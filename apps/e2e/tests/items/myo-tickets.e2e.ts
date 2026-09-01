@@ -14,6 +14,7 @@ import {
   SeedRevertTraitReviewDocument,
   SeedUpdateRoleDocument,
   SeedCreateCharacterDocument,
+  SeedGrantItemDocument,
 } from "../../src/generated/graphql.js";
 
 const test = presetTest("community-items");
@@ -557,7 +558,35 @@ test.describe("spending an MYO ticket, through the page", () => {
 
     await page.goto(`/character/create?ticket=${itemId}`);
 
-    // Said before they write a character, not after they submit one.
+    // Said before they write a character, not after they submit one. The
+    // grant hangs off the item *type*, which still has one -- so this fails
+    // if the page reads the grant without checking that this particular item
+    // is still spendable.
+    await expect(page.getByTestId("myo-ticket-unusable")).toBeVisible();
+    await expect(page.getByTestId("submit-character")).toBeDisabled();
+  });
+
+  test("says somebody else's ticket cannot be used", async ({
+    page,
+    world,
+  }) => {
+    // othermember's inventory is not reachable through the UI, so this URL is
+    // only arrived at by editing one -- but the same missing check covered
+    // both, and a live ticket someone else holds is the case that looks most
+    // like a working one.
+    const { grantItem } = await world
+      .as("quartermaster")
+      .gql(SeedGrantItemDocument, {
+        input: {
+          itemTypeId: world.itemTypes.myoTicket.id,
+          userId: world.users.othermember.userId,
+          quantity: 1,
+          reason: "Event prize",
+        },
+      });
+
+    await page.goto(`/character/create?ticket=${grantItem[0].id}`);
+
     await expect(page.getByTestId("myo-ticket-unusable")).toBeVisible();
     await expect(page.getByTestId("submit-character")).toBeDisabled();
   });

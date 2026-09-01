@@ -317,7 +317,21 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   });
 
   const ticket = ticketData?.item ?? null;
-  const grant = ticket?.itemType?.useMyoGrant ?? null;
+
+  // The grant belongs to the item *type*, so it is there whether or not this
+  // particular item can still be spent. `item(id:)` returns destroyed items --
+  // provenance pages need them -- so reading the grant straight off the type
+  // would hand a full create form to somebody following a bookmark to a ticket
+  // they already spent, and only refuse at submit, after they had written a
+  // character.
+  //
+  // Not a security boundary: the redemption re-checks ownership in the WHERE
+  // of its destroy, and refuses either way. This is about refusing where it
+  // costs nothing rather than after the work.
+  const ticketSpendable = Boolean(
+    ticket && !ticket.destroyedAt && ticket.ownerId === user?.id,
+  );
+  const grant = ticketSpendable ? (ticket?.itemType?.useMyoGrant ?? null) : null;
 
   // Species and variant state
   const [selectedSpecies, setSelectedSpecies] =
