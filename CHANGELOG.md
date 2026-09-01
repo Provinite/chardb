@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The Item Ledger and Community Currency walkthroughs cover using an item**,
+  with screenshots taken against a seeded instance. The ledger's "Used" event
+  type has been documented since it was written; it can finally happen.
+
 ### Added
 
 - **E2E: 16 item-use specs** — thirteen against the API, about the ways a
