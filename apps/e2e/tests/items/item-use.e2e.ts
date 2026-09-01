@@ -293,6 +293,33 @@ test.describe("using an item, through the page", () => {
     ).toContainText(String(world.balances.member));
   });
 
+  test("says what an item type is worth on its own page", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(`/item-types/${world.itemTypes.ticket.id}`);
+
+    // Before this the payout appeared only in the confirm dialog, which is
+    // after the decision to spend rather than before it -- and useless to
+    // somebody weighing up a trade for one.
+    const payout = page.getByTestId("item-type-use-payout");
+    await expect(payout).toContainText(
+      String(world.itemTypes.ticket.payout),
+    );
+  });
+
+  test("says nothing about payout on a type that pays nothing", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(`/item-types/${world.itemTypes.blankTicket.id}`);
+
+    // Absent rather than showing a zero, matching the item type's actual
+    // state: it has no payout, which is not the same as a payout of nothing.
+    await expect(page.getByText("Properties")).toBeVisible();
+    await expect(page.getByTestId("item-type-use-payout")).toHaveCount(0);
+  });
+
   test("offers no Use on an item that pays nothing", async ({
     page,
     world,

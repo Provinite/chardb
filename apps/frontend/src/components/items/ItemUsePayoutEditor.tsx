@@ -95,7 +95,10 @@ export const ItemUsePayoutEditor: React.FC<Props> = ({
 
   if (!itemType.isConsumable) {
     return (
-      <Wrap>
+      // Same testid as the editable state. The component has two states and
+      // both are the component; tagging only one made the other unreachable
+      // to anything looking for it.
+      <Wrap data-testid="use-payout-editor">
         <Head>Pays on use</Head>
         <Hint>
           Only a consumable item can pay out. Using is what uses it up, and

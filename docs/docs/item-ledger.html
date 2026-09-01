@@ -677,99 +677,29 @@
           <p>
             Revoking is staff taking something back. <strong>Using</strong> is
             the holder spending it themselves, and it is the other way an item
-            leaves circulation. A <em>Coin Ticket</em> redeemed for currency is
-            the case it was built for.
-          </p>
-          <p>
-            Two settings decide whether an item can be used, and both are on
-            the item type rather than the item: it must be marked
-            <strong>consumable</strong>, and it must be given something to pay.
-            An item type with neither offers no Use button at all — not a
-            greyed-out one, since a button whose every press is a refusal is
-            worse than no button.
+            leaves circulation — a <em>Coin Ticket</em> redeemed for currency,
+            say. It shows here as a
+            <span class="pill used">Used</span> entry reading
+            <em>member&nbsp;→&nbsp;consumed</em>, which is what tells it apart
+            from a revoke at a glance.
           </p>
         </div>
         <div class="screenshot">
           <img
-            src="item-use-inventory.png"
-            alt="An inventory showing Coin Ticket expanded with a Use button beside each of the two copies, and Blank Ticket below it with no Use button at all"
+            src="item-use-item-ledger.png"
+            alt="The community item ledger with a Used entry for Coin Ticket showing minus one, member arrow consumed, actor member, and the reason Used Coin Ticket"
           />
           <div class="screenshot-caption">
-            Two Coin Tickets, each usable. The Blank Ticket below is consumable
-            but pays nothing, so it offers no button.
+            A redemption in the ledger. The payment it produced is recorded on
+            the currency ledger under the same event.
           </div>
         </div>
         <div class="step-content">
           <p>
-            Using is irreversible — the item is destroyed and there is no
-            un-use — so it asks first, and says what you are getting for it.
+            Setting what a type pays, spending one, and the three places it
+            shows up afterwards are covered in their own walkthrough:
+            <a href="using-items.html">Using Items</a>.
           </p>
-        </div>
-        <div class="screenshot">
-          <img
-            src="item-use-confirm.png"
-            alt="A confirm dialog reading 'Use Coin Ticket?' and 'This uses it up and pays you 250 Hollow Coin. The item is gone afterwards', with Cancel and Use it buttons"
-          />
-          <div class="screenshot-caption">
-            The payout is named before you commit to it, not after.
-          </div>
-        </div>
-        <div class="screenshot">
-          <img
-            src="item-use-paid.png"
-            alt="The inventory immediately after using a ticket: Hollow Coin has risen from 380 to 630, Coin Ticket now reads times one, items held has dropped from six to five, and a toast reads 'Used. You received 250'"
-          />
-          <div class="screenshot-caption">
-            Both halves, immediately: one ticket gone, 250 coin arrived. No
-            reload.
-          </div>
-        </div>
-        <div class="step-content">
-          <p>
-            <strong>One use is one event across two ledgers.</strong> The item
-            ledger gets a <span class="pill used">Used</span> row and the
-            currency ledger gets the payment, both carrying the same batch
-            identifier — so the coin can always be traced back to the thing
-            that produced it rather than appearing from nowhere.
-          </p>
-        </div>
-        <div class="screenshot">
-          <img
-            src="item-use-currency-ledger.png"
-            alt="The currency ledger showing a +250 Hollow Coin entry to member, reason 'Used Coin Ticket', with a link reading 'from the item that was used'"
-          />
-          <div class="screenshot-caption">
-            The payout in the currency ledger, linking back to the item. The
-            item's page outlives its destruction, so the link goes somewhere
-            real.
-          </div>
-        </div>
-        <div class="screenshot">
-          <img
-            src="item-use-provenance.png"
-            alt="A destroyed Coin Ticket's provenance page showing two events, Granted then Used, and a chain of custody ending in destroyed"
-          />
-          <div class="screenshot-caption">
-            And the same event from the item's side. Granted, then used, then
-            gone — with the history still readable.
-          </div>
-        </div>
-        <div class="step-content">
-          <p>
-            Staff decide what a type pays, per currency, on the item type's own
-            edit form. A payout can name more than one currency, and clearing
-            every amount removes it.
-          </p>
-        </div>
-        <div class="screenshot">
-          <img
-            src="item-use-payout-editor.png"
-            alt="The 'Pays on use' panel on an item type's edit form, listing each of the community's currencies with an amount box"
-          />
-          <div class="screenshot-caption">
-            Archived currencies are left out. They cannot be created, so a
-            payout naming one would be a reward that never arrives.
-          </div>
         </div>
       </div>
 
