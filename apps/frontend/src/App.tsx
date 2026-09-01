@@ -18,6 +18,8 @@ import { CharacterPage } from "./pages/CharacterPage";
 import { CharacterMediaPage } from "./pages/CharacterMediaPage";
 import { CharactersPage } from "./pages/CharactersPage";
 import { CreateCharacterPageEnhanced as CreateCharacterPage } from "./pages/CreateCharacterPageEnhanced";
+import { SpendEditKitPage } from "./pages/SpendEditKitPage";
+import { EditKitCharacterPickerPage } from "./pages/EditKitCharacterPickerPage";
 import { EditCharacterPage } from "./pages/EditCharacterPage";
 import { CreateTextPage } from "./pages/CreateTextPage";
 import { CreateMediaPage } from "./pages/CreateMediaPage";
@@ -170,6 +172,22 @@ function App() {
           element={
             <ProtectedRoute>
               <MyCommunitiesPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/character/:characterId/edit-traits"
+          element={
+            <ProtectedRoute>
+              <SpendEditKitPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/edit-kits/:itemId"
+          element={
+            <ProtectedRoute>
+              <EditKitCharacterPickerPage />
             </ProtectedRoute>
           }
         />

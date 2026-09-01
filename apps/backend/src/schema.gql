@@ -118,6 +118,11 @@ type Character {
   """ID of the owner. Null for orphaned/community-owned characters."""
   ownerId: ID
   pendingOwnership: PendingOwnership
+
+  """
+  The source of this character's pending trait review, or null when there is none. Says what kind of review is open without exposing what it proposes.
+  """
+  pendingTraitReviewSource: TraitReviewSource
   price: Float
 
   """Official registry identifier for this character within its species"""
@@ -1109,6 +1114,19 @@ input EditAndApproveTraitReviewInput {
   reviewId: ID!
 }
 
+input EditCharacterTraitsWithKitInput {
+  """The character to change. Must be yours."""
+  characterId: ID!
+
+  """The kit to spend."""
+  itemId: ID!
+
+  """
+  The complete set of trait values being proposed, not a patch. Nothing is applied until staff approve.
+  """
+  traitValues: [CharacterTraitValueInput!]!
+}
+
 """
 Where an offer stands with the clock applied. A PENDING trade past its expiresAt reports EXPIRED and will not settle.
 """
@@ -1626,6 +1644,7 @@ type ItemType {
   updatedAt: DateTime!
   useMyoGrant: ItemUseMyoGrant
   usePayout: [ItemUsePayoutComponent!]!
+  useTraitEditGrant: ItemUseTraitEditGrant
 }
 
 type ItemTypeConnection {
@@ -1687,6 +1706,23 @@ One currency and how much of it using this item pays. Name each currency once; s
 input ItemUsePayoutComponentInput {
   amount: Int!
   currencyId: ID!
+}
+
+type ItemUseTraitEditGrant {
+  id: ID!
+
+  """Never empty -- a grant covering nothing is cleared instead."""
+  species: [ItemUseTraitEditGrantSpecies!]!
+}
+
+type ItemUseTraitEditGrantSpecies {
+  id: ID!
+  species: Species!
+
+  """
+  Which variants of this species the kit is limited to. **Empty means every variant**, including a character with no variant set at all.
+  """
+  variants: [SpeciesVariant!]!
 }
 
 """
@@ -2138,6 +2174,11 @@ type Mutation {
 
   """Edit and approve a trait review (moderator action)"""
   editAndApproveTraitReview(input: EditAndApproveTraitReviewInput!): TraitReview!
+
+  """
+  Spend an edit kit to propose a change to one of your characters' traits. Destroys the kit and creates a pending USER_EDIT review; the character is unchanged until staff approve it. Authorized by holding the kit, not by canEditOwnCharacterRegistry.
+  """
+  editCharacterTraitsWithKit(input: EditCharacterTraitsWithKitInput!): TraitReview!
   forgotPassword(input: ForgotPasswordInput!): Boolean!
 
   """
@@ -2328,6 +2369,11 @@ type Mutation {
   Set which characters a ticket of this type can make. Replaces the grant wholesale; an empty variant list clears it. Needs the same permission as editing the item type, because it hands out the right to create characters.
   """
   setItemTypeMyoGrant(input: SetItemTypeMyoGrantInput!): ItemType!
+
+  """
+  Set which characters an edit kit of this type can change the traits of. Replaces the grant wholesale; an empty species list clears it. A species with no variants listed covers every variant of it.
+  """
+  setItemTypeTraitEditGrant(input: SetItemTypeTraitEditGrantInput!): ItemType!
 
   """
   Set what using one of these pays its holder. Replaces the payout wholesale; an empty list clears it. Needs the same permission as editing the item type, because it is minting rights.
@@ -3436,6 +3482,13 @@ input SetItemTypeMyoGrantInput {
   speciesVariantIds: [ID!]!
 }
 
+input SetItemTypeTraitEditGrantInput {
+  itemTypeId: ID!
+
+  """Replaces the grant wholesale. Empty clears it."""
+  species: [TraitEditGrantSpeciesInput!]!
+}
+
 input SetItemTypeUsePayoutInput {
   """Replaces the payout wholesale. Empty clears it."""
   components: [ItemUsePayoutComponentInput!]!
@@ -3889,6 +3942,15 @@ type TraitConnection {
 
   """Total number of traits available"""
   totalCount: Float!
+}
+
+input TraitEditGrantSpeciesInput {
+  speciesId: ID!
+
+  """
+  Narrow the kit to these variants. Empty covers every variant of the species, and characters with no variant set.
+  """
+  speciesVariantIds: [ID!]! = []
 }
 
 type TraitListEntry {

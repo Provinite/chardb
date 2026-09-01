@@ -89,6 +89,13 @@ enum ItemTransactionSource {
   /// given a fresh ticket, because the one they spent stays spent and keeps
   /// its history.
   MYO_REJECTION
+  /// An edit kit spent proposing a change to a character's traits. Source id
+  /// is the character. Unlike an MYO redemption the character is not changed
+  /// by this -- the proposal waits in the review until staff approve it.
+  TRAIT_EDIT_REDEMPTION
+  /// A kit handed back because the edit it proposed was refused. Source id is
+  /// the review. Same pairing as MYO_REJECTION: kind GRANT, a fresh item.
+  TRAIT_EDIT_REJECTION
 }
 
 enum TraitReviewSource {
@@ -780,6 +787,7 @@ model ItemType {
   ShopItem     ShopItem[]
   usePayout    ItemUsePayout?
   useMyoGrant  ItemUseMyoGrant?
+  useTraitEditGrant ItemUseTraitEditGrant?
 
   @@unique([name, communityId])
   @@map("item_types")
@@ -1251,6 +1259,67 @@ model ItemUseMyoGrantVariant {
   @@map("item_use_myo_grant_variants")
 }
 
+/// Which characters an edit kit may change the traits of.
+///
+/// The third use effect, and one level deeper than the other two, because a
+/// kit names *several* species where an MYO ticket names one. A kit good for
+/// "any Thornwing, or a Rare Bramblecat" is a shape a single species column
+/// cannot describe.
+///
+/// Deliberately not shared with ItemUseMyoGrant. They look adjacent and are
+/// different products: one makes a character of a species you pick from a
+/// list, the other changes an existing character you already own. Forcing one
+/// model onto both was considered and declined.
+model ItemUseTraitEditGrant {
+  id String @id @default(uuid())
+
+  /// One grant per item type, as with the other two effects.
+  itemTypeId String @unique @map("item_type_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  itemType ItemType                       @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
+  species  ItemUseTraitEditGrantSpecies[]
+
+  @@map("item_use_trait_edit_grants")
+}
+
+/// One species an edit kit covers, and optionally which of its variants.
+///
+/// **An empty variant list means every variant of this species**, including a
+/// character that has no variant set at all. That is the common case -- a kit
+/// for a species is the ordinary thing to sell -- so it is the state you get
+/// by naming a species and stopping.
+model ItemUseTraitEditGrantSpecies {
+  id        String @id @default(uuid())
+  grantId   String @map("grant_id")
+  speciesId String @map("species_id")
+
+  grant ItemUseTraitEditGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  /// Restrict, as everywhere else a use effect names something: a species
+  /// outstanding kits can still edit cannot be deleted out from under them.
+  species Species @relation(fields: [speciesId], references: [id], onDelete: Restrict)
+
+  variants ItemUseTraitEditGrantVariant[]
+
+  @@unique([grantId, speciesId])
+  @@map("item_use_trait_edit_grant_species")
+}
+
+/// One variant of one species an edit kit is limited to.
+model ItemUseTraitEditGrantVariant {
+  id               String @id @default(uuid())
+  grantSpeciesId   String @map("grant_species_id")
+  speciesVariantId String @map("species_variant_id")
+
+  grantSpecies   ItemUseTraitEditGrantSpecies @relation(fields: [grantSpeciesId], references: [id], onDelete: Cascade)
+  speciesVariant SpeciesVariant               @relation(fields: [speciesVariantId], references: [id], onDelete: Restrict)
+
+  @@unique([grantSpeciesId, speciesVariantId])
+  @@map("item_use_trait_edit_grant_variants")
+}
+
 /// One checkout.
 ///
 /// The order exists mostly to group its lines and to date the refund window;
@@ -1344,6 +1413,8 @@ model Species {
 
   /// Item types whose tickets make a character of this species.
   myoGrants ItemUseMyoGrant[]
+  /// Item types whose edit kits can change a character of this species.
+  traitEditGrants ItemUseTraitEditGrantSpecies[]
 
   @@map("species")
 }
@@ -1405,6 +1476,8 @@ model SpeciesVariant {
 
   /// Every MYO grant that lists this variant as one a ticket can make.
   myoGrantVariants ItemUseMyoGrantVariant[]
+  /// Every edit-kit grant limited to this variant.
+  traitEditGrantVariants ItemUseTraitEditGrantVariant[]
 
   @@unique([speciesId, name])
   @@map("species_variants")

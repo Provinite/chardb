@@ -12,6 +12,10 @@ import {
   SeedCreateShopItemDocument,
   SeedSetItemTypeUsePayoutDocument,
   SeedSetItemTypeMyoGrantDocument,
+  SeedSetItemTypeTraitEditGrantDocument,
+  SeedCreateTraitDocument,
+  SeedCreateEnumValueDocument,
+  TraitValueType,
   SeedCreateSpeciesDocument,
   SeedCreateSpeciesVariantDocument,
   SeedCreateCharacterDocument,
@@ -41,13 +45,45 @@ export interface CommunityItemsWorld {
      * variant is deliberately left off so a ticket can be proved to refuse it.
      */
     myoTicket: { id: string; name: string };
+    /**
+     * Consumable, and good for editing the traits of any Thornwing --
+     * deliberately species-wide with no variants listed, which is the state
+     * that must cover Rare and variant-less characters too.
+     */
+    editKit: { id: string; name: string };
+    /**
+     * Consumable, and narrowed to Thornwing Common only. The pair is what
+     * proves a variant list narrows rather than decorates.
+     */
+    commonOnlyEditKit: { id: string; name: string };
   };
   /** The three potions `member` holds, granted during seeding as one batch. */
   grantedItems: { ids: string[] };
+  /**
+   * How many undestroyed items this world contains.
+   *
+   * Here rather than in the spec that asserts on it. The economy tile's spec
+   * used to hard-code 36; when the preset gained MYO tickets it said 38 and
+   * broke, and the first repair -- summing these arrays *in the spec* -- broke
+   * again the moment edit kits arrived. A spec in another package cannot be
+   * the place that knows what this world holds.
+   *
+   * **Adding a granted item type means adding it to this sum**, which sits
+   * beside the grants rather than a directory away.
+   */
+  totalCirculation: number;
   /** `member`'s two Coin Tickets and one Blank Ticket. */
   usableItems: { ticketIds: string[]; blankTicketId: string };
   /** `member`'s two MYO tickets. Two, so one can be spent and one kept. */
   myoItems: { ticketIds: string[] };
+  /** `member`'s edit kits: two species-wide, one narrowed to Common. */
+  editKitItems: { kitIds: string[]; commonOnlyKitId: string };
+  /**
+   * One enum trait on the species, so an edit kit has something to change.
+   * Without it every proposed edit is the empty set and the "changes nothing"
+   * refusal is the only reachable outcome.
+   */
+  traits: { eyeColor: { id: string; values: Record<string, string> } };
   /**
    * Items standing in for what the migration produces: pre-existing holdings
    * with one IMPORT row each, all sharing a batch id. Deliberately larger than
@@ -305,6 +341,31 @@ export default definePreset<CommunityItemsWorld>({
     const common = await variant("Common");
     const uncommon = await variant("Uncommon");
     const rare = await variant("Rare");
+
+    // One enum trait, so an edit kit has something to change. Every character
+    // below is seeded without trait values, which keeps their creation from
+    // opening a PENDING review and leaves the edit-kit specs a clean slate.
+    const { createTrait: eyeColor } = await ctx
+      .as("commadmin")
+      .gql(SeedCreateTraitDocument, {
+        createTraitInput: {
+          speciesId: species.id,
+          name: "Eye Color",
+          valueType: TraitValueType.Enum,
+          allowsClarifier: false,
+          allowsMultipleValues: false,
+        },
+      });
+
+    const eyeColorValues: Record<string, string> = {};
+    for (const [i, name] of ["Blue", "Green", "Amber"].entries()) {
+      const { createEnumValue } = await ctx
+        .as("commadmin")
+        .gql(SeedCreateEnumValueDocument, {
+          createEnumValueInput: { traitId: eyeColor.id, name, order: i },
+        });
+      eyeColorValues[name.toLowerCase()] = createEnumValue.id;
+    }
 
     // assignToSelf, so each character is owned by whoever seeds it. The stock
     // Member role carries canCreateCharacter, so both members can.
@@ -565,6 +626,75 @@ export default definePreset<CommunityItemsWorld>({
       },
     );
 
+    // An edit kit for the whole species: no variants listed, which must cover
+    // Rare and a character with no variant set at all.
+    const { createItemType: editKit } = await asQuartermaster.gql(
+      SeedCreateItemTypeDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Thornwing Edit Kit",
+          category: "Redeemable",
+          isTradeable: true,
+          isConsumable: true,
+        },
+      },
+    );
+
+    await asQuartermaster.gql(SeedSetItemTypeTraitEditGrantDocument, {
+      input: {
+        itemTypeId: editKit.id,
+        species: [{ speciesId: species.id, speciesVariantIds: [] }],
+      },
+    });
+
+    // Two: one to spend, one still in hand afterwards.
+    const { grantItem: editKitItems } = await asQuartermaster.gql(
+      SeedGrantItemDocument,
+      {
+        input: {
+          itemTypeId: editKit.id,
+          userId: member.userId,
+          quantity: 2,
+          reason: "Event prize",
+        },
+      },
+    );
+
+    // The same thing narrowed to one variant. Its whole job is to be refused
+    // on a character the species-wide kit accepts.
+    const { createItemType: commonOnlyEditKit } = await asQuartermaster.gql(
+      SeedCreateItemTypeDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Common Thornwing Edit Kit",
+          category: "Redeemable",
+          isTradeable: true,
+          isConsumable: true,
+        },
+      },
+    );
+
+    await asQuartermaster.gql(SeedSetItemTypeTraitEditGrantDocument, {
+      input: {
+        itemTypeId: commonOnlyEditKit.id,
+        species: [{ speciesId: species.id, speciesVariantIds: [common.id] }],
+      },
+    });
+
+    const { grantItem: commonOnlyKitItems } = await asQuartermaster.gql(
+      SeedGrantItemDocument,
+      {
+        input: {
+          itemTypeId: commonOnlyEditKit.id,
+          userId: member.userId,
+          quantity: 1,
+          reason: "Event prize",
+        },
+      },
+    );
+
     // ==================== Shop ====================
 
     // The member has 380 HC and 0 FT after the transfer above, so the
@@ -672,13 +802,31 @@ export default definePreset<CommunityItemsWorld>({
         ticket: { id: ticket.id, name: ticket.name, payout: 250 },
         blankTicket: { id: blankTicket.id, name: blankTicket.name },
         myoTicket: { id: myoTicket.id, name: myoTicket.name },
+        editKit: { id: editKit.id, name: editKit.name },
+        commonOnlyEditKit: {
+          id: commonOnlyEditKit.id,
+          name: commonOnlyEditKit.name,
+        },
       },
       usableItems: {
         ticketIds: ticketItems.map((i) => i.id),
         blankTicketId: blankTicketItems[0].id,
       },
       myoItems: { ticketIds: myoItems.map((i) => i.id) },
+      editKitItems: {
+        kitIds: editKitItems.map((i) => i.id),
+        commonOnlyKitId: commonOnlyKitItems[0].id,
+      },
+      traits: { eyeColor: { id: eyeColor.id, values: eyeColorValues } },
       grantedItems: { ids: grantItem.map((i) => i.id) },
+      totalCirculation:
+        grantItem.length +
+        IMPORT_COUNT +
+        ticketItems.length +
+        blankTicketItems.length +
+        myoItems.length +
+        editKitItems.length +
+        commonOnlyKitItems.length,
       importedItems: {
         ids: importedIds,
         batchId: IMPORT_BATCH,

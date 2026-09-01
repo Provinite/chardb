@@ -89,20 +89,12 @@ test.describe("as staff who can manage items", () => {
     await expect(tiles).toContainText("Unclaimed");
     await expect(tiles).toContainText("Net 30d");
 
-    // 3 potions + 30 imported lockets + 2 coin tickets + 1 blank ticket +
-    // 2 MYO tickets, held by member and othermember.
-    //
-    // Counted from the preset rather than written as a literal: this said 36
-    // until the preset gained two MYO tickets, and a spec that has to be
-    // edited every time the world grows an item is not asserting what it
-    // means to. What it means is "the tile shows the real circulation".
-    const circulation =
-      world.grantedItems.ids.length +
-      world.importedItems.count +
-      world.usableItems.ticketIds.length +
-      1 +
-      world.myoItems.ticketIds.length;
-    await expect(tiles).toContainText(String(circulation));
+    // Counted by the preset, not here. This assertion said 36, then became a
+    // sum of the world's arrays written in this file, and broke both times an
+    // item type was added. A spec in another package is the wrong place to
+    // know what the world holds -- what it means is "the tile shows the real
+    // circulation", and the world is what knows that number.
+    await expect(tiles).toContainText(String(world.totalCirculation));
     await expect(tiles).toContainText("2");
   });
 

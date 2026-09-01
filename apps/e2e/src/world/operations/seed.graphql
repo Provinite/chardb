@@ -150,6 +150,7 @@ query SeedCharacter($id: ID!) {
       traitId
       value
     }
+    pendingTraitReviewSource
   }
 }
 
@@ -343,6 +344,47 @@ mutation SeedSetItemTypeMyoGrant($input: SetItemTypeMyoGrantInput!) {
         name
       }
     }
+  }
+}
+
+mutation SeedSetItemTypeTraitEditGrant($input: SetItemTypeTraitEditGrantInput!) {
+  setItemTypeTraitEditGrant(input: $input) {
+    id
+    useTraitEditGrant {
+      id
+      species {
+        id
+        species {
+          id
+          name
+        }
+        variants {
+          id
+          name
+        }
+      }
+    }
+  }
+}
+
+mutation SeedEditCharacterTraitsWithKit(
+  $input: EditCharacterTraitsWithKitInput!
+) {
+  editCharacterTraitsWithKit(input: $input) {
+    id
+    status
+    source
+    characterId
+  }
+}
+
+mutation SeedUpdateCharacterRegistry(
+  $id: ID!
+  $input: UpdateCharacterRegistryInput!
+) {
+  updateCharacterRegistry(id: $id, input: $input) {
+    id
+    speciesVariantId
   }
 }
 

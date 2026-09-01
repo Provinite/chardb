@@ -69,6 +69,7 @@ export const GET_CHARACTER = gql`
       registryId
       speciesId
       speciesVariantId
+      pendingTraitReviewSource
       species {
         id
         name

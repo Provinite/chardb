@@ -375,6 +375,28 @@ export const ItemTypePage: React.FC = () => {
           </PayoutNote>
         </PropertiesSection>
       )}
+
+      {/* Which characters a kit works on, for the same reason the other two
+          are here: it is what somebody weighing up a trade for one needs, and
+          it is otherwise only visible once you already hold it. */}
+      {itemType.useTraitEditGrant && (
+        <PropertiesSection data-testid="item-type-trait-edit-grant">
+          <Heading2 style={{ marginBottom: "0.5rem" }}>Edits on use</Heading2>
+          {itemType.useTraitEditGrant.species.map((entry) => (
+            <PayoutValue key={entry.id}>
+              {entry.species.name}
+              {entry.variants.length > 0
+                ? ` — ${entry.variants.map((v) => v.name).join(", ")}`
+                : " — any variant"}
+            </PayoutValue>
+          ))}
+          <PayoutNote>
+            Spending one destroys it and proposes a change to that
+            character&rsquo;s traits. Nothing changes until staff approve it,
+            and if they refuse, the kit comes back.
+          </PayoutNote>
+        </PropertiesSection>
+      )}
     </Container>
   );
 };

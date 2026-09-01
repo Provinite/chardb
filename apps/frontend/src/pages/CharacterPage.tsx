@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 
 import { Avatar, Button } from "@chardb/ui";
 import {
   useGetCharacterQuery,
+  useGetMyEditKitsQuery,
+  TraitReviewSource,
   useDeleteCharacterMutation,
   useKickCharacterFromSpeciesMutation,
   LikeableType,
@@ -16,6 +18,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import { canUserEditCharacter } from "../lib/characterPermissions";
 import { setKinds } from "../lib/characterAvailability";
+import { kitCovers } from "../lib/editKits";
 import { CharacterAvailability } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
 import { CommentList } from "../components/CommentList";
@@ -463,6 +466,38 @@ export const CharacterPage: React.FC = () => {
   );
 
   /**
+   * How many edit kits this viewer holds that work on this character.
+   *
+   * Queried rather than assumed, so the offer below is only made when it can
+   * be taken. Skipped for anyone who is not the owner, and for a character
+   * that already has a change in the queue -- both are refusals, and neither
+   * needs a round trip to discover.
+   */
+  const ownsCharacter = Boolean(user && character?.owner?.id === user.id);
+  const hasPendingReview =
+    character?.traitReviewStatus === ModerationStatus.Pending;
+
+  const { data: kitsData } = useGetMyEditKitsQuery({
+    variables: {
+      communityId: character?.species?.communityId ?? "",
+      userId: user?.id ?? "",
+    },
+    skip:
+      !ownsCharacter ||
+      hasPendingReview ||
+      !character?.species?.communityId ||
+      !user?.id,
+  });
+
+  const eligibleKitCount = useMemo(() => {
+    if (!character) return 0;
+    return (kitsData?.memberHoldings?.holdings ?? []).filter((h) => {
+      const grant = h.itemType.useTraitEditGrant;
+      return grant ? kitCovers(grant, character) : false;
+    }).length;
+  }, [kitsData, character]);
+
+  /**
    * Whether to offer this viewer a way to propose a trade for this character.
    *
    * Every clause is a way the offer would be a dead end, and a dead end here
@@ -671,9 +706,23 @@ export const CharacterPage: React.FC = () => {
                 {kind.badge}
               </MetaBadge>
             ))}
-            {character.traitReviewStatus === ModerationStatus.Pending && (
-              <MetaBadge variant="warning">Traits Pending Review</MetaBadge>
-            )}
+            {/* Two different things wear this status.
+
+                For every other source the traits on screen ARE the pending
+                ones, applied when the character was made and awaiting
+                ratification. A USER_EDIT review is the opposite: the traits
+                shown are the approved ones and a *change* to them is waiting.
+                One badge for both would tell a reader the design in front of
+                them is provisional when it is settled. */}
+            {character.traitReviewStatus === ModerationStatus.Pending &&
+              (character.pendingTraitReviewSource ===
+              TraitReviewSource.UserEdit ? (
+                <MetaBadge variant="warning" data-testid="trait-edit-pending">
+                  Trait Change Pending Review
+                </MetaBadge>
+              ) : (
+                <MetaBadge variant="warning">Traits Pending Review</MetaBadge>
+              ))}
             {character.traitReviewStatus === ModerationStatus.Rejected && (
               <MetaBadge variant="error">Traits Rejected</MetaBadge>
             )}
@@ -693,6 +742,26 @@ export const CharacterPage: React.FC = () => {
               </InfoItem>
             )}
           </InfoGrid>
+
+          {/* An owner action, not a staff one, so it sits above the admin
+              strip rather than inside it. Offered only when they actually
+              hold a kit that works on this character -- a button whose every
+              press is a refusal is the thing this codebase keeps not doing. */}
+          {eligibleKitCount > 0 && (
+            <CharacterActions data-testid="character-edit-kit-actions">
+              <AdminActionsLabel>Yours</AdminActionsLabel>
+              <Button
+                variant="outline"
+                size="sm"
+                data-testid="use-edit-kit"
+                onClick={() =>
+                  navigate(`/character/${character.id}/edit-traits`)
+                }
+              >
+                Use an edit kit
+              </Button>
+            </CharacterActions>
+          )}
 
           {(canUserEditCharacter(character, user, permissions) ||
             permissions.canDeleteCharacter ||

@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Spend an edit kit to change a character's traits.** Reachable from the
+  character or from the kit; nothing is spent until you submit, and nothing
+  changes on the character until staff approve (#171).
+
+- **A distinct badge for a pending trait change**, so a reader can tell "these
+  traits are provisional" from "a change to these traits is waiting".
+
+- **An item type's page says which characters an edit kit covers.**
+
+- **Staff set what a kit covers** on the item type's edit form.
+
+### Added
+
 - **Spend an MYO ticket to make a character.** Use on an MYO ticket opens the
   create page rather than a confirm; nothing is consumed until you submit
   (#168).

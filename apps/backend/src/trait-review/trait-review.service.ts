@@ -147,6 +147,22 @@ export class TraitReviewService {
         where: { id: review.characterId },
         data: {
           traitReviewStatus: ModerationStatus.APPROVED,
+          // Approving is what *applies* a USER_EDIT review.
+          //
+          // Every other source writes its values to the character up front and
+          // uses the review to ratify them after the fact, which is fine when
+          // the character is new. An edit kit cannot work that way: the member
+          // would wear an unapproved trait until the queue caught up, and then
+          // lose it in public. So the proposal lives only in the review row,
+          // and this is where it lands.
+          //
+          // Scoped to this source rather than done for all of them. For the
+          // apply-first sources writing `proposedTraitValues` here would be a
+          // no-op today, but only because they happen to agree -- making that
+          // a load-bearing coincidence is how the next source breaks.
+          ...(review.source === TraitReviewSource.USER_EDIT
+            ? { traitValues: review.proposedTraitValues }
+            : {}),
         },
       }),
     ]);
@@ -156,6 +172,91 @@ export class TraitReviewService {
     }
 
     return updatedReview;
+  }
+
+  /**
+   * Refuse a proposed trait edit: nothing changes, the kit comes back.
+   *
+   * The character is deliberately untouched. A USER_EDIT review never applied
+   * its values, so there is nothing to restore -- and writing
+   * `previousTraitValues` back "just in case" would clobber a staff edit that
+   * landed while this sat in the queue.
+   *
+   * **Returning an item is a mint**, and this is the only path to it for edit
+   * kits. Two things keep it once-only, both inside one transaction:
+   *
+   * - The review update carries `status: PENDING` in its own WHERE, so a
+   *   second rejection updates no rows and the transaction rolls back before
+   *   anything is granted.
+   * - It is unreachable except from a PENDING USER_EDIT review, checked by the
+   *   caller.
+   *
+   * The kit handed back is a **new item**. The original was genuinely spent
+   * and its history says so; the two are tied together through the ledger
+   * instead -- the USE row names the character, the GRANT row names the
+   * review.
+   */
+  private async rejectEditKitReview(
+    reviewId: string,
+    characterId: string,
+    context: { moderatorId: string; reason: string },
+  ) {
+    // Which type to give back, read from the ledger rather than a column on
+    // the review. The USE row written when the kit was spent already names the
+    // item type, and `[source, sourceId]` is indexed.
+    const redemption = await this.db.itemTransaction.findFirst({
+      where: {
+        source: ItemTransactionSource.TRAIT_EDIT_REDEMPTION,
+        sourceId: characterId,
+        kind: ItemTransactionKind.USE,
+      },
+      // Newest first: a character can be edited with a kit more than once over
+      // its life, and the one being refused is the most recent.
+      orderBy: { createdAt: "desc" },
+      select: { itemTypeId: true, communityId: true, fromUserId: true },
+    });
+
+    return this.db.$transaction(async (tx) => {
+      const updatedReview = await tx.traitReview.update({
+        where: { id: reviewId, status: ModerationStatus.PENDING },
+        data: {
+          status: ModerationStatus.REJECTED,
+          resolvedAt: new Date(),
+          resolvedById: context.moderatorId,
+          rejectionReason: context.reason,
+        },
+        include: traitReviewInclude,
+      });
+
+      // Status only. The traits stay exactly as they were, because the
+      // proposal was never applied to them.
+      const character = await tx.character.update({
+        where: { id: characterId },
+        data: { traitReviewStatus: ModerationStatus.REJECTED },
+        select: { ownerId: true },
+      });
+
+      // No redemption row means this review did not come from a kit -- only
+      // reachable if a review's source were edited by hand. Refusing it still
+      // works; inventing an item to hand back on a guess would be worse.
+      const recipientId = character.ownerId ?? redemption?.fromUserId;
+      if (redemption && recipientId) {
+        await this.items.createGranted(tx, {
+          itemTypeId: redemption.itemTypeId,
+          communityId: redemption.communityId,
+          ownerId: recipientId,
+          quantity: 1,
+          actor: {
+            actorUserId: context.moderatorId,
+            reason: "Returned after the edit it was spent on was refused",
+          },
+          source: ItemTransactionSource.TRAIT_EDIT_REJECTION,
+          sourceId: reviewId,
+        });
+      }
+
+      return updatedReview;
+    });
   }
 
   /**
@@ -253,6 +354,13 @@ export class TraitReviewService {
 
     if (review.source === TraitReviewSource.MYO) {
       return this.rejectMyoReview(review.id, review.characterId, {
+        moderatorId,
+        reason,
+      });
+    }
+
+    if (review.source === TraitReviewSource.USER_EDIT) {
+      return this.rejectEditKitReview(review.id, review.characterId, {
         moderatorId,
         reason,
       });

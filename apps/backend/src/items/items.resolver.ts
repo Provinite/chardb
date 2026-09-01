@@ -29,6 +29,7 @@ import {
   ItemTypeConnection,
   ItemUsePayoutComponent,
   ItemUseMyoGrant,
+  ItemUseTraitEditGrant,
   UseItemResult,
 } from "./entities/item-type.entity";
 import { Item as ItemEntity } from "./entities/item.entity";
@@ -46,6 +47,7 @@ import {
   ItemTypeFiltersInput,
   SetItemTypeUsePayoutInput,
   SetItemTypeMyoGrantInput,
+  SetItemTypeTraitEditGrantInput,
   UseItemInput,
 } from "./dto/item-type.dto";
 import { GrantItemInput, UpdateItemInput } from "./dto/item.dto";
@@ -168,6 +170,27 @@ export class ItemsResolver {
       input.itemTypeId,
       input.speciesId ?? null,
       input.speciesVariantIds,
+    );
+    return mapPrismaItemTypeToGraphQL(itemType);
+  }
+
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
+  @ResolveCommunityFrom({ itemTypeId: "input.itemTypeId" })
+  @Mutation(() => ItemTypeEntity, {
+    description:
+      "Set which characters an edit kit of this type can change the traits " +
+      "of. Replaces the grant wholesale; an empty species list clears it. " +
+      "A species with no variants listed covers every variant of it.",
+  })
+  async setItemTypeTraitEditGrant(
+    @Args("input") input: SetItemTypeTraitEditGrantInput,
+  ): Promise<ItemTypeEntity> {
+    const itemType = await this.itemsService.setItemTypeTraitEditGrant(
+      input.itemTypeId,
+      input.species.map((s) => ({
+        speciesId: s.speciesId,
+        speciesVariantIds: s.speciesVariantIds ?? [],
+      })),
     );
     return mapPrismaItemTypeToGraphQL(itemType);
   }
@@ -418,6 +441,32 @@ export class ItemsResolver {
       variants: grant.variants.map((v) =>
         mapPrismaSpeciesVariantToGraphQL(v.speciesVariant),
       ),
+    };
+  }
+
+  /** Null when this type edits nothing, which is almost all of them. */
+  @AllowUnauthenticated()
+  @ResolveField(() => ItemUseTraitEditGrant, {
+    name: "useTraitEditGrant",
+    nullable: true,
+  })
+  async resolveUseTraitEditGrant(
+    @Parent() itemType: ItemTypeEntity,
+  ): Promise<ItemUseTraitEditGrant | null> {
+    const grant = await this.itemsService.findItemTypeTraitEditGrant(
+      itemType.id,
+    );
+    if (!grant) return null;
+
+    return {
+      id: grant.id,
+      species: grant.species.map((entry) => ({
+        id: entry.id,
+        species: mapPrismaSpeciesToGraphQL(entry.species),
+        variants: entry.variants.map((v) =>
+          mapPrismaSpeciesVariantToGraphQL(v.speciesVariant),
+        ),
+      })),
     };
   }
 

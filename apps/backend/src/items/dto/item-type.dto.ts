@@ -108,6 +108,53 @@ export class SetItemTypeMyoGrantInput {
   speciesVariantIds: string[];
 }
 
+/**
+ * One species an edit kit covers, and optionally which of its variants.
+ *
+ * Leaving `speciesVariantIds` empty is not "no variants" -- it is **every**
+ * variant of this species, including a character with none set. That is the
+ * ordinary kit, so it is the state you get by naming a species and stopping.
+ */
+@InputType()
+export class TraitEditGrantSpeciesInput {
+  @Field(() => ID)
+  @IsUUID()
+  speciesId: string;
+
+  @Field(() => [ID], {
+    defaultValue: [],
+    description:
+      "Narrow the kit to these variants. Empty covers every variant of the " +
+      "species, and characters with no variant set.",
+  })
+  @IsOptional()
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  speciesVariantIds?: string[];
+}
+
+/**
+ * Which characters an edit kit of this type can change.
+ *
+ * Wrapped for the same reason the other two setters are: Nest's
+ * ValidationPipe skips any parameter whose reflected metatype is `Array`, so
+ * decorators on a top-level array argument never run.
+ */
+@InputType()
+export class SetItemTypeTraitEditGrantInput {
+  @Field(() => ID)
+  @IsUUID()
+  itemTypeId: string;
+
+  @Field(() => [TraitEditGrantSpeciesInput], {
+    description: "Replaces the grant wholesale. Empty clears it.",
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TraitEditGrantSpeciesInput)
+  species: TraitEditGrantSpeciesInput[];
+}
+
 @InputType()
 export class CreateItemTypeInput {
   @Field()

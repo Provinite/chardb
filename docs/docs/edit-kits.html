@@ -1,0 +1,775 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Edit Kits - Feature Walkthrough</title>
+    <meta name="description" content="An edit kit buys one change to a character's traits. Staff decide which characters it works on; the holder proposes a change, and nothing moves until staff approve it." />
+    <link rel="canonical" href="https://provinite.github.io/chardb/docs/edit-kits.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Edit Kits" />
+    <meta property="og:description" content="An edit kit buys one change to a character's traits. Staff decide which characters it works on; the holder proposes a change, and nothing moves until staff approve it." />
+    <meta property="og:url" content="https://provinite.github.io/chardb/docs/edit-kits.html" />
+    <meta property="og:image" content="https://provinite.github.io/chardb/docs/edit-kit-character-pending.png" />
+    <meta property="og:image:alt" content="A CharDB character page showing its approved traits with a badge saying a trait change is pending review." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Edit Kits</h1>
+        <p>One change to a character&rsquo;s traits, and the review that follows</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">What an edit kit is</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>An edit kit is an item that buys one change to a
+            character&rsquo;s traits.</strong> A community sells or awards one;
+            the member spends it on a character they own, changes what they
+            like, and submits. Staff then approve or refuse the change.
+          </p>
+          <p>
+            It is an
+            <a href="using-items.html">ordinary usable item</a> whose type has
+            been told which characters it works on &mdash; so it can be traded,
+            granted, sold in the shop, and it has a provenance page like
+            anything else.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Members cannot normally change their own
+            characters&rsquo; traits at all.</strong> The stock
+            <em>Member</em> role does not carry the
+            <em>edit own character registry</em> permission &mdash; only Admin
+            and Moderator do. So a kit is not a way round a setting you have to
+            remember to switch off; it is the only self-service route to a
+            trait change there is.
+          </div>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">&#127903;</div>
+              <h4>Staff decide</h4>
+              <p>Which species, and optionally which variants</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#9999;&#65039;</div>
+              <h4>Members propose</h4>
+              <p>Any number of traits, in one submission</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#9989;</div>
+              <h4>Approval applies it</h4>
+              <p>Nothing changes on the character before then</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">The part that surprises people</h2>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>A proposed change does not touch the character until it is
+            approved.</strong> Submit a change and the character still shows
+            its old traits, with a badge saying a change is waiting. That is
+            correct, not a failure.
+          </div>
+          <p>
+            This is the opposite of every other trait review in CharDB. When a
+            character is <em>created</em> &mdash; by hand, by an import, or
+            with an <a href="myo-slots.html">MYO slot</a> &mdash; its traits are
+            written straight away and the review ratifies them afterwards. That
+            works because the character is new and nobody had expectations of
+            it.
+          </p>
+          <p>
+            An edit is different. Applying first would mean a member wearing an
+            unapproved trait for as long as the queue took, and then losing it
+            in public if it was refused. So a proposed edit waits in the
+            review, and approving is what writes it.
+          </p>
+          <p>
+            The badges say which is which:
+          </p>
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Badge</th>
+                <th>What the traits on screen are</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Traits Pending Review</strong></td>
+                <td>
+                  Provisional. They are on the character and staff have not
+                  signed them off. Comes from a creation, an import or an MYO.
+                </td>
+              </tr>
+              <tr>
+                <td><strong>Trait Change Pending Review</strong></td>
+                <td>
+                  Settled. These are the approved traits; a change to them is
+                  waiting. Comes from an edit kit.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Staff: setting what a kit works on</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            On an item type&rsquo;s edit form, under
+            <strong>Administration &rarr; Items</strong>, there is an
+            <strong>Edits on use</strong> panel listing the community&rsquo;s
+            species. Tick the ones the kit works on.
+          </p>
+          <div class="highlight-box">
+            <strong>A species with no variants ticked covers all of them</strong>
+            &mdash; including a character with no variant set at all. That is
+            the ordinary kit, so it is what you get by ticking a species and
+            stopping.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-grant-editor.png"
+            alt="The Edits on use panel with the Thornwing species ticked and no variants selected, noting that it covers every variant."
+          />
+          <div class="screenshot-caption">
+            A kit for any Thornwing. The note under the variants says so rather
+            than leaving an empty list to be interpreted.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            Tick variants to narrow it. A kit limited to Common will be refused
+            on an Uncommon of the same species.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-grant-narrowed.png"
+            alt="The same panel with only the Common variant ticked, narrowing the kit to Common Thornwings."
+          />
+          <div class="screenshot-caption">
+            The same species, narrowed to one rarity.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            A kit can name <strong>several species</strong>, each narrowed
+            separately or not at all. Untick everything to clear the kit.
+          </p>
+          <p>
+            <strong>Only a consumable item type can be an edit kit</strong>,
+            for the reason every usable item is consumable: spending it is what
+            uses it up.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-not-consumable.png"
+            alt="The Edits on use panel on an item type that is not consumable, explaining that only a consumable item can be an edit kit."
+          />
+          <div class="screenshot-caption">
+            Tick <em>Consumable</em> on the item type first.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            An item type does <strong>one thing</strong> when used. A type that
+            already <a href="using-items.html">pays out currency</a> or
+            <a href="myo-slots.html">makes characters</a> cannot also edit
+            traits &mdash; clear the other one first.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Seeing what a kit works on</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The item type&rsquo;s page lists every species the kit covers and
+            the variants it is limited to. It is public, so somebody
+            considering a trade for one can read it without holding it.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-item-type.png"
+            alt="A Thornwing Edit Kit's item type page showing an Edits on use section naming the species and saying any variant."
+          />
+          <div class="screenshot-caption">
+            <strong>Edits on use</strong>, beside where the other kinds of
+            usable item say what they do.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Spending one</h2>
+        </div>
+        <div class="step-content">
+          <p>There are two ways in, and they meet at the same editor.</p>
+          <p>
+            <strong>From the character.</strong> A character you own shows a
+            <strong>Use an edit kit</strong> action when you actually hold a kit
+            that works on it. This is the one most people will use &mdash; the
+            character is what you are thinking about.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-character-entry.png"
+            alt="The Use an edit kit action on a character page, under a heading reading Yours."
+          />
+          <div class="screenshot-caption">
+            Offered only when you hold a kit that covers this character.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>From the kit.</strong> In your inventory, an edit kit
+            carries an <strong>Edit a character</strong> button, which opens a
+            list of the characters that kit can change.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-inventory.png"
+            alt="A member's community inventory with an edit kit group expanded, each kit offering an Edit a character button."
+          />
+          <div class="screenshot-caption">
+            Holding more than one groups them; open the group for the
+            per-kit buttons.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-picker.png"
+            alt="A picker listing only the characters this edit kit is able to change, each with its species and variant."
+          />
+          <div class="screenshot-caption">
+            Only characters the kit actually covers. A list that offered
+            everything and refused most of it would put the refusal after the
+            choice.
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>Neither link costs anything to follow.</strong> The kit is
+            spent when you submit the change. Open the editor, think better of
+            it, close the tab &mdash; the kit is still yours.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Proposing the change</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The form opens on the character&rsquo;s <em>current</em> traits, not
+            an empty sheet &mdash; this is an edit, so it starts from the
+            design that exists. Change as many traits as you like; one kit
+            covers the whole submission.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-editor.png"
+            alt="The edit kit panel on the trait editor, warning that submitting spends the kit and that nothing changes until staff approve."
+          />
+          <div class="screenshot-caption">
+            The panel says both things that matter: the kit goes, and the
+            character does not change yet.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-submit.png"
+            alt="The submit button, reading Spend kit and send for review."
+          />
+          <div class="screenshot-caption">
+            The button says what it costs.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>Two things the editor will not let you do:</p>
+          <ul>
+            <li>
+              <strong>Change the variant.</strong> A kit edits traits. Moving a
+              character between variants is a different thing entirely and is
+              not part of this.
+            </li>
+            <li>
+              <strong>Set the official identifier.</strong> That stays
+              staff&rsquo;s.
+            </li>
+          </ul>
+          <p>
+            Submitting a change that is identical to what the character already
+            has is refused, and the kit is not spent &mdash; opening the editor
+            and thinking better of it should not cost anything.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">While it waits</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The kit is gone and the character is unchanged. Its page shows the
+            approved traits with a
+            <strong>Trait Change Pending Review</strong> badge.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-character-pending.png"
+            alt="A character page showing its existing approved traits alongside a badge reading Trait Change Pending Review."
+          />
+          <div class="screenshot-caption">
+            Traits as they were; a change waiting behind them.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>One change at a time.</strong> A character with a pending
+            change will not accept a second kit &mdash; and the second kit is
+            refused before it is spent, not after.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">Staff: reviewing it</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The change lands in
+            <strong>Moderation &rarr; Trait Reviews</strong>, tagged
+            <strong>User Edit</strong>, showing what is proposed against what
+            the character has now. Reviewing needs the
+            <em>edit any character&rsquo;s registry</em> permission.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-review-queue.png"
+            alt="The trait review queue listing a pending User Edit change with the available staff actions."
+          />
+          <div class="screenshot-caption">
+            The same queue that handles creations, imports and MYOs.
+          </div>
+        </div>
+        <div class="step-content">
+          <ul>
+            <li>
+              <strong>Approve</strong> &mdash; this is what writes the new
+              traits onto the character.
+            </li>
+            <li>
+              <strong>Revert</strong> &mdash; refuse it. The traits stay as they
+              were and the kit goes back. You are asked for a reason.
+            </li>
+          </ul>
+          <div class="highlight-box">
+            <strong>Reach for Revert rather than Delete.</strong> Deleting the
+            character does not return the kit, and the member loses both.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-approved.png"
+            alt="The character page after approval, with the new traits applied and the pending badge gone."
+          />
+          <div class="screenshot-caption">
+            Approved: the badge is gone and the new traits are on the
+            character.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 8 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <h2 class="step-title">Refusal puts the kit back</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Refusing changes nothing about the character &mdash; there is
+            nothing to undo, because the proposal was never applied &mdash; and
+            returns a kit of the type that was spent. The member can try again
+            with something that passes.
+          </p>
+          <div class="highlight-box">
+            <strong>The returned kit is a new one.</strong> The original was
+            genuinely spent and its history says so. The two are linked through
+            the item ledger instead: the
+            <span class="pill used">Used</span> row names the character, and the
+            <span class="pill granted">Granted</span> row names the review that
+            sent it back.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="edit-kit-refused-ledger.png"
+            alt="The item ledger showing the original Used row and a Granted row returning a replacement kit after the change was refused."
+          />
+          <div class="screenshot-caption">
+            Both halves of the reversal, readable as one story.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 9 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">9</div>
+          <h2 class="step-title">Every reason a kit is refused</h2>
+        </div>
+        <div class="step-content">
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Reason</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>The character is not yours</td>
+                <td>A kit edits your own characters.</td>
+              </tr>
+              <tr>
+                <td>The kit does not cover that species</td>
+                <td>
+                  Checked against the kit&rsquo;s own list, not against the
+                  community.
+                </td>
+              </tr>
+              <tr>
+                <td>The kit does not cover that variant</td>
+                <td>
+                  Only when the kit names variants for that species. A species
+                  with none listed covers all of them.
+                </td>
+              </tr>
+              <tr>
+                <td>That character already has a change awaiting review</td>
+                <td>
+                  One at a time. Refused before the kit is spent, so nothing is
+                  lost.
+                </td>
+              </tr>
+              <tr>
+                <td>The change would change nothing</td>
+                <td>
+                  Submitting the traits the character already has would spend a
+                  kit for no reason.
+                </td>
+              </tr>
+              <tr>
+                <td>The item type is not consumable</td>
+                <td>Spending is what uses it up.</td>
+              </tr>
+              <tr>
+                <td>The kit works on nothing yet</td>
+                <td>Consumable, but no species configured.</td>
+              </tr>
+              <tr>
+                <td>You have left the community</td>
+                <td>A species belongs to one community.</td>
+              </tr>
+              <tr>
+                <td>The kit is not yours, or is already spent</td>
+                <td>
+                  Checked at the moment of the write, so a trade landing in
+                  between cannot be raced. Submitting the same form twice
+                  spends one kit.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>In every case the kit survives.</p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Edit Kits &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>
