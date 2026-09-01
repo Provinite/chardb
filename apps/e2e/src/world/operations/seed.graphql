@@ -297,6 +297,37 @@ mutation SeedUpdateTraitOrders($input: UpdateTraitOrdersInput!) {
 
 # Requires community CanManageItems -- currency reuses the item permissions
 # rather than defining its own.
+# Configuring what using an item pays. Requires community CanManageItems --
+# it is minting rights, so it sits with editing the item type rather than with
+# granting.
+mutation SeedSetItemTypeUsePayout($input: SetItemTypeUsePayoutInput!) {
+  setItemTypeUsePayout(input: $input) {
+    id
+    usePayout {
+      amount
+      currency {
+        id
+        code
+      }
+    }
+  }
+}
+
+# Using an item, for the specs that assert through the API rather than the UI.
+mutation SeedUseItem($input: UseItemInput!) {
+  useItem(input: $input) {
+    itemTypeName
+    batchId
+    payout {
+      amount
+      currency {
+        id
+        code
+      }
+    }
+  }
+}
+
 mutation SeedCreateCurrency($input: CreateCurrencyInput!) {
   createCurrency(input: $input) {
     id

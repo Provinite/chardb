@@ -1,7 +1,10 @@
 import { Field, InputType, Int, ID } from "@nestjs/graphql";
 import { Prisma } from "@chardb/database";
+import { Type } from "class-transformer";
 import {
   IsString,
+  IsArray,
+  ValidateNested,
   IsOptional,
   IsBoolean,
   IsNumber,
@@ -11,6 +14,68 @@ import {
   Min,
   Max,
 } from "class-validator";
+
+/**
+ * What to use, and anything that use needs to know.
+ *
+ * An input object rather than a bare `itemId` argument, because using is going
+ * to grow arguments. Paying out needs nothing beyond the item; an MYO ticket
+ * will need a species and a variant, an edit ticket a character and a trait.
+ * Optional fields can be added to an input type without breaking a caller; a
+ * new required *argument* on a mutation cannot.
+ */
+@InputType()
+export class UseItemInput {
+  @Field(() => ID)
+  @IsUUID()
+  itemId: string;
+}
+
+@InputType({
+  description:
+    "One currency and how much of it using this item pays. Name each " +
+    "currency once; say the total rather than listing it twice.",
+})
+export class ItemUsePayoutComponentInput {
+  @Field(() => ID)
+  @IsUUID()
+  currencyId: string;
+
+  @Field(() => Int)
+  @IsNumber()
+  @Min(1)
+  // Matching MintCurrencyInput and ShopPriceComponentInput. Not a security
+  // boundary -- the permission is -- but a mistyped amount here creates coin
+  // rather than rejecting, so the same ceiling every other currency amount
+  // carries belongs on this one.
+  @Max(1_000_000_000)
+  amount: number;
+}
+
+/**
+ * What using one of these pays out.
+ *
+ * The components are wrapped rather than passed as a bare `@Args` array, and
+ * that is load-bearing: Nest's ValidationPipe skips any parameter whose
+ * reflected metatype is `Array` (`toValidate`), so decorators on a top-level
+ * array argument never run at all. Nested inside an input type the pipe
+ * validates the wrapper, and `@ValidateNested({ each: true })` reaches the
+ * elements. Same arrangement CreateTradeInput uses for its line arrays.
+ */
+@InputType()
+export class SetItemTypeUsePayoutInput {
+  @Field(() => ID)
+  @IsUUID()
+  itemTypeId: string;
+
+  @Field(() => [ItemUsePayoutComponentInput], {
+    description: "Replaces the payout wholesale. Empty clears it.",
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ItemUsePayoutComponentInput)
+  components: ItemUsePayoutComponentInput[];
+}
 
 @InputType()
 export class CreateItemTypeInput {

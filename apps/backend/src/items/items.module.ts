@@ -7,6 +7,7 @@ import { PendingOwnershipModule } from "../pending-ownership/pending-ownership.m
 import { DiscordModule } from "../discord/discord.module";
 import { ItemTransactionsModule } from "../item-transactions/item-transactions.module";
 import { NotificationsModule } from "../notifications/notifications.module";
+import { CurrenciesModule } from "../currencies/currencies.module";
 import { ItemsService } from "./items.service";
 import { ItemsResolver, ItemFieldsResolver } from "./items.resolver";
 
@@ -20,6 +21,10 @@ import { ItemsResolver, ItemFieldsResolver } from "./items.resolver";
     DiscordModule,
     ItemTransactionsModule,
     NotificationsModule,
+    // forwardRef: CurrenciesModule pulls in AuthModule, which reaches back
+    // here through UsersModule. Same cycle UsersModule above is held at
+    // arm's length for.
+    forwardRef(() => CurrenciesModule),
   ],
   providers: [ItemsService, ItemsResolver, ItemFieldsResolver],
   exports: [ItemsService],

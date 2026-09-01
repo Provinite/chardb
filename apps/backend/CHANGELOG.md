@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Using an item.** `useItem` destroys one of your items and applies what its
+  type does, in one transaction under one batch id across both ledgers.
+  `ItemTransactionKind.USE` is written for the first time.
+
+- **Currency payouts on use.** An item type can carry a set of
+  {currency, amount} components, set with `setItemTypeUsePayout`. Enforced
+  consumable, same-community, not archived, and capped at 1,000,000,000 to
+  match every other currency amount — checked when configured and again at
+  use.
+
 ## [v11.7.0] - 2026-08-31
 
 ### Added

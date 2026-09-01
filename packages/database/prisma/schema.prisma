@@ -742,7 +742,14 @@ model ItemType {
   // Item properties. There is deliberately no stacking flag: every item is an
   // individually tracked row, and rolling several of them up into one tile is a
   // presentation choice the frontend makes, not a storage one.
-  isTradeable  Boolean @default(true) @map("is_tradeable")
+  isTradeable Boolean @default(true) @map("is_tradeable")
+
+  /// Whether a holder can use one up.
+  ///
+  /// Was a label with nothing behind it until using arrived. It is now the
+  /// gate: using destroys the item, so anything that pays out has to be
+  /// consumable or the payout is a currency printer. Enforced when a payout is
+  /// configured, not merely documented here.
   isConsumable Boolean @default(false) @map("is_consumable")
 
   // Visual properties
@@ -763,6 +770,7 @@ model ItemType {
   transactions ItemTransaction[]
   tradeLines   TradeItem[]
   ShopItem     ShopItem[]
+  usePayout    ItemUsePayout?
 
   @@unique([name, communityId])
   @@map("item_types")
@@ -921,6 +929,7 @@ model Currency {
   tradeLines            TradeCurrencyLine[]
   shopPriceComponents   ShopPriceComponent[]
   shopPurchaseLineCosts ShopPurchaseLineCost[]
+  itemUsePayouts        ItemUsePayoutComponent[]
 
   @@unique([communityId, code])
   @@unique([communityId, name])
@@ -990,6 +999,11 @@ enum CurrencyTransactionSource {
   /// the upload is gone as far as anyone is concerned, and pointing at the
   /// surviving image would name something with no user-facing existence.
   MEDIA_APPROVAL
+  /// Paid out when a member used an item up. Source id is the ITEM, not its
+  /// type: the item is the thing that was destroyed to produce this coin, and
+  /// it is what the matching USE row on the item ledger names too, so the two
+  /// halves of one event point at the same object.
+  ITEM_USE
 }
 
 /// One member's side of one currency movement. A transfer is two rows.
@@ -1128,6 +1142,50 @@ model ShopPriceComponent {
   /// single amount, not two components.
   @@unique([shopPriceId, currencyId])
   @@map("shop_price_components")
+}
+
+/// What using one of an item type pays its holder.
+///
+/// A row of its own rather than columns on `ItemType`, for the same reason
+/// prices are: a payout is a set of currencies, and two nullable columns can
+/// only ever describe one. A redemption ticket worth 100 coin and a seasonal
+/// one worth 100 coin plus 2 event tokens are the same feature.
+///
+/// Optional -- most item types pay nothing, and a missing row says so more
+/// plainly than a zero would.
+model ItemUsePayout {
+  id String @id @default(uuid())
+
+  /// One payout per item type. Using is not a choice between rewards the way
+  /// buying is a choice between prices: the holder presses Use and gets what
+  /// the type pays.
+  itemTypeId String @unique @map("item_type_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  itemType   ItemType                 @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
+  components ItemUsePayoutComponent[]
+
+  @@map("item_use_payouts")
+}
+
+/// One currency and how much of it a use pays out.
+model ItemUsePayoutComponent {
+  id         String @id @default(uuid())
+  payoutId   String @map("payout_id")
+  currencyId String @map("currency_id")
+  amount     Int
+
+  payout   ItemUsePayout @relation(fields: [payoutId], references: [id], onDelete: Cascade)
+  /// Restrict, matching the shop's price components: a currency that something
+  /// still pays out in cannot be deleted out from under it.
+  currency Currency      @relation(fields: [currencyId], references: [id], onDelete: Restrict)
+
+  /// One entry per currency per payout. "100 coin and 50 more coin" is a
+  /// single amount, not two components.
+  @@unique([payoutId, currencyId])
+  @@map("item_use_payout_components")
 }
 
 /// One checkout.

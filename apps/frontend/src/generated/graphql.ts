@@ -857,6 +857,7 @@ export enum CurrencyTransactionKind {
 export enum CurrencyTransactionSource {
   /** Somebody acted directly, with no other record behind it. */
   Direct = 'DIRECT',
+  ItemUse = 'ITEM_USE',
   /** Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media. */
   MediaApproval = 'MEDIA_APPROVAL',
   ShopPurchase = 'SHOP_PURCHASE'
@@ -1356,11 +1357,13 @@ export type ItemType = {
   description: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   image: Maybe<Image>;
+  /** Whether a holder can use one up. Using destroys the item, which is why anything with a payout must be consumable. */
   isConsumable: Scalars['Boolean']['output'];
   isTradeable: Scalars['Boolean']['output'];
   metadata: Maybe<Scalars['JSON']['output']>;
   name: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
+  usePayout: Array<ItemUsePayoutComponent>;
 };
 
 export type ItemTypeConnection = {
@@ -1392,6 +1395,19 @@ export type ItemTypeFiltersInput = {
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ItemUsePayoutComponent = {
+  __typename?: 'ItemUsePayoutComponent';
+  amount: Scalars['Int']['output'];
+  currency: Currency;
+  id: Scalars['ID']['output'];
+};
+
+/** One currency and how much of it using this item pays. Name each currency once; say the total rather than listing it twice. */
+export type ItemUsePayoutComponentInput = {
+  amount: Scalars['Int']['input'];
+  currencyId: Scalars['ID']['input'];
 };
 
 export type LikeResult = {
@@ -1748,6 +1764,8 @@ export type Mutation = {
   runDeviantartUuidBackfill: Scalars['Boolean']['output'];
   /** Sets or clears the main media for a character */
   setCharacterMainMedia: Character;
+  /** Set what using one of these pays its holder. Replaces the payout wholesale; an empty list clears it. Needs the same permission as editing the item type, because it is minting rights. */
+  setItemTypeUsePayout: ItemType;
   signup: AuthPayload;
   toggleFollow: FollowResult;
   toggleLike: LikeResult;
@@ -1798,6 +1816,8 @@ export type Mutation = {
   updateTraitListEntry: TraitListEntry;
   /** Batch update trait display orders for a species variant */
   updateTraitOrders: Array<TraitListEntry>;
+  /** Use one of your items up. Destroys it and pays what its type is worth in one transaction, under one batch id across both ledgers. */
+  useItem: UseItemResult;
 };
 
 
@@ -2179,6 +2199,11 @@ export type MutationSetCharacterMainMediaArgs = {
 };
 
 
+export type MutationSetItemTypeUsePayoutArgs = {
+  input: SetItemTypeUsePayoutInput;
+};
+
+
 export type MutationSignupArgs = {
   input: SignupInput;
 };
@@ -2354,6 +2379,11 @@ export type MutationUpdateTraitListEntryArgs = {
 
 export type MutationUpdateTraitOrdersArgs = {
   input: UpdateTraitOrdersInput;
+};
+
+
+export type MutationUseItemArgs = {
+  input: UseItemInput;
 };
 
 /** One thing that happened, addressed to one recipient. Rows are snapshots: the display fields were captured when the notification was written, so a notification about a since-deleted subject still says what happened, and its link is the part that goes dead. */
@@ -3409,6 +3439,12 @@ export type RoleConnection = {
   totalCount: Scalars['Float']['output'];
 };
 
+export type SetItemTypeUsePayoutInput = {
+  /** Replaces the payout wholesale. Empty clears it. */
+  components: Array<ItemUsePayoutComponentInput>;
+  itemTypeId: Scalars['ID']['input'];
+};
+
 export type SetMainMediaInput = {
   mediaId?: InputMaybe<Scalars['ID']['input']>;
 };
@@ -4198,6 +4234,19 @@ export type UpdateUserInput = {
   website?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UseItemInput = {
+  itemId: Scalars['ID']['input'];
+};
+
+export type UseItemResult = {
+  __typename?: 'UseItemResult';
+  /** Shared by the USE row on the item ledger and every credit on the currency ledger, so one use reads as one event. */
+  batchId: Scalars['String']['output'];
+  /** What was used up, for the message. */
+  itemTypeName: Scalars['String']['output'];
+  payout: Array<ItemUsePayoutComponent>;
+};
+
 export type User = {
   __typename?: 'User';
   avatarImage: Maybe<Image>;
@@ -4981,30 +5030,30 @@ export type RolesByCommunityQueryVariables = Exact<{
 
 export type RolesByCommunityQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Role', id: string, name: string, canCreateInviteCode: boolean, community: { __typename?: 'Community', id: string, name: string } }> } };
 
-export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
+export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
+export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
 
 export type GetItemTypesQueryVariables = Exact<{
   filters?: InputMaybe<ItemTypeFiltersInput>;
 }>;
 
 
-export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
+export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type GetItemTypeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateItemTypeMutationVariables = Exact<{
   input: CreateItemTypeInput;
 }>;
 
 
-export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5012,7 +5061,7 @@ export type UpdateItemTypeMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type DeleteItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5021,21 +5070,21 @@ export type DeleteItemTypeMutationVariables = Exact<{
 
 export type DeleteItemTypeMutation = { __typename?: 'Mutation', deleteItemType: boolean };
 
-export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type GetMyInventoryQueryVariables = Exact<{
   communityId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> }> } };
+export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> }> } };
 
 export type GrantItemMutationVariables = Exact<{
   input: GrantItemInput;
 }>;
 
 
-export type GrantItemMutation = { __typename?: 'Mutation', grantItem: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type GrantItemMutation = { __typename?: 'Mutation', grantItem: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type UpdateItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5043,7 +5092,7 @@ export type UpdateItemMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null } };
+export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null } };
 
 export type RevokeItemsMutationVariables = Exact<{
   itemIds: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
@@ -5075,7 +5124,7 @@ export type GetItemWithProvenanceQueryVariables = Exact<{
 }>;
 
 
-export type GetItemWithProvenanceQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }, itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type GetItemWithProvenanceQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }, itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type GetItemEconomyQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5090,7 +5139,21 @@ export type GetMemberHoldingsQueryVariables = Exact<{
 }>;
 
 
-export type GetMemberHoldingsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', totalItems: number, distinctTypes: number, pendingItems: number, member: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, category: string | null, isTradeable: boolean, isConsumable: boolean, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }> } };
+export type GetMemberHoldingsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', totalItems: number, distinctTypes: number, pendingItems: number, member: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, category: string | null, isTradeable: boolean, isConsumable: boolean, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }> } };
+
+export type UseItemMutationVariables = Exact<{
+  input: UseItemInput;
+}>;
+
+
+export type UseItemMutation = { __typename?: 'Mutation', useItem: { __typename?: 'UseItemResult', itemTypeName: string, batchId: string, payout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }> } };
+
+export type SetItemTypeUsePayoutMutationVariables = Exact<{
+  input: SetItemTypeUsePayoutInput;
+}>;
+
+
+export type SetItemTypeUsePayoutMutation = { __typename?: 'Mutation', setItemTypeUsePayout: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -5858,6 +5921,16 @@ export const ItemTypeFieldsFragmentDoc = gql`
   category
   isTradeable
   isConsumable
+  usePayout {
+    id
+    amount
+    currency {
+      id
+      name
+      code
+      symbol
+    }
+  }
   image {
     id
     originalUrl
@@ -11388,6 +11461,16 @@ export const GetMemberHoldingsDocument = gql`
         category
         isTradeable
         isConsumable
+        usePayout {
+          id
+          amount
+          currency {
+            id
+            name
+            code
+            symbol
+          }
+        }
         color {
           id
           hexCode
@@ -11441,6 +11524,83 @@ export type GetMemberHoldingsQueryHookResult = ReturnType<typeof useGetMemberHol
 export type GetMemberHoldingsLazyQueryHookResult = ReturnType<typeof useGetMemberHoldingsLazyQuery>;
 export type GetMemberHoldingsSuspenseQueryHookResult = ReturnType<typeof useGetMemberHoldingsSuspenseQuery>;
 export type GetMemberHoldingsQueryResult = Apollo.QueryResult<GetMemberHoldingsQuery, GetMemberHoldingsQueryVariables>;
+export const UseItemDocument = gql`
+    mutation UseItem($input: UseItemInput!) {
+  useItem(input: $input) {
+    itemTypeName
+    batchId
+    payout {
+      id
+      amount
+      currency {
+        id
+        name
+        code
+        symbol
+      }
+    }
+  }
+}
+    `;
+export type UseItemMutationFn = Apollo.MutationFunction<UseItemMutation, UseItemMutationVariables>;
+
+/**
+ * __useUseItemMutation__
+ *
+ * To run a mutation, you first call `useUseItemMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUseItemMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [useItemMutation, { data, loading, error }] = useUseItemMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUseItemMutation(baseOptions?: Apollo.MutationHookOptions<UseItemMutation, UseItemMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UseItemMutation, UseItemMutationVariables>(UseItemDocument, options);
+      }
+export type UseItemMutationHookResult = ReturnType<typeof useUseItemMutation>;
+export type UseItemMutationResult = Apollo.MutationResult<UseItemMutation>;
+export type UseItemMutationOptions = Apollo.BaseMutationOptions<UseItemMutation, UseItemMutationVariables>;
+export const SetItemTypeUsePayoutDocument = gql`
+    mutation SetItemTypeUsePayout($input: SetItemTypeUsePayoutInput!) {
+  setItemTypeUsePayout(input: $input) {
+    ...ItemTypeFields
+  }
+}
+    ${ItemTypeFieldsFragmentDoc}`;
+export type SetItemTypeUsePayoutMutationFn = Apollo.MutationFunction<SetItemTypeUsePayoutMutation, SetItemTypeUsePayoutMutationVariables>;
+
+/**
+ * __useSetItemTypeUsePayoutMutation__
+ *
+ * To run a mutation, you first call `useSetItemTypeUsePayoutMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetItemTypeUsePayoutMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setItemTypeUsePayoutMutation, { data, loading, error }] = useSetItemTypeUsePayoutMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useSetItemTypeUsePayoutMutation(baseOptions?: Apollo.MutationHookOptions<SetItemTypeUsePayoutMutation, SetItemTypeUsePayoutMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetItemTypeUsePayoutMutation, SetItemTypeUsePayoutMutationVariables>(SetItemTypeUsePayoutDocument, options);
+      }
+export type SetItemTypeUsePayoutMutationHookResult = ReturnType<typeof useSetItemTypeUsePayoutMutation>;
+export type SetItemTypeUsePayoutMutationResult = Apollo.MutationResult<SetItemTypeUsePayoutMutation>;
+export type SetItemTypeUsePayoutMutationOptions = Apollo.BaseMutationOptions<SetItemTypeUsePayoutMutation, SetItemTypeUsePayoutMutationVariables>;
 export const GetMediaDocument = gql`
     query GetMedia($filters: MediaFiltersInput) {
   media(filters: $filters) {

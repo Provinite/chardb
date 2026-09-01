@@ -10,6 +10,7 @@ import { MAX_GRANT_QUANTITY } from "./dto/item.dto";
 import { DatabaseService } from "../database/database.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
+import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
 import { ItemTransactionKind, NotificationKind } from "@chardb/database";
 import {
@@ -27,6 +28,7 @@ const mockDiscordService = {
   resolveUsernameToId: jest.fn(),
 };
 const mockItemTransactions = { recordBatch: jest.fn() };
+const mockCurrencyLedger = { credit: jest.fn() };
 
 /** What grantItem/revokeItems handed the ledger on the last call. */
 interface RecordedBatch {
@@ -69,6 +71,7 @@ describe("ItemsService", () => {
         },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: ItemTransactionsService, useValue: mockItemTransactions },
+        { provide: CurrencyLedgerService, useValue: mockCurrencyLedger },
       ],
     }).compile();
 
@@ -450,9 +453,7 @@ describe("ItemsService", () => {
         mockDatabaseService as unknown as DbClient,
         ["i1"],
         actor,
-        undefined,
-        null,
-        "user1",
+        { expectedOwnerId: "user1" },
       );
 
       const call = mockDatabaseService.item.updateMany.mock.calls[0][0] as {
@@ -548,6 +549,194 @@ describe("ItemsService", () => {
       expect(mockDatabaseService.itemType.delete).toHaveBeenCalled();
     });
   });
+
+  /**
+   * Using an item creates currency, which puts these tests in a different
+   * class from the rest of the file. Every one of them is about a way the
+   * feature could pay out more than once, or pay out for something it did not
+   * consume.
+   */
+  describe("useItem", () => {
+    /** A consumable ticket worth 100 HC, held by user1. */
+    const ticket = ({
+      itemType: typeOverrides = {},
+      ...overrides
+    }: {
+      itemType?: Record<string, unknown>;
+      [key: string]: unknown;
+    } = {}) => ({
+      id: "i1",
+      ownerId: "user1",
+      destroyedAt: null,
+      itemTypeId: "type1",
+      ...overrides,
+      // Merged last and separately, so a test overriding one field of the
+      // item type does not silently replace the whole thing -- which is how
+      // an earlier version of this helper made two tests pass by accident.
+      itemType: {
+        id: "type1",
+        name: "Redemption Ticket",
+        communityId: "comm1",
+        isConsumable: true,
+        usePayout: {
+          components: [
+            {
+              id: "c1",
+              currencyId: "cur1",
+              amount: 100,
+              currency: { id: "cur1", name: "Hollow Coin", archivedAt: null },
+            },
+          ],
+        },
+        ...typeOverrides,
+      },
+    });
+
+    beforeEach(() => {
+      mockDatabaseService.item.findFirst.mockResolvedValue(ticket());
+      mockDatabaseService.communityMember.count.mockResolvedValue(1);
+      mockDatabaseService.item.findMany.mockResolvedValue([
+        {
+          id: "i1",
+          ownerId: "user1",
+          itemTypeId: "type1",
+          itemType: { communityId: "comm1", name: "Redemption Ticket" },
+        },
+      ]);
+      mockDatabaseService.item.updateMany.mockResolvedValue({ count: 1 });
+    });
+
+    it("destroys the item and pays on one batch id", async () => {
+      const result = await service.useItem("i1", "user1");
+
+      // Both ledgers, one event. A use whose halves carried different ids
+      // could not be recognised afterwards as the coin having come from the
+      // ticket.
+      const itemBatch = (
+        mockItemTransactions.recordBatch.mock.calls[0][0] as {
+          batchId: string;
+          kind: string;
+        }
+      ).batchId;
+      const coinBatch = (
+        mockCurrencyLedger.credit.mock.calls[0][0] as { batchId: string }
+      ).batchId;
+
+      expect(itemBatch).toBe(coinBatch);
+      expect(result.batchId).toBe(itemBatch);
+      expect(result.payout).toEqual([expect.objectContaining({ amount: 100 })]);
+    });
+
+    it("records it as a USE rather than a revoke", async () => {
+      await service.useItem("i1", "user1");
+
+      // The ledger is what a member reads to find out what happened to an
+      // item. "Staff took it back" and "you spent it" are different stories.
+      const { kind } = mockItemTransactions.recordBatch.mock.calls[0][0] as {
+        kind: string;
+      };
+      expect(kind).toBe("USE");
+    });
+
+    it("destroys conditionally on the holder still holding it", async () => {
+      await service.useItem("i1", "user1");
+
+      // The predicate is in the UPDATE, not merely checked before it. On a
+      // feature that creates currency, a check-then-write is the difference
+      // between a bug and a mint: two clicks would both pass the check and
+      // both pay.
+      const { where } = mockDatabaseService.item.updateMany.mock
+        .calls[0][0] as {
+        where: { ownerId?: string; destroyedAt: null };
+      };
+      expect(where.ownerId).toBe("user1");
+      expect(where.destroyedAt).toBeNull();
+    });
+
+    it("pays nothing when the item was destroyed under it", async () => {
+      mockDatabaseService.item.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(service.useItem("i1", "user1")).rejects.toThrow();
+
+      // The destroy runs first precisely so this holds: nothing was consumed,
+      // so nothing is paid.
+      expect(mockCurrencyLedger.credit).not.toHaveBeenCalled();
+    });
+
+    it("refuses somebody else's item", async () => {
+      mockDatabaseService.item.findFirst.mockResolvedValue(
+        ticket({ ownerId: "user2" }),
+      );
+
+      await expect(service.useItem("i1", "user1")).rejects.toThrow(
+        /not yours/i,
+      );
+      expect(mockCurrencyLedger.credit).not.toHaveBeenCalled();
+    });
+
+    it("refuses an item type that is not consumable", async () => {
+      mockDatabaseService.item.findFirst.mockResolvedValue(
+        ticket({ itemType: { isConsumable: false } }),
+      );
+
+      // Using without consuming is a button that pays every time it is
+      // pressed.
+      await expect(service.useItem("i1", "user1")).rejects.toThrow(
+        /cannot be used/i,
+      );
+      expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("refuses when the payout currency has been archived since", async () => {
+      mockDatabaseService.item.findFirst.mockResolvedValue(
+        ticket({
+          itemType: {
+            usePayout: {
+              components: [
+                {
+                  id: "c1",
+                  currencyId: "cur1",
+                  amount: 100,
+                  currency: {
+                    id: "cur1",
+                    name: "Hollow Coin",
+                    archivedAt: new Date(),
+                  },
+                },
+              ],
+            },
+          },
+        }),
+      );
+
+      // Checked again at use rather than trusted from when staff configured
+      // it. Otherwise the item is destroyed for coin that cannot be created.
+      await expect(service.useItem("i1", "user1")).rejects.toThrow(/archived/i);
+      expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("refuses a consumable that pays nothing", async () => {
+      mockDatabaseService.item.findFirst.mockResolvedValue(
+        ticket({ itemType: { usePayout: null } }),
+      );
+
+      // Destroying the item and handing back nothing is worth refusing rather
+      // than doing quietly.
+      await expect(service.useItem("i1", "user1")).rejects.toThrow(
+        /does nothing/i,
+      );
+      expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("refuses a non-member, before destroying anything", async () => {
+      mockDatabaseService.communityMember.count.mockResolvedValue(0);
+
+      await expect(service.useItem("i1", "user1")).rejects.toThrow(
+        /must be a member/i,
+      );
+      expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe("ItemsService.findItemEconomy", () => {
@@ -574,6 +763,7 @@ describe("ItemsService.findItemEconomy", () => {
         },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: ItemTransactionsService, useValue: mockItemTransactions },
+        { provide: CurrencyLedgerService, useValue: mockCurrencyLedger },
       ],
     }).compile();
     service = module.get<ItemsService>(ItemsService);
@@ -705,6 +895,7 @@ describe("ItemsService.findMemberHoldings", () => {
         },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: ItemTransactionsService, useValue: mockItemTransactions },
+        { provide: CurrencyLedgerService, useValue: mockCurrencyLedger },
       ],
     }).compile();
     service = module.get<ItemsService>(ItemsService);
