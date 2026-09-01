@@ -316,8 +316,7 @@ export const CommunityShopPurchasesPage: React.FC = () => {
                     onClick={() =>
                       setPending({
                         lineId: line.id,
-                        item:
-                          line.shopItem.name || line.shopItem.itemType.name,
+                        item: line.shopItem.name || line.shopItem.itemType.name,
                         buyer:
                           purchase.buyer?.displayName ||
                           `@${purchase.buyer?.username ?? "someone"}`,

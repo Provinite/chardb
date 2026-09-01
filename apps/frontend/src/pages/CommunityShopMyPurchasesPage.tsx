@@ -374,8 +374,7 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
                     onClick={() =>
                       setUndoTarget({
                         lineId: line.id,
-                        item:
-                          line.shopItem.name || line.shopItem.itemType.name,
+                        item: line.shopItem.name || line.shopItem.itemType.name,
                         cost: formatPrice(line.costs),
                       })
                     }
