@@ -187,6 +187,8 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
     <Card
       to={`/character/${character.id}`}
       aria-label={`View character ${character.name}`}
+      data-testid="character-card"
+      data-character-id={character.id}
     >
       <ButtonGroup>
         <CopyIdButton id={character.id} />

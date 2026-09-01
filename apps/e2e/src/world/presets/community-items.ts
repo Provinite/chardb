@@ -69,6 +69,11 @@ export interface CommunityItemsWorld {
     hearthstone: { id: string; name: string; url: string };
     /** `othermember`'s. Open to trades and for sale in coin. */
     marrowfen: { id: string; name: string; url: string };
+    /**
+     * How many `member` owns in total, filler included. More than one page of
+     * any list that shows them, which is what the paging specs need.
+     */
+    memberTotal: number;
   };
   /** What each persona holds of `coin` after seeding. */
   balances: { member: number; othermember: number };
@@ -275,6 +280,25 @@ export default definePreset<CommunityItemsWorld>({
       };
     };
 
+    // Enough of member's characters to run past a page.
+    //
+    // Seeded straight through Prisma rather than the API, the way the imported
+    // items above are: thirty createCharacter calls would be thirty round
+    // trips to prove one Load More button. Backdated so the three named
+    // characters below sort ahead of them under the default "newest first" --
+    // the browse specs look for those by name on the first page, and would
+    // start failing if this filler pushed them off it.
+    const FILLER_COUNT = 30;
+    await ctx.prisma.character.createMany({
+      data: Array.from({ length: FILLER_COUNT }, (_, i) => ({
+        name: `Hollow Understudy ${String(i + 1).padStart(2, "0")}`,
+        speciesId: species.id,
+        ownerId: member.userId,
+        creatorId: member.userId,
+        createdAt: new Date("2025-02-01T00:00:00Z"),
+      })),
+    });
+
     // Two asymmetries at once. For the trade specs: one open character on each
     // side, and one closed to trades to prove the flag withholds the whole
     // affordance rather than greying it out. For the browse specs: three
@@ -459,7 +483,14 @@ export default definePreset<CommunityItemsWorld>({
         bound: { id: bound.id, code: bound.code, name: bound.name },
       },
       species: { id: species.id, name: species.name },
-      characters: { bramblefoot, hearthstone, marrowfen },
+      characters: {
+        bramblefoot,
+        hearthstone,
+        marrowfen,
+        // Bramblefoot and Hearthstone, plus the filler. Marrowfen is
+        // othermember's.
+        memberTotal: FILLER_COUNT + 2,
+      },
       balances: { member: 380, othermember: 620 },
       currencyUrls: {
         admin: `/communities/${community.id}/currencies`,

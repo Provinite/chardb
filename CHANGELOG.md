@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **E2E: 4 My Characters paging specs**, and 30 filler characters for `member`
+  in the `community-items` preset so a list can actually run past a page
+  (#307).
+
 ## [v11.7.0] - 2026-08-31
 
 ### Fixed
