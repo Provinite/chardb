@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.8.0] - 2026-09-01
+
 ### Added
 
 - **A dedicated "Using Items" walkthrough** (`docs/docs/using-items.html`)
@@ -14,32 +16,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reason a use is refused. Linked from the docs index, the item ledger and the
   currency walkthrough.
 
-### Fixed
-
-- **The shop walkthrough described refunds as a single click.** They have asked
-  for confirmation since #296; the page now says so and shows the dialog.
-
-### Changed
-
-- **The Item Ledger and Community Currency walkthroughs cover using an item**,
-  with screenshots taken against a seeded instance. The ledger's "Used" event
-  type has been documented since it was written; it can finally happen.
-
-### Added
-
 - **E2E: 16 item-use specs** — thirteen against the API, about the ways a
   feature that creates currency could create it twice, and three driving the
   real screens for the button, the confirm and the wallet updating. The
   `community-items` preset carries a Coin Ticket worth 250 and a Blank Ticket
   worth nothing.
-
-### Changed
-
-- Two ledger specs now name the grant they mean rather than querying every
-  grant in the community, which is what made them break when the preset gained
-  another one.
-
-### Added
 
 - **E2E: 6 refund-confirmation specs** in `apps/e2e/tests/shop`, covering
   cancel and Escape as well as confirm — a dialog that dismissed but acted
@@ -51,6 +32,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **E2E: 4 My Characters paging specs**, and 30 filler characters for `member`
   in the `community-items` preset so a list can actually run past a page
   (#307).
+
+### Changed
+
+- **The Item Ledger and Community Currency walkthroughs cover using an item**,
+  with screenshots taken against a seeded instance. The ledger's "Used" event
+  type has been documented since it was written; it can finally happen.
+
+- Two ledger specs now name the grant they mean rather than querying every
+  grant in the community, which is what made them break when the preset gained
+  another one.
+
+### Fixed
+
+- **The shop walkthrough described refunds as a single click.** They have asked
+  for confirmation since #296; the page now says so and shows the dialog.
 
 ## [v11.7.0] - 2026-08-31
 

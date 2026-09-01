@@ -7,13 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.8.0] - 2026-09-01
+
 ### Added
 
 - **An item type's page says what using one pays.** Previously the payout
   appeared only in the confirm dialog, which is after the decision to spend
   rather than before it — and invisible to anyone weighing up a trade.
-
-### Added
 
 - **Use an item from your inventory** when its type pays something, behind a
   confirm naming what you get. The button appears only on your own inventory.
@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The currency ledger links a payout row back to the item that was used, the
   way it already did for an approved upload. The item's page outlives its
   destruction on purpose, so the link lands on real provenance.
+
+- A shared `useOffsetPaging` hook and `Pager` component for the eleven
+  offset-paged list queries, used by My Characters and Browse Characters
+  (#307).
 
 ### Changed
 
@@ -36,12 +40,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **My Characters showed only the first 20, silently.** It now states how many
   you have and pages through all of them; a member with more than a page saw a
   screen that looked complete (#307, #215).
-
-### Added
-
-- A shared `useOffsetPaging` hook and `Pager` component for the eleven
-  offset-paged list queries, used by My Characters and Browse Characters
-  (#307).
 
 ## [v11.7.0] - 2026-08-31
 
