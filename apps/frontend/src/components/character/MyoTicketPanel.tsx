@@ -123,8 +123,8 @@ export const MyoTicketPanel: React.FC<Props> = ({
       Making a character with your {itemTypeName}
     </Head>
     <Note>
-      Submitting spends it and cannot be undone. The character is yours
-      straight away; its traits go to staff for review.
+      Submitting spends it and cannot be undone. The character is yours straight
+      away; its traits go to staff for review.
     </Note>
 
     <Label>Species</Label>

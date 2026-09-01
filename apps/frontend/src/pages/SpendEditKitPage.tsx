@@ -339,9 +339,7 @@ export const SpendEditKitPage: React.FC = () => {
       <ConfirmDialog
         open={confirming}
         title={
-          chosenKit
-            ? `Redeem your ${chosenKit.name}?`
-            : "Redeem this item?"
+          chosenKit ? `Redeem your ${chosenKit.name}?` : "Redeem this item?"
         }
         confirmLabel="Redeem it"
         busyLabel="Redeeming…"

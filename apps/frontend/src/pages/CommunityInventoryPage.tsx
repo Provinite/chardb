@@ -569,9 +569,7 @@ export const CommunityInventoryPage: React.FC = () => {
                               })
                             }
                           >
-                            {usingItemId === item.id
-                              ? "Redeeming…"
-                              : "Redeem"}
+                            {usingItemId === item.id ? "Redeeming…" : "Redeem"}
                           </UseButton>
                         )}
                       </ItemRow>
@@ -589,9 +587,7 @@ export const CommunityInventoryPage: React.FC = () => {
           payout is named because that is the thing being traded for it. */}
       <ConfirmDialog
         open={pendingUse !== null}
-        title={
-          pendingUse ? `Redeem ${pendingUse.itemTypeName}?` : "Redeem it?"
-        }
+        title={pendingUse ? `Redeem ${pendingUse.itemTypeName}?` : "Redeem it?"}
         confirmLabel="Redeem it"
         busyLabel="Redeeming…"
         busy={usingItemId !== null}
