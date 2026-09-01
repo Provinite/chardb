@@ -118,8 +118,8 @@ export const EditKitCharacterPickerPage: React.FC = () => {
           Back
         </BackButton>
         <p data-testid="edit-kit-unusable">
-          That kit cannot be used. It may already have been spent, or it may
-          not be a kit that edits traits.
+          That kit cannot be used. It may already have been spent, or it may not
+          be a kit that edits traits.
         </p>
       </Container>
     );

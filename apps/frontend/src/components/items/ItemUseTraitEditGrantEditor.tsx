@@ -81,8 +81,8 @@ export const ItemUseTraitEditGrantEditor: React.FC<Props> = ({
       <Wrap data-testid="trait-edit-grant-editor">
         <Head>Edits on use</Head>
         <Hint>
-          Only a consumable item can be an edit kit. Spending it is what uses
-          it up, and without that the same kit could buy an edit over and over.
+          Only a consumable item can be an edit kit. Spending it is what uses it
+          up, and without that the same kit could buy an edit over and over.
         </Hint>
       </Wrap>
     );

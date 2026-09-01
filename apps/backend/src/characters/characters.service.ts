@@ -1126,9 +1126,7 @@ export class CharactersService {
     // which then decides its trait list, its display, and what an MYO or edit
     // kit grant matches against.
     const connectedVariantId = (
-      characterData.speciesVariant as
-        | { connect?: { id?: string } }
-        | undefined
+      characterData.speciesVariant as { connect?: { id?: string } } | undefined
     )?.connect?.id;
 
     if (connectedVariantId) {

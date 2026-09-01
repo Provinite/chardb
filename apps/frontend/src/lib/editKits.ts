@@ -27,9 +27,7 @@ export function kitCovers(
 ): boolean {
   if (!character.speciesId) return false;
 
-  const entry = grant.species.find(
-    (s) => s.species.id === character.speciesId,
-  );
+  const entry = grant.species.find((s) => s.species.id === character.speciesId);
   if (!entry) return false;
 
   if (entry.variants.length === 0) return true;

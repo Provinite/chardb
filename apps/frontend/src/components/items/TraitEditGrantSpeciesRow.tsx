@@ -81,9 +81,7 @@ export const TraitEditGrantSpeciesRow: React.FC<Props> = ({
           type="checkbox"
           checked={state.on}
           data-testid={`trait-edit-species-${species.id}`}
-          onChange={(e) =>
-            onChange({ on: e.target.checked, variantIds: [] })
-          }
+          onChange={(e) => onChange({ on: e.target.checked, variantIds: [] })}
         />
         <span>{species.name}</span>
       </Line>

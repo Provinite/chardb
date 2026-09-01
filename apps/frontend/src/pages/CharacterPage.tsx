@@ -513,15 +513,15 @@ export const CharacterPage: React.FC = () => {
   const tradeCommunityId = character?.species?.community?.id;
   const canProposeTrade = Boolean(
     character?.isTradeable &&
-      user &&
-      character.owner &&
-      character.owner.id !== user.id &&
-      // Characters reach a community through their species, and a trade is
-      // scoped to one. No species, no community, nowhere to trade.
-      tradeCommunityId &&
-      // Both parties must be members, and this is the half we can see from
-      // here. An owner who never joined is caught at send instead.
-      userRole,
+    user &&
+    character.owner &&
+    character.owner.id !== user.id &&
+    // Characters reach a community through their species, and a trade is
+    // scoped to one. No species, no community, nowhere to trade.
+    tradeCommunityId &&
+    // Both parties must be members, and this is the half we can see from
+    // here. An owner who never joined is caught at send instead.
+    userRole,
   );
 
   const [deleteCharacter, { loading: deleting }] = useDeleteCharacterMutation();
@@ -754,7 +754,9 @@ export const CharacterPage: React.FC = () => {
                 variant="outline"
                 size="sm"
                 data-testid="use-edit-kit"
-                onClick={() => navigate(`/character/${character.id}/edit-traits`)}
+                onClick={() =>
+                  navigate(`/character/${character.id}/edit-traits`)
+                }
               >
                 Use an edit kit
               </Button>

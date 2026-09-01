@@ -471,9 +471,7 @@ export const SET_ITEM_TYPE_MYO_GRANT = gql`
 `;
 
 export const SET_ITEM_TYPE_TRAIT_EDIT_GRANT = gql`
-  mutation SetItemTypeTraitEditGrant(
-    $input: SetItemTypeTraitEditGrantInput!
-  ) {
+  mutation SetItemTypeTraitEditGrant($input: SetItemTypeTraitEditGrantInput!) {
     setItemTypeTraitEditGrant(input: $input) {
       ...ItemTypeFields
     }

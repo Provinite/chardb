@@ -22,7 +22,10 @@ const test = presetTest("community-items");
 
 /** Propose Blue eyes, which no seeded character has. */
 const blueEyes = (world: World<CommunityItemsWorld>) => [
-  { traitId: world.traits.eyeColor.id, value: world.traits.eyeColor.values.blue },
+  {
+    traitId: world.traits.eyeColor.id,
+    value: world.traits.eyeColor.values.blue,
+  },
 ];
 
 /**
@@ -349,7 +352,11 @@ test.describe("what an edit kit covers", () => {
   });
 
   test("a species-wide kit covers every variant", async ({ world }) => {
-    const id = await characterOfVariant(world, "Rare One", world.variants.rare.id);
+    const id = await characterOfVariant(
+      world,
+      "Rare One",
+      world.variants.rare.id,
+    );
 
     await expect(
       world.as("member").gql(SeedEditCharacterTraitsWithKitDocument, {
@@ -365,7 +372,11 @@ test.describe("what an edit kit covers", () => {
   test("a narrowed kit refuses a variant it does not name", async ({
     world,
   }) => {
-    const id = await characterOfVariant(world, "Rare Two", world.variants.rare.id);
+    const id = await characterOfVariant(
+      world,
+      "Rare Two",
+      world.variants.rare.id,
+    );
 
     // Same species, same owner, and the species-wide kit would take it. Only
     // the variant list makes this a refusal.
@@ -539,7 +550,10 @@ test.describe("changing a character's variant", () => {
     const { createSpecies: other } = await world
       .as("commadmin")
       .gql(SeedCreateSpeciesDocument, {
-        createSpeciesInput: { name: "Bramblecat", communityId: world.community.id },
+        createSpeciesInput: {
+          name: "Bramblecat",
+          communityId: world.community.id,
+        },
       });
     const { createSpeciesVariant: otherVariant } = await world
       .as("commadmin")
