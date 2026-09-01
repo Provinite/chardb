@@ -123,8 +123,8 @@ export const MyoTicketPanel: React.FC<Props> = ({
       Making a character with your {itemTypeName}
     </Head>
     <Note>
-      Submitting spends the ticket and cannot be undone. The character is yours
-      straight away; its traits go to staff for review.
+      Submitting spends it and cannot be undone. The character is yours straight
+      away; its traits go to staff for review.
     </Note>
 
     <Label>Species</Label>
@@ -132,7 +132,7 @@ export const MyoTicketPanel: React.FC<Props> = ({
 
     <Label>
       {variants.length === 1
-        ? "This ticket makes"
+        ? "This one makes"
         : `Pick one of ${variants.length}`}
     </Label>
     <Variants>

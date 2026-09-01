@@ -595,6 +595,30 @@ export class ItemsService {
     return this.findItemTypeById(itemTypeId);
   }
 
+  /**
+   * When an item reached the person holding it now, per the ledger.
+   *
+   * The most recent row that handed it to them -- a grant, a claim, or the
+   * receiving half of a trade. Null when the ledger cannot say, which is the
+   * IMPORT batch: those rows predate the ledger and name no recipient, so the
+   * caller falls back to the item's own creation rather than this inventing a
+   * date.
+   */
+  async findAcquiredAt(itemId: string, ownerId: string) {
+    const row = await this.db.itemTransaction.findFirst({
+      where: { itemId, toUserId: ownerId },
+      orderBy: { createdAt: "desc" },
+      select: { createdAt: true },
+    });
+    if (row) return row.createdAt;
+
+    const item = await this.db.item.findUnique({
+      where: { id: itemId },
+      select: { createdAt: true },
+    });
+    return item?.createdAt ?? null;
+  }
+
   /** What an edit kit of this type covers, or null when it covers nothing. */
   async findItemTypeTraitEditGrant(itemTypeId: string) {
     return this.db.itemUseTraitEditGrant.findUnique({
@@ -1028,7 +1052,7 @@ export class ItemsService {
       await this.destroyItems(
         tx,
         [itemId],
-        { actorUserId: userId, reason: `Used ${item.itemType.name}` },
+        { actorUserId: userId, reason: `Redeemed ${item.itemType.name}` },
         {
           kind: ItemTransactionKind.USE,
           expectedOwnerId: userId,
@@ -1275,7 +1299,7 @@ export class ItemsService {
       await this.currencyLedger.credit({
         currencyId: component.currencyId,
         awards: [{ userId: context.userId, amount: component.amount }],
-        reason: `Used ${context.itemTypeName}`,
+        reason: `Redeemed ${context.itemTypeName}`,
         actorUserId: context.userId,
         source: CurrencyTransactionSource.ITEM_USE,
         // The item, not its type: it is the thing destroyed to produce this

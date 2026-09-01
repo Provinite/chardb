@@ -106,7 +106,9 @@ export const KIND_LABEL: Record<ItemTransactionKind, string> = {
   [ItemTransactionKind.Revoke]: "Revoked",
   [ItemTransactionKind.Transfer]: "Traded",
   [ItemTransactionKind.Claim]: "Claimed",
-  [ItemTransactionKind.Use]: "Used",
+  // "Redeemed", not "Used": the enum is a record and stays USE, but a member
+  // reading their history sees the word the buttons use.
+  [ItemTransactionKind.Use]: "Redeemed",
   [ItemTransactionKind.Import]: "Imported",
 };
 

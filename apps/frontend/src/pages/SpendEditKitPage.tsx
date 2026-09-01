@@ -13,7 +13,16 @@ import {
 import { useAuth } from "../contexts/AuthContext";
 import { TraitForm } from "../components/character/TraitForm";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { kitCovers } from "../lib/editKits";
+
+/** Same shape the inventory uses, so one date reads the same in both places. */
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 
 const Container = styled.div`
   max-width: 900px;
@@ -137,7 +146,11 @@ export const SpendEditKitPage: React.FC = () => {
         return grant ? kitCovers(grant, character) : false;
       })
       .flatMap((h) =>
-        h.items.map((item) => ({ id: item.id, name: h.itemType.name })),
+        h.items.map((item) => ({
+          id: item.id,
+          name: h.itemType.name,
+          acquiredAt: item.acquiredAt,
+        })),
       );
   }, [kitsData, character]);
 
@@ -150,6 +163,18 @@ export const SpendEditKitPage: React.FC = () => {
     if (kitId || eligibleKits.length !== 1) return;
     setKitId(eligibleKits[0].id);
   }, [kitId, eligibleKits]);
+
+  /** The kit actually being spent, so the page can call it by its name. */
+  const chosenKit = eligibleKits.find((k) => k.id === kitId) ?? null;
+
+  /**
+   * Whether the confirm is open.
+   *
+   * Redeeming destroys the kit and there is no un-redeem, so it never happens
+   * on a single click -- the same rule the payout redemption and the shop's
+   * refunds follow.
+   */
+  const [confirming, setConfirming] = useState(false);
 
   const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
     [],
@@ -177,10 +202,18 @@ export const SpendEditKitPage: React.FC = () => {
       cache.gc();
     },
     onCompleted: () => {
-      toast.success("Sent to staff for review. Your kit has been spent.");
+      setConfirming(false);
+      toast.success(
+        chosenKit
+          ? `Sent to staff for review. Your ${chosenKit.name} has been spent.`
+          : "Sent to staff for review. Your item has been spent.",
+      );
       navigate(`/character/${characterId}`);
     },
-    onError: (error) => toast.error(error.message),
+    onError: (error) => {
+      setConfirming(false);
+      toast.error(error.message);
+    },
   });
 
   if (characterLoading || kitsLoading) return <LoadingSpinner />;
@@ -204,7 +237,7 @@ export const SpendEditKitPage: React.FC = () => {
     : pending
       ? "That character already has a change awaiting review. Only one at a time."
       : eligibleKits.length === 0
-        ? "You do not hold an edit kit that works on this character."
+        ? "You do not hold an item that can change this character's traits."
         : null;
 
   if (blocked) {
@@ -220,11 +253,8 @@ export const SpendEditKitPage: React.FC = () => {
     );
   }
 
-  const onSubmit = async () => {
-    if (!kitId) {
-      toast.error("Pick which kit to spend");
-      return;
-    }
+  const onConfirm = async () => {
+    if (!kitId) return;
     await spend({
       variables: {
         input: { itemId: kitId, characterId: character.id, traitValues },
@@ -242,17 +272,22 @@ export const SpendEditKitPage: React.FC = () => {
       <Title>Edit {character.name}&rsquo;s traits</Title>
 
       <Panel data-testid="edit-kit-panel">
+        {/* Named, not called an "edit kit". That is our word for the feature;
+            the community called the item something, and that is what its
+            holder recognises. Falls back only when several are eligible and
+            none is picked yet. */}
         <PanelHead>
           <Wrench size={20} />
-          Spending an edit kit
+          {chosenKit
+            ? `Changing traits with your ${chosenKit.name}`
+            : `Changing ${character.name}'s traits`}
         </PanelHead>
         <Note>
-          Submitting spends the kit and cannot be undone.{" "}
+          Submitting spends it and cannot be undone.{" "}
           <strong>
             Nothing changes on {character.name} until staff approve it
           </strong>
-          — the traits below are a proposal. If it is refused, your kit comes
-          back.
+          — the traits below are a proposal. If it is refused, it comes back.
         </Note>
 
         {eligibleKits.length > 1 ? (
@@ -261,7 +296,7 @@ export const SpendEditKitPage: React.FC = () => {
             data-testid="edit-kit-select"
             onChange={(e) => setKitId(e.target.value || null)}
           >
-            <option value="">Pick a kit to spend…</option>
+            <option value="">Pick which one to spend…</option>
             {eligibleKits.map((kit, i) => (
               <option key={kit.id} value={kit.id}>
                 {kit.name} #{i + 1}
@@ -286,13 +321,46 @@ export const SpendEditKitPage: React.FC = () => {
 
       <ButtonRow>
         <Button
-          onClick={onSubmit}
+          onClick={() => setConfirming(true)}
           disabled={spending || !kitId}
           data-testid="submit-edit-kit"
         >
-          {spending ? "Spending kit…" : "Spend kit and send for review"}
+          {spending
+            ? "Spending…"
+            : chosenKit
+              ? `Spend ${chosenKit.name} and send for review`
+              : "Spend it and send for review"}
         </Button>
       </ButtonRow>
+
+      {/* Names the item and when it reached them, because "are you sure?"
+          about an unnamed thing is a question nobody can answer. The date is
+          the ledger's, not the item's creation -- see Item.acquiredAt. */}
+      <ConfirmDialog
+        open={confirming}
+        title={
+          chosenKit ? `Redeem your ${chosenKit.name}?` : "Redeem this item?"
+        }
+        confirmLabel="Redeem it"
+        busyLabel="Redeeming…"
+        busy={spending}
+        destructive
+        testId="redeem-edit-kit-dialog"
+        onCancel={() => setConfirming(false)}
+        onConfirm={() => void onConfirm()}
+      >
+        {chosenKit && (
+          <>
+            Redeeming your <strong>{chosenKit.name}</strong>
+            {chosenKit.acquiredAt
+              ? `, acquired ${formatDate(chosenKit.acquiredAt)},`
+              : ""}{" "}
+            to change <strong>{character.name}</strong>&rsquo;s traits. This
+            cannot be undone. Nothing changes on {character.name} until staff
+            approve it, and if they refuse, your kit comes back.
+          </>
+        )}
+      </ConfirmDialog>
     </Container>
   );
 };

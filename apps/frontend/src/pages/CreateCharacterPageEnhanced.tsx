@@ -23,6 +23,7 @@ import {
   useCreateCharacterFromMyoTicketMutation,
   useGetMyoTicketQuery,
   SpeciesDetailsFragment,
+  type RedeemMyoTicketInput,
   SpeciesVariantDetailsFragment,
   CharacterTraitValueInput,
   Visibility,
@@ -35,6 +36,7 @@ import { MyoTicketPanel } from "../components/character/MyoTicketPanel";
 import { TraitForm } from "../components/character/TraitForm";
 import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
 import { CustomFieldsEditor } from "../components/CustomFieldsEditor";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import {
   AVAILABILITY_KINDS,
   TRADE_CHARACTERS_NOTE,
@@ -100,6 +102,14 @@ const characterSchema = z.object({
 });
 
 type CharacterForm = z.infer<typeof characterSchema>;
+
+/** Same shape the inventory uses, so one date reads the same in both places. */
+const formatTicketDate = (iso: string) =>
+  new Date(iso).toLocaleDateString(undefined, {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 
 const Container = styled.div`
   max-width: 900px;
@@ -318,6 +328,18 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
 
   const ticket = ticketData?.item ?? null;
 
+  /**
+   * Whether the redeem confirm is open.
+   *
+   * Redeeming destroys the ticket and there is no un-redeem, so it never
+   * happens on a single click -- the rule the payout redemption and the shop's
+   * refunds already follow. Following the link here still costs nothing; this
+   * gates the submit.
+   */
+  const [confirmingRedeem, setConfirmingRedeem] = useState(false);
+  const [pendingRedeem, setPendingRedeem] =
+    useState<RedeemMyoTicketInput | null>(null);
+
   // The grant belongs to the item *type*, so it is there whether or not this
   // particular item can still be spent. `item(id:)` returns destroyed items --
   // provenance pages need them -- so reading the grant straight off the type
@@ -511,20 +533,22 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           return;
         }
 
-        await redeemTicketMutation({
-          variables: {
-            input: {
-              itemId: ticketId,
-              speciesVariantId: selectedVariant.id,
-              name: data.name,
-              details: data.details || undefined,
-              customFields: cleanedCustomFields,
-              visibility: data.visibility,
-              tags: tags.length > 0 ? tags : undefined,
-              traitValues: traitValues.length > 0 ? traitValues : undefined,
-            },
-          },
+        // Held rather than sent. Redeeming destroys the ticket, so the
+        // confirm below stands between the form and the irreversible part --
+        // and the values are captured here so the dialog cannot end up
+        // redeeming against a form the member kept editing behind it.
+        setPendingRedeem({
+          itemId: ticketId,
+          speciesVariantId: selectedVariant.id,
+          name: data.name,
+          details: data.details || undefined,
+          customFields: cleanedCustomFields,
+          visibility: data.visibility,
+          tags: tags.length > 0 ? tags : undefined,
+          traitValues: traitValues.length > 0 ? traitValues : undefined,
         });
+        setConfirmingRedeem(true);
+        setIsSubmitting(false);
         return;
       }
 
@@ -874,14 +898,43 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           >
             {isSubmitting
               ? isMyo
-                ? "Spending ticket…"
+                ? "Redeeming…"
                 : "Creating..."
               : isMyo
-                ? "Spend ticket and make character"
+                ? `Redeem ${ticket?.itemType?.name ?? "ticket"} and make character`
                 : "Create Character"}
           </Button>
         </ButtonRow>
       </Form>
+
+      {/* Names the ticket and when it reached them. "Are you sure?" about an
+          unnamed thing is a question nobody can answer, and the date is the
+          ledger's rather than the item's creation -- see Item.acquiredAt. */}
+      <ConfirmDialog
+        open={confirmingRedeem}
+        title={`Redeem your ${ticket?.itemType?.name ?? "ticket"}?`}
+        confirmLabel="Redeem it"
+        busyLabel="Redeeming…"
+        busy={isSubmitting}
+        destructive
+        testId="redeem-myo-dialog"
+        onCancel={() => {
+          setConfirmingRedeem(false);
+          setPendingRedeem(null);
+        }}
+        onConfirm={() => {
+          if (!pendingRedeem) return;
+          setIsSubmitting(true);
+          void redeemTicketMutation({ variables: { input: pendingRedeem } });
+        }}
+      >
+        Redeeming your <strong>{ticket?.itemType?.name}</strong>
+        {ticket?.acquiredAt
+          ? `, acquired ${formatTicketDate(ticket.acquiredAt)},`
+          : ""}{" "}
+        to make <strong>{watch("name")}</strong>. This cannot be undone. The
+        character is yours straight away; its traits go to staff for review.
+      </ConfirmDialog>
     </Container>
   );
 };

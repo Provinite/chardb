@@ -81,8 +81,8 @@ export const ItemUseTraitEditGrantEditor: React.FC<Props> = ({
       <Wrap data-testid="trait-edit-grant-editor">
         <Head>Edits on use</Head>
         <Hint>
-          Only a consumable item can be an edit kit. Spending it is what uses it
-          up, and without that the same kit could buy an edit over and over.
+          Only a consumable item can edit traits. Spending it is what uses it
+          up, and without that the same item could buy an edit over and over.
         </Hint>
       </Wrap>
     );
@@ -100,7 +100,9 @@ export const ItemUseTraitEditGrantEditor: React.FC<Props> = ({
       await save({
         variables: { input: { itemTypeId: itemType.id, species: chosen } },
       });
-      toast.success(chosen.length ? "Edit kit saved" : "Edit kit cleared");
+      toast.success(
+        chosen.length ? "Edits on use saved" : "Edits on use cleared",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save that");
     }
@@ -113,8 +115,8 @@ export const ItemUseTraitEditGrantEditor: React.FC<Props> = ({
         Spending one destroys it and lets its holder propose a change to one of
         their characters&rsquo; traits, which then goes to trait review. Tick
         the species it works on; leave a species&rsquo; variants unticked to
-        cover all of them. Untick everything to clear it. An item type cannot
-        both pay out and edit traits.
+        cover all of them. Untick everything to clear it. An item type does one
+        thing when used, so this cannot sit beside a payout or an MYO grant.
       </Hint>
 
       {species.length === 0 ? (
@@ -137,7 +139,7 @@ export const ItemUseTraitEditGrantEditor: React.FC<Props> = ({
           disabled={loading}
           data-testid="save-trait-edit-grant"
         >
-          {loading ? "Saving…" : "Save edit kit"}
+          {loading ? "Saving…" : "Save edits on use"}
         </Button>
       </Actions>
     </Wrap>

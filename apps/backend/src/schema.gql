@@ -1496,6 +1496,7 @@ type InviteCodeConnection {
 }
 
 type Item {
+  acquiredAt: DateTime
   createdAt: DateTime!
 
   """

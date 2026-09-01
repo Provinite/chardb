@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Using Items - Feature Walkthrough</title>
+    <title>Redeeming Items - Feature Walkthrough</title>
     <meta name="description" content="Items can be used up for what their type is worth. Staff set the payout per currency; the holder spends the item and the coin arrives, recorded on both ledgers as one event." />
     <link rel="canonical" href="https://provinite.github.io/chardb/docs/using-items.html" />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="CharDB" />
-    <meta property="og:title" content="Using Items" />
+    <meta property="og:title" content="Redeeming Items" />
     <meta property="og:description" content="Items can be used up for what their type is worth. Staff set the payout per currency; the holder spends the item and the coin arrives, recorded on both ledgers as one event." />
     <meta property="og:url" content="https://provinite.github.io/chardb/docs/using-items.html" />
     <meta property="og:image" content="https://provinite.github.io/chardb/docs/item-ledger-staff.png" />
@@ -251,7 +251,7 @@
   <body>
     <div class="container">
       <header>
-        <h1>Using Items</h1>
+        <h1>Redeeming Items</h1>
         <p>
           Spending an item for what it is worth, and where that shows up
           afterwards
@@ -437,7 +437,7 @@
         <div class="screenshot">
           <img
             src="item-use-inventory.png"
-            alt="An inventory showing Coin Ticket expanded with a Use button beside each of two copies, and Blank Ticket below it with no Use button"
+            alt="An inventory showing Coin Ticket expanded with a Redeem button beside each of two copies, and Blank Ticket below it with no Redeem button"
           />
           <div class="screenshot-caption">
             Two Coin Tickets, each usable. The Blank Ticket below is consumable
@@ -460,7 +460,7 @@
         <div class="screenshot">
           <img
             src="item-use-confirm.png"
-            alt="A confirm dialog reading Use Coin Ticket, and This uses it up and pays you 250 Hollow Coin, the item is gone afterwards, with Cancel and Use it buttons"
+            alt="A confirm dialog reading Redeem Coin Ticket, and This uses it up and pays you 250 Hollow Coin, the item is gone afterwards, with Cancel and Redeem it buttons"
           />
           <div class="screenshot-caption">
             The payout is named in the question.
@@ -476,7 +476,7 @@
         <div class="screenshot">
           <img
             src="item-use-paid.png"
-            alt="The inventory immediately after a use: Hollow Coin risen from 380 to 630, Coin Ticket now showing one copy, items held down from six to five, and a toast reading Used, you received 250"
+            alt="The inventory immediately after a redemption: Hollow Coin risen from 380 to 630, Coin Ticket now showing one copy, items held down from six to five, and a toast reading Redeemed, you received 250"
           />
           <div class="screenshot-caption">
             One ticket gone, 250 coin arrived, items held down by one.
@@ -502,7 +502,7 @@
         <div class="step-content">
           <p>
             The community's item ledger, under <strong>Community → Item
-            Ledger</strong>, gets a <span class="pill used">Used</span> entry.
+            Ledger</strong>, gets a <span class="pill used">Redeemed</span> entry.
             It reads <em>member → consumed</em>, which is what distinguishes it
             at a glance from a revoke, where an item goes back to staff.
           </p>
@@ -510,10 +510,10 @@
         <div class="screenshot">
           <img
             src="item-use-item-ledger.png"
-            alt="The community item ledger with a Used entry for Coin Ticket showing minus one, member arrow consumed, actor member, and the reason Used Coin Ticket"
+            alt="The community item ledger with a Redeemed entry for Coin Ticket showing minus one, member arrow consumed, actor member, and the reason Redeemed Coin Ticket"
           />
           <div class="screenshot-caption">
-            Filterable like any other event type — the <strong>Used</strong>
+            Filterable like any other event type — the <strong>Redeemed</strong>
             chip narrows the ledger to redemptions.
           </div>
         </div>
@@ -535,7 +535,7 @@
         <div class="screenshot">
           <img
             src="item-use-currency-ledger.png"
-            alt="The currency ledger showing a plus 250 Hollow Coin entry to member with the reason Used Coin Ticket and a link reading from the item that was used"
+            alt="The currency ledger showing a plus 250 Hollow Coin entry to member with the reason Redeemed Coin Ticket and a link reading from the item that was redeemed"
           />
           <div class="screenshot-caption">
             Coin that appears from nowhere is coin nobody can check. The link
@@ -568,7 +568,7 @@
         <div class="screenshot">
           <img
             src="item-use-provenance.png"
-            alt="A destroyed Coin Ticket's page showing a destroyed banner, a two event history of Granted then Used, and a chain of custody ending in destroyed"
+            alt="A destroyed Coin Ticket's page showing a destroyed banner, a two event history of Granted then Redeemed, and a chain of custody ending in destroyed"
           />
           <div class="screenshot-caption">
             Granted, then used, then gone — with both events and the holder
@@ -642,7 +642,7 @@
       </div>
 
       <footer>
-        <p>CharDB Using Items &bull; Feature Documentation</p>
+        <p>CharDB Redeeming Items &bull; Feature Documentation</p>
       </footer>
     </div>
   </body>

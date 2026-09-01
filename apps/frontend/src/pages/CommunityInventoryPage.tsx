@@ -343,7 +343,7 @@ export const CommunityInventoryPage: React.FC = () => {
       const paid = result.data?.useItem.payout ?? [];
       toast.success(
         paid.length
-          ? `Used. You received ${paid
+          ? `Redeemed. You received ${paid
               .map(
                 (p) =>
                   `${p.amount.toLocaleString()} ${
@@ -351,7 +351,7 @@ export const CommunityInventoryPage: React.FC = () => {
                   }`,
               )
               .join(" + ")}.`
-          : "Used.",
+          : "Redeemed.",
       );
     } catch (err) {
       // The server owns every reason a use can fail -- archived currency, the
@@ -569,7 +569,7 @@ export const CommunityInventoryPage: React.FC = () => {
                               })
                             }
                           >
-                            {usingItemId === item.id ? "Using…" : "Use"}
+                            {usingItemId === item.id ? "Redeeming…" : "Redeem"}
                           </UseButton>
                         )}
                       </ItemRow>
@@ -587,9 +587,9 @@ export const CommunityInventoryPage: React.FC = () => {
           payout is named because that is the thing being traded for it. */}
       <ConfirmDialog
         open={pendingUse !== null}
-        title={pendingUse ? `Use ${pendingUse.itemTypeName}?` : "Use it?"}
-        confirmLabel="Use it"
-        busyLabel="Using…"
+        title={pendingUse ? `Redeem ${pendingUse.itemTypeName}?` : "Redeem it?"}
+        confirmLabel="Redeem it"
+        busyLabel="Redeeming…"
         busy={usingItemId !== null}
         onCancel={() => setPendingUse(null)}
         onConfirm={() => {
