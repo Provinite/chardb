@@ -394,7 +394,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           membership.role.canCreateOrphanedCharacter,
       ) || false
     );
-  }, [user, selectedSpecies]);
+  }, [user, selectedSpecies, isMyo]);
 
   // Form handling
   const {
@@ -561,7 +561,9 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
         Back
       </BackButton>
 
-      <Title>{isMyo ? "Make Your Own Character" : "Create New Character"}</Title>
+      <Title>
+        {isMyo ? "Make Your Own Character" : "Create New Character"}
+      </Title>
 
       <Form onSubmit={handleSubmit(onSubmit)}>
         {/* Basic Information */}

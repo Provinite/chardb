@@ -107,8 +107,8 @@ export const ItemUseMyoGrantEditor: React.FC<Props> = ({
         <Head>Makes on use</Head>
         <Hint>
           Only a consumable item can make a character. Redeeming is what uses
-          the ticket up, and without that the same ticket could make a
-          character over and over.
+          the ticket up, and without that the same ticket could make a character
+          over and over.
         </Hint>
       </Wrap>
     );
@@ -125,7 +125,9 @@ export const ItemUseMyoGrantEditor: React.FC<Props> = ({
           },
         },
       });
-      toast.success(variantIds.length ? "MYO grant saved" : "MYO grant cleared");
+      toast.success(
+        variantIds.length ? "MYO grant saved" : "MYO grant cleared",
+      );
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save that");
     }
