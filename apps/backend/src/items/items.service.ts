@@ -264,7 +264,9 @@ export class ItemsService {
       );
     }
     if (components.some((c) => !Number.isInteger(c.amount) || c.amount <= 0)) {
-      throw new BadRequestException("A payout must pay a whole positive amount");
+      throw new BadRequestException(
+        "A payout must pay a whole positive amount",
+      );
     }
 
     // The same two checks the shop makes on a price, for the same two
@@ -744,11 +746,12 @@ export class ItemsService {
         },
       );
 
-      const payout = await this.applyCurrencyPayout(
-        tx,
-        effect.payout,
-        { userId, itemId, itemTypeName: item.itemType.name, batchId },
-      );
+      const payout = await this.applyCurrencyPayout(tx, effect.payout, {
+        userId,
+        itemId,
+        itemTypeName: item.itemType.name,
+        batchId,
+      });
 
       return { itemTypeName: item.itemType.name, batchId, payout };
     });

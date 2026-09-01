@@ -624,9 +624,7 @@ describe("ItemsService", () => {
 
       expect(itemBatch).toBe(coinBatch);
       expect(result.batchId).toBe(itemBatch);
-      expect(result.payout).toEqual([
-        expect.objectContaining({ amount: 100 }),
-      ]);
+      expect(result.payout).toEqual([expect.objectContaining({ amount: 100 })]);
     });
 
     it("records it as a USE rather than a revoke", async () => {
@@ -713,9 +711,7 @@ describe("ItemsService", () => {
 
       // Checked again at use rather than trusted from when staff configured
       // it. Otherwise the item is destroyed for coin that cannot be created.
-      await expect(service.useItem("i1", "user1")).rejects.toThrow(
-        /archived/i,
-      );
+      await expect(service.useItem("i1", "user1")).rejects.toThrow(/archived/i);
       expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();
     });
 

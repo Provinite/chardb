@@ -12,6 +12,16 @@ export const ITEM_TYPE_FRAGMENT = gql`
     category
     isTradeable
     isConsumable
+    usePayout {
+      id
+      amount
+      currency {
+        id
+        name
+        code
+        symbol
+      }
+    }
     image {
       id
       originalUrl
@@ -299,6 +309,16 @@ export const GET_MEMBER_HOLDINGS = gql`
           category
           isTradeable
           isConsumable
+          usePayout {
+            id
+            amount
+            currency {
+              id
+              name
+              code
+              symbol
+            }
+          }
           color {
             id
             hexCode
@@ -318,4 +338,35 @@ export const GET_MEMBER_HOLDINGS = gql`
     }
   }
   ${USER_BASIC_FRAGMENT}
+`;
+
+export const USE_ITEM = gql`
+  mutation UseItem($input: UseItemInput!) {
+    useItem(input: $input) {
+      itemTypeName
+      batchId
+      payout {
+        id
+        amount
+        currency {
+          id
+          name
+          code
+          symbol
+        }
+      }
+    }
+  }
+`;
+
+export const SET_ITEM_TYPE_USE_PAYOUT = gql`
+  mutation SetItemTypeUsePayout(
+    $itemTypeId: ID!
+    $components: [ItemUsePayoutComponentInput!]!
+  ) {
+    setItemTypeUsePayout(itemTypeId: $itemTypeId, components: $components) {
+      ...ItemTypeFields
+    }
+  }
+  ${ITEM_TYPE_FRAGMENT}
 `;

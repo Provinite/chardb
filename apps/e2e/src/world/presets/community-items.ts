@@ -10,6 +10,7 @@ import {
   SeedMintCurrencyDocument,
   SeedTransferCurrencyDocument,
   SeedCreateShopItemDocument,
+  SeedSetItemTypeUsePayoutDocument,
   SeedCreateSpeciesDocument,
   SeedCreateCharacterDocument,
 } from "../../generated/graphql.js";
@@ -22,9 +23,21 @@ export interface CommunityItemsWorld {
     potion: { id: string; name: string };
     /** Untradeable keepsake. */
     locket: { id: string; name: string };
+    /**
+     * Consumable, and worth 250 coin when used. The redemption ticket the
+     * feature was built for.
+     */
+    ticket: { id: string; name: string; payout: number };
+    /**
+     * Consumable and configured with nothing. Using it must be refused, which
+     * is a different refusal from an item that cannot be used at all.
+     */
+    blankTicket: { id: string; name: string };
   };
   /** The three potions `member` holds, granted during seeding as one batch. */
   grantedItems: { ids: string[] };
+  /** `member`'s two Coin Tickets and one Blank Ticket. */
+  usableItems: { ticketIds: string[]; blankTicketId: string };
   /**
    * Items standing in for what the migration produces: pre-existing holdings
    * with one IMPORT row each, all sharing a batch id. Deliberately larger than
@@ -411,6 +424,70 @@ export default definePreset<CommunityItemsWorld>({
       },
     });
 
+    // ==================== Usable items ====================
+
+    // The case that motivated item use: a ticket you redeem for coin. Created
+    // after the currencies because its payout names one, which is also the
+    // real ordering constraint -- a payout cannot be configured before the
+    // currency it pays exists.
+    const { createItemType: ticket } = await asQuartermaster.gql(
+      SeedCreateItemTypeDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Coin Ticket",
+          category: "Redeemable",
+          isTradeable: true,
+          isConsumable: true,
+        },
+      },
+    );
+
+    await asQuartermaster.gql(SeedSetItemTypeUsePayoutDocument, {
+      itemTypeId: ticket.id,
+      components: [{ currencyId: coin.id, amount: 250 }],
+    });
+
+    const { grantItem: ticketItems } = await asQuartermaster.gql(
+      SeedGrantItemDocument,
+      {
+        input: {
+          itemTypeId: ticket.id,
+          userId: member.userId,
+          quantity: 2,
+          reason: "Event prize",
+        },
+      },
+    );
+
+    // Consumable, but nothing configured. Using it must be refused rather
+    // than destroying the item for nothing -- which is a different failure
+    // from "this item cannot be used at all".
+    const { createItemType: blankTicket } = await asQuartermaster.gql(
+      SeedCreateItemTypeDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Blank Ticket",
+          category: "Redeemable",
+          isTradeable: true,
+          isConsumable: true,
+        },
+      },
+    );
+
+    const { grantItem: blankTicketItems } = await asQuartermaster.gql(
+      SeedGrantItemDocument,
+      {
+        input: {
+          itemTypeId: blankTicket.id,
+          userId: member.userId,
+          quantity: 1,
+          reason: "Event prize",
+        },
+      },
+    );
+
     // ==================== Shop ====================
 
     // The member has 380 HC and 0 FT after the transfer above, so the
@@ -514,6 +591,12 @@ export default definePreset<CommunityItemsWorld>({
       itemTypes: {
         potion: { id: potion.id, name: potion.name },
         locket: { id: locket.id, name: locket.name },
+        ticket: { id: ticket.id, name: ticket.name, payout: 250 },
+        blankTicket: { id: blankTicket.id, name: blankTicket.name },
+      },
+      usableItems: {
+        ticketIds: ticketItems.map((i) => i.id),
+        blankTicketId: blankTicketItems[0].id,
       },
       grantedItems: { ids: grantItem.map((i) => i.id) },
       importedItems: {

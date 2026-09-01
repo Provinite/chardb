@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Use an item from your inventory** when its type pays something, behind a
+  confirm naming what you get. The button appears only on your own inventory.
+
+- **Staff can set what using an item pays**, per currency, on the item type's
+  edit form.
+
 ### Changed
 
 - **Refunding now asks first**, on all three buttons that do it: the staff

@@ -10,6 +10,7 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ColorSelector } from "../components/colors";
 import { ImageUpload, ImageFile } from "../components/ImageUpload";
+import { ItemUsePayoutEditor } from "../components/items/ItemUsePayoutEditor";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-hot-toast";
 import {
@@ -1005,6 +1006,22 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 Consumable
               </CheckboxLabel>
             </FormGroup>
+
+            {/* Saved on its own, not with the rest of the form: the payout is
+                a separate mutation keyed on an item type that already exists,
+                which is also why it appears when editing and not when
+                creating. */}
+            {selectedItemType && communityId && (
+              <FormGroup>
+                <ItemUsePayoutEditor
+                  itemType={{
+                    ...selectedItemType,
+                    isConsumable: formData.isConsumable,
+                  }}
+                  communityId={communityId}
+                />
+              </FormGroup>
+            )}
 
             <FormGroup>
               <Label>Item Image</Label>

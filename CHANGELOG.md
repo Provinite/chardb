@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **E2E: 13 item-use specs**, most of them about the ways a feature that
+  creates currency could create it twice. The `community-items` preset carries
+  a Coin Ticket worth 250 and a Blank Ticket worth nothing.
+
+### Changed
+
+- Two ledger specs now name the grant they mean rather than querying every
+  grant in the community, which is what made them break when the preset gained
+  another one.
+
+### Added
+
 - **E2E: 6 refund-confirmation specs** in `apps/e2e/tests/shop`, covering
   cancel and Escape as well as confirm — a dialog that dismissed but acted
   anyway would be worse than the single click it replaced (#296).

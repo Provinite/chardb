@@ -5,10 +5,13 @@ import { Package, ChevronDown } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CurrencyWallet } from "../components/currency/CurrencyWallet";
 import { useAuth } from "../contexts/AuthContext";
+import { toast } from "react-hot-toast";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import {
   useCommunityByIdQuery,
   useGetMemberHoldingsQuery,
   useGetUserProfileQuery,
+  useUseItemMutation,
 } from "../generated/graphql";
 
 /**
@@ -175,6 +178,29 @@ const Button = styled.button<{ $danger?: boolean }>`
   }
 `;
 
+/** Sits inside an item row, so it is smaller than the group-level buttons. */
+const UseButton = styled.button`
+  font: inherit;
+  font-size: 0.75rem;
+  font-weight: 500;
+  margin-left: 0.35rem;
+  padding: 0.3rem 0.6rem;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  border: 1px solid ${({ theme }) => theme.colors.primary};
+  background: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.primary};
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.primary}12;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
 const Expand = styled(Button)<{ $open: boolean }>`
   svg:last-child {
     transition: transform 0.15s;
@@ -284,6 +310,57 @@ export const CommunityInventoryPage: React.FC = () => {
 
   const report = data?.memberHoldings;
   const holdings = report?.holdings ?? [];
+
+  /**
+   * The use awaiting a yes.
+   *
+   * Using destroys the item, and there is no un-use. Same gate the shop
+   * refunds got (#296), and captured up front because the holdings list
+   * refetches after a use -- a dialog re-reading the row could name a
+   * different item than the one that was clicked.
+   */
+  const [pendingUse, setPendingUse] = useState<{
+    itemId: string;
+    itemTypeName: string;
+    payout: string;
+  } | null>(null);
+  const [usingItemId, setUsingItemId] = useState<string | null>(null);
+  const [useItem] = useUseItemMutation();
+
+  const handleUse = async (itemId: string) => {
+    setUsingItemId(itemId);
+    try {
+      const result = await useItem({
+        variables: { input: { itemId } },
+        // Both moved: the item is gone and the balance grew. The wallet is a
+        // separate component with its own query, so refetching by operation
+        // name is what keeps the two halves of one event on screen together.
+        refetchQueries: ["GetMemberHoldings", "GetMemberWallet"],
+        awaitRefetchQueries: true,
+      });
+      const paid = result.data?.useItem.payout ?? [];
+      toast.success(
+        paid.length
+          ? `Used. You received ${paid
+              .map(
+                (p) =>
+                  `${p.amount.toLocaleString()} ${
+                    p.currency.symbol || p.currency.code
+                  }`,
+              )
+              .join(" + ")}.`
+          : "Used.",
+      );
+    } catch (err) {
+      // The server owns every reason a use can fail -- archived currency, the
+      // item already gone, no longer a member -- so its message is the useful
+      // one.
+      toast.error(err instanceof Error ? err.message : "Could not use that");
+    } finally {
+      setUsingItemId(null);
+      setPendingUse(null);
+    }
+  };
 
   const toggleGroup = (id: string) =>
     setExpanded((prev) => {
@@ -438,6 +515,33 @@ export const CommunityInventoryPage: React.FC = () => {
                           #{i + 1}
                           <Since>{formatDate(item.createdAt)}</Since>
                         </Link>
+                        {/* Only on your own inventory, and only when using it
+                            would do something. A Use button on somebody
+                            else's items, or on one that pays nothing, is a
+                            button whose every press is a refusal. */}
+                        {viewingSelf && h.itemType.usePayout.length > 0 && (
+                          <UseButton
+                            type="button"
+                            data-testid={`use-item-${item.id}`}
+                            disabled={usingItemId !== null}
+                            onClick={() =>
+                              setPendingUse({
+                                itemId: item.id,
+                                itemTypeName: h.itemType.name,
+                                payout: h.itemType.usePayout
+                                  .map(
+                                    (c) =>
+                                      `${c.amount.toLocaleString()} ${
+                                        c.currency.symbol || c.currency.code
+                                      }`,
+                                  )
+                                  .join(" + "),
+                              })
+                            }
+                          >
+                            {usingItemId === item.id ? "Using…" : "Use"}
+                          </UseButton>
+                        )}
                       </ItemRow>
                     ))}
                   </Items>
@@ -447,6 +551,29 @@ export const CommunityInventoryPage: React.FC = () => {
           })}
         </div>
       )}
+
+      {/* Using destroys the item and there is no un-use, so it never happens
+          on a single click -- the same rule the shop's refunds follow. The
+          payout is named because that is the thing being traded for it. */}
+      <ConfirmDialog
+        open={pendingUse !== null}
+        title={pendingUse ? `Use ${pendingUse.itemTypeName}?` : "Use it?"}
+        confirmLabel="Use it"
+        busyLabel="Using…"
+        busy={usingItemId !== null}
+        onCancel={() => setPendingUse(null)}
+        onConfirm={() => {
+          if (pendingUse) void handleUse(pendingUse.itemId);
+        }}
+        testId="use-item-dialog"
+      >
+        {pendingUse && (
+          <>
+            This uses it up and pays you <strong>{pendingUse.payout}</strong>.
+            The item is gone afterwards.
+          </>
+        )}
+      </ConfirmDialog>
     </Container>
   );
 };

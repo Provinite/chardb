@@ -89,8 +89,9 @@ test.describe("as staff who can manage items", () => {
     await expect(tiles).toContainText("Unclaimed");
     await expect(tiles).toContainText("Net 30d");
 
-    // 3 potions + 30 imported lockets, held by member and othermember.
-    await expect(tiles).toContainText("33");
+    // 3 potions + 30 imported lockets + 2 coin tickets + 1 blank ticket,
+    // held by member and othermember.
+    await expect(tiles).toContainText("36");
     await expect(tiles).toContainText("2");
   });
 

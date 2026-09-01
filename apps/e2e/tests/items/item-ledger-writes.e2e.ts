@@ -149,6 +149,10 @@ test.describe("the API contract behind the page", () => {
       .gql(SeedItemTransactionsDocument, {
         filters: {
           communityId: world.community.id,
+          // Named, not "every grant in the community". Other seeded grants
+          // exist and more will be added; this test is about one grant of
+          // three potions.
+          itemTypeId: world.itemTypes.potion.id,
           kinds: [ItemTransactionKind.Grant],
           limit: 100,
         },
@@ -246,6 +250,10 @@ test.describe("the API contract behind the page", () => {
   }) => {
     const filters = {
       communityId: world.community.id,
+      // The potion grant specifically: this asserts on the first row's note,
+      // so it has to be a row whose note is known rather than whichever grant
+      // happens to be newest.
+      itemTypeId: world.itemTypes.potion.id,
       kinds: [ItemTransactionKind.Grant],
     };
 
