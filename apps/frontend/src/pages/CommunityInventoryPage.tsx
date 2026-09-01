@@ -325,12 +325,14 @@ export const CommunityInventoryPage: React.FC = () => {
     payout: string;
   } | null>(null);
   const [usingItemId, setUsingItemId] = useState<string | null>(null);
-  const [useItem] = useUseItemMutation();
+  // Not named `useItem`: a function starting with "use" reads as a hook to
+  // eslint, and calling it from handleUse trips rules-of-hooks.
+  const [submitUse] = useUseItemMutation();
 
   const handleUse = async (itemId: string) => {
     setUsingItemId(itemId);
     try {
-      const result = await useItem({
+      const result = await submitUse({
         variables: { input: { itemId } },
         // Both moved: the item is gone and the balance grew. The wallet is a
         // separate component with its own query, so refetching by operation

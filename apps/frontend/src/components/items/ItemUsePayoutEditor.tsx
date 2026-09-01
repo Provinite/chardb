@@ -99,8 +99,8 @@ export const ItemUsePayoutEditor: React.FC<Props> = ({
         <Head>Pays on use</Head>
         <Hint>
           Only a consumable item can pay out. Using is what uses it up, and
-          without that the payout could be collected over and over from the
-          same item.
+          without that the payout could be collected over and over from the same
+          item.
         </Hint>
       </Wrap>
     );
@@ -115,9 +115,7 @@ export const ItemUsePayoutEditor: React.FC<Props> = ({
       await save({
         variables: { itemTypeId: itemType.id, components },
       });
-      toast.success(
-        components.length ? "Payout saved" : "Payout cleared",
-      );
+      toast.success(components.length ? "Payout saved" : "Payout cleared");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save that");
     }

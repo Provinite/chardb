@@ -240,5 +240,4 @@ test.describe("using an item, through the page", () => {
       page.getByTestId(`use-item-${world.usableItems.blankTicketId}`),
     ).toHaveCount(0);
   });
-
 });
