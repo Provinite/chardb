@@ -91,10 +91,37 @@ test.describe("purchase history", () => {
     const oldest = rows.last();
     await oldest.getByRole("button", { name: /undo/i }).click();
 
+    // Undo asks first now (#296). The dialog names the purchase, because the
+    // rows on this page look alike.
+    await expect(page.getByTestId("my-undo-dialog")).toBeVisible();
+    await page.getByTestId("confirm-accept").click();
+
     await expect(page.getByTestId("my-purchases-count")).toContainText(
       "Showing 12 of 12",
     );
     await expect(rows.last()).toContainText(/refunded/i);
+  });
+
+  test("undo can be backed out of, and nothing is refunded", async ({
+    page,
+    world,
+  }) => {
+    await buy(world, 2);
+    await page.goto(`/communities/${world.community.id}/shop/purchases`);
+
+    const rows = page
+      .getByTestId("my-purchases-list")
+      .locator('[data-testid^="my-purchase-"]');
+    await rows.last().getByRole("button", { name: /undo/i }).click();
+    await page.getByTestId("confirm-cancel").click();
+
+    // The point of the gate: backing out has to leave the purchase alone.
+    // A dialog that dismissed but refunded anyway would be worse than none.
+    await expect(page.getByTestId("my-undo-dialog")).toHaveCount(0);
+    await expect(rows.last()).not.toContainText(/refunded/i);
+    await expect(
+      rows.last().getByRole("button", { name: /undo/i }),
+    ).toBeVisible();
   });
 
   test("searching and filtering narrow the whole history, not the page", async ({

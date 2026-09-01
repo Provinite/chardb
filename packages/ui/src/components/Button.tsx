@@ -207,31 +207,47 @@ const StyledButton = styled.button.withConfig({
   }
 `;
 
-export const Button: React.FC<ButtonProps> = ({
-  children,
-  variant = "primary",
-  size = "md",
-  disabled = false,
-  loading = false,
-  type = "button",
-  onClick,
-  as,
-  icon,
-  ...props
-}) => {
-  return (
-    <StyledButton
-      as={as}
-      variant={variant}
-      size={size}
-      disabled={disabled || loading}
-      type={type}
-      onClick={onClick}
-      {...props}
-    >
-      {loading && <span>⏳</span>}
-      {!loading && icon && icon}
-      {children}
-    </StyledButton>
-  );
-};
+/**
+ * Forwards its ref so callers can move focus to a particular button.
+ *
+ * Which matters most for a confirm dialog: one that opens with the
+ * destructive button focused turns a stray Enter into the thing it was trying
+ * to prevent, and putting focus on Cancel instead needs a handle on it. With
+ * `as`, the ref is whatever element that renders.
+ */
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
+  (
+    {
+      children,
+      variant = "primary",
+      size = "md",
+      disabled = false,
+      loading = false,
+      type = "button",
+      onClick,
+      as,
+      icon,
+      ...props
+    },
+    ref,
+  ) => {
+    return (
+      <StyledButton
+        ref={ref}
+        as={as}
+        variant={variant}
+        size={size}
+        disabled={disabled || loading}
+        type={type}
+        onClick={onClick}
+        {...props}
+      >
+        {loading && <span>⏳</span>}
+        {!loading && icon && icon}
+        {children}
+      </StyledButton>
+    );
+  },
+);
+
+Button.displayName = "Button";

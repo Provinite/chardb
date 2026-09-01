@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **E2E: 6 refund-confirmation specs** in `apps/e2e/tests/shop`, covering
+  cancel and Escape as well as confirm — a dialog that dismissed but acted
+  anyway would be worse than the single click it replaced (#296).
+
+- `Button` forwards refs, so a confirm dialog can put focus on Cancel rather
+  than on the button that cannot be undone (#296).
+
 - **E2E: 4 My Characters paging specs**, and 30 filler characters for `member`
   in the `community-items` preset so a list can actually run past a page
   (#307).
