@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A dedicated "Using Items" walkthrough** (`docs/docs/using-items.html`)
+  covering the staff side, the member side, all three history views, and every
+  reason a use is refused. Linked from the docs index, the item ledger and the
+  currency walkthrough.
+
+### Fixed
+
+- **The shop walkthrough described refunds as a single click.** They have asked
+  for confirmation since #296; the page now says so and shows the dialog.
+
 ### Changed
 
 - **The Item Ledger and Community Currency walkthroughs cover using an item**,

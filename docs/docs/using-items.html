@@ -1,0 +1,623 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Using Items - Feature Walkthrough</title>
+    <meta name="description" content="Items can be used up for what their type is worth. Staff set the payout per currency; the holder spends the item and the coin arrives, recorded on both ledgers as one event." />
+    <link rel="canonical" href="https://provinite.github.io/chardb/docs/using-items.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Using Items" />
+    <meta property="og:description" content="Items can be used up for what their type is worth. Staff set the payout per currency; the holder spends the item and the coin arrives, recorded on both ledgers as one event." />
+    <meta property="og:url" content="https://provinite.github.io/chardb/docs/using-items.html" />
+    <meta property="og:image" content="https://provinite.github.io/chardb/docs/item-ledger-staff.png" />
+    <meta property="og:image:alt" content="The CharDB community item ledger listing item movements with actor, recipient, and reason." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Using Items</h1>
+        <p>
+          Spending an item for what it is worth, and where that shows up
+          afterwards
+        </p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            An item can be worth something. A community decides that a
+            <em>Coin Ticket</em> is worth 250 coin, hands tickets out as event
+            prizes, and members redeem them whenever they like — the community
+            never has to be in the room when it happens.
+          </p>
+          <p>
+            <strong>Using is the holder spending an item themselves.</strong>
+            It is the counterpart to a staff revoke: both take an item out of
+            circulation, but one is done to you and the other is done by you.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">🎛️</div>
+              <h4>Staff decide</h4>
+              <p>What a type is worth, once, per currency</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🎟️</div>
+              <h4>Holders spend</h4>
+              <p>One press, from their own inventory</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🧾</div>
+              <h4>Both ledgers record it</h4>
+              <p>The item gone, the coin arrived, one event</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Using destroys the item.</strong> That is not a side
+            effect, it is the mechanism — an item that paid out without being
+            used up would pay every time it was pressed. Everything below
+            follows from it: why only consumable types can carry a payout, why
+            there is a confirm, and why the item's page still works afterwards.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: staff configure -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Staff: setting what a type pays</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            On an item type's edit form, under <strong>Administration →
+            Items</strong>, there is a <strong>Pays on use</strong> panel
+            listing every currency the community has. Put an amount beside one
+            or more of them and save.
+          </p>
+          <p>
+            It saves on its own, separately from the rest of the form. A payout
+            belongs to a type that already exists, which is also why the panel
+            appears when editing a type and not when creating one.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-use-payout-editor.png"
+            alt="The Pays on use panel on an item type's edit form, listing Hollow Coin, Festival Token and Prompt Points each with an amount box, and a Save payout button"
+          />
+          <div class="screenshot-caption">
+            One amount per currency. A ticket can pay in more than one, and
+            clearing every box removes the payout entirely.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Only a consumable type can pay.</strong> The panel says so
+            rather than letting the amount be typed and refused at save — the
+            reason is the mechanism above, and it is more use where the
+            decision is being made than in an error afterwards.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-use-payout-not-consumable.png"
+            alt="The Pays on use panel for a non-consumable item type, showing an explanation that only a consumable item can pay out instead of any amount boxes"
+          />
+          <div class="screenshot-caption">
+            A keepsake that is never used up offers no amounts, and says why.
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>Archived currencies are left out of the list.</strong> An
+            archived currency takes no new transactions, so a payout naming one
+            would be a reward that never arrives. If a currency is archived
+            <em>after</em> a payout is set, the payout is refused at the moment
+            somebody tries to use the item rather than paying in something that
+            cannot be created — the check happens twice on purpose, because
+            nothing configured stays true on its own.
+          </div>
+          <p>
+            Setting a payout needs the same permission as editing the item
+            type, <code>canManageItems</code>. It is worth being deliberate
+            about who holds it: a payout creates currency, and every use of it
+            is recorded, but the recording is after the fact.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 2: what it is worth -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Seeing what an item is worth</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The item type's own page carries the payout, so anyone can see what
+            one is worth without holding it — which matters before a trade as
+            much as before a redemption.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-use-item-type.png"
+            alt="The Coin Ticket item type page showing Tradeable and Consumable properties and a Pays on use section reading 250 Hollow Coin"
+          />
+          <div class="screenshot-caption">
+            What one is worth, stated before anyone commits to spending it.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3: using one -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Using one</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A <strong>Use</strong> button sits beside each copy in your
+            inventory, under <strong>Community → Inventory</strong>. Items are
+            tracked individually rather than as a count, so you are always
+            spending a particular one.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-use-inventory.png"
+            alt="An inventory showing Coin Ticket expanded with a Use button beside each of two copies, and Blank Ticket below it with no Use button"
+          />
+          <div class="screenshot-caption">
+            Two Coin Tickets, each usable. The Blank Ticket below is consumable
+            but has no payout, so it offers no button at all.
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>No button is the answer, not a disabled one.</strong> If a
+            type pays nothing, or is not consumable, or the item is not yours,
+            there is nothing to press. A greyed-out button that refuses every
+            press tells you less than its absence does, and invites the press
+            anyway.
+          </div>
+          <p>
+            Using cannot be undone, so it asks — and it says what you are
+            getting before you commit, not after.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-use-confirm.png"
+            alt="A confirm dialog reading Use Coin Ticket, and This uses it up and pays you 250 Hollow Coin, the item is gone afterwards, with Cancel and Use it buttons"
+          />
+          <div class="screenshot-caption">
+            The payout is named in the question.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            Both halves land together. The item leaves the inventory and the
+            balance rises in the same moment — no reload, and no window where
+            one has happened and the other has not.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-use-paid.png"
+            alt="The inventory immediately after a use: Hollow Coin risen from 380 to 630, Coin Ticket now showing one copy, items held down from six to five, and a toast reading Used, you received 250"
+          />
+          <div class="screenshot-caption">
+            One ticket gone, 250 coin arrived, items held down by one.
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>The same ticket cannot be spent twice.</strong> The item is
+            destroyed and the coin created inside a single operation, and the
+            destruction is conditional on you still holding it. A second press
+            — a double click, two tabs, a retry — destroys nothing, fails, and
+            pays nothing.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: item ledger -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Afterwards: the item ledger</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The community's item ledger, under <strong>Community → Item
+            Ledger</strong>, gets a <span class="pill used">Used</span> entry.
+            It reads <em>member → consumed</em>, which is what distinguishes it
+            at a glance from a revoke, where an item goes back to staff.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-use-item-ledger.png"
+            alt="The community item ledger with a Used entry for Coin Ticket showing minus one, member arrow consumed, actor member, and the reason Used Coin Ticket"
+          />
+          <div class="screenshot-caption">
+            Filterable like any other event type — the <strong>Used</strong>
+            chip narrows the ledger to redemptions.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: currency ledger -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Afterwards: the currency ledger</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The community's currency ledger, under <strong>Community →
+            Currencies</strong>, records the payment, and links back to the
+            item that produced it.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-use-currency-ledger.png"
+            alt="The currency ledger showing a plus 250 Hollow Coin entry to member with the reason Used Coin Ticket and a link reading from the item that was used"
+          />
+          <div class="screenshot-caption">
+            Coin that appears from nowhere is coin nobody can check. The link
+            is what makes this row answerable.
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>One use is one event across two ledgers.</strong> Both rows
+            carry the same internal identifier, so a redemption can always be
+            reassembled from either side — the coin traced back to the item, or
+            the item forward to what it paid.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: the item's own page -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">Afterwards: the item's own history</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A used item's page keeps working. That is deliberate and it is the
+            same promise revoked items get: the item is gone from circulation,
+            but what happened to it stays readable.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-use-provenance.png"
+            alt="A destroyed Coin Ticket's page showing a destroyed banner, a two event history of Granted then Used, and a chain of custody ending in destroyed"
+          />
+          <div class="screenshot-caption">
+            Granted, then used, then gone — with both events and the holder
+            still on the record.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7: what can go wrong -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">When a use is refused</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Everything checked when the payout was configured is checked again
+            when somebody presses Use, because none of it stays true on its
+            own. A use is refused, with the item untouched, when:
+          </p>
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Situation</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>The type is not consumable</td>
+                <td>
+                  Using would not use it up, so the payout could be collected
+                  over and over from the same item.
+                </td>
+              </tr>
+              <tr>
+                <td>The type pays nothing</td>
+                <td>
+                  Destroying an item and handing back nothing is worth refusing
+                  rather than doing quietly.
+                </td>
+              </tr>
+              <tr>
+                <td>The payout currency has been archived</td>
+                <td>
+                  It cannot be created any more. The item is left alone rather
+                  than spent for coin that never arrives.
+                </td>
+              </tr>
+              <tr>
+                <td>You have left the community</td>
+                <td>
+                  Currency exists inside one community, and a balance needs a
+                  membership to sit in.
+                </td>
+              </tr>
+              <tr>
+                <td>The item is not yours, or is already gone</td>
+                <td>
+                  Checked at the moment of the write, not before it, so a trade
+                  landing in between cannot be raced.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            In every case the item survives. There is no path where something
+            is destroyed and the payment does not happen.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Using Items &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **An item type's page says what using one pays.** Previously the payout
+  appeared only in the confirm dialog, which is after the decision to spend
+  rather than before it — and invisible to anyone weighing up a trade.
+
+### Added
+
 - **Use an item from your inventory** when its type pays something, behind a
   confirm naming what you get. The button appears only on your own inventory.
 

@@ -6,6 +6,7 @@ import { Button, Title, Heading2, SmallText, HelpText } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ColorPip } from "../components/colors";
 import { useGetItemTypeQuery } from "../generated/graphql";
+import { formatPrice } from "../lib/currencyDisplay";
 
 /**
  * Item Type Detail Page
@@ -108,6 +109,19 @@ const CommunityLink = styled(Link)`
 
 const PropertiesSection = styled.div`
   margin-bottom: 2rem;
+`;
+
+const PayoutValue = styled.div`
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-variant-numeric: tabular-nums;
+`;
+
+const PayoutNote = styled.p`
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const PropertiesList = styled.div`
@@ -321,6 +335,27 @@ export const ItemTypePage: React.FC = () => {
           )}
         </PropertiesList>
       </PropertiesSection>
+
+      {/* What one is worth, said where somebody deciding whether to spend one
+          would look. Without this the only place the payout appears is the
+          confirm dialog, which is after the decision rather than before it --
+          and it is also what a would-be trade partner needs to know. */}
+      {itemType.usePayout.length > 0 && (
+        <PropertiesSection data-testid="item-type-use-payout">
+          <Heading2 style={{ marginBottom: "0.5rem" }}>Pays on use</Heading2>
+          <PayoutValue>
+            {formatPrice(
+              itemType.usePayout.map((c) => ({
+                amount: c.amount,
+                currency: c.currency,
+              })),
+            )}
+          </PayoutValue>
+          <PayoutNote>
+            Using one destroys it and pays its holder this.
+          </PayoutNote>
+        </PropertiesSection>
+      )}
     </Container>
   );
 };

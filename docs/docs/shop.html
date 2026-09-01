@@ -564,6 +564,14 @@
             failing.
           </div>
           <p>
+            <strong>Undoing asks first.</strong> Every button that returns coin
+            — the one in the shop's sidebar, the one in your own purchase
+            history, and the staff one below — opens a confirm naming what is
+            being returned. Undoing is not itself reversible: it puts the copy
+            back on a shelf that may be limited, so if somebody takes the last
+            one in the meantime you cannot simply buy it again.
+          </p>
+          <p>
             Staff have their own list, under
             <strong>Shop Purchases</strong> in the Administration section:
             everyone's purchases, newest first, with a refund button that is
@@ -571,6 +579,17 @@
             <code>canGrantItems</code> — the permission that already means
             "may move items and coin on somebody else's behalf".
           </p>
+          <div class="screenshot">
+            <img
+              src="shop-refund-confirm.png"
+              alt="A confirm dialog reading Refund Practice Potion to member, and This returns 1 Hollow Coin and destroys the item, it cannot be undone, with a focused Cancel button and a red Refund button"
+            />
+            <div class="screenshot-caption">
+              The staff refund names the member, the item and the amount — this
+              page lists many people's purchases and the rows look alike.
+              Cancel holds the focus, so a stray keypress refunds nobody.
+            </div>
+          </div>
           <div class="screenshot">
             <img
               src="shop-staff-purchases.png"
