@@ -538,7 +538,7 @@ const describe = (row: ItemTransactionFieldsFragment): React.ReactNode => {
     case ItemTransactionKind.Use:
       return (
         <>
-          Used by <b>{from ?? actor}</b>.
+          Redeemed by <b>{from ?? actor}</b>.
         </>
       );
     case ItemTransactionKind.Revoke:

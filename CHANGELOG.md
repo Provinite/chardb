@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **"Redeem" is now the word for spending a usable item**, across all three
+  kinds: the buttons, the confirms, the ledger's event label and reason, and
+  the docs. The `USE` transaction kind is unchanged — it is a record, not
+  copy. `Using Items` is now `Redeeming Items`; its URL is unchanged.
+
 ### Added
 
 - **E2E: 23 edit-kit specs**, plus an Eye Color trait and two edit kits in the

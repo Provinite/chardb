@@ -542,6 +542,27 @@ export class ItemFieldsResolver {
     return mapPrismaItemTypeToGraphQL(itemType);
   }
 
+  /**
+   * When this item reached the person who holds it now.
+   *
+   * Not `createdAt`, which is when the item was minted. For anything that has
+   * changed hands those are different dates, and telling somebody they
+   * acquired a ticket on the day it was created -- before they had it -- is
+   * the kind of small lie a confirm dialog should not be telling while asking
+   * them to spend something.
+   *
+   * Read from the ledger, which already records exactly this: the most recent
+   * row handing the item to its current owner. Falls back to the item's own
+   * creation for rows that name no recipient -- the IMPORT batch, which
+   * predates the ledger and cannot say better.
+   */
+  @AllowUnauthenticated()
+  @ResolveField(() => Date, { name: "acquiredAt", nullable: true })
+  async resolveAcquiredAt(@Parent() item: ItemEntity): Promise<Date | null> {
+    if (!item.ownerId) return null;
+    return this.itemsService.findAcquiredAt(item.id, item.ownerId);
+  }
+
   @AllowUnauthenticated()
   @ResolveField(() => User, { name: "owner", nullable: true })
   async resolveOwner(@Parent() item: ItemEntity): Promise<User | null> {

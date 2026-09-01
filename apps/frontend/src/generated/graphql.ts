@@ -1262,6 +1262,7 @@ export type InviteCodeConnection = {
 
 export type Item = {
   __typename?: 'Item';
+  acquiredAt: Maybe<Scalars['DateTime']['output']>;
   createdAt: Scalars['DateTime']['output'];
   /** Set when the item was revoked or consumed. Destroyed items keep their provenance but never appear in an inventory. */
   destroyedAt: Maybe<Scalars['DateTime']['output']>;
@@ -5258,7 +5259,7 @@ export type GetMyoTicketQueryVariables = Exact<{
 }>;
 
 
-export type GetMyoTicketQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } | null } } };
+export type GetMyoTicketQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, acquiredAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } | null } } };
 
 export type CreateCharacterFromMyoTicketMutationVariables = Exact<{
   input: RedeemMyoTicketInput;
@@ -5286,7 +5287,7 @@ export type GetEditKitQueryVariables = Exact<{
 }>;
 
 
-export type GetEditKitQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null } } };
+export type GetEditKitQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, acquiredAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null } } };
 
 export type GetMyEditKitsQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5294,7 +5295,7 @@ export type GetMyEditKitsQueryVariables = Exact<{
 }>;
 
 
-export type GetMyEditKitsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, items: Array<{ __typename?: 'Item', id: string }>, itemType: { __typename?: 'ItemType', id: string, name: string, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null } }> } };
+export type GetMyEditKitsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, items: Array<{ __typename?: 'Item', id: string, acquiredAt: string | null }>, itemType: { __typename?: 'ItemType', id: string, name: string, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null } }> } };
 
 export type GetMyCharactersForEditKitQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -11813,6 +11814,7 @@ export const GetMyoTicketDocument = gql`
     id
     ownerId
     destroyedAt
+    acquiredAt
     itemType {
       id
       name
@@ -11970,6 +11972,7 @@ export const GetEditKitDocument = gql`
     id
     ownerId
     destroyedAt
+    acquiredAt
     itemType {
       id
       name
@@ -12032,6 +12035,7 @@ export const GetMyEditKitsDocument = gql`
       count
       items {
         id
+        acquiredAt
       }
       itemType {
         id

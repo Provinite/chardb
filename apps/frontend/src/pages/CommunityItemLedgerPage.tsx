@@ -28,7 +28,7 @@ const KINDS: ReadonlyArray<{ kind: ItemTransactionKind; label: string }> = [
   { kind: ItemTransactionKind.Revoke, label: "Revoked" },
   { kind: ItemTransactionKind.Transfer, label: "Traded" },
   { kind: ItemTransactionKind.Claim, label: "Claimed" },
-  { kind: ItemTransactionKind.Use, label: "Used" },
+  { kind: ItemTransactionKind.Use, label: "Redeemed" },
   { kind: ItemTransactionKind.Import, label: "Imported" },
 ];
 

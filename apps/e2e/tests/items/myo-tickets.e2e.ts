@@ -525,6 +525,13 @@ test.describe("spending an MYO ticket, through the page", () => {
     await page.locator("#name").fill("Pagebound");
     await page.getByTestId("submit-character").click();
 
+    // Redeeming destroys the ticket, so it never happens on a single click.
+    // The dialog names the ticket, because "are you sure?" about an unnamed
+    // thing is a question nobody can answer.
+    const dialog = page.getByTestId("redeem-myo-dialog");
+    await expect(dialog).toContainText(world.itemTypes.myoTicket.name);
+    await page.getByTestId("confirm-accept").click();
+
     // Lands on the character it made.
     await expect(page).toHaveURL(/\/character\/[0-9a-f-]{36}$/);
 
@@ -532,6 +539,24 @@ test.describe("spending an MYO ticket, through the page", () => {
       .as("member")
       .gql(SeedItemDocument, { id: itemId });
     expect(item.destroyedAt).not.toBeNull();
+  });
+
+  test("cancelling the confirm redeems nothing", async ({ page, world }) => {
+    const itemId = world.myoItems.ticketIds[0];
+    await page.goto(`/character/create?ticket=${itemId}`);
+
+    await page.getByTestId(`myo-variant-${world.variants.uncommon.id}`).click();
+    await page.locator("#name").fill("Unmade");
+    await page.getByTestId("submit-character").click();
+    await page.getByTestId("confirm-cancel").click();
+
+    // A dialog that dismissed but redeemed anyway would be worse than the
+    // single click it replaced.
+    await expect(page.getByTestId("redeem-myo-dialog")).toHaveCount(0);
+    const { item } = await world
+      .as("member")
+      .gql(SeedItemDocument, { id: itemId });
+    expect(item.destroyedAt).toBeNull();
   });
 
   test("cannot be submitted without picking a variant", async ({

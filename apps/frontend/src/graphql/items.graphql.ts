@@ -432,6 +432,7 @@ export const GET_MYO_TICKET = gql`
       id
       ownerId
       destroyedAt
+      acquiredAt
       itemType {
         id
         name
@@ -492,6 +493,7 @@ export const GET_EDIT_KIT = gql`
       id
       ownerId
       destroyedAt
+      acquiredAt
       itemType {
         id
         name
@@ -526,6 +528,7 @@ export const GET_MY_EDIT_KITS = gql`
         count
         items {
           id
+          acquiredAt
         }
         itemType {
           id

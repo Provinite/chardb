@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Redeeming an MYO ticket or an edit kit now asks first**, naming the item
+  and when you acquired it. Both destroy the item and neither could be undone;
+  only the currency payout had a confirm.
+
+- **The app calls an item what its community named it.** "Edit kit" and
+  "ticket" were leaking into copy where the item's own name belonged.
+
 ### Added
 
 - **Spend an edit kit to change a character's traits.** Reachable from the

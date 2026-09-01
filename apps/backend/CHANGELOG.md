@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Item.acquiredAt`** — when an item reached its current holder, read from
+  the ledger. Not `createdAt`, which is when it was minted; those differ for
+  anything traded.
+
+### Changed
+
+- Ledger reasons for a redemption now all read `Redeemed <item>`. They were
+  `Used`, `Redeemed` and `Spent` depending on which effect ran.
+
+### Added
+
 - **Edit kits.** `editCharacterTraitsWithKit` destroys a kit and opens a
   pending `USER_EDIT` review. **The character is not changed** — approving is
   what applies the proposal (#171).
