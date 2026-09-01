@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **MYO tickets.** `createCharacterFromMyoTicket` destroys a ticket and makes
+  the character it was for, traits pending review under `TraitReviewSource.MYO`
+  (#168).
+
+- **MYO grants on an item type**, set with `setItemTypeMyoGrant`: the species
+  and variants a ticket can make. Mutually exclusive with a currency payout.
+
+- **Refusing an MYO review returns the ticket** and soft-deletes the character.
+  New `ItemTransactionSource.MYO_REDEMPTION` and `MYO_REJECTION`.
+
+- **An approved MYO character gets the next registry number in its species.**
+
 ## [v11.8.0] - 2026-09-01
 
 ### Added

@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Spend an MYO ticket to make a character.** Use on an MYO ticket opens the
+  create page rather than a confirm; nothing is consumed until you submit
+  (#168).
+
+- **The create page narrows itself to the ticket**: species fixed, only the
+  variants that ticket allows, no registry or ownership fields.
+
+- **An item type's page says which characters a ticket makes.**
+
+- **Staff set what a ticket makes** on the item type's edit form.
+
 ## [v11.8.0] - 2026-09-01
 
 ### Added

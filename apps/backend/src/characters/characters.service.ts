@@ -1457,7 +1457,8 @@ export class CharactersService {
    * @param traitValues The trait values to validate
    * @throws BadRequestException if any single-value trait has multiple values
    */
-  private async validateTraitValues(
+  /** Public for MYO redemption, which creates its character on its own transaction. */
+  async validateTraitValues(
     speciesId: string,
     traitValues: PrismaJson.CharacterTraitValuesJson,
   ) {

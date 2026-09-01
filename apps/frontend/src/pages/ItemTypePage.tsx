@@ -356,6 +356,25 @@ export const ItemTypePage: React.FC = () => {
           </PayoutNote>
         </PropertiesSection>
       )}
+
+      {/* Same reasoning as the payout above: which characters a ticket makes
+          is what somebody weighing up a trade for one needs, and it was
+          otherwise only visible on the create page they cannot reach without
+          already holding it. */}
+      {itemType.useMyoGrant && (
+        <PropertiesSection data-testid="item-type-myo-grant">
+          <Heading2 style={{ marginBottom: "0.5rem" }}>Makes on use</Heading2>
+          <PayoutValue>
+            {itemType.useMyoGrant.species.name} &mdash;{" "}
+            {itemType.useMyoGrant.variants.map((v) => v.name).join(", ")}
+          </PayoutValue>
+          <PayoutNote>
+            {itemType.useMyoGrant.variants.length === 1
+              ? "Redeeming one destroys it and makes a character of that variant, with its traits pending review."
+              : `Redeeming one destroys it and makes a character of any one of those ${itemType.useMyoGrant.variants.length} variants, with its traits pending review.`}
+          </PayoutNote>
+        </PropertiesSection>
+      )}
     </Container>
   );
 };

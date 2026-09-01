@@ -77,6 +77,37 @@ export class SetItemTypeUsePayoutInput {
   components: ItemUsePayoutComponentInput[];
 }
 
+/**
+ * What a ticket of this type can make.
+ *
+ * Wrapped for the same reason {@link SetItemTypeUsePayoutInput} is: Nest's
+ * ValidationPipe skips any parameter whose reflected metatype is `Array`, so
+ * decorators on a top-level array argument never run.
+ */
+@InputType()
+export class SetItemTypeMyoGrantInput {
+  @Field(() => ID)
+  @IsUUID()
+  itemTypeId: string;
+
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "The species a ticket makes. Required unless the variant list is " +
+      "empty, which clears the grant.",
+  })
+  @IsOptional()
+  @IsUUID()
+  speciesId?: string;
+
+  @Field(() => [ID], {
+    description: "Replaces the grant wholesale. Empty clears it.",
+  })
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  speciesVariantIds: string[];
+}
+
 @InputType()
 export class CreateItemTypeInput {
   @Field()

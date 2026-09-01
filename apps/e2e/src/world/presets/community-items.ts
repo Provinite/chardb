@@ -11,7 +11,9 @@ import {
   SeedTransferCurrencyDocument,
   SeedCreateShopItemDocument,
   SeedSetItemTypeUsePayoutDocument,
+  SeedSetItemTypeMyoGrantDocument,
   SeedCreateSpeciesDocument,
+  SeedCreateSpeciesVariantDocument,
   SeedCreateCharacterDocument,
 } from "../../generated/graphql.js";
 import { definePreset, type Persona } from "../types.js";
@@ -33,11 +35,19 @@ export interface CommunityItemsWorld {
      * is a different refusal from an item that cannot be used at all.
      */
     blankTicket: { id: string; name: string };
+    /**
+     * Consumable, and good for a Thornwing of either Common or Uncommon.
+     * Two variants rather than one so "pick one of n" is exercised, and one
+     * variant is deliberately left off so a ticket can be proved to refuse it.
+     */
+    myoTicket: { id: string; name: string };
   };
   /** The three potions `member` holds, granted during seeding as one batch. */
   grantedItems: { ids: string[] };
   /** `member`'s two Coin Tickets and one Blank Ticket. */
   usableItems: { ticketIds: string[]; blankTicketId: string };
+  /** `member`'s two MYO tickets. Two, so one can be spent and one kept. */
+  myoItems: { ticketIds: string[] };
   /**
    * Items standing in for what the migration produces: pre-existing holdings
    * with one IMPORT row each, all sharing a batch id. Deliberately larger than
@@ -71,6 +81,18 @@ export interface CommunityItemsWorld {
    * to a community, so a character trade cannot be scoped without one.
    */
   species: { id: string; name: string };
+  /**
+   * Three variants, of which the MYO ticket grants the first two.
+   *
+   * `rare` exists to be refused: a ticket good for two of three variants is
+   * the only shape that proves the allow-list is read at all, rather than the
+   * species being taken as permission for everything under it.
+   */
+  variants: {
+    common: { id: string; name: string };
+    uncommon: { id: string; name: string };
+    rare: { id: string; name: string };
+  };
   characters: {
     /** `member`'s. Open to trades, and nothing else. Changes hands. */
     bramblefoot: { id: string; name: string; url: string };
@@ -269,6 +291,20 @@ export default definePreset<CommunityItemsWorld>({
           communityId: community.id,
         },
       });
+
+    // Variants, for the MYO ticket further down. Created by commadmin for the
+    // same reason the species is: canEditSpecies is not on the Member role.
+    const variant = async (name: string) => {
+      const { createSpeciesVariant } = await ctx
+        .as("commadmin")
+        .gql(SeedCreateSpeciesVariantDocument, {
+          createSpeciesVariantInput: { name, speciesId: species.id },
+        });
+      return { id: createSpeciesVariant.id, name: createSpeciesVariant.name };
+    };
+    const common = await variant("Common");
+    const uncommon = await variant("Uncommon");
+    const rare = await variant("Rare");
 
     // assignToSelf, so each character is owned by whoever seeds it. The stock
     // Member role carries canCreateCharacter, so both members can.
@@ -490,6 +526,45 @@ export default definePreset<CommunityItemsWorld>({
       },
     );
 
+    // An MYO ticket: spend it, make a Thornwing. Good for Common or Uncommon
+    // but deliberately not Rare, so a spec can prove the ticket's allow-list
+    // is what is checked rather than the species.
+    const { createItemType: myoTicket } = await asQuartermaster.gql(
+      SeedCreateItemTypeDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Thornwing MYO Ticket",
+          category: "Redeemable",
+          isTradeable: true,
+          isConsumable: true,
+        },
+      },
+    );
+
+    await asQuartermaster.gql(SeedSetItemTypeMyoGrantDocument, {
+      input: {
+        itemTypeId: myoTicket.id,
+        speciesId: species.id,
+        speciesVariantIds: [common.id, uncommon.id],
+      },
+    });
+
+    // Two: one to spend, one still in hand afterwards. A single ticket cannot
+    // tell "the redemption consumed the right item" from "the redemption
+    // consumed everything".
+    const { grantItem: myoItems } = await asQuartermaster.gql(
+      SeedGrantItemDocument,
+      {
+        input: {
+          itemTypeId: myoTicket.id,
+          userId: member.userId,
+          quantity: 2,
+          reason: "Event prize",
+        },
+      },
+    );
+
     // ==================== Shop ====================
 
     // The member has 380 HC and 0 FT after the transfer above, so the
@@ -562,6 +637,7 @@ export default definePreset<CommunityItemsWorld>({
         bound: { id: bound.id, code: bound.code, name: bound.name },
       },
       species: { id: species.id, name: species.name },
+      variants: { common, uncommon, rare },
       characters: {
         bramblefoot,
         hearthstone,
@@ -595,11 +671,13 @@ export default definePreset<CommunityItemsWorld>({
         locket: { id: locket.id, name: locket.name },
         ticket: { id: ticket.id, name: ticket.name, payout: 250 },
         blankTicket: { id: blankTicket.id, name: blankTicket.name },
+        myoTicket: { id: myoTicket.id, name: myoTicket.name },
       },
       usableItems: {
         ticketIds: ticketItems.map((i) => i.id),
         blankTicketId: blankTicketItems[0].id,
       },
+      myoItems: { ticketIds: myoItems.map((i) => i.id) },
       grantedItems: { ids: grantItem.map((i) => i.id) },
       importedItems: {
         ids: importedIds,

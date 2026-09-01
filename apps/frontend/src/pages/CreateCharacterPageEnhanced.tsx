@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState, useMemo, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,6 +20,8 @@ import {
 } from "../components/GrantTargetSelector";
 import {
   useCreateCharacterMutation,
+  useCreateCharacterFromMyoTicketMutation,
+  useGetMyoTicketQuery,
   SpeciesDetailsFragment,
   SpeciesVariantDetailsFragment,
   CharacterTraitValueInput,
@@ -29,6 +31,7 @@ import { useGetCommunityMembersQuery } from "../graphql/communities.graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
+import { MyoTicketPanel } from "../components/character/MyoTicketPanel";
 import { TraitForm } from "../components/character/TraitForm";
 import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
 import { CustomFieldsEditor } from "../components/CustomFieldsEditor";
@@ -296,6 +299,26 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Spending a ticket, rather than creating outright.
+  //
+  // The ticket rides in the URL because the inventory's Use button is a link
+  // -- nothing is consumed by pressing it, and a member who wanders off has
+  // lost nothing. The id is the only thing carried; everything about what the
+  // ticket may make is read back from the server here, so a hand-edited URL
+  // buys nothing that the redemption would not refuse anyway.
+  const [searchParams] = useSearchParams();
+  const ticketId = searchParams.get("ticket");
+  const isMyo = Boolean(ticketId);
+
+  const { data: ticketData, loading: ticketLoading } = useGetMyoTicketQuery({
+    variables: { itemId: ticketId ?? "" },
+    skip: !ticketId,
+    fetchPolicy: "network-only",
+  });
+
+  const ticket = ticketData?.item ?? null;
+  const grant = ticket?.itemType?.useMyoGrant ?? null;
+
   // Species and variant state
   const [selectedSpecies, setSelectedSpecies] =
     useState<SpeciesDetailsFragment | null>(null);
@@ -343,8 +366,26 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     };
   }, [user]);
 
+  // The ticket names the species, so the selector never runs in MYO mode.
+  // An effect rather than initial state: the ticket arrives from a query.
+  useEffect(() => {
+    if (!grant) return;
+    setSelectedSpecies(grant.species);
+    // Auto-pick when there is nothing to pick. A one-variant ticket has one
+    // answer, and making the member click it is a step that cannot go any
+    // other way.
+    if (grant.variants.length === 1) {
+      setSelectedVariant(grant.variants[0]);
+    }
+  }, [grant]);
+
   // Check if user has permission to create orphaned characters in the selected species' community
   const canCreateOrphanedCharacter = useMemo(() => {
+    // Not offered under a ticket at any permission level. Orphaning needs
+    // canCreateOrphanedCharacter, and holding a ticket does not grant it --
+    // the server refuses it, so offering it here would only mean explaining
+    // the refusal afterwards.
+    if (isMyo) return false;
     if (!user || !selectedSpecies) return false;
     return (
       user.communityMemberships?.some(
@@ -392,6 +433,28 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     },
   });
 
+  const [redeemTicketMutation] = useCreateCharacterFromMyoTicketMutation({
+    // The inventory and its wallet are both stale the moment this lands: the
+    // ticket is gone. Evicting rather than refetching, since we navigate away
+    // from here and the next reader of those lists should be the one to pay
+    // for the query.
+    update: (cache) => {
+      cache.evict({ fieldName: "memberHoldings" });
+      cache.evict({ fieldName: "myCharacters" });
+      cache.gc();
+    },
+    onCompleted: (data) => {
+      toast.success(
+        `"${data.createCharacterFromMyoTicket.name}" made. Its traits are with staff for review.`,
+      );
+      navigate(`/character/${data.createCharacterFromMyoTicket.id}`);
+    },
+    onError: (error) => {
+      toast.error(error.message);
+      setIsSubmitting(false);
+    },
+  });
+
   // Form submission
   const onSubmit = async (data: CharacterForm) => {
     setIsSubmitting(true);
@@ -419,6 +482,34 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
         } catch {
           cleanedCustomFields = undefined;
         }
+      }
+
+      // A ticket redemption is a different mutation, not this one with a flag.
+      // It carries no registryId, no ownership target and no species: the
+      // ticket decides those, and a field that cannot be sent is a stronger
+      // guarantee than one validated away.
+      if (isMyo && ticketId) {
+        if (!selectedVariant) {
+          toast.error("Pick which variant to make");
+          setIsSubmitting(false);
+          return;
+        }
+
+        await redeemTicketMutation({
+          variables: {
+            input: {
+              itemId: ticketId,
+              speciesVariantId: selectedVariant.id,
+              name: data.name,
+              details: data.details || undefined,
+              customFields: cleanedCustomFields,
+              visibility: data.visibility,
+              tags: tags.length > 0 ? tags : undefined,
+              traitValues: traitValues.length > 0 ? traitValues : undefined,
+            },
+          },
+        });
+        return;
       }
 
       await createCharacterMutation({
@@ -470,7 +561,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
         Back
       </BackButton>
 
-      <Title>Create New Character</Title>
+      <Title>{isMyo ? "Make Your Own Character" : "Create New Character"}</Title>
 
       <Form onSubmit={handleSubmit(onSubmit)}>
         {/* Basic Information */}
@@ -502,47 +593,78 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           />
         </Section>
 
-        {/* Species Selection */}
+        {/* Species Selection, or the ticket that already decided it */}
         <Section>
-          <SpeciesSelector
-            selectedSpecies={selectedSpecies}
-            selectedVariant={selectedVariant}
-            onSpeciesChange={(species) => {
-              setSelectedSpecies(species);
-              if (!species) {
-                setRegistryId("");
-              }
-            }}
-            onVariantChange={setSelectedVariant}
-            error={
-              !selectedSpecies
-                ? "Species selection is required. Non-species character creation coming soon to all users!"
-                : undefined
-            }
-            userCommunityMemberships={user?.communityMemberships}
-          />
-
-          {selectedSpecies && (
-            <FormGroup style={{ marginTop: "1rem" }}>
-              <Label htmlFor="registryId">Official Identifier (Optional)</Label>
-              <Input
-                id="registryId"
-                value={registryId}
-                onChange={(e) => setRegistryId(e.target.value)}
-                placeholder="e.g., Strawberry Bliss, TH-042"
-                maxLength={100}
+          {isMyo ? (
+            grant ? (
+              <MyoTicketPanel
+                itemTypeName={ticket?.itemType?.name ?? "ticket"}
+                species={grant.species}
+                variants={grant.variants}
+                selectedVariantId={selectedVariant?.id}
+                onVariantChange={setSelectedVariant}
+                error={
+                  !selectedVariant ? "Pick which variant to make" : undefined
+                }
               />
-              <span
-                style={{
-                  fontSize: "0.875rem",
-                  color: "#666",
-                  marginTop: "0.25rem",
+            ) : (
+              // Every reason to be here -- spent, someone else's, never an MYO
+              // ticket at all -- is the same to a reader: this link does not
+              // work. The redemption would refuse it too; saying so now beats
+              // saying so after they have written a character.
+              <p data-testid="myo-ticket-unusable">
+                {ticketLoading
+                  ? "Checking your ticket…"
+                  : "That ticket cannot be used. It may already have been spent, or it may not be a ticket that makes characters."}
+              </p>
+            )
+          ) : (
+            <>
+              <SpeciesSelector
+                selectedSpecies={selectedSpecies}
+                selectedVariant={selectedVariant}
+                onSpeciesChange={(species) => {
+                  setSelectedSpecies(species);
+                  if (!species) {
+                    setRegistryId("");
+                  }
                 }}
-              >
-                An optional official identifier for this character within the
-                species.
-              </span>
-            </FormGroup>
+                onVariantChange={setSelectedVariant}
+                error={
+                  !selectedSpecies
+                    ? "Species selection is required. Non-species character creation coming soon to all users!"
+                    : undefined
+                }
+                userCommunityMemberships={user?.communityMemberships}
+              />
+
+              {/* Staff's to assign, so it is absent under a ticket. An
+                  approved MYO gets the next number in its species instead. */}
+              {selectedSpecies && (
+                <FormGroup style={{ marginTop: "1rem" }}>
+                  <Label htmlFor="registryId">
+                    Official Identifier (Optional)
+                  </Label>
+                  <Input
+                    id="registryId"
+                    value={registryId}
+                    onChange={(e) => setRegistryId(e.target.value)}
+                    placeholder="e.g., Strawberry Bliss, TH-042"
+                    maxLength={100}
+                  />
+                  <span
+                    style={{
+                      fontSize: "0.875rem",
+                      color: "#666",
+                      marginTop: "0.25rem",
+                    }}
+                  >
+                    An optional official identifier for this character within
+                    the species.
+                  </span>
+                </FormGroup>
+              )}
+            </>
           )}
         </Section>
 
@@ -721,13 +843,24 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           </CancelButton>
           <Button
             type="submit"
+            data-testid="submit-character"
             disabled={
               isSubmitting ||
               !selectedSpecies ||
+              // Under a ticket the variant is not optional: it is the one
+              // thing the ticket left to the member, and the server refuses a
+              // redemption without it.
+              (isMyo && (!grant || !selectedVariant)) ||
               (characterTarget?.type === "pending" && !isGrantTargetValid)
             }
           >
-            {isSubmitting ? "Creating..." : "Create Character"}
+            {isSubmitting
+              ? isMyo
+                ? "Spending ticket…"
+                : "Creating..."
+              : isMyo
+                ? "Spend ticket and make character"
+                : "Create Character"}
           </Button>
         </ButtonRow>
       </Form>

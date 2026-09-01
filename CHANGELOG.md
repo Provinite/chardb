@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **E2E: 25 MYO-ticket specs**, and three Thornwing variants in the
+  `community-items` preset with a ticket good for two of them (#168).
+
 ## [v11.8.0] - 2026-09-01
 
 ### Added

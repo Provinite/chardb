@@ -28,6 +28,7 @@ import {
   ItemType as ItemTypeEntity,
   ItemTypeConnection,
   ItemUsePayoutComponent,
+  ItemUseMyoGrant,
   UseItemResult,
 } from "./entities/item-type.entity";
 import { Item as ItemEntity } from "./entities/item.entity";
@@ -44,6 +45,7 @@ import {
   UpdateItemTypeInput,
   ItemTypeFiltersInput,
   SetItemTypeUsePayoutInput,
+  SetItemTypeMyoGrantInput,
   UseItemInput,
 } from "./dto/item-type.dto";
 import { GrantItemInput, UpdateItemInput } from "./dto/item.dto";
@@ -53,6 +55,8 @@ import {
 } from "./utils/item-type-resolver-mappers";
 import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 import { mapPrismaItemToGraphQL } from "./utils/item-resolver-mappers";
+import { mapPrismaSpeciesToGraphQL } from "../species/utils/species-resolver-mappers";
+import { mapPrismaSpeciesVariantToGraphQL } from "../species-variants/utils/species-variant-resolver-mappers";
 
 @Resolver(() => ItemTypeEntity)
 export class ItemsResolver {
@@ -144,6 +148,26 @@ export class ItemsResolver {
     const itemType = await this.itemsService.setItemTypePayout(
       input.itemTypeId,
       input.components,
+    );
+    return mapPrismaItemTypeToGraphQL(itemType);
+  }
+
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
+  @ResolveCommunityFrom({ itemTypeId: "input.itemTypeId" })
+  @Mutation(() => ItemTypeEntity, {
+    description:
+      "Set which characters a ticket of this type can make. Replaces the " +
+      "grant wholesale; an empty variant list clears it. Needs the same " +
+      "permission as editing the item type, because it hands out the right " +
+      "to create characters.",
+  })
+  async setItemTypeMyoGrant(
+    @Args("input") input: SetItemTypeMyoGrantInput,
+  ): Promise<ItemTypeEntity> {
+    const itemType = await this.itemsService.setItemTypeMyoGrant(
+      input.itemTypeId,
+      input.speciesId ?? null,
+      input.speciesVariantIds,
     );
     return mapPrismaItemTypeToGraphQL(itemType);
   }
@@ -374,6 +398,27 @@ export class ItemsResolver {
     @Parent() itemType: ItemTypeEntity,
   ): Promise<ItemUsePayoutComponent[]> {
     return this.itemsService.findItemTypePayout(itemType.id);
+  }
+
+  /** Null when this type makes nothing, which is almost all of them. */
+  @AllowUnauthenticated()
+  @ResolveField(() => ItemUseMyoGrant, {
+    name: "useMyoGrant",
+    nullable: true,
+  })
+  async resolveUseMyoGrant(
+    @Parent() itemType: ItemTypeEntity,
+  ): Promise<ItemUseMyoGrant | null> {
+    const grant = await this.itemsService.findItemTypeMyoGrant(itemType.id);
+    if (!grant) return null;
+
+    return {
+      id: grant.id,
+      species: mapPrismaSpeciesToGraphQL(grant.species),
+      variants: grant.variants.map((v) =>
+        mapPrismaSpeciesVariantToGraphQL(v.speciesVariant),
+      ),
+    };
   }
 
   @AllowUnauthenticated()
