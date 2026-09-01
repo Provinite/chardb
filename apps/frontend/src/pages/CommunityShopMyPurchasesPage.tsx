@@ -5,6 +5,7 @@ import { Receipt, Undo2, Search, X, Check } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import {
   useGetMyShopPurchaseLinesQuery,
   useRefundShopPurchaseLineMutation,
@@ -235,6 +236,15 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
   });
 
   const [refundLine] = useRefundShopPurchaseLineMutation();
+  /**
+   * The purchase awaiting a yes on Undo. Captured rather than re-read when the
+   * dialog renders, since the list refetches underneath it.
+   */
+  const [undoTarget, setUndoTarget] = useState<{
+    lineId: string;
+    item: string;
+    cost: string;
+  } | null>(null);
 
   const lines = data?.myShopPurchaseLines.lines ?? [];
   const total = data?.myShopPurchaseLines.total ?? 0;
@@ -254,6 +264,7 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
       toast.error(err instanceof Error ? err.message : "Could not undo that");
     } finally {
       setBusyLineId(null);
+      setUndoTarget(null);
     }
   };
 
@@ -360,7 +371,13 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
                 </What>
                 {line.refundableByViewer ? (
                   <UndoButton
-                    onClick={() => handleUndo(line.id)}
+                    onClick={() =>
+                      setUndoTarget({
+                        lineId: line.id,
+                        item: line.shopItem.name || line.shopItem.itemType.name,
+                        cost: formatPrice(line.costs),
+                      })
+                    }
                     disabled={busyLineId === line.id}
                     data-testid={`my-undo-${line.id}`}
                   >
@@ -399,6 +416,29 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
           </Footer>
         </>
       )}
+
+      {/* The same gate the shop sidebar's Undo has. Two buttons doing the
+          same irreversible thing, one asking and one not, is how the staff
+          refund ended up without one. */}
+      <ConfirmDialog
+        open={undoTarget !== null}
+        title={undoTarget ? `Undo buying ${undoTarget.item}?` : "Undo?"}
+        confirmLabel="Undo it"
+        busyLabel="Undoing…"
+        busy={busyLineId !== null}
+        onCancel={() => setUndoTarget(null)}
+        onConfirm={() => {
+          if (undoTarget) void handleUndo(undoTarget.lineId);
+        }}
+        testId="my-undo-dialog"
+      >
+        {undoTarget && (
+          <>
+            This returns <strong>{undoTarget.cost}</strong> and takes the item
+            back. If it is limited, someone else may buy it before you can.
+          </>
+        )}
+      </ConfirmDialog>
     </Container>
   );
 };

@@ -11,6 +11,7 @@ import {
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useShopCart, MAX_UNITS_PER_ITEM } from "../hooks/useShopCart";
 import {
   useGetShopItemsQuery,
@@ -422,6 +423,19 @@ export const CommunityShopPage: React.FC = () => {
   const { user } = useAuth();
   const cart = useShopCart(communityId);
   const [confirming, setConfirming] = useState(false);
+  /**
+   * The purchase awaiting a yes on Undo.
+   *
+   * Captured rather than looked up when the dialog renders: the panel
+   * refetches after every buy, and a dialog that re-read the row could name a
+   * different purchase than the one that was tapped.
+   */
+  const [undoTarget, setUndoTarget] = useState<{
+    lineId: string;
+    item: string;
+    cost: string;
+  } | null>(null);
+  const [undoing, setUndoing] = useState(false);
 
   const { data, loading, error, refetch } = useGetShopItemsQuery({
     variables: { communityId: communityId as string },
@@ -523,12 +537,16 @@ export const CommunityShopPage: React.FC = () => {
   };
 
   const handleUndo = async (lineId: string) => {
+    setUndoing(true);
     try {
       await refundLine({ variables: { lineId } });
       toast.success("Refunded");
       await Promise.all([refetch(), refetchPurchases(), refetchWallet()]);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not undo that");
+    } finally {
+      setUndoing(false);
+      setUndoTarget(null);
     }
   };
 
@@ -721,7 +739,14 @@ export const CommunityShopPage: React.FC = () => {
                   </CartName>
                   {line.refundableByViewer ? (
                     <UndoButton
-                      onClick={() => handleUndo(line.id)}
+                      onClick={() =>
+                        setUndoTarget({
+                          lineId: line.id,
+                          item:
+                            line.shopItem.name || line.shopItem.itemType.name,
+                          cost: formatPrice(line.costs),
+                        })
+                      }
                       data-testid={`undo-${line.id}`}
                     >
                       <Undo2 size={12} /> Undo
@@ -785,6 +810,32 @@ export const CommunityShopPage: React.FC = () => {
           </ModalActions>
         </ModalContent>
       </Modal>
+
+      {/* Undo is the recovery path, so gating it is a real trade-off. It gets
+          a gate anyway, because undoing is not reliably reversible either: it
+          returns the copy to a limited stock, and if someone else takes it --
+          or the listing caps how many one person may hold -- re-buying is not
+          available. Same one-tap-and-it-happened shape the staff refund had,
+          and the reporter's point about mobile applies here too. */}
+      <ConfirmDialog
+        open={undoTarget !== null}
+        title={undoTarget ? `Undo buying ${undoTarget.item}?` : "Undo?"}
+        confirmLabel="Undo it"
+        busyLabel="Undoing…"
+        busy={undoing}
+        onCancel={() => setUndoTarget(null)}
+        onConfirm={() => {
+          if (undoTarget) void handleUndo(undoTarget.lineId);
+        }}
+        testId="undo-dialog"
+      >
+        {undoTarget && (
+          <>
+            This returns <strong>{undoTarget.cost}</strong> and takes the item
+            back. If it is limited, someone else may buy it before you can.
+          </>
+        )}
+      </ConfirmDialog>
     </Container>
   );
 };

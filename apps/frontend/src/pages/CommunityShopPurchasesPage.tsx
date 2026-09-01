@@ -5,6 +5,7 @@ import { Receipt, Undo2, Search, X } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import {
   useGetCommunityShopPurchasesQuery,
@@ -154,6 +155,19 @@ export const CommunityShopPurchasesPage: React.FC = () => {
     useUserCommunityRole(communityId);
   const [query, setQuery] = useState("");
   const [busyLineId, setBusyLineId] = useState<string | null>(null);
+  /**
+   * The refund awaiting a yes.
+   *
+   * Everything the dialog says is captured here rather than looked up again
+   * when it renders: the list refetches, and a dialog that re-read the row
+   * could end up naming a different purchase than the one that was clicked.
+   */
+  const [pending, setPending] = useState<{
+    lineId: string;
+    item: string;
+    buyer: string;
+    cost: string;
+  } | null>(null);
 
   const { data, loading, error, refetch } = useGetCommunityShopPurchasesQuery({
     variables: { communityId: communityId as string, limit: 50 },
@@ -191,6 +205,7 @@ export const CommunityShopPurchasesPage: React.FC = () => {
       toast.error(err instanceof Error ? err.message : "Could not refund that");
     } finally {
       setBusyLineId(null);
+      setPending(null);
     }
   };
 
@@ -299,10 +314,14 @@ export const CommunityShopPurchasesPage: React.FC = () => {
                     disabled={busyLineId === line.id}
                     data-testid={`staff-refund-${line.id}`}
                     onClick={() =>
-                      handleRefund(
-                        line.id,
-                        line.shopItem.name || line.shopItem.itemType.name,
-                      )
+                      setPending({
+                        lineId: line.id,
+                        item: line.shopItem.name || line.shopItem.itemType.name,
+                        buyer:
+                          purchase.buyer?.displayName ||
+                          `@${purchase.buyer?.username ?? "someone"}`,
+                        cost: formatPrice(line.costs),
+                      })
                     }
                   >
                     <Undo2 size={14} />{" "}
@@ -319,6 +338,35 @@ export const CommunityShopPurchasesPage: React.FC = () => {
           </Purchase>
         ))
       )}
+
+      {/* A staff refund is irreversible the moment it lands -- it returns the
+          coin and destroys the item, and there is no un-refund -- so it never
+          happens on a single click. The buyer's own undo, one screen over,
+          has had this gate since it shipped. Naming the member and the item
+          matters here in a way it does not there: this page lists many
+          people's purchases and the rows look alike. */}
+      <ConfirmDialog
+        open={pending !== null}
+        destructive
+        title={
+          pending ? `Refund ${pending.item} to ${pending.buyer}?` : "Refund?"
+        }
+        confirmLabel="Refund"
+        busyLabel="Refunding…"
+        busy={busyLineId !== null}
+        onCancel={() => setPending(null)}
+        onConfirm={() => {
+          if (pending) void handleRefund(pending.lineId, pending.buyer);
+        }}
+        testId="staff-refund-dialog"
+      >
+        {pending && (
+          <>
+            This returns <strong>{pending.cost}</strong> and destroys the item.
+            It cannot be undone.
+          </>
+        )}
+      </ConfirmDialog>
     </Container>
   );
 };

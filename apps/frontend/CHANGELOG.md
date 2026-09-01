@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Refunding now asks first**, on all three buttons that do it: the staff
+  refund, the shop sidebar's Undo, and Undo in your own purchase history. The
+  dialog names the member, the item and the amount (#296).
+
 ### Fixed
 
 - **My Characters showed only the first 20, silently.** It now states how many
