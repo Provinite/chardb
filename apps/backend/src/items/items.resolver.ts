@@ -12,7 +12,9 @@ import { NotFoundException } from "@nestjs/common";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
+import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
+import { mapPrismaCurrencyToGraphQL } from "../currencies/utils/currency-resolver-mappers";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { ItemsService } from "./items.service";
@@ -25,6 +27,8 @@ import { mapPrismaPendingOwnershipToGraphQL } from "../pending-ownership/utils/p
 import {
   ItemType as ItemTypeEntity,
   ItemTypeConnection,
+  ItemUsePayoutComponent,
+  UseItemResult,
 } from "./entities/item-type.entity";
 import { Item as ItemEntity } from "./entities/item.entity";
 import { ItemEconomyReport } from "./entities/item-economy.entity";
@@ -39,6 +43,8 @@ import {
   CreateItemTypeInput,
   UpdateItemTypeInput,
   ItemTypeFiltersInput,
+  ItemUsePayoutComponentInput,
+  UseItemInput,
 } from "./dto/item-type.dto";
 import { GrantItemInput, UpdateItemInput } from "./dto/item.dto";
 import {
@@ -122,6 +128,26 @@ export class ItemsResolver {
     @Args("id", { type: () => ID }) id: string,
   ): Promise<boolean> {
     return this.itemsService.deleteItemType(id);
+  }
+
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
+  @ResolveCommunityFrom({ itemTypeId: "itemTypeId" })
+  @Mutation(() => ItemTypeEntity, {
+    description:
+      "Set what using one of these pays its holder. Replaces the payout " +
+      "wholesale; an empty list clears it. Needs the same permission as " +
+      "editing the item type, because it is minting rights.",
+  })
+  async setItemTypeUsePayout(
+    @Args("itemTypeId", { type: () => ID }) itemTypeId: string,
+    @Args("components", { type: () => [ItemUsePayoutComponentInput] })
+    components: ItemUsePayoutComponentInput[],
+  ): Promise<ItemTypeEntity> {
+    const itemType = await this.itemsService.setItemTypePayout(
+      itemTypeId,
+      components,
+    );
+    return mapPrismaItemTypeToGraphQL(itemType);
   }
 
   // ==================== ItemType Queries ====================
@@ -305,7 +331,52 @@ export class ItemsResolver {
     });
   }
 
+  // Only membership, not a permission: using your own item is not a staff act.
+  // The service does the rest -- that you hold it, that it is consumable, that
+  // it pays something, and that the currency is still live.
+  @AllowAnyAuthenticated()
+  @Mutation(() => UseItemResult, {
+    description:
+      "Use one of your items up. Destroys it and pays what its type is worth " +
+      "in one transaction, under one batch id across both ledgers.",
+  })
+  async useItem(
+    @Args("input") input: UseItemInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<UseItemResult> {
+    const result = await this.itemsService.useItem(input.itemId, user.id);
+    return {
+      itemTypeName: result.itemTypeName,
+      batchId: result.batchId,
+      payout: result.payout.map((p) => ({
+        id: p.id,
+        currency: mapPrismaCurrencyToGraphQL(p.currency),
+        amount: p.amount,
+      })),
+    };
+  }
+
   // ==================== Field Resolvers ====================
+
+  /**
+   * Resolved per item type rather than included in every read.
+   *
+   * The alternative was widening the mapper and remembering the include on
+   * each of the several paths that read item types -- and a path that forgot
+   * would report an empty payout, which reads as "this pays nothing" rather
+   * than as a missing join. A wrong answer beats a slow one only if you never
+   * find out, and members would not.
+   *
+   * One query per item type on a list, in a codebase with no DataLoader
+   * anywhere (#97). Worth revisiting with the rest of them, not before.
+   */
+  @AllowUnauthenticated()
+  @ResolveField(() => [ItemUsePayoutComponent], { name: "usePayout" })
+  async resolveUsePayout(
+    @Parent() itemType: ItemTypeEntity,
+  ): Promise<ItemUsePayoutComponent[]> {
+    return this.itemsService.findItemTypePayout(itemType.id);
+  }
 
   @AllowUnauthenticated()
   @ResolveField(() => Community, { nullable: true })

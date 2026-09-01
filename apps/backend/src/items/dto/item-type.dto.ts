@@ -12,6 +12,38 @@ import {
   Max,
 } from "class-validator";
 
+/**
+ * What to use, and anything that use needs to know.
+ *
+ * An input object rather than a bare `itemId` argument, because using is going
+ * to grow arguments. Paying out needs nothing beyond the item; an MYO ticket
+ * will need a species and a variant, an edit ticket a character and a trait.
+ * Optional fields can be added to an input type without breaking a caller; a
+ * new required *argument* on a mutation cannot.
+ */
+@InputType()
+export class UseItemInput {
+  @Field(() => ID)
+  @IsUUID()
+  itemId: string;
+}
+
+@InputType({
+  description:
+    "One currency and how much of it using this item pays. Name each " +
+    "currency once; say the total rather than listing it twice.",
+})
+export class ItemUsePayoutComponentInput {
+  @Field(() => ID)
+  @IsUUID()
+  currencyId: string;
+
+  @Field(() => Int)
+  @IsNumber()
+  @Min(1)
+  amount: number;
+}
+
 @InputType()
 export class CreateItemTypeInput {
   @Field()

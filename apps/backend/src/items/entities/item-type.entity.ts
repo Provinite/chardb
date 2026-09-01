@@ -3,6 +3,50 @@ import { GraphQLJSON } from "graphql-type-json";
 import { Community } from "../../communities/entities/community.entity";
 import { CommunityColor } from "../../community-colors/entities/community-color.entity";
 import { Image } from "../../images/entities/image.entity";
+import { Currency } from "../../currencies/entities/currency.entity";
+
+/** One currency and how much of it using this item pays. */
+@ObjectType()
+export class ItemUsePayoutComponent {
+  @Field(() => ID)
+  id: string;
+
+  @Field(() => Currency)
+  currency: Currency;
+
+  @Field(() => Int)
+  amount: number;
+}
+
+/**
+ * What one use produced.
+ *
+ * Returns the payout rather than just a boolean so the caller can say "you got
+ * 100 HC" without a second round trip -- and the item it came from is gone by
+ * then, so re-reading is not an option.
+ */
+@ObjectType()
+export class UseItemResult {
+  @Field({ description: "What was used up, for the message." })
+  itemTypeName: string;
+
+  @Field({
+    description:
+      "Shared by the USE row on the item ledger and every credit on the " +
+      "currency ledger, so one use reads as one event.",
+  })
+  batchId: string;
+
+  /**
+   * What this use paid, if it paid anything.
+   *
+   * A sibling rather than the whole result: an MYO ticket will return a
+   * character here beside an empty payout, and a trait-edit ticket the
+   * character it changed. Adding those is an additive change to this type.
+   */
+  @Field(() => [ItemUsePayoutComponent])
+  payout: ItemUsePayoutComponent[];
+}
 
 @ObjectType()
 export class ItemType {
@@ -28,8 +72,22 @@ export class ItemType {
   @Field()
   isTradeable: boolean;
 
-  @Field()
+  @Field({
+    description:
+      "Whether a holder can use one up. Using destroys the item, which is " +
+      "why anything with a payout must be consumable.",
+  })
   isConsumable: boolean;
+
+  // Optional in TypeScript, non-null in GraphQL: a field resolver always
+  // supplies it, so nothing constructing an ItemType has to carry it. Same
+  // arrangement as `community` above.
+  @Field(() => [ItemUsePayoutComponent], {
+    description:
+      "What using one pays its holder. Empty when it pays nothing, which is " +
+      "most item types.",
+  })
+  usePayout?: ItemUsePayoutComponent[];
 
   // Not a GraphQL field - used internally by field resolver
   imageId?: string | null;

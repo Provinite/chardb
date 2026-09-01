@@ -1037,6 +1037,7 @@ enum CurrencyTransactionKind {
 enum CurrencyTransactionSource {
   """Somebody acted directly, with no other record behind it."""
   DIRECT
+  ITEM_USE
 
   """
   Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media.
@@ -1614,11 +1615,16 @@ type ItemType {
   description: String
   id: ID!
   image: Image
+
+  """
+  Whether a holder can use one up. Using destroys the item, which is why anything with a payout must be consumable.
+  """
   isConsumable: Boolean!
   isTradeable: Boolean!
   metadata: JSON
   name: String!
   updatedAt: DateTime!
+  usePayout: [ItemUsePayoutComponent!]!
 }
 
 type ItemTypeConnection {
@@ -1656,6 +1662,20 @@ input ItemTypeFiltersInput {
   limit: Int! = 20
   offset: Int! = 0
   search: String
+}
+
+type ItemUsePayoutComponent {
+  amount: Int!
+  currency: Currency!
+  id: ID!
+}
+
+"""
+One currency and how much of it using this item pays. Name each currency once; say the total rather than listing it twice.
+"""
+input ItemUsePayoutComponentInput {
+  amount: Int!
+  currencyId: ID!
 }
 
 """
@@ -2287,6 +2307,11 @@ type Mutation {
     """Main media setting parameters"""
     input: SetMainMediaInput!
   ): Character!
+
+  """
+  Set what using one of these pays its holder. Replaces the payout wholesale; an empty list clears it. Needs the same permission as editing the item type, because it is minting rights.
+  """
+  setItemTypeUsePayout(components: [ItemUsePayoutComponentInput!]!, itemTypeId: ID!): ItemType!
   signup(input: SignupInput!): AuthPayload!
   toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
@@ -2440,6 +2465,11 @@ type Mutation {
     """Trait order updates for a species variant"""
     input: UpdateTraitOrdersInput!
   ): [TraitListEntry!]!
+
+  """
+  Use one of your items up. Destroys it and pays what its type is worth in one transaction, under one batch id across both ledgers.
+  """
+  useItem(input: UseItemInput!): UseItemResult!
 }
 
 """
@@ -4323,6 +4353,21 @@ input UpdateUserInput {
   displayName: String
   privacySettings: JSON
   website: String
+}
+
+input UseItemInput {
+  itemId: ID!
+}
+
+type UseItemResult {
+  """
+  Shared by the USE row on the item ledger and every credit on the currency ledger, so one use reads as one event.
+  """
+  batchId: String!
+
+  """What was used up, for the message."""
+  itemTypeName: String!
+  payout: [ItemUsePayoutComponent!]!
 }
 
 type User {

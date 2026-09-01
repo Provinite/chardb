@@ -11,6 +11,7 @@ import { DiscordService } from "../discord/discord.service";
 import {
   Prisma,
   ExternalAccountProvider,
+  CurrencyTransactionSource,
   ItemTransactionKind,
   ItemTransactionSource,
   NotificationKind,
@@ -21,6 +22,7 @@ import {
   type DbClient,
 } from "../item-transactions/item-transactions.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { ItemTypeFilters } from "./dto/item-type.dto";
 import { ItemFilters, MAX_GRANT_QUANTITY } from "./dto/item.dto";
 
@@ -44,6 +46,42 @@ export interface ItemActor {
   staffNote?: string | null;
 }
 
+/**
+ * The optional half of destroying items.
+ *
+ * An options object rather than five trailing positionals: callers were
+ * already writing `undefined, null, "user1"` to reach the one they wanted,
+ * which is a signature that tells the reader nothing about what it is doing.
+ */
+export interface DestroyItemsOptions {
+  source?: ItemTransactionSource;
+  sourceId?: string | null;
+  /**
+   * Refuse unless the items are still held by this user.
+   *
+   * For callers whose right to destroy depends on who owns the item -- a
+   * refund may only take back what the buyer still has -- checking the owner
+   * before calling here is not enough, because a trade can land in between.
+   * Passed through to the UPDATE itself so the database re-evaluates it
+   * under the row lock.
+   */
+  expectedOwnerId?: string;
+  /**
+   * Why the item is gone. Defaults to REVOKE, which is staff taking it back.
+   * A holder using one up is a USE, and the difference is the whole of what
+   * the provenance page can tell a reader about what happened to it.
+   */
+  kind?: ItemTransactionKind;
+  /**
+   * Share a batch id with whatever else this destruction is part of.
+   *
+   * Using an item writes to two ledgers -- the item is destroyed, the coin is
+   * created -- and the pair is only recognisable as one event if both carry
+   * the same id.
+   */
+  batchId?: string;
+}
+
 @Injectable()
 export class ItemsService {
   constructor(
@@ -52,6 +90,7 @@ export class ItemsService {
     private readonly discordService: DiscordService,
     private readonly itemTransactions: ItemTransactionsService,
     private readonly notifications: NotificationsService,
+    private readonly currencyLedger: CurrencyLedgerService,
   ) {}
 
   // ==================== ItemType Methods ====================
@@ -178,6 +217,98 @@ export class ItemsService {
       }
       throw error;
     }
+  }
+
+  /**
+   * Set, replace, or clear what using one of these pays out.
+   *
+   * Replaces wholesale rather than merging. A payout is read as a set -- "this
+   * ticket is worth 100 coin" -- and a partial update would leave staff
+   * guessing whether a currency they did not mention is still in there.
+   *
+   * An empty list clears it, which is how a payout is removed. There is no
+   * separate delete: "pays nothing" and "has no payout" are the same state,
+   * and two ways to reach it would be two things to keep in step.
+   */
+  async setItemTypePayout(
+    itemTypeId: string,
+    components: Array<{ currencyId: string; amount: number }>,
+  ) {
+    const itemType = await this.db.itemType.findUnique({
+      where: { id: itemTypeId },
+      select: { id: true, name: true, communityId: true, isConsumable: true },
+    });
+    if (!itemType) {
+      throw new NotFoundException(`ItemType with ID ${itemTypeId} not found`);
+    }
+
+    if (components.length === 0) {
+      await this.db.itemUsePayout.deleteMany({ where: { itemTypeId } });
+      return this.findItemTypeById(itemTypeId);
+    }
+
+    // Consumable is what makes using destroy the item, and destroying it is
+    // the only thing stopping a payout being pressed forever. Refused here
+    // rather than at use, so staff find out when they are configuring it
+    // instead of a member finding out when it does not work.
+    if (!itemType.isConsumable) {
+      throw new BadRequestException(
+        `${itemType.name} is not consumable, so using it would not use it up. A payout needs a consumable item.`,
+      );
+    }
+
+    const ids = components.map((c) => c.currencyId);
+    if (new Set(ids).size !== ids.length) {
+      throw new BadRequestException(
+        "A payout names the same currency twice. Say the total once instead.",
+      );
+    }
+    if (components.some((c) => !Number.isInteger(c.amount) || c.amount <= 0)) {
+      throw new BadRequestException("A payout must pay a whole positive amount");
+    }
+
+    // The same two checks the shop makes on a price, for the same two
+    // reasons: paying another community's coin is the cross-community hole,
+    // and an archived currency cannot be created, so a payout naming one would
+    // render as a reward that never arrives.
+    const currencies = await this.db.currency.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, communityId: true, archivedAt: true, name: true },
+    });
+    for (const id of ids) {
+      const currency = currencies.find((c) => c.id === id);
+      if (!currency || currency.communityId !== itemType.communityId) {
+        throw new BadRequestException(
+          "A payout names a currency from another community",
+        );
+      }
+      if (currency.archivedAt) {
+        throw new BadRequestException(
+          `${currency.name} is archived and cannot be paid out`,
+        );
+      }
+    }
+
+    await this.db.$transaction(async (tx) => {
+      await tx.itemUsePayout.deleteMany({ where: { itemTypeId } });
+      await tx.itemUsePayout.create({
+        data: {
+          itemTypeId,
+          components: { create: components },
+        },
+      });
+    });
+
+    return this.findItemTypeById(itemTypeId);
+  }
+
+  /** What using one of these pays, or an empty list when it pays nothing. */
+  async findItemTypePayout(itemTypeId: string) {
+    const payout = await this.db.itemUsePayout.findUnique({
+      where: { itemTypeId },
+      include: { components: { include: { currency: true } } },
+    });
+    return payout?.components ?? [];
   }
 
   // ==================== Item Methods ====================
@@ -547,6 +678,164 @@ export class ItemsService {
    * Takes a list because revoking two of someone's three potions now means
    * naming two specific items, and the whole revoke should land as one event.
    */
+  /**
+   * Spend one of your items and take what it pays.
+   *
+   * Destroying and paying happen in one transaction under one batch id, so the
+   * item ledger's USE row and the currency ledger's credit are recognisable as
+   * two halves of one event rather than two things that happened to coincide.
+   *
+   * The ownership predicate rides in the UPDATE rather than being trusted from
+   * the read, which is what makes a double-click safe: the second one destroys
+   * nothing, fails, and pays nothing. Getting this wrong on a feature that
+   * creates currency is the difference between a bug and a mint.
+   *
+   * Every check the admin form already made is made again here, because none
+   * of them stay true on their own -- staff can archive the currency, or clear
+   * the payout, between the button rendering and the press landing.
+   */
+  async useItem(itemId: string, userId: string) {
+    const item = await this.db.item.findFirst({
+      where: { id: itemId, destroyedAt: null },
+      include: {
+        itemType: {
+          include: {
+            usePayout: {
+              include: { components: { include: { currency: true } } },
+            },
+          },
+        },
+      },
+    });
+
+    if (!item) {
+      throw new NotFoundException(
+        "That item does not exist, or is already gone",
+      );
+    }
+    if (item.ownerId !== userId) {
+      throw new BadRequestException("That item is not yours to use");
+    }
+    if (!item.itemType.isConsumable) {
+      throw new BadRequestException(`${item.itemType.name} cannot be used`);
+    }
+
+    // What this item type actually does. One effect today; the shape is here
+    // so the second one is a branch rather than a rewrite of everything
+    // around it.
+    const effect = await this.resolveUseEffect(item.itemType, userId);
+
+    const batchId = randomUUID();
+
+    return this.db.$transaction(async (tx) => {
+      // Destroyed first, and conditionally on still being this member's, so
+      // the effect only ever runs for a use that actually consumed something.
+      // A second click destroys nothing, throws, and applies nothing -- which
+      // on a feature that creates currency is the difference between a bug
+      // and a mint.
+      await this.destroyItems(
+        tx,
+        [itemId],
+        { actorUserId: userId, reason: `Used ${item.itemType.name}` },
+        {
+          kind: ItemTransactionKind.USE,
+          expectedOwnerId: userId,
+          batchId,
+        },
+      );
+
+      const payout = await this.applyCurrencyPayout(
+        tx,
+        effect.payout,
+        { userId, itemId, itemTypeName: item.itemType.name, batchId },
+      );
+
+      return { itemTypeName: item.itemType.name, batchId, payout };
+    });
+  }
+
+  /**
+   * Work out what using this type does, and refuse now if it cannot.
+   *
+   * Everything here was already checked when staff configured the payout. It
+   * is checked again because none of it stays true on its own: a currency can
+   * be archived, or the payout cleared, between the button rendering and the
+   * press landing. Same reason a trade re-checks its lines at settlement.
+   */
+  private async resolveUseEffect(
+    itemType: Prisma.ItemTypeGetPayload<{
+      include: {
+        usePayout: { include: { components: { include: { currency: true } } } };
+      };
+    }>,
+    userId: string,
+  ) {
+    const payout = itemType.usePayout?.components ?? [];
+
+    if (payout.length === 0) {
+      // Consumable but doing nothing. Using it would destroy the item and
+      // give the holder nothing, which is worth refusing rather than doing
+      // quietly. When there are other effects this becomes "no effect at all".
+      throw new BadRequestException(`${itemType.name} does nothing yet`);
+    }
+
+    const archived = payout.find((c) => c.currency.archivedAt);
+    if (archived) {
+      throw new BadRequestException(
+        `${archived.currency.name} is archived, so ${itemType.name} cannot be used right now`,
+      );
+    }
+
+    // Coin only exists inside a community for its members. Checked before
+    // anything is destroyed, so a non-member is refused rather than left with
+    // neither the item nor the payout.
+    const membership = await this.db.communityMember.count({
+      where: { userId, role: { communityId: itemType.communityId } },
+    });
+    if (membership === 0) {
+      throw new BadRequestException(
+        "You must be a member of this community to use that",
+      );
+    }
+
+    return { payout };
+  }
+
+  /** Pay a use's currency components, on the use's transaction and batch. */
+  private async applyCurrencyPayout(
+    tx: Prisma.TransactionClient,
+    components: Prisma.ItemUsePayoutComponentGetPayload<{
+      include: { currency: true };
+    }>[],
+    context: {
+      userId: string;
+      itemId: string;
+      itemTypeName: string;
+      batchId: string;
+    },
+  ) {
+    for (const component of components) {
+      await this.currencyLedger.credit({
+        currencyId: component.currencyId,
+        awards: [{ userId: context.userId, amount: component.amount }],
+        reason: `Used ${context.itemTypeName}`,
+        actorUserId: context.userId,
+        source: CurrencyTransactionSource.ITEM_USE,
+        // The item, not its type: it is the thing destroyed to produce this
+        // coin, and the USE row on the other ledger names it too.
+        sourceId: context.itemId,
+        tx,
+        batchId: context.batchId,
+      });
+    }
+
+    return components.map((c) => ({
+      id: c.id,
+      currency: c.currency,
+      amount: c.amount,
+    }));
+  }
+
   async revokeItems(itemIds: string[], actor: ItemActor) {
     if (itemIds.length === 0) {
       throw new BadRequestException("No items given to revoke");
@@ -561,23 +850,22 @@ export class ItemsService {
    * transaction -- a shop refund handing back the coin in the same breath --
    * can revoke within it rather than opening a second one.
    */
+  /**
+   * @see DestroyItemsOptions
+   */
   async destroyItems(
     client: DbClient,
     itemIds: string[],
     actor: ItemActor,
-    source?: ItemTransactionSource,
-    sourceId?: string | null,
-    /**
-     * Refuse unless the items are still held by this user.
-     *
-     * For callers whose right to destroy depends on who owns the item -- a
-     * refund may only take back what the buyer still has -- checking the owner
-     * before calling here is not enough, because a trade can land in between.
-     * Passed through to the UPDATE itself so the database re-evaluates it
-     * under the row lock.
-     */
-    expectedOwnerId?: string,
+    options: DestroyItemsOptions = {},
   ) {
+    const {
+      source,
+      sourceId,
+      expectedOwnerId,
+      kind = ItemTransactionKind.REVOKE,
+      batchId,
+    } = options;
     const items = await client.item.findMany({
       where: { id: { in: itemIds }, destroyedAt: null },
       // `name` is here for the revoke notification, which needs something to
@@ -634,10 +922,11 @@ export class ItemsService {
         communityId: items[0].itemType.communityId,
         itemTypeId: items[0].itemTypeId,
         itemIds,
-        kind: ItemTransactionKind.REVOKE,
+        kind,
         fromUserId: items[0].ownerId,
         source,
         sourceId,
+        batchId,
         ...actor,
       },
       client,

@@ -1,4 +1,4 @@
-import { Module } from "@nestjs/common";
+import { Module, forwardRef } from "@nestjs/common";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
 import { NotificationsModule } from "../notifications/notifications.module";
@@ -11,7 +11,10 @@ import {
 } from "./currencies.resolver";
 
 @Module({
-  imports: [DatabaseModule, AuthModule, NotificationsModule],
+  // forwardRef on AuthModule: it reaches UsersModule, which imports
+  // ItemsModule, which now imports this one for item-use payouts. AuthModule
+  // already holds UsersModule at arm's length for the same reason.
+  imports: [DatabaseModule, forwardRef(() => AuthModule), NotificationsModule],
   providers: [
     CurrenciesService,
     CurrencyLedgerService,

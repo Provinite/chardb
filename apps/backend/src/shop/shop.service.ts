@@ -937,9 +937,11 @@ export class ShopService {
         tx,
         [grant.itemId],
         { actorUserId: actorId, reason: "Shop purchase refunded" },
-        ItemTransactionSource.SHOP_PURCHASE,
-        lineId,
-        line.purchase.buyerId,
+        {
+          source: ItemTransactionSource.SHOP_PURCHASE,
+          sourceId: lineId,
+          expectedOwnerId: line.purchase.buyerId,
+        },
       );
 
       // Only when the listing tracks stock at all. Incrementing a null would

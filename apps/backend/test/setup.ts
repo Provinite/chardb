@@ -22,6 +22,11 @@ const mockPrismaService = {
     delete: jest.fn(),
     count: jest.fn(),
   },
+  itemUsePayout: {
+    findUnique: jest.fn(),
+    create: jest.fn(),
+    deleteMany: jest.fn(),
+  },
   characterOwnershipChange: {
     create: jest.fn(),
     createMany: jest.fn(),
