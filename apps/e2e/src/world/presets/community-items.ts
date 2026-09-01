@@ -444,8 +444,10 @@ export default definePreset<CommunityItemsWorld>({
     );
 
     await asQuartermaster.gql(SeedSetItemTypeUsePayoutDocument, {
-      itemTypeId: ticket.id,
-      components: [{ currencyId: coin.id, amount: 250 }],
+      input: {
+        itemTypeId: ticket.id,
+        components: [{ currencyId: coin.id, amount: 250 }],
+      },
     });
 
     const { grantItem: ticketItems } = await asQuartermaster.gql(

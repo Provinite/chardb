@@ -360,11 +360,8 @@ export const USE_ITEM = gql`
 `;
 
 export const SET_ITEM_TYPE_USE_PAYOUT = gql`
-  mutation SetItemTypeUsePayout(
-    $itemTypeId: ID!
-    $components: [ItemUsePayoutComponentInput!]!
-  ) {
-    setItemTypeUsePayout(itemTypeId: $itemTypeId, components: $components) {
+  mutation SetItemTypeUsePayout($input: SetItemTypeUsePayoutInput!) {
+    setItemTypeUsePayout(input: $input) {
       ...ItemTypeFields
     }
   }

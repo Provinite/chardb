@@ -26,6 +26,9 @@ import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { ItemTypeFilters } from "./dto/item-type.dto";
 import { ItemFilters, MAX_GRANT_QUANTITY } from "./dto/item.dto";
 
+/** The ceiling every other currency amount in the app carries. */
+const MAX_PAYOUT_AMOUNT = 1_000_000_000;
+
 export interface PendingOwnerInput {
   provider: ExternalAccountProvider;
   providerAccountId: string;
@@ -263,9 +266,20 @@ export class ItemsService {
         "A payout names the same currency twice. Say the total once instead.",
       );
     }
-    if (components.some((c) => !Number.isInteger(c.amount) || c.amount <= 0)) {
+    // The bound lives here as well as on the DTO, because the DTO's is the
+    // one that used to not run: a bare `@Args` array is skipped by Nest's
+    // ValidationPipe entirely. Wrapping the input fixed that, and this stays
+    // so the rule does not depend on remembering why the wrapper exists.
+    if (
+      components.some(
+        (c) =>
+          !Number.isInteger(c.amount) ||
+          c.amount <= 0 ||
+          c.amount > MAX_PAYOUT_AMOUNT,
+      )
+    ) {
       throw new BadRequestException(
-        "A payout must pay a whole positive amount",
+        `A payout must pay a whole amount between 1 and ${MAX_PAYOUT_AMOUNT.toLocaleString()}`,
       );
     }
 

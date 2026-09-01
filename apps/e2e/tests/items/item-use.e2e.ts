@@ -121,8 +121,10 @@ test.describe("using an item", () => {
     // Refused where staff can see it, rather than at use in front of a member.
     await expect(
       world.as("quartermaster").gql(SeedSetItemTypeUsePayoutDocument, {
-        itemTypeId: world.itemTypes.locket.id,
-        components: [{ currencyId: world.currencies.coin.id, amount: 10 }],
+        input: {
+          itemTypeId: world.itemTypes.locket.id,
+          components: [{ currencyId: world.currencies.coin.id, amount: 10 }],
+        },
       }),
     ).rejects.toThrow(/not consumable/i);
   });
@@ -130,18 +132,87 @@ test.describe("using an item", () => {
   test("a payout cannot name an archived currency", async ({ world }) => {
     await expect(
       world.as("quartermaster").gql(SeedSetItemTypeUsePayoutDocument, {
-        itemTypeId: world.itemTypes.ticket.id,
-        components: [{ currencyId: world.currencies.retired.id, amount: 10 }],
+        input: {
+          itemTypeId: world.itemTypes.ticket.id,
+          components: [{ currencyId: world.currencies.retired.id, amount: 10 }],
+        },
       }),
     ).rejects.toThrow(/archived/i);
+  });
+
+  test("refuses a payout above the ceiling every other amount carries", async ({
+    world,
+  }) => {
+    // Belt and braces: the DTO's @Max and the service check both cover this,
+    // so it passes whichever fires. The test below is the one that tells them
+    // apart.
+    await expect(
+      world.as("quartermaster").gql(SeedSetItemTypeUsePayoutDocument, {
+        input: {
+          itemTypeId: world.itemTypes.ticket.id,
+          components: [
+            { currencyId: world.currencies.coin.id, amount: 2000000000 },
+          ],
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("refuses a payout of zero", async ({ world }) => {
+    await expect(
+      world.as("quartermaster").gql(SeedSetItemTypeUsePayoutDocument, {
+        input: {
+          itemTypeId: world.itemTypes.ticket.id,
+          components: [{ currencyId: world.currencies.coin.id, amount: 0 }],
+        },
+      }),
+    ).rejects.toThrow();
+  });
+
+  test("validates the components themselves, not just the wrapper", async ({
+    world,
+  }) => {
+    // The discriminating test. `@IsUUID()` on currencyId is checked by nothing
+    // but the DTO, so the message tells you which layer answered: validation
+    // says "must be a UUID", while the old dead-decorator behaviour fell
+    // through to the community lookup and said "names a currency from another
+    // community".
+    //
+    // Those decorators were dead until this input was wrapped: Nest's
+    // ValidationPipe skips any parameter whose metatype is Array, so
+    // `@Args("components", { type: () => [Input] })` was never validated.
+    const rejection = await world
+      .as("quartermaster")
+      .gql(SeedSetItemTypeUsePayoutDocument, {
+        input: {
+          itemTypeId: world.itemTypes.ticket.id,
+          components: [{ currencyId: "not-a-uuid", amount: 10 }],
+        },
+      })
+      .then(
+        () => null,
+        (err: Error) => err.message,
+      );
+
+    // The pipe's own throw, which is what firing looks like from out here --
+    // its per-field detail lives in the error extensions, not the message.
+    expect(rejection).toMatch(/bad request/i);
+    // And specifically not the service's message, which is what a dead
+    // decorator would have produced by letting the garbage id through to the
+    // community lookup.
+    expect(rejection).not.toMatch(/another community/i);
   });
 
   test("an ordinary member cannot set a payout", async ({ world }) => {
     // It is minting rights. Anyone who can set it can create currency at will.
     await expect(
       world.as("member").gql(SeedSetItemTypeUsePayoutDocument, {
-        itemTypeId: world.itemTypes.ticket.id,
-        components: [{ currencyId: world.currencies.coin.id, amount: 999999 }],
+        input: {
+          itemTypeId: world.itemTypes.ticket.id,
+          components: [
+            { currencyId: world.currencies.coin.id, amount: 999999 },
+          ],
+        },
       }),
     ).rejects.toThrow();
   });

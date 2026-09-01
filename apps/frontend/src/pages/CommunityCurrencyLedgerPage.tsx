@@ -463,6 +463,21 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
                           from an approved upload →
                         </SourceLink>
                       )}
+                    {/* The item this coin came from, which is destroyed by
+                        the time anyone reads this row. Its page survives that
+                        on purpose, so the link lands on real provenance --
+                        including the USE row on the item ledger carrying the
+                        same batch id as this one. Without it, "Used Coin
+                        Ticket" names a thing with no way to reach it. */}
+                    {row.source === CurrencyTransactionSource.ItemUse &&
+                      row.sourceId && (
+                        <SourceLink
+                          to={`/communities/${communityId}/items/${row.sourceId}`}
+                          data-testid="ledger-item-use-link"
+                        >
+                          from the item that was used →
+                        </SourceLink>
+                      )}
                     {row.staffNote && (
                       <StaffNote>
                         <StaffLabel>Staff note</StaffLabel>

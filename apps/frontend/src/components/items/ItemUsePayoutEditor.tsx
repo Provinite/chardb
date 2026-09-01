@@ -113,7 +113,7 @@ export const ItemUsePayoutEditor: React.FC<Props> = ({
   const onSave = async () => {
     try {
       await save({
-        variables: { itemTypeId: itemType.id, components },
+        variables: { input: { itemTypeId: itemType.id, components } },
       });
       toast.success(components.length ? "Payout saved" : "Payout cleared");
     } catch (err) {

@@ -15,8 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Currency payouts on use.** An item type can carry a set of
   {currency, amount} components, set with `setItemTypeUsePayout`. Enforced
-  consumable, same-community, and not archived — checked when configured and
-  again at use.
+  consumable, same-community, not archived, and capped at 1,000,000,000 to
+  match every other currency amount — checked when configured and again at
+  use.
 
 ## [v11.7.0] - 2026-08-31
 

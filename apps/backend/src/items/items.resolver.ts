@@ -43,7 +43,7 @@ import {
   CreateItemTypeInput,
   UpdateItemTypeInput,
   ItemTypeFiltersInput,
-  ItemUsePayoutComponentInput,
+  SetItemTypeUsePayoutInput,
   UseItemInput,
 } from "./dto/item-type.dto";
 import { GrantItemInput, UpdateItemInput } from "./dto/item.dto";
@@ -131,7 +131,7 @@ export class ItemsResolver {
   }
 
   @AllowCommunityPermission(CommunityPermission.CanManageItems)
-  @ResolveCommunityFrom({ itemTypeId: "itemTypeId" })
+  @ResolveCommunityFrom({ itemTypeId: "input.itemTypeId" })
   @Mutation(() => ItemTypeEntity, {
     description:
       "Set what using one of these pays its holder. Replaces the payout " +
@@ -139,13 +139,11 @@ export class ItemsResolver {
       "editing the item type, because it is minting rights.",
   })
   async setItemTypeUsePayout(
-    @Args("itemTypeId", { type: () => ID }) itemTypeId: string,
-    @Args("components", { type: () => [ItemUsePayoutComponentInput] })
-    components: ItemUsePayoutComponentInput[],
+    @Args("input") input: SetItemTypeUsePayoutInput,
   ): Promise<ItemTypeEntity> {
     const itemType = await this.itemsService.setItemTypePayout(
-      itemTypeId,
-      components,
+      input.itemTypeId,
+      input.components,
     );
     return mapPrismaItemTypeToGraphQL(itemType);
   }

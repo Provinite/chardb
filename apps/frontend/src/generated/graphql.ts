@@ -2200,8 +2200,7 @@ export type MutationSetCharacterMainMediaArgs = {
 
 
 export type MutationSetItemTypeUsePayoutArgs = {
-  components: Array<ItemUsePayoutComponentInput>;
-  itemTypeId: Scalars['ID']['input'];
+  input: SetItemTypeUsePayoutInput;
 };
 
 
@@ -3438,6 +3437,12 @@ export type RoleConnection = {
   nodes: Array<Role>;
   /** Total count of roles matching the query */
   totalCount: Scalars['Float']['output'];
+};
+
+export type SetItemTypeUsePayoutInput = {
+  /** Replaces the payout wholesale. Empty clears it. */
+  components: Array<ItemUsePayoutComponentInput>;
+  itemTypeId: Scalars['ID']['input'];
 };
 
 export type SetMainMediaInput = {
@@ -5144,8 +5149,7 @@ export type UseItemMutationVariables = Exact<{
 export type UseItemMutation = { __typename?: 'Mutation', useItem: { __typename?: 'UseItemResult', itemTypeName: string, batchId: string, payout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }> } };
 
 export type SetItemTypeUsePayoutMutationVariables = Exact<{
-  itemTypeId: Scalars['ID']['input'];
-  components: Array<ItemUsePayoutComponentInput> | ItemUsePayoutComponentInput;
+  input: SetItemTypeUsePayoutInput;
 }>;
 
 
@@ -11565,8 +11569,8 @@ export type UseItemMutationHookResult = ReturnType<typeof useUseItemMutation>;
 export type UseItemMutationResult = Apollo.MutationResult<UseItemMutation>;
 export type UseItemMutationOptions = Apollo.BaseMutationOptions<UseItemMutation, UseItemMutationVariables>;
 export const SetItemTypeUsePayoutDocument = gql`
-    mutation SetItemTypeUsePayout($itemTypeId: ID!, $components: [ItemUsePayoutComponentInput!]!) {
-  setItemTypeUsePayout(itemTypeId: $itemTypeId, components: $components) {
+    mutation SetItemTypeUsePayout($input: SetItemTypeUsePayoutInput!) {
+  setItemTypeUsePayout(input: $input) {
     ...ItemTypeFields
   }
 }
@@ -11586,8 +11590,7 @@ export type SetItemTypeUsePayoutMutationFn = Apollo.MutationFunction<SetItemType
  * @example
  * const [setItemTypeUsePayoutMutation, { data, loading, error }] = useSetItemTypeUsePayoutMutation({
  *   variables: {
- *      itemTypeId: // value for 'itemTypeId'
- *      components: // value for 'components'
+ *      input: // value for 'input'
  *   },
  * });
  */

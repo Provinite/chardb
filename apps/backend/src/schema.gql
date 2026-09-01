@@ -2311,7 +2311,7 @@ type Mutation {
   """
   Set what using one of these pays its holder. Replaces the payout wholesale; an empty list clears it. Needs the same permission as editing the item type, because it is minting rights.
   """
-  setItemTypeUsePayout(components: [ItemUsePayoutComponentInput!]!, itemTypeId: ID!): ItemType!
+  setItemTypeUsePayout(input: SetItemTypeUsePayoutInput!): ItemType!
   signup(input: SignupInput!): AuthPayload!
   toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
@@ -3383,6 +3383,12 @@ type RoleConnection {
 
   """Total count of roles matching the query"""
   totalCount: Float!
+}
+
+input SetItemTypeUsePayoutInput {
+  """Replaces the payout wholesale. Empty clears it."""
+  components: [ItemUsePayoutComponentInput!]!
+  itemTypeId: ID!
 }
 
 input SetMainMediaInput {

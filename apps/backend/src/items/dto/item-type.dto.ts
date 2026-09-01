@@ -1,7 +1,10 @@
 import { Field, InputType, Int, ID } from "@nestjs/graphql";
 import { Prisma } from "@chardb/database";
+import { Type } from "class-transformer";
 import {
   IsString,
+  IsArray,
+  ValidateNested,
   IsOptional,
   IsBoolean,
   IsNumber,
@@ -41,7 +44,37 @@ export class ItemUsePayoutComponentInput {
   @Field(() => Int)
   @IsNumber()
   @Min(1)
+  // Matching MintCurrencyInput and ShopPriceComponentInput. Not a security
+  // boundary -- the permission is -- but a mistyped amount here creates coin
+  // rather than rejecting, so the same ceiling every other currency amount
+  // carries belongs on this one.
+  @Max(1_000_000_000)
   amount: number;
+}
+
+/**
+ * What using one of these pays out.
+ *
+ * The components are wrapped rather than passed as a bare `@Args` array, and
+ * that is load-bearing: Nest's ValidationPipe skips any parameter whose
+ * reflected metatype is `Array` (`toValidate`), so decorators on a top-level
+ * array argument never run at all. Nested inside an input type the pipe
+ * validates the wrapper, and `@ValidateNested({ each: true })` reaches the
+ * elements. Same arrangement CreateTradeInput uses for its line arrays.
+ */
+@InputType()
+export class SetItemTypeUsePayoutInput {
+  @Field(() => ID)
+  @IsUUID()
+  itemTypeId: string;
+
+  @Field(() => [ItemUsePayoutComponentInput], {
+    description: "Replaces the payout wholesale. Empty clears it.",
+  })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ItemUsePayoutComponentInput)
+  components: ItemUsePayoutComponentInput[];
 }
 
 @InputType()
