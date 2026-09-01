@@ -11,6 +11,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ColorSelector } from "../components/colors";
 import { ImageUpload, ImageFile } from "../components/ImageUpload";
 import { ItemUsePayoutEditor } from "../components/items/ItemUsePayoutEditor";
+import { ItemUseMyoGrantEditor } from "../components/items/ItemUseMyoGrantEditor";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-hot-toast";
 import {
@@ -1014,6 +1015,13 @@ export const CommunityItemsAdminPage: React.FC = () => {
             {selectedItemType && communityId && (
               <FormGroup>
                 <ItemUsePayoutEditor
+                  itemType={{
+                    ...selectedItemType,
+                    isConsumable: formData.isConsumable,
+                  }}
+                  communityId={communityId}
+                />
+                <ItemUseMyoGrantEditor
                   itemType={{
                     ...selectedItemType,
                     isConsumable: formData.isConsumable,

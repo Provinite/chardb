@@ -89,9 +89,20 @@ test.describe("as staff who can manage items", () => {
     await expect(tiles).toContainText("Unclaimed");
     await expect(tiles).toContainText("Net 30d");
 
-    // 3 potions + 30 imported lockets + 2 coin tickets + 1 blank ticket,
-    // held by member and othermember.
-    await expect(tiles).toContainText("36");
+    // 3 potions + 30 imported lockets + 2 coin tickets + 1 blank ticket +
+    // 2 MYO tickets, held by member and othermember.
+    //
+    // Counted from the preset rather than written as a literal: this said 36
+    // until the preset gained two MYO tickets, and a spec that has to be
+    // edited every time the world grows an item is not asserting what it
+    // means to. What it means is "the tile shows the real circulation".
+    const circulation =
+      world.grantedItems.ids.length +
+      world.importedItems.count +
+      world.usableItems.ticketIds.length +
+      1 +
+      world.myoItems.ticketIds.length;
+    await expect(tiles).toContainText(String(circulation));
     await expect(tiles).toContainText("2");
   });
 

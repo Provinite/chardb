@@ -4,6 +4,8 @@ import { Community } from "../../communities/entities/community.entity";
 import { CommunityColor } from "../../community-colors/entities/community-color.entity";
 import { Image } from "../../images/entities/image.entity";
 import { Currency } from "../../currencies/entities/currency.entity";
+import { Species } from "../../species/entities/species.entity";
+import { SpeciesVariant } from "../../species-variants/entities/species-variant.entity";
 
 /** One currency and how much of it using this item pays. */
 @ObjectType()
@@ -16,6 +18,29 @@ export class ItemUsePayoutComponent {
 
   @Field(() => Int)
   amount: number;
+}
+
+/**
+ * What making a character with one of these is allowed to make.
+ *
+ * `species` and `variants` are both here rather than the species being read
+ * off the first variant: a ticket names one species, and a reader deciding
+ * whether it is worth trading for should not have to infer that.
+ */
+@ObjectType()
+export class ItemUseMyoGrant {
+  @Field(() => ID)
+  id: string;
+
+  @Field(() => Species)
+  species: Species;
+
+  @Field(() => [SpeciesVariant], {
+    description:
+      "Which variants a ticket of this type can make. Never empty -- a grant " +
+      "with no variants is cleared rather than stored.",
+  })
+  variants: SpeciesVariant[];
 }
 
 /**

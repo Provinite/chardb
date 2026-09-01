@@ -16,7 +16,8 @@ import { Character, CharacterConnection } from "../entities/character.entity";
  * Resolver layer mapping functions to convert GraphQL DTOs to Prisma types
  */
 
-function mapTraitValues(
+/** Exported for MYO redemption, which builds the same shape from its own input. */
+export function mapTraitValues(
   traitValues?: CharacterTraitValueInput[],
 ): PrismaJson.CharacterTraitValuesJson {
   if (!traitValues) return [];

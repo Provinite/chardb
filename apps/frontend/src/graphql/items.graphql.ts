@@ -1,5 +1,6 @@
 import { gql } from "@apollo/client";
 import { USER_BASIC_FRAGMENT } from "./users.graphql";
+import { SPECIES_FRAGMENT, SPECIES_VARIANT_FRAGMENT } from "./species.graphql";
 
 // ==================== ItemType Fragments ====================
 
@@ -20,6 +21,17 @@ export const ITEM_TYPE_FRAGMENT = gql`
         name
         code
         symbol
+      }
+    }
+    useMyoGrant {
+      id
+      species {
+        id
+        name
+      }
+      variants {
+        id
+        name
       }
     }
     image {
@@ -319,6 +331,17 @@ export const GET_MEMBER_HOLDINGS = gql`
               symbol
             }
           }
+          useMyoGrant {
+            id
+            species {
+              id
+              name
+            }
+            variants {
+              id
+              name
+            }
+          }
           color {
             id
             hexCode
@@ -362,6 +385,57 @@ export const USE_ITEM = gql`
 export const SET_ITEM_TYPE_USE_PAYOUT = gql`
   mutation SetItemTypeUsePayout($input: SetItemTypeUsePayoutInput!) {
     setItemTypeUsePayout(input: $input) {
+      ...ItemTypeFields
+    }
+  }
+  ${ITEM_TYPE_FRAGMENT}
+`;
+
+/**
+ * A ticket about to be spent, and what it is allowed to make.
+ *
+ * Selects the full species and variant fragments rather than bare ids, so the
+ * create page can drive its species header and variant picker straight off the
+ * ticket instead of loading every species in the site and finding the one.
+ */
+export const GET_MYO_TICKET = gql`
+  query GetMyoTicket($itemId: ID!) {
+    item(id: $itemId) {
+      id
+      ownerId
+      destroyedAt
+      itemType {
+        id
+        name
+        communityId
+        useMyoGrant {
+          id
+          species {
+            ...SpeciesDetails
+          }
+          variants {
+            ...SpeciesVariantDetails
+          }
+        }
+      }
+    }
+  }
+  ${SPECIES_FRAGMENT}
+  ${SPECIES_VARIANT_FRAGMENT}
+`;
+
+export const CREATE_CHARACTER_FROM_MYO_TICKET = gql`
+  mutation CreateCharacterFromMyoTicket($input: RedeemMyoTicketInput!) {
+    createCharacterFromMyoTicket(input: $input) {
+      id
+      name
+    }
+  }
+`;
+
+export const SET_ITEM_TYPE_MYO_GRANT = gql`
+  mutation SetItemTypeMyoGrant($input: SetItemTypeMyoGrantInput!) {
+    setItemTypeMyoGrant(input: $input) {
       ...ItemTypeFields
     }
   }

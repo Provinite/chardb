@@ -517,6 +517,21 @@ export const CommunityInventoryPage: React.FC = () => {
                           #{i + 1}
                           <Since>{formatDate(item.createdAt)}</Since>
                         </Link>
+                        {/* An MYO ticket is spent by making a character with
+                            it, which needs a name, a variant and traits --
+                            none of which fit in a confirm dialog. So this one
+                            is a link, and nothing is consumed by following
+                            it: the ticket is spent when that form is
+                            submitted, not here. */}
+                        {viewingSelf && h.itemType.useMyoGrant && (
+                          <UseButton
+                            as={Link}
+                            to={`/character/create?ticket=${item.id}`}
+                            data-testid={`use-item-${item.id}`}
+                          >
+                            Make a character
+                          </UseButton>
+                        )}
                         {/* Only on your own inventory, and only when using it
                             would do something. A Use button on somebody
                             else's items, or on one that pays nothing, is a

@@ -81,6 +81,14 @@ enum ItemTransactionSource {
   DIRECT
   /// Granted by a community shop purchase. Source id is the purchase line.
   SHOP_PURCHASE
+  /// An MYO ticket spent making a character. Source id is the character, which
+  /// outlives a rejection as a soft delete, so the link stays followable.
+  MYO_REDEMPTION
+  /// A ticket handed back because the character it made was refused at trait
+  /// review. Source id is the review. Paired with kind GRANT: the member is
+  /// given a fresh ticket, because the one they spent stays spent and keeps
+  /// its history.
+  MYO_REJECTION
 }
 
 enum TraitReviewSource {
@@ -771,6 +779,7 @@ model ItemType {
   tradeLines   TradeItem[]
   ShopItem     ShopItem[]
   usePayout    ItemUsePayout?
+  useMyoGrant  ItemUseMyoGrant?
 
   @@unique([name, communityId])
   @@map("item_types")
@@ -1188,6 +1197,60 @@ model ItemUsePayoutComponent {
   @@map("item_use_payout_components")
 }
 
+/// What making a character with one of these is allowed to make.
+///
+/// The second use effect, and shaped like the first: an effect row owned by an
+/// item type, with N components under it. A ticket good for one Common and a
+/// ticket good for any of Common, Uncommon or Rare are the same feature, and a
+/// single variant column could only describe the first.
+///
+/// One species per ticket. The species is on the grant rather than inferred
+/// from the variants so a grant is never ambiguous mid-edit, and so the "these
+/// variants all belong to that species" rule has something to check against.
+///
+/// A grant and a currency payout are mutually exclusive on one item type. An
+/// item type does one thing when used; enforced when either is configured.
+model ItemUseMyoGrant {
+  id String @id @default(uuid())
+
+  /// One grant per item type, for the same reason a payout is one per type:
+  /// the holder redeems the ticket and gets what the type makes, rather than
+  /// choosing between rewards.
+  itemTypeId String @unique @map("item_type_id")
+
+  speciesId String @map("species_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  itemType ItemType @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
+  /// Restrict, matching the payout's currency: a species that outstanding
+  /// tickets can still make cannot be deleted out from under them.
+  species  Species  @relation(fields: [speciesId], references: [id], onDelete: Restrict)
+
+  variants ItemUseMyoGrantVariant[]
+
+  @@map("item_use_myo_grants")
+}
+
+/// One variant a ticket is allowed to make.
+model ItemUseMyoGrantVariant {
+  id               String @id @default(uuid())
+  grantId          String @map("grant_id")
+  speciesVariantId String @map("species_variant_id")
+
+  grant          ItemUseMyoGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  /// Restrict, as above. Deleting a variant somebody holds a ticket for would
+  /// leave that ticket pointing at nothing, which is discovered at redemption
+  /// -- the worst place to discover it.
+  speciesVariant SpeciesVariant  @relation(fields: [speciesVariantId], references: [id], onDelete: Restrict)
+
+  /// One entry per variant per grant. Listing Common twice does not make it
+  /// likelier.
+  @@unique([grantId, speciesVariantId])
+  @@map("item_use_myo_grant_variants")
+}
+
 /// One checkout.
 ///
 /// The order exists mostly to group its lines and to date the refund window;
@@ -1279,6 +1342,9 @@ model Species {
   traits          Trait[]
   speciesVariants SpeciesVariant[]
 
+  /// Item types whose tickets make a character of this species.
+  myoGrants ItemUseMyoGrant[]
+
   @@map("species")
 }
 
@@ -1336,6 +1402,9 @@ model SpeciesVariant {
   characters        Character[]
   traitListEntries  TraitListEntry[]
   enumValueSettings EnumValueSetting[]
+
+  /// Every MYO grant that lists this variant as one a ticket can make.
+  myoGrantVariants ItemUseMyoGrantVariant[]
 
   @@unique([speciesId, name])
   @@map("species_variants")

@@ -134,6 +134,7 @@ query SeedCharacter($id: ID!) {
   character(id: $id) {
     id
     name
+    registryId
     speciesId
     speciesVariantId
     customFields
@@ -325,6 +326,58 @@ mutation SeedUseItem($input: UseItemInput!) {
         code
       }
     }
+  }
+}
+
+mutation SeedSetItemTypeMyoGrant($input: SetItemTypeMyoGrantInput!) {
+  setItemTypeMyoGrant(input: $input) {
+    id
+    useMyoGrant {
+      id
+      species {
+        id
+        name
+      }
+      variants {
+        id
+        name
+      }
+    }
+  }
+}
+
+mutation SeedCreateCharacterFromMyoTicket($input: RedeemMyoTicketInput!) {
+  createCharacterFromMyoTicket(input: $input) {
+    id
+    name
+    registryId
+    speciesId
+    speciesVariantId
+    traitReviewStatus
+  }
+}
+
+# Editing a role, so a spec can take a permission away and prove what still
+# works without it. Requires community CanEditRole.
+mutation SeedUpdateRole($id: ID!, $updateRoleInput: UpdateRoleInput!) {
+  updateRole(id: $id, updateRoleInput: $updateRoleInput) {
+    id
+    canCreateCharacter
+  }
+}
+
+# Resolving a review, so a spec can prove what a rejection does to the ticket.
+mutation SeedApproveTraitReview($input: ApproveTraitReviewInput!) {
+  approveTraitReview(input: $input) {
+    id
+    status
+  }
+}
+
+mutation SeedRevertTraitReview($input: RevertTraitReviewInput!) {
+  revertTraitReview(input: $input) {
+    id
+    status
   }
 }
 

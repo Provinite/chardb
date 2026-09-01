@@ -1363,6 +1363,7 @@ export type ItemType = {
   metadata: Maybe<Scalars['JSON']['output']>;
   name: Scalars['String']['output'];
   updatedAt: Scalars['DateTime']['output'];
+  useMyoGrant: Maybe<ItemUseMyoGrant>;
   usePayout: Array<ItemUsePayoutComponent>;
 };
 
@@ -1395,6 +1396,14 @@ export type ItemTypeFiltersInput = {
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
   search?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ItemUseMyoGrant = {
+  __typename?: 'ItemUseMyoGrant';
+  id: Scalars['ID']['output'];
+  species: Species;
+  /** Which variants a ticket of this type can make. Never empty -- a grant with no variants is cleared rather than stored. */
+  variants: Array<SpeciesVariant>;
 };
 
 export type ItemUsePayoutComponent = {
@@ -1655,6 +1664,8 @@ export type Mutation = {
   /** Answer an offer with a different one. Declines the original and sends the replacement in a single step, so opening a counter and thinking better of it costs the offer nothing. Returns the new trade. */
   counterTrade: Trade;
   createCharacter: Character;
+  /** Spend an MYO ticket to make a character. Destroys the ticket and creates the character with its traits pending review. Authorized by holding the ticket, not by canCreateCharacter. */
+  createCharacterFromMyoTicket: Character;
   /** Create a new character ownership change record */
   createCharacterOwnershipChange: CharacterOwnershipChange;
   createComment: Comment;
@@ -1764,6 +1775,8 @@ export type Mutation = {
   runDeviantartUuidBackfill: Scalars['Boolean']['output'];
   /** Sets or clears the main media for a character */
   setCharacterMainMedia: Character;
+  /** Set which characters a ticket of this type can make. Replaces the grant wholesale; an empty variant list clears it. Needs the same permission as editing the item type, because it hands out the right to create characters. */
+  setItemTypeMyoGrant: ItemType;
   /** Set what using one of these pays its holder. Replaces the payout wholesale; an empty list clears it. Needs the same permission as editing the item type, because it is minting rights. */
   setItemTypeUsePayout: ItemType;
   signup: AuthPayload;
@@ -1884,6 +1897,11 @@ export type MutationCounterTradeArgs = {
 
 export type MutationCreateCharacterArgs = {
   input: CreateCharacterInput;
+};
+
+
+export type MutationCreateCharacterFromMyoTicketArgs = {
+  input: RedeemMyoTicketInput;
 };
 
 
@@ -2196,6 +2214,11 @@ export type MutationRunDeviantartUuidBackfillArgs = {
 export type MutationSetCharacterMainMediaArgs = {
   id: Scalars['ID']['input'];
   input: SetMainMediaInput;
+};
+
+
+export type MutationSetItemTypeMyoGrantArgs = {
+  input: SetItemTypeMyoGrantInput;
 };
 
 
@@ -3322,6 +3345,20 @@ export type QueryValidateDiscordGuildArgs = {
   guildId: Scalars['ID']['input'];
 };
 
+export type RedeemMyoTicketInput = {
+  /** A JSON document, carried as a string, as elsewhere. */
+  customFields?: InputMaybe<Scalars['String']['input']>;
+  details?: InputMaybe<Scalars['String']['input']>;
+  /** The ticket to spend. */
+  itemId: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
+  /** Which of the variants this ticket allows. Checked against the ticket's grant, not merely against the species. */
+  speciesVariantId: Scalars['ID']['input'];
+  tags?: Array<Scalars['String']['input']>;
+  traitValues?: Array<CharacterTraitValueInput>;
+  visibility?: Visibility;
+};
+
 export type RejectImageInput = {
   /** The ID of the image to reject */
   imageId: Scalars['ID']['input'];
@@ -3437,6 +3474,14 @@ export type RoleConnection = {
   nodes: Array<Role>;
   /** Total count of roles matching the query */
   totalCount: Scalars['Float']['output'];
+};
+
+export type SetItemTypeMyoGrantInput = {
+  itemTypeId: Scalars['ID']['input'];
+  /** The species a ticket makes. Required unless the variant list is empty, which clears the grant. */
+  speciesId?: InputMaybe<Scalars['ID']['input']>;
+  /** Replaces the grant wholesale. Empty clears it. */
+  speciesVariantIds: Array<Scalars['ID']['input']>;
 };
 
 export type SetItemTypeUsePayoutInput = {
@@ -5030,30 +5075,30 @@ export type RolesByCommunityQueryVariables = Exact<{
 
 export type RolesByCommunityQuery = { __typename?: 'Query', rolesByCommunity: { __typename?: 'RoleConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Role', id: string, name: string, canCreateInviteCode: boolean, community: { __typename?: 'Community', id: string, name: string } }> } };
 
-export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
+export type ItemTypeFieldsFragment = { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
+export type ItemFieldsFragment = { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
 
 export type GetItemTypesQueryVariables = Exact<{
   filters?: InputMaybe<ItemTypeFiltersInput>;
 }>;
 
 
-export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
+export type GetItemTypesQuery = { __typename?: 'Query', itemTypes: { __typename?: 'ItemTypeConnection', total: number, hasMore: boolean, itemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type GetItemTypeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type GetItemTypeQuery = { __typename?: 'Query', itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateItemTypeMutationVariables = Exact<{
   input: CreateItemTypeInput;
 }>;
 
 
-export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type CreateItemTypeMutation = { __typename?: 'Mutation', createItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5061,7 +5106,7 @@ export type UpdateItemTypeMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type UpdateItemTypeMutation = { __typename?: 'Mutation', updateItemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type DeleteItemTypeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5070,21 +5115,21 @@ export type DeleteItemTypeMutationVariables = Exact<{
 
 export type DeleteItemTypeMutation = { __typename?: 'Mutation', deleteItemType: boolean };
 
-export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type InventoryFieldsFragment = { __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type GetMyInventoryQueryVariables = Exact<{
   communityId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
-export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> }> } };
+export type GetMyInventoryQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, inventories: Array<{ __typename?: 'Inventory', communityId: string, totalItems: number, items: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> }> } };
 
 export type GrantItemMutationVariables = Exact<{
   input: GrantItemInput;
 }>;
 
 
-export type GrantItemMutation = { __typename?: 'Mutation', grantItem: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type GrantItemMutation = { __typename?: 'Mutation', grantItem: Array<{ __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type UpdateItemMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5092,7 +5137,7 @@ export type UpdateItemMutationVariables = Exact<{
 }>;
 
 
-export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null } };
+export type UpdateItemMutation = { __typename?: 'Mutation', updateItem: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null } };
 
 export type RevokeItemsMutationVariables = Exact<{
   itemIds: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
@@ -5124,7 +5169,7 @@ export type GetItemWithProvenanceQueryVariables = Exact<{
 }>;
 
 
-export type GetItemWithProvenanceQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }, itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type GetItemWithProvenanceQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }, itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type GetItemEconomyQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5139,7 +5184,7 @@ export type GetMemberHoldingsQueryVariables = Exact<{
 }>;
 
 
-export type GetMemberHoldingsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', totalItems: number, distinctTypes: number, pendingItems: number, member: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, category: string | null, isTradeable: boolean, isConsumable: boolean, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }> } };
+export type GetMemberHoldingsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', totalItems: number, distinctTypes: number, pendingItems: number, member: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, category: string | null, isTradeable: boolean, isConsumable: boolean, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }> } };
 
 export type UseItemMutationVariables = Exact<{
   input: UseItemInput;
@@ -5153,7 +5198,28 @@ export type SetItemTypeUsePayoutMutationVariables = Exact<{
 }>;
 
 
-export type SetItemTypeUsePayoutMutation = { __typename?: 'Mutation', setItemTypeUsePayout: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type SetItemTypeUsePayoutMutation = { __typename?: 'Mutation', setItemTypeUsePayout: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+
+export type GetMyoTicketQueryVariables = Exact<{
+  itemId: Scalars['ID']['input'];
+}>;
+
+
+export type GetMyoTicketQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } | null } } };
+
+export type CreateCharacterFromMyoTicketMutationVariables = Exact<{
+  input: RedeemMyoTicketInput;
+}>;
+
+
+export type CreateCharacterFromMyoTicketMutation = { __typename?: 'Mutation', createCharacterFromMyoTicket: { __typename?: 'Character', id: string, name: string } };
+
+export type SetItemTypeMyoGrantMutationVariables = Exact<{
+  input: SetItemTypeMyoGrantInput;
+}>;
+
+
+export type SetItemTypeMyoGrantMutation = { __typename?: 'Mutation', setItemTypeMyoGrant: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type GetMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
@@ -5929,6 +5995,17 @@ export const ItemTypeFieldsFragmentDoc = gql`
       name
       code
       symbol
+    }
+  }
+  useMyoGrant {
+    id
+    species {
+      id
+      name
+    }
+    variants {
+      id
+      name
     }
   }
   image {
@@ -11471,6 +11548,17 @@ export const GetMemberHoldingsDocument = gql`
             symbol
           }
         }
+        useMyoGrant {
+          id
+          species {
+            id
+            name
+          }
+          variants {
+            id
+            name
+          }
+        }
         color {
           id
           hexCode
@@ -11601,6 +11689,130 @@ export function useSetItemTypeUsePayoutMutation(baseOptions?: Apollo.MutationHoo
 export type SetItemTypeUsePayoutMutationHookResult = ReturnType<typeof useSetItemTypeUsePayoutMutation>;
 export type SetItemTypeUsePayoutMutationResult = Apollo.MutationResult<SetItemTypeUsePayoutMutation>;
 export type SetItemTypeUsePayoutMutationOptions = Apollo.BaseMutationOptions<SetItemTypeUsePayoutMutation, SetItemTypeUsePayoutMutationVariables>;
+export const GetMyoTicketDocument = gql`
+    query GetMyoTicket($itemId: ID!) {
+  item(id: $itemId) {
+    id
+    ownerId
+    destroyedAt
+    itemType {
+      id
+      name
+      communityId
+      useMyoGrant {
+        id
+        species {
+          ...SpeciesDetails
+        }
+        variants {
+          ...SpeciesVariantDetails
+        }
+      }
+    }
+  }
+}
+    ${SpeciesDetailsFragmentDoc}
+${SpeciesVariantDetailsFragmentDoc}`;
+
+/**
+ * __useGetMyoTicketQuery__
+ *
+ * To run a query within a React component, call `useGetMyoTicketQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyoTicketQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMyoTicketQuery({
+ *   variables: {
+ *      itemId: // value for 'itemId'
+ *   },
+ * });
+ */
+export function useGetMyoTicketQuery(baseOptions: Apollo.QueryHookOptions<GetMyoTicketQuery, GetMyoTicketQueryVariables> & ({ variables: GetMyoTicketQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMyoTicketQuery, GetMyoTicketQueryVariables>(GetMyoTicketDocument, options);
+      }
+export function useGetMyoTicketLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyoTicketQuery, GetMyoTicketQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMyoTicketQuery, GetMyoTicketQueryVariables>(GetMyoTicketDocument, options);
+        }
+export function useGetMyoTicketSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyoTicketQuery, GetMyoTicketQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMyoTicketQuery, GetMyoTicketQueryVariables>(GetMyoTicketDocument, options);
+        }
+export type GetMyoTicketQueryHookResult = ReturnType<typeof useGetMyoTicketQuery>;
+export type GetMyoTicketLazyQueryHookResult = ReturnType<typeof useGetMyoTicketLazyQuery>;
+export type GetMyoTicketSuspenseQueryHookResult = ReturnType<typeof useGetMyoTicketSuspenseQuery>;
+export type GetMyoTicketQueryResult = Apollo.QueryResult<GetMyoTicketQuery, GetMyoTicketQueryVariables>;
+export const CreateCharacterFromMyoTicketDocument = gql`
+    mutation CreateCharacterFromMyoTicket($input: RedeemMyoTicketInput!) {
+  createCharacterFromMyoTicket(input: $input) {
+    id
+    name
+  }
+}
+    `;
+export type CreateCharacterFromMyoTicketMutationFn = Apollo.MutationFunction<CreateCharacterFromMyoTicketMutation, CreateCharacterFromMyoTicketMutationVariables>;
+
+/**
+ * __useCreateCharacterFromMyoTicketMutation__
+ *
+ * To run a mutation, you first call `useCreateCharacterFromMyoTicketMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCharacterFromMyoTicketMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCharacterFromMyoTicketMutation, { data, loading, error }] = useCreateCharacterFromMyoTicketMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateCharacterFromMyoTicketMutation(baseOptions?: Apollo.MutationHookOptions<CreateCharacterFromMyoTicketMutation, CreateCharacterFromMyoTicketMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCharacterFromMyoTicketMutation, CreateCharacterFromMyoTicketMutationVariables>(CreateCharacterFromMyoTicketDocument, options);
+      }
+export type CreateCharacterFromMyoTicketMutationHookResult = ReturnType<typeof useCreateCharacterFromMyoTicketMutation>;
+export type CreateCharacterFromMyoTicketMutationResult = Apollo.MutationResult<CreateCharacterFromMyoTicketMutation>;
+export type CreateCharacterFromMyoTicketMutationOptions = Apollo.BaseMutationOptions<CreateCharacterFromMyoTicketMutation, CreateCharacterFromMyoTicketMutationVariables>;
+export const SetItemTypeMyoGrantDocument = gql`
+    mutation SetItemTypeMyoGrant($input: SetItemTypeMyoGrantInput!) {
+  setItemTypeMyoGrant(input: $input) {
+    ...ItemTypeFields
+  }
+}
+    ${ItemTypeFieldsFragmentDoc}`;
+export type SetItemTypeMyoGrantMutationFn = Apollo.MutationFunction<SetItemTypeMyoGrantMutation, SetItemTypeMyoGrantMutationVariables>;
+
+/**
+ * __useSetItemTypeMyoGrantMutation__
+ *
+ * To run a mutation, you first call `useSetItemTypeMyoGrantMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetItemTypeMyoGrantMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setItemTypeMyoGrantMutation, { data, loading, error }] = useSetItemTypeMyoGrantMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useSetItemTypeMyoGrantMutation(baseOptions?: Apollo.MutationHookOptions<SetItemTypeMyoGrantMutation, SetItemTypeMyoGrantMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetItemTypeMyoGrantMutation, SetItemTypeMyoGrantMutationVariables>(SetItemTypeMyoGrantDocument, options);
+      }
+export type SetItemTypeMyoGrantMutationHookResult = ReturnType<typeof useSetItemTypeMyoGrantMutation>;
+export type SetItemTypeMyoGrantMutationResult = Apollo.MutationResult<SetItemTypeMyoGrantMutation>;
+export type SetItemTypeMyoGrantMutationOptions = Apollo.BaseMutationOptions<SetItemTypeMyoGrantMutation, SetItemTypeMyoGrantMutationVariables>;
 export const GetMediaDocument = gql`
     query GetMedia($filters: MediaFiltersInput) {
   media(filters: $filters) {

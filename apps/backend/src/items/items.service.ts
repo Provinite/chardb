@@ -260,6 +260,8 @@ export class ItemsService {
       );
     }
 
+    await this.refuseSecondUseEffect(itemTypeId, "payout", itemType.name);
+
     const ids = components.map((c) => c.currencyId);
     if (new Set(ids).size !== ids.length) {
       throw new BadRequestException(
@@ -325,6 +327,139 @@ export class ItemsService {
       include: { components: { include: { currency: true } } },
     });
     return payout?.components ?? [];
+  }
+
+  /**
+   * Refuse configuring one use effect on a type that already has the other.
+   *
+   * An item type does one thing when used. Two effects would mean a confirm
+   * dialog with two answers and, worse, two different moments of consumption:
+   * a payout is spent by pressing Use, an MYO ticket by submitting the
+   * character it makes. Refused where staff can see it rather than at
+   * redemption in front of a member.
+   */
+  private async refuseSecondUseEffect(
+    itemTypeId: string,
+    configuring: "payout" | "MYO grant",
+    itemTypeName: string,
+  ) {
+    const other = configuring === "payout" ? "MYO grant" : "payout";
+    const existing =
+      other === "payout"
+        ? await this.db.itemUsePayout.count({ where: { itemTypeId } })
+        : await this.db.itemUseMyoGrant.count({ where: { itemTypeId } });
+
+    if (existing > 0) {
+      throw new BadRequestException(
+        `${itemTypeName} already has a ${other}, and an item type does one thing when used. Clear the ${other} first.`,
+      );
+    }
+  }
+
+  /**
+   * Set, replace, or clear which characters a ticket of this type can make.
+   *
+   * Wholesale, like the payout it mirrors, and for the same reason: a grant
+   * reads as a set -- "this ticket makes a Common or an Uncommon" -- and a
+   * partial update would leave staff guessing what a variant they did not
+   * mention still does.
+   *
+   * An empty variant list clears the grant. "Makes nothing" and "has no grant"
+   * are the same state, and two ways to reach it would be two things to keep
+   * in step.
+   */
+  async setItemTypeMyoGrant(
+    itemTypeId: string,
+    speciesId: string | null,
+    speciesVariantIds: string[],
+  ) {
+    const itemType = await this.db.itemType.findUnique({
+      where: { id: itemTypeId },
+      select: { id: true, name: true, communityId: true, isConsumable: true },
+    });
+    if (!itemType) {
+      throw new NotFoundException(`ItemType with ID ${itemTypeId} not found`);
+    }
+
+    if (speciesVariantIds.length === 0) {
+      await this.db.itemUseMyoGrant.deleteMany({ where: { itemTypeId } });
+      return this.findItemTypeById(itemTypeId);
+    }
+
+    if (!speciesId) {
+      throw new BadRequestException(
+        "An MYO grant needs a species. Say which one the ticket makes.",
+      );
+    }
+
+    // Same rule the payout follows, for the same reason: redeeming is what
+    // uses the ticket up, and a ticket that survives redemption makes a
+    // character every time it is pressed.
+    if (!itemType.isConsumable) {
+      throw new BadRequestException(
+        `${itemType.name} is not consumable, so redeeming it would not use it up. An MYO grant needs a consumable item.`,
+      );
+    }
+
+    await this.refuseSecondUseEffect(itemTypeId, "MYO grant", itemType.name);
+
+    const ids = [...new Set(speciesVariantIds)];
+    if (ids.length !== speciesVariantIds.length) {
+      throw new BadRequestException(
+        "An MYO grant lists the same variant twice. Listing it again does not make it likelier.",
+      );
+    }
+
+    // The cross-community hole, closed in both directions: the species has to
+    // belong to the item type's community, and every variant has to belong to
+    // that species. Without the second, a ticket for a Common Foo could make a
+    // Rare Bar.
+    const species = await this.db.species.findUnique({
+      where: { id: speciesId },
+      select: { id: true, name: true, communityId: true },
+    });
+    if (!species || species.communityId !== itemType.communityId) {
+      throw new BadRequestException(
+        "An MYO grant names a species from another community",
+      );
+    }
+
+    const variants = await this.db.speciesVariant.findMany({
+      where: { id: { in: ids } },
+      select: { id: true, speciesId: true },
+    });
+    if (
+      variants.length !== ids.length ||
+      variants.some((v) => v.speciesId !== speciesId)
+    ) {
+      throw new BadRequestException(
+        `An MYO grant names a variant that is not a ${species.name}`,
+      );
+    }
+
+    await this.db.$transaction(async (tx) => {
+      await tx.itemUseMyoGrant.deleteMany({ where: { itemTypeId } });
+      await tx.itemUseMyoGrant.create({
+        data: {
+          itemTypeId,
+          speciesId,
+          variants: { create: ids.map((id) => ({ speciesVariantId: id })) },
+        },
+      });
+    });
+
+    return this.findItemTypeById(itemTypeId);
+  }
+
+  /** What a ticket of this type makes, or null when it makes nothing. */
+  async findItemTypeMyoGrant(itemTypeId: string) {
+    return this.db.itemUseMyoGrant.findUnique({
+      where: { itemTypeId },
+      include: {
+        species: true,
+        variants: { include: { speciesVariant: true } },
+      },
+    });
   }
 
   // ==================== Item Methods ====================
@@ -711,35 +846,23 @@ export class ItemsService {
    * the payout, between the button rendering and the press landing.
    */
   async useItem(itemId: string, userId: string) {
-    const item = await this.db.item.findFirst({
-      where: { id: itemId, destroyedAt: null },
-      include: {
-        itemType: {
-          include: {
-            usePayout: {
-              include: { components: { include: { currency: true } } },
-            },
-          },
-        },
-      },
-    });
+    const item = await this.loadUsableItem(itemId, userId);
 
-    if (!item) {
-      throw new NotFoundException(
-        "That item does not exist, or is already gone",
+    // What this item type actually does.
+    const effect = await this.resolveUseEffect(item.itemType, userId);
+
+    // Redeeming an MYO ticket needs input this mutation has no way to carry
+    // -- which variant, what name, which traits -- and produces a character
+    // rather than a payout. It is `createCharacterFromMyoTicket`, which
+    // destroys the ticket itself on the same terms.
+    //
+    // Refused rather than quietly no-op'd: an API caller that reached here
+    // meant to spend something, and the ticket is still theirs afterwards.
+    if (effect.kind === "MYO") {
+      throw new BadRequestException(
+        `${item.itemType.name} is redeemed by making a character with it, not by using it from your inventory`,
       );
     }
-    if (item.ownerId !== userId) {
-      throw new BadRequestException("That item is not yours to use");
-    }
-    if (!item.itemType.isConsumable) {
-      throw new BadRequestException(`${item.itemType.name} cannot be used`);
-    }
-
-    // What this item type actually does. One effect today; the shape is here
-    // so the second one is a branch rather than a rewrite of everything
-    // around it.
-    const effect = await this.resolveUseEffect(item.itemType, userId);
 
     const batchId = randomUUID();
 
@@ -772,27 +895,122 @@ export class ItemsService {
   }
 
   /**
+   * Read an item somebody is about to spend, and refuse if they cannot.
+   *
+   * Shared by using and by MYO redemption, which destroy the same way and for
+   * the same reasons. None of these checks is the safety net -- the ownership
+   * predicate in the destroy is -- but refusing here means the caller gets a
+   * sentence rather than a conflict.
+   */
+  private async loadUsableItem(itemId: string, userId: string) {
+    const item = await this.db.item.findFirst({
+      where: { id: itemId, destroyedAt: null },
+      include: {
+        itemType: {
+          include: {
+            usePayout: {
+              include: { components: { include: { currency: true } } },
+            },
+            useMyoGrant: {
+              include: {
+                species: true,
+                variants: { include: { speciesVariant: true } },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!item) {
+      throw new NotFoundException(
+        "That item does not exist, or is already gone",
+      );
+    }
+    if (item.ownerId !== userId) {
+      throw new BadRequestException("That item is not yours to use");
+    }
+    if (!item.itemType.isConsumable) {
+      throw new BadRequestException(`${item.itemType.name} cannot be used`);
+    }
+
+    return item;
+  }
+
+  /**
+   * Everything an MYO redemption needs, with every reason to refuse spent.
+   *
+   * Public because redeeming lives in MyoService: the item rules belong here,
+   * beside the destroy that enforces them, and the character rules belong
+   * there. Returns before anything is written -- the caller opens the
+   * transaction.
+   */
+  async resolveMyoRedemption(itemId: string, userId: string) {
+    const item = await this.loadUsableItem(itemId, userId);
+    const effect = await this.resolveUseEffect(item.itemType, userId);
+
+    if (effect.kind !== "MYO") {
+      throw new BadRequestException(
+        `${item.itemType.name} does not make characters`,
+      );
+    }
+
+    return { item, itemType: item.itemType, grant: effect.grant };
+  }
+
+  /**
    * Work out what using this type does, and refuse now if it cannot.
    *
-   * Everything here was already checked when staff configured the payout. It
+   * Everything here was already checked when staff configured the effect. It
    * is checked again because none of it stays true on its own: a currency can
    * be archived, or the payout cleared, between the button rendering and the
    * press landing. Same reason a trade re-checks its lines at settlement.
+   *
+   * A discriminated union rather than an optional field per effect, so a
+   * caller cannot forget to ask which one it got. The two are mutually
+   * exclusive at configuration time; this is where that pays off.
    */
   private async resolveUseEffect(
     itemType: Prisma.ItemTypeGetPayload<{
       include: {
         usePayout: { include: { components: { include: { currency: true } } } };
+        useMyoGrant: {
+          include: {
+            species: true;
+            variants: { include: { speciesVariant: true } };
+          };
+        };
       };
     }>,
     userId: string,
   ) {
+    // Membership first, and for both effects. Coin only exists inside a
+    // community for its members, and neither does a species. Checked before
+    // anything is destroyed, so a non-member is refused rather than left with
+    // neither the item nor what it was for.
+    const membership = await this.db.communityMember.count({
+      where: { userId, role: { communityId: itemType.communityId } },
+    });
+    if (membership === 0) {
+      throw new BadRequestException(
+        "You must be a member of this community to use that",
+      );
+    }
+
+    const grant = itemType.useMyoGrant;
+    if (grant) {
+      if (grant.variants.length === 0) {
+        throw new BadRequestException(`${itemType.name} does nothing yet`);
+      }
+      return { kind: "MYO" as const, grant };
+    }
+
     const payout = itemType.usePayout?.components ?? [];
 
     if (payout.length === 0) {
       // Consumable but doing nothing. Using it would destroy the item and
       // give the holder nothing, which is worth refusing rather than doing
-      // quietly. When there are other effects this becomes "no effect at all".
+      // quietly.
       throw new BadRequestException(`${itemType.name} does nothing yet`);
     }
 
@@ -803,19 +1021,7 @@ export class ItemsService {
       );
     }
 
-    // Coin only exists inside a community for its members. Checked before
-    // anything is destroyed, so a non-member is refused rather than left with
-    // neither the item nor the payout.
-    const membership = await this.db.communityMember.count({
-      where: { userId, role: { communityId: itemType.communityId } },
-    });
-    if (membership === 0) {
-      throw new BadRequestException(
-        "You must be a member of this community to use that",
-      );
-    }
-
-    return { payout };
+    return { kind: "CURRENCY" as const, payout };
   }
 
   /** Pay a use's currency components, on the use's transaction and batch. */
