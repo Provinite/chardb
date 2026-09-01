@@ -12,6 +12,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **E2E: 25 MYO-ticket specs**, and three Thornwing variants in the
   `community-items` preset with a ticket good for two of them (#168).
 
+- **E2E: 6 API specs pinning who may create a character in a species**, in
+  their own file rather than inside the MYO specs that happened to cover it.
+
 ## [v11.8.0] - 2026-09-01
 
 ### Added
