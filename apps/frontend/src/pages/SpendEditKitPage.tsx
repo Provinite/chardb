@@ -151,6 +151,9 @@ export const SpendEditKitPage: React.FC = () => {
     setKitId(eligibleKits[0].id);
   }, [kitId, eligibleKits]);
 
+  /** The kit actually being spent, so the page can call it by its name. */
+  const chosenKit = eligibleKits.find((k) => k.id === kitId) ?? null;
+
   const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
     [],
   );
@@ -177,7 +180,11 @@ export const SpendEditKitPage: React.FC = () => {
       cache.gc();
     },
     onCompleted: () => {
-      toast.success("Sent to staff for review. Your kit has been spent.");
+      toast.success(
+        chosenKit
+          ? `Sent to staff for review. Your ${chosenKit.name} has been spent.`
+          : "Sent to staff for review. Your item has been spent.",
+      );
       navigate(`/character/${characterId}`);
     },
     onError: (error) => toast.error(error.message),
@@ -204,7 +211,7 @@ export const SpendEditKitPage: React.FC = () => {
     : pending
       ? "That character already has a change awaiting review. Only one at a time."
       : eligibleKits.length === 0
-        ? "You do not hold an edit kit that works on this character."
+        ? "You do not hold an item that can change this character's traits."
         : null;
 
   if (blocked) {
@@ -242,17 +249,22 @@ export const SpendEditKitPage: React.FC = () => {
       <Title>Edit {character.name}&rsquo;s traits</Title>
 
       <Panel data-testid="edit-kit-panel">
+        {/* Named, not called an "edit kit". That is our word for the feature;
+            the community called the item something, and that is what its
+            holder recognises. Falls back only when several are eligible and
+            none is picked yet. */}
         <PanelHead>
           <Wrench size={20} />
-          Spending an edit kit
+          {chosenKit
+            ? `Changing traits with your ${chosenKit.name}`
+            : `Changing ${character.name}'s traits`}
         </PanelHead>
         <Note>
-          Submitting spends the kit and cannot be undone.{" "}
+          Submitting spends it and cannot be undone.{" "}
           <strong>
             Nothing changes on {character.name} until staff approve it
           </strong>
-          — the traits below are a proposal. If it is refused, your kit comes
-          back.
+          — the traits below are a proposal. If it is refused, it comes back.
         </Note>
 
         {eligibleKits.length > 1 ? (
@@ -261,7 +273,7 @@ export const SpendEditKitPage: React.FC = () => {
             data-testid="edit-kit-select"
             onChange={(e) => setKitId(e.target.value || null)}
           >
-            <option value="">Pick a kit to spend…</option>
+            <option value="">Pick which one to spend…</option>
             {eligibleKits.map((kit, i) => (
               <option key={kit.id} value={kit.id}>
                 {kit.name} #{i + 1}
@@ -290,7 +302,11 @@ export const SpendEditKitPage: React.FC = () => {
           disabled={spending || !kitId}
           data-testid="submit-edit-kit"
         >
-          {spending ? "Spending kit…" : "Spend kit and send for review"}
+          {spending
+            ? "Spending…"
+            : chosenKit
+              ? `Spend ${chosenKit.name} and send for review`
+              : "Spend it and send for review"}
         </Button>
       </ButtonRow>
     </Container>

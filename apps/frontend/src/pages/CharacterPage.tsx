@@ -489,12 +489,21 @@ export const CharacterPage: React.FC = () => {
       !user?.id,
   });
 
-  const eligibleKitCount = useMemo(() => {
-    if (!character) return 0;
-    return (kitsData?.memberHoldings?.holdings ?? []).filter((h) => {
-      const grant = h.itemType.useTraitEditGrant;
-      return grant ? kitCovers(grant, character) : false;
-    }).length;
+  /**
+   * The item types this viewer holds that can edit this character.
+   *
+   * Names rather than a count, because the button should call the item what
+   * the community called it. "Edit kit" is our word for the feature, not
+   * anything a member has seen.
+   */
+  const eligibleKitTypes = useMemo(() => {
+    if (!character) return [] as string[];
+    return (kitsData?.memberHoldings?.holdings ?? [])
+      .filter((h) => {
+        const grant = h.itemType.useTraitEditGrant;
+        return grant ? kitCovers(grant, character) : false;
+      })
+      .map((h) => h.itemType.name);
   }, [kitsData, character]);
 
   /**
@@ -747,7 +756,7 @@ export const CharacterPage: React.FC = () => {
               strip rather than inside it. Offered only when they actually
               hold a kit that works on this character -- a button whose every
               press is a refusal is the thing this codebase keeps not doing. */}
-          {eligibleKitCount > 0 && (
+          {eligibleKitTypes.length > 0 && (
             <CharacterActions data-testid="character-edit-kit-actions">
               <AdminActionsLabel>Yours</AdminActionsLabel>
               <Button
@@ -758,7 +767,9 @@ export const CharacterPage: React.FC = () => {
                   navigate(`/character/${character.id}/edit-traits`)
                 }
               >
-                Use an edit kit
+                {eligibleKitTypes.length === 1
+                  ? `Use your ${eligibleKitTypes[0]}`
+                  : "Change traits with an item"}
               </Button>
             </CharacterActions>
           )}
