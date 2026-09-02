@@ -310,6 +310,17 @@ export class UpdateCharacterRegistryInput {
   })
   @IsOptional()
   traitValues?: CharacterTraitValueInput[];
+
+  @Field({
+    nullable: true,
+    description:
+      "Why the variant changed — 'upgrade ticket #204', say. Recorded on the " +
+      "rarity history and ignored when the variant is not changing.",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  variantChangeReason?: string;
 }
 
 /**

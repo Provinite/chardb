@@ -9,6 +9,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A variant with no per-variant options configured offered none at all.**
+  The trait editor filtered its option list to an allow-list nobody had filled
+  in, so a character on such a variant saw "No options available" for a trait
+  with three. Restrictions are opt-in.
+
+- **A character's variant could not be changed after creation.** The edit page
+  locked it alongside the species under "assignment is permanent", which is
+  true of the species and never was of its rarity (#232).
+
+### Added
+
+- **Trait values the new rarity does not permit are re-routed before saving**,
+  one control per affected value. The save is blocked until each is resolved.
+
+- **A rarity history on the character page**, shown only for characters that
+  have one.
+
+### Fixed
+
 - **The review queue offered Delete and Remove from Species on redemptions**,
   neither of which is a review outcome and both of which stranded the member's
   item. Gone for MYO and edit-kit reviews (#327).

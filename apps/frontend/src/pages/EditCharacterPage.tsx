@@ -35,6 +35,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { TraitForm } from "../components/character/TraitForm";
+import { VariantChangePanel } from "../components/character/VariantChangePanel";
 import {
   SpeciesDetailsFragment,
   SpeciesVariantDetailsFragment,
@@ -317,6 +318,10 @@ export const EditCharacterPage: React.FC = () => {
   );
   const [registryId, setRegistryId] = useState<string>("");
   const [isSubmittingRegistry, setIsSubmittingRegistry] = useState(false);
+
+  /** Staff's note on a rarity change, and how many traits it strands. */
+  const [variantChangeReason, setVariantChangeReason] = useState("");
+  const [unresolvedTraits, setUnresolvedTraits] = useState(0);
 
   // Pending ownership state
   const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(
@@ -624,6 +629,12 @@ export const EditCharacterPage: React.FC = () => {
       const input: UpdateCharacterRegistryInput = {
         traitValues,
         registryId: registryId.trim() || null,
+        // Sent whether or not it moved. The server compares against what the
+        // character has and only treats a genuine move as a rarity change --
+        // which is what decides whether staff rights are needed and whether a
+        // history row is written.
+        speciesVariantId: selectedVariant?.id ?? null,
+        variantChangeReason: variantChangeReason.trim() || undefined,
       };
 
       await updateCharacterRegistry({
@@ -944,6 +955,23 @@ export const EditCharacterPage: React.FC = () => {
               </WarningBox>
             )}
 
+            {/* Rarity lives here, not in the Species section above: this is
+                the section whose Save button writes registry fields, and the
+                trait re-routing a rarity change forces belongs beside the
+                traits it re-routes. */}
+            <VariantChangePanel
+              speciesId={character.speciesId}
+              currentVariantId={character.speciesVariantId ?? null}
+              selectedVariantId={selectedVariant?.id ?? null}
+              onVariantChange={setSelectedVariant}
+              traitValues={traitValues}
+              onTraitValuesChange={setTraitValues}
+              reason={variantChangeReason}
+              onReasonChange={setVariantChangeReason}
+              onUnresolvedChange={setUnresolvedTraits}
+              disabled={!canEditRegistry || isSubmittingRegistry}
+            />
+
             <FormGroup>
               <Label>Official Identifier</Label>
               <Input
@@ -972,7 +1000,15 @@ export const EditCharacterPage: React.FC = () => {
                 type="button"
                 variant="primary"
                 onClick={handleSaveRegistry}
-                disabled={!canEditRegistry || isSubmittingRegistry}
+                data-testid="save-species-details"
+                disabled={
+                  !canEditRegistry ||
+                  isSubmittingRegistry ||
+                  // A stranded trait value would be refused by the server
+                  // anyway; blocking here means staff find out before typing
+                  // the rest of the form.
+                  unresolvedTraits > 0
+                }
               >
                 {isSubmittingRegistry ? "Saving..." : "Save Species Details"}
               </Button>

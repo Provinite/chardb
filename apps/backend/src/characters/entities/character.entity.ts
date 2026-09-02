@@ -2,6 +2,8 @@ import { ObjectType, Field, ID, Float, Int } from "@nestjs/graphql";
 import { Visibility, ModerationStatus } from "@chardb/database";
 import { Tag } from "../../shared/entities/tag.entity";
 import { CharacterTraitValue } from "../../shared/types/character-trait.types";
+import { SpeciesVariant } from "../../species-variants/entities/species-variant.entity";
+import { User } from "../../users/entities/user.entity";
 
 @ObjectType()
 export class CharacterCount {
@@ -135,4 +137,46 @@ export class CharacterConnection {
 
   @Field()
   hasMore: boolean;
+}
+
+/**
+ * One move of a character's rarity, and what it did to its traits.
+ *
+ * Read-only. The write happens as part of `updateCharacterRegistry`, because a
+ * rarity change and the trait re-routing it forces are one act, not two.
+ */
+@ObjectType()
+export class CharacterVariantChange {
+  @Field(() => ID)
+  id: string;
+
+  @Field(() => ID)
+  characterId: string;
+
+  @Field(() => SpeciesVariant, {
+    nullable: true,
+    description: "Null when the character had no variant before this.",
+  })
+  fromVariant?: SpeciesVariant | null;
+
+  @Field(() => SpeciesVariant, {
+    nullable: true,
+    description: "Null when the variant was cleared rather than changed.",
+  })
+  toVariant?: SpeciesVariant | null;
+
+  @Field(() => User, { nullable: true })
+  changedBy?: User | null;
+
+  @Field(() => String, { nullable: true })
+  reason?: string | null;
+
+  @Field(() => [CharacterTraitValue])
+  previousTraitValues: CharacterTraitValue[];
+
+  @Field(() => [CharacterTraitValue])
+  newTraitValues: CharacterTraitValue[];
+
+  @Field()
+  createdAt: Date;
 }

@@ -38,6 +38,7 @@ import { PendingOwnership } from "../pending-ownership/entities/pending-ownershi
 import { mapPrismaPendingOwnershipToGraphQL } from "../pending-ownership/utils/pending-ownership-mappers";
 import {
   Character as CharacterEntity,
+  CharacterVariantChange,
   CharacterConnection,
   CharacterCount,
   CharacterTag,
@@ -207,12 +208,46 @@ export class CharactersResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<CharacterEntity> {
     const serviceInput = mapUpdateCharacterRegistryInputToService(input);
-    const character = await this.charactersService.updateRegistry(
-      id,
-      user.id,
-      serviceInput,
-    );
+    const character = await this.charactersService.updateRegistry(id, user.id, {
+      ...serviceInput,
+      variantChangeReason: input.variantChangeReason,
+    });
     return mapPrismaCharacterToGraphQL(character);
+  }
+
+  /**
+   * A character's rarity history.
+   *
+   * Public, like the character page it sits on: rarity is what a masterlist
+   * publishes, and "why is this a Rare" is a question anyone can reasonably
+   * ask. The staff note is the only part that might not be, and it is written
+   * by staff who know it will be read.
+   */
+  @AllowUnauthenticated()
+  @Query(() => [CharacterVariantChange], {
+    description: "Every change to this character's variant, newest first.",
+  })
+  async characterVariantChanges(
+    @Args("characterId", { type: () => ID }) characterId: string,
+  ): Promise<CharacterVariantChange[]> {
+    const rows = await this.charactersService.findVariantChanges(characterId);
+    return rows.map((row) => ({
+      id: row.id,
+      characterId: row.characterId,
+      fromVariant: row.fromVariant
+        ? mapPrismaSpeciesVariantToGraphQL(row.fromVariant)
+        : null,
+      toVariant: row.toVariant
+        ? mapPrismaSpeciesVariantToGraphQL(row.toVariant)
+        : null,
+      changedBy: row.changedBy ? mapPrismaUserToGraphQL(row.changedBy) : null,
+      reason: row.reason,
+      previousTraitValues:
+        row.previousTraitValues as PrismaJson.CharacterTraitValuesJson,
+      newTraitValues:
+        row.newTraitValues as PrismaJson.CharacterTraitValuesJson,
+      createdAt: row.createdAt,
+    }));
   }
 
   /**

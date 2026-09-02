@@ -250,6 +250,21 @@ export type CharacterTraitValueInput = {
   value?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type CharacterVariantChange = {
+  __typename?: 'CharacterVariantChange';
+  changedBy: Maybe<User>;
+  characterId: Scalars['ID']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  /** Null when the character had no variant before this. */
+  fromVariant: Maybe<SpeciesVariant>;
+  id: Scalars['ID']['output'];
+  newTraitValues: Array<CharacterTraitValue>;
+  previousTraitValues: Array<CharacterTraitValue>;
+  reason: Maybe<Scalars['String']['output']>;
+  /** Null when the variant was cleared rather than changed. */
+  toVariant: Maybe<SpeciesVariant>;
+};
+
 export type CheckoutInput = {
   communityId: Scalars['ID']['input'];
   /** The cart. Prices are re-read server-side; this only says which option was picked, never what it costs. */
@@ -2580,6 +2595,8 @@ export type Query = {
   characterOwnershipChangesByUser: CharacterOwnershipChangeConnection;
   /** Get the active pending trait review for a character */
   characterTraitReview: Maybe<TraitReview>;
+  /** Every change to this character's variant, newest first. */
+  characterVariantChanges: Array<CharacterVariantChange>;
   characters: CharacterConnection;
   comment: Comment;
   comments: CommentConnection;
@@ -2816,6 +2833,11 @@ export type QueryCharacterOwnershipChangesByUserArgs = {
 
 
 export type QueryCharacterTraitReviewArgs = {
+  characterId: Scalars['ID']['input'];
+};
+
+
+export type QueryCharacterVariantChangesArgs = {
   characterId: Scalars['ID']['input'];
 };
 
@@ -4091,6 +4113,8 @@ export type UpdateCharacterRegistryInput = {
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   /** Trait values for the character */
   traitValues?: InputMaybe<Array<CharacterTraitValueInput>>;
+  /** Why the variant changed — 'upgrade ticket #204', say. Recorded on the rarity history and ignored when the variant is not changing. */
+  variantChangeReason?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateCommentInput = {
@@ -4594,6 +4618,13 @@ export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> };
+
+export type CharacterVariantChangesQueryVariables = Exact<{
+  characterId: Scalars['ID']['input'];
+}>;
+
+
+export type CharacterVariantChangesQuery = { __typename?: 'Query', characterVariantChanges: Array<{ __typename?: 'CharacterVariantChange', id: string, reason: string | null, createdAt: string, fromVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, changedBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
 
 export type CommunityMemberUserFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
@@ -7841,6 +7872,61 @@ export type GetLikedCharactersQueryHookResult = ReturnType<typeof useGetLikedCha
 export type GetLikedCharactersLazyQueryHookResult = ReturnType<typeof useGetLikedCharactersLazyQuery>;
 export type GetLikedCharactersSuspenseQueryHookResult = ReturnType<typeof useGetLikedCharactersSuspenseQuery>;
 export type GetLikedCharactersQueryResult = Apollo.QueryResult<GetLikedCharactersQuery, GetLikedCharactersQueryVariables>;
+export const CharacterVariantChangesDocument = gql`
+    query CharacterVariantChanges($characterId: ID!) {
+  characterVariantChanges(characterId: $characterId) {
+    id
+    reason
+    createdAt
+    fromVariant {
+      id
+      name
+    }
+    toVariant {
+      id
+      name
+    }
+    changedBy {
+      id
+      username
+      displayName
+    }
+  }
+}
+    `;
+
+/**
+ * __useCharacterVariantChangesQuery__
+ *
+ * To run a query within a React component, call `useCharacterVariantChangesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCharacterVariantChangesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCharacterVariantChangesQuery({
+ *   variables: {
+ *      characterId: // value for 'characterId'
+ *   },
+ * });
+ */
+export function useCharacterVariantChangesQuery(baseOptions: Apollo.QueryHookOptions<CharacterVariantChangesQuery, CharacterVariantChangesQueryVariables> & ({ variables: CharacterVariantChangesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CharacterVariantChangesQuery, CharacterVariantChangesQueryVariables>(CharacterVariantChangesDocument, options);
+      }
+export function useCharacterVariantChangesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CharacterVariantChangesQuery, CharacterVariantChangesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CharacterVariantChangesQuery, CharacterVariantChangesQueryVariables>(CharacterVariantChangesDocument, options);
+        }
+export function useCharacterVariantChangesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CharacterVariantChangesQuery, CharacterVariantChangesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CharacterVariantChangesQuery, CharacterVariantChangesQueryVariables>(CharacterVariantChangesDocument, options);
+        }
+export type CharacterVariantChangesQueryHookResult = ReturnType<typeof useCharacterVariantChangesQuery>;
+export type CharacterVariantChangesLazyQueryHookResult = ReturnType<typeof useCharacterVariantChangesLazyQuery>;
+export type CharacterVariantChangesSuspenseQueryHookResult = ReturnType<typeof useCharacterVariantChangesSuspenseQuery>;
+export type CharacterVariantChangesQueryResult = Apollo.QueryResult<CharacterVariantChangesQuery, CharacterVariantChangesQueryVariables>;
 export const CommunitiesDocument = gql`
     query Communities($first: Int, $after: String) {
   communities(first: $first, after: $after) {

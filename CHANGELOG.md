@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **E2E: 17 rarity-change specs**, and a fourth `Legendary` variant in the
+  `community-items` preset — the only one with per-variant trait options
+  configured, so "a configured variant restricts" and "an unconfigured one
+  does not" are both pinned (#232).
+
+- **A "Changing a Character's Rarity" walkthrough** (`docs/docs/character-rarity.html`).
+
+### Added
+
 - **E2E: 10 specs pinning that a character under redemption review cannot be
   disposed of**, and that the guard stays narrow — a creation review, or no
   review, still deletes (#327).

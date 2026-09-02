@@ -130,8 +130,23 @@ export class TraitsService {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
+    // A variant's trait list is an allow-list, and an *unconfigured* variant
+    // is not an empty one.
+    //
+    // Filtering on TraitListEntry with no entries returns nothing, so a
+    // character on a variant nobody has configured saw "No traits configured"
+    // on a species that plainly has traits -- and, once rarity became
+    // editable, a form asking staff to re-route a trait it then claimed did
+    // not exist. Same rule as the per-variant enum options: configure it and
+    // it constrains, leave it alone and it does not.
+    const variantOrdersTraits = variantId
+      ? (await this.prisma.traitListEntry.count({
+          where: { speciesVariantId: variantId },
+        })) > 0
+      : false;
+
     // When variantId is provided, fetch traits with their TraitListEntry order
-    if (variantId) {
+    if (variantId && variantOrdersTraits) {
       const [traitsWithOrder, totalCount] = await Promise.all([
         this.prisma.trait.findMany({
           where: {

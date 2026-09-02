@@ -28,6 +28,7 @@ import { Tag } from "../components/Tag";
 import { TagsContainer } from "../components/TagsContainer";
 
 import { CharacterTraitsDisplay } from "../components/character/CharacterTraitsDisplay";
+import { VariantHistory } from "../components/character/VariantHistory";
 import { Markdown } from "../components/Markdown";
 
 const Container = styled.div`
@@ -892,6 +893,8 @@ export const CharacterPage: React.FC = () => {
             speciesId={character.speciesId}
             speciesVariantId={character.speciesVariantId}
           />
+
+          <VariantHistory characterId={character.id} />
         </ContentSection>
       )}
 

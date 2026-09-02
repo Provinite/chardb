@@ -15,6 +15,7 @@ import {
   SeedSetItemTypeTraitEditGrantDocument,
   SeedCreateTraitDocument,
   SeedCreateEnumValueDocument,
+  SeedCreateEnumValueSettingDocument,
   TraitValueType,
   SeedCreateSpeciesDocument,
   SeedCreateSpeciesVariantDocument,
@@ -128,6 +129,16 @@ export interface CommunityItemsWorld {
     common: { id: string; name: string };
     uncommon: { id: string; name: string };
     rare: { id: string; name: string };
+    /**
+     * The only *configured* variant: its EnumValueSettings permit Amber and
+     * nothing else.
+     *
+     * A fourth variant rather than settings on one of the three above, so that
+     * every spec written before variant-aware validation existed keeps the
+     * behaviour it was written against. An unconfigured variant permits
+     * everything; this one is what proves a configured variant does not.
+     */
+    legendary: { id: string; name: string };
   };
   characters: {
     /** `member`'s. Open to trades, and nothing else. Changes hands. */
@@ -341,6 +352,7 @@ export default definePreset<CommunityItemsWorld>({
     const common = await variant("Common");
     const uncommon = await variant("Uncommon");
     const rare = await variant("Rare");
+    const legendary = await variant("Legendary");
 
     // One enum trait, so an edit kit has something to change. Every character
     // below is seeded without trait values, which keeps their creation from
@@ -366,6 +378,16 @@ export default definePreset<CommunityItemsWorld>({
         });
       eyeColorValues[name.toLowerCase()] = createEnumValue.id;
     }
+
+    // Legendary permits Amber and nothing else. The other three variants are
+    // left unconfigured on purpose: that is the state most communities are in,
+    // and it must keep meaning "anything goes" rather than "nothing does".
+    await ctx.as("commadmin").gql(SeedCreateEnumValueSettingDocument, {
+      createEnumValueSettingInput: {
+        speciesVariantId: legendary.id,
+        enumValueId: eyeColorValues.amber,
+      },
+    });
 
     // assignToSelf, so each character is owned by whoever seeds it. The stock
     // Member role carries canCreateCharacter, so both members can.
@@ -767,7 +789,7 @@ export default definePreset<CommunityItemsWorld>({
         bound: { id: bound.id, code: bound.code, name: bound.name },
       },
       species: { id: species.id, name: species.name },
-      variants: { common, uncommon, rare },
+      variants: { common, uncommon, rare, legendary },
       characters: {
         bramblefoot,
         hearthstone,

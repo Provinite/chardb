@@ -155,6 +155,7 @@ model User {
   // Character ownership change tracking
   ownershipChangesFrom CharacterOwnershipChange[] @relation("CharacterOwnershipChangeFrom")
   ownershipChangesTo   CharacterOwnershipChange[] @relation("CharacterOwnershipChangeTo")
+  variantChangesMade   CharacterVariantChange[]   @relation("CharacterVariantChangedBy")
 
   // External account linking
   externalAccounts ExternalAccount[]
@@ -306,6 +307,9 @@ model Character {
 
   // Ownership change tracking
   ownershipChanges CharacterOwnershipChange[]
+
+  /// Every time this character's rarity moved. See CharacterVariantChange.
+  variantChanges CharacterVariantChange[]
 
   /// Every offer this character has been named in, settled or not.
   tradeLines TradeCharacter[]
@@ -692,6 +696,52 @@ model InviteCode {
   role    Role? @relation(fields: [roleId], references: [id], onDelete: SetNull)
 
   @@map("invite_codes")
+}
+
+/// One change of a character's variant, and what it did to its traits.
+///
+/// Rarity is economically load-bearing -- it is the thing upgrade tickets sell
+/// -- so a change to it needs to be answerable months later: who moved this
+/// character to Rare, when, and why. Nothing recorded that before.
+///
+/// The trait snapshots are here because a variant change is rarely just a
+/// variant change: the new rarity may not permit values the old one did, and
+/// staff re-route them in the same act. Storing only the variant transition
+/// would leave the trait edit that accompanied it invisible, which is exactly
+/// the half a masterlist dispute asks about.
+model CharacterVariantChange {
+  id          String @id @default(uuid())
+  characterId String @map("character_id")
+
+  /// Null when the character had no variant before this.
+  fromVariantId String? @map("from_variant_id")
+  /// Null when the variant was cleared rather than changed.
+  toVariantId   String? @map("to_variant_id")
+
+  /// Who did it. Null only if the user is later deleted -- the record outlives
+  /// them, the way the item ledger's does.
+  changedById String? @map("changed_by_id")
+
+  /// Staff's note. Optional, and worth asking for: "upgrade ticket #204" is
+  /// the difference between a record and an audit trail.
+  reason String? @db.Text
+
+  /// [CharacterTraitValuesJson]
+  previousTraitValues Json @map("previous_trait_values")
+  /// [CharacterTraitValuesJson]
+  newTraitValues      Json @map("new_trait_values")
+
+  createdAt DateTime @default(now()) @map("created_at")
+
+  character   Character       @relation(fields: [characterId], references: [id], onDelete: Cascade)
+  /// SetNull rather than Cascade on both variants: deleting a variant must not
+  /// erase the record of characters that used to be it.
+  fromVariant SpeciesVariant? @relation("CharacterVariantChangeFrom", fields: [fromVariantId], references: [id], onDelete: SetNull)
+  toVariant   SpeciesVariant? @relation("CharacterVariantChangeTo", fields: [toVariantId], references: [id], onDelete: SetNull)
+  changedBy   User?           @relation("CharacterVariantChangedBy", fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@index([characterId, createdAt])
+  @@map("character_variant_changes")
 }
 
 model CharacterOwnershipChange {
@@ -1478,6 +1528,10 @@ model SpeciesVariant {
   myoGrantVariants ItemUseMyoGrantVariant[]
   /// Every edit-kit grant limited to this variant.
   traitEditGrantVariants ItemUseTraitEditGrantVariant[]
+
+  /// Characters that moved off this variant, and onto it.
+  variantChangesFrom CharacterVariantChange[] @relation("CharacterVariantChangeFrom")
+  variantChangesTo   CharacterVariantChange[] @relation("CharacterVariantChangeTo")
 
   @@unique([speciesId, name])
   @@map("species_variants")
