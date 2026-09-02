@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **E2E: 10 specs pinning that a character under redemption review cannot be
+  disposed of**, and that the guard stays narrow — a creation review, or no
+  review, still deletes (#327).
+
 ### Changed
 
 - **"Redeem" is now the word for spending a usable item**, across all three

@@ -781,6 +781,55 @@ export class CharactersService {
     return finalCharacter;
   }
 
+  /**
+   * Refuse to dispose of a character whose redemption is still being reviewed.
+   *
+   * A pending MYO or edit-kit review means a member has already spent an item
+   * on this character -- the item is destroyed and gone by the time a reviewer
+   * sees the card. Refusing the review is what hands it back.
+   *
+   * Every path below (`softDelete`, `purge`, `kickFromSpecies`) resolves
+   * pending reviews to CANCELLED on its way past. That is fine for a review of
+   * something the member did not pay for, and quietly catastrophic for one
+   * they did: the return path is guarded on the review still being PENDING, so
+   * cancelling it does not merely skip the refund, it **closes the only door
+   * to it**. The item is then unrecoverable through any route in the product.
+   *
+   * So this orders the steps rather than taking anything away. Refuse first --
+   * which returns the item and leaves a ledger row saying so -- then delete.
+   * Staff who do not want the member keeping the item can revoke it
+   * afterwards, which is one more step and a great deal more evidence than a
+   * silent confiscation.
+   *
+   * Narrow on purpose: a CREATION or IMPORT review has no item behind it and
+   * blocks nothing.
+   */
+  private async assertNoPendingRedemption(characterId: string) {
+    const pending = await this.db.traitReview.findFirst({
+      where: {
+        characterId,
+        status: ModerationStatus.PENDING,
+        source: {
+          in: [TraitReviewSource.MYO, TraitReviewSource.USER_EDIT],
+        },
+      },
+      select: { source: true },
+    });
+    if (!pending) return;
+
+    const what =
+      pending.source === TraitReviewSource.MYO
+        ? "an MYO redemption"
+        : "a trait change bought with an item";
+
+    throw new BadRequestException(
+      `This character has ${what} awaiting review. Refuse the review first — ` +
+        `that returns the item to its holder — and then do this. Deleting it ` +
+        `now would cancel the review and leave the item spent with no way to ` +
+        `hand it back.`,
+    );
+  }
+
   async softDelete(id: string, userId: string): Promise<boolean> {
     const character = await this.db.character.findFirst({
       where: { id, ...notDeleted },
@@ -788,6 +837,8 @@ export class CharactersService {
     if (!character) {
       throw new NotFoundException("Character not found");
     }
+
+    await this.assertNoPendingRedemption(id);
 
     await this.db.$transaction(async (tx) => {
       await tx.character.update({
@@ -809,6 +860,8 @@ export class CharactersService {
       throw new NotFoundException("Character not found");
     }
 
+    await this.assertNoPendingRedemption(id);
+
     await this.db.$transaction(async (tx) => {
       await tx.traitReview.updateMany({
         where: { characterId: id, status: ModerationStatus.PENDING },
@@ -826,6 +879,8 @@ export class CharactersService {
     if (!character) {
       throw new NotFoundException("Character not found");
     }
+    await this.assertNoPendingRedemption(id);
+
     if (!character.speciesId) {
       throw new BadRequestException(
         "Character does not have a species assigned",

@@ -244,10 +244,15 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
         </Button>
       </Header>
 
+      {/* Said generically because the outcomes differ by source, and the old
+          wording described neither accurately: "revert to previous values" is
+          not what refusing a redemption does -- it hands the member's item
+          back -- and "edit the traits before approving" describes a button
+          nothing currently wires up. */}
       <HelpText>
         Review proposed trait values for imported or user-submitted characters.
-        You can approve, revert to previous values, or edit the traits before
-        approving.
+        Approving accepts them as proposed. Refusing a change bought with an
+        item returns that item to its holder.
       </HelpText>
 
       {loading ? (
