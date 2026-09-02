@@ -23,10 +23,10 @@ const test = presetTest("community-items");
  * distinction: it asks whether the caller may edit registry fields at all, and
  * an owner passes. So the check is on the field.
  *
- * **What it does to traits.** A variant is an allow-list of enum options. Only
- * `legendary` is configured in this world -- Amber and nothing else -- and the
- * other three permit everything, which is the state most real communities are
- * in and must keep meaning "anything goes".
+ * **What it does to traits.** A variant is an allow-list of enum options.
+ * `legendary` permits Amber alone where the other three take every colour, so
+ * moving a blue-eyed character there strands a value that has to be re-routed
+ * before the change can be saved.
  */
 test.describe("changing a character's variant", () => {
   test.use({ persona: "commadmin" });
@@ -337,33 +337,6 @@ test.describe("traits that do not exist at the new rarity", () => {
     );
   });
 
-  test("an unconfigured variant permits everything", async ({ world }) => {
-    // The compatibility rule, and the one most worth pinning. Common, Uncommon
-    // and Rare have no settings at all. Reading that as "permits nothing"
-    // would refuse every save in every community that never configured this --
-    // which is most of them, and why nothing validated it before.
-    const id = await withBlueEyes(
-      world,
-      "Unconfigured",
-      world.variants.common.id,
-    );
-
-    await expect(
-      world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
-        id,
-        input: {
-          speciesVariantId: world.variants.rare.id,
-          traitValues: [
-            {
-              traitId: world.traits.eyeColor.id,
-              value: world.traits.eyeColor.values.blue,
-            },
-          ],
-        },
-      }),
-    ).resolves.toBeTruthy();
-  });
-
   test("a variant of another species is still refused", async ({ world }) => {
     // Unchanged by any of this, and worth keeping pinned beside it.
     const id = await withBlueEyes(
@@ -507,61 +480,5 @@ test.describe("changing rarity, through the page", () => {
     // noise standing in for information.
     await page.goto(`/character/${world.characters.bramblefoot.id}`);
     await expect(page.getByTestId("variant-history")).toHaveCount(0);
-  });
-});
-
-/**
- * A variant's trait list is an allow-list too, and the same rule applies.
- *
- * `traitsBySpecies` filters on TraitListEntry when given a variant. With no
- * entries that returned nothing, so a character on an unconfigured variant saw
- * "No traits configured" on a species that plainly has traits -- and, once
- * rarity became editable, a form asking staff to re-route a trait it then
- * claimed did not exist.
- */
-test.describe("traits on an unconfigured variant", () => {
-  test.use({ persona: "commadmin" });
-
-  test.beforeEach(async ({ world }) => {
-    await world.reset();
-  });
-
-  test("still show on the edit page", async ({ page, world }) => {
-    const { createCharacter } = await world
-      .as("member")
-      .gql(SeedCreateCharacterDocument, {
-        input: {
-          name: "Has traits",
-          speciesId: world.species.id,
-          speciesVariantId: world.variants.common.id,
-        },
-      });
-
-    await page.goto(`/character/${createCharacter.id}/edit`);
-
-    await expect(page.getByText("Eye Color").first()).toBeVisible();
-    await expect(page.getByText("No traits configured")).toHaveCount(0);
-  });
-
-  test("still offer their options", async ({ page, world }) => {
-    // The same rule one level down. A variant with no enum settings filtered
-    // the option list to nothing, so the trait appeared but could not be set
-    // -- "No options available for this variant" on a trait with three.
-    const { createCharacter } = await world
-      .as("member")
-      .gql(SeedCreateCharacterDocument, {
-        input: {
-          name: "Has options",
-          speciesId: world.species.id,
-          speciesVariantId: world.variants.common.id,
-        },
-      });
-
-    await page.goto(`/character/${createCharacter.id}/edit`);
-
-    await expect(page.getByText("Eye Color").first()).toBeVisible();
-    await expect(
-      page.getByText("No options available for this variant"),
-    ).toHaveCount(0);
   });
 });

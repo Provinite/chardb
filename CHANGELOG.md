@@ -9,10 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **E2E: 17 rarity-change specs**, and a fourth `Legendary` variant in the
-  `community-items` preset — the only one with per-variant trait options
-  configured, so "a configured variant restricts" and "an unconfigured one
-  does not" are both pinned (#232).
+- **E2E: 15 rarity-change specs**, and a fourth `Legendary` variant in the
+  `community-items` preset — narrowed to one trait option where the other
+  three take all of them, so "a variant restricts what it carries" has
+  something to bite on. Every variant in that world is now configured, since
+  an unconfigured one carries nothing (#232).
 
 - **A "Changing a Character's Rarity" walkthrough** (`docs/docs/character-rarity.html`).
 

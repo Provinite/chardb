@@ -307,18 +307,12 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
       return allEnumValues;
     }
 
+    // Filter enum values based on settings (only show enabled ones)
     const enabledEnumValueIds = new Set(
       enumSettingsData.enumValueSettingsBySpeciesVariant?.nodes?.map(
         (setting) => setting.enumValueId,
       ) || [],
     );
-
-    // An *unconfigured* variant is not an empty one. Filtering on an
-    // allow-list nobody has filled in leaves every option hidden, so a
-    // character on a variant with no settings saw "no options available" for
-    // traits its species plainly has. Restrictions are opt-in: configure the
-    // variant and it narrows, leave it alone and it does not.
-    if (enabledEnumValueIds.size === 0) return allEnumValues;
 
     return allEnumValues.filter((enumValue) =>
       enabledEnumValueIds.has(enumValue.id),

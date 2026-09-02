@@ -14,16 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   readable at `characterVariantChanges` (#232).
 
 - **Trait values are validated against the variant**, not just the species. A
-  variant with no options configured permits everything; one with options
-  treats them as an allow-list.
+  variant's enabled options are an allow-list, so a value the target variant
+  does not carry is refused.
 
 ### Fixed
-
-- **A variant with no trait-list entries showed no traits at all.**
-  `traitsBySpecies` filters on `TraitListEntry` when given a variant, so a
-  character on an unconfigured variant saw an empty trait form on a species
-  that plainly has traits. An unconfigured variant now falls back to the
-  species' full list — the same rule its enum options follow.
 
 - **Changing a character's variant was reachable by its owner.** Every other
   registry field is theirs to edit; rarity is what upgrade tickets sell, so it

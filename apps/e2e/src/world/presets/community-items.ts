@@ -16,6 +16,7 @@ import {
   SeedCreateTraitDocument,
   SeedCreateEnumValueDocument,
   SeedCreateEnumValueSettingDocument,
+  SeedCreateTraitListEntryDocument,
   TraitValueType,
   SeedCreateSpeciesDocument,
   SeedCreateSpeciesVariantDocument,
@@ -130,13 +131,12 @@ export interface CommunityItemsWorld {
     uncommon: { id: string; name: string };
     rare: { id: string; name: string };
     /**
-     * The only *configured* variant: its EnumValueSettings permit Amber and
-     * nothing else.
+     * The narrow one: its enum settings permit Amber and nothing else, where
+     * the other three take every colour.
      *
-     * A fourth variant rather than settings on one of the three above, so that
-     * every spec written before variant-aware validation existed keeps the
-     * behaviour it was written against. An unconfigured variant permits
-     * everything; this one is what proves a configured variant does not.
+     * A fourth variant rather than narrowing one of the three above, so that
+     * every spec written before this branch keeps the data it was written
+     * against.
      */
     legendary: { id: string; name: string };
   };
@@ -379,15 +379,42 @@ export default definePreset<CommunityItemsWorld>({
       eyeColorValues[name.toLowerCase()] = createEnumValue.id;
     }
 
-    // Legendary permits Amber and nothing else. The other three variants are
-    // left unconfigured on purpose: that is the state most communities are in,
-    // and it must keep meaning "anything goes" rather than "nothing does".
-    await ctx.as("commadmin").gql(SeedCreateEnumValueSettingDocument, {
-      createEnumValueSettingInput: {
-        speciesVariantId: legendary.id,
-        enumValueId: eyeColorValues.amber,
-      },
-    });
+    // Every variant is configured, because an unconfigured one is dead: a
+    // variant with no trait-list entry does not carry the trait, and an enum
+    // allow-list with no rows allows nothing. A world whose variants were left
+    // blank while its characters held trait values was modelling a state the
+    // product does not have.
+    //
+    // Legendary is the narrow one -- Amber only -- so that "a variant
+    // restricts its options" has something to bite on. The other three take
+    // every colour.
+    for (const v of [common, uncommon, rare, legendary]) {
+      await ctx.as("commadmin").gql(SeedCreateTraitListEntryDocument, {
+        input: {
+          traitId: eyeColor.id,
+          speciesVariantId: v.id,
+          order: 0,
+          required: false,
+          valueType: TraitValueType.Enum,
+        },
+      });
+    }
+
+    for (const [variantId, colours] of [
+      [common.id, ["blue", "green", "amber"]],
+      [uncommon.id, ["blue", "green", "amber"]],
+      [rare.id, ["blue", "green", "amber"]],
+      [legendary.id, ["amber"]],
+    ] as const) {
+      for (const colour of colours) {
+        await ctx.as("commadmin").gql(SeedCreateEnumValueSettingDocument, {
+          createEnumValueSettingInput: {
+            speciesVariantId: variantId,
+            enumValueId: eyeColorValues[colour],
+          },
+        });
+      }
+    }
 
     // assignToSelf, so each character is owned by whoever seeds it. The stock
     // Member role carries canCreateCharacter, so both members can.

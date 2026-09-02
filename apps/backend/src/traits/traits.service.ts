@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
+import { TraitValueType } from "../shared/enums/trait-value-type.enum";
 import { $Enums, Prisma } from "@chardb/database";
 import { CommunityColorsService } from "../community-colors/community-colors.service";
 
@@ -129,23 +130,8 @@ export class TraitsService {
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
-    // A variant's trait list is an allow-list, and an *unconfigured* variant
-    // is not an empty one.
-    //
-    // Filtering on TraitListEntry with no entries returns nothing, so a
-    // character on a variant nobody has configured saw "No traits configured"
-    // on a species that plainly has traits -- and, once rarity became
-    // editable, a form asking staff to re-route a trait it then claimed did
-    // not exist. Same rule as the per-variant enum options: configure it and
-    // it constrains, leave it alone and it does not.
-    const variantOrdersTraits = variantId
-      ? (await this.prisma.traitListEntry.count({
-          where: { speciesVariantId: variantId },
-        })) > 0
-      : false;
-
     // When variantId is provided, fetch traits with their TraitListEntry order
-    if (variantId && variantOrdersTraits) {
+    if (variantId) {
       const [traitsWithOrder, totalCount] = await Promise.all([
         this.prisma.trait.findMany({
           where: {
@@ -198,12 +184,8 @@ export class TraitsService {
       const hasNextPage = sortedTraits.length > first;
       const nodes = hasNextPage ? sortedTraits.slice(0, -1) : sortedTraits;
 
-      // Remove the traitListEntries from response (internal use only).
-      // Underscored because discarding it is the point -- the lint rule's own
-      // escape for a deliberately unused binding.
-      const cleanNodes = nodes.map(
-        ({ traitListEntries: _traitListEntries, ...trait }) => trait,
-      );
+      // Remove the traitListEntries from response (internal use only)
+      const cleanNodes = nodes.map(({ traitListEntries, ...trait }) => trait);
 
       return {
         nodes: cleanNodes,

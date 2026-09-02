@@ -1798,12 +1798,10 @@ export class CharactersService {
    * may use this option". Rarity is usually what it encodes -- a Rare may take
    * markings a Common may not.
    *
-   * **A variant with no rows at all permits everything.** That is the
-   * difference between *unconfigured* and *empty*, and reading it the other
-   * way would refuse every save in every community that uses variants without
-   * ever setting this up -- which is most of them, and which is why nothing
-   * validated this before. Only a variant somebody has actually configured
-   * constrains anything.
+   * An allow-list with no rows allows nothing. A trait with no options enabled
+   * for a variant is not available to that variant at all, which is the same
+   * thing the trait list says one level up: a variant nothing is configured
+   * for is dead, not permissive.
    *
    * Scoped to enum traits. A free-text or numeric trait has no options to
    * allow, so it has no settings and must not be read as forbidden.
@@ -1816,8 +1814,6 @@ export class CharactersService {
       where: { speciesVariantId },
       select: { enumValueId: true },
     });
-    if (settings.length === 0) return [];
-
     const allowed = new Set(settings.map((s) => s.enumValueId));
 
     // Only enum traits are constrained, and only the values that name an enum

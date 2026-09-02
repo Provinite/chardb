@@ -9,11 +9,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **A variant with no per-variant options configured offered none at all.**
-  The trait editor filtered its option list to an allow-list nobody had filled
-  in, so a character on such a variant saw "No options available" for a trait
-  with three. Restrictions are opt-in.
-
 - **A character's variant could not be changed after creation.** The edit page
   locked it alongside the species under "assignment is permanent", which is
   true of the species and never was of its rarity (#232).
