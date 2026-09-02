@@ -814,15 +814,15 @@ export const CharacterPage: React.FC = () => {
               {!pendingRedemption &&
                 (permissions.canDeleteCharacter ||
                   (user?.isAdmin ?? false)) && (
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                >
-                  {deleting ? "Deleting..." : "Delete Character"}
-                </Button>
-              )}
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? "Deleting..." : "Delete Character"}
+                  </Button>
+                )}
             </CharacterActions>
           )}
           {actionError && (

@@ -244,9 +244,7 @@ test.describe("the review queue's actions", () => {
 
     await page.goto(`/communities/${world.community.id}/moderation/traits`);
 
-    await expect(
-      page.getByRole("button", { name: "Approve" }),
-    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Approve" })).toBeVisible();
     // "Refuse", not "Revert": there is nothing to revert to, and what the
     // button does is hand the ticket back.
     await expect(page.getByRole("button", { name: "Refuse" })).toBeVisible();
