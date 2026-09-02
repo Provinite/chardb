@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **The review queue offered Delete and Remove from Species on redemptions**,
+  neither of which is a review outcome and both of which stranded the member's
+  item. Gone for MYO and edit-kit reviews (#327).
+
+### Changed
+
+- **Refusing a redemption review is called "Refuse", not "Revert"** — it
+  reverts nothing, and what it does is hand the item back.
+
 ### Changed
 
 - **Redeeming an MYO ticket or an edit kit now asks first**, naming the item

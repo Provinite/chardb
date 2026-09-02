@@ -19,6 +19,7 @@ import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import { canUserEditCharacter } from "../lib/characterPermissions";
 import { setKinds } from "../lib/characterAvailability";
 import { kitCovers } from "../lib/editKits";
+import { isRedemptionReview } from "../lib/traitReviews";
 import { CharacterAvailability } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
 import { CommentList } from "../components/CommentList";
@@ -473,6 +474,19 @@ export const CharacterPage: React.FC = () => {
    * that already has a change in the queue -- both are refusals, and neither
    * needs a round trip to discover.
    */
+  /**
+   * Whether this character has a redemption awaiting review.
+   *
+   * Both disposal actions below are refused by the server while one is open,
+   * because every path behind them cancels the pending review and the item's
+   * return is guarded on it still being pending -- so they do not skip the
+   * refund, they close the door to it. Hidden here so the buttons are not
+   * offered and then refused.
+   */
+  const pendingRedemption = isRedemptionReview(
+    character?.pendingTraitReviewSource,
+  );
+
   const ownsCharacter = Boolean(user && character?.owner?.id === user.id);
   const hasPendingReview =
     character?.traitReviewStatus === ModerationStatus.Pending;
@@ -785,6 +799,7 @@ export const CharacterPage: React.FC = () => {
                 </Button>
               )}
               {character.speciesId &&
+                !pendingRedemption &&
                 (permissions.canEditCharacterRegistry ||
                   (user?.isAdmin ?? false)) && (
                   <RemoveFromSpeciesButton
@@ -796,16 +811,18 @@ export const CharacterPage: React.FC = () => {
                     {kicking ? "Removing..." : "Remove from Species"}
                   </RemoveFromSpeciesButton>
                 )}
-              {(permissions.canDeleteCharacter || (user?.isAdmin ?? false)) && (
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={handleDelete}
-                  disabled={deleting}
-                >
-                  {deleting ? "Deleting..." : "Delete Character"}
-                </Button>
-              )}
+              {!pendingRedemption &&
+                (permissions.canDeleteCharacter ||
+                  (user?.isAdmin ?? false)) && (
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={handleDelete}
+                    disabled={deleting}
+                  >
+                    {deleting ? "Deleting..." : "Delete Character"}
+                  </Button>
+                )}
             </CharacterActions>
           )}
           {actionError && (

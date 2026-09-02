@@ -399,6 +399,14 @@ mutation SeedCreateCharacterFromMyoTicket($input: RedeemMyoTicketInput!) {
   }
 }
 
+mutation SeedDeleteCharacter($id: ID!) {
+  deleteCharacter(id: $id)
+}
+
+mutation SeedKickCharacterFromSpecies($id: ID!) {
+  kickCharacterFromSpecies(id: $id)
+}
+
 # Editing a role, so a spec can take a permission away and prove what still
 # works without it. Requires community CanEditRole.
 mutation SeedUpdateRole($id: ID!, $updateRoleInput: UpdateRoleInput!) {

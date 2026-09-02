@@ -15,6 +15,7 @@ import { Button, Caption } from "@chardb/ui";
 import { TraitReviewSource } from "../../generated/graphql";
 import { TraitDiffDisplay } from "./TraitDiffDisplay";
 import { RevertTraitReviewModal } from "./RevertTraitReviewModal";
+import { isRedemptionReview } from "../../lib/traitReviews";
 
 import type { TraitReviewQueueQuery } from "../../generated/graphql";
 
@@ -201,6 +202,8 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
 }) => {
   const [showRejectModal, setShowRejectModal] = useState(false);
   const review = item.review;
+  /** Paid for with an item, which changes three things on this card. */
+  const redemption = isRedemptionReview(review.source);
   const mainMedia = review.character?.mainMedia;
   const img = mainMedia?.pendingModerationImage ?? mainMedia?.image;
   const imageUrl = img?.mediumUrl ?? img?.originalUrl;
@@ -275,6 +278,13 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                 Edit & Approve
               </Button>
             )}
+            {/* Creation and Import have no earlier state to restore, so they
+                are excluded. A redemption is *not* excluded: refusing one is
+                the whole reason this button exists there, and it is the only
+                thing that hands the member's item back. It is called Refuse
+                rather than Revert because it reverts nothing -- an MYO
+                character had no previous traits, and an edit kit's proposal
+                was never applied. */}
             {review.source !== TraitReviewSource.Creation &&
               review.source !== TraitReviewSource.Import && (
                 <Button
@@ -284,10 +294,16 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                   disabled={actionInProgress}
                   icon={<X size={14} />}
                 >
-                  Revert
+                  {redemption ? "Refuse" : "Revert"}
                 </Button>
               )}
-            {onKickFromSpecies && (
+            {/* Neither of these is a review outcome, and on a redemption both
+                are worse than that: every path behind them cancels the pending
+                review, and the item's return is guarded on that review still
+                being pending. So they do not skip the refund, they close the
+                only door to it. The server refuses them too -- this is about
+                not offering a button whose press is a refusal. */}
+            {onKickFromSpecies && !redemption && (
               <Button
                 variant="outline"
                 size="sm"
@@ -304,7 +320,7 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                 Remove from Species
               </Button>
             )}
-            {onDelete && (
+            {onDelete && !redemption && (
               <Button
                 variant="danger"
                 size="sm"

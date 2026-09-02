@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Deleting a character mid-redemption stranded the member's item.**
+  `softDelete`, `purge` and `kickFromSpecies` cancel pending trait reviews, and
+  an item's return is guarded on its review still being pending — so they did
+  not skip the refund, they closed the only path to it. All three now refuse
+  while an MYO or edit-kit review is open, naming the way out (#327).
+
 ### Added
 
 - **`Item.acquiredAt`** — when an item reached its current holder, read from
