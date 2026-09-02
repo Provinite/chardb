@@ -7,20 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v11.9.0] - 2026-09-02
+
 ### Added
 
 - **E2E: 10 specs pinning that a character under redemption review cannot be
   disposed of**, and that the guard stays narrow — a creation review, or no
   review, still deletes (#327).
-
-### Changed
-
-- **"Redeem" is now the word for spending a usable item**, across all three
-  kinds: the buttons, the confirms, the ledger's event label and reason, and
-  the docs. The `USE` transaction kind is unchanged — it is a record, not
-  copy. `Using Items` is now `Redeeming Items`; its URL is unchanged.
-
-### Added
 
 - **E2E: 23 edit-kit specs**, plus an Eye Color trait and two edit kits in the
   `community-items` preset — one species-wide, one narrowed to Common (#171).
@@ -28,8 +21,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A dedicated "Edit Kits" walkthrough** (`docs/docs/edit-kits.html`), ten
   steps with thirteen screenshots, leading on the thing that surprises people:
   a proposed change does not touch the character until staff approve it.
-
-### Added
 
 - **E2E: 25 MYO-ticket specs**, and three Thornwing variants in the
   `community-items` preset with a ticket good for two of them (#168).
@@ -40,6 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A dedicated "MYO Slots" walkthrough** (`docs/docs/myo-slots.html`), eleven
   steps with twelve screenshots. Using Items becomes the starting point that
   links to it (#168).
+
+### Changed
+
+- **"Redeem" is now the word for spending a usable item**, across all three
+  kinds: the buttons, the confirms, the ledger's event label and reason, and
+  the docs. The `USE` transaction kind is unchanged — it is a record, not
+  copy. `Using Items` is now `Redeeming Items`; its URL is unchanged.
 
 ## [v11.8.0] - 2026-09-01
 
