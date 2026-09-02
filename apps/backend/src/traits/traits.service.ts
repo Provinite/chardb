@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { TraitValueType } from "../shared/enums/trait-value-type.enum";
 import { $Enums, Prisma } from "@chardb/database";
 import { CommunityColorsService } from "../community-colors/community-colors.service";
 
@@ -199,8 +198,12 @@ export class TraitsService {
       const hasNextPage = sortedTraits.length > first;
       const nodes = hasNextPage ? sortedTraits.slice(0, -1) : sortedTraits;
 
-      // Remove the traitListEntries from response (internal use only)
-      const cleanNodes = nodes.map(({ traitListEntries, ...trait }) => trait);
+      // Remove the traitListEntries from response (internal use only).
+      // Underscored because discarding it is the point -- the lint rule's own
+      // escape for a deliberately unused binding.
+      const cleanNodes = nodes.map(
+        ({ traitListEntries: _traitListEntries, ...trait }) => trait,
+      );
 
       return {
         nodes: cleanNodes,
