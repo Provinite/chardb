@@ -244,8 +244,7 @@ export class CharactersResolver {
       reason: row.reason,
       previousTraitValues:
         row.previousTraitValues as PrismaJson.CharacterTraitValuesJson,
-      newTraitValues:
-        row.newTraitValues as PrismaJson.CharacterTraitValuesJson,
+      newTraitValues: row.newTraitValues as PrismaJson.CharacterTraitValuesJson,
       createdAt: row.createdAt,
     }));
   }

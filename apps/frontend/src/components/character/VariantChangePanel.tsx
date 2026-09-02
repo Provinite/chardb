@@ -231,9 +231,7 @@ export const VariantChangePanel: React.FC<Props> = ({
         value={selectedVariantId ?? ""}
         disabled={disabled}
         onChange={(e) =>
-          onVariantChange(
-            variants.find((v) => v.id === e.target.value) ?? null,
-          )
+          onVariantChange(variants.find((v) => v.id === e.target.value) ?? null)
         }
       >
         <option value="">No variant</option>

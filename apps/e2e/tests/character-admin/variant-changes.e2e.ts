@@ -83,7 +83,11 @@ test.describe("changing a character's variant", () => {
       updateRoleInput: { canEditOwnCharacterRegistry: true },
     });
 
-    const id = await character(world, "Self-upgrader", world.variants.common.id);
+    const id = await character(
+      world,
+      "Self-upgrader",
+      world.variants.common.id,
+    );
 
     await expect(
       world.as("member").gql(SeedUpdateCharacterRegistryDocument, {
@@ -299,7 +303,11 @@ test.describe("traits that do not exist at the new rarity", () => {
   });
 
   test("the history keeps both sides of the re-route", async ({ world }) => {
-    const id = await withBlueEyes(world, "Both sides", world.variants.common.id);
+    const id = await withBlueEyes(
+      world,
+      "Both sides",
+      world.variants.common.id,
+    );
 
     await world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
       id,
@@ -334,7 +342,11 @@ test.describe("traits that do not exist at the new rarity", () => {
     // and Rare have no settings at all. Reading that as "permits nothing"
     // would refuse every save in every community that never configured this --
     // which is most of them, and why nothing validated it before.
-    const id = await withBlueEyes(world, "Unconfigured", world.variants.common.id);
+    const id = await withBlueEyes(
+      world,
+      "Unconfigured",
+      world.variants.common.id,
+    );
 
     await expect(
       world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
@@ -354,7 +366,11 @@ test.describe("traits that do not exist at the new rarity", () => {
 
   test("a variant of another species is still refused", async ({ world }) => {
     // Unchanged by any of this, and worth keeping pinned beside it.
-    const id = await withBlueEyes(world, "Cross species", world.variants.common.id);
+    const id = await withBlueEyes(
+      world,
+      "Cross species",
+      world.variants.common.id,
+    );
 
     await expect(
       world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
@@ -380,10 +396,7 @@ test.describe("changing rarity, through the page", () => {
     await world.reset();
   });
 
-  const blueEyed = async (
-    world: World<CommunityItemsWorld>,
-    name: string,
-  ) => {
+  const blueEyed = async (world: World<CommunityItemsWorld>, name: string) => {
     const { createCharacter } = await world
       .as("member")
       .gql(SeedCreateCharacterDocument, {
