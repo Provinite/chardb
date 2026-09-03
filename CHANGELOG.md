@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Docs screenshots open full size on click**, with their caption underneath
+  and arrow-key paging. One `lightbox.js` on all sixteen walkthrough pages,
+  no markup changes; it reads a `.screenshot-caption`, a `figcaption`, or the
+  alt text, whichever the page has.
+
 - **A "Variant Change Items" walkthrough**
   (`docs/docs/variant-change-items.html`), ten steps with eleven screenshots,
   leading on the two things that catch people out: there is no review and no
