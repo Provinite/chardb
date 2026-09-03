@@ -24,26 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   now requires `canEditCharacterRegistry` specifically. The mutation's guard
   cannot tell the fields apart, so the check is on the field.
 
-### Fixed
-
-- **Deleting a character mid-redemption stranded the member's item.**
-  `softDelete`, `purge` and `kickFromSpecies` cancel pending trait reviews, and
-  an item's return is guarded on its review still being pending — so they did
-  not skip the refund, they closed the only path to it. All three now refuse
-  while an MYO or edit-kit review is open, naming the way out (#327).
+## [v11.9.0] - 2026-09-02
 
 ### Added
 
 - **`Item.acquiredAt`** — when an item reached its current holder, read from
   the ledger. Not `createdAt`, which is when it was minted; those differ for
   anything traded.
-
-### Changed
-
-- Ledger reasons for a redemption now all read `Redeemed <item>`. They were
-  `Used`, `Redeemed` and `Spent` depending on which effect ran.
-
-### Added
 
 - **Edit kits.** `editCharacterTraitsWithKit` destroys a kit and opens a
   pending `USER_EDIT` review. **The character is not changed** — approving is
@@ -56,22 +43,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Refusing a trait edit returns the kit** and leaves the traits alone. New
   `ItemTransactionSource.TRAIT_EDIT_REDEMPTION` and `TRAIT_EDIT_REJECTION`.
 
-### Fixed
-
-- **`updateCharacterRegistry` never checked that a variant belonged to the
-  character's species**, so a character could be moved onto another species'
-  variant entirely. Now refused, and enforced by a partial unique index for
-  one pending trait review per character.
-
-### Fixed
-
-- **`createCharacter` did not enforce `canCreateCharacter`.** Its resolver
-  decorator is OR'd with `@AllowAnyAuthenticated`, so any logged-in user could
-  create a character in any species through the API. Now checked in
-  `CharactersService.create`, where `assignSpecies` already checked it.
-
-### Added
-
 - **MYO tickets.** `createCharacterFromMyoTicket` destroys a ticket and makes
   the character it was for, traits pending review under `TraitReviewSource.MYO`
   (#168).
@@ -83,6 +54,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   New `ItemTransactionSource.MYO_REDEMPTION` and `MYO_REJECTION`.
 
 - **An approved MYO character gets the next registry number in its species.**
+
+### Changed
+
+- Ledger reasons for a redemption now all read `Redeemed <item>`. They were
+  `Used`, `Redeemed` and `Spent` depending on which effect ran.
+
+### Fixed
+
+- **Deleting a character mid-redemption stranded the member's item.**
+  `softDelete`, `purge` and `kickFromSpecies` cancel pending trait reviews, and
+  an item's return is guarded on its review still being pending — so they did
+  not skip the refund, they closed the only path to it. All three now refuse
+  while an MYO or edit-kit review is open, naming the way out (#327).
+
+- **`updateCharacterRegistry` never checked that a variant belonged to the
+  character's species**, so a character could be moved onto another species'
+  variant entirely. Now refused, and enforced by a partial unique index for
+  one pending trait review per character.
+
+- **`createCharacter` did not enforce `canCreateCharacter`.** Its resolver
+  decorator is OR'd with `@AllowAnyAuthenticated`, so any logged-in user could
+  create a character in any species through the API. Now checked in
+  `CharactersService.create`, where `assignSpecies` already checked it.
 
 ## [v11.8.0] - 2026-09-01
 
