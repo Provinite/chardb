@@ -389,16 +389,13 @@ export class MediaResolver {
     description:
       "Image content (populated for image media). URLs are masked for pending/rejected images.",
   })
-  async image(
-    @Parent() media: MediaEntity,
-    @CurrentUser() user?: CurrentUserType,
-  ): Promise<Image | null> {
+  // No viewer parameter: masking below turns on the image's moderation
+  // status, not on who is looking, and `findOne` never read the id this used
+  // to pass it.
+  async image(@Parent() media: MediaEntity): Promise<Image | null> {
     if (!media.imageId) return null;
 
-    const prismaImage = await this.imagesService.findOne(
-      media.imageId,
-      user?.id,
-    );
+    const prismaImage = await this.imagesService.findOne(media.imageId);
     if (!prismaImage) return null;
 
     const image = mapPrismaImageToGraphQL(prismaImage);
@@ -431,16 +428,14 @@ export class MediaResolver {
       "Actual image for moderation review (moderators only, pending images only)",
     middleware: [sentinelValueMiddleware],
   })
+  // Access is decided entirely by the decorators above, which is why no
+  // viewer is threaded into the fetch.
   async pendingModerationImage(
     @Parent() media: MediaEntity,
-    @CurrentUser() user?: CurrentUserType,
   ): Promise<Image | null> {
     if (!media.imageId) return null;
 
-    const prismaImage = await this.imagesService.findOne(
-      media.imageId,
-      user?.id,
-    );
+    const prismaImage = await this.imagesService.findOne(media.imageId);
     if (!prismaImage) return null;
 
     // Only return for PENDING images

@@ -245,7 +245,11 @@ export class ImagesService {
     return result;
   }
 
-  async findAll(filters: ImageFilters = {}, userId?: string) {
+  // No viewer argument: image visibility is decided by moderation status
+  // alone (see getModerationVisibilityFilter), never by who is asking. The
+  // parameter this used to take was read by nothing and had been passed at
+  // every call site for long enough to look like it meant something.
+  async findAll(filters: ImageFilters = {}) {
     const {
       limit = 20,
       offset = 0,
@@ -305,12 +309,16 @@ export class ImagesService {
     };
   }
 
-  async findOne(id: string, userId?: string) {
+  async findOne(id: string) {
     const image = await this.db.image.findUnique({
       where: { id },
       include: {
         uploader: true,
         artist: true,
+        // Joined here because this is the path the moderation queue reads an
+        // image through, and a deferred entry has to be able to say who passed
+        // on it. Null on all but a handful of rows.
+        deferredBy: true,
         tags_rel: {
           include: {
             tag: true,
@@ -362,7 +370,7 @@ export class ImagesService {
     userId: string,
     input: UpdateImageInput,
   ): Promise<Image> {
-    const image = await this.findOne(id, userId);
+    const image = await this.findOne(id);
 
     // Check ownership
     if (image.uploaderId !== userId) {
@@ -397,7 +405,7 @@ export class ImagesService {
   }
 
   async remove(id: string, userId: string): Promise<boolean> {
-    const image = await this.findOne(id, userId);
+    const image = await this.findOne(id);
 
     // Check ownership
     if (image.uploaderId !== userId) {

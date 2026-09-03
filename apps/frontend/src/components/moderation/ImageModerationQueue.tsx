@@ -6,6 +6,7 @@ import {
   useMediaModerationQueueQuery,
   useApproveImageMutation,
   useRejectImageMutation,
+  useDeferImageMutation,
   useGetCurrenciesQuery,
   ModerationRejectionReason,
 } from "../../generated/graphql";
@@ -148,6 +149,7 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
 
   const [approveImage] = useApproveImageMutation();
   const [rejectImage] = useRejectImageMutation();
+  const [deferImage] = useDeferImageMutation();
 
   const queue = data?.mediaModerationQueue;
   const items = queue?.media || [];
@@ -219,6 +221,19 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
     }
   };
 
+  const handleDefer = async (imageId: string, note: string | undefined) => {
+    setActionInProgress(imageId);
+    try {
+      await deferImage({ variables: { input: { imageId, note } } });
+      showToast("Sent to the back of the queue");
+      await refetch();
+    } catch (err) {
+      console.error("Failed to defer image:", err);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
   const handlePrevPage = () => {
     setOffset(Math.max(0, offset - PAGE_SIZE));
   };
@@ -269,7 +284,9 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
       <HelpText>
         Review and approve or reject uploaded images. Approved images will
         become visible to the community. Rejected images will be hidden and
-        uploaders will be notified via email.
+        uploaders will be notified via email. An image you cannot rule on yet
+        can be sent to the back of the queue instead — it stays pending and the
+        uploader hears nothing.
       </HelpText>
 
       {loading ? (
@@ -311,6 +328,10 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
                       isNsfw: image.isNsfw,
                       moderationStatus: image.moderationStatus,
                       createdAt: image.createdAt,
+                      deferredAt: image.deferredAt,
+                      deferralCount: image.deferralCount,
+                      deferralNote: image.deferralNote,
+                      deferredBy: image.deferredBy,
                       uploader: image.uploader,
                     },
                     characterId: mediaItem.characterId ?? null,
@@ -325,8 +346,10 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
                   currencies={currencies}
                   onApprove={handleApprove}
                   onReject={handleReject}
+                  onDefer={handleDefer}
                   approving={actionInProgress === image.id}
                   rejecting={actionInProgress === image.id}
+                  deferring={actionInProgress === image.id}
                 />
               );
             })}

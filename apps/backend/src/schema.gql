@@ -1085,6 +1085,26 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
+input DeferImageInput {
+  """The ID of the image to send to the back of the queue"""
+  imageId: ID!
+
+  """
+  Why this image is being passed on, shown to the next moderator who reaches it
+  """
+  note: String
+}
+
+input DeferTraitReviewInput {
+  """
+  Why this review is being passed on, shown to the next moderator who reaches it
+  """
+  note: String
+
+  """The ID of the review to send to the back of the queue"""
+  reviewId: ID!
+}
+
 type DeviantartUuidBackfillProgress {
   cancelled: Boolean!
   claimed: Int!
@@ -1351,6 +1371,21 @@ type Image {
   artistName: String
   artistUrl: String
   createdAt: DateTime!
+
+  """How many times this image has been sent to the back"""
+  deferralCount: Int!
+
+  """Why the last moderator passed on this image"""
+  deferralNote: String
+
+  """
+  When this image was last sent to the back of the moderation queue. Null means it has never been deferred.
+  """
+  deferredAt: DateTime
+
+  """The moderator who last sent this image to the back"""
+  deferredBy: User
+  deferredById: ID
   fileSize: Int!
   height: Int!
   id: ID!
@@ -2207,6 +2242,16 @@ type Mutation {
   Refuse an offer. Nothing was held, so nothing is released. To refuse and reply with your own terms, use counterTrade instead.
   """
   declineTrade(id: ID!): Trade!
+
+  """
+  Send a pending image to the back of the moderation queue. It stays pending; nothing is decided or announced.
+  """
+  deferImage(input: DeferImageInput!): Image!
+
+  """
+  Send a pending trait review to the back of the queue. It stays pending; nothing is applied, refunded or announced.
+  """
+  deferTraitReview(input: DeferTraitReviewInput!): TraitReview!
 
   """
   Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. A character with no species has no community to resolve permissions from, so once it has been removed from its species (see kickCharacterFromSpecies) only a global admin can delete it.
@@ -4101,6 +4146,21 @@ type TraitReview {
   character: Character!
   characterId: ID!
   createdAt: DateTime!
+
+  """How many times this review has been sent to the back"""
+  deferralCount: Int!
+
+  """Why the last moderator passed on this review"""
+  deferralNote: String
+
+  """
+  When this review was last sent to the back of the queue. Null means it has never been deferred.
+  """
+  deferredAt: DateTime
+
+  """The moderator who last sent this review to the back"""
+  deferredBy: User
+  deferredById: ID
   id: ID!
 
   """The previous trait values"""

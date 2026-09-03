@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A "Send to back" button on both moderation queues**, with an optional note
+  for the next moderator and a `Deferred ×N` badge on anything that has been
+  passed over (#333).
+
 - **A character page lists the items you hold that work on it**, with an icon,
   a count, what redeeming does, and a Redeem button each. Replaces two buttons
   whose labels were assembled sentences. Clicking a row carries that item type

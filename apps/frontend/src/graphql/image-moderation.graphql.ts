@@ -86,6 +86,14 @@ export const MEDIA_MODERATION_QUEUE = gql`
           isNsfw
           moderationStatus
           createdAt
+          deferredAt
+          deferralCount
+          deferralNote
+          deferredBy {
+            id
+            username
+            displayName
+          }
           uploader {
             id
             username
@@ -187,6 +195,18 @@ export const APPROVE_IMAGE = gql`
           name
         }
       }
+    }
+  }
+`;
+
+export const DEFER_IMAGE = gql`
+  mutation DeferImage($input: DeferImageInput!) {
+    deferImage(input: $input) {
+      id
+      moderationStatus
+      deferredAt
+      deferralCount
+      deferralNote
     }
   }
 `;

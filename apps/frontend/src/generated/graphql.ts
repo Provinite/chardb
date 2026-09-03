@@ -889,6 +889,20 @@ export enum CurrencyTransactionSource {
   ShopPurchase = 'SHOP_PURCHASE'
 }
 
+export type DeferImageInput = {
+  /** The ID of the image to send to the back of the queue */
+  imageId: Scalars['ID']['input'];
+  /** Why this image is being passed on, shown to the next moderator who reaches it */
+  note?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type DeferTraitReviewInput = {
+  /** Why this review is being passed on, shown to the next moderator who reaches it */
+  note?: InputMaybe<Scalars['String']['input']>;
+  /** The ID of the review to send to the back of the queue */
+  reviewId: Scalars['ID']['input'];
+};
+
 export type DeviantartUuidBackfillProgress = {
   __typename?: 'DeviantartUuidBackfillProgress';
   cancelled: Scalars['Boolean']['output'];
@@ -1132,6 +1146,15 @@ export type Image = {
   artistName: Maybe<Scalars['String']['output']>;
   artistUrl: Maybe<Scalars['String']['output']>;
   createdAt: Scalars['DateTime']['output'];
+  /** How many times this image has been sent to the back */
+  deferralCount: Scalars['Int']['output'];
+  /** Why the last moderator passed on this image */
+  deferralNote: Maybe<Scalars['String']['output']>;
+  /** When this image was last sent to the back of the moderation queue. Null means it has never been deferred. */
+  deferredAt: Maybe<Scalars['DateTime']['output']>;
+  /** The moderator who last sent this image to the back */
+  deferredBy: Maybe<User>;
+  deferredById: Maybe<Scalars['ID']['output']>;
   fileSize: Scalars['Int']['output'];
   height: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
@@ -1766,6 +1789,10 @@ export type Mutation = {
   createTraitListEntry: TraitListEntry;
   /** Refuse an offer. Nothing was held, so nothing is released. To refuse and reply with your own terms, use counterTrade instead. */
   declineTrade: Trade;
+  /** Send a pending image to the back of the moderation queue. It stays pending; nothing is decided or announced. */
+  deferImage: Image;
+  /** Send a pending trait review to the back of the queue. It stays pending; nothing is applied, refunded or announced. */
+  deferTraitReview: TraitReview;
   /** Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. A character with no species has no community to resolve permissions from, so once it has been removed from its species (see kickCharacterFromSpecies) only a global admin can delete it. */
   deleteCharacter: Scalars['Boolean']['output'];
   deleteComment: Scalars['Boolean']['output'];
@@ -2079,6 +2106,16 @@ export type MutationCreateTraitListEntryArgs = {
 
 export type MutationDeclineTradeArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationDeferImageArgs = {
+  input: DeferImageInput;
+};
+
+
+export type MutationDeferTraitReviewArgs = {
+  input: DeferTraitReviewInput;
 };
 
 
@@ -4040,6 +4077,15 @@ export type TraitReview = {
   character: Character;
   characterId: Scalars['ID']['output'];
   createdAt: Scalars['DateTime']['output'];
+  /** How many times this review has been sent to the back */
+  deferralCount: Scalars['Int']['output'];
+  /** Why the last moderator passed on this review */
+  deferralNote: Maybe<Scalars['String']['output']>;
+  /** When this review was last sent to the back of the queue. Null means it has never been deferred. */
+  deferredAt: Maybe<Scalars['DateTime']['output']>;
+  /** The moderator who last sent this review to the back */
+  deferredBy: Maybe<User>;
+  deferredById: Maybe<Scalars['ID']['output']>;
   id: Scalars['ID']['output'];
   /** The previous trait values */
   previousTraitValues: Array<CharacterTraitValue>;
@@ -5106,7 +5152,7 @@ export type MediaModerationQueueQueryVariables = Exact<{
 }>;
 
 
-export type MediaModerationQueueQuery = { __typename?: 'Query', mediaModerationQueue: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, characterId: string | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null, awardRecipients: Array<{ __typename?: 'MediaAwardRecipient', userId: string, relations: Array<MediaAwardRelation>, isMember: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> | null }> } };
+export type MediaModerationQueueQuery = { __typename?: 'Query', mediaModerationQueue: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, characterId: string | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, deferredAt: string | null, deferralCount: number, deferralNote: string | null, deferredBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null, awardRecipients: Array<{ __typename?: 'MediaAwardRecipient', userId: string, relations: Array<MediaAwardRelation>, isMember: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> | null }> } };
 
 export type GlobalImageModerationQueueQueryVariables = Exact<{
   filters?: InputMaybe<ImageModerationQueueFiltersInput>;
@@ -5135,6 +5181,13 @@ export type ApproveImageMutationVariables = Exact<{
 
 
 export type ApproveImageMutation = { __typename?: 'Mutation', approveImage: { __typename?: 'ImageModerationAction', id: string, action: ModerationStatus, createdAt: string, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus }, currencyAwards: Array<{ __typename?: 'CurrencyTransaction', id: string, userId: string, amount: number, currency: { __typename?: 'Currency', id: string, code: string, symbol: string | null, name: string } }> } };
+
+export type DeferImageMutationVariables = Exact<{
+  input: DeferImageInput;
+}>;
+
+
+export type DeferImageMutation = { __typename?: 'Mutation', deferImage: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus, deferredAt: string | null, deferralCount: number, deferralNote: string | null } };
 
 export type RejectImageMutationVariables = Exact<{
   input: RejectImageInput;
@@ -5983,7 +6036,7 @@ export type TraitReviewQueueQueryVariables = Exact<{
 }>;
 
 
-export type TraitReviewQueueQuery = { __typename?: 'Query', traitReviewQueue: { __typename?: 'TraitReviewQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'TraitReviewQueueItem', characterName: string, characterId: string, registryId: string | null, speciesName: string | null, variantName: string | null, review: { __typename?: 'TraitReview', id: string, characterId: string, status: ModerationStatus, source: TraitReviewSource, rejectionReason: string | null, resolvedAt: string | null, createdAt: string, proposedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, previousTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, appliedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> | null, resolvedBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, speciesId: string | null, speciesVariantId: string | null, mainMedia: { __typename?: 'Media', pendingModerationImage: { __typename?: 'Image', mediumUrl: string | null, thumbnailUrl: string | null, originalUrl: string } | null, image: { __typename?: 'Image', mediumUrl: string | null, thumbnailUrl: string | null, originalUrl: string } | null } | null } } }> } };
+export type TraitReviewQueueQuery = { __typename?: 'Query', traitReviewQueue: { __typename?: 'TraitReviewQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'TraitReviewQueueItem', characterName: string, characterId: string, registryId: string | null, speciesName: string | null, variantName: string | null, review: { __typename?: 'TraitReview', id: string, characterId: string, status: ModerationStatus, source: TraitReviewSource, rejectionReason: string | null, resolvedAt: string | null, createdAt: string, deferredAt: string | null, deferralCount: number, deferralNote: string | null, proposedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, previousTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, appliedTraitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> | null, deferredBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, resolvedBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, character: { __typename?: 'Character', id: string, speciesId: string | null, speciesVariantId: string | null, mainMedia: { __typename?: 'Media', pendingModerationImage: { __typename?: 'Image', mediumUrl: string | null, thumbnailUrl: string | null, originalUrl: string } | null, image: { __typename?: 'Image', mediumUrl: string | null, thumbnailUrl: string | null, originalUrl: string } | null } | null } } }> } };
 
 export type PendingTraitReviewCountQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -6005,6 +6058,13 @@ export type ApproveTraitReviewMutationVariables = Exact<{
 
 
 export type ApproveTraitReviewMutation = { __typename?: 'Mutation', approveTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, resolvedAt: string | null, resolvedBy: { __typename?: 'User', id: string, username: string } | null } };
+
+export type DeferTraitReviewMutationVariables = Exact<{
+  input: DeferTraitReviewInput;
+}>;
+
+
+export type DeferTraitReviewMutation = { __typename?: 'Mutation', deferTraitReview: { __typename?: 'TraitReview', id: string, status: ModerationStatus, deferredAt: string | null, deferralCount: number, deferralNote: string | null, deferredBy: { __typename?: 'User', id: string, username: string } | null } };
 
 export type RevertTraitReviewMutationVariables = Exact<{
   input: RevertTraitReviewInput;
@@ -10564,6 +10624,14 @@ export const MediaModerationQueueDocument = gql`
         isNsfw
         moderationStatus
         createdAt
+        deferredAt
+        deferralCount
+        deferralNote
+        deferredBy {
+          id
+          username
+          displayName
+        }
         uploader {
           id
           username
@@ -10813,6 +10881,43 @@ export function useApproveImageMutation(baseOptions?: Apollo.MutationHookOptions
 export type ApproveImageMutationHookResult = ReturnType<typeof useApproveImageMutation>;
 export type ApproveImageMutationResult = Apollo.MutationResult<ApproveImageMutation>;
 export type ApproveImageMutationOptions = Apollo.BaseMutationOptions<ApproveImageMutation, ApproveImageMutationVariables>;
+export const DeferImageDocument = gql`
+    mutation DeferImage($input: DeferImageInput!) {
+  deferImage(input: $input) {
+    id
+    moderationStatus
+    deferredAt
+    deferralCount
+    deferralNote
+  }
+}
+    `;
+export type DeferImageMutationFn = Apollo.MutationFunction<DeferImageMutation, DeferImageMutationVariables>;
+
+/**
+ * __useDeferImageMutation__
+ *
+ * To run a mutation, you first call `useDeferImageMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeferImageMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deferImageMutation, { data, loading, error }] = useDeferImageMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useDeferImageMutation(baseOptions?: Apollo.MutationHookOptions<DeferImageMutation, DeferImageMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeferImageMutation, DeferImageMutationVariables>(DeferImageDocument, options);
+      }
+export type DeferImageMutationHookResult = ReturnType<typeof useDeferImageMutation>;
+export type DeferImageMutationResult = Apollo.MutationResult<DeferImageMutation>;
+export type DeferImageMutationOptions = Apollo.BaseMutationOptions<DeferImageMutation, DeferImageMutationVariables>;
 export const RejectImageDocument = gql`
     mutation RejectImage($input: RejectImageInput!) {
   rejectImage(input: $input) {
@@ -15967,6 +16072,14 @@ export const TraitReviewQueueDocument = gql`
         rejectionReason
         resolvedAt
         createdAt
+        deferredAt
+        deferralCount
+        deferralNote
+        deferredBy {
+          id
+          username
+          displayName
+        }
         resolvedBy {
           id
           username
@@ -16164,6 +16277,47 @@ export function useApproveTraitReviewMutation(baseOptions?: Apollo.MutationHookO
 export type ApproveTraitReviewMutationHookResult = ReturnType<typeof useApproveTraitReviewMutation>;
 export type ApproveTraitReviewMutationResult = Apollo.MutationResult<ApproveTraitReviewMutation>;
 export type ApproveTraitReviewMutationOptions = Apollo.BaseMutationOptions<ApproveTraitReviewMutation, ApproveTraitReviewMutationVariables>;
+export const DeferTraitReviewDocument = gql`
+    mutation DeferTraitReview($input: DeferTraitReviewInput!) {
+  deferTraitReview(input: $input) {
+    id
+    status
+    deferredAt
+    deferralCount
+    deferralNote
+    deferredBy {
+      id
+      username
+    }
+  }
+}
+    `;
+export type DeferTraitReviewMutationFn = Apollo.MutationFunction<DeferTraitReviewMutation, DeferTraitReviewMutationVariables>;
+
+/**
+ * __useDeferTraitReviewMutation__
+ *
+ * To run a mutation, you first call `useDeferTraitReviewMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeferTraitReviewMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deferTraitReviewMutation, { data, loading, error }] = useDeferTraitReviewMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useDeferTraitReviewMutation(baseOptions?: Apollo.MutationHookOptions<DeferTraitReviewMutation, DeferTraitReviewMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeferTraitReviewMutation, DeferTraitReviewMutationVariables>(DeferTraitReviewDocument, options);
+      }
+export type DeferTraitReviewMutationHookResult = ReturnType<typeof useDeferTraitReviewMutation>;
+export type DeferTraitReviewMutationResult = Apollo.MutationResult<DeferTraitReviewMutation>;
+export type DeferTraitReviewMutationOptions = Apollo.BaseMutationOptions<DeferTraitReviewMutation, DeferTraitReviewMutationVariables>;
 export const RevertTraitReviewDocument = gql`
     mutation RevertTraitReview($input: RevertTraitReviewInput!) {
   revertTraitReview(input: $input) {

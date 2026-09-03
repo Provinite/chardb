@@ -116,8 +116,22 @@ query SeedTraitReviewQueue($communityId: ID!, $first: Int, $offset: Int) {
         id
         status
         characterId
+        deferredAt
+        deferralCount
+        deferralNote
       }
     }
+  }
+}
+
+# Sending an entry to the back, so a spec can prove the queue reorders and the
+# review stays pending while it does.
+mutation SeedDeferTraitReview($input: DeferTraitReviewInput!) {
+  deferTraitReview(input: $input) {
+    id
+    status
+    deferralCount
+    deferralNote
   }
 }
 
@@ -347,7 +361,9 @@ mutation SeedSetItemTypeMyoGrant($input: SetItemTypeMyoGrantInput!) {
   }
 }
 
-mutation SeedSetItemTypeTraitEditGrant($input: SetItemTypeTraitEditGrantInput!) {
+mutation SeedSetItemTypeTraitEditGrant(
+  $input: SetItemTypeTraitEditGrantInput!
+) {
   setItemTypeTraitEditGrant(input: $input) {
     id
     useTraitEditGrant {
@@ -628,6 +644,18 @@ query SeedMediaModerationQueue($communityId: ID!) {
     media {
       id
       title
+      # The queue orders by these across the media -> image relation, so
+      # selecting them is also what proves that query runs at all.
+      pendingModerationImage {
+        id
+        moderationStatus
+        deferredAt
+        deferralCount
+        deferralNote
+        deferredBy {
+          username
+        }
+      }
       awardRecipients {
         userId
         relations
@@ -637,6 +665,15 @@ query SeedMediaModerationQueue($communityId: ID!) {
         }
       }
     }
+  }
+}
+
+mutation SeedDeferImage($input: DeferImageInput!) {
+  deferImage(input: $input) {
+    id
+    moderationStatus
+    deferralCount
+    deferralNote
   }
 }
 

@@ -57,6 +57,25 @@ export class RevertTraitReviewInput {
 }
 
 @InputType()
+export class DeferTraitReviewInput {
+  @Field(() => ID, {
+    description: "The ID of the review to send to the back of the queue",
+  })
+  @IsUUID()
+  reviewId: string;
+
+  @Field({
+    nullable: true,
+    description:
+      "Why this review is being passed on, shown to the next moderator who reaches it",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  note?: string;
+}
+
+@InputType()
 export class EditAndApproveTraitReviewInput {
   @Field(() => ID, { description: "The ID of the review to edit and approve" })
   @IsUUID()

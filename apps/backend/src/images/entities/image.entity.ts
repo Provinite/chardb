@@ -62,6 +62,27 @@ export class Image {
   })
   moderationStatus: ModerationStatus;
 
+  @Field({
+    nullable: true,
+    description:
+      "When this image was last sent to the back of the moderation queue. Null means it has never been deferred.",
+  })
+  deferredAt?: Date;
+
+  @Field(() => ID, { nullable: true })
+  deferredById?: string;
+
+  @Field(() => Int, {
+    description: "How many times this image has been sent to the back",
+  })
+  deferralCount: number;
+
+  @Field({
+    nullable: true,
+    description: "Why the last moderator passed on this image",
+  })
+  deferralNote?: string;
+
   @Field()
   createdAt: Date;
 
@@ -74,6 +95,12 @@ export class Image {
 
   @Field(() => User, { nullable: true })
   artist?: User;
+
+  @Field(() => User, {
+    nullable: true,
+    description: "The moderator who last sent this image to the back",
+  })
+  deferredBy?: User;
 
   @Field(() => [ImageTag], { nullable: true })
   tags_rel?: ImageTag[];

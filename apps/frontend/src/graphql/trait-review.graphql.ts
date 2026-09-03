@@ -52,6 +52,14 @@ export const TRAIT_REVIEW_QUEUE = gql`
           rejectionReason
           resolvedAt
           createdAt
+          deferredAt
+          deferralCount
+          deferralNote
+          deferredBy {
+            id
+            username
+            displayName
+          }
           resolvedBy {
             id
             username
@@ -122,6 +130,22 @@ export const APPROVE_TRAIT_REVIEW = gql`
       status
       resolvedAt
       resolvedBy {
+        id
+        username
+      }
+    }
+  }
+`;
+
+export const DEFER_TRAIT_REVIEW = gql`
+  mutation DeferTraitReview($input: DeferTraitReviewInput!) {
+    deferTraitReview(input: $input) {
+      id
+      status
+      deferredAt
+      deferralCount
+      deferralNote
+      deferredBy {
         id
         username
       }

@@ -103,7 +103,14 @@ export class TraitReviewService {
       this.db.traitReview.findMany({
         where: whereClause,
         include: traitReviewQueueInclude,
-        orderBy: { createdAt: "asc" },
+        // ORDER BY deferred_at ASC NULLS FIRST, created_at ASC. Everything
+        // never deferred sorts first, in the FIFO order it always had; the
+        // deferred entries queue up behind it in the order they were passed
+        // on, so deferring twice lands behind anything deferred in between.
+        orderBy: [
+          { deferredAt: { sort: "asc", nulls: "first" } },
+          { createdAt: "asc" },
+        ],
         skip: offset,
         take: first + 1,
       }),
@@ -114,6 +121,45 @@ export class TraitReviewService {
     const trimmedItems = items.slice(0, first);
 
     return { items: trimmedItems, total, hasMore };
+  }
+
+  /**
+   * Send a review to the back of the queue.
+   *
+   * Not a review outcome. The status stays PENDING, the character keeps its
+   * pending state, a redemption's item stays consumed, and nobody is notified
+   * -- the entry is exactly as unresolved afterwards as it was before, it just
+   * stops sitting in front of the work that can actually be done. Every defer
+   * bumps the sort key and the count, so an entry the whole team keeps passing
+   * on says so on its face rather than quietly cycling forever.
+   */
+  async deferReview(reviewId: string, moderatorId: string, note?: string) {
+    const review = await this.db.traitReview.findUnique({
+      where: { id: reviewId },
+      include: traitReviewInclude,
+    });
+
+    if (!review) {
+      throw new NotFoundException("Trait review not found");
+    }
+
+    // A resolved review is not in the queue, so there is no back of the queue
+    // to send it to. Refusing is more useful than silently writing a sort key
+    // nothing will ever read.
+    if (review.status !== ModerationStatus.PENDING) {
+      throw new BadRequestException("Review is not pending");
+    }
+
+    return this.db.traitReview.update({
+      where: { id: reviewId, status: ModerationStatus.PENDING },
+      data: {
+        deferredAt: new Date(),
+        deferredById: moderatorId,
+        deferralCount: { increment: 1 },
+        deferralNote: note?.trim() || null,
+      },
+      include: traitReviewInclude,
+    });
   }
 
   /**

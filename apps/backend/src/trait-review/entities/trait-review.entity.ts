@@ -43,6 +43,27 @@ export class TraitReview {
   @Field({ nullable: true, description: "Reason for rejection" })
   rejectionReason?: string;
 
+  @Field({
+    nullable: true,
+    description:
+      "When this review was last sent to the back of the queue. Null means it has never been deferred.",
+  })
+  deferredAt?: Date;
+
+  @Field(() => ID, { nullable: true })
+  deferredById?: string;
+
+  @Field(() => Int, {
+    description: "How many times this review has been sent to the back",
+  })
+  deferralCount: number;
+
+  @Field({
+    nullable: true,
+    description: "Why the last moderator passed on this review",
+  })
+  deferralNote?: string;
+
   @Field()
   createdAt: Date;
 
@@ -58,6 +79,12 @@ export class TraitReview {
     description: "The moderator who resolved this review",
   })
   resolvedBy?: User;
+
+  @Field(() => User, {
+    nullable: true,
+    description: "The moderator who last sent this review to the back",
+  })
+  deferredBy?: User;
 }
 
 @ObjectType({ description: "An item in the trait review queue" })

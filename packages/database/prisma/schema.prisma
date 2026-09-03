@@ -195,6 +195,13 @@ model User {
   // Trait review actions
   traitReviewActions TraitReview[] @relation("TraitReviewResolver")
 
+  // Queue entries this user last sent to the back. Separate from the resolver
+  // relations above because deferring is not resolving: the entry is still
+  // open, and the next moderator to reach it is owed the name of whoever
+  // passed on it.
+  deferredTraitReviews TraitReview[] @relation("TraitReviewDeferrer")
+  deferredImages       Image[]       @relation("ImageDeferrer")
+
   // Notifications. Two relations because one row names two people: who it was
   // addressed to, and who caused it.
   notifications      Notification[] @relation("NotificationRecipient")
@@ -356,12 +363,26 @@ model Image {
   // Moderation
   moderationStatus ModerationStatus @default(PENDING) @map("moderation_status")
 
+  /// Deferral. An image nobody can rule on yet -- the art is mid-reupload, the
+  /// call needs a second opinion -- is sent to the back of the queue instead of
+  /// sitting at the front of it. `deferredAt` is the sort key, not the arrival
+  /// time: the queue orders by it NULLS FIRST, so undeferred images keep their
+  /// exact FIFO order and deferred ones queue up behind them in the order they
+  /// were passed on. `createdAt` stays the upload time and is never rewritten
+  /// by this, because how long a member has been waiting is not a number staff
+  /// should be able to edit by pressing a button.
+  deferredAt    DateTime? @map("deferred_at")
+  deferredById  String?   @map("deferred_by_id")
+  deferralCount Int       @default(0) @map("deferral_count")
+  deferralNote  String?   @map("deferral_note") @db.Text
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  uploader User  @relation("ImageUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
-  artist   User? @relation("ImageArtist", fields: [artistId], references: [id], onDelete: SetNull)
+  uploader   User  @relation("ImageUploader", fields: [uploaderId], references: [id], onDelete: Cascade)
+  artist     User? @relation("ImageArtist", fields: [artistId], references: [id], onDelete: SetNull)
+  deferredBy User? @relation("ImageDeferrer", fields: [deferredById], references: [id], onDelete: SetNull)
 
   comments          Comment[]
   likes             Like[]
@@ -1677,11 +1698,23 @@ model TraitReview {
   resolvedById    String?   @map("resolved_by_id")
   rejectionReason String?   @map("rejection_reason") @db.Text
 
+  /// Deferral. Approve and Refuse are the only ways out of this queue and both
+  /// are wrong answers for a review nobody can act on yet -- refusing a
+  /// redemption hands the member's item back, so it is not a park button.
+  /// Deferring moves the entry to the back of the queue and changes nothing
+  /// else: `status` stays PENDING, the item stays consumed, nobody is
+  /// notified. See the matching block on `Image` for how the sort key works.
+  deferredAt    DateTime? @map("deferred_at")
+  deferredById  String?   @map("deferred_by_id")
+  deferralCount Int       @default(0) @map("deferral_count")
+  deferralNote  String?   @map("deferral_note") @db.Text
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   character  Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
   resolvedBy User?     @relation("TraitReviewResolver", fields: [resolvedById], references: [id])
+  deferredBy User?     @relation("TraitReviewDeferrer", fields: [deferredById], references: [id], onDelete: SetNull)
 
   @@index([characterId])
   @@index([status])

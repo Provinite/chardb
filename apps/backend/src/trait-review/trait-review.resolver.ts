@@ -10,6 +10,7 @@ import {
   ApproveTraitReviewInput,
   RevertTraitReviewInput,
   EditAndApproveTraitReviewInput,
+  DeferTraitReviewInput,
 } from "./dto/trait-review.dto";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
@@ -115,6 +116,28 @@ export class TraitReviewResolver {
       input.reviewId,
       user.id,
       input.reason,
+    );
+    return mapPrismaTraitReviewToGraphQL(review);
+  }
+
+  // Same permission as approving: deciding an entry cannot be decided yet is
+  // part of deciding it, and nothing here is destructive.
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
+  @ResolveCommunityFrom({ traitReviewId: "input.reviewId" })
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => TraitReview, {
+    description:
+      "Send a pending trait review to the back of the queue. It stays pending; nothing is applied, refunded or announced.",
+  })
+  async deferTraitReview(
+    @Args("input") input: DeferTraitReviewInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<TraitReview> {
+    const review = await this.traitReviewService.deferReview(
+      input.reviewId,
+      user.id,
+      input.note,
     );
     return mapPrismaTraitReviewToGraphQL(review);
   }

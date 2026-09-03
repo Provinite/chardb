@@ -322,4 +322,93 @@ describe("ImageModerationService", () => {
       expect(mockLedger.credit).not.toHaveBeenCalled();
     });
   });
+
+  describe("deferImage", () => {
+    it("stamps the sort key, the moderator and the note", async () => {
+      await service.deferImage(IMAGE_ID, MODERATOR, "  waiting on a reupload ");
+
+      expect(mockDatabaseService.image.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: IMAGE_ID },
+          data: {
+            deferredAt: expect.any(Date),
+            deferredById: MODERATOR,
+            deferralCount: { increment: 1 },
+            deferralNote: "waiting on a reupload",
+          },
+        }),
+      );
+    });
+
+    it("clears a previous note when deferred again with none", async () => {
+      // Null, not undefined: the note describes why THIS moderator passed,
+      // and leaving the last person's reason attached would misattribute it.
+      await service.deferImage(IMAGE_ID, MODERATOR);
+
+      expect(mockDatabaseService.image.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ deferralNote: null }),
+        }),
+      );
+    });
+
+    it("treats a whitespace-only note as no note", async () => {
+      await service.deferImage(IMAGE_ID, MODERATOR, "   ");
+
+      expect(mockDatabaseService.image.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ deferralNote: null }),
+        }),
+      );
+    });
+
+    it("leaves the moderation status alone", async () => {
+      await service.deferImage(IMAGE_ID, MODERATOR);
+
+      const data = mockDatabaseService.image.update.mock.calls.at(-1)?.[0]
+        .data as Record<string, unknown>;
+      expect(data).not.toHaveProperty("moderationStatus");
+    });
+
+    it("writes nothing to the moderation action log", async () => {
+      // Deferring is not a decision. That table's `action` column is a
+      // ModerationStatus, and there is no status for "not yet".
+      await service.deferImage(IMAGE_ID, MODERATOR);
+
+      expect(
+        mockDatabaseService.imageModerationAction.create,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("never pays anyone", async () => {
+      await service.deferImage(IMAGE_ID, MODERATOR);
+
+      expect(mockLedger.credit).not.toHaveBeenCalled();
+    });
+
+    it("refuses a moderator without permission on this image", async () => {
+      mockPermissionService.hasCommunityPermission.mockResolvedValue(false);
+
+      await expect(service.deferImage(IMAGE_ID, MODERATOR)).rejects.toThrow(
+        ForbiddenException,
+      );
+      expect(mockDatabaseService.image.update).not.toHaveBeenCalled();
+    });
+
+    it("refuses an image that is not pending", async () => {
+      // A resolved image is not in the queue, so there is no back of the
+      // queue to send it to.
+      mockDatabaseService.image.findUnique.mockResolvedValue({
+        id: IMAGE_ID,
+        moderationStatus: ModerationStatus.REJECTED,
+        originalFilename: "ridley.png",
+        uploader: { email: "clove@example.test", username: "clove" },
+      });
+
+      await expect(service.deferImage(IMAGE_ID, MODERATOR)).rejects.toThrow(
+        BadRequestException,
+      );
+      expect(mockDatabaseService.image.update).not.toHaveBeenCalled();
+    });
+  });
 });

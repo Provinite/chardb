@@ -24,7 +24,10 @@ import {
   ImageModerationQueueFiltersInput,
   ApproveImageInput,
   RejectImageInput,
+  DeferImageInput,
 } from "./dto/image-moderation.dto";
+import { Image } from "../images/entities/image.entity";
+import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
@@ -176,6 +179,30 @@ export class ImageModerationResolver {
       },
     );
     return mapPrismaImageModerationActionToGraphQL(action);
+  }
+
+  /**
+   * Send an image to the back of the queue.
+   *
+   * Returns the Image rather than an ImageModerationAction because no action
+   * was taken -- see the service for why nothing is written to that log.
+   */
+  @AllowAnyAuthenticated()
+  @UseGuards(JwtAuthGuard)
+  @Mutation(() => Image, {
+    description:
+      "Send a pending image to the back of the moderation queue. It stays pending; nothing is decided or announced.",
+  })
+  async deferImage(
+    @Args("input") input: DeferImageInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<Image> {
+    const image = await this.imageModerationService.deferImage(
+      input.imageId,
+      user.id,
+      input.note,
+    );
+    return mapPrismaImageToGraphQL(image);
   }
 
   /**

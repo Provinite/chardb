@@ -602,7 +602,14 @@ export class MediaService {
         },
         take: first,
         skip: offset,
-        orderBy: { createdAt: "asc" },
+        // The queue lists media but moderates the image behind it, so the
+        // deferral sort key lives on the image and is reached across the
+        // relation. NULLS FIRST keeps never-deferred uploads in their exact
+        // arrival order and parks the passed-over ones behind them.
+        orderBy: [
+          { image: { deferredAt: { sort: "asc", nulls: "first" } } },
+          { createdAt: "asc" },
+        ],
       }),
       this.db.media.count({ where }),
     ]);
