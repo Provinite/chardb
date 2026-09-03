@@ -216,6 +216,23 @@ test.describe("redeeming a variant change item, through the pages", () => {
     ).toHaveCount(0);
   });
 
+  test("the item list is absent on somebody else's character", async ({
+    page,
+    world,
+  }) => {
+    // Marrowfen is othermember's, and the Ascension covers any Thornwing --
+    // so this member holds an item that would work on it, and must still be
+    // offered nothing. The server refuses it too; this is the half a member
+    // can see.
+    await page.goto(world.characters.marrowfen.url);
+    await expect(page.getByTestId("character-usable-items")).toHaveCount(0);
+
+    // Their own character proves the section renders at all, so the assertion
+    // above cannot pass because the panel is broken everywhere.
+    await page.goto(world.characters.pinefall.url);
+    await expect(page.getByTestId("character-usable-items")).toBeVisible();
+  });
+
   test("says nothing is offered when the character has a review pending", async ({
     page,
     world,
