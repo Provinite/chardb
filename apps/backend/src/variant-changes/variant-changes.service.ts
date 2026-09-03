@@ -56,12 +56,11 @@ export class VariantChangesService {
    * submitted tabs spend one item: the second destroys nothing, throws, and
    * moves nothing.
    */
-  async spendItem(
-    userId: string,
-    input: ChangeCharacterVariantWithItemInput,
-  ) {
-    const { itemType, grant } =
-      await this.items.resolveVariantChangeRedemption(input.itemId, userId);
+  async spendItem(userId: string, input: ChangeCharacterVariantWithItemInput) {
+    const { itemType, grant } = await this.items.resolveVariantChangeRedemption(
+      input.itemId,
+      userId,
+    );
 
     const character = await this.db.character.findFirst({
       where: { id: input.characterId, ...notDeleted },

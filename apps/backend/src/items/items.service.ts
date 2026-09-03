@@ -697,7 +697,10 @@ export class ItemsService {
         species: { select: { id: true, name: true, communityId: true } },
       },
     });
-    if (!destination || destination.species.communityId !== itemType.communityId) {
+    if (
+      !destination ||
+      destination.species.communityId !== itemType.communityId
+    ) {
       throw new BadRequestException(
         "A variant change grant names a variant from another community",
       );

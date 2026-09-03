@@ -25,7 +25,10 @@ const test = presetTest("community-items");
 
 /** A trait value naming one of the seeded eye colours. */
 const eyes = (world: World<CommunityItemsWorld>, colour: string) => [
-  { traitId: world.traits.eyeColor.id, value: world.traits.eyeColor.values[colour] },
+  {
+    traitId: world.traits.eyeColor.id,
+    value: world.traits.eyeColor.values[colour],
+  },
 ];
 
 const held = async (world: World<CommunityItemsWorld>, itemTypeId: string) => {
@@ -81,7 +84,9 @@ test.describe("redeeming a variant change item", () => {
 
     const { item } = await world
       .as("member")
-      .gql(SeedItemDocument, { id: world.variantChangeItems.rareUpgradeIds[0] });
+      .gql(SeedItemDocument, {
+        id: world.variantChangeItems.rareUpgradeIds[0],
+      });
     expect(item.destroyedAt).not.toBeNull();
   });
 
@@ -94,15 +99,13 @@ test.describe("redeeming a variant change item", () => {
         .gql(SeedCharacterDocument, { id: world.characters.pinefall.id })
     ).character.traitReviewStatus;
 
-    await world
-      .as("member")
-      .gql(SeedChangeCharacterVariantWithItemDocument, {
-        input: {
-          itemId: world.variantChangeItems.rareUpgradeIds[0],
-          characterId: world.characters.pinefall.id,
-          traitValues: eyes(world, "green"),
-        },
-      });
+    await world.as("member").gql(SeedChangeCharacterVariantWithItemDocument, {
+      input: {
+        itemId: world.variantChangeItems.rareUpgradeIds[0],
+        characterId: world.characters.pinefall.id,
+        traitValues: eyes(world, "green"),
+      },
+    });
 
     const { character } = await world
       .as("member")
@@ -110,7 +113,10 @@ test.describe("redeeming a variant change item", () => {
 
     expect(character.speciesVariantId).toBe(world.variants.rare.id);
     expect(character.traitValues).toEqual([
-      { traitId: world.traits.eyeColor.id, value: world.traits.eyeColor.values.green },
+      {
+        traitId: world.traits.eyeColor.id,
+        value: world.traits.eyeColor.values.green,
+      },
     ]);
     expect(character.traitReviewStatus).toBe(beforeStatus);
     expect(character.pendingTraitReviewSource).toBeNull();
@@ -119,15 +125,13 @@ test.describe("redeeming a variant change item", () => {
   test("records the move in the character's variant history", async ({
     world,
   }) => {
-    await world
-      .as("member")
-      .gql(SeedChangeCharacterVariantWithItemDocument, {
-        input: {
-          itemId: world.variantChangeItems.rareUpgradeIds[0],
-          characterId: world.characters.pinefall.id,
-          traitValues: eyes(world, "blue"),
-        },
-      });
+    await world.as("member").gql(SeedChangeCharacterVariantWithItemDocument, {
+      input: {
+        itemId: world.variantChangeItems.rareUpgradeIds[0],
+        characterId: world.characters.pinefall.id,
+        traitValues: eyes(world, "blue"),
+      },
+    });
 
     const { characterVariantChanges: history } = await world
       .as("member")
@@ -138,24 +142,20 @@ test.describe("redeeming a variant change item", () => {
     expect(history).toHaveLength(1);
     expect(history[0].fromVariant?.id).toBe(world.variants.common.id);
     expect(history[0].toVariant?.id).toBe(world.variants.rare.id);
-    expect(history[0].changedBy?.username).toBe(
-      world.users.member.username,
-    );
+    expect(history[0].changedBy?.username).toBe(world.users.member.username);
     // What bought the change. A history that said only "Common to Rare" could
     // not tell a staff correction from a redemption.
     expect(history[0].reason).toMatch(/redeemed .*rare thornwing upgrade/i);
   });
 
   test("writes one USE row on the item ledger", async ({ world }) => {
-    await world
-      .as("member")
-      .gql(SeedChangeCharacterVariantWithItemDocument, {
-        input: {
-          itemId: world.variantChangeItems.rareUpgradeIds[0],
-          characterId: world.characters.pinefall.id,
-          traitValues: eyes(world, "blue"),
-        },
-      });
+    await world.as("member").gql(SeedChangeCharacterVariantWithItemDocument, {
+      input: {
+        itemId: world.variantChangeItems.rareUpgradeIds[0],
+        characterId: world.characters.pinefall.id,
+        traitValues: eyes(world, "blue"),
+      },
+    });
 
     const { itemTransactions } = await world
       .as("quartermaster")
@@ -237,7 +237,10 @@ test.describe("redeeming a variant change item", () => {
       .as("member")
       .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
     expect(character.traitValues).toEqual([
-      { traitId: world.traits.eyeColor.id, value: world.traits.eyeColor.values.amber },
+      {
+        traitId: world.traits.eyeColor.id,
+        value: world.traits.eyeColor.values.amber,
+      },
     ]);
   });
 
@@ -298,7 +301,9 @@ test.describe("redeeming a variant change item", () => {
 
     const { item } = await world
       .as("member")
-      .gql(SeedItemDocument, { id: world.variantChangeItems.rareUpgradeIds[0] });
+      .gql(SeedItemDocument, {
+        id: world.variantChangeItems.rareUpgradeIds[0],
+      });
     expect(item.destroyedAt).toBeNull();
   });
 
@@ -350,7 +355,9 @@ test.describe("redeeming a variant change item", () => {
 
     const { item } = await world
       .as("member")
-      .gql(SeedItemDocument, { id: world.variantChangeItems.rareUpgradeIds[0] });
+      .gql(SeedItemDocument, {
+        id: world.variantChangeItems.rareUpgradeIds[0],
+      });
     expect(item.destroyedAt).toBeNull();
   });
 
@@ -625,12 +632,18 @@ test.describe("configuring a variant change grant", () => {
     const { createSpecies: other } = await world
       .as("commadmin")
       .gql(SeedCreateSpeciesDocument, {
-        createSpeciesInput: { name: "Lintling", communityId: world.community.id },
+        createSpeciesInput: {
+          name: "Lintling",
+          communityId: world.community.id,
+        },
       });
     const { createSpeciesVariant: otherVariant } = await world
       .as("commadmin")
       .gql(SeedCreateSpeciesVariantDocument, {
-        createSpeciesVariantInput: { name: "Lintling Common", speciesId: other.id },
+        createSpeciesVariantInput: {
+          name: "Lintling Common",
+          speciesId: other.id,
+        },
       });
 
     const type = await consumableType(world, "Crossbred Upgrade");
@@ -660,7 +673,10 @@ test.describe("configuring a variant change grant", () => {
     const { createSpeciesVariant: theirVariant } = await world
       .as("commadmin")
       .gql(SeedCreateSpeciesVariantDocument, {
-        createSpeciesVariantInput: { name: "Marshling Rare", speciesId: theirSpecies.id },
+        createSpeciesVariantInput: {
+          name: "Marshling Rare",
+          speciesId: theirSpecies.id,
+        },
       });
 
     const type = await consumableType(world, "Trespassing Upgrade");

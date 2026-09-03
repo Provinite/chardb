@@ -112,8 +112,17 @@ export function strandedValues(
         typeof tv.value === "string" ? optionsById.get(tv.value) : undefined,
     }))
     .filter(
-      (row): row is { index: number; option: { id: string; name: string; traitId: string; traitName: string } } =>
-        row.option !== undefined && !allowedEnumValueIds.has(row.option.id),
+      (
+        row,
+      ): row is {
+        index: number;
+        option: {
+          id: string;
+          name: string;
+          traitId: string;
+          traitName: string;
+        };
+      } => row.option !== undefined && !allowedEnumValueIds.has(row.option.id),
     )
     .map(({ index, option }) => ({
       index,

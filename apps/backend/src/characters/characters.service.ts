@@ -1327,7 +1327,8 @@ export class CharactersService {
       changedById: input.changedById,
       reason: input.reason,
       previousTraitValues: input.previousTraitValues,
-      newTraitValues: updated.traitValues as PrismaJson.CharacterTraitValuesJson,
+      newTraitValues:
+        updated.traitValues as PrismaJson.CharacterTraitValuesJson,
     });
 
     return updated;

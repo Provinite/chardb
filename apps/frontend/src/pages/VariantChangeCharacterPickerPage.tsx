@@ -83,12 +83,13 @@ export const VariantChangeCharacterPickerPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data: itemData, loading: itemLoading } =
-    useGetVariantChangeItemQuery({
+  const { data: itemData, loading: itemLoading } = useGetVariantChangeItemQuery(
+    {
       variables: { itemId: itemId! },
       skip: !itemId,
       fetchPolicy: "network-only",
-    });
+    },
+  );
 
   const item = itemData?.item ?? null;
   const redeemable = Boolean(

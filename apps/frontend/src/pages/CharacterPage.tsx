@@ -808,8 +808,7 @@ export const CharacterPage: React.FC = () => {
               strip rather than inside it. Offered only when they actually
               hold a kit that works on this character -- a button whose every
               press is a refusal is the thing this codebase keeps not doing. */}
-          {(eligibleKitTypes.length > 0 ||
-            eligibleVariantItems.length > 0) && (
+          {(eligibleKitTypes.length > 0 || eligibleVariantItems.length > 0) && (
             <CharacterActions data-testid="character-edit-kit-actions">
               <AdminActionsLabel>Yours</AdminActionsLabel>
               {eligibleKitTypes.length > 0 && (

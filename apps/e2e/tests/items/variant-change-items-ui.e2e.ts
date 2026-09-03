@@ -72,9 +72,9 @@ test.describe("redeeming a variant change item, through the pages", () => {
     );
 
     await page.getByTestId("submit-variant-change").click();
-    await expect(page.getByTestId("redeem-variant-change-dialog")).toContainText(
-      world.itemTypes.rareUpgrade.name,
-    );
+    await expect(
+      page.getByTestId("redeem-variant-change-dialog"),
+    ).toContainText(world.itemTypes.rareUpgrade.name);
     await page.getByTestId("confirm-accept").click();
 
     // Back on the character, actually Rare. Read from the API rather than off
@@ -90,7 +90,9 @@ test.describe("redeeming a variant change item, through the pages", () => {
   });
 
   test("cancelling the confirm redeems nothing", async ({ page, world }) => {
-    await page.goto(`/character/${world.characters.pinefall.id}/change-variant`);
+    await page.goto(
+      `/character/${world.characters.pinefall.id}/change-variant`,
+    );
 
     await page
       .getByTestId("variant-change-select")
@@ -100,9 +102,9 @@ test.describe("redeeming a variant change item, through the pages", () => {
 
     // A dialog that dismissed but redeemed anyway would be worse than the
     // single click it replaced.
-    await expect(
-      page.getByTestId("redeem-variant-change-dialog"),
-    ).toHaveCount(0);
+    await expect(page.getByTestId("redeem-variant-change-dialog")).toHaveCount(
+      0,
+    );
 
     const { character } = await world
       .as("member")
@@ -124,7 +126,9 @@ test.describe("redeeming a variant change item, through the pages", () => {
     // Only characters it actually moves. Emberwake is already Rare and
     // Ashglass is Legendary, so neither belongs in this list.
     await expect(
-      page.getByTestId(`variant-change-character-${world.characters.pinefall.id}`),
+      page.getByTestId(
+        `variant-change-character-${world.characters.pinefall.id}`,
+      ),
     ).toBeVisible();
     await expect(
       page.getByTestId(
@@ -227,7 +231,9 @@ test.describe("redeeming a variant change item, through the pages", () => {
       },
     });
 
-    await page.goto(`/character/${world.characters.pinefall.id}/change-variant`);
+    await page.goto(
+      `/character/${world.characters.pinefall.id}/change-variant`,
+    );
 
     await expect(page.getByTestId("variant-change-unusable")).toContainText(
       /awaiting review/i,
@@ -250,7 +256,9 @@ test.describe("redeeming a variant change item, through the pages", () => {
   });
 
   test("the redemption reaches the item ledger", async ({ page, world }) => {
-    await page.goto(`/character/${world.characters.pinefall.id}/change-variant`);
+    await page.goto(
+      `/character/${world.characters.pinefall.id}/change-variant`,
+    );
     await page
       .getByTestId("variant-change-select")
       .selectOption(world.variantChangeItems.rareUpgradeIds[0]);
@@ -395,8 +403,8 @@ test.describe("configuring a variant change, through the admin page", () => {
       .getByRole("button", { name: "Edit" })
       .click();
 
-    await expect(
-      page.getByTestId("variant-change-grant-editor"),
-    ).toContainText(/only a consumable item/i);
+    await expect(page.getByTestId("variant-change-grant-editor")).toContainText(
+      /only a consumable item/i,
+    );
   });
 });

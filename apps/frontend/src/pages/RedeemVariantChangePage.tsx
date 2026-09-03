@@ -431,8 +431,7 @@ export const RedeemVariantChangePage: React.FC = () => {
         <Note>
           Redeeming spends it and cannot be undone.{" "}
           <strong>The change happens straight away</strong> — there is no
-          review, and no way to move {character.name} back without another
-          item.
+          review, and no way to move {character.name} back without another item.
         </Note>
 
         {eligibleItems.length > 1 ? (
