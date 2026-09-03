@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Variant Change Items - Feature Walkthrough</title>
+    <meta name="description" content="A variant change item moves a character from one variant to another. Staff pick the destination and what it can be spent on; the holder redeems it, and the change happens straight away." />
+    <link rel="canonical" href="https://provinite.github.io/chardb/docs/variant-change-items.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Variant Change Items" />
+    <meta property="og:description" content="A variant change item moves a character from one variant to another. Staff pick the destination and what it can be spent on; the holder redeems it, and the change happens straight away." />
+    <meta property="og:url" content="https://provinite.github.io/chardb/docs/variant-change-items.html" />
+    <meta property="og:image" content="https://provinite.github.io/chardb/docs/variant-change-reroute.png" />
+    <meta property="og:image:alt" content="A CharDB redemption page saying a character becomes Legendary, with a warning that one trait value does not exist at that variant and the redeem button disabled." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Variant Change Items</h1>
+        <p>Moving a character from one variant to another, and what it costs</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">What one of these is</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>A variant change item moves one of your characters from
+            one variant to another.</strong> A community sells or awards one;
+            the member redeems it on a character they own; the character is the
+            new variant from that moment.
+          </p>
+          <p>
+            It is an
+            <a href="using-items.html">ordinary redeemable item</a> whose type
+            has been told <em>which</em> variant it grants and <em>which</em>
+            characters it can be spent on &mdash; so it can be traded, granted,
+            sold in the shop, and it has a provenance page like anything else.
+          </p>
+          <p>
+            <strong>Holding it is the permission.</strong> Changing a
+            character&rsquo;s variant is otherwise staff-only &mdash; a member
+            who can edit their own character&rsquo;s registry still cannot
+            touch its variant, because that is exactly what these items are
+            sold for. Redeeming one is not an exception carved into that rule;
+            it is a separate route that exists only while you hold the item.
+          </p>
+
+          <div class="highlight-box">
+            <strong>These are the &ldquo;upgrade tickets&rdquo; most
+            communities mean.</strong> But CharDB deliberately does not call
+            them that, and neither should you assume it knows what an upgrade
+            is. A variant has a <em>name</em>, not a rank &mdash; nothing
+            anywhere in CharDB knows that Legendary is worth more than Common.
+            So the same feature configures a promotion, a demotion, or a
+            sideways swap between two variants of the same tier, and the app
+            cannot tell the difference. Name your item
+            <em>Rare Upgrade Ticket</em> and that is what your members see.
+          </div>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">&#127919;</div>
+              <h4>One destination</h4>
+              <p>The item decides; the member never picks</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#9889;</div>
+              <h4>No review</h4>
+              <p>The change applies the moment it is redeemed</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#128220;</div>
+              <h4>On the record</h4>
+              <p>The item ledger and the character&rsquo;s rarity history</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: the part that surprises people -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">The part that catches people out</h2>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>There is no review, and there is no undo.</strong> An
+            <a href="myo-slots.html">MYO slot</a> and an
+            <a href="edit-kits.html">edit kit</a> both put something in front of
+            staff, and refusing either hands the item back. This does not. The
+            moment the member confirms, the item is gone and the character is
+            the new variant &mdash; and the only way back is another item
+            pointing the other way.
+          </div>
+          <p>
+            That is deliberate rather than an oversight. A review would have to
+            be able to undo a variant change on refusal, which means either
+            taking back something the member paid for or minting the item a
+            second time. Your community already decided what this item may do
+            when you configured it; the redemption is the member exercising
+            that, not asking for it.
+          </p>
+          <p>
+            The practical consequence for staff:
+            <strong>configure it carefully, because nothing downstream will
+            catch a mistake.</strong> If you point an item at the wrong variant,
+            every redemption of every copy already in members&rsquo; hands does
+            the wrong thing, immediately and without asking.
+          </p>
+          <p>
+            Staff can still move a character afterwards &mdash; see
+            <a href="character-rarity.html">Changing a Character&rsquo;s
+            Rarity</a> &mdash; but that is a staff action correcting a mistake,
+            not the item coming back.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 2: staff configure -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Staff: setting where it sends a character</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            On an item type&rsquo;s edit form, under
+            <strong>Administration &rarr; Items</strong>, there is a
+            <strong>Changes variant on use</strong> panel. It asks two
+            questions, and they are not the same shape.
+          </p>
+          <ul>
+            <li>
+              <strong>Becomes</strong> &mdash; exactly one variant. This is
+              what the character turns into. Because there is only ever one,
+              the member is never asked to choose, and every screen can say
+              plainly what will happen.
+            </li>
+            <li>
+              <strong>Spendable on</strong> &mdash; any number of variants.
+              This is what it works on. &ldquo;Spendable on a Common or an
+              Uncommon, becomes a Rare&rdquo; is the shape most communities
+              actually sell.
+            </li>
+          </ul>
+          <div class="highlight-box">
+            <strong>Ticking nothing under <em>Spendable on</em> covers every
+            variant of the species</strong> &mdash; including a character with
+            no variant set at all. That is the permissive case, not the broken
+            one, so it is what you get by picking a destination and stopping.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-grant-editor.png"
+            alt="The Changes variant on use panel: species Thornwing, Becomes Rare, and Common and Uncommon ticked under Spendable on, with Rare shown greyed out and labelled as the destination."
+          />
+          <div class="screenshot-caption">
+            A Common or an Uncommon becomes a Rare. <strong>Rare cannot be
+            ticked as a source</strong> &mdash; an item that turns a Rare into a
+            Rare does nothing, and its holder would only find that out after
+            spending it, so the box is shown disabled rather than hidden.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            The species is fixed by the destination.
+            <strong>An item cannot move a character between species</strong>
+            &mdash; a Pillowing cannot become a Lintling, however the variants
+            are named, because the character&rsquo;s trait values have nothing
+            to do with the other species&rsquo; trait list.
+          </p>
+          <p>
+            Clear the destination to remove the effect entirely.
+          </p>
+          <p>
+            <strong>Only a consumable item type can carry one</strong>, for the
+            reason every redeemable item is consumable: redeeming is what uses
+            it up. Without that, one item would move a character every time it
+            was pressed.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-not-consumable.png"
+            alt="The Changes variant on use panel on an item type that is not consumable, explaining that only a consumable item can change a variant."
+          />
+          <div class="screenshot-caption">
+            Tick <em>Consumable</em> on the item type first.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            An item type does <strong>one thing</strong> when redeemed. A type
+            that already <a href="using-items.html">pays out currency</a>,
+            <a href="myo-slots.html">makes characters</a>, or
+            <a href="edit-kits.html">edits traits</a> cannot also change
+            variants &mdash; clear the other one first.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 3: reading it -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Seeing what one does before you get one</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The item type&rsquo;s page says what it can be spent on and what it
+            grants. It is public, so somebody weighing up a trade for one can
+            read it without holding it &mdash; which matters more here than for
+            the other kinds, because this is the one that cannot be taken back.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-item-type.png"
+            alt="An item type page showing a Changes variant on use section reading Thornwing, Common and Uncommon, arrow, Rare, and noting there is no review."
+          />
+          <div class="screenshot-caption">
+            <strong>Changes variant on use</strong>, beside where the other
+            kinds of redeemable item say what they do. The note spells out that
+            there is no review and no way back.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: reaching it -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Redeeming one</h2>
+        </div>
+        <div class="step-content">
+          <p>There are two ways in, and they meet at the same page.</p>
+          <p>
+            <strong>From the character.</strong> A character you own shows an
+            action naming what it would become, when you actually hold an item
+            that would move it. This is the one most people will use &mdash;
+            the character is what you are thinking about.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-character-entry.png"
+            alt="A character page action strip labelled Yours, with two buttons: Use your Thornwing Edit Kit, and Make Emberwake Legendary."
+          />
+          <div class="screenshot-caption">
+            Both kinds of item offer themselves here when you hold them. The
+            variant one <strong>says where the character ends up</strong>
+            rather than just that something would change &mdash; if you hold
+            items pointing at two different variants it falls back to a
+            general wording, because one button cannot name two destinations.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>From the item.</strong> In your inventory, one of these
+            carries a <strong>Change a variant</strong> button, which opens a
+            list of the characters it would move.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-inventory.png"
+            alt="A member's inventory with a Rare Thornwing Upgrade group expanded, each copy offering a Change a variant button."
+          />
+          <div class="screenshot-caption">
+            Holding more than one groups them; open the group for the
+            per-item buttons.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-picker.png"
+            alt="A picker headed Which character, listing Pinefall as Common to Rare, and noting below that one of the member's characters is already Rare so it is not listed."
+          />
+          <div class="screenshot-caption">
+            Only characters it would actually move. A character
+            <strong>already at the destination is left off and said so</strong>
+            &mdash; &ldquo;you hold nothing for this character&rdquo; and
+            &ldquo;you hold one, but this character is already Rare&rdquo; send
+            a reader looking in completely different places.
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>Neither link costs anything to follow.</strong> The item is
+            spent when you confirm. Open the page, think better of it, close
+            the tab &mdash; the item is still yours.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: the page -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">The redemption page</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>There is no variant picker here.</strong> The item already
+            decided, so the page states the move rather than offering it. If
+            you hold more than one item that would move this character, you
+            pick which item &mdash; and each option names where it sends the
+            character, because different items send it to different places.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-page.png"
+            alt="A page headed Change Pinefall's variant, saying Pinefall becomes Rare from Common, warning that redeeming cannot be undone, and offering a Redeem Rare Thornwing Upgrade button."
+          />
+          <div class="screenshot-caption">
+            The whole page, when nothing needs sorting out first. It is called
+            by the item&rsquo;s own name, not by anything CharDB invented.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: stranded values -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">When the new variant does not allow a trait</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            This is the part worth understanding before you sell one of these.
+          </p>
+          <p>
+            <strong>A variant is an allow-list.</strong> Each one carries its
+            own set of trait options &mdash; the whole reason a Legendary looks
+            different from a Common. So a character can perfectly well be
+            holding a trait value that the variant it is moving to does not
+            offer: a blue-eyed Common moving to a Legendary that only allows
+            amber.
+          </p>
+          <p>
+            Redeeming does not silently drop those values, and it does not
+            silently keep an impossible one. The page finds each one, names it,
+            and <strong>refuses to redeem until you have said what it should
+            become</strong> &mdash; either a value the new variant does offer,
+            or nothing at all.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-reroute.png"
+            alt="The redemption page for Pinefall becoming Legendary, with a warning panel reading One trait value does not exist at Legendary, an Eye Color row saying currently Blue with a Choose a replacement dropdown, and the redeem button greyed out."
+          />
+          <div class="screenshot-caption">
+            The button stays disabled until every listed value is resolved.
+            Only options the new variant actually allows are offered in the
+            replacement dropdown.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            Most redemptions never show this panel at all. It appears only when
+            the destination genuinely refuses something the character has, which
+            depends entirely on how your species&rsquo; variants are configured
+            &mdash; two variants offering the same options will never produce
+            it.
+          </p>
+          <div class="highlight-box">
+            <strong>Nothing is spent while this is unresolved.</strong> The
+            check happens before the item is destroyed, so a member who opens
+            the page, sees a re-pick they do not like and leaves still has their
+            item. The same check runs again on the server at the moment of the
+            write, so a page left open while staff change the variant&rsquo;s
+            options cannot slip an impossible value through.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7: the confirm -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">The confirm</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Redeeming never happens on a single click. The dialog names the
+            item, when it reached you, the character, and what it becomes.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-confirm.png"
+            alt="A confirmation dialog reading Redeem your Thornwing Ascension, naming the acquisition date, saying it will make Pinefall Legendary, and warning that it happens straight away and cannot be undone."
+          />
+          <div class="screenshot-caption">
+            The date is <strong>when you got it</strong>, from the ledger
+            &mdash; not when it was minted. For anything traded those are
+            different, and the one that helps you recognise which item this is
+            is the first.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            Cancel and nothing has happened. Confirm and the item is destroyed
+            and the character moved <strong>in one write</strong> &mdash; so a
+            second submitted tab spends one item, not two, and there is no
+            state where the item is gone but the character has not moved.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 8: afterwards -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <h2 class="step-title">Afterwards: two records</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>The character&rsquo;s rarity history</strong> gains a line
+            saying what it moved between, who did it, and what bought it. It is
+            on the character page, public, and it is the same history a staff
+            variant change writes to &mdash; so a reader can tell a redemption
+            from a staff correction.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-history.png"
+            alt="A Rarity history block on a character page reading Common to Legendary, dated, by member, with the reason Redeemed Thornwing Ascension."
+          />
+          <div class="screenshot-caption">
+            &ldquo;Redeemed Thornwing Ascension&rdquo; is the difference
+            between a history and a list of mutations.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>The community&rsquo;s item ledger</strong> gains a
+            <span class="pill used">Redeemed</span> row, naming the item, the
+            member, and the reason. Filterable to <em>Redeemed</em> alongside
+            every other kind of redemption.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-change-ledger.png"
+            alt="The community item ledger with a Redeemed row for Thornwing Ascension at quantity minus one, from member to consumed, reason Redeemed Thornwing Ascension, above the earlier Granted rows."
+          />
+          <div class="screenshot-caption">
+            One row for one redemption, above the grant that put the item in
+            that member&rsquo;s hands in the first place.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            The item&rsquo;s own provenance page still works after it is gone
+            &mdash; being destroyed is an event in its history, not an erasure
+            of it.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 9: refusals -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">9</div>
+          <h2 class="step-title">Every reason a redemption is refused</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Wherever possible these are said before the member fills anything
+            in, and the item survives every one of them.
+          </p>
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Reason</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>That character is not yours</td>
+                <td>
+                  You can only redeem on characters you own, not on ones you
+                  are being offered in a trade.
+                </td>
+              </tr>
+              <tr>
+                <td>The character is already that variant</td>
+                <td>
+                  Its own message, not folded into &ldquo;cannot be redeemed on
+                  that character&rdquo; &mdash; they send you looking in
+                  different places. Such characters are left out of the picker
+                  entirely.
+                </td>
+              </tr>
+              <tr>
+                <td>The item does not work on that variant</td>
+                <td>
+                  Checked against the item&rsquo;s own source list. An empty
+                  list works on all of them.
+                </td>
+              </tr>
+              <tr>
+                <td>The item is for a different species</td>
+                <td>
+                  An item cannot move a character between species, so it can
+                  only ever be spent within its destination&rsquo;s own.
+                </td>
+              </tr>
+              <tr>
+                <td>A trait value the new variant does not allow</td>
+                <td>
+                  Re-pick it, or remove it. See step 6 &mdash; nothing is spent
+                  while it is unresolved.
+                </td>
+              </tr>
+              <tr>
+                <td>That character has a change awaiting review</td>
+                <td>
+                  An edit kit&rsquo;s proposal holds trait values chosen for
+                  the variant the character is about to leave. Resolve the
+                  review first.
+                </td>
+              </tr>
+              <tr>
+                <td>That character has no species</td>
+                <td>
+                  A character removed from its species has no variants to move
+                  between.
+                </td>
+              </tr>
+              <tr>
+                <td>The item type is not consumable</td>
+                <td>Redeeming is what uses it up.</td>
+              </tr>
+              <tr>
+                <td>You have left the community</td>
+                <td>A species belongs to one community.</td>
+              </tr>
+              <tr>
+                <td>The item is not yours, or is already spent</td>
+                <td>
+                  Checked at the moment of the write, so a trade landing in
+                  between cannot be raced. Submitting the same page twice
+                  spends one item.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+          <p>In every case the item survives.</p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Variant Change Items &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>

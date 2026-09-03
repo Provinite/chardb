@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A "Variant Change Items" walkthrough**
+  (`docs/docs/variant-change-items.html`), ten steps with eleven screenshots,
+  leading on the two things that catch people out: there is no review and no
+  undo, and a trait the destination does not allow has to be re-picked first.
+
 - **E2E: 52 variant-change-item specs** — 35 against the API and 17 driving the
   screens, plus two such items and three variant-bearing characters in the
   `community-items` preset. One item is narrowed to two source variants, the
