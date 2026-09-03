@@ -72,18 +72,18 @@ export const DeferQueueEntryModal: React.FC<DeferQueueEntryModalProps> = ({
 
   return (
     <Modal isOpen onClose={onCancel} title={`Send to back: ${entryName}`}>
-      <FormContainer>
+      <FormContainer data-testid="defer-modal">
         <InfoBanner>
           <Clock size={18} />
-          This stays pending and nobody is notified. It moves behind the
-          entries that can be worked on now.
+          This stays pending and nobody is notified. It moves behind the entries
+          that can be worked on now.
         </InfoBanner>
 
         <div>
           <Label>Why (optional)</Label>
           <HelpText>
-            Shown to the next moderator who reaches this. Replaces any note
-            left by the last person to pass on it.
+            Shown to the next moderator who reaches this. Replaces any note left
+            by the last person to pass on it.
           </HelpText>
           <TextArea
             value={note}

@@ -271,9 +271,9 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
       <HelpText>
         Review proposed trait values for imported or user-submitted characters.
         Approving accepts them as proposed. Refusing a change bought with an
-        item returns that item to its holder. Anything you cannot decide yet
-        can be sent to the back of the queue instead — it stays pending and
-        nobody is told.
+        item returns that item to its holder. Anything you cannot decide yet can
+        be sent to the back of the queue instead — it stays pending and nobody
+        is told.
       </HelpText>
 
       {loading ? (
