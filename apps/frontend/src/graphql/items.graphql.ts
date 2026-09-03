@@ -48,6 +48,21 @@ export const ITEM_TYPE_FRAGMENT = gql`
         }
       }
     }
+    useVariantChangeGrant {
+      id
+      species {
+        id
+        name
+      }
+      toVariant {
+        id
+        name
+      }
+      fromVariants {
+        id
+        name
+      }
+    }
     image {
       id
       originalUrl
@@ -370,6 +385,13 @@ export const GET_MEMBER_HOLDINGS = gql`
               }
             }
           }
+          useVariantChangeGrant {
+            id
+            toVariant {
+              id
+              name
+            }
+          }
           color {
             id
             hexCode
@@ -593,6 +615,104 @@ export const EDIT_CHARACTER_TRAITS_WITH_KIT = gql`
       id
       status
       characterId
+    }
+  }
+`;
+
+export const SET_ITEM_TYPE_VARIANT_CHANGE_GRANT = gql`
+  mutation SetItemTypeVariantChangeGrant(
+    $input: SetItemTypeVariantChangeGrantInput!
+  ) {
+    setItemTypeVariantChangeGrant(input: $input) {
+      ...ItemTypeFields
+    }
+  }
+  ${ITEM_TYPE_FRAGMENT}
+`;
+
+/**
+ * An item about to be redeemed for a variant change, and what it moves.
+ *
+ * `destroyedAt` and `ownerId` are selected and **used**, for the reason
+ * GET_EDIT_KIT gives: the grant hangs off the item type, so a spent or
+ * borrowed item would otherwise present a working page and refuse at submit.
+ */
+export const GET_VARIANT_CHANGE_ITEM = gql`
+  query GetVariantChangeItem($itemId: ID!) {
+    item(id: $itemId) {
+      id
+      ownerId
+      destroyedAt
+      acquiredAt
+      itemType {
+        id
+        name
+        communityId
+        useVariantChangeGrant {
+          id
+          species {
+            id
+            name
+          }
+          toVariant {
+            id
+            name
+          }
+          fromVariants {
+            id
+            name
+          }
+        }
+      }
+    }
+  }
+`;
+
+/**
+ * The variant change items a member holds in one community, for the character
+ * page's offer and for the redemption page's picker.
+ */
+export const GET_MY_VARIANT_CHANGE_ITEMS = gql`
+  query GetMyVariantChangeItems($communityId: ID!, $userId: ID!) {
+    memberHoldings(communityId: $communityId, userId: $userId) {
+      holdings {
+        count
+        items {
+          id
+          acquiredAt
+        }
+        itemType {
+          id
+          name
+          useVariantChangeGrant {
+            id
+            species {
+              id
+              name
+            }
+            toVariant {
+              id
+              name
+            }
+            fromVariants {
+              id
+              name
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const CHANGE_CHARACTER_VARIANT_WITH_ITEM = gql`
+  mutation ChangeCharacterVariantWithItem(
+    $input: ChangeCharacterVariantWithItemInput!
+  ) {
+    changeCharacterVariantWithItem(input: $input) {
+      id
+      name
+      speciesVariantId
     }
   }
 `;

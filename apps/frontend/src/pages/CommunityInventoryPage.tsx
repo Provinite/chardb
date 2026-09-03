@@ -545,6 +545,19 @@ export const CommunityInventoryPage: React.FC = () => {
                             Edit a character
                           </UseButton>
                         )}
+                        {/* Same reasoning as the kit: the character comes
+                            first, and which of the holder's characters this
+                            works on is not something a confirm dialog can
+                            ask. Nothing is consumed by following it. */}
+                        {viewingSelf && h.itemType.useVariantChangeGrant && (
+                          <UseButton
+                            as={Link}
+                            to={`/communities/${communityId}/variant-changes/${item.id}`}
+                            data-testid={`use-item-${item.id}`}
+                          >
+                            Change a variant
+                          </UseButton>
+                        )}
                         {/* Only on your own inventory, and only when using it
                             would do something. A Use button on somebody
                             else's items, or on one that pays nothing, is a

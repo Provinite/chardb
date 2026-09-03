@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { AlertTriangle } from "lucide-react";
+import { strandedValues } from "../../lib/variantChangeItems";
 import {
   useSpeciesVariantsBySpeciesQuery,
   useSpeciesWithTraitsAndEnumValuesQuery,
@@ -117,10 +118,12 @@ interface Props {
  * -- re-routing those values is precisely the work staff came to do -- so this
  * names each one and asks what it should become before the save is allowed.
  *
- * A variant with **no** settings configured permits everything. That is the
- * difference between unconfigured and empty, and it is the state most
- * communities are in; reading it the other way would mean every rarity change
- * demanded re-routing every trait.
+ * **An allow-list with no rows permits nothing.** A variant with no enum
+ * settings is not "unconfigured, so anything goes" -- it is a variant nothing
+ * can be, the same way one with no trait-list entries carries no traits.
+ * `CharactersService.enumValueViolationsForVariant` reads it that way and
+ * refuses every enum value, so reading it the other way here would show a
+ * panel with nothing to re-route and then fail at save.
  */
 export const VariantChangePanel: React.FC<Props> = ({
   speciesId,
@@ -161,18 +164,19 @@ export const VariantChangePanel: React.FC<Props> = ({
   });
 
   /**
-   * Which options the target variant permits, or null when it permits all.
+   * Which options the target variant permits.
    *
-   * Null is "nobody configured this variant", not "this variant allows
-   * nothing" — see the note on the component.
+   * Null only while the answer is not known yet — no variant picked, or the
+   * settings still loading. An **empty** set is a real answer, and it means
+   * the variant permits nothing; see `strandedValues`.
    */
   const allowed = useMemo(() => {
     if (!changing || !selectedVariantId || !settingsData) return null;
-    const ids =
+    return new Set(
       settingsData.enumValueSettingsBySpeciesVariant?.nodes?.map(
         (s) => s.enumValueId,
-      ) ?? [];
-    return ids.length === 0 ? null : new Set(ids);
+      ) ?? [],
+    );
   }, [changing, selectedVariantId, settingsData]);
 
   /** Every enum option this species has, by id, so a value can be named. */
@@ -197,16 +201,7 @@ export const VariantChangePanel: React.FC<Props> = ({
   /** Current values the target variant does not permit. */
   const stranded = useMemo(() => {
     if (!allowed) return [];
-    return traitValues
-      .map((tv, index) => ({
-        tv,
-        index,
-        // Only a string value can name an enum option. A numeric or free-text
-        // trait has no options and so cannot be stranded by a rarity change.
-        option:
-          typeof tv.value === "string" ? optionsById.get(tv.value) : undefined,
-      }))
-      .filter(({ option }) => option && !allowed.has(option.id));
+    return strandedValues(traitValues, allowed, optionsById);
   }, [allowed, traitValues, optionsById]);
 
   useEffect(() => {
@@ -277,22 +272,22 @@ export const VariantChangePanel: React.FC<Props> = ({
             saved while any is unresolved &mdash; the server refuses it too.
           </Help>
 
-          {stranded.map(({ index, option }) => {
-            const trait = traits.find((t) => t.id === option!.traitId);
+          {stranded.map((row) => {
+            const trait = traits.find((t) => t.id === row.traitId);
             const choices = (trait?.enumValues ?? []).filter((ev) =>
               allowed!.has(ev.id),
             );
             return (
-              <Row key={`${option!.traitId}-${index}`}>
+              <Row key={`${row.traitId}-${row.index}`}>
                 <Was>
-                  {option!.traitName}
-                  <span>currently {option!.name}</span>
+                  {row.traitName}
+                  <span>currently {row.optionName}</span>
                 </Was>
                 <Select
-                  data-testid={`reroute-${option!.traitId}`}
+                  data-testid={`reroute-${row.traitId}`}
                   defaultValue=""
                   disabled={disabled}
-                  onChange={(e) => reroute(index, e.target.value)}
+                  onChange={(e) => reroute(row.index, e.target.value)}
                 >
                   <option value="" disabled>
                     Choose a replacement…

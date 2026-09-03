@@ -397,6 +397,32 @@ export const ItemTypePage: React.FC = () => {
           </PayoutNote>
         </PropertiesSection>
       )}
+
+      {/* Where it sends a character, for the same reason the other three are
+          here. This one carries a warning the others do not need: it is the
+          only redemption that cannot be undone by a refusal, because there is
+          no review to refuse. */}
+      {itemType.useVariantChangeGrant && (
+        <PropertiesSection data-testid="item-type-variant-change-grant">
+          <Heading2 style={{ marginBottom: "0.5rem" }}>
+            Changes variant on use
+          </Heading2>
+          <PayoutValue>
+            {itemType.useVariantChangeGrant.species.name} &mdash;{" "}
+            {itemType.useVariantChangeGrant.fromVariants.length > 0
+              ? itemType.useVariantChangeGrant.fromVariants
+                  .map((v) => v.name)
+                  .join(", ")
+              : "any variant"}{" "}
+            &rarr; {itemType.useVariantChangeGrant.toVariant.name}
+          </PayoutValue>
+          <PayoutNote>
+            Redeeming one destroys it and moves that character to{" "}
+            {itemType.useVariantChangeGrant.toVariant.name} straight away. There
+            is no review, and no way back without another item.
+          </PayoutNote>
+        </PropertiesSection>
+      )}
     </Container>
   );
 };
