@@ -17,8 +17,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import {
   variantItemUsableOn,
-  alreadyThere,
-  variantItemCovers,
+  redundantOn,
   strandedValues,
 } from "../lib/variantChangeItems";
 
@@ -226,9 +225,7 @@ export const RedeemVariantChangePage: React.FC = () => {
     if (!character) return false;
     return (itemsData?.memberHoldings?.holdings ?? []).some((h) => {
       const grant = h.itemType.useVariantChangeGrant;
-      return grant
-        ? variantItemCovers(grant, character) && alreadyThere(grant, character)
-        : false;
+      return grant ? redundantOn(grant, character) : false;
     });
   }, [itemsData, character]);
 

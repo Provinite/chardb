@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Redeem an item to change a character's variant.** Reachable from the
+  character or from the item; nothing is spent until you confirm, and there is
+  no variant picker because the item already decided (#172).
+
+- **Trait values the destination does not permit are re-picked before
+  redeeming**, one control each, with the button blocked until every one is
+  resolved.
+
+- **An item type's page says where it sends a character**, and that there is no
+  review to undo it.
+
+- **Staff set where an item sends a character** on the item type's edit form.
+
+### Fixed
+
+- **`VariantChangePanel` read an empty allow-list as permitting everything**,
+  which the server has never agreed with — it would have shown nothing to
+  re-route and then failed at save.
+
 ### Fixed
 
 - **A character's variant could not be changed after creation.** The edit page

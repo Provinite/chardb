@@ -31,11 +31,27 @@ export function variantItemCovers(
   return grant.fromVariants.some((v) => v.id === character.speciesVariantId);
 }
 
-/** Whether redeeming would move the character to where it already is. */
-export function alreadyThere(
-  grant: { toVariant: { id: string } },
-  character: { speciesVariantId?: string | null },
+/**
+ * Whether this item has nothing to do for this character, because the
+ * character is already the variant it grants.
+ *
+ * Deliberately checks the species and the destination, and **not** the source
+ * list. Composing this with {@link variantItemCovers} looks natural and is
+ * always false: a grant may not name its own destination as a source, so a
+ * character sitting at the destination is never covered. The whole point of
+ * this is to tell "you hold nothing for this character" apart from "you hold
+ * one, but it would not move anything", and reading the source list throws
+ * that distinction away.
+ */
+export function redundantOn(
+  grant: { species: { id: string }; toVariant: { id: string } },
+  character: {
+    speciesId?: string | null;
+    speciesVariantId?: string | null;
+  },
 ): boolean {
+  if (!character.speciesId) return false;
+  if (character.speciesId !== grant.species.id) return false;
   return character.speciesVariantId === grant.toVariant.id;
 }
 
@@ -51,7 +67,7 @@ export function variantItemUsableOn(
     speciesVariantId?: string | null;
   },
 ): boolean {
-  return variantItemCovers(grant, character) && !alreadyThere(grant, character);
+  return variantItemCovers(grant, character) && !redundantOn(grant, character);
 }
 
 export interface StrandedValue {

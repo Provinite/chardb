@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Variant change items.** `changeCharacterVariantWithItem` destroys an item
+  and moves one of your characters to the variant it grants. **Applies
+  immediately and opens no review**, unlike the other two redemptions (#172).
+
+- **Variant change grants on an item type**, set with
+  `setItemTypeVariantChangeGrant`: one destination, and the variants it can be
+  spent on. An empty source list covers every variant of the species. New
+  `ItemTransactionSource.VARIANT_CHANGE_REDEMPTION`, with no rejection
+  counterpart — there is no review to refuse.
+
+### Added
+
 - **A character's rarity history.** Every variant change records what it moved
   between, who moved it, why, and the character's traits either side —
   readable at `characterVariantChanges` (#232).

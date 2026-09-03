@@ -8,11 +8,7 @@ import {
 } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import {
-  variantItemUsableOn,
-  variantItemCovers,
-  alreadyThere,
-} from "../lib/variantChangeItems";
+import { variantItemUsableOn, redundantOn } from "../lib/variantChangeItems";
 
 const Container = styled.div`
   max-width: 800px;
@@ -126,9 +122,7 @@ export const VariantChangeCharacterPickerPage: React.FC = () => {
    */
   const alreadyCount = useMemo(() => {
     if (!grant) return 0;
-    return characters.filter(
-      (c) => variantItemCovers(grant, c) && alreadyThere(grant, c),
-    ).length;
+    return characters.filter((c) => redundantOn(grant, c)).length;
   }, [characters, grant]);
 
   if (itemLoading || charactersLoading) return <LoadingSpinner />;
