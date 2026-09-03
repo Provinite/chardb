@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Send a review queue entry to the back.** `deferTraitReview` and
+  `deferImage` reorder without deciding — status stays PENDING, nothing is
+  applied, refunded, logged or announced — and record a count, a note and who
+  passed on it (#333).
+
 - **Variant change items.** `changeCharacterVariantWithItem` destroys an item
   and moves one of your characters to the variant it grants. **Applies
   immediately and opens no review**, unlike the other two redemptions (#172).
