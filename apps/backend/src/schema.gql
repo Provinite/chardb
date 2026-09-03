@@ -266,6 +266,22 @@ input CharacterTraitValueInput {
   value: String
 }
 
+type CharacterVariantChange {
+  changedBy: User
+  characterId: ID!
+  createdAt: DateTime!
+
+  """Null when the character had no variant before this."""
+  fromVariant: SpeciesVariant
+  id: ID!
+  newTraitValues: [CharacterTraitValue!]!
+  previousTraitValues: [CharacterTraitValue!]!
+  reason: String
+
+  """Null when the variant was cleared rather than changed."""
+  toVariant: SpeciesVariant
+}
+
 input CheckoutInput {
   communityId: ID!
 
@@ -2736,6 +2752,9 @@ type Query {
 
   """Get the active pending trait review for a character"""
   characterTraitReview(characterId: ID!): TraitReview
+
+  """Every change to this character's variant, newest first."""
+  characterVariantChanges(characterId: ID!): [CharacterVariantChange!]!
   characters(filters: CharacterFiltersInput): CharacterConnection!
   comment(id: ID!): Comment!
   comments(filters: CommentFiltersInput!): CommentConnection!
@@ -4167,6 +4186,11 @@ input UpdateCharacterRegistryInput {
 
   """Trait values for the character"""
   traitValues: [CharacterTraitValueInput!]
+
+  """
+  Why the variant changed — 'upgrade ticket #204', say. Recorded on the rarity history and ignored when the variant is not changing.
+  """
+  variantChangeReason: String
 }
 
 input UpdateCommentInput {

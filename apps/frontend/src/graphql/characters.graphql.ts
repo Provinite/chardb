@@ -672,3 +672,33 @@ export {
   type Tag,
   type CharacterTag,
 } from "../generated/graphql";
+
+/**
+ * A character's rarity history.
+ *
+ * Its own query rather than a field on GetCharacter: most character pages have
+ * no history at all, and the ones that do are the minority a masterlist
+ * argument is about. Making every page load pay for it would be backwards.
+ */
+export const CHARACTER_VARIANT_CHANGES = gql`
+  query CharacterVariantChanges($characterId: ID!) {
+    characterVariantChanges(characterId: $characterId) {
+      id
+      reason
+      createdAt
+      fromVariant {
+        id
+        name
+      }
+      toVariant {
+        id
+        name
+      }
+      changedBy {
+        id
+        username
+        displayName
+      }
+    }
+  }
+`;

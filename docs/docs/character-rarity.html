@@ -1,0 +1,443 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Changing a Character's Rarity - Feature Walkthrough</title>
+    <meta name="description" content="Staff can move a character between species variants after it was created. The species is permanent; its rarity is not. Every change is recorded, and traits the new rarity does not permit are re-routed first." />
+    <link rel="canonical" href="https://provinite.github.io/chardb/docs/character-rarity.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Changing a Character's Rarity" />
+    <meta property="og:description" content="Staff can move a character between species variants after it was created. The species is permanent; its rarity is not. Every change is recorded." />
+    <meta property="og:url" content="https://provinite.github.io/chardb/docs/character-rarity.html" />
+    <meta property="og:image" content="https://provinite.github.io/chardb/docs/rarity-reroute.png" />
+    <meta property="og:image:alt" content="The rarity selector on a CharDB character's edit page, warning that a trait value does not exist at the chosen rarity." />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Changing a Character&rsquo;s Rarity</h1>
+        <p>The species is permanent. Its variant is not.</p>
+      </header>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">What this is</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A character&rsquo;s <strong>species</strong> is permanent &mdash; a
+            Thornwing does not become a Bramblecat. Its
+            <strong>variant</strong> is not. Variants usually encode rarity
+            (Common, Uncommon, Rare), and a rarity moves: an upgrade ticket is
+            redeemed, or a design is grandfathered in during a masterlist
+            review.
+          </p>
+          <div class="highlight-box">
+            <strong>This is a staff action.</strong> A member who can edit their
+            own character&rsquo;s registry &mdash; its identifier, its traits
+            &mdash; still cannot change its rarity. Rarity is what upgrade
+            tickets are sold for, so leaving it self-service would give the
+            product away.
+          </div>
+          <p>
+            It needs the <em>edit any character&rsquo;s registry</em>
+            permission, and it is recorded against the character where anyone
+            can read it.
+          </p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Changing it</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            On a character&rsquo;s edit page, under <strong>Species
+            Details</strong>, the variant is a dropdown of every variant its
+            species has. Pick one and save.
+          </p>
+          <p>
+            The <strong>Species</strong> section further up still says the
+            species cannot change. That remains true &mdash; it is only ever
+            been the species that is permanent, and the rarity being locked
+            alongside it was the bug this fixes.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="rarity-variant-selector.png"
+            alt="The variant dropdown in the Species Details section of a character's edit page, with an optional reason field."
+          />
+          <div class="screenshot-caption">
+            The <strong>why</strong> box appears once the rarity actually
+            moves. Worth filling in: it is what the history shows.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Traits that do not exist at the new rarity</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A variant can restrict which trait options are available to it
+            &mdash; a marking that only Rares have, a colour Commons cannot
+            take. Moving a character to a rarity that does not permit one of
+            its current values would leave it holding something its own trait
+            editor cannot offer.
+          </p>
+          <p>
+            So the form says which values are affected and asks what each
+            should become. <strong>The save is blocked until every one is
+            resolved</strong>, and the server refuses it too &mdash; this is
+            not merely a disabled button.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="rarity-reroute.png"
+            alt="The rarity selector showing a warning that one trait value does not exist at the chosen rarity, with a dropdown to choose a replacement."
+          />
+          <div class="screenshot-caption">
+            Each affected value gets a replacement, or is removed. Re-routing
+            them is the work &mdash; refusing the change outright would be safe
+            and useless.
+          </div>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>Which options a variant permits is something you
+            configure</strong>, per variant, under the species&rsquo; trait
+            options. A variant with none enabled for a trait does not carry
+            that trait at all &mdash; so if a rarity change is asking you to
+            re-route something, the target rarity genuinely does not have the
+            value the character is holding.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">The record</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every rarity change is recorded on the character: what it moved
+            between, who moved it, when, and the reason if one was given. It
+            appears under the character&rsquo;s traits and is
+            <strong>public</strong>, like the rarity itself &mdash; a
+            masterlist publishes rarity, so &ldquo;why is this a Rare&rdquo; is
+            a question anyone can reasonably ask.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="rarity-history.png"
+            alt="A character's rarity history showing a move from Common to Rare, dated, with the staff member who made it and the reason."
+          />
+          <div class="screenshot-caption">
+            Characters that have never changed rarity show nothing here at all.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            The record also keeps the character&rsquo;s traits from before and
+            after, because the re-routing in step 2 is part of the same act.
+            Storing only the rarity would leave the trait edit that came with
+            it invisible, which is exactly the half a dispute asks about.
+          </p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Every reason a change is refused</h2>
+        </div>
+        <div class="step-content">
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Reason</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>You only have rights to your own character&rsquo;s registry</td>
+                <td>
+                  Rarity is staff&rsquo;s. Your identifier and traits are not.
+                </td>
+              </tr>
+              <tr>
+                <td>A trait value does not exist at the new rarity</td>
+                <td>
+                  Re-route it first. The form asks; the server insists.
+                </td>
+              </tr>
+              <tr>
+                <td>The variant belongs to another species</td>
+                <td>
+                  A variant belongs to exactly one species, and the rarity
+                  decides the trait list.
+                </td>
+              </tr>
+              <tr>
+                <td>The character has no species</td>
+                <td>
+                  There are no variants to move between until it has one.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Character Rarity &bull; Feature Documentation</p>
+      </footer>
+    </div>
+  </body>
+</html>

@@ -399,6 +399,42 @@ mutation SeedCreateCharacterFromMyoTicket($input: RedeemMyoTicketInput!) {
   }
 }
 
+mutation SeedCreateEnumValueSetting(
+  $createEnumValueSettingInput: CreateEnumValueSettingInput!
+) {
+  createEnumValueSetting(
+    createEnumValueSettingInput: $createEnumValueSettingInput
+  ) {
+    id
+  }
+}
+
+query SeedCharacterVariantChanges($characterId: ID!) {
+  characterVariantChanges(characterId: $characterId) {
+    id
+    reason
+    fromVariant {
+      id
+      name
+    }
+    toVariant {
+      id
+      name
+    }
+    changedBy {
+      username
+    }
+    previousTraitValues {
+      traitId
+      value
+    }
+    newTraitValues {
+      traitId
+      value
+    }
+  }
+}
+
 mutation SeedDeleteCharacter($id: ID!) {
   deleteCharacter(id: $id)
 }

@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Trait values the new rarity does not permit are re-routed before saving**,
+  one control per affected value. The save is blocked until each is resolved.
+
+- **A rarity history on the character page**, shown only for characters that
+  have one.
+
+### Fixed
+
+- **A character's variant could not be changed after creation.** The edit page
+  locked it alongside the species under "assignment is permanent", which is
+  true of the species and never was of its rarity (#232).
+
 ## [v11.9.0] - 2026-09-02
 
 ### Added

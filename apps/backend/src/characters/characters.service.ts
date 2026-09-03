@@ -1159,6 +1159,8 @@ export class CharactersService {
     userId: string,
     input: {
       characterData: Prisma.CharacterUpdateInput;
+      /** Staff's note on a variant change. Ignored when none happens. */
+      variantChangeReason?: string | null;
     },
   ) {
     const character = await this.findOne(id, userId);
@@ -1196,22 +1198,116 @@ export class CharactersService {
       }
     }
 
-    // Validate trait values if provided
+    // Is the variant actually moving? A form that posts every registry field
+    // sends the current variant back unchanged on most saves, and that is not
+    // a rarity change -- it should neither need staff rights nor write an
+    // audit row.
+    const variantIsChanging =
+      characterData.speciesVariant !== undefined &&
+      connectedVariantId !== character.speciesVariantId;
+
+    if (variantIsChanging) {
+      await this.assertCanChangeVariant(userId, character.speciesId);
+    }
+
+    // The variant the traits are being judged against: the one it is moving
+    // to, or the one it already has. Validating a Rare's markings against the
+    // Common it used to be would refuse exactly the change staff came to make.
+    const effectiveVariantId = variantIsChanging
+      ? (connectedVariantId ?? null)
+      : character.speciesVariantId;
+
     if (characterData.traitValues) {
       const traitValues =
         characterData.traitValues as PrismaJson.CharacterTraitValuesJson;
       if (Array.isArray(traitValues) && traitValues.length > 0) {
-        await this.validateTraitValues(character.speciesId, traitValues);
+        await this.validateTraitValues(
+          character.speciesId,
+          traitValues,
+          effectiveVariantId,
+        );
       }
     }
 
-    // Update the character
-    const updatedCharacter = await this.db.character.update({
-      where: { id },
-      data: characterData,
+    // The update and its audit row commit together or not at all. A rarity
+    // change with no record of who made it is the thing this table exists to
+    // stop.
+    const updatedCharacter = await this.db.$transaction(async (tx) => {
+      const updated = await tx.character.update({
+        where: { id },
+        data: characterData,
+      });
+
+      if (variantIsChanging) {
+        await tx.characterVariantChange.create({
+          data: {
+            characterId: id,
+            fromVariantId: character.speciesVariantId,
+            toVariantId: connectedVariantId ?? null,
+            changedById: userId,
+            reason: input.variantChangeReason?.trim() || null,
+            previousTraitValues:
+              character.traitValues as PrismaJson.CharacterTraitValuesJson,
+            newTraitValues:
+              updated.traitValues as PrismaJson.CharacterTraitValuesJson,
+          },
+        });
+      }
+
+      return updated;
     });
 
     return updatedCharacter;
+  }
+
+  /**
+   * Refuse a variant change from anyone but staff.
+   *
+   * Every other registry field is editable by an owner holding
+   * `canEditOwnCharacterRegistry` -- their own registry id, their own traits.
+   * Rarity is different in kind: it is the thing upgrade tickets are sold for,
+   * so leaving it self-service gives away the product.
+   *
+   * The guard on the mutation cannot make this distinction. It asks whether
+   * the caller may edit registry fields at all, and an owner with own-registry
+   * rights passes -- which is how this has been reachable since the field was
+   * added. So the check is here, on the one field it applies to.
+   */
+  private async assertCanChangeVariant(userId: string, speciesId: string) {
+    const actor = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+    if (actor?.isAdmin) return;
+
+    const species = await this.db.species.findUnique({
+      where: { id: speciesId },
+      select: { communityId: true },
+    });
+    if (!species) {
+      throw new NotFoundException(`Species with ID ${speciesId} not found`);
+    }
+
+    const allowed = await this.permissionService.hasCommunityPermission(
+      userId,
+      species.communityId,
+      CommunityPermission.CanEditCharacterRegistry,
+    );
+    if (!allowed) {
+      throw new ForbiddenException(
+        "Changing a character's variant is a staff action. Editing your own " +
+          "character's registry does not include its rarity.",
+      );
+    }
+  }
+
+  /** A character's rarity history, newest first. */
+  async findVariantChanges(characterId: string) {
+    return this.db.characterVariantChange.findMany({
+      where: { characterId },
+      orderBy: { createdAt: "desc" },
+      include: { fromVariant: true, toVariant: true, changedBy: true },
+    });
   }
 
   /**
@@ -1592,6 +1688,7 @@ export class CharactersService {
   async validateTraitValues(
     speciesId: string,
     traitValues: PrismaJson.CharacterTraitValuesJson,
+    speciesVariantId?: string | null,
   ) {
     // Fetch all traits for this species
     const traits = await this.db.trait.findMany({
@@ -1678,11 +1775,78 @@ export class CharactersService {
       }
     }
 
+    if (speciesVariantId) {
+      violations.push(
+        ...(await this.enumValueViolationsForVariant(
+          traitValues,
+          speciesVariantId,
+        )),
+      );
+    }
+
     if (violations.length > 0) {
       throw new BadRequestException(
         `Trait validation failed:\n${violations.join("\n")}`,
       );
     }
+  }
+
+  /**
+   * Enum values this variant does not permit.
+   *
+   * `EnumValueSetting` is an allow-list per variant: a row says "this variant
+   * may use this option". Rarity is usually what it encodes -- a Rare may take
+   * markings a Common may not.
+   *
+   * An allow-list with no rows allows nothing. A trait with no options enabled
+   * for a variant is not available to that variant at all, which is the same
+   * thing the trait list says one level up: a variant nothing is configured
+   * for is dead, not permissive.
+   *
+   * Scoped to enum traits. A free-text or numeric trait has no options to
+   * allow, so it has no settings and must not be read as forbidden.
+   */
+  private async enumValueViolationsForVariant(
+    traitValues: PrismaJson.CharacterTraitValuesJson,
+    speciesVariantId: string,
+  ): Promise<string[]> {
+    const settings = await this.db.enumValueSetting.findMany({
+      where: { speciesVariantId },
+      select: { enumValueId: true },
+    });
+    const allowed = new Set(settings.map((s) => s.enumValueId));
+
+    // Only enum traits are constrained, and only the values that name an enum
+    // option. A value that is not an enum option at all belongs to a text or
+    // numeric trait and is none of this rule's business.
+    // Only string values can name an enum option; a numeric or boolean trait
+    // value is not an id and must not be looked up as one.
+    const candidateIds = traitValues
+      .map((tv) => tv.value)
+      .filter((v): v is string => typeof v === "string");
+    if (candidateIds.length === 0) return [];
+
+    const enumValues = await this.db.enumValue.findMany({
+      where: { id: { in: candidateIds } },
+      select: {
+        id: true,
+        name: true,
+        trait: { select: { name: true } },
+      },
+    });
+
+    const variant = await this.db.speciesVariant.findUnique({
+      where: { id: speciesVariantId },
+      select: { name: true },
+    });
+
+    return enumValues
+      .filter((ev) => !allowed.has(ev.id))
+      .map(
+        (ev) =>
+          `'${ev.name}' is not available to ${variant?.name ?? "this variant"}` +
+          ` for trait '${ev.trait.name}'`,
+      );
   }
 
   async getLikesCount(characterId: string) {

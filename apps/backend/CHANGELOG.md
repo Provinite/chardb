@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A character's rarity history.** Every variant change records what it moved
+  between, who moved it, why, and the character's traits either side —
+  readable at `characterVariantChanges` (#232).
+
+- **Trait values are validated against the variant**, not just the species. A
+  variant's enabled options are an allow-list, so a value the target variant
+  does not carry is refused.
+
+### Fixed
+
+- **Changing a character's variant was reachable by its owner.** Every other
+  registry field is theirs to edit; rarity is what upgrade tickets sell, so it
+  now requires `canEditCharacterRegistry` specifically. The mutation's guard
+  cannot tell the fields apart, so the check is on the field.
+
 ## [v11.9.0] - 2026-09-02
 
 ### Added
