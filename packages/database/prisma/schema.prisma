@@ -96,6 +96,11 @@ enum ItemTransactionSource {
   /// A kit handed back because the edit it proposed was refused. Source id is
   /// the review. Same pairing as MYO_REJECTION: kind GRANT, a fresh item.
   TRAIT_EDIT_REJECTION
+  /// An item spent moving a character from one variant to another. Source id
+  /// is the character. Unlike the other two redemptions this one has no
+  /// rejection counterpart: the change applies at redemption and there is no
+  /// review to refuse, so there is no path that hands the item back.
+  VARIANT_CHANGE_REDEMPTION
 }
 
 enum TraitReviewSource {
@@ -838,6 +843,7 @@ model ItemType {
   usePayout    ItemUsePayout?
   useMyoGrant  ItemUseMyoGrant?
   useTraitEditGrant ItemUseTraitEditGrant?
+  useVariantChangeGrant ItemUseVariantChangeGrant?
 
   @@unique([name, communityId])
   @@map("item_types")
@@ -1370,6 +1376,61 @@ model ItemUseTraitEditGrantVariant {
   @@map("item_use_trait_edit_grant_variants")
 }
 
+/// What an item moves a character to, and what it can be spent on.
+///
+/// Called a variant change rather than an upgrade because nothing here can
+/// tell an upgrade from a downgrade. `SpeciesVariant` has no rank -- Common
+/// and Legendary are two rows with different names -- so a community can
+/// configure this to move a character in any direction, or sideways between
+/// two variants of the same tier, and the model neither knows nor cares.
+/// "Upgrade ticket" is a thing a community names an item, not a thing this is.
+model ItemUseVariantChangeGrant {
+  id String @id @default(uuid())
+
+  /// One grant per item type, as with the other three effects.
+  itemTypeId String @unique @map("item_type_id")
+
+  /// The species this can be spent on. Derivable from `toVariantId`, and kept
+  /// anyway: an empty `fromVariants` means "any variant of this species,
+  /// including a character with none set", and that sentence needs a species
+  /// of its own to be scoped to.
+  speciesId String @map("species_id")
+
+  /// Where a redemption puts the character. Exactly one, so a member never
+  /// picks -- the ticket already decided, and the confirm can name it.
+  toVariantId String @map("to_variant_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  itemType ItemType @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
+  /// Restrict, as with the other grants: a species or variant that
+  /// outstanding tickets still name cannot be deleted out from under them.
+  species  Species  @relation(fields: [speciesId], references: [id], onDelete: Restrict)
+  toVariant SpeciesVariant @relation("ItemUseVariantChangeGrantTo", fields: [toVariantId], references: [id], onDelete: Restrict)
+
+  fromVariants ItemUseVariantChangeGrantFrom[]
+
+  @@map("item_use_variant_change_grants")
+}
+
+/// One variant an item can be spent on.
+///
+/// An empty set for a grant means every variant of its species, including a
+/// character with no variant at all -- the same reading `ItemUseTraitEditGrant`
+/// gives a species it lists no variants for.
+model ItemUseVariantChangeGrantFrom {
+  id               String @id @default(uuid())
+  grantId          String @map("grant_id")
+  speciesVariantId String @map("species_variant_id")
+
+  grant          ItemUseVariantChangeGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  speciesVariant SpeciesVariant            @relation("ItemUseVariantChangeGrantFrom", fields: [speciesVariantId], references: [id], onDelete: Restrict)
+
+  @@unique([grantId, speciesVariantId])
+  @@map("item_use_variant_change_grant_from_variants")
+}
+
 /// One checkout.
 ///
 /// The order exists mostly to group its lines and to date the refund window;
@@ -1465,6 +1526,8 @@ model Species {
   myoGrants ItemUseMyoGrant[]
   /// Item types whose edit kits can change a character of this species.
   traitEditGrants ItemUseTraitEditGrantSpecies[]
+  /// Item types whose items move a character of this species between variants.
+  variantChangeGrants ItemUseVariantChangeGrant[]
 
   @@map("species")
 }
@@ -1528,6 +1591,12 @@ model SpeciesVariant {
   myoGrantVariants ItemUseMyoGrantVariant[]
   /// Every edit-kit grant limited to this variant.
   traitEditGrantVariants ItemUseTraitEditGrantVariant[]
+
+  /// Every variant-change grant that moves characters *to* this variant.
+  variantChangeGrantsTo   ItemUseVariantChangeGrant[]     @relation("ItemUseVariantChangeGrantTo")
+  /// Every variant-change grant that can be spent on a character that *is*
+  /// this variant.
+  variantChangeGrantsFrom ItemUseVariantChangeGrantFrom[] @relation("ItemUseVariantChangeGrantFrom")
 
   /// Characters that moved off this variant, and onto it.
   variantChangesFrom CharacterVariantChange[] @relation("CharacterVariantChangeFrom")

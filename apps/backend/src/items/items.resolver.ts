@@ -30,6 +30,7 @@ import {
   ItemUsePayoutComponent,
   ItemUseMyoGrant,
   ItemUseTraitEditGrant,
+  ItemUseVariantChangeGrant,
   UseItemResult,
 } from "./entities/item-type.entity";
 import { Item as ItemEntity } from "./entities/item.entity";
@@ -48,6 +49,7 @@ import {
   SetItemTypeUsePayoutInput,
   SetItemTypeMyoGrantInput,
   SetItemTypeTraitEditGrantInput,
+  SetItemTypeVariantChangeGrantInput,
   UseItemInput,
 } from "./dto/item-type.dto";
 import { GrantItemInput, UpdateItemInput } from "./dto/item.dto";
@@ -191,6 +193,26 @@ export class ItemsResolver {
         speciesId: s.speciesId,
         speciesVariantIds: s.speciesVariantIds ?? [],
       })),
+    );
+    return mapPrismaItemTypeToGraphQL(itemType);
+  }
+
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
+  @ResolveCommunityFrom({ itemTypeId: "input.itemTypeId" })
+  @Mutation(() => ItemTypeEntity, {
+    description:
+      "Set where an item of this type moves a character, and which " +
+      "characters it can be spent on. Replaces the grant wholesale; a null " +
+      "destination clears it. An empty source list covers every variant of " +
+      "the destination's species.",
+  })
+  async setItemTypeVariantChangeGrant(
+    @Args("input") input: SetItemTypeVariantChangeGrantInput,
+  ): Promise<ItemTypeEntity> {
+    const itemType = await this.itemsService.setItemTypeVariantChangeGrant(
+      input.itemTypeId,
+      input.toVariantId ?? null,
+      input.fromVariantIds ?? [],
     );
     return mapPrismaItemTypeToGraphQL(itemType);
   }
@@ -467,6 +489,30 @@ export class ItemsResolver {
           mapPrismaSpeciesVariantToGraphQL(v.speciesVariant),
         ),
       })),
+    };
+  }
+
+  /** Null when this type moves nothing, which is almost all of them. */
+  @AllowUnauthenticated()
+  @ResolveField(() => ItemUseVariantChangeGrant, {
+    name: "useVariantChangeGrant",
+    nullable: true,
+  })
+  async resolveUseVariantChangeGrant(
+    @Parent() itemType: ItemTypeEntity,
+  ): Promise<ItemUseVariantChangeGrant | null> {
+    const grant = await this.itemsService.findItemTypeVariantChangeGrant(
+      itemType.id,
+    );
+    if (!grant) return null;
+
+    return {
+      id: grant.id,
+      species: mapPrismaSpeciesToGraphQL(grant.species),
+      toVariant: mapPrismaSpeciesVariantToGraphQL(grant.toVariant),
+      fromVariants: grant.fromVariants.map((v) =>
+        mapPrismaSpeciesVariantToGraphQL(v.speciesVariant),
+      ),
     };
   }
 

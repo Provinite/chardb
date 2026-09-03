@@ -155,6 +155,47 @@ export class SetItemTypeTraitEditGrantInput {
   species: TraitEditGrantSpeciesInput[];
 }
 
+/**
+ * Where an item of this type moves a character, and what it can be spent on.
+ *
+ * The two halves are not symmetrical on purpose. One destination, so the
+ * confirm can name what the character becomes and a member never picks; a set
+ * of sources, because "usable on a Common or an Uncommon" is the ordinary
+ * thing to sell.
+ *
+ * Wrapped for the same reason the other three setters are: Nest's
+ * ValidationPipe skips any parameter whose reflected metatype is `Array`, so
+ * decorators on a top-level array argument never run.
+ */
+@InputType()
+export class SetItemTypeVariantChangeGrantInput {
+  @Field(() => ID)
+  @IsUUID()
+  itemTypeId: string;
+
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "What the character becomes. Null clears the grant. Its species is " +
+      "the species the item can be spent on.",
+  })
+  @IsOptional()
+  @IsUUID()
+  toVariantId?: string;
+
+  @Field(() => [ID], {
+    defaultValue: [],
+    description:
+      "Narrow to characters that are one of these variants. Empty covers " +
+      "every variant of the species, and characters with no variant set. " +
+      "Cannot contain the destination.",
+  })
+  @IsOptional()
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  fromVariantIds?: string[];
+}
+
 @InputType()
 export class CreateItemTypeInput {
   @Field()

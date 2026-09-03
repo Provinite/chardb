@@ -13,6 +13,8 @@ import {
   SeedSetItemTypeUsePayoutDocument,
   SeedSetItemTypeMyoGrantDocument,
   SeedSetItemTypeTraitEditGrantDocument,
+  SeedSetItemTypeVariantChangeGrantDocument,
+  SeedApproveTraitReviewDocument,
   SeedCreateTraitDocument,
   SeedCreateEnumValueDocument,
   SeedCreateEnumValueSettingDocument,
@@ -58,6 +60,18 @@ export interface CommunityItemsWorld {
      * proves a variant list narrows rather than decorates.
      */
     commonOnlyEditKit: { id: string; name: string };
+    /**
+     * Consumable. Moves a Common or an Uncommon Thornwing to Rare, and
+     * refuses everything else -- which is what a community actually sells.
+     */
+    rareUpgrade: { id: string; name: string };
+    /**
+     * Consumable. Moves *any* Thornwing to Legendary, source list empty, so
+     * the permissive reading of that list is covered as well as the narrow
+     * one. Legendary permits Amber eyes alone, which makes this the item that
+     * strands a trait value and forces a re-pick.
+     */
+    legendaryAscension: { id: string; name: string };
   };
   /** The three potions `member` holds, granted during seeding as one batch. */
   grantedItems: { ids: string[] };
@@ -80,6 +94,12 @@ export interface CommunityItemsWorld {
   myoItems: { ticketIds: string[] };
   /** `member`'s edit kits: two species-wide, one narrowed to Common. */
   editKitItems: { kitIds: string[]; commonOnlyKitId: string };
+  /**
+   * `member`'s variant change items. Two of each, so one can be spent and one
+   * kept -- a count that went from 2 to 1 is the only proof that redeeming
+   * consumed exactly one.
+   */
+  variantChangeItems: { rareUpgradeIds: string[]; ascensionIds: string[] };
   /**
    * One enum trait on the species, so an edit kit has something to change.
    * Without it every proposed edit is the empty set and the "changes nothing"
@@ -151,6 +171,30 @@ export interface CommunityItemsWorld {
     hearthstone: { id: string; name: string; url: string };
     /** `othermember`'s. Open to trades and for sale in coin. */
     marrowfen: { id: string; name: string; url: string };
+    /**
+     * `member`'s Common Thornwing with Blue eyes, review settled.
+     *
+     * The variant change happy path. Blue is permitted by Rare as well as
+     * Common, so moving it to Rare strands nothing -- which is what separates
+     * this from the Legendary case.
+     */
+    pinefall: { id: string; name: string; url: string };
+    /**
+     * `member`'s Rare Thornwing with Amber eyes, review settled.
+     *
+     * Already the Rare upgrade's destination, so that refusal has a subject.
+     * Amber is the one colour Legendary permits, so the Ascension moves it
+     * with nothing stranded.
+     */
+    emberwake: { id: string; name: string; url: string };
+    /**
+     * `member`'s Legendary Thornwing with Amber eyes, review settled.
+     *
+     * Outside the Rare upgrade's source list without being its destination,
+     * which is a different refusal from Emberwake's and reads differently to
+     * the member.
+     */
+    ashglass: { id: string; name: string; url: string };
     /**
      * How many `member` owns in total, filler included. More than one page of
      * any list that shows them, which is what the paging specs need.
@@ -474,6 +518,64 @@ export default definePreset<CommunityItemsWorld>({
       isSellableForCoin: true,
     });
 
+    // Characters that actually *are* a variant.
+    //
+    // The three above deliberately have none, which is the state the edit-kit
+    // specs need. A variant change has nothing to bite on there: every refusal
+    // it can produce -- already the destination, outside the source list --
+    // is about which variant a character currently is.
+    //
+    // Their CREATION reviews are approved as they are seeded. Creating a
+    // character with trait values opens one, and a character with a review
+    // still pending cannot be moved at all, so leaving them pending would put
+    // every one of these characters permanently out of reach of the feature
+    // they exist to test.
+    const settledCharacter = async (
+      name: string,
+      variantId: string,
+      colour: "blue" | "green" | "amber",
+    ) => {
+      const { createCharacter } = await ctx
+        .as("member")
+        .gql(SeedCreateCharacterDocument, {
+          input: {
+            name,
+            speciesId: species.id,
+            speciesVariantId: variantId,
+            traitValues: [
+              { traitId: eyeColor.id, value: eyeColorValues[colour] },
+            ],
+          },
+        });
+
+      const review = await ctx.prisma.traitReview.findFirst({
+        where: { characterId: createCharacter.id },
+        select: { id: true },
+      });
+      if (!review) {
+        throw new Error(`${name} was seeded without the review it needs`);
+      }
+      await ctx.as("commadmin").gql(SeedApproveTraitReviewDocument, {
+        input: { reviewId: review.id },
+      });
+
+      return {
+        id: createCharacter.id,
+        name: createCharacter.name,
+        url: `/character/${createCharacter.id}`,
+      };
+    };
+
+    // Common, with an eye colour Rare also permits. The happy path: it moves
+    // to Rare with nothing stranded.
+    const pinefall = await settledCharacter("Pinefall", common.id, "blue");
+    // Already Rare, so a Rare ticket has to refuse it -- and with Amber eyes,
+    // so the Legendary ticket can move it without stranding anything.
+    const emberwake = await settledCharacter("Emberwake", rare.id, "amber");
+    // Legendary, which is not in the Rare ticket's source list. The refusal
+    // this proves is a different one from Emberwake's.
+    const ashglass = await settledCharacter("Ashglass", legendary.id, "amber");
+
     // ==================== Currency ====================
 
     const asQuartermaster = ctx.as("quartermaster");
@@ -744,6 +846,82 @@ export default definePreset<CommunityItemsWorld>({
       },
     );
 
+    // ==================== Variant change items ====================
+
+    // The shape a community actually sells: spendable on the two tiers below
+    // the one it grants, and on nothing else.
+    const { createItemType: rareUpgrade } = await asQuartermaster.gql(
+      SeedCreateItemTypeDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Rare Thornwing Upgrade",
+          category: "Redeemable",
+          isTradeable: true,
+          isConsumable: true,
+        },
+      },
+    );
+
+    await asQuartermaster.gql(SeedSetItemTypeVariantChangeGrantDocument, {
+      input: {
+        itemTypeId: rareUpgrade.id,
+        toVariantId: rare.id,
+        fromVariantIds: [common.id, uncommon.id],
+      },
+    });
+
+    // Two: one to spend, one still in hand afterwards.
+    const { grantItem: rareUpgradeItems } = await asQuartermaster.gql(
+      SeedGrantItemDocument,
+      {
+        input: {
+          itemTypeId: rareUpgrade.id,
+          userId: member.userId,
+          quantity: 2,
+          reason: "Event prize",
+        },
+      },
+    );
+
+    // The other reading of the source list: empty, so it covers every variant
+    // of the species *and* a character with none set. Its destination is
+    // Legendary, whose enum settings permit Amber alone -- so redeeming it on
+    // a blue-eyed character is the case where a value is stranded and has to
+    // be re-picked. That pairing is the whole reason this one exists.
+    const { createItemType: legendaryAscension } = await asQuartermaster.gql(
+      SeedCreateItemTypeDocument,
+      {
+        input: {
+          communityId: community.id,
+          name: "Thornwing Ascension",
+          category: "Redeemable",
+          isTradeable: true,
+          isConsumable: true,
+        },
+      },
+    );
+
+    await asQuartermaster.gql(SeedSetItemTypeVariantChangeGrantDocument, {
+      input: {
+        itemTypeId: legendaryAscension.id,
+        toVariantId: legendary.id,
+        fromVariantIds: [],
+      },
+    });
+
+    const { grantItem: legendaryAscensionItems } = await asQuartermaster.gql(
+      SeedGrantItemDocument,
+      {
+        input: {
+          itemTypeId: legendaryAscension.id,
+          userId: member.userId,
+          quantity: 2,
+          reason: "Event prize",
+        },
+      },
+    );
+
     // ==================== Shop ====================
 
     // The member has 380 HC and 0 FT after the transfer above, so the
@@ -821,9 +999,13 @@ export default definePreset<CommunityItemsWorld>({
         bramblefoot,
         hearthstone,
         marrowfen,
+        pinefall,
+        emberwake,
+        ashglass,
         // Bramblefoot and Hearthstone, plus the filler. Marrowfen is
         // othermember's.
-        memberTotal: FILLER_COUNT + 2,
+        // Bramblefoot and Hearthstone, plus the three variant-bearing ones.
+        memberTotal: FILLER_COUNT + 5,
       },
       balances: { member: 380, othermember: 620 },
       currencyUrls: {
@@ -852,6 +1034,11 @@ export default definePreset<CommunityItemsWorld>({
         blankTicket: { id: blankTicket.id, name: blankTicket.name },
         myoTicket: { id: myoTicket.id, name: myoTicket.name },
         editKit: { id: editKit.id, name: editKit.name },
+        rareUpgrade: { id: rareUpgrade.id, name: rareUpgrade.name },
+        legendaryAscension: {
+          id: legendaryAscension.id,
+          name: legendaryAscension.name,
+        },
         commonOnlyEditKit: {
           id: commonOnlyEditKit.id,
           name: commonOnlyEditKit.name,
@@ -866,6 +1053,10 @@ export default definePreset<CommunityItemsWorld>({
         kitIds: editKitItems.map((i) => i.id),
         commonOnlyKitId: commonOnlyKitItems[0].id,
       },
+      variantChangeItems: {
+        rareUpgradeIds: rareUpgradeItems.map((i) => i.id),
+        ascensionIds: legendaryAscensionItems.map((i) => i.id),
+      },
       traits: { eyeColor: { id: eyeColor.id, values: eyeColorValues } },
       grantedItems: { ids: grantItem.map((i) => i.id) },
       totalCirculation:
@@ -875,7 +1066,9 @@ export default definePreset<CommunityItemsWorld>({
         blankTicketItems.length +
         myoItems.length +
         editKitItems.length +
-        commonOnlyKitItems.length,
+        commonOnlyKitItems.length +
+        rareUpgradeItems.length +
+        legendaryAscensionItems.length,
       importedItems: {
         ids: importedIds,
         batchId: IMPORT_BATCH,

@@ -378,6 +378,39 @@ mutation SeedEditCharacterTraitsWithKit(
   }
 }
 
+mutation SeedSetItemTypeVariantChangeGrant(
+  $input: SetItemTypeVariantChangeGrantInput!
+) {
+  setItemTypeVariantChangeGrant(input: $input) {
+    id
+    useVariantChangeGrant {
+      id
+      species {
+        id
+        name
+      }
+      toVariant {
+        id
+        name
+      }
+      fromVariants {
+        id
+        name
+      }
+    }
+  }
+}
+
+mutation SeedChangeCharacterVariantWithItem(
+  $input: ChangeCharacterVariantWithItemInput!
+) {
+  changeCharacterVariantWithItem(input: $input) {
+    id
+    speciesVariantId
+    traitReviewStatus
+  }
+}
+
 mutation SeedUpdateCharacterRegistry(
   $id: ID!
   $input: UpdateCharacterRegistryInput!

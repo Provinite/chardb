@@ -79,6 +79,39 @@ export class ItemUseTraitEditGrant {
 }
 
 /**
+ * Where an item of this type moves a character, and what it can be spent on.
+ *
+ * Named for what it does rather than what it is usually sold as. A community
+ * calls its item a Rare Upgrade Ticket; this cannot tell an upgrade from a
+ * demotion, because a variant has a name and not a rank.
+ */
+@ObjectType()
+export class ItemUseVariantChangeGrant {
+  @Field(() => ID)
+  id: string;
+
+  @Field(() => Species, {
+    description:
+      "The species this can be spent on. Always the destination variant's " +
+      "own species -- an item cannot move a character between species.",
+  })
+  species: Species;
+
+  @Field(() => SpeciesVariant, {
+    description:
+      "What the character becomes. Exactly one, so a member never chooses.",
+  })
+  toVariant: SpeciesVariant;
+
+  @Field(() => [SpeciesVariant], {
+    description:
+      "Which variants this can be spent on. **Empty means every variant** of " +
+      "the species, including a character with no variant set at all.",
+  })
+  fromVariants: SpeciesVariant[];
+}
+
+/**
  * What one use produced.
  *
  * Returns the payout rather than just a boolean so the caller can say "you got
