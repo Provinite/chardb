@@ -5,3 +5,5 @@ export { TraitReviewQueue } from "./TraitReviewQueue";
 export { TraitReviewCard } from "./TraitReviewCard";
 export { TraitDiffDisplay } from "./TraitDiffDisplay";
 export { RevertTraitReviewModal } from "./RevertTraitReviewModal";
+export { DeferQueueEntryModal } from "./DeferQueueEntryModal";
+export { DeferralBadge, DeferralDetail } from "./DeferralNotice";

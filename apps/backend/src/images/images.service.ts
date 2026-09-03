@@ -245,7 +245,11 @@ export class ImagesService {
     return result;
   }
 
-  async findAll(filters: ImageFilters = {}, userId?: string) {
+  // `_userId` is unread: image visibility is decided by moderation status
+  // alone (see getModerationVisibilityFilter), not by who is asking. Kept in
+  // the signature because callers pass it and a per-viewer filter is the
+  // obvious next thing to want here.
+  async findAll(filters: ImageFilters = {}, _userId?: string) {
     const {
       limit = 20,
       offset = 0,
@@ -305,7 +309,7 @@ export class ImagesService {
     };
   }
 
-  async findOne(id: string, userId?: string) {
+  async findOne(id: string, _userId?: string) {
     const image = await this.db.image.findUnique({
       where: { id },
       include: {

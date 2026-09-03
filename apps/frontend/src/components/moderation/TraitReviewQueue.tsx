@@ -7,6 +7,7 @@ import {
   useTraitReviewQueueQuery,
   useApproveTraitReviewMutation,
   useRevertTraitReviewMutation,
+  useDeferTraitReviewMutation,
   useDeleteCharacterMutation,
   useKickCharacterFromSpeciesMutation,
 } from "../../generated/graphql";
@@ -120,6 +121,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
 
   const [approveReview] = useApproveTraitReviewMutation();
   const [revertReview] = useRevertTraitReviewMutation();
+  const [deferReview] = useDeferTraitReviewMutation();
   const [deleteCharacter] = useDeleteCharacterMutation();
   const [kickFromSpecies] = useKickCharacterFromSpeciesMutation();
 
@@ -153,6 +155,23 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
       console.error("Failed to revert trait review:", err);
       const message = err instanceof Error ? err.message : "Unknown error";
       toast.error(`Failed to revert: ${message}`);
+    } finally {
+      setActionInProgress(null);
+    }
+  };
+
+  const handleDefer = async (reviewId: string, note: string | undefined) => {
+    setActionInProgress(reviewId);
+    try {
+      await deferReview({ variables: { input: { reviewId, note } } });
+      // Refetching is the whole visible effect: the card leaves this position
+      // and reappears at the end of the queue.
+      toast.success("Sent to the back of the queue");
+      await refetch();
+    } catch (err) {
+      console.error("Failed to defer trait review:", err);
+      const message = err instanceof Error ? err.message : "Unknown error";
+      toast.error(`Failed to send to back: ${message}`);
     } finally {
       setActionInProgress(null);
     }
@@ -252,7 +271,9 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
       <HelpText>
         Review proposed trait values for imported or user-submitted characters.
         Approving accepts them as proposed. Refusing a change bought with an
-        item returns that item to its holder.
+        item returns that item to its holder. Anything you cannot decide yet
+        can be sent to the back of the queue instead — it stays pending and
+        nobody is told.
       </HelpText>
 
       {loading ? (
@@ -279,6 +300,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
                 item={item}
                 onApprove={handleApprove}
                 onRevert={handleRevert}
+                onDefer={handleDefer}
                 onDelete={canDelete ? handleDelete : undefined}
                 onKickFromSpecies={canKick ? handleKickFromSpecies : undefined}
                 actionInProgress={

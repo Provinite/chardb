@@ -9,6 +9,7 @@ import {
   Clock,
   ExternalLink,
   AlertTriangle,
+  Undo2,
 } from "lucide-react";
 import { Button, SmallText, Caption } from "@chardb/ui";
 import {
@@ -16,6 +17,8 @@ import {
   ModerationStatus,
 } from "../../generated/graphql";
 import { RejectImageModal } from "./RejectImageModal";
+import { DeferQueueEntryModal } from "./DeferQueueEntryModal";
+import { DeferralBadge, DeferralDetail } from "./DeferralNotice";
 import {
   AwardRecipientsWidget,
   type AwardRecipient,
@@ -44,6 +47,14 @@ export interface ImageModerationCardItem {
     isNsfw: boolean;
     moderationStatus: ModerationStatus;
     createdAt: string;
+    deferredAt?: string | null;
+    deferralCount: number;
+    deferralNote?: string | null;
+    deferredBy?: {
+      id: string;
+      username: string;
+      displayName?: string | null;
+    } | null;
     uploader?: {
       id: string;
       username: string;
@@ -214,8 +225,10 @@ interface ImageModerationCardProps {
     reason: ModerationRejectionReason,
     reasonText?: string,
   ) => Promise<void>;
+  onDefer: (imageId: string, note: string | undefined) => Promise<void>;
   approving?: boolean;
   rejecting?: boolean;
+  deferring?: boolean;
 }
 
 export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
@@ -223,16 +236,19 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
   currencies = [],
   onApprove,
   onReject,
+  onDefer,
   approving = false,
   rejecting = false,
+  deferring = false,
 }) => {
   const [showFullImage, setShowFullImage] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showDeferModal, setShowDeferModal] = useState(false);
   const [currencyId, setCurrencyId] = useState(currencies[0]?.id ?? "");
   const [amounts, setAmounts] = useState<Record<string, string>>({});
 
   const { image, characterId, characterName, communityName, mediaTitle } = item;
-  const isLoading = approving || rejecting;
+  const isLoading = approving || rejecting || deferring;
   const recipients = item.awardRecipients ?? [];
 
   const handleApprove = async () => {
@@ -297,6 +313,13 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
         </ImageContainer>
 
         <Content>
+          {image.deferralCount > 0 && (
+            <MetaRow>
+              <DeferralBadge deferralCount={image.deferralCount} />
+            </MetaRow>
+          )}
+
+          <DeferralDetail info={image} formatTimeAgo={formatDate} />
           <MetaRow>
             <MetaIcon>
               <User size={14} />
@@ -366,6 +389,18 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
             >
               Approve
             </ApproveButton>
+            {/* Between the two outcomes and neither of them: the image stays
+                pending, the uploader hears nothing. */}
+            <ActionButton
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDeferModal(true)}
+              disabled={isLoading}
+              loading={deferring}
+              icon={<Undo2 size={14} />}
+            >
+              Send to back
+            </ActionButton>
             <ActionButton
               variant="danger"
               size="sm"
@@ -397,6 +432,19 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
         loading={rejecting}
         imageName={image.originalFilename || undefined}
       />
+
+      {showDeferModal && (
+        <DeferQueueEntryModal
+          entryName={mediaTitle || image.originalFilename || "this image"}
+          deferralCount={image.deferralCount}
+          onDefer={async (note) => {
+            await onDefer(image.id, note);
+            setShowDeferModal(false);
+          }}
+          onCancel={() => setShowDeferModal(false)}
+          submitting={deferring}
+        />
+      )}
     </>
   );
 };

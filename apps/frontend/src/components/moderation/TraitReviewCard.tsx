@@ -10,11 +10,14 @@ import {
   ExternalLink,
   Trash2,
   Unlink,
+  Undo2,
 } from "lucide-react";
 import { Button, Caption } from "@chardb/ui";
 import { TraitReviewSource } from "../../generated/graphql";
 import { TraitDiffDisplay } from "./TraitDiffDisplay";
 import { RevertTraitReviewModal } from "./RevertTraitReviewModal";
+import { DeferQueueEntryModal } from "./DeferQueueEntryModal";
+import { DeferralBadge, DeferralDetail } from "./DeferralNotice";
 import { isRedemptionReview } from "../../lib/traitReviews";
 
 import type { TraitReviewQueueQuery } from "../../generated/graphql";
@@ -25,6 +28,7 @@ interface TraitReviewCardProps {
   item: QueueItem;
   onApprove: (reviewId: string) => Promise<void>;
   onRevert: (reviewId: string, reason: string) => Promise<void>;
+  onDefer: (reviewId: string, note: string | undefined) => Promise<void>;
   onEditAndApprove?: (reviewId: string) => void;
   onDelete?: (characterId: string, characterName: string) => Promise<void>;
   onKickFromSpecies?: (
@@ -195,12 +199,14 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
   item,
   onApprove,
   onRevert,
+  onDefer,
   onEditAndApprove,
   onDelete,
   onKickFromSpecies,
   actionInProgress,
 }) => {
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const [showDeferModal, setShowDeferModal] = useState(false);
   const review = item.review;
   /** Paid for with an item, which changes three things on this card. */
   const redemption = isRedemptionReview(review.source);
@@ -242,6 +248,7 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                 <SourceBadge $source={review.source}>
                   {sourceLabel(review.source)}
                 </SourceBadge>
+                <DeferralBadge deferralCount={review.deferralCount} />
               </CharacterMeta>
             </CharacterInfo>
             <TimeInfo>
@@ -249,6 +256,8 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
               <Caption>{formatTimeAgo(review.createdAt)}</Caption>
             </TimeInfo>
           </CardHeader>
+
+          <DeferralDetail info={review} formatTimeAgo={formatTimeAgo} />
 
           <TraitDiffDisplay
             previousTraitValues={review.previousTraitValues}
@@ -297,6 +306,19 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                   {redemption ? "Refuse" : "Revert"}
                 </Button>
               )}
+            {/* Sits after the outcomes and before the destructive buttons,
+                because it is neither. Offered on every source, including the
+                two that cannot be reverted -- an import nobody can rule on
+                yet is exactly the case this exists for. */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowDeferModal(true)}
+              disabled={actionInProgress}
+              icon={<Undo2 size={14} />}
+            >
+              Send to back
+            </Button>
             {/* Neither of these is a review outcome, and on a redemption both
                 are worse than that: every path behind them cancels the pending
                 review, and the item's return is guarded on that review still
@@ -343,6 +365,20 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
             setShowRejectModal(false);
           }}
           onCancel={() => setShowRejectModal(false)}
+          submitting={actionInProgress}
+        />
+      )}
+
+      {showDeferModal && (
+        <DeferQueueEntryModal
+          entryName={item.characterName}
+          deferralCount={review.deferralCount}
+          maxNoteLength={2000}
+          onDefer={async (note) => {
+            await onDefer(review.id, note);
+            setShowDeferModal(false);
+          }}
+          onCancel={() => setShowDeferModal(false)}
           submitting={actionInProgress}
         />
       )}
