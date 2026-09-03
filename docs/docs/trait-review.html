@@ -410,11 +410,16 @@
               the character's traits to their previous values (not available for
               CREATION reviews since there are no previous values)
             </li>
+            <li>
+              <strong>Send to back</strong> &mdash; Decides nothing. Moves the
+              review behind the ones you can act on now (see step 7)
+            </li>
           </ul>
           <p>
             The trait diff section uses color coding: green borders indicate
             added traits, with each trait name and its proposed value clearly
-            displayed. CREATION-source reviews show only the Approve button.
+            displayed. A CREATION-source review has no Revert button, since
+            there is nothing to revert to.
           </p>
         </div>
         <div class="screenshot">
@@ -540,6 +545,26 @@
             keeps climbing is worth acting on: it means the queue has an entry
             everyone is avoiding and nobody is resolving.
           </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trait-review-defer-modal.png"
+            alt="Send to back modal with an optional note explaining why the review is being passed on"
+          />
+          <div class="screenshot-caption">
+            The modal, saying plainly that the review stays pending and nobody
+            is notified. The note is optional.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="trait-review-deferred-card.png"
+            alt="Trait review card marked Deferred once, showing the note and the moderator who left it"
+          />
+          <div class="screenshot-caption">
+            The same review after it was passed on, now at the back of the
+            queue: the count, the reason, and who to go and ask
+          </div>
         </div>
       </div>
 
