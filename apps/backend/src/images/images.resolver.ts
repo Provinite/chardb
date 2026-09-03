@@ -1,18 +1,11 @@
 import { Resolver, Query, Mutation, Args, ID } from "@nestjs/graphql";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
-import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { ImagesService } from "./images.service";
 import { Image as ImageEntity, ImageConnection } from "./entities/image.entity";
-import {
-  UpdateImageInput,
-  ImageFiltersInput,
-  ManageImageTagsInput,
-} from "./dto/image.dto";
-import type { Image } from "@chardb/database";
+import { UpdateImageInput, ImageFiltersInput } from "./dto/image.dto";
 
 @Resolver(() => ImageEntity)
 export class ImagesResolver {
@@ -21,20 +14,21 @@ export class ImagesResolver {
   // Note: File upload is handled via REST endpoint /images/upload
   // This GraphQL resolver is for querying existing images
 
+  // Return types are inferred rather than annotated. These hand back Prisma
+  // rows, and the GraphQL shape is declared by the @Query decorator; the
+  // entity's remaining fields (likesCount, userHasLiked) come from field
+  // resolvers. Writing `Promise<ImageConnection>` here would be a lie the
+  // compiler could not check, which is what the `any` it replaced was hiding.
   @Query(() => ImageConnection)
   async images(
     @Args("filters", { nullable: true }) filters?: ImageFiltersInput,
-    @CurrentUser() user?: any,
-  ): Promise<any> {
-    return this.imagesService.findAll(filters, user?.id);
+  ) {
+    return this.imagesService.findAll(filters);
   }
 
   @Query(() => ImageEntity)
-  async image(
-    @Args("id", { type: () => ID }) id: string,
-    @CurrentUser() user?: any,
-  ): Promise<any> {
-    return this.imagesService.findOne(id, user?.id);
+  async image(@Args("id", { type: () => ID }) id: string) {
+    return this.imagesService.findOne(id);
   }
 
   @AllowGlobalAdmin()
@@ -44,7 +38,7 @@ export class ImagesResolver {
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateImageInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<any> {
+  ) {
     return this.imagesService.update(id, user.id, input);
   }
 
@@ -63,11 +57,11 @@ export class ImagesResolver {
   // DEPRECATED: Image queries are blocked (no permission decorators = blocked)
   @Query(() => ImageConnection)
   async myImages(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
     @Args("filters", { nullable: true }) filters?: ImageFiltersInput,
-  ): Promise<any> {
+  ) {
     const userFilters = { ...filters, uploaderId: user.id };
-    return this.imagesService.findAll(userFilters, user.id);
+    return this.imagesService.findAll(userFilters);
   }
 
   // Query for images by specific user
@@ -75,10 +69,9 @@ export class ImagesResolver {
   async userImages(
     @Args("userId", { type: () => ID }) userId: string,
     @Args("filters", { nullable: true }) filters?: ImageFiltersInput,
-    @CurrentUser() user?: any,
-  ): Promise<any> {
+  ) {
     const userFilters = { ...filters, uploaderId: userId };
-    return this.imagesService.findAll(userFilters, user?.id);
+    return this.imagesService.findAll(userFilters);
   }
 
   // Query for images in a specific character
@@ -86,10 +79,9 @@ export class ImagesResolver {
   async characterImages(
     @Args("characterId", { type: () => ID }) characterId: string,
     @Args("filters", { nullable: true }) filters?: ImageFiltersInput,
-    @CurrentUser() user?: any,
-  ): Promise<any> {
+  ) {
     const characterFilters = { ...filters, characterId };
-    return this.imagesService.findAll(characterFilters, user?.id);
+    return this.imagesService.findAll(characterFilters);
   }
 
   // Query for images in a specific gallery
@@ -97,9 +89,8 @@ export class ImagesResolver {
   async galleryImages(
     @Args("galleryId", { type: () => ID }) galleryId: string,
     @Args("filters", { nullable: true }) filters?: ImageFiltersInput,
-    @CurrentUser() user?: any,
-  ): Promise<any> {
+  ) {
     const galleryFilters = { ...filters, galleryId };
-    return this.imagesService.findAll(galleryFilters, user?.id);
+    return this.imagesService.findAll(galleryFilters);
   }
 }

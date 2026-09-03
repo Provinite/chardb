@@ -245,11 +245,11 @@ export class ImagesService {
     return result;
   }
 
-  // `_userId` is unread: image visibility is decided by moderation status
-  // alone (see getModerationVisibilityFilter), not by who is asking. Kept in
-  // the signature because callers pass it and a per-viewer filter is the
-  // obvious next thing to want here.
-  async findAll(filters: ImageFilters = {}, _userId?: string) {
+  // No viewer argument: image visibility is decided by moderation status
+  // alone (see getModerationVisibilityFilter), never by who is asking. The
+  // parameter this used to take was read by nothing and had been passed at
+  // every call site for long enough to look like it meant something.
+  async findAll(filters: ImageFilters = {}) {
     const {
       limit = 20,
       offset = 0,
@@ -309,7 +309,7 @@ export class ImagesService {
     };
   }
 
-  async findOne(id: string, _userId?: string) {
+  async findOne(id: string) {
     const image = await this.db.image.findUnique({
       where: { id },
       include: {
@@ -370,7 +370,7 @@ export class ImagesService {
     userId: string,
     input: UpdateImageInput,
   ): Promise<Image> {
-    const image = await this.findOne(id, userId);
+    const image = await this.findOne(id);
 
     // Check ownership
     if (image.uploaderId !== userId) {
@@ -405,7 +405,7 @@ export class ImagesService {
   }
 
   async remove(id: string, userId: string): Promise<boolean> {
-    const image = await this.findOne(id, userId);
+    const image = await this.findOne(id);
 
     // Check ownership
     if (image.uploaderId !== userId) {
