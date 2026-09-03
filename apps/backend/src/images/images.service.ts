@@ -311,6 +311,10 @@ export class ImagesService {
       include: {
         uploader: true,
         artist: true,
+        // Joined here because this is the path the moderation queue reads an
+        // image through, and a deferred entry has to be able to say who passed
+        // on it. Null on all but a handful of rows.
+        deferredBy: true,
         tags_rel: {
           include: {
             tag: true,

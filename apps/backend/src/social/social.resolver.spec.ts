@@ -231,6 +231,7 @@ describe("ImageLikesResolver", () => {
     isNsfw: false,
     visibility: Visibility.PUBLIC,
     moderationStatus: ModerationStatus.APPROVED,
+    deferralCount: 0,
     createdAt: new Date(),
     updatedAt: new Date(),
     uploader: {

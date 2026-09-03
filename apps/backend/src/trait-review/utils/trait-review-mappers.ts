@@ -14,6 +14,7 @@ import { CharacterTraitValue } from "../../shared/types/character-trait.types";
 export const traitReviewInclude = {
   character: true,
   resolvedBy: true,
+  deferredBy: true,
 } as const;
 
 /**
@@ -27,6 +28,7 @@ export const traitReviewQueueInclude = {
     },
   },
   resolvedBy: true,
+  deferredBy: true,
 } as const;
 
 /**
@@ -75,11 +77,18 @@ export function mapPrismaTraitReviewToGraphQL(
     resolvedAt: prismaReview.resolvedAt ?? undefined,
     resolvedById: prismaReview.resolvedById ?? undefined,
     rejectionReason: prismaReview.rejectionReason ?? undefined,
+    deferredAt: prismaReview.deferredAt ?? undefined,
+    deferredById: prismaReview.deferredById ?? undefined,
+    deferralCount: prismaReview.deferralCount,
+    deferralNote: prismaReview.deferralNote ?? undefined,
     createdAt: prismaReview.createdAt,
     updatedAt: prismaReview.updatedAt,
     character: mapPrismaCharacterToGraphQL(prismaReview.character),
     resolvedBy: prismaReview.resolvedBy
       ? mapPrismaUserToGraphQL(prismaReview.resolvedBy)
+      : undefined,
+    deferredBy: prismaReview.deferredBy
+      ? mapPrismaUserToGraphQL(prismaReview.deferredBy)
       : undefined,
   };
 }
@@ -106,11 +115,18 @@ export function mapPrismaTraitReviewQueueItemToGraphQL(
       resolvedAt: prismaReview.resolvedAt ?? undefined,
       resolvedById: prismaReview.resolvedById ?? undefined,
       rejectionReason: prismaReview.rejectionReason ?? undefined,
+      deferredAt: prismaReview.deferredAt ?? undefined,
+      deferredById: prismaReview.deferredById ?? undefined,
+      deferralCount: prismaReview.deferralCount,
+      deferralNote: prismaReview.deferralNote ?? undefined,
       createdAt: prismaReview.createdAt,
       updatedAt: prismaReview.updatedAt,
       character: mapPrismaCharacterToGraphQL(character),
       resolvedBy: prismaReview.resolvedBy
         ? mapPrismaUserToGraphQL(prismaReview.resolvedBy)
+        : undefined,
+      deferredBy: prismaReview.deferredBy
+        ? mapPrismaUserToGraphQL(prismaReview.deferredBy)
         : undefined,
     },
     characterName: character.name,

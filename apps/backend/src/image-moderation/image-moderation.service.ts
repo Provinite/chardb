@@ -230,7 +230,12 @@ export class ImageModerationService {
       this.db.image.findMany({
         where: whereClause,
         include: queueImageInclude,
-        orderBy: { createdAt: "asc" },
+        // deferred_at ASC NULLS FIRST: undeferred images keep their FIFO
+        // order, deferred ones queue behind in the order they were passed on.
+        orderBy: [
+          { deferredAt: { sort: "asc", nulls: "first" } },
+          { createdAt: "asc" },
+        ],
         skip: offset,
         take: first + 1, // Fetch one extra to check hasMore
       }),
@@ -274,7 +279,12 @@ export class ImageModerationService {
       this.db.image.findMany({
         where: whereClause,
         include: queueImageInclude,
-        orderBy: { createdAt: "asc" },
+        // deferred_at ASC NULLS FIRST: undeferred images keep their FIFO
+        // order, deferred ones queue behind in the order they were passed on.
+        orderBy: [
+          { deferredAt: { sort: "asc", nulls: "first" } },
+          { createdAt: "asc" },
+        ],
         skip: offset,
         take: first + 1,
       }),
@@ -483,6 +493,46 @@ export class ImageModerationService {
     );
 
     return action;
+  }
+
+  /**
+   * Send an image to the back of the moderation queue.
+   *
+   * No `ImageModerationAction` row is written, deliberately. That table's
+   * `action` column is a `ModerationStatus`, and deferring is not one -- the
+   * image is still PENDING when this returns. Recording it as a moderation
+   * action would put a decision in the log that nobody made.
+   */
+  async deferImage(imageId: string, moderatorId: string, note?: string) {
+    const canModerate = await this.canUserModerateImage(moderatorId, imageId);
+    if (!canModerate) {
+      throw new ForbiddenException(
+        "You do not have permission to moderate this image",
+      );
+    }
+
+    const image = await this.db.image.findUnique({
+      where: { id: imageId },
+    });
+
+    if (!image) {
+      throw new NotFoundException("Image not found");
+    }
+
+    if (image.moderationStatus !== ModerationStatus.PENDING) {
+      throw new BadRequestException("Image is not pending moderation");
+    }
+
+    return this.db.image.update({
+      where: { id: imageId },
+      data: {
+        deferredAt: new Date(),
+        deferredById: moderatorId,
+        deferralCount: { increment: 1 },
+        deferralNote: note?.trim() || null,
+      },
+      include: { uploader: true, artist: true, deferredBy: true },
+    });
   }
 
   /**

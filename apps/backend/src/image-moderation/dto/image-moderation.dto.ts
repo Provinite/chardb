@@ -111,6 +111,25 @@ export class ApproveImageInput {
 }
 
 @InputType()
+export class DeferImageInput {
+  @Field(() => ID, {
+    description: "The ID of the image to send to the back of the queue",
+  })
+  @IsUUID()
+  imageId: string;
+
+  @Field({
+    nullable: true,
+    description:
+      "Why this image is being passed on, shown to the next moderator who reaches it",
+  })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  note?: string;
+}
+
+@InputType()
 export class RejectImageInput {
   @Field(() => ID, { description: "The ID of the image to reject" })
   @IsUUID()
