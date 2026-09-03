@@ -35,7 +35,11 @@ const MAX_PAYOUT_AMOUNT = 1_000_000_000;
  * Exactly one per item type. The strings are user-facing -- they land in the
  * refusal a staff member reads when they try to configure a second.
  */
-type UseEffectKind = "payout" | "MYO grant" | "edit kit grant";
+type UseEffectKind =
+  | "payout"
+  | "MYO grant"
+  | "edit kit grant"
+  | "variant change grant";
 
 export interface PendingOwnerInput {
   provider: ExternalAccountProvider;
@@ -367,6 +371,12 @@ export class ItemsService {
         "edit kit grant",
         await this.db.itemUseTraitEditGrant.count({ where: { itemTypeId } }),
       ],
+      [
+        "variant change grant",
+        await this.db.itemUseVariantChangeGrant.count({
+          where: { itemTypeId },
+        }),
+      ],
     ];
 
     const other = counts.find(([kind, n]) => kind !== configuring && n > 0);
@@ -617,6 +627,148 @@ export class ItemsService {
       select: { createdAt: true },
     });
     return item?.createdAt ?? null;
+  }
+
+  /**
+   * Set, replace, or clear which characters an item of this type moves, and
+   * where it moves them to.
+   *
+   * Two halves, and they are not symmetrical. The destination is exactly one
+   * variant, so a member never picks -- the ticket already decided, and the
+   * confirm can say what it will become. The source is a set, because "usable
+   * on a Common or an Uncommon" is the ordinary thing to sell.
+   *
+   * **An empty source list means every variant of the species**, including a
+   * character with no variant set at all. Same reading the edit kit grant
+   * gives a species it lists no variants for, and it is the state you get by
+   * naming a destination and stopping.
+   *
+   * A null destination clears the grant. "Moves nothing" and "has no grant"
+   * are the same state, and two ways to reach it would be two things to keep
+   * in step.
+   *
+   * Nothing here knows an upgrade from a downgrade, because nothing can:
+   * variants have names, not ranks. A community that wants a demotion ticket
+   * configures one and this does not notice.
+   */
+  async setItemTypeVariantChangeGrant(
+    itemTypeId: string,
+    toVariantId: string | null,
+    fromVariantIds: string[],
+  ) {
+    const itemType = await this.db.itemType.findUnique({
+      where: { id: itemTypeId },
+      select: { id: true, name: true, communityId: true, isConsumable: true },
+    });
+    if (!itemType) {
+      throw new NotFoundException(`ItemType with ID ${itemTypeId} not found`);
+    }
+
+    if (!toVariantId) {
+      await this.db.itemUseVariantChangeGrant.deleteMany({
+        where: { itemTypeId },
+      });
+      return this.findItemTypeById(itemTypeId);
+    }
+
+    // Same rule the other three follow: redeeming is what uses the item up,
+    // and one that survived being redeemed would move a character every time
+    // it was pressed.
+    if (!itemType.isConsumable) {
+      throw new BadRequestException(
+        `${itemType.name} is not consumable, so redeeming it would not use it up. A variant change grant needs a consumable item.`,
+      );
+    }
+
+    await this.refuseSecondUseEffect(
+      itemTypeId,
+      "variant change grant",
+      itemType.name,
+    );
+
+    // The destination decides the species, so it is resolved first and
+    // everything else is checked against it.
+    const destination = await this.db.speciesVariant.findUnique({
+      where: { id: toVariantId },
+      select: {
+        id: true,
+        name: true,
+        speciesId: true,
+        species: { select: { id: true, name: true, communityId: true } },
+      },
+    });
+    if (
+      !destination ||
+      destination.species.communityId !== itemType.communityId
+    ) {
+      throw new BadRequestException(
+        "A variant change grant names a variant from another community",
+      );
+    }
+
+    const ids = [...new Set(fromVariantIds)];
+    if (ids.length !== fromVariantIds.length) {
+      throw new BadRequestException(
+        "A variant change grant lists the same variant twice",
+      );
+    }
+
+    // Cross-species, refused. A ticket that turned a Pillowing into a Lintling
+    // would carry the character's trait values onto a trait list that has
+    // nothing to do with them.
+    if (ids.length > 0) {
+      const sources = await this.db.speciesVariant.findMany({
+        where: { id: { in: ids } },
+        select: { id: true, speciesId: true },
+      });
+      if (
+        sources.length !== ids.length ||
+        sources.some((v) => v.speciesId !== destination.speciesId)
+      ) {
+        throw new BadRequestException(
+          `A variant change grant names a variant that is not a ${destination.species.name}`,
+        );
+      }
+    }
+
+    // A ticket that turns a Rare into a Rare is a ticket that does nothing,
+    // and the member finds out after spending it. Refused here instead.
+    if (ids.includes(toVariantId)) {
+      throw new BadRequestException(
+        `A variant change grant cannot be spent on a character that is already ${destination.name}`,
+      );
+    }
+
+    await this.db.$transaction(async (tx) => {
+      await tx.itemUseVariantChangeGrant.deleteMany({ where: { itemTypeId } });
+      await tx.itemUseVariantChangeGrant.create({
+        data: {
+          itemTypeId,
+          speciesId: destination.speciesId,
+          toVariantId,
+          fromVariants: {
+            create: ids.map((id) => ({ speciesVariantId: id })),
+          },
+        },
+      });
+    });
+
+    return this.findItemTypeById(itemTypeId);
+  }
+
+  /**
+   * What an item of this type moves a character to, or null when it moves
+   * nothing.
+   */
+  async findItemTypeVariantChangeGrant(itemTypeId: string) {
+    return this.db.itemUseVariantChangeGrant.findUnique({
+      where: { itemTypeId },
+      include: {
+        species: true,
+        toVariant: true,
+        fromVariants: { include: { speciesVariant: true } },
+      },
+    });
   }
 
   /** What an edit kit of this type covers, or null when it covers nothing. */
@@ -1023,7 +1175,7 @@ export class ItemsService {
     // What this item type actually does.
     const effect = await this.resolveUseEffect(item.itemType, userId);
 
-    // Both of the other effects need input this mutation has no way to carry
+    // The other three effects need input this mutation has no way to carry
     // -- which variant, what name, which traits, which character -- and
     // produce something other than a payout. Each has its own mutation, which
     // destroys the item itself on the same terms.
@@ -1038,6 +1190,11 @@ export class ItemsService {
     if (effect.kind === "TRAIT_EDIT") {
       throw new BadRequestException(
         `${item.itemType.name} is spent by editing a character's traits with it, not by using it from your inventory`,
+      );
+    }
+    if (effect.kind === "VARIANT_CHANGE") {
+      throw new BadRequestException(
+        `${item.itemType.name} is redeemed on a character you own, not by using it from your inventory`,
       );
     }
 
@@ -1104,6 +1261,13 @@ export class ItemsService {
                 },
               },
             },
+            useVariantChangeGrant: {
+              include: {
+                species: true,
+                toVariant: true,
+                fromVariants: { include: { speciesVariant: true } },
+              },
+            },
           },
         },
       },
@@ -1164,6 +1328,58 @@ export class ItemsService {
     }
 
     return { item, itemType: item.itemType, grant: effect.grant };
+  }
+
+  /**
+   * Everything a variant change redemption needs, with every item-side reason
+   * to refuse spent.
+   *
+   * Public for the same reason the other two resolvers are: the item rules
+   * belong here beside the destroy that enforces them, and the character rules
+   * belong in VariantChangesService. Returns before anything is written.
+   */
+  async resolveVariantChangeRedemption(itemId: string, userId: string) {
+    const item = await this.loadUsableItem(itemId, userId);
+    const effect = await this.resolveUseEffect(item.itemType, userId);
+
+    if (effect.kind !== "VARIANT_CHANGE") {
+      throw new BadRequestException(
+        `${item.itemType.name} does not change a character's variant`,
+      );
+    }
+
+    return { item, itemType: item.itemType, grant: effect.grant };
+  }
+
+  /**
+   * Whether a variant change grant can be spent on this character.
+   *
+   * Species first, because a grant scoped to Pillowings must not match a
+   * Lintling however its variant list reads. Then the source set, where empty
+   * means every variant -- including a character with none set, which is the
+   * case a list comparison gets wrong by omission and so is spelled out.
+   *
+   * Deliberately does **not** check whether the character is already the
+   * destination. That is a refusal with its own sentence, and folding it in
+   * here would report it as "this item cannot be used on that character",
+   * which is not what happened.
+   */
+  static variantChangeGrantCovers(
+    grant: {
+      speciesId: string;
+      fromVariants: Array<{ speciesVariantId: string }>;
+    },
+    character: { speciesId: string | null; speciesVariantId: string | null },
+  ): boolean {
+    if (!character.speciesId) return false;
+    if (character.speciesId !== grant.speciesId) return false;
+
+    // No source variants listed means every variant, including none.
+    if (grant.fromVariants.length === 0) return true;
+
+    return grant.fromVariants.some(
+      (v) => v.speciesVariantId === character.speciesVariantId,
+    );
   }
 
   /**
@@ -1230,6 +1446,13 @@ export class ItemsService {
             };
           };
         };
+        useVariantChangeGrant: {
+          include: {
+            species: true;
+            toVariant: true;
+            fromVariants: { include: { speciesVariant: true } };
+          };
+        };
       };
     }>,
     userId: string,
@@ -1261,6 +1484,15 @@ export class ItemsService {
         throw new BadRequestException(`${itemType.name} does nothing yet`);
       }
       return { kind: "TRAIT_EDIT" as const, grant: editGrant };
+    }
+
+    // No emptiness check to make here, unlike the other two. This grant's
+    // destination is a column rather than a list, so a grant row that exists
+    // always names somewhere to go; an empty `fromVariants` is the permissive
+    // case, not the broken one.
+    const variantGrant = itemType.useVariantChangeGrant;
+    if (variantGrant) {
+      return { kind: "VARIANT_CHANGE" as const, grant: variantGrant };
     }
 
     const payout = itemType.usePayout?.components ?? [];

@@ -72,6 +72,13 @@ module.exports = {
       env: { jest: true },
     },
     {
+      // Plain scripts served by the GitHub Pages docs site: browser globals,
+      // and loaded by a <script> tag rather than imported, so not a module.
+      files: ["docs/**/*.js"],
+      parserOptions: { sourceType: "script" },
+      env: { browser: true, node: false },
+    },
+    {
       // CommonJS config files.
       files: ["**/*.cjs"],
       parserOptions: { sourceType: "script" },

@@ -1239,18 +1239,16 @@ export class CharactersService {
       });
 
       if (variantIsChanging) {
-        await tx.characterVariantChange.create({
-          data: {
-            characterId: id,
-            fromVariantId: character.speciesVariantId,
-            toVariantId: connectedVariantId ?? null,
-            changedById: userId,
-            reason: input.variantChangeReason?.trim() || null,
-            previousTraitValues:
-              character.traitValues as PrismaJson.CharacterTraitValuesJson,
-            newTraitValues:
-              updated.traitValues as PrismaJson.CharacterTraitValuesJson,
-          },
+        await this.recordVariantChange(tx, {
+          characterId: id,
+          fromVariantId: character.speciesVariantId,
+          toVariantId: connectedVariantId ?? null,
+          changedById: userId,
+          reason: input.variantChangeReason?.trim() || null,
+          previousTraitValues:
+            character.traitValues as PrismaJson.CharacterTraitValuesJson,
+          newTraitValues:
+            updated.traitValues as PrismaJson.CharacterTraitValuesJson,
         });
       }
 
@@ -1258,6 +1256,82 @@ export class CharactersService {
     });
 
     return updatedCharacter;
+  }
+
+  /**
+   * Write the audit row for one variant change.
+   *
+   * Shared by the two paths that can move a character: staff editing the
+   * registry, and a member redeeming an item for it (#172). Both write the
+   * same row, and a field added for one of them must not be missing from the
+   * other -- which is the whole reason this is a function rather than the
+   * dozen lines it replaces.
+   */
+  private async recordVariantChange(
+    tx: Prisma.TransactionClient,
+    row: {
+      characterId: string;
+      fromVariantId: string | null;
+      toVariantId: string | null;
+      changedById: string;
+      reason: string | null;
+      previousTraitValues: PrismaJson.CharacterTraitValuesJson;
+      newTraitValues: PrismaJson.CharacterTraitValuesJson;
+    },
+  ) {
+    await tx.characterVariantChange.create({ data: row });
+  }
+
+  /**
+   * Move a character to a variant and set its traits, on a caller's
+   * transaction.
+   *
+   * The redemption half of #232's staff path. It exists as its own method
+   * rather than {@link updateRegistry} with a flag because the two authorize
+   * completely differently: staff pass `canEditCharacterRegistry`, and a
+   * member passes by **holding the item**, which is checked in
+   * VariantChangesService before this is reached. Routing a redemption
+   * through `updateRegistry` would mean punching a hole in
+   * {@link assertCanChangeVariant}, and a hole in a staff-only check is a
+   * hole whether or not today's caller is honest.
+   *
+   * Everything is written in the caller's transaction, so the item's
+   * destruction and the character's move commit together or not at all.
+   * Takes trait values already validated against the destination -- validating
+   * them here would be a second read of a species this has no reason to load.
+   */
+  async applyVariantChange(
+    tx: Prisma.TransactionClient,
+    input: {
+      characterId: string;
+      fromVariantId: string | null;
+      toVariantId: string;
+      previousTraitValues: PrismaJson.CharacterTraitValuesJson;
+      traitValues: PrismaJson.CharacterTraitValuesJson;
+      changedById: string;
+      reason: string | null;
+    },
+  ) {
+    const updated = await tx.character.update({
+      where: { id: input.characterId },
+      data: {
+        speciesVariant: { connect: { id: input.toVariantId } },
+        traitValues: input.traitValues,
+      },
+    });
+
+    await this.recordVariantChange(tx, {
+      characterId: input.characterId,
+      fromVariantId: input.fromVariantId,
+      toVariantId: input.toVariantId,
+      changedById: input.changedById,
+      reason: input.reason,
+      previousTraitValues: input.previousTraitValues,
+      newTraitValues:
+        updated.traitValues as PrismaJson.CharacterTraitValuesJson,
+    });
+
+    return updated;
   }
 
   /**

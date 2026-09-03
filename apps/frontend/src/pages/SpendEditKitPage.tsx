@@ -148,6 +148,7 @@ export const SpendEditKitPage: React.FC = () => {
       .flatMap((h) =>
         h.items.map((item) => ({
           id: item.id,
+          typeId: h.itemType.id,
           name: h.itemType.name,
           acquiredAt: item.acquiredAt,
         })),
@@ -155,14 +156,28 @@ export const SpendEditKitPage: React.FC = () => {
   }, [kitsData, character]);
 
   const requestedKit = searchParams.get("kit");
+  /**
+   * A *type* rather than a specific kit, which is what the character page's
+   * item list can name -- it groups by type, so it knows you picked "Thornwing
+   * Edit Kit" and not which of your two copies.
+   */
+  const requestedType = searchParams.get("kitType");
   const [kitId, setKitId] = useState<string | null>(requestedKit);
 
-  // Default to the only kit when there is only one. A picker with one option
-  // is a step that cannot go any other way.
+  // Default to the only kit when there is only one, or to the first of the
+  // type that was asked for. A picker shown after the member already chose
+  // the item is the same choice asked twice.
   useEffect(() => {
-    if (kitId || eligibleKits.length !== 1) return;
-    setKitId(eligibleKits[0].id);
-  }, [kitId, eligibleKits]);
+    if (kitId) return;
+    if (requestedType) {
+      const match = eligibleKits.find((k) => k.typeId === requestedType);
+      if (match) {
+        setKitId(match.id);
+        return;
+      }
+    }
+    if (eligibleKits.length === 1) setKitId(eligibleKits[0].id);
+  }, [kitId, requestedType, eligibleKits]);
 
   /** The kit actually being spent, so the page can call it by its name. */
   const chosenKit = eligibleKits.find((k) => k.id === kitId) ?? null;

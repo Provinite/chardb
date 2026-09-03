@@ -51,6 +51,7 @@ import { ImageModerationModule } from "./image-moderation/image-moderation.modul
 import { TraitReviewModule } from "./trait-review/trait-review.module";
 import { MyoModule } from "./myo/myo.module";
 import { EditKitsModule } from "./edit-kits/edit-kits.module";
+import { VariantChangesModule } from "./variant-changes/variant-changes.module";
 import { DeviantartUuidBackfillModule } from "./jobs/deviantart-uuid-backfill/deviantart-uuid-backfill.module";
 import { Request, Response } from "express";
 
@@ -278,6 +279,7 @@ import { Request, Response } from "express";
     TraitReviewModule,
     MyoModule,
     EditKitsModule,
+    VariantChangesModule,
     DeviantartUuidBackfillModule,
   ],
 })

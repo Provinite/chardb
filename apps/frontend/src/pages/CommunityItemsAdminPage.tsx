@@ -13,6 +13,7 @@ import { ImageUpload, ImageFile } from "../components/ImageUpload";
 import { ItemUsePayoutEditor } from "../components/items/ItemUsePayoutEditor";
 import { ItemUseMyoGrantEditor } from "../components/items/ItemUseMyoGrantEditor";
 import { ItemUseTraitEditGrantEditor } from "../components/items/ItemUseTraitEditGrantEditor";
+import { ItemUseVariantChangeGrantEditor } from "../components/items/ItemUseVariantChangeGrantEditor";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-hot-toast";
 import {
@@ -1030,6 +1031,13 @@ export const CommunityItemsAdminPage: React.FC = () => {
                   communityId={communityId}
                 />
                 <ItemUseTraitEditGrantEditor
+                  itemType={{
+                    ...selectedItemType,
+                    isConsumable: formData.isConsumable,
+                  }}
+                  communityId={communityId}
+                />
+                <ItemUseVariantChangeGrantEditor
                   itemType={{
                     ...selectedItemType,
                     isConsumable: formData.isConsumable,

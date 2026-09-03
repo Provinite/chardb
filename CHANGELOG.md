@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Docs screenshots open full size on click**, with their caption underneath
+  and arrow-key paging. One `lightbox.js` on all sixteen walkthrough pages,
+  no markup changes; it reads a `.screenshot-caption`, a `figcaption`, or the
+  alt text, whichever the page has.
+
+- **A "Variant Change Items" walkthrough**
+  (`docs/docs/variant-change-items.html`), ten steps with eleven screenshots,
+  leading on the two things that catch people out: there is no review and no
+  undo, and a trait the destination does not allow has to be re-picked first.
+
+- **E2E: 52 variant-change-item specs** — 35 against the API and 17 driving the
+  screens, plus two such items and three variant-bearing characters in the
+  `community-items` preset. One item is narrowed to two source variants, the
+  other has an empty source list and a destination permitting one trait
+  option, which is the pairing that exercises a stranded value (#172).
+
 - **E2E: 15 rarity-change specs**, and a fourth `Legendary` variant in the
   `community-items` preset — narrowed to one trait option where the other
   three take all of them, so "a variant restricts what it carries" has

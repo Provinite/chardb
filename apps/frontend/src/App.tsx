@@ -20,6 +20,8 @@ import { CharactersPage } from "./pages/CharactersPage";
 import { CreateCharacterPageEnhanced as CreateCharacterPage } from "./pages/CreateCharacterPageEnhanced";
 import { SpendEditKitPage } from "./pages/SpendEditKitPage";
 import { EditKitCharacterPickerPage } from "./pages/EditKitCharacterPickerPage";
+import { RedeemVariantChangePage } from "./pages/RedeemVariantChangePage";
+import { VariantChangeCharacterPickerPage } from "./pages/VariantChangeCharacterPickerPage";
 import { EditCharacterPage } from "./pages/EditCharacterPage";
 import { CreateTextPage } from "./pages/CreateTextPage";
 import { CreateMediaPage } from "./pages/CreateMediaPage";
@@ -188,6 +190,22 @@ function App() {
           element={
             <ProtectedRoute>
               <EditKitCharacterPickerPage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/character/:characterId/change-variant"
+          element={
+            <ProtectedRoute>
+              <RedeemVariantChangePage />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/communities/:communityId/variant-changes/:itemId"
+          element={
+            <ProtectedRoute>
+              <VariantChangeCharacterPickerPage />
             </ProtectedRoute>
           }
         />
