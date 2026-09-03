@@ -86,6 +86,15 @@ export type BurnCurrencyInput = {
   userId: Scalars['ID']['input'];
 };
 
+export type ChangeCharacterVariantWithItemInput = {
+  /** The character to move. Must be yours. */
+  characterId: Scalars['ID']['input'];
+  /** The item to redeem. */
+  itemId: Scalars['ID']['input'];
+  /** The complete set of trait values the character should end up with, not a patch. Must be valid for the variant the item moves it to, which is not necessarily the one it is valid for now. */
+  traitValues: Array<CharacterTraitValueInput>;
+};
+
 export type Character = {
   __typename?: 'Character';
   _count: CharacterCount;
@@ -1393,6 +1402,7 @@ export type ItemType = {
   useMyoGrant: Maybe<ItemUseMyoGrant>;
   usePayout: Array<ItemUsePayoutComponent>;
   useTraitEditGrant: Maybe<ItemUseTraitEditGrant>;
+  useVariantChangeGrant: Maybe<ItemUseVariantChangeGrant>;
 };
 
 export type ItemTypeConnection = {
@@ -1460,6 +1470,17 @@ export type ItemUseTraitEditGrantSpecies = {
   species: Species;
   /** Which variants of this species the kit is limited to. **Empty means every variant**, including a character with no variant set at all. */
   variants: Array<SpeciesVariant>;
+};
+
+export type ItemUseVariantChangeGrant = {
+  __typename?: 'ItemUseVariantChangeGrant';
+  /** Which variants this can be spent on. **Empty means every variant** of the species, including a character with no variant set at all. */
+  fromVariants: Array<SpeciesVariant>;
+  id: Scalars['ID']['output'];
+  /** The species this can be spent on. Always the destination variant's own species -- an item cannot move a character between species. */
+  species: Species;
+  /** What the character becomes. Exactly one, so a member never chooses. */
+  toVariant: SpeciesVariant;
 };
 
 export type LikeResult = {
@@ -1700,6 +1721,8 @@ export type Mutation = {
   cancelDeviantartUuidBackfill: Scalars['Boolean']['output'];
   /** Withdraw an offer you sent. */
   cancelTrade: Trade;
+  /** Redeem an item to move one of your characters to the variant that item grants. Destroys the item and applies the change immediately -- there is no review. Authorized by holding the item, not by canEditCharacterRegistry. */
+  changeCharacterVariantWithItem: Character;
   /** Buy a cart. Everything commits together, or nothing does. */
   checkout: ShopPurchase;
   /** Claim an invite code to join a community */
@@ -1826,6 +1849,8 @@ export type Mutation = {
   setItemTypeTraitEditGrant: ItemType;
   /** Set what using one of these pays its holder. Replaces the payout wholesale; an empty list clears it. Needs the same permission as editing the item type, because it is minting rights. */
   setItemTypeUsePayout: ItemType;
+  /** Set where an item of this type moves a character, and which characters it can be spent on. Replaces the grant wholesale; a null destination clears it. An empty source list covers every variant of the destination's species. */
+  setItemTypeVariantChangeGrant: ItemType;
   signup: AuthPayload;
   toggleFollow: FollowResult;
   toggleLike: LikeResult;
@@ -1922,6 +1947,11 @@ export type MutationBurnCurrencyArgs = {
 
 export type MutationCancelTradeArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationChangeCharacterVariantWithItemArgs = {
+  input: ChangeCharacterVariantWithItemInput;
 };
 
 
@@ -2281,6 +2311,11 @@ export type MutationSetItemTypeTraitEditGrantArgs = {
 
 export type MutationSetItemTypeUsePayoutArgs = {
   input: SetItemTypeUsePayoutInput;
+};
+
+
+export type MutationSetItemTypeVariantChangeGrantArgs = {
+  input: SetItemTypeVariantChangeGrantInput;
 };
 
 
@@ -3558,6 +3593,14 @@ export type SetItemTypeUsePayoutInput = {
   /** Replaces the payout wholesale. Empty clears it. */
   components: Array<ItemUsePayoutComponentInput>;
   itemTypeId: Scalars['ID']['input'];
+};
+
+export type SetItemTypeVariantChangeGrantInput = {
+  /** Narrow to characters that are one of these variants. Empty covers every variant of the species, and characters with no variant set. Cannot contain the destination. */
+  fromVariantIds?: Array<Scalars['ID']['input']>;
+  itemTypeId: Scalars['ID']['input'];
+  /** What the character becomes. Null clears the grant. Its species is the species the item can be spent on. */
+  toVariantId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type SetMainMediaInput = {
