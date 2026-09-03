@@ -5369,7 +5369,7 @@ export type GetMyEditKitsQueryVariables = Exact<{
 }>;
 
 
-export type GetMyEditKitsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, items: Array<{ __typename?: 'Item', id: string, acquiredAt: string | null }>, itemType: { __typename?: 'ItemType', id: string, name: string, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null } }> } };
+export type GetMyEditKitsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, items: Array<{ __typename?: 'Item', id: string, acquiredAt: string | null }>, itemType: { __typename?: 'ItemType', id: string, name: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null } }> } };
 
 export type GetMyCharactersForEditKitQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -5405,7 +5405,7 @@ export type GetMyVariantChangeItemsQueryVariables = Exact<{
 }>;
 
 
-export type GetMyVariantChangeItemsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, items: Array<{ __typename?: 'Item', id: string, acquiredAt: string | null }>, itemType: { __typename?: 'ItemType', id: string, name: string, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string }, fromVariants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null } }> } };
+export type GetMyVariantChangeItemsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, items: Array<{ __typename?: 'Item', id: string, acquiredAt: string | null }>, itemType: { __typename?: 'ItemType', id: string, name: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string }, fromVariants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null } }> } };
 
 export type ChangeCharacterVariantWithItemMutationVariables = Exact<{
   input: ChangeCharacterVariantWithItemInput;
@@ -12220,6 +12220,16 @@ export const GetMyEditKitsDocument = gql`
       itemType {
         id
         name
+        image {
+          id
+          thumbnailUrl
+          originalUrl
+          altText
+        }
+        color {
+          id
+          hexCode
+        }
         useTraitEditGrant {
           id
           species {
@@ -12472,6 +12482,16 @@ export const GetMyVariantChangeItemsDocument = gql`
       itemType {
         id
         name
+        image {
+          id
+          thumbnailUrl
+          originalUrl
+          altText
+        }
+        color {
+          id
+          hexCode
+        }
         useVariantChangeGrant {
           id
           species {

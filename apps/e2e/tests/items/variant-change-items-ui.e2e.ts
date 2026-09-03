@@ -53,16 +53,17 @@ test.describe("redeeming a variant change item, through the pages", () => {
   }) => {
     await page.goto(world.characters.pinefall.url);
 
-    // Pinefall is Common, so both items apply -- the Rare upgrade and the
-    // Ascension -- and one button cannot name two destinations. The specific
-    // wording is asserted below on a character where only one applies.
-    const offer = page.getByTestId("use-variant-change-item");
-    await offer.click();
+    // Pinefall is Common, so both items apply and both are listed. Each row
+    // names its own destination and redeems its own item, which is the whole
+    // reason this is a list rather than a pair of buttons.
+    const row = page.getByTestId(
+      `usable-item-${world.itemTypes.rareUpgrade.id}`,
+    );
+    await expect(row).toContainText(world.itemTypes.rareUpgrade.name);
+    await expect(row).toContainText(world.variants.rare.name);
+    await row.getByRole("link", { name: "Redeem" }).click();
 
-    await page
-      .getByTestId("variant-change-select")
-      .selectOption(world.variantChangeItems.rareUpgradeIds[0]);
-
+    // The row already named the item, so the page does not ask again.
     await expect(page.getByTestId("variant-change-move")).toContainText(
       world.variants.rare.name,
     );
@@ -91,12 +92,9 @@ test.describe("redeeming a variant change item, through the pages", () => {
 
   test("cancelling the confirm redeems nothing", async ({ page, world }) => {
     await page.goto(
-      `/character/${world.characters.pinefall.id}/change-variant`,
+      `/character/${world.characters.pinefall.id}/change-variant?itemType=${world.itemTypes.rareUpgrade.id}`,
     );
 
-    await page
-      .getByTestId("variant-change-select")
-      .selectOption(world.variantChangeItems.rareUpgradeIds[0]);
     await page.getByTestId("submit-variant-change").click();
     await page.getByTestId("confirm-cancel").click();
 
@@ -205,13 +203,17 @@ test.describe("redeeming a variant change item, through the pages", () => {
     page,
     world,
   }) => {
-    // Emberwake is Rare. The Ascension still covers it, so the offer is not
-    // absent -- it names Legendary, not Rare.
+    // Emberwake is Rare. The Ascension still covers it, so the section is not
+    // empty -- but the Rare upgrade has no row at all, because redeeming it
+    // would move nothing.
     await page.goto(world.characters.emberwake.url);
 
-    await expect(page.getByTestId("use-variant-change-item")).toContainText(
-      world.variants.legendary.name,
-    );
+    await expect(
+      page.getByTestId(`usable-item-${world.itemTypes.legendaryAscension.id}`),
+    ).toContainText(world.variants.legendary.name);
+    await expect(
+      page.getByTestId(`usable-item-${world.itemTypes.rareUpgrade.id}`),
+    ).toHaveCount(0);
   });
 
   test("says nothing is offered when the character has a review pending", async ({
@@ -232,7 +234,7 @@ test.describe("redeeming a variant change item, through the pages", () => {
     });
 
     await page.goto(
-      `/character/${world.characters.pinefall.id}/change-variant`,
+      `/character/${world.characters.pinefall.id}/change-variant?itemType=${world.itemTypes.rareUpgrade.id}`,
     );
 
     await expect(page.getByTestId("variant-change-unusable")).toContainText(
@@ -257,11 +259,8 @@ test.describe("redeeming a variant change item, through the pages", () => {
 
   test("the redemption reaches the item ledger", async ({ page, world }) => {
     await page.goto(
-      `/character/${world.characters.pinefall.id}/change-variant`,
+      `/character/${world.characters.pinefall.id}/change-variant?itemType=${world.itemTypes.rareUpgrade.id}`,
     );
-    await page
-      .getByTestId("variant-change-select")
-      .selectOption(world.variantChangeItems.rareUpgradeIds[0]);
     await page.getByTestId("submit-variant-change").click();
     await page.getByTestId("confirm-accept").click();
     await expect(page).toHaveURL(

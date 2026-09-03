@@ -1,12 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 
 import { Avatar, Button } from "@chardb/ui";
 import {
   useGetCharacterQuery,
-  useGetMyEditKitsQuery,
-  useGetMyVariantChangeItemsQuery,
   TraitReviewSource,
   useDeleteCharacterMutation,
   useKickCharacterFromSpeciesMutation,
@@ -19,8 +17,6 @@ import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import { canUserEditCharacter } from "../lib/characterPermissions";
 import { setKinds } from "../lib/characterAvailability";
-import { kitCovers } from "../lib/editKits";
-import { variantItemUsableOn } from "../lib/variantChangeItems";
 import { isRedemptionReview } from "../lib/traitReviews";
 import { CharacterAvailability } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
@@ -31,6 +27,7 @@ import { TagsContainer } from "../components/TagsContainer";
 
 import { CharacterTraitsDisplay } from "../components/character/CharacterTraitsDisplay";
 import { VariantHistory } from "../components/character/VariantHistory";
+import { UsableItemsPanel } from "../components/character/UsableItemsPanel";
 import { Markdown } from "../components/Markdown";
 
 const Container = styled.div`
@@ -494,70 +491,6 @@ export const CharacterPage: React.FC = () => {
   const hasPendingReview =
     character?.traitReviewStatus === ModerationStatus.Pending;
 
-  const { data: kitsData } = useGetMyEditKitsQuery({
-    variables: {
-      communityId: character?.species?.communityId ?? "",
-      userId: user?.id ?? "",
-    },
-    skip:
-      !ownsCharacter ||
-      hasPendingReview ||
-      !character?.species?.communityId ||
-      !user?.id,
-  });
-
-  /**
-   * The item types this viewer holds that can edit this character.
-   *
-   * Names rather than a count, because the button should call the item what
-   * the community called it. "Edit kit" is our word for the feature, not
-   * anything a member has seen.
-   */
-  const eligibleKitTypes = useMemo(() => {
-    if (!character) return [] as string[];
-    return (kitsData?.memberHoldings?.holdings ?? [])
-      .filter((h) => {
-        const grant = h.itemType.useTraitEditGrant;
-        return grant ? kitCovers(grant, character) : false;
-      })
-      .map((h) => h.itemType.name);
-  }, [kitsData, character]);
-
-  const { data: variantItemsData } = useGetMyVariantChangeItemsQuery({
-    variables: {
-      communityId: character?.species?.communityId ?? "",
-      userId: user?.id ?? "",
-    },
-    skip:
-      !ownsCharacter ||
-      hasPendingReview ||
-      !character?.species?.communityId ||
-      !user?.id,
-  });
-
-  /**
-   * The item types this viewer holds that would move this character.
-   *
-   * Names and destinations, for the same reason the kits above are names: the
-   * button should call the item what the community called it, and say where
-   * the character would end up. "Upgrade ticket" is our word for the feature.
-   *
-   * An item pointed at the variant this character already is counts as no
-   * offer at all -- see `variantItemUsableOn`.
-   */
-  const eligibleVariantItems = useMemo(() => {
-    if (!character) return [] as Array<{ name: string; to: string }>;
-    return (variantItemsData?.memberHoldings?.holdings ?? [])
-      .filter((h) => {
-        const grant = h.itemType.useVariantChangeGrant;
-        return grant ? variantItemUsableOn(grant, character) : false;
-      })
-      .map((h) => ({
-        name: h.itemType.name,
-        to: h.itemType.useVariantChangeGrant!.toVariant.name,
-      }));
-  }, [variantItemsData, character]);
-
   /**
    * Whether to offer this viewer a way to propose a trade for this character.
    *
@@ -804,47 +737,6 @@ export const CharacterPage: React.FC = () => {
             )}
           </InfoGrid>
 
-          {/* An owner action, not a staff one, so it sits above the admin
-              strip rather than inside it. Offered only when they actually
-              hold a kit that works on this character -- a button whose every
-              press is a refusal is the thing this codebase keeps not doing. */}
-          {(eligibleKitTypes.length > 0 || eligibleVariantItems.length > 0) && (
-            <CharacterActions data-testid="character-edit-kit-actions">
-              <AdminActionsLabel>Yours</AdminActionsLabel>
-              {eligibleKitTypes.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  data-testid="use-edit-kit"
-                  onClick={() =>
-                    navigate(`/character/${character.id}/edit-traits`)
-                  }
-                >
-                  {eligibleKitTypes.length === 1
-                    ? `Use your ${eligibleKitTypes[0]}`
-                    : "Change traits with an item"}
-                </Button>
-              )}
-              {/* Says where it goes, not just that it changes something.
-                  "Make Pinefall Rare" is a decision a reader can take; "change
-                  variant" sends them to the page to find out. */}
-              {eligibleVariantItems.length > 0 && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  data-testid="use-variant-change-item"
-                  onClick={() =>
-                    navigate(`/character/${character.id}/change-variant`)
-                  }
-                >
-                  {eligibleVariantItems.length === 1
-                    ? `Make ${character.name} ${eligibleVariantItems[0].to}`
-                    : "Change variant with an item"}
-                </Button>
-              )}
-            </CharacterActions>
-          )}
-
           {(canUserEditCharacter(character, user, permissions) ||
             permissions.canDeleteCharacter ||
             (user?.isAdmin ?? false)) && (
@@ -933,6 +825,12 @@ export const CharacterPage: React.FC = () => {
           </OwnerInfo>
         )}
       </CharacterHeader>
+
+      <UsableItemsPanel
+        character={character}
+        isOwner={ownsCharacter}
+        hasPendingReview={hasPendingReview}
+      />
 
       {character._count && (
         <ImageStats>

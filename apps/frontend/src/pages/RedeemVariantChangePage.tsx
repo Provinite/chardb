@@ -206,6 +206,7 @@ export const RedeemVariantChangePage: React.FC = () => {
       .flatMap((h) =>
         h.items.map((item) => ({
           id: item.id,
+          typeId: h.itemType.id,
           name: h.itemType.name,
           acquiredAt: item.acquiredAt,
           grant: h.itemType.useVariantChangeGrant!,
@@ -230,14 +231,29 @@ export const RedeemVariantChangePage: React.FC = () => {
   }, [itemsData, character]);
 
   const requestedItem = searchParams.get("item");
+  /**
+   * A *type* rather than a specific item, which is what the character page's
+   * item list can name -- it groups by type, so it knows you picked "Rare
+   * Thornwing Upgrade" and not which of your two copies.
+   */
+  const requestedType = searchParams.get("itemType");
   const [itemId, setItemId] = useState<string | null>(requestedItem);
 
-  // Default to the only one when there is only one. A picker with one option
-  // is a step that cannot go any other way.
+  // Default to the only one when there is only one, or to the first of the
+  // type that was asked for. A picker with one option is a step that cannot
+  // go any other way, and a picker shown after the member already chose the
+  // item is the same choice asked twice.
   useEffect(() => {
-    if (itemId || eligibleItems.length !== 1) return;
-    setItemId(eligibleItems[0].id);
-  }, [itemId, eligibleItems]);
+    if (itemId) return;
+    if (requestedType) {
+      const match = eligibleItems.find((i) => i.typeId === requestedType);
+      if (match) {
+        setItemId(match.id);
+        return;
+      }
+    }
+    if (eligibleItems.length === 1) setItemId(eligibleItems[0].id);
+  }, [itemId, requestedType, eligibleItems]);
 
   const chosen = eligibleItems.find((i) => i.id === itemId) ?? null;
   const destination = chosen?.grant.toVariant ?? null;

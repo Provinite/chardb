@@ -555,6 +555,16 @@ export const GET_MY_EDIT_KITS = gql`
         itemType {
           id
           name
+          image {
+            id
+            thumbnailUrl
+            originalUrl
+            altText
+          }
+          color {
+            id
+            hexCode
+          }
           useTraitEditGrant {
             id
             species {
@@ -684,6 +694,16 @@ export const GET_MY_VARIANT_CHANGE_ITEMS = gql`
         itemType {
           id
           name
+          image {
+            id
+            thumbnailUrl
+            originalUrl
+            altText
+          }
+          color {
+            id
+            hexCode
+          }
           useVariantChangeGrant {
             id
             species {
