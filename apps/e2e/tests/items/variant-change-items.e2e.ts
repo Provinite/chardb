@@ -82,11 +82,9 @@ test.describe("redeeming a variant change item", () => {
     expect(moved.speciesVariantId).toBe(world.variants.rare.id);
     expect(await held(world, world.itemTypes.rareUpgrade.id)).toBe(before - 1);
 
-    const { item } = await world
-      .as("member")
-      .gql(SeedItemDocument, {
-        id: world.variantChangeItems.rareUpgradeIds[0],
-      });
+    const { item } = await world.as("member").gql(SeedItemDocument, {
+      id: world.variantChangeItems.rareUpgradeIds[0],
+    });
     expect(item.destroyedAt).not.toBeNull();
   });
 
@@ -299,11 +297,9 @@ test.describe("redeeming a variant change item", () => {
       }),
     ).rejects.toThrow(/not yours/i);
 
-    const { item } = await world
-      .as("member")
-      .gql(SeedItemDocument, {
-        id: world.variantChangeItems.rareUpgradeIds[0],
-      });
+    const { item } = await world.as("member").gql(SeedItemDocument, {
+      id: world.variantChangeItems.rareUpgradeIds[0],
+    });
     expect(item.destroyedAt).toBeNull();
   });
 
@@ -353,11 +349,9 @@ test.describe("redeeming a variant change item", () => {
       }),
     ).rejects.toThrow(/redeemed on a character you own/i);
 
-    const { item } = await world
-      .as("member")
-      .gql(SeedItemDocument, {
-        id: world.variantChangeItems.rareUpgradeIds[0],
-      });
+    const { item } = await world.as("member").gql(SeedItemDocument, {
+      id: world.variantChangeItems.rareUpgradeIds[0],
+    });
     expect(item.destroyedAt).toBeNull();
   });
 
