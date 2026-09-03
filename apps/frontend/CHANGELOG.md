@@ -27,45 +27,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Staff set where an item sends a character** on the item type's edit form.
 
-### Fixed
-
-- **`VariantChangePanel` read an empty allow-list as permitting everything**,
-  which the server has never agreed with — it would have shown nothing to
-  re-route and then failed at save.
-
-### Fixed
-
-- **A character's variant could not be changed after creation.** The edit page
-  locked it alongside the species under "assignment is permanent", which is
-  true of the species and never was of its rarity (#232).
-
-### Added
-
 - **Trait values the new rarity does not permit are re-routed before saving**,
-  one control per affected value. The save is blocked until each is resolved.
+  one control per affected value. The save is blocked until each is resolved
+  (#232).
 
 - **A rarity history on the character page**, shown only for characters that
   have one.
 
 ### Fixed
 
-- **The review queue offered Delete and Remove from Species on redemptions**,
-  neither of which is a review outcome and both of which stranded the member's
-  item. Gone for MYO and edit-kit reviews (#327).
+- **`VariantChangePanel` read an empty allow-list as permitting everything**,
+  which the server has never agreed with — it would have shown nothing to
+  re-route and then failed at save.
 
-### Changed
+- **A character's variant could not be changed after creation.** The edit page
+  locked it alongside the species under "assignment is permanent", which is
+  true of the species and never was of its rarity (#232).
 
-- **Refusing a redemption review is called "Refuse", not "Revert"** — it
-  reverts nothing, and what it does is hand the item back.
-
-### Changed
-
-- **Redeeming an MYO ticket or an edit kit now asks first**, naming the item
-  and when you acquired it. Both destroy the item and neither could be undone;
-  only the currency payout had a confirm.
-
-- **The app calls an item what its community named it.** "Edit kit" and
-  "ticket" were leaking into copy where the item's own name belonged.
+## [v11.9.0] - 2026-09-02
 
 ### Added
 
@@ -80,8 +59,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Staff set what a kit covers** on the item type's edit form.
 
-### Added
-
 - **Spend an MYO ticket to make a character.** Use on an MYO ticket opens the
   create page rather than a confirm; nothing is consumed until you submit
   (#168).
@@ -92,6 +69,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **An item type's page says which characters a ticket makes.**
 
 - **Staff set what a ticket makes** on the item type's edit form.
+
+### Changed
+
+- **Refusing a redemption review is called "Refuse", not "Revert"** — it
+  reverts nothing, and what it does is hand the item back.
+
+- **Redeeming an MYO ticket or an edit kit now asks first**, naming the item
+  and when you acquired it. Both destroy the item and neither could be undone;
+  only the currency payout had a confirm.
+
+- **The app calls an item what its community named it.** "Edit kit" and
+  "ticket" were leaking into copy where the item's own name belonged.
+
+### Fixed
+
+- **The review queue offered Delete and Remove from Species on redemptions**,
+  neither of which is a review outcome and both of which stranded the member's
+  item. Gone for MYO and edit-kit reviews (#327).
 
 ## [v11.8.0] - 2026-09-01
 
