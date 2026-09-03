@@ -150,7 +150,8 @@
     bigImg.src = img.currentSrc || img.src;
     bigImg.alt = img.getAttribute("alt") || "";
     capEl.textContent = captionFor(img);
-    countEl.textContent = shots.length > 1 ? index + 1 + " / " + shots.length : "";
+    countEl.textContent =
+      shots.length > 1 ? index + 1 + " / " + shots.length : "";
   };
 
   const open = (i) => {
@@ -194,8 +195,12 @@
     }
   });
   overlay.querySelector("#lb-close").addEventListener("click", close);
-  overlay.querySelector("#lb-prev").addEventListener("click", () => show(index - 1));
-  overlay.querySelector("#lb-next").addEventListener("click", () => show(index + 1));
+  overlay
+    .querySelector("#lb-prev")
+    .addEventListener("click", () => show(index - 1));
+  overlay
+    .querySelector("#lb-next")
+    .addEventListener("click", () => show(index + 1));
 
   document.addEventListener("keydown", (e) => {
     if (overlay.dataset.open !== "1") return;
