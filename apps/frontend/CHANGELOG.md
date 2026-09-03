@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A character page lists the items you hold that work on it**, with an icon,
+  a count, what redeeming does, and a Redeem button each. Replaces two buttons
+  whose labels were assembled sentences. Clicking a row carries that item type
+  to the redemption page, which no longer asks which item you meant.
+
 - **Redeem an item to change a character's variant.** Reachable from the
   character or from the item; nothing is spent until you confirm, and there is
   no variant picker because the item already decided (#172).
