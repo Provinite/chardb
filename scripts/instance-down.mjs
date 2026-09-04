@@ -47,14 +47,12 @@ function main() {
     }
   }
 
-  const args = [
-    "compose",
-    "-f",
-    "docker/compose.yaml",
-    "-f",
-    "docker/compose.override.yaml",
-    "down",
-  ];
+  // Addressed by project name, with no -f files. Compose then works from the
+  // containers' own labels, which is the only way to catch everything the
+  // project ever created: the e2e suite's postgres-test lives in
+  // compose.test.yml, so passing the dev compose files left it running after
+  // every `instance:down`.
+  const args = ["compose", "-p", names.composeProject, "down"];
   if (process.argv.includes("--volumes")) args.push("-v");
 
   console.log(`\nstopping compose project ${names.composeProject}`);

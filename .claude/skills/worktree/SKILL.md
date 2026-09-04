@@ -16,6 +16,23 @@ You never compute any of this. `scripts/with-instance.mjs` wraps every dev,
 database and test script and injects the right values, so the ordinary commands
 already do the right thing in whichever checkout you are in.
 
+## Creating the checkout
+
+If you are not already in one, make it first. In Claude Code, the `EnterWorktree`
+tool does this and moves the session into it. By hand, or from another agent
+runner:
+
+```bash
+git worktree add .claude/worktrees/<name> -b <branch>
+cd .claude/worktrees/<name>
+```
+
+`.claude/worktrees/` is where this repo keeps them and is gitignored. A separate
+`git clone` anywhere on the machine works identically — the instance system does
+not care which you use.
+
+Then set it up from inside the new checkout.
+
 ## Starting
 
 ```bash
@@ -39,25 +56,75 @@ The three builds are not: a fresh checkout of any kind needs them, because
 entry for package "@chardb/ui"`. Build them in that order — plain `yarn build`
 is not topological and trips over `@chardb/ui`.
 
-## Running
+## Running the app
+
+Run these **in this order**. The order is load-bearing at two points, both
+called out below.
 
 ```bash
-yarn shared:up   # once per machine: Jaeger 16686, MailHog 8025, OTEL collector
-yarn instance:up # this instance's postgres + localstack
-yarn dev         # backend + frontend on this instance's ports
+yarn shared:up    # once per machine: Jaeger 16686, MailHog 8025, OTEL collector
+yarn instance:up  # this instance's postgres + localstack -- BEFORE yarn dev
+yarn workspace @chardb/database db:migrate:prod   # empty database -> schema
+yarn workspace @chardb/database db:seed           # admin + a character
+yarn dev          # backend + frontend on this instance's ports
 ```
+
+Then, with the backend up, for the personas you actually log in as:
+
+```bash
+yarn workspace @chardb/database db:seed-personas
+```
+
+**Why the order matters:**
+
+- **`instance:up` before `yarn dev`.** The backend's SQS consumer polls a
+  LocalStack queue at boot, and a missing queue throws through winston's
+  exception handler and kills the process. The symptom is a wall of
+  `QueueDoesNotExist` JSON and a backend that was healthy a second ago — not
+  anything that mentions LocalStack being down.
+- **`yarn dev` before `db:seed-personas`.** That seeder drives the GraphQL API
+  over HTTP rather than writing to the database, so it needs a running backend.
+  It targets your instance automatically (`GRAPHQL_ENDPOINT` is injected); it
+  is not hardcoded to :4000.
+
+**A fresh instance's database is empty.** Skipping the migrate step gets you a
+backend that starts, a frontend that renders, and every query failing. There is
+no warning — the schema simply is not there.
 
 Read the URLs off `yarn instance` — **do not assume localhost:3000**. That is
 slot 0, which is almost certainly the user's own running app.
 
+Log in with any persona from `LOCAL_DEV_SEED_DATA.md`; they all share the
+password `test123` (e.g. `siteadmin@test.local`, `member@test.local`).
+
+## Running the tests
+
+**Neither suite needs any of the setup above.** Both provision their own
+throwaway database on their own port, and both are already instance-scoped, so
+they are safe to run while your `yarn dev` is up and while other agents are
+running theirs.
+
+```bash
+yarn workspace @chardb/e2e e2e                 # browser suite: own backend, frontend, database
+yarn workspace @chardb/e2e e2e tests/smoke     # one directory
+yarn workspace @chardb/backend test:e2e        # supertest suite: own postgres-test container
+```
+
+The browser suite starts its own postgres-test container, creates and migrates
+its own database, builds and boots the backend, builds and serves the frontend,
+seeds, and tears it all down. Do not run `instance:up` or seed for it.
+
+To drive the app by hand against a seeded world:
+
+```bash
+yarn workspace @chardb/e2e world community-basic --json   # every id, URL and credential
+```
+
 Other instance-scoped commands, all unchanged in form:
 
 ```bash
-yarn workspace @chardb/database db:push        # against this instance's database
-yarn workspace @chardb/backend test:e2e        # own postgres-test container
-yarn workspace @chardb/e2e e2e                 # own backend, frontend, database
-yarn workspace @chardb/e2e world community-basic --json
-yarn dc logs -f backend                        # docker compose for this instance
+yarn dc logs -f backend    # docker compose for this instance
+yarn dc ps                 # what this instance has running
 ```
 
 ## Finishing
