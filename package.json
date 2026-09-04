@@ -30,9 +30,9 @@
     "clean": "yarn workspaces foreach -A run clean",
     "prepare": "husky",
     "lint:changed": "node scripts/lint-changed.mjs",
-    "lint:fix": "eslint . --fix && prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,css}\"",
-    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,css}\"",
-    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,cjs,mjs,css}\""
+    "lint:fix": "eslint . --fix && prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,css,html}\"",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,cjs,mjs,css,html}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,cjs,mjs,css,html}\""
   },
   "devDependencies": {
     "@types/node": "^20.0.0",

@@ -182,6 +182,12 @@
       font-size: 0.9rem;
     }
 
+    /*
+     * Newlines inside .source are load-bearing: it holds raw markdown samples
+     * rendered as-is. Prettier reads an element's default CSS, not this rule,
+     * so it treats these divs as reflowable -- each one carries a
+     * <!-- prettier-ignore --> to stop the samples collapsing to one line.
+     */
     .example-panel-body.source {
       font-family: Monaco, Consolas, 'Courier New', monospace;
       white-space: pre-wrap;
@@ -395,6 +401,7 @@
         <div class="example-block">
           <div class="example-panel">
             <div class="example-panel-header">What you type</div>
+            <!-- prettier-ignore -->
             <div class="example-panel-body source">**Luna** is a *graceful* fox with ~~brown~~ silver fur.</div>
           </div>
           <div class="example-panel">
@@ -445,6 +452,7 @@
         <div class="example-block">
           <div class="example-panel">
             <div class="example-panel-header">What you type</div>
+            <!-- prettier-ignore -->
             <div class="example-panel-body source"># Description
 A cheerful fox who loves adventure.
 
@@ -503,6 +511,7 @@ Allergic to pollen.</div>
         <div class="example-block">
           <div class="example-panel">
             <div class="example-panel-header">What you type</div>
+            <!-- prettier-ignore -->
             <div class="example-panel-body source">Art by [StarryPaws](https://example.com/starrypaws)</div>
           </div>
           <div class="example-panel">
@@ -534,6 +543,7 @@ Allergic to pollen.</div>
         <div class="example-block">
           <div class="example-panel">
             <div class="example-panel-header">What you type</div>
+            <!-- prettier-ignore -->
             <div class="example-panel-body source">**Likes:**
 - Warm blankets
 - Stargazing
@@ -580,6 +590,7 @@ Allergic to pollen.</div>
         <div class="example-block">
           <div class="example-panel">
             <div class="example-panel-header">What you type</div>
+            <!-- prettier-ignore -->
             <div class="example-panel-body source">> "The stars remember what we forget."
 > &mdash; Luna, gazing at the night sky</div>
           </div>
@@ -610,6 +621,7 @@ Allergic to pollen.</div>
         <div class="example-block">
           <div class="example-panel">
             <div class="example-panel-header">What you type</div>
+            <!-- prettier-ignore -->
             <div class="example-panel-body source">| Stat | Value |
 | --- | --- |
 | Strength | 8 |
