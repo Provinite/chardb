@@ -17,6 +17,7 @@ import * as net from "node:net";
 import * as path from "node:path";
 import { CFG, REPO_ROOT } from "../config.js";
 import { provision } from "../db/provision.js";
+import { superviseChild } from "./supervise.js";
 
 async function assertPortFree(port: number): Promise<void> {
   await new Promise<void>((resolve, reject) => {
@@ -79,13 +80,7 @@ async function main(): Promise<void> {
     },
   });
 
-  for (const sig of ["SIGINT", "SIGTERM"] as const) {
-    process.on(sig, () => {
-      child.kill(sig);
-      process.exit(0);
-    });
-  }
-  child.on("exit", (code) => process.exit(code ?? 0));
+  superviseChild(child);
 }
 
 main().catch((err) => {

@@ -20,7 +20,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Agent entry point**: `yarn workspace @chardb/e2e world <preset> --json` prints a seeded world's ids, URLs, and credentials. Only JSON goes to stdout, so it pipes into `jq`. (#235)
 - **CI job**: runs on every pull request and push to `main`, in parallel with the type-check job. Starts its own Postgres via `docker/compose.test.yml` rather than a GitHub service container, so a CI failure reproduces locally with the same command. (#235)
 
+### Changed
+
+- **CI runs the suite across four shards**, cutting the job from ~9m to ~3m30s. Shard count is the `strategy.matrix.shard` list in `ci.yml` and nothing else; local runs stay unsharded on one worker. (#353)
+- **Reports merge instead of multiplying**: CI reports as `blob`, each shard uploads its slice, and an `e2e-report` job merges them into the one `playwright-report` artifact. Local runs still write HTML directly. (#353)
+
+### Fixed
+
+- **Servers no longer outlive a run.** The wrapper scripts signalled their child and called `process.exit` in the same tick, orphaning it with the port still bound — and since Vite runs with `--strictPort`, the next run failed on EADDRINUSE rather than on anything naming the cause. They now wait for the child to exit, force-kill after 10s, and handle SIGHUP. `gracefulShutdown` on both `webServer` entries makes Playwright's reclaim a SIGTERM the servers can act on rather than an uncatchable SIGKILL. (#353)
+
 ### Notes
 
 - Assertions go through the UI or the GraphQL API, never the database. Implementation details — that a delete is *soft*, that `traitValues` was emptied — are covered in `apps/backend/src/characters/characters.service.spec.ts`, where they sit next to the code they describe. `README.md` documents the rule and maps each behavior to the spec that owns it.
-- `workers: 1` deliberately. Ports and the database name are already offset by `TEST_PARALLEL_INDEX`, so raising it is a config change — but a per-worker database *partitions* state rather than isolating tests within a worker. Per-test isolation comes from `world.reset()`.
+- `workers: 1` deliberately, and parallelism in CI comes from `--shard` instead. Raising `workers` is *not* the config change an earlier note here claimed: Playwright starts `webServer` entries once per run, before any worker exists, so `TEST_PARALLEL_INDEX` is unset when the servers boot and every worker resolves to index 0. It would need N `webServer` entries and N seeded databases. Sharding sidesteps all of it — a shard is a whole machine — and a per-worker database would only *partition* state anyway, not isolate tests within a worker. Per-test isolation comes from `world.reset()`.

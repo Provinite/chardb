@@ -17,6 +17,7 @@
 import { execFileSync, spawn } from "node:child_process";
 import * as net from "node:net";
 import { CFG, REPO_ROOT } from "../config.js";
+import { superviseChild } from "./supervise.js";
 
 async function assertPortFree(port: number): Promise<void> {
   await new Promise<void>((resolve, reject) => {
@@ -84,13 +85,7 @@ async function main(): Promise<void> {
 
   const child = spawn("yarn", args, { cwd: REPO_ROOT, stdio: "inherit", env });
 
-  for (const sig of ["SIGINT", "SIGTERM"] as const) {
-    process.on(sig, () => {
-      child.kill(sig);
-      process.exit(0);
-    });
-  }
-  child.on("exit", (code) => process.exit(code ?? 0));
+  superviseChild(child);
 }
 
 main().catch((err) => {

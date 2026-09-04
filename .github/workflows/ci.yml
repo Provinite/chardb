@@ -269,11 +269,32 @@ jobs:
         run: yarn workspace ${{ matrix.workspace }} run test
 
   e2e:
-    name: Browser E2E
+    name: Browser E2E (shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
     # Independent of `verify` on purpose: a type error and a broken user flow are
     # different signals, and running them in parallel keeps the slower job off
     # the critical path.
+
+    strategy:
+      # A failing shard says nothing about the other three, and cancelling them
+      # would hide any second failure behind the first.
+      fail-fast: false
+      matrix:
+        # The shard count lives here and nowhere else: the denominator below is
+        # `strategy.job-total`, which counts the legs of this matrix. Add or
+        # remove an entry and the split follows. Keep `shard` the ONLY dimension
+        # -- job-total counts every combination, so a second dimension would
+        # silently multiply the denominator.
+        #
+        # Four is where the curve bends. Measured on a green main run: 1m42s of
+        # fixed cost per shard (checkout, install, browser, package builds, then
+        # docker up + migrate + nest and vite builds) against 7m16s of tests, so
+        # wall clock is roughly 102s + 436s/n. Four gives ~3m30s against 9m05s
+        # serial; eight would give ~2m37s for twice the runners.
+        #
+        # Nothing local reads this. An unsharded `yarn e2e` runs all 474 tests
+        # in one process, which is what a developer machine should do.
+        shard: [1, 2, 3, 4]
 
     steps:
       - name: Checkout
@@ -340,17 +361,87 @@ jobs:
       # No `services:` block: the suite starts its own Postgres through
       # docker/compose.test.yml, exactly as it does locally. Keeping the two
       # identical means a CI failure reproduces with a plain `yarn e2e`.
+      # Playwright splits by spec file and balances by test count. Measured at
+      # four shards: 128 / 121 / 116 / 121 tests, so no shard carries the run.
+      # Each shard reruns the `setup` project against its own database, which is
+      # what makes them independent.
       - name: Run browser E2E
-        run: yarn workspace @chardb/e2e e2e
+        run: yarn workspace @chardb/e2e e2e --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+
+      # This shard's slice of the report, which `e2e-report` below merges.
+      # A single `path` is deliberate: upload-artifact roots the archive at the
+      # common ancestor of what it is given, so one path puts the blob zips at
+      # the artifact root where merge-reports expects them, and a second path
+      # would push them down under apps/e2e/. Traces, videos and screenshots are
+      # attachments inside the blob, so they need no upload of their own.
+      - name: Upload shard report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: apps/e2e/blob-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  e2e-report:
+    name: Merge E2E reports
+    needs: e2e
+    # `always()` so a red run still produces a report -- that is when it is worth
+    # having. It reports the merge, not the tests; `e2e` remains the gate.
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --immutable
+
+      # Every shard's blob lands in one directory; merge-reports reads them all.
+      - name: Download shard reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: blob-report-*
+          merge-multiple: true
+          path: apps/e2e/all-blob-reports
+
+      - name: Merge into one HTML report
+        run: |
+          if ! ls apps/e2e/all-blob-reports/*.zip >/dev/null 2>&1; then
+            echo "No blob reports to merge; every shard failed before reporting."
+            exit 0
+          fi
+          yarn workspace @chardb/e2e exec playwright merge-reports \
+            --reporter html all-blob-reports
 
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
-          path: |
-            apps/e2e/playwright-report/
-            apps/e2e/test-results/
+          path: apps/e2e/playwright-report/
           retention-days: 7
           if-no-files-found: ignore
 
