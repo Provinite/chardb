@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Owner-filtered listing specs**: the profile's "View All" reaching that member's characters rather than everyone's, and the visibility matrix behind it — owner, other member, signed out — asserted through both the page and the API. (#321)
 - **Deferral specs for both review queues**: the trait review queue's reorder driven through the browser, and the image queue's cross-relation ordering exercised against real Postgres — the one claim a mocked Prisma client cannot make. (#333)
 - **Initial suite**: Playwright driving real Chromium against the production frontend bundle and a real backend. `yarn workspace @chardb/e2e e2e` starts the test Postgres, creates and migrates a dedicated `chardb_e2e_ui` database, boots the backend (:4310) and frontend (:4311), seeds, runs, and tears down — nothing needs to be running first. (#235)
 - **Seeding presets** (`src/world/presets/`): named worlds built by creating users directly via Prisma (the only way to grant global permission flags, since `signup` requires an invite code and grants none), then building everything else through the GraphQL API *as those users*, so a preset exercises real authorization and cannot construct a state the app itself could not reach. `ctx.user()` both creates and registers a persona, which makes `as()`, token minting, and `storageState` generation automatic. Ships `community-basic`, covering the #235 permission matrix. (#235)
