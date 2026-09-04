@@ -453,12 +453,19 @@ export class CharactersResolver {
     return count;
   }
 
-  @AllowAnyAuthenticated()
+  // Unauthenticated for the same reason as Gallery.userHasLiked (#173): the
+  // field is non-nullable, so gating it turns any public page that selects it
+  // into a 403 for the whole parent object. No page selects it anonymously
+  // today, which is the only reason this was a tripwire rather than a bug --
+  // `GET_CHARACTER` simply happens not to ask for it.
+  @AllowUnauthenticated()
   @ResolveField("userHasLiked", () => Boolean)
   async resolveUserHasLikedField(
     @Parent() character: CharacterEntity,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<boolean> {
+    // Nobody signed in has liked nothing, rather than an error.
+    if (!user?.id) return false;
     return this.charactersService.hasUserLiked(character.id, user.id);
   }
 
