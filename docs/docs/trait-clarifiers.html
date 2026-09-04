@@ -4,15 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trait Clarifiers - Feature Walkthrough</title>
-    <meta name="description" content="Attach an optional free-text note to any character trait value in CharDB. Clarifiers render in parentheses after the value, so one trait can describe many things." />
-    <link rel="canonical" href="https://provinite.github.io/chardb/docs/trait-clarifiers.html" />
+    <meta
+      name="description"
+      content="Attach an optional free-text note to any character trait value in CharDB. Clarifiers render in parentheses after the value, so one trait can describe many things."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/trait-clarifiers.html"
+    />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="CharDB" />
     <meta property="og:title" content="Trait Clarifiers" />
-    <meta property="og:description" content="Attach an optional free-text note to any character trait value in CharDB. Clarifiers render in parentheses after the value, so one trait can describe many things." />
-    <meta property="og:url" content="https://provinite.github.io/chardb/docs/trait-clarifiers.html" />
-    <meta property="og:image" content="https://provinite.github.io/chardb/docs/trait-clarifier-display.png" />
-    <meta property="og:image:alt" content="A CharDB character trait list showing clarifier notes in parentheses after each value." />
+    <meta
+      property="og:description"
+      content="Attach an optional free-text note to any character trait value in CharDB. Clarifiers render in parentheses after the value, so one trait can describe many things."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/trait-clarifiers.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/trait-clarifier-display.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="A CharDB character trait list showing clarifier notes in parentheses after each value."
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <style>
       * {
@@ -194,9 +212,7 @@
     <div class="container">
       <header>
         <h1>Trait Clarifiers</h1>
-        <p>
-          A walkthrough of free-text clarifiers on character trait values
-        </p>
+        <p>A walkthrough of free-text clarifiers on character trait values</p>
       </header>
 
       <!-- Overview -->
@@ -256,8 +272,8 @@
         </div>
         <div class="step-content">
           <p>
-            Open the species' <strong>Trait Builder</strong>, then either
-            create a new trait or edit an existing one. Toggle
+            Open the species' <strong>Trait Builder</strong>, then either create
+            a new trait or edit an existing one. Toggle
             <strong>Allow clarifier text</strong> on. The setting lives on the
             trait itself, so it applies to every variant that uses the trait.
           </p>
@@ -296,15 +312,15 @@
           </p>
           <ul>
             <li>
-              <strong>Single-value trait:</strong> type the value, then type
-              the clarifier. Both fields update the trait independently.
+              <strong>Single-value trait:</strong> type the value, then type the
+              clarifier. Both fields update the trait independently.
             </li>
             <li>
               <strong>Multi-value trait:</strong> type the value and (optional)
               clarifier, click <strong>Add</strong>. The entry is added as a
-              chip with the format
-              <code>Value (clarifier)</code>. Repeat to add more, including
-              duplicates of the same value with different clarifiers.
+              chip with the format <code>Value (clarifier)</code>. Repeat to add
+              more, including duplicates of the same value with different
+              clarifiers.
             </li>
           </ul>
 
@@ -320,8 +336,8 @@
             alt="Character trait editor with Body Mod showing two clarified chips and a value + clarifier input pair"
           />
           <div class="screenshot-caption">
-            Multi-value Body Mod trait with two clarified entries and the
-            value + clarifier inputs ready for the next addition
+            Multi-value Body Mod trait with two clarified entries and the value
+            + clarifier inputs ready for the next addition
           </div>
         </div>
       </div>
@@ -336,8 +352,8 @@
           <p>
             On the character profile, clarified values are rendered with the
             clarifier in parentheses immediately after the value. Multi-value
-            traits show each instance as its own chip; single-value traits
-            show the value inline.
+            traits show each instance as its own chip; single-value traits show
+            the value inline.
           </p>
         </div>
         <div class="screenshot">
@@ -346,8 +362,8 @@
             alt="Character profile showing Body Mod trait with two parenthetically clarified values"
           />
           <div class="screenshot-caption">
-            The character profile rendering "Common Body Mod (extra horns)"
-            and "Common Body Mod (long tail)" as separate chips
+            The character profile rendering "Common Body Mod (extra horns)" and
+            "Common Body Mod (long tail)" as separate chips
           </div>
         </div>
       </div>
@@ -365,25 +381,21 @@
               >Trait Review Queue</a
             >
             treats the
-            <code>(value, clarifier)</code> pair as the diff key. Changing
-            only the clarifier — same value, different note — registers as a
-            change, just like swapping the value itself.
+            <code>(value, clarifier)</code> pair as the diff key. Changing only
+            the clarifier — same value, different note — registers as a change,
+            just like swapping the value itself.
           </p>
           <ul>
-            <li>
-              Removed entries are shown with strikethrough text
-            </li>
-            <li>
-              Added entries are highlighted (green border / chip)
-            </li>
+            <li>Removed entries are shown with strikethrough text</li>
+            <li>Added entries are highlighted (green border / chip)</li>
             <li>Unchanged entries appear normally for context</li>
           </ul>
 
           <div class="highlight-box">
-            <strong>Tip:</strong> A clarifier-only edit is intentionally
-            visible in moderation. Reviewers can spot, for example, a renamed
-            mod (<em>"extra horns" → "spiral horns"</em>) without having to
-            inspect raw data.
+            <strong>Tip:</strong> A clarifier-only edit is intentionally visible
+            in moderation. Reviewers can spot, for example, a renamed mod (<em
+              >"extra horns" → "spiral horns"</em
+            >) without having to inspect raw data.
           </div>
         </div>
         <div class="screenshot">
@@ -407,23 +419,22 @@
         <div class="step-content">
           <ul>
             <li>
-              Clarifier input is only shown for traits where the species
-              manager has enabled <strong>Allow clarifier text</strong>. The
-              backend rejects clarifiers submitted on traits that did not opt
-              in.
+              Clarifier input is only shown for traits where the species manager
+              has enabled <strong>Allow clarifier text</strong>. The backend
+              rejects clarifiers submitted on traits that did not opt in.
             </li>
             <li>
-              A clarifier requires a value — you can't store a clarifier
-              against an empty trait entry.
+              A clarifier requires a value — you can't store a clarifier against
+              an empty trait entry.
             </li>
             <li>
               Maximum length is 200 characters. Surrounding whitespace is
               trimmed; an all-whitespace clarifier is treated as absent.
             </li>
             <li>
-              On enum (Selection) multi-value traits, enabling clarifiers
-              allows the same enum option to appear multiple times with
-              different clarifiers (e.g. two
+              On enum (Selection) multi-value traits, enabling clarifiers allows
+              the same enum option to appear multiple times with different
+              clarifiers (e.g. two
               <em>Common Body Mod</em> entries). Without clarifiers, already
               selected options remain hidden from the dropdown.
             </li>
@@ -435,6 +446,6 @@
         <p>CharDB Trait Clarifiers &bull; Feature Documentation</p>
       </footer>
     </div>
-      <script src="lightbox.js" defer></script>
+    <script src="lightbox.js" defer></script>
   </body>
 </html>

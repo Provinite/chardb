@@ -4,15 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Changing a Character's Rarity - Feature Walkthrough</title>
-    <meta name="description" content="Staff can move a character between species variants after it was created. The species is permanent; its rarity is not. Every change is recorded, and traits the new rarity does not permit are re-routed first." />
-    <link rel="canonical" href="https://provinite.github.io/chardb/docs/character-rarity.html" />
+    <meta
+      name="description"
+      content="Staff can move a character between species variants after it was created. The species is permanent; its rarity is not. Every change is recorded, and traits the new rarity does not permit are re-routed first."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/character-rarity.html"
+    />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="CharDB" />
     <meta property="og:title" content="Changing a Character's Rarity" />
-    <meta property="og:description" content="Staff can move a character between species variants after it was created. The species is permanent; its rarity is not. Every change is recorded." />
-    <meta property="og:url" content="https://provinite.github.io/chardb/docs/character-rarity.html" />
-    <meta property="og:image" content="https://provinite.github.io/chardb/docs/rarity-reroute.png" />
-    <meta property="og:image:alt" content="The rarity selector on a CharDB character's edit page, warning that a trait value does not exist at the chosen rarity." />
+    <meta
+      property="og:description"
+      content="Staff can move a character between species variants after it was created. The species is permanent; its rarity is not. Every change is recorded."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/character-rarity.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/rarity-reroute.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The rarity selector on a CharDB character's edit page, warning that a trait value does not exist at the chosen rarity."
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <style>
       * {
@@ -293,9 +311,9 @@
         </div>
         <div class="step-content">
           <p>
-            On a character&rsquo;s edit page, under <strong>Species
-            Details</strong>, the variant is a dropdown of every variant its
-            species has. Pick one and save.
+            On a character&rsquo;s edit page, under
+            <strong>Species Details</strong>, the variant is a dropdown of every
+            variant its species has. Pick one and save.
           </p>
           <p>
             The <strong>Species</strong> section further up still says the
@@ -310,8 +328,8 @@
             alt="The variant dropdown in the Species Details section of a character's edit page, with an optional reason field."
           />
           <div class="screenshot-caption">
-            The <strong>why</strong> box appears once the rarity actually
-            moves. Worth filling in: it is what the history shows.
+            The <strong>why</strong> box appears once the rarity actually moves.
+            Worth filling in: it is what the history shows.
           </div>
         </div>
       </div>
@@ -325,15 +343,16 @@
           <p>
             A variant can restrict which trait options are available to it
             &mdash; a marking that only Rares have, a colour Commons cannot
-            take. Moving a character to a rarity that does not permit one of
-            its current values would leave it holding something its own trait
-            editor cannot offer.
+            take. Moving a character to a rarity that does not permit one of its
+            current values would leave it holding something its own trait editor
+            cannot offer.
           </p>
           <p>
-            So the form says which values are affected and asks what each
-            should become. <strong>The save is blocked until every one is
-            resolved</strong>, and the server refuses it too &mdash; this is
-            not merely a disabled button.
+            So the form says which values are affected and asks what each should
+            become.
+            <strong>The save is blocked until every one is resolved</strong>,
+            and the server refuses it too &mdash; this is not merely a disabled
+            button.
           </p>
         </div>
         <div class="screenshot">
@@ -349,12 +368,14 @@
         </div>
         <div class="step-content">
           <div class="highlight-box">
-            <strong>Which options a variant permits is something you
-            configure</strong>, per variant, under the species&rsquo; trait
-            options. A variant with none enabled for a trait does not carry
-            that trait at all &mdash; so if a rarity change is asking you to
-            re-route something, the target rarity genuinely does not have the
-            value the character is holding.
+            <strong
+              >Which options a variant permits is something you
+              configure</strong
+            >, per variant, under the species&rsquo; trait options. A variant
+            with none enabled for a trait does not carry that trait at all
+            &mdash; so if a rarity change is asking you to re-route something,
+            the target rarity genuinely does not have the value the character is
+            holding.
           </div>
         </div>
       </div>
@@ -369,9 +390,9 @@
             Every rarity change is recorded on the character: what it moved
             between, who moved it, when, and the reason if one was given. It
             appears under the character&rsquo;s traits and is
-            <strong>public</strong>, like the rarity itself &mdash; a
-            masterlist publishes rarity, so &ldquo;why is this a Rare&rdquo; is
-            a question anyone can reasonably ask.
+            <strong>public</strong>, like the rarity itself &mdash; a masterlist
+            publishes rarity, so &ldquo;why is this a Rare&rdquo; is a question
+            anyone can reasonably ask.
           </p>
         </div>
         <div class="screenshot">
@@ -387,8 +408,8 @@
           <p>
             The record also keeps the character&rsquo;s traits from before and
             after, because the re-routing in step 2 is part of the same act.
-            Storing only the rarity would leave the trait edit that came with
-            it invisible, which is exactly the half a dispute asks about.
+            Storing only the rarity would leave the trait edit that came with it
+            invisible, which is exactly the half a dispute asks about.
           </p>
         </div>
       </div>
@@ -408,16 +429,16 @@
             </thead>
             <tbody>
               <tr>
-                <td>You only have rights to your own character&rsquo;s registry</td>
+                <td>
+                  You only have rights to your own character&rsquo;s registry
+                </td>
                 <td>
                   Rarity is staff&rsquo;s. Your identifier and traits are not.
                 </td>
               </tr>
               <tr>
                 <td>A trait value does not exist at the new rarity</td>
-                <td>
-                  Re-route it first. The form asks; the server insists.
-                </td>
+                <td>Re-route it first. The form asks; the server insists.</td>
               </tr>
               <tr>
                 <td>The variant belongs to another species</td>
@@ -428,9 +449,7 @@
               </tr>
               <tr>
                 <td>The character has no species</td>
-                <td>
-                  There are no variants to move between until it has one.
-                </td>
+                <td>There are no variants to move between until it has one.</td>
               </tr>
             </tbody>
           </table>
@@ -441,6 +460,6 @@
         <p>CharDB Character Rarity &bull; Feature Documentation</p>
       </footer>
     </div>
-      <script src="lightbox.js" defer></script>
+    <script src="lightbox.js" defer></script>
   </body>
 </html>

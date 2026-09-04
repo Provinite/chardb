@@ -4,15 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Redeeming Items - Feature Walkthrough</title>
-    <meta name="description" content="Items can be used up for what their type is worth. Staff set the payout per currency; the holder spends the item and the coin arrives, recorded on both ledgers as one event." />
-    <link rel="canonical" href="https://provinite.github.io/chardb/docs/using-items.html" />
+    <meta
+      name="description"
+      content="Items can be used up for what their type is worth. Staff set the payout per currency; the holder spends the item and the coin arrives, recorded on both ledgers as one event."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/using-items.html"
+    />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="CharDB" />
     <meta property="og:title" content="Redeeming Items" />
-    <meta property="og:description" content="Items can be used up for what their type is worth. Staff set the payout per currency; the holder spends the item and the coin arrives, recorded on both ledgers as one event." />
-    <meta property="og:url" content="https://provinite.github.io/chardb/docs/using-items.html" />
-    <meta property="og:image" content="https://provinite.github.io/chardb/docs/item-ledger-staff.png" />
-    <meta property="og:image:alt" content="The CharDB community item ledger listing item movements with actor, recipient, and reason." />
+    <meta
+      property="og:description"
+      content="Items can be used up for what their type is worth. Staff set the payout per currency; the holder spends the item and the coin arrives, recorded on both ledgers as one event."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/using-items.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/item-ledger-staff.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The CharDB community item ledger listing item movements with actor, recipient, and reason."
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <style>
       * {
@@ -296,43 +314,45 @@
           </div>
 
           <div class="highlight-box">
-            <strong>Using destroys the item.</strong> That is not a side
-            effect, it is the mechanism — an item that paid out without being
-            used up would pay every time it was pressed. Everything below
-            follows from it: why only consumable types can carry a payout, why
-            there is a confirm, and why the item's page still works afterwards.
+            <strong>Using destroys the item.</strong> That is not a side effect,
+            it is the mechanism — an item that paid out without being used up
+            would pay every time it was pressed. Everything below follows from
+            it: why only consumable types can carry a payout, why there is a
+            confirm, and why the item's page still works afterwards.
           </div>
 
           <p>
-            <strong>An item type does one thing when used</strong>, and there
-            is more than one thing it can do. The rest of this page is about
-            paying out currency, which is the kind you press and collect. The
-            other kind has a page of its own:
+            <strong>An item type does one thing when used</strong>, and there is
+            more than one thing it can do. The rest of this page is about paying
+            out currency, which is the kind you press and collect. The other
+            kind has a page of its own:
           </p>
           <ul>
             <li>
               <a href="myo-slots.html"><strong>MYO slots</strong></a> — spend
-              the item to make a character. It opens the create page rather
-              than a confirm, because designing a character needs more than a
-              yes.
+              the item to make a character. It opens the create page rather than
+              a confirm, because designing a character needs more than a yes.
             </li>
             <li>
               <a href="edit-kits.html"><strong>Edit kits</strong></a> — spend
-              the item to change an existing character's traits. The change is
-              a proposal: it goes to staff, and the character does not move
-              until they approve it.
+              the item to change an existing character's traits. The change is a
+              proposal: it goes to staff, and the character does not move until
+              they approve it.
             </li>
             <li>
-              <a href="variant-change-items.html"><strong>Variant change
-              items</strong></a> — spend the item to move a character from one
-              variant to another. Unlike the other two there is no review: the
-              change happens the moment it is redeemed, and there is no undo.
+              <a href="variant-change-items.html"
+                ><strong>Variant change items</strong></a
+              >
+              — spend the item to move a character from one variant to another.
+              Unlike the other two there is no review: the change happens the
+              moment it is redeemed, and there is no undo.
             </li>
           </ul>
           <p>
-            A type carries exactly one of these, never more than one. Everything below —
-            consumable-only, the ledger rows, the item page outliving its own
-            destruction — is true of every usable item whichever kind it is.
+            A type carries exactly one of these, never more than one. Everything
+            below — consumable-only, the ledger rows, the item page outliving
+            its own destruction — is true of every usable item whichever kind it
+            is.
           </p>
         </div>
       </div>
@@ -345,10 +365,10 @@
         </div>
         <div class="step-content">
           <p>
-            On an item type's edit form, under <strong>Administration →
-            Items</strong>, there is a <strong>Pays on use</strong> panel
-            listing every currency the community has. Put an amount beside one
-            or more of them and save.
+            On an item type's edit form, under
+            <strong>Administration → Items</strong>, there is a
+            <strong>Pays on use</strong> panel listing every currency the
+            community has. Put an amount beside one or more of them and save.
           </p>
           <p>
             It saves on its own, separately from the rest of the form. A payout
@@ -370,8 +390,8 @@
           <p>
             <strong>Only a consumable type can pay.</strong> The panel says so
             rather than letting the amount be typed and refused at save — the
-            reason is the mechanism above, and it is more use where the
-            decision is being made than in an error afterwards.
+            reason is the mechanism above, and it is more use where the decision
+            is being made than in an error afterwards.
           </p>
         </div>
         <div class="screenshot">
@@ -394,10 +414,10 @@
             nothing configured stays true on its own.
           </div>
           <p>
-            Setting a payout needs the same permission as editing the item
-            type, <code>canManageItems</code>. It is worth being deliberate
-            about who holds it: a payout creates currency, and every use of it
-            is recorded, but the recording is after the fact.
+            Setting a payout needs the same permission as editing the item type,
+            <code>canManageItems</code>. It is worth being deliberate about who
+            holds it: a payout creates currency, and every use of it is
+            recorded, but the recording is after the fact.
           </p>
         </div>
       </div>
@@ -492,8 +512,8 @@
           <div class="highlight-box">
             <strong>The same ticket cannot be spent twice.</strong> The item is
             destroyed and the coin created inside a single operation, and the
-            destruction is conditional on you still holding it. A second press
-            — a double click, two tabs, a retry — destroys nothing, fails, and
+            destruction is conditional on you still holding it. A second press —
+            a double click, two tabs, a retry — destroys nothing, fails, and
             pays nothing.
           </div>
         </div>
@@ -507,10 +527,11 @@
         </div>
         <div class="step-content">
           <p>
-            The community's item ledger, under <strong>Community → Item
-            Ledger</strong>, gets a <span class="pill used">Redeemed</span> entry.
-            It reads <em>member → consumed</em>, which is what distinguishes it
-            at a glance from a revoke, where an item goes back to staff.
+            The community's item ledger, under
+            <strong>Community → Item Ledger</strong>, gets a
+            <span class="pill used">Redeemed</span> entry. It reads
+            <em>member → consumed</em>, which is what distinguishes it at a
+            glance from a revoke, where an item goes back to staff.
           </p>
         </div>
         <div class="screenshot">
@@ -533,9 +554,9 @@
         </div>
         <div class="step-content">
           <p>
-            The community's currency ledger, under <strong>Community →
-            Currencies</strong>, records the payment, and links back to the
-            item that produced it.
+            The community's currency ledger, under
+            <strong>Community → Currencies</strong>, records the payment, and
+            links back to the item that produced it.
           </p>
         </div>
         <div class="screenshot">
@@ -544,8 +565,8 @@
             alt="The currency ledger showing a plus 250 Hollow Coin entry to member with the reason Redeemed Coin Ticket and a link reading from the item that was redeemed"
           />
           <div class="screenshot-caption">
-            Coin that appears from nowhere is coin nobody can check. The link
-            is what makes this row answerable.
+            Coin that appears from nowhere is coin nobody can check. The link is
+            what makes this row answerable.
           </div>
         </div>
         <div class="step-content">
@@ -592,8 +613,8 @@
         <div class="step-content">
           <p>
             Everything checked when the payout was configured is checked again
-            when somebody presses Use, because none of it stays true on its
-            own. A use is refused, with the item untouched, when:
+            when somebody presses Use, because none of it stays true on its own.
+            A use is refused, with the item untouched, when:
           </p>
           <table class="kinds">
             <thead>
@@ -641,8 +662,8 @@
             </tbody>
           </table>
           <p>
-            In every case the item survives. There is no path where something
-            is destroyed and the payment does not happen.
+            In every case the item survives. There is no path where something is
+            destroyed and the payment does not happen.
           </p>
         </div>
       </div>
@@ -651,6 +672,6 @@
         <p>CharDB Redeeming Items &bull; Feature Documentation</p>
       </footer>
     </div>
-      <script src="lightbox.js" defer></script>
+    <script src="lightbox.js" defer></script>
   </body>
 </html>

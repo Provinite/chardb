@@ -1,534 +1,637 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Image Moderation Queue - Feature Walkthrough</title>
-  <meta name="description" content="How uploaded images are reviewed before becoming publicly visible in CharDB: pending placeholders, the moderation queue, and the approve or reject actions.">
-  <link rel="canonical" href="https://provinite.github.io/chardb/docs/image-moderation.html">
-  <meta property="og:type" content="article">
-  <meta property="og:site_name" content="CharDB">
-  <meta property="og:title" content="Image Moderation Queue">
-  <meta property="og:description" content="How uploaded images are reviewed before becoming publicly visible in CharDB: pending placeholders, the moderation queue, and the approve or reject actions.">
-  <meta property="og:url" content="https://provinite.github.io/chardb/docs/image-moderation.html">
-  <meta property="og:image" content="https://provinite.github.io/chardb/docs/image-moderation-page.png">
-  <meta property="og:image:alt" content="The CharDB image moderation queue showing pending uploads awaiting review.">
-  <meta name="twitter:card" content="summary_large_image">
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Moderation Queue - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="How uploaded images are reviewed before becoming publicly visible in CharDB: pending placeholders, the moderation queue, and the approve or reject actions."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/image-moderation.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Image Moderation Queue" />
+    <meta
+      property="og:description"
+      content="How uploaded images are reviewed before becoming publicly visible in CharDB: pending placeholders, the moderation queue, and the approve or reject actions."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/image-moderation.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/image-moderation-page.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The CharDB image moderation queue showing pending uploads awaiting review."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 2rem;
-    }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
 
-    header {
-      text-align: center;
-      margin-bottom: 3rem;
-      color: white;
-    }
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
 
-    header h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
 
-    header p {
-      font-size: 1.1rem;
-      opacity: 0.9;
-    }
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
 
-    .step {
-      background: white;
-      border-radius: 16px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    }
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
 
-    .step-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
 
-    .step-number {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
 
-    .step-title {
-      font-size: 1.5rem;
-      color: #333;
-    }
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
 
-    .step-content {
-      color: #555;
-      margin-bottom: 1.5rem;
-    }
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
 
-    .step-content p {
-      margin-bottom: 1rem;
-    }
+      .step-content p {
+        margin-bottom: 1rem;
+      }
 
-    .step-content ul {
-      margin-left: 1.5rem;
-      margin-bottom: 1rem;
-    }
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
 
-    .step-content li {
-      margin-bottom: 0.5rem;
-    }
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
 
-    .screenshot {
-      border: 1px solid #e0e0e0;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
 
-    .screenshot img {
-      width: 100%;
-      display: block;
-    }
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
 
-    .screenshot-caption {
-      background: #f8f9fa;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      color: #666;
-      border-top: 1px solid #e0e0e0;
-    }
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
 
-    .highlight-box {
-      background: #f0f4ff;
-      border-left: 4px solid #667eea;
-      padding: 1rem 1.25rem;
-      margin: 1rem 0;
-      border-radius: 0 8px 8px 0;
-    }
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
 
-    .highlight-box strong {
-      color: #667eea;
-    }
+      .highlight-box strong {
+        color: #667eea;
+      }
 
-    .feature-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
 
-    .feature-item {
-      background: #f8f9fa;
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
-    }
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
 
-    .feature-item .icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
 
-    .feature-item h4 {
-      color: #333;
-      margin-bottom: 0.25rem;
-    }
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
 
-    .feature-item p {
-      font-size: 0.875rem;
-      color: #666;
-    }
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
 
-    footer {
-      text-align: center;
-      color: white;
-      opacity: 0.8;
-      margin-top: 2rem;
-      padding: 1rem;
-    }
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
 
-    .badge {
-      display: inline-block;
-      padding: 0.25rem 0.75rem;
-      border-radius: 999px;
-      font-size: 0.75rem;
-      font-weight: 600;
-      text-transform: uppercase;
-    }
+      .badge {
+        display: inline-block;
+        padding: 0.25rem 0.75rem;
+        border-radius: 999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+      }
 
-    .badge-warning {
-      background: #fff3cd;
-      color: #856404;
-    }
+      .badge-warning {
+        background: #fff3cd;
+        color: #856404;
+      }
 
-    .badge-success {
-      background: #d4edda;
-      color: #155724;
-    }
+      .badge-success {
+        background: #d4edda;
+        color: #155724;
+      }
 
-    .badge-danger {
-      background: #f8d7da;
-      color: #721c24;
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>Image Moderation Queue</h1>
-      <p>A walkthrough of the content moderation workflow for CharDB</p>
-    </header>
+      .badge-danger {
+        background: #f8d7da;
+        color: #721c24;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Image Moderation Queue</h1>
+        <p>A walkthrough of the content moderation workflow for CharDB</p>
+      </header>
 
-    <!-- Overview -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">0</div>
-        <h2 class="step-title">Overview</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          The Image Moderation Queue ensures all uploaded images are reviewed before becoming publicly visible.
-          This helps maintain community standards and prevents inappropriate content from appearing on the platform.
-        </p>
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The Image Moderation Queue ensures all uploaded images are reviewed
+            before becoming publicly visible. This helps maintain community
+            standards and prevents inappropriate content from appearing on the
+            platform.
+          </p>
 
-        <div class="feature-list">
-          <div class="feature-item">
-            <div class="icon">🔒</div>
-            <h4>Pending by Default</h4>
-            <p>All uploads enter moderation queue</p>
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">🔒</div>
+              <h4>Pending by Default</h4>
+              <p>All uploads enter moderation queue</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🖼️</div>
+              <h4>Placeholder Display</h4>
+              <p>Pending images show placeholder to all users</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">✅</div>
+              <h4>Approve or Reject</h4>
+              <p>Moderators control visibility</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">📧</div>
+              <h4>Email Notifications</h4>
+              <p>Uploaders notified of decisions</p>
+            </div>
           </div>
-          <div class="feature-item">
-            <div class="icon">🖼️</div>
-            <h4>Placeholder Display</h4>
-            <p>Pending images show placeholder to all users</p>
+        </div>
+      </div>
+
+      <!-- Step 1: What Users See -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">What Users See While Pending</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            When an image is uploaded, it enters the moderation queue with a
+            <span class="badge badge-warning">PENDING</span> status. During this
+            time, <strong>all users</strong>&mdash;including the
+            uploader&mdash;see a placeholder image instead of the actual
+            content.
+          </p>
+          <p>
+            The placeholder clearly indicates that the image is awaiting
+            moderation. This ensures that:
+          </p>
+          <ul>
+            <li>Unapproved content is never displayed publicly</li>
+            <li>Users know their upload was received and is being processed</li>
+            <li>
+              The media entry still appears in galleries and character pages
+              (with the placeholder)
+            </li>
+            <li>
+              Only moderators can view the actual image content, and only
+              through the moderation queue
+            </li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Note:</strong> Media metadata (title, description, character
+            association) is still visible. Only the actual image content is
+            replaced with the placeholder.
           </div>
-          <div class="feature-item">
-            <div class="icon">✅</div>
-            <h4>Approve or Reject</h4>
-            <p>Moderators control visibility</p>
-          </div>
-          <div class="feature-item">
-            <div class="icon">📧</div>
-            <h4>Email Notifications</h4>
-            <p>Uploaders notified of decisions</p>
-          </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Step 1: What Users See -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">1</div>
-        <h2 class="step-title">What Users See While Pending</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          When an image is uploaded, it enters the moderation queue with a <span class="badge badge-warning">PENDING</span> status.
-          During this time, <strong>all users</strong>&mdash;including the uploader&mdash;see a placeholder image instead of the actual content.
-        </p>
-        <p>
-          The placeholder clearly indicates that the image is awaiting moderation. This ensures that:
-        </p>
-        <ul>
-          <li>Unapproved content is never displayed publicly</li>
-          <li>Users know their upload was received and is being processed</li>
-          <li>The media entry still appears in galleries and character pages (with the placeholder)</li>
-          <li>Only moderators can view the actual image content, and only through the moderation queue</li>
-        </ul>
-
-        <div class="highlight-box">
-          <strong>Note:</strong> Media metadata (title, description, character association) is still visible.
-          Only the actual image content is replaced with the placeholder.
-        </div>
-      </div>
-      <div class="screenshot">
-        <img src="pending-moderation-placeholder.png" alt="Placeholder shown for pending images">
-        <div class="screenshot-caption">
-          A media page showing the "Image Pending Moderation" placeholder while awaiting review
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 2: Accessing the Queue -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">2</div>
-        <h2 class="step-title">Accessing the Moderation Queue</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          Community moderators and administrators can access the Image Moderation Queue from the
-          <strong>Administration</strong> section in the community sidebar. Click
-          <strong>Image Moderation</strong> to open the dedicated Image Moderation page.
-        </p>
-        <p>
-          The queue displays a count badge showing how many images are awaiting review. In this example,
-          there are <span class="badge badge-warning">3 pending</span> images in the queue.
-        </p>
-        <div class="highlight-box">
-          <strong>Note:</strong> Image Moderation and Trait Review are separate pages with their own
-          sidebar links. The Image Moderation link is visible to users with the
-          <strong>CanModerateImages</strong> permission.
-        </div>
-      </div>
-      <div class="screenshot">
-        <img src="image-moderation-page.png" alt="Image Moderation page with sidebar">
-        <div class="screenshot-caption">
-          The Image Moderation page showing the sidebar link and the queue with pending count badge
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 3: Reviewing an Image -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">3</div>
-        <h2 class="step-title">Reviewing Pending Images</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          Each pending image is displayed as a card containing all the information needed to make a moderation decision:
-        </p>
-        <ul>
-          <li><strong>Image Preview:</strong> A thumbnail of the uploaded image (click to view full size)</li>
-          <li><strong>Uploader:</strong> Link to the user who uploaded the image</li>
-          <li><strong>Character:</strong> The character this image is associated with</li>
-          <li><strong>Community:</strong> Which community the image belongs to</li>
-          <li><strong>Timestamp:</strong> When the image was uploaded</li>
-        </ul>
-
-        <div class="highlight-box">
-          <strong>Tip:</strong> Click on the image thumbnail to open a full-size view for detailed inspection
-          before making your decision.
-        </div>
-
-        <p>
-          At the bottom of each card are three action buttons:
-        </p>
-        <ul>
-          <li><span class="badge badge-success">Approve</span> - Makes the image publicly visible</li>
-          <li><span class="badge badge-danger">Reject</span> - Hides the image and notifies the uploader</li>
-          <li><strong>Send to back</strong> - Decides nothing. Moves the image behind the ones you can rule on now (see step 6)</li>
-        </ul>
-      </div>
-      <div class="screenshot">
-        <img src="moderation-card-buttons.png" alt="Moderation card with approve, send to back and reject buttons">
-        <div class="screenshot-caption">
-          A moderation card showing image metadata and action buttons
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 4: Approving an Image -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">4</div>
-        <h2 class="step-title">Approving an Image</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          If the image meets community guidelines, click the green <strong>Approve</strong> button.
-          This will:
-        </p>
-        <ul>
-          <li>Set the image's moderation status to <strong>APPROVED</strong></li>
-          <li>Make the image visible to all community members</li>
-          <li>Send an email notification to the uploader confirming approval</li>
-          <li>Remove the image from the moderation queue</li>
-        </ul>
-
-        <div class="highlight-box">
-          <strong>Note:</strong> Approval is immediate. A success toast will appear confirming the action,
-          and the queue will automatically refresh.
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 5: Rejecting an Image -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">5</div>
-        <h2 class="step-title">Rejecting an Image</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          If an image violates community guidelines, click the red <strong>Reject</strong> button
-          to open the rejection modal. You must select a reason for the rejection:
-        </p>
-        <ul>
-          <li><strong>Terms of Service Violation:</strong> Content violates community guidelines or terms of service</li>
-          <li><strong>NSFW Not Tagged:</strong> Adult content that was not properly marked as NSFW</li>
-          <li><strong>Spam / Low Quality:</strong> Spam, duplicate content, or extremely low quality images</li>
-          <li><strong>Copyright Issue:</strong> Potential copyright infringement or unauthorized use</li>
-          <li><strong>Other:</strong> Other reason not listed above (requires explanation)</li>
-        </ul>
-
-        <p>
-          You can also provide <strong>Additional Details</strong> to give the uploader more context
-          about why their image was rejected. This message will be included in the notification email.
-        </p>
-
-        <div class="highlight-box">
-          <strong>Important:</strong> If you select "Other" as the reason, you must provide additional
-          details explaining the rejection. The "Reject Image" button remains disabled until all
-          required fields are completed.
-        </div>
-      </div>
-      <div class="screenshot">
-        <img src="reject-modal-complete.png" alt="Reject image modal with reason selection">
-        <div class="screenshot-caption">
-          The rejection modal with predefined reasons and optional details field
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 6: Sending an Image to the Back -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">6</div>
-        <h2 class="step-title">Sending an Image to the Back</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          Not every upload can be ruled on when you reach it. The art may be mid-reupload, the call
-          may need a second opinion, or you may want to ask the uploader something first. The queue
-          is ordered oldest-first, so an image like that sits at the front and is passed over by
-          every moderator who opens the queue.
-        </p>
-        <p>
-          Click <strong>Send to back</strong> to move it behind the images that can be decided now.
-          You may leave a short note saying why, which the next moderator to reach the card sees.
-        </p>
-
-        <div class="highlight-box">
-          <strong>This is not a decision.</strong> The image stays <strong>PENDING</strong> and
-          hidden, the pending count does not change, and the uploader is told nothing — no approval
-          email, no rejection email. Nothing is written to the moderation log, because no moderation
-          happened.
-        </div>
-        <p>
-          A card that has been sent to the back carries a <strong>Deferred ×N</strong> badge counting
-          how many times it has happened, with the last note and who left it. A climbing number means
-          the queue holds an upload everyone is avoiding and nobody is resolving, and the uploader is
-          still waiting on it.
-        </p>
-      </div>
-    </div>
-
-    <!-- Step 7: After Moderation -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">7</div>
-        <h2 class="step-title">After Moderation</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          After processing an image, the queue automatically refreshes. When all pending images have
-          been reviewed, you'll see the "All Caught Up!" message indicating the queue is empty.
-        </p>
-
-        <p>
-          All moderation actions are logged for audit purposes, including:
-        </p>
-        <ul>
-          <li>Which moderator took the action</li>
-          <li>The action taken (approve/reject)</li>
-          <li>The rejection reason (if applicable)</li>
-          <li>Any additional details provided</li>
-          <li>Timestamp of the action</li>
-        </ul>
-
-        <div class="highlight-box">
-          <strong>Email Notifications:</strong> Uploaders receive an email for both approvals and rejections.
-          Rejection emails include the reason and any additional details you provided, helping users
-          understand how to improve future uploads.
-        </div>
-      </div>
-    </div>
-
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">8</div>
-        <h2 class="step-title">Rewarding an Upload</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          If your community uses currency, and you can grant it as well as
-          moderate, each card carries an <strong>Award currency</strong> panel
-          listing everyone the upload names &mdash; whoever uploaded it, whoever
-          is credited as the artist, and whoever owns the character depicted.
-        </p>
-
         <div class="screenshot">
           <img
-            src="currency-award-widget.png"
-            alt="The moderation queue with an Award currency panel listing the uploader and the artist, each with an amount field"
+            src="pending-moderation-placeholder.png"
+            alt="Placeholder shown for pending images"
           />
           <div class="screenshot-caption">
-            The panel sits between the upload's details and the Approve button.
+            A media page showing the "Image Pending Moderation" placeholder
+            while awaiting review
           </div>
         </div>
+      </div>
 
-        <p>
-          One person can be several of those at once, so they appear once with
-          all their roles listed rather than several times. Fill in what each
-          should receive and press <strong>Approve</strong> as usual &mdash; the
-          approval and the payment happen together, so an upload is never
-          approved without the reward it was promised, or paid for without going
-          live.
-        </p>
-
-        <p>
-          Leaving the amounts blank is normal, and approves exactly as it always
-          has.
-        </p>
-
-        <div class="highlight-box">
-          <strong>Not everyone sees this.</strong> Moderating images and handing
-          out currency are separate permissions. If you can only moderate, the
-          panel is simply absent and nothing else about the queue changes.
+      <!-- Step 2: Accessing the Queue -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Accessing the Moderation Queue</h2>
         </div>
-
-        <div class="highlight-box">
-          <strong>Rewards are public.</strong> Every award appears in the
-          community's currency ledger, naming who granted it and linking back to
-          the upload it was for. See the
-          <a href="currency.html">Community Currency walkthrough</a>.
+        <div class="step-content">
+          <p>
+            Community moderators and administrators can access the Image
+            Moderation Queue from the
+            <strong>Administration</strong> section in the community sidebar.
+            Click <strong>Image Moderation</strong> to open the dedicated Image
+            Moderation page.
+          </p>
+          <p>
+            The queue displays a count badge showing how many images are
+            awaiting review. In this example, there are
+            <span class="badge badge-warning">3 pending</span> images in the
+            queue.
+          </p>
+          <div class="highlight-box">
+            <strong>Note:</strong> Image Moderation and Trait Review are
+            separate pages with their own sidebar links. The Image Moderation
+            link is visible to users with the
+            <strong>CanModerateImages</strong> permission.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="image-moderation-page.png"
+            alt="Image Moderation page with sidebar"
+          />
+          <div class="screenshot-caption">
+            The Image Moderation page showing the sidebar link and the queue
+            with pending count badge
+          </div>
         </div>
       </div>
-    </div>
 
-    <footer>
-      <p>CharDB Image Moderation Queue &bull; Feature Documentation</p>
-    </footer>
-  </div>
+      <!-- Step 3: Reviewing an Image -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Reviewing Pending Images</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Each pending image is displayed as a card containing all the
+            information needed to make a moderation decision:
+          </p>
+          <ul>
+            <li>
+              <strong>Image Preview:</strong> A thumbnail of the uploaded image
+              (click to view full size)
+            </li>
+            <li>
+              <strong>Uploader:</strong> Link to the user who uploaded the image
+            </li>
+            <li>
+              <strong>Character:</strong> The character this image is associated
+              with
+            </li>
+            <li>
+              <strong>Community:</strong> Which community the image belongs to
+            </li>
+            <li><strong>Timestamp:</strong> When the image was uploaded</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Tip:</strong> Click on the image thumbnail to open a
+            full-size view for detailed inspection before making your decision.
+          </div>
+
+          <p>At the bottom of each card are three action buttons:</p>
+          <ul>
+            <li>
+              <span class="badge badge-success">Approve</span> - Makes the image
+              publicly visible
+            </li>
+            <li>
+              <span class="badge badge-danger">Reject</span> - Hides the image
+              and notifies the uploader
+            </li>
+            <li>
+              <strong>Send to back</strong> - Decides nothing. Moves the image
+              behind the ones you can rule on now (see step 6)
+            </li>
+          </ul>
+        </div>
+        <div class="screenshot">
+          <img
+            src="moderation-card-buttons.png"
+            alt="Moderation card with approve, send to back and reject buttons"
+          />
+          <div class="screenshot-caption">
+            A moderation card showing image metadata and action buttons
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: Approving an Image -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Approving an Image</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            If the image meets community guidelines, click the green
+            <strong>Approve</strong> button. This will:
+          </p>
+          <ul>
+            <li>
+              Set the image's moderation status to <strong>APPROVED</strong>
+            </li>
+            <li>Make the image visible to all community members</li>
+            <li>
+              Send an email notification to the uploader confirming approval
+            </li>
+            <li>Remove the image from the moderation queue</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Note:</strong> Approval is immediate. A success toast will
+            appear confirming the action, and the queue will automatically
+            refresh.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: Rejecting an Image -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Rejecting an Image</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            If an image violates community guidelines, click the red
+            <strong>Reject</strong> button to open the rejection modal. You must
+            select a reason for the rejection:
+          </p>
+          <ul>
+            <li>
+              <strong>Terms of Service Violation:</strong> Content violates
+              community guidelines or terms of service
+            </li>
+            <li>
+              <strong>NSFW Not Tagged:</strong> Adult content that was not
+              properly marked as NSFW
+            </li>
+            <li>
+              <strong>Spam / Low Quality:</strong> Spam, duplicate content, or
+              extremely low quality images
+            </li>
+            <li>
+              <strong>Copyright Issue:</strong> Potential copyright infringement
+              or unauthorized use
+            </li>
+            <li>
+              <strong>Other:</strong> Other reason not listed above (requires
+              explanation)
+            </li>
+          </ul>
+
+          <p>
+            You can also provide <strong>Additional Details</strong> to give the
+            uploader more context about why their image was rejected. This
+            message will be included in the notification email.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Important:</strong> If you select "Other" as the reason, you
+            must provide additional details explaining the rejection. The
+            "Reject Image" button remains disabled until all required fields are
+            completed.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="reject-modal-complete.png"
+            alt="Reject image modal with reason selection"
+          />
+          <div class="screenshot-caption">
+            The rejection modal with predefined reasons and optional details
+            field
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Sending an Image to the Back -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">Sending an Image to the Back</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Not every upload can be ruled on when you reach it. The art may be
+            mid-reupload, the call may need a second opinion, or you may want to
+            ask the uploader something first. The queue is ordered oldest-first,
+            so an image like that sits at the front and is passed over by every
+            moderator who opens the queue.
+          </p>
+          <p>
+            Click <strong>Send to back</strong> to move it behind the images
+            that can be decided now. You may leave a short note saying why,
+            which the next moderator to reach the card sees.
+          </p>
+
+          <div class="highlight-box">
+            <strong>This is not a decision.</strong> The image stays
+            <strong>PENDING</strong> and hidden, the pending count does not
+            change, and the uploader is told nothing — no approval email, no
+            rejection email. Nothing is written to the moderation log, because
+            no moderation happened.
+          </div>
+          <p>
+            A card that has been sent to the back carries a
+            <strong>Deferred ×N</strong> badge counting how many times it has
+            happened, with the last note and who left it. A climbing number
+            means the queue holds an upload everyone is avoiding and nobody is
+            resolving, and the uploader is still waiting on it.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 7: After Moderation -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">After Moderation</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            After processing an image, the queue automatically refreshes. When
+            all pending images have been reviewed, you'll see the "All Caught
+            Up!" message indicating the queue is empty.
+          </p>
+
+          <p>
+            All moderation actions are logged for audit purposes, including:
+          </p>
+          <ul>
+            <li>Which moderator took the action</li>
+            <li>The action taken (approve/reject)</li>
+            <li>The rejection reason (if applicable)</li>
+            <li>Any additional details provided</li>
+            <li>Timestamp of the action</li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Email Notifications:</strong> Uploaders receive an email for
+            both approvals and rejections. Rejection emails include the reason
+            and any additional details you provided, helping users understand
+            how to improve future uploads.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <h2 class="step-title">Rewarding an Upload</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            If your community uses currency, and you can grant it as well as
+            moderate, each card carries an <strong>Award currency</strong> panel
+            listing everyone the upload names &mdash; whoever uploaded it,
+            whoever is credited as the artist, and whoever owns the character
+            depicted.
+          </p>
+
+          <div class="screenshot">
+            <img
+              src="currency-award-widget.png"
+              alt="The moderation queue with an Award currency panel listing the uploader and the artist, each with an amount field"
+            />
+            <div class="screenshot-caption">
+              The panel sits between the upload's details and the Approve
+              button.
+            </div>
+          </div>
+
+          <p>
+            One person can be several of those at once, so they appear once with
+            all their roles listed rather than several times. Fill in what each
+            should receive and press <strong>Approve</strong> as usual &mdash;
+            the approval and the payment happen together, so an upload is never
+            approved without the reward it was promised, or paid for without
+            going live.
+          </p>
+
+          <p>
+            Leaving the amounts blank is normal, and approves exactly as it
+            always has.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Not everyone sees this.</strong> Moderating images and
+            handing out currency are separate permissions. If you can only
+            moderate, the panel is simply absent and nothing else about the
+            queue changes.
+          </div>
+
+          <div class="highlight-box">
+            <strong>Rewards are public.</strong> Every award appears in the
+            community's currency ledger, naming who granted it and linking back
+            to the upload it was for. See the
+            <a href="currency.html">Community Currency walkthrough</a>.
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Image Moderation Queue &bull; Feature Documentation</p>
+      </footer>
+    </div>
     <script src="lightbox.js" defer></script>
-</body>
+  </body>
 </html>
