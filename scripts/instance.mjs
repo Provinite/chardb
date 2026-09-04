@@ -22,6 +22,9 @@
  *   node scripts/instance.mjs --list       # every claimed slot on this machine
  *   node scripts/instance.mjs --claim 0    # take a specific slot for this checkout
  *   node scripts/instance.mjs --release    # give this checkout's slot back
+ *   node scripts/instance.mjs --prune      # free slots whose checkout is gone
+ *   node scripts/instance.mjs --reset      # free every slot on this machine
+ *   ...either with --containers            # also tear down orphaned containers
  *
  * See docs/PARALLEL_INSTANCES.md.
  */
@@ -443,6 +446,71 @@ export function describe(slot, root = null) {
   };
 }
 
+// --------------------------------------------------------------- cleanup
+
+/**
+ * Compose projects on this machine that no live checkout claims.
+ *
+ * Derived from docker rather than from the registry, so it also catches
+ * projects whose slot was already reclaimed by a newer checkout. Slot 0's
+ * project is `docker`, which cannot match `chardb-w<n>` -- the legacy
+ * instance's containers and its postgres_data volume are structurally out of
+ * reach here, and the explicit guard below says so.
+ */
+function findOrphanedProjects() {
+  let running;
+  try {
+    running = execFileSync(
+      "docker",
+      ["ps", "-a", "--format", '{{.Label "com.docker.compose.project"}}'],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "ignore"] },
+    );
+  } catch {
+    return null; // no docker on this machine, or the daemon is down
+  }
+
+  const live = new Set(
+    listClaims()
+      .filter((claim) => fs.existsSync(claim.path))
+      .map((claim) => describe(claim.slot).names.composeProject),
+  );
+
+  return [...new Set(running.split("\n").map((line) => line.trim()))]
+    .filter((project) => /^chardb-w\d+$/.test(project))
+    .filter((project) => project !== LEGACY_COMPOSE_PROJECT)
+    .filter((project) => !live.has(project))
+    .sort();
+}
+
+/** Lists orphaned compose projects, and tears them down when asked to. */
+function reportOrphanedProjects(remove) {
+  const orphans = findOrphanedProjects();
+  if (orphans === null) {
+    console.log("\nSkipped the docker check: no reachable docker daemon.");
+    return;
+  }
+  if (orphans.length === 0) {
+    console.log("\nNo orphaned compose projects.");
+    return;
+  }
+
+  if (!remove) {
+    console.log(
+      `\n${orphans.length} orphaned compose project(s) still hold containers:`,
+    );
+    for (const project of orphans) console.log(`  ${project}`);
+    console.log("Re-run with --containers to remove them and their volumes.");
+    return;
+  }
+
+  for (const project of orphans) {
+    console.log(`\nremoving ${project}`);
+    execFileSync("docker", ["compose", "-p", project, "down", "-v"], {
+      stdio: "inherit",
+    });
+  }
+}
+
 // ------------------------------------------------------------------- cli
 
 function main(argv) {
@@ -485,6 +553,39 @@ function main(argv) {
       /* nothing pinned */
     }
     console.log(`Released the instance slot held by ${root}`);
+    return;
+  }
+
+  if (has("--prune") || has("--reset")) {
+    const all = has("--reset");
+    const dropped = withLock(() => {
+      const registry = readRegistry();
+      const out = [];
+      for (const [slot, info] of Object.entries(registry.slots)) {
+        if (all || !fs.existsSync(info.path)) {
+          out.push({ slot: Number(slot), path: info.path });
+          delete registry.slots[slot];
+        }
+      }
+      writeRegistry(registry);
+      return out;
+    });
+
+    if (dropped.length === 0) console.log("No slots to free.");
+    for (const { slot, path: freed } of dropped) {
+      console.log(`freed  ${String(slot).padStart(2)}  ${freed}`);
+    }
+    if (all) {
+      // Pin files elsewhere survive, and that is deliberate: every checkout
+      // re-claims the slot it had, so a reset costs nothing but the orphans.
+      try {
+        fs.unlinkSync(pinPath(root));
+      } catch {
+        /* nothing pinned here */
+      }
+    }
+
+    reportOrphanedProjects(has("--containers"));
     return;
   }
 

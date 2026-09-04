@@ -60,6 +60,8 @@ yarn instance --claim 3  # take a specific slot for this checkout
 yarn instance:list       # every claimed slot on this machine
 yarn instance:init       # prepare a fresh checkout (see below)
 yarn instance:release    # hand the slot back
+yarn instance:prune      # free slots whose checkout is gone (see Cleaning up)
+yarn instance:reset      # free every slot on this machine
 ```
 
 Everything else is the command you already know. `yarn dev`,
@@ -134,6 +136,35 @@ Three properties make this safe with several agents starting at once:
 If all 15 non-legacy slots are held by live checkouts, resolution fails with the
 list of occupants rather than handing out a duplicate. Free one with
 `yarn instance:release`, delete a checkout, or raise `CHARDB_SLOTS`.
+
+## Cleaning up
+
+A checkout you **delete** needs no cleanup: its slot is reclaimed the moment
+another checkout looks for a free one. What accumulates instead is checkouts
+that still exist but are abandoned — they hold a slot forever — and containers
+left behind by either kind.
+
+```bash
+yarn instance:prune               # free slots whose checkout is gone from disk
+yarn instance:reset               # free every slot on this machine
+yarn instance --prune --containers   # ...and `docker compose down -v` the orphans
+yarn instance --reset --containers
+```
+
+Both print what they freed, then list the compose projects no live checkout
+claims. Without `--containers` that is all they do — the list is a report, and
+you get the command to act on it. With it, each orphaned project is torn down
+with its volumes.
+
+`reset` is close to free: pin files elsewhere survive, so every live checkout
+re-claims the slot it already had the next time it runs. What it actually
+releases is the abandoned ones.
+
+**The legacy instance is out of reach here.** Orphan detection only ever matches
+project names of the form `chardb-w<n>`, and slot 0's project is `docker` — so
+`docker_postgres_data`, the one volume with real data in it, cannot be caught by
+any of these commands. Shared tooling (`chardb-shared`) is equally immune; stop
+it with `yarn shared:down`.
 
 ## What is shared, and what that costs
 

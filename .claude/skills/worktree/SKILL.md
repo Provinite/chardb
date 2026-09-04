@@ -71,6 +71,19 @@ Deleting the checkout directory is also enough — a slot held by a path that no
 longer exists is reclaimed automatically. `yarn shared:up`'s containers are
 machine-wide; leave them running.
 
+To clear up after checkouts that were abandoned rather than released:
+
+```bash
+yarn instance:prune                  # free slots whose checkout is gone
+yarn instance:reset                  # free every slot on this machine
+yarn instance --prune --containers   # ...and tear down the orphaned containers
+```
+
+Both list the orphaned compose projects and only remove them when given
+`--containers`. Neither can touch slot 0's project (`docker`, holding the real
+postgres volume) or the shared tooling — orphan detection matches
+`chardb-w<n>` only.
+
 ## Rules
 
 - **Never touch another checkout.** No `git checkout`, no edits, no
