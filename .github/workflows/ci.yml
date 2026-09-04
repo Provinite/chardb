@@ -305,20 +305,28 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
-      # Deliberately first, and deliberately without --wait.
+      # Deliberately first, deliberately without --wait, and deliberately
+      # backgrounded.
       #
-      # provision() starts this same container from inside the suite, but it
-      # does so after Node, Chromium and the workspace packages are set up --
-      # roughly 35s in -- and then blocks ~13s on the pg_isready healthcheck.
-      # None of that setup depends on Postgres, so the wait is pure critical
-      # path. Starting it here lets it come up alongside them.
+      # provision() starts this same container from inside the suite, but only
+      # after Node, Chromium and the workspace packages are ready -- ~50s in --
+      # and then blocks ~13s on the pg_isready healthcheck. Nothing in that
+      # setup depends on Postgres, so the wait is pure critical path.
       #
-      # This changes nothing about what runs: `up -d --wait` in provision() is
-      # idempotent and returns immediately once the container is already
-      # healthy. It is also CI-only -- a local `yarn e2e` still brings its own
-      # Postgres up exactly as before.
+      # The `&` is the entire point. Steps run sequentially and `up -d` blocks
+      # until the containers are created and started, image pull included, so
+      # without it this step simply moves the 10s earlier instead of overlapping
+      # it -- measured, and worth exactly nothing. Backgrounded, the pull and
+      # start happen during the steps that follow.
+      #
+      # Fire-and-forget is acceptable here because it is not the only attempt:
+      # provision() runs the same idempotent `up -d --wait` later and is what
+      # actually gates on the container being healthy. If this fails, that one
+      # reports it.
+      #
+      # CI-only -- a local `yarn e2e` still brings its own Postgres up as before.
       - name: Start test Postgres in the background
-        run: docker compose -f docker/compose.test.yml up -d
+        run: nohup docker compose -f docker/compose.test.yml up -d > /dev/null 2>&1 &
 
       - name: Enable Corepack
         run: corepack enable
