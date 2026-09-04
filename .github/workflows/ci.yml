@@ -354,13 +354,13 @@ jobs:
       # ----------------------------------------------------------------------
       # Build caches.
       #
-      # Every shard otherwise repeats the same ~42s of compilation: 11s of
-      # workspace packages, a 20s nest build and an 11s vite build, all from an
-      # identical tree. Caching the OUTPUT and skipping the build on a hit is
-      # the only shape that helps here -- building once in a preceding job and
-      # fanning the artifacts out would convert parallel work into serial work
-      # and cost ~42s of wall clock, since the shards already build
-      # concurrently.
+      # Every shard otherwise repeats the same compilation from an identical
+      # tree: a 20s nest build and an 11s vite build, both cached here, plus an
+      # 11s workspace package build that deliberately is not (see below).
+      # Caching the OUTPUT and skipping the build on a hit is the only shape
+      # that helps -- building once in a preceding job and fanning the
+      # artifacts out would convert parallel work into serial work and cost
+      # ~42s of wall clock, since the shards already build concurrently.
       #
       # These are per-run-independent: all shards of one run start together and
       # so all hit or all miss. The payoff is across runs -- a re-push that does
@@ -372,22 +372,17 @@ jobs:
       # a false hit passes CI on code that is not the code being merged.
       # ----------------------------------------------------------------------
 
-      # prisma generate writes into node_modules/.prisma, which the
-      # node_modules cache above already carries; only the tsc output is here.
-      - name: Restore workspace package builds
-        id: pkg-dist-cache
-        uses: actions/cache@v6
-        with:
-          path: |
-            packages/database/dist
-            packages/shared/dist
-            packages/ui/dist
-          key: pkg-dist-${{ runner.os }}-${{ hashFiles('packages/*/src/**', 'packages/*/package.json', 'packages/*/tsconfig*.json', 'packages/database/prisma/schema.prisma', 'yarn.lock') }}
-
-      # @chardb/database's build runs prisma generate; apps/* consume these
-      # packages through their `types` field, which points at gitignored dist/.
+      # This step is NOT cached, and must not be. It runs prisma generate, and
+      # packages/database/src/index.ts is `export * from "@prisma/client"` --
+      # so the package's dist re-exports a client that only exists once
+      # generate has run. Caching the dist and skipping the build restores a
+      # dist whose re-exports resolve to nothing: the backend then dies at
+      # import time on `NotificationKind` being undefined. Observed, not
+      # theorised. The 11s this costs is the price of the client being real.
+      #
+      # apps/* consume these packages through their `types` field, which points
+      # at gitignored dist/.
       - name: Build workspace packages
-        if: steps.pkg-dist-cache.outputs.cache-hit != 'true'
         run: |
           yarn workspaces foreach -A --parallel \
             --include '@chardb/database' \
