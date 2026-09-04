@@ -7,6 +7,12 @@ const num = (v: string | undefined, d: number): number => (v ? Number(v) : d);
  * Reserved for future parallelism. Playwright sets TEST_PARALLEL_INDEX per worker;
  * every port and the database name are offset by it, so raising `workers` above 1
  * is a config change rather than a rewrite.
+ *
+ * This is *within-run* parallelism and is a second, independent axis from the
+ * instance slot: the slot (scripts/instance.mjs) separates concurrent worktrees
+ * by supplying E2E_* below, and each slot reserves 60 ports for its workers, so
+ * the two never interfere. Stride 2 because each worker needs a backend and a
+ * frontend port.
  */
 const idx = num(process.env.TEST_PARALLEL_INDEX, 0);
 
@@ -60,12 +66,12 @@ const pgPassword = process.env.E2E_PG_PASSWORD ?? "test_password";
  * That one is `prisma db push`-ed and has no _prisma_migrations table, so
  * `migrate deploy` against it would misbehave.
  */
-const dbName = `${process.env.E2E_DB_NAME ?? "chardb_e2e_ui"}${idx ? `_w${idx}` : ""}`;
+const dbName = `${process.env.E2E_DB_NAME ?? "chardb_e2e_ui"}${idx ? `_p${idx}` : ""}`;
 
 export const CFG = {
   host,
-  backendPort: num(process.env.E2E_BACKEND_PORT, 4310) + idx * 10,
-  frontendPort: num(process.env.E2E_FRONTEND_PORT, 4311) + idx * 10,
+  backendPort: num(process.env.E2E_BACKEND_PORT, 4310) + idx * 2,
+  frontendPort: num(process.env.E2E_FRONTEND_PORT, 4311) + idx * 2,
 
   pgHost,
   pgPort,

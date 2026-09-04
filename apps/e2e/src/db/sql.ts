@@ -57,7 +57,7 @@ export async function assertSuperuser(client: pg.Client): Promise<void> {
     throw new Error(
       `E2E reset requires a superuser role (it sets session_replication_role to ` +
         `disable FK triggers during restore). Current user is not a superuser.\n` +
-        `The chardb-postgres-test container grants this to POSTGRES_USER by default -- ` +
+        `The postgres-test container grants this to POSTGRES_USER by default -- ` +
         `check that docker/services/postgres-test.yml has not been changed.`,
     );
   }

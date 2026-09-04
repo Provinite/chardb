@@ -3,7 +3,6 @@ import type { CommandModule } from "yargs";
 import { CharDBClient } from "../graphql/client";
 import { parseDescription } from "../parser/description-parser";
 import { extractTraitAndRarity } from "../parser/trait-extractor";
-import type { DownloadedDeviation } from "../types/downloaded-deviation";
 import { DownloadedDeviationSchema } from "../types/downloaded-deviation";
 import type { MappingConfig } from "../types/mapping-config";
 import {
@@ -40,7 +39,9 @@ export const scaffoldMappingCommand: CommandModule<object, ScaffoldArgs> = {
     },
     "api-url": {
       type: "string" as const,
-      default: "http://localhost:4000/graphql",
+      // GRAPHQL_ENDPOINT is set per checkout by scripts/with-instance.mjs, so
+      // this reaches the backend of the instance you are actually running.
+      default: process.env.GRAPHQL_ENDPOINT ?? "http://localhost:4000/graphql",
       describe: "CharDB GraphQL API URL",
     },
     email: {

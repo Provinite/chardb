@@ -26,6 +26,12 @@ RUN yarn workspace @chardb/shared build
 RUN yarn workspace @chardb/ui build
 
 # Build frontend application
+#
+# Vite inlines VITE_* at BUILD time, so the backend origin has to be a build
+# arg. Setting it in the container's runtime `environment:` does nothing -- the
+# value is already baked into the bundle by then.
+ARG VITE_API_URL=http://localhost:4000
+ENV VITE_API_URL=${VITE_API_URL}
 RUN yarn workspace @chardb/frontend build
 
 # Production stage

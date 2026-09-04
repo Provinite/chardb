@@ -1,30 +1,27 @@
 #!/bin/bash
+set -euo pipefail
+
+# Starts this worktree's development instance: its own containers on its own
+# ports, plus the machine-wide shared tooling. Safe to run from several
+# worktrees at once -- see docs/PARALLEL_INSTANCES.md.
+
+cd "$(dirname "$0")"
 
 echo "🚀 Starting CharDB Development Environment"
+yarn instance
 
-# Start database services in background
-echo "📊 Starting PostgreSQL and Redis..."
-docker compose -f docker/docker compose.yml up -d postgres redis
+echo ""
+echo "📊 Starting this instance's PostgreSQL and LocalStack..."
+# --wait blocks on the healthchecks, so nothing below races a container that is
+# not accepting connections yet.
+yarn instance:up
 
-# Wait for services to be healthy
-echo "⏳ Waiting for database to be ready..."
-sleep 5
+echo "🔭 Starting shared tooling (Jaeger, MailHog, OTEL collector)..."
+yarn shared:up
 
-# Check if postgres is ready
-until docker compose -f docker/docker compose.yml exec postgres pg_isready -U chardb -d chardb_dev > /dev/null 2>&1; do
-  echo "⏳ Waiting for PostgreSQL..."
-  sleep 2
-done
-
-echo "✅ Database is ready!"
-
-# Run database migrations if needed
 echo "🔄 Running database setup..."
-cd apps/backend
-yarn db:generate
-yarn db:push
-cd ../..
+yarn workspace @chardb/database db:generate
+yarn workspace @chardb/database db:push
 
-# Start development servers
 echo "🎯 Starting development servers..."
 yarn dev

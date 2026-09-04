@@ -18,7 +18,9 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: chardb-postgres
+    # No container_name: it would pin this service to one name machine-wide and
+    # make a second instance fail to start. Compose derives a unique name from
+    # COMPOSE_PROJECT_NAME instead (see scripts/instance.mjs).
     environment:
       POSTGRES_DB: ${POSTGRES_DB:-chardb_dev}
       POSTGRES_USER: ${POSTGRES_USER:-chardb}

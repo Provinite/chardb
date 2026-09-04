@@ -25,8 +25,12 @@ services:
     volumes:
       - ${OTEL_CONFIG_PATH:-../otel-collector-config.yml}:/etc/otel-collector-config.yml
     ports:
-      - "${OTEL_GRPC_PORT:-4317}:4317"   # OTLP gRPC receiver
-      - "${OTEL_HTTP_PORT:-4318}:4318"   # OTLP HTTP receiver
+      # 4319/4320, not 4317/4318: those are what otel-collector-config.yml
+      # actually binds, and 4317/4318 on the host already belong to Jaeger's own
+      # OTLP receivers. The old mapping published two ports nothing listened on
+      # and collided with jaeger the moment both ran in one compose project.
+      - "${OTEL_GRPC_PORT:-4319}:4319"   # OTLP gRPC receiver
+      - "${OTEL_HTTP_PORT:-4320}:4320"   # OTLP HTTP receiver
       - "${OTEL_METRICS_PORT:-8889}:8889"   # Prometheus metrics
     depends_on:
       jaeger:

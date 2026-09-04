@@ -1,0 +1,26 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+
+# Shared developer tooling — ONE copy per machine, not one per instance.
+#
+#   yarn shared:up      (idempotent from any worktree)
+#   yarn shared:down
+#
+# Jaeger, MailHog and the OTEL collector are read-only inspection surfaces with
+# no per-instance state worth isolating, and each wants a well-known port a
+# human types into a browser (16686, 8025). Running N copies would mean N sets
+# of ports to remember for no benefit, so they are pinned to the fixed project
+# name `chardb-shared` and every instance points at them.
+#
+# Traces stay separable because each instance sends a distinct
+# OTEL_SERVICE_NAME (chardb-backend, chardb-backend-w1, ...) — pick your
+# instance from the service dropdown at http://localhost:16686.
+#
+# MailHog does NOT separate instances: all captured mail lands in one inbox at
+# http://localhost:8025. That is the accepted cost of sharing it.
+
+name: chardb-shared
+
+include:
+  - services/jaeger.yml
+  - services/otel-collector.yml
+  - services/mailhog.yml

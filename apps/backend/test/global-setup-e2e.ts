@@ -1,7 +1,13 @@
 import { execSync } from "child_process";
 import * as path from "path";
 
+/**
+ * TEST_DATABASE_URL is injected per worktree by scripts/with-instance.mjs, so
+ * two agents can run this suite at once against their own containers. The
+ * fallback is what instance slot 0 -- the primary checkout -- resolves to.
+ */
 const TEST_DATABASE_URL =
+  process.env.TEST_DATABASE_URL ??
   "postgresql://test_user:test_password@localhost:5440/chardb_test";
 const COMPOSE_FILE = path.resolve(
   __dirname,

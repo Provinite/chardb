@@ -45,24 +45,30 @@ docker compose -f docker compose.prod.yml up
 
 ### Testing (E2E)
 
-The e2e tests require a dedicated test database on port 5440. Run once before executing tests:
+The e2e tests use a dedicated test database — port 5440 on the default instance,
+`POSTGRES_TEST_PORT` elsewhere (see [docs/PARALLEL_INSTANCES.md](../docs/PARALLEL_INSTANCES.md)).
+
+**Nothing needs to be started first.** `test:e2e` starts the container and pushes
+the schema itself, in its Jest global setup:
 
 ```bash
-# From repo root — start the test database
-docker compose -f docker/compose.test.yml up -d
+yarn workspace @chardb/backend test:e2e
+```
 
-# Push the Prisma schema to the test database
+The rest is only for driving the test database by hand:
+
+```bash
+# Start the test database on its own, without running anything
 yarn workspace @chardb/backend test:e2e:setup
 
-# Run e2e tests
-yarn workspace @chardb/backend test:e2e
-
-# Or combined — set up and run
-yarn workspace @chardb/backend test:e2e:setup && yarn workspace @chardb/backend test:e2e
-
-# Tear down when done
-docker compose -f docker/compose.test.yml down
+# Tear down when done — this also stops the instance's dev containers
+yarn instance:down
 ```
+
+Note `test:e2e:setup` only starts the container. It used to push the schema too,
+but with no `DATABASE_URL` of its own that push landed on the *development*
+database; the schema push belongs to `test:e2e`, which targets the test database
+explicitly.
 
 The test database is ephemeral (no persistent volume) — data is discarded when the container stops.
 Both the dev database (5433) and test database (5440) can run simultaneously.

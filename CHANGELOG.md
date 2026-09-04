@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Parallel instances**: every checkout — git worktree or separate clone — gets
+  its own ports, databases and containers, so several agents can run the app and
+  the e2e suites at once. `yarn instance` prints a checkout's numbers; see
+  `docs/PARALLEL_INSTANCES.md`.
+
 - **Docs screenshots open full size on click**, with their caption underneath
   and arrow-key paging. One `lightbox.js` on all sixteen walkthrough pages,
   no markup changes; it reads a `.screenshot-caption`, a `figcaption`, or the
@@ -64,6 +69,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kinds: the buttons, the confirms, the ledger's event label and reason, and
   the docs. The `USE` transaction kind is unchanged — it is a record, not
   copy. `Using Items` is now `Redeeming Items`; its URL is unchanged.
+
+- **Jaeger, MailHog and the OTEL collector moved to `docker/compose.shared.yml`**
+  (`yarn shared:up`), one copy per machine rather than one per checkout. Once:
+  `docker rm -f chardb-jaeger chardb-mailhog chardb-otel-collector`.
+
+### Fixed
+
+- **The OTEL collector published 4317/4318, which nothing in it listens on** and
+  which Jaeger already owns; it now publishes the 4319/4320 its config binds.
 
 ## [v11.8.0] - 2026-09-01
 

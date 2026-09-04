@@ -3,23 +3,32 @@
 # Test Database Service
 #
 # Ephemeral PostgreSQL instance for running e2e tests.
-# Uses a distinct port (5440) and credentials so it can run alongside
-# the dev database (5433) without conflict.
+# Uses a distinct port (5440 on the default instance) and credentials so it can
+# run alongside the dev database (5433) without conflict.
+#
+# Every port and name here is instance-scoped: POSTGRES_TEST_PORT and
+# COMPOSE_PROJECT_NAME come from scripts/instance.mjs, so each worktree gets its
+# own container on its own port and two agents can run e2e concurrently.
 #
 # No persistent volume — data is intentionally discarded between test runs.
 
 services:
   postgres-test:
     image: postgres:15-alpine
-    container_name: chardb-postgres-test
+    # No container_name: it would pin this to one name machine-wide and make a
+    # second instance's e2e run fail to start.
     environment:
-      POSTGRES_DB: chardb_test
-      POSTGRES_USER: test_user
-      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: ${POSTGRES_TEST_DB:-chardb_test}
+      POSTGRES_USER: ${E2E_PG_USER:-test_user}
+      POSTGRES_PASSWORD: ${E2E_PG_PASSWORD:-test_password}
     ports:
-      - "5440:5432"
+      - "${POSTGRES_TEST_PORT:-5440}:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U test_user -d chardb_test"]
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${E2E_PG_USER:-test_user} -d ${POSTGRES_TEST_DB:-chardb_test}",
+        ]
       interval: 5s
       timeout: 5s
       retries: 10

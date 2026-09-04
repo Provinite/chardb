@@ -139,7 +139,9 @@ export const importCommand: CommandModule<object, ImportArgs> = {
   builder: {
     "api-url": {
       type: "string" as const,
-      default: "http://localhost:4000/graphql",
+      // GRAPHQL_ENDPOINT is set per checkout by scripts/with-instance.mjs, so
+      // this reaches the backend of the instance you are actually running.
+      default: process.env.GRAPHQL_ENDPOINT ?? "http://localhost:4000/graphql",
       describe: "CharDB GraphQL API URL",
     },
     email: {
