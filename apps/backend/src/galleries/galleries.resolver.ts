@@ -232,7 +232,13 @@ export class GalleriesResolver {
     return this.galleriesService.getGalleryLikesCount(gallery.id);
   }
 
-  @AllowAnyAuthenticated()
+  // Unauthenticated, like `likesCount` above it and `Media.userHasLiked`.
+  // Gating this one was what broke the public gallery page for signed-out
+  // visitors: the field is non-nullable, so its 403 propagated to the parent
+  // and nulled the whole gallery, and the page reported a public gallery as
+  // missing (#173). The service has always answered `false` for a viewer it
+  // does not know -- the decorator was the only thing disagreeing.
+  @AllowUnauthenticated()
   @ResolveField("userHasLiked", () => Boolean)
   async resolveUserHasLiked(
     @Parent() gallery: Gallery,
