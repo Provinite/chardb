@@ -43,7 +43,7 @@ is not topological and trips over `@chardb/ui`.
 
 ```bash
 yarn shared:up   # once per machine: Jaeger 16686, MailHog 8025, OTEL collector
-yarn infra:up    # this instance's postgres + localstack
+yarn instance:up # this instance's postgres + localstack
 yarn dev         # backend + frontend on this instance's ports
 ```
 
@@ -63,9 +63,13 @@ yarn dc logs -f backend                        # docker compose for this instanc
 ## Finishing
 
 ```bash
-yarn infra:down        # stop this instance's containers
+yarn instance:down     # stop this instance's dev servers AND its containers
 yarn instance:release  # hand the slot back so a future checkout can reuse it
 ```
+
+**Always run `yarn instance:down` when you finish.** `yarn dev` outlives whatever
+started it — if your session is killed rather than interrupted, nest and vite
+keep running and keep the ports. Nothing else will clean them up.
 
 Deleting the checkout directory is also enough — a slot held by a path that no
 longer exists is reclaimed automatically. `yarn shared:up`'s containers are
@@ -76,13 +80,13 @@ To clear up after checkouts that were abandoned rather than released:
 ```bash
 yarn instance:prune                  # free slots whose checkout is gone
 yarn instance:reset                  # free every slot on this machine
-yarn instance --prune --containers   # ...and tear down the orphaned containers
+yarn instance --prune --stop         # ...and stop what those slots left running
 ```
 
-Both list the orphaned compose projects and only remove them when given
-`--containers`. Neither can touch slot 0's project (`docker`, holding the real
-postgres volume) or the shared tooling — orphan detection matches
-`chardb-w<n>` only.
+Both report the dev servers still on freed ports and the orphaned compose
+projects, and only act on them when given `--stop`. Neither can touch slot 0's
+project (`docker`, holding the real postgres volume) or the shared tooling —
+orphan detection matches `chardb-w<n>` only.
 
 ## Rules
 

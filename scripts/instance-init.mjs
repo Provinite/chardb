@@ -90,7 +90,7 @@ function main() {
   );
   console.log("");
   console.log(
-    "Next: `yarn infra:up` then `yarn dev` (or `yarn instance` for the full table).",
+    "Next: `yarn instance:up` then `yarn dev` (or `yarn instance` for the full table).",
   );
 }
 

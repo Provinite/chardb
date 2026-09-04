@@ -70,10 +70,10 @@ the rest are wrapped in `scripts/with-instance.mjs`, which resolves the slot and
 injects the derived environment into the child process.
 
 ```bash
-yarn shared:up   # once per machine: Jaeger, MailHog, OTEL collector
-yarn infra:up    # this instance's postgres + localstack
-yarn infra:down
-yarn dc <args>   # docker compose for this instance, e.g. `yarn dc logs -f backend`
+yarn shared:up      # once per machine: Jaeger, MailHog, OTEL collector
+yarn instance:up    # this instance's postgres + localstack
+yarn instance:down  # stop this instance's dev servers AND its containers
+yarn dc <args>      # docker compose for this instance, e.g. `yarn dc logs -f backend`
 ```
 
 ## Setting up a new checkout
@@ -139,22 +139,42 @@ list of occupants rather than handing out a duplicate. Free one with
 
 ## Cleaning up
 
-A checkout you **delete** needs no cleanup: its slot is reclaimed the moment
-another checkout looks for a free one. What accumulates instead is checkouts
-that still exist but are abandoned — they hold a slot forever — and containers
-left behind by either kind.
+An instance leaves two kinds of thing running, and they leak differently.
+
+**Containers** are owned by compose and stop when told. **Dev servers are the
+half that actually leaks:** `yarn dev` outlives whatever started it, so an agent
+killed rather than interrupted leaves a nest and a vite holding the slot's ports
+until someone notices. Nothing runs cleanup for a process that was SIGKILLed.
+
+So the habit that matters is one command when you finish:
 
 ```bash
-yarn instance:prune               # free slots whose checkout is gone from disk
-yarn instance:reset               # free every slot on this machine
-yarn instance --prune --containers   # ...and `docker compose down -v` the orphans
-yarn instance --reset --containers
+yarn instance:down            # this checkout's dev servers AND its containers
+yarn instance:down --volumes  # ...and drop its database too
 ```
 
-Both print what they freed, then list the compose projects no live checkout
-claims. Without `--containers` that is all they do — the list is a report, and
-you get the command to act on it. With it, each orphaned project is torn down
-with its volumes.
+A checkout you **delete** needs no slot cleanup: it is reclaimed the moment
+another checkout looks for a free one. What accumulates is checkouts that still
+exist but are abandoned, plus whatever either kind left running.
+
+```bash
+yarn instance:prune                  # free slots whose checkout is gone from disk
+yarn instance:reset                  # free every slot on this machine
+yarn instance --prune --stop         # ...and stop what those slots left running
+yarn instance --reset --stop
+```
+
+Both print what they freed, then report two things: dev servers still holding
+the ports of freed slots, and compose projects no live checkout claims. Without
+`--stop` that is all they do — the lists are a report, and you get the
+command to act on them. With it, the servers are stopped (SIGTERM, then SIGKILL
+after a grace period) and each orphaned project is torn down with its volumes.
+
+A dev server is only ever stopped if it was started from the checkout that owns
+those ports — verified through `/proc/<pid>/cwd`, not assumed from the port
+number. The one exception is a checkout that no longer exists on disk, where a
+leftover server cannot prove its provenance and nothing else could be listening
+there anyway.
 
 `reset` is close to free: pin files elsewhere survive, so every live checkout
 re-claims the slot it already had the next time it runs. What it actually

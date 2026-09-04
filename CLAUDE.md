@@ -11,7 +11,7 @@
 - Jaeger trace analysis is available at http://localhost:16686
 - You may start the servers if they are not running with `yarn dev:agent`
   - Frontend: localhost:3000 only on the slot-0 checkout. **Any other checkout uses different ports** — run `yarn instance` to see them, and never assume 3000/4000. See [docs/PARALLEL_INSTANCES.md](./docs/PARALLEL_INSTANCES.md) and the `worktree` skill
-- Several checkouts — git worktrees or separate clones, treated identically — can run the app and the e2e suite at the same time: each gets its own ports, databases and containers automatically. `yarn instance:init` prepares a fresh checkout; `yarn infra:up` starts its containers; `yarn shared:up` starts the machine-wide Jaeger/MailHog/OTEL
+- Several checkouts — git worktrees or separate clones, treated identically — can run the app and the e2e suite at the same time: each gets its own ports, databases and containers automatically. `yarn instance:init` prepares a fresh checkout; `yarn instance:up` starts its containers; `yarn instance:down` stops its servers and containers when you are done; `yarn shared:up` starts the machine-wide Jaeger/MailHog/OTEL
 - The `gh` cli is configured for github interactions beyond simple `git` cli commands
 - Local Development Credentials: See [LOCAL_DEV_SEED_DATA.md](./LOCAL_DEV_SEED_DATA.md) for test user personas and credentials
 - Browser E2E tests live in `apps/e2e` (Playwright). Run with `yarn workspace @chardb/e2e e2e` — it starts Postgres, the backend, and the frontend itself; nothing needs to be running first. See [apps/e2e/README.md](./apps/e2e/README.md), especially "Adding a preset"

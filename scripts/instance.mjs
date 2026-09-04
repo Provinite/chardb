@@ -24,7 +24,7 @@
  *   node scripts/instance.mjs --release    # give this checkout's slot back
  *   node scripts/instance.mjs --prune      # free slots whose checkout is gone
  *   node scripts/instance.mjs --reset      # free every slot on this machine
- *   ...either with --containers            # also tear down orphaned containers
+ *   ...either with --stop                  # also stop what those slots left running
  *
  * See docs/PARALLEL_INSTANCES.md.
  */
@@ -32,6 +32,7 @@ import * as fs from "node:fs";
 import * as os from "node:os";
 import * as path from "node:path";
 import { execFileSync } from "node:child_process";
+import { findInstanceServers, stopProcesses } from "./lib/processes.mjs";
 
 /** How many concurrent checkouts the port layout reserves room for. */
 export const SLOT_COUNT = Number(process.env.CHARDB_SLOTS ?? 16);
@@ -492,6 +493,42 @@ function findOrphanedProjects() {
     .sort();
 }
 
+/**
+ * Dev servers still holding the ports of slots we just freed.
+ *
+ * These are the ones nothing else will ever clean up: the checkout is gone or
+ * abandoned, so no `yarn instance:down` will ever be run from it, and the
+ * process outlives whatever started it.
+ */
+function reapOrphanedServers(dropped, remove) {
+  const stray = [];
+  for (const { slot, path: freed } of dropped) {
+    const { ports } = describe(slot);
+    stray.push(
+      ...findInstanceServers(
+        [ports.frontend, ports.backend, ports.e2eBackend, ports.e2eFrontend],
+        freed,
+        // The checkout is gone, so a leftover server cannot prove it came from
+        // there -- but nothing else can be listening on that slot's ports.
+        { orphaned: !fs.existsSync(freed) },
+      ),
+    );
+  }
+  if (stray.length === 0) return;
+
+  if (!remove) {
+    console.log(`\n${stray.length} dev server(s) still on freed ports:`);
+    for (const { pid, port } of stray)
+      console.log(`  pid ${pid}  port ${port}`);
+    console.log("Re-run with --stop to stop them too.");
+    return;
+  }
+  for (const { pid, port } of stray) {
+    console.log(`stopping  pid ${pid}  (port ${port})`);
+  }
+  stopProcesses(stray);
+}
+
 /** Lists orphaned compose projects, and tears them down when asked to. */
 function reportOrphanedProjects(remove) {
   const orphans = findOrphanedProjects();
@@ -509,7 +546,7 @@ function reportOrphanedProjects(remove) {
       `\n${orphans.length} orphaned compose project(s) still hold containers:`,
     );
     for (const project of orphans) console.log(`  ${project}`);
-    console.log("Re-run with --containers to remove them and their volumes.");
+    console.log("Re-run with --stop to remove them and their volumes.");
     return;
   }
 
@@ -595,7 +632,8 @@ function main(argv) {
       }
     }
 
-    reportOrphanedProjects(has("--containers"));
+    reapOrphanedServers(dropped, has("--stop"));
+    reportOrphanedProjects(has("--stop"));
     return;
   }
 

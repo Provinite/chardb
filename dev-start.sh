@@ -14,7 +14,7 @@ echo ""
 echo "📊 Starting this instance's PostgreSQL and LocalStack..."
 # --wait blocks on the healthchecks, so nothing below races a container that is
 # not accepting connections yet.
-yarn infra:up
+yarn instance:up
 
 echo "🔭 Starting shared tooling (Jaeger, MailHog, OTEL collector)..."
 yarn shared:up

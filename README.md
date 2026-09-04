@@ -74,7 +74,7 @@ chardb/
 4. **Start the development environment**
    ```bash
    # Start this checkout's services (PostgreSQL, LocalStack)
-   yarn infra:up
+   yarn instance:up
 
    # Start the machine-wide tooling (MailHog, Jaeger, OTEL collector) — once
    yarn shared:up
