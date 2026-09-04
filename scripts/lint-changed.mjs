@@ -17,7 +17,7 @@ import path from "node:path";
 import { ESLint } from "eslint";
 
 const LINT_EXTS = new Set([".ts", ".tsx", ".js", ".jsx", ".cjs", ".mjs"]);
-const PRETTIER_EXTS = new Set([...LINT_EXTS, ".css"]);
+const PRETTIER_EXTS = new Set([...LINT_EXTS, ".css", ".html"]);
 
 function git(...args) {
   return execFileSync("git", args, { encoding: "utf8" }).trim();

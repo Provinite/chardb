@@ -1,433 +1,562 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CharDB - Character Hosting Platform</title>
-  <meta name="description" content="A modern character hosting platform for creative communities. Organize characters, manage species and traits, and build vibrant creative spaces.">
-  <link rel="canonical" href="https://provinite.github.io/chardb/">
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="CharDB">
-  <meta property="og:title" content="CharDB - Character Hosting Platform">
-  <meta property="og:description" content="A modern character hosting platform for creative communities. Organize characters, manage species and traits, and build vibrant creative spaces.">
-  <meta property="og:url" content="https://provinite.github.io/chardb/">
-  <meta name="twitter:card" content="summary">
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CharDB - Character Hosting Platform</title>
+    <meta
+      name="description"
+      content="A modern character hosting platform for creative communities. Organize characters, manage species and traits, and build vibrant creative spaces."
+    />
+    <link rel="canonical" href="https://provinite.github.io/chardb/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="CharDB - Character Hosting Platform" />
+    <meta
+      property="og:description"
+      content="A modern character hosting platform for creative communities. Organize characters, manage species and traits, and build vibrant creative spaces."
+    />
+    <meta property="og:url" content="https://provinite.github.io/chardb/" />
+    <meta name="twitter:card" content="summary" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      line-height: 1.6;
-      color: #1a1a2e;
-      background: #fafafa;
-    }
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #1a1a2e;
+        background: #fafafa;
+      }
 
-    /* Hero Section */
-    .hero {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      padding: 4rem 2rem;
-      text-align: center;
-    }
+      /* Hero Section */
+      .hero {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 4rem 2rem;
+        text-align: center;
+      }
 
-    .hero h1 {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
-
-    .hero .tagline {
-      font-size: 1.25rem;
-      opacity: 0.9;
-      max-width: 600px;
-      margin: 0 auto 2rem;
-    }
-
-    .hero-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .btn {
-      display: inline-block;
-      padding: 0.875rem 2rem;
-      border-radius: 8px;
-      text-decoration: none;
-      font-weight: 600;
-      transition: transform 0.2s, box-shadow 0.2s;
-    }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    }
-
-    .btn-primary {
-      background: white;
-      color: #667eea;
-    }
-
-    .btn-secondary {
-      background: rgba(255,255,255,0.15);
-      color: white;
-      border: 2px solid rgba(255,255,255,0.5);
-    }
-
-    /* Features Section */
-    .features {
-      padding: 4rem 2rem;
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .features h2 {
-      text-align: center;
-      font-size: 2rem;
-      margin-bottom: 3rem;
-      color: #1a1a2e;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-    }
-
-    .feature-card {
-      background: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      text-align: center;
-    }
-
-    .feature-icon {
-      font-size: 3rem;
-      margin-bottom: 1rem;
-    }
-
-    .feature-card h3 {
-      color: #1a1a2e;
-      margin-bottom: 0.5rem;
-    }
-
-    .feature-card p {
-      color: #666;
-      font-size: 0.95rem;
-    }
-
-    /* Documentation Section */
-    .docs {
-      background: #f0f4ff;
-      padding: 4rem 2rem;
-    }
-
-    .docs-container {
-      max-width: 1200px;
-      margin: 0 auto;
-    }
-
-    .docs h2 {
-      text-align: center;
-      font-size: 2rem;
-      margin-bottom: 1rem;
-      color: #1a1a2e;
-    }
-
-    .docs-subtitle {
-      text-align: center;
-      color: #666;
-      margin-bottom: 3rem;
-    }
-
-    .docs-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .doc-card {
-      background: white;
-      border-radius: 12px;
-      padding: 1.5rem;
-      text-decoration: none;
-      color: inherit;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-      transition: transform 0.2s, box-shadow 0.2s;
-      display: flex;
-      align-items: flex-start;
-      gap: 1rem;
-    }
-
-    .doc-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 30px rgba(0,0,0,0.12);
-    }
-
-    .doc-icon {
-      font-size: 2rem;
-      flex-shrink: 0;
-    }
-
-    .doc-content h3 {
-      color: #667eea;
-      margin-bottom: 0.25rem;
-    }
-
-    .doc-content p {
-      color: #666;
-      font-size: 0.9rem;
-      margin: 0;
-    }
-
-    /* Footer */
-    footer {
-      background: #1a1a2e;
-      color: white;
-      padding: 2rem;
-      text-align: center;
-    }
-
-    footer p {
-      opacity: 0.7;
-    }
-
-    footer a {
-      color: #a8b4ff;
-      text-decoration: none;
-    }
-
-    footer a:hover {
-      text-decoration: underline;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
       .hero h1 {
-        font-size: 2rem;
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
       }
 
       .hero .tagline {
-        font-size: 1rem;
+        font-size: 1.25rem;
+        opacity: 0.9;
+        max-width: 600px;
+        margin: 0 auto 2rem;
       }
-    }
-  </style>
-</head>
-<body>
-  <!-- Hero -->
-  <section class="hero">
-    <h1>CharDB</h1>
-    <p class="tagline">
-      A modern character hosting platform for creative communities.
-      Organize characters, manage species, and build vibrant creative spaces.
-    </p>
-    <div class="hero-buttons">
-      <a href="https://github.com/Provinite/chardb" class="btn btn-primary">View on GitHub</a>
-      <a href="#docs" class="btn btn-secondary">Documentation</a>
-    </div>
-  </section>
 
-  <!-- Features -->
-  <section class="features">
-    <h2>Platform Features</h2>
-    <div class="features-grid">
-      <div class="feature-card">
-        <div class="feature-icon">🎨</div>
-        <h3>Character Profiles</h3>
-        <p>Rich character profiles with custom traits, galleries, and detailed information pages.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🌿</div>
-        <h3>Species Management</h3>
-        <p>Create and manage species with variants, traits, and customizable attributes.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">👥</div>
-        <h3>Community Tools</h3>
-        <p>Role-based permissions, member management, and community-specific settings.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🖼️</div>
-        <h3>Media Galleries</h3>
-        <p>Upload and organize artwork with support for multiple image formats and galleries.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🔒</div>
-        <h3>Content Moderation</h3>
-        <p>Built-in moderation queue for reviewing uploaded content before publication.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">🎁</div>
-        <h3>Item System</h3>
-        <p>Create custom items and manage community inventories with Discord integration.</p>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon">📜</div>
-        <h3>Item Ledger</h3>
-        <p>Every item movement is recorded — who moved it, to whom, and why. Each item's history is public within its community.</p>
-      </div>
-    </div>
-  </section>
+      .hero-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
 
-  <!-- Documentation -->
-  <section class="docs" id="docs">
-    <div class="docs-container">
-      <h2>Documentation</h2>
-      <p class="docs-subtitle">Learn how to use CharDB's features</p>
-      <div class="docs-grid">
-        <a href="docs/member-characters.html" class="doc-card">
-          <div class="doc-icon">&#x1F464;</div>
-          <div class="doc-content">
-            <h3>A Member's Characters and Galleries</h3>
-            <p>See everything one member owns from their profile, filtered to what you are allowed to see.</p>
-          </div>
-        </a>
-        <a href="docs/fuzzy-navigation.html" class="doc-card">
-          <div class="doc-icon">🔍</div>
-          <div class="doc-content">
-            <h3>Fuzzy Page Navigation</h3>
-            <p>Quickly jump to any page using the "Find page" spotlight with fuzzy search and keyboard shortcuts.</p>
-          </div>
-        </a>
-        <a href="docs/image-uploads.html" class="doc-card">
-          <div class="doc-icon">🖼️</div>
-          <div class="doc-content">
-            <h3>Uploading Images</h3>
-            <p>Step-by-step guide to uploading images, setting titles, adding metadata, and organizing media.</p>
-          </div>
-        </a>
-        <a href="docs/image-moderation.html" class="doc-card">
-          <div class="doc-icon">🛡️</div>
-          <div class="doc-content">
-            <h3>Image Moderation Queue</h3>
-            <p>Walkthrough of the content moderation workflow for reviewing and approving uploaded images.</p>
-          </div>
-        </a>
-        <a href="docs/using-items.html" class="doc-card">
-          <div class="doc-icon">🎟️</div>
-          <div class="doc-content">
-            <h3>Redeeming Items</h3>
-            <p>Walkthrough of spending an item for what it is worth: staff setting a payout per currency, why only consumable types can carry one, what a holder sees before and when they press Use, the three places the redemption shows up afterwards, and every reason a use is refused. Starting point for the per-kind pages below.</p>
-          </div>
-        </a>
-        <a href="docs/character-rarity.html" class="doc-card">
-          <div class="doc-icon">💎</div>
-          <div class="doc-content">
-            <h3>Changing a Character's Rarity</h3>
-            <p>Walkthrough of moving a character between species variants after creation: why the species stays permanent but its rarity does not, why it is staff's and not the owner's, how traits that do not exist at the new rarity are re-routed before the save, and the public record every change leaves.</p>
-          </div>
-        </a>
-        <a href="docs/edit-kits.html" class="doc-card">
-          <div class="doc-icon">✏️</div>
-          <div class="doc-content">
-            <h3>Edit Kits</h3>
-            <p>Walkthrough of the item that buys one trait change: staff choosing which species and variants a kit works on, the two ways a member reaches the editor, why a proposed change does not touch the character until staff approve it, what the pending badge actually means, and why refusing one hands the kit back.</p>
-          </div>
-        </a>
-        <a href="docs/myo-slots.html" class="doc-card">
-          <div class="doc-icon">🎨</div>
-          <div class="doc-content">
-            <h3>MYO Slots</h3>
-            <p>Walkthrough of the item that makes a character: staff choosing the species and which of its variants a ticket allows, why holding the ticket is the permission, what the create page hides and narrows, the trait review that follows, the number an approval assigns, and why refusing one hands the ticket back.</p>
-          </div>
-        </a>
-        <a href="docs/variant-change-items.html" class="doc-card">
-          <div class="doc-icon">↗️</div>
-          <div class="doc-content">
-            <h3>Variant Change Items</h3>
-            <p>Walkthrough of the item that moves a character between variants, such as a Rarity Upgrade Ticket: staff setting the destination and what it can be spent on, the two routes to redeeming one, why there is no review and no undo, replacing a trait the new variant does not carry, and the records a redemption leaves.</p>
-          </div>
-        </a>
-        <a href="docs/item-ledger.html" class="doc-card">
-          <div class="doc-icon">📜</div>
-          <div class="doc-content">
-            <h3>Item Ledger &amp; Provenance</h3>
-            <p>Walkthrough of the item history trail: the community ledger, per-item provenance, public reasons versus private staff notes, what happens to revoked items, using an item up for what its type pays, and the staff views for circulation and member holdings.</p>
-          </div>
-        </a>
-        <a href="docs/currency.html" class="doc-card">
-          <div class="doc-icon">🪙</div>
-          <div class="doc-content">
-            <h3>Community Currency</h3>
-            <p>Walkthrough of community-defined currencies: creating one, the three ways it is earned — staff grants, approved uploads, and using an item that pays — member wallets, member-to-member transfers, the public ledger, and why balances can never go negative.</p>
-          </div>
-        </a>
-        <a href="docs/trading.html" class="doc-card">
-          <div class="doc-icon">🔁</div>
-          <div class="doc-content">
-            <h3>Trading</h3>
-            <p>Walkthrough of member-to-member trading: building an offer of items, characters and coin, why the two sides of the composer are not symmetrical, the six things a character's owner can be open to and which one has a mechanism behind it, browsing for characters by those, answering and countering an offer, what settlement re-checks, and the ledger lines it leaves behind.</p>
-          </div>
-        </a>
-        <a href="docs/shop.html" class="doc-card">
-          <div class="doc-icon">🛒</div>
-          <div class="doc-content">
-            <h3>Coin Shop</h3>
-            <p>Walkthrough of selling items for community currency: listings with several ways to pay, prices asking for more than one currency, the cart and its confirmation, stock and per-member limits, and the fifteen-minute undo on every purchase.</p>
-          </div>
-        </a>
-        <a href="docs/notifications.html" class="doc-card">
-          <div class="doc-icon">🔔</div>
-          <div class="doc-content">
-            <h3>Notifications</h3>
-            <p>Walkthrough of in-app notifications: the top-bar badge, the dropdown, the full history with an unread filter, why seen and read are different things, and what happens to a notification whose subject is later deleted.</p>
-          </div>
-        </a>
-        <a href="docs/trait-review.html" class="doc-card">
-          <div class="doc-icon">📋</div>
-          <div class="doc-content">
-            <h3>Trait Review Queue</h3>
-            <p>Walkthrough of the trait review moderation workflow for reviewing and approving character trait values.</p>
-          </div>
-        </a>
-        <a href="docs/trait-clarifiers.html" class="doc-card">
-          <div class="doc-icon">🏷️</div>
-          <div class="doc-content">
-            <h3>Trait Clarifiers</h3>
-            <p>Attach optional free-text notes to trait values (e.g., "Common Body Mod (extra horns)") to keep grouping traits expressive.</p>
-          </div>
-        </a>
-        <a href="docs/character-deletion.html" class="doc-card">
-          <div class="doc-icon">🗑️</div>
-          <div class="doc-content">
-            <h3>Character Deletion &amp; Species Removal</h3>
-            <p>Walkthrough of the admin tools for soft-deleting characters and removing them from a species, including inline actions in the Trait Review Queue.</p>
-          </div>
-        </a>
-        <a href="docs/markdown-formatting.html" class="doc-card">
-          <div class="doc-icon">✍️</div>
-          <div class="doc-content">
-            <h3>Markdown Formatting</h3>
-            <p>Learn the supported Markdown syntax for character details, media descriptions, and other text fields.</p>
-          </div>
-        </a>
-        <a href="https://github.com/Provinite/chardb#readme" class="doc-card">
-          <div class="doc-icon">📖</div>
-          <div class="doc-content">
-            <h3>Getting Started</h3>
-            <p>Installation guide and setup instructions for running CharDB locally or in production.</p>
-          </div>
-        </a>
-        <a href="https://github.com/Provinite/chardb/blob/main/DEPLOYMENT_GUIDE.md" class="doc-card">
-          <div class="doc-icon">🚀</div>
-          <div class="doc-content">
-            <h3>Deployment Guide</h3>
-            <p>Deploy CharDB to AWS with Docker, including infrastructure setup and configuration.</p>
-          </div>
-        </a>
-      </div>
-    </div>
-  </section>
+      .btn {
+        display: inline-block;
+        padding: 0.875rem 2rem;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: 600;
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+      }
 
-  <!-- Footer -->
-  <footer>
-    <p>CharDB &bull; A character hosting platform</p>
-  </footer>
-</body>
+      .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      }
+
+      .btn-primary {
+        background: white;
+        color: #667eea;
+      }
+
+      .btn-secondary {
+        background: rgba(255, 255, 255, 0.15);
+        color: white;
+        border: 2px solid rgba(255, 255, 255, 0.5);
+      }
+
+      /* Features Section */
+      .features {
+        padding: 4rem 2rem;
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .features h2 {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 3rem;
+        color: #1a1a2e;
+      }
+
+      .features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+      }
+
+      .feature-card {
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        text-align: center;
+      }
+
+      .feature-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+      }
+
+      .feature-card h3 {
+        color: #1a1a2e;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-card p {
+        color: #666;
+        font-size: 0.95rem;
+      }
+
+      /* Documentation Section */
+      .docs {
+        background: #f0f4ff;
+        padding: 4rem 2rem;
+      }
+
+      .docs-container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+
+      .docs h2 {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+        color: #1a1a2e;
+      }
+
+      .docs-subtitle {
+        text-align: center;
+        color: #666;
+        margin-bottom: 3rem;
+      }
+
+      .docs-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+      }
+
+      .doc-card {
+        background: white;
+        border-radius: 12px;
+        padding: 1.5rem;
+        text-decoration: none;
+        color: inherit;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        display: flex;
+        align-items: flex-start;
+        gap: 1rem;
+      }
+
+      .doc-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+      }
+
+      .doc-icon {
+        font-size: 2rem;
+        flex-shrink: 0;
+      }
+
+      .doc-content h3 {
+        color: #667eea;
+        margin-bottom: 0.25rem;
+      }
+
+      .doc-content p {
+        color: #666;
+        font-size: 0.9rem;
+        margin: 0;
+      }
+
+      /* Footer */
+      footer {
+        background: #1a1a2e;
+        color: white;
+        padding: 2rem;
+        text-align: center;
+      }
+
+      footer p {
+        opacity: 0.7;
+      }
+
+      footer a {
+        color: #a8b4ff;
+        text-decoration: none;
+      }
+
+      footer a:hover {
+        text-decoration: underline;
+      }
+
+      /* Responsive */
+      @media (max-width: 768px) {
+        .hero h1 {
+          font-size: 2rem;
+        }
+
+        .hero .tagline {
+          font-size: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Hero -->
+    <section class="hero">
+      <h1>CharDB</h1>
+      <p class="tagline">
+        A modern character hosting platform for creative communities. Organize
+        characters, manage species, and build vibrant creative spaces.
+      </p>
+      <div class="hero-buttons">
+        <a href="https://github.com/Provinite/chardb" class="btn btn-primary"
+          >View on GitHub</a
+        >
+        <a href="#docs" class="btn btn-secondary">Documentation</a>
+      </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+      <h2>Platform Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon">🎨</div>
+          <h3>Character Profiles</h3>
+          <p>
+            Rich character profiles with custom traits, galleries, and detailed
+            information pages.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🌿</div>
+          <h3>Species Management</h3>
+          <p>
+            Create and manage species with variants, traits, and customizable
+            attributes.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">👥</div>
+          <h3>Community Tools</h3>
+          <p>
+            Role-based permissions, member management, and community-specific
+            settings.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🖼️</div>
+          <h3>Media Galleries</h3>
+          <p>
+            Upload and organize artwork with support for multiple image formats
+            and galleries.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🔒</div>
+          <h3>Content Moderation</h3>
+          <p>
+            Built-in moderation queue for reviewing uploaded content before
+            publication.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">🎁</div>
+          <h3>Item System</h3>
+          <p>
+            Create custom items and manage community inventories with Discord
+            integration.
+          </p>
+        </div>
+        <div class="feature-card">
+          <div class="feature-icon">📜</div>
+          <h3>Item Ledger</h3>
+          <p>
+            Every item movement is recorded — who moved it, to whom, and why.
+            Each item's history is public within its community.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Documentation -->
+    <section class="docs" id="docs">
+      <div class="docs-container">
+        <h2>Documentation</h2>
+        <p class="docs-subtitle">Learn how to use CharDB's features</p>
+        <div class="docs-grid">
+          <a href="docs/member-characters.html" class="doc-card">
+            <div class="doc-icon">&#x1F464;</div>
+            <div class="doc-content">
+              <h3>A Member's Characters and Galleries</h3>
+              <p>
+                See everything one member owns from their profile, filtered to
+                what you are allowed to see.
+              </p>
+            </div>
+          </a>
+          <a href="docs/fuzzy-navigation.html" class="doc-card">
+            <div class="doc-icon">🔍</div>
+            <div class="doc-content">
+              <h3>Fuzzy Page Navigation</h3>
+              <p>
+                Quickly jump to any page using the "Find page" spotlight with
+                fuzzy search and keyboard shortcuts.
+              </p>
+            </div>
+          </a>
+          <a href="docs/image-uploads.html" class="doc-card">
+            <div class="doc-icon">🖼️</div>
+            <div class="doc-content">
+              <h3>Uploading Images</h3>
+              <p>
+                Step-by-step guide to uploading images, setting titles, adding
+                metadata, and organizing media.
+              </p>
+            </div>
+          </a>
+          <a href="docs/image-moderation.html" class="doc-card">
+            <div class="doc-icon">🛡️</div>
+            <div class="doc-content">
+              <h3>Image Moderation Queue</h3>
+              <p>
+                Walkthrough of the content moderation workflow for reviewing and
+                approving uploaded images.
+              </p>
+            </div>
+          </a>
+          <a href="docs/using-items.html" class="doc-card">
+            <div class="doc-icon">🎟️</div>
+            <div class="doc-content">
+              <h3>Redeeming Items</h3>
+              <p>
+                Walkthrough of spending an item for what it is worth: staff
+                setting a payout per currency, why only consumable types can
+                carry one, what a holder sees before and when they press Use,
+                the three places the redemption shows up afterwards, and every
+                reason a use is refused. Starting point for the per-kind pages
+                below.
+              </p>
+            </div>
+          </a>
+          <a href="docs/character-rarity.html" class="doc-card">
+            <div class="doc-icon">💎</div>
+            <div class="doc-content">
+              <h3>Changing a Character's Rarity</h3>
+              <p>
+                Walkthrough of moving a character between species variants after
+                creation: why the species stays permanent but its rarity does
+                not, why it is staff's and not the owner's, how traits that do
+                not exist at the new rarity are re-routed before the save, and
+                the public record every change leaves.
+              </p>
+            </div>
+          </a>
+          <a href="docs/edit-kits.html" class="doc-card">
+            <div class="doc-icon">✏️</div>
+            <div class="doc-content">
+              <h3>Edit Kits</h3>
+              <p>
+                Walkthrough of the item that buys one trait change: staff
+                choosing which species and variants a kit works on, the two ways
+                a member reaches the editor, why a proposed change does not
+                touch the character until staff approve it, what the pending
+                badge actually means, and why refusing one hands the kit back.
+              </p>
+            </div>
+          </a>
+          <a href="docs/myo-slots.html" class="doc-card">
+            <div class="doc-icon">🎨</div>
+            <div class="doc-content">
+              <h3>MYO Slots</h3>
+              <p>
+                Walkthrough of the item that makes a character: staff choosing
+                the species and which of its variants a ticket allows, why
+                holding the ticket is the permission, what the create page hides
+                and narrows, the trait review that follows, the number an
+                approval assigns, and why refusing one hands the ticket back.
+              </p>
+            </div>
+          </a>
+          <a href="docs/variant-change-items.html" class="doc-card">
+            <div class="doc-icon">↗️</div>
+            <div class="doc-content">
+              <h3>Variant Change Items</h3>
+              <p>
+                Walkthrough of the item that moves a character between variants,
+                such as a Rarity Upgrade Ticket: staff setting the destination
+                and what it can be spent on, the two routes to redeeming one,
+                why there is no review and no undo, replacing a trait the new
+                variant does not carry, and the records a redemption leaves.
+              </p>
+            </div>
+          </a>
+          <a href="docs/item-ledger.html" class="doc-card">
+            <div class="doc-icon">📜</div>
+            <div class="doc-content">
+              <h3>Item Ledger &amp; Provenance</h3>
+              <p>
+                Walkthrough of the item history trail: the community ledger,
+                per-item provenance, public reasons versus private staff notes,
+                what happens to revoked items, using an item up for what its
+                type pays, and the staff views for circulation and member
+                holdings.
+              </p>
+            </div>
+          </a>
+          <a href="docs/currency.html" class="doc-card">
+            <div class="doc-icon">🪙</div>
+            <div class="doc-content">
+              <h3>Community Currency</h3>
+              <p>
+                Walkthrough of community-defined currencies: creating one, the
+                three ways it is earned — staff grants, approved uploads, and
+                using an item that pays — member wallets, member-to-member
+                transfers, the public ledger, and why balances can never go
+                negative.
+              </p>
+            </div>
+          </a>
+          <a href="docs/trading.html" class="doc-card">
+            <div class="doc-icon">🔁</div>
+            <div class="doc-content">
+              <h3>Trading</h3>
+              <p>
+                Walkthrough of member-to-member trading: building an offer of
+                items, characters and coin, why the two sides of the composer
+                are not symmetrical, the six things a character's owner can be
+                open to and which one has a mechanism behind it, browsing for
+                characters by those, answering and countering an offer, what
+                settlement re-checks, and the ledger lines it leaves behind.
+              </p>
+            </div>
+          </a>
+          <a href="docs/shop.html" class="doc-card">
+            <div class="doc-icon">🛒</div>
+            <div class="doc-content">
+              <h3>Coin Shop</h3>
+              <p>
+                Walkthrough of selling items for community currency: listings
+                with several ways to pay, prices asking for more than one
+                currency, the cart and its confirmation, stock and per-member
+                limits, and the fifteen-minute undo on every purchase.
+              </p>
+            </div>
+          </a>
+          <a href="docs/notifications.html" class="doc-card">
+            <div class="doc-icon">🔔</div>
+            <div class="doc-content">
+              <h3>Notifications</h3>
+              <p>
+                Walkthrough of in-app notifications: the top-bar badge, the
+                dropdown, the full history with an unread filter, why seen and
+                read are different things, and what happens to a notification
+                whose subject is later deleted.
+              </p>
+            </div>
+          </a>
+          <a href="docs/trait-review.html" class="doc-card">
+            <div class="doc-icon">📋</div>
+            <div class="doc-content">
+              <h3>Trait Review Queue</h3>
+              <p>
+                Walkthrough of the trait review moderation workflow for
+                reviewing and approving character trait values.
+              </p>
+            </div>
+          </a>
+          <a href="docs/trait-clarifiers.html" class="doc-card">
+            <div class="doc-icon">🏷️</div>
+            <div class="doc-content">
+              <h3>Trait Clarifiers</h3>
+              <p>
+                Attach optional free-text notes to trait values (e.g., "Common
+                Body Mod (extra horns)") to keep grouping traits expressive.
+              </p>
+            </div>
+          </a>
+          <a href="docs/character-deletion.html" class="doc-card">
+            <div class="doc-icon">🗑️</div>
+            <div class="doc-content">
+              <h3>Character Deletion &amp; Species Removal</h3>
+              <p>
+                Walkthrough of the admin tools for soft-deleting characters and
+                removing them from a species, including inline actions in the
+                Trait Review Queue.
+              </p>
+            </div>
+          </a>
+          <a href="docs/markdown-formatting.html" class="doc-card">
+            <div class="doc-icon">✍️</div>
+            <div class="doc-content">
+              <h3>Markdown Formatting</h3>
+              <p>
+                Learn the supported Markdown syntax for character details, media
+                descriptions, and other text fields.
+              </p>
+            </div>
+          </a>
+          <a href="https://github.com/Provinite/chardb#readme" class="doc-card">
+            <div class="doc-icon">📖</div>
+            <div class="doc-content">
+              <h3>Getting Started</h3>
+              <p>
+                Installation guide and setup instructions for running CharDB
+                locally or in production.
+              </p>
+            </div>
+          </a>
+          <a
+            href="https://github.com/Provinite/chardb/blob/main/DEPLOYMENT_GUIDE.md"
+            class="doc-card"
+          >
+            <div class="doc-icon">🚀</div>
+            <div class="doc-content">
+              <h3>Deployment Guide</h3>
+              <p>
+                Deploy CharDB to AWS with Docker, including infrastructure setup
+                and configuration.
+              </p>
+            </div>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      <p>CharDB &bull; A character hosting platform</p>
+    </footer>
+  </body>
 </html>

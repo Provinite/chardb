@@ -4,15 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Trading - Feature Walkthrough</title>
-    <meta name="description" content="Member-to-member trading: build an offer of items and coin, answer one, counter it, and read what settlement wrote to both ledgers." />
-    <link rel="canonical" href="https://provinite.github.io/chardb/docs/trading.html" />
+    <meta
+      name="description"
+      content="Member-to-member trading: build an offer of items and coin, answer one, counter it, and read what settlement wrote to both ledgers."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/trading.html"
+    />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="CharDB" />
     <meta property="og:title" content="Trading" />
-    <meta property="og:description" content="Member-to-member trading: build an offer of items and coin, answer one, counter it, and read what settlement wrote to both ledgers." />
-    <meta property="og:url" content="https://provinite.github.io/chardb/docs/trading.html" />
-    <meta property="og:image" content="https://provinite.github.io/chardb/docs/trade-composer.png" />
-    <meta property="og:image:alt" content="The CharDB trade composer, showing your items on the left, the table in the middle, and their items on the right." />
+    <meta
+      property="og:description"
+      content="Member-to-member trading: build an offer of items and coin, answer one, counter it, and read what settlement wrote to both ledgers."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/trading.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/trade-composer.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The CharDB trade composer, showing your items on the left, the table in the middle, and their items on the right."
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <style>
       * {
@@ -254,8 +272,8 @@
           <p>
             Characters are opt-in and off by default. A character only appears
             on a table if its owner has opened it to trades, and that stays true
-            right up to the moment the offer settles. <a href="#characters">Step
-            2</a> covers it.
+            right up to the moment the offer settles.
+            <a href="#characters">Step 2</a> covers it.
           </p>
 
           <div class="feature-list">
@@ -296,9 +314,11 @@
         </div>
         <div class="step-content">
           <p>
-            Start from a member's row on the community's <strong>Members</strong>
+            Start from a member's row on the community's
+            <strong>Members</strong>
             page. The composer has three panes: what you hold on the left, what
-            they hold on the right, and the table you are building in the middle.
+            they hold on the right, and the table you are building in the
+            middle.
           </p>
         </div>
         <div class="screenshot">
@@ -313,12 +333,14 @@
 
         <div class="step-content">
           <p>
-            <strong>The two panes are not symmetrical, and that is the point.</strong>
+            <strong
+              >The two panes are not symmetrical, and that is the point.</strong
+            >
             Your side lists every copy separately, because you are here and can
-            choose which one leaves. Their side lists one line per item type with
-            a count, because any copy will do — pinning one of theirs would make
-            the offer fail the moment they traded that particular copy to someone
-            else.
+            choose which one leaves. Their side lists one line per item type
+            with a count, because any copy will do — pinning one of theirs would
+            make the offer fail the moment they traded that particular copy to
+            someone else.
           </p>
           <p>
             An item type its community has marked untradeable shows as
@@ -342,11 +364,11 @@
           <p>
             The currency picker offers only what you actually hold, and leaves
             out two kinds you might: <strong>archived</strong> ones, which keep
-            their balances and stay readable but refuse new transactions at
-            all, and <strong>untradeable</strong> ones, which are perfectly
-            alive — granted, spent, refunded — but cannot move between members.
-            Either would be refused at send over a rule you can do nothing
-            about from here.
+            their balances and stay readable but refuse new transactions at all,
+            and <strong>untradeable</strong> ones, which are perfectly alive —
+            granted, spent, refunded — but cannot move between members. Either
+            would be refused at send over a rule you can do nothing about from
+            here.
           </p>
         </div>
       </div>
@@ -366,8 +388,11 @@
           <p>
             It sits in a list of six things an owner can say they are open to —
             sale for money, sale for community currency, trades for characters,
-            trades for art, offers, and free to a good home. <strong>Open to
-            Trades is the only one of the six with a mechanism behind it.</strong>
+            trades for art, offers, and free to a good home.
+            <strong
+              >Open to Trades is the only one of the six with a mechanism behind
+              it.</strong
+            >
             The other five are notices: they say what you will consider, and
             anyone interested has to ask you in the comments. Ticking "open to
             trades for art" does not let anyone put your character on a table.
@@ -412,7 +437,9 @@
         </div>
         <div class="step-content">
           <p>
-            <strong>The panes only list characters that are already open.</strong>
+            <strong
+              >The panes only list characters that are already open.</strong
+            >
             A closed one is absent rather than locked — which is the opposite of
             how an untradeable <em>item</em> is shown, and deliberately so. An
             item type is locked by community staff, so leaving it visible
@@ -541,8 +568,8 @@
             alt="The CharDB trades list scoped to Thornfield Hollow, showing an incoming offer of a Sunfeather Charm for a Trait Change Potion and 120 coin, above a declined outgoing offer of the same charm for a potion and 75 coin."
           />
           <div class="screenshot-caption">
-            Open, Settled and All. The chip under the heading narrows the list to
-            one community; the × clears it.
+            Open, Settled and All. The chip under the heading narrows the list
+            to one community; the × clears it.
           </div>
         </div>
         <div class="step-content">
@@ -588,7 +615,10 @@
             <tbody>
               <tr>
                 <td><span class="pill pending">Awaiting an answer</span></td>
-                <td>Open. The recipient can accept, decline or counter; the sender can withdraw</td>
+                <td>
+                  Open. The recipient can accept, decline or counter; the sender
+                  can withdraw
+                </td>
               </tr>
               <tr>
                 <td><span class="pill settled">Settled</span></td>
@@ -610,18 +640,19 @@
           </table>
 
           <div class="highlight-box">
-            <strong>Expiry is a deadline, not an event.</strong> An offer carries
-            a date, and it is judged against the clock whenever anyone looks at
-            it — including at the moment someone tries to accept. Nothing has to
-            run on a schedule to sweep old offers, and there is no window in
-            which an offer reads as expired but can still be accepted.
+            <strong>Expiry is a deadline, not an event.</strong> An offer
+            carries a date, and it is judged against the clock whenever anyone
+            looks at it — including at the moment someone tries to accept.
+            Nothing has to run on a schedule to sweep old offers, and there is
+            no window in which an offer reads as expired but can still be
+            accepted.
           </div>
 
           <p>
             Accepting sends no choice about which of their copies you get. A
             by-type line means any of them will do, so the giver's side picks —
-            newest first — rather than asking you a question you have no basis to
-            answer.
+            newest first — rather than asking you a question you have no basis
+            to answer.
           </p>
         </div>
       </div>
@@ -651,11 +682,11 @@
         </div>
         <div class="step-content">
           <p>
-            What was coming to you becomes what you ask for, what was being asked
-            of you becomes rows picked from your own holdings, and the coin flips
-            direction. Anything they have traded away since they wrote the offer
-            is quietly dropped rather than carried over into a request that could
-            not be filled.
+            What was coming to you becomes what you ask for, what was being
+            asked of you becomes rows picked from your own holdings, and the
+            coin flips direction. Anything they have traded away since they
+            wrote the offer is quietly dropped rather than carried over into a
+            request that could not be filled.
           </p>
           <div class="highlight-box">
             <strong>Opening a counter costs you nothing.</strong> Their offer
@@ -704,7 +735,8 @@
             <strong>An offer that fails at accept is not a bug.</strong> It is
             the honest outcome of an offer that has gone stale, and the message
             names the line that no longer holds. The alternative — settling
-            anyway — would move items their owner had already promised elsewhere.
+            anyway — would move items their owner had already promised
+            elsewhere.
           </div>
           <p>
             The character check is the one that matters most, because it is
@@ -755,8 +787,8 @@
             alt="The item ledger showing two Traded rows from one settlement: a Sunfeather Charm going from othermember to member, and a Trait Change Potion going from member to othermember, both reading 'Trade settled'."
           />
           <div class="screenshot-caption">
-            One line per leg. A trade moves two different things in two different
-            directions, so it is two lines rather than one.
+            One line per leg. A trade moves two different things in two
+            different directions, so it is two lines rather than one.
           </div>
         </div>
         <div class="screenshot">
@@ -796,6 +828,6 @@
         <p>CharDB Trading &bull; Feature Documentation</p>
       </footer>
     </div>
-      <script src="lightbox.js" defer></script>
+    <script src="lightbox.js" defer></script>
   </body>
 </html>

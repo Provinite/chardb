@@ -38,6 +38,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **A "Changing a Character's Rarity" walkthrough** (`docs/docs/character-rarity.html`).
 
+### Fixed
+
+- **HTML is now prettier-checked and formatted** — `.html` was missing from `lint:changed`, `yarn format` and `format:check`, so all 20 tracked files were unformatted (#354).
+
 ## [v11.9.0] - 2026-09-02
 
 ### Added

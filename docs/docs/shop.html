@@ -4,15 +4,33 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Coin Shop - Feature Walkthrough</title>
-    <meta name="description" content="Communities can sell items for their own currency. Several ways to pay, a cart, stock and per-member limits, and a fifteen-minute undo on every purchase." />
-    <link rel="canonical" href="https://provinite.github.io/chardb/docs/shop.html" />
+    <meta
+      name="description"
+      content="Communities can sell items for their own currency. Several ways to pay, a cart, stock and per-member limits, and a fifteen-minute undo on every purchase."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/shop.html"
+    />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="CharDB" />
     <meta property="og:title" content="Coin Shop" />
-    <meta property="og:description" content="Communities can sell items for their own currency. Several ways to pay, a cart, stock and per-member limits, and a fifteen-minute undo on every purchase." />
-    <meta property="og:url" content="https://provinite.github.io/chardb/docs/shop.html" />
-    <meta property="og:image" content="https://provinite.github.io/chardb/docs/shop-storefront.png" />
-    <meta property="og:image:alt" content="The CharDB coin shop storefront showing two listings, their prices, a wallet balance, and a cart." />
+    <meta
+      property="og:description"
+      content="Communities can sell items for their own currency. Several ways to pay, a cart, stock and per-member limits, and a fifteen-minute undo on every purchase."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/shop.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/shop-storefront.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The CharDB coin shop storefront showing two listings, their prices, a wallet balance, and a cart."
+    />
     <meta name="twitter:card" content="summary_large_image" />
     <style>
       * {
@@ -313,9 +331,9 @@
         <div class="step-content">
           <p>
             <strong>Shop</strong> under <strong>Administration</strong> is where
-            staff define listings. It needs
-            <code>canManageItems</code> — the same permission as creating item
-            types, because a listing is a promise to grant one.
+            staff define listings. It needs <code>canManageItems</code> — the
+            same permission as creating item types, because a listing is a
+            promise to grant one.
           </p>
           <div class="screenshot">
             <img
@@ -353,8 +371,8 @@
         <div class="step-content">
           <p>
             A listing has one or more <strong>price options</strong>. Each
-            option is one complete way to pay, and a buyer picks exactly one.
-            An option can ask for <strong>several currencies at once</strong>.
+            option is one complete way to pay, and a buyer picks exactly one. An
+            option can ask for <strong>several currencies at once</strong>.
           </p>
           <div class="example">
             Trait Change Potion<br />
@@ -390,7 +408,9 @@
             </div>
           </div>
           <div class="highlight-box">
-            <strong>Editing a price never changes what was already paid.</strong>
+            <strong
+              >Editing a price never changes what was already paid.</strong
+            >
             The amounts are copied onto the purchase when it happens. Put a
             listing on sale next week and last week's refunds still return last
             week's price.
@@ -406,10 +426,9 @@
         </div>
         <div class="step-content">
           <p>
-            Members see <strong>Shop</strong> under
-            <strong>Community</strong>. Every listing shows its options, what
-            the buyer already holds, and how much of any per-member limit they
-            have used.
+            Members see <strong>Shop</strong> under <strong>Community</strong>.
+            Every listing shows its options, what the buyer already holds, and
+            how much of any per-member limit they have used.
           </p>
           <div class="screenshot">
             <img
@@ -422,9 +441,10 @@
             </div>
           </div>
           <p>
-            Options a member cannot afford are <strong>dimmed, not hidden</strong>.
-            A price you cannot pay yet is information — it tells you what to go
-            and earn. Hiding it just makes the shop look smaller than it is.
+            Options a member cannot afford are
+            <strong>dimmed, not hidden</strong>. A price you cannot pay yet is
+            information — it tells you what to go and earn. Hiding it just makes
+            the shop look smaller than it is.
           </p>
         </div>
       </div>
@@ -437,9 +457,10 @@
         </div>
         <div class="step-content">
           <p>
-            Adding to the cart picks <strong>the listing and the option</strong>.
-            Two of the same item bought at different options stay on separate
-            lines, because they are genuinely different purchases.
+            Adding to the cart picks
+            <strong>the listing and the option</strong>. Two of the same item
+            bought at different options stay on separate lines, because they are
+            genuinely different purchases.
           </p>
           <div class="screenshot">
             <img
@@ -468,9 +489,9 @@
           <div class="highlight-box">
             <strong>The cart never decides the price.</strong> It records which
             option you picked; the amounts are read from the database at
-            checkout. Affordability shown on the page is advisory — the
-            purchase itself is what decides, so a balance that changed a second
-            ago cannot be spent twice.
+            checkout. Affordability shown on the page is advisory — the purchase
+            itself is what decides, so a balance that changed a second ago
+            cannot be spent twice.
           </div>
           <div class="screenshot">
             <img
@@ -546,8 +567,8 @@
               alt="A refunded purchase line marked refunded, with the balance restored and the locket back to two left"
             />
             <div class="screenshot-caption">
-              The coin is back, the locket is back on the shelf, and the line
-              is marked refunded rather than removed.
+              The coin is back, the locket is back on the shelf, and the line is
+              marked refunded rather than removed.
             </div>
           </div>
           <p>
@@ -574,10 +595,10 @@
           <p>
             Staff have their own list, under
             <strong>Shop Purchases</strong> in the Administration section:
-            everyone's purchases, newest first, with a refund button that is
-            not bound by the fifteen minutes. It needs
-            <code>canGrantItems</code> — the permission that already means
-            "may move items and coin on somebody else's behalf".
+            everyone's purchases, newest first, with a refund button that is not
+            bound by the fifteen minutes. It needs <code>canGrantItems</code> —
+            the permission that already means "may move items and coin on
+            somebody else's behalf".
           </p>
           <div class="screenshot">
             <img
@@ -586,8 +607,8 @@
             />
             <div class="screenshot-caption">
               The staff refund names the member, the item and the amount — this
-              page lists many people's purchases and the rows look alike.
-              Cancel holds the focus, so a stray keypress refunds nobody.
+              page lists many people's purchases and the rows look alike. Cancel
+              holds the focus, so a stray keypress refunds nobody.
             </div>
           </div>
           <div class="screenshot">
@@ -602,13 +623,15 @@
             </div>
           </div>
           <div class="highlight-box">
-            <strong>The reasons staff cannot override are the real ones.</strong>
+            <strong
+              >The reasons staff cannot override are the real ones.</strong
+            >
             The undo window and "this is not your purchase" are the buyer's
-            limits and do not apply here. An item that has been used,
-            destroyed, or traded still cannot come back for anybody — and
-            neither can coin belonging to somebody who has since left the
-            community, so that refund is refused rather than taking the item
-            and giving nothing back.
+            limits and do not apply here. An item that has been used, destroyed,
+            or traded still cannot come back for anybody — and neither can coin
+            belonging to somebody who has since left the community, so that
+            refund is refused rather than taking the item and giving nothing
+            back.
           </div>
         </div>
       </div>
@@ -696,6 +719,6 @@
         <p>CharDB Coin Shop &bull; Feature Documentation</p>
       </footer>
     </div>
-      <script src="lightbox.js" defer></script>
+    <script src="lightbox.js" defer></script>
   </body>
 </html>

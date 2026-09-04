@@ -1,305 +1,353 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A Member's Characters and Galleries - Feature Walkthrough</title>
-  <meta name="description" content="See everything one member owns: the profile's View All links and stat tiles now open a page listing that member's characters or galleries, showing only what you are allowed to see.">
-  <link rel="canonical" href="https://provinite.github.io/chardb/docs/member-characters.html">
-  <meta property="og:type" content="article">
-  <meta property="og:site_name" content="CharDB">
-  <meta property="og:title" content="A Member's Characters and Galleries">
-  <meta property="og:description" content="See everything one member owns: the profile's View All links and stat tiles now open a page listing that member's characters or galleries, showing only what you are allowed to see.">
-  <meta property="og:url" content="https://provinite.github.io/chardb/docs/member-characters.html">
-  <meta property="og:image" content="https://provinite.github.io/chardb/docs/user-characters-page.png">
-  <meta property="og:image:alt" content="A page titled Member's Characters, listing that member's characters as cards.">
-  <meta name="twitter:card" content="summary_large_image">
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-      line-height: 1.6;
-      color: #333;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 2rem;
-    }
-
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 3rem;
-      color: white;
-    }
-
-    header h1 {
-      font-size: 2.5rem;
-      margin-bottom: 0.5rem;
-      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
-
-    header p {
-      font-size: 1.1rem;
-      opacity: 0.9;
-    }
-
-    .step {
-      background: white;
-      border-radius: 16px;
-      padding: 2rem;
-      margin-bottom: 2rem;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-    }
-
-    .step-header {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .step-number {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.5rem;
-      font-weight: bold;
-      flex-shrink: 0;
-    }
-
-    .step-title {
-      font-size: 1.5rem;
-      color: #333;
-    }
-
-    .step-content {
-      color: #555;
-      margin-bottom: 1.5rem;
-    }
-
-    .step-content p {
-      margin-bottom: 1rem;
-    }
-
-    .step-content ul {
-      margin-left: 1.5rem;
-      margin-bottom: 1rem;
-    }
-
-    .step-content li {
-      margin-bottom: 0.5rem;
-    }
-
-    .screenshot {
-      border: 1px solid #e0e0e0;
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-    }
-
-    .screenshot img {
-      width: 100%;
-      display: block;
-    }
-
-    .screenshot-caption {
-      background: #f8f9fa;
-      padding: 0.75rem 1rem;
-      font-size: 0.875rem;
-      color: #666;
-      border-top: 1px solid #e0e0e0;
-    }
-
-    .screenshot-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-    }
-
-    .screenshot-row .screenshot img {
-      height: 400px;
-      object-fit: contain;
-      background: #1a1a2e;
-    }
-
-    .highlight-box {
-      background: #f0f4ff;
-      border-left: 4px solid #667eea;
-      padding: 1rem 1.25rem;
-      margin: 1rem 0;
-      border-radius: 0 8px 8px 0;
-    }
-
-    .highlight-box strong {
-      color: #667eea;
-    }
-
-    .feature-list {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      margin: 1.5rem 0;
-    }
-
-    .feature-item {
-      background: #f8f9fa;
-      padding: 1rem;
-      border-radius: 8px;
-      text-align: center;
-    }
-
-    .feature-item .icon {
-      font-size: 2rem;
-      margin-bottom: 0.5rem;
-    }
-
-    .feature-item h4 {
-      color: #333;
-      margin-bottom: 0.25rem;
-    }
-
-    .feature-item p {
-      font-size: 0.875rem;
-      color: #666;
-    }
-
-    kbd {
-      display: inline-block;
-      padding: 0.15rem 0.5rem;
-      background: #f8f9fa;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-      font-size: 0.85em;
-      color: #555;
-      box-shadow: 0 1px 0 rgba(0,0,0,0.1);
-    }
-
-    footer {
-      text-align: center;
-      color: white;
-      opacity: 0.8;
-      margin-top: 2rem;
-      padding: 1rem;
-    }
-
-    @media (max-width: 768px) {
-      .screenshot-row {
-        grid-template-columns: 1fr;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>A Member's Characters and Galleries - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="See everything one member owns: the profile's View All links and stat tiles now open a page listing that member's characters or galleries, showing only what you are allowed to see."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/member-characters.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="A Member's Characters and Galleries" />
+    <meta
+      property="og:description"
+      content="See everything one member owns: the profile's View All links and stat tiles now open a page listing that member's characters or galleries, showing only what you are allowed to see."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/member-characters.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/user-characters-page.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="A page titled Member's Characters, listing that member's characters as cards."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
       }
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <header>
-      <h1>A Member's Characters and Galleries</h1>
-      <p>Everything one person owns, on one page, filtered to what you may see</p>
-    </header>
 
-    <!-- Overview -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">0</div>
-        <h2 class="step-title">Overview</h2>
-      </div>
-      <div class="step-content">
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .screenshot-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .screenshot-row .screenshot img {
+        height: 400px;
+        object-fit: contain;
+        background: #1a1a2e;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      kbd {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85em;
+        color: #555;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .screenshot-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>A Member's Characters and Galleries</h1>
         <p>
-          A profile shows a handful of recent characters and a handful of recent galleries.
-          To see the rest, open <strong>View All</strong> beside either heading, or click the
-          <strong>Characters</strong> or <strong>Galleries</strong> tile in the stats row.
-          Both go to a page listing everything that member owns.
+          Everything one person owns, on one page, filtered to what you may see
         </p>
+      </header>
 
-        <div class="highlight-box">
-          <strong>This used to go somewhere else.</strong> "View All" pointed at the site-wide
-          browse page with a filter that was silently discarded, so it showed every character on
-          CharDB rather than that member's. The count beside the link was right, which made the
-          mismatch look like a data problem rather than a broken link.
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A profile shows a handful of recent characters and a handful of
+            recent galleries. To see the rest, open
+            <strong>View All</strong> beside either heading, or click the
+            <strong>Characters</strong> or <strong>Galleries</strong> tile in
+            the stats row. Both go to a page listing everything that member
+            owns.
+          </p>
+
+          <div class="highlight-box">
+            <strong>This used to go somewhere else.</strong> "View All" pointed
+            at the site-wide browse page with a filter that was silently
+            discarded, so it showed every character on CharDB rather than that
+            member's. The count beside the link was right, which made the
+            mismatch look like a data problem rather than a broken link.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="profile-view-all-characters.png"
+            alt="A member's profile showing the clickable Characters and Galleries stat tiles and the View All link beside Recent Characters"
+          />
+          <div class="screenshot-caption">
+            Two ways in: the stats tiles at the top, and "View All" beside the
+            section heading
+          </div>
         </div>
       </div>
-      <div class="screenshot">
-        <img src="profile-view-all-characters.png" alt="A member's profile showing the clickable Characters and Galleries stat tiles and the View All link beside Recent Characters">
-        <div class="screenshot-caption">
-          Two ways in: the stats tiles at the top, and "View All" beside the section heading
+
+      <!-- Step 1: The page -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">The Listing</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The page is titled with whose characters they are, and says how many
+            it is showing out of how many there are. Long lists load a page at a
+            time &mdash; use <strong>Load More</strong>
+            at the bottom to fetch the next batch.
+          </p>
+          <p>
+            Cards do not repeat the owner's name, because every card on the page
+            has the same owner.
+            <strong>Back to profile</strong> returns you where you came from.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="user-characters-page.png"
+            alt="A page titled Member's Characters showing three character cards and the text Showing 3 of 3 characters"
+          />
+          <div class="screenshot-caption">
+            The destination: only that member's characters, counted and titled
+          </div>
         </div>
       </div>
+
+      <!-- Step 2: What you can see -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">What You Can See</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The list is filtered by who is asking, not just by who owns it. What
+            appears depends on your relationship to the member whose page you
+            are on:
+          </p>
+          <ul>
+            <li>
+              <strong>Their own page, signed in as them:</strong> everything
+              &mdash; public, unlisted and private.
+            </li>
+            <li>
+              <strong>Someone else's page:</strong> their public characters and
+              galleries only.
+            </li>
+            <li>
+              <strong>Signed out:</strong> the same public-only view. The page
+              is open to visitors; it does not ask you to log in.
+            </li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>Unlisted is not listed.</strong> An unlisted character stays
+            reachable by its link &mdash; that is what unlisted means &mdash;
+            but it does not appear in anyone else's listing of your characters,
+            and it is not counted in the number on your profile. Only
+            <strong>private</strong> hides it from the link as well.
+          </div>
+
+          <p>
+            The filtering happens on the server. A character you are not allowed
+            to see is never sent to your browser at all, rather than sent and
+            then hidden.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>
+          CharDB Member Characters and Galleries &bull; Feature Documentation
+        </p>
+      </footer>
     </div>
-
-    <!-- Step 1: The page -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">1</div>
-        <h2 class="step-title">The Listing</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          The page is titled with whose characters they are, and says how many it is showing out
-          of how many there are. Long lists load a page at a time &mdash; use <strong>Load More</strong>
-          at the bottom to fetch the next batch.
-        </p>
-        <p>
-          Cards do not repeat the owner's name, because every card on the page has the same owner.
-          <strong>Back to profile</strong> returns you where you came from.
-        </p>
-      </div>
-      <div class="screenshot">
-        <img src="user-characters-page.png" alt="A page titled Member's Characters showing three character cards and the text Showing 3 of 3 characters">
-        <div class="screenshot-caption">
-          The destination: only that member's characters, counted and titled
-        </div>
-      </div>
-    </div>
-
-    <!-- Step 2: What you can see -->
-    <div class="step">
-      <div class="step-header">
-        <div class="step-number">2</div>
-        <h2 class="step-title">What You Can See</h2>
-      </div>
-      <div class="step-content">
-        <p>
-          The list is filtered by who is asking, not just by who owns it. What appears depends on
-          your relationship to the member whose page you are on:
-        </p>
-        <ul>
-          <li><strong>Their own page, signed in as them:</strong> everything &mdash; public, unlisted and private.</li>
-          <li><strong>Someone else's page:</strong> their public characters and galleries only.</li>
-          <li><strong>Signed out:</strong> the same public-only view. The page is open to visitors; it does not ask you to log in.</li>
-        </ul>
-
-        <div class="highlight-box">
-          <strong>Unlisted is not listed.</strong> An unlisted character stays reachable by its
-          link &mdash; that is what unlisted means &mdash; but it does not appear in anyone else's
-          listing of your characters, and it is not counted in the number on your profile. Only
-          <strong>private</strong> hides it from the link as well.
-        </div>
-
-        <p>
-          The filtering happens on the server. A character you are not allowed to see is never sent
-          to your browser at all, rather than sent and then hidden.
-        </p>
-      </div>
-    </div>
-
-    <footer>
-      <p>CharDB Member Characters and Galleries &bull; Feature Documentation</p>
-    </footer>
-  </div>
     <script src="lightbox.js" defer></script>
-</body>
+  </body>
 </html>
