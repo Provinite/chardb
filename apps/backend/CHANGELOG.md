@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A public gallery no longer reports itself missing to signed-out visitors.**
+  `Gallery.userHasLiked` was gated to authenticated users and is non-nullable,
+  so its 403 nulled the whole gallery and the page rendered "Gallery not
+  found". `Character.userHasLiked` carried the same decorator and is fixed
+  alongside it (#173).
+
 ### Added
 
 - **Unlisted characters and galleries are no longer listed to other members.**

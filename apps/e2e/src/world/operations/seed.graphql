@@ -909,3 +909,28 @@ query SeedUserGalleries($userId: ID!) {
     }
   }
 }
+
+# --- Public pages, signed out (#173) -----------------------------------------
+
+# `userHasLiked` is selected deliberately: it is the field whose decorator
+# broke the gallery page for anonymous visitors, and it is non-nullable, so a
+# spec that omitted it would pass against the bug.
+query SeedGalleryLikeStatus($id: ID!) {
+  gallery(id: $id) {
+    id
+    name
+    visibility
+    likesCount
+    userHasLiked
+  }
+}
+
+query SeedCharacterLikeStatus($id: ID!) {
+  character(id: $id) {
+    id
+    name
+    visibility
+    likesCount
+    userHasLiked
+  }
+}
