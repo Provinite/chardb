@@ -400,13 +400,26 @@ export const UserProfilePage: React.FC = () => {
         )}
 
       <StatsGrid>
-        <StatCard>
-          <StatNumber>{stats.charactersCount}</StatNumber>
-          <StatLabel>Characters</StatLabel>
+        {/* Clickable now that there is somewhere to go. Followers and
+            Following already worked this way; these two read as the same kind
+            of tile and did nothing, which is its own small lie. */}
+        <StatCard clickable>
+          <StatLink
+            data-testid="profile-stat-characters"
+            to={`/user/${user.username}/characters`}
+          >
+            <StatNumber>{stats.charactersCount}</StatNumber>
+            <StatLabel>Characters</StatLabel>
+          </StatLink>
         </StatCard>
-        <StatCard>
-          <StatNumber>{stats.galleriesCount}</StatNumber>
-          <StatLabel>Galleries</StatLabel>
+        <StatCard clickable>
+          <StatLink
+            data-testid="profile-stat-galleries"
+            to={`/user/${user.username}/galleries`}
+          >
+            <StatNumber>{stats.galleriesCount}</StatNumber>
+            <StatLabel>Galleries</StatLabel>
+          </StatLink>
         </StatCard>
         <StatCard>
           <StatNumber>{stats.imagesCount}</StatNumber>
@@ -452,8 +465,12 @@ export const UserProfilePage: React.FC = () => {
           <SectionHeader>
             <SectionTitle>Recent Characters</SectionTitle>
             <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+              {/* `?owner=<username>` before: a parameter the browse page does
+                  not parse, carrying a username where the filter wants a UUID.
+                  It landed on the unfiltered global browse (#321). */}
               <Link
-                to={`/characters?owner=${user.username}`}
+                data-testid="profile-view-all-characters"
+                to={`/user/${user.username}/characters`}
                 style={{
                   color: "inherit",
                   textDecoration: "none",
@@ -482,7 +499,8 @@ export const UserProfilePage: React.FC = () => {
           <SectionHeader>
             <SectionTitle>Recent Galleries</SectionTitle>
             <Link
-              to={`/galleries?owner=${user.username}`}
+              data-testid="profile-view-all-galleries"
+              to={`/user/${user.username}/galleries`}
               style={{
                 color: "inherit",
                 textDecoration: "none",

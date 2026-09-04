@@ -264,13 +264,22 @@ export class CharactersService {
       AND: [
         notDeleted,
 
-        // Visibility filter - only show public characters unless owner/admin
+        // Visibility. Public to everyone; anything else only to its owner.
+        //
+        // UNLISTED used to be listed here to any signed-in viewer, which is
+        // the one thing the word rules out -- `findOne` still serves it to
+        // anybody holding the link, which is what unlisted means. The
+        // contradiction was invisible while this only backed a global browse
+        // nobody read as a claim about a person. Per-owner listings (#321)
+        // make it a page titled "X's Characters" that lists what X chose not
+        // to list, and `UserStats.charactersCount` has always counted PUBLIC
+        // only for a visitor -- so the count and the grid disagreed by
+        // exactly the unlisted ones.
         userId
           ? {
               OR: [
                 { visibility: Visibility.PUBLIC },
-                { ownerId: userId }, // Owner can see their own private characters
-                { visibility: Visibility.UNLISTED }, // Unlisted characters are visible if you have the link
+                { ownerId: userId }, // Owner sees their own, whatever it is
               ],
             }
           : { visibility: Visibility.PUBLIC }, // Only public for anonymous users

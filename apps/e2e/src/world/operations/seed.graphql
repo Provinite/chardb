@@ -876,3 +876,36 @@ query SeedMemberHoldings($communityId: ID!, $userId: ID!) {
     }
   }
 }
+
+# --- Owner-filtered listings (#321) ------------------------------------------
+
+# Galleries are not part of any preset, so a spec that needs one makes it.
+mutation SeedCreateGallery($input: CreateGalleryInput!) {
+  createGallery(input: $input) {
+    id
+    name
+    visibility
+  }
+}
+
+# The two queries the per-owner pages read. Selected here so a spec can assert
+# what the API hands a given viewer, independently of what the page renders.
+query SeedUserCharacters($userId: ID!) {
+  userCharacters(userId: $userId, filters: { limit: 50, offset: 0 }) {
+    total
+    characters {
+      name
+      visibility
+    }
+  }
+}
+
+query SeedUserGalleries($userId: ID!) {
+  userGalleries(userId: $userId, filters: { limit: 50, offset: 0 }) {
+    total
+    galleries {
+      name
+      visibility
+    }
+  }
+}
