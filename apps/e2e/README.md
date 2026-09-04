@@ -17,7 +17,19 @@ yarn workspace @chardb/e2e e2e tests/smoke
 yarn workspace @chardb/e2e e2e --grep "admin strip"
 ```
 
-Nothing needs to be running first. The suite starts the Postgres container, creates and migrates its own database, builds and boots the backend, builds and serves the frontend, seeds, and tears down after.
+Nothing needs to be *running* first. The suite starts the Postgres container, creates and migrates its own database, builds and boots the backend, builds and serves the frontend, seeds, and tears down after.
+
+A fresh checkout does still need building once, though, because the backend and frontend this suite builds resolve `@chardb/*` through `dist/` like any other consumer:
+
+```bash
+yarn install
+yarn workspace @chardb/database db:generate
+yarn workspace @chardb/shared build
+yarn workspace @chardb/ui build
+yarn workspace @chardb/database build
+```
+
+Skipping that fails as `Cannot find module '.../@chardb/database/dist/index.js'` or `Failed to resolve entry for package "@chardb/ui"` — not as anything mentioning the test suite. Plain `yarn build` is not topological and trips over `@chardb/ui`, so run them in that order.
 
 Ports default to **4310** (backend) and **4311** (frontend) so a running `yarn dev` never collides.
 

@@ -66,10 +66,24 @@ yarn shared:up    # once per machine: Jaeger 16686, MailHog 8025, OTEL collector
 yarn instance:up  # this instance's postgres + localstack -- BEFORE yarn dev
 yarn workspace @chardb/database db:migrate:prod   # empty database -> schema
 yarn workspace @chardb/database db:seed           # admin + a character
-yarn dev          # backend + frontend on this instance's ports
+yarn dev:agent    # backend + frontend on this instance's ports, tee'd to dev.log
 ```
 
-Then, with the backend up, for the personas you actually log in as:
+**`yarn dev` never returns** — it runs both servers in the foreground until
+killed. Start it in the background (Claude Code: Bash with
+`run_in_background: true`) or you will block your own session with nothing left
+to run the next command. `yarn dev:agent` is `yarn dev | tee dev.log`, which is
+the variant to use: you get the same servers plus a log you can grep afterwards,
+which is the only way to see why the backend died if it does.
+
+Wait for the backend to answer before going further — the frontend is up in
+seconds but the backend compiles first, which takes a minute on a cold start:
+
+```bash
+until curl -sf http://localhost:<backendPort>/health; do sleep 2; done
+```
+
+Then, with the backend actually up, seed the personas you log in as:
 
 ```bash
 yarn workspace @chardb/database db:seed-personas
@@ -81,7 +95,9 @@ yarn workspace @chardb/database db:seed-personas
   LocalStack queue at boot, and a missing queue throws through winston's
   exception handler and kills the process. The symptom is a wall of
   `QueueDoesNotExist` JSON and a backend that was healthy a second ago — not
-  anything that mentions LocalStack being down.
+  anything that mentions LocalStack being down. A stale `AWS_SQS_QUEUE_URL` in
+  `.env` is not a second cause of this: outside slot 0 the injected value wins,
+  because a variable already in the environment beats any `.env` file.
 - **`yarn dev` before `db:seed-personas`.** That seeder drives the GraphQL API
   over HTTP rather than writing to the database, so it needs a running backend.
   It targets your instance automatically (`GRAPHQL_ENDPOINT` is injected); it
@@ -99,10 +115,14 @@ password `test123` (e.g. `siteadmin@test.local`, `member@test.local`).
 
 ## Running the tests
 
-**Neither suite needs any of the setup above.** Both provision their own
-throwaway database on their own port, and both are already instance-scoped, so
-they are safe to run while your `yarn dev` is up and while other agents are
-running theirs.
+**Neither suite needs the containers, migrations or seeding above.** Both
+provision their own throwaway database on their own port, and both are already
+instance-scoped, so they are safe to run while your `yarn dev` is up and while
+other agents are running theirs.
+
+They do still need the `yarn install` and the three package builds from
+**Starting** — the suites build their own backend and frontend, which resolve
+`@chardb/*` through `dist/` exactly as the dev servers do.
 
 ```bash
 yarn workspace @chardb/e2e e2e                 # browser suite: own backend, frontend, database
@@ -130,9 +150,14 @@ yarn dc ps                 # what this instance has running
 ## Finishing
 
 ```bash
-yarn instance:down     # stop this instance's dev servers AND its containers
-yarn instance:release  # hand the slot back so a future checkout can reuse it
+yarn instance:down     # always: stop this instance's dev servers AND its containers
+yarn instance:release  # only if you are done with the checkout for good
 ```
+
+**`instance:down` every time; `instance:release` only when abandoning the
+checkout.** Keeping the slot is the point — the pin file holds it so your ports
+stay the same next session. Release it when you are deleting the checkout or
+will not come back, so the slot returns to the pool.
 
 **Always run `yarn instance:down` when you finish.** `yarn dev` outlives whatever
 started it — if your session is killed rather than interrupted, nest and vite
