@@ -305,6 +305,21 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v7
 
+      # Deliberately first, and deliberately without --wait.
+      #
+      # provision() starts this same container from inside the suite, but it
+      # does so after Node, Chromium and the workspace packages are set up --
+      # roughly 35s in -- and then blocks ~13s on the pg_isready healthcheck.
+      # None of that setup depends on Postgres, so the wait is pure critical
+      # path. Starting it here lets it come up alongside them.
+      #
+      # This changes nothing about what runs: `up -d --wait` in provision() is
+      # idempotent and returns immediately once the container is already
+      # healthy. It is also CI-only -- a local `yarn e2e` still brings its own
+      # Postgres up exactly as before.
+      - name: Start test Postgres in the background
+        run: docker compose -f docker/compose.test.yml up -d
+
       - name: Enable Corepack
         run: corepack enable
 
