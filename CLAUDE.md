@@ -10,7 +10,8 @@
 - You can type check the entire repository by running `yarn type-check` in the root
 - Jaeger trace analysis is available at http://localhost:16686
 - You may start the servers if they are not running with `yarn dev:agent`
-  - Frontend: localhost:3000
+  - Frontend: localhost:3000 in the primary checkout. **In a git worktree the ports are different** — run `yarn instance` to see them, and never assume 3000/4000. See [docs/PARALLEL_INSTANCES.md](./docs/PARALLEL_INSTANCES.md) and the `worktree` skill
+- Several worktrees can run the app and the e2e suite at the same time: each gets its own ports, databases and containers automatically. `yarn instance:init` prepares a fresh worktree; `yarn infra:up` starts its containers; `yarn shared:up` starts the machine-wide Jaeger/MailHog/OTEL
 - The `gh` cli is configured for github interactions beyond simple `git` cli commands
 - Local Development Credentials: See [LOCAL_DEV_SEED_DATA.md](./LOCAL_DEV_SEED_DATA.md) for test user personas and credentials
 - Browser E2E tests live in `apps/e2e` (Playwright). Run with `yarn workspace @chardb/e2e e2e` — it starts Postgres, the backend, and the frontend itself; nothing needs to be running first. See [apps/e2e/README.md](./apps/e2e/README.md), especially "Adding a preset"

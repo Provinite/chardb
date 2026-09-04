@@ -6,22 +6,26 @@
 # - SQS (Simple Queue Service) for Discord bot prize distribution
 #
 # Access:
-# - API Gateway: http://localhost:4566
+# - API Gateway: http://localhost:4566 (LOCALSTACK_PORT on other instances)
 # - Health: http://localhost:4566/_localstack/health
 #
 # AWS CLI usage:
 #   aws --endpoint-url=http://localhost:4566 s3 ls
 #   aws --endpoint-url=http://localhost:4566 sqs list-queues
 #
-# Configuration is in init-aws.sh which runs on startup
+# Configuration is in init-aws.sh which runs on startup. The bucket and queue
+# names it creates are instance-scoped so two worktrees never share state.
 
 services:
   localstack:
     image: localstack/localstack:3.0
-    container_name: chardb-localstack
+    # No container_name -- see the note in services/postgres.yml.
     ports:
-      - "4566:4566"            # LocalStack Gateway
-      - "4510-4559:4510-4559"  # External services port range
+      # The legacy 4510-4559 "external services" range is not published: those
+      # are LocalStack 2.x per-service ports, nothing in this repo uses them,
+      # and a 50-port block per instance would collide almost immediately.
+      # Everything goes through the gateway below.
+      - "${LOCALSTACK_PORT:-4566}:4566"
     environment:
       - SERVICES=s3,sqs
       - DEBUG=1
@@ -29,12 +33,13 @@ services:
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
+      # Read by init-aws.sh.
+      - S3_IMAGES_BUCKET=${S3_IMAGES_BUCKET:-chardb-images}
+      - SQS_PRIZE_QUEUE=${SQS_PRIZE_QUEUE:-chardb-prize-distribution}
     volumes:
       - "../localstack:/etc/localstack/init/ready.d"
       - "/var/run/docker.sock:/var/run/docker.sock"
-    networks:
-      - chardb-network
-
-networks:
-  chardb-network:
-    external: true
+    # No explicit network: joining the compose project's default network puts
+    # localstack on the same network as the backend. The previous `external:
+    # chardb-network` did the opposite -- it isolated localstack from every
+    # other service and required a network created out of band.

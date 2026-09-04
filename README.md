@@ -73,8 +73,11 @@ chardb/
 
 4. **Start the development environment**
    ```bash
-   # Start development services (PostgreSQL, LocalStack, MailHog, Jaeger)
-   docker compose up -d
+   # Start this checkout's services (PostgreSQL, LocalStack)
+   yarn infra:up
+
+   # Start the machine-wide tooling (MailHog, Jaeger, OTEL collector) — once
+   yarn shared:up
 
    # Generate Prisma client and run migrations
    yarn workspace @chardb/database db:generate
@@ -108,12 +111,25 @@ chardb/
 
 ```bash
 # Start everything with Docker Compose
-docker compose -f docker/docker compose.yml up
+yarn dc up
 
 # The application will be available at:
 # Frontend: http://localhost:3000
 # Backend: http://localhost:4000
 ```
+
+### Running several checkouts at once
+
+Each git worktree gets its own ports, databases and containers automatically, so
+you and any number of agents can run the app and the e2e suite in parallel:
+
+```bash
+yarn instance:init   # in a fresh worktree: prepares .env, prints your ports
+yarn instance        # every port, URL and database name for this checkout
+```
+
+The ports above are the primary checkout's. See
+[docs/PARALLEL_INSTANCES.md](docs/PARALLEL_INSTANCES.md).
 
 ## 📝 Available Scripts
 
@@ -220,7 +236,7 @@ docker build -f docker/Dockerfile.frontend -t chardb-frontend .
 ### Production Deployment
 ```bash
 # Using Docker Compose
-docker compose -f docker/docker compose.prod.yml up -d
+docker compose -f docker/docker-compose.prod.yml up -d
 ```
 
 The application includes GitHub Actions workflows for:

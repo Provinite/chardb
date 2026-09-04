@@ -1,19 +1,30 @@
 # Development-specific overrides
+#
+# Auto-loaded by `docker compose up` alongside compose.yaml.
+#
+# Everything here is instance-scoped. The values come from the environment that
+# scripts/with-instance.mjs injects (see scripts/instance.mjs); the `:-`
+# defaults reproduce the original hardcoded values, which are what instance
+# slot 0 -- the primary checkout -- resolves to.
 services:
   postgres:
     environment:
-      POSTGRES_DB: chardb_dev
-      POSTGRES_USER: chardb
-      POSTGRES_PASSWORD: chardb_password
-    ports:
-      - "5433:5432" # Non-standard port to avoid conflicts
+      POSTGRES_DB: ${POSTGRES_DB:-chardb_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-chardb}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-chardb_password}
+    # No `ports` here: the base services/postgres.yml already publishes
+    # ${POSTGRES_PORT} on loopback, and compose *appends* port lists across
+    # files rather than replacing them, so repeating it published postgres
+    # twice and defeated the loopback binding.
 
   backend:
     environment:
       NODE_ENV: development
-      DATABASE_URL: postgresql://chardb:chardb_password@postgres:5432/chardb_dev
-      JWT_SECRET: your-super-secret-jwt-key-here
-      FRONTEND_URL: http://localhost:3000
+      # Inside the compose network postgres is always :5432 -- POSTGRES_PORT is
+      # the host-side mapping only.
+      DATABASE_URL: postgresql://${POSTGRES_USER:-chardb}:${POSTGRES_PASSWORD:-chardb_password}@postgres:5432/${POSTGRES_DB:-chardb_dev}
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
     volumes:
       # Mount source code for hot-reloading
       - ../apps/backend:/app/apps/backend
@@ -23,16 +34,14 @@ services:
     command: ["yarn", "workspace", "@chardb/backend", "dev"]
 
   frontend:
-    environment:
-      VITE_GRAPHQL_URL: http://localhost:4000/graphql
-    ports:
-      - "3000:8080"
     volumes:
       # Mount source code for hot-reloading
       - ../apps/frontend:/app/apps/frontend
       - ../packages:/app/packages
       - /app/node_modules
       - /app/apps/frontend/node_modules
+    # Serves on 8080 inside the container in every instance; the host-side port
+    # is services/frontend.yml's "${FRONTEND_PORT}:8080".
     command:
       [
         "yarn",
@@ -42,9 +51,9 @@ services:
         "--host",
         "0.0.0.0",
         "--port",
-        "3000",
+        "8080",
       ]
 
-networks:
-  default:
-    name: chardb-network
+# No `networks:` block. Naming the default network pinned it machine-wide and
+# made a second instance fail to start; compose scopes it to
+# COMPOSE_PROJECT_NAME instead.

@@ -6,16 +6,20 @@
 # Individual services are defined in ./services/ directory with their own documentation
 #
 # Usage:
-#   Development: docker compose up
+#   Development: yarn infra:up          (this file, scoped to your instance)
+#   Shared:      yarn shared:up         (compose.shared.yml -- one copy per machine)
+#   Test:        docker compose -f docker/compose.test.yml up
 #   Production:  docker compose -f docker-compose.prod.yml up
-#   Test:        docker compose -f docker-compose.test.yml up
+#
+# Every service here is *per instance*: `yarn infra:up` sets
+# COMPOSE_PROJECT_NAME and the host ports from this worktree's instance slot, so
+# several worktrees can each run their own copy. Jaeger, MailHog and the OTEL
+# collector are deliberately NOT included -- they are single-copy developer
+# tooling and live in compose.shared.yml.
 
 # Include all individual service definitions
 include:
   - services/postgres.yml
   - services/backend.yml
   - services/frontend.yml
-  - services/jaeger.yml
-  - services/otel-collector.yml
-  - services/mailhog.yml
   - services/localstack.yml

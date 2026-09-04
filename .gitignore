@@ -26,6 +26,10 @@ out/
 .env.test.local
 .env.production.local
 
+# Per-worktree instance slot (see scripts/instance.mjs). Machine-local by
+# definition -- committing it would hand every checkout the same ports.
+.instance.json
+
 # Logs
 logs/
 *.log
@@ -101,7 +105,10 @@ tmp/
 to-delete/
 
 # AI tools and extensions
-.claude/
+# Everything under .claude/ is machine-local (settings, worktrees, caches)
+# except skills/, which are checked-in project workflows shared by the team.
+.claude/*
+!.claude/skills/
 .cursor/
 .roo/
 .roomodes

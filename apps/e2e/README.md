@@ -21,6 +21,11 @@ Nothing needs to be running first. The suite starts the Postgres container, crea
 
 Ports default to **4310** (backend) and **4311** (frontend) so a running `yarn dev` never collides.
 
+In a git worktree they are different again: every port, the compose project and
+the database name are offset by that worktree's instance slot, so two agents can
+run this suite simultaneously. `yarn instance` prints the numbers; see
+[docs/PARALLEL_INSTANCES.md](../../docs/PARALLEL_INSTANCES.md).
+
 ## How it works
 
 ```

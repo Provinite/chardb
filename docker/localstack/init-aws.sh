@@ -2,6 +2,13 @@
 
 # LocalStack initialization script
 # This script runs when LocalStack is ready and sets up AWS resources for local development
+#
+# Resource names come from the environment (services/localstack.yml passes them
+# through) so each instance can own its own bucket and queue. The defaults are
+# the names the primary instance has always used.
+
+BUCKET="${S3_IMAGES_BUCKET:-chardb-images}"
+QUEUE="${SQS_PRIZE_QUEUE:-chardb-prize-distribution}"
 
 echo "Initializing LocalStack resources..."
 
@@ -10,14 +17,14 @@ echo "Initializing LocalStack resources..."
 # ========================================
 echo "Setting up S3 bucket..."
 
-# Create the chardb-images bucket
-awslocal s3 mb s3://chardb-images
+# Create the images bucket
+awslocal s3 mb "s3://${BUCKET}"
 
 # Set bucket policy to allow public read access (for local dev)
-awslocal s3api put-bucket-acl --bucket chardb-images --acl public-read
+awslocal s3api put-bucket-acl --bucket "${BUCKET}" --acl public-read
 
 # Enable CORS for the bucket
-awslocal s3api put-bucket-cors --bucket chardb-images --cors-configuration '{
+awslocal s3api put-bucket-cors --bucket "${BUCKET}" --cors-configuration '{
   "CORSRules": [
     {
       "AllowedOrigins": ["*"],
@@ -28,7 +35,7 @@ awslocal s3api put-bucket-cors --bucket chardb-images --cors-configuration '{
   ]
 }'
 
-echo "✓ S3 bucket 'chardb-images' created and configured"
+echo "✓ S3 bucket '${BUCKET}' created and configured"
 
 # ========================================
 # SQS Setup
@@ -37,7 +44,7 @@ echo "Setting up SQS queues..."
 
 # Create Dead Letter Queue first
 DLQ_URL=$(awslocal sqs create-queue \
-  --queue-name chardb-prize-distribution-dlq \
+  --queue-name "${QUEUE}-dlq" \
   --attributes '{
     "MessageRetentionPeriod": "1209600"
   }' \
@@ -53,7 +60,7 @@ DLQ_ARN=$(awslocal sqs get-queue-attributes \
 
 # Create main prize distribution queue with DLQ
 QUEUE_URL=$(awslocal sqs create-queue \
-  --queue-name chardb-prize-distribution \
+  --queue-name "${QUEUE}" \
   --attributes "{
     \"VisibilityTimeout\": \"30\",
     \"MessageRetentionPeriod\": \"345600\",
