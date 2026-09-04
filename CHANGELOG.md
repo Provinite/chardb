@@ -9,9 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Parallel instances**: every git worktree gets its own ports, databases and
-  containers, so several agents can run the app and the e2e suites at once. See
-  `docs/PARALLEL_INSTANCES.md`; `yarn instance` prints a checkout's numbers.
+- **Parallel instances**: every checkout — git worktree or separate clone — gets
+  its own ports, databases and containers, so several agents can run the app and
+  the e2e suites at once. `yarn instance` prints a checkout's numbers; see
+  `docs/PARALLEL_INSTANCES.md`.
 
 - **Docs screenshots open full size on click**, with their caption underneath
   and arrow-key paging. One `lightbox.js` on all sixteen walkthrough pages,

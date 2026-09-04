@@ -2,22 +2,26 @@
 /**
  * Instance slot allocation.
  *
- * Every local instance of the stack -- one per git worktree -- gets a "slot":
- * a small integer that offsets every host port, database name and docker
- * compose project name, so N agents can run N copies of the app and N e2e runs
- * concurrently without colliding.
+ * Every local instance of the stack gets a "slot": a small integer that offsets
+ * every host port, database name and docker compose project name, so N agents
+ * can run N copies of the app and N e2e runs concurrently without colliding.
+ *
+ * A checkout is a checkout. Separate clones and linked worktrees are peers,
+ * keyed by absolute path -- nothing here assumes the copies share a .git.
  *
  * Slot 0 is the legacy instance: it reproduces the exact ports, database names
- * and compose project that existed before this file, so the primary checkout
- * (and the OAuth callback URLs registered against localhost:4000) keep working
- * untouched. Slots >= 1 live in a contiguous 100-port block each.
+ * and compose project that existed before this file, so the checkout a human
+ * has bookmarked at localhost:3000 (and registered OAuth callbacks against)
+ * keeps working untouched. Only a standalone checkout can hold it; slots >= 1
+ * live in a contiguous 100-port block each.
  *
  * Usage:
  *   node scripts/instance.mjs              # human-readable table
  *   node scripts/instance.mjs --json       # machine-readable
  *   node scripts/instance.mjs --env        # KEY=VALUE lines, for dotenv/eval
  *   node scripts/instance.mjs --list       # every claimed slot on this machine
- *   node scripts/instance.mjs --release    # give this worktree's slot back
+ *   node scripts/instance.mjs --claim 0    # take a specific slot for this checkout
+ *   node scripts/instance.mjs --release    # give this checkout's slot back
  *
  * See docs/PARALLEL_INSTANCES.md.
  */
@@ -26,7 +30,7 @@ import * as os from "node:os";
 import * as path from "node:path";
 import { execFileSync } from "node:child_process";
 
-/** How many concurrent instances the port layout reserves room for. */
+/** How many concurrent checkouts the port layout reserves room for. */
 export const SLOT_COUNT = Number(process.env.CHARDB_SLOTS ?? 16);
 
 /** Slots >= 1 each own [BLOCK_BASE + slot*100, +100). Well below ip_local_port_range. */
@@ -56,7 +60,7 @@ const PORTS = {
  * The compose project name slot 0 must keep. Before this file existed, no
  * project name was set, so compose derived it from the compose file's
  * directory -- `docker`. Its volume is therefore `docker_postgres_data`.
- * Setting anything else here orphans the primary checkout's database.
+ * Setting anything else here orphans the slot-0 checkout's database.
  */
 const LEGACY_COMPOSE_PROJECT = "docker";
 
@@ -154,6 +158,13 @@ function writeRegistry(registry) {
   fs.renameSync(tmp, REGISTRY_FILE);
 }
 
+/** Every claimed slot, lowest first. Paths may no longer exist on disk. */
+export function listClaims() {
+  return Object.entries(withLock(() => readRegistry()).slots)
+    .map(([slot, info]) => ({ slot: Number(slot), path: info.path }))
+    .sort((a, b) => a.slot - b.slot);
+}
+
 // ------------------------------------------------------------ resolution
 
 /** FNV-1a. Stable across Node versions, unlike anything involving Math.random. */
@@ -166,7 +177,7 @@ function hash(str) {
   return h >>> 0;
 }
 
-/** The worktree root: the directory holding the workspace package.json. */
+/** The checkout root: the directory holding the workspace package.json. */
 export function findRepoRoot(from = process.cwd()) {
   let dir = path.resolve(from);
   for (;;) {
@@ -187,10 +198,13 @@ export function findRepoRoot(from = process.cwd()) {
 }
 
 /**
- * The primary (non-worktree) checkout, or null.
+ * The checkout `root` is a linked worktree OF, or null when `root` is a
+ * standalone checkout (a plain clone, or the primary of its own worktrees).
  *
  * `--git-common-dir` points at the shared .git of the main checkout from any
- * linked worktree, so its parent is the primary working tree.
+ * linked worktree, so its parent is that worktree's primary working tree.
+ * Inside a standalone checkout it points at the checkout's own .git, and the
+ * parent is `root` itself.
  */
 export function findPrimaryCheckout(root) {
   try {
@@ -220,21 +234,24 @@ function readPin(root) {
 /**
  * Claims a slot for `root`, under the registry lock.
  *
- * Slot 0 is reserved for the primary checkout and never handed to a linked
- * worktree. That reservation is what lets slot 0 keep the legacy ports,
- * database names and compose project: the checkout a human has bookmarked at
- * localhost:3000 and registered OAuth callbacks against is always the one that
- * gets them, no matter which worktree resolves first.
+ * Every checkout is a peer here -- a separate clone and a linked worktree are
+ * treated the same way, keyed by absolute path -- with one asymmetry:
  *
- * For a worktree the preference order is:
- *   1. `pinned`, if the registry agrees it is ours (or nobody holds it).
- *   2. hash(root) -- stable, so a worktree keeps its ports across reboots.
+ * **Only a standalone checkout may hold slot 0.** A linked worktree never
+ * takes it, because the checkout it was created from is the natural owner of
+ * the legacy ports, database names and compose project. Among standalone
+ * checkouts it is first come, first served, made sticky by the pin file; use
+ * `--claim 0` to move it deliberately.
+ *
+ * Preference order:
+ *   1. `pinned`, if the registry agrees it is ours (or nobody live holds it).
+ *   2. hash(root) -- stable, so a checkout keeps its ports across reboots.
  *   3. the next free slot, scanning upward from the hash with wraparound.
  *
  * A slot held by a path that no longer exists on disk is reclaimed: deleting a
- * worktree frees its slot without any explicit cleanup step.
+ * checkout frees its slot without any explicit cleanup step.
  */
-function claimSlot(root, pinned, isPrimary) {
+function claimSlot(root, pinned, canTakeZero, forced = null) {
   return withLock(() => {
     const registry = readRegistry();
     const heldBy = (slot) => registry.slots[String(slot)]?.path;
@@ -242,19 +259,32 @@ function claimSlot(root, pinned, isPrimary) {
       const owner = heldBy(slot);
       return !owner || owner === root || !fs.existsSync(owner);
     };
+    const claimable = (slot) =>
+      slot !== null && (slot !== 0 || canTakeZero) && isFree(slot);
 
     let slot = null;
-    if (isPrimary) {
-      slot = 0;
-    } else if (
-      pinned !== null &&
-      pinned !== undefined &&
-      pinned !== 0 &&
-      isFree(pinned)
-    ) {
+    if (forced !== null) {
+      if (!isFree(forced)) {
+        throw new Error(
+          `Instance slot ${forced} is held by ${heldBy(forced)}. ` +
+            `Run \`yarn instance:release\` there first.`,
+        );
+      }
+      if (forced === 0 && !canTakeZero) {
+        throw new Error(
+          `Instance slot 0 keeps the legacy ports and belongs to a standalone ` +
+            `checkout, not a linked worktree. Claim it from ${findPrimaryCheckout(root)}.`,
+        );
+      }
+      slot = forced;
+    } else if (claimable(pinned ?? null)) {
       slot = pinned;
+    } else if (canTakeZero && isFree(0)) {
+      // A standalone checkout prefers slot 0 while it is going spare, so a lone
+      // clone behaves exactly like the primary checkout always has.
+      slot = 0;
     } else {
-      // Worktrees live in 1..SLOT_COUNT-1; 0 belongs to the primary checkout.
+      // Everything else lives in 1..SLOT_COUNT-1.
       const span = SLOT_COUNT - 1;
       const preferred = (hash(root) % span) + 1;
       for (let i = 0; i < span; i++) {
@@ -271,8 +301,8 @@ function claimSlot(root, pinned, isPrimary) {
         .map(([s, v]) => `  ${s}: ${v.path}`)
         .join("\n");
       throw new Error(
-        `All ${SLOT_COUNT - 1} worktree instance slots are claimed by live worktrees:\n${occupants}\n` +
-          `Free one with \`yarn instance:release\` in that worktree, delete it, ` +
+        `All ${SLOT_COUNT - 1} non-legacy instance slots are claimed by live checkouts:\n${occupants}\n` +
+          `Free one with \`yarn instance:release\` in that checkout, delete it, ` +
           `or raise CHARDB_SLOTS.`,
       );
     }
@@ -293,11 +323,11 @@ function claimSlot(root, pinned, isPrimary) {
  * override always wins, including in CI where every job has its own machine
  * and the registry is pointless.
  */
-export function resolveInstance({ cwd = process.cwd() } = {}) {
+export function resolveInstance({ cwd = process.cwd(), claim = null } = {}) {
   const root = findRepoRoot(cwd);
 
   let slot;
-  if (process.env.CHARDB_INSTANCE !== undefined) {
+  if (claim === null && process.env.CHARDB_INSTANCE !== undefined) {
     slot = Number(process.env.CHARDB_INSTANCE);
     if (!Number.isInteger(slot) || slot < 0) {
       throw new Error(
@@ -305,14 +335,14 @@ export function resolveInstance({ cwd = process.cwd() } = {}) {
       );
     }
   } else {
-    const isPrimary = findPrimaryCheckout(root) === null;
-    // A pin whose slot has since been taken by another live worktree is simply
+    // A linked worktree may not hold slot 0; a standalone checkout -- a plain
+    // clone, or the primary of its own worktrees -- may.
+    const canTakeZero = findPrimaryCheckout(root) === null;
+    // A pin whose slot has since been taken by another live checkout is simply
     // not honoured by claimSlot, so a stale pin self-heals.
     const pin = readPin(root);
-    slot = claimSlot(root, pin?.slot ?? null, isPrimary);
-    // The primary checkout is always slot 0, so there is nothing to pin -- and
-    // not writing the file keeps this a read-only operation there.
-    if (!isPrimary && pin?.slot !== slot) {
+    slot = claimSlot(root, pin?.slot ?? null, canTakeZero, claim);
+    if (pin?.slot !== slot) {
       fs.writeFileSync(
         pinPath(root),
         JSON.stringify({ slot, path: root }, null, 2) + "\n",
@@ -419,20 +449,24 @@ function main(argv) {
   const has = (flag) => argv.includes(flag);
   const root = findRepoRoot();
 
+  const claimAt = argv.indexOf("--claim");
+  let claim = null;
+  if (claimAt !== -1) {
+    claim = Number(argv[claimAt + 1]);
+    if (!Number.isInteger(claim) || claim < 0) {
+      throw new Error("--claim takes a non-negative integer slot number");
+    }
+  }
+
   if (has("--list")) {
-    const registry = withLock(() => readRegistry());
-    const entries = Object.entries(registry.slots).sort(
-      (a, b) => Number(a[0]) - Number(b[0]),
-    );
-    if (entries.length === 0) {
+    const claims = listClaims();
+    if (claims.length === 0) {
       console.log("No slots claimed.");
       return;
     }
-    for (const [slot, info] of entries) {
-      const live = fs.existsSync(info.path)
-        ? ""
-        : "  (stale, will be reclaimed)";
-      console.log(`${String(slot).padStart(2)}  ${info.path}${live}`);
+    for (const { slot, path: claimed } of claims) {
+      const live = fs.existsSync(claimed) ? "" : "  (stale, will be reclaimed)";
+      console.log(`${String(slot).padStart(2)}  ${claimed}${live}`);
     }
     return;
   }
@@ -454,7 +488,7 @@ function main(argv) {
     return;
   }
 
-  const instance = resolveInstance();
+  const instance = resolveInstance({ claim });
 
   if (has("--json")) {
     console.log(JSON.stringify(instance, null, 2));
@@ -468,8 +502,8 @@ function main(argv) {
 
   const { slot, ports, names, urls } = instance;
   const rows = [
-    ["slot", String(slot) + (slot === 0 ? "  (legacy / primary)" : "")],
-    ["worktree", instance.root],
+    ["slot", String(slot) + (slot === 0 ? "  (legacy)" : "")],
+    ["checkout", instance.root],
     ["compose project", names.composeProject],
     ["frontend", urls.frontendUrl],
     ["backend", urls.backendUrl],

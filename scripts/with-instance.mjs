@@ -1,17 +1,17 @@
 #!/usr/bin/env node
 /**
- * Runs a command with this worktree's instance environment applied.
+ * Runs a command with this checkout's instance environment applied.
  *
  *   node scripts/with-instance.mjs nest start --watch
  *
  * Two rules govern what gets injected, and both exist to make this safe to put
  * in front of every dev script:
  *
- *  1. **Slot 0 is left alone.** The primary checkout keeps its ports, its
- *     .env files and its compose project exactly as they were; only
- *     CHARDB_INSTANCE and the (already implicit) COMPOSE_PROJECT_NAME are set.
- *     Anything more would let a generated DATABASE_URL override the real one
- *     in apps/backend/.env.
+ *  1. **Slot 0 is left alone.** Whichever checkout holds the legacy slot keeps
+ *     its ports, its .env files and its compose project exactly as they were;
+ *     only CHARDB_INSTANCE and the (already implicit) COMPOSE_PROJECT_NAME are
+ *     set. Anything more would let a generated DATABASE_URL override the real
+ *     one in apps/backend/.env.
  *  2. **An already-set variable always wins.** `PORT=9999 yarn dev` still
  *     listens on 9999. The instance supplies defaults, not overrides.
  *

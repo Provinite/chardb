@@ -120,15 +120,16 @@ yarn dc up
 
 ### Running several checkouts at once
 
-Each git worktree gets its own ports, databases and containers automatically, so
-you and any number of agents can run the app and the e2e suite in parallel:
+Every checkout — a git worktree or an entirely separate clone — gets its own
+ports, databases and containers automatically, so you and any number of agents
+can run the app and the e2e suite in parallel:
 
 ```bash
-yarn instance:init   # in a fresh worktree: prepares .env, prints your ports
+yarn instance:init   # in a fresh checkout: prepares .env, prints your ports
 yarn instance        # every port, URL and database name for this checkout
 ```
 
-The ports above are the primary checkout's. See
+The ports listed above belong to whichever checkout holds slot 0. See
 [docs/PARALLEL_INSTANCES.md](docs/PARALLEL_INSTANCES.md).
 
 ## 📝 Available Scripts
