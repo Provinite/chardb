@@ -22,7 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **CI runs the suite across four shards**, cutting the job from ~9m to ~3m30s. Shard count is the `strategy.matrix.shard` list in `ci.yml` and nothing else; local runs stay unsharded on one worker. (#353)
+- **CI runs the suite across six shards**, cutting the job from ~9m. Shard count is the `strategy.matrix.shard` list in `ci.yml` and nothing else; local runs stay unsharded on one worker. Six is the last count that helps — Playwright balances by test count rather than duration, so the same eleven slow files land in one shard at six shards and at eight alike. (#353)
+- **CI caches the workspace, backend and frontend build outputs**, so a shard that hits skips ~42s of compilation. Keyed on the sources that produce each output; a miss costs nothing. New `E2E_SKIP_BACKEND_BUILD` / `E2E_SKIP_FRONTEND_BUILD` flags drive it, and `E2E_SKIP_BUILD` now covers both servers rather than just the frontend. Each server errors up front if told to reuse a dist that is not there. (#353)
 - **Reports merge instead of multiplying**: CI reports as `blob`, each shard uploads its slice, and an `e2e-report` job merges them into the one `playwright-report` artifact. Local runs still write HTML directly. (#353)
 
 ### Fixed

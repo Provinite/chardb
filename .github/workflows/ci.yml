@@ -286,15 +286,20 @@ jobs:
         # -- job-total counts every combination, so a second dimension would
         # silently multiply the denominator.
         #
-        # Four is where the curve bends. Measured on a green main run: 1m42s of
-        # fixed cost per shard (checkout, install, browser, package builds, then
-        # docker up + migrate + nest and vite builds) against 7m16s of tests, so
-        # wall clock is roughly 102s + 436s/n. Four gives ~3m30s against 9m05s
-        # serial; eight would give ~2m37s for twice the runners.
+        # Six is the last count that buys anything. Modelled from the real
+        # per-file durations against the real shard assignments: 4 -> 4m01s,
+        # 5 -> 3m43s, 6 -> 3m25s, 8 -> 3m25s. It stops improving because
+        # Playwright balances by test COUNT, not duration, and the trades and
+        # smoke files are few-tests-but-slow -- so the same eleven files land
+        # together in the last shard at 6 and at 8 alike. Adding shards past
+        # this only subdivides shards that were already fast.
+        #
+        # The floor is ~2m23s: ~100s of per-shard fixed cost plus the 43s that
+        # tests/trades/trading.e2e.ts takes on its own.
         #
         # Nothing local reads this. An unsharded `yarn e2e` runs all 474 tests
         # in one process, which is what a developer machine should do.
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6]
 
     steps:
       - name: Checkout
@@ -346,9 +351,43 @@ jobs:
             yarn workspace @chardb/e2e exec playwright install --with-deps chromium
           fi
 
+      # ----------------------------------------------------------------------
+      # Build caches.
+      #
+      # Every shard otherwise repeats the same ~42s of compilation: 11s of
+      # workspace packages, a 20s nest build and an 11s vite build, all from an
+      # identical tree. Caching the OUTPUT and skipping the build on a hit is
+      # the only shape that helps here -- building once in a preceding job and
+      # fanning the artifacts out would convert parallel work into serial work
+      # and cost ~42s of wall clock, since the shards already build
+      # concurrently.
+      #
+      # These are per-run-independent: all shards of one run start together and
+      # so all hit or all miss. The payoff is across runs -- a re-push that does
+      # not touch app source, or a re-run of the same commit.
+      #
+      # Every key names the full set of inputs that can change the output. A key
+      # that under-specifies would serve a stale dist to the suite that gates
+      # deploys, so err towards including too much: a needless miss costs 42s,
+      # a false hit passes CI on code that is not the code being merged.
+      # ----------------------------------------------------------------------
+
+      # prisma generate writes into node_modules/.prisma, which the
+      # node_modules cache above already carries; only the tsc output is here.
+      - name: Restore workspace package builds
+        id: pkg-dist-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            packages/database/dist
+            packages/shared/dist
+            packages/ui/dist
+          key: pkg-dist-${{ runner.os }}-${{ hashFiles('packages/*/src/**', 'packages/*/package.json', 'packages/*/tsconfig*.json', 'packages/database/prisma/schema.prisma', 'yarn.lock') }}
+
       # @chardb/database's build runs prisma generate; apps/* consume these
       # packages through their `types` field, which points at gitignored dist/.
       - name: Build workspace packages
+        if: steps.pkg-dist-cache.outputs.cache-hit != 'true'
         run: |
           yarn workspaces foreach -A --parallel \
             --include '@chardb/database' \
@@ -358,15 +397,42 @@ jobs:
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
 
+      # A cache hit here means src/servers/backend.ts skips `nest build` and
+      # runs the restored dist/src/main.js as-is.
+      - name: Restore backend build
+        id: backend-dist-cache
+        uses: actions/cache@v6
+        with:
+          path: apps/backend/dist
+          key: backend-dist-${{ runner.os }}-${{ hashFiles('apps/backend/src/**', 'apps/backend/package.json', 'apps/backend/tsconfig*.json', 'apps/backend/nest-cli.json', 'packages/*/src/**', 'packages/database/prisma/schema.prisma', 'yarn.lock') }}
+
+      # The frontend bundle additionally depends on schema.gql, which drives
+      # codegen, and on VITE_API_URL -- inlined at build time. That URL is
+      # CFG.backendUrl, identical on every CI shard because each is its own
+      # runner using the default port, so it is not part of the key. Change how
+      # the e2e backend port is derived in CI and this key must gain it.
+      - name: Restore frontend build
+        id: frontend-dist-cache
+        uses: actions/cache@v6
+        with:
+          path: apps/frontend/dist
+          key: frontend-dist-${{ runner.os }}-${{ hashFiles('apps/frontend/src/**', 'apps/frontend/index.html', 'apps/frontend/package.json', 'apps/frontend/vite.config.ts', 'apps/frontend/.graphqlrc.yml', 'apps/backend/src/schema.gql', 'packages/*/src/**', 'yarn.lock') }}
+
       # No `services:` block: the suite starts its own Postgres through
       # docker/compose.test.yml, exactly as it does locally. Keeping the two
       # identical means a CI failure reproduces with a plain `yarn e2e`.
-      # Playwright splits by spec file and balances by test count. Measured at
-      # four shards: 128 / 121 / 116 / 121 tests, so no shard carries the run.
+      #
+      # Playwright splits by spec file and balances by test count, not duration
+      # -- measured at four shards the counts were even (128/121/116/121) while
+      # the slowest job still ran 83s longer than the fastest.
+      #
       # Each shard reruns the `setup` project against its own database, which is
       # what makes them independent.
       - name: Run browser E2E
         run: yarn workspace @chardb/e2e e2e --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          E2E_SKIP_BACKEND_BUILD: ${{ steps.backend-dist-cache.outputs.cache-hit == 'true' && '1' || '0' }}
+          E2E_SKIP_FRONTEND_BUILD: ${{ steps.frontend-dist-cache.outputs.cache-hit == 'true' && '1' || '0' }}
 
       # This shard's slice of the report, which `e2e-report` below merges.
       # A single `path` is deliberate: upload-artifact roots the archive at the

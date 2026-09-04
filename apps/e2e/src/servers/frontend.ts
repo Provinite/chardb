@@ -12,10 +12,13 @@
  *    a cold dev-mode first navigation costs seconds of on-demand transform, paid
  *    on every test. Preview serves static files.
  *
- * Set E2E_FRONTEND_MODE=dev to opt out, E2E_SKIP_BUILD=1 to reuse dist/.
+ * Set E2E_FRONTEND_MODE=dev to opt out, E2E_SKIP_BUILD=1 (or the narrower
+ * E2E_SKIP_FRONTEND_BUILD=1) to reuse dist/.
  */
 import { execFileSync, spawn } from "node:child_process";
+import * as fs from "node:fs";
 import * as net from "node:net";
+import * as path from "node:path";
 import { CFG, REPO_ROOT } from "../config.js";
 import { superviseChild } from "./supervise.js";
 
@@ -46,7 +49,18 @@ async function main(): Promise<void> {
   // not merely for the server.
   const env = { ...process.env, VITE_API_URL: CFG.backendUrl };
 
-  if (CFG.frontendMode === "preview" && !CFG.skipBuild) {
+  if (CFG.frontendMode === "preview" && CFG.skipFrontendBuild) {
+    const bundle = path.resolve(REPO_ROOT, "apps/frontend/dist/index.html");
+    if (!fs.existsSync(bundle)) {
+      throw new Error(
+        `Frontend build was skipped but ${bundle} does not exist. ` +
+          `Unset E2E_SKIP_FRONTEND_BUILD (or E2E_SKIP_BUILD), or run ` +
+          `\`yarn workspace @chardb/frontend exec vite build\` first.`,
+      );
+    }
+  }
+
+  if (CFG.frontendMode === "preview" && !CFG.skipFrontendBuild) {
     // codegen reads the committed schema.gql from disk -- no running backend needed.
     execFileSync("yarn", ["workspace", "@chardb/frontend", "codegen"], {
       cwd: REPO_ROOT,

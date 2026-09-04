@@ -168,7 +168,9 @@ Prints every id, URL and credential for the seeded world. With `--json` only the
 | `E2E_PG_PORT` | `5440` | The shared test-postgres container. |
 | `E2E_DB_NAME` | `chardb_e2e_ui` | Separate from the Jest suite's `chardb_test`. |
 | `E2E_FRONTEND_MODE` | `preview` | `dev` serves via Vite dev instead of a production build. |
-| `E2E_SKIP_BUILD` | unset | Reuse `apps/frontend/dist` — much faster spec iteration. |
+| `E2E_SKIP_BUILD` | unset | Reuse both `apps/backend/dist` and `apps/frontend/dist` — much faster spec iteration. Each server errors up front if the dist it was told to reuse is missing. |
+| `E2E_SKIP_BACKEND_BUILD` | unset | Just the backend half of the above. Exists for CI, which caches the two builds under separate keys and can hit on one and miss on the other. |
+| `E2E_SKIP_FRONTEND_BUILD` | unset | Just the frontend half. |
 | `E2E_KEEP_DB` | unset | Skip teardown so the database can be inspected. |
 | `E2E_REUSE_SERVERS` | unset | Attach to already-running servers. |
 
@@ -287,7 +289,8 @@ It deliberately does **not** use a GitHub `services:` container for Postgres —
 
 - **Browsers are cached** on `~/.cache/ms-playwright`, keyed by the resolved Playwright version, so a version bump busts it automatically. On a cache hit the job still runs `playwright install-deps` — the binary is cached but the system libraries it links against are not.
 - **`retries: 1` in CI only** (`retries: 0` locally). A test that fails twice still fails the run; this only absorbs a slow cold start or a dropped connection.
-- **The run is sharded across four runners.** Each shard is an independent `ubuntu-latest` job with its own Postgres container, database and ports, so nothing has to be isolated for it to work.
+- **The run is sharded across six runners.** Each shard is an independent `ubuntu-latest` job with its own Postgres container, database and ports, so nothing has to be isolated for it to work.
+- **Build outputs are cached between runs.** Each shard would otherwise repeat the same ~42s of compilation — 11s of workspace packages, a 20s nest build, an 11s vite build — from an identical tree. On a cache hit the shard skips them via `E2E_SKIP_BACKEND_BUILD` / `E2E_SKIP_FRONTEND_BUILD`. Note this cannot help *within* a run: all shards start together, so they all hit or all miss. It pays off on a re-push that leaves app source alone, and on a re-run. Building once in a preceding job and fanning artifacts out would be **slower** — the shards already compile in parallel, so that trades ~42s of parallel work for ~74s of serial work.
 - **One report, not four.** In CI the reporter is `blob` rather than `html`; each shard uploads its slice as `blob-report-<n>` and the `e2e-report` job merges them into the single `playwright-report` artifact, kept 7 days. Traces, videos, and screenshots are `retain-on-failure` and travel inside the blob, so a red run comes with a step-by-step replay rather than just a stack trace.
 - **Changing the shard count** means editing one list: `strategy.matrix.shard` in the `e2e` job. The `--shard` denominator is `strategy.job-total`, so it follows automatically. Keep `shard` the only matrix dimension — `job-total` counts every combination, so a second one would silently multiply the denominator.
 

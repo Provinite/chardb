@@ -40,7 +40,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **CI shards the browser E2E suite across four runners**, taking the job from ~9m to ~3m30s; a merge job stitches the four reports into one artifact (#353).
+- **CI shards the browser E2E suite across six runners** and caches the backend, frontend and workspace build outputs between runs, taking the job down from ~9m; a merge job stitches the shard reports into one artifact (#353).
 
 ### Fixed
 
