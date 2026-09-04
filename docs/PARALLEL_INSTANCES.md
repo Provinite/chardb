@@ -67,7 +67,15 @@ git worktree add ../my-feature -b feat/my-feature
 cd ../my-feature
 yarn install
 yarn instance:init
+yarn workspace @chardb/database db:generate
+yarn workspace @chardb/shared build
+yarn workspace @chardb/ui build
+yarn workspace @chardb/database build
 ```
+
+Only `instance:init` is worktree-specific. The generate and the three builds are
+what any fresh checkout needs — `apps/*` resolve `@chardb/*` through `dist/` —
+and they have to run in that order, because `yarn build` is not topological.
 
 `instance:init` copies `apps/backend/.env` and `apps/frontend/.env` from the
 primary checkout when it can find one (same machine, same developer, same

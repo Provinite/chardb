@@ -20,12 +20,22 @@ already do the right thing inside a worktree.
 ```bash
 yarn install          # yarn 4 workspaces; the worktree needs its own node_modules
 yarn instance:init    # copies .env files from the primary checkout, prints your slot
+yarn workspace @chardb/database db:generate
+yarn workspace @chardb/shared build
+yarn workspace @chardb/ui build
+yarn workspace @chardb/database build
 yarn instance         # the full table: every port, URL and database name
 ```
 
-`instance:init` is the only extra step versus working in the primary checkout.
-It exists because `.env` files are gitignored, so a new worktree has none and
-the backend will not boot without `JWT_SECRET` and the OAuth client ids.
+`instance:init` is the only step specific to worktrees. It exists because `.env`
+files are gitignored, so a new worktree has none and the backend will not boot
+without `JWT_SECRET` and the OAuth client ids.
+
+The three builds are not: a fresh checkout of any kind needs them, because
+`apps/*` resolve `@chardb/*` through `dist/`. Skipping them fails as
+`Cannot find module '.../@chardb/database/dist/index.js'` or `Failed to resolve
+entry for package "@chardb/ui"`. Build them in that order — plain `yarn build`
+is not topological and trips over `@chardb/ui`.
 
 ## Running
 

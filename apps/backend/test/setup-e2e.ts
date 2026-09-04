@@ -10,11 +10,22 @@ import { ConfigModule } from "@nestjs/config";
 import { JwtModule } from "@nestjs/jwt";
 import { ThrottlerModule } from "@nestjs/throttler";
 import * as request from "supertest";
+import * as jwt from "jsonwebtoken";
 import { DatabaseService } from "../src/database/database.service";
 import { CustomThrottlerGuard } from "../src/middleware/custom-throttler.guard";
 import { OptionalJwtAuthGuard } from "../src/auth/guards/optional-jwt-auth.guard";
 // Ensure ModerationStatus and other enums are registered for GraphQL schema generation
 import "../src/image-moderation/dto/image-moderation.dto";
+
+// This suite must talk to the throwaway test database, never the development
+// one. Outside the primary checkout, scripts/with-instance.mjs puts this
+// worktree's *dev* DATABASE_URL in the environment, and a value already in
+// process.env beats .env.test -- so point it at the test database explicitly.
+// On the primary checkout TEST_DATABASE_URL is unset and .env.test still wins,
+// exactly as before.
+if (process.env.TEST_DATABASE_URL) {
+  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
+}
 
 // NestJS app startup + DB operations can take well over 5s
 jest.setTimeout(60000);
@@ -241,7 +252,6 @@ export class TestApp {
   }
 
   async generateTestToken(userId: string, username?: string) {
-    const jwt = require("jsonwebtoken");
     return jwt.sign(
       { sub: userId, username: username || `testuser_${userId}` },
       process.env.JWT_SECRET ||
