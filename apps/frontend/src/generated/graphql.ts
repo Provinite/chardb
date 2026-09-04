@@ -4584,6 +4584,16 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, communityMemberships: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateCharacter: boolean, canEditCharacter: boolean, canCreateOrphanedCharacter: boolean } }> } };
 
+export type CharacterCardFieldsFragment = { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } };
+
+export type UserCharactersQueryVariables = Exact<{
+  userId: Scalars['ID']['input'];
+  filters?: InputMaybe<CharacterFiltersInput>;
+}>;
+
+
+export type UserCharactersQuery = { __typename?: 'Query', userCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
+
 export type GetCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
@@ -5063,6 +5073,14 @@ export type UnlinkExternalAccountMutationVariables = Exact<{
 
 
 export type UnlinkExternalAccountMutation = { __typename?: 'Mutation', unlinkExternalAccount: boolean };
+
+export type UserGalleriesQueryVariables = Exact<{
+  userId: Scalars['ID']['input'];
+  filters?: InputMaybe<GalleryFiltersInput>;
+}>;
+
+
+export type UserGalleriesQuery = { __typename?: 'Query', userGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, visibility: Visibility, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
 
 export type GetGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
@@ -6082,6 +6100,13 @@ export type EditAndApproveTraitReviewMutation = { __typename?: 'Mutation', editA
 
 export type UserBasicFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
+export type UserIdentityQueryVariables = Exact<{
+  username: Scalars['String']['input'];
+}>;
+
+
+export type UserIdentityQuery = { __typename?: 'Query', user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
+
 export type GetUserProfileQueryVariables = Exact<{
   username: Scalars['String']['input'];
 }>;
@@ -6103,6 +6128,71 @@ export type UpdateProfileMutationVariables = Exact<{
 
 export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } };
 
+export const UserBasicFragmentDoc = gql`
+    fragment UserBasic on User {
+  id
+  username
+  displayName
+  avatarImage {
+    id
+    originalUrl
+    thumbnailUrl
+    altText
+  }
+}
+    `;
+export const CharacterCardFieldsFragmentDoc = gql`
+    fragment CharacterCardFields on Character {
+  id
+  name
+  species {
+    id
+    name
+  }
+  details
+  ownerId
+  creatorId
+  mainMediaId
+  visibility
+  isSellable
+  isTradeable
+  isSellableForCoin
+  isTradeableForArt
+  isOpenToOffers
+  isFreebie
+  price
+  tags
+  customFields
+  createdAt
+  updatedAt
+  pendingOwnership {
+    id
+    provider
+    providerAccountId
+    createdAt
+  }
+  owner {
+    ...UserBasic
+  }
+  creator {
+    ...UserBasic
+  }
+  mainMedia {
+    id
+    title
+    image {
+      id
+      originalUrl
+      thumbnailUrl
+      altText
+      isNsfw
+    }
+  }
+  _count {
+    media
+  }
+}
+    ${UserBasicFragmentDoc}`;
 export const CommunityMemberUserFragmentDoc = gql`
     fragment CommunityMemberUser on User {
   id
@@ -6139,19 +6229,6 @@ export const CurrencyFieldsFragmentDoc = gql`
   archivedAt
   createdAt
   updatedAt
-}
-    `;
-export const UserBasicFragmentDoc = gql`
-    fragment UserBasic on User {
-  id
-  username
-  displayName
-  avatarImage {
-    id
-    originalUrl
-    thumbnailUrl
-    altText
-  }
 }
     `;
 export const CurrencyTransactionFieldsFragmentDoc = gql`
@@ -6950,6 +7027,51 @@ export type MeQueryHookResult = ReturnType<typeof useMeQuery>;
 export type MeLazyQueryHookResult = ReturnType<typeof useMeLazyQuery>;
 export type MeSuspenseQueryHookResult = ReturnType<typeof useMeSuspenseQuery>;
 export type MeQueryResult = Apollo.QueryResult<MeQuery, MeQueryVariables>;
+export const UserCharactersDocument = gql`
+    query UserCharacters($userId: ID!, $filters: CharacterFiltersInput) {
+  userCharacters(userId: $userId, filters: $filters) {
+    characters {
+      ...CharacterCardFields
+    }
+    total
+    hasMore
+  }
+}
+    ${CharacterCardFieldsFragmentDoc}`;
+
+/**
+ * __useUserCharactersQuery__
+ *
+ * To run a query within a React component, call `useUserCharactersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUserCharactersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUserCharactersQuery({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useUserCharactersQuery(baseOptions: Apollo.QueryHookOptions<UserCharactersQuery, UserCharactersQueryVariables> & ({ variables: UserCharactersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<UserCharactersQuery, UserCharactersQueryVariables>(UserCharactersDocument, options);
+      }
+export function useUserCharactersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<UserCharactersQuery, UserCharactersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<UserCharactersQuery, UserCharactersQueryVariables>(UserCharactersDocument, options);
+        }
+export function useUserCharactersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<UserCharactersQuery, UserCharactersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<UserCharactersQuery, UserCharactersQueryVariables>(UserCharactersDocument, options);
+        }
+export type UserCharactersQueryHookResult = ReturnType<typeof useUserCharactersQuery>;
+export type UserCharactersLazyQueryHookResult = ReturnType<typeof useUserCharactersLazyQuery>;
+export type UserCharactersSuspenseQueryHookResult = ReturnType<typeof useUserCharactersSuspenseQuery>;
+export type UserCharactersQueryResult = Apollo.QueryResult<UserCharactersQuery, UserCharactersQueryVariables>;
 export const GetCharactersDocument = gql`
     query GetCharacters($filters: CharacterFiltersInput) {
   characters(filters: $filters) {
@@ -9929,6 +10051,67 @@ export function useUnlinkExternalAccountMutation(baseOptions?: Apollo.MutationHo
 export type UnlinkExternalAccountMutationHookResult = ReturnType<typeof useUnlinkExternalAccountMutation>;
 export type UnlinkExternalAccountMutationResult = Apollo.MutationResult<UnlinkExternalAccountMutation>;
 export type UnlinkExternalAccountMutationOptions = Apollo.BaseMutationOptions<UnlinkExternalAccountMutation, UnlinkExternalAccountMutationVariables>;
+export const UserGalleriesDocument = gql`
+    query UserGalleries($userId: ID!, $filters: GalleryFiltersInput) {
+  userGalleries(userId: $userId, filters: $filters) {
+    galleries {
+      id
+      name
+      description
+      ownerId
+      visibility
+      createdAt
+      updatedAt
+      owner {
+        ...UserBasic
+      }
+      character {
+        id
+        name
+      }
+      _count {
+        media
+      }
+    }
+    total
+    hasMore
+  }
+}
+    ${UserBasicFragmentDoc}`;
+
+/**
+ * __useUserGalleriesQuery__
+ *
+ * To run a query within a React component, call `useUserGalleriesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUserGalleriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUserGalleriesQuery({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useUserGalleriesQuery(baseOptions: Apollo.QueryHookOptions<UserGalleriesQuery, UserGalleriesQueryVariables> & ({ variables: UserGalleriesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<UserGalleriesQuery, UserGalleriesQueryVariables>(UserGalleriesDocument, options);
+      }
+export function useUserGalleriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<UserGalleriesQuery, UserGalleriesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<UserGalleriesQuery, UserGalleriesQueryVariables>(UserGalleriesDocument, options);
+        }
+export function useUserGalleriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<UserGalleriesQuery, UserGalleriesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<UserGalleriesQuery, UserGalleriesQueryVariables>(UserGalleriesDocument, options);
+        }
+export type UserGalleriesQueryHookResult = ReturnType<typeof useUserGalleriesQuery>;
+export type UserGalleriesLazyQueryHookResult = ReturnType<typeof useUserGalleriesLazyQuery>;
+export type UserGalleriesSuspenseQueryHookResult = ReturnType<typeof useUserGalleriesSuspenseQuery>;
+export type UserGalleriesQueryResult = Apollo.QueryResult<UserGalleriesQuery, UserGalleriesQueryVariables>;
 export const GetGalleriesDocument = gql`
     query GetGalleries($filters: GalleryFiltersInput) {
   galleries(filters: $filters) {
@@ -16400,6 +16583,46 @@ export function useEditAndApproveTraitReviewMutation(baseOptions?: Apollo.Mutati
 export type EditAndApproveTraitReviewMutationHookResult = ReturnType<typeof useEditAndApproveTraitReviewMutation>;
 export type EditAndApproveTraitReviewMutationResult = Apollo.MutationResult<EditAndApproveTraitReviewMutation>;
 export type EditAndApproveTraitReviewMutationOptions = Apollo.BaseMutationOptions<EditAndApproveTraitReviewMutation, EditAndApproveTraitReviewMutationVariables>;
+export const UserIdentityDocument = gql`
+    query UserIdentity($username: String!) {
+  user(username: $username) {
+    ...UserBasic
+  }
+}
+    ${UserBasicFragmentDoc}`;
+
+/**
+ * __useUserIdentityQuery__
+ *
+ * To run a query within a React component, call `useUserIdentityQuery` and pass it any options that fit your needs.
+ * When your component renders, `useUserIdentityQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useUserIdentityQuery({
+ *   variables: {
+ *      username: // value for 'username'
+ *   },
+ * });
+ */
+export function useUserIdentityQuery(baseOptions: Apollo.QueryHookOptions<UserIdentityQuery, UserIdentityQueryVariables> & ({ variables: UserIdentityQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<UserIdentityQuery, UserIdentityQueryVariables>(UserIdentityDocument, options);
+      }
+export function useUserIdentityLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<UserIdentityQuery, UserIdentityQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<UserIdentityQuery, UserIdentityQueryVariables>(UserIdentityDocument, options);
+        }
+export function useUserIdentitySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<UserIdentityQuery, UserIdentityQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<UserIdentityQuery, UserIdentityQueryVariables>(UserIdentityDocument, options);
+        }
+export type UserIdentityQueryHookResult = ReturnType<typeof useUserIdentityQuery>;
+export type UserIdentityLazyQueryHookResult = ReturnType<typeof useUserIdentityLazyQuery>;
+export type UserIdentitySuspenseQueryHookResult = ReturnType<typeof useUserIdentitySuspenseQuery>;
+export type UserIdentityQueryResult = Apollo.QueryResult<UserIdentityQuery, UserIdentityQueryVariables>;
 export const GetUserProfileDocument = gql`
     query GetUserProfile($username: String!) {
   userProfile(username: $username) {

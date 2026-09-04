@@ -1,6 +1,36 @@
 import { gql } from "@apollo/client";
 import { USER_BASIC_FRAGMENT } from "./users.graphql";
 
+/** One member's galleries, filtered server-side by owner and by viewer. */
+export const USER_GALLERIES = gql`
+  query UserGalleries($userId: ID!, $filters: GalleryFiltersInput) {
+    userGalleries(userId: $userId, filters: $filters) {
+      galleries {
+        id
+        name
+        description
+        ownerId
+        visibility
+        createdAt
+        updatedAt
+        owner {
+          ...UserBasic
+        }
+        character {
+          id
+          name
+        }
+        _count {
+          media
+        }
+      }
+      total
+      hasMore
+    }
+  }
+  ${USER_BASIC_FRAGMENT}
+`;
+
 export const GET_GALLERIES = gql`
   query GetGalleries($filters: GalleryFiltersInput) {
     galleries(filters: $filters) {

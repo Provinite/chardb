@@ -1,6 +1,80 @@
 import { gql } from "@apollo/client";
 import { USER_BASIC_FRAGMENT } from "./users.graphql";
 
+/**
+ * Everything `CharacterCard` reads. A fragment because two lists now render
+ * the same card -- global browse and one member's characters -- and a card
+ * that renders differently depending on which list it came from would be a
+ * bug waiting to happen.
+ */
+export const CHARACTER_CARD_FIELDS_FRAGMENT = gql`
+  fragment CharacterCardFields on Character {
+    id
+    name
+    species {
+      id
+      name
+    }
+    details
+    ownerId
+    creatorId
+    mainMediaId
+    visibility
+    isSellable
+    isTradeable
+    isSellableForCoin
+    isTradeableForArt
+    isOpenToOffers
+    isFreebie
+    price
+    tags
+    customFields
+    createdAt
+    updatedAt
+    pendingOwnership {
+      id
+      provider
+      providerAccountId
+      createdAt
+    }
+    owner {
+      ...UserBasic
+    }
+    creator {
+      ...UserBasic
+    }
+    mainMedia {
+      id
+      title
+      image {
+        id
+        originalUrl
+        thumbnailUrl
+        altText
+        isNsfw
+      }
+    }
+    _count {
+      media
+    }
+  }
+  ${USER_BASIC_FRAGMENT}
+`;
+
+/** One member's characters, filtered server-side by owner and by viewer. */
+export const USER_CHARACTERS = gql`
+  query UserCharacters($userId: ID!, $filters: CharacterFiltersInput) {
+    userCharacters(userId: $userId, filters: $filters) {
+      characters {
+        ...CharacterCardFields
+      }
+      total
+      hasMore
+    }
+  }
+  ${CHARACTER_CARD_FIELDS_FRAGMENT}
+`;
+
 export const GET_CHARACTERS = gql`
   query GetCharacters($filters: CharacterFiltersInput) {
     characters(filters: $filters) {

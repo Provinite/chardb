@@ -15,6 +15,22 @@ export const USER_BASIC_FRAGMENT = gql`
   }
 `;
 
+/**
+ * Enough of a member to title a page about them, and no more.
+ *
+ * Deliberately not `GET_USER_PROFILE`: that pulls stats, recent characters,
+ * recent galleries and recent images to render one heading, and the per-owner
+ * listing pages need a name and an id.
+ */
+export const USER_IDENTITY = gql`
+  query UserIdentity($username: String!) {
+    user(username: $username) {
+      ...UserBasic
+    }
+  }
+  ${USER_BASIC_FRAGMENT}
+`;
+
 export const GET_USER_PROFILE = gql`
   query GetUserProfile($username: String!) {
     userProfile(username: $username) {

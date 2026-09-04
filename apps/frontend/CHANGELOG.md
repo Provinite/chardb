@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A member's characters and galleries each have a page.**
+  `/user/:username/characters` and `/user/:username/galleries`. The profile's
+  "View All" links reach them, and the Characters and Galleries stat tiles are
+  now links too (#321).
+
 - **A "Send to back" button on both moderation queues**, with an optional note
   for the next moderator and a `Deferred ×N` badge on anything that has been
   passed over (#333).

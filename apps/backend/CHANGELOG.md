@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Unlisted characters and galleries are no longer listed to other members.**
+  `characters` / `galleries` and their per-owner variants now return PUBLIC
+  plus the viewer's own, matching what `UserStats` has always counted and what
+  "unlisted" means. Unlisted stays reachable by direct link (#321).
+
 - **Send a review queue entry to the back.** `deferTraitReview` and
   `deferImage` reorder without deciding — status stays PENDING, nothing is
   applied, refunded, logged or announced — and record a count, a note and who

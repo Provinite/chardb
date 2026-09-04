@@ -87,13 +87,13 @@ export class GalleriesService {
 
     const where: Prisma.GalleryWhereInput = {
       AND: [
-        // Visibility filter
+        // Visibility. Same rule and same reasoning as CharactersService.findAll:
+        // unlisted is reachable by link, not by listing.
         userId
           ? {
               OR: [
                 { visibility: Visibility.PUBLIC },
-                { ownerId: userId }, // User can see their own galleries
-                { visibility: Visibility.UNLISTED },
+                { ownerId: userId }, // Owner sees their own, whatever it is
               ],
             }
           : { visibility: Visibility.PUBLIC },
