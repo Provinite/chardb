@@ -3,12 +3,13 @@
 # LocalStack initialization script
 # This script runs when LocalStack is ready and sets up AWS resources for local development
 #
-# Resource names come from the environment (services/localstack.yml passes them
-# through) so each instance can own its own bucket and queue. The defaults are
-# the names the primary instance has always used.
+# These names are the same in every instance on purpose: each instance runs its
+# own LocalStack, so isolation comes from the container, not from the name. Only
+# the port differs (LOCALSTACK_PORT), and the backend's AWS_ENDPOINT_URL follows
+# it. See docs/PARALLEL_INSTANCES.md.
 
-BUCKET="${S3_IMAGES_BUCKET:-chardb-images}"
-QUEUE="${SQS_PRIZE_QUEUE:-chardb-prize-distribution}"
+BUCKET="chardb-images"
+QUEUE="chardb-prize-distribution"
 
 echo "Initializing LocalStack resources..."
 

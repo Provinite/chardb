@@ -383,8 +383,9 @@ export function describe(slot, root = null) {
     testDatabase: `chardb_test${under}`,
     e2eDatabase: `chardb_e2e_ui${under}`,
     otelService: `chardb-backend${dash}`,
-    imagesBucket: `chardb-images${dash}`,
-    prizeQueue: `chardb-prize-distribution${dash}`,
+    // Not instance-scoped -- see the LocalStack note in `env` below.
+    imagesBucket: "chardb-images",
+    prizeQueue: "chardb-prize-distribution",
   };
 
   const backendUrl = `http://localhost:${ports.backend}`;
@@ -402,6 +403,9 @@ export function describe(slot, root = null) {
     FRONTEND_PORT: String(ports.frontend),
     FRONTEND_URL: frontendUrl,
     VITE_API_URL: backendUrl,
+    // Read by packages/database's persona seeder and the da-import CLI, which
+    // talk to the backend over HTTP rather than to the database directly.
+    GRAPHQL_ENDPOINT: `${backendUrl}/graphql`,
 
     // Dev database.
     POSTGRES_PORT: String(ports.postgres),
@@ -420,9 +424,15 @@ export function describe(slot, root = null) {
     E2E_DB_NAME: names.e2eDatabase,
 
     // LocalStack (S3 + SQS).
+    //
+    // Only the port is instance-scoped. The bucket and queue keep their stock
+    // names deliberately: each instance runs its own LocalStack holding exactly
+    // one of each, so a per-instance name would buy no isolation and would mean
+    // two places -- init-aws.sh, which creates them, and the backend, which
+    // uses them -- had to agree about a string. When they disagreed, the
+    // backend crashed at boot polling a queue that did not exist.
     LOCALSTACK_PORT: String(ports.localstack),
     AWS_ENDPOINT_URL: localstackUrl,
-    S3_IMAGES_BUCKET: names.imagesBucket,
     CLOUDFRONT_IMAGES_DOMAIN: `localhost:${ports.localstack}/${names.imagesBucket}`,
     AWS_SQS_QUEUE_URL: `${localstackUrl}/000000000000/${names.prizeQueue}`,
 

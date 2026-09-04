@@ -33,9 +33,6 @@ services:
       - AWS_DEFAULT_REGION=us-east-1
       - AWS_ACCESS_KEY_ID=test
       - AWS_SECRET_ACCESS_KEY=test
-      # Read by init-aws.sh.
-      - S3_IMAGES_BUCKET=${S3_IMAGES_BUCKET:-chardb-images}
-      - SQS_PRIZE_QUEUE=${SQS_PRIZE_QUEUE:-chardb-prize-distribution}
     volumes:
       - "../localstack:/etc/localstack/init/ready.d"
       - "/var/run/docker.sock:/var/run/docker.sock"
