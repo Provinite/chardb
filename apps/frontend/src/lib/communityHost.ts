@@ -68,8 +68,7 @@ const origin = (host: string): string =>
   `${window.location.protocol}//${host}${port()}`;
 
 /** Absolute URL for `path` on the site's apex host. */
-export const apexUrl = (path = "/"): string =>
-  `${origin(ROOT_DOMAIN)}${path}`;
+export const apexUrl = (path = "/"): string => `${origin(ROOT_DOMAIN)}${path}`;
 
 /** Absolute URL for `path` on a community's own host. */
 export const communityUrl = (slug: string, path = "/"): string =>

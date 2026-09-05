@@ -3,7 +3,10 @@ import { useLocation, useParams } from "react-router-dom";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { CharacterPage } from "../pages/CharacterPage";
-import { useCommunityByIdQuery, useGetCharacterQuery } from "../generated/graphql";
+import {
+  useCommunityByIdQuery,
+  useGetCharacterQuery,
+} from "../generated/graphql";
 import { communityUrl } from "../lib/communityHost";
 
 /**

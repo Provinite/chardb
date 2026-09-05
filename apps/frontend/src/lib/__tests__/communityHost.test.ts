@@ -88,7 +88,9 @@ describe("suggestCommunitySlug", () => {
     expect(suggestCommunitySlug("Willowmere")).toBe("willowmere");
     expect(suggestCommunitySlug("Thornfield Hollow")).toBe("thornfield-hollow");
     expect(suggestCommunitySlug("The Cloverse")).toBe("the-cloverse");
-    expect(suggestCommunitySlug("CloverCoin's ARPG!")).toBe("clovercoin-s-arpg");
+    expect(suggestCommunitySlug("CloverCoin's ARPG!")).toBe(
+      "clovercoin-s-arpg",
+    );
   });
 
   it("can return something the rules then reject", () => {

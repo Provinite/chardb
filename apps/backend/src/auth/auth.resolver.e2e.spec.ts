@@ -1,4 +1,3 @@
-import { INestApplication } from "@nestjs/common";
 import { TestApp, AUTH_QUERIES } from "../../test/setup-e2e";
 import { AuthModule } from "./auth.module";
 import { DatabaseModule } from "../database/database.module";
@@ -27,14 +26,12 @@ function refreshCookie(response: {
 
 describe("AuthResolver (e2e)", () => {
   let testApp: TestApp;
-  let app: INestApplication;
 
   beforeAll(async () => {
     testApp = new TestApp();
     await testApp.setup({
       imports: [DatabaseModule, AuthModule, UsersModule],
     });
-    app = testApp.getApp();
   });
 
   beforeEach(async () => {

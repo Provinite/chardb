@@ -88,10 +88,7 @@ export const ApexRoutes: React.FC = () => (
         Public, like the profile they hang off: every query behind them is
         @AllowUnauthenticated and narrows by viewer server-side. */}
     <Route path="/user/:username" element={<UserProfilePage />} />
-    <Route
-      path="/user/:username/characters"
-      element={<UserCharactersPage />}
-    />
+    <Route path="/user/:username/characters" element={<UserCharactersPage />} />
     <Route path="/user/:username/galleries" element={<UserGalleriesPage />} />
     <Route path="/user/:username/media" element={<UserMediaPage />} />
     <Route path="/user/:username/followers" element={<FollowersPage />} />
@@ -100,7 +97,10 @@ export const ApexRoutes: React.FC = () => (
     {/* --- every old community URL, forwarded to that community's host.
         One route rather than twenty-seven: the translation is mechanical once
         the id has been resolved to a slug. */}
-    <Route path="/communities/:communityId" element={<CommunityHostRedirect />} />
+    <Route
+      path="/communities/:communityId"
+      element={<CommunityHostRedirect />}
+    />
     <Route
       path="/communities/:communityId/*"
       element={<CommunityHostRedirect />}

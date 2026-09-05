@@ -40,6 +40,8 @@ export function mapUpdateCommunityInputToService(
   return result;
 }
 
+// eslint-disable-next-line @typescript-eslint/ban-types -- `GetPayload` takes
+// an args object, and the empty one is how you ask for the scalar fields alone.
 type PrismaCommunity = Prisma.CommunityGetPayload<{}>;
 
 /**

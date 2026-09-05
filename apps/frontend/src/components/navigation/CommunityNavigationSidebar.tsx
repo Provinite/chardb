@@ -265,14 +265,14 @@ export const CommunityNavigationSidebar: React.FC<
   });
 
   const { data: characterData } = useGetCharacterQuery({
-      variables: { id: characterId || "" },
-      skip: !characterId,
-    });
+    variables: { id: characterId || "" },
+    skip: !characterId,
+  });
 
   const { data: variantData } = useSpeciesVariantByIdQuery({
-      variables: { id: variantId || "" },
-      skip: !variantId,
-    });
+    variables: { id: variantId || "" },
+    skip: !variantId,
+  });
 
   const { data: traitData } = useTraitByIdQuery({
     variables: { id: traitId || "" },
@@ -392,11 +392,7 @@ export const CommunityNavigationSidebar: React.FC<
       ) : (
         <SidebarContent>
           {/* Overview Section - Always visible to members */}
-          <CommunityNavigationItem
-            to="/"
-            icon={BarChart3}
-            label="Overview"
-          />
+          <CommunityNavigationItem to="/" icon={BarChart3} label="Overview" />
 
           <Divider />
 

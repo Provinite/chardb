@@ -14,6 +14,7 @@ import { loggerConfig } from "./logger.config";
 // `cookie_parser_1.default`, which is undefined at runtime for a CommonJS
 // module whose export is the function itself.
 import * as cookieParser from "cookie-parser";
+import type { Request, Response, NextFunction } from "express";
 import { isOriginAllowed } from "./auth/allowed-origins";
 
 async function bootstrap() {
@@ -22,7 +23,7 @@ async function bootstrap() {
   });
 
   // Enable request logging middleware
-  app.use((req: any, res: any, next: any) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     const logger = new Logger("HTTP");
     const start = Date.now();
 

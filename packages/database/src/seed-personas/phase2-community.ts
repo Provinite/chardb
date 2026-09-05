@@ -151,7 +151,9 @@ async function createCustomRoles(
 
 export async function runPhase2(
   client: GraphQLClient,
-  users: Map<string, User>,
+  // Unused, but the phases are called in a row with the same shape and phase 3
+  // does need it. Kept so the call sites stay uniform.
+  _users: Map<string, User>,
 ): Promise<Phase2Result> {
   log.phase("Phase 2: Setting up community...");
 
