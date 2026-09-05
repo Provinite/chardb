@@ -295,15 +295,23 @@ export const CommunityMembersPage: React.FC = () => {
                 <Avatar image={m.user.avatarImage} name={name} size={36} />
                 <Who>
                   <Name>
-                    <Link to={`/user/${m.user.username}`}>{name}</Link>
+                    {/* Their profile *here*, not the global one. Clicking a
+                        name inside a community and landing somewhere that has
+                        forgotten the community is how their holdings became
+                        unreachable in the first place (#349). */}
+                    <Link
+                      to={`/communities/${communityId}/members/${m.user.username}`}
+                    >
+                      {name}
+                    </Link>
                   </Name>
                   {m.user.displayName && <Handle>@{m.user.username}</Handle>}
                 </Who>
                 <RoleTag>{m.role.name}</RoleTag>
                 <ItemsLink
-                  to={`/communities/${communityId}/members/${m.user.username}/items`}
+                  to={`/communities/${communityId}/members/${m.user.username}/inventory`}
                 >
-                  <Package size={14} /> Items
+                  <Package size={14} /> Inventory
                 </ItemsLink>
                 {/* Hidden on your own row: the server refuses a trade with
                     yourself, so offering the button would be a dead end. */}

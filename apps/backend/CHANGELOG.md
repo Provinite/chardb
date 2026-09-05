@@ -17,6 +17,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`communityMemberRoles(communityId, userId)`** — what one member's standing
+  in one community is called. Gated on membership, unlike
+  `communityMembersByUser`, which is about yourself everywhere (#349).
+
 - **Unlisted characters and galleries are no longer listed to other members.**
   `characters` / `galleries` and their per-owner variants now return PUBLIC
   plus the viewer's own, matching what `UserStats` has always counted and what

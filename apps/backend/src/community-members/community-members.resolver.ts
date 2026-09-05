@@ -166,6 +166,35 @@ export class CommunityMembersResolver {
     return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
+  /**
+   * The roles one member holds inside one community.
+   *
+   * `communityMembersByUser` refuses to answer about anyone but yourself,
+   * and rightly so -- the full list of communities a person belongs to is
+   * theirs. Narrowed to a single community the question is a different one:
+   * who someone is *here* is already on the members list, so a fellow member
+   * may ask it. Membership is the gate, matching `memberHoldings`.
+   */
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.Any)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => [Role], {
+    name: "communityMemberRoles",
+    description: "Roles a user holds in a community",
+  })
+  async findRolesInCommunity(
+    @Args("communityId", { type: () => ID, description: "Community ID" })
+    communityId: string,
+    @Args("userId", { type: () => ID, description: "User ID" })
+    userId: string,
+  ): Promise<Role[]> {
+    const roles = await this.communityMembersService.getUserRolesInCommunity(
+      userId,
+      communityId,
+    );
+    return roles.map(mapPrismaRoleToGraphQL);
+  }
+
   /** Get a community member by ID */
   @AllowGlobalAdmin()
   @Query(() => CommunityMember, {

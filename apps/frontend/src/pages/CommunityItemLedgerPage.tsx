@@ -389,12 +389,16 @@ const PartyCell: React.FC<{
   const from = displayName(row.fromUser);
   const to = displayName(row.toUser);
 
-  // A name in the ledger is the natural way into that person's holdings --
-  // the members page is still a placeholder, so this is the only route in.
+  // Straight to holdings rather than to the member profile, unlike the members
+  // list. The question a ledger row raises is "what do they have now", and
+  // routing through a profile to answer it would add a click to the one
+  // workflow that reads this page.
   const who = (label: string, u: ItemTransactionFieldsFragment["toUser"]) =>
     communityId && u ? (
       <Party>
-        <Link to={`/communities/${communityId}/members/${u.username}/items`}>
+        <Link
+          to={`/communities/${communityId}/members/${u.username}/inventory`}
+        >
           {label}
         </Link>
       </Party>

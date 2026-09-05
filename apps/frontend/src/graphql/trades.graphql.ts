@@ -164,6 +164,13 @@ export const TRADE_COMPOSER_QUERY = gql`
       }
     }
     theirs: memberHoldings(communityId: $communityId, userId: $themId) {
+      # For the link out to their full inventory. This pane is deliberately
+      # narrowed to what can move; the page it links to is not.
+      member {
+        id
+        username
+        displayName
+      }
       holdings {
         count
         itemType {

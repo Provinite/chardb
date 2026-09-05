@@ -2688,6 +2688,8 @@ export type Query = {
   communityInvitationsByInvitee: CommunityInvitationConnection;
   /** Get a community member by ID */
   communityMemberById: CommunityMember;
+  /** Roles a user holds in a community */
+  communityMemberRoles: Array<Role>;
   /** Get all community members with pagination */
   communityMembers: CommunityMemberConnection;
   /** Get community members by community ID with pagination */
@@ -2977,6 +2979,12 @@ export type QueryCommunityInvitationsByInviteeArgs = {
 
 export type QueryCommunityMemberByIdArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityMemberRolesArgs = {
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -5641,6 +5649,14 @@ export type CommunityMembersWithRolesQueryVariables = Exact<{
 
 export type CommunityMembersWithRolesQuery = { __typename?: 'Query', communityMembersByCommunity: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, userId: string, roleId: string, createdAt: string, updatedAt: string, user: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, role: { __typename?: 'Role', id: string, name: string, canCreateSpecies: boolean, canCreateCharacter: boolean, canCreateOrphanedCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canEditSpecies: boolean, canManageItems: boolean, canGrantItems: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean } }> } };
 
+export type CommunityMemberRolesQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type CommunityMemberRolesQuery = { __typename?: 'Query', communityMemberRoles: Array<{ __typename?: 'Role', id: string, name: string }> };
+
 export type UpdateCommunityMemberMutationVariables = Exact<{
   id: Scalars['ID']['input'];
   input: UpdateCommunityMemberInput;
@@ -5966,7 +5982,7 @@ export type TradeComposerQueryVariables = Exact<{
 }>;
 
 
-export type TradeComposerQuery = { __typename?: 'Query', mine: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean }, items: Array<{ __typename?: 'Item', id: string }> }> }, theirs: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean } }> }, myCharacters: { __typename?: 'CharacterConnection', characters: Array<{ __typename?: 'Character', id: string, name: string }> }, theirCharacters: { __typename?: 'CharacterConnection', characters: Array<{ __typename?: 'Character', id: string, name: string }> }, wallet: { __typename?: 'MemberWallet', balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null, archivedAt: string | null, isTradeable: boolean } }> } };
+export type TradeComposerQuery = { __typename?: 'Query', mine: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean }, items: Array<{ __typename?: 'Item', id: string }> }> }, theirs: { __typename?: 'MemberHoldingsReport', member: { __typename?: 'User', id: string, username: string, displayName: string | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, isTradeable: boolean } }> }, myCharacters: { __typename?: 'CharacterConnection', characters: Array<{ __typename?: 'Character', id: string, name: string }> }, theirCharacters: { __typename?: 'CharacterConnection', characters: Array<{ __typename?: 'Character', id: string, name: string }> }, wallet: { __typename?: 'MemberWallet', balances: Array<{ __typename?: 'CurrencyBalanceLine', amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null, archivedAt: string | null, isTradeable: boolean } }> } };
 
 export type ProposeTradeMutationVariables = Exact<{
   input: CreateTradeInput;
@@ -14105,6 +14121,48 @@ export type CommunityMembersWithRolesQueryHookResult = ReturnType<typeof useComm
 export type CommunityMembersWithRolesLazyQueryHookResult = ReturnType<typeof useCommunityMembersWithRolesLazyQuery>;
 export type CommunityMembersWithRolesSuspenseQueryHookResult = ReturnType<typeof useCommunityMembersWithRolesSuspenseQuery>;
 export type CommunityMembersWithRolesQueryResult = Apollo.QueryResult<CommunityMembersWithRolesQuery, CommunityMembersWithRolesQueryVariables>;
+export const CommunityMemberRolesDocument = gql`
+    query CommunityMemberRoles($communityId: ID!, $userId: ID!) {
+  communityMemberRoles(communityId: $communityId, userId: $userId) {
+    id
+    name
+  }
+}
+    `;
+
+/**
+ * __useCommunityMemberRolesQuery__
+ *
+ * To run a query within a React component, call `useCommunityMemberRolesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityMemberRolesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunityMemberRolesQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useCommunityMemberRolesQuery(baseOptions: Apollo.QueryHookOptions<CommunityMemberRolesQuery, CommunityMemberRolesQueryVariables> & ({ variables: CommunityMemberRolesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunityMemberRolesQuery, CommunityMemberRolesQueryVariables>(CommunityMemberRolesDocument, options);
+      }
+export function useCommunityMemberRolesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityMemberRolesQuery, CommunityMemberRolesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunityMemberRolesQuery, CommunityMemberRolesQueryVariables>(CommunityMemberRolesDocument, options);
+        }
+export function useCommunityMemberRolesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityMemberRolesQuery, CommunityMemberRolesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunityMemberRolesQuery, CommunityMemberRolesQueryVariables>(CommunityMemberRolesDocument, options);
+        }
+export type CommunityMemberRolesQueryHookResult = ReturnType<typeof useCommunityMemberRolesQuery>;
+export type CommunityMemberRolesLazyQueryHookResult = ReturnType<typeof useCommunityMemberRolesLazyQuery>;
+export type CommunityMemberRolesSuspenseQueryHookResult = ReturnType<typeof useCommunityMemberRolesSuspenseQuery>;
+export type CommunityMemberRolesQueryResult = Apollo.QueryResult<CommunityMemberRolesQuery, CommunityMemberRolesQueryVariables>;
 export const UpdateCommunityMemberDocument = gql`
     mutation UpdateCommunityMember($id: ID!, $input: UpdateCommunityMemberInput!) {
   updateCommunityMember(id: $id, updateCommunityMemberInput: $input) {
@@ -15803,6 +15861,11 @@ export const TradeComposerDocument = gql`
     }
   }
   theirs: memberHoldings(communityId: $communityId, userId: $themId) {
+    member {
+      id
+      username
+      displayName
+    }
     holdings {
       count
       itemType {

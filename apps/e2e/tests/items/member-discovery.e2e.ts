@@ -1,0 +1,134 @@
+import { presetTest, expect } from "../../src/fixtures.js";
+const test = presetTest("community-items");
+
+/**
+ * Getting to someone else's inventory without knowing the URL.
+ *
+ * The page itself was finished and correct; it was reachable from two list
+ * screens and nowhere else, so staff who knew the product still could not find
+ * it (#349). These specs cover the routes in rather than the page: a name on
+ * the members list, the search box, and the trade you are already composing.
+ */
+
+test.describe("a member's profile inside a community", () => {
+  test.use({ persona: "member" });
+
+  test("a name on the members list opens their profile here", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(`${world.community.url}/members`);
+
+    await page
+      .locator(
+        `[data-testid="member-row"][data-username="${world.users.othermember.username}"]`,
+      )
+      .getByRole("link", { name: world.users.othermember.username })
+      .click();
+
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/communities/${world.community.id}/members/${world.users.othermember.username}$`,
+      ),
+    );
+    // Their standing *here*, which is the whole reason this is not
+    // /user/:username.
+    await expect(page.getByTestId("member-role-tags")).toContainText("Member");
+  });
+
+  test("the profile lists their characters in this community", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(
+      `${world.community.url}/members/${world.users.othermember.username}`,
+    );
+
+    await expect(
+      page.getByRole("link", { name: world.characters.marrowfen.name }),
+    ).toBeVisible();
+    // `member`'s, not `othermember`'s -- the grid is filtered by owner.
+    await expect(
+      page.getByRole("link", { name: world.characters.bramblefoot.name }),
+    ).toHaveCount(0);
+  });
+
+  test("its Inventory button reaches their holdings", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(
+      `${world.community.url}/members/${world.users.othermember.username}`,
+    );
+
+    await page.getByTestId("member-inventory-link").click();
+
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory$`,
+      ),
+    );
+    await expect(
+      page.locator(
+        `[data-testid="holding-group"][data-item-type-id="${world.itemTypes.locket.id}"]`,
+      ),
+    ).toBeVisible();
+  });
+
+  test("offers no trade with yourself", async ({ page, world }) => {
+    await page.goto(
+      `${world.community.url}/members/${world.users.member.username}`,
+    );
+
+    await expect(page.getByTestId("member-inventory-link")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Propose trade" })).toHaveCount(
+      0,
+    );
+  });
+});
+
+test.describe("finding a member from the search box", () => {
+  test.use({ persona: "member" });
+
+  test("typing a name offers their inventory", async ({ page, world }) => {
+    // Scoped to the community you are standing in: the same name means a
+    // different person in each one, so the search only runs inside a
+    // community's pages.
+    await page.goto(world.community.url);
+
+    await page.getByRole("button", { name: "Search pages" }).click();
+    await page
+      .getByPlaceholder("Search pages and members...")
+      .fill(world.users.othermember.username);
+
+    await page
+      .getByRole("button", { name: world.users.othermember.username })
+      .click();
+
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory$`,
+      ),
+    );
+  });
+});
+
+test.describe("the trade composer", () => {
+  test.use({ persona: "member" });
+
+  test("links out to the partner's full inventory", async ({ page, world }) => {
+    // The pane beside the link shows only what can move. Whether an offer is
+    // fair often turns on what cannot, and that is a different page.
+    await page.goto(
+      `/communities/${world.community.id}/trades/new?with=${world.users.othermember.userId}`,
+    );
+
+    await page.getByTestId("their-full-inventory").click();
+
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory$`,
+      ),
+    );
+  });
+});

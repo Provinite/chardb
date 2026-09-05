@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A member has a profile inside a community**, at
+  `/communities/:communityId/members/:username`: their role here, their
+  characters here, and the way through to their inventory or a trade (#349).
+
+- **The search box finds members, not just pages.** Typing a name while inside
+  a community offers that member's inventory (#349).
+
+- **The trade composer links out to the partner's full inventory**, which
+  includes the items its own pane leaves out as untradeable (#349).
+
 - **A member's characters and galleries each have a page.**
   `/user/:username/characters` and `/user/:username/galleries`. The profile's
   "View All" links reach them, and the Characters and Galleries stat tiles are
@@ -46,6 +56,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A moderation index at `/communities/:id/moderation`**, listing the image
   and trait queues with their pending counts. Each is shown only to a role that
   can work it, and the sidebar and command palette both reach it (#352).
+
+### Changed
+
+- **Breaking: a member's inventory moved from
+  `/communities/:id/members/:username/items` to `.../inventory`**, matching the
+  segment your own already used. Links to the old path 404 (#349).
+
+- **A member's name on the members list now opens their community profile**
+  rather than their global site profile (#349).
 
 ### Fixed
 

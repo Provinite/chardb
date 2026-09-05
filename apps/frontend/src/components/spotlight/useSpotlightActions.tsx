@@ -1,25 +1,94 @@
 import { useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useDebouncedValue } from "@mantine/hooks";
 import type {
   SpotlightActionData,
   SpotlightActionGroupData,
 } from "@mantine/spotlight";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCommunityMembersByUserQuery } from "../../generated/graphql";
+import {
+  useCommunityMembersByUserQuery,
+  useGetCommunityMembersQuery,
+} from "../../generated/graphql";
 
-export function useSpotlightActions(): SpotlightActionGroupData[] {
+/** The group name the async member results are filed under. */
+export const MEMBER_INVENTORY_GROUP = "Member inventory";
+
+/** Shorter than this and every member of a community matches. */
+const MIN_MEMBER_QUERY = 2;
+
+/** Enough to recognise the person you meant; more is a members list. */
+const MEMBER_RESULT_LIMIT = 5;
+
+/**
+ * Which community the viewer is standing in, or undefined outside one.
+ *
+ * Member search is scoped to it rather than fanned out across every community
+ * the viewer belongs to: a name means a different person in each of them, and
+ * one query per membership per keystroke is not a search box.
+ */
+function useActiveCommunityId(): string | undefined {
+  const { pathname } = useLocation();
+  return useMemo(
+    () => /^\/communities\/([^/]+)/.exec(pathname)?.[1],
+    [pathname],
+  );
+}
+
+export function useSpotlightActions(query: string): SpotlightActionGroupData[] {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const activeCommunityId = useActiveCommunityId();
 
   const { data: communitiesData } = useCommunityMembersByUserQuery({
     variables: { userId: user?.id || "", first: 50 },
     skip: !user?.id,
   });
 
+  // Every keystroke would otherwise be a round trip. 200ms is below the point
+  // where the list feels like it is lagging the box.
+  const [debouncedQuery] = useDebouncedValue(query.trim(), 200);
+  const memberSearch = debouncedQuery.length >= MIN_MEMBER_QUERY;
+
+  const { data: memberData } = useGetCommunityMembersQuery({
+    variables: {
+      communityId: activeCommunityId ?? "",
+      search: debouncedQuery,
+      limit: MEMBER_RESULT_LIMIT,
+    },
+    skip: !user?.id || !activeCommunityId || !memberSearch,
+  });
+
   return useMemo(() => {
     const groups: SpotlightActionGroupData[] = [];
 
     const nav = (path: string) => () => navigate(path);
+
+    // People first. Typing a name is a more specific request than typing a
+    // page name, and these are already server-matched against exactly what
+    // was typed -- the static groups below still have to be filtered down.
+    // `memberSearch` again rather than trusting the skip: Apollo hands back the
+    // last result for a skipped query, so without it the people you found stay
+    // on screen after you have cleared the box.
+    const members = memberSearch ? (memberData?.community?.members ?? []) : [];
+    if (activeCommunityId && members.length > 0) {
+      const communityName =
+        communitiesData?.communityMembersByUser?.nodes?.find(
+          (m) => m.role.community.id === activeCommunityId,
+        )?.role.community.name ?? "this community";
+
+      groups.push({
+        group: MEMBER_INVENTORY_GROUP,
+        actions: members.map((member) => ({
+          id: `member-inventory-${member.id}`,
+          label: member.displayName || member.username,
+          description: `Inventory in ${communityName}`,
+          onClick: nav(
+            `/communities/${activeCommunityId}/members/${member.username}/inventory`,
+          ),
+        })),
+      });
+    }
 
     // General — always visible
     groups.push({
@@ -391,5 +460,12 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
     }
 
     return groups;
-  }, [user, communitiesData, navigate]);
+  }, [
+    user,
+    communitiesData,
+    navigate,
+    memberData,
+    memberSearch,
+    activeCommunityId,
+  ]);
 }
