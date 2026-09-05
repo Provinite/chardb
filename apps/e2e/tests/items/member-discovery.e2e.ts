@@ -1,4 +1,5 @@
 import { presetTest, expect } from "../../src/fixtures.js";
+import { SeedCommunityMemberRolesDocument } from "../../src/generated/graphql.js";
 const test = presetTest("community-items");
 
 /**
@@ -130,5 +131,30 @@ test.describe("the trade composer", () => {
         `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory$`,
       ),
     );
+  });
+});
+
+test.describe("who may ask what someone's role here is", () => {
+  test("a fellow member may", async ({ world }) => {
+    const { communityMemberRoles } = await world
+      .as("member")
+      .gql(SeedCommunityMemberRolesDocument, {
+        communityId: world.community.id,
+        userId: world.users.quartermaster.userId,
+      });
+
+    expect(communityMemberRoles.map((r) => r.name)).toContain("Quartermaster");
+  });
+
+  test("someone outside the community may not", async ({ world }) => {
+    // The narrowing that makes this readable at all is the community. Asking
+    // what roles a person holds without one is asking about them everywhere,
+    // which is what `communityMembersByUser` refuses.
+    await expect(
+      world.as("outsider").gql(SeedCommunityMemberRolesDocument, {
+        communityId: world.community.id,
+        userId: world.users.quartermaster.userId,
+      }),
+    ).rejects.toThrow();
   });
 });

@@ -934,3 +934,12 @@ query SeedCharacterLikeStatus($id: ID!) {
     userHasLiked
   }
 }
+
+# Membership is the gate, not being the person asked about -- unlike
+# communityMembersByUser, which refuses everyone but yourself (#349).
+query SeedCommunityMemberRoles($communityId: ID!, $userId: ID!) {
+  communityMemberRoles(communityId: $communityId, userId: $userId) {
+    id
+    name
+  }
+}

@@ -75,6 +75,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The same card was shown to members who cannot moderate anything**, unlike
   every other card on that page (#352).
 
+- **A long name on the members list painted over the role tag beside it**, and
+  a narrow enough window crushed it away entirely. Rows now wrap (#349).
+
 - **`VariantChangePanel` read an empty allow-list as permitting everything**,
   which the server has never agreed with — it would have shown nothing to
   re-route and then failed at save.
