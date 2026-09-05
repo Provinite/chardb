@@ -22,6 +22,7 @@ export function mapCreateCommunityInputToService(
 ): CreateCommunityServiceInput {
   return {
     name: input.name,
+    slug: input.slug,
     creatorId: creatorId,
   };
 }
@@ -51,6 +52,7 @@ export function mapPrismaCommunityToGraphQL(
   return {
     id: prismaCommunity.id,
     name: prismaCommunity.name,
+    slug: prismaCommunity.slug,
     discordGuildId: prismaCommunity.discordGuildId,
     discordGuildName: prismaCommunity.discordGuildName,
     createdAt: prismaCommunity.createdAt,

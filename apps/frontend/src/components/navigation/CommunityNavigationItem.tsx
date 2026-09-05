@@ -1,9 +1,15 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { LucideIcon } from "lucide-react";
 
 interface CommunityNavigationItemProps {
+  /**
+   * A path on this host, or an absolute URL. Communities now live on their own
+   * hosts, so a sidebar entry can point at a different origin than the one it
+   * is rendered on; an absolute `to` is rendered as an `<a>`, because the
+   * router cannot navigate across origins.
+   */
   to: string;
   icon?: LucideIcon;
   label: string;
@@ -12,7 +18,7 @@ interface CommunityNavigationItemProps {
   disabled?: boolean;
 }
 
-const StyledNavItem = styled(Link)<{
+const navItemStyles = css<{
   $isActive: boolean;
   $isNested?: boolean;
   $disabled?: boolean;
@@ -60,6 +66,22 @@ const StyledNavItem = styled(Link)<{
   }
 `;
 
+const StyledNavItem = styled(Link)<{
+  $isActive: boolean;
+  $isNested?: boolean;
+  $disabled?: boolean;
+}>`
+  ${navItemStyles}
+`;
+
+const StyledNavAnchor = styled.a<{
+  $isActive: boolean;
+  $isNested?: boolean;
+  $disabled?: boolean;
+}>`
+  ${navItemStyles}
+`;
+
 const Label = styled.span`
   flex: 1;
   overflow: hidden;
@@ -82,20 +104,34 @@ export const CommunityNavigationItem: React.FC<
   CommunityNavigationItemProps
 > = ({ to, icon: Icon, label, badge, isNested = false, disabled = false }) => {
   const location = useLocation();
-  const isActive = location.pathname === to;
+  // An absolute URL names another origin, so it is never the page we are on and
+  // never a destination the router can reach.
+  const isCrossHost = /^https?:\/\//.test(to);
+  const isActive = !isCrossHost && location.pathname === to;
 
-  return (
-    <StyledNavItem
-      to={to}
-      $isActive={isActive}
-      $isNested={isNested}
-      $disabled={disabled}
-      aria-current={isActive ? "page" : undefined}
-      aria-disabled={disabled}
-    >
+  const styleProps = {
+    $isActive: isActive,
+    $isNested: isNested,
+    $disabled: disabled,
+    "aria-current": isActive ? ("page" as const) : undefined,
+    "aria-disabled": disabled,
+  };
+
+  const contents = (
+    <>
       {Icon && <Icon />}
       <Label>{label}</Label>
       {badge !== undefined && <Badge>{badge}</Badge>}
+    </>
+  );
+
+  return isCrossHost ? (
+    <StyledNavAnchor href={to} {...styleProps}>
+      {contents}
+    </StyledNavAnchor>
+  ) : (
+    <StyledNavItem to={to} {...styleProps}>
+      {contents}
     </StyledNavItem>
   );
 };

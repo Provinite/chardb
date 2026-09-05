@@ -96,6 +96,29 @@ export class CommunitiesResolver {
     return mapPrismaCommunityToGraphQL(prismaResult);
   }
 
+  /**
+   * Resolves a subdomain to the community it belongs to.
+   *
+   * Nullable rather than throwing, because this is what the frontend calls on
+   * boot for whatever host the browser happens to be on. `nonsense.chardb.cc`
+   * resolves at DNS -- the wildcard record answers for every label -- so an
+   * unrecognised slug is a normal page to render, not an exception to report.
+   */
+  @AllowUnauthenticated()
+  @Query(() => Community, {
+    name: "communityBySlug",
+    nullable: true,
+    description:
+      "Get a community by its subdomain label. Null if no community holds that slug.",
+  })
+  async findBySlug(
+    @Args("slug", { description: "Subdomain label, e.g. `cloverse`" })
+    slug: string,
+  ): Promise<Community | null> {
+    const prismaResult = await this.communitiesService.findBySlug(slug);
+    return prismaResult ? mapPrismaCommunityToGraphQL(prismaResult) : null;
+  }
+
   @AllowGlobalPermission(GlobalPermission.CanCreateCommunity)
   @Mutation(() => Community, { description: "Update a community" })
   async updateCommunity(

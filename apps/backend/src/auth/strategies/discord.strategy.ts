@@ -10,6 +10,14 @@ export interface DiscordProfile {
   global_name?: string;
 }
 
+/** What `validate` puts on `req.user`, mirroring `ToyhouseOAuthPayload`. */
+export interface DiscordOAuthPayload {
+  providerAccountId: string;
+  displayName: string;
+  accessToken: string;
+  refreshToken: string;
+}
+
 @Injectable()
 export class DiscordStrategy extends PassportStrategy(Strategy, "discord") {
   constructor(configService: ConfigService) {
@@ -82,7 +90,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy, "discord") {
     accessToken: string,
     refreshToken: string,
     profile: DiscordProfile,
-  ) {
+  ): Promise<DiscordOAuthPayload> {
     // Format display name: use global_name if available, otherwise username#discriminator or @username
     let displayName: string;
     if (profile.global_name) {

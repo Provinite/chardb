@@ -74,7 +74,7 @@ if [ "$DEPLOY_FRONTEND" = "true" ]; then
 
     # Build frontend with backend URL and version
     echo "🏗️  Building frontend..."
-    ./scripts/build-frontend.sh "$ENVIRONMENT" "$BACKEND_URL" "$FRONTEND_VERSION"
+    ./scripts/build-frontend.sh "$ENVIRONMENT" "$BACKEND_URL" "$FRONTEND_VERSION" "$ROOT_DOMAIN"
 
     # Deploy to S3
     echo "📤 Deploying frontend to S3..."

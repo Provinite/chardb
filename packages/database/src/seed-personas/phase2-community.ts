@@ -14,7 +14,12 @@ import {
   CommunitiesResponse,
   RolesByCommunityResponse,
 } from "./graphql-client";
-import { PERSONAS, TEST_COMMUNITY_NAME, PERSONA_LIST } from "./personas";
+import {
+  PERSONAS,
+  TEST_COMMUNITY_NAME,
+  TEST_COMMUNITY_SLUG,
+  PERSONA_LIST,
+} from "./personas";
 import { log, isAlreadyExistsError } from "./utils";
 
 interface RoleInfo {
@@ -64,6 +69,7 @@ async function findOrCreateCommunity(
     {
       input: {
         name: TEST_COMMUNITY_NAME,
+        slug: TEST_COMMUNITY_SLUG,
       },
     },
   );

@@ -4,6 +4,26 @@ import { AuthModule } from "./auth.module";
 import { DatabaseModule } from "../database/database.module";
 import { UsersModule } from "../users/users.module";
 import * as bcrypt from "bcrypt";
+import { REFRESH_COOKIE_NAME } from "./refresh-cookie";
+
+/**
+ * The refresh token off a response's Set-Cookie header.
+ *
+ * It used to be a field on the payload, which made it trivial to read and
+ * equally trivial for any script on the page to read. It is `HttpOnly` now, so
+ * the only place it appears is here.
+ */
+function refreshCookie(response: {
+  headers: Record<string, string | string[] | undefined>;
+}): string | undefined {
+  const raw = response.headers["set-cookie"];
+  const cookies = Array.isArray(raw) ? raw : raw ? [raw] : [];
+  const match = cookies.find((c) => c.startsWith(`${REFRESH_COOKIE_NAME}=`));
+  if (!match) return undefined;
+
+  const value = match.slice(REFRESH_COOKIE_NAME.length + 1).split(";")[0];
+  return value || undefined;
+}
 
 describe("AuthResolver (e2e)", () => {
   let testApp: TestApp;
@@ -44,8 +64,8 @@ describe("AuthResolver (e2e)", () => {
       expect(response.body.errors).toBeUndefined();
       expect(response.body.data.signup).toMatchObject({
         accessToken: expect.any(String),
-        refreshToken: expect.any(String),
       });
+      expect(refreshCookie(response)).toEqual(expect.any(String));
 
       // Verify user was created in database
       const db = testApp.getDb();
@@ -181,8 +201,8 @@ describe("AuthResolver (e2e)", () => {
       expect(response.body.errors).toBeUndefined();
       expect(response.body.data.login).toMatchObject({
         accessToken: expect.any(String),
-        refreshToken: expect.any(String),
       });
+      expect(refreshCookie(response)).toEqual(expect.any(String));
     });
 
     it("should reject invalid email", async () => {
@@ -269,7 +289,7 @@ describe("AuthResolver (e2e)", () => {
   });
 
   describe("refreshToken", () => {
-    let refreshToken: string;
+    let cookie: string;
 
     beforeEach(async () => {
       const inviteCode = await testApp.createTestInviteCode();
@@ -285,17 +305,20 @@ describe("AuthResolver (e2e)", () => {
         input,
       });
 
-      refreshToken = signupResponse.body.data.signup.refreshToken;
+      const value = refreshCookie(signupResponse);
+      if (!value) throw new Error("signup did not set a refresh cookie");
+      cookie = `${REFRESH_COOKIE_NAME}=${value}`;
     });
 
-    it("should generate new access token with valid refresh token", async () => {
+    it("should generate a new access token from the refresh cookie", async () => {
       const response = await testApp.graphqlRequest(
         `
-          mutation refreshToken($token: String!) {
-            refreshToken(token: $token)
+          mutation refreshToken {
+            refreshToken
           }
         `,
-        { token: refreshToken },
+        {},
+        { Cookie: cookie },
       );
 
       expect(response.status).toBe(200);
@@ -303,14 +326,27 @@ describe("AuthResolver (e2e)", () => {
       expect(response.body.data.refreshToken).toEqual(expect.any(String));
     });
 
-    it("should reject invalid refresh token", async () => {
+    it("should reject a request with no refresh cookie", async () => {
+      const response = await testApp.graphqlRequest(`
+        mutation refreshToken {
+          refreshToken
+        }
+      `);
+
+      expect(response.status).toBe(200);
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors[0].message).toContain("No refresh token");
+    });
+
+    it("should reject an invalid refresh cookie", async () => {
       const response = await testApp.graphqlRequest(
         `
-          mutation refreshToken($token: String!) {
-            refreshToken(token: $token)
+          mutation refreshToken {
+            refreshToken
           }
         `,
-        { token: "invalid-refresh-token" },
+        {},
+        { Cookie: `${REFRESH_COOKIE_NAME}=invalid-refresh-token` },
       );
 
       expect(response.status).toBe(200);
@@ -318,6 +354,45 @@ describe("AuthResolver (e2e)", () => {
       expect(response.body.errors[0].message).toContain(
         "Invalid refresh token",
       );
+    });
+
+    // A token the server will not honour is never going to start working, so
+    // the resolver drops it rather than leaving the browser to keep sending it.
+    it("should clear the cookie when it rejects one", async () => {
+      const response = await testApp.graphqlRequest(
+        `
+          mutation refreshToken {
+            refreshToken
+          }
+        `,
+        {},
+        { Cookie: `${REFRESH_COOKIE_NAME}=invalid-refresh-token` },
+      );
+
+      const raw = response.headers["set-cookie"];
+      const cookies = Array.isArray(raw) ? raw : raw ? [raw] : [];
+      expect(
+        cookies.some((c: string) => c.startsWith(`${REFRESH_COOKIE_NAME}=;`)),
+      ).toBe(true);
+    });
+  });
+
+  describe("logout", () => {
+    it("should clear the refresh cookie", async () => {
+      const response = await testApp.graphqlRequest(`
+        mutation logout {
+          logout
+        }
+      `);
+
+      expect(response.status).toBe(200);
+      expect(response.body.data.logout).toBe(true);
+
+      const raw = response.headers["set-cookie"];
+      const cookies = Array.isArray(raw) ? raw : raw ? [raw] : [];
+      expect(
+        cookies.some((c: string) => c.startsWith(`${REFRESH_COOKIE_NAME}=;`)),
+      ).toBe(true);
     });
   });
 });

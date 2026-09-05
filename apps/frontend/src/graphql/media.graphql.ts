@@ -78,6 +78,14 @@ export const GET_MEDIA_ITEM = gql`
       character {
         id
         name
+        species {
+          id
+          community {
+            id
+            # The host the character is served from; this page is at the apex.
+            slug
+          }
+        }
       }
       gallery {
         id
@@ -292,6 +300,13 @@ export const GET_LIKED_MEDIA = gql`
         character {
           id
           name
+          species {
+            id
+            community {
+              id
+              slug
+            }
+          }
         }
         gallery {
           id

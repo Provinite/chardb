@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { Avatar } from "@chardb/ui";
 import {
   useGetUserProfileQuery,
@@ -10,6 +10,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { RandomCharacterButton } from "../components/RandomCharacterButton";
 import { FollowButton } from "../components/FollowButton";
 import { MediaGrid } from "../components/MediaGrid";
+import { characterUrl } from "../lib/communityHost";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -166,7 +167,7 @@ const Grid = styled.div`
   gap: ${({ theme }) => theme.spacing.lg};
 `;
 
-const Card = styled(Link)`
+const card = css`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
@@ -179,6 +180,15 @@ const Card = styled(Link)`
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
   }
+`;
+
+const Card = styled(Link)`
+  ${card}
+`;
+
+/** The same card for a character, which is served from another host. */
+const CardAnchor = styled.a`
+  ${card}
 `;
 
 const CardTitle = styled.h4`
@@ -457,10 +467,16 @@ export const UserProfilePage: React.FC = () => {
           </SectionHeader>
           <Grid>
             {featuredCharacters.map((character) => (
-              <Card key={character.id} to={`/character/${character.id}`}>
+              <CardAnchor
+                key={character.id}
+                href={characterUrl(
+                  character.id,
+                  character.species?.community?.slug,
+                )}
+              >
                 <CardTitle>{character.name}</CardTitle>
                 <CardDescription>{character.species?.name}</CardDescription>
-              </Card>
+              </CardAnchor>
             ))}
           </Grid>
         </Section>
@@ -491,10 +507,16 @@ export const UserProfilePage: React.FC = () => {
           </SectionHeader>
           <Grid>
             {recentCharacters.map((character) => (
-              <Card key={character.id} to={`/character/${character.id}`}>
+              <CardAnchor
+                key={character.id}
+                href={characterUrl(
+                  character.id,
+                  character.species?.community?.slug,
+                )}
+              >
                 <CardTitle>{character.name}</CardTitle>
                 <CardDescription>{character.species?.name}</CardDescription>
-              </Card>
+              </CardAnchor>
             ))}
           </Grid>
         </Section>

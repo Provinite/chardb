@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
 import { Users, Search, Package, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import { useCommunityId } from "../contexts/CommunityHostContext";
+import { apexUrl } from "../lib/communityHost";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
   useCommunityByIdQuery,
@@ -191,7 +193,7 @@ const LoadingContainer = styled.div`
 `;
 
 export const CommunityMembersPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(PAGE_SIZE);
@@ -295,22 +297,20 @@ export const CommunityMembersPage: React.FC = () => {
                 <Avatar image={m.user.avatarImage} name={name} size={36} />
                 <Who>
                   <Name>
-                    <Link to={`/user/${m.user.username}`}>{name}</Link>
+                    {/* A profile belongs to a person, not to this community,
+                        so it is served from the apex. */}
+                    <a href={apexUrl(`/user/${m.user.username}`)}>{name}</a>
                   </Name>
                   {m.user.displayName && <Handle>@{m.user.username}</Handle>}
                 </Who>
                 <RoleTag>{m.role.name}</RoleTag>
-                <ItemsLink
-                  to={`/communities/${communityId}/members/${m.user.username}/items`}
-                >
+                <ItemsLink to={`/members/${m.user.username}/items`}>
                   <Package size={14} /> Items
                 </ItemsLink>
                 {/* Hidden on your own row: the server refuses a trade with
                     yourself, so offering the button would be a dead end. */}
                 {m.user.id !== user?.id && (
-                  <ItemsLink
-                    to={`/communities/${communityId}/trades/new?with=${m.user.id}`}
-                  >
+                  <ItemsLink to={`/trades/new?with=${m.user.id}`}>
                     <ArrowLeftRight size={14} /> Trade
                   </ItemsLink>
                 )}

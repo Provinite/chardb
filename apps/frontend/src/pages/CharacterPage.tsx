@@ -15,6 +15,7 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { apexUrl } from "../lib/communityHost";
 import { canUserEditCharacter } from "../lib/characterPermissions";
 import { setKinds } from "../lib/characterAvailability";
 import { isRedemptionReview } from "../lib/traitReviews";
@@ -241,7 +242,9 @@ const OwnerInfo = styled.div`
   }
 `;
 
-const OwnerLink = styled(Link)`
+// An anchor rather than a router link: a profile is always served from the
+// apex, which is a different origin whenever a character has a community.
+const OwnerLink = styled.a`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -621,9 +624,7 @@ export const CharacterPage: React.FC = () => {
       {/* Breadcrumb navigation */}
       {character.species?.community ? (
         <Breadcrumb>
-          <Link to={`/communities/${character.species.community.id}`}>
-            {character.species.community.name}
-          </Link>
+          <Link to="/">{character.species.community.name}</Link>
           <span>/</span>
           <Link to={`/species/${character.species.id}`}>
             {character.species.name}
@@ -789,7 +790,7 @@ export const CharacterPage: React.FC = () => {
 
         {character.owner ? (
           <OwnerInfo>
-            <OwnerLink to={`/user/${character.owner.username}`}>
+            <OwnerLink href={apexUrl(`/user/${character.owner.username}`)}>
               <OwnerAvatar
                 image={character.owner.avatarImage}
                 name={character.owner.displayName || character.owner.username}
@@ -897,7 +898,7 @@ export const CharacterPage: React.FC = () => {
                   data-testid="propose-character-trade"
                   onClick={() =>
                     navigate(
-                      `/communities/${tradeCommunityId}/trades/new?with=${character.owner?.id}&character=${character.id}`,
+                      `/trades/new?with=${character.owner?.id}&character=${character.id}`,
                     )
                   }
                 >

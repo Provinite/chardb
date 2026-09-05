@@ -108,10 +108,22 @@ backend that starts, a frontend that renders, and every query failing. There is
 no warning — the schema simply is not there.
 
 Read the URLs off `yarn instance` — **do not assume localhost:3000**. That is
-slot 0, which is almost certainly the user's own running app.
+slot 0, which is almost certainly the user's own running app. Note the host as
+well as the port: the app is served from `dev.localhost`, not `localhost`, and
+the API from `api.dev.localhost`. A community lives on its own label under the
+same root: `willowmere.dev.localhost:<frontend port>`.
+
+That spare label is load-bearing rather than decoration. Bare `localhost` is a
+public suffix, so `api.localhost` and `willowmere.localhost` would be different
+*sites* and `SameSite=Lax` would stop the browser ever sending the session
+cookie from a community host — every subdomain would look signed out. Under
+`dev.localhost` they are one site, exactly as production is. Every `*.localhost`
+label resolves to loopback with no `/etc/hosts` entry, so nothing needs setting
+up.
 
 Log in with any persona from `LOCAL_DEV_SEED_DATA.md`; they all share the
-password `test123` (e.g. `siteadmin@test.local`, `member@test.local`).
+password `test123` (e.g. `siteadmin@test.local`, `member@test.local`). One
+sign-in at the apex covers every community subdomain.
 
 ## Running the tests
 

@@ -68,6 +68,13 @@ const PORTS = {
  */
 const LEGACY_COMPOSE_PROJECT = "docker";
 
+/**
+ * The root domain the browser suite serves itself from. Mirrors the default in
+ * `apps/e2e/src/config.ts`, which is where it is actually read; this copy only
+ * exists so `yarn instance` can print the right hosts.
+ */
+const E2E_ROOT_DOMAIN = process.env.E2E_ROOT_DOMAIN ?? "e2e.localhost";
+
 // ---------------------------------------------------------------- registry
 
 const REGISTRY_DIR =
@@ -389,8 +396,22 @@ export function describe(slot, root = null) {
     prizeQueue: "chardb-prize-distribution",
   };
 
-  const backendUrl = `http://localhost:${ports.backend}`;
-  const frontendUrl = `http://localhost:${ports.frontend}`;
+  // The domain communities hang off locally: `willowmere.dev.localhost`.
+  //
+  // A spare label, not bare `localhost`, and the reason is `SameSite=Lax` on
+  // the refresh cookie. `localhost` is a public suffix, so `api.localhost` and
+  // `willowmere.localhost` would be different *sites* and the browser would
+  // never attach the cookie to a call made from a community host -- every
+  // subdomain would appear signed out. Under `dev.localhost` they are one
+  // site, exactly as `api.chardb.cc` and `willowmere.chardb.cc` are in
+  // production. Every `*.localhost` label resolves to loopback with no
+  // /etc/hosts entry, so this costs nothing to set up.
+  const rootDomain = process.env.CHARDB_ROOT_DOMAIN ?? "dev.localhost";
+
+  // Served from `api.` under the root domain for the same reason: the cookie
+  // is scoped to the domain, and it has to reach the API.
+  const backendUrl = `http://api.${rootDomain}:${ports.backend}`;
+  const frontendUrl = `http://${rootDomain}:${ports.frontend}`;
   const localstackUrl = `http://localhost:${ports.localstack}`;
 
   const env = {
@@ -404,6 +425,11 @@ export function describe(slot, root = null) {
     FRONTEND_PORT: String(ports.frontend),
     FRONTEND_URL: frontendUrl,
     VITE_API_URL: backendUrl,
+    // The apex the frontend compares `window.location.hostname` against, and
+    // the domain the backend pins the refresh cookie to. Both sides must agree
+    // or the session does not survive a page load.
+    ROOT_DOMAIN: rootDomain,
+    VITE_ROOT_DOMAIN: rootDomain,
     // Read by packages/database's persona seeder and the da-import CLI, which
     // talk to the backend over HTTP rather than to the database directly.
     GRAPHQL_ENDPOINT: `${backendUrl}/graphql`,
@@ -662,8 +688,11 @@ function main(argv) {
       `localhost:${ports.postgresTest}/${names.testDatabase}`,
     ],
     ["localstack", urls.localstackUrl],
-    ["e2e backend", `http://127.0.0.1:${ports.e2eBackend}`],
-    ["e2e frontend", `http://127.0.0.1:${ports.e2eFrontend}`],
+    // The browser suite runs under its own root domain (see apps/e2e's
+    // config.ts) for the same SameSite reason the dev servers do; these are the
+    // hosts Playwright actually points at.
+    ["e2e backend", `http://api.${E2E_ROOT_DOMAIN}:${ports.e2eBackend}`],
+    ["e2e frontend", `http://${E2E_ROOT_DOMAIN}:${ports.e2eFrontend}`],
     ["e2e database", names.e2eDatabase],
     ["otel service", names.otelService],
   ];

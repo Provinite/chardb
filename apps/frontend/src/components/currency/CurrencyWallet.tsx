@@ -262,9 +262,7 @@ export const CurrencyWallet: React.FC<CurrencyWalletProps> = ({
     <Section data-testid="currency-wallet">
       <Heading>
         <HeadingTitle>Currency</HeadingTitle>
-        <Link to={`/communities/${communityId}/currencies/ledger`}>
-          Currency ledger
-        </Link>
+        <Link to="/currencies/ledger">Currency ledger</Link>
       </Heading>
       <Cards>
         {balances.map((line) => (

@@ -11,7 +11,21 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { Button, ErrorMessage, Modal, Input } from "@chardb/ui";
 import { toast } from "react-hot-toast";
-import { Link } from "react-router-dom";
+import {
+  rejectCommunitySlug,
+  suggestCommunitySlug,
+  COMMUNITY_SLUG_MIN_LENGTH,
+  COMMUNITY_SLUG_MAX_LENGTH,
+  type CommunitySlugRejection,
+} from "@chardb/shared";
+import { ROOT_DOMAIN, communityUrl } from "../lib/communityHost";
+
+const SLUG_ERRORS: Record<CommunitySlugRejection, string> = {
+  "too-short": `At least ${COMMUNITY_SLUG_MIN_LENGTH} characters.`,
+  "too-long": `At most ${COMMUNITY_SLUG_MAX_LENGTH} characters.`,
+  malformed: "Lowercase letters, numbers and interior hyphens only.",
+  reserved: "That address is reserved by the site.",
+};
 
 const Container = styled.div`
   max-width: 1200px;
@@ -170,6 +184,13 @@ const Label = styled.label`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
+const SlugHint = styled.p<{ $error: boolean }>`
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme, $error }) =>
+    $error ? theme.colors.error : theme.colors.text.secondary};
+`;
+
 const EmptyState = styled.div`
   text-align: center;
   padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.md};
@@ -180,6 +201,27 @@ export function CommunityManagementPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
+  // The slug is permanent once the community exists, so the form has to show
+  // what it will be before anyone commits to it. It tracks the name until
+  // someone types in the slug field, after which it stops following.
+  const [newName, setNewName] = useState("");
+  const [newSlug, setNewSlug] = useState("");
+  const [slugEdited, setSlugEdited] = useState(false);
+
+  const slugRejection = newSlug ? rejectCommunitySlug(newSlug) : null;
+  const slugError = slugRejection && SLUG_ERRORS[slugRejection];
+
+  const resetCreateForm = () => {
+    setNewName("");
+    setNewSlug("");
+    setSlugEdited(false);
+  };
+
+  const closeCreateModal = () => {
+    setIsCreateModalOpen(false);
+    resetCreateForm();
+  };
+
   const { data, loading, error, refetch } = useCommunitiesQuery({
     variables: { first: 50 },
   });
@@ -187,7 +229,7 @@ export function CommunityManagementPage() {
   const [createCommunity, { loading: creating }] = useCreateCommunityMutation({
     onCompleted: () => {
       toast.success("Community created successfully");
-      setIsCreateModalOpen(false);
+      closeCreateModal();
       refetch();
     },
     onError: (error) => {
@@ -212,10 +254,10 @@ export function CommunityManagementPage() {
 
   const handleCreateCommunity = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
 
     const input: CreateCommunityInput = {
-      name: formData.get("name") as string,
+      name: newName,
+      slug: newSlug,
     };
 
     createCommunity({ variables: { createCommunityInput: input } });
@@ -302,9 +344,12 @@ export function CommunityManagementPage() {
               </CommunityStats>
 
               <CardActions>
+                {/* An anchor rather than a Link: this is the site admin's
+                    list of every community, so each row points at a different
+                    origin and the router cannot get there. */}
                 <ActionButton
-                  as={Link}
-                  to={`/communities/${community.id}/invite-codes`}
+                  as="a"
+                  href={communityUrl(community.slug, "/invite-codes")}
                 >
                   <ExternalLink size={14} />
                   Invite Codes
@@ -328,7 +373,7 @@ export function CommunityManagementPage() {
 
       <Modal
         isOpen={isCreateModalOpen}
-        onClose={() => setIsCreateModalOpen(false)}
+        onClose={closeCreateModal}
         title="Create Community"
       >
         <form onSubmit={handleCreateCommunity}>
@@ -339,7 +384,33 @@ export function CommunityManagementPage() {
               type="text"
               required
               placeholder="Enter community name"
+              value={newName}
+              onChange={(e) => {
+                setNewName(e.target.value);
+                if (!slugEdited)
+                  setNewSlug(suggestCommunitySlug(e.target.value));
+              }}
             />
+          </FormGroup>
+
+          <FormGroup>
+            <Label>Address</Label>
+            <Input
+              name="slug"
+              type="text"
+              required
+              placeholder="community-address"
+              value={newSlug}
+              onChange={(e) => {
+                setSlugEdited(true);
+                setNewSlug(e.target.value.toLowerCase());
+              }}
+              aria-describedby="slug-hint"
+            />
+            <SlugHint id="slug-hint" $error={Boolean(slugError)}>
+              {slugError ??
+                `Members will use ${newSlug || "address"}.${ROOT_DOMAIN}. This cannot be changed later.`}
+            </SlugHint>
           </FormGroup>
 
           <div
@@ -348,11 +419,16 @@ export function CommunityManagementPage() {
             <Button
               type="button"
               variant="secondary"
-              onClick={() => setIsCreateModalOpen(false)}
+              onClick={closeCreateModal}
             >
               Cancel
             </Button>
-            <Button type="submit" variant="primary" loading={creating}>
+            <Button
+              type="submit"
+              variant="primary"
+              loading={creating}
+              disabled={!newName || Boolean(slugError) || !newSlug}
+            >
               Create Community
             </Button>
           </div>

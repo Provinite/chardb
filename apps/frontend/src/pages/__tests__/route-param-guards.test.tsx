@@ -1,15 +1,20 @@
 /**
- * Regression tests for the route-param guards on the species/variant/trait
- * admin pages.
+ * Regression tests for the "nothing to work on" guards on the
+ * species/variant/trait admin pages.
  *
- * Each of these pages used to run its "missing route param" guard *before*
- * its hooks, so a render that hit the guard called fewer hooks than one that
- * did not. React tolerates that only until a single component instance
- * renders both ways -- then it throws and the page is dead.
+ * Each of these pages used to run its guard *before* its hooks, so a render
+ * that hit the guard called fewer hooks than one that did not. React tolerates
+ * that only until a single component instance renders both ways -- then it
+ * throws and the page is dead.
  *
- * The second test in each block is the one with teeth: it renders with the
- * param present, then re-renders the same instance with it absent. Against
- * the old ordering React raises "Rendered fewer hooks than expected."
+ * The second test in each block is the one with teeth: it renders with the id
+ * present, then re-renders the same instance with it absent. Against the old
+ * ordering React raises "Rendered fewer hooks than expected."
+ *
+ * Two of these read their community off the hostname rather than the path
+ * (#339), so their id is mocked at `useCommunityId` instead of `useParams`.
+ * The hazard is the same either way: a value that can be there or not, above
+ * a guard that must stay below the hooks.
  */
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -25,6 +30,9 @@ type Params = Record<string, string | undefined>;
 // disappear -- which is the whole point of the ordering test below.
 const routeParams = vi.hoisted(() => ({ current: {} as Params }));
 
+// The same trick for the community, which now comes off the hostname.
+const hostCommunityId = vi.hoisted(() => ({ current: null as string | null }));
+
 vi.mock("react-router-dom", async () => {
   const actual =
     await vi.importActual<typeof import("react-router-dom")>(
@@ -35,6 +43,16 @@ vi.mock("react-router-dom", async () => {
   // non-zero pre-guard hook count for React to compare against. Stubbing it
   // would let the ordering test below pass against broken code.
   return { ...actual, useParams: () => routeParams.current };
+});
+
+// Only `useCommunityId` is stubbed; `useCommunityHost` is left alone so a page
+// that reaches for the community itself still fails loudly rather than
+// silently reading a fixture.
+vi.mock("../../contexts/CommunityHostContext", async () => {
+  const actual = await vi.importActual<
+    typeof import("../../contexts/CommunityHostContext")
+  >("../../contexts/CommunityHostContext");
+  return { ...actual, useCommunityId: () => hostCommunityId.current };
 });
 
 // Pages that read the signed-in user go through useAuth, which throws outside
@@ -80,7 +98,8 @@ const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 interface PageCase {
   name: string;
   Component: React.ComponentType;
-  param: string;
+  /** The route param the page needs, or "host" when it reads the hostname. */
+  param: string | "host";
   message: string;
 }
 
@@ -88,8 +107,8 @@ const cases: PageCase[] = [
   {
     name: "SpeciesManagementPage",
     Component: SpeciesManagementPage,
-    param: "communityId",
-    message: "Community ID is required",
+    param: "host",
+    message: "This address names no community",
   },
   {
     name: "SpeciesVariantManagementPage",
@@ -124,27 +143,37 @@ const cases: PageCase[] = [
   {
     name: "CommunityModerationPage",
     Component: CommunityModerationPage,
-    param: "communityId",
-    message: "Community ID is required",
+    param: "host",
+    message: "This address names no community",
   },
 ];
 
-describe.each(cases)("$name", ({ Component, param, message }) => {
-  beforeEach(() => {
-    routeParams.current = {};
-  });
+const ID = "00000000-0000-4000-8000-000000000000";
 
-  it("renders the guard message when its route param is missing", () => {
+const provide = (param: string) => {
+  if (param === "host") hostCommunityId.current = ID;
+  else routeParams.current = { [param]: ID };
+};
+
+const withhold = () => {
+  routeParams.current = {};
+  hostCommunityId.current = null;
+};
+
+describe.each(cases)("$name", ({ Component, param, message }) => {
+  beforeEach(withhold);
+
+  it("renders the guard message when its id is missing", () => {
     render(<Component />, { wrapper: Providers });
 
     expect(screen.getByText(message)).toBeInTheDocument();
   });
 
-  it("keeps hook order stable when the param disappears between renders", () => {
-    routeParams.current = { [param]: "00000000-0000-4000-8000-000000000000" };
+  it("keeps hook order stable when the id disappears between renders", () => {
+    provide(param);
     const { rerender } = render(<Component />, { wrapper: Providers });
 
-    routeParams.current = {};
+    withhold();
 
     // Against the pre-fix ordering this throws rather than rendering.
     expect(() => rerender(<Component />)).not.toThrow();

@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { ChevronDown, Check, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityMembersByUserQuery } from "../../generated/graphql";
+import { apexUrl } from "../../lib/communityHost";
 
 interface CommunitySwitcherProps {
   className?: string;
@@ -220,7 +220,6 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   const { user } = useAuth();
 
   const { data, loading } = useCommunityMembersByUserQuery({
@@ -257,14 +256,24 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
     };
   }, [isOpen]);
 
+  /**
+   * Switching communities means changing hosts, so this is a whole-page
+   * navigation and not a router one -- there is no route from
+   * `willowmere.chardb.cc` to `cloverse.chardb.cc`.
+   *
+   * It goes via the apex's `/communities/:id` forwarder rather than naming the
+   * target host outright because `CommunityMembersByUser` selects the
+   * community's id and name but not its slug.
+   */
   const handleCommunitySelect = (selectedCommunityId: string) => {
-    navigate(`/communities/${selectedCommunityId}`);
+    window.location.assign(apexUrl(`/communities/${selectedCommunityId}`));
     setIsOpen(false);
     setSearchQuery("");
   };
 
+  /** Also a different host: this switcher only renders on a community one. */
   const handleBrowseAll = () => {
-    navigate("/my/communities");
+    window.location.assign(apexUrl("/my/communities"));
     setIsOpen(false);
     setSearchQuery("");
   };

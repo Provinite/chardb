@@ -62,7 +62,7 @@ cd "$PROJECT_ROOT"
 # Check if build exists
 if [ ! -d "apps/frontend/dist" ]; then
     echo "❌ Frontend build not found. Please build first:"
-    echo "   ./scripts/build-frontend.sh $ENVIRONMENT <backend_url>"
+    echo "   ./scripts/build-frontend.sh $ENVIRONMENT <backend_url> <version> <root_domain>"
     exit 1
 fi
 

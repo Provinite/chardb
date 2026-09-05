@@ -26,6 +26,12 @@ variable "route53_zone_id" {
   default     = null
 }
 
+variable "serve_wildcard_subdomains" {
+  description = "Also serve every subdomain of domain_name from this distribution, by adding '*.<domain_name>' as a CloudFront alias and a wildcard Route53 record. Requires a certificate covering the wildcard."
+  type        = bool
+  default     = false
+}
+
 variable "default_root_object" {
   description = "Default root object for the distribution"
   type        = string

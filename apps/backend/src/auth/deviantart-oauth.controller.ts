@@ -9,7 +9,18 @@ import { ExternalAccountsService } from "../external-accounts/external-accounts.
 import { ExternalAccountProvider } from "@prisma/client";
 import { CurrentUser } from "./decorators/CurrentUser";
 import { User } from "@prisma/client";
-import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { DeviantArtOAuthPayload } from "./strategies/deviantart.strategy";
+import {
+  resolveRequestOrigin,
+  resolveReturnOrigin,
+} from "./oauth-return-origin";
+
+/** The `state` token this controller signs and then reads back on the callback. */
+interface OAuthState {
+  sub: string;
+  /** Origin to return the user to; see `oauth-return-origin.ts`. */
+  ret?: string;
+}
 
 @Controller("auth/deviantart")
 export class DeviantArtOAuthController {
@@ -25,12 +36,18 @@ export class DeviantArtOAuthController {
    */
   @Get()
   @AllowAnyAuthenticated()
-  async initiateOAuth(@CurrentUser() user: User) {
+  async initiateOAuth(@CurrentUser() user: User, @Req() req: Request) {
     const jwtSecret = this.configService.get("JWT_SECRET");
-    const state = this.jwtService.sign(
-      { sub: user.id },
-      { secret: jwtSecret + "_O", expiresIn: "10m" },
-    );
+    const frontendUrl =
+      this.configService.get("FRONTEND_URL") || "http://localhost:3000";
+    const payload: OAuthState = {
+      sub: user.id,
+      ret: resolveRequestOrigin(req, frontendUrl),
+    };
+    const state = this.jwtService.sign(payload, {
+      secret: jwtSecret + "_O",
+      expiresIn: "10m",
+    });
     const clientId = this.configService.get("DEVIANTART_CLIENT_ID");
     const callbackUrl =
       this.configService.get("DEVIANTART_CALLBACK_URL") ||
@@ -58,6 +75,10 @@ export class DeviantArtOAuthController {
   async handleCallback(@Req() req: Request, @Res() res: Response) {
     const frontendUrl =
       this.configService.get("FRONTEND_URL") || "http://localhost:3000";
+    // Reassigned as soon as the state token parses. Failures before that point
+    // -- a missing or expired state -- have no trustworthy origin to honour and
+    // land on the apex.
+    let returnBase = frontendUrl;
 
     try {
       const state = req.query.state as string;
@@ -68,16 +89,17 @@ export class DeviantArtOAuthController {
       let userId: string;
       try {
         const jwtSecret = this.configService.get("JWT_SECRET");
-        const statePayload = this.jwtService.verify(state, {
+        const statePayload = this.jwtService.verify<OAuthState>(state, {
           secret: jwtSecret + "_O",
         });
         userId = statePayload.sub;
+        returnBase = resolveReturnOrigin(statePayload.ret, frontendUrl);
       } catch (error) {
         throw new Error("Invalid or expired state token");
       }
 
       // Get the OAuth data from Passport
-      const oauthData = req.user as any;
+      const oauthData = req.user as DeviantArtOAuthPayload;
       if (!oauthData?.providerAccountId || !oauthData?.displayName) {
         throw new Error("Invalid OAuth response");
       }
@@ -91,7 +113,7 @@ export class DeviantArtOAuthController {
       );
 
       // Redirect to frontend with success status and claimed items info
-      const callbackUrl = new URL(`${frontendUrl}/auth/deviantart/callback`);
+      const callbackUrl = new URL(`${returnBase}/auth/deviantart/callback`);
       callbackUrl.searchParams.set("success", "true");
       if (result.claimedCharacterIds.length > 0) {
         callbackUrl.searchParams.set(
@@ -108,7 +130,7 @@ export class DeviantArtOAuthController {
       res.redirect(callbackUrl.toString());
     } catch (error) {
       // Redirect to frontend with error message
-      const errorUrl = `${frontendUrl}/auth/deviantart/callback?error=${encodeURIComponent(error.message)}`;
+      const errorUrl = `${returnBase}/auth/deviantart/callback?error=${encodeURIComponent(error.message)}`;
       res.redirect(errorUrl);
     }
   }

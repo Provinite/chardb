@@ -105,6 +105,14 @@ output "frontend_website_url" {
   value       = module.frontend.website_url
 }
 
+# The host the site answers on -- dev.chardb.cc here, not the apex -- with
+# communities hanging off it as <slug>.dev.chardb.cc. The frontend bundle needs
+# it at build time to tell a community subdomain from the main site.
+output "root_domain" {
+  description = "Domain the site is served from, that communities are subdomains of"
+  value       = var.domain_name != null ? "${var.environment}.${var.domain_name}" : null
+}
+
 # Image storage outputs
 output "images_bucket_name" {
   description = "Name of the images S3 bucket"

@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Package, Search, Lock } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
   ItemTransactionKind,
   useCommunityByIdQuery,
@@ -384,19 +385,16 @@ const displayName = (
  */
 const PartyCell: React.FC<{
   row: ItemTransactionFieldsFragment;
-  communityId?: string;
-}> = ({ row, communityId }) => {
+}> = ({ row }) => {
   const from = displayName(row.fromUser);
   const to = displayName(row.toUser);
 
   // A name in the ledger is the natural way into that person's holdings --
   // the members page is still a placeholder, so this is the only route in.
   const who = (label: string, u: ItemTransactionFieldsFragment["toUser"]) =>
-    communityId && u ? (
+    u ? (
       <Party>
-        <Link to={`/communities/${communityId}/members/${u.username}/items`}>
-          {label}
-        </Link>
+        <Link to={`/members/${u.username}/items`}>{label}</Link>
       </Party>
     ) : (
       <Party>{label}</Party>
@@ -458,7 +456,7 @@ const PartyCell: React.FC<{
 };
 
 export const CommunityItemLedgerPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const [search, setSearch] = useState("");
   const [activeKinds, setActiveKinds] = useState<ItemTransactionKind[]>([]);
   const [limit, setLimit] = useState(PAGE_SIZE);
@@ -619,7 +617,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
                               <Link
                                 to={
                                   count === 1 && row.itemId
-                                    ? `/communities/${communityId}/items/${row.itemId}`
+                                    ? `/items/${row.itemId}`
                                     : `/item-types/${row.itemType.id}`
                                 }
                               >
@@ -639,7 +637,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
                         {count}
                       </Delta>
                       <td>
-                        <PartyCell row={row} communityId={communityId} />
+                        <PartyCell row={row} />
                       </td>
                       <td>
                         <Party>{actor}</Party>

@@ -8,6 +8,14 @@ export interface DeviantArtProfile {
   username: string;
 }
 
+/** What `validate` puts on `req.user`, mirroring `ToyhouseOAuthPayload`. */
+export interface DeviantArtOAuthPayload {
+  providerAccountId: string;
+  displayName: string;
+  accessToken: string;
+  refreshToken: string;
+}
+
 @Injectable()
 export class DeviantArtStrategy extends PassportStrategy(
   Strategy,
@@ -84,7 +92,7 @@ export class DeviantArtStrategy extends PassportStrategy(
     accessToken: string,
     refreshToken: string,
     profile: DeviantArtProfile,
-  ) {
+  ): Promise<DeviantArtOAuthPayload> {
     return {
       providerAccountId: profile.uuid,
       displayName: profile.username,

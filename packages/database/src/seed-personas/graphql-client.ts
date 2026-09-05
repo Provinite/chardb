@@ -73,7 +73,6 @@ export const MUTATIONS = {
     mutation Login($input: LoginInput!) {
       login(input: $input) {
         accessToken
-        refreshToken
       }
     }
   `,
@@ -212,8 +211,10 @@ export const QUERIES = {
 // Response types
 export interface LoginResponse {
   login: {
+    // The refresh token is not here any more: it comes back as an HttpOnly
+    // cookie. This seeder only ever needed the access token to authenticate
+    // its own subsequent mutations, so it does not care.
     accessToken: string;
-    refreshToken: string;
   };
 }
 

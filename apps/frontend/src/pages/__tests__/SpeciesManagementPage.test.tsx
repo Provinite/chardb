@@ -1,10 +1,13 @@
 /**
  * Happy-path coverage for SpeciesManagementPage.
  *
- * The route-param guard is covered in route-param-guards.test.tsx. This file
- * covers the other half of that change: with the param present the queries
- * must still run normally rather than being held back by the `skip` flag they
- * gained when the guard moved below them.
+ * The "no community" guard is covered in route-param-guards.test.tsx. This
+ * file covers the other half of that change: with a community present the
+ * queries must still run normally rather than being held back by the `skip`
+ * flag they gained when the guard moved below them.
+ *
+ * The community comes from the hostname now, not the path (#339), so it is
+ * `useCommunityId` that gets stubbed here.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -15,16 +18,13 @@ import { lightTheme } from "@chardb/ui";
 
 const COMMUNITY_ID = "11111111-1111-4111-8111-111111111111";
 
-const routeParams = vi.hoisted(() => ({
-  current: {} as Record<string, string | undefined>,
-}));
+const hostCommunityId = vi.hoisted(() => ({ current: null as string | null }));
 
-vi.mock("react-router-dom", async () => {
-  const actual =
-    await vi.importActual<typeof import("react-router-dom")>(
-      "react-router-dom",
-    );
-  return { ...actual, useParams: () => routeParams.current };
+vi.mock("../../contexts/CommunityHostContext", async () => {
+  const actual = await vi.importActual<
+    typeof import("../../contexts/CommunityHostContext")
+  >("../../contexts/CommunityHostContext");
+  return { ...actual, useCommunityId: () => hostCommunityId.current };
 });
 
 vi.mock("react-hot-toast", () => {
@@ -110,7 +110,7 @@ const renderPage = () =>
 
 describe("SpeciesManagementPage", () => {
   beforeEach(() => {
-    routeParams.current = { communityId: COMMUNITY_ID };
+    hostCommunityId.current = COMMUNITY_ID;
   });
 
   it("runs both queries and renders the community's species", async () => {

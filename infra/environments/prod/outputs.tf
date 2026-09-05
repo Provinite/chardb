@@ -203,6 +203,15 @@ output "frontend_website_url" {
   value       = module.frontend.website_url
 }
 
+# The host the site answers on, with communities hanging off it as
+# <slug>.<root_domain>. The frontend bundle needs it at build time to tell a
+# community subdomain from the main site, and the backend takes it as
+# ROOT_DOMAIN.
+output "root_domain" {
+  description = "Apex domain the site is served from"
+  value       = var.domain_name
+}
+
 ##############################################################################
 # Image Storage Outputs
 ##############################################################################

@@ -331,9 +331,7 @@ export const TradeOfferPage: React.FC = () => {
                   // Only navigation. The decline happens with the replacement
                   // when the counter is sent, so opening the composer and
                   // changing your mind leaves this offer exactly as it was.
-                  navigate(
-                    `/communities/${trade.community.id}/trades/new?with=${other.id}&mirror=${trade.id}`,
-                  )
+                  navigate(`/trades/new?with=${other.id}&mirror=${trade.id}`)
                 }
               >
                 Counter…

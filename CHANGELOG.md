@@ -7,7 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Local development moved to `dev.localhost`**, with the API on
+  `api.dev.localhost` — bare `localhost` is a public suffix, so the session
+  cookie could not have crossed subdomains under it (#339).
+
 ### Added
+
+- **The frontend distribution serves every subdomain** — `*.chardb.cc` is now a
+  CloudFront alias and a wildcard Route53 record, so a new community needs no
+  infrastructure; the backend gets `ROOT_DOMAIN` and the bundle
+  `VITE_ROOT_DOMAIN` (#339).
 
 - **Parallel instances**: every checkout — git worktree or separate clone — gets
   its own ports, databases and containers, so several agents can run the app and

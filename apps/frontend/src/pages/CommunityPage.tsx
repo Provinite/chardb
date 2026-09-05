@@ -1,5 +1,4 @@
 import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Users, Calendar, Settings, UserPlus } from "lucide-react";
 import {
@@ -20,6 +19,8 @@ import {
 } from "../generated/graphql";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useCommunityId } from "../contexts/CommunityHostContext";
+import { apexUrl } from "../lib/communityHost";
 
 /**
  * Community Landing Page
@@ -187,9 +188,8 @@ const NotFoundContainer = styled.div`
 `;
 
 export const CommunityPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const { user } = useAuth();
-  const navigate = useNavigate();
 
   const { data, loading, error } = useCommunityByIdQuery({
     variables: { id: communityId! },
@@ -281,7 +281,7 @@ export const CommunityPage: React.FC = () => {
       description:
         "Browse and discover unique characters created by community members",
       icon: Users,
-      path: `/communities/${communityId}/characters`,
+      path: "/characters",
       count: charactersCount,
       enabled: true,
     },
@@ -291,7 +291,7 @@ export const CommunityPage: React.FC = () => {
       description:
         "Explore the various species and their traits available in this community",
       icon: Settings, // Would use a better icon like Dna or similar
-      path: `/communities/${communityId}/species`,
+      path: "/species",
       count: speciesCount,
       enabled: true,
     },
@@ -301,7 +301,7 @@ export const CommunityPage: React.FC = () => {
       description:
         "View artwork, stories, and media shared by community members",
       icon: Users, // Would use Gallery icon
-      path: `/communities/${communityId}/gallery`,
+      path: "/gallery",
       count: 0, // Would come from media count query when implemented
       enabled: false, // Not implemented yet
     },
@@ -339,7 +339,11 @@ export const CommunityPage: React.FC = () => {
                     <Button
                       variant="primary"
                       icon={<UserPlus size={16} />}
-                      onClick={() => navigate("/join-community")}
+                      // Joining, like signing in, happens at the apex: the
+                      // router cannot cross a host.
+                      onClick={() => {
+                        window.location.assign(apexUrl("/join-community"));
+                      }}
                     >
                       Join Community
                     </Button>
@@ -349,14 +353,16 @@ export const CommunityPage: React.FC = () => {
                       variant="outline"
                       icon={<Settings size={16} />}
                       as={Link}
-                      to={`/communities/${communityId}/admin`}
+                      to="/admin"
                     >
                       Manage
                     </Button>
                   )}
                 </>
               ) : (
-                <Button variant="primary" as={Link} to="/login">
+                // The session cookie is set on the parent domain, so signing
+                // in has to happen at the apex.
+                <Button variant="primary" as="a" href={apexUrl("/login")}>
                   Sign In to Join
                 </Button>
               )}

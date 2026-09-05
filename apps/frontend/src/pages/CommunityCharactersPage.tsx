@@ -1,9 +1,10 @@
 import React from "react";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { CharacterListView } from "../components/CharacterListView";
-import { useCommunityByIdQuery } from "../generated/graphql";
+import { useCommunityByIdQuery, Visibility } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 
 const Breadcrumb = styled.div`
   display: flex;
@@ -43,7 +44,7 @@ const LoadingContainer = styled.div`
 `;
 
 export const CommunityCharactersPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
 
   const { data, loading, error } = useCommunityByIdQuery({
     variables: { id: communityId! },
@@ -78,7 +79,7 @@ export const CommunityCharactersPage: React.FC = () => {
 
   const breadcrumb = (
     <Breadcrumb>
-      <Link to={`/communities/${communityId}`}>{data.community.name}</Link>
+      <Link to="/">{data.community.name}</Link>
       <Separator>›</Separator>
       <span>Characters</span>
     </Breadcrumb>
@@ -92,7 +93,7 @@ export const CommunityCharactersPage: React.FC = () => {
         communityId,
       }}
       defaultFilters={{
-        visibility: "PUBLIC" as any,
+        visibility: Visibility.Public,
       }}
     />
   );

@@ -1,10 +1,12 @@
 import { gql } from "@apollo/client";
 
+// The refresh token is no longer part of any payload: it arrives as an
+// HttpOnly cookie on the same response and is never visible to script.
+
 export const LOGIN_MUTATION = gql`
   mutation Login($input: LoginInput!) {
     login(input: $input) {
       accessToken
-      refreshToken
     }
   }
 `;
@@ -13,14 +15,21 @@ export const SIGNUP_MUTATION = gql`
   mutation Signup($input: SignupInput!) {
     signup(input: $input) {
       accessToken
-      refreshToken
     }
   }
 `;
 
+/** Takes no argument: the server reads the refresh cookie off the request. */
 export const REFRESH_TOKEN_MUTATION = gql`
-  mutation RefreshToken($token: String!) {
-    refreshToken(token: $token)
+  mutation RefreshToken {
+    refreshToken
+  }
+`;
+
+/** Clears the refresh cookie. Only the server that set it can remove it. */
+export const LOGOUT_MUTATION = gql`
+  mutation Logout {
+    logout
   }
 `;
 
@@ -85,6 +94,7 @@ export {
   useLoginMutation,
   useSignupMutation,
   useRefreshTokenMutation,
+  useLogoutMutation,
   useForgotPasswordMutation,
   useResetPasswordMutation,
   useMeQuery,
@@ -96,6 +106,8 @@ export {
   type SignupMutationVariables,
   type RefreshTokenMutation,
   type RefreshTokenMutationVariables,
+  type LogoutMutation,
+  type LogoutMutationVariables,
   type ForgotPasswordMutation,
   type ForgotPasswordMutationVariables,
   type ResetPasswordMutation,

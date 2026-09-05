@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar, Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./notifications/NotificationBell";
 
@@ -70,6 +71,7 @@ const Username = styled.span`
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuth();
+  const { slug: communitySlug } = useCommunityHost();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -87,7 +89,12 @@ export const Header: React.FC = () => {
 
           {user ? (
             <UserMenu>
-              <NavLink to="/character/create">Create Character</NavLink>
+              {/* A character is created in a community, so this only exists on
+                  a community host. At the apex there is no community to create
+                  it in and no route to offer. */}
+              {communitySlug && (
+                <NavLink to="/character/create">Create Character</NavLink>
+              )}
               <NavLink to="/upload">Upload</NavLink>
               <NotificationBell />
               <UserInfo to={`/user/${user.username}`}>

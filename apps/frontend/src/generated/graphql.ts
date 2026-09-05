@@ -73,7 +73,6 @@ export type AssignCharacterSpeciesInput = {
 export type AuthPayload = {
   __typename?: 'AuthPayload';
   accessToken: Scalars['String']['output'];
-  refreshToken: Scalars['String']['output'];
 };
 
 export type BurnCurrencyInput = {
@@ -356,6 +355,8 @@ export type Community = {
   members: Array<User>;
   /** Name of the community */
   name: Scalars['String']['output'];
+  /** The community's subdomain label -- `cloverse` in `cloverse.chardb.cc`. Chosen at creation and never changed. */
+  slug: Scalars['String']['output'];
   /** When the community was last updated */
   updatedAt: Scalars['DateTime']['output'];
 };
@@ -518,6 +519,8 @@ export type CreateCommunityColorInput = {
 export type CreateCommunityInput = {
   /** Name of the community */
   name: Scalars['String']['input'];
+  /** Subdomain label for the community -- `cloverse` in `cloverse.chardb.cc`. Permanent once set. */
+  slug: Scalars['String']['input'];
 };
 
 /** Input for creating a new community invitation */
@@ -1814,6 +1817,7 @@ export type Mutation = {
   /** Link a Discord guild to a community */
   linkDiscordGuild: Community;
   login: AuthPayload;
+  logout: Scalars['Boolean']['output'];
   /** Marks all of your notifications read. */
   markAllNotificationsRead: Scalars['Int']['output'];
   /** Marks specific notifications read. Ids that are not yours match nothing. Returns how many were affected. */
@@ -2207,11 +2211,6 @@ export type MutationProposeTradeArgs = {
 
 export type MutationPurgeCharacterArgs = {
   id: Scalars['ID']['input'];
-};
-
-
-export type MutationRefreshTokenArgs = {
-  token: Scalars['String']['input'];
 };
 
 
@@ -2676,6 +2675,8 @@ export type Query = {
   communities: CommunityConnection;
   /** Get a community by ID */
   community: Community;
+  /** Get a community by its subdomain label. Null if no community holds that slug. */
+  communityBySlug: Maybe<Community>;
   communityColor: CommunityColor;
   communityColors: Array<CommunityColor>;
   /** Get a community invitation by ID */
@@ -2937,6 +2938,11 @@ export type QueryCommunitiesArgs = {
 
 export type QueryCommunityArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityBySlugArgs = {
+  slug: Scalars['String']['input'];
 };
 
 
@@ -4549,21 +4555,24 @@ export type LoginMutationVariables = Exact<{
 }>;
 
 
-export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'AuthPayload', accessToken: string, refreshToken: string } };
+export type LoginMutation = { __typename?: 'Mutation', login: { __typename?: 'AuthPayload', accessToken: string } };
 
 export type SignupMutationVariables = Exact<{
   input: SignupInput;
 }>;
 
 
-export type SignupMutation = { __typename?: 'Mutation', signup: { __typename?: 'AuthPayload', accessToken: string, refreshToken: string } };
+export type SignupMutation = { __typename?: 'Mutation', signup: { __typename?: 'AuthPayload', accessToken: string } };
 
-export type RefreshTokenMutationVariables = Exact<{
-  token: Scalars['String']['input'];
-}>;
+export type RefreshTokenMutationVariables = Exact<{ [key: string]: never; }>;
 
 
 export type RefreshTokenMutation = { __typename?: 'Mutation', refreshToken: string };
+
+export type LogoutMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type LogoutMutation = { __typename?: 'Mutation', logout: boolean };
 
 export type ForgotPasswordMutationVariables = Exact<{
   input: ForgotPasswordInput;
@@ -4584,7 +4593,7 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, communityMemberships: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateCharacter: boolean, canEditCharacter: boolean, canCreateOrphanedCharacter: boolean } }> } };
 
-export type CharacterCardFieldsFragment = { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } };
+export type CharacterCardFieldsFragment = { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } };
 
 export type UserCharactersQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -4592,49 +4601,49 @@ export type UserCharactersQueryVariables = Exact<{
 }>;
 
 
-export type UserCharactersQuery = { __typename?: 'Query', userCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
+export type UserCharactersQuery = { __typename?: 'Query', userCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
 export type GetCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
+export type GetCharactersQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
 export type GetCharacterQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, pendingTraitReviewSource: TraitReviewSource | null, traitReviewStatus: ModerationStatus | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, pendingTraitReviewSource: TraitReviewSource | null, traitReviewStatus: ModerationStatus | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, isOrphaned: boolean, likesCount: number, userHasLiked: boolean, speciesId: string | null, speciesVariantId: string | null, species: { __typename?: 'Species', id: string, name: string } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
+export type GetMyCharactersQuery = { __typename?: 'Query', myCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, isOrphaned: boolean, likesCount: number, userHasLiked: boolean, speciesId: string | null, speciesVariantId: string | null, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
 export type GetMyEditableCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetMyEditableCharactersQuery = { __typename?: 'Query', myEditableCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null }> } };
+export type GetMyEditableCharactersQuery = { __typename?: 'Query', myEditableCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null }> } };
 
 export type GetMyCharactersForImageUploadQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
 
 
-export type GetMyCharactersForImageUploadQuery = { __typename?: 'Query', myCharactersForImageUpload: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null }> } };
+export type GetMyCharactersForImageUploadQuery = { __typename?: 'Query', myCharactersForImageUpload: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null }> } };
 
 export type CreateCharacterMutationVariables = Exact<{
   input: CreateCharacterInput;
 }>;
 
 
-export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type CreateCharacterMutation = { __typename?: 'Mutation', createCharacter: { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type AssignCharacterSpeciesMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4642,7 +4651,7 @@ export type AssignCharacterSpeciesMutationVariables = Exact<{
 }>;
 
 
-export type AssignCharacterSpeciesMutation = { __typename?: 'Mutation', assignCharacterSpecies: { __typename?: 'Character', id: string, name: string, registryId: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type AssignCharacterSpeciesMutation = { __typename?: 'Mutation', assignCharacterSpecies: { __typename?: 'Character', id: string, name: string, registryId: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type DeleteCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4671,7 +4680,7 @@ export type TransferCharacterMutationVariables = Exact<{
 }>;
 
 
-export type TransferCharacterMutation = { __typename?: 'Mutation', transferCharacter: { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type TransferCharacterMutation = { __typename?: 'Mutation', transferCharacter: { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type AddCharacterTagsMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4703,7 +4712,7 @@ export type UpdateCharacterProfileMutationVariables = Exact<{
 }>;
 
 
-export type UpdateCharacterProfileMutation = { __typename?: 'Mutation', updateCharacterProfile: { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, mainMediaId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
+export type UpdateCharacterProfileMutation = { __typename?: 'Mutation', updateCharacterProfile: { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, mainMediaId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } } };
 
 export type UpdateCharacterRegistryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4716,7 +4725,7 @@ export type UpdateCharacterRegistryMutation = { __typename?: 'Mutation', updateC
 export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> };
+export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> };
 
 export type CharacterVariantChangesQueryVariables = Exact<{
   characterId: Scalars['ID']['input'];
@@ -4733,14 +4742,21 @@ export type CommunitiesQueryVariables = Exact<{
 }>;
 
 
-export type CommunitiesQuery = { __typename?: 'Query', communities: { __typename?: 'CommunityConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string }> } };
+export type CommunitiesQuery = { __typename?: 'Query', communities: { __typename?: 'CommunityConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Community', id: string, name: string, slug: string, createdAt: string, updatedAt: string }> } };
 
 export type CommunityByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null, memberCount: number, createdAt: string, updatedAt: string } };
+export type CommunityByIdQuery = { __typename?: 'Query', community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null, memberCount: number, createdAt: string, updatedAt: string } };
+
+export type CommunityBySlugQueryVariables = Exact<{
+  slug: Scalars['String']['input'];
+}>;
+
+
+export type CommunityBySlugQuery = { __typename?: 'Query', communityBySlug: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null, memberCount: number, createdAt: string, updatedAt: string } | null };
 
 export type GetCommunityMembersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -4756,7 +4772,7 @@ export type CreateCommunityMutationVariables = Exact<{
 }>;
 
 
-export type CreateCommunityMutation = { __typename?: 'Mutation', createCommunity: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } };
+export type CreateCommunityMutation = { __typename?: 'Mutation', createCommunity: { __typename?: 'Community', id: string, name: string, slug: string, createdAt: string, updatedAt: string } };
 
 export type UpdateCommunityMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -4816,7 +4832,7 @@ export type CommunityMembersByUserQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type CommunityMembersByUserQuery = { __typename?: 'Query', communityMembersByUser: { __typename?: 'CommunityMemberConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'CommunityMember', id: string, createdAt: string, updatedAt: string, role: { __typename?: 'Role', id: string, name: string, canCreateCharacter: boolean, canCreateInviteCode: boolean, canCreateRole: boolean, canEditCharacter: boolean, canCreateSpecies: boolean, canEditSpecies: boolean, canEditRole: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canListInviteCodes: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string, createdAt: string, updatedAt: string } }, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type CommunityColorFieldsFragment = { __typename?: 'CommunityColor', id: string, name: string, hexCode: string, communityId: string, createdAt: string, updatedAt: string };
 
@@ -5087,21 +5103,21 @@ export type GetGalleriesQueryVariables = Exact<{
 }>;
 
 
-export type GetGalleriesQuery = { __typename?: 'Query', galleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
+export type GetGalleriesQuery = { __typename?: 'Query', galleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
 
 export type GetGalleryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type GetGalleryQuery = { __typename?: 'Query', gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } } };
+export type GetGalleryQuery = { __typename?: 'Query', gallery: { __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, _count: { __typename?: 'GalleryCount', media: number } } };
 
 export type GetMyGalleriesQueryVariables = Exact<{
   filters?: InputMaybe<GalleryFiltersInput>;
 }>;
 
 
-export type GetMyGalleriesQuery = { __typename?: 'Query', myGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
+export type GetMyGalleriesQuery = { __typename?: 'Query', myGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
 
 export type GetUserGalleriesQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -5109,7 +5125,7 @@ export type GetUserGalleriesQueryVariables = Exact<{
 }>;
 
 
-export type GetUserGalleriesQuery = { __typename?: 'Query', userGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
+export type GetUserGalleriesQuery = { __typename?: 'Query', userGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
 
 export type GetCharacterGalleriesQueryVariables = Exact<{
   characterId: Scalars['ID']['input'];
@@ -5117,7 +5133,7 @@ export type GetCharacterGalleriesQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterGalleriesQuery = { __typename?: 'Query', characterGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
+export type GetCharacterGalleriesQuery = { __typename?: 'Query', characterGalleries: { __typename?: 'GalleryConnection', total: number, hasMore: boolean, galleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, ownerId: string, characterId: string | null, visibility: Visibility, sortOrder: number, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> } };
 
 export type CreateGalleryMutationVariables = Exact<{
   input: CreateGalleryInput;
@@ -5151,7 +5167,7 @@ export type ReorderGalleriesMutation = { __typename?: 'Mutation', reorderGalleri
 export type GetLikedGalleriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null, _count: { __typename?: 'GalleryCount', media: number } }> };
+export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> };
 
 export type ImageModerationQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5263,7 +5279,7 @@ export type ClaimInviteCodeMutationVariables = Exact<{
 }>;
 
 
-export type ClaimInviteCodeMutation = { __typename?: 'Mutation', claimInviteCode: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } };
+export type ClaimInviteCodeMutation = { __typename?: 'Mutation', claimInviteCode: { __typename?: 'InviteCode', id: string, claimCount: number, maxClaims: number, isAvailable: boolean, remainingClaims: number, creator: { __typename?: 'User', id: string, username: string, displayName: string | null }, role: { __typename?: 'Role', id: string, name: string, community: { __typename?: 'Community', id: string, name: string, slug: string } } | null } };
 
 export type RolesByCommunityQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5368,7 +5384,7 @@ export type GetItemWithProvenanceQueryVariables = Exact<{
 }>;
 
 
-export type GetItemWithProvenanceQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string } | null, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string }, fromVariants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }, itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type GetItemWithProvenanceQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string } | null, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string }, fromVariants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }, itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
 
 export type GetItemEconomyQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5404,7 +5420,7 @@ export type GetMyoTicketQueryVariables = Exact<{
 }>;
 
 
-export type GetMyoTicketQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, acquiredAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } | null } } };
+export type GetMyoTicketQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, acquiredAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } | null } } };
 
 export type CreateCharacterFromMyoTicketMutationVariables = Exact<{
   input: RedeemMyoTicketInput;
@@ -5497,7 +5513,7 @@ export type GetMediaItemQueryVariables = Exact<{
 }>;
 
 
-export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, mediumUrl: string | null, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, mediumUrl: string | null, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
 export type GetCharacterMediaQueryVariables = Exact<{
   characterId: Scalars['ID']['input'];
@@ -5527,7 +5543,7 @@ export type GetLikedMediaQueryVariables = Exact<{
 }>;
 
 
-export type GetLikedMediaQuery = { __typename?: 'Query', likedMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, width: number, height: number, fileSize: number, mimeType: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
+export type GetLikedMediaQuery = { __typename?: 'Query', likedMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, width: number, height: number, fileSize: number, mimeType: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, artist: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null }> } };
 
 export type CreateTextMediaMutationVariables = Exact<{
   input: CreateTextMediaInput;
@@ -5583,7 +5599,7 @@ export type RemoveMediaTagsMutationVariables = Exact<{
 
 export type RemoveMediaTagsMutation = { __typename?: 'Mutation', removeMediaTags: { __typename?: 'Media', id: string, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
-export type NotificationFieldsFragment = { __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string } | null };
+export type NotificationFieldsFragment = { __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null };
 
 export type NotificationsQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -5592,7 +5608,7 @@ export type NotificationsQueryVariables = Exact<{
 }>;
 
 
-export type NotificationsQuery = { __typename?: 'Query', notifications: { __typename?: 'NotificationConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string } | null }> } };
+export type NotificationsQuery = { __typename?: 'Query', notifications: { __typename?: 'NotificationConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null }> } };
 
 export type UnseenNotificationCountQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -5797,9 +5813,9 @@ export type GetActivityFeedQueryVariables = Exact<{
 
 export type GetActivityFeedQuery = { __typename?: 'Query', activityFeed: Array<{ __typename?: 'ActivityItem', id: string, type: string, entityId: string, createdAt: string, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, content: { __typename?: 'ActivityContent', name: string | null, title: string | null, description: string | null } | null }> };
 
-export type SpeciesDetailsFragment = { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } };
+export type SpeciesDetailsFragment = { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } };
 
-export type SpeciesConnectionDetailsFragment = { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }> };
+export type SpeciesConnectionDetailsFragment = { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } }> };
 
 export type SpeciesQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -5807,7 +5823,7 @@ export type SpeciesQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesQuery = { __typename?: 'Query', species: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }> } };
+export type SpeciesQuery = { __typename?: 'Query', species: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } }> } };
 
 export type SpeciesByCommunityQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5816,21 +5832,21 @@ export type SpeciesByCommunityQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesByCommunityQuery = { __typename?: 'Query', speciesByCommunity: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }> } };
+export type SpeciesByCommunityQuery = { __typename?: 'Query', speciesByCommunity: { __typename?: 'SpeciesConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } }> } };
 
 export type SpeciesByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type SpeciesByIdQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } };
+export type SpeciesByIdQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } } };
 
 export type CreateSpeciesMutationVariables = Exact<{
   createSpeciesInput: CreateSpeciesInput;
 }>;
 
 
-export type CreateSpeciesMutation = { __typename?: 'Mutation', createSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } };
+export type CreateSpeciesMutation = { __typename?: 'Mutation', createSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } } };
 
 export type UpdateSpeciesMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5838,7 +5854,7 @@ export type UpdateSpeciesMutationVariables = Exact<{
 }>;
 
 
-export type UpdateSpeciesMutation = { __typename?: 'Mutation', updateSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } } };
+export type UpdateSpeciesMutation = { __typename?: 'Mutation', updateSpecies: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } } };
 
 export type DeleteSpeciesMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5873,7 +5889,7 @@ export type SpeciesVariantByIdQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateSpeciesVariantMutationVariables = Exact<{
   createSpeciesVariantInput: CreateSpeciesVariantInput;
@@ -5916,7 +5932,7 @@ export type TraitByIdQueryVariables = Exact<{
 }>;
 
 
-export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type TraitByIdQuery = { __typename?: 'Query', traitById: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean, speciesId: string, colorId: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateTraitMutationVariables = Exact<{
   createTraitInput: CreateTraitInput;
@@ -5948,7 +5964,7 @@ export type SearchTagsQueryVariables = Exact<{
 
 export type SearchTagsQuery = { __typename?: 'Query', searchTags: Array<{ __typename?: 'Tag', id: string, name: string, displayName: string, category: string | null, color: string | null, createdAt: string }> };
 
-export type TradeFieldsFragment = { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> };
+export type TradeFieldsFragment = { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> };
 
 export type TradesQueryVariables = Exact<{
   communityId?: InputMaybe<Scalars['ID']['input']>;
@@ -5958,14 +5974,14 @@ export type TradesQueryVariables = Exact<{
 }>;
 
 
-export type TradesQuery = { __typename?: 'Query', trades: { __typename?: 'TradeConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> }> } };
+export type TradesQuery = { __typename?: 'Query', trades: { __typename?: 'TradeConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> }> } };
 
 export type TradeQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type TradeQuery = { __typename?: 'Query', trade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type TradeQuery = { __typename?: 'Query', trade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type TradeComposerQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5981,7 +5997,7 @@ export type ProposeTradeMutationVariables = Exact<{
 }>;
 
 
-export type ProposeTradeMutation = { __typename?: 'Mutation', proposeTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type ProposeTradeMutation = { __typename?: 'Mutation', proposeTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type CounterTradeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5989,7 +6005,7 @@ export type CounterTradeMutationVariables = Exact<{
 }>;
 
 
-export type CounterTradeMutation = { __typename?: 'Mutation', counterTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type CounterTradeMutation = { __typename?: 'Mutation', counterTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type AcceptTradeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5997,21 +6013,21 @@ export type AcceptTradeMutationVariables = Exact<{
 }>;
 
 
-export type AcceptTradeMutation = { __typename?: 'Mutation', acceptTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type AcceptTradeMutation = { __typename?: 'Mutation', acceptTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type DeclineTradeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type DeclineTradeMutation = { __typename?: 'Mutation', declineTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type DeclineTradeMutation = { __typename?: 'Mutation', declineTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type CancelTradeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type CancelTradeMutation = { __typename?: 'Mutation', cancelTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
+export type CancelTradeMutation = { __typename?: 'Mutation', cancelTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
 export type TraitListEntryDetailsFragment = { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> } };
 
@@ -6120,7 +6136,7 @@ export type GetUserProfileQueryVariables = Exact<{
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, website: string | null, isVerified: boolean, createdAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, visibility: Visibility, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, textContent: { __typename?: 'TextContent', content: string, wordCount: number } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } | null };
+export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, website: string | null, isVerified: boolean, createdAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, visibility: Visibility, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, textContent: { __typename?: 'TextContent', content: string, wordCount: number } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } | null };
 
 export type GetUserStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -6156,6 +6172,10 @@ export const CharacterCardFieldsFragmentDoc = gql`
   species {
     id
     name
+    community {
+      id
+      slug
+    }
   }
   details
   ownerId
@@ -6493,6 +6513,7 @@ export const NotificationFieldsFragmentDoc = gql`
   community {
     id
     name
+    slug
   }
 }
     `;
@@ -6587,6 +6608,7 @@ export const SpeciesDetailsFragmentDoc = gql`
   community {
     id
     name
+    slug
     discordGuildId
     discordGuildName
   }
@@ -6667,6 +6689,7 @@ export const TradeFieldsFragmentDoc = gql`
   community {
     id
     name
+    slug
   }
   proposer {
     id
@@ -6804,7 +6827,6 @@ export const LoginDocument = gql`
     mutation Login($input: LoginInput!) {
   login(input: $input) {
     accessToken
-    refreshToken
   }
 }
     `;
@@ -6838,7 +6860,6 @@ export const SignupDocument = gql`
     mutation Signup($input: SignupInput!) {
   signup(input: $input) {
     accessToken
-    refreshToken
   }
 }
     `;
@@ -6869,8 +6890,8 @@ export type SignupMutationHookResult = ReturnType<typeof useSignupMutation>;
 export type SignupMutationResult = Apollo.MutationResult<SignupMutation>;
 export type SignupMutationOptions = Apollo.BaseMutationOptions<SignupMutation, SignupMutationVariables>;
 export const RefreshTokenDocument = gql`
-    mutation RefreshToken($token: String!) {
-  refreshToken(token: $token)
+    mutation RefreshToken {
+  refreshToken
 }
     `;
 export type RefreshTokenMutationFn = Apollo.MutationFunction<RefreshTokenMutation, RefreshTokenMutationVariables>;
@@ -6888,7 +6909,6 @@ export type RefreshTokenMutationFn = Apollo.MutationFunction<RefreshTokenMutatio
  * @example
  * const [refreshTokenMutation, { data, loading, error }] = useRefreshTokenMutation({
  *   variables: {
- *      token: // value for 'token'
  *   },
  * });
  */
@@ -6899,6 +6919,36 @@ export function useRefreshTokenMutation(baseOptions?: Apollo.MutationHookOptions
 export type RefreshTokenMutationHookResult = ReturnType<typeof useRefreshTokenMutation>;
 export type RefreshTokenMutationResult = Apollo.MutationResult<RefreshTokenMutation>;
 export type RefreshTokenMutationOptions = Apollo.BaseMutationOptions<RefreshTokenMutation, RefreshTokenMutationVariables>;
+export const LogoutDocument = gql`
+    mutation Logout {
+  logout
+}
+    `;
+export type LogoutMutationFn = Apollo.MutationFunction<LogoutMutation, LogoutMutationVariables>;
+
+/**
+ * __useLogoutMutation__
+ *
+ * To run a mutation, you first call `useLogoutMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useLogoutMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [logoutMutation, { data, loading, error }] = useLogoutMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useLogoutMutation(baseOptions?: Apollo.MutationHookOptions<LogoutMutation, LogoutMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<LogoutMutation, LogoutMutationVariables>(LogoutDocument, options);
+      }
+export type LogoutMutationHookResult = ReturnType<typeof useLogoutMutation>;
+export type LogoutMutationResult = Apollo.MutationResult<LogoutMutation>;
+export type LogoutMutationOptions = Apollo.BaseMutationOptions<LogoutMutation, LogoutMutationVariables>;
 export const ForgotPasswordDocument = gql`
     mutation ForgotPassword($input: ForgotPasswordInput!) {
   forgotPassword(input: $input)
@@ -7089,6 +7139,10 @@ export const GetCharactersDocument = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
       details
       ownerId
@@ -7190,6 +7244,7 @@ export const GetCharacterDocument = gql`
       community {
         id
         name
+        slug
         discordGuildId
         discordGuildName
       }
@@ -7322,6 +7377,10 @@ export const GetMyCharactersDocument = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
       details
       ownerId
@@ -7435,6 +7494,10 @@ export const GetMyEditableCharactersDocument = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
     }
     total
@@ -7484,6 +7547,10 @@ export const GetMyCharactersForImageUploadDocument = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
     }
     total
@@ -7532,6 +7599,10 @@ export const CreateCharacterDocument = gql`
     species {
       id
       name
+      community {
+        id
+        slug
+      }
     }
     details
     ownerId
@@ -7601,6 +7672,10 @@ export const AssignCharacterSpeciesDocument = gql`
     species {
       id
       name
+      community {
+        id
+        slug
+      }
     }
     speciesVariant {
       id
@@ -7773,6 +7848,10 @@ export const TransferCharacterDocument = gql`
     species {
       id
       name
+      community {
+        id
+        slug
+      }
     }
     details
     ownerId
@@ -7971,6 +8050,10 @@ export const UpdateCharacterProfileDocument = gql`
     species {
       id
       name
+      community {
+        id
+        slug
+      }
     }
     details
     ownerId
@@ -8102,6 +8185,10 @@ export const GetLikedCharactersDocument = gql`
     species {
       id
       name
+      community {
+        id
+        slug
+      }
     }
     visibility
     createdAt
@@ -8210,6 +8297,7 @@ export const CommunitiesDocument = gql`
     nodes {
       id
       name
+      slug
       createdAt
       updatedAt
     }
@@ -8258,6 +8346,7 @@ export const CommunityByIdDocument = gql`
   community(id: $id) {
     id
     name
+    slug
     discordGuildId
     discordGuildName
     memberCount
@@ -8299,6 +8388,53 @@ export type CommunityByIdQueryHookResult = ReturnType<typeof useCommunityByIdQue
 export type CommunityByIdLazyQueryHookResult = ReturnType<typeof useCommunityByIdLazyQuery>;
 export type CommunityByIdSuspenseQueryHookResult = ReturnType<typeof useCommunityByIdSuspenseQuery>;
 export type CommunityByIdQueryResult = Apollo.QueryResult<CommunityByIdQuery, CommunityByIdQueryVariables>;
+export const CommunityBySlugDocument = gql`
+    query CommunityBySlug($slug: String!) {
+  communityBySlug(slug: $slug) {
+    id
+    name
+    slug
+    discordGuildId
+    discordGuildName
+    memberCount
+    createdAt
+    updatedAt
+  }
+}
+    `;
+
+/**
+ * __useCommunityBySlugQuery__
+ *
+ * To run a query within a React component, call `useCommunityBySlugQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityBySlugQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunityBySlugQuery({
+ *   variables: {
+ *      slug: // value for 'slug'
+ *   },
+ * });
+ */
+export function useCommunityBySlugQuery(baseOptions: Apollo.QueryHookOptions<CommunityBySlugQuery, CommunityBySlugQueryVariables> & ({ variables: CommunityBySlugQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunityBySlugQuery, CommunityBySlugQueryVariables>(CommunityBySlugDocument, options);
+      }
+export function useCommunityBySlugLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityBySlugQuery, CommunityBySlugQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunityBySlugQuery, CommunityBySlugQueryVariables>(CommunityBySlugDocument, options);
+        }
+export function useCommunityBySlugSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityBySlugQuery, CommunityBySlugQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunityBySlugQuery, CommunityBySlugQueryVariables>(CommunityBySlugDocument, options);
+        }
+export type CommunityBySlugQueryHookResult = ReturnType<typeof useCommunityBySlugQuery>;
+export type CommunityBySlugLazyQueryHookResult = ReturnType<typeof useCommunityBySlugLazyQuery>;
+export type CommunityBySlugSuspenseQueryHookResult = ReturnType<typeof useCommunityBySlugSuspenseQuery>;
+export type CommunityBySlugQueryResult = Apollo.QueryResult<CommunityBySlugQuery, CommunityBySlugQueryVariables>;
 export const GetCommunityMembersDocument = gql`
     query GetCommunityMembers($communityId: ID!, $search: String, $limit: Int) {
   community(id: $communityId) {
@@ -8349,6 +8485,7 @@ export const CreateCommunityDocument = gql`
   createCommunity(createCommunityInput: $createCommunityInput) {
     id
     name
+    slug
     createdAt
     updatedAt
   }
@@ -8665,6 +8802,7 @@ export const CommunityMembersByUserDocument = gql`
         community {
           id
           name
+          slug
           createdAt
           updatedAt
         }
@@ -10142,6 +10280,10 @@ export const GetGalleriesDocument = gql`
         species {
           id
           name
+          community {
+            id
+            slug
+          }
         }
       }
       _count {
@@ -10209,6 +10351,10 @@ export const GetGalleryDocument = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
     }
     _count {
@@ -10274,6 +10420,10 @@ export const GetMyGalleriesDocument = gql`
         species {
           id
           name
+          community {
+            id
+            slug
+          }
         }
       }
       _count {
@@ -10342,6 +10492,10 @@ export const GetUserGalleriesDocument = gql`
         species {
           id
           name
+          community {
+            id
+            slug
+          }
         }
       }
       _count {
@@ -10411,6 +10565,10 @@ export const GetCharacterGalleriesDocument = gql`
         species {
           id
           name
+          community {
+            id
+            slug
+          }
         }
       }
       _count {
@@ -10662,6 +10820,13 @@ export const GetLikedGalleriesDocument = gql`
     character {
       id
       name
+      species {
+        id
+        community {
+          id
+          slug
+        }
+      }
     }
     _count {
       media
@@ -11492,6 +11657,7 @@ export const ClaimInviteCodeDocument = gql`
       community {
         id
         name
+        slug
       }
     }
   }
@@ -11999,6 +12165,7 @@ export const GetItemWithProvenanceDocument = gql`
       community {
         id
         name
+        slug
       }
     }
   }
@@ -12985,6 +13152,13 @@ export const GetMediaItemDocument = gql`
     character {
       id
       name
+      species {
+        id
+        community {
+          id
+          slug
+        }
+      }
     }
     gallery {
       id
@@ -13322,6 +13496,13 @@ export const GetLikedMediaDocument = gql`
       character {
         id
         name
+        species {
+          id
+          community {
+            id
+            slug
+          }
+        }
       }
       gallery {
         id
@@ -15164,6 +15345,7 @@ export const SpeciesByIdDocument = gql`
     community {
       id
       name
+      slug
       discordGuildId
       discordGuildName
     }
@@ -15398,6 +15580,7 @@ export const SpeciesVariantByIdDocument = gql`
       community {
         id
         name
+        slug
         discordGuildId
         discordGuildName
       }
@@ -15601,6 +15784,7 @@ export const TraitByIdDocument = gql`
       community {
         id
         name
+        slug
         discordGuildId
         discordGuildName
       }
@@ -16745,6 +16929,10 @@ export const GetUserProfileDocument = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
       createdAt
       updatedAt
@@ -16792,6 +16980,10 @@ export const GetUserProfileDocument = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
       createdAt
       updatedAt

@@ -53,6 +53,10 @@ export const GET_GALLERIES = gql`
           species {
             id
             name
+            community {
+              id
+              slug
+            }
           }
         }
         _count {
@@ -89,6 +93,11 @@ export const GET_GALLERY = gql`
         species {
           id
           name
+          community {
+            id
+            # The host the character is served from; a gallery is at the apex.
+            slug
+          }
         }
       }
       _count {
@@ -123,6 +132,10 @@ export const GET_MY_GALLERIES = gql`
           species {
             id
             name
+            community {
+              id
+              slug
+            }
           }
         }
         _count {
@@ -160,6 +173,10 @@ export const GET_USER_GALLERIES = gql`
           species {
             id
             name
+            community {
+              id
+              slug
+            }
           }
         }
         _count {
@@ -200,6 +217,10 @@ export const GET_CHARACTER_GALLERIES = gql`
           species {
             id
             name
+            community {
+              id
+              slug
+            }
           }
         }
         _count {
@@ -320,6 +341,13 @@ export const GET_LIKED_GALLERIES = gql`
       character {
         id
         name
+        species {
+          id
+          community {
+            id
+            slug
+          }
+        }
       }
       _count {
         media

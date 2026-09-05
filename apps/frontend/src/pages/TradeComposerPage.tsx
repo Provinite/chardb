@@ -5,12 +5,13 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowDownUp } from "lucide-react";
 import { Button, Input } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
   useTradeComposerQuery,
   useTradeQuery,
@@ -261,7 +262,7 @@ const LoadingWrap = styled.div`
  * looser way to ask for one.
  */
 export const TradeComposerPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -561,7 +562,7 @@ export const TradeComposerPage: React.FC = () => {
             ?.counterTrade.id
         : (await proposeTrade({ variables: { input } })).data?.proposeTrade.id;
 
-      if (id) navigate(`/communities/${communityId}/trades/${id}`);
+      if (id) navigate(`/trades/${id}`);
     } catch (err) {
       setProblem(
         err instanceof Error ? err.message : "That offer could not be sent",

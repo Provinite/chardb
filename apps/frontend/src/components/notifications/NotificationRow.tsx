@@ -1,5 +1,4 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
 import type { NotificationFieldsFragment } from "../../graphql/notifications.graphql";
@@ -65,7 +64,11 @@ const Bare = styled.div`
   color: inherit;
 `;
 
-const RowLink = styled(Link)`
+/**
+ * An `<a>` and not a `<Link>`: `notificationHref` answers with an absolute URL,
+ * and most of them are on a community host the router cannot navigate to.
+ */
+const RowLink = styled.a`
   text-decoration: none;
   color: inherit;
   display: block;
@@ -132,5 +135,5 @@ export const NotificationRow: React.FC<NotificationRowProps> = ({
 
   // A notification whose subject has no page, or whose subject is gone, is
   // still worth showing -- it just stops being a link.
-  return href ? <RowLink to={href}>{inner}</RowLink> : <Bare>{inner}</Bare>;
+  return href ? <RowLink href={href}>{inner}</RowLink> : <Bare>{inner}</Bare>;
 };

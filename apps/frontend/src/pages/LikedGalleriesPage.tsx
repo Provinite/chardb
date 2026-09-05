@@ -5,6 +5,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useGetLikedGalleriesQuery, LikeableType } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
+import { characterUrl } from "../lib/communityHost";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -86,7 +87,9 @@ const MetaBadge = styled.span`
   border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
-const CharacterLink = styled(Link)`
+// An anchor rather than a router link: a character is served from its
+// community's own host, which is a different origin to this page.
+const CharacterLink = styled.a`
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
@@ -234,7 +237,7 @@ export const LikedGalleriesPage: React.FC = () => {
         </EmptyState>
       ) : (
         <Grid>
-          {likedGalleries.map((gallery: any) => (
+          {likedGalleries.map((gallery) => (
             <GalleryCard key={gallery.id}>
               <CardContent>
                 <GalleryName>{gallery.name}</GalleryName>
@@ -243,10 +246,15 @@ export const LikedGalleriesPage: React.FC = () => {
                 )}
 
                 <GalleryMeta>
-                  <MetaBadge>{gallery._count?.images || 0} images</MetaBadge>
+                  <MetaBadge>{gallery._count?.media ?? 0} items</MetaBadge>
                   {gallery.character && (
                     <MetaBadge>
-                      <CharacterLink to={`/character/${gallery.character.id}`}>
+                      <CharacterLink
+                        href={characterUrl(
+                          gallery.character.id,
+                          gallery.character.species?.community?.slug,
+                        )}
+                      >
                         {gallery.character.name}
                       </CharacterLink>
                     </MetaBadge>

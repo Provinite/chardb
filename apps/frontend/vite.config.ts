@@ -18,6 +18,11 @@ export default defineConfig({
     // Fail loudly instead of silently sliding to the next free port, which
     // would land one instance on another instance's number.
     strictPort: true,
+    // Communities are served from their own subdomain, and locally that means
+    // `willowmere.localhost:<port>` -- browsers resolve every `*.localhost`
+    // label to loopback without an /etc/hosts entry, so the request arrives
+    // here. Vite would otherwise reject the unfamiliar Host header.
+    allowedHosts: [".localhost"],
     // Limit parallel requests and connections
     hmr: {
       overlay: true, // Disable error overlay to reduce requests

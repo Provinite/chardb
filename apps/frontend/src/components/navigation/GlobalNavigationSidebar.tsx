@@ -1,6 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import {
   User,
   Heart,
@@ -18,6 +18,8 @@ import { CommunityNavigationItem } from "./CommunityNavigationItem";
 import { CommunityNavigationGroup } from "./CommunityNavigationGroup";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityMembersByUserQuery } from "../../generated/graphql";
+import { useCommunityHost } from "../../contexts/CommunityHostContext";
+import { apexUrl } from "../../lib/communityHost";
 
 interface GlobalNavigationSidebarProps {
   className?: string;
@@ -63,7 +65,7 @@ const SidebarContent = styled.nav`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
-const SidebarHeader = styled(Link)`
+const sidebarHeaderStyles = css`
   padding: ${({ theme }) => theme.spacing.md};
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
   display: flex;
@@ -77,6 +79,15 @@ const SidebarHeader = styled(Link)`
   &:hover {
     background-color: ${({ theme }) => theme.colors.surface};
   }
+`;
+
+const SidebarHeader = styled(Link)`
+  ${sidebarHeaderStyles}
+`;
+
+/** The same header when the dashboard is on another host; see `apexHref`. */
+const SidebarHeaderAnchor = styled.a`
+  ${sidebarHeaderStyles}
 `;
 
 const Divider = styled.div`
@@ -171,6 +182,21 @@ export const GlobalNavigationSidebar: React.FC<
   GlobalNavigationSidebarProps
 > = ({ className, onToggleToCommunity }) => {
   const { user } = useAuth();
+  const { slug: communitySlug } = useCommunityHost();
+
+  /**
+   * Every destination in this sidebar belongs to the apex -- including
+   * `/trades` and `/characters`, which exist on both hosts but mean the
+   * cross-community inbox and the global browse here.
+   *
+   * That normally needs no thought, because this is the apex's sidebar. But
+   * `CommunityNavigationSidebar` falls back to rendering it on a community host
+   * when the viewer is not a member, and from there the same paths are a
+   * different origin. `CommunityNavigationItem` renders an absolute `to` as an
+   * anchor for exactly this.
+   */
+  const apexHref = (path: string): string =>
+    communitySlug ? apexUrl(path) : path;
 
   // Fetch user's communities
   const { data: communitiesData, loading: communitiesLoading } =
@@ -190,10 +216,17 @@ export const GlobalNavigationSidebar: React.FC<
       role="navigation"
       aria-label="Global navigation"
     >
-      <SidebarHeader to="/dashboard">
-        <LayoutGrid size={20} />
-        Dashboard
-      </SidebarHeader>
+      {communitySlug ? (
+        <SidebarHeaderAnchor href={apexUrl("/dashboard")}>
+          <LayoutGrid size={20} />
+          Dashboard
+        </SidebarHeaderAnchor>
+      ) : (
+        <SidebarHeader to="/dashboard">
+          <LayoutGrid size={20} />
+          Dashboard
+        </SidebarHeader>
+      )}
 
       <SidebarContent>
         <SearchTrigger
@@ -224,19 +257,19 @@ export const GlobalNavigationSidebar: React.FC<
               defaultExpanded
             >
               <CommunityNavigationItem
-                to="/my/characters"
+                to={apexHref("/my/characters")}
                 icon={User}
                 label="My Characters"
                 isNested
               />
               <CommunityNavigationItem
-                to="/my/galleries"
+                to={apexHref("/my/galleries")}
                 icon={LayoutGrid}
                 label="My Galleries"
                 isNested
               />
               <CommunityNavigationItem
-                to="/my/media"
+                to={apexHref("/my/media")}
                 icon={Image}
                 label="My Media"
                 isNested
@@ -248,19 +281,19 @@ export const GlobalNavigationSidebar: React.FC<
             {/* Liked Content Section */}
             <CommunityNavigationGroup title="Liked" icon={Heart}>
               <CommunityNavigationItem
-                to="/liked/characters"
+                to={apexHref("/liked/characters")}
                 icon={User}
                 label="Characters"
                 isNested
               />
               <CommunityNavigationItem
-                to="/liked/galleries"
+                to={apexHref("/liked/galleries")}
                 icon={LayoutGrid}
                 label="Galleries"
                 isNested
               />
               <CommunityNavigationItem
-                to="/liked/media"
+                to={apexHref("/liked/media")}
                 icon={Image}
                 label="Media"
                 isNested
@@ -271,22 +304,24 @@ export const GlobalNavigationSidebar: React.FC<
 
             {/* Activity Section */}
             <CommunityNavigationItem
-              to="/feed"
+              to={apexHref("/feed")}
               icon={Activity}
               label="Activity Feed"
             />
 
             {/* Global rather than per-community: an offer waiting on you is
                 waiting on you wherever it was made, and the whole point of one
-                inbox is not having to remember which community to check. */}
+                inbox is not having to remember which community to check. That
+                is also why it is the apex's `/trades` and never the community
+                host's, which is the same path meaning that community's offers. */}
             <CommunityNavigationItem
-              to="/trades"
+              to={apexHref("/trades")}
               icon={ArrowLeftRight}
               label="Trades"
             />
 
             <CommunityNavigationItem
-              to={`/user/${user.username}`}
+              to={apexHref(`/user/${user.username}`)}
               icon={User}
               label="My Profile"
             />
@@ -297,20 +332,22 @@ export const GlobalNavigationSidebar: React.FC<
 
         {/* Browse Section */}
         <CommunityNavigationGroup title="Browse" icon={LayoutGrid}>
+          {/* The global browse, so the apex's `/characters` -- a community
+              host serves that path as its own roster. */}
           <CommunityNavigationItem
-            to="/characters"
+            to={apexHref("/characters")}
             icon={User}
             label="All Characters"
             isNested
           />
           <CommunityNavigationItem
-            to="/galleries"
+            to={apexHref("/galleries")}
             icon={LayoutGrid}
             label="All Galleries"
             isNested
           />
           <CommunityNavigationItem
-            to="/media"
+            to={apexHref("/media")}
             icon={Image}
             label="All Media"
             isNested
@@ -330,10 +367,16 @@ export const GlobalNavigationSidebar: React.FC<
               <LoadingContainer>Loading communities...</LoadingContainer>
             ) : communities.length > 0 ? (
               <>
+                {/* Every community is its own host, so these are absolute URLs
+                    -- `CommunityNavigationItem` renders them as anchors. They
+                    go via the apex's `/communities/:id` forwarder rather than
+                    straight to `<slug>.chardb.cc` because
+                    `CommunityMembersByUser` selects the community's id and name
+                    but not its slug. */}
                 {communities.map((community) => (
                   <CommunityNavigationItem
                     key={community.id}
-                    to={`/communities/${community.id}`}
+                    to={apexUrl(`/communities/${community.id}`)}
                     icon={Users}
                     label={community.name}
                     isNested
@@ -341,7 +384,7 @@ export const GlobalNavigationSidebar: React.FC<
                 ))}
                 <Divider />
                 <CommunityNavigationItem
-                  to="/my/communities"
+                  to={apexHref("/my/communities")}
                   icon={Users}
                   label="View All"
                   isNested
@@ -351,7 +394,7 @@ export const GlobalNavigationSidebar: React.FC<
               <LoadingContainer>No communities yet</LoadingContainer>
             ))}
           <CommunityNavigationItem
-            to="/join-community"
+            to={apexHref("/join-community")}
             icon={Plus}
             label="Join Community"
             isNested

@@ -59,7 +59,6 @@ input AssignCharacterSpeciesInput {
 
 type AuthPayload {
   accessToken: String!
-  refreshToken: String!
 }
 
 input BurnCurrencyInput {
@@ -385,6 +384,11 @@ type Community {
   """Name of the community"""
   name: String!
 
+  """
+  The community's subdomain label -- `cloverse` in `cloverse.chardb.cc`. Chosen at creation and never changed.
+  """
+  slug: String!
+
   """When the community was last updated"""
   updatedAt: DateTime!
 }
@@ -568,6 +572,11 @@ input CreateCommunityColorInput {
 input CreateCommunityInput {
   """Name of the community"""
   name: String!
+
+  """
+  Subdomain label for the community -- `cloverse` in `cloverse.chardb.cc`. Permanent once set.
+  """
+  slug: String!
 }
 
 """Input for creating a new community invitation"""
@@ -2297,6 +2306,7 @@ type Mutation {
     guildId: ID!
   ): Community!
   login(input: LoginInput!): AuthPayload!
+  logout: Boolean!
 
   """Marks all of your notifications read."""
   markAllNotificationsRead: Int!
@@ -2325,7 +2335,7 @@ type Mutation {
   Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete.
   """
   purgeCharacter(id: ID!): Boolean!
-  refreshToken(token: String!): String!
+  refreshToken: String!
 
   """
   Undo one unit. The buyer may do this inside the window; staff at any time. Nothing is rewritten -- the coin comes back as new ledger rows.
@@ -2858,6 +2868,14 @@ type Query {
     """Community ID"""
     id: ID!
   ): Community!
+
+  """
+  Get a community by its subdomain label. Null if no community holds that slug.
+  """
+  communityBySlug(
+    """Subdomain label, e.g. `cloverse`"""
+    slug: String!
+  ): Community
   communityColor(id: ID!): CommunityColor!
   communityColors(communityId: ID!): [CommunityColor!]!
 
