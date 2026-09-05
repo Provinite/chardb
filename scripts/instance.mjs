@@ -410,8 +410,15 @@ export function describe(slot, root = null) {
 
   // Served from `api.` under the root domain for the same reason: the cookie
   // is scoped to the domain, and it has to reach the API.
+  //
+  // Browser-facing only. Only browsers implement the `*.localhost` rule --
+  // glibc does not -- so a Node process resolving this name gets ENOTFOUND.
+  // Anything server-side uses `backendLoopbackUrl` below instead.
   const backendUrl = `http://api.${rootDomain}:${ports.backend}`;
   const frontendUrl = `http://${rootDomain}:${ports.frontend}`;
+
+  // The same server, addressed the way a Node process can actually reach it.
+  const backendLoopbackUrl = `http://localhost:${ports.backend}`;
   const localstackUrl = `http://localhost:${ports.localstack}`;
 
   const env = {
@@ -432,7 +439,9 @@ export function describe(slot, root = null) {
     VITE_ROOT_DOMAIN: rootDomain,
     // Read by packages/database's persona seeder and the da-import CLI, which
     // talk to the backend over HTTP rather than to the database directly.
-    GRAPHQL_ENDPOINT: `${backendUrl}/graphql`,
+    // Loopback, not the `api.` name: both are Node processes, and Node cannot
+    // resolve `*.localhost`.
+    GRAPHQL_ENDPOINT: `${backendLoopbackUrl}/graphql`,
 
     // Dev database.
     POSTGRES_PORT: String(ports.postgres),
