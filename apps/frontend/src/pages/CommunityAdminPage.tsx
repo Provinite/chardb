@@ -324,17 +324,20 @@ export const CommunityAdminPage: React.FC = () => {
           </CardDescription>
         </AdminCard>
 
-        {/* Content Moderation */}
-        <AdminCard to={`/communities/${communityId}/moderation`}>
-          <CardIcon>
-            <FileText size={24} />
-          </CardIcon>
-          <CardTitle>Content Moderation</CardTitle>
-          <CardDescription>
-            Review reported content, manage character approvals, and maintain
-            community standards and guidelines.
-          </CardDescription>
-        </AdminCard>
+        {/* Content Moderation - the index covers both review queues, so it is
+            shown to anyone who can work either one. */}
+        {(userRole.canModerateImages || userRole.canEditCharacterRegistry) && (
+          <AdminCard to={`/communities/${communityId}/moderation`}>
+            <CardIcon>
+              <FileText size={24} />
+            </CardIcon>
+            <CardTitle>Content Moderation</CardTitle>
+            <CardDescription>
+              Review reported content, manage character approvals, and maintain
+              community standards and guidelines.
+            </CardDescription>
+          </AdminCard>
+        )}
       </AdminGrid>
     </Container>
   );

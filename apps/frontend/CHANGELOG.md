@@ -43,7 +43,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A rarity history on the character page**, shown only for characters that
   have one.
 
+- **A moderation index at `/communities/:id/moderation`**, listing the image
+  and trait queues with their pending counts. Each is shown only to a role that
+  can work it, and the sidebar and command palette both reach it (#352).
+
 ### Fixed
+
+- **The admin dashboard's "Content Moderation" card 404'd.** It pointed at
+  `/communities/:id/moderation`, which was never a registered route; it now
+  reaches the index above (#352).
+
+- **The same card was shown to members who cannot moderate anything**, unlike
+  every other card on that page (#352).
 
 - **`VariantChangePanel` read an empty allow-list as permitting everything**,
   which the server has never agreed with — it would have shown nothing to

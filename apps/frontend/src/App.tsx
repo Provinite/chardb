@@ -61,6 +61,7 @@ import { TradesPage } from "./pages/TradesPage";
 import { TradeOfferPage } from "./pages/TradeOfferPage";
 import { TradeComposerPage } from "./pages/TradeComposerPage";
 import { CommunitySettingsPage } from "./pages/CommunitySettingsPage";
+import { CommunityModerationPage } from "./pages/CommunityModerationPage";
 import { ImageModerationPage } from "./pages/ImageModerationPage";
 import { TraitReviewPage } from "./pages/TraitReviewPage";
 import { JoinCommunityPage } from "./pages/JoinCommunityPage";
@@ -598,6 +599,17 @@ function App() {
           element={
             <ProtectedRoute>
               <ItemProvenancePage />
+            </ProtectedRoute>
+          }
+        />
+        {/* The index the admin dashboard's "Content Moderation" card links
+            to. The two queues below are also linked directly from the
+            sidebar; this is the page that answers for both at once. */}
+        <Route
+          path="/communities/:communityId/moderation"
+          element={
+            <ProtectedRoute>
+              <CommunityModerationPage />
             </ProtectedRoute>
           }
         />

@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
-import type { SpotlightActionGroupData } from "@mantine/spotlight";
+import type {
+  SpotlightActionData,
+  SpotlightActionGroupData,
+} from "@mantine/spotlight";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityMembersByUserQuery } from "../../generated/graphql";
 
@@ -228,7 +231,9 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
         const hasInvitePermissions =
           role.canCreateInviteCode || role.canListInviteCodes;
 
-        const actions = [
+        // Annotated rather than inferred: without it the array's element type
+        // is fixed by the first literal, which carries no `keywords`.
+        const actions: SpotlightActionData[] = [
           {
             id: `c-${cId}-overview`,
             label: "Overview",
@@ -311,11 +316,51 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
           });
         }
 
+        // Moderation. The vocabulary people reach for here is not the page
+        // titles -- "pending", "queue", "approve", "reports" -- so these three
+        // carry keywords, which Mantine's default filter searches alongside
+        // the label and description.
+        if (role.canModerateImages || role.canEditCharacterRegistry) {
+          actions.push({
+            id: `c-${cId}-moderation`,
+            label: "Content Moderation",
+            description: `${cName} moderation queues`,
+            keywords: [
+              "moderation",
+              "moderate",
+              "review",
+              "queue",
+              "pending",
+              "approve",
+              "reject",
+              "reports",
+              "reported",
+              "flagged",
+              "content",
+            ],
+            onClick: nav(`/communities/${cId}/moderation`),
+          });
+        }
+
         if (role.canModerateImages) {
           actions.push({
             id: `c-${cId}-image-moderation`,
             label: "Image Moderation",
             description: `${cName} image moderation`,
+            keywords: [
+              "images",
+              "image",
+              "artwork",
+              "art",
+              "uploads",
+              "media",
+              "nsfw",
+              "approve",
+              "reject",
+              "pending",
+              "queue",
+              "moderation",
+            ],
             onClick: nav(`/communities/${cId}/moderation/images`),
           });
         }
@@ -325,6 +370,18 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-trait-review`,
             label: "Trait Review",
             description: `${cName} trait review`,
+            keywords: [
+              "traits",
+              "trait",
+              "registry",
+              "character",
+              "approvals",
+              "proposed",
+              "changes",
+              "pending",
+              "queue",
+              "moderation",
+            ],
             onClick: nav(`/communities/${cId}/moderation/traits`),
           });
         }

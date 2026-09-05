@@ -13,6 +13,7 @@ import {
   Lock,
   Image,
   ClipboardCheck,
+  ShieldCheck,
   Globe,
   LayoutGrid,
   Package,
@@ -672,6 +673,19 @@ export const CommunityNavigationSidebar: React.FC<
                   to={`${communityBasePath}/permissions`}
                   icon={Lock}
                   label="Permissions"
+                  isNested
+                />
+              )}
+
+              {/* Moderation index - shown to anyone who can work either
+                  queue. The two queues stay listed below it: this is the
+                  overview, not a replacement for the direct links. */}
+              {(permissions.canModerateImages ||
+                permissions.canEditCharacterRegistry) && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/moderation`}
+                  icon={ShieldCheck}
+                  label="Moderation"
                   isNested
                 />
               )}

@@ -37,6 +37,17 @@ vi.mock("react-router-dom", async () => {
   return { ...actual, useParams: () => routeParams.current };
 });
 
+// Pages that read the signed-in user go through useAuth, which throws outside
+// an AuthProvider. Stubbing it keeps this file free of auth fixtures without
+// removing any of the hooks the ordering test is actually watching -- those
+// live in useUserCommunityRole, which still runs for real.
+vi.mock("../../contexts/AuthContext", async () => {
+  const actual = await vi.importActual<
+    typeof import("../../contexts/AuthContext")
+  >("../../contexts/AuthContext");
+  return { ...actual, useAuth: () => ({ user: null }) };
+});
+
 vi.mock("react-hot-toast", () => {
   const stub = {
     success: vi.fn(),
@@ -53,6 +64,7 @@ import { TraitBuilderPage } from "../TraitBuilderPage";
 import { VariantDetailPage } from "../VariantDetailPage";
 import { EnumValueManagementPage } from "../EnumValueManagementPage";
 import { EnumValueSettingsPage } from "../EnumValueSettingsPage";
+import { CommunityModerationPage } from "../CommunityModerationPage";
 
 const Providers: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   // No mocks: with the param missing every query skips, and with it present
@@ -108,6 +120,12 @@ const cases: PageCase[] = [
     Component: EnumValueSettingsPage,
     param: "variantId",
     message: "Variant ID is required",
+  },
+  {
+    name: "CommunityModerationPage",
+    Component: CommunityModerationPage,
+    param: "communityId",
+    message: "Community ID is required",
   },
 ];
 
