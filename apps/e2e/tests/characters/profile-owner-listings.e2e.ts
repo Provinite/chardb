@@ -3,15 +3,18 @@ import type { Page } from "@playwright/test";
 import {
   SeedCreateCharacterDocument,
   SeedCreateGalleryDocument,
+  SeedCreateTextMediaDocument,
   SeedUserCharactersDocument,
   SeedUserGalleriesDocument,
+  SeedUserMediaDocument,
   Visibility,
 } from "../../src/generated/graphql.js";
 import type { CommunityBasicWorld } from "../../src/world/presets/community-basic.js";
 import type { World } from "../../src/world/types.js";
 
 /**
- * "View All" on a member's profile (#321, reported twice -- also #214).
+ * "View All" on a member's profile (#321, reported twice -- also #214; the
+ * media link again as #348).
  *
  * The link wrote `/characters?owner=<username>`: a parameter nothing parses,
  * carrying a username where the filter wants a UUID. The result was the
@@ -19,6 +22,11 @@ import type { World } from "../../src/world/types.js";
  * site under someone else's name, with no indication the filter was dropped.
  * A silent wrong answer, which is why these assert *whose* characters appear
  * rather than merely that a page loaded.
+ *
+ * The media link was the third of the set and outlived the fix. It pointed at
+ * `/images?uploader=<username>`, and `/images` is not a route at all, so it
+ * reached the catch-all and 404'd. Its assertions check the URL and the
+ * listing, not just that something rendered -- a 404 page renders too.
  *
  * The visibility cases are here because a per-owner listing is the surface
  * where visibility actually matters. Browse mixes everyone together; this page
@@ -33,11 +41,14 @@ interface OwnerContent {
   privateChar: string;
   publicGallery: string;
   privateGallery: string;
+  publicMedia: string;
+  privateMedia: string;
 }
 
 /**
- * Gives `othermember` one character of each visibility and two galleries.
- * They already own `plain`, so there are two public characters in the end.
+ * Gives `othermember` one character of each visibility, two galleries and two
+ * pieces of text media. They already own `plain`, so there are two public
+ * characters in the end.
  *
  * Seeded per test rather than added to the preset: several specs assert
  * character counts, and a fixture that exists for this one should not move
@@ -67,12 +78,23 @@ const seedOwnerContent = async (
     return createGallery.id;
   };
 
+  // Text rather than image media: it needs no upload, and the listing does not
+  // care which kind it is drawing.
+  const media = async (title: string, visibility: Visibility) => {
+    const { createTextMedia } = await as.gql(SeedCreateTextMediaDocument, {
+      input: { title, content: `${title} body`, visibility },
+    });
+    return createTextMedia.id;
+  };
+
   return {
     publicChar: await character("Fernhollow", Visibility.Public),
     unlistedChar: await character("Quietmoor", Visibility.Unlisted),
     privateChar: await character("Hushvale", Visibility.Private),
     publicGallery: await gallery("Fernhollow Refs", Visibility.Public),
     privateGallery: await gallery("Hushvale Drafts", Visibility.Private),
+    publicMedia: await media("Fernhollow Notes", Visibility.Public),
+    privateMedia: await media("Hushvale Notes", Visibility.Private),
   };
 };
 
@@ -81,6 +103,9 @@ const characterCard = (page: Page, id: string) =>
 
 const galleryCard = (page: Page, id: string) =>
   page.locator(`[data-testid="gallery-card"][data-gallery-id="${id}"]`);
+
+const mediaCard = (page: Page, id: string) =>
+  page.locator(`[data-testid="media-card"][data-media-id="${id}"]`);
 
 test.describe("a signed-in visitor", () => {
   test.use({ persona: "member" });
@@ -176,6 +201,41 @@ test.describe("a signed-in visitor", () => {
     await expect(galleryCard(page, content.publicGallery)).toBeVisible();
     await expect(galleryCard(page, content.privateGallery)).toHaveCount(0);
   });
+
+  test("View All for media reaches that member's media rather than a 404", async ({
+    page,
+    world,
+  }) => {
+    // `member`'s own profile, not `othermember`'s: the Recent Media section
+    // renders only where there is image media to put in it, and the preset's
+    // images belong to `member`. Seeding image media per test is not on --
+    // that needs S3 and a multipart upload.
+    const owner = world.users.member.username;
+    await page.goto(`/user/${owner}`);
+
+    await page.getByTestId("profile-view-all-media").click();
+
+    // The whole of #348 is in this pair: the old link left the router with no
+    // match and the catch-all drew the 404 page.
+    await expect(page).toHaveURL(new RegExp(`/user/${owner}/media$`));
+    await expect(page.getByTestId("user-media-page")).toBeVisible();
+    await expect(page.getByTestId("media-card").first()).toBeVisible();
+  });
+
+  test("the Images tile goes to the same place", async ({ page, world }) => {
+    // The tile is on every profile, media or none, so it is the entry point
+    // that does not depend on what the member happens to own.
+    const owner = world.users.othermember.username;
+    await page.goto(`/user/${owner}`);
+
+    await page.getByTestId("profile-stat-images").click();
+
+    await expect(page).toHaveURL(new RegExp(`/user/${owner}/media$`));
+    await expect(page.getByTestId("user-media-page")).toBeVisible();
+
+    await expect(mediaCard(page, content.publicMedia)).toBeVisible();
+    await expect(mediaCard(page, content.privateMedia)).toHaveCount(0);
+  });
 });
 
 test.describe("the owner", () => {
@@ -204,6 +264,13 @@ test.describe("the owner", () => {
 
     await expect(galleryCard(page, content.publicGallery)).toBeVisible();
     await expect(galleryCard(page, content.privateGallery)).toBeVisible();
+  });
+
+  test("sees their own private media", async ({ page, world }) => {
+    await page.goto(`/user/${world.users.othermember.username}/media`);
+
+    await expect(mediaCard(page, content.publicMedia)).toBeVisible();
+    await expect(mediaCard(page, content.privateMedia)).toBeVisible();
   });
 });
 
@@ -249,5 +316,30 @@ test.describe("a signed-out visitor", () => {
     const galleryVis = userGalleries.galleries.map((g) => g.visibility);
     expect(galleryVis).toContain(Visibility.Public);
     expect(galleryVis).not.toContain(Visibility.Private);
+
+    const { userMedia } = await anon.gql(SeedUserMediaDocument, {
+      userId: world.users.othermember.userId,
+    });
+    // Every row belongs to the member asked about, and none of it is private.
+    // Media treats UNLISTED as listable -- unlike characters and galleries --
+    // so this asserts ownership and privacy only, which is what `userMedia`
+    // actually promises.
+    expect(userMedia.media.map((m) => m.ownerId)).not.toContain(
+      world.users.member.userId,
+    );
+    expect(userMedia.media.map((m) => m.visibility)).not.toContain(
+      Visibility.Private,
+    );
+  });
+
+  test("the media page loads signed out and shows only public media", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(`/user/${world.users.othermember.username}/media`);
+
+    await expect(page.getByTestId("user-media-page")).toBeVisible();
+    await expect(mediaCard(page, content.publicMedia)).toBeVisible();
+    await expect(mediaCard(page, content.privateMedia)).toHaveCount(0);
   });
 });

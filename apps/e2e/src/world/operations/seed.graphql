@@ -888,8 +888,17 @@ mutation SeedCreateGallery($input: CreateGalleryInput!) {
   }
 }
 
-# The two queries the per-owner pages read. Selected here so a spec can assert
-# what the API hands a given viewer, independently of what the page renders.
+mutation SeedCreateTextMedia($input: CreateTextMediaInput!) {
+  createTextMedia(input: $input) {
+    id
+    title
+    visibility
+  }
+}
+
+# The three queries the per-owner pages read. Selected here so a spec can
+# assert what the API hands a given viewer, independently of what the page
+# renders.
 query SeedUserCharacters($userId: ID!) {
   userCharacters(userId: $userId, filters: { limit: 50, offset: 0 }) {
     total
@@ -906,6 +915,17 @@ query SeedUserGalleries($userId: ID!) {
     galleries {
       name
       visibility
+    }
+  }
+}
+
+query SeedUserMedia($userId: ID!) {
+  userMedia(userId: $userId, filters: { limit: 50, offset: 0 }) {
+    total
+    media {
+      title
+      visibility
+      ownerId
     }
   }
 }

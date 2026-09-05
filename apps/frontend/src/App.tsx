@@ -15,6 +15,7 @@ import { DashboardPage } from "./pages/DashboardPage";
 import { UserProfilePage } from "./pages/UserProfilePage";
 import { UserCharactersPage } from "./pages/UserCharactersPage";
 import { UserGalleriesPage } from "./pages/UserGalleriesPage";
+import { UserMediaPage } from "./pages/UserMediaPage";
 import { EditProfilePage } from "./pages/EditProfilePage";
 import { CharacterPage } from "./pages/CharacterPage";
 import { CharacterMediaPage } from "./pages/CharacterMediaPage";
@@ -125,8 +126,8 @@ function App() {
         <Route path="/media" element={<MediaLibraryPage />} />
         <Route path="/media/:id" element={<MediaPage />} />
         <Route path="/user/:username" element={<UserProfilePage />} />
-        {/* Public, like the profile they hang off: both queries behind them
-            are @AllowUnauthenticated and narrow by viewer server-side. */}
+        {/* Public, like the profile they hang off: every query behind them is
+            @AllowUnauthenticated and narrows by viewer server-side. */}
         <Route
           path="/user/:username/characters"
           element={<UserCharactersPage />}
@@ -135,6 +136,7 @@ function App() {
           path="/user/:username/galleries"
           element={<UserGalleriesPage />}
         />
+        <Route path="/user/:username/media" element={<UserMediaPage />} />
         <Route path="/user/:username/followers" element={<FollowersPage />} />
         <Route path="/user/:username/following" element={<FollowingPage />} />
         <Route path="/communities/:communityId" element={<CommunityPage />} />

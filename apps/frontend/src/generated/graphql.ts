@@ -5507,6 +5507,14 @@ export type GetCharacterMediaQueryVariables = Exact<{
 
 export type GetCharacterMediaQuery = { __typename?: 'Query', characterMedia: { __typename?: 'MediaConnection', total: number, imageCount: number, textCount: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null }> } };
 
+export type GetUserMediaQueryVariables = Exact<{
+  userId: Scalars['ID']['input'];
+  filters?: InputMaybe<MediaFiltersInput>;
+}>;
+
+
+export type GetUserMediaQuery = { __typename?: 'Query', userMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null }> } };
+
 export type GetMyMediaQueryVariables = Exact<{
   filters?: InputMaybe<MediaFiltersInput>;
 }>;
@@ -13124,6 +13132,87 @@ export type GetCharacterMediaQueryHookResult = ReturnType<typeof useGetCharacter
 export type GetCharacterMediaLazyQueryHookResult = ReturnType<typeof useGetCharacterMediaLazyQuery>;
 export type GetCharacterMediaSuspenseQueryHookResult = ReturnType<typeof useGetCharacterMediaSuspenseQuery>;
 export type GetCharacterMediaQueryResult = Apollo.QueryResult<GetCharacterMediaQuery, GetCharacterMediaQueryVariables>;
+export const GetUserMediaDocument = gql`
+    query GetUserMedia($userId: ID!, $filters: MediaFiltersInput) {
+  userMedia(userId: $userId, filters: $filters) {
+    media {
+      id
+      title
+      description
+      ownerId
+      characterId
+      galleryId
+      visibility
+      imageId
+      textContentId
+      createdAt
+      updatedAt
+      owner {
+        ...UserBasic
+      }
+      character {
+        id
+        name
+      }
+      gallery {
+        id
+        name
+      }
+      image {
+        id
+        originalUrl
+        thumbnailUrl
+        altText
+        isNsfw
+      }
+      textContent {
+        id
+        content
+        wordCount
+        formatting
+      }
+      likesCount
+      userHasLiked
+    }
+    total
+    hasMore
+  }
+}
+    ${UserBasicFragmentDoc}`;
+
+/**
+ * __useGetUserMediaQuery__
+ *
+ * To run a query within a React component, call `useGetUserMediaQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUserMediaQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUserMediaQuery({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetUserMediaQuery(baseOptions: Apollo.QueryHookOptions<GetUserMediaQuery, GetUserMediaQueryVariables> & ({ variables: GetUserMediaQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetUserMediaQuery, GetUserMediaQueryVariables>(GetUserMediaDocument, options);
+      }
+export function useGetUserMediaLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUserMediaQuery, GetUserMediaQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetUserMediaQuery, GetUserMediaQueryVariables>(GetUserMediaDocument, options);
+        }
+export function useGetUserMediaSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserMediaQuery, GetUserMediaQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUserMediaQuery, GetUserMediaQueryVariables>(GetUserMediaDocument, options);
+        }
+export type GetUserMediaQueryHookResult = ReturnType<typeof useGetUserMediaQuery>;
+export type GetUserMediaLazyQueryHookResult = ReturnType<typeof useGetUserMediaLazyQuery>;
+export type GetUserMediaSuspenseQueryHookResult = ReturnType<typeof useGetUserMediaSuspenseQuery>;
+export type GetUserMediaQueryResult = Apollo.QueryResult<GetUserMediaQuery, GetUserMediaQueryVariables>;
 export const GetMyMediaDocument = gql`
     query GetMyMedia($filters: MediaFiltersInput) {
   myMedia(filters: $filters) {
