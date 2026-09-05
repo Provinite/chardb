@@ -14,6 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `UserStats.imagesCount` counted images by uploader, a table with no
   visibility column; both now narrow by who is asking (#348).
 
+- **Unlisted media is no longer listed to other members.** `MediaService.findAll`
+  returned it to everyone, so every media listing showed what its owner had
+  chosen not to list. It was the instance #321 missed when it made this rule
+  for characters and galleries (#348).
+
 - **A public gallery no longer reports itself missing to signed-out visitors.**
   `Gallery.userHasLiked` was gated to authenticated users and is non-nullable,
   so its 403 nulled the whole gallery and the page rendered "Gallery not

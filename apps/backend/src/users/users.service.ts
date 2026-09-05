@@ -158,15 +158,13 @@ export class UsersService {
    * It counted every image the user had ever uploaded, private ones included,
    * and put the number on a public profile.
    *
-   * UNLISTED counts, unlike `getUserGalleriesCount` above. That is the rule
-   * `MediaService.findAll` applies everywhere media is listed, and this number
-   * labels a tile that links to one of those listings; agreeing with the
-   * destination matters more here than matching the sibling counters.
+   * PUBLIC only for a visitor, exactly like the two counters above: this
+   * number labels a listing, and unlisted media is by definition not listed.
    */
   async getUserImagesCount(userId: string, includePrivate = false) {
     const visibilityFilter = includePrivate
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
-      : [Visibility.PUBLIC, Visibility.UNLISTED];
+      : [Visibility.PUBLIC];
 
     return this.db.media.count({
       where: {
@@ -223,12 +221,13 @@ export class UsersService {
    * PRIVATE media was drawn on their public profile, to anyone, signed out
    * included. Its two neighbours above have taken `includePrivate` all along.
    *
-   * UNLISTED is listed here for the same reason as in `getUserImagesCount`.
+   * UNLISTED is excluded from a visitor's view for the same reason as in
+   * `getUserImagesCount`: a strip on a profile is a listing.
    */
   async getUserRecentMedia(userId: string, includePrivate = false, limit = 12) {
     const visibilityFilter = includePrivate
       ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
-      : [Visibility.PUBLIC, Visibility.UNLISTED];
+      : [Visibility.PUBLIC];
 
     return this.db.media.findMany({
       where: {

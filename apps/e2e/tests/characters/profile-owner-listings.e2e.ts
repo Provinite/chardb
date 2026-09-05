@@ -43,6 +43,7 @@ interface OwnerContent {
   publicGallery: string;
   privateGallery: string;
   publicMedia: string;
+  unlistedMedia: string;
   privateMedia: string;
 }
 
@@ -95,6 +96,7 @@ const seedOwnerContent = async (
     publicGallery: await gallery("Fernhollow Refs", Visibility.Public),
     privateGallery: await gallery("Hushvale Drafts", Visibility.Private),
     publicMedia: await media("Fernhollow Notes", Visibility.Public),
+    unlistedMedia: await media("Quietmoor Notes", Visibility.Unlisted),
     privateMedia: await media("Hushvale Notes", Visibility.Private),
   };
 };
@@ -236,6 +238,9 @@ test.describe("a signed-in visitor", () => {
 
     await expect(mediaCard(page, content.publicMedia)).toBeVisible();
     await expect(mediaCard(page, content.privateMedia)).toHaveCount(0);
+    // Unlisted means reachable by link, not listed -- the rule #321 set for
+    // characters and galleries, which media only got in #348.
+    await expect(mediaCard(page, content.unlistedMedia)).toHaveCount(0);
   });
 });
 
@@ -267,11 +272,12 @@ test.describe("the owner", () => {
     await expect(galleryCard(page, content.privateGallery)).toBeVisible();
   });
 
-  test("sees their own private media", async ({ page, world }) => {
+  test("sees their own private and unlisted media", async ({ page, world }) => {
     await page.goto(`/user/${world.users.othermember.username}/media`);
 
     await expect(mediaCard(page, content.publicMedia)).toBeVisible();
     await expect(mediaCard(page, content.privateMedia)).toBeVisible();
+    await expect(mediaCard(page, content.unlistedMedia)).toBeVisible();
   });
 });
 
@@ -321,16 +327,17 @@ test.describe("a signed-out visitor", () => {
     const { userMedia } = await anon.gql(SeedUserMediaDocument, {
       userId: world.users.othermember.userId,
     });
-    // Every row belongs to the member asked about, and none of it is private.
-    // Media treats UNLISTED as listable -- unlike characters and galleries --
-    // so this asserts ownership and privacy only, which is what `userMedia`
-    // actually promises.
+    // Every row belongs to the member asked about, and none of it is private
+    // or unlisted. `MediaService.findAll` listed UNLISTED to everyone until
+    // #348 -- the instance #321 missed when it made this rule for characters
+    // and galleries.
+    const mediaVis = userMedia.media.map((m) => m.visibility);
     expect(userMedia.media.map((m) => m.ownerId)).not.toContain(
       world.users.member.userId,
     );
-    expect(userMedia.media.map((m) => m.visibility)).not.toContain(
-      Visibility.Private,
-    );
+    expect(mediaVis).toContain(Visibility.Public);
+    expect(mediaVis).not.toContain(Visibility.Private);
+    expect(mediaVis).not.toContain(Visibility.Unlisted);
   });
 
   test("the media page loads signed out and shows only public media", async ({
@@ -342,6 +349,7 @@ test.describe("a signed-out visitor", () => {
     await expect(page.getByTestId("user-media-page")).toBeVisible();
     await expect(mediaCard(page, content.publicMedia)).toBeVisible();
     await expect(mediaCard(page, content.privateMedia)).toHaveCount(0);
+    await expect(mediaCard(page, content.unlistedMedia)).toHaveCount(0);
   });
 });
 
@@ -362,11 +370,18 @@ test.describe("a signed-out visitor", () => {
  * image media and the tile's count and the media page's total are comparable.
  */
 test.describe("visibility on the profile itself", () => {
-  const hideOneImage = (world: World<CommunityBasicWorld>) =>
+  /** Re-flags the one preset image whose media id the world hands out. */
+  const flagOneImage = (
+    world: World<CommunityBasicWorld>,
+    visibility: Visibility,
+  ) =>
     world.as("member").gql(SeedUpdateMediaDocument, {
       id: world.pendingImage.mediaId,
-      input: { visibility: Visibility.Private },
+      input: { visibility },
     });
+
+  const hideOneImage = (world: World<CommunityBasicWorld>) =>
+    flagOneImage(world, Visibility.Private);
 
   const imagesTileCount = async (page: Page) =>
     Number(
@@ -391,6 +406,20 @@ test.describe("visibility on the profile itself", () => {
 
       // The strip renders -- this is not a page that failed to load -- and the
       // one private item is the only thing missing from it.
+      await expect(page.getByTestId("media-card").first()).toBeVisible();
+      await expect(mediaCard(page, world.pendingImage.mediaId)).toHaveCount(0);
+    });
+
+    test("does not see the owner's unlisted media either", async ({
+      page,
+      world,
+    }) => {
+      // The beforeEach made it private; unlisted is the case #321 settled for
+      // characters and galleries and media did not get until #348.
+      await flagOneImage(world, Visibility.Unlisted);
+
+      await page.goto(`/user/${world.users.member.username}`);
+
       await expect(page.getByTestId("media-card").first()).toBeVisible();
       await expect(mediaCard(page, world.pendingImage.mediaId)).toHaveCount(0);
     });
