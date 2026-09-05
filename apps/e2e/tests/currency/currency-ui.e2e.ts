@@ -139,7 +139,7 @@ test.describe("currency wallet", () => {
     test.use({ persona: "member" });
 
     test("shows what the member holds", async ({ page, world }) => {
-      await page.goto(`/communities/${world.community.id}/inventory`);
+      await page.goto(`${world.community.url}/inventory`);
 
       const wallet = page.getByTestId("currency-wallet");
       await expect(wallet).toBeVisible();
@@ -148,7 +148,7 @@ test.describe("currency wallet", () => {
     });
 
     test("shows a currency held at zero", async ({ page, world }) => {
-      await page.goto(`/communities/${world.community.id}/inventory`);
+      await page.goto(`${world.community.url}/inventory`);
 
       // A wallet that hides these cannot tell a member the currency exists,
       // which is what they need to know before they can earn any.
@@ -159,7 +159,7 @@ test.describe("currency wallet", () => {
       page,
       world,
     }) => {
-      await page.goto(`/communities/${world.community.id}/inventory`);
+      await page.goto(`${world.community.url}/inventory`);
       await expect(page.getByTestId("wallet-FT")).toContainText("0 FT");
     });
 
@@ -167,7 +167,7 @@ test.describe("currency wallet", () => {
       page,
       world,
     }) => {
-      await page.goto(`/communities/${world.community.id}/inventory`);
+      await page.goto(`${world.community.url}/inventory`);
 
       await expect(
         page.getByTestId("wallet-HC").getByRole("button", { name: /send/i }),
@@ -181,7 +181,7 @@ test.describe("currency wallet", () => {
       page,
       world,
     }) => {
-      await page.goto(`/communities/${world.community.id}/inventory`);
+      await page.goto(`${world.community.url}/inventory`);
 
       // The member holds 40 of it, so the absence of Send is about the
       // currency rather than the balance -- and a card that silently lost its
@@ -204,7 +204,7 @@ test.describe("currency wallet", () => {
         page,
         world,
       }) => {
-        await page.goto(`/communities/${world.community.id}/inventory`);
+        await page.goto(`${world.community.url}/inventory`);
 
         await page
           .getByTestId("wallet-HC")
@@ -242,7 +242,7 @@ test.describe("currency wallet", () => {
 
     test("balances are visible, Send is not", async ({ page, world }) => {
       await page.goto(
-        `/communities/${world.community.id}/members/${world.users.othermember.username}/items`,
+        `${world.community.url}/members/${world.users.othermember.username}/items`,
       );
 
       await expect(page.getByTestId("wallet-HC")).toContainText("⬡620");

@@ -13,10 +13,12 @@ const schemaFor = (preset: string): string =>
  * and the schema's enum types) and copies no constraints or indexes -- exactly
  * what a data-only snapshot wants.
  *
- * Restoring rows rather than re-running the seeder is what keeps UUIDs stable
+ * Restoring rows rather than re-running the seeder is what keeps ids stable
  * across spec files. That in turn keeps the seeded world handle, the minted
- * JWTs (which encode `sub`), the storageState files, and every
- * `a[href="/character/<uuid>"]` selector valid for the whole run.
+ * JWTs (which encode `sub`), the refresh cookies in the storageState files, and
+ * every href selector valid for the whole run -- selectors that now match a
+ * whole URL, since a character card links across hosts to the community that
+ * owns it, so the community's slug has to hold still alongside the id.
  */
 export async function createSnapshot(preset: string): Promise<void> {
   const schema = schemaFor(preset);

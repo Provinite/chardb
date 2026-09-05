@@ -657,7 +657,7 @@ test.describe("configuring a variant change grant", () => {
     const { createCommunity: elsewhere } = await world
       .as("commadmin")
       .gql(SeedCreateCommunityDocument, {
-        createCommunityInput: { name: "Distant Marsh" },
+        createCommunityInput: { name: "Distant Marsh", slug: "distant-marsh" },
       });
     const { createSpecies: theirSpecies } = await world
       .as("commadmin")

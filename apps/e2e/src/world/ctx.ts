@@ -3,6 +3,7 @@ import { PrismaClient } from "@chardb/database";
 import { CFG } from "../config.js";
 import { makeActor } from "./actor.js";
 import { SeedLoginDocument } from "../generated/graphql.js";
+import { readRefreshCookie } from "./refresh-cookie.js";
 import type { Actor, Persona, SeedCtx, UserSpec } from "./types.js";
 
 /** Matches AuthService.signup and the existing persona seeder. */
@@ -50,7 +51,12 @@ export function makeSeedCtx(prisma: PrismaClient): SeedCtx {
       });
 
       // Login is by EMAIL, not username.
-      const { login } = await anon.gql(SeedLoginDocument, {
+      //
+      // The response carries only the access token; the refresh token is an
+      // `HttpOnly` cookie, so the session comes off the header (#339). `fetch`
+      // stores no cookies, which is why the value has to be captured here --
+      // it is what storage-state.ts later replays into the browser.
+      const { data, response } = await anon.gqlWithResponse(SeedLoginDocument, {
         input: { email, password },
       });
 
@@ -60,8 +66,8 @@ export function makeSeedCtx(prisma: PrismaClient): SeedCtx {
         username,
         email,
         password,
-        accessToken: login.accessToken,
-        refreshToken: login.refreshToken,
+        accessToken: data.login.accessToken,
+        refreshCookie: readRefreshCookie(response),
         isAdmin: created.isAdmin,
       };
       personas[key] = persona;

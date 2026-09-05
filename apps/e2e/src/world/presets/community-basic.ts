@@ -11,10 +11,26 @@ import {
   SeedCreateCurrencyDocument,
   TraitValueType,
 } from "../../generated/graphql.js";
+import { communityUrl } from "../../config.js";
 import { definePreset, type Persona } from "../types.js";
 
 export interface CommunityBasicWorld {
-  community: { id: string; name: string; url: string };
+  community: {
+    id: string;
+    name: string;
+    /** The label the community is served from: `willowmere.<root domain>`. */
+    slug: string;
+    /**
+     * The community's own origin, absolute and without a trailing slash, so
+     * `${world.community.url}/members` is a page on it.
+     *
+     * Absolute because a community is a different ORIGIN from the apex that
+     * Playwright's `baseURL` names: a relative path would resolve against the
+     * apex and land on the site's 404. Use `communityUrl()` from src/config.ts
+     * for a host this handle does not name.
+     */
+    url: string;
+  };
   species: { id: string; name: string; variantId: string };
   traits: {
     eyeColor: { id: string; name: string; values: Record<string, string> };
@@ -97,7 +113,7 @@ export default definePreset<CommunityBasicWorld>({
     const { createCommunity: community } = await ctx
       .as("commadmin")
       .gql(SeedCreateCommunityDocument, {
-        createCommunityInput: { name: "Willowmere" },
+        createCommunityInput: { name: "Willowmere", slug: "willowmere" },
       });
 
     const { rolesByCommunity } = await ctx
@@ -329,7 +345,8 @@ export default definePreset<CommunityBasicWorld>({
       community: {
         id: community.id,
         name: community.name,
-        url: `/communities/${community.id}`,
+        slug: community.slug,
+        url: communityUrl(community.slug),
       },
       species: { id: species.id, name: species.name, variantId: variant.id },
       traits: { eyeColor: { id: eyeColor.id, name: eyeColor.name, values } },
@@ -352,21 +369,25 @@ export default definePreset<CommunityBasicWorld>({
         payingmod,
         artist,
       },
+      // A character is served from its community's host, because it reaches a
+      // community through its species. The apex still answers for
+      // /character/<id> and forwards there, but a spec that means "the
+      // character page" should not have to sit through a redirect.
       characters: {
         pending: {
           id: pending.id,
           name: pending.name,
-          url: `/character/${pending.id}`,
+          url: communityUrl(community.slug, `/character/${pending.id}`),
         },
         plain: {
           id: plain.id,
           name: plain.name,
-          url: `/character/${plain.id}`,
+          url: communityUrl(community.slug, `/character/${plain.id}`),
         },
         gallery: {
           id: gallery.id,
           name: gallery.name,
-          url: `/character/${gallery.id}`,
+          url: communityUrl(community.slug, `/character/${gallery.id}`),
           mediaCount: GALLERY_MEDIA,
         },
       },

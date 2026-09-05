@@ -34,7 +34,13 @@ export default defineConfig({
     : [["list"], ["html", { open: "never" }]],
 
   use: {
-    baseURL: CFG.frontendUrl,
+    // The APEX, by name -- not `CFG.frontendUrl`, which is the loopback address
+    // the servers bind to and Node polls. A relative `page.goto("/login")`
+    // resolves against this, so it lands on the apex; a community page is on
+    // another origin and is always reached by an absolute URL (see
+    // `communityUrl` in src/config.ts). Chromium resolves every `*.localhost`
+    // label to loopback on its own, so no host mapping is needed here.
+    baseURL: CFG.apexUrl,
     trace: "retain-on-failure",
     video: "retain-on-failure",
     screenshot: "only-on-failure",

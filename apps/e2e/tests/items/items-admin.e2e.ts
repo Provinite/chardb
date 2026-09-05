@@ -18,8 +18,9 @@ const test = presetTest("community-items");
  * unverified.
  */
 
-const adminUrl = (communityId: string) =>
-  `/communities/${communityId}/admin/items`;
+/** Takes the community's own origin -- `world.community.url` -- because the
+ *  page is served from the community's host, not from the apex. */
+const adminUrl = (communityUrl: string) => `${communityUrl}/admin/items`;
 
 /** Keys off the item type id, so it asserts identity rather than presence. */
 const card = (page: Page, itemTypeId: string) =>
@@ -43,7 +44,7 @@ test.describe("as staff who can manage items", () => {
     page,
     world,
   }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     await expect(
       page.getByRole("heading", { name: "Item Types Administration" }),
@@ -67,7 +68,7 @@ test.describe("as staff who can manage items", () => {
     page,
     world,
   }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     // `member` holds three potions: three in circulation, one holder. The page
     // used to say neither, which is the whole point of this table.
@@ -80,7 +81,7 @@ test.describe("as staff who can manage items", () => {
   });
 
   test("summarises the community above the table", async ({ page, world }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     // Scoped to the tiles: "Unclaimed" is also a column header below.
     const tiles = page.getByTestId("economy-tiles");
@@ -99,7 +100,7 @@ test.describe("as staff who can manage items", () => {
   });
 
   test("a revoke moves the numbers", async ({ page, world }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
     await expect(card(page, world.itemTypes.potion.id)).toContainText("3");
 
     await world.as("quartermaster").gql(SeedRevokeItemsDocument, {
@@ -113,7 +114,7 @@ test.describe("as staff who can manage items", () => {
   });
 
   test("creates an item type", async ({ page, world }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
     await page.getByRole("button", { name: "Create Item Type" }).click();
 
     await field(page, "create-item-name").fill("Festival Token");
@@ -136,7 +137,7 @@ test.describe("as staff who can manage items", () => {
   });
 
   test("edits an item type", async ({ page, world }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     await card(page, world.itemTypes.locket.id)
       .getByRole("button", { name: "Edit" })
@@ -156,7 +157,7 @@ test.describe("as staff who can manage items", () => {
     page,
     world,
   }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     // The potion has three live items from the seeded grant. Deleting the type
     // would orphan them, so the server refuses and the card survives.
@@ -169,7 +170,7 @@ test.describe("as staff who can manage items", () => {
   });
 
   test("deletes an item type that has no items", async ({ page, world }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
     await page.getByRole("button", { name: "Create Item Type" }).click();
     await field(page, "create-item-name").fill("Disposable Type");
     await page.getByRole("button", { name: "Create", exact: true }).click();
@@ -189,7 +190,7 @@ test.describe("as staff who can manage items", () => {
     page,
     world,
   }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     await card(page, world.itemTypes.locket.id)
       .getByRole("button", { name: "Grant" })
@@ -280,7 +281,7 @@ test.describe("as a member without item permissions", () => {
     page,
     world,
   }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     // The route itself is not permission-gated, so the page renders. What must
     // not happen is a member writing through it. Asserted on the outcome
