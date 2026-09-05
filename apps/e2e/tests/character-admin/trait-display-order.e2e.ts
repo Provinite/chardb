@@ -99,7 +99,7 @@ test("a character shows its traits in the variant's order, not the stored order"
       },
     });
 
-  await page.goto(`/character/${createCharacter.id}`);
+  await page.goto(`${world.community.url}/character/${createCharacter.id}`);
 
   await expectTraitOrder(page, ["Horns", "Eyes", "Tail"]);
 });
@@ -127,7 +127,7 @@ test("reordering the variant reorders characters already using it", async ({
       },
     });
 
-  await page.goto(`/character/${createCharacter.id}`);
+  await page.goto(`${world.community.url}/character/${createCharacter.id}`);
   await expectTraitOrder(page, ["Horns", "Eyes", "Tail"]);
 
   await world.as("commadmin").gql(SeedUpdateTraitOrdersDocument, {
@@ -142,7 +142,7 @@ test("reordering the variant reorders characters already using it", async ({
   });
 
   // Nothing about the character changed -- only the variant did.
-  await page.goto(`/character/${createCharacter.id}`);
+  await page.goto(`${world.community.url}/character/${createCharacter.id}`);
   await expectTraitOrder(page, ["Tail", "Horns", "Eyes"]);
 });
 

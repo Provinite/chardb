@@ -80,7 +80,7 @@ test.describe("purchase history", () => {
     world,
   }) => {
     await buy(world, 12);
-    await page.goto(`/communities/${world.community.id}/shop/purchases`);
+    await page.goto(`${world.community.url}/shop/purchases`);
 
     // The oldest is the one the panel never showed, and it is still inside
     // the fifteen-minute window, so it must be actionable rather than merely
@@ -107,7 +107,7 @@ test.describe("purchase history", () => {
     world,
   }) => {
     await buy(world, 2);
-    await page.goto(`/communities/${world.community.id}/shop/purchases`);
+    await page.goto(`${world.community.url}/shop/purchases`);
 
     const rows = page
       .getByTestId("my-purchases-list")
@@ -129,7 +129,7 @@ test.describe("purchase history", () => {
     world,
   }) => {
     await buy(world, 12);
-    await page.goto(`/communities/${world.community.id}/shop/purchases`);
+    await page.goto(`${world.community.url}/shop/purchases`);
 
     await page.getByTestId("purchase-search").fill("Practice");
     await expect(page.getByTestId("my-purchases-count")).toContainText("of 12");

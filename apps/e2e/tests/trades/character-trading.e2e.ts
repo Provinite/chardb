@@ -17,8 +17,10 @@ const test = presetTest("community-items");
  * open character on each side to trade, and a closed one that must stay inert.
  */
 
-const composerUrl = (communityId: string, withUserId: string) =>
-  `/communities/${communityId}/trades/new?with=${withUserId}`;
+/** Takes the community's own origin -- `world.community.url` -- because a
+ *  trade belongs to a community and is served from its host. */
+const composerUrl = (communityUrl: string, withUserId: string) =>
+  `${communityUrl}/trades/new?with=${withUserId}`;
 
 /** A second signed-in browser context, for the other side of the trade. */
 async function pageAs(
@@ -34,13 +36,13 @@ async function pageAs(
 async function offerCharacterForCharacter(
   page: Page,
   world: {
-    community: { id: string };
+    community: { url: string };
     users: { othermember: { userId: string } };
     characters: { bramblefoot: { id: string }; marrowfen: { id: string } };
   },
 ): Promise<string> {
   await page.goto(
-    composerUrl(world.community.id, world.users.othermember.userId),
+    composerUrl(world.community.url, world.users.othermember.userId),
   );
 
   await page
@@ -124,7 +126,7 @@ test.describe("composing with characters", () => {
     world,
   }) => {
     await page.goto(
-      composerUrl(world.community.id, world.users.othermember.userId),
+      composerUrl(world.community.url, world.users.othermember.userId),
     );
 
     await expect(
@@ -154,7 +156,7 @@ test.describe("composing with characters", () => {
     // same object. Without this the second fails at accept, in front of
     // someone who cannot see the first.
     await page.goto(
-      composerUrl(world.community.id, world.users.othermember.userId),
+      composerUrl(world.community.url, world.users.othermember.userId),
     );
     await page
       .locator(

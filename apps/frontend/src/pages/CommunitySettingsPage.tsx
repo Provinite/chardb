@@ -1,5 +1,4 @@
 import React from "react";
-import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import { Settings, ArrowLeft } from "lucide-react";
 import {
@@ -12,6 +11,7 @@ import {
 import { useCommunityByIdQuery } from "../graphql/communities.graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { DiscordIntegrationSettings } from "../components/DiscordIntegrationSettings";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 
 const Container = styled.div`
   display: flex;
@@ -83,7 +83,7 @@ const LoadingContainer = styled.div`
 `;
 
 export const CommunitySettingsPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
 
   const { data, loading, error, refetch } = useCommunityByIdQuery({
     variables: { id: communityId || "" },

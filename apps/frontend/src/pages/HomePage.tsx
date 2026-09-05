@@ -180,7 +180,9 @@ export const HomePage: React.FC = () => {
                 <HeroPrimaryButton as={Link} to="/dashboard" size="lg">
                   Go to Dashboard
                 </HeroPrimaryButton>
-                <HeroSecondaryButton as={Link} to="/character/create" size="lg">
+                {/* A character is created inside a community, and this page
+                    is the apex, which is in none. Pick one first. */}
+                <HeroSecondaryButton as={Link} to="/my/communities" size="lg">
                   Create Character
                 </HeroSecondaryButton>
               </>

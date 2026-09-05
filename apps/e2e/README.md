@@ -47,13 +47,40 @@ webServer[0]  docker compose up postgres-test
               CREATE DATABASE chardb_e2e_ui   (dropped + recreated each run)
               prisma migrate deploy  +  drift check
               nest build -> node dist/src/main.js on :4310
-webServer[1]  vite build (VITE_API_URL=:4310) -> vite preview on :4311
+webServer[1]  vite build (VITE_API_URL=api.e2e.localhost:4310) -> vite preview on :4311
 
 setup project     build each preset -> snapshot it into a `snap_<preset>` schema
                   write one storageState file per persona
 chromium project  per spec file: restore the snapshot, then run
 teardown project  drop snapshots + the database
 ```
+
+### Hosts
+
+The run is served from `e2e.localhost`, and each community from a subdomain of
+it: the apex is `http://e2e.localhost:4311`, Willowmere is
+`http://willowmere.e2e.localhost:4311`, and the API is
+`http://api.e2e.localhost:4310`. Chromium resolves every `*.localhost` name to
+loopback by itself, so this needs no /etc/hosts entry and no DNS.
+
+The spare label is not decoration. The session is an `HttpOnly` cookie on the
+parent domain with `SameSite=Lax`, and `localhost` is a public suffix — so under
+a bare `localhost` root, `willowmere.localhost` and the API would be different
+*sites* and the browser would never attach the cookie to a call made from a
+community host. One label down they are one site, exactly as `api.chardb.cc` and
+`willowmere.chardb.cc` are in production. (The dev servers do the same thing
+with `dev.localhost`; see `scripts/instance.mjs`.)
+
+Node cannot resolve those names, so anything server-side — the seeder, the
+actor's GraphQL calls, Playwright's readiness polls — talks to `127.0.0.1`
+instead. `CFG.apexUrl` / `CFG.browserBackendUrl` are browser-facing;
+`CFG.frontendUrl` / `CFG.backendUrl` are process-facing.
+
+Playwright's `baseURL` is the apex, so a relative `page.goto("/login")` lands
+there. A community page is a different origin and always needs an absolute URL:
+presets hand them out (`world.community.url`, `world.characters.plain.url`) and
+`communityUrl(slug, path)` in `src/config.ts` builds one for a host no preset
+names.
 
 ### Reset
 
@@ -62,7 +89,7 @@ Seeding runs **once**. Each spec file then restores the snapshot: one transactio
 Two details that are load-bearing:
 
 - **`SET LOCAL session_replication_role = 'replica'`** disables FK triggers for the transaction. This is required, not a convenience: every FK in the schema is `NOT DEFERRABLE` (so `SET CONSTRAINTS ALL DEFERRED` is a no-op), and the FK graph has cycles — `users ↔ images`, `characters ↔ media`, `comments → comments` — so no topological insert order exists. It needs superuser, which the test container grants; `assertSuperuser` fails loudly if that ever changes.
-- **Restoring rows, not re-seeding**, keeps UUIDs stable for the whole run. The world handle, the minted JWTs, the storageState files and every `a[href="/character/<uuid>"]` selector stay valid across spec files.
+- **Restoring rows, not re-seeding**, keeps ids stable for the whole run. The world handle, the minted JWTs, the refresh cookies in the storageState files, and every href selector stay valid across spec files — and those selectors now match a whole URL (`a[href="<community host>/character/<uuid>"]`), so the community's slug has to hold still alongside the id.
 
 Reset is **per spec file** by default, so tests within a file share state. For stricter isolation:
 
@@ -162,7 +189,8 @@ Prints every id, URL and credential for the seeded world. With `--json` only the
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `E2E_HOST` | `127.0.0.1` | Must match the storageState origin; the config asserts this. |
+| `E2E_ROOT_DOMAIN` | `e2e.localhost` | The apex the browser is pointed at; communities are subdomains of it. Needs a label under `localhost` — see "Hosts". |
+| `E2E_HOST` | `127.0.0.1` | Where the servers listen and Node connects. Not what the browser is pointed at. |
 | `E2E_BACKEND_PORT` | `4310` | |
 | `E2E_FRONTEND_PORT` | `4311` | |
 | `E2E_PG_PORT` | `5440` | The shared test-postgres container. |
@@ -176,9 +204,9 @@ Prints every id, URL and credential for the seeded world. With `--json` only the
 
 ## Troubleshooting
 
-**A test unexpectedly lands on `/login`.** An auth problem, not a UI one — the token in `storageState` is missing, malformed, or written under the wrong origin. Check that `E2E_HOST` matches the origin in the state file; a mismatch drops the entries silently and the page looks logged out with no error.
+**A test unexpectedly lands on `/login`.** An auth problem, not a UI one. Nothing is in `localStorage` any more: a storageState file holds one `chardb_rt` cookie, and the browser only sends it if its domain covers the API host *and* the page's site matches the API's. So check the cookie's domain has a leading dot (`.e2e.localhost`, covering `api.` and every community), and that `E2E_ROOT_DOMAIN` is not a bare `localhost` — under that root the cookie is silently dropped on every community host and the page just looks logged out.
 
-(Historically this also happened with a *valid* token: `AuthProvider`'s mount effect cleared `loading` before the `me` query resolved whenever no `refreshToken` was present. Fixed, and pinned by `tests/smoke/session-restore.e2e.ts`.)
+(Historically this also happened with a *valid* token: `AuthProvider`'s mount effect cleared `loading` before the `me` query resolved. It now waits on the boot refresh instead, pinned by `tests/smoke/session-restore.e2e.ts`.)
 
 **"timed out waiting for URL".** Usually a port collision. Both servers pre-probe their port and Vite runs with `--strictPort`, so the real error should appear above.
 

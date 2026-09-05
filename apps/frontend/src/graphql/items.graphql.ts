@@ -296,6 +296,9 @@ export const GET_ITEM_WITH_PROVENANCE = gql`
         community {
           id
           name
+          # The host the item is served from, so a request that lands on the
+          # wrong community's host can be forwarded to the right one.
+          slug
         }
       }
     }

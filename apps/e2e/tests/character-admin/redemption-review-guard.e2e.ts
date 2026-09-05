@@ -242,7 +242,7 @@ test.describe("the review queue's actions", () => {
       },
     });
 
-    await page.goto(`/communities/${world.community.id}/moderation/traits`);
+    await page.goto(`${world.community.url}/moderation/traits`);
 
     await expect(page.getByRole("button", { name: "Approve" })).toBeVisible();
     // "Refuse", not "Revert": there is nothing to revert to, and what the
@@ -271,7 +271,7 @@ test.describe("the review queue's actions", () => {
       },
     });
 
-    await page.goto(`/communities/${world.community.id}/moderation/traits`);
+    await page.goto(`${world.community.url}/moderation/traits`);
 
     await expect(page.getByRole("button", { name: "Refuse" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Delete" })).toHaveCount(0);

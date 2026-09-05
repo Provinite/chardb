@@ -38,7 +38,7 @@ test.describe("staff refund", () => {
     page,
     world,
   }) => {
-    await page.goto(`/communities/${world.community.id}/admin/shop/purchases`);
+    await page.goto(`${world.community.url}/admin/shop/purchases`);
 
     const refund = page.locator('[data-testid^="staff-refund-"]').first();
     await refund.click();
@@ -52,7 +52,7 @@ test.describe("staff refund", () => {
   });
 
   test("cancelling refunds nothing", async ({ page, world }) => {
-    await page.goto(`/communities/${world.community.id}/admin/shop/purchases`);
+    await page.goto(`${world.community.url}/admin/shop/purchases`);
 
     await page.locator('[data-testid^="staff-refund-"]').first().click();
     await page.getByTestId("confirm-cancel").click();
@@ -66,7 +66,7 @@ test.describe("staff refund", () => {
   });
 
   test("escape backs out too", async ({ page, world }) => {
-    await page.goto(`/communities/${world.community.id}/admin/shop/purchases`);
+    await page.goto(`${world.community.url}/admin/shop/purchases`);
 
     await page.locator('[data-testid^="staff-refund-"]').first().click();
     await page.keyboard.press("Escape");
@@ -80,7 +80,7 @@ test.describe("staff refund", () => {
   });
 
   test("confirming refunds it", async ({ page, world }) => {
-    await page.goto(`/communities/${world.community.id}/admin/shop/purchases`);
+    await page.goto(`${world.community.url}/admin/shop/purchases`);
 
     await page.locator('[data-testid^="staff-refund-"]').first().click();
     await page.getByTestId("confirm-accept").click();

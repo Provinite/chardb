@@ -14,7 +14,12 @@ import {
   CommunitiesResponse,
   RolesByCommunityResponse,
 } from "./graphql-client";
-import { PERSONAS, TEST_COMMUNITY_NAME, PERSONA_LIST } from "./personas";
+import {
+  PERSONAS,
+  TEST_COMMUNITY_NAME,
+  TEST_COMMUNITY_SLUG,
+  PERSONA_LIST,
+} from "./personas";
 import { log, isAlreadyExistsError } from "./utils";
 
 interface RoleInfo {
@@ -64,6 +69,7 @@ async function findOrCreateCommunity(
     {
       input: {
         name: TEST_COMMUNITY_NAME,
+        slug: TEST_COMMUNITY_SLUG,
       },
     },
   );
@@ -145,7 +151,9 @@ async function createCustomRoles(
 
 export async function runPhase2(
   client: GraphQLClient,
-  users: Map<string, User>,
+  // Unused, but the phases are called in a row with the same shape and phase 3
+  // does need it. Kept so the call sites stay uniform.
+  _users: Map<string, User>,
 ): Promise<Phase2Result> {
   log.phase("Phase 2: Setting up community...");
 

@@ -9,6 +9,13 @@ import { CustomThrottlerGuard } from "./middleware/custom-throttler.guard";
 import { OptionalJwtAuthGuard } from "./auth/guards/optional-jwt-auth.guard";
 import { WinstonModule } from "nest-winston";
 import { loggerConfig } from "./logger.config";
+// Namespace import: this tsconfig has `allowSyntheticDefaultImports` without
+// `esModuleInterop`, so a default import type-checks and then emits
+// `cookie_parser_1.default`, which is undefined at runtime for a CommonJS
+// module whose export is the function itself.
+import * as cookieParser from "cookie-parser";
+import type { Request, Response, NextFunction } from "express";
+import { isOriginAllowed } from "./auth/allowed-origins";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -16,7 +23,7 @@ async function bootstrap() {
   });
 
   // Enable request logging middleware
-  app.use((req: any, res: any, next: any) => {
+  app.use((req: Request, res: Response, next: NextFunction) => {
     const logger = new Logger("HTTP");
     const start = Date.now();
 
@@ -34,9 +41,22 @@ async function bootstrap() {
 
   // Tracing is handled by OpenTelemetry auto-instrumentation
 
+  // Parse cookies before anything reads the refresh cookie off a request.
+  app.use(cookieParser());
+
   // Enable CORS with optimizations
   app.enableCors({
-    origin: true, // Allow all origins for now
+    // An allowlist rather than a reflector, because `credentials: true` now
+    // means a real session cookie. See `auth/allowed-origins.ts`.
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      // No Origin header at all: same-origin navigations, curl, health checks.
+      // Nothing to allow or deny, and no cookie risk -- CSRF needs a page.
+      if (!origin) return callback(null, true);
+      return callback(null, isOriginAllowed(origin));
+    },
     credentials: true,
     optionsSuccessStatus: 200, // Some legacy browsers choke on 204
     maxAge: 86400, // Cache preflight response for 24 hours

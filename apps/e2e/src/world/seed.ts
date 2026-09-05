@@ -63,9 +63,14 @@ async function readHandle(preset: PresetName): Promise<StoredHandle | null> {
 /**
  * Ensures the preset's snapshot exists, then restores it.
  *
- * Restoring rows rather than re-seeding is what keeps UUIDs stable for the whole
- * run: the handle, the minted JWTs (which encode `sub`), the storageState files
- * and every `a[href="/character/<uuid>"]` selector stay valid across spec files.
+ * Restoring rows rather than re-seeding is what keeps ids stable for the whole
+ * run: the handle, the minted JWTs (which encode `sub`), the refresh cookies in
+ * the storageState files, and every href selector stay valid across spec files.
+ *
+ * Those selectors now match a whole URL -- `a[href="<community host>/character/
+ * <uuid>"]` -- because a character card links across hosts to the community
+ * that owns the character. They therefore depend on the community's slug as
+ * well as the character's id, and the snapshot holds both fixed.
  */
 export async function seedPreset<K extends PresetName>(
   preset: K,

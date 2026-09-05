@@ -7,7 +7,9 @@ import {
   CreateCommunityServiceInput,
   UpdateCommunityServiceInput,
 } from "../communities.service";
-import { Prisma } from "@chardb/database";
+// Aliased because `Community` in this file is the GraphQL entity, which is a
+// different shape from the row it is mapped from.
+import type { Community as PrismaCommunity } from "@chardb/database";
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -22,6 +24,7 @@ export function mapCreateCommunityInputToService(
 ): CreateCommunityServiceInput {
   return {
     name: input.name,
+    slug: input.slug,
     creatorId: creatorId,
   };
 }
@@ -39,8 +42,6 @@ export function mapUpdateCommunityInputToService(
   return result;
 }
 
-type PrismaCommunity = Prisma.CommunityGetPayload<{}>;
-
 /**
  * Maps Prisma Community result to GraphQL Community entity
  * Since Community has no relations or computed fields, this is a direct mapping
@@ -51,6 +52,7 @@ export function mapPrismaCommunityToGraphQL(
   return {
     id: prismaCommunity.id,
     name: prismaCommunity.name,
+    slug: prismaCommunity.slug,
     discordGuildId: prismaCommunity.discordGuildId,
     discordGuildName: prismaCommunity.discordGuildName,
     createdAt: prismaCommunity.createdAt,

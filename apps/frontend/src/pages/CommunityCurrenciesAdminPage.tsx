@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Coins,
   Plus,
@@ -13,6 +13,7 @@ import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
   useGetCurrencySupplyQuery,
   useCreateCurrencyMutation,
@@ -358,8 +359,10 @@ const blankForm = {
 };
 
 export const CommunityCurrenciesAdminPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
-  const { permissions, community } = useUserCommunityRole(communityId);
+  const communityId = useCommunityId();
+  const { permissions, community } = useUserCommunityRole(
+    communityId ?? undefined,
+  );
 
   const [modal, setModal] = useState<ModalKind>(null);
   const [active, setActive] = useState<CurrencyFieldsFragment | null>(null);
@@ -654,7 +657,7 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
                           <span aria-hidden>{row.currency.symbol}</span>
                         )}
                         <Link
-                          to={`/communities/${communityId}/currencies/ledger?currencyId=${row.currency.id}`}
+                          to={`/currencies/ledger?currencyId=${row.currency.id}`}
                         >
                           {row.currency.name}
                         </Link>

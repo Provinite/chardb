@@ -31,12 +31,12 @@ test("deleting a character removes it everywhere", async ({ page, world }) => {
 
   // handleDelete navigates to /characters on success.
   await expect(page).toHaveURL(/\/characters$/);
-  await expect(
-    page.locator(`a[href="/character/${character.id}"]`),
-  ).toHaveCount(0);
+  // Cards link by absolute URL, because a character is served from its
+  // community's host wherever the list itself is (#339).
+  await expect(page.locator(`a[href="${character.url}"]`)).toHaveCount(0);
   // The other character is untouched -- proves the list actually rendered.
   await expect(
-    page.locator(`a[href="/character/${world.characters.pending.id}"]`),
+    page.locator(`a[href="${world.characters.pending.url}"]`),
   ).toBeVisible();
 
   // Direct navigation is also blocked by the notDeleted filter.

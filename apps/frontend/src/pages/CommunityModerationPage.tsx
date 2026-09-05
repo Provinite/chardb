@@ -1,10 +1,11 @@
 import React from "react";
 import styled from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Image, ClipboardCheck } from "lucide-react";
 import { Title, Subtitle, Card } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
   usePendingImageCountQuery,
   usePendingTraitReviewCountQuery,
@@ -132,7 +133,7 @@ const ErrorContainer = styled(MessageContainer)`
 `;
 
 export const CommunityModerationPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
 
   // Every hook runs before the guards below. These pages have a history of
   // returning early above their hooks, which breaks the moment one mounted
@@ -142,7 +143,7 @@ export const CommunityModerationPage: React.FC = () => {
     permissions,
     loading: roleLoading,
     error: roleError,
-  } = useUserCommunityRole(communityId);
+  } = useUserCommunityRole(communityId ?? undefined);
 
   const canModerateImages = permissions.canModerateImages;
   const canReviewTraits = permissions.canEditCharacterRegistry;
@@ -163,7 +164,7 @@ export const CommunityModerationPage: React.FC = () => {
     return (
       <Container>
         <Title>Content Moderation</Title>
-        <Subtitle>Community ID is required</Subtitle>
+        <Subtitle>This address names no community</Subtitle>
       </Container>
     );
   }
@@ -210,11 +211,9 @@ export const CommunityModerationPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to={`/communities/${communityId}`}>
-          {community?.name || "Community"}
-        </Link>
+        <Link to="/">{community?.name || "Community"}</Link>
         <span>/</span>
-        <Link to={`/communities/${communityId}/admin`}>Administration</Link>
+        <Link to="/admin">Administration</Link>
         <span>/</span>
         <span>Content Moderation</span>
       </Breadcrumb>
@@ -230,7 +229,7 @@ export const CommunityModerationPage: React.FC = () => {
       <QueueGrid>
         {canModerateImages && (
           <QueueCard
-            to={`/communities/${communityId}/moderation/images`}
+            to="/moderation/images"
             aria-label={`Image Moderation, ${pendingImages} pending`}
           >
             <CardHeader>
@@ -252,7 +251,7 @@ export const CommunityModerationPage: React.FC = () => {
 
         {canReviewTraits && (
           <QueueCard
-            to={`/communities/${communityId}/moderation/traits`}
+            to="/moderation/traits"
             aria-label={`Trait Review, ${pendingTraits} pending`}
           >
             <CardHeader>

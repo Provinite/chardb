@@ -20,9 +20,10 @@ module "frontend_static_site" {
   name        = "${var.project_name}-frontend-${var.environment}"
   bucket_name = "${var.project_name}-frontend-${var.environment}-${random_id.bucket_suffix.hex}"
   
-  domain_name           = var.domain_name
-  acm_certificate_arn   = var.acm_certificate_arn
-  route53_zone_id       = var.route53_zone_id
+  domain_name               = var.domain_name
+  acm_certificate_arn       = var.acm_certificate_arn
+  route53_zone_id           = var.route53_zone_id
+  serve_wildcard_subdomains = var.serve_wildcard_subdomains
   
   default_root_object = "index.html"
   default_ttl        = var.default_ttl != null ? var.default_ttl : (var.environment == "dev" ? 0 : 3600)

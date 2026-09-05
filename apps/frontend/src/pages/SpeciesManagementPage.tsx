@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Search, Plus, Trash2, Edit, Palette, Database } from "lucide-react";
 import { Button, Modal, Input, ErrorMessage } from "@chardb/ui";
 import {
@@ -10,6 +10,7 @@ import {
   useCommunityByIdQuery,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 
 /**
  * Species Management Dashboard
@@ -28,8 +29,8 @@ import { toast } from "react-hot-toast";
  * - Responsive card-based layout
  * - Comprehensive error handling and loading states
  *
- * URL Parameters:
- * - communityId: Filter species by specific community
+ * The community comes from the hostname, so the page is always scoped to
+ * whichever community is being browsed.
  *
  * Permissions:
  * - Requires canCreateSpecies permission for creation
@@ -39,11 +40,7 @@ import { toast } from "react-hot-toast";
  * @example Usage in routing:
  * ```tsx
  * <Route
- *   path="/admin/species"
- *   element={<ProtectedRoute><SpeciesManagementPage /></ProtectedRoute>}
- * />
- * <Route
- *   path="/communities/:communityId/species"
+ *   path="/species"
  *   element={<ProtectedRoute><SpeciesManagementPage /></ProtectedRoute>}
  * />
  * ```
@@ -335,7 +332,7 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
 
 export const SpeciesManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -403,7 +400,7 @@ export const SpeciesManagementPage: React.FC = () => {
       <Container>
         <Header>
           <Title>Species Management</Title>
-          <Subtitle>Community ID is required</Subtitle>
+          <Subtitle>This address names no community</Subtitle>
         </Header>
       </Container>
     );

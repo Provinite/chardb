@@ -1,10 +1,12 @@
 import React, { useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import styled from "styled-components";
+import { Link } from "react-router-dom";
+import styled, { css } from "styled-components";
 import { ArrowLeftRight, X } from "lucide-react";
 import { Avatar, Button } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
+import { useCommunityId } from "../contexts/CommunityHostContext";
+import { apexUrl, communityUrl } from "../lib/communityHost";
 import { useCommunityByIdQuery } from "../generated/graphql";
 import {
   EffectiveTradeStatus,
@@ -65,7 +67,7 @@ const List = styled.div`
   overflow: hidden;
 `;
 
-const Row = styled(Link)`
+const row = css`
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -80,6 +82,15 @@ const Row = styled(Link)`
   &:hover {
     background: ${({ theme }) => theme.colors.background};
   }
+`;
+
+const Row = styled(Link)`
+  ${row}
+`;
+
+/** The same row when the trade belongs to another community's host. */
+const RowAnchor = styled.a`
+  ${row}
 `;
 
 const Body = styled.div`
@@ -105,7 +116,9 @@ const Meta = styled.div`
 `;
 
 /** Says which community the list is narrowed to, and clears the narrowing. */
-const Scope = styled(Link)`
+// An anchor, not a router link: dropping the narrowing means leaving this
+// community's host for the cross-community inbox at the apex.
+const Scope = styled.a`
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -152,10 +165,10 @@ const LoadingWrap = styled.div`
  */
 export const TradesPage: React.FC = () => {
   const { user } = useAuth();
-  // Which community, if any, is in the path rather than in a query string.
-  // The sidebar reads community context off the pathname, so a narrowing it
-  // cannot see is a narrowing that costs the member their community nav.
-  const { communityId } = useParams<{ communityId?: string }>();
+  // Which community, if any, this list is narrowed to. The page is mounted on
+  // both hosts: on a community's own host it is that community's inbox, and at
+  // the apex it is the cross-community one, where this is null.
+  const communityId = useCommunityId();
   const [status, setStatus] = useState<EffectiveTradeStatus | undefined>(
     EffectiveTradeStatus.Pending,
   );
@@ -213,7 +226,9 @@ export const TradesPage: React.FC = () => {
       </Header>
 
       {communityId && (
-        <Scope to="/trades" data-testid="trade-scope">
+        // Dropping the narrowing means leaving this community's host for the
+        // cross-community inbox at the apex, which the router cannot do.
+        <Scope href={apexUrl("/trades")} data-testid="trade-scope">
           {communityData?.community.name ?? "This community"} only
           <X size={12} />
         </Scope>
@@ -242,13 +257,12 @@ export const TradesPage: React.FC = () => {
             const sides = sidesFor(trade, viewerId);
             // Through the trade's own community, not the one this list is
             // narrowed to -- the global inbox has no narrowing, and an offer
-            // is a single-community thing wherever you found it.
-            return (
-              <Row
-                key={trade.id}
-                to={`/communities/${trade.community.id}/trades/${trade.id}`}
-                data-testid="trade-row"
-              >
+            // is a single-community thing wherever you found it. At the apex
+            // that community is another host, so the row leaves this origin.
+            const path = `/trades/${trade.id}`;
+            const inside = trade.community.id === communityId;
+            const body = (
+              <>
                 <Avatar image={other.avatarImage} name={name} size={38} />
                 <Body>
                   <Who>
@@ -262,7 +276,20 @@ export const TradesPage: React.FC = () => {
                     ? describeExpiry(trade.expiresAt)
                     : STATUS_LABEL[trade.status]}
                 </Meta>
+              </>
+            );
+            return inside ? (
+              <Row key={trade.id} to={path} data-testid="trade-row">
+                {body}
               </Row>
+            ) : (
+              <RowAnchor
+                key={trade.id}
+                href={communityUrl(trade.community.slug, path)}
+                data-testid="trade-row"
+              >
+                {body}
+              </RowAnchor>
             );
           })}
         </List>

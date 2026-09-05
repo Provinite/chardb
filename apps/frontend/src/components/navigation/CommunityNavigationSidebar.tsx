@@ -30,13 +30,12 @@ import { CommunityNavigationGroup } from "./CommunityNavigationGroup";
 import { CommunitySwitcher } from "./CommunitySwitcher";
 import { GlobalNavigationSidebar } from "./GlobalNavigationSidebar";
 import { useUserCommunityRole } from "../../hooks/useUserCommunityRole";
-import { isCommunityRoute } from "../../lib/communityRoutes";
+import { useCommunityHost } from "../../contexts/CommunityHostContext";
 import {
   useSpeciesByIdQuery,
   useGetCharacterQuery,
   useSpeciesVariantByIdQuery,
   useTraitByIdQuery,
-  useGetItemTypeQuery,
 } from "../../generated/graphql";
 
 interface CommunityNavigationSidebarProps {
@@ -210,51 +209,35 @@ const SubsectionLabel = styled.div`
 `;
 
 /**
- * Extract community ID from pathname since Layout is outside Routes
- * and useParams() won't work
- */
-const extractCommunityId = (pathname: string): string | undefined => {
-  const match = pathname.match(/^\/communities\/([^/]+)/);
-  return match ? match[1] : undefined;
-};
-
-/**
- * Extract species ID from pathname for species-specific routes
+ * Extract species ID from pathname, for the "Current species" subsection.
+ *
+ * The only pathname regex left here. There used to be six, plus five GraphQL
+ * queries behind them, and their job was to work out which community the page
+ * belonged to -- `Layout` mounts outside `<Routes>`, so `useParams()` was not
+ * available and the id had to be recovered from whatever the URL happened to
+ * carry (#293). The hostname answers that now.
+ *
+ * What remains is a different question: which species is being looked at, so
+ * the sidebar can offer its traits and variants. That is display context, not
+ * routing, and it still has to be read from the path.
  */
 const extractSpeciesId = (pathname: string): string | undefined => {
   const match = pathname.match(/^\/species\/([^/]+)/);
   return match ? match[1] : undefined;
 };
 
-/**
- * Extract character ID from pathname for character pages
- */
 const extractCharacterId = (pathname: string): string | undefined => {
   const match = pathname.match(/^\/character\/([^/]+)/);
   return match ? match[1] : undefined;
 };
 
-/**
- * Extract variant ID from pathname for variant pages
- */
 const extractVariantId = (pathname: string): string | undefined => {
   const match = pathname.match(/^\/variants\/([^/]+)/);
   return match ? match[1] : undefined;
 };
 
-/**
- * Extract trait ID from pathname for trait pages
- */
 const extractTraitId = (pathname: string): string | undefined => {
   const match = pathname.match(/^\/traits\/([^/]+)/);
-  return match ? match[1] : undefined;
-};
-
-/**
- * Extract item type ID from pathname for item pages
- */
-const extractItemTypeId = (pathname: string): string | undefined => {
-  const match = pathname.match(/^\/items\/([^/]+)/);
   return match ? match[1] : undefined;
 };
 
@@ -263,87 +246,56 @@ export const CommunityNavigationSidebar: React.FC<
 > = ({ className, onToggleToGlobal }) => {
   const location = useLocation();
 
-  // Extract communityId from URL path instead of useParams (Layout is outside Routes)
-  let communityId = extractCommunityId(location.pathname);
+  // Which community this is, straight off the hostname. No regex, no lookup,
+  // and no window in which it is briefly unknown.
+  const { community } = useCommunityHost();
+  const communityId = community?.id;
+
   const speciesId = extractSpeciesId(location.pathname);
   const characterId = extractCharacterId(location.pathname);
   const variantId = extractVariantId(location.pathname);
   const traitId = extractTraitId(location.pathname);
-  const itemTypeId = extractItemTypeId(location.pathname);
 
-  // If we're on a species route, fetch the species to get its communityId
-  const { data: speciesData, loading: speciesLoading } = useSpeciesByIdQuery({
+  // These four exist only to name the species in the "Current species"
+  // subsection. None of them decides which community this is any more, so a
+  // slow or failed lookup costs a label, not the whole navigation.
+  const { data: speciesData } = useSpeciesByIdQuery({
     variables: { id: speciesId || "" },
     skip: !speciesId,
   });
 
-  // If we're on a character route, fetch the character to get its species
-  const { data: characterData, loading: characterLoading } =
-    useGetCharacterQuery({
-      variables: { id: characterId || "" },
-      skip: !characterId,
-    });
+  const { data: characterData } = useGetCharacterQuery({
+    variables: { id: characterId || "" },
+    skip: !characterId,
+  });
 
-  // If we're on a variant route, fetch the variant to get its species
-  const { data: variantData, loading: variantLoading } =
-    useSpeciesVariantByIdQuery({
-      variables: { id: variantId || "" },
-      skip: !variantId,
-    });
+  const { data: variantData } = useSpeciesVariantByIdQuery({
+    variables: { id: variantId || "" },
+    skip: !variantId,
+  });
 
-  // If we're on a trait route, fetch the trait to get its species
-  const { data: traitData, loading: traitLoading } = useTraitByIdQuery({
+  const { data: traitData } = useTraitByIdQuery({
     variables: { id: traitId || "" },
     skip: !traitId,
   });
 
-  // If we're on an item type route, fetch the item type to get its communityId
-  const { data: itemTypeData } = useGetItemTypeQuery({
-    variables: { id: itemTypeId || "" },
-    skip: !itemTypeId,
-  });
-
-  // Determine the species context (from species route, character, variant, or trait)
+  // The species in view, reached from whichever of the four the URL names.
   let contextSpeciesId: string | undefined = speciesId;
   let contextSpeciesName: string | undefined = speciesData?.speciesById?.name;
 
-  // Override communityId if we got it from species data
-  if (speciesId && speciesData?.speciesById?.community?.id) {
-    communityId = speciesData.speciesById.community.id;
-  }
-
-  // If on character route with species, use that for species context and community
   if (characterId && characterData?.character?.species) {
     contextSpeciesId = characterData.character.species.id;
     contextSpeciesName = characterData.character.species.name;
-
-    // Get community from character's species
-    if (characterData.character.species.community?.id) {
-      communityId = characterData.character.species.community.id;
-    }
   }
 
-  // If on variant route, use its species for context and community
   if (variantId && variantData?.speciesVariantById?.species) {
     contextSpeciesId = variantData.speciesVariantById.species.id;
     contextSpeciesName = variantData.speciesVariantById.species.name;
-
-    // Get community from variant's species
-    communityId = variantData.speciesVariantById.species.communityId;
   }
 
-  // If on trait route, use its species for context and community
   if (traitId && traitData?.traitById?.species) {
     contextSpeciesId = traitData.traitById.species.id;
     contextSpeciesName = traitData.traitById.species.name;
-
-    // Get community from trait's species
-    communityId = traitData.traitById.species.communityId;
-  }
-
-  // If on item type route, get community from item type
-  if (itemTypeId && itemTypeData?.itemType?.communityId) {
-    communityId = itemTypeData.itemType.communityId;
   }
 
   const {
@@ -356,44 +308,16 @@ export const CommunityNavigationSidebar: React.FC<
     error,
   } = useUserCommunityRole(communityId);
 
-  // Debug logging
-  console.log("[CommunityNavigationSidebar] Debug Info:", {
-    pathname: location.pathname,
-    communityId,
-    speciesId,
-    characterId,
-    variantId,
-    traitId,
-    contextSpeciesId,
-    contextSpeciesName,
-    speciesLoading,
-    characterLoading,
-    variantLoading,
-    traitLoading,
-    isCommunityRoute: isCommunityRoute(location.pathname),
-    loading,
-    isMember,
-    hasError: !!error,
-    error: error?.message,
-  });
-
-  // Only render sidebar for community-scoped routes
-  if (!isCommunityRoute(location.pathname)) {
-    console.log(
-      "[CommunityNavigationSidebar] Not rendering - not a community route, showing global sidebar",
-    );
+  // Not a community host at all: nothing to show, hand back to the global one.
+  // `Layout` normally decides this, but the sidebar can also be forced on by
+  // the manual toggle, so it still has to be able to say no.
+  if (!communityId) {
     return <GlobalNavigationSidebar onToggleToCommunity={undefined} />;
   }
 
-  // Show loading state while checking membership, species data, character data, variant data, or trait data
-  if (
-    loading ||
-    (speciesId && speciesLoading) ||
-    (characterId && characterLoading) ||
-    (variantId && variantLoading) ||
-    (traitId && traitLoading)
-  ) {
-    console.log("[CommunityNavigationSidebar] Showing loading state");
+  // Only membership gates the sidebar now. The species lookups above no longer
+  // hold it up: they name a subsection, and it renders without them.
+  if (loading) {
     return (
       <SidebarContainer
         className={className}
@@ -407,17 +331,8 @@ export const CommunityNavigationSidebar: React.FC<
     );
   }
 
-  // After loading, check if we have a communityId
-  if (!communityId) {
-    console.log(
-      "[CommunityNavigationSidebar] Not rendering - no communityId after loading, showing global sidebar",
-    );
-    return <GlobalNavigationSidebar onToggleToCommunity={undefined} />;
-  }
-
   // Show error state if query failed
   if (error) {
-    console.error("[CommunityNavigationSidebar] GraphQL Error:", error);
     return (
       <SidebarContainer
         className={className}
@@ -435,15 +350,11 @@ export const CommunityNavigationSidebar: React.FC<
 
   // Don't render if user is not a member
   if (!isMember) {
-    console.log(
-      "[CommunityNavigationSidebar] Not rendering - user is not a member, showing global sidebar",
-    );
     return <GlobalNavigationSidebar onToggleToCommunity={undefined} />;
   }
 
-  console.log("[CommunityNavigationSidebar] Rendering full sidebar");
-
-  const communityBasePath = `/communities/${communityId}`;
+  // The community is the host, so its pages are the root of it.
+  const communityBasePath = "";
 
   return (
     <SidebarContainer
@@ -481,11 +392,7 @@ export const CommunityNavigationSidebar: React.FC<
       ) : (
         <SidebarContent>
           {/* Overview Section - Always visible to members */}
-          <CommunityNavigationItem
-            to={communityBasePath}
-            icon={BarChart3}
-            label="Overview"
-          />
+          <CommunityNavigationItem to="/" icon={BarChart3} label="Overview" />
 
           <Divider />
 

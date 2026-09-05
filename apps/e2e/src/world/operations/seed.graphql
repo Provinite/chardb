@@ -5,10 +5,12 @@
 # of these against apps/backend/src/schema.gql, so a mismatch fails at codegen
 # time rather than at seed time.
 
+# The refresh token is not in this payload: it leaves as an `HttpOnly` cookie,
+# and the seeder reads it off the response's Set-Cookie header (#339). See
+# world/refresh-cookie.ts.
 mutation SeedLogin($input: LoginInput!) {
   login(input: $input) {
     accessToken
-    refreshToken
   }
 }
 
@@ -18,6 +20,9 @@ mutation SeedCreateCommunity($createCommunityInput: CreateCommunityInput!) {
   createCommunity(createCommunityInput: $createCommunityInput) {
     id
     name
+    # The community's host. Read back rather than assumed, so a preset can
+    # never hand out a URL the server would not serve.
+    slug
   }
 }
 

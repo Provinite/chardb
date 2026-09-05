@@ -10,7 +10,8 @@
 - You can type check the entire repository by running `yarn type-check` in the root
 - Jaeger trace analysis is available at http://localhost:16686
 - You may start the servers if they are not running with `yarn dev:agent`
-  - Frontend: localhost:3000 only on the slot-0 checkout. **Any other checkout uses different ports** — run `yarn instance` to see them, and never assume 3000/4000. See [docs/PARALLEL_INSTANCES.md](./docs/PARALLEL_INSTANCES.md) and the `worktree` skill
+  - Frontend: `dev.localhost:3000` only on the slot-0 checkout. **Any other checkout uses different ports** — run `yarn instance` to see them, and never assume 3000/4000. See [docs/PARALLEL_INSTANCES.md](./docs/PARALLEL_INSTANCES.md) and the `worktree` skill
+  - Communities are served from their own subdomain of the root domain, which is `dev.localhost` locally: `willowmere.dev.localhost:3000`. The spare label is load-bearing — bare `localhost` is a public suffix, so the session cookie could not cross subdomains under it. Every `*.localhost` label resolves to loopback with no `/etc/hosts` entry
 - Several checkouts — git worktrees or separate clones, treated identically — can run the app and the e2e suite at the same time: each gets its own ports, databases and containers automatically. `yarn instance:init` prepares a fresh checkout; `yarn instance:up` starts its containers; `yarn instance:down` stops its servers and containers when you are done; `yarn shared:up` starts the machine-wide Jaeger/MailHog/OTEL
 - The `gh` cli is configured for github interactions beyond simple `git` cli commands
 - Local Development Credentials: See [LOCAL_DEV_SEED_DATA.md](./LOCAL_DEV_SEED_DATA.md) for test user personas and credentials

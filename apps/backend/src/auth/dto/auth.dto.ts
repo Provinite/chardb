@@ -47,8 +47,9 @@ export class AuthPayload {
   @Field()
   accessToken: string;
 
-  @Field()
-  refreshToken: string;
+  // No `refreshToken`. It leaves as an HttpOnly cookie on the same response,
+  // so nothing on the page -- including this app -- can read it.
+  // See `auth/refresh-cookie.ts`.
 }
 
 @InputType()

@@ -15,6 +15,9 @@ export const TRADE_FRAGMENT = gql`
     community {
       id
       name
+      # The host a trade is served from. The apex inbox spans communities, so
+      # every row in it is a link to another origin.
+      slug
     }
     proposer {
       id

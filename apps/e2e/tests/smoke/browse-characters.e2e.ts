@@ -2,8 +2,11 @@ import { presetTest, expect } from "../../src/fixtures.js";
 
 const test = presetTest("community-basic");
 
-// href selectors key off the seeded UUID, so they assert identity rather than
-// mere presence -- stronger than a test id and immune to copy changes.
+// href selectors key off the seeded character's own URL, so they assert
+// identity rather than mere presence -- stronger than a test id and immune to
+// copy changes. That URL is absolute and names the community's host: this is
+// the apex, and a character belongs to a community, so the link off this page
+// leaves the site's own host (#339).
 for (const persona of ["anon", "member", "moderator", "siteadmin"] as const) {
   test.describe(`as ${persona}`, () => {
     test.use({ persona });
@@ -18,10 +21,10 @@ for (const persona of ["anon", "member", "moderator", "siteadmin"] as const) {
       ).toBeVisible();
 
       await expect(
-        page.locator(`a[href="/character/${world.characters.pending.id}"]`),
+        page.locator(`a[href="${world.characters.pending.url}"]`),
       ).toBeVisible();
       await expect(
-        page.locator(`a[href="/character/${world.characters.plain.id}"]`),
+        page.locator(`a[href="${world.characters.plain.url}"]`),
       ).toBeVisible();
     });
   });

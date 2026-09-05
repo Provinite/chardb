@@ -14,6 +14,14 @@ export const CHARACTER_CARD_FIELDS_FRAGMENT = gql`
     species {
       id
       name
+      community {
+        id
+        # The host this character is served from. A card renders at the apex
+        # (My Characters, Liked, a profile, the feed) and on a community host
+        # alike, so it has to build an absolute URL; without this the Edit
+        # button would point at an apex route that does not exist.
+        slug
+      }
     }
     details
     ownerId
@@ -84,6 +92,12 @@ export const GET_CHARACTERS = gql`
         species {
           id
           name
+          community {
+            id
+            # The host the character is served from; every list of characters
+            # can be rendered from the apex, so its links cross an origin.
+            slug
+          }
         }
         details
         ownerId
@@ -154,6 +168,9 @@ export const GET_CHARACTER = gql`
         community {
           id
           name
+          # The host this character is served from. CharacterHostGuard needs it
+          # to forward an apex /character/:id to the right community.
+          slug
           discordGuildId
           discordGuildName
         }
@@ -255,6 +272,12 @@ export const GET_MY_CHARACTERS = gql`
         species {
           id
           name
+          community {
+            id
+            # The host the character is served from; every list of characters
+            # can be rendered from the apex, so its links cross an origin.
+            slug
+          }
         }
         details
         ownerId
@@ -337,6 +360,12 @@ export const GET_MY_EDITABLE_CHARACTERS = gql`
         species {
           id
           name
+          community {
+            id
+            # The host the character is served from; every list of characters
+            # can be rendered from the apex, so its links cross an origin.
+            slug
+          }
         }
       }
       total
@@ -354,6 +383,12 @@ export const GET_MY_CHARACTERS_FOR_IMAGE_UPLOAD = gql`
         species {
           id
           name
+          community {
+            id
+            # The host the character is served from; every list of characters
+            # can be rendered from the apex, so its links cross an origin.
+            slug
+          }
         }
       }
       total
@@ -370,6 +405,10 @@ export const CREATE_CHARACTER = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
       details
       ownerId
@@ -418,6 +457,10 @@ export const ASSIGN_CHARACTER_SPECIES = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
       speciesVariant {
         id
@@ -490,6 +533,10 @@ export const TRANSFER_CHARACTER = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
       details
       ownerId
@@ -588,6 +635,10 @@ export const UPDATE_CHARACTER_PROFILE = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
       details
       ownerId
@@ -671,6 +722,10 @@ export const GET_LIKED_CHARACTERS = gql`
       species {
         id
         name
+        community {
+          id
+          slug
+        }
       }
       visibility
       createdAt

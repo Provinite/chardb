@@ -24,6 +24,7 @@ export const COMMUNITIES_QUERY = gql`
       nodes {
         id
         name
+        slug
         createdAt
         updatedAt
       }
@@ -39,6 +40,27 @@ export const COMMUNITY_BY_ID_QUERY = gql`
     community(id: $id) {
       id
       name
+      slug
+      discordGuildId
+      discordGuildName
+      memberCount
+      createdAt
+      updatedAt
+    }
+  }
+`;
+
+/**
+ * Resolves the hostname the app was loaded from. Nullable: the wildcard DNS
+ * record answers for every label, so an unknown slug is a page to render
+ * rather than an error.
+ */
+export const COMMUNITY_BY_SLUG_QUERY = gql`
+  query CommunityBySlug($slug: String!) {
+    communityBySlug(slug: $slug) {
+      id
+      name
+      slug
       discordGuildId
       discordGuildName
       memberCount
@@ -67,6 +89,7 @@ export const CREATE_COMMUNITY_MUTATION = gql`
     createCommunity(createCommunityInput: $createCommunityInput) {
       id
       name
+      slug
       createdAt
       updatedAt
     }
@@ -164,6 +187,9 @@ export const COMMUNITY_MEMBERS_BY_USER_QUERY = gql`
           community {
             id
             name
+            # The host this community is served from -- every link out of a
+            # cross-community list at the apex is a link to another origin.
+            slug
             createdAt
             updatedAt
           }

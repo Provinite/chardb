@@ -10,6 +10,16 @@ export class Community {
   @Field({ description: "Name of the community" })
   name: string;
 
+  /**
+   * The community's subdomain label: `cloverse` in `cloverse.chardb.cc`.
+   * Fixed at creation; `name` is the part that can be renamed.
+   */
+  @Field({
+    description:
+      "The community's subdomain label -- `cloverse` in `cloverse.chardb.cc`. Chosen at creation and never changed.",
+  })
+  slug: string;
+
   /** Discord guild (server) ID linked to this community */
   @Field(() => String, {
     nullable: true,

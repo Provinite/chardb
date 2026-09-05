@@ -507,6 +507,14 @@ module "ecs" {
       name  = "FRONTEND_URL"
       value = var.domain_name != null ? "https://${var.domain_name}" : ""
     },
+    # The apex domain on its own, without a scheme. The session cookie is set
+    # on it so it travels to every community subdomain, and CORS accepts any
+    # host under it -- communities are created in the app, so the origins that
+    # will call the API cannot be listed here.
+    {
+      name  = "ROOT_DOMAIN"
+      value = var.domain_name != null ? var.domain_name : ""
+    },
     {
       name  = "EMAIL_FROM"
       value = var.email_from
@@ -760,6 +768,11 @@ module "frontend" {
   domain_name         = var.domain_name
   acm_certificate_arn = var.domain_name != null ? aws_acm_certificate_validation.frontend[0].certificate_arn : null
   route53_zone_id     = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : null
+
+  # Communities live at <slug>.chardb.cc and are all served by this
+  # distribution, from the one bundle -- the app reads the hostname to work out
+  # which community it is. The certificate above already covers the wildcard.
+  serve_wildcard_subdomains = true
 }
 
 ##############################################################################

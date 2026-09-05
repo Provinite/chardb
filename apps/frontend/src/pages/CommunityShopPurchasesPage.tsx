@@ -1,12 +1,13 @@
 import React, { useMemo, useState } from "react";
 import styled from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Receipt, Undo2, Search, X } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
   useGetCommunityShopPurchasesQuery,
   useRefundShopPurchaseLineMutation,
@@ -150,9 +151,10 @@ const Empty = styled.div`
 `;
 
 export const CommunityShopPurchasesPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
-  const { permissions, loading: roleLoading } =
-    useUserCommunityRole(communityId);
+  const communityId = useCommunityId();
+  const { permissions, loading: roleLoading } = useUserCommunityRole(
+    communityId ?? undefined,
+  );
   const [query, setQuery] = useState("");
   const [busyLineId, setBusyLineId] = useState<string | null>(null);
   /**
@@ -251,10 +253,7 @@ export const CommunityShopPurchasesPage: React.FC = () => {
           The fifty most recent, newest first. Members can undo their own
           purchase for fifteen minutes; after that it is a staff decision, and
           this is where it is made.{" "}
-          <Link to={`/communities/${communityId}/admin/shop`}>
-            Manage what is for sale
-          </Link>
-          .
+          <Link to="/admin/shop">Manage what is for sale</Link>.
         </Subtitle>
       </Header>
 

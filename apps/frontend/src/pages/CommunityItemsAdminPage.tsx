@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift, ExternalLink } from "lucide-react";
 import { Button } from "@chardb/ui";
 import {
@@ -8,6 +8,7 @@ import {
   GrantTarget,
 } from "../components/GrantTargetSelector";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import { ColorSelector } from "../components/colors";
 import { ImageUpload, ImageFile } from "../components/ImageUpload";
 import { ItemUsePayoutEditor } from "../components/items/ItemUsePayoutEditor";
@@ -363,7 +364,7 @@ const LoadingContainer = styled.div`
 `;
 
 export const CommunityItemsAdminPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const { user } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);

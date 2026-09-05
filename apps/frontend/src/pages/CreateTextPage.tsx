@@ -15,6 +15,7 @@ import {
 } from "../graphql/media.graphql";
 import { useGetCharacterQuery } from "../graphql/characters.graphql";
 import { useGetMyGalleriesQuery } from "../graphql/galleries.graphql";
+import { characterUrl } from "../lib/communityHost";
 import { TextFormatting, Visibility } from "../generated/graphql";
 // import { TextEditor } from '../components/TextEditor';
 import { useAuth } from "../contexts/AuthContext";
@@ -344,9 +345,17 @@ export const CreateTextPage: React.FC = () => {
     ],
   });
 
+  // Writing happens at the apex and the character is served from its
+  // community's host, so going back to it leaves this origin.
+  const goToCharacter = (id: string) => {
+    window.location.assign(
+      characterUrl(id, characterData?.character?.species?.community?.slug),
+    );
+  };
+
   const handleBackClick = () => {
     if (characterId) {
-      navigate(`/character/${characterId}`);
+      goToCharacter(characterId);
     } else if (galleryId) {
       navigate(`/gallery/${galleryId}`);
     } else {
@@ -383,7 +392,7 @@ export const CreateTextPage: React.FC = () => {
 
       // Navigate to the created media or back to character
       if (characterId) {
-        navigate(`/character/${characterId}`);
+        goToCharacter(characterId);
       } else if (galleryId) {
         navigate(`/gallery/${galleryId}`);
       } else {

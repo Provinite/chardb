@@ -51,6 +51,7 @@ export const SPECIES_FRAGMENT = gql`
     community {
       id
       name
+      slug
       discordGuildId
       discordGuildName
     }
@@ -123,6 +124,7 @@ export const SPECIES_BY_ID_QUERY = gql`
       community {
         id
         name
+        slug
         discordGuildId
         discordGuildName
       }
@@ -275,6 +277,7 @@ export const SPECIES_VARIANT_BY_ID_QUERY = gql`
         community {
           id
           name
+          slug
           discordGuildId
           discordGuildName
         }
@@ -430,6 +433,7 @@ export const TRAIT_BY_ID_QUERY = gql`
         community {
           id
           name
+          slug
           discordGuildId
           discordGuildName
         }

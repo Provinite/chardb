@@ -372,9 +372,7 @@ export const SpeciesPage: React.FC = () => {
               {species.community && (
                 <MetaItem>
                   <Users size={16} />
-                  <CommunityLink to={`/communities/${species.communityId}`}>
-                    {species.community.name}
-                  </CommunityLink>
+                  <CommunityLink to="/">{species.community.name}</CommunityLink>
                 </MetaItem>
               )}
               <MetaItem>
@@ -392,7 +390,7 @@ export const SpeciesPage: React.FC = () => {
                   variant="primary"
                   icon={<Settings size={16} />}
                   as={Link}
-                  to={`/communities/${species.communityId}/species`}
+                  to="/species"
                 >
                   Manage Species
                 </Button>

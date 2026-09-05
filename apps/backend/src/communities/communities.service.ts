@@ -14,6 +14,8 @@ import { Prisma } from "@chardb/database";
 export interface CreateCommunityServiceInput {
   /** Name of the community (must be unique) */
   name: string;
+  /** Subdomain label the community is served from. Permanent once set. */
+  slug: string;
   /** ID of the user creating the community (will become admin) */
   creatorId: string;
 }
@@ -41,6 +43,7 @@ export class CommunitiesService {
       const community = await prisma.community.create({
         data: {
           name: input.name,
+          slug: input.slug,
         },
       });
 
@@ -164,6 +167,19 @@ export class CommunitiesService {
     }
 
     return community;
+  }
+
+  /**
+   * Look a community up by the subdomain it is served from.
+   *
+   * This is the first query the frontend makes on a community host, before it
+   * knows anything else, so an unknown slug is an ordinary miss rather than an
+   * error: the caller renders "no such community" rather than a failure.
+   */
+  async findBySlug(slug: string) {
+    return this.prisma.community.findUnique({
+      where: { slug },
+    });
   }
 
   /** Update a community */

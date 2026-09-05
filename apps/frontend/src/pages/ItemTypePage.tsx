@@ -294,7 +294,7 @@ export const ItemTypePage: React.FC = () => {
               {itemType.community && (
                 <MetaItem>
                   <Users size={16} />
-                  <CommunityLink to={`/communities/${itemType.communityId}`}>
+                  <CommunityLink to="/">
                     {itemType.community.name}
                   </CommunityLink>
                 </MetaItem>

@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Database,
   Users,
@@ -16,6 +16,8 @@ import {
   useCommunityMembersByUserQuery,
 } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
+import { useCommunityId } from "../contexts/CommunityHostContext";
+import { apexUrl } from "../lib/communityHost";
 
 /**
  * Community Administration Interface
@@ -117,7 +119,7 @@ const ErrorContainer = styled.div`
 `;
 
 export const CommunityAdminPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const { user } = useAuth();
 
   // Fetch community data
@@ -220,9 +222,11 @@ export const CommunityAdminPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to="/my/communities">My Communities</Link>
+        {/* The list of communities is the site's, not this one's, so it lives
+            at the apex and the router cannot reach it. */}
+        <a href={apexUrl("/my/communities")}>My Communities</a>
         <span>/</span>
-        <Link to={`/communities/${communityId}`}>{community.name}</Link>
+        <Link to="/">{community.name}</Link>
         <span>/</span>
         <span>Administration</span>
       </Breadcrumb>
@@ -246,7 +250,7 @@ export const CommunityAdminPage: React.FC = () => {
       <AdminGrid>
         {/* Species Management - Core feature */}
         {(userRole.canCreateSpecies || userRole.canEditSpecies) && (
-          <AdminCard to={`/communities/${communityId}/species`}>
+          <AdminCard to="/species">
             <CardIcon>
               <Database size={24} />
             </CardIcon>
@@ -260,7 +264,7 @@ export const CommunityAdminPage: React.FC = () => {
 
         {/* Color Palette Management */}
         {userRole.canEditSpecies && (
-          <AdminCard to={`/communities/${communityId}/admin/colors`}>
+          <AdminCard to="/admin/colors">
             <CardIcon>
               <Palette size={24} />
             </CardIcon>
@@ -273,7 +277,7 @@ export const CommunityAdminPage: React.FC = () => {
         )}
 
         {/* Community Members */}
-        <AdminCard to={`/communities/${communityId}/members`}>
+        <AdminCard to="/members">
           <CardIcon>
             <Users size={24} />
           </CardIcon>
@@ -286,7 +290,7 @@ export const CommunityAdminPage: React.FC = () => {
 
         {/* Roles & Permissions */}
         {(userRole.canCreateRole || userRole.canEditRole) && (
-          <AdminCard to={`/communities/${communityId}/permissions`}>
+          <AdminCard to="/permissions">
             <CardIcon>
               <Settings size={24} />
             </CardIcon>
@@ -300,7 +304,7 @@ export const CommunityAdminPage: React.FC = () => {
 
         {/* Invite Codes */}
         {(userRole.canCreateInviteCode || userRole.canListInviteCodes) && (
-          <AdminCard to={`/communities/${communityId}/invite-codes`}>
+          <AdminCard to="/invite-codes">
             <CardIcon>
               <List size={24} />
             </CardIcon>
@@ -313,7 +317,7 @@ export const CommunityAdminPage: React.FC = () => {
         )}
 
         {/* Community Settings */}
-        <AdminCard to={`/communities/${communityId}/settings`}>
+        <AdminCard to="/settings">
           <CardIcon>
             <Settings size={24} />
           </CardIcon>
@@ -327,7 +331,7 @@ export const CommunityAdminPage: React.FC = () => {
         {/* Content Moderation - the index covers both review queues, so it is
             shown to anyone who can work either one. */}
         {(userRole.canModerateImages || userRole.canEditCharacterRegistry) && (
-          <AdminCard to={`/communities/${communityId}/moderation`}>
+          <AdminCard to="/moderation">
             <CardIcon>
               <FileText size={24} />
             </CardIcon>

@@ -1,9 +1,11 @@
 import React, { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
-import { useParams, useSearchParams, Link } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 import { Coins, Search } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useCommunityId } from "../contexts/CommunityHostContext";
+import { apexUrl } from "../lib/communityHost";
 import {
   useGetCurrencyTransactionsQuery,
   useGetCurrenciesQuery,
@@ -199,11 +201,20 @@ const StaffLabel = styled.span`
   margin-right: 0.35rem;
 `;
 
-const SourceLink = styled(Link)`
+const sourceLink = css`
   display: inline-block;
   margin-top: 0.3rem;
   font-size: 0.8125rem;
   color: ${({ theme }) => theme.colors.primary};
+`;
+
+const SourceLink = styled(Link)`
+  ${sourceLink}
+`;
+
+/** The same link when it leaves this host; see the media row below. */
+const SourceAnchor = styled.a`
+  ${sourceLink}
 `;
 
 const EntrySide = styled.div`
@@ -298,7 +309,7 @@ function describeForCommunity(row: CurrencyTransactionFieldsFragment): {
 }
 
 export const CommunityCurrencyLedgerPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [search, setSearch] = useState("");
@@ -446,7 +457,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
                       </KindTag>
                       <strong>{who}</strong>
                       <Link
-                        to={`/communities/${communityId}/currencies/ledger?currencyId=${row.currencyId}`}
+                        to={`/currencies/ledger?currencyId=${row.currencyId}`}
                       >
                         {row.currency.name}
                       </Link>
@@ -459,9 +470,11 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
                         for -- an image is an implementation detail of one. */}
                     {row.source === CurrencyTransactionSource.MediaApproval &&
                       row.sourceId && (
-                        <SourceLink to={`/media/${row.sourceId}`}>
+                        // Media lives at the apex, not on this community's
+                        // host, so the router cannot take us there.
+                        <SourceAnchor href={apexUrl(`/media/${row.sourceId}`)}>
                           from an approved upload →
-                        </SourceLink>
+                        </SourceAnchor>
                       )}
                     {/* The item this coin came from, which is destroyed by
                         the time anyone reads this row. Its page survives that
@@ -472,7 +485,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
                     {row.source === CurrencyTransactionSource.ItemUse &&
                       row.sourceId && (
                         <SourceLink
-                          to={`/communities/${communityId}/items/${row.sourceId}`}
+                          to={`/items/${row.sourceId}`}
                           data-testid="ledger-item-use-link"
                         >
                           from the item that was used →
