@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { SpotlightActionGroupData } from "@mantine/spotlight";
-import { filterKeepingMembers } from "../SpotlightNavigation";
+import { filterKeepingMembers } from "../filterKeepingMembers";
 import { MEMBER_INVENTORY_GROUP } from "../useSpotlightActions";
 
 const noop = () => {};
