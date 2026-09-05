@@ -53,8 +53,6 @@ export interface UpdateUserServiceInput {
   privacySettings?: UserPrivacySettings;
 }
 
-type PrismaUser = Prisma.UserGetPayload<{}>;
-
 @Injectable()
 export class UsersService {
   constructor(private db: DatabaseService) {}
