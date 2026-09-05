@@ -50,6 +50,9 @@ async function main(): Promise<void> {
   const env = { ...process.env, VITE_API_URL: CFG.backendUrl };
 
   if (CFG.frontendMode === "preview" && CFG.skipFrontendBuild) {
+    // Skipping a build whose output is absent would otherwise surface as vite
+    // preview serving a 404 for everything, which names neither the flag nor
+    // the missing dist.
     const bundle = path.resolve(REPO_ROOT, "apps/frontend/dist/index.html");
     if (!fs.existsSync(bundle)) {
       throw new Error(
@@ -58,9 +61,7 @@ async function main(): Promise<void> {
           `\`yarn workspace @chardb/frontend exec vite build\` first.`,
       );
     }
-  }
-
-  if (CFG.frontendMode === "preview" && !CFG.skipFrontendBuild) {
+  } else if (CFG.frontendMode === "preview") {
     // codegen reads the committed schema.gql from disk -- no running backend needed.
     execFileSync("yarn", ["workspace", "@chardb/frontend", "codegen"], {
       cwd: REPO_ROOT,

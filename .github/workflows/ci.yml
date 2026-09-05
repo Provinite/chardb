@@ -294,8 +294,14 @@ jobs:
         # together in the last shard at 6 and at 8 alike. Adding shards past
         # this only subdivides shards that were already fast.
         #
-        # The floor is ~2m23s: ~100s of per-shard fixed cost plus the 43s that
-        # tests/trades/trading.e2e.ts takes on its own.
+        # What binds at this count is the MEAN, not the largest file: ~422s of
+        # work over 6 shards is ~70s each, while the biggest spec file is only
+        # ~40s. File size does not become the constraint until ~11 shards, by
+        # which point the ~100s of per-shard fixed cost dominates anyway. So
+        # splitting slow spec files buys nothing here -- and Playwright assigns
+        # a group to a shard by the test index its FIRST test falls in, walking
+        # files alphabetically, so a split does not even move work between
+        # shards. It just adds ~670ms of per-file seeding each time.
         #
         # Nothing local reads this. An unsharded `yarn e2e` runs all 474 tests
         # in one process, which is what a developer machine should do.
