@@ -3,7 +3,7 @@ import type {
   SpotlightActionGroupData,
   SpotlightFilterFunction,
 } from "@mantine/spotlight";
-import { MEMBER_INVENTORY_GROUP } from "./useSpotlightActions";
+import { MEMBER_INVENTORY_GROUP, MEMBER_PREFIX } from "./useSpotlightActions";
 
 type Item = SpotlightActionData | SpotlightActionGroupData;
 
@@ -22,13 +22,15 @@ const matches = (action: SpotlightActionData, query: string) => {
 };
 
 /**
- * Mantine's own filter, with one group exempted.
+ * Mantine's own filter, with `@` switching the box to people.
  *
- * The member group is already the answer to the query -- the server matched
- * it, against display names and usernames both. Substring-matching it a second
- * time here would drop the person you were looking for whenever the thing you
- * typed matched their username and the label shows their display name.
- * Everything else is a static list of pages and still needs narrowing.
+ * The box answers one question at a time. A query opening with `@` is about
+ * people, and returns the member group alone -- unfiltered, because it is
+ * already the answer: the server matched it against display names and
+ * usernames both, and substring-matching it again here would drop the person
+ * you were looking for whenever what you typed matched their username while
+ * the label shows their display name. Any other query is about pages, and the
+ * member group is dropped rather than left standing from a moment ago.
  *
  * Not `defaultSpotlightFilter`, because @mantine/spotlight does not export it.
  */
@@ -38,17 +40,19 @@ export const filterKeepingMembers: SpotlightFilterFunction = (
 ) => {
   const query = rawQuery.trim().toLowerCase();
   const members: Item[] = [];
-  const rest: Item[] = [];
+  const pages: Item[] = [];
 
   for (const item of data as Item[]) {
     if (isGroup(item) && item.group === MEMBER_INVENTORY_GROUP) {
       members.push(item);
     } else {
-      rest.push(item);
+      pages.push(item);
     }
   }
 
-  const filtered = rest.reduce<Item[]>((acc, item) => {
+  if (query.startsWith(MEMBER_PREFIX)) return members;
+
+  return pages.reduce<Item[]>((acc, item) => {
     if (!isGroup(item)) {
       if (matches(item, query)) acc.push(item);
       return acc;
@@ -57,6 +61,4 @@ export const filterKeepingMembers: SpotlightFilterFunction = (
     if (actions.length > 0) acc.push({ ...item, actions });
     return acc;
   }, []);
-
-  return [...members, ...filtered];
 };

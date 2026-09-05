@@ -34,15 +34,24 @@ const groupNames = (result: ReturnType<typeof filterKeepingMembers>) =>
   result.map((item) => ("group" in item ? item.group : item.id));
 
 describe("filterKeepingMembers", () => {
+  it("answers an @ query with people and nothing else", () => {
+    // "inventory" is a page label in every community group, so without the
+    // mode this query would bury the person under them.
+    const result = filterKeepingMembers("@inventory", [pages, members]);
+
+    expect(groupNames(result)).toEqual([MEMBER_INVENTORY_GROUP]);
+  });
+
   it("keeps a member the query does not literally spell", () => {
     // The server matched "neoth" against the username; the label shows the
     // display name. Filtering it again here is what would lose them.
-    const result = filterKeepingMembers("neoth", [members, pages]);
+    const result = filterKeepingMembers("@neoth", [members, pages]);
 
-    expect(groupNames(result)).toContain(MEMBER_INVENTORY_GROUP);
+    const found = result[0] as SpotlightActionGroupData;
+    expect(found.actions.map((a) => a.label)).toEqual(["Neo the Baka"]);
   });
 
-  it("still narrows the static pages", () => {
+  it("narrows the pages when no @ was typed", () => {
     const result = filterKeepingMembers("ledger", [members, pages]);
 
     const community = result.find(
@@ -52,16 +61,16 @@ describe("filterKeepingMembers", () => {
   });
 
   it("drops a page group with nothing left in it", () => {
-    const result = filterKeepingMembers("zzz", [members, pages]);
+    const result = filterKeepingMembers("zzz", [pages]);
 
-    expect(groupNames(result)).toEqual([MEMBER_INVENTORY_GROUP]);
+    expect(groupNames(result)).toEqual([]);
   });
 
-  it("puts members above pages", () => {
-    // Both match "inventory": the member action by description, any page by
-    // label. The person is the more specific answer.
-    const result = filterKeepingMembers("inventory", [pages, members]);
+  it("drops people the moment the @ goes away", () => {
+    // Backstop for the hook: deleting the sigil is a different question, and
+    // the people you found a keystroke ago are not an answer to it.
+    const result = filterKeepingMembers("overview", [members, pages]);
 
-    expect(groupNames(result)[0]).toBe(MEMBER_INVENTORY_GROUP);
+    expect(groupNames(result)).not.toContain(MEMBER_INVENTORY_GROUP);
   });
 });

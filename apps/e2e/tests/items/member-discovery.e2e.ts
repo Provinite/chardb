@@ -1,4 +1,5 @@
 import { presetTest, expect } from "../../src/fixtures.js";
+import type { Page } from "@playwright/test";
 import { SeedCommunityMemberRolesDocument } from "../../src/generated/graphql.js";
 const test = presetTest("community-items");
 
@@ -91,16 +92,20 @@ test.describe("a member's profile inside a community", () => {
 test.describe("finding a member from the search box", () => {
   test.use({ persona: "member" });
 
-  test("typing a name offers their inventory", async ({ page, world }) => {
+  const openSpotlight = async (page: Page, query: string) => {
+    await page.getByRole("button", { name: "Search pages" }).click();
+    await page
+      .getByPlaceholder("Search pages, or @ for members...")
+      .fill(query);
+  };
+
+  test("@ and a name offers their inventory", async ({ page, world }) => {
     // Scoped to the community you are standing in: the same name means a
     // different person in each one, so the search only runs inside a
     // community's pages.
     await page.goto(world.community.url);
 
-    await page.getByRole("button", { name: "Search pages" }).click();
-    await page
-      .getByPlaceholder("Search pages and members...")
-      .fill(world.users.othermember.username);
+    await openSpotlight(page, `@${world.users.othermember.username}`);
 
     await page
       .getByRole("button", { name: world.users.othermember.username })
@@ -111,6 +116,34 @@ test.describe("finding a member from the search box", () => {
         `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory$`,
       ),
     );
+  });
+
+  test("the same name without the @ searches pages only", async ({
+    page,
+    world,
+  }) => {
+    // The sigil is the whole gate. Without it the box is what it always was,
+    // and does not spend a round trip per keystroke asking about people.
+    await page.goto(world.community.url);
+
+    await openSpotlight(page, world.users.othermember.username);
+
+    await expect(
+      page.getByRole("button", { name: world.users.othermember.username }),
+    ).toHaveCount(0);
+  });
+
+  test("@ on its own lists who is here", async ({ page, world }) => {
+    // Asserting that people came back rather than which ones: the server
+    // returns the first few alphabetically, and naming one would pin this to
+    // the preset's roster rather than to the behaviour.
+    await page.goto(world.community.url);
+
+    await openSpotlight(page, "@");
+
+    await expect(
+      page.getByRole("button", { name: /Inventory in / }).first(),
+    ).toBeVisible();
   });
 });
 

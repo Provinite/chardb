@@ -1,15 +1,25 @@
 import React, { useState } from "react";
 import { Spotlight } from "@mantine/spotlight";
 import { filterKeepingMembers } from "./filterKeepingMembers";
-import { useSpotlightActions } from "./useSpotlightActions";
+import {
+  MEMBER_PREFIX,
+  useActiveCommunityId,
+  useSpotlightActions,
+} from "./useSpotlightActions";
 
-const SEARCH_PROPS = { placeholder: "Search pages and members..." } as const;
+// The hint is the feature. A people search nobody knows the sigil for is the
+// same unfindable inventory this replaced (#349).
+const SEARCH_PROPS = {
+  placeholder: "Search pages, or @ for members...",
+} as const;
 
 export const SpotlightNavigation: React.FC = () => {
   // Controlled because the actions depend on it: member results are fetched
   // for what has been typed rather than filtered out of a fixed list.
   const [query, setQuery] = useState("");
   const actions = useSpotlightActions(query);
+  const askingForPeople = query.trim().startsWith(MEMBER_PREFIX);
+  const inCommunity = !!useActiveCommunityId();
 
   return (
     <Spotlight
@@ -18,12 +28,20 @@ export const SpotlightNavigation: React.FC = () => {
       onQueryChange={setQuery}
       filter={filterKeepingMembers}
       highlightQuery
-      // Raised from 7 to leave room for both: member matches sit above the
-      // page matches and would otherwise eat most of the list.
-      limit={12}
+      limit={7}
       scrollable
       maxHeight={400}
-      nothingFound="No pages or members found..."
+      // Answering the question that was asked. "No pages found" to someone who
+      // typed a person's name reads as the person not existing -- and "nobody
+      // by that name" reads the same way to someone who is not in a community
+      // at all, where there is no membership to search.
+      nothingFound={
+        !askingForPeople
+          ? "No pages found... try @ for members"
+          : inCommunity
+            ? "Nobody here by that name..."
+            : "Open a community to search its members"
+      }
       searchProps={SEARCH_PROPS}
     />
   );

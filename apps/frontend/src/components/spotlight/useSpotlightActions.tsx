@@ -14,8 +14,16 @@ import {
 /** The group name the async member results are filed under. */
 export const MEMBER_INVENTORY_GROUP = "Member inventory";
 
-/** Shorter than this and every member of a community matches. */
-const MIN_MEMBER_QUERY = 2;
+/**
+ * What turns the box into a people search.
+ *
+ * Without a sigil every query is two questions at once -- "is there a page
+ * called this" and "is there a person called this" -- and the second one costs
+ * a round trip on a box that is mostly used for the first. `@` is the same
+ * thing it means everywhere else, and it makes the request explicit enough
+ * that a single character is worth answering.
+ */
+export const MEMBER_PREFIX = "@";
 
 /** Enough to recognise the person you meant; more is a members list. */
 const MEMBER_RESULT_LIMIT = 5;
@@ -27,7 +35,7 @@ const MEMBER_RESULT_LIMIT = 5;
  * the viewer belongs to: a name means a different person in each of them, and
  * one query per membership per keystroke is not a search box.
  */
-function useActiveCommunityId(): string | undefined {
+export function useActiveCommunityId(): string | undefined {
   const { pathname } = useLocation();
   return useMemo(
     () => /^\/communities\/([^/]+)/.exec(pathname)?.[1],
@@ -48,12 +56,17 @@ export function useSpotlightActions(query: string): SpotlightActionGroupData[] {
   // Every keystroke would otherwise be a round trip. 200ms is below the point
   // where the list feels like it is lagging the box.
   const [debouncedQuery] = useDebouncedValue(query.trim(), 200);
-  const memberSearch = debouncedQuery.length >= MIN_MEMBER_QUERY;
+  const memberSearch = debouncedQuery.startsWith(MEMBER_PREFIX);
+  // `@` on its own is a request too -- it asks who is here, and the first few
+  // members alphabetically is a fine answer to that.
+  const memberTerm = memberSearch
+    ? debouncedQuery.slice(MEMBER_PREFIX.length)
+    : "";
 
   const { data: memberData } = useGetCommunityMembersQuery({
     variables: {
       communityId: activeCommunityId ?? "",
-      search: debouncedQuery,
+      search: memberTerm || null,
       limit: MEMBER_RESULT_LIMIT,
     },
     skip: !user?.id || !activeCommunityId || !memberSearch,
