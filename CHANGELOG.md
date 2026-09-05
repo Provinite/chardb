@@ -14,6 +14,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the e2e suites at once. `yarn instance` prints a checkout's numbers; see
   `docs/PARALLEL_INSTANCES.md`.
 
+- **A "Content Moderation" walkthrough** (`docs/docs/content-moderation.html`),
+  five steps with four screenshots: the three ways into the index, what the
+  pending counts mean, and the permission matrix behind seeing one queue where
+  a colleague sees both. Linked from the image and trait queue pages, whose
+  sidebar shots were retaken (#352).
+
+- **Fuzzy navigation documents keyword search** — a page can be found by what it
+  does, not only by its name, shown with "pending" surfacing all three
+  moderation pages though none is named that (#352).
+
 - **Docs screenshots open full size on click**, with their caption underneath
   and arrow-key paging. One `lightbox.js` on all sixteen walkthrough pages,
   no markup changes; it reads a `.screenshot-caption`, a `figcaption`, or the

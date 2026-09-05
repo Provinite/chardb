@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Content Moderation - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="One home for a community's review queues: the Content Moderation page lists the image queue and the trait queue with their pending counts, showing each only to staff who can work it."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/content-moderation.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Content Moderation" />
+    <meta
+      property="og:description"
+      content="One home for a community's review queues: the Content Moderation page lists the image queue and the trait queue with their pending counts, showing each only to staff who can work it."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/content-moderation.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/moderation-index.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The CharDB Content Moderation page showing the Image Moderation and Trait Review queues with their pending counts."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .screenshot-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .screenshot-row .screenshot img {
+        height: 400px;
+        object-fit: contain;
+        background: #1a1a2e;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 0.6rem 0.75rem;
+        border-bottom: 1px solid #e8e8e8;
+      }
+
+      th {
+        color: #333;
+        font-weight: 600;
+        background: #f8f9fa;
+      }
+
+      code {
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.9em;
+        background: #f4f4f8;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        color: #555;
+      }
+
+      kbd {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85em;
+        color: #555;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer a {
+        color: white;
+      }
+
+      @media (max-width: 768px) {
+        .screenshot-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Content Moderation</h1>
+        <p>One home for a community's review queues</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A community has two review queues:
+            <strong>Image Moderation</strong>, where uploaded artwork waits for
+            approval, and <strong>Trait Review</strong>, where proposed changes
+            to a character's traits wait before they land on the registry. The
+            <strong>Content Moderation</strong> page is the shared home for
+            both. It tells you at a glance how much is waiting in each, and
+            takes one click to get into either.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">&#x1F6E1;&#xFE0F;</div>
+              <h4>Both Queues</h4>
+              <p>Images and traits in one place</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F522;</div>
+              <h4>Pending Counts</h4>
+              <p>How much is waiting, before you open anything</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F511;</div>
+              <h4>Permission-Aware</h4>
+              <p>You only see the queues you can work</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F9ED;</div>
+              <h4>Three Ways In</h4>
+              <p>Admin dashboard, sidebar, or <kbd>Ctrl+K</kbd></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Getting There</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            From the <strong>Community Administration</strong> dashboard, the
+            <strong>Content Moderation</strong> card opens the page. The card
+            appears only if you can work at least one of the two queues.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="admin-content-moderation-card.png"
+            alt="The Community Administration dashboard with the Content Moderation card"
+          />
+          <div class="screenshot-caption">
+            The community admin dashboard &mdash; "Content Moderation" is the
+            last card
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <p>
+            The community sidebar has a <strong>Moderation</strong> entry under
+            <strong>Administration</strong>, with the two queues listed beneath
+            it. Those direct links have not gone anywhere: use Moderation when
+            you want the overview, and the queue links when you already know
+            which one you are going to.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="sidebar-moderation-index.png"
+            alt="Community sidebar showing Moderation above Image Moderation and Trait Review"
+          />
+          <div class="screenshot-caption">
+            The Administration group &mdash; Moderation, then the two queues
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <div class="highlight-box">
+            <strong>Fastest route:</strong> press <kbd>Ctrl+K</kbd> (<kbd
+              >&#8984;K</kbd
+            >
+            on Mac) and type <code>pending</code>, <code>queue</code>,
+            <code>approve</code> or <code>moderation</code>. All three
+            moderation pages answer to those words even though none of them says
+            "pending" in its name &mdash; see
+            <a href="fuzzy-navigation.html">Fuzzy Page Navigation</a>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Reading the Page</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Each queue is one card, and the large number on it is how many items
+            are <strong>pending</strong> in that queue right now. Deferring
+            something does not decide it, so a card sent to the back of a queue
+            still counts here. Click a card to open that queue.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="moderation-index.png"
+            alt="The Content Moderation page with the Image Moderation and Trait Review cards, each showing one pending item"
+          />
+          <div class="screenshot-caption">
+            Both queues, each with one item waiting
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">What You See Depends on Your Role</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Moderating images and reviewing traits are separate permissions, and
+            most staff hold only one of them. The page shows a queue only to
+            somebody who can actually work it:
+          </p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Permission</th>
+                <th>Queue shown</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Moderate Images</strong></td>
+                <td>Image Moderation</td>
+              </tr>
+              <tr>
+                <td><strong>Edit Character Registry</strong></td>
+                <td>Trait Review</td>
+              </tr>
+              <tr>
+                <td>Neither</td>
+                <td>
+                  None &mdash; the page, the dashboard card and the sidebar
+                  entry are all withheld
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          <p>
+            An image moderator who cannot edit the registry sees one card, not
+            two, and no empty second card hinting at something they cannot open:
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="moderation-index-image-only.png"
+            alt="The Content Moderation page as an image moderator, showing only the Image Moderation card"
+          />
+          <div class="screenshot-caption">
+            An image-only moderator &mdash; one card, and one queue in the
+            sidebar
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <div class="highlight-box">
+            <strong>Note:</strong> this holds for the address bar too. Opening
+            the page by URL without either permission gives
+            <strong>Access Denied</strong> rather than an empty page.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Working the Queues</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The cards are a way in, not a place to decide anything. Each queue
+            has its own walkthrough:
+          </p>
+          <ul>
+            <li>
+              <a href="image-moderation.html"
+                ><strong>Image Moderation Queue</strong></a
+              >
+              &mdash; approving, rejecting and flagging uploaded artwork
+            </li>
+            <li>
+              <a href="trait-review.html"
+                ><strong>Trait Review Queue</strong></a
+              >
+              &mdash; approving, editing and reverting proposed trait changes
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <footer>
+        <p>
+          CharDB Content Moderation &bull; Feature Documentation &bull;
+          <a href="../index.html">All docs</a>
+        </p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>
