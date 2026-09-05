@@ -467,6 +467,35 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
+  # A single check whose NAME IS STABLE across shard-count changes.
+  #
+  # main's ruleset requires a status check literally called "Browser E2E".
+  # Matrix jobs report one check per leg, named "Browser E2E (shard 1)" and so
+  # on, so sharding the job silently removed the context the ruleset waits for
+  # and left every PR unmergeable. Rather than list the six shard names in the
+  # ruleset -- which would mean a settings change every time the matrix changes,
+  # defeating the point of the count living in one place -- this job carries the
+  # required name and simply reports the matrix's aggregate result.
+  #
+  # `needs.e2e.result` is 'success' only when every leg succeeded, so this is a
+  # true gate and not a rubber stamp.
+  e2e-required:
+    name: Browser E2E
+    needs: e2e
+    # always(), or a failed shard would leave this skipped -- and a skipped
+    # required check blocks the PR without ever saying why.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report aggregate shard result
+        run: |
+          result='${{ needs.e2e.result }}'
+          if [ "$result" != "success" ]; then
+            echo "::error::Browser E2E shards did not all pass (matrix result: $result)."
+            exit 1
+          fi
+          echo "All Browser E2E shards passed."
+
   e2e-report:
     name: Merge E2E reports
     needs: e2e
