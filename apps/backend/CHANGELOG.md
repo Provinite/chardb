@@ -21,6 +21,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   in one community is called. Gated on membership, unlike
   `communityMembersByUser`, which is about yourself everywhere (#349).
 
+### Changed
+
+- **`Community.members(search:)` returns exact name matches first.** The limit
+  is applied in SQL, so the person you actually named could lose the cut to
+  five people who merely contain your spelling of them (#349).
+
 - **Unlisted characters and galleries are no longer listed to other members.**
   `characters` / `galleries` and their per-owner variants now return PUBLIC
   plus the viewer's own, matching what `UserStats` has always counted and what

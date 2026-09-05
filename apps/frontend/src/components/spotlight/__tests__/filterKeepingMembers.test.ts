@@ -1,19 +1,28 @@
 import { describe, it, expect } from "vitest";
 import type { SpotlightActionGroupData } from "@mantine/spotlight";
 import { filterKeepingMembers } from "../filterKeepingMembers";
-import { MEMBER_INVENTORY_GROUP } from "../useSpotlightActions";
+import { MEMBER_GROUP, MEMBER_PAGES_GROUP } from "../useSpotlightActions";
 
 const noop = () => {};
 
 const members: SpotlightActionGroupData = {
-  group: MEMBER_INVENTORY_GROUP,
+  group: MEMBER_GROUP,
   actions: [
     {
-      id: "member-inventory-1",
+      id: "member-1",
       label: "Neo the Baka",
-      description: "Inventory in Thornwood",
+      description: "@neothebaka",
       onClick: noop,
     },
+  ],
+};
+
+const memberPages: SpotlightActionGroupData = {
+  group: MEMBER_PAGES_GROUP,
+  actions: [
+    { id: "profile", label: "Profile", description: "", onClick: noop },
+    { id: "inventory", label: "Inventory", description: "", onClick: noop },
+    { id: "characters", label: "Characters", description: "", onClick: noop },
   ],
 };
 
@@ -30,47 +39,64 @@ const pages: SpotlightActionGroupData = {
   ],
 };
 
+const all = [members, memberPages, pages];
+
 const groupNames = (result: ReturnType<typeof filterKeepingMembers>) =>
   result.map((item) => ("group" in item ? item.group : item.id));
 
+const actionsOf = (result: ReturnType<typeof filterKeepingMembers>) =>
+  (result[0] as SpotlightActionGroupData).actions.map((a) => a.id);
+
 describe("filterKeepingMembers", () => {
   it("answers an @ query with people and nothing else", () => {
-    // "inventory" is a page label in every community group, so without the
-    // mode this query would bury the person under them.
-    const result = filterKeepingMembers("@inventory", [pages, members]);
+    // "inventory" is both a page label and one of a member's pages, so without
+    // the mode this query would answer three questions at once.
+    const result = filterKeepingMembers("@inventory", all);
 
-    expect(groupNames(result)).toEqual([MEMBER_INVENTORY_GROUP]);
+    expect(groupNames(result)).toEqual([MEMBER_GROUP]);
   });
 
   it("keeps a member the query does not literally spell", () => {
     // The server matched "neoth" against the username; the label shows the
     // display name. Filtering it again here is what would lose them.
-    const result = filterKeepingMembers("@neoth", [members, pages]);
+    const result = filterKeepingMembers("@neoth", all);
 
-    const found = result[0] as SpotlightActionGroupData;
-    expect(found.actions.map((a) => a.label)).toEqual(["Neo the Baka"]);
+    expect(actionsOf(result)).toEqual(["member-1"]);
+  });
+
+  it("answers a drilled query with that person's pages", () => {
+    const result = filterKeepingMembers("@neothebaka/", all);
+
+    expect(groupNames(result)).toEqual([MEMBER_PAGES_GROUP]);
+    expect(actionsOf(result)).toEqual(["profile", "inventory", "characters"]);
+  });
+
+  it("narrows a person's pages by what follows the slash", () => {
+    // The username before the slash must not be part of the match, or nothing
+    // would ever survive it.
+    const result = filterKeepingMembers("@neothebaka/inv", all);
+
+    expect(actionsOf(result)).toEqual(["inventory"]);
+  });
+
+  it("treats @/ as still choosing a person", () => {
+    const result = filterKeepingMembers("@/", all);
+
+    expect(groupNames(result)).toEqual([MEMBER_GROUP]);
   });
 
   it("narrows the pages when no @ was typed", () => {
-    const result = filterKeepingMembers("ledger", [members, pages]);
+    const result = filterKeepingMembers("ledger", all);
 
-    const community = result.find(
-      (item) => "group" in item && item.group === "Thornwood",
-    ) as SpotlightActionGroupData;
-    expect(community.actions.map((a) => a.id)).toEqual(["ledger"]);
-  });
-
-  it("drops a page group with nothing left in it", () => {
-    const result = filterKeepingMembers("zzz", [pages]);
-
-    expect(groupNames(result)).toEqual([]);
+    expect(groupNames(result)).toEqual(["Thornwood"]);
+    expect(actionsOf(result)).toEqual(["ledger"]);
   });
 
   it("drops people the moment the @ goes away", () => {
     // Backstop for the hook: deleting the sigil is a different question, and
     // the people you found a keystroke ago are not an answer to it.
-    const result = filterKeepingMembers("overview", [members, pages]);
+    const result = filterKeepingMembers("overview", all);
 
-    expect(groupNames(result)).not.toContain(MEMBER_INVENTORY_GROUP);
+    expect(groupNames(result)).toEqual(["Thornwood"]);
   });
 });

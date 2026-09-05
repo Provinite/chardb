@@ -193,37 +193,74 @@ export class CommunitiesService {
     });
   }
 
-  /** Get community members with optional search filtering */
+  /**
+   * Get community members with optional search filtering.
+   *
+   * Whoever is called exactly what was typed comes first, then everyone the
+   * search is merely a substring of. Two queries rather than one, because the
+   * limit is applied in SQL: sorting after the fact would only reorder the
+   * page the database already chose, and the person you named can lose that
+   * cut to five people who merely contain your spelling of them.
+   */
   async getMembers(
     communityId: string,
     filters: { search?: string; limit?: number },
   ) {
-    const where: Prisma.UserWhereInput = {
+    const member: Prisma.UserWhereInput = {
       communityMemberships: {
         some: {
           role: { communityId },
         },
       },
     };
+    const select = {
+      id: true,
+      username: true,
+      displayName: true,
+      avatarImageId: true,
+    };
+    const take = Math.min(filters.limit || 10, 20); // Max 20
+    const search = filters.search?.trim();
 
-    if (filters.search) {
-      where.OR = [
-        { username: { contains: filters.search, mode: "insensitive" } },
-        { displayName: { contains: filters.search, mode: "insensitive" } },
-      ];
+    if (!search) {
+      return this.prisma.user.findMany({
+        where: member,
+        select,
+        take,
+        orderBy: { username: "asc" },
+      });
     }
 
-    return this.prisma.user.findMany({
-      where,
-      select: {
-        id: true,
-        username: true,
-        displayName: true,
-        avatarImageId: true,
+    const exact = await this.prisma.user.findMany({
+      where: {
+        ...member,
+        OR: [
+          { username: { equals: search, mode: "insensitive" } },
+          { displayName: { equals: search, mode: "insensitive" } },
+        ],
       },
-      take: Math.min(filters.limit || 10, 20), // Max 20
+      select,
+      take,
       orderBy: { username: "asc" },
     });
+
+    if (exact.length >= take) return exact;
+
+    const partial = await this.prisma.user.findMany({
+      where: {
+        ...member,
+        id: { notIn: exact.map((user) => user.id) },
+        OR: [
+          { username: { contains: search, mode: "insensitive" } },
+          { displayName: { contains: search, mode: "insensitive" } },
+        ],
+      },
+      select,
+      take: take - exact.length,
+      orderBy: { username: "asc" },
+    });
+
+    return [...exact, ...partial];
   }
 
   /**

@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { Spotlight } from "@mantine/spotlight";
 import { filterKeepingMembers } from "./filterKeepingMembers";
+import { parseSpotlightQuery } from "./spotlightQuery";
 import {
-  MEMBER_PREFIX,
   useActiveCommunityId,
   useSpotlightActions,
 } from "./useSpotlightActions";
@@ -14,12 +14,26 @@ const SEARCH_PROPS = {
 } as const;
 
 export const SpotlightNavigation: React.FC = () => {
-  // Controlled because the actions depend on it: member results are fetched
-  // for what has been typed rather than filtered out of a fixed list.
+  // Controlled because the actions both depend on it and rewrite it: member
+  // results are fetched for what has been typed, and picking a person appends
+  // the slash that asks which of their pages you meant.
   const [query, setQuery] = useState("");
-  const actions = useSpotlightActions(query);
-  const askingForPeople = query.trim().startsWith(MEMBER_PREFIX);
+  const actions = useSpotlightActions(query, setQuery);
+  const parsed = parseSpotlightQuery(query);
   const inCommunity = !!useActiveCommunityId();
+
+  // Answering the question that was asked. "No pages found" to someone who
+  // typed a person's name reads as the person not existing -- and "nobody by
+  // that name" reads the same way to someone who is not in a community at all,
+  // where there is no membership to search.
+  const nothingFound =
+    parsed.mode === "pages"
+      ? "No pages found... try @ for members"
+      : !inCommunity
+        ? "Open a community to search its members"
+        : parsed.mode === "people"
+          ? "Nobody here by that name..."
+          : "No pages of theirs match that...";
 
   return (
     <Spotlight
@@ -31,17 +45,7 @@ export const SpotlightNavigation: React.FC = () => {
       limit={7}
       scrollable
       maxHeight={400}
-      // Answering the question that was asked. "No pages found" to someone who
-      // typed a person's name reads as the person not existing -- and "nobody
-      // by that name" reads the same way to someone who is not in a community
-      // at all, where there is no membership to search.
-      nothingFound={
-        !askingForPeople
-          ? "No pages found... try @ for members"
-          : inCommunity
-            ? "Nobody here by that name..."
-            : "Open a community to search its members"
-      }
+      nothingFound={nothingFound}
       searchProps={SEARCH_PROPS}
     />
   );

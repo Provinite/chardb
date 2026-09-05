@@ -10,20 +10,13 @@ import {
   useCommunityMembersByUserQuery,
   useGetCommunityMembersQuery,
 } from "../../generated/graphql";
+import { drillQuery, parseSpotlightQuery } from "./spotlightQuery";
 
-/** The group name the async member results are filed under. */
-export const MEMBER_INVENTORY_GROUP = "Member inventory";
+/** People matching what was typed. Picking one opens their pages. */
+export const MEMBER_GROUP = "Members";
 
-/**
- * What turns the box into a people search.
- *
- * Without a sigil every query is two questions at once -- "is there a page
- * called this" and "is there a person called this" -- and the second one costs
- * a round trip on a box that is mostly used for the first. `@` is the same
- * thing it means everywhere else, and it makes the request explicit enough
- * that a single character is worth answering.
- */
-export const MEMBER_PREFIX = "@";
+/** One person's pages, once you have picked them. */
+export const MEMBER_PAGES_GROUP = "Member pages";
 
 /** Enough to recognise the person you meant; more is a members list. */
 const MEMBER_RESULT_LIMIT = 5;
@@ -43,7 +36,11 @@ export function useActiveCommunityId(): string | undefined {
   );
 }
 
-export function useSpotlightActions(query: string): SpotlightActionGroupData[] {
+export function useSpotlightActions(
+  query: string,
+  /** Rewrites the box, for the actions that narrow it rather than navigate. */
+  setQuery: (query: string) => void,
+): SpotlightActionGroupData[] {
   const { user } = useAuth();
   const navigate = useNavigate();
   const activeCommunityId = useActiveCommunityId();
@@ -56,20 +53,31 @@ export function useSpotlightActions(query: string): SpotlightActionGroupData[] {
   // Every keystroke would otherwise be a round trip. 200ms is below the point
   // where the list feels like it is lagging the box.
   const [debouncedQuery] = useDebouncedValue(query.trim(), 200);
-  const memberSearch = debouncedQuery.startsWith(MEMBER_PREFIX);
-  // `@` on its own is a request too -- it asks who is here, and the first few
-  // members alphabetically is a fine answer to that.
-  const memberTerm = memberSearch
-    ? debouncedQuery.slice(MEMBER_PREFIX.length)
-    : "";
+  // Memoised: it is a dependency of the actions below, and a fresh object
+  // every render would rebuild the whole list on every render.
+  const parsed = useMemo(
+    () => parseSpotlightQuery(debouncedQuery),
+    [debouncedQuery],
+  );
+
+  // Both people modes hit the same query. Once a person is picked it searches
+  // for their name exactly, which the server sorts first -- so the same
+  // request that listed the candidates also resolves the one you chose, and
+  // Apollo serves the rest of the drill-down from cache while you type it.
+  const memberSearch =
+    parsed.mode === "people"
+      ? parsed.term
+      : parsed.mode === "person"
+        ? parsed.username
+        : "";
 
   const { data: memberData } = useGetCommunityMembersQuery({
     variables: {
       communityId: activeCommunityId ?? "",
-      search: memberTerm || null,
+      search: memberSearch || null,
       limit: MEMBER_RESULT_LIMIT,
     },
-    skip: !user?.id || !activeCommunityId || !memberSearch,
+    skip: !user?.id || !activeCommunityId || parsed.mode === "pages",
   });
 
   return useMemo(() => {
@@ -77,30 +85,80 @@ export function useSpotlightActions(query: string): SpotlightActionGroupData[] {
 
     const nav = (path: string) => () => navigate(path);
 
-    // People first. Typing a name is a more specific request than typing a
-    // page name, and these are already server-matched against exactly what
-    // was typed -- the static groups below still have to be filtered down.
-    // `memberSearch` again rather than trusting the skip: Apollo hands back the
+    // `parsed.mode` again rather than trusting the skip: Apollo hands back the
     // last result for a skipped query, so without it the people you found stay
     // on screen after you have cleared the box.
-    const members = memberSearch ? (memberData?.community?.members ?? []) : [];
-    if (activeCommunityId && members.length > 0) {
-      const communityName =
-        communitiesData?.communityMembersByUser?.nodes?.find(
-          (m) => m.role.community.id === activeCommunityId,
-        )?.role.community.name ?? "this community";
+    const members =
+      parsed.mode === "pages" ? [] : (memberData?.community?.members ?? []);
+    const communityName =
+      communitiesData?.communityMembersByUser?.nodes?.find(
+        (m) => m.role.community.id === activeCommunityId,
+      )?.role.community.name ?? "this community";
 
+    if (activeCommunityId && parsed.mode === "people" && members.length > 0) {
       groups.push({
-        group: MEMBER_INVENTORY_GROUP,
+        group: MEMBER_GROUP,
         actions: members.map((member) => ({
-          id: `member-inventory-${member.id}`,
+          id: `member-${member.id}`,
           label: member.displayName || member.username,
-          description: `Inventory in ${communityName}`,
-          onClick: nav(
-            `/communities/${activeCommunityId}/members/${member.username}/inventory`,
-          ),
+          description: `@${member.username}`,
+          // Narrows the box instead of leaving it. Picking a person is half a
+          // request -- the other half is which of their pages you wanted, and
+          // asking it here beats loading one to navigate off it.
+          onClick: () => setQuery(drillQuery(member.username)),
+          closeSpotlightOnTrigger: false,
         })),
       });
+    }
+
+    if (activeCommunityId && parsed.mode === "person") {
+      // The server sorts an exact name first, so this is the person named in
+      // the query rather than whoever merely contains their spelling.
+      const member = members.find(
+        (m) => m.username.toLowerCase() === parsed.username.toLowerCase(),
+      );
+      const base = `/communities/${activeCommunityId}/members/${parsed.username}`;
+
+      if (member) {
+        const who = member.displayName || member.username;
+        const pages: SpotlightActionData[] = [
+          {
+            id: `member-page-profile-${member.id}`,
+            label: "Profile",
+            description: `${who} in ${communityName}`,
+            onClick: nav(base),
+          },
+          {
+            id: `member-page-inventory-${member.id}`,
+            label: "Inventory",
+            description: `What ${who} holds in ${communityName}`,
+            onClick: nav(`${base}/inventory`),
+          },
+          {
+            id: `member-page-characters-${member.id}`,
+            label: "Characters",
+            // Says "every" because it is the whole site rather than here --
+            // the ones belonging to this community are on the profile above.
+            description: `Every character ${who} owns`,
+            onClick: nav(`/user/${member.username}/characters`),
+          },
+        ];
+
+        // Hidden on yourself: the server refuses a trade with yourself, so
+        // offering it would be a dead end.
+        if (member.id !== user?.id) {
+          pages.push({
+            id: `member-page-trade-${member.id}`,
+            label: "Propose trade",
+            description: `Open a trade with ${who}`,
+            onClick: nav(
+              `/communities/${activeCommunityId}/trades/new?with=${member.id}`,
+            ),
+          });
+        }
+
+        groups.push({ group: MEMBER_PAGES_GROUP, actions: pages });
+      }
     }
 
     // General — always visible
@@ -477,8 +535,9 @@ export function useSpotlightActions(query: string): SpotlightActionGroupData[] {
     user,
     communitiesData,
     navigate,
+    setQuery,
     memberData,
-    memberSearch,
+    parsed,
     activeCommunityId,
   ]);
 }

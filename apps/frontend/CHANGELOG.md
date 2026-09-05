@@ -14,8 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   characters here, and the way through to their inventory or a trade (#349).
 
 - **The search box finds members, not just pages.** `@` inside a community
-  switches it to people and offers that member's inventory; `@` alone lists who
-  is here. Without the sigil it searches pages exactly as before (#349).
+  switches it to people and `@` alone lists who is here; picking one opens
+  their pages — profile, inventory, characters, propose a trade — without
+  leaving the box. Without the sigil it searches pages exactly as before
+  (#349).
 
 - **The trade composer links out to the partner's full inventory**, which
   includes the items its own pane leaves out as untradeable (#349).

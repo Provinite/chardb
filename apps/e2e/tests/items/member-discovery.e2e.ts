@@ -99,23 +99,92 @@ test.describe("finding a member from the search box", () => {
       .fill(query);
   };
 
-  test("@ and a name offers their inventory", async ({ page, world }) => {
+  test("picking a person offers their pages rather than leaving", async ({
+    page,
+    world,
+  }) => {
     // Scoped to the community you are standing in: the same name means a
     // different person in each one, so the search only runs inside a
     // community's pages.
     await page.goto(world.community.url);
 
     await openSpotlight(page, `@${world.users.othermember.username}`);
-
     await page
       .getByRole("button", { name: world.users.othermember.username })
       .click();
+
+    // Still in the palette, one level down. Picking a person is half a
+    // request; this is the other half.
+    await expect(page).toHaveURL(new RegExp(`${world.community.id}$`));
+    await expect(page.getByRole("button", { name: /^Profile/ })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /^Inventory/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /^Characters/ }),
+    ).toBeVisible();
+  });
+
+  test("their Inventory from there reaches their holdings", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(world.community.url);
+
+    await openSpotlight(page, `@${world.users.othermember.username}`);
+    await page
+      .getByRole("button", { name: world.users.othermember.username })
+      .click();
+    await page.getByRole("button", { name: /^Inventory/ }).click();
 
     await expect(page).toHaveURL(
       new RegExp(
         `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory$`,
       ),
     );
+  });
+
+  test("their Profile from there reaches the profile", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(world.community.url);
+
+    await openSpotlight(page, `@${world.users.othermember.username}`);
+    await page
+      .getByRole("button", { name: world.users.othermember.username })
+      .click();
+    await page.getByRole("button", { name: /^Profile/ }).click();
+
+    await expect(page).toHaveURL(
+      new RegExp(
+        `/communities/${world.community.id}/members/${world.users.othermember.username}$`,
+      ),
+    );
+  });
+
+  test("typing past the slash narrows their pages", async ({ page, world }) => {
+    await page.goto(world.community.url);
+
+    await openSpotlight(page, `@${world.users.othermember.username}/inv`);
+
+    await expect(
+      page.getByRole("button", { name: /^Inventory/ }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: /^Profile/ })).toHaveCount(0);
+  });
+
+  test("offers no trade with yourself", async ({ page, world }) => {
+    await page.goto(world.community.url);
+
+    await openSpotlight(page, `@${world.users.member.username}/`);
+
+    await expect(
+      page.getByRole("button", { name: /^Inventory/ }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: /^Propose trade/ }),
+    ).toHaveCount(0);
   });
 
   test("the same name without the @ searches pages only", async ({
@@ -141,9 +210,23 @@ test.describe("finding a member from the search box", () => {
 
     await openSpotlight(page, "@");
 
+    // A member row reads "<name>@<username>" -- the label and the handle
+    // beneath it. Nothing else in the palette carries an @.
+    await expect(page.getByRole("button", { name: /@/ }).first()).toBeVisible();
+  });
+
+  test("an exact name comes back first", async ({ page, world }) => {
+    // `member` is also a substring of `othermember`. This world holds nobody
+    // who sorts ahead of an exact match while containing it, so ordering is
+    // pinned properly in `communities.service.spec.ts` -- this only asserts
+    // the two do not come back the wrong way round through the real stack.
+    await page.goto(world.community.url);
+
+    await openSpotlight(page, `@${world.users.member.username}`);
+
     await expect(
-      page.getByRole("button", { name: /Inventory in / }).first(),
-    ).toBeVisible();
+      page.getByRole("button", { name: /@/ }).first(),
+    ).toHaveAccessibleName(new RegExp(`@${world.users.member.username}$`));
   });
 });
 
