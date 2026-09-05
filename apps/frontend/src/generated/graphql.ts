@@ -4528,7 +4528,7 @@ export type UserStats = {
   followingCount: Scalars['Int']['output'];
   /** Total number of galleries created by this user */
   galleriesCount: Scalars['Int']['output'];
-  /** Total number of images uploaded by this user */
+  /** Number of this user's image media the asker is allowed to see */
   imagesCount: Scalars['Int']['output'];
   /** Total number of likes received across all user's content */
   totalLikes: Scalars['Int']['output'];

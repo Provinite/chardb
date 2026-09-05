@@ -4,6 +4,7 @@ import {
   SeedCreateCharacterDocument,
   SeedCreateGalleryDocument,
   SeedCreateTextMediaDocument,
+  SeedUpdateMediaDocument,
   SeedUserCharactersDocument,
   SeedUserGalleriesDocument,
   SeedUserMediaDocument,
@@ -341,5 +342,112 @@ test.describe("a signed-out visitor", () => {
     await expect(page.getByTestId("user-media-page")).toBeVisible();
     await expect(mediaCard(page, content.publicMedia)).toBeVisible();
     await expect(mediaCard(page, content.privateMedia)).toHaveCount(0);
+  });
+});
+
+/**
+ * The profile itself, rather than the pages it links to (#348).
+ *
+ * Two bugs found while adding the media page, both older than it. The Recent
+ * Media strip took no viewer and filtered on nothing but ownership, so a
+ * member's PRIVATE media was drawn on their public profile to anyone, signed
+ * out included -- while the strip's two neighbours, Recent Characters and
+ * Recent Galleries, had taken `includePrivate` all along. The Images tile
+ * counted `image` rows by uploader, a table with no visibility column, so it
+ * could not have filtered even in principle.
+ *
+ * These use `member`, whose image media the preset seeds through Prisma, and
+ * re-flag one of them: creating image media through the API needs S3 and a
+ * multipart upload. Nothing here seeds text media, so `member`'s media is all
+ * image media and the tile's count and the media page's total are comparable.
+ */
+test.describe("visibility on the profile itself", () => {
+  const hideOneImage = (world: World<CommunityBasicWorld>) =>
+    world.as("member").gql(SeedUpdateMediaDocument, {
+      id: world.pendingImage.mediaId,
+      input: { visibility: Visibility.Private },
+    });
+
+  const imagesTileCount = async (page: Page) =>
+    Number(
+      (await page.getByTestId("profile-stat-images").innerText()).match(
+        /\d+/,
+      )?.[0],
+    );
+
+  test.describe("a signed-in visitor", () => {
+    test.use({ persona: "othermember" });
+
+    test.beforeEach(async ({ world }) => {
+      await world.reset();
+      await hideOneImage(world);
+    });
+
+    test("does not see the owner's private media in Recent Media", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(`/user/${world.users.member.username}`);
+
+      // The strip renders -- this is not a page that failed to load -- and the
+      // one private item is the only thing missing from it.
+      await expect(page.getByTestId("media-card").first()).toBeVisible();
+      await expect(mediaCard(page, world.pendingImage.mediaId)).toHaveCount(0);
+    });
+
+    test("is given an Images count that matches what they can see", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(`/user/${world.users.member.username}`);
+
+      const claimed = await imagesTileCount(page);
+      expect(claimed).toBeGreaterThan(0);
+
+      await page.getByTestId("profile-stat-images").click();
+      await expect(page.getByTestId("user-media-page")).toBeVisible();
+
+      // The tile counted every image the member had ever uploaded, private
+      // ones included, and the page it now links to does not show them.
+      await expect(page.getByTestId("media-card")).toHaveCount(claimed);
+    });
+  });
+
+  test.describe("the owner", () => {
+    test.use({ persona: "member" });
+
+    test.beforeEach(async ({ world }) => {
+      await world.reset();
+      await hideOneImage(world);
+    });
+
+    test("still sees their own private media, and is counted it", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(`/user/${world.users.member.username}`);
+
+      await expect(mediaCard(page, world.pendingImage.mediaId)).toBeVisible();
+
+      const claimed = await imagesTileCount(page);
+      await page.getByTestId("profile-stat-images").click();
+      await expect(page.getByTestId("media-card")).toHaveCount(claimed);
+    });
+  });
+
+  test.describe("a signed-out visitor", () => {
+    test.use({ persona: "anon" });
+
+    test.beforeEach(async ({ world }) => {
+      await world.reset();
+      await hideOneImage(world);
+    });
+
+    test("does not see private media either", async ({ page, world }) => {
+      await page.goto(`/user/${world.users.member.username}`);
+
+      await expect(page.getByTestId("media-card").first()).toBeVisible();
+      await expect(mediaCard(page, world.pendingImage.mediaId)).toHaveCount(0);
+    });
   });
 });

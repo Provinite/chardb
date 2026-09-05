@@ -356,7 +356,12 @@ export class UserProfileResolver {
     description: "Recently uploaded media (images and text) by this user",
   })
   async resolveRecentMedia(@Parent() profile: UserProfile) {
-    return this.usersService.getUserRecentMedia(profile.user.id, 12);
+    const includePrivate = profile.canViewPrivateContent;
+    return this.usersService.getUserRecentMedia(
+      profile.user.id,
+      includePrivate,
+      12,
+    );
   }
 
   @AllowUnauthenticated()
@@ -416,11 +421,17 @@ export class UserStatsResolver {
 
   @AllowUnauthenticated()
   @ResolveField("imagesCount", () => Int, {
-    description: "Total number of images uploaded by this user",
+    description:
+      "Number of this user's image media the asker is allowed to see",
   })
-  async resolveImagesCount(@Parent() stats: UserStats) {
+  async resolveImagesCount(
+    @Parent() stats: UserStats,
+    @CurrentUser() currentUser?: CurrentUserType,
+  ) {
     if (!stats.userId) return 0;
-    return this.usersService.getUserImagesCount(stats.userId);
+    const includePrivate =
+      currentUser?.id === stats.userId || !!currentUser?.isAdmin;
+    return this.usersService.getUserImagesCount(stats.userId, includePrivate);
   }
 
   @AllowUnauthenticated()

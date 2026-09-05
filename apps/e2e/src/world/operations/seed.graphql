@@ -896,6 +896,16 @@ mutation SeedCreateTextMedia($input: CreateTextMediaInput!) {
   }
 }
 
+# The only way a spec can get *image* media of a given visibility: creating one
+# needs S3 and a multipart upload, so a spec re-flags one the preset seeded
+# through Prisma instead.
+mutation SeedUpdateMedia($id: ID!, $input: UpdateMediaInput!) {
+  updateMedia(id: $id, input: $input) {
+    id
+    visibility
+  }
+}
+
 # The three queries the per-owner pages read. Selected here so a spec can
 # assert what the API hands a given viewer, independently of what the page
 # renders.

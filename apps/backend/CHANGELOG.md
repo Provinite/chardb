@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A member's private media no longer appears on their public profile.**
+  `UserProfile.recentMedia` applied no visibility filter at all, and
+  `UserStats.imagesCount` counted images by uploader, a table with no
+  visibility column; both now narrow by who is asking (#348).
+
 - **A public gallery no longer reports itself missing to signed-out visitors.**
   `Gallery.userHasLiked` was gated to authenticated users and is non-nullable,
   so its 403 nulled the whole gallery and the page rendered "Gallery not
