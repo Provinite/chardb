@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Moderation index specs**: the admin dashboard's "Content Moderation" card clicked through to a real page rather than the 404 it used to reach, plus the gating — `imagemod` and `moderator` hold one moderation permission each, so each sees exactly one queue and its pending count, and a plain member is refused even by URL. (#352)
 - **Signed-out public page specs**: a public gallery and a public character opened with no session, asserted through both the page and the API, each selecting the non-nullable `userHasLiked` that broke them. (#173)
 - **Owner-filtered listing specs**: the profile's "View All" reaching that member's characters rather than everyone's, and the visibility matrix behind it — owner, other member, signed out — asserted through both the page and the API. (#321)
 - **Deferral specs for both review queues**: the trait review queue's reorder driven through the browser, and the image queue's cross-relation ordering exercised against real Postgres — the one claim a mocked Prisma client cannot make. (#333)
