@@ -17,6 +17,7 @@ import * as net from "node:net";
 import * as path from "node:path";
 import { CFG, REPO_ROOT } from "../config.js";
 import { provision } from "../db/provision.js";
+import { superviseChild } from "./supervise.js";
 
 async function assertPortFree(port: number): Promise<void> {
   await new Promise<void>((resolve, reject) => {
@@ -58,12 +59,28 @@ function readEnvTest(): Record<string, string> {
 
 async function main(): Promise<void> {
   await assertPortFree(CFG.backendPort);
+
+  // Checked before provision(): a misconfigured skip is a config error, and
+  // there is no reason to spend a docker-compose wait discovering it. Skipping
+  // a build whose output is absent would otherwise surface much later as a
+  // module resolution error naming neither the flag nor the missing dist.
+  const entrypoint = path.resolve(REPO_ROOT, "apps/backend/dist/src/main.js");
+  if (CFG.skipBackendBuild && !fs.existsSync(entrypoint)) {
+    throw new Error(
+      `Backend build was skipped but ${entrypoint} does not exist. ` +
+        `Unset E2E_SKIP_BACKEND_BUILD (or E2E_SKIP_BUILD), or run ` +
+        `\`yarn workspace @chardb/backend build\` first.`,
+    );
+  }
+
   await provision();
 
-  execFileSync("yarn", ["workspace", "@chardb/backend", "build"], {
-    cwd: REPO_ROOT,
-    stdio: "inherit",
-  });
+  if (!CFG.skipBackendBuild) {
+    execFileSync("yarn", ["workspace", "@chardb/backend", "build"], {
+      cwd: REPO_ROOT,
+      stdio: "inherit",
+    });
+  }
 
   const child = spawn("node", ["dist/src/main.js"], {
     // cwd is apps/backend so the code-first GraphQL schema lands back at
@@ -79,13 +96,7 @@ async function main(): Promise<void> {
     },
   });
 
-  for (const sig of ["SIGINT", "SIGTERM"] as const) {
-    process.on(sig, () => {
-      child.kill(sig);
-      process.exit(0);
-    });
-  }
-  child.on("exit", (code) => process.exit(code ?? 0));
+  superviseChild(child);
 }
 
 main().catch((err) => {

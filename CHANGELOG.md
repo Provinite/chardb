@@ -38,9 +38,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **A "Changing a Character's Rarity" walkthrough** (`docs/docs/character-rarity.html`).
 
+### Changed
+
+- **CI shards the browser E2E suite across six runners** and caches the backend, frontend and workspace build outputs between runs, taking the job down from ~9m; a merge job stitches the shard reports into one artifact (#353).
+
 ### Fixed
 
 - **HTML is now prettier-checked and formatted** — `.html` was missing from `lint:changed`, `yarn format` and `format:check`, so all 20 tracked files were unformatted (#354).
+
+- **E2E servers no longer outlive their run** — the wrapper scripts exited before their child had, orphaning a Vite that then blocked the next run's port (#353).
 
 ## [v11.9.0] - 2026-09-02
 

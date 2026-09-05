@@ -83,8 +83,23 @@ export const CFG = {
   frontendMode: (process.env.E2E_FRONTEND_MODE ?? "preview") as
     | "preview"
     | "dev",
-  /** Reuse apps/frontend/dist instead of rebuilding -- fast spec iteration. */
-  skipBuild: process.env.E2E_SKIP_BUILD === "1",
+  /**
+   * Reuse an existing dist instead of rebuilding it.
+   *
+   * `E2E_SKIP_BUILD=1` covers both servers and is the one to reach for locally
+   * when iterating on specs. The two narrower flags exist for CI, which caches
+   * the backend and frontend build outputs under separate keys and so can hit
+   * on one and miss on the other.
+   *
+   * Both servers refuse to start if asked to skip a build whose dist is not
+   * there, rather than failing later as a missing module.
+   */
+  skipBackendBuild:
+    process.env.E2E_SKIP_BACKEND_BUILD === "1" ||
+    process.env.E2E_SKIP_BUILD === "1",
+  skipFrontendBuild:
+    process.env.E2E_SKIP_FRONTEND_BUILD === "1" ||
+    process.env.E2E_SKIP_BUILD === "1",
   /** Keep the database after teardown for post-mortem inspection. */
   keepDb: process.env.E2E_KEEP_DB === "1",
   reuseServers: process.env.E2E_REUSE_SERVERS === "1",

@@ -11,7 +11,7 @@
     "build": "echo '@chardb/e2e: nothing to build'",
     "test": "echo '@chardb/e2e: browser suite is opt-in, run `yarn workspace @chardb/e2e e2e`'",
     "type-check": "yarn codegen && tsc --noEmit",
-    "clean": "rm -rf .artifacts playwright-report test-results src/generated",
+    "clean": "rm -rf .artifacts playwright-report test-results blob-report all-blob-reports src/generated",
     "codegen": "graphql-codegen --config .graphqlrc.yml"
   },
   "dependencies": {

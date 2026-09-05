@@ -168,7 +168,9 @@ Prints every id, URL and credential for the seeded world. With `--json` only the
 | `E2E_PG_PORT` | `5440` | The shared test-postgres container. |
 | `E2E_DB_NAME` | `chardb_e2e_ui` | Separate from the Jest suite's `chardb_test`. |
 | `E2E_FRONTEND_MODE` | `preview` | `dev` serves via Vite dev instead of a production build. |
-| `E2E_SKIP_BUILD` | unset | Reuse `apps/frontend/dist` — much faster spec iteration. |
+| `E2E_SKIP_BUILD` | unset | Reuse both `apps/backend/dist` and `apps/frontend/dist` — much faster spec iteration. Each server errors up front if the dist it was told to reuse is missing. |
+| `E2E_SKIP_BACKEND_BUILD` | unset | Just the backend half of the above. Exists for CI, which caches the two builds under separate keys and can hit on one and miss on the other. |
+| `E2E_SKIP_FRONTEND_BUILD` | unset | Just the frontend half. |
 | `E2E_KEEP_DB` | unset | Skip teardown so the database can be inspected. |
 | `E2E_REUSE_SERVERS` | unset | Attach to already-running servers. |
 
@@ -287,8 +289,29 @@ It deliberately does **not** use a GitHub `services:` container for Postgres —
 
 - **Browsers are cached** on `~/.cache/ms-playwright`, keyed by the resolved Playwright version, so a version bump busts it automatically. On a cache hit the job still runs `playwright install-deps` — the binary is cached but the system libraries it links against are not.
 - **`retries: 1` in CI only** (`retries: 0` locally). A test that fails twice still fails the run; this only absorbs a slow cold start or a dropped connection.
-- **The HTML report and traces upload on failure** as the `playwright-report` artifact, kept 7 days. Traces, videos, and screenshots are `retain-on-failure`, so a red run comes with a step-by-step replay rather than just a stack trace.
+- **The run is sharded across six runners.** Each shard is an independent `ubuntu-latest` job with its own Postgres container, database and ports, so nothing has to be isolated for it to work.
+- **The backend and frontend builds are cached between runs.** Each shard would otherwise repeat the same 20s nest build and 11s vite build from an identical tree. On a cache hit the shard skips them via `E2E_SKIP_BACKEND_BUILD` / `E2E_SKIP_FRONTEND_BUILD`. Note this cannot help *within* a run: all shards start together, so they all hit or all miss. It pays off on a re-push that leaves app source alone, and on a re-run. Building once in a preceding job and fanning artifacts out would be **slower** — the shards already compile in parallel, so that trades ~31s of parallel work for ~74s of serial work.
+- **The workspace package build is deliberately not cached.** It runs `prisma generate`, and `packages/database/src/index.ts` is `export * from "@prisma/client"` — so the package's `dist` re-exports a client that only exists once generate has run. Caching that `dist` and skipping the build restores re-exports that resolve to nothing, and the backend dies at import time on `NotificationKind` being undefined. This was tried; that is what it does.
+- **One report, not four.** In CI the reporter is `blob` rather than `html`; each shard uploads its slice as `blob-report-<n>` and the `e2e-report` job merges them into the single `playwright-report` artifact, kept 7 days. Traces, videos, and screenshots are `retain-on-failure` and travel inside the blob, so a red run comes with a step-by-step replay rather than just a stack trace.
+- **Changing the shard count** means editing one list: `strategy.matrix.shard` in the `e2e` job. The `--shard` denominator is `strategy.job-total`, so it follows automatically. Keep `shard` the only matrix dimension — `job-total` counts every combination, so a second one would silently multiply the denominator.
 
 ## Parallelism
 
-`workers: 1`, deliberately. Every port and the database name are already offset by `TEST_PARALLEL_INDEX`, so raising it is a config change rather than a rewrite — but note that a per-worker database **partitions** state, it does not isolate tests from each other within a worker, since a worker runs many spec files sequentially. Per-test isolation comes from `world.reset()`, not from worker count.
+**Locally the suite is one process.** `workers: 1`, no sharding, one browser and one copy of each server. That is unconditional, and it is what you want on a laptop: the suite already brings up Postgres, a nest build and a vite build, and running several of those at once on a developer machine costs more than it saves.
+
+**In CI the parallelism is `--shard`, not `workers`.** These are different axes and only one of them is cheap:
+
+- **Sharding** splits the spec files across N *machines*. Each shard is a separate runner with its own docker daemon, its own database and its own ports, so there is nothing to isolate — which is why it needed no changes to `src/config.ts`. Measured at four shards the split is 128 / 121 / 116 / 121 tests. You can reproduce a single shard locally with `yarn workspace @chardb/e2e e2e --shard=2/4`.
+- **Raising `workers`** splits them across *processes on one machine*, and is the harder one. Every port and the database name are offset by `TEST_PARALLEL_INDEX`, but Playwright starts `webServer` entries **once per run, before any worker exists**, so that variable is unset when the servers boot and they all resolve to index 0. Worker 1 would then look for a backend on a port nothing started. Making it work needs N `webServer` entries and N seeded databases. Note too that a per-worker database **partitions** state, it does not isolate tests from each other within a worker, since a worker runs many spec files sequentially — per-test isolation comes from `world.reset()`, not from worker count.
+
+### Cleaning up after a run that did not exit
+
+A normal run — pass, fail, or Ctrl-C — leaves nothing behind. Playwright signals the whole process group; `gracefulShutdown` in `playwright.config.ts` makes that a SIGTERM the servers can act on, and the wrapper scripts in `src/servers/` wait for their child to actually exit before exiting themselves, so the ports are free by the time the command returns.
+
+What that cannot cover is the runner being killed outright — an OOM kill, or `kill -9`. Nothing runs, and a `vite preview` can be left holding its port; because Vite runs with `--strictPort`, the next run fails on it. To reclaim:
+
+```bash
+yarn instance:down      # frees this checkout's ports, e2e's included, and stops its containers
+```
+
+The Postgres container is a separate matter: `world.teardown.ts` drops the database but deliberately leaves the container up, since it is tmpfs-backed and the backend Jest suite shares it. `docker compose -f docker/compose.test.yml down` stops it.

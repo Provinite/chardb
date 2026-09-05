@@ -5,10 +5,13 @@ export default defineConfig({
   testDir: "./tests",
   testMatch: /.*\.(e2e|setup|teardown)\.ts$/,
 
-  // Deliberately serial for now. Every port and the database name are already
-  // offset by TEST_PARALLEL_INDEX (see src/config.ts), so raising this is a
-  // config change rather than a rewrite -- but note that per-worker databases
-  // partition state, they do not isolate tests from each other within a worker.
+  // Deliberately serial, and deliberately unconditional -- a local run is one
+  // browser, one backend, one frontend, whatever the machine.
+  //
+  // Parallelism in CI comes from `--shard`, not from this number: each shard is
+  // a separate runner with its own database, ports and containers, so it needs
+  // no isolation work here. See the `e2e` job in .github/workflows/ci.yml, and
+  // "Parallelism" in README.md for why raising `workers` is the harder axis.
   workers: 1,
   fullyParallel: false,
 
@@ -21,7 +24,14 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   timeout: 45_000,
   expect: { timeout: 10_000 },
-  reporter: [["list"], ["html", { open: "never" }]],
+  // `blob` in CI because the run is sharded: each shard emits a blob that
+  // `playwright merge-reports` stitches into one HTML report, so a failure is
+  // read in a single place rather than by guessing which of N shards owns it.
+  // Locally there is one unsharded run, so HTML is written directly and
+  // `yarn e2e:report` keeps working.
+  reporter: process.env.CI
+    ? [["list"], ["blob"]]
+    : [["list"], ["html", { open: "never" }]],
 
   use: {
     baseURL: CFG.frontendUrl,
@@ -47,11 +57,20 @@ export default defineConfig({
     },
   ],
 
+  // `gracefulShutdown` is load-bearing, not a nicety. Without it Playwright
+  // reclaims each webServer with SIGKILL to the process group -- uncatchable, so
+  // nest never closes its connection pool and vite never flushes. With it the
+  // group gets SIGTERM first and Playwright still escalates to SIGKILL if the
+  // timeout passes, so nothing can hang the run. The wrapper scripts wait for
+  // their child to actually exit before exiting themselves (src/servers/
+  // supervise.ts); together that is what stops a run leaving a server on the
+  // port for the next one to trip over.
   webServer: [
     {
       command: "yarn tsx src/servers/backend.ts",
       url: `${CFG.backendUrl}/health`,
       timeout: 300_000, // includes docker up, migrate, and a cold nest build
+      gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
       reuseExistingServer: CFG.reuseServers,
       stdout: "pipe",
       stderr: "pipe",
@@ -60,6 +79,7 @@ export default defineConfig({
       command: "yarn tsx src/servers/frontend.ts",
       url: CFG.frontendUrl,
       timeout: 300_000, // includes codegen + vite build on a cold run
+      gracefulShutdown: { signal: "SIGTERM", timeout: 10_000 },
       reuseExistingServer: CFG.reuseServers,
       stdout: "pipe",
       stderr: "pipe",

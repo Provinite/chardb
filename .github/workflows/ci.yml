@@ -269,15 +269,70 @@ jobs:
         run: yarn workspace ${{ matrix.workspace }} run test
 
   e2e:
-    name: Browser E2E
+    name: Browser E2E (shard ${{ matrix.shard }})
     runs-on: ubuntu-latest
     # Independent of `verify` on purpose: a type error and a broken user flow are
     # different signals, and running them in parallel keeps the slower job off
     # the critical path.
 
+    strategy:
+      # A failing shard says nothing about the other three, and cancelling them
+      # would hide any second failure behind the first.
+      fail-fast: false
+      matrix:
+        # The shard count lives here and nowhere else: the denominator below is
+        # `strategy.job-total`, which counts the legs of this matrix. Add or
+        # remove an entry and the split follows. Keep `shard` the ONLY dimension
+        # -- job-total counts every combination, so a second dimension would
+        # silently multiply the denominator.
+        #
+        # Six is the last count that buys anything. Modelled from the real
+        # per-file durations against the real shard assignments: 4 -> 4m01s,
+        # 5 -> 3m43s, 6 -> 3m25s, 8 -> 3m25s. It stops improving because
+        # Playwright balances by test COUNT, not duration, and the trades and
+        # smoke files are few-tests-but-slow -- so the same eleven files land
+        # together in the last shard at 6 and at 8 alike. Adding shards past
+        # this only subdivides shards that were already fast.
+        #
+        # What binds at this count is the MEAN, not the largest file: ~422s of
+        # work over 6 shards is ~70s each, while the biggest spec file is only
+        # ~40s. File size does not become the constraint until ~11 shards, by
+        # which point the ~100s of per-shard fixed cost dominates anyway. So
+        # splitting slow spec files buys nothing here -- and Playwright assigns
+        # a group to a shard by the test index its FIRST test falls in, walking
+        # files alphabetically, so a split does not even move work between
+        # shards. It just adds ~670ms of per-file seeding each time.
+        #
+        # Nothing local reads this. An unsharded `yarn e2e` runs all 474 tests
+        # in one process, which is what a developer machine should do.
+        shard: [1, 2, 3, 4, 5, 6]
+
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+
+      # Deliberately first, deliberately without --wait, and deliberately
+      # backgrounded.
+      #
+      # provision() starts this same container from inside the suite, but only
+      # after Node, Chromium and the workspace packages are ready -- ~50s in --
+      # and then blocks ~13s on the pg_isready healthcheck. Nothing in that
+      # setup depends on Postgres, so the wait is pure critical path.
+      #
+      # The `&` is the entire point. Steps run sequentially and `up -d` blocks
+      # until the containers are created and started, image pull included, so
+      # without it this step simply moves the 10s earlier instead of overlapping
+      # it -- measured, and worth exactly nothing. Backgrounded, the pull and
+      # start happen during the steps that follow.
+      #
+      # Fire-and-forget is acceptable here because it is not the only attempt:
+      # provision() runs the same idempotent `up -d --wait` later and is what
+      # actually gates on the container being healthy. If this fails, that one
+      # reports it.
+      #
+      # CI-only -- a local `yarn e2e` still brings its own Postgres up as before.
+      - name: Start test Postgres in the background
+        run: nohup docker compose -f docker/compose.test.yml up -d > /dev/null 2>&1 &
 
       - name: Enable Corepack
         run: corepack enable
@@ -325,8 +380,37 @@ jobs:
             yarn workspace @chardb/e2e exec playwright install --with-deps chromium
           fi
 
-      # @chardb/database's build runs prisma generate; apps/* consume these
-      # packages through their `types` field, which points at gitignored dist/.
+      # ----------------------------------------------------------------------
+      # Build caches.
+      #
+      # Every shard otherwise repeats the same compilation from an identical
+      # tree: a 20s nest build and an 11s vite build, both cached here, plus an
+      # 11s workspace package build that deliberately is not (see below).
+      # Caching the OUTPUT and skipping the build on a hit is the only shape
+      # that helps -- building once in a preceding job and fanning the
+      # artifacts out would convert parallel work into serial work and cost
+      # ~42s of wall clock, since the shards already build concurrently.
+      #
+      # These are per-run-independent: all shards of one run start together and
+      # so all hit or all miss. The payoff is across runs -- a re-push that does
+      # not touch app source, or a re-run of the same commit.
+      #
+      # Every key names the full set of inputs that can change the output. A key
+      # that under-specifies would serve a stale dist to the suite that gates
+      # deploys, so err towards including too much: a needless miss costs 42s,
+      # a false hit passes CI on code that is not the code being merged.
+      # ----------------------------------------------------------------------
+
+      # This step is NOT cached, and must not be. It runs prisma generate, and
+      # packages/database/src/index.ts is `export * from "@prisma/client"` --
+      # so the package's dist re-exports a client that only exists once
+      # generate has run. Caching the dist and skipping the build restores a
+      # dist whose re-exports resolve to nothing: the backend then dies at
+      # import time on `NotificationKind` being undefined. Observed, not
+      # theorised. The 11s this costs is the price of the client being real.
+      #
+      # apps/* consume these packages through their `types` field, which points
+      # at gitignored dist/.
       - name: Build workspace packages
         run: |
           yarn workspaces foreach -A --parallel \
@@ -337,20 +421,146 @@ jobs:
         env:
           DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
 
+      # A cache hit here means src/servers/backend.ts skips `nest build` and
+      # runs the restored dist/src/main.js as-is.
+      - name: Restore backend build
+        id: backend-dist-cache
+        uses: actions/cache@v6
+        with:
+          path: apps/backend/dist
+          key: backend-dist-${{ runner.os }}-${{ hashFiles('apps/backend/src/**', 'apps/backend/package.json', 'apps/backend/tsconfig*.json', 'apps/backend/nest-cli.json', 'packages/*/src/**', 'packages/database/prisma/schema.prisma', 'yarn.lock') }}
+
+      # The frontend bundle additionally depends on schema.gql, which drives
+      # codegen, and on VITE_API_URL -- inlined at build time. That URL is
+      # CFG.backendUrl, identical on every CI shard because each is its own
+      # runner using the default port, so it is not part of the key. Change how
+      # the e2e backend port is derived in CI and this key must gain it.
+      - name: Restore frontend build
+        id: frontend-dist-cache
+        uses: actions/cache@v6
+        with:
+          path: apps/frontend/dist
+          key: frontend-dist-${{ runner.os }}-${{ hashFiles('apps/frontend/src/**', 'apps/frontend/index.html', 'apps/frontend/package.json', 'apps/frontend/vite.config.ts', 'apps/frontend/.graphqlrc.yml', 'apps/backend/src/schema.gql', 'packages/*/src/**', 'yarn.lock') }}
+
       # No `services:` block: the suite starts its own Postgres through
       # docker/compose.test.yml, exactly as it does locally. Keeping the two
       # identical means a CI failure reproduces with a plain `yarn e2e`.
+      #
+      # Playwright splits by spec file and balances by test count, not duration
+      # -- measured at four shards the counts were even (128/121/116/121) while
+      # the slowest job still ran 83s longer than the fastest.
+      #
+      # Each shard reruns the `setup` project against its own database, which is
+      # what makes them independent.
       - name: Run browser E2E
-        run: yarn workspace @chardb/e2e e2e
+        run: yarn workspace @chardb/e2e e2e --shard=${{ matrix.shard }}/${{ strategy.job-total }}
+        env:
+          E2E_SKIP_BACKEND_BUILD: ${{ steps.backend-dist-cache.outputs.cache-hit == 'true' && '1' || '0' }}
+          E2E_SKIP_FRONTEND_BUILD: ${{ steps.frontend-dist-cache.outputs.cache-hit == 'true' && '1' || '0' }}
+
+      # This shard's slice of the report, which `e2e-report` below merges.
+      # A single `path` is deliberate: upload-artifact roots the archive at the
+      # common ancestor of what it is given, so one path puts the blob zips at
+      # the artifact root where merge-reports expects them, and a second path
+      # would push them down under apps/e2e/. Traces, videos and screenshots are
+      # attachments inside the blob, so they need no upload of their own.
+      - name: Upload shard report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: blob-report-${{ matrix.shard }}
+          path: apps/e2e/blob-report/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # A single check whose NAME IS STABLE across shard-count changes.
+  #
+  # main's ruleset requires a status check literally called "Browser E2E".
+  # Matrix jobs report one check per leg, named "Browser E2E (shard 1)" and so
+  # on, so sharding the job silently removed the context the ruleset waits for
+  # and left every PR unmergeable. Rather than list the six shard names in the
+  # ruleset -- which would mean a settings change every time the matrix changes,
+  # defeating the point of the count living in one place -- this job carries the
+  # required name and simply reports the matrix's aggregate result.
+  #
+  # `needs.e2e.result` is 'success' only when every leg succeeded, so this is a
+  # true gate and not a rubber stamp.
+  e2e-required:
+    name: Browser E2E
+    needs: e2e
+    # always(), or a failed shard would leave this skipped -- and a skipped
+    # required check blocks the PR without ever saying why.
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Report aggregate shard result
+        run: |
+          result='${{ needs.e2e.result }}'
+          if [ "$result" != "success" ]; then
+            echo "::error::Browser E2E shards did not all pass (matrix result: $result)."
+            exit 1
+          fi
+          echo "All Browser E2E shards passed."
+
+  e2e-report:
+    name: Merge E2E reports
+    needs: e2e
+    # `always()` so a red run still produces a report -- that is when it is worth
+    # having. It reports the merge, not the tests; `e2e` remains the gate.
+    if: always()
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --immutable
+
+      # Every shard's blob lands in one directory; merge-reports reads them all.
+      - name: Download shard reports
+        uses: actions/download-artifact@v8
+        with:
+          pattern: blob-report-*
+          merge-multiple: true
+          path: apps/e2e/all-blob-reports
+
+      - name: Merge into one HTML report
+        run: |
+          if ! ls apps/e2e/all-blob-reports/*.zip >/dev/null 2>&1; then
+            echo "No blob reports to merge; every shard failed before reporting."
+            exit 0
+          fi
+          yarn workspace @chardb/e2e exec playwright merge-reports \
+            --reporter html all-blob-reports
 
       - name: Upload report
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: playwright-report
-          path: |
-            apps/e2e/playwright-report/
-            apps/e2e/test-results/
+          path: apps/e2e/playwright-report/
           retention-days: 7
           if-no-files-found: ignore
 
