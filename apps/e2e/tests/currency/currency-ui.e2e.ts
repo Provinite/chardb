@@ -242,7 +242,7 @@ test.describe("currency wallet", () => {
 
     test("balances are visible, Send is not", async ({ page, world }) => {
       await page.goto(
-        `/communities/${world.community.id}/members/${world.users.othermember.username}/items`,
+        `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory`,
       );
 
       await expect(page.getByTestId("wallet-HC")).toContainText("⬡620");

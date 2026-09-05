@@ -2906,6 +2906,15 @@ type Query {
     id: ID!
   ): CommunityMember!
 
+  """Roles a user holds in a community"""
+  communityMemberRoles(
+    """Community ID"""
+    communityId: ID!
+
+    """User ID"""
+    userId: ID!
+  ): [Role!]!
+
   """Get all community members with pagination"""
   communityMembers(
     """Cursor for pagination"""

@@ -13,7 +13,7 @@ const test = presetTest("community-items");
 const ownUrl = (communityId: string) => `/communities/${communityId}/inventory`;
 
 const memberUrl = (communityId: string, username: string) =>
-  `/communities/${communityId}/members/${username}/items`;
+  `/communities/${communityId}/members/${username}/inventory`;
 
 const group = (page: Page, itemTypeId: string) =>
   page.locator(
@@ -189,7 +189,7 @@ test.describe("reaching holdings from the member list", () => {
     ).toContainText("Quartermaster");
   });
 
-  test("clicking a member's Items reaches their holdings", async ({
+  test("clicking a member's Inventory reaches their holdings", async ({
     page,
     world,
   }) => {
@@ -201,12 +201,12 @@ test.describe("reaching holdings from the member list", () => {
       .locator(
         `[data-testid="member-row"][data-username="${world.users.othermember.username}"]`,
       )
-      .getByRole("link", { name: /Items/ })
+      .getByRole("link", { name: /Inventory/ })
       .click();
 
     await expect(page).toHaveURL(
       new RegExp(
-        `/communities/${world.community.id}/members/${world.users.othermember.username}/items$`,
+        `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory$`,
       ),
     );
     await expect(group(page, world.itemTypes.locket.id)).toContainText(

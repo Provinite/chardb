@@ -83,6 +83,10 @@ const List = styled.div`
 const MemberRow = styled.div`
   display: flex;
   align-items: center;
+  /* Narrow enough and the buttons drop to their own line rather than crushing
+     the name to nothing -- a member you cannot read is worse than a row two
+     lines tall. */
+  flex-wrap: wrap;
   gap: 0.875rem;
   padding: 0.75rem 1rem;
   border-bottom: 1px solid ${({ theme }) => theme.colors.border};
@@ -98,7 +102,13 @@ const MemberRow = styled.div`
 
 const Who = styled.div`
   min-width: 0;
-  flex: 1;
+  /* A real basis rather than 0, so the row wraps instead of squeezing this to
+     nothing -- with a basis of zero it always "fits" and never wraps. */
+  flex: 1 1 10rem;
+  /* And without this the block shrinks while its text keeps its own width, so
+     the name paints across the role tag beside it. Clipping here is what makes
+     the ellipsis below do anything. */
+  overflow: hidden;
 `;
 
 const Name = styled.div`
@@ -112,6 +122,9 @@ const Name = styled.div`
 const Handle = styled.div`
   font-size: 0.75rem;
   color: ${({ theme }) => theme.colors.text.muted};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const RoleTag = styled.span`
@@ -124,6 +137,9 @@ const RoleTag = styled.span`
   border-radius: ${({ theme }) => theme.borderRadius.sm};
   padding: 0.1rem 0.4rem;
   white-space: nowrap;
+  /* The tag is as wide as its role's name and no narrower. The member's own
+     name is the part that gives way, and it has an ellipsis to do it with. */
+  flex: none;
 `;
 
 const ItemsLink = styled(Link)`
@@ -295,15 +311,23 @@ export const CommunityMembersPage: React.FC = () => {
                 <Avatar image={m.user.avatarImage} name={name} size={36} />
                 <Who>
                   <Name>
-                    <Link to={`/user/${m.user.username}`}>{name}</Link>
+                    {/* Their profile *here*, not the global one. Clicking a
+                        name inside a community and landing somewhere that has
+                        forgotten the community is how their holdings became
+                        unreachable in the first place (#349). */}
+                    <Link
+                      to={`/communities/${communityId}/members/${m.user.username}`}
+                    >
+                      {name}
+                    </Link>
                   </Name>
                   {m.user.displayName && <Handle>@{m.user.username}</Handle>}
                 </Who>
                 <RoleTag>{m.role.name}</RoleTag>
                 <ItemsLink
-                  to={`/communities/${communityId}/members/${m.user.username}/items`}
+                  to={`/communities/${communityId}/members/${m.user.username}/inventory`}
                 >
-                  <Package size={14} /> Items
+                  <Package size={14} /> Inventory
                 </ItemsLink>
                 {/* Hidden on your own row: the server refuses a trade with
                     yourself, so offering the button would be a dead end. */}

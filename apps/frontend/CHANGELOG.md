@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A member has a profile inside a community**, at
+  `/communities/:communityId/members/:username`: their role here, their
+  characters here, and the way through to their inventory or a trade (#349).
+
+- **The search box finds members, not just pages.** `@` inside a community
+  switches it to people and `@` alone lists who is here; picking one opens
+  their pages — profile, inventory, characters, propose a trade — without
+  leaving the box. Without the sigil it searches pages exactly as before
+  (#349).
+
+- **The trade composer links out to the partner's full inventory**, which
+  includes the items its own pane leaves out as untradeable (#349).
+
 - **A member's characters and galleries each have a page.**
   `/user/:username/characters` and `/user/:username/galleries`. The profile's
   "View All" links reach them, and the Characters and Galleries stat tiles are
@@ -47,6 +60,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and trait queues with their pending counts. Each is shown only to a role that
   can work it, and the sidebar and command palette both reach it (#352).
 
+### Changed
+
+- **Breaking: a member's inventory moved from
+  `/communities/:id/members/:username/items` to `.../inventory`**, matching the
+  segment your own already used. Links to the old path 404 (#349).
+
+- **A member's name on the members list now opens their community profile**
+  rather than their global site profile (#349).
+
 ### Fixed
 
 - **A profile's "View All" on Recent Media 404'd.** It pointed at `/images`,
@@ -59,6 +81,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **The same card was shown to members who cannot moderate anything**, unlike
   every other card on that page (#352).
+
+- **A long name on the members list painted over the role tag beside it**, and
+  a narrow enough window crushed it away entirely. Rows now wrap (#349).
 
 - **`VariantChangePanel` read an empty allow-list as permitting everything**,
   which the server has never agreed with — it would have shown nothing to

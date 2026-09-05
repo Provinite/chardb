@@ -57,6 +57,7 @@ import { EnumValueManagementPage } from "./pages/EnumValueManagementPage";
 import { EnumValueSettingsPage } from "./pages/EnumValueSettingsPage";
 import { PermissionManagementPage } from "./pages/PermissionManagementPage";
 import { CommunityMembersPage } from "./pages/CommunityMembersPage";
+import { CommunityMemberProfilePage } from "./pages/CommunityMemberProfilePage";
 import { NotificationsPage } from "./pages/NotificationsPage";
 import { TradesPage } from "./pages/TradesPage";
 import { TradeOfferPage } from "./pages/TradeOfferPage";
@@ -507,11 +508,26 @@ function App() {
             </ProtectedRoute>
           }
         />
+        {/* One person, seen from inside one community: their role here, what
+            they hold here, who they are here. The global /user/:username has
+            none of that context and cannot grow it -- it does not know which
+            community you came from. */}
+        <Route
+          path="/communities/:communityId/members/:username"
+          element={
+            <ProtectedRoute>
+              <CommunityMemberProfilePage />
+            </ProtectedRoute>
+          }
+        />
         {/* Same page either way: inventories are public within a community,
             so a named member's holdings and your own are one view with
-            different actions rather than two pages of the same facts. */}
+            different actions rather than two pages of the same facts. The
+            segment says `inventory` in both shapes -- it used to say `items`
+            here and `inventory` for your own, which is how the feature came
+            to be unfindable (#349). */}
         <Route
-          path="/communities/:communityId/members/:username/items"
+          path="/communities/:communityId/members/:username/inventory"
           element={
             <ProtectedRoute>
               <CommunityInventoryPage />

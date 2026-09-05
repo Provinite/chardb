@@ -5,7 +5,12 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import {
+  Link,
+  useNavigate,
+  useParams,
+  useSearchParams,
+} from "react-router-dom";
 import styled from "styled-components";
 import { ArrowDownUp } from "lucide-react";
 import { Button, Input } from "@chardb/ui";
@@ -67,6 +72,17 @@ const Hint = styled.span`
   font-size: 0.6875rem;
   font-weight: 400;
   color: ${({ theme }) => theme.colors.text.muted};
+`;
+
+const PaneLink = styled(Link)`
+  font-size: 0.6875rem;
+  font-weight: 400;
+  color: ${({ theme }) => theme.colors.text.muted};
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.text.primary};
+    text-decoration: underline;
+  }
 `;
 
 const PaneBody = styled.div`
@@ -312,6 +328,9 @@ export const TradeComposerPage: React.FC = () => {
   // query resolves, which would make the useMemo below recompute each time.
   const mine = useMemo(() => data?.mine.holdings ?? [], [data]);
   const theirs = useMemo(() => data?.theirs.holdings ?? [], [data]);
+  // The composer is handed a user id in the query string; their inventory URL
+  // is keyed on the name, which is what a shareable URL should say.
+  const themUsername = data?.theirs.member.username;
   // Already filtered to the tradeable ones by the query. A character that is
   // not open to trades is not a greyed-out choice here, it is absent -- the
   // flag is a standing answer to being asked, and showing it at all would be
@@ -846,7 +865,21 @@ export const TradeComposerPage: React.FC = () => {
             {/* Was "any copy will do", which is true of the items and false of
                 the characters below them. A hint that is right about half a
                 pane is worse than one that only says what to do with it. */}
-            Theirs <Hint>tap to ask for</Hint>
+            <span>
+              Theirs <Hint>tap to ask for</Hint>
+            </span>
+            {/* This pane shows only what can move. Whether an offer is fair
+                often turns on what they hold that cannot -- so the way to see
+                the rest sits next to the half you are looking at, rather than
+                on a members list two pages away (#349). */}
+            {themUsername && (
+              <PaneLink
+                to={`/communities/${communityId}/members/${themUsername}/inventory`}
+                data-testid="their-full-inventory"
+              >
+                full inventory
+              </PaneLink>
+            )}
           </PaneHead>
           <PaneBody>
             {theirs.length === 0 && theirCharacters.length === 0 && (
