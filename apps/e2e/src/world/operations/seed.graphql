@@ -888,8 +888,27 @@ mutation SeedCreateGallery($input: CreateGalleryInput!) {
   }
 }
 
-# The two queries the per-owner pages read. Selected here so a spec can assert
-# what the API hands a given viewer, independently of what the page renders.
+mutation SeedCreateTextMedia($input: CreateTextMediaInput!) {
+  createTextMedia(input: $input) {
+    id
+    title
+    visibility
+  }
+}
+
+# The only way a spec can get *image* media of a given visibility: creating one
+# needs S3 and a multipart upload, so a spec re-flags one the preset seeded
+# through Prisma instead.
+mutation SeedUpdateMedia($id: ID!, $input: UpdateMediaInput!) {
+  updateMedia(id: $id, input: $input) {
+    id
+    visibility
+  }
+}
+
+# The three queries the per-owner pages read. Selected here so a spec can
+# assert what the API hands a given viewer, independently of what the page
+# renders.
 query SeedUserCharacters($userId: ID!) {
   userCharacters(userId: $userId, filters: { limit: 50, offset: 0 }) {
     total
@@ -906,6 +925,17 @@ query SeedUserGalleries($userId: ID!) {
     galleries {
       name
       visibility
+    }
+  }
+}
+
+query SeedUserMedia($userId: ID!) {
+  userMedia(userId: $userId, filters: { limit: 50, offset: 0 }) {
+    total
+    media {
+      title
+      visibility
+      ownerId
     }
   }
 }

@@ -49,6 +49,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A profile's "View All" on Recent Media 404'd.** It pointed at `/images`,
+  which is not a route; it now reaches `/user/:username/media`, and the Images
+  stat tile links there too (#348).
+
 - **The admin dashboard's "Content Moderation" card 404'd.** It pointed at
   `/communities/:id/moderation`, which was never a registered route; it now
   reaches the index above (#352).

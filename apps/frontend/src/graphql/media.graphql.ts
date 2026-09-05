@@ -162,6 +162,58 @@ export const GET_CHARACTER_MEDIA = gql`
   ${USER_BASIC_FRAGMENT}
 `;
 
+// `userMedia` is @AllowUnauthenticated and narrows by viewer as well as by
+// owner, so a visitor gets one member's public media and nothing they kept
+// back. The filtering has to stay server-side for that to hold.
+export const GET_USER_MEDIA = gql`
+  query GetUserMedia($userId: ID!, $filters: MediaFiltersInput) {
+    userMedia(userId: $userId, filters: $filters) {
+      media {
+        id
+        title
+        description
+        ownerId
+        characterId
+        galleryId
+        visibility
+        imageId
+        textContentId
+        createdAt
+        updatedAt
+        owner {
+          ...UserBasic
+        }
+        character {
+          id
+          name
+        }
+        gallery {
+          id
+          name
+        }
+        image {
+          id
+          originalUrl
+          thumbnailUrl
+          altText
+          isNsfw
+        }
+        textContent {
+          id
+          content
+          wordCount
+          formatting
+        }
+        likesCount
+        userHasLiked
+      }
+      total
+      hasMore
+    }
+  }
+  ${USER_BASIC_FRAGMENT}
+`;
+
 export const GET_MY_MEDIA = gql`
   query GetMyMedia($filters: MediaFiltersInput) {
     myMedia(filters: $filters) {
@@ -449,6 +501,7 @@ export {
   useGetMediaQuery,
   useGetMediaItemQuery,
   useGetCharacterMediaQuery,
+  useGetUserMediaQuery,
   useGetMyMediaQuery,
 
   // Mutation Hooks
@@ -478,6 +531,8 @@ export {
   type GetMediaItemQueryVariables,
   type GetCharacterMediaQuery,
   type GetCharacterMediaQueryVariables,
+  type GetUserMediaQuery,
+  type GetUserMediaQueryVariables,
   type GetMyMediaQuery,
   type GetMyMediaQueryVariables,
   type CreateTextMediaMutation,

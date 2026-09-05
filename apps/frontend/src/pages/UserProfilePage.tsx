@@ -401,8 +401,9 @@ export const UserProfilePage: React.FC = () => {
 
       <StatsGrid>
         {/* Clickable now that there is somewhere to go. Followers and
-            Following already worked this way; these two read as the same kind
-            of tile and did nothing, which is its own small lie. */}
+            Following already worked this way; Characters, Galleries and Images
+            read as the same kind of tile and did nothing, which is its own
+            small lie. Total Views stays inert -- there is no page of views. */}
         <StatCard clickable>
           <StatLink
             data-testid="profile-stat-characters"
@@ -421,9 +422,14 @@ export const UserProfilePage: React.FC = () => {
             <StatLabel>Galleries</StatLabel>
           </StatLink>
         </StatCard>
-        <StatCard>
-          <StatNumber>{stats.imagesCount}</StatNumber>
-          <StatLabel>Images</StatLabel>
+        <StatCard clickable>
+          <StatLink
+            data-testid="profile-stat-images"
+            to={`/user/${user.username}/media`}
+          >
+            <StatNumber>{stats.imagesCount}</StatNumber>
+            <StatLabel>Images</StatLabel>
+          </StatLink>
         </StatCard>
         <StatCard>
           <StatNumber>{stats.totalViews}</StatNumber>
@@ -533,8 +539,14 @@ export const UserProfilePage: React.FC = () => {
         <Section>
           <SectionHeader>
             <SectionTitle>Recent Media</SectionTitle>
+            {/* `/images?uploader=<username>` before: #321 converted the two
+                links above to real routes and left this one on the old
+                pattern, where it was worse than either -- `/images` is not a
+                route at all, so it fell through to the catch-all and 404'd
+                (#348). */}
             <Link
-              to={`/images?uploader=${user.username}`}
+              data-testid="profile-view-all-media"
+              to={`/user/${user.username}/media`}
               style={{
                 color: "inherit",
                 textDecoration: "none",
