@@ -7,7 +7,9 @@ import {
   CreateCommunityServiceInput,
   UpdateCommunityServiceInput,
 } from "../communities.service";
-import { Prisma } from "@chardb/database";
+// Aliased because `Community` in this file is the GraphQL entity, which is a
+// different shape from the row it is mapped from.
+import type { Community as PrismaCommunity } from "@chardb/database";
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -39,10 +41,6 @@ export function mapUpdateCommunityInputToService(
 
   return result;
 }
-
-// eslint-disable-next-line @typescript-eslint/ban-types -- `GetPayload` takes
-// an args object, and the empty one is how you ask for the scalar fields alone.
-type PrismaCommunity = Prisma.CommunityGetPayload<{}>;
 
 /**
  * Maps Prisma Community result to GraphQL Community entity
