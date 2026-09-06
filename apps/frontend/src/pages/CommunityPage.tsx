@@ -21,6 +21,7 @@ import {
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
 import { apexUrl } from "../lib/communityHost";
+import { usePageMeta } from "../lib/pageMeta";
 
 /**
  * Community Landing Page
@@ -198,6 +199,17 @@ export const CommunityPage: React.FC = () => {
       },
     },
   });
+
+  usePageMeta(
+    hostCommunity
+      ? {
+          title: hostCommunity.name,
+          // A community has neither a description nor an image to describe it
+          // with, so the card says what it is rather than inventing copy.
+          description: "A character community on CharDB.",
+        }
+      : null,
+  );
 
   // Check if current user is a member of this community
   // Off the viewer: `me` already carries the memberships.

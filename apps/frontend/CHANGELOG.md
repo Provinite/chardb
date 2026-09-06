@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Pages set their own title and OpenGraph tags**, replacing the one static title every route shared; chat unfurlers still see only the site card, which needs server-side rendering.
+
 ## [v12.0.0] - 2026-09-06
 
 ### Changed

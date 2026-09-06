@@ -6,6 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <title>CharDB - Character Hub</title>
+
+    <!--
+      Site-level card. `usePageMeta` overwrites these once the app has mounted
+      and knows which page it is on; see src/lib/pageMeta.ts.
+
+      For a link unfurler they are not defaults, they are the whole answer.
+      Discord, Slack, Twitter/X, Facebook and iMessage fetch this file and
+      parse the head they are handed without executing a line of JavaScript, so
+      every URL on the site unfurls as the site. Making a pasted character link
+      show that character needs the head to differ before the bundle runs,
+      which a static bundle cannot do -- it needs something server-side, and
+      there is deliberately nothing server-side here yet.
+    -->
+    <meta
+      name="description"
+      content="A home for original characters: profiles, art galleries, species and the communities built around them."
+    />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="CharDB" />
+    <meta
+      property="og:description"
+      content="A home for original characters: profiles, art galleries, species and the communities built around them."
+    />
+    <meta name="twitter:card" content="summary" />
   </head>
   <body>
     <div id="root"></div>

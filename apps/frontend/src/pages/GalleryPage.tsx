@@ -13,6 +13,7 @@ import { LikeButton } from "../components/LikeButton";
 import { CommentList } from "../components/CommentList";
 import { MediaCard } from "../components/MediaCard";
 import { characterUrl } from "../lib/communityHost";
+import { usePageMeta } from "../lib/pageMeta";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -330,6 +331,22 @@ export const GalleryPage: React.FC = () => {
 
   const gallery = data?.gallery;
   const mediaItems = mediaData?.media?.media || [];
+
+  // The cover is whatever the gallery leads with, skipping anything flagged
+  // NSFW rather than falling back to no image at the first one.
+  const cover = mediaItems.find((item) => item.image && !item.image.isNsfw)
+    ?.image;
+
+  usePageMeta(
+    gallery
+      ? {
+          title: gallery.name,
+          description:
+            gallery.description || `A gallery by ${gallery.owner.username}`,
+          image: cover?.thumbnailUrl ?? cover?.originalUrl,
+        }
+      : null,
+  );
 
   const handleBackClick = () => {
     navigate("/galleries");

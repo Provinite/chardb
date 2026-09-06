@@ -15,6 +15,7 @@ import { DeleteConfirmationDialog } from "../components/DeleteConfirmationDialog
 import { TextViewer } from "../components/TextViewer";
 import { Markdown } from "../components/Markdown";
 import { characterUrl } from "../lib/communityHost";
+import { usePageMeta } from "../lib/pageMeta";
 // import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
@@ -371,6 +372,18 @@ export const MediaPage: React.FC = () => {
   });
 
   const media = data?.mediaItem;
+
+  usePageMeta(
+    media
+      ? {
+          title: media.title,
+          description: media.description || `Posted by ${media.owner.username}`,
+          image: media.image?.isNsfw
+            ? null
+            : (media.image?.thumbnailUrl ?? media.image?.originalUrl),
+        }
+      : null,
+  );
 
   const handleBackClick = () => {
     if (media?.character) {
