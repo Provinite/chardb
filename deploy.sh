@@ -81,11 +81,15 @@ fi
 # Load TF outputs into env
 source ./scripts/get-terraform-outputs.sh "$ENVIRONMENT"
 
-if [ -z "$SERVER_IP" ] || [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$ECR_REPOSITORY_URL" ]; then
+if [ -z "$SERVER_IP" ] || [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$ECR_REPOSITORY_URL" ] || [ -z "$ROOT_DOMAIN" ]; then
     echo "❌ Missing required Terraform outputs"
     echo "SERVER_IP: $SERVER_IP"
     echo "SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:+[present]}"
     echo "ECR_REPOSITORY_URL: $ECR_REPOSITORY_URL"
+    # Fails here rather than at runtime: without it the CORS allowlist falls
+    # back to `localhost` and refuses every origin the site is actually served
+    # from, which looks like an outage rather than a missing variable.
+    echo "ROOT_DOMAIN: $ROOT_DOMAIN"
     exit 1
 fi
 
@@ -121,6 +125,12 @@ DATABASE_URL="postgresql://app:$ENCODED_PASSWORD@postgres:5432/app"
 JWT_SECRET="${JWT_SECRET//$/\\$}"
 NODE_ENV=production
 FRONTEND_URL="$FRONTEND_URL"
+# The domain communities are subdomains of. Two things depend on it and both
+# fail closed: the CORS allowlist, which without this defaults to `localhost`
+# and refuses every real origin, and the Domain on the session cookie. Comes
+# from the same Terraform output the frontend build is given, so the bundle and
+# the API cannot disagree about which host they are on.
+ROOT_DOMAIN="$ROOT_DOMAIN"
 EMAIL_FROM="noreply@dev.chardb.cc"
 
 # OAuth client ids and callback URLs. Neither is secret. The client secrets and
