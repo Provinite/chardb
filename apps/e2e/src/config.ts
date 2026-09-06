@@ -105,6 +105,12 @@ export const CFG = {
   bindHost,
   backendPort: num(process.env.E2E_BACKEND_PORT, 4310) + idx * 2,
   frontendPort: num(process.env.E2E_FRONTEND_PORT, 4311) + idx * 2,
+  /**
+   * The suite's own LocalStack, so an upload in a spec really reaches S3.
+   * Not shared with the dev instance's: a suite run empties the bucket, and
+   * doing that to a running app's images would be unkind.
+   */
+  localstackPort: num(process.env.E2E_LOCALSTACK_PORT, 4567),
 
   pgHost,
   pgPort,
@@ -161,6 +167,10 @@ export const CFG = {
   /** The site's apex as the browser reaches it. Playwright's `baseURL`. */
   get apexUrl(): string {
     return `http://${this.rootDomain}:${this.frontendPort}`;
+  },
+  /** Where the backend puts uploaded images. Also where the suite empties. */
+  get s3Endpoint(): string {
+    return `http://${this.bindHost}:${this.localstackPort}`;
   },
   get graphqlUrl(): string {
     return `${this.backendUrl}/graphql`;

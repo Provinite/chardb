@@ -98,6 +98,11 @@ async function main(): Promise<void> {
       // cookie -- `.e2e.localhost`, so every community host is signed in by the
       // same sign-in. It must match the domain the bundle was built with.
       ROOT_DOMAIN: CFG.rootDomain,
+      // The suite's own LocalStack. Without this the backend reaches for
+      // whatever is on the dev instance's port -- somebody else's bucket, and
+      // quite possibly nothing at all.
+      AWS_ENDPOINT_URL: CFG.s3Endpoint,
+      S3_IMAGES_BUCKET: "chardb-images",
     },
   });
 

@@ -45,6 +45,26 @@ describe("isOriginAllowed", () => {
     });
   });
 
+  it("refuses the staging label, which is under production's root", () => {
+    // Staging is `dev.chardb.cc`, one label under production, so it satisfies
+    // the single-label rule. Accepting it as a CREDENTIALED origin would let
+    // script on staging call the production API with the browser's production
+    // cookie and read the reply.
+    withRootDomain("chardb.cc", () => {
+      expect(isOriginAllowed("https://dev.chardb.cc")).toBe(false);
+      expect(isOriginAllowed("https://staging.chardb.cc")).toBe(false);
+    });
+  });
+
+  it("still allows staging its own apex when it is the root", () => {
+    // On staging itself ROOT_DOMAIN is `dev.chardb.cc`, so its own origin is
+    // the root rather than a label under one, and the blocklist never applies.
+    withRootDomain("dev.chardb.cc", () => {
+      expect(isOriginAllowed("https://dev.chardb.cc")).toBe(true);
+      expect(isOriginAllowed("https://willowmere.dev.chardb.cc")).toBe(true);
+    });
+  });
+
   it("refuses non-http schemes", () => {
     withRootDomain("chardb.cc", () => {
       expect(isOriginAllowed("ftp://chardb.cc")).toBe(false);

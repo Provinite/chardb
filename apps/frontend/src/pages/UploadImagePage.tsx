@@ -11,6 +11,7 @@ import {
 import { CharacterTypeahead } from "../components/CharacterTypeahead";
 import { MarkdownEditor } from "../components/MarkdownEditor";
 import { characterUrl } from "../lib/communityHost";
+import { getAccessToken } from "../lib/accessToken";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -506,7 +507,7 @@ export const UploadImagePage: React.FC = () => {
         const response = await fetch(`${apiUrl}/images/upload`, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: formDataToSend,
         });

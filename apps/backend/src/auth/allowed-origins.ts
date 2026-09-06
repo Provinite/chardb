@@ -20,6 +20,23 @@
 const rootDomain = (): string => process.env.ROOT_DOMAIN || "localhost";
 
 /**
+ * Labels that are under the root domain but are NOT this deployment.
+ *
+ * Staging lives at `dev.chardb.cc`, one label under production. Without this it
+ * satisfies the rule below -- a single label under the root -- and production
+ * therefore accepts it as a CREDENTIALED origin: script on staging could call
+ * `api.chardb.cc` carrying the browser's production cookie and read the reply.
+ * The cookie is sent regardless, because `Domain=.chardb.cc` is what makes
+ * community subdomains work; what this removes is permission to read what comes
+ * back.
+ *
+ * A blocklist rather than narrowing to valid slugs, because `api` and `www` are
+ * legitimately under the root and are not communities either. The real fix is
+ * moving staging off the production registrable domain, which retires this.
+ */
+const BLOCKED_LABELS: ReadonlySet<string> = new Set(["dev", "staging"]);
+
+/**
  * Extra origins that are not under the root domain: CloudFront's own
  * `*.cloudfront.net` hostname before DNS is cut over, a preview deployment, a
  * staging apex. Comma-separated, exact origins including scheme.
@@ -60,5 +77,7 @@ export const isOriginAllowed = (origin: string): boolean => {
   if (!host.endsWith(suffix)) return false;
 
   const label = host.slice(0, -suffix.length);
-  return label.length > 0 && !label.includes(".");
+  if (label.length === 0 || label.includes(".")) return false;
+
+  return !BLOCKED_LABELS.has(label);
 };

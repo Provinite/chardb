@@ -20,6 +20,7 @@ import { ItemUseTraitEditGrantEditor } from "../components/items/ItemUseTraitEdi
 import { ItemUseVariantChangeGrantEditor } from "../components/items/ItemUseVariantChangeGrantEditor";
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-hot-toast";
+import { getAccessToken } from "../lib/accessToken";
 import {
   type GrantItemInput,
   type ItemTypeFieldsFragment,
@@ -464,7 +465,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
       const response = await fetch(`${apiUrl}/images/upload`, {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          Authorization: `Bearer ${getAccessToken()}`,
         },
         body: formDataToSend,
       });

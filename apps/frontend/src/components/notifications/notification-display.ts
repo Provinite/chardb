@@ -19,10 +19,9 @@ import { apexUrl } from "../../lib/communityHost";
  * -- while most of what they point at is served from a community host. The
  * router cannot make that jump: it is a different origin.
  *
- * The community-owned ones address the apex's `/communities/:id/...` route,
- * which resolves the id to a slug and forwards (`CommunityHostRedirect`).
- * Naming the community host directly would save a hop, but the notification
- * fragment selects `community { id name }` and no slug.
+ * The community-owned ones name that community's host directly. The
+ * notification fragment selects the slug, so there is no reason to go through
+ * the apex's `/communities/:id` forwarder and pay the extra hops it costs.
  */
 export function notificationHref(
   notification: NotificationFieldsFragment,

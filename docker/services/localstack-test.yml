@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
+
+# Test LocalStack
+#
+# Ephemeral S3 for the browser e2e suite, so an image upload in a spec is a
+# real upload rather than a stub.
+#
+# A DISTINCT SERVICE NAME from `localstack`, for the same reason `postgres-test`
+# is distinct from `postgres`: both compose files are brought up under one
+# project name (COMPOSE_PROJECT_NAME, from scripts/instance.mjs), so a shared
+# name is one container. Reusing `localstack` here does not add a second
+# container -- it RECONFIGURES the dev instance's onto the test port, and the
+# running app loses its S3 mid-session with no error anywhere.
+#
+# No SQS: the suite sets AWS_SQS_ENABLED=false, and the backend's consumer is
+# what would otherwise need a queue to exist at boot.
+
+services:
+  localstack-test:
+    image: localstack/localstack:3.0
+    # No container_name: it would pin this machine-wide and make a second
+    # instance's e2e run fail to start.
+    ports:
+      - "${E2E_LOCALSTACK_PORT:-4567}:4566"
+    environment:
+      - SERVICES=s3
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - "../localstack-test:/etc/localstack/init/ready.d"
+    healthcheck:
+      # The suite's provision step waits on this, so a spec never uploads into
+      # a LocalStack that has not finished creating the bucket.
+      test:
+        [
+          "CMD-SHELL",
+          "awslocal s3api head-bucket --bucket chardb-images || exit 1",
+        ]
+      interval: 2s
+      timeout: 5s
+      retries: 30

@@ -58,6 +58,10 @@ const PORTS = {
   localstack: { legacy: 4566, offset: 4 },
   e2eBackend: { legacy: 4310, offset: 40 },
   e2eFrontend: { legacy: 4311, offset: 41 },
+  // The browser suite provisions its own LocalStack, so an image upload in a
+  // spec is a real upload. Separate from the dev instance's so a suite run and
+  // a running app never share a bucket.
+  e2eLocalstack: { legacy: 4567, offset: 42 },
 };
 
 /**
@@ -383,6 +387,7 @@ export function describe(slot, root = null) {
     localstack: port("localstack"),
     e2eBackend: port("e2eBackend"),
     e2eFrontend: port("e2eFrontend"),
+    e2eLocalstack: port("e2eLocalstack"),
   };
 
   const names = {
@@ -456,6 +461,7 @@ export function describe(slot, root = null) {
     // Browser e2e suite (apps/e2e). Consumed by apps/e2e/src/config.ts.
     E2E_BACKEND_PORT: String(ports.e2eBackend),
     E2E_FRONTEND_PORT: String(ports.e2eFrontend),
+    E2E_LOCALSTACK_PORT: String(ports.e2eLocalstack),
     E2E_PG_PORT: String(ports.postgresTest),
     E2E_DB_NAME: names.e2eDatabase,
 

@@ -14,9 +14,10 @@ export type CharacterCardItem = Pick<
   species?:
     | (Pick<NonNullable<Character["species"]>, "name"> & {
         /**
-         * Which host the character is served from. Optional because most of
-         * the list queries behind this card do not select it yet; without it
-         * the card addresses the apex, which forwards (`CharacterHostGuard`).
+         * Which host the character is served from. Optional because a
+         * character with no species has no community and therefore no host --
+         * it lives at the apex, and `characterUrl` says so. Every list query
+         * behind this card selects it.
          */
         community?: Pick<Community, "slug"> | null;
       })

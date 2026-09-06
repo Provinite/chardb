@@ -14,16 +14,20 @@ const run = (
   });
 };
 
-/** Idempotent; `--wait` blocks on the container's pg_isready healthcheck. */
+/**
+ * Idempotent; `--wait` blocks on each container's healthcheck.
+ *
+ * Brings up LocalStack as well as postgres, so an image upload in a spec is a
+ * real upload rather than a stub. The port is this suite's own, not the dev
+ * instance's -- teardown empties the bucket, and doing that to a running app's
+ * images would be unkind.
+ */
 export function startPostgres(): void {
-  run("docker", [
-    "compose",
-    "-f",
-    "docker/compose.test.yml",
-    "up",
-    "-d",
-    "--wait",
-  ]);
+  run(
+    "docker",
+    ["compose", "-f", "docker/compose.test.yml", "up", "-d", "--wait"],
+    { E2E_LOCALSTACK_PORT: String(CFG.localstackPort) },
+  );
 }
 
 export async function dropDatabase(name = CFG.dbName): Promise<void> {

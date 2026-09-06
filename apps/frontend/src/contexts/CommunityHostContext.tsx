@@ -92,6 +92,14 @@ interface CommunityHostContextType {
    */
   isUnknownHost: boolean;
   /**
+   * True when the community could not be looked up at all -- the request
+   * failed. Distinct from `isUnknownHost`, which means the server answered and
+   * said there is nothing here. One is a broken connection, the other is a
+   * wrong address, and telling somebody the wrong thing about which is worse
+   * than saying nothing.
+   */
+  unreachable: boolean;
+  /**
    * Re-read the host community. For the pages that can CHANGE it -- renaming
    * it, linking a Discord guild -- which previously held their own query and
    * refetched that.
@@ -132,7 +140,7 @@ export const CommunityHostProvider: React.FC<{ children: ReactNode }> = ({
   // the mapping is permanent rather than merely cacheable.
   const [remembered, setRemembered] = useState(() => readRemembered(slug));
 
-  const { data, loading, refetch } = useCommunityBySlugQuery({
+  const { data, loading, error, refetch } = useCommunityBySlugQuery({
     variables: { slug: slug ?? "" },
     skip: !slug,
     fetchPolicy: "cache-first",
@@ -143,6 +151,13 @@ export const CommunityHostProvider: React.FC<{ children: ReactNode }> = ({
   useEffect(() => {
     if (!slug || loading) return;
 
+    // A FAILED request says nothing about whether the community exists, and
+    // must not be read as "it does not". Forgetting on an error would bounce
+    // every visitor to a community host off it on one 5xx, and wipe the
+    // remembered id on the way out so the next visit blocks on the query
+    // again -- turning a blip into an outage for that community.
+    if (error) return;
+
     // A slug that resolves to nothing is a community that has been deleted, or
     // never existed. Forget it rather than keeping a dead id alive forever.
     if (!fetched) {
@@ -152,7 +167,7 @@ export const CommunityHostProvider: React.FC<{ children: ReactNode }> = ({
     }
 
     rememberCommunity(slug, fetched);
-  }, [slug, loading, fetched]);
+  }, [slug, loading, error, fetched]);
 
   const value = useMemo<CommunityHostContextType>(
     () => ({
@@ -165,14 +180,22 @@ export const CommunityHostProvider: React.FC<{ children: ReactNode }> = ({
       loading: Boolean(slug) && loading && !remembered,
       // Either the label could never be a slug, or it is one nobody holds.
       // The app treats both the same way: this address is not a community.
+      // Unknown means "the server told us there is nothing here", not "we
+      // could not ask". An error leaves this false, so the app renders the
+      // failure rather than silently redirecting away from it.
       isUnknownHost:
         target.kind === "unknown" ||
-        (target.kind === "community" && !loading && !fetched && !remembered),
+        (target.kind === "community" &&
+          !loading &&
+          !error &&
+          !fetched &&
+          !remembered),
       refetch: () => {
         void refetch();
       },
+      unreachable: Boolean(slug) && Boolean(error) && !remembered,
     }),
-    [slug, target, fetched, remembered, loading, refetch],
+    [slug, target, fetched, remembered, loading, error, refetch],
   );
 
   return (

@@ -19,6 +19,12 @@ export const COMMUNITY_SLUG_MAX_LENGTH = 63;
 export const COMMUNITY_SLUG_MIN_LENGTH = 3;
 
 /**
+ * How much of a derived slug is kept before the migration's collision suffix.
+ * 55 rather than 63 so `-2` and friends still fit inside the DNS label limit.
+ */
+const COMMUNITY_SLUG_BASE_MAX_LENGTH = 55;
+
+/**
  * Labels a community may not take, because something else already answers to
  * them or will need to.
  *
@@ -112,15 +118,20 @@ export const isValidCommunitySlug = (slug: string): boolean =>
  * creates a community.
  *
  * Matches the backfill migration's derivation so a community created today and
- * one backfilled yesterday get the same answer from the same name. It can
- * still return something invalid -- a name of nothing but punctuation, or one
- * that normalises onto a reserved label -- which is the caller's cue to make
- * the person choose rather than to silently mangle it further.
+ * one backfilled yesterday get the same answer from the same name -- including
+ * the truncation, which is to 55 rather than the full 63 because the migration
+ * leaves itself room to append a collision suffix. Suggesting a longer slug
+ * than the backfill would have produced is a difference nobody would ever look
+ * for and everybody would be confused by.
+ *
+ * It can still return something invalid -- a name of nothing but punctuation,
+ * or one that normalises onto a reserved label -- which is the caller's cue to
+ * make the person choose rather than to silently mangle it further.
  */
 export const suggestCommunitySlug = (name: string): string =>
   name
     .toLowerCase()
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
-    .slice(0, COMMUNITY_SLUG_MAX_LENGTH)
+    .slice(0, COMMUNITY_SLUG_BASE_MAX_LENGTH)
     .replace(/^-+|-+$/g, "");

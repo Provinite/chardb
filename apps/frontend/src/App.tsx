@@ -7,6 +7,7 @@ import { LoadingSpinner } from "./components/LoadingSpinner";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ApexRoutes } from "./routes/ApexRoutes";
 import { CommunityRoutes } from "./routes/CommunityRoutes";
+import { CommunityUnreachable } from "./pages/CommunityUnreachable";
 
 /**
  * Picks the route table from the hostname.
@@ -23,7 +24,12 @@ import { CommunityRoutes } from "./routes/CommunityRoutes";
  */
 function App() {
   const { loading: authLoading } = useAuth();
-  const { community, isUnknownHost, loading: hostLoading } = useCommunityHost();
+  const {
+    community,
+    isUnknownHost,
+    unreachable,
+    loading: hostLoading,
+  } = useCommunityHost();
 
   // An address that names no community -- a typo, a deleted community, a label
   // that could never have been a slug. The wildcard record answers for every
@@ -40,6 +46,13 @@ function App() {
         <LoadingSpinner size="lg" />
       </div>
     );
+  }
+
+  // The lookup failed rather than answering. Say that, and nothing else: this
+  // is not "no such community", and telling somebody their address is wrong
+  // when the server is down sends them to check a URL that was fine.
+  if (unreachable) {
+    return <CommunityUnreachable />;
   }
 
   if (authLoading || hostLoading) {

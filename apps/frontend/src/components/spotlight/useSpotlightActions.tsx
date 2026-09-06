@@ -6,7 +6,7 @@ import type {
 } from "@mantine/spotlight";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityHost } from "../../contexts/CommunityHostContext";
-import { apexUrl } from "../../lib/communityHost";
+import { apexUrl, communityUrl } from "../../lib/communityHost";
 
 export function useSpotlightActions(): SpotlightActionGroupData[] {
   const { user } = useAuth();
@@ -42,14 +42,14 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
      * A page inside one of the viewer's communities.
      *
      * On that community's own host it is just a route. From anywhere else it
-     * is another origin, reached through the apex's `/communities/:id`
-     * forwarder -- `CommunityMembersByUser` gives us the community's id and
-     * name but not the slug the host is built from.
+     * is another origin, named directly -- the memberships on `me` carry the
+     * slug, so there is no need for the apex's `/communities/:id` forwarder
+     * and the two extra hops it costs.
      */
-    const inCommunity = (communityId: string, path: string) =>
+    const inCommunity = (slug: string, communityId: string, path: string) =>
       communityId === hostCommunityId
         ? nav(path || "/")
-        : leave(apexUrl(`/communities/${communityId}${path}`));
+        : leave(communityUrl(slug, path || "/"));
 
     // General — always visible
     groups.push({
@@ -261,6 +261,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
         const community = role.community;
         const cId = community.id;
         const cName = community.name;
+        const cSlug = community.slug;
 
         const hasAdminPermissions =
           role.canCreateRole ||
@@ -281,19 +282,19 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-overview`,
             label: "Overview",
             description: `${cName} overview`,
-            onClick: inCommunity(cId, ""),
+            onClick: inCommunity(cSlug, cId, ""),
           },
           {
             id: `c-${cId}-members`,
             label: "Members",
             description: `${cName} members`,
-            onClick: inCommunity(cId, "/members"),
+            onClick: inCommunity(cSlug, cId, "/members"),
           },
           {
             id: `c-${cId}-inventory`,
             label: "Inventory",
             description: `${cName} inventory`,
-            onClick: inCommunity(cId, "/inventory"),
+            onClick: inCommunity(cSlug, cId, "/inventory"),
           },
         ];
 
@@ -302,7 +303,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-invite-codes`,
             label: "Invite Codes",
             description: `${cName} invite codes`,
-            onClick: inCommunity(cId, "/invite-codes"),
+            onClick: inCommunity(cSlug, cId, "/invite-codes"),
           });
         }
 
@@ -311,7 +312,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-settings`,
             label: "Settings",
             description: `${cName} settings`,
-            onClick: inCommunity(cId, "/settings"),
+            onClick: inCommunity(cSlug, cId, "/settings"),
           });
         }
 
@@ -321,13 +322,13 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
               id: `c-${cId}-admin`,
               label: "Admin Dashboard",
               description: `${cName} admin dashboard`,
-              onClick: inCommunity(cId, "/admin"),
+              onClick: inCommunity(cSlug, cId, "/admin"),
             },
             {
               id: `c-${cId}-colors`,
               label: "Color Palette",
               description: `${cName} color palette`,
-              onClick: inCommunity(cId, "/admin/colors"),
+              onClick: inCommunity(cSlug, cId, "/admin/colors"),
             },
           );
         }
@@ -337,7 +338,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-items`,
             label: "Items Admin",
             description: `${cName} items administration`,
-            onClick: inCommunity(cId, "/admin/items"),
+            onClick: inCommunity(cSlug, cId, "/admin/items"),
           });
         }
 
@@ -346,7 +347,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-species`,
             label: "Species Management",
             description: `${cName} species management`,
-            onClick: inCommunity(cId, "/species"),
+            onClick: inCommunity(cSlug, cId, "/species"),
           });
         }
 
@@ -355,7 +356,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-permissions`,
             label: "Permissions",
             description: `${cName} role permissions`,
-            onClick: inCommunity(cId, "/permissions"),
+            onClick: inCommunity(cSlug, cId, "/permissions"),
           });
         }
 
@@ -381,7 +382,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
               "flagged",
               "content",
             ],
-            onClick: inCommunity(cId, "/moderation"),
+            onClick: inCommunity(cSlug, cId, "/moderation"),
           });
         }
 
@@ -404,7 +405,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
               "queue",
               "moderation",
             ],
-            onClick: inCommunity(cId, "/moderation/images"),
+            onClick: inCommunity(cSlug, cId, "/moderation/images"),
           });
         }
 
@@ -425,7 +426,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
               "queue",
               "moderation",
             ],
-            onClick: inCommunity(cId, "/moderation/traits"),
+            onClick: inCommunity(cSlug, cId, "/moderation/traits"),
           });
         }
 
