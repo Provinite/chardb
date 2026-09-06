@@ -1,4 +1,8 @@
 import { presetTest, expect } from "../../src/fixtures.js";
+import {
+  SeedCreateCommunityDocument,
+  SeedRemoveCommunityDocument,
+} from "../../src/generated/graphql.js";
 import { apexUrl, communityUrl, urlStartingWith } from "../../src/config.js";
 
 const test = presetTest("community-basic");
@@ -167,40 +171,37 @@ test.describe("community hosts", () => {
     expect(JSON.parse(remembered as string).id).toBe(world.community.id);
   });
 
-  test("forgets a host that stops resolving", async ({ page }) => {
-    // The remembered id must not outlive the community. A deleted one would
-    // otherwise keep a dead id in play on that host forever.
-    // Seeded before the app boots, not by visiting first: that host redirects
-    // on sight now, so there is no moment on it in which to run a script.
-    await page.context().addInitScript(() => {
-      window.localStorage.setItem(
-        "chardb.community.nowhere-at-all",
-        JSON.stringify({
-          id: "00000000-0000-0000-0000-000000000000",
-          name: "Gone",
-        }),
-      );
-    });
-
-    await page.goto(communityUrl("nowhere-at-all"));
-    await expect(page).toHaveURL(apexUrl("/"));
-
-    // Read out of the browser context rather than by navigating back: that
-    // host redirects on sight now, which destroys the execution context before
-    // an evaluate can run on it.
+  test("a community that gets deleted stops working gracefully", async ({
+    page,
+    world,
+  }) => {
+    // The host remembers which community it is, so that a return visit renders
+    // without waiting on a lookup. That memory must not outlive the community:
+    // without forgetting it, the app keeps rendering community pages against a
+    // dead id and never decides the address is unknown, so the host stays
+    // broken rather than bouncing.
     //
-    // Scoped to the community's own origin, because the init script above runs
-    // on every navigation -- including the redirect -- so the apex origin ends
-    // up holding a copy that says nothing about whether the community host
-    // forgot its own.
-    const { origins } = await page.context().storageState();
-    const onThatHost = origins.find(
-      (o) => o.origin === communityUrl("nowhere-at-all").replace(/\/$/, ""),
-    );
-    const stored = onThatHost?.localStorage.find(
-      (e) => e.name === "chardb.community.nowhere-at-all",
-    );
-    expect(stored).toBeUndefined();
+    // Its own community rather than the preset's, because it ends up deleted.
+    const slug = `ephemeral-${Date.now()}`;
+    const { createCommunity } = await world
+      .as("siteadmin")
+      .gql(SeedCreateCommunityDocument, {
+        createCommunityInput: { name: `Ephemeral ${Date.now()}`, slug },
+      });
+
+    // Visited first, so the host is remembered the way the app does it rather
+    // than the way a test could fake it.
+    await page.goto(communityUrl(slug));
+    await expect(page).toHaveURL(urlStartingWith(communityUrl(slug)));
+
+    await world
+      .as("siteadmin")
+      .gql(SeedRemoveCommunityDocument, { id: createCommunity.id });
+
+    await page.goto(communityUrl(slug));
+
+    await expect(page).toHaveURL(apexUrl("/"));
+    await expect(globalNav(page)).toBeVisible();
   });
 });
 

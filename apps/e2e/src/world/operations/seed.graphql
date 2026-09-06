@@ -969,3 +969,12 @@ query SeedCharacterLikeStatus($id: ID!) {
     userHasLiked
   }
 }
+
+# Deleting a community, so a spec can prove what happens to a host that stops
+# resolving. Gated on the global CanCreateCommunity permission, so it runs as
+# siteadmin.
+mutation SeedRemoveCommunity($id: ID!) {
+  removeCommunity(id: $id) {
+    removed
+  }
+}
