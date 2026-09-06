@@ -97,6 +97,34 @@ test.describe("community hosts", () => {
     ).toBeVisible();
   });
 
+  test("navigating within a community does not reload the page", async ({
+    page,
+    world,
+  }) => {
+    // Splitting hosts made every cross-scope link absolute, and an absolute
+    // href reloads the whole app even when it points at the origin it is
+    // already on -- which a community's own roster always does. The router has
+    // to keep those.
+    await page.goto(`${world.community.url}/characters`);
+
+    // Survives a client-side navigation and does not survive a page load.
+    await page.evaluate(() => {
+      (window as unknown as { __stillHere?: true }).__stillHere = true;
+    });
+
+    await page
+      .locator(`a[href$="/character/${world.characters.plain.id}"]`)
+      .first()
+      .click();
+
+    await expect(page).toHaveURL(world.characters.plain.url);
+    await expect(
+      page.evaluate(
+        () => (window as unknown as { __stillHere?: true }).__stillHere,
+      ),
+    ).resolves.toBe(true);
+  });
+
   test("a subdomain no community holds says so", async ({ page }) => {
     // The wildcard DNS record answers for every label, so a typo or a deleted
     // community reaches the app exactly as a real one does. The app loaded
@@ -107,6 +135,50 @@ test.describe("community hosts", () => {
       page.getByRole("heading", { level: 1, name: "No community here" }),
     ).toBeVisible();
     await expect(communityNav(page)).toHaveCount(0);
+  });
+
+  test("remembers which community the host is, between page loads", async ({
+    page,
+    world,
+  }) => {
+    // A slug is chosen at creation and never changes, and an id never changes,
+    // so this mapping has exactly one answer for all time. Asking the server
+    // for it on every page load is a question already answered.
+    await page.goto(world.community.url);
+    await expect(communityNav(page)).toBeVisible();
+
+    const remembered = await page.evaluate(
+      (slug) => window.localStorage.getItem(`chardb.community.${slug}`),
+      world.community.slug,
+    );
+    expect(remembered).not.toBeNull();
+    expect(JSON.parse(remembered as string).id).toBe(world.community.id);
+  });
+
+  test("forgets a host that stops resolving", async ({ page }) => {
+    // The remembered id must not outlive the community. A deleted one would
+    // otherwise keep a dead id in play on that host forever.
+    await page.goto(communityUrl("nowhere-at-all"));
+    await page.evaluate(() =>
+      window.localStorage.setItem(
+        "chardb.community.nowhere-at-all",
+        JSON.stringify({
+          id: "00000000-0000-0000-0000-000000000000",
+          name: "Gone",
+        }),
+      ),
+    );
+
+    await page.reload();
+
+    await expect(
+      page.getByRole("heading", { level: 1, name: "No community here" }),
+    ).toBeVisible();
+    await expect(
+      page.evaluate(() =>
+        window.localStorage.getItem("chardb.community.nowhere-at-all"),
+      ),
+    ).resolves.toBeNull();
   });
 });
 

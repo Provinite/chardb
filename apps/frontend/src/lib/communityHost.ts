@@ -153,6 +153,28 @@ export const returnDestination = (params: URLSearchParams): string | null => {
 };
 
 /**
+ * The path part of `url` if it lands on the page's own origin, else `null`.
+ *
+ * Splitting hosts made every cross-scope link absolute, and an absolute URL in
+ * an `<a href>` is a whole-page load even when it points at the page it is
+ * already on. That is most character links: a community's roster links to
+ * characters in that same community. `HostAwareLink` uses this to keep those
+ * client-side and reserve the page load for links that genuinely cross.
+ */
+export const localPath = (url: string): string | null => {
+  // Already a path. `//evil.example` is a URL wearing a path's clothes.
+  if (url.startsWith("/") && !url.startsWith("//")) return url;
+
+  try {
+    const parsed = new URL(url, window.location.href);
+    if (parsed.origin !== window.location.origin) return null;
+    return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+  } catch {
+    return null;
+  }
+};
+
+/**
  * Absolute URL for a character, wherever it lives.
  *
  * A character reached its community through a nullable `speciesId`, so one

@@ -84,7 +84,10 @@ describe("returnDestination", () => {
   it("keeps query and hash, which are part of the path", () => {
     expect(
       returnDestination(
-        params({ nextCommunitySlug: "willowmere", nextPath: "/items?tab=all#x" }),
+        params({
+          nextCommunitySlug: "willowmere",
+          nextPath: "/items?tab=all#x",
+        }),
       ),
     ).toBe(communityUrl("willowmere", "/items?tab=all#x"));
   });
@@ -110,7 +113,9 @@ describe("returnDestination", () => {
   });
 
   it("refuses a path that is really a URL", () => {
-    expect(returnDestination(params({ nextPath: "//evil.example" }))).toBeNull();
+    expect(
+      returnDestination(params({ nextPath: "//evil.example" })),
+    ).toBeNull();
     expect(
       returnDestination(params({ nextPath: "https://evil.example/phish" })),
     ).toBeNull();

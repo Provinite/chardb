@@ -1,10 +1,70 @@
-import React, { createContext, useContext, useMemo, ReactNode } from "react";
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  ReactNode,
+} from "react";
 import { useCommunityBySlugQuery } from "../generated/graphql";
 import { currentCommunitySlug } from "../lib/communityHost";
 
-type HostCommunity = NonNullable<
-  ReturnType<typeof useCommunityBySlugQuery>["data"]
->["communityBySlug"];
+/**
+ * What the host resolves to.
+ *
+ * Deliberately narrow. Everything reachable from a community host can query
+ * whatever else it needs about that community; what this context owes them is
+ * which community it is, and promising more would mean the remembered copy
+ * below had to carry more too.
+ */
+type HostCommunity = { id: string; name: string; slug: string };
+
+/** Where a resolved host is remembered between page loads. */
+const storageKey = (slug: string) => `chardb.community.${slug}`;
+
+/**
+ * `localStorage` throws rather than returning null in some browsers -- Safari
+ * in private mode, anything with site data disabled -- and this is a cache, so
+ * every path through it degrades to "ask the server" rather than failing.
+ */
+const readRemembered = (slug: string | null): HostCommunity | null => {
+  if (!slug) return null;
+
+  try {
+    const raw = window.localStorage.getItem(storageKey(slug));
+    if (!raw) return null;
+
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      typeof parsed === "object" &&
+      parsed !== null &&
+      typeof (parsed as HostCommunity).id === "string" &&
+      typeof (parsed as HostCommunity).name === "string"
+    ) {
+      return { ...(parsed as HostCommunity), slug };
+    }
+  } catch {
+    // Unreadable or unparseable. Ask the server.
+  }
+
+  return null;
+};
+
+const rememberCommunity = (slug: string, id: string, name: string): void => {
+  try {
+    window.localStorage.setItem(storageKey(slug), JSON.stringify({ id, name }));
+  } catch {
+    // Storage full or unavailable; the app works without it.
+  }
+};
+
+const forgetRemembered = (slug: string): void => {
+  try {
+    window.localStorage.removeItem(storageKey(slug));
+  } catch {
+    // As above.
+  }
+};
 
 interface CommunityHostContextType {
   /** The slug in the hostname, or null at the apex. */
@@ -44,21 +104,46 @@ export const CommunityHostProvider: React.FC<{ children: ReactNode }> = ({
   // rather than watched.
   const slug = useMemo(() => currentCommunitySlug(), []);
 
+  // What this host resolved to last time. Apollo's cache is per page load, so
+  // without this every visit blocks the whole app on the same answer to the
+  // same question -- and it is a question that only has one answer ever: a
+  // slug is chosen at creation and never changes, and an id never changes, so
+  // the mapping is permanent rather than merely cacheable.
+  const [remembered, setRemembered] = useState(() => readRemembered(slug));
+
   const { data, loading } = useCommunityBySlugQuery({
     variables: { slug: slug ?? "" },
     skip: !slug,
-    // A community's name and id do not change under a reader, and every page
-    // on the host depends on this answer.
     fetchPolicy: "cache-first",
   });
+
+  const fetched = data?.communityBySlug;
+
+  useEffect(() => {
+    if (!slug || loading) return;
+
+    // A slug that resolves to nothing is a community that has been deleted, or
+    // never existed. Forget it rather than keeping a dead id alive forever.
+    if (!fetched) {
+      forgetRemembered(slug);
+      setRemembered(null);
+      return;
+    }
+
+    rememberCommunity(slug, fetched.id, fetched.name);
+  }, [slug, loading, fetched]);
 
   const value = useMemo<CommunityHostContextType>(
     () => ({
       slug,
-      community: data?.communityBySlug ?? null,
-      loading: Boolean(slug) && loading,
+      // The fetched record wins the moment it lands, so a name that changed
+      // since the last visit is stale for one render and no longer. The id
+      // behind it cannot go stale at all.
+      community: fetched ?? remembered,
+      // Nothing to wait for when this host is already known.
+      loading: Boolean(slug) && loading && !remembered,
     }),
-    [slug, data, loading],
+    [slug, fetched, remembered, loading],
   );
 
   return (

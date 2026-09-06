@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { Character, Community } from "../generated/graphql";
 import { characterUrl } from "../lib/communityHost";
+import { HostAwareLink } from "./HostAwareLink";
 import { Tag } from "./Tag";
 import { TagsContainer } from "./TagsContainer";
 import { CopyIdButton } from "./CopyIdButton";
@@ -34,12 +35,14 @@ export type CharacterCardItem = Pick<
 };
 
 /**
- * An `<a>` and not a `<Link>`: this card renders at the apex (My Characters,
- * Liked, a profile, the feed) and on a community host (the roster), and the
- * character it names lives on whichever host its species' community owns. The
- * router cannot cross an origin, so the href is always absolute.
+ * The card renders at the apex (My Characters, Liked, a profile, the feed) and
+ * on a community host (the roster), and the character it names lives on
+ * whichever host its species' community owns -- so the destination is absolute
+ * and may or may not be this origin. `HostAwareLink` decides per click: a
+ * roster linking to its own community stays client-side, and only a link that
+ * genuinely crosses costs a page load.
  */
-const Card = styled.a`
+const Card = styled(HostAwareLink)`
   display: block;
   text-decoration: none;
   background: ${({ theme }) => theme.colors.background};
@@ -165,8 +168,8 @@ const ButtonGroup = styled.div`
   }
 `;
 
-/** An `<a>` for the same reason as `Card`. */
-const EditButton = styled.a`
+/** Same treatment as `Card`, for the same reason. */
+const EditButton = styled(HostAwareLink)`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.text.primary};
@@ -203,14 +206,14 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
 
   return (
     <Card
-      href={href}
+      to={href}
       aria-label={`View character ${character.name}`}
       data-testid="character-card"
       data-character-id={character.id}
     >
       <ButtonGroup>
         <CopyIdButton id={character.id} />
-        {showEditButton && <EditButton href={`${href}/edit`}>Edit</EditButton>}
+        {showEditButton && <EditButton to={`${href}/edit`}>Edit</EditButton>}
       </ButtonGroup>
       <ImageSection>
         {character.mainMedia?.image ? (
