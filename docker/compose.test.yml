@@ -1,6 +1,12 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/compose-spec/compose-spec/master/schema/compose-spec.json
 
-# Test environment — only the database needed for e2e tests.
+# Test environment — the database and LocalStack the e2e suite needs.
+#
+# LocalStack is here so that an image upload in a browser spec is a real
+# upload: the request reaches the backend, the backend puts an object in S3,
+# and the spec can assert on what came back. Stubbing it would have left the
+# thing that actually broke -- the Authorization header on that request --
+# uncovered, which is exactly what happened.
 #
 # Usage:
 #   docker compose -f docker/compose.test.yml up -d
@@ -9,3 +15,4 @@
 
 include:
   - services/postgres-test.yml
+  - services/localstack-test.yml

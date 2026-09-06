@@ -7,14 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Fixed
-
-- **A public gallery no longer reports itself missing to signed-out visitors.**
-  `Gallery.userHasLiked` was gated to authenticated users and is non-nullable,
-  so its 403 nulled the whole gallery and the page rendered "Gallery not
-  found". `Character.userHasLiked` carried the same decorator and is fixed
-  alongside it (#173).
-
 ### Added
 
 - **`communityMemberRoles(communityId, userId)`** — what one member's standing
@@ -26,6 +18,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`Community.members(search:)` returns exact name matches first.** The limit
   is applied in SQL, so the person you actually named could lose the cut to
   five people who merely contain your spelling of them (#349).
+
+## [v12.0.0] - 2026-09-06
+
+### Added
+
+- **Communities have a permanent `slug`**, the subdomain they are served from,
+  with a reserved-name list and a `communityBySlug` query; existing communities
+  were backfilled from their names (#339).
 
 - **Unlisted characters and galleries are no longer listed to other members.**
   `characters` / `galleries` and their per-owner variants now return PUBLIC
@@ -55,7 +55,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   variant's enabled options are an allow-list, so a value the target variant
   does not carry is refused.
 
+### Changed
+
+- **BREAKING: the refresh token is an `HttpOnly` cookie, not a payload field.**
+  `AuthPayload` no longer carries `refreshToken`, `refreshToken` takes no
+  argument, and there is a new `logout` mutation; every signed-in user is
+  signed out once on deploy (#339).
+
+- **CORS is an allowlist rather than a reflector.** `origin: true` alongside
+  `credentials: true` would have handed any site a credentialed session once a
+  cookie existed; the apex and `*.$ROOT_DOMAIN` are now the only origins
+  accepted (#339).
+
 ### Fixed
+
+- **A member's private media no longer appears on their public profile.**
+  `UserProfile.recentMedia` applied no visibility filter at all, and
+  `UserStats.imagesCount` counted images by uploader, a table with no
+  visibility column; both now narrow by who is asking (#348).
+
+- **Unlisted media is no longer listed to other members.** `MediaService.findAll`
+  returned it to everyone, so every media listing showed what its owner had
+  chosen not to list. It was the instance #321 missed when it made this rule
+  for characters and galleries (#348).
+
+- **A public gallery no longer reports itself missing to signed-out visitors.**
+  `Gallery.userHasLiked` was gated to authenticated users and is non-nullable,
+  so its 403 nulled the whole gallery and the page rendered "Gallery not
+  found". `Character.userHasLiked` carried the same decorator and is fixed
+  alongside it (#173).
 
 - **Changing a character's variant was reachable by its owner.** Every other
   registry field is theirs to edit; rarity is what upgrade tickets sell, so it

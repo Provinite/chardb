@@ -7,11 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Markdown no longer leaks into `og:description`**, and `stripMarkdown` no longer returns escaped text like `some\_user\_name` — which also reached the media card's preview line.
+
+- **A long name on the members list painted over the role tag beside it**, and
+  a narrow enough window crushed it away entirely. Rows now wrap (#349).
+
 ### Added
 
-- **A member has a profile inside a community**, at
-  `/communities/:communityId/members/:username`: their role here, their
-  characters here, and the way through to their inventory or a trade (#349).
+- **Every page sets its own title and OpenGraph tags**, replacing the one static title all 80-odd routes shared; chat unfurlers still see only the site card, which needs server-side rendering.
+
+- **A member has a profile inside a community**, at `/members/:username` on
+  that community's host: their role here, their characters here, and the way
+  through to their inventory or a trade (#349).
 
 - **The search box finds members, not just pages.** `@` inside a community
   switches it to people and `@` alone lists who is here; picking one opens
@@ -21,6 +30,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **The trade composer links out to the partner's full inventory**, which
   includes the items its own pane leaves out as untradeable (#349).
+
+### Changed
+
+- **Breaking: a member's inventory moved from `/members/:username/items` to
+  `.../inventory`**, matching the segment your own already used. Links to the
+  old path 404 (#349).
+
+- **A member's name on the members list now opens their community profile**
+  rather than their apex site profile (#349).
+
+## [v12.0.0] - 2026-09-06
+
+### Changed
+
+- **Every community is served from its own subdomain.** `willowmere.chardb.cc`
+  replaces `/communities/:communityId/...`, and its characters, species, traits,
+  variants and item types move under it too; old URLs redirect (#339).
+
+- **Signing in is now one session for the whole site.** The refresh token moved
+  from `localStorage` to an `HttpOnly` cookie on the parent domain, so one
+  sign-in covers the apex and every community subdomain (#339).
+
+### Added
 
 - **A member's characters and galleries each have a page.**
   `/user/:username/characters` and `/user/:username/galleries`. The profile's
@@ -60,16 +92,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and trait queues with their pending counts. Each is shown only to a role that
   can work it, and the sidebar and command palette both reach it (#352).
 
-### Changed
-
-- **Breaking: a member's inventory moved from
-  `/communities/:id/members/:username/items` to `.../inventory`**, matching the
-  segment your own already used. Links to the old path 404 (#349).
-
-- **A member's name on the members list now opens their community profile**
-  rather than their global site profile (#349).
-
 ### Fixed
+
+- **A profile's "View All" on Recent Media 404'd.** It pointed at `/images`,
+  which is not a route; it now reaches `/user/:username/media`, and the Images
+  stat tile links there too (#348).
 
 - **The admin dashboard's "Content Moderation" card 404'd.** It pointed at
   `/communities/:id/moderation`, which was never a registered route; it now
@@ -77,9 +104,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **The same card was shown to members who cannot moderate anything**, unlike
   every other card on that page (#352).
-
-- **A long name on the members list painted over the role tag beside it**, and
-  a narrow enough window crushed it away entirely. Rows now wrap (#349).
 
 - **`VariantChangePanel` read an empty allow-list as permitting everything**,
   which the server has never agreed with — it would have shown nothing to

@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v12.0.0] - 2026-09-06
+
+### Changed
+
+- **Local development moved to `dev.localhost`**, with the API on
+  `api.dev.localhost` — bare `localhost` is a public suffix, so the session
+  cookie could not have crossed subdomains under it (#339).
+
+- **CI shards the browser E2E suite across six runners** and caches the backend, frontend and workspace build outputs between runs, taking the job down from ~9m; a merge job stitches the shard reports into one artifact (#353).
+
 ### Added
+
+- **The frontend distribution serves every subdomain** — `*.chardb.cc` is now a
+  CloudFront alias and a wildcard Route53 record, so a new community needs no
+  infrastructure; the backend gets `ROOT_DOMAIN` and the bundle
+  `VITE_ROOT_DOMAIN` (#339).
 
 - **Parallel instances**: every checkout — git worktree or separate clone — gets
   its own ports, databases and containers, so several agents can run the app and
@@ -47,10 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an unconfigured one carries nothing (#232).
 
 - **A "Changing a Character's Rarity" walkthrough** (`docs/docs/character-rarity.html`).
-
-### Changed
-
-- **CI shards the browser E2E suite across six runners** and caches the backend, frontend and workspace build outputs between runs, taking the job down from ~9m; a merge job stitches the shard reports into one artifact (#353).
 
 ### Fixed
 

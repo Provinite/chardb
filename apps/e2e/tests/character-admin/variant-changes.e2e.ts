@@ -393,7 +393,7 @@ test.describe("changing rarity, through the page", () => {
     // "Species assignment is permanent", which is true of the species and was
     // never true of its rarity.
     const id = await blueEyed(world, "Editable");
-    await page.goto(`/character/${id}/edit`);
+    await page.goto(`${world.community.url}/character/${id}/edit`);
 
     await expect(page.getByTestId("variant-select")).toBeEnabled();
   });
@@ -403,7 +403,7 @@ test.describe("changing rarity, through the page", () => {
     world,
   }) => {
     const id = await blueEyed(world, "Stranded");
-    await page.goto(`/character/${id}/edit`);
+    await page.goto(`${world.community.url}/character/${id}/edit`);
 
     await page
       .getByTestId("variant-select")
@@ -425,7 +425,7 @@ test.describe("changing rarity, through the page", () => {
     world,
   }) => {
     const id = await blueEyed(world, "Saved");
-    await page.goto(`/character/${id}/edit`);
+    await page.goto(`${world.community.url}/character/${id}/edit`);
 
     await page
       .getByTestId("variant-select")
@@ -465,7 +465,7 @@ test.describe("changing rarity, through the page", () => {
       },
     });
 
-    await page.goto(`/character/${id}`);
+    await page.goto(`${world.community.url}/character/${id}`);
     const history = page.getByTestId("variant-history");
     await expect(history).toContainText(world.variants.common.name);
     await expect(history).toContainText(world.variants.rare.name);
@@ -478,7 +478,7 @@ test.describe("changing rarity, through the page", () => {
   }) => {
     // A section reading "no rarity changes" on every character page would be
     // noise standing in for information.
-    await page.goto(`/character/${world.characters.bramblefoot.id}`);
+    await page.goto(world.characters.bramblefoot.url);
     await expect(page.getByTestId("variant-history")).toHaveCount(0);
   });
 });

@@ -1,9 +1,11 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useGetMyGalleriesQuery } from "../generated/graphql";
+import { characterUrl } from "../lib/communityHost";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -122,7 +124,9 @@ const ImageCount = styled.span`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-const CharacterLink = styled(Link)`
+// An anchor rather than a router link: a character is served from its
+// community's own host, which is a different origin to this page.
+const CharacterLink = styled.a`
   background: ${({ theme }) => theme.colors.primary + "20"};
   color: ${({ theme }) => theme.colors.primary};
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.sm};
@@ -256,6 +260,8 @@ const formatDate = (dateString: string) => {
 };
 
 export const MyGalleriesPage: React.FC = () => {
+  usePageMeta({ title: "My Galleries" });
+
   const { user } = useAuth();
 
   const { data, loading, error } = useGetMyGalleriesQuery({
@@ -316,7 +322,7 @@ export const MyGalleriesPage: React.FC = () => {
         </EmptyState>
       ) : (
         <Grid>
-          {myGalleries.map((gallery: any) => (
+          {myGalleries.map((gallery) => (
             <GalleryCard key={gallery.id}>
               <CardContent>
                 <GalleryName>{gallery.name}</GalleryName>
@@ -329,10 +335,15 @@ export const MyGalleriesPage: React.FC = () => {
                     {gallery.visibility}
                   </MetaBadge>
                   {gallery._count && (
-                    <ImageCount>{gallery._count.images} images</ImageCount>
+                    <ImageCount>{gallery._count.media} items</ImageCount>
                   )}
                   {gallery.character && (
-                    <CharacterLink to={`/character/${gallery.character.id}`}>
+                    <CharacterLink
+                      href={characterUrl(
+                        gallery.character.id,
+                        gallery.character.species?.community?.slug,
+                      )}
+                    >
                       {gallery.character.name}
                     </CharacterLink>
                   )}

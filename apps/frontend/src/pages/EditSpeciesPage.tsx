@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
@@ -128,6 +129,8 @@ interface EditSpeciesFormData {
 }
 
 export const EditSpeciesPage: React.FC = () => {
+  usePageMeta({ title: "Edit Species" });
+
   const navigate = useNavigate();
   const { speciesId } = useParams<{ speciesId: string }>();
 
@@ -154,7 +157,7 @@ export const EditSpeciesPage: React.FC = () => {
           `Species "${data.updateSpecies.name}" updated successfully!`,
         );
         // Navigate back to the community species management page
-        navigate(`/communities/${data.updateSpecies.communityId}/species`);
+        navigate("/species");
       },
       onError: (error) => {
         toast.error(`Failed to update species: ${error.message}`);
@@ -187,11 +190,7 @@ export const EditSpeciesPage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    if (speciesData?.speciesById?.communityId) {
-      navigate(`/communities/${speciesData.speciesById.communityId}/species`);
-    } else {
-      navigate(-1);
-    }
+    navigate("/species");
   };
 
   // Loading state

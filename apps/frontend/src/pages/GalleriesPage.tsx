@@ -1,9 +1,11 @@
 import React, { useState, useCallback } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 import {
   useGetGalleriesQuery,
   GalleryFiltersInput,
+  Visibility,
 } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
@@ -315,6 +317,8 @@ const EmptyState = styled.div`
 `;
 
 export const GalleriesPage: React.FC = () => {
+  usePageMeta({ title: "Browse Galleries" });
+
   const navigate = useNavigate();
   const { user } = useAuth();
   const [filters, setFilters] = useState<GalleryFiltersInput>({
@@ -337,11 +341,15 @@ export const GalleriesPage: React.FC = () => {
       setFilters((prev) => ({
         ...prev,
         offset: 0,
+        // The buttons carry the enum's own string values, and "ALL" -- the one
+        // that is not a visibility -- is excluded just above.
         visibility:
-          visibilityFilter === "ALL" ? undefined : (visibilityFilter as any),
+          visibilityFilter === "ALL"
+            ? undefined
+            : (visibilityFilter as Visibility),
       }));
     },
-    [searchTerm, visibilityFilter],
+    [visibilityFilter],
   );
 
   const handleLoadMore = useCallback(() => {

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import {
   Plus,
@@ -443,6 +444,8 @@ const Button = styled.button<{ $variant?: "primary" | "secondary" }>`
 `;
 
 export function SiteInviteCodesPage() {
+  usePageMeta({ title: "Site Invite Codes" });
+
   const { data: userData } = useMeQuery();
   const { data, loading, error, refetch } = useInviteCodesQuery({
     variables: {

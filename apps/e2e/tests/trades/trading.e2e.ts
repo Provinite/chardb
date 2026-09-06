@@ -18,8 +18,10 @@ const test = presetTest("community-items");
  * directions, and the lockets are a ready-made locked case.
  */
 
-const composerUrl = (communityId: string, withUserId: string) =>
-  `/communities/${communityId}/trades/new?with=${withUserId}`;
+/** Takes the community's own origin -- `world.community.url` -- because a
+ *  trade belongs to a community and is served from its host. */
+const composerUrl = (communityUrl: string, withUserId: string) =>
+  `${communityUrl}/trades/new?with=${withUserId}`;
 
 /** A second signed-in browser context, for the other side of the trade. */
 async function pageAs(
@@ -35,14 +37,14 @@ async function pageAs(
 async function offerPotionForCoin(
   page: Page,
   world: {
-    community: { id: string };
+    community: { url: string };
     users: { othermember: { userId: string } };
     itemTypes: { potion: { id: string } };
   },
   coin: number,
 ): Promise<string> {
   await page.goto(
-    composerUrl(world.community.id, world.users.othermember.userId),
+    composerUrl(world.community.url, world.users.othermember.userId),
   );
 
   await page
@@ -71,7 +73,7 @@ test.describe("composing an offer", () => {
     world,
   }) => {
     await page.goto(
-      composerUrl(world.community.id, world.users.othermember.userId),
+      composerUrl(world.community.url, world.users.othermember.userId),
     );
 
     // Your side is rows, because you are here and can choose which. Their side
@@ -94,7 +96,7 @@ test.describe("composing an offer", () => {
 
   test("refuses to offer an untradeable type", async ({ page, world }) => {
     await page.goto(
-      composerUrl(world.community.id, world.users.othermember.userId),
+      composerUrl(world.community.url, world.users.othermember.userId),
     );
 
     // Locked rather than hidden: the member can see it is theirs and see why
@@ -115,7 +117,7 @@ test.describe("composing an offer", () => {
     // Without this the item settles against whichever offer is accepted first
     // and the other fails at accept, in front of someone who cannot see why.
     await page.goto(
-      composerUrl(world.community.id, world.users.othermember.userId),
+      composerUrl(world.community.url, world.users.othermember.userId),
     );
     await page
       .locator(
@@ -133,7 +135,7 @@ test.describe("composing an offer", () => {
     world,
   }) => {
     await page.goto(
-      composerUrl(world.community.id, world.users.othermember.userId),
+      composerUrl(world.community.url, world.users.othermember.userId),
     );
 
     // `member` holds 40 PP, so it is in the wallet and would be in the picker
@@ -150,7 +152,7 @@ test.describe("composing an offer", () => {
   }) => {
     // 300 of member's 380 goes out in the first offer.
     await page.goto(
-      composerUrl(world.community.id, world.users.othermember.userId),
+      composerUrl(world.community.url, world.users.othermember.userId),
     );
     await page.getByLabel(/hollow coin you give$/i).fill("300");
     await page.getByTestId("send-offer").click();
@@ -161,7 +163,7 @@ test.describe("composing an offer", () => {
     // The balance alone would have allowed it, which is why the message has to
     // name the commitment.
     await page.goto(
-      composerUrl(world.community.id, world.users.othermember.userId),
+      composerUrl(world.community.url, world.users.othermember.userId),
     );
     await page.getByLabel(/hollow coin you give$/i).fill("200");
     await page.getByTestId("send-offer").click();
@@ -196,7 +198,7 @@ test.describe("answering an offer", () => {
 
       // Both legs, checked where a member would actually see them. One potion
       // left member's inventory and 100 coin arrived; the reverse for them.
-      await page.goto(`/communities/${world.community.id}/inventory`);
+      await page.goto(`${world.community.url}/inventory`);
       await expect(
         page.locator(
           `[data-testid="holding-group"][data-item-type-id="${world.itemTypes.potion.id}"]`,
@@ -239,7 +241,7 @@ test.describe("answering an offer", () => {
     }
 
     // Failed settlement is all-or-nothing: the coin must not have moved either.
-    await page.goto(`/communities/${world.community.id}/inventory`);
+    await page.goto(`${world.community.url}/inventory`);
     await expect(
       page.locator(
         `[data-testid="holding-group"][data-item-type-id="${world.itemTypes.potion.id}"]`,
@@ -291,7 +293,7 @@ test.describe("answering an offer", () => {
 
     // Nothing was held while it stood, so nothing needed releasing -- the three
     // potions are still exactly where they were.
-    await page.goto(`/communities/${world.community.id}/inventory`);
+    await page.goto(`${world.community.url}/inventory`);
     await expect(
       page.locator(
         `[data-testid="holding-group"][data-item-type-id="${world.itemTypes.potion.id}"]`,
@@ -427,7 +429,7 @@ test.describe("countering an offer", () => {
     await expect(page.getByTestId("trade-status")).toContainText(/settled/i);
 
     // 60 rather than 100, and one potion gone: the edit settled, not the seed.
-    await page.goto(`/communities/${world.community.id}/inventory`);
+    await page.goto(`${world.community.url}/inventory`);
     await expect(page.getByTestId("wallet-HC")).toContainText("440");
     await expect(
       page.locator(

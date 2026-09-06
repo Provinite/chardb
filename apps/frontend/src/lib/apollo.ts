@@ -11,28 +11,38 @@ import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { getMainDefinition } from "@apollo/client/utilities";
 import { Kind, OperationTypeNode } from "graphql";
 import { createClient } from "graphql-ws";
+import { getAccessToken, setAccessToken } from "./accessToken";
+import { apexUrl, ROOT_DOMAIN } from "./communityHost";
 
+// The fallback is derived from the root domain rather than hardcoded, because
+// the API has to be under it: the refresh cookie is scoped to the domain, and
+// a `localhost:4000` default would never receive it from `dev.localhost`. That
+// failure looks like being signed out on every page load, with no error.
 const httpUrl = import.meta.env.VITE_API_URL
   ? `${import.meta.env.VITE_API_URL}/graphql`
-  : "http://localhost:4000/graphql";
+  : `http://api.${ROOT_DOMAIN}:4000/graphql`;
 const wsUrl = httpUrl.replace(/^http/, "ws");
 
 const httpLink = createHttpLink({
   uri: httpUrl,
+  // The refresh token is an HttpOnly cookie on the parent domain now, so the
+  // browser has to be told to attach it. Without this the session does not
+  // survive a reload, and the API answers every call as a signed-out visitor.
+  credentials: "include",
 });
 
 const wsLink = new GraphQLWsLink(
   createClient({
     url: wsUrl,
     connectionParams: () => {
-      const token = localStorage.getItem("accessToken");
+      const token = getAccessToken();
       return token ? { authorization: `Bearer ${token}` } : {};
     },
   }),
 );
 
 const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem("accessToken");
+  const token = getAccessToken();
 
   return {
     headers: {
@@ -54,11 +64,12 @@ const errorLink = onError(({ graphQLErrors, networkError }) => {
   if (networkError) {
     console.log(`[Network error]: ${networkError}`);
 
-    // Handle 401 errors by clearing tokens and redirecting to login
+    // Handle 401 errors by clearing the token and redirecting to login.
+    // Login lives at the apex, so from a community host this leaves the
+    // subdomain -- the session it establishes covers both.
     if (networkError.message.includes("401")) {
-      localStorage.removeItem("accessToken");
-      localStorage.removeItem("refreshToken");
-      window.location.href = "/login";
+      setAccessToken(null);
+      window.location.href = apexUrl("/login");
     }
   }
 });

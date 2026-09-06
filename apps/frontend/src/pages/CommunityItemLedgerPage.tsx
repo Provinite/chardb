@@ -1,11 +1,15 @@
 import React, { useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Package, Search, Lock } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
+import {
   ItemTransactionKind,
-  useCommunityByIdQuery,
   useGetItemTransactionsQuery,
   type ItemTransactionFieldsFragment,
 } from "../generated/graphql";
@@ -384,8 +388,7 @@ const displayName = (
  */
 const PartyCell: React.FC<{
   row: ItemTransactionFieldsFragment;
-  communityId?: string;
-}> = ({ row, communityId }) => {
+}> = ({ row }) => {
   const from = displayName(row.fromUser);
   const to = displayName(row.toUser);
 
@@ -394,13 +397,9 @@ const PartyCell: React.FC<{
   // routing through a profile to answer it would add a click to the one
   // workflow that reads this page.
   const who = (label: string, u: ItemTransactionFieldsFragment["toUser"]) =>
-    communityId && u ? (
+    u ? (
       <Party>
-        <Link
-          to={`/communities/${communityId}/members/${u.username}/inventory`}
-        >
-          {label}
-        </Link>
+        <Link to={`/members/${u.username}/inventory`}>{label}</Link>
       </Party>
     ) : (
       <Party>{label}</Party>
@@ -462,15 +461,14 @@ const PartyCell: React.FC<{
 };
 
 export const CommunityItemLedgerPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  usePageMeta({ title: "Item Ledger" });
+
+  const communityId = useCommunityId();
   const [search, setSearch] = useState("");
   const [activeKinds, setActiveKinds] = useState<ItemTransactionKind[]>([]);
   const [limit, setLimit] = useState(PAGE_SIZE);
 
-  const { data: communityData } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  const community = useHostCommunity();
 
   const filters = useMemo(
     () => ({
@@ -518,8 +516,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
       <Header>
         <Title>Item Ledger</Title>
         <Subtitle>
-          Every item movement in{" "}
-          {communityData?.community?.name || "this community"}
+          Every item movement in {community?.name || "this community"}
         </Subtitle>
       </Header>
 
@@ -623,7 +620,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
                               <Link
                                 to={
                                   count === 1 && row.itemId
-                                    ? `/communities/${communityId}/items/${row.itemId}`
+                                    ? `/items/${row.itemId}`
                                     : `/item-types/${row.itemType.id}`
                                 }
                               >
@@ -643,7 +640,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
                         {count}
                       </Delta>
                       <td>
-                        <PartyCell row={row} communityId={communityId} />
+                        <PartyCell row={row} />
                       </td>
                       <td>
                         <Party>{actor}</Party>

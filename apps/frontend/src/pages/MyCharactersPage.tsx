@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -96,6 +97,8 @@ const ErrorContainer = styled.div`
 const PAGE_SIZE = 24;
 
 export const MyCharactersPage: React.FC = () => {
+  usePageMeta({ title: "My Characters" });
+
   const { user } = useAuth();
 
   const { data, loading, error, fetchMore } = useGetMyCharactersQuery({
@@ -179,7 +182,9 @@ export const MyCharactersPage: React.FC = () => {
             You haven't created any characters yet. Create your first character
             to get started!
           </EmptyDescription>
-          <CreateButton to="/character/create">
+          {/* This list spans every community, so there is no one community to
+              create in -- pick one first. */}
+          <CreateButton to="/my/communities">
             Create Your First Character
           </CreateButton>
         </EmptyState>

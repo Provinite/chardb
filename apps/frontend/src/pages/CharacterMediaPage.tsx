@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useParams, Link } from "react-router-dom";
 import { ArrowLeft } from "lucide-react";
@@ -62,6 +63,8 @@ const Empty = styled.div`
 
 export const CharacterMediaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+
+  usePageMeta({ title: "Character Media" });
   const { user } = useAuth();
 
   const { data, loading, error } = useGetCharacterQuery({

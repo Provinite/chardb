@@ -234,8 +234,9 @@ test.describe("using an item, through the page", () => {
     await world.reset();
   });
 
-  const inventoryUrl = (communityId: string) =>
-    `/communities/${communityId}/inventory`;
+  // Takes the community's own origin -- `world.community.url` -- because the
+  // inventory is served from the community's host, not from the apex.
+  const inventoryUrl = (communityUrl: string) => `${communityUrl}/inventory`;
 
   /** Open a holding group, which is collapsed whenever it holds more than one. */
   const showItems = async (page: Page, itemTypeId: string) => {
@@ -249,7 +250,7 @@ test.describe("using an item, through the page", () => {
     page,
     world,
   }) => {
-    await page.goto(inventoryUrl(world.community.id));
+    await page.goto(inventoryUrl(world.community.url));
 
     const wallet = page.getByTestId(`wallet-${world.currencies.coin.code}`);
     await expect(wallet).toContainText(String(world.balances.member));
@@ -276,7 +277,7 @@ test.describe("using an item, through the page", () => {
   });
 
   test("cancelling uses nothing", async ({ page, world }) => {
-    await page.goto(inventoryUrl(world.community.id));
+    await page.goto(inventoryUrl(world.community.url));
 
     await showItems(page, world.itemTypes.ticket.id);
 
@@ -297,7 +298,9 @@ test.describe("using an item, through the page", () => {
     page,
     world,
   }) => {
-    await page.goto(`/item-types/${world.itemTypes.ticket.id}`);
+    await page.goto(
+      `${world.community.url}/item-types/${world.itemTypes.ticket.id}`,
+    );
 
     // Before this the payout appeared only in the confirm dialog, which is
     // after the decision to spend rather than before it -- and useless to
@@ -310,7 +313,9 @@ test.describe("using an item, through the page", () => {
     page,
     world,
   }) => {
-    await page.goto(`/item-types/${world.itemTypes.blankTicket.id}`);
+    await page.goto(
+      `${world.community.url}/item-types/${world.itemTypes.blankTicket.id}`,
+    );
 
     // Absent rather than showing a zero, matching the item type's actual
     // state: it has no payout, which is not the same as a payout of nothing.
@@ -322,7 +327,7 @@ test.describe("using an item, through the page", () => {
     page,
     world,
   }) => {
-    await page.goto(inventoryUrl(world.community.id));
+    await page.goto(inventoryUrl(world.community.url));
 
     // The Blank Ticket is consumable but configured with nothing. Using it
     // would be refused, so the button is absent rather than present and

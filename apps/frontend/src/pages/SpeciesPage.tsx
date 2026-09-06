@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import {
@@ -235,6 +236,8 @@ export const SpeciesPage: React.FC = () => {
     errorPolicy: "all",
   });
 
+  usePageMeta({ title: data?.speciesById?.name ?? "Species" });
+
   // Fetch trait count for this species
   const { data: traitsData } = useTraitsBySpeciesQuery({
     variables: { speciesId: speciesId!, first: 1 }, // Just get count
@@ -372,9 +375,7 @@ export const SpeciesPage: React.FC = () => {
               {species.community && (
                 <MetaItem>
                   <Users size={16} />
-                  <CommunityLink to={`/communities/${species.communityId}`}>
-                    {species.community.name}
-                  </CommunityLink>
+                  <CommunityLink to="/">{species.community.name}</CommunityLink>
                 </MetaItem>
               )}
               <MetaItem>
@@ -392,7 +393,7 @@ export const SpeciesPage: React.FC = () => {
                   variant="primary"
                   icon={<Settings size={16} />}
                   as={Link}
-                  to={`/communities/${species.communityId}/species`}
+                  to="/species"
                 >
                   Manage Species
                 </Button>

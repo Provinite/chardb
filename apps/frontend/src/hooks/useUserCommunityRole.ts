@@ -1,6 +1,5 @@
 import { useMemo } from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { useCommunityMembersByUserQuery } from "../generated/graphql";
 
 /**
  * Custom hook to get the user's role and permissions within a specific community
@@ -8,22 +7,27 @@ import { useCommunityMembersByUserQuery } from "../generated/graphql";
 export const useUserCommunityRole = (communityId: string | undefined) => {
   const { user } = useAuth();
 
-  const { data, loading, error } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || "", first: 50 },
-    skip: !user?.id,
-  });
+  // Off `me`, not a query of its own. This used to ask
+  // `communityMembersByUser(userId:)` -- which could not run until `me` had
+  // told it the viewer's own id, so it was a second round trip waiting on the
+  // first for data the first could have carried.
+  // No loading or error of its own any more: the memberships arrive with the
+  // viewer, so whether they are here is `AuthContext`'s question and a failure
+  // to load them is a failure to load the session.
+  const memberships = user?.communityMemberships?.nodes;
+  const loading = false;
 
   const userRole = useMemo(() => {
-    if (!data || !communityId) {
+    if (!memberships || !communityId) {
       return null;
     }
 
-    const membership = data.communityMembersByUser?.nodes?.find(
-      (m: any) => m.role.community.id === communityId,
+    const membership = memberships.find(
+      (m) => m.role.community?.id === communityId,
     );
 
     return membership?.role || null;
-  }, [data, communityId]);
+  }, [memberships, communityId]);
 
   const community = useMemo(() => {
     return userRole?.community || null;
@@ -112,7 +116,6 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
     hasSpeciesPermissions,
     hasInvitePermissions,
     loading,
-    error,
     isMember: !!userRole,
   };
 };

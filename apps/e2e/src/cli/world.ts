@@ -12,7 +12,7 @@
  * Assumes the servers are already up (`yarn workspace @chardb/e2e e2e` brings
  * them up, or run the server scripts directly).
  */
-import { CFG } from "../config.js";
+import { CFG, apexUrl } from "../config.js";
 import { PRESETS, type PresetName } from "../world/presets/index.js";
 import { seedPreset } from "../world/seed.js";
 
@@ -36,12 +36,16 @@ async function main(): Promise<void> {
   log(`Seeding "${preset}" ...`);
   const world = await seedPreset(preset);
 
+  // Browser-facing URLs, because a human or an agent drives this in a browser.
+  // The site is at its root domain and each community at its own subdomain;
+  // the loopback address the servers bind to is not a hostname the app can
+  // work out a community from, so it is not offered here.
   const out = {
     preset,
-    frontendUrl: CFG.frontendUrl,
-    backendUrl: CFG.backendUrl,
-    graphqlUrl: CFG.graphqlUrl,
-    loginUrl: `${CFG.frontendUrl}/login`,
+    frontendUrl: CFG.apexUrl,
+    backendUrl: CFG.browserBackendUrl,
+    graphqlUrl: `${CFG.browserBackendUrl}/graphql`,
+    loginUrl: apexUrl("/login"),
     users: Object.fromEntries(
       Object.entries(world.users).map(([k, p]) => [
         k,

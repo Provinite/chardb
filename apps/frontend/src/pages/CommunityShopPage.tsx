@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   ShoppingCart,
   Package,
@@ -13,6 +14,7 @@ import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useShopCart, MAX_UNITS_PER_ITEM } from "../hooks/useShopCart";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
   useGetShopItemsQuery,
   useGetMyShopPurchaseLinesQuery,
@@ -419,9 +421,11 @@ const blockedReason = (
 };
 
 export const CommunityShopPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  usePageMeta({ title: "Shop" });
+
+  const communityId = useCommunityId();
   const { user } = useAuth();
-  const cart = useShopCart(communityId);
+  const cart = useShopCart(communityId ?? undefined);
   const [confirming, setConfirming] = useState(false);
   /**
    * The purchase awaiting a yes on Undo.
@@ -593,9 +597,7 @@ export const CommunityShopPage: React.FC = () => {
               ))
             )}
           </WalletAmounts>
-          <WalletLink to={`/communities/${communityId}/inventory`}>
-            Full wallet and history
-          </WalletLink>
+          <WalletLink to="/inventory">Full wallet and history</WalletLink>
         </Wallet>
       </Header>
 
@@ -769,9 +771,7 @@ export const CommunityShopPage: React.FC = () => {
                 <Muted>
                   Showing {purchaseLines.length} of {purchaseTotal}
                 </Muted>
-                <Link to={`/communities/${communityId}/shop/purchases`}>
-                  View all
-                </Link>
+                <Link to="/shop/purchases">View all</Link>
               </PanelFooter>
             )}
           </Panel>

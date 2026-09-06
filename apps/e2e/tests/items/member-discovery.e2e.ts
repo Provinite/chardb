@@ -29,9 +29,7 @@ test.describe("a member's profile inside a community", () => {
       .click();
 
     await expect(page).toHaveURL(
-      new RegExp(
-        `/communities/${world.community.id}/members/${world.users.othermember.username}$`,
-      ),
+      `${world.community.url}/members/${world.users.othermember.username}`,
     );
     // Their standing *here*, which is the whole reason this is not
     // /user/:username.
@@ -66,9 +64,7 @@ test.describe("a member's profile inside a community", () => {
     await page.getByTestId("member-inventory-link").click();
 
     await expect(page).toHaveURL(
-      new RegExp(
-        `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory$`,
-      ),
+      `${world.community.url}/members/${world.users.othermember.username}/inventory`,
     );
     await expect(
       page.locator(
@@ -114,8 +110,8 @@ test.describe("finding a member from the search box", () => {
       .click();
 
     // Still in the palette, one level down. Picking a person is half a
-    // request; this is the other half.
-    await expect(page).toHaveURL(new RegExp(`${world.community.id}$`));
+    // request; this is the other half -- so the page did not move.
+    await expect(page).toHaveURL(`${world.community.url}/`);
     await expect(page.getByRole("button", { name: /^Profile/ })).toBeVisible();
     await expect(
       page.getByRole("button", { name: /^Inventory/ }),
@@ -138,9 +134,7 @@ test.describe("finding a member from the search box", () => {
     await page.getByRole("button", { name: /^Inventory/ }).click();
 
     await expect(page).toHaveURL(
-      new RegExp(
-        `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory$`,
-      ),
+      `${world.community.url}/members/${world.users.othermember.username}/inventory`,
     );
   });
 
@@ -157,9 +151,7 @@ test.describe("finding a member from the search box", () => {
     await page.getByRole("button", { name: /^Profile/ }).click();
 
     await expect(page).toHaveURL(
-      new RegExp(
-        `/communities/${world.community.id}/members/${world.users.othermember.username}$`,
-      ),
+      `${world.community.url}/members/${world.users.othermember.username}`,
     );
   });
 
@@ -237,15 +229,13 @@ test.describe("the trade composer", () => {
     // The pane beside the link shows only what can move. Whether an offer is
     // fair often turns on what cannot, and that is a different page.
     await page.goto(
-      `/communities/${world.community.id}/trades/new?with=${world.users.othermember.userId}`,
+      `${world.community.url}/trades/new?with=${world.users.othermember.userId}`,
     );
 
     await page.getByTestId("their-full-inventory").click();
 
     await expect(page).toHaveURL(
-      new RegExp(
-        `/communities/${world.community.id}/members/${world.users.othermember.username}/inventory$`,
-      ),
+      `${world.community.url}/members/${world.users.othermember.username}/inventory`,
     );
   });
 });

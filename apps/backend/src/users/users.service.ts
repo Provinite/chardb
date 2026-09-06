@@ -53,8 +53,6 @@ export interface UpdateUserServiceInput {
   privacySettings?: UserPrivacySettings;
 }
 
-type PrismaUser = Prisma.UserGetPayload<{}>;
-
 @Injectable()
 export class UsersService {
   constructor(private db: DatabaseService) {}
@@ -151,10 +149,28 @@ export class UsersService {
     });
   }
 
-  async getUserImagesCount(userId: string) {
-    return this.db.image.count({
+  /**
+   * How much of this user's image media the asker is allowed to see.
+   *
+   * Counted through `media` rather than `image`, because visibility lives on
+   * the media row -- `image` has no such column, so the old
+   * `image.count({ uploaderId })` could not have filtered even in principle.
+   * It counted every image the user had ever uploaded, private ones included,
+   * and put the number on a public profile.
+   *
+   * PUBLIC only for a visitor, exactly like the two counters above: this
+   * number labels a listing, and unlisted media is by definition not listed.
+   */
+  async getUserImagesCount(userId: string, includePrivate = false) {
+    const visibilityFilter = includePrivate
+      ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
+      : [Visibility.PUBLIC];
+
+    return this.db.media.count({
       where: {
-        uploaderId: userId,
+        ownerId: userId,
+        imageId: { not: null },
+        visibility: { in: visibilityFilter },
       },
     });
   }
@@ -198,11 +214,26 @@ export class UsersService {
     });
   }
 
-  async getUserRecentMedia(userId: string, limit = 12) {
+  /**
+   * The profile's "Recent Media" strip.
+   *
+   * Took no viewer and applied no visibility filter until #348: a member's
+   * PRIVATE media was drawn on their public profile, to anyone, signed out
+   * included. Its two neighbours above have taken `includePrivate` all along.
+   *
+   * UNLISTED is excluded from a visitor's view for the same reason as in
+   * `getUserImagesCount`: a strip on a profile is a listing.
+   */
+  async getUserRecentMedia(userId: string, includePrivate = false, limit = 12) {
+    const visibilityFilter = includePrivate
+      ? [Visibility.PUBLIC, Visibility.UNLISTED, Visibility.PRIVATE]
+      : [Visibility.PUBLIC];
+
     return this.db.media.findMany({
       where: {
         ownerId: userId,
         imageId: { not: null }, // Only include image media
+        visibility: { in: visibilityFilter },
       },
       take: limit,
       orderBy: { createdAt: "desc" },

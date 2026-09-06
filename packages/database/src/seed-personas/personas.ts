@@ -32,6 +32,12 @@ export interface PersonaDefinition {
 export const TEST_PASSWORD = "test123";
 export const TEST_COMMUNITY_NAME = "Test Community";
 
+/**
+ * The host the seeded community is served from in local development:
+ * `test-community.localhost:<frontend port>`.
+ */
+export const TEST_COMMUNITY_SLUG = "test-community";
+
 export const PERSONAS: Record<string, PersonaDefinition> = {
   siteAdmin: {
     username: "siteadmin",

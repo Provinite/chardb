@@ -1,9 +1,10 @@
 import React from "react";
-import { useParams } from "react-router-dom";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Image, ArrowLeft } from "lucide-react";
 import { Button, Heading2, SmallText, HelpText } from "@chardb/ui";
 import { ImageModerationQueue } from "../components/moderation";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 
 const Container = styled.div`
   display: flex;
@@ -62,15 +63,15 @@ const HeaderText = styled.div`
 `;
 
 export const ImageModerationPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  usePageMeta({ title: "Image Moderation" });
+
+  const communityId = useCommunityId();
 
   if (!communityId) {
     return (
       <Container>
         <Heading2>Invalid Community</Heading2>
-        <HelpText>
-          Community ID is required to access moderation tools.
-        </HelpText>
+        <HelpText>This address names no community to moderate.</HelpText>
       </Container>
     );
   }

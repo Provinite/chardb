@@ -264,7 +264,10 @@ test.describe("approval awards", () => {
       const { createCommunity: other } = await world
         .as("commadmin")
         .gql(SeedCreateCommunityDocument, {
-          createCommunityInput: { name: `Elsewhere ${Date.now()}` },
+          createCommunityInput: {
+            name: `Elsewhere ${Date.now()}`,
+            slug: `elsewhere-${Date.now()}`,
+          },
         });
 
       const { rolesByCommunity } = await world

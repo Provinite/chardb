@@ -171,6 +171,11 @@ module "frontend" {
   domain_name         = var.domain_name != null ? "${var.environment}.${var.domain_name}" : null
   acm_certificate_arn = var.domain_name != null ? aws_acm_certificate_validation.main[0].certificate_arn : null
   route53_zone_id     = var.domain_name != null ? data.aws_route53_zone.main[0].zone_id : null
+
+  # As in prod: communities are subdomains of the site, served by this same
+  # distribution and bundle. Here that is *.dev.chardb.cc, which the
+  # environment's certificate is already issued for.
+  serve_wildcard_subdomains = true
 }
 
 module "app_secrets" {

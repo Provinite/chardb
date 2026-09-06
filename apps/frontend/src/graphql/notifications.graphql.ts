@@ -38,6 +38,9 @@ export const NOTIFICATION_FRAGMENT = gql`
     community {
       id
       name
+      # Notifications are read at the apex but point at community objects, so
+      # every href out of the list crosses an origin and needs the host.
+      slug
     }
   }
 `;

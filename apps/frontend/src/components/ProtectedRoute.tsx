@@ -1,7 +1,8 @@
 import React from "react";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { loginUrlReturningHere } from "../lib/communityHost";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -9,7 +10,6 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
-  const location = useLocation();
 
   if (loading) {
     return (
@@ -20,7 +20,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    // The return address goes in the URL, not in router state. On a community
+    // host `/login` is itself a hop to the apex, and `location.state` does not
+    // survive a navigation across origins -- carrying it that way stranded
+    // people on the apex dashboard instead of the page they asked for.
+    return <Navigate to={loginUrlReturningHere()} replace />;
   }
 
   return <>{children}</>;

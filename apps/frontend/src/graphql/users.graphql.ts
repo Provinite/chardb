@@ -64,6 +64,11 @@ export const GET_USER_PROFILE = gql`
         species {
           id
           name
+          community {
+            id
+            # The host the character is served from; a profile is at the apex.
+            slug
+          }
         }
         createdAt
         updatedAt
@@ -111,6 +116,10 @@ export const GET_USER_PROFILE = gql`
         species {
           id
           name
+          community {
+            id
+            slug
+          }
         }
         createdAt
         updatedAt

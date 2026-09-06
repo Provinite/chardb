@@ -1,5 +1,6 @@
 import { presetTest, expect } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
+import { linkToPath } from "../../src/config.js";
 const test = presetTest("community-items");
 
 /**
@@ -15,8 +16,11 @@ const test = presetTest("community-items");
  * open to trades and for sale in coin.
  */
 
+/** Keyed off the character's own URL, which is absolute and names its
+ *  community's host -- this list is the site's, at the apex, and a character
+ *  lives on its community (#339). Takes `world.characters.<name>.url`. */
 const card = (page: Page, characterId: string) =>
-  page.locator(`a[href="/character/${characterId}"]`).first();
+  page.locator(linkToPath(`/character/${characterId}`)).first();
 
 /** Open advanced search, tick these boxes, and search. */
 async function filterBy(page: Page, kinds: string[]) {

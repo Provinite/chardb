@@ -7,7 +7,6 @@ import {
   ID,
   ResolveField,
   Parent,
-  Extensions,
 } from "@nestjs/graphql";
 import { NotFoundException, UseFilters } from "@nestjs/common";
 import { UsersService } from "./users.service";
@@ -35,13 +34,25 @@ import { AllowSelf } from "../auth/decorators/AllowSelf";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { GraphQLJSON } from "graphql-type-json";
 import { Inventory } from "../items/entities/inventory.entity";
+import { Item as ItemEntity } from "../items/entities/item.entity";
 import { ItemsService } from "../items/items.service";
 import { EmptyStringOnForbiddenFilter } from "../auth/filters/EmptyStringOnForbiddenFilter";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
-import { CommunityMember } from "../community-members/entities/community-member.entity";
+import { CommunityMemberConnection } from "../community-members/entities/community-member.entity";
+import { CommunityMembersService } from "../community-members/community-members.service";
+import { mapPrismaCommunityMemberConnectionToGraphQL } from "../community-members/utils/community-member-resolver-mappers";
 import { DatabaseService } from "../database/database.service";
 import { Image } from "../images/entities/image.entity";
 import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
+
+/**
+ * One row as `ItemsService.findAllItems` returns it, includes and all. Taken
+ * from the method rather than written out so the `itemType` this file groups
+ * by stays tied to the include that produces it.
+ */
+type InventoryItemRow = Awaited<
+  ReturnType<ItemsService["findAllItems"]>
+>["items"][number];
 
 @Resolver(() => User)
 export class UsersResolver {
@@ -50,6 +61,7 @@ export class UsersResolver {
     private readonly externalAccountsService: ExternalAccountsService,
     private readonly itemsService: ItemsService,
     private readonly database: DatabaseService,
+    private readonly communityMembersService: CommunityMembersService,
   ) {}
 
   @AllowGlobalPermission(GlobalPermission.CanListUsers)
@@ -125,7 +137,7 @@ export class UsersResolver {
   @Query(() => UserStats, { name: "userStats" })
   async getUserStats(
     @Args("userId", { type: () => ID }) userId: string,
-    @CurrentUser() currentUser?: CurrentUserType,
+    @CurrentUser() _currentUser?: CurrentUserType,
   ): Promise<UserStats | null> {
     const user = await this.usersService.findById(userId);
     if (!user) return null;
@@ -135,13 +147,13 @@ export class UsersResolver {
 
   // Field resolvers for computed properties
   @ResolveField("followersCount", () => Int)
-  async resolveFollowersCount(@Parent() user: User): Promise<number> {
+  async resolveFollowersCount(@Parent() _user: User): Promise<number> {
     // TODO: Implement when social features are added
     return 0;
   }
 
   @ResolveField("followingCount", () => Int)
-  async resolveFollowingCount(@Parent() user: User): Promise<number> {
+  async resolveFollowingCount(@Parent() _user: User): Promise<number> {
     // TODO: Implement when social features are added
     return 0;
   }
@@ -149,8 +161,8 @@ export class UsersResolver {
   @AllowAnyAuthenticated()
   @ResolveField("userIsFollowing", () => Boolean)
   async resolveUserIsFollowing(
-    @Parent() user: User,
-    @CurrentUser() currentUser?: CurrentUserType,
+    @Parent() _user: User,
+    @CurrentUser() _currentUser?: CurrentUserType,
   ): Promise<boolean> {
     // TODO: Implement when social features are added
     return false;
@@ -177,7 +189,7 @@ export class UsersResolver {
   @AllowGlobalAdmin()
   @AllowSelf()
   @ResolveField("privacySettings", () => GraphQLJSON)
-  async resolvePrivacySettings(@Parent() user: User): Promise<any> {
+  async resolvePrivacySettings(@Parent() user: User): Promise<unknown> {
     return user.privacySettings;
   }
 
@@ -227,16 +239,36 @@ export class UsersResolver {
     return this.externalAccountsService.findByUserId(user.id);
   }
 
+  /**
+   * The communities this user belongs to.
+   *
+   * Reachable only through a `User`, which for the common case is the `me`
+   * root -- so "whose memberships" is the authenticated subject and there is
+   * no argument for a caller to claim. `communityMembersByUser(userId:)` still
+   * exists for a global admin looking at somebody else, where the identity
+   * check inside it is the point of the field rather than a guard against a
+   * wrong argument.
+   *
+   * Paginated, because `me` gates first paint on every page: a member of five
+   * hundred communities must not make the whole app slow. It was an unbounded
+   * list before.
+   */
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("communityMemberships", () => [CommunityMember])
+  @ResolveField("communityMemberships", () => CommunityMemberConnection)
   async resolveCommunityMemberships(
     @Parent() user: User,
-  ): Promise<CommunityMember[]> {
-    return this.database.communityMember.findMany({
-      where: { userId: user.id },
-      include: { role: true },
-    }) as any;
+    @Args("first", { type: () => Int, nullable: true, defaultValue: 20 })
+    first?: number,
+    @Args("after", { type: () => String, nullable: true })
+    after?: string,
+  ): Promise<CommunityMemberConnection> {
+    const result = await this.communityMembersService.findByUser(
+      user.id,
+      first,
+      after,
+    );
+    return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
   @AllowUnauthenticated()
@@ -277,9 +309,9 @@ export class UsersResolver {
 
     if (!communityId) {
       // Group items by community
-      const itemsByCommunity = new Map<string, any[]>();
+      const itemsByCommunity = new Map<string, InventoryItemRow[]>();
       for (const item of result.items) {
-        const commId = (item as any).itemType.communityId;
+        const commId = item.itemType.communityId;
         if (!itemsByCommunity.has(commId)) {
           itemsByCommunity.set(commId, []);
         }
@@ -289,7 +321,7 @@ export class UsersResolver {
       // Return an inventory for each community
       return Array.from(itemsByCommunity.entries()).map(([commId, items]) => ({
         communityId: commId,
-        items: items as any,
+        items: items as unknown as ItemEntity[],
         totalItems: items.length,
       }));
     }
@@ -298,7 +330,7 @@ export class UsersResolver {
     return [
       {
         communityId,
-        items: result.items as any,
+        items: result.items as unknown as ItemEntity[],
         totalItems: result.items.length,
       },
     ];
@@ -324,7 +356,7 @@ export class UserProfileResolver {
   })
   async resolveRecentCharacters(
     @Parent() profile: UserProfile,
-    @CurrentUser() currentUser?: CurrentUserType,
+    @CurrentUser() _currentUser?: CurrentUserType,
   ) {
     const includePrivate = profile.canViewPrivateContent;
     const characters = await this.usersService.getUserRecentCharacters(
@@ -341,7 +373,7 @@ export class UserProfileResolver {
   })
   async resolveRecentGalleries(
     @Parent() profile: UserProfile,
-    @CurrentUser() currentUser?: CurrentUserType,
+    @CurrentUser() _currentUser?: CurrentUserType,
   ) {
     const includePrivate = profile.canViewPrivateContent;
     return this.usersService.getUserRecentGalleries(
@@ -356,7 +388,12 @@ export class UserProfileResolver {
     description: "Recently uploaded media (images and text) by this user",
   })
   async resolveRecentMedia(@Parent() profile: UserProfile) {
-    return this.usersService.getUserRecentMedia(profile.user.id, 12);
+    const includePrivate = profile.canViewPrivateContent;
+    return this.usersService.getUserRecentMedia(
+      profile.user.id,
+      includePrivate,
+      12,
+    );
   }
 
   @AllowUnauthenticated()
@@ -416,18 +453,24 @@ export class UserStatsResolver {
 
   @AllowUnauthenticated()
   @ResolveField("imagesCount", () => Int, {
-    description: "Total number of images uploaded by this user",
+    description:
+      "Number of this user's image media the asker is allowed to see",
   })
-  async resolveImagesCount(@Parent() stats: UserStats) {
+  async resolveImagesCount(
+    @Parent() stats: UserStats,
+    @CurrentUser() currentUser?: CurrentUserType,
+  ) {
     if (!stats.userId) return 0;
-    return this.usersService.getUserImagesCount(stats.userId);
+    const includePrivate =
+      currentUser?.id === stats.userId || !!currentUser?.isAdmin;
+    return this.usersService.getUserImagesCount(stats.userId, includePrivate);
   }
 
   @AllowUnauthenticated()
   @ResolveField("totalViews", () => Int, {
     description: "Total number of views across all user's content",
   })
-  async resolveTotalViews(@Parent() stats: UserStats) {
+  async resolveTotalViews(@Parent() _stats: UserStats) {
     // TODO: Implement when views system is added
     return 0;
   }
@@ -448,7 +491,7 @@ export class UserStatsResolver {
   @ResolveField("followersCount", () => Int, {
     description: "Number of users following this user",
   })
-  async resolveFollowersCount(@Parent() stats: UserStats) {
+  async resolveFollowersCount(@Parent() _stats: UserStats) {
     // TODO: Implement when social features are added
     return 0;
   }
@@ -457,7 +500,7 @@ export class UserStatsResolver {
   @ResolveField("followingCount", () => Int, {
     description: "Number of users this user is following",
   })
-  async resolveFollowingCount(@Parent() stats: UserStats) {
+  async resolveFollowingCount(@Parent() _stats: UserStats) {
     // TODO: Implement when social features are added
     return 0;
   }

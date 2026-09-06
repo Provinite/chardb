@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
@@ -104,6 +105,8 @@ const WelcomeMessage = styled.p`
 `;
 
 export const DashboardPage: React.FC = () => {
+  usePageMeta({ title: "Dashboard" });
+
   const { user } = useAuth();
 
   return (
@@ -121,7 +124,9 @@ export const DashboardPage: React.FC = () => {
       <QuickActions>
         <ActionsTitle>Quick Actions</ActionsTitle>
         <ActionButtons>
-          <Button as={Link} to="/character/create" variant="primary">
+          {/* Creating a character happens inside a community; the dashboard
+              is at the apex, so this picks one first. */}
+          <Button as={Link} to="/my/communities" variant="primary">
             Create Character
           </Button>
           <Button as={Link} to="/gallery/create" variant="outline">

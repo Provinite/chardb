@@ -7,11 +7,11 @@ import {
 
 const test = presetTest("community-items");
 
-const inventoryUrl = (communityId: string) =>
-  `/communities/${communityId}/inventory`;
+/** Both take the community's own origin -- `world.community.url` -- because
+ *  these pages are served from the community's host, not from the apex. */
+const inventoryUrl = (communityUrl: string) => `${communityUrl}/inventory`;
 
-const adminUrl = (communityId: string) =>
-  `/communities/${communityId}/admin/items`;
+const adminUrl = (communityUrl: string) => `${communityUrl}/admin/items`;
 
 /** Open a holding group, which is collapsed whenever it holds more than one. */
 const showItems = async (page: Page, itemTypeId: string) => {
@@ -92,7 +92,7 @@ test.describe("redeeming a variant change item, through the pages", () => {
 
   test("cancelling the confirm redeems nothing", async ({ page, world }) => {
     await page.goto(
-      `/character/${world.characters.pinefall.id}/change-variant?itemType=${world.itemTypes.rareUpgrade.id}`,
+      `${world.characters.pinefall.url}/change-variant?itemType=${world.itemTypes.rareUpgrade.id}`,
     );
 
     await page.getByTestId("submit-variant-change").click();
@@ -114,7 +114,7 @@ test.describe("redeeming a variant change item, through the pages", () => {
     page,
     world,
   }) => {
-    await page.goto(inventoryUrl(world.community.id));
+    await page.goto(inventoryUrl(world.community.url));
 
     await showItems(page, world.itemTypes.rareUpgrade.id);
     await page
@@ -168,7 +168,7 @@ test.describe("redeeming a variant change item, through the pages", () => {
     // Pinefall has Blue eyes; Legendary permits Amber alone. This is the case
     // the whole page exists for.
     await page.goto(
-      `/character/${world.characters.pinefall.id}/change-variant?item=${world.variantChangeItems.ascensionIds[0]}`,
+      `${world.characters.pinefall.url}/change-variant?item=${world.variantChangeItems.ascensionIds[0]}`,
     );
 
     const reroute = page.getByTestId("variant-change-reroute");
@@ -251,7 +251,7 @@ test.describe("redeeming a variant change item, through the pages", () => {
     });
 
     await page.goto(
-      `/character/${world.characters.pinefall.id}/change-variant?itemType=${world.itemTypes.rareUpgrade.id}`,
+      `${world.characters.pinefall.url}/change-variant?itemType=${world.itemTypes.rareUpgrade.id}`,
     );
 
     await expect(page.getByTestId("variant-change-unusable")).toContainText(
@@ -263,7 +263,9 @@ test.describe("redeeming a variant change item, through the pages", () => {
     page,
     world,
   }) => {
-    await page.goto(`/item-types/${world.itemTypes.rareUpgrade.id}`);
+    await page.goto(
+      `${world.community.url}/item-types/${world.itemTypes.rareUpgrade.id}`,
+    );
 
     const section = page.getByTestId("item-type-variant-change-grant");
     await expect(section).toContainText(world.variants.common.name);
@@ -276,7 +278,7 @@ test.describe("redeeming a variant change item, through the pages", () => {
 
   test("the redemption reaches the item ledger", async ({ page, world }) => {
     await page.goto(
-      `/character/${world.characters.pinefall.id}/change-variant?itemType=${world.itemTypes.rareUpgrade.id}`,
+      `${world.characters.pinefall.url}/change-variant?itemType=${world.itemTypes.rareUpgrade.id}`,
     );
     await page.getByTestId("submit-variant-change").click();
     await page.getByTestId("confirm-accept").click();
@@ -315,7 +317,7 @@ test.describe("configuring a variant change, through the admin page", () => {
     page,
     world,
   }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     await card(page, world.itemTypes.potion.id)
       .getByRole("button", { name: "Edit" })
@@ -335,7 +337,9 @@ test.describe("configuring a variant change, through the admin page", () => {
 
     await expect(page.getByText("Variant change saved")).toBeVisible();
 
-    await page.goto(`/item-types/${world.itemTypes.potion.id}`);
+    await page.goto(
+      `${world.community.url}/item-types/${world.itemTypes.potion.id}`,
+    );
     const section = page.getByTestId("item-type-variant-change-grant");
     await expect(section).toContainText(world.variants.common.name);
     await expect(section).toContainText(world.variants.rare.name);
@@ -345,7 +349,7 @@ test.describe("configuring a variant change, through the admin page", () => {
     page,
     world,
   }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     await card(page, world.itemTypes.potion.id)
       .getByRole("button", { name: "Edit" })
@@ -367,7 +371,7 @@ test.describe("configuring a variant change, through the admin page", () => {
   });
 
   test("clearing the destination clears the grant", async ({ page, world }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     await card(page, world.itemTypes.rareUpgrade.id)
       .getByRole("button", { name: "Edit" })
@@ -379,7 +383,9 @@ test.describe("configuring a variant change, through the admin page", () => {
 
     await expect(page.getByText("Variant change cleared")).toBeVisible();
 
-    await page.goto(`/item-types/${world.itemTypes.rareUpgrade.id}`);
+    await page.goto(
+      `${world.community.url}/item-types/${world.itemTypes.rareUpgrade.id}`,
+    );
     await expect(
       page.getByTestId("item-type-variant-change-grant"),
     ).toHaveCount(0);
@@ -389,7 +395,7 @@ test.describe("configuring a variant change, through the admin page", () => {
     page,
     world,
   }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     // The Coin Ticket already pays 250. An item type does one thing.
     await card(page, world.itemTypes.ticket.id)
@@ -412,7 +418,7 @@ test.describe("configuring a variant change, through the admin page", () => {
     page,
     world,
   }) => {
-    await page.goto(adminUrl(world.community.id));
+    await page.goto(adminUrl(world.community.url));
 
     // The locket is an untradeable keepsake, and not consumable.
     await card(page, world.itemTypes.locket.id)

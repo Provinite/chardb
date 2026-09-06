@@ -1,4 +1,5 @@
 import React, { useCallback, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Bell } from "lucide-react";
 import { Button } from "@chardb/ui";
@@ -85,6 +86,8 @@ const LoadingContainer = styled.div`
  * same event differently.
  */
 export const NotificationsPage: React.FC = () => {
+  usePageMeta({ title: "Notifications" });
+
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [limit, setLimit] = useState(PAGE_SIZE);
 

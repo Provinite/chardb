@@ -1,7 +1,8 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Character } from "../generated/graphql";
+import { Character, Community } from "../generated/graphql";
+import { characterUrl } from "../lib/communityHost";
+import { HostAwareLink } from "./HostAwareLink";
 import { Tag } from "./Tag";
 import { TagsContainer } from "./TagsContainer";
 import { CopyIdButton } from "./CopyIdButton";
@@ -10,7 +11,17 @@ export type CharacterCardItem = Pick<
   Character,
   "id" | "name" | "visibility" | "tags" | "isSellable" | "price"
 > & {
-  species?: Pick<NonNullable<Character["species"]>, "name"> | null;
+  species?:
+    | (Pick<NonNullable<Character["species"]>, "name"> & {
+        /**
+         * Which host the character is served from. Optional because a
+         * character with no species has no community and therefore no host --
+         * it lives at the apex, and `characterUrl` says so. Every list query
+         * behind this card selects it.
+         */
+        community?: Pick<Community, "slug"> | null;
+      })
+    | null;
   owner?: Pick<
     NonNullable<Character["owner"]>,
     "displayName" | "username"
@@ -24,7 +35,15 @@ export type CharacterCardItem = Pick<
   _count?: Pick<NonNullable<Character["_count"]>, "media"> | null;
 };
 
-const Card = styled(Link)`
+/**
+ * The card renders at the apex (My Characters, Liked, a profile, the feed) and
+ * on a community host (the roster), and the character it names lives on
+ * whichever host its species' community owns -- so the destination is absolute
+ * and may or may not be this origin. `HostAwareLink` decides per click: a
+ * roster linking to its own community stays client-side, and only a link that
+ * genuinely crosses costs a page load.
+ */
+const Card = styled(HostAwareLink)`
   display: block;
   text-decoration: none;
   background: ${({ theme }) => theme.colors.background};
@@ -150,7 +169,8 @@ const ButtonGroup = styled.div`
   }
 `;
 
-const EditButton = styled(Link)`
+/** Same treatment as `Card`, for the same reason. */
+const EditButton = styled(HostAwareLink)`
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.text.primary};
@@ -183,18 +203,18 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
   showOwner = true,
   showEditButton = false,
 }) => {
+  const href = characterUrl(character.id, character.species?.community?.slug);
+
   return (
     <Card
-      to={`/character/${character.id}`}
+      to={href}
       aria-label={`View character ${character.name}`}
       data-testid="character-card"
       data-character-id={character.id}
     >
       <ButtonGroup>
         <CopyIdButton id={character.id} />
-        {showEditButton && (
-          <EditButton to={`/character/${character.id}/edit`}>Edit</EditButton>
-        )}
+        {showEditButton && <EditButton to={`${href}/edit`}>Edit</EditButton>}
       </ButtonGroup>
       <ImageSection>
         {character.mainMedia?.image ? (

@@ -1,14 +1,16 @@
 import React, { useMemo, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { usePageMeta } from "../lib/pageMeta";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
 import { Users, Search, Package, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
-  useCommunityByIdQuery,
-  useCommunityMembersWithRolesQuery,
-} from "../generated/graphql";
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
+import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useCommunityMembersWithRolesQuery } from "../generated/graphql";
 
 /**
  * Who is in this community, and what each of them holds.
@@ -207,15 +209,14 @@ const LoadingContainer = styled.div`
 `;
 
 export const CommunityMembersPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  usePageMeta({ title: "Members" });
+
+  const communityId = useCommunityId();
   const { user } = useAuth();
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(PAGE_SIZE);
 
-  const { data: communityData } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  const community = useHostCommunity();
 
   const { data, loading, error } = useCommunityMembersWithRolesQuery({
     variables: { communityId: communityId!, first: limit },
@@ -273,9 +274,7 @@ export const CommunityMembersPage: React.FC = () => {
     <Container>
       <Header>
         <Title>Members</Title>
-        <Subtitle>
-          Everyone in {communityData?.community?.name || "this community"}
-        </Subtitle>
+        <Subtitle>Everyone in {community?.name || "this community"}</Subtitle>
       </Header>
 
       <SearchWrap>
@@ -311,30 +310,23 @@ export const CommunityMembersPage: React.FC = () => {
                 <Avatar image={m.user.avatarImage} name={name} size={36} />
                 <Who>
                   <Name>
-                    {/* Their profile *here*, not the global one. Clicking a
+                    {/* Their profile *here*, not the apex one. Clicking a
                         name inside a community and landing somewhere that has
                         forgotten the community is how their holdings became
-                        unreachable in the first place (#349). */}
-                    <Link
-                      to={`/communities/${communityId}/members/${m.user.username}`}
-                    >
-                      {name}
-                    </Link>
+                        unreachable in the first place (#349). The apex
+                        profile is still a click away, linked from this one. */}
+                    <Link to={`/members/${m.user.username}`}>{name}</Link>
                   </Name>
                   {m.user.displayName && <Handle>@{m.user.username}</Handle>}
                 </Who>
                 <RoleTag>{m.role.name}</RoleTag>
-                <ItemsLink
-                  to={`/communities/${communityId}/members/${m.user.username}/inventory`}
-                >
+                <ItemsLink to={`/members/${m.user.username}/inventory`}>
                   <Package size={14} /> Inventory
                 </ItemsLink>
                 {/* Hidden on your own row: the server refuses a trade with
                     yourself, so offering the button would be a dead end. */}
                 {m.user.id !== user?.id && (
-                  <ItemsLink
-                    to={`/communities/${communityId}/trades/new?with=${m.user.id}`}
-                  >
+                  <ItemsLink to={`/trades/new?with=${m.user.id}`}>
                     <ArrowLeftRight size={14} /> Trade
                   </ItemsLink>
                 )}

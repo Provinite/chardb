@@ -135,19 +135,26 @@ export class MediaService {
 
     const where: Prisma.MediaWhereInput = {
       AND: [
-        // Visibility filter - properly handle private content
-        {
-          OR: [
-            { visibility: "PUBLIC" },
-            { visibility: "UNLISTED" },
-            // Private content only visible to owner
-            userId
-              ? {
-                  AND: [{ visibility: "PRIVATE" }, { ownerId: userId }],
-                }
-              : { id: "never-matches" }, // Exclude private content for anonymous users
-          ],
-        },
+        // Visibility. Public to everyone; anything else only to its owner.
+        //
+        // UNLISTED was listed here to everyone until #348, which is the one
+        // thing the word rules out -- `findOne` still serves it to anybody
+        // holding the link, and that is what unlisted means. #321 made this
+        // same argument for characters and galleries and changed those; media
+        // was the instance it missed, exactly as the profile's media "View
+        // All" was the link it missed. All five callers of this method are
+        // listings: the global browse, a member's media, a character's, a
+        // gallery's, and your own (where `ownerId` is you, so nothing here
+        // narrows it). `likedMedia` is not one of them -- it lives in
+        // SocialService, and someone who liked a thing already had its link.
+        userId
+          ? {
+              OR: [
+                { visibility: "PUBLIC" },
+                { ownerId: userId }, // Owner sees their own, whatever it is
+              ],
+            }
+          : { visibility: "PUBLIC" }, // Only public for anonymous users
 
         // Search filter
         filters?.search

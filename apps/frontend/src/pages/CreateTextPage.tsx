@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom";
+import { usePageMeta } from "../lib/pageMeta";
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -15,6 +17,7 @@ import {
 } from "../graphql/media.graphql";
 import { useGetCharacterQuery } from "../graphql/characters.graphql";
 import { useGetMyGalleriesQuery } from "../graphql/galleries.graphql";
+import { characterUrl } from "../lib/communityHost";
 import { TextFormatting, Visibility } from "../generated/graphql";
 // import { TextEditor } from '../components/TextEditor';
 import { useAuth } from "../contexts/AuthContext";
@@ -283,6 +286,8 @@ const LoadingSpinner = styled.div`
 `;
 
 export const CreateTextPage: React.FC = () => {
+  usePageMeta({ title: "New Text Post" });
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();
@@ -344,9 +349,17 @@ export const CreateTextPage: React.FC = () => {
     ],
   });
 
+  // Writing happens at the apex and the character is served from its
+  // community's host, so going back to it leaves this origin.
+  const goToCharacter = (id: string) => {
+    window.location.assign(
+      characterUrl(id, characterData?.character?.species?.community?.slug),
+    );
+  };
+
   const handleBackClick = () => {
     if (characterId) {
-      navigate(`/character/${characterId}`);
+      goToCharacter(characterId);
     } else if (galleryId) {
       navigate(`/gallery/${galleryId}`);
     } else {
@@ -383,7 +396,7 @@ export const CreateTextPage: React.FC = () => {
 
       // Navigate to the created media or back to character
       if (characterId) {
-        navigate(`/character/${characterId}`);
+        goToCharacter(characterId);
       } else if (galleryId) {
         navigate(`/gallery/${galleryId}`);
       } else {
@@ -517,15 +530,15 @@ export const CreateTextPage: React.FC = () => {
                     <option>No galleries yet</option>
                   </Select>
                   <div style={{ marginTop: "0.5rem" }}>
-                    <a
-                      href="/gallery/create"
+                    <Link
+                      to="/gallery/create"
                       style={{
                         fontSize: "0.875rem",
                         color: "var(--color-primary)",
                       }}
                     >
                       Create your first gallery
-                    </a>
+                    </Link>
                   </div>
                 </>
               ) : (

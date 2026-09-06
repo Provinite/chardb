@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowDownUp } from "lucide-react";
@@ -193,6 +194,8 @@ function LineRows({
  * belongs behind an affordance, not in the main path.
  */
 export const TradeOfferPage: React.FC = () => {
+  usePageMeta({ title: "Trade Offer" });
+
   const { tradeId } = useParams<{ tradeId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -331,9 +334,7 @@ export const TradeOfferPage: React.FC = () => {
                   // Only navigation. The decline happens with the replacement
                   // when the counter is sent, so opening the composer and
                   // changing your mind leaves this offer exactly as it was.
-                  navigate(
-                    `/communities/${trade.community.id}/trades/new?with=${other.id}&mirror=${trade.id}`,
-                  )
+                  navigate(`/trades/new?with=${other.id}&mirror=${trade.id}`)
                 }
               >
                 Counter…

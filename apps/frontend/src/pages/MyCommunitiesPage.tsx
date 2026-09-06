@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import {
@@ -17,6 +18,7 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useCommunityMembersByUserQuery } from "../graphql/communities.graphql";
+import { communityUrl } from "../lib/communityHost";
 import { Users, Calendar, ExternalLink } from "lucide-react";
 
 const Container = styled.div`
@@ -44,7 +46,9 @@ const CommunityCard = styled(Card)`
   }
 `;
 
-const ClickableCommunityCard = styled(Link)`
+// Every card leaves the apex for a community's own host, so these are plain
+// anchors: the router cannot cross an origin.
+const ClickableCommunityCard = styled.a`
   text-decoration: none;
   color: inherit;
   display: block;
@@ -107,6 +111,8 @@ const EmptyActions = styled.div`
 `;
 
 export const MyCommunitiesPage: React.FC = () => {
+  usePageMeta({ title: "My Communities" });
+
   const { user } = useAuth();
 
   const { data, loading, error } = useCommunityMembersByUserQuery({
@@ -197,7 +203,7 @@ export const MyCommunitiesPage: React.FC = () => {
         {communities.map((membership) => (
           <ClickableCommunityCard
             key={membership.id}
-            to={`/communities/${membership.role.community.id}`}
+            href={communityUrl(membership.role.community.slug)}
           >
             <CommunityCard>
               <CommunityHeader>
@@ -228,8 +234,8 @@ export const MyCommunitiesPage: React.FC = () => {
                 }}
               >
                 <Button
-                  as={Link}
-                  to={`/communities/${membership.role.community.id}/admin`}
+                  as="a"
+                  href={communityUrl(membership.role.community.slug, "/admin")}
                   variant="primary"
                   size="sm"
                   icon={<ExternalLink size={14} />}

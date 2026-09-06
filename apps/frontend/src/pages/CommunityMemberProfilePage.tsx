@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { Avatar } from "@chardb/ui";
 import {
   Package,
@@ -9,10 +9,15 @@ import {
   ChevronLeft,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
+import { apexUrl } from "../lib/communityHost";
+import { usePageMeta } from "../lib/pageMeta";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
 import {
-  useCommunityByIdQuery,
   useCommunityMemberRolesQuery,
   useGetUserProfileQuery,
   useUserCharactersQuery,
@@ -120,7 +125,7 @@ const Actions = styled.div`
   margin-top: 1.1rem;
 `;
 
-const Action = styled(Link)<{ $primary?: boolean }>`
+const actionStyles = css<{ $primary?: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
@@ -142,6 +147,18 @@ const Action = styled(Link)<{ $primary?: boolean }>`
     color: ${({ theme, $primary }) =>
       $primary ? theme.colors.primary : theme.colors.text.primary};
   }
+`;
+
+const Action = styled(Link)<{ $primary?: boolean }>`
+  ${actionStyles}
+`;
+
+/**
+ * The same button, for a destination on another host. The router cannot cross
+ * an origin, so anything leaving this one is a plain anchor.
+ */
+const ActionAnchor = styled.a<{ $primary?: boolean }>`
+  ${actionStyles}
 `;
 
 const Section = styled.section`
@@ -188,16 +205,14 @@ const LoadingContainer = styled.div`
 `;
 
 export const CommunityMemberProfilePage: React.FC = () => {
-  const { communityId, username } = useParams<{
-    communityId: string;
-    username: string;
-  }>();
+  const { username } = useParams<{ username: string }>();
   const { user } = useAuth();
+  // Off the hostname, not the path: `/communities/:communityId` is gone (#339)
+  // and the host context is already holding the whole record.
+  const communityId = useCommunityId();
+  const community = useHostCommunity();
 
-  const { data: communityData } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  usePageMeta({ title: username ? `@${username}` : "Member" });
 
   const { data: profileData, loading: profileLoading } = useGetUserProfileQuery(
     {
@@ -249,11 +264,11 @@ export const CommunityMemberProfilePage: React.FC = () => {
   const characters = charactersData?.userCharacters?.characters ?? [];
   const characterTotal = charactersData?.userCharacters?.total ?? 0;
   const displayName = member.displayName || member.username;
-  const communityName = communityData?.community?.name || "this community";
+  const communityName = community?.name || "this community";
 
   return (
     <Container>
-      <BackLink to={`/communities/${communityId}/members`}>
+      <BackLink to="/members">
         <ChevronLeft size={14} /> Members of {communityName}
       </BackLink>
 
@@ -279,7 +294,7 @@ export const CommunityMemberProfilePage: React.FC = () => {
                 knowing a URL. */}
             <Action
               $primary
-              to={`/communities/${communityId}/members/${member.username}/inventory`}
+              to={`/members/${member.username}/inventory`}
               data-testid="member-inventory-link"
             >
               <Package size={15} />
@@ -288,15 +303,15 @@ export const CommunityMemberProfilePage: React.FC = () => {
             {/* Hidden on your own profile: the server refuses a trade with
                 yourself, so offering the button would be a dead end. */}
             {!isSelf && (
-              <Action
-                to={`/communities/${communityId}/trades/new?with=${member.id}`}
-              >
+              <Action to={`/trades/new?with=${member.id}`}>
                 <ArrowLeftRight size={15} /> Propose trade
               </Action>
             )}
-            <Action to={`/user/${member.username}`}>
+            {/* The apex profile: a person belongs to no community, so this
+                one leaves the host entirely rather than routing. */}
+            <ActionAnchor href={apexUrl(`/user/${member.username}`)}>
               <ExternalLink size={15} /> Site profile
-            </Action>
+            </ActionAnchor>
           </Actions>
         </Identity>
       </Header>

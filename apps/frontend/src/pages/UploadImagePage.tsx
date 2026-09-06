@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
@@ -10,6 +11,8 @@ import {
 } from "../generated/graphql";
 import { CharacterTypeahead } from "../components/CharacterTypeahead";
 import { MarkdownEditor } from "../components/MarkdownEditor";
+import { characterUrl } from "../lib/communityHost";
+import { getAccessToken } from "../lib/accessToken";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -382,6 +385,8 @@ interface UploadImageResponse {
 }
 
 export const UploadImagePage: React.FC = () => {
+  usePageMeta({ title: "Upload an Image" });
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -441,7 +446,10 @@ export const UploadImagePage: React.FC = () => {
 
   const selectedCharacter = characterData?.character;
 
-  const handleInputChange = (field: keyof UploadFormData, value: any) => {
+  const handleInputChange = <K extends keyof UploadFormData>(
+    field: K,
+    value: UploadFormData[K],
+  ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -502,7 +510,7 @@ export const UploadImagePage: React.FC = () => {
         const response = await fetch(`${apiUrl}/images/upload`, {
           method: "POST",
           headers: {
-            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+            Authorization: `Bearer ${getAccessToken()}`,
           },
           body: formDataToSend,
         });
@@ -564,9 +572,7 @@ export const UploadImagePage: React.FC = () => {
   };
 
   const renderSuccessState = () => {
-    const selectedGallery = galleries.find(
-      (g: any) => g.id === formData.galleryId,
-    );
+    const selectedGallery = galleries.find((g) => g.id === formData.galleryId);
 
     return (
       <SuccessContainer>
@@ -609,9 +615,16 @@ export const UploadImagePage: React.FC = () => {
             <Link to={`/media/${uploadedImages[0].id}`}>View Image</Link>
           )}
           {formData.characterId && (
-            <Link to={`/character/${formData.characterId}`}>
+            // Uploading happens at the apex; the character is served from its
+            // community's host, which the router cannot reach.
+            <a
+              href={characterUrl(
+                formData.characterId,
+                selectedCharacter?.species?.community?.slug,
+              )}
+            >
               View Character
-            </Link>
+            </a>
           )}
           {selectedGallery && (
             <Link to={`/gallery/${selectedGallery.id}`}>
@@ -696,7 +709,10 @@ export const UploadImagePage: React.FC = () => {
                   <Select
                     value={formData.authorizedViewers}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      handleInputChange("authorizedViewers", e.target.value)
+                      handleInputChange(
+                        "authorizedViewers",
+                        e.target.value as UploadFormData["authorizedViewers"],
+                      )
                     }
                   >
                     <option value="full-size">Full Size</option>
@@ -709,7 +725,10 @@ export const UploadImagePage: React.FC = () => {
                   <Select
                     value={formData.publicViewers}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      handleInputChange("publicViewers", e.target.value)
+                      handleInputChange(
+                        "publicViewers",
+                        e.target.value as UploadFormData["publicViewers"],
+                      )
                     }
                   >
                     <option value="full-size">Full Size</option>
@@ -722,7 +741,10 @@ export const UploadImagePage: React.FC = () => {
                   <Select
                     value={formData.watermark}
                     onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
-                      handleInputChange("watermark", e.target.value)
+                      handleInputChange(
+                        "watermark",
+                        e.target.value as UploadFormData["watermark"],
+                      )
                     }
                   >
                     <option value="url-fileside">URL, Fileside</option>
@@ -933,7 +955,7 @@ export const UploadImagePage: React.FC = () => {
                     }
                   >
                     <option value="">Select a gallery...</option>
-                    {galleries.map((gallery: any) => (
+                    {galleries.map((gallery) => (
                       <option key={gallery.id} value={gallery.id}>
                         {gallery.name}
                       </option>

@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { Package, ArrowLeft, Users, Calendar } from "lucide-react";
@@ -219,6 +220,8 @@ export const ItemTypePage: React.FC = () => {
     errorPolicy: "all",
   });
 
+  usePageMeta({ title: data?.itemType?.name ?? "Item Type" });
+
   // `&& !data`: this query is cache-and-network, which reports loading on
   // every background revalidation, so a bare check blanks the page on revisit.
   if (loading && !data) {
@@ -294,7 +297,7 @@ export const ItemTypePage: React.FC = () => {
               {itemType.community && (
                 <MetaItem>
                   <Users size={16} />
-                  <CommunityLink to={`/communities/${itemType.communityId}`}>
+                  <CommunityLink to="/">
                     {itemType.community.name}
                   </CommunityLink>
                 </MetaItem>

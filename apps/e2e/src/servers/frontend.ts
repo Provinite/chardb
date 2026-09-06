@@ -36,7 +36,7 @@ async function assertPortFree(port: number): Promise<void> {
       ),
     );
     srv.once("listening", () => srv.close(() => resolve()));
-    srv.listen(port, CFG.host);
+    srv.listen(port, CFG.bindHost);
   });
 }
 
@@ -45,9 +45,17 @@ async function main(): Promise<void> {
 
   // VITE_API_URL is an ORIGIN; apps/frontend/src/lib/apollo.ts appends /graphql.
   // (VITE_GRAPHQL_URL in .env and the compose files is dead config -- nothing
-  // reads it.) Vite inlines env at BUILD time, so this must be set for the build,
-  // not merely for the server.
-  const env = { ...process.env, VITE_API_URL: CFG.backendUrl };
+  // reads it.) Vite inlines env at BUILD time, so both of these must be set for
+  // the build, not merely for the server.
+  //
+  // The API is named under the root domain rather than by address so that it
+  // shares a site with the pages calling it; VITE_ROOT_DOMAIN is what tells the
+  // bundle which label of a hostname is the community. See CFG.rootDomain.
+  const env = {
+    ...process.env,
+    VITE_API_URL: CFG.browserBackendUrl,
+    VITE_ROOT_DOMAIN: CFG.rootDomain,
+  };
 
   if (CFG.frontendMode === "preview" && CFG.skipFrontendBuild) {
     // Skipping a build whose output is absent would otherwise surface as vite
@@ -95,7 +103,7 @@ async function main(): Promise<void> {
     String(CFG.frontendPort),
     "--strictPort",
     "--host",
-    CFG.host,
+    CFG.bindHost,
   ];
 
   const child = spawn("yarn", args, { cwd: REPO_ROOT, stdio: "inherit", env });

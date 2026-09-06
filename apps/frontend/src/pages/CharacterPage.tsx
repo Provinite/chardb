@@ -15,6 +15,8 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { apexUrl } from "../lib/communityHost";
+import { usePageMeta } from "../lib/pageMeta";
 import { canUserEditCharacter } from "../lib/characterPermissions";
 import { setKinds } from "../lib/characterAvailability";
 import { isRedemptionReview } from "../lib/traitReviews";
@@ -241,7 +243,9 @@ const OwnerInfo = styled.div`
   }
 `;
 
-const OwnerLink = styled(Link)`
+// An anchor rather than a router link: a profile is always served from the
+// apex, which is a different origin whenever a character has a community.
+const OwnerLink = styled.a`
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -461,6 +465,26 @@ export const CharacterPage: React.FC = () => {
 
   const character = data?.character;
 
+  // "Character" until the name arrives, rather than leaving the previous page's
+  // title up for the length of the fetch.
+  usePageMeta({
+    title: character?.name ?? "Character",
+    description:
+      character?.details ||
+      [
+        character?.species?.name,
+        character?.owner ? `owned by ${character.owner.username}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    // An NSFW image is behind a click-through on the page itself, and a tab
+    // preview or an in-app share sheet reproduces none of that.
+    image: character?.mainMedia?.image?.isNsfw
+      ? null
+      : (character?.mainMedia?.image?.thumbnailUrl ??
+        character?.mainMedia?.image?.originalUrl),
+  });
+
   // Get user's permissions in the character's community
   const { permissions, userRole } = useUserCommunityRole(
     character?.species?.community?.id,
@@ -621,9 +645,7 @@ export const CharacterPage: React.FC = () => {
       {/* Breadcrumb navigation */}
       {character.species?.community ? (
         <Breadcrumb>
-          <Link to={`/communities/${character.species.community.id}`}>
-            {character.species.community.name}
-          </Link>
+          <Link to="/">{character.species.community.name}</Link>
           <span>/</span>
           <Link to={`/species/${character.species.id}`}>
             {character.species.name}
@@ -789,7 +811,7 @@ export const CharacterPage: React.FC = () => {
 
         {character.owner ? (
           <OwnerInfo>
-            <OwnerLink to={`/user/${character.owner.username}`}>
+            <OwnerLink href={apexUrl(`/user/${character.owner.username}`)}>
               <OwnerAvatar
                 image={character.owner.avatarImage}
                 name={character.owner.displayName || character.owner.username}
@@ -897,7 +919,7 @@ export const CharacterPage: React.FC = () => {
                   data-testid="propose-character-trade"
                   onClick={() =>
                     navigate(
-                      `/communities/${tradeCommunityId}/trades/new?with=${character.owner?.id}&character=${character.id}`,
+                      `/trades/new?with=${character.owner?.id}&character=${character.id}`,
                     )
                   }
                 >

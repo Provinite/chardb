@@ -8,12 +8,14 @@ import {
 import { SocialModule } from "../social/social.module";
 import { ExternalAccountsModule } from "../external-accounts/external-accounts.module";
 import { ItemsModule } from "../items/items.module";
+import { CommunityMembersModule } from "../community-members/community-members.module";
 
 @Module({
   imports: [
     SocialModule,
     ExternalAccountsModule,
     forwardRef(() => ItemsModule),
+    forwardRef(() => CommunityMembersModule),
   ],
   providers: [
     UsersService,

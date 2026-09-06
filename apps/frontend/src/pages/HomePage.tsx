@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { usePageMeta } from "../lib/pageMeta";
 
 const Hero = styled.section`
   background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e293b 100%);
@@ -164,6 +165,12 @@ const SectionTitle = styled.h2`
 export const HomePage: React.FC = () => {
   const { user } = useAuth();
 
+  usePageMeta({
+    title: "Your Characters, Your Stories",
+    description:
+      "A home for original characters: profiles, art galleries, species and the communities built around them.",
+  });
+
   return (
     <>
       <Hero>
@@ -180,7 +187,9 @@ export const HomePage: React.FC = () => {
                 <HeroPrimaryButton as={Link} to="/dashboard" size="lg">
                   Go to Dashboard
                 </HeroPrimaryButton>
-                <HeroSecondaryButton as={Link} to="/character/create" size="lg">
+                {/* A character is created inside a community, and this page
+                    is the apex, which is in none. Pick one first. */}
+                <HeroSecondaryButton as={Link} to="/my/communities" size="lg">
                   Create Character
                 </HeroSecondaryButton>
               </>

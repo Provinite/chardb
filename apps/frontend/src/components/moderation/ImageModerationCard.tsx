@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Link } from "react-router-dom";
+import { apexUrl } from "../../lib/communityHost";
+import { HostAwareLink } from "../HostAwareLink";
 import {
   Check,
   X,
@@ -154,7 +155,7 @@ const MetaText = styled(SmallText)`
   white-space: nowrap;
 `;
 
-const MetaLink = styled(Link)`
+const MetaLink = styled(HostAwareLink)`
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
   overflow: hidden;
@@ -325,7 +326,7 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
               <User size={14} />
             </MetaIcon>
             {image.uploader ? (
-              <MetaLink to={`/user/${image.uploader.username}`}>
+              <MetaLink to={apexUrl(`/user/${image.uploader.username}`)}>
                 {image.uploader.displayName || image.uploader.username}
               </MetaLink>
             ) : (

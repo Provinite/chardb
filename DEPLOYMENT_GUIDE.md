@@ -498,8 +498,12 @@ cd ../../../
 export SERVER_IP=$(cd infra/environments/$ENVIRONMENT && terraform output -raw backend_public_ip)
 export BACKEND_URL="http://$SERVER_IP:4000"
 
+# The root domain is baked into the bundle: communities are served from
+# <slug>.<root_domain>, and the app compares the hostname against it.
+export ROOT_DOMAIN=$(cd infra/environments/$ENVIRONMENT && terraform output -raw root_domain)
+
 # Build frontend with backend API URL
-./scripts/build-frontend.sh $ENVIRONMENT $BACKEND_URL
+./scripts/build-frontend.sh $ENVIRONMENT $BACKEND_URL $VERSION $ROOT_DOMAIN
 
 # Deploy frontend to S3 + CloudFront
 ./scripts/deploy-frontend.sh $ENVIRONMENT

@@ -1,6 +1,6 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { Avatar } from "@chardb/ui";
 import {
   useGetUserProfileQuery,
@@ -10,6 +10,8 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { RandomCharacterButton } from "../components/RandomCharacterButton";
 import { FollowButton } from "../components/FollowButton";
 import { MediaGrid } from "../components/MediaGrid";
+import { characterUrl } from "../lib/communityHost";
+import { usePageMeta } from "../lib/pageMeta";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -166,7 +168,7 @@ const Grid = styled.div`
   gap: ${({ theme }) => theme.spacing.lg};
 `;
 
-const Card = styled(Link)`
+const card = css`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
@@ -179,6 +181,15 @@ const Card = styled(Link)`
     transform: translateY(-2px);
     box-shadow: ${({ theme }) => theme.shadows.lg};
   }
+`;
+
+const Card = styled(Link)`
+  ${card}
+`;
+
+/** The same card for a character, which is served from another host. */
+const CardAnchor = styled.a`
+  ${card}
 `;
 
 const CardTitle = styled.h4`
@@ -298,6 +309,21 @@ export const UserProfilePage: React.FC = () => {
     skip: !data?.userProfile?.isOwnProfile,
   });
 
+  const profileUser = data?.userProfile?.user;
+  usePageMeta({
+    // Both names: the display name is what people recognise, the username is
+    // what the URL says. The username is in the URL, so it titles the page
+    // immediately and the display name joins it when the profile lands.
+    title: profileUser?.displayName
+      ? `${profileUser.displayName} (@${profileUser.username})`
+      : `@${username}`,
+    description: profileUser?.bio || `${username} on CharDB`,
+    image:
+      profileUser?.avatarImage?.thumbnailUrl ??
+      profileUser?.avatarImage?.originalUrl,
+    type: "profile",
+  });
+
   if (loading) {
     return (
       <Container>
@@ -401,8 +427,9 @@ export const UserProfilePage: React.FC = () => {
 
       <StatsGrid>
         {/* Clickable now that there is somewhere to go. Followers and
-            Following already worked this way; these two read as the same kind
-            of tile and did nothing, which is its own small lie. */}
+            Following already worked this way; Characters, Galleries and Images
+            read as the same kind of tile and did nothing, which is its own
+            small lie. Total Views stays inert -- there is no page of views. */}
         <StatCard clickable>
           <StatLink
             data-testid="profile-stat-characters"
@@ -421,9 +448,14 @@ export const UserProfilePage: React.FC = () => {
             <StatLabel>Galleries</StatLabel>
           </StatLink>
         </StatCard>
-        <StatCard>
-          <StatNumber>{stats.imagesCount}</StatNumber>
-          <StatLabel>Images</StatLabel>
+        <StatCard clickable>
+          <StatLink
+            data-testid="profile-stat-images"
+            to={`/user/${user.username}/media`}
+          >
+            <StatNumber>{stats.imagesCount}</StatNumber>
+            <StatLabel>Images</StatLabel>
+          </StatLink>
         </StatCard>
         <StatCard>
           <StatNumber>{stats.totalViews}</StatNumber>
@@ -451,10 +483,16 @@ export const UserProfilePage: React.FC = () => {
           </SectionHeader>
           <Grid>
             {featuredCharacters.map((character) => (
-              <Card key={character.id} to={`/character/${character.id}`}>
+              <CardAnchor
+                key={character.id}
+                href={characterUrl(
+                  character.id,
+                  character.species?.community?.slug,
+                )}
+              >
                 <CardTitle>{character.name}</CardTitle>
                 <CardDescription>{character.species?.name}</CardDescription>
-              </Card>
+              </CardAnchor>
             ))}
           </Grid>
         </Section>
@@ -485,10 +523,16 @@ export const UserProfilePage: React.FC = () => {
           </SectionHeader>
           <Grid>
             {recentCharacters.map((character) => (
-              <Card key={character.id} to={`/character/${character.id}`}>
+              <CardAnchor
+                key={character.id}
+                href={characterUrl(
+                  character.id,
+                  character.species?.community?.slug,
+                )}
+              >
                 <CardTitle>{character.name}</CardTitle>
                 <CardDescription>{character.species?.name}</CardDescription>
-              </Card>
+              </CardAnchor>
             ))}
           </Grid>
         </Section>
@@ -533,8 +577,14 @@ export const UserProfilePage: React.FC = () => {
         <Section>
           <SectionHeader>
             <SectionTitle>Recent Media</SectionTitle>
+            {/* `/images?uploader=<username>` before: #321 converted the two
+                links above to real routes and left this one on the old
+                pattern, where it was worse than either -- `/images` is not a
+                route at all, so it fell through to the catch-all and 404'd
+                (#348). */}
             <Link
-              to={`/images?uploader=${user.username}`}
+              data-testid="profile-view-all-media"
+              to={`/user/${user.username}/media`}
               style={{
                 color: "inherit",
                 textDecoration: "none",

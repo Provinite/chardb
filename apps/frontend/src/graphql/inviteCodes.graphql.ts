@@ -147,6 +147,9 @@ export const CLAIM_INVITE_CODE_MUTATION = gql`
         community {
           id
           name
+          # Where to send someone once they are in: the community has its own
+          # host, which the apex join page has to build for itself.
+          slug
         }
       }
     }

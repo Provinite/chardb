@@ -24,10 +24,27 @@ import {
   SeedCreateSpeciesVariantDocument,
   SeedCreateCharacterDocument,
 } from "../../generated/graphql.js";
+import { communityUrl } from "../../config.js";
 import { definePreset, type Persona } from "../types.js";
 
 export interface CommunityItemsWorld {
-  community: { id: string; name: string; url: string; ledgerUrl: string };
+  community: {
+    id: string;
+    name: string;
+    /** The label the community is served from: `thornfield-hollow.<root>`. */
+    slug: string;
+    /**
+     * The community's own origin, absolute and without a trailing slash, so
+     * `${world.community.url}/inventory` is a page on it.
+     *
+     * Absolute because a community is a different ORIGIN from the apex that
+     * Playwright's `baseURL` names: a relative path would resolve against the
+     * apex and land on the site's 404. Use `communityUrl()` from src/config.ts
+     * for a host this handle does not name.
+     */
+    url: string;
+    ledgerUrl: string;
+  };
   itemTypes: {
     /** Consumable. The one used for grant and revoke assertions. */
     potion: { id: string; name: string };
@@ -258,7 +275,10 @@ export default definePreset<CommunityItemsWorld>({
     const { createCommunity: community } = await ctx
       .as("commadmin")
       .gql(SeedCreateCommunityDocument, {
-        createCommunityInput: { name: "Thornfield Hollow" },
+        createCommunityInput: {
+          name: "Thornfield Hollow",
+          slug: "thornfield-hollow",
+        },
       });
 
     const { rolesByCommunity } = await ctx
@@ -479,7 +499,9 @@ export default definePreset<CommunityItemsWorld>({
       return {
         id: createCharacter.id,
         name: createCharacter.name,
-        url: `/character/${createCharacter.id}`,
+        // On the community's host: a character belongs to its species'
+        // community, and that is where the page is served from.
+        url: communityUrl(community.slug, `/character/${createCharacter.id}`),
       };
     };
 
@@ -562,7 +584,7 @@ export default definePreset<CommunityItemsWorld>({
       return {
         id: createCharacter.id,
         name: createCharacter.name,
-        url: `/character/${createCharacter.id}`,
+        url: communityUrl(community.slug, `/character/${createCharacter.id}`),
       };
     };
 
@@ -984,8 +1006,9 @@ export default definePreset<CommunityItemsWorld>({
       community: {
         id: community.id,
         name: community.name,
-        url: `/communities/${community.id}`,
-        ledgerUrl: `/communities/${community.id}/items/ledger`,
+        slug: community.slug,
+        url: communityUrl(community.slug),
+        ledgerUrl: communityUrl(community.slug, "/items/ledger"),
       },
       currencies: {
         coin: { id: coin.id, code: coin.code, name: coin.name },
@@ -1009,8 +1032,8 @@ export default definePreset<CommunityItemsWorld>({
       },
       balances: { member: 380, othermember: 620 },
       currencyUrls: {
-        admin: `/communities/${community.id}/currencies`,
-        ledger: `/communities/${community.id}/currencies/ledger`,
+        admin: communityUrl(community.slug, "/currencies"),
+        ledger: communityUrl(community.slug, "/currencies/ledger"),
       },
       shop: {
         potionListing: {
@@ -1025,7 +1048,7 @@ export default definePreset<CommunityItemsWorld>({
           id: bulkListing.id,
           priceIds: bulkListing.prices.map((p) => p.id),
         },
-        url: `/communities/${community.id}/shop`,
+        url: communityUrl(community.slug, "/shop"),
       },
       itemTypes: {
         potion: { id: potion.id, name: potion.name },

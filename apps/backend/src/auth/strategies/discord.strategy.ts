@@ -2,12 +2,19 @@ import { Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { Strategy } from "passport-oauth2";
 import { ConfigService } from "@nestjs/config";
-
 export interface DiscordProfile {
   id: string;
   username: string;
   discriminator: string;
   global_name?: string;
+}
+
+/** What `validate` puts on `req.user`, mirroring `ToyhouseOAuthPayload`. */
+export interface DiscordOAuthPayload {
+  providerAccountId: string;
+  displayName: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 @Injectable()
@@ -32,7 +39,12 @@ export class DiscordStrategy extends PassportStrategy(Strategy, "discord") {
   /**
    * Override authenticate to inject custom state parameter
    */
-  authenticate(req: any, options?: any) {
+  // `any` rather than express's Request: @types/passport bundles its own nested
+  // copy of @types/express, and the two Request types are structurally
+  // incompatible, so this override cannot be typed against either without
+  // failing to match the other. The body reads one property.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  authenticate(req: any, options?: Record<string, unknown>) {
     // If oauthState is set in the request (from controller), use it
     const state = req.oauthState;
     if (state) {
@@ -47,7 +59,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy, "discord") {
    */
   async fetchUserProfile(
     accessToken: string,
-    done: (err?: Error | null, profile?: any) => void,
+    done: (err?: Error | null, profile?: DiscordProfile) => void,
   ) {
     try {
       const response = await fetch("https://discord.com/api/v10/users/@me", {
@@ -82,7 +94,7 @@ export class DiscordStrategy extends PassportStrategy(Strategy, "discord") {
     accessToken: string,
     refreshToken: string,
     profile: DiscordProfile,
-  ) {
+  ): Promise<DiscordOAuthPayload> {
     // Format display name: use global_name if available, otherwise username#discriminator or @username
     let displayName: string;
     if (profile.global_name) {

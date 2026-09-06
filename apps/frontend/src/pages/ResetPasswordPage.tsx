@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link, useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -127,6 +128,8 @@ const BackLink = styled(Link)`
 `;
 
 export const ResetPasswordPage: React.FC = () => {
+  usePageMeta({ title: "Choose a New Password" });
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [resetError, setResetError] = useState<string | null>(null);
@@ -174,10 +177,11 @@ export const ResetPasswordPage: React.FC = () => {
       setTimeout(() => {
         navigate("/login");
       }, 2000);
-    } catch (error: any) {
+    } catch (error) {
       console.error("Reset password error:", error);
       const errorMessage =
-        error.message || "Failed to reset password. The link may have expired.";
+        (error instanceof Error ? error.message : "") ||
+        "Failed to reset password. The link may have expired.";
       setResetError(errorMessage);
       toast.error(errorMessage);
     } finally {

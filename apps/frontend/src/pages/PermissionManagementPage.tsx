@@ -1,11 +1,12 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Shield, Users, Settings, Plus, ArrowLeft } from "lucide-react";
 import { Button, Heading2, SmallText, HelpText } from "@chardb/ui";
 import { PermissionMatrix } from "../components/admin/PermissionMatrix";
 import { RoleEditor } from "../components/admin/RoleEditor";
 import { RoleManagementTab } from "../components/admin/RoleManagementTab";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
   useRolesByCommunityDetailedQuery,
   RolesByCommunityDetailedQuery,
@@ -146,7 +147,9 @@ const ErrorContainer = styled.div`
 type TabType = "overview" | "roles";
 
 export const PermissionManagementPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  usePageMeta({ title: "Permissions" });
+
+  const communityId = useCommunityId();
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [showRoleEditor, setShowRoleEditor] = useState(false);
   const [editingRole, setEditingRole] = useState<

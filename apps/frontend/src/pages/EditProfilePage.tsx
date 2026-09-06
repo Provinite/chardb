@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +14,7 @@ import {
   ExternalAccountProvider,
 } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { getAccessToken } from "../lib/accessToken";
 
 const updateProfileSchema = z.object({
   displayName: z.string().max(100).optional(),
@@ -283,6 +285,8 @@ const EmptyState = styled.div`
 `;
 
 export const EditProfilePage: React.FC = () => {
+  usePageMeta({ title: "Edit Profile" });
+
   const navigate = useNavigate();
   const { data: meData, loading: meLoading } = useMeQuery();
   const [updateProfile, { loading: updating }] = useUpdateProfileMutation();
@@ -352,8 +356,7 @@ export const EditProfilePage: React.FC = () => {
   };
 
   const handleLinkDeviantArt = async () => {
-    // Get JWT token from localStorage
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
 
     if (!token) {
       toast.error("Please log in to link your DeviantArt account");
@@ -393,8 +396,7 @@ export const EditProfilePage: React.FC = () => {
   };
 
   const handleLinkDiscord = async () => {
-    // Get JWT token from localStorage
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
 
     if (!token) {
       toast.error("Please log in to link your Discord account");
@@ -434,7 +436,7 @@ export const EditProfilePage: React.FC = () => {
   };
 
   const handleLinkToyhouse = async () => {
-    const token = localStorage.getItem("accessToken");
+    const token = getAccessToken();
 
     if (!token) {
       toast.error("Please log in to link your ToyHouse account");
@@ -605,17 +607,19 @@ export const EditProfilePage: React.FC = () => {
         ) : externalAccountsData?.myExternalAccounts &&
           externalAccountsData.myExternalAccounts.length > 0 ? (
           <AccountsList>
-            {externalAccountsData.myExternalAccounts.map((account: any) => (
+            {externalAccountsData.myExternalAccounts.map((account) => (
               <AccountItem key={account.id}>
                 <AccountInfo>
                   <AccountIcon>
+                    {/* Exhaustive: the provider enum has exactly these three,
+                        so there is no fourth case to fall back to. The
+                        `charAt(0)` that used to be here was unreachable, and
+                        only compiled because the row was typed `any`. */}
                     {account.provider === "DEVIANTART"
                       ? "DA"
                       : account.provider === "DISCORD"
                         ? "DC"
-                        : account.provider === "TOYHOUSE"
-                          ? "TH"
-                          : account.provider.charAt(0)}
+                        : "TH"}
                   </AccountIcon>
                   <AccountDetails>
                     <AccountName>{account.displayName}</AccountName>
@@ -651,21 +655,21 @@ export const EditProfilePage: React.FC = () => {
           }}
         >
           {!externalAccountsData?.myExternalAccounts?.some(
-            (acc: any) => acc.provider === "DEVIANTART",
+            (acc) => acc.provider === "DEVIANTART",
           ) && (
             <SmallButton variant="primary" onClick={handleLinkDeviantArt}>
               Link DeviantArt Account
             </SmallButton>
           )}
           {!externalAccountsData?.myExternalAccounts?.some(
-            (acc: any) => acc.provider === "DISCORD",
+            (acc) => acc.provider === "DISCORD",
           ) && (
             <SmallButton variant="primary" onClick={handleLinkDiscord}>
               Link Discord Account
             </SmallButton>
           )}
           {!externalAccountsData?.myExternalAccounts?.some(
-            (acc: any) => acc.provider === "TOYHOUSE",
+            (acc) => acc.provider === "TOYHOUSE",
           ) && (
             <SmallButton variant="primary" onClick={handleLinkToyhouse}>
               Link ToyHouse Account

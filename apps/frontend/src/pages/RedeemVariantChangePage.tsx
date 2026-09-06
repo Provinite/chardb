@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
@@ -165,6 +166,8 @@ const ButtonRow = styled.div`
  * page and not a confirm dialog.
  */
 export const RedeemVariantChangePage: React.FC = () => {
+  usePageMeta({ title: "Change Variant" });
+
   const { characterId } = useParams<{ characterId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

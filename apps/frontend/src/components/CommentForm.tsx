@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useMutation } from "@apollo/client";
 import styled from "styled-components";
+import { Link } from "react-router-dom";
 import { Avatar, Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { loginUrlReturningHere } from "../lib/communityHost";
 import { CREATE_COMMENT } from "../graphql/social.graphql";
 import { CommentableType } from "../generated/graphql";
 import toast from "react-hot-toast";
@@ -172,7 +174,15 @@ export const CommentForm: React.FC<CommentFormProps> = ({
     return (
       <LoginPrompt>
         <LoginPromptText>Please log in to leave a comment</LoginPromptText>
-        <Button as="a" href="/login" variant="primary" size="sm">
+        {/* A comment form renders on a character page, which lives on a
+            community host -- so this has to carry the way back, and it is a
+            router link because /login on this host is a route like any other. */}
+        <Button
+          as={Link}
+          to={loginUrlReturningHere()}
+          variant="primary"
+          size="sm"
+        >
           Log In
         </Button>
       </LoginPrompt>

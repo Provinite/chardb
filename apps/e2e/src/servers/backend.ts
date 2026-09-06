@@ -33,7 +33,7 @@ async function assertPortFree(port: number): Promise<void> {
       ),
     );
     srv.once("listening", () => srv.close(() => resolve()));
-    srv.listen(port, CFG.host);
+    srv.listen(port, CFG.bindHost);
   });
 }
 
@@ -93,6 +93,16 @@ async function main(): Promise<void> {
       DATABASE_URL: CFG.databaseUrl,
       PORT: String(CFG.backendPort),
       NODE_ENV: "test",
+      // Decides two things at once: which origins may make credentialed calls
+      // (the apex and one label under it), and the `Domain` on the refresh
+      // cookie -- `.e2e.localhost`, so every community host is signed in by the
+      // same sign-in. It must match the domain the bundle was built with.
+      ROOT_DOMAIN: CFG.rootDomain,
+      // The suite's own LocalStack. Without this the backend reaches for
+      // whatever is on the dev instance's port -- somebody else's bucket, and
+      // quite possibly nothing at all.
+      AWS_ENDPOINT_URL: CFG.s3Endpoint,
+      S3_IMAGES_BUCKET: "chardb-images",
     },
   });
 

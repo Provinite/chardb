@@ -21,6 +21,8 @@
 #     SSH_KEY_NAME              Key pair name; "" for prod
 #     BACKEND_URL               API base URL (dev: EC2/CloudFront, prod: api_url)
 #     FRONTEND_URL              Public website URL
+#     ROOT_DOMAIN               Host the site answers on; communities are its
+#                               subdomains (chardb.cc, dev.chardb.cc)
 #     ECR_REPOSITORY_URL        Backend image repository
 #
 #   Secrets -- exported, never printed
@@ -81,7 +83,7 @@ _tf_outputs_load() {
 
     # Kept in the same order as the VARIABLES EXPORTED block above.
     export SERVER_IP INSTANCE_ID SSH_KEY_NAME BACKEND_URL FRONTEND_URL \
-        ECR_REPOSITORY_URL \
+        ROOT_DOMAIN ECR_REPOSITORY_URL \
         SSH_PRIVATE_KEY POSTGRES_PASSWORD JWT_SECRET \
         DEVIANTART_CLIENT_ID DISCORD_CLIENT_ID TOYHOUSE_CLIENT_ID \
         DEVIANTART_CALLBACK_URL DISCORD_CALLBACK_URL TOYHOUSE_CALLBACK_URL \
@@ -90,6 +92,7 @@ _tf_outputs_load() {
     SERVER_IP=$(_tf_output "backend_public_ip")
     INSTANCE_ID=$(_tf_output "backend_instance_id")
     FRONTEND_URL=$(_tf_output "frontend_website_url")
+    ROOT_DOMAIN=$(_tf_output "root_domain")
     ECR_REPOSITORY_URL=$(_tf_output "backend_ecr_repository_url")
 
     POSTGRES_PASSWORD=$(_tf_output "backend_db_password")
@@ -141,6 +144,7 @@ _tf_outputs_summary() {
    Instance ID:         $INSTANCE_ID
    Backend URL:         $BACKEND_URL
    Frontend URL:        $FRONTEND_URL
+   Root domain:         $ROOT_DOMAIN
    SSH key pair:        ${SSH_KEY_NAME:-(none)}
    ECR repository:      $ECR_REPOSITORY_URL
    SQS queue:           $SQS_QUEUE_URL

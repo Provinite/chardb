@@ -1,6 +1,7 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import {
   Database,
   Users,
@@ -11,11 +12,13 @@ import {
 } from "lucide-react";
 import { Title, Subtitle, Card } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import {
-  useCommunityByIdQuery,
-  useCommunityMembersByUserQuery,
-} from "../generated/graphql";
+import { useCommunityMembersByUserQuery } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
+import { apexUrl } from "../lib/communityHost";
 
 /**
  * Community Administration Interface
@@ -117,18 +120,15 @@ const ErrorContainer = styled.div`
 `;
 
 export const CommunityAdminPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  usePageMeta({ title: "Community Admin" });
+
+  const communityId = useCommunityId();
   const { user } = useAuth();
 
   // Fetch community data
-  const {
-    data: communityData,
-    loading: communityLoading,
-    error: communityError,
-  } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  // The host context already holds this community; querying it back by id
+  // fetched the same record a second time on every page load.
+  const community = useHostCommunity();
 
   // Fetch user's membership in this community to get role and permissions
   const {
@@ -152,8 +152,9 @@ export const CommunityAdminPage: React.FC = () => {
     );
   }
 
-  // Loading states
-  if (communityLoading || membershipLoading) {
+  // Loading states. The community itself is not among them any more -- the
+  // host resolved it before this page mounted.
+  if (membershipLoading) {
     return (
       <Container>
         <LoadingContainer>
@@ -164,22 +165,18 @@ export const CommunityAdminPage: React.FC = () => {
   }
 
   // Error states
-  if (communityError || membershipError) {
+  if (membershipError) {
     return (
       <Container>
         <ErrorContainer>
           <Title>Error Loading Community</Title>
           <Subtitle>
-            {communityError?.message ||
-              membershipError?.message ||
-              "Unable to load community data"}
+            {membershipError?.message || "Unable to load community data"}
           </Subtitle>
         </ErrorContainer>
       </Container>
     );
   }
-
-  const community = communityData?.community;
 
   // Find user's membership in this specific community
   const userMembership = membershipData?.communityMembersByUser?.nodes?.find(
@@ -220,9 +217,11 @@ export const CommunityAdminPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to="/my/communities">My Communities</Link>
+        {/* The list of communities is the site's, not this one's, so it lives
+            at the apex and the router cannot reach it. */}
+        <a href={apexUrl("/my/communities")}>My Communities</a>
         <span>/</span>
-        <Link to={`/communities/${communityId}`}>{community.name}</Link>
+        <Link to="/">{community.name}</Link>
         <span>/</span>
         <span>Administration</span>
       </Breadcrumb>
@@ -246,7 +245,7 @@ export const CommunityAdminPage: React.FC = () => {
       <AdminGrid>
         {/* Species Management - Core feature */}
         {(userRole.canCreateSpecies || userRole.canEditSpecies) && (
-          <AdminCard to={`/communities/${communityId}/species`}>
+          <AdminCard to="/species">
             <CardIcon>
               <Database size={24} />
             </CardIcon>
@@ -260,7 +259,7 @@ export const CommunityAdminPage: React.FC = () => {
 
         {/* Color Palette Management */}
         {userRole.canEditSpecies && (
-          <AdminCard to={`/communities/${communityId}/admin/colors`}>
+          <AdminCard to="/admin/colors">
             <CardIcon>
               <Palette size={24} />
             </CardIcon>
@@ -273,7 +272,7 @@ export const CommunityAdminPage: React.FC = () => {
         )}
 
         {/* Community Members */}
-        <AdminCard to={`/communities/${communityId}/members`}>
+        <AdminCard to="/members">
           <CardIcon>
             <Users size={24} />
           </CardIcon>
@@ -286,7 +285,7 @@ export const CommunityAdminPage: React.FC = () => {
 
         {/* Roles & Permissions */}
         {(userRole.canCreateRole || userRole.canEditRole) && (
-          <AdminCard to={`/communities/${communityId}/permissions`}>
+          <AdminCard to="/permissions">
             <CardIcon>
               <Settings size={24} />
             </CardIcon>
@@ -300,7 +299,7 @@ export const CommunityAdminPage: React.FC = () => {
 
         {/* Invite Codes */}
         {(userRole.canCreateInviteCode || userRole.canListInviteCodes) && (
-          <AdminCard to={`/communities/${communityId}/invite-codes`}>
+          <AdminCard to="/invite-codes">
             <CardIcon>
               <List size={24} />
             </CardIcon>
@@ -313,7 +312,7 @@ export const CommunityAdminPage: React.FC = () => {
         )}
 
         {/* Community Settings */}
-        <AdminCard to={`/communities/${communityId}/settings`}>
+        <AdminCard to="/settings">
           <CardIcon>
             <Settings size={24} />
           </CardIcon>
@@ -327,7 +326,7 @@ export const CommunityAdminPage: React.FC = () => {
         {/* Content Moderation - the index covers both review queues, so it is
             shown to anyone who can work either one. */}
         {(userRole.canModerateImages || userRole.canEditCharacterRegistry) && (
-          <AdminCard to={`/communities/${communityId}/moderation`}>
+          <AdminCard to="/moderation">
             <CardIcon>
               <FileText size={24} />
             </CardIcon>

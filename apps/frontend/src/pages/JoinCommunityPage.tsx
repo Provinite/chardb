@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { ApolloError } from "@apollo/client";
 import styled from "styled-components";
 import {
   Button,
@@ -18,6 +20,7 @@ import {
   useInviteCodeByIdQuery,
   useClaimInviteCodeMutation,
 } from "../graphql/inviteCodes.graphql";
+import { communityUrl } from "../lib/communityHost";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { toast } from "react-hot-toast";
 
@@ -103,6 +106,8 @@ const PreviewText = styled.p`
 `;
 
 export const JoinCommunityPage: React.FC = () => {
+  usePageMeta({ title: "Join a Community" });
+
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -162,18 +167,21 @@ export const JoinCommunityPage: React.FC = () => {
           toast.success(
             `Successfully joined ${claimedCode.role.community.name} as ${claimedCode.role.name}!`,
           );
-          navigate(`/communities/${claimedCode.role.community.id}`);
+          // The community lives on its own host, which the router cannot
+          // reach from the apex.
+          window.location.assign(communityUrl(claimedCode.role.community.slug));
         } else {
           toast.success("Successfully claimed invite code!");
           navigate("/dashboard");
         }
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error("Claim invite code error:", error);
+      const apolloError = error instanceof ApolloError ? error : null;
       const errorMessage =
-        error?.graphQLErrors?.[0]?.message ||
-        error?.networkError?.message ||
-        error?.message ||
+        apolloError?.graphQLErrors?.[0]?.message ||
+        apolloError?.networkError?.message ||
+        (error instanceof Error ? error.message : null) ||
         "Failed to claim invite code";
       toast.error(errorMessage);
     } finally {

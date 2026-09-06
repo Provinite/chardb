@@ -1,9 +1,13 @@
 import React from "react";
-import { useParams, Link } from "react-router-dom";
+import { usePageMeta } from "../lib/pageMeta";
+import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { CharacterListView } from "../components/CharacterListView";
-import { useCommunityByIdQuery } from "../generated/graphql";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { Visibility } from "../generated/graphql";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 
 const Breadcrumb = styled.div`
   display: flex;
@@ -36,49 +40,30 @@ const ErrorContainer = styled.div`
   }
 `;
 
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  padding: ${({ theme }) => theme.spacing.xxl};
-`;
-
 export const CommunityCharactersPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  usePageMeta({ title: "Characters" });
 
-  const { data, loading, error } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  const communityId = useCommunityId();
 
-  if (!communityId) {
+  // The host context already resolved this community; querying it back by id
+  // fetched the same record a second time on every page load.
+  const community = useHostCommunity();
+
+  // No separate loading or error branch: this page only mounts on a community
+  // host, and `App` renders the community route table only once that host has
+  // resolved. If it is null here, the address names no community.
+  if (!communityId || !community) {
     return (
       <ErrorContainer>
         <h3>Error</h3>
-        <p>Community ID is required</p>
-      </ErrorContainer>
-    );
-  }
-
-  if (loading) {
-    return (
-      <LoadingContainer>
-        <LoadingSpinner />
-      </LoadingContainer>
-    );
-  }
-
-  if (error || !data?.community) {
-    return (
-      <ErrorContainer>
-        <h3>Error loading community</h3>
-        <p>{error?.message || "Community not found"}</p>
+        <p>This address names no community</p>
       </ErrorContainer>
     );
   }
 
   const breadcrumb = (
     <Breadcrumb>
-      <Link to={`/communities/${communityId}`}>{data.community.name}</Link>
+      <Link to="/">{community.name}</Link>
       <Separator>›</Separator>
       <span>Characters</span>
     </Breadcrumb>
@@ -86,13 +71,13 @@ export const CommunityCharactersPage: React.FC = () => {
 
   return (
     <CharacterListView
-      title={`${data.community.name} Characters`}
+      title={`${community.name} Characters`}
       breadcrumb={breadcrumb}
       baseFilters={{
         communityId,
       }}
       defaultFilters={{
-        visibility: "PUBLIC" as any,
+        visibility: Visibility.Public,
       }}
     />
   );

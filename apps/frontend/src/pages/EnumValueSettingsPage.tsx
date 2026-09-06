@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Check, X, Settings, ArrowLeft, Database, Palette } from "lucide-react";
@@ -216,6 +217,8 @@ const LoadingState = styled.div`
 `;
 
 export const EnumValueSettingsPage: React.FC = () => {
+  usePageMeta({ title: "Variant Trait Settings" });
+
   const { variantId } = useParams<{ variantId: string }>();
   const navigate = useNavigate();
 
@@ -340,9 +343,7 @@ export const EnumValueSettingsPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        <Link to={`/communities/${species?.communityId}/species`}>
-          Species Management
-        </Link>
+        <Link to="/species">Species Management</Link>
         <span>/</span>
         <Link to={`/species/${variant.speciesId}`}>
           {species?.name || "Species"}

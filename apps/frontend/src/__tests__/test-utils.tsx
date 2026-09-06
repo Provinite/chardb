@@ -116,7 +116,7 @@ export const createMockUser = (
   createdAt: "2023-01-01T00:00:00Z",
   updatedAt: "2023-01-01T00:00:00Z",
   avatarImage: null,
-  communityMemberships: [],
+  communityMemberships: { totalCount: 0, hasNextPage: false, nodes: [] },
   ...overrides,
 });
 
