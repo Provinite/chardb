@@ -154,7 +154,7 @@ export const EditSpeciesPage: React.FC = () => {
           `Species "${data.updateSpecies.name}" updated successfully!`,
         );
         // Navigate back to the community species management page
-        navigate(`/communities/${data.updateSpecies.communityId}/species`);
+        navigate("/species");
       },
       onError: (error) => {
         toast.error(`Failed to update species: ${error.message}`);
@@ -187,11 +187,7 @@ export const EditSpeciesPage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    if (speciesData?.speciesById?.communityId) {
-      navigate(`/communities/${speciesData.speciesById.communityId}/species`);
-    } else {
-      navigate(-1);
-    }
+    navigate("/species");
   };
 
   // Loading state

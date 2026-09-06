@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from "react";
 import styled, { css } from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Store, Plus, Edit2, EyeOff, Eye, X } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
   useGetShopItemsQuery,
   useCreateShopItemMutation,
@@ -303,8 +304,8 @@ const blankDraft = (currencyId: string): DraftPrice => ({
 });
 
 export const CommunityShopAdminPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
-  const { permissions } = useUserCommunityRole(communityId);
+  const communityId = useCommunityId();
+  const { permissions } = useUserCommunityRole(communityId ?? undefined);
 
   const [editing, setEditing] = useState<ShopItemFieldsFragment | null>(null);
   const [creating, setCreating] = useState(false);
@@ -466,11 +467,7 @@ export const CommunityShopAdminPage: React.FC = () => {
           <Subtitle>
             What members can buy, and what it costs them. A listing grants a
             real item, so anything sold here shows up in an inventory with its
-            own history.{" "}
-            <Link to={`/communities/${communityId}/shop`}>
-              See the member view
-            </Link>
-            .
+            own history. <Link to="/shop">See the member view</Link>.
           </Subtitle>
         </div>
         {canManage && currencies.length > 0 && itemTypes.length > 0 && (
@@ -483,21 +480,14 @@ export const CommunityShopAdminPage: React.FC = () => {
       {currencies.length === 0 && (
         <Empty>
           This community has no currency yet, so nothing can be priced.{" "}
-          <Link to={`/communities/${communityId}/currencies`}>
-            Create one first
-          </Link>
-          .
+          <Link to="/currencies">Create one first</Link>.
         </Empty>
       )}
 
       {currencies.length > 0 && itemTypes.length === 0 && (
         <Empty>
           This community has no item types yet, and a listing has to grant
-          something.{" "}
-          <Link to={`/communities/${communityId}/admin/items`}>
-            Create one first
-          </Link>
-          .
+          something. <Link to="/admin/items">Create one first</Link>.
         </Empty>
       )}
 

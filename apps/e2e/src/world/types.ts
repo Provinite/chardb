@@ -9,7 +9,16 @@ export interface Persona {
   email: string;
   password: string;
   accessToken: string;
-  refreshToken: string;
+  /**
+   * The VALUE of the `chardb_rt` cookie the login response set -- not a token
+   * the API will accept as an argument.
+   *
+   * Named for what it is because that is all it can be used as now: the
+   * refresh token travels as an `HttpOnly` cookie and `refreshToken` takes no
+   * arguments (#339). The harness's only use for it is writing a Playwright
+   * cookie that stands in for having signed in.
+   */
+  refreshCookie: string;
   isAdmin: boolean;
 }
 
@@ -42,6 +51,16 @@ export interface Actor {
     document: TypedDocumentNode<TResult, TVariables>,
     variables?: TVariables,
   ): Promise<TResult>;
+  /**
+   * `gql`, plus the HTTP response.
+   *
+   * For the one thing that lives outside the GraphQL payload: the refresh
+   * cookie a login sets. Prefer `gql` everywhere else.
+   */
+  gqlWithResponse<TResult, TVariables>(
+    document: TypedDocumentNode<TResult, TVariables>,
+    variables?: TVariables,
+  ): Promise<{ data: TResult; response: Response }>;
   /** Escape hatch for the REST surface (e.g. multipart POST /images/upload). */
   rest(path: string, init?: RequestInit): Promise<Response>;
 }

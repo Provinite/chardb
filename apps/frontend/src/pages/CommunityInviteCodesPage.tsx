@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import {
   Plus,
@@ -20,6 +19,7 @@ import {
   type CreateInviteCodeInput,
 } from "../graphql/inviteCodes.graphql";
 import { useMeQuery } from "../graphql/auth.graphql";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 
 const Container = styled.div`
@@ -491,7 +491,7 @@ const Button = styled.button<{ $variant?: "primary" | "secondary" }>`
 `;
 
 export function CommunityInviteCodesPage() {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const { data: userData } = useMeQuery();
 
   // Query community invite codes (filtered by communityId)
@@ -581,7 +581,7 @@ export function CommunityInviteCodesPage() {
             <AlertCircle size={20} />
             <ErrorTitle>Invalid Community</ErrorTitle>
           </ErrorHeader>
-          <ErrorMessage>No community ID provided in the URL.</ErrorMessage>
+          <ErrorMessage>This address names no community.</ErrorMessage>
         </ErrorCard>
       </Container>
     );

@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { ChevronDown, Check, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCommunityMembersByUserQuery } from "../../generated/graphql";
+import { apexUrl, communityUrl } from "../../lib/communityHost";
 
 interface CommunitySwitcherProps {
   className?: string;
@@ -220,16 +219,17 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
-  const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data, loading } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || "", first: 100 },
-    skip: !user?.id,
-  });
+  // Off the viewer, not a query of its own: `me` already carries the
+  // memberships, and asking for them separately could not even start until
+  // `me` had returned the id to ask with.
+  const loading = false;
 
   const communities =
-    data?.communityMembersByUser?.nodes?.map((m) => m.role.community) || [];
+    user?.communityMemberships?.nodes
+      ?.map((m) => m.role.community)
+      .filter((c): c is NonNullable<typeof c> => Boolean(c)) ?? [];
   const currentCommunity = communities.find((c) => c.id === communityId);
 
   // Filter communities based on search query
@@ -257,14 +257,25 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
     };
   }, [isOpen]);
 
-  const handleCommunitySelect = (selectedCommunityId: string) => {
-    navigate(`/communities/${selectedCommunityId}`);
+  /**
+   * Switching communities means changing hosts, so this is a whole-page
+   * navigation and not a router one -- there is no route from
+   * `willowmere.chardb.cc` to `cloverse.chardb.cc`.
+   *
+   * Straight to the target host, not via the apex's `/communities/:id`
+   * forwarder: that would load the apex, fetch the id to resolve a slug, and
+   * then load the community -- three hops to reach a host this menu is already
+   * naming.
+   */
+  const handleCommunitySelect = (slug: string) => {
+    window.location.assign(communityUrl(slug));
     setIsOpen(false);
     setSearchQuery("");
   };
 
+  /** Also a different host: this switcher only renders on a community one. */
   const handleBrowseAll = () => {
-    navigate("/my/communities");
+    window.location.assign(apexUrl("/my/communities"));
     setIsOpen(false);
     setSearchQuery("");
   };
@@ -311,7 +322,7 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
               <CommunityItem
                 key={community.id}
                 $isActive={community.id === communityId}
-                onClick={() => handleCommunitySelect(community.id)}
+                onClick={() => handleCommunitySelect(community.slug)}
                 role="option"
                 aria-selected={community.id === communityId}
               >

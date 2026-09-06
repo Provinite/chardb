@@ -1,11 +1,15 @@
 import React, { useState } from "react";
-import { Link, useParams } from "react-router-dom";
-import styled from "styled-components";
+import { HostAwareLink } from "../components/HostAwareLink";
+import styled, { css } from "styled-components";
 import { ArrowLeftRight, X } from "lucide-react";
 import { Avatar, Button } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
-import { useCommunityByIdQuery } from "../generated/graphql";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
+import { apexUrl, communityUrl } from "../lib/communityHost";
 import {
   EffectiveTradeStatus,
   useTradesQuery,
@@ -65,7 +69,7 @@ const List = styled.div`
   overflow: hidden;
 `;
 
-const Row = styled(Link)`
+const row = css`
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -80,6 +84,15 @@ const Row = styled(Link)`
   &:hover {
     background: ${({ theme }) => theme.colors.background};
   }
+`;
+
+/**
+ * A trade always lives on its own community's host. From the apex inbox that
+ * is somewhere else; from a community inbox it is usually right here, so the
+ * destination decides whether this is a page load.
+ */
+const Row = styled(HostAwareLink)`
+  ${row}
 `;
 
 const Body = styled.div`
@@ -105,7 +118,9 @@ const Meta = styled.div`
 `;
 
 /** Says which community the list is narrowed to, and clears the narrowing. */
-const Scope = styled(Link)`
+// An anchor, not a router link: dropping the narrowing means leaving this
+// community's host for the cross-community inbox at the apex.
+const Scope = styled.a`
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
@@ -152,19 +167,16 @@ const LoadingWrap = styled.div`
  */
 export const TradesPage: React.FC = () => {
   const { user } = useAuth();
-  // Which community, if any, is in the path rather than in a query string.
-  // The sidebar reads community context off the pathname, so a narrowing it
-  // cannot see is a narrowing that costs the member their community nav.
-  const { communityId } = useParams<{ communityId?: string }>();
+  // Which community, if any, this list is narrowed to. The page is mounted on
+  // both hosts: on a community's own host it is that community's inbox, and at
+  // the apex it is the cross-community one, where this is null.
+  const communityId = useCommunityId();
   const [status, setStatus] = useState<EffectiveTradeStatus | undefined>(
     EffectiveTradeStatus.Pending,
   );
   const [limit, setLimit] = useState(PAGE_SIZE);
 
-  const { data: communityData } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  const community = useHostCommunity();
 
   const { data, loading, error } = useTradesQuery({
     variables: { communityId, status, first: limit },
@@ -213,8 +225,10 @@ export const TradesPage: React.FC = () => {
       </Header>
 
       {communityId && (
-        <Scope to="/trades" data-testid="trade-scope">
-          {communityData?.community.name ?? "This community"} only
+        // Dropping the narrowing means leaving this community's host for the
+        // cross-community inbox at the apex, which the router cannot do.
+        <Scope href={apexUrl("/trades")} data-testid="trade-scope">
+          {community?.name ?? "This community"} only
           <X size={12} />
         </Scope>
       )}
@@ -243,12 +257,9 @@ export const TradesPage: React.FC = () => {
             // Through the trade's own community, not the one this list is
             // narrowed to -- the global inbox has no narrowing, and an offer
             // is a single-community thing wherever you found it.
-            return (
-              <Row
-                key={trade.id}
-                to={`/communities/${trade.community.id}/trades/${trade.id}`}
-                data-testid="trade-row"
-              >
+            const path = `/trades/${trade.id}`;
+            const body = (
+              <>
                 <Avatar image={other.avatarImage} name={name} size={38} />
                 <Body>
                   <Who>
@@ -262,6 +273,15 @@ export const TradesPage: React.FC = () => {
                     ? describeExpiry(trade.expiresAt)
                     : STATUS_LABEL[trade.status]}
                 </Meta>
+              </>
+            );
+            return (
+              <Row
+                key={trade.id}
+                to={communityUrl(trade.community.slug, path)}
+                data-testid="trade-row"
+              >
+                {body}
               </Row>
             );
           })}

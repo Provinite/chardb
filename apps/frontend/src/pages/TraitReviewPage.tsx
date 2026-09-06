@@ -1,9 +1,9 @@
 import React from "react";
-import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ClipboardCheck, ArrowLeft } from "lucide-react";
 import { Button, Heading2, SmallText, HelpText } from "@chardb/ui";
 import { TraitReviewQueue } from "../components/moderation";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 
 const Container = styled.div`
   display: flex;
@@ -62,15 +62,13 @@ const HeaderText = styled.div`
 `;
 
 export const TraitReviewPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
 
   if (!communityId) {
     return (
       <Container>
         <Heading2>Invalid Community</Heading2>
-        <HelpText>
-          Community ID is required to access moderation tools.
-        </HelpText>
+        <HelpText>This address names no community to moderate.</HelpText>
       </Container>
     );
   }

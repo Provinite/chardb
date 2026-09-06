@@ -1,4 +1,5 @@
 import { presetTest, expect, acceptNextDialog } from "../../src/fixtures.js";
+import { linkToPath } from "../../src/config.js";
 
 const test = presetTest("community-basic");
 test.use({ persona: "moderator" });
@@ -31,12 +32,14 @@ test("deleting a character removes it everywhere", async ({ page, world }) => {
 
   // handleDelete navigates to /characters on success.
   await expect(page).toHaveURL(/\/characters$/);
+  // Cards link by absolute URL, because a character is served from its
+  // community's host wherever the list itself is (#339).
   await expect(
-    page.locator(`a[href="/character/${character.id}"]`),
+    page.locator(linkToPath(`/character/${character.id}`)),
   ).toHaveCount(0);
   // The other character is untouched -- proves the list actually rendered.
   await expect(
-    page.locator(`a[href="/character/${world.characters.pending.id}"]`),
+    page.locator(linkToPath(`/character/${world.characters.pending.id}`)),
   ).toBeVisible();
 
   // Direct navigation is also blocked by the notDeleted filter.

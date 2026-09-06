@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useGetLikedMediaQuery, LikeableType } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
+import { characterUrl } from "../lib/communityHost";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -120,7 +121,7 @@ const MetaBadge = styled.span`
   border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
-const UploaderLink = styled(Link)`
+const uploaderLink = css`
   color: ${({ theme }) => theme.colors.primary};
   text-decoration: none;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
@@ -128,6 +129,15 @@ const UploaderLink = styled(Link)`
   &:hover {
     text-decoration: underline;
   }
+`;
+
+const UploaderLink = styled(Link)`
+  ${uploaderLink}
+`;
+
+/** The same link for a character, which is served from another host. */
+const CharacterAnchor = styled.a`
+  ${uploaderLink}
 `;
 
 const CardActions = styled.div`
@@ -282,11 +292,14 @@ export const LikedMediaPage: React.FC = () => {
           </EmptyState>
         ) : (
           <Grid>
-            {likedMedia.map((media: any) => (
+            {likedMedia.map((media) => (
               <ImageCard key={media.id}>
                 {media.image && (
                   <ImageContainer
-                    onClick={() => setLightboxImage(media.image.originalUrl)}
+                    onClick={() => {
+                      if (media.image)
+                        setLightboxImage(media.image.originalUrl);
+                    }}
                   >
                     <ImageElement
                       src={media.image.thumbnailUrl || media.image.originalUrl}
@@ -347,9 +360,14 @@ export const LikedMediaPage: React.FC = () => {
                     </MetaBadge>
                     {media.character && (
                       <MetaBadge>
-                        <UploaderLink to={`/character/${media.character.id}`}>
+                        <CharacterAnchor
+                          href={characterUrl(
+                            media.character.id,
+                            media.character.species?.community?.slug,
+                          )}
+                        >
                           {media.character.name}
-                        </UploaderLink>
+                        </CharacterAnchor>
                       </MetaBadge>
                     )}
                   </ImageMeta>

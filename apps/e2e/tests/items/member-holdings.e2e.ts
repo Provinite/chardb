@@ -1,4 +1,5 @@
 import { presetTest, expect } from "../../src/fixtures.js";
+import { urlStartingWith } from "../../src/config.js";
 import type { Page } from "@playwright/test";
 const test = presetTest("community-items");
 
@@ -10,10 +11,12 @@ const test = presetTest("community-items");
  * see the same facts. Permissions add actions; they never change what is shown.
  */
 
-const ownUrl = (communityId: string) => `/communities/${communityId}/inventory`;
+/** Both take the community's own origin -- `world.community.url` -- because
+ *  these pages are served from the community's host, not from the apex. */
+const ownUrl = (communityUrl: string) => `${communityUrl}/inventory`;
 
-const memberUrl = (communityId: string, username: string) =>
-  `/communities/${communityId}/members/${username}/items`;
+const memberUrl = (communityUrl: string, username: string) =>
+  `${communityUrl}/members/${username}/items`;
 
 const group = (page: Page, itemTypeId: string) =>
   page.locator(
@@ -24,7 +27,7 @@ test.describe("viewing your own inventory", () => {
   test.use({ persona: "member" });
 
   test("groups items by type with a count", async ({ page, world }) => {
-    await page.goto(ownUrl(world.community.id));
+    await page.goto(ownUrl(world.community.url));
 
     await expect(
       page.getByRole("heading", { level: 1, name: "Your Inventory" }),
@@ -41,7 +44,7 @@ test.describe("viewing your own inventory", () => {
   }) => {
     // `member` has no item permissions, and this is their own inventory --
     // neither reason to show a revoke applies.
-    await page.goto(ownUrl(world.community.id));
+    await page.goto(ownUrl(world.community.url));
 
     const potion = group(page, world.itemTypes.potion.id);
     await potion.getByTestId("expand-group").click();
@@ -62,7 +65,7 @@ test.describe("a holding larger than the old page size", () => {
     expect(world.importedItems.count).toBeGreaterThan(20);
 
     await page.goto(
-      memberUrl(world.community.id, world.users.othermember.username),
+      memberUrl(world.community.url, world.users.othermember.username),
     );
 
     const lockets = group(page, world.itemTypes.locket.id);
@@ -75,15 +78,18 @@ test.describe("a holding larger than the old page size", () => {
   });
 
   test("each item links to its own history", async ({ page, world }) => {
-    await page.goto(ownUrl(world.community.id));
+    await page.goto(ownUrl(world.community.url));
 
     const potion = group(page, world.itemTypes.potion.id);
     await potion.getByTestId("expand-group").click();
 
     const first = potion.getByTestId("holding-item").first();
+    // A path, not a URL: the item is on the community host this page is
+    // already on, so the link stays inside the router rather than naming an
+    // origin. The community is the host now, so it is no longer in the path.
     await expect(first.getByRole("link")).toHaveAttribute(
       "href",
-      new RegExp(`/communities/${world.community.id}/items/`),
+      /^\/items\/[0-9a-f-]{36}$/,
     );
   });
 });
@@ -94,7 +100,9 @@ test.describe("viewing another member", () => {
   test("shows the same facts about someone else", async ({ page, world }) => {
     // Public within the community: this is what makes a trade partner's
     // inventory checkable before offering.
-    await page.goto(memberUrl(world.community.id, world.users.member.username));
+    await page.goto(
+      memberUrl(world.community.url, world.users.member.username),
+    );
 
     await expect(
       page.getByRole("heading", { level: 1, name: /Items$/ }),
@@ -103,7 +111,9 @@ test.describe("viewing another member", () => {
   });
 
   test("offers no revoke without the permission", async ({ page, world }) => {
-    await page.goto(memberUrl(world.community.id, world.users.member.username));
+    await page.goto(
+      memberUrl(world.community.url, world.users.member.username),
+    );
 
     const potion = group(page, world.itemTypes.potion.id);
     await potion.getByTestId("expand-group").click();
@@ -121,7 +131,9 @@ test.describe("staff have no actions here", () => {
     // Deliberate: revoking happens on an item's own page, where its history is
     // in front of you. You should not be able to take something away without
     // first looking at what it is and where it came from.
-    await page.goto(memberUrl(world.community.id, world.users.member.username));
+    await page.goto(
+      memberUrl(world.community.url, world.users.member.username),
+    );
 
     const potion = group(page, world.itemTypes.potion.id);
     await potion.getByTestId("expand-group").click();
@@ -135,14 +147,16 @@ test.describe("staff have no actions here", () => {
     page,
     world,
   }) => {
-    await page.goto(memberUrl(world.community.id, world.users.member.username));
+    await page.goto(
+      memberUrl(world.community.url, world.users.member.username),
+    );
 
     const potion = group(page, world.itemTypes.potion.id);
     await potion.getByTestId("expand-group").click();
     await potion.getByTestId("holding-item").first().getByRole("link").click();
 
     await expect(page).toHaveURL(
-      new RegExp(`/communities/${world.community.id}/items/`),
+      urlStartingWith(`${world.community.url}/items/`),
     );
     // The revoke control lives here, next to the history.
     await expect(page.getByTestId("revoke-item")).toBeVisible();
@@ -153,7 +167,9 @@ test.describe("someone outside the community", () => {
   test.use({ persona: "outsider" });
 
   test("cannot read a member's holdings", async ({ page, world }) => {
-    await page.goto(memberUrl(world.community.id, world.users.member.username));
+    await page.goto(
+      memberUrl(world.community.url, world.users.member.username),
+    );
 
     await expect(page.getByText("could not be loaded")).toBeVisible();
     await expect(group(page, world.itemTypes.potion.id)).toHaveCount(0);
@@ -205,9 +221,7 @@ test.describe("reaching holdings from the member list", () => {
       .click();
 
     await expect(page).toHaveURL(
-      new RegExp(
-        `/communities/${world.community.id}/members/${world.users.othermember.username}/items$`,
-      ),
+      memberUrl(world.community.url, world.users.othermember.username),
     );
     await expect(group(page, world.itemTypes.locket.id)).toContainText(
       `×${world.importedItems.count}`,

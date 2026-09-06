@@ -592,8 +592,21 @@ model MediaTag {
 }
 
 model Community {
-  id               String   @id @default(uuid())
-  name             String   @unique @db.VarChar(100)
+  id String @id @default(uuid())
+
+  name String @unique @db.VarChar(100)
+
+  /// The community's subdomain label: `cloverse` in `cloverse.chardb.cc`.
+  ///
+  /// Chosen once, at creation, and never changed. A slug is the host half of
+  /// every URL the community's members share, so a rename would break every
+  /// link already pasted into a Discord channel or a profile bio. `name` stays
+  /// freely editable and is what the UI actually displays; this is only the
+  /// address.
+  ///
+  /// 63 characters because that is the maximum length of a single DNS label.
+  slug String @unique @db.VarChar(63)
+
   discordGuildId   String?  @map("discord_guild_id") @db.VarChar(30)
   discordGuildName String?  @map("discord_guild_name") @db.VarChar(100)
   createdAt        DateTime @default(now()) @map("created_at")

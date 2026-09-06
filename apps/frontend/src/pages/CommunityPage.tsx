@@ -1,5 +1,4 @@
 import React from "react";
-import { useParams, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Users, Calendar, Settings, UserPlus } from "lucide-react";
 import {
@@ -11,15 +10,17 @@ import {
   HelpText,
   Card,
 } from "@chardb/ui";
-import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
-  useCommunityByIdQuery,
   useSpeciesByCommunityQuery,
   useGetCharactersQuery,
-  useCommunityMembersByUserQuery,
 } from "../generated/graphql";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
+import { apexUrl } from "../lib/communityHost";
 
 /**
  * Community Landing Page
@@ -167,19 +168,6 @@ const ViewButton = styled(Button)`
   padding: 0.5rem 1rem;
 `;
 
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 4rem;
-`;
-
-const ErrorContainer = styled.div`
-  text-align: center;
-  padding: 4rem 2rem;
-  color: ${({ theme }) => theme.colors.error};
-`;
-
 const NotFoundContainer = styled.div`
   text-align: center;
   padding: 4rem 2rem;
@@ -187,16 +175,13 @@ const NotFoundContainer = styled.div`
 `;
 
 export const CommunityPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const { user } = useAuth();
-  const navigate = useNavigate();
 
-  const { data, loading, error } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-    fetchPolicy: "cache-and-network",
-    errorPolicy: "all",
-  });
+  // The host context already holds this community -- it is the one whose host
+  // this is -- so querying it back by id fetched the same record twice per
+  // page load.
+  const hostCommunity = useHostCommunity();
 
   // Fetch species count for this community
   const { data: speciesData } = useSpeciesByCommunityQuery({
@@ -215,39 +200,12 @@ export const CommunityPage: React.FC = () => {
   });
 
   // Check if current user is a member of this community
-  const { data: userMembershipsData } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || "", first: 100 },
-    skip: !user?.id,
-    fetchPolicy: "cache-and-network",
-  });
+  // Off the viewer: `me` already carries the memberships.
 
-  // `&& !data`: this query is cache-and-network, which reports loading on
-  // every background revalidation, so a bare check blanks the page on revisit.
-  if (loading && !data) {
-    return (
-      <Container>
-        <LoadingContainer>
-          <LoadingSpinner size="lg" />
-        </LoadingContainer>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container>
-        <ErrorContainer>
-          <Heading2>Error Loading Community</Heading2>
-          <HelpText>
-            Unable to load community information. Please try refreshing the
-            page.
-          </HelpText>
-        </ErrorContainer>
-      </Container>
-    );
-  }
-
-  if (!data?.community) {
+  // No loading or error branch any more: `App` mounts the community route
+  // table only once the host has resolved, so by the time this renders the
+  // answer is already in hand. Null here means the address names no community.
+  if (!hostCommunity) {
     return (
       <Container>
         <NotFoundContainer>
@@ -261,7 +219,7 @@ export const CommunityPage: React.FC = () => {
     );
   }
 
-  const community = data.community;
+  const community = hostCommunity;
 
   // Get actual counts from GraphQL queries
   const speciesCount = speciesData?.speciesByCommunity?.totalCount || 0;
@@ -270,7 +228,7 @@ export const CommunityPage: React.FC = () => {
 
   // Check if current user is a member of this community
   const isMember =
-    userMembershipsData?.communityMembersByUser?.nodes.some(
+    user?.communityMemberships?.nodes.some(
       (membership) => membership.role.community.id === communityId,
     ) || false;
 
@@ -281,7 +239,7 @@ export const CommunityPage: React.FC = () => {
       description:
         "Browse and discover unique characters created by community members",
       icon: Users,
-      path: `/communities/${communityId}/characters`,
+      path: "/characters",
       count: charactersCount,
       enabled: true,
     },
@@ -291,7 +249,7 @@ export const CommunityPage: React.FC = () => {
       description:
         "Explore the various species and their traits available in this community",
       icon: Settings, // Would use a better icon like Dna or similar
-      path: `/communities/${communityId}/species`,
+      path: "/species",
       count: speciesCount,
       enabled: true,
     },
@@ -301,7 +259,7 @@ export const CommunityPage: React.FC = () => {
       description:
         "View artwork, stories, and media shared by community members",
       icon: Users, // Would use Gallery icon
-      path: `/communities/${communityId}/gallery`,
+      path: "/gallery",
       count: 0, // Would come from media count query when implemented
       enabled: false, // Not implemented yet
     },
@@ -339,7 +297,11 @@ export const CommunityPage: React.FC = () => {
                     <Button
                       variant="primary"
                       icon={<UserPlus size={16} />}
-                      onClick={() => navigate("/join-community")}
+                      // Joining, like signing in, happens at the apex: the
+                      // router cannot cross a host.
+                      onClick={() => {
+                        window.location.assign(apexUrl("/join-community"));
+                      }}
                     >
                       Join Community
                     </Button>
@@ -349,14 +311,16 @@ export const CommunityPage: React.FC = () => {
                       variant="outline"
                       icon={<Settings size={16} />}
                       as={Link}
-                      to={`/communities/${communityId}/admin`}
+                      to="/admin"
                     >
                       Manage
                     </Button>
                   )}
                 </>
               ) : (
-                <Button variant="primary" as={Link} to="/login">
+                // The session cookie is set on the parent domain, so signing
+                // in has to happen at the apex.
+                <Button variant="primary" as="a" href={apexUrl("/login")}>
                   Sign In to Join
                 </Button>
               )}

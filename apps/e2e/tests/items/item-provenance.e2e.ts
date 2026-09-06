@@ -1,6 +1,8 @@
 import { presetTest, expect } from "../../src/fixtures.js";
+import { communityUrl } from "../../src/config.js";
 import type { Page } from "@playwright/test";
 import {
+  SeedCreateCommunityDocument,
   SeedGrantItemDocument,
   SeedItemDocument,
   SeedRevokeItemsDocument,
@@ -13,9 +15,10 @@ const events = (page: Page) => page.getByTestId("provenance-event");
 const eventOfKind = (page: Page, kind: string) =>
   page.locator(`[data-testid="provenance-event"][data-kind="${kind}"]`);
 
-/** The item page is community-scoped so it renders inside community nav. */
-const itemUrl = (communityId: string, itemId: string) =>
-  `/communities/${communityId}/items/${itemId}`;
+/** The item page is community-scoped, so it is served from the community's own
+ *  host and renders inside community nav. Takes `world.community.url`. */
+const itemUrl = (communityHome: string, itemId: string) =>
+  `${communityHome}/items/${itemId}`;
 
 /** An inventory holding group, keyed by item type so it asserts identity. */
 const group = (page: Page, itemTypeId: string) =>
@@ -38,7 +41,7 @@ test.describe("as a member with no item permissions", () => {
     page,
     world,
   }) => {
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
     await expect(
       page.getByRole("heading", { level: 1, name: "Trait Change Potion" }),
@@ -56,7 +59,7 @@ test.describe("as a member with no item permissions", () => {
   });
 
   test("does not show the staff note", async ({ page, world }) => {
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
     await expect(page.getByText("Lanternfall prompt completion")).toBeVisible();
     await expect(
@@ -70,7 +73,7 @@ test.describe("as a member with no item permissions", () => {
   }) => {
     // The dominant row type in a real ledger. It must not read as a grant from
     // nobody -- these items have a real history that simply was not captured.
-    await page.goto(itemUrl(world.community.id, world.importedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.importedItems.ids[0]));
 
     const imported = eventOfKind(page, "IMPORT");
     await expect(imported).toHaveCount(1);
@@ -85,7 +88,7 @@ test.describe("as a member with no item permissions", () => {
       reason: "Returned by the member",
     });
 
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
     // A history reads forwards. The ledger is a feed and reads backwards.
     await expect(events(page)).toHaveCount(2);
@@ -98,7 +101,7 @@ test.describe("staff", () => {
   test.use({ persona: "quartermaster" });
 
   test("sees the staff note on the same page", async ({ page, world }) => {
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
     await expect(
       page.getByText("Bumped from 1 after the tier table turned out ambiguous"),
@@ -121,7 +124,7 @@ test.describe("a destroyed item", () => {
       reason: "Issued in error",
     });
 
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
     const banner = page.getByTestId("item-destroyed-banner");
     await expect(banner).toContainText("This item was destroyed");
@@ -144,7 +147,7 @@ test.describe("a destroyed item", () => {
     await page.goto(`${world.community.url}/inventory`);
     await expect(group(page, world.itemTypes.potion.id)).toHaveCount(0);
 
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
     await expect(page.getByTestId("item-destroyed-banner")).toBeVisible();
   });
 });
@@ -153,7 +156,7 @@ test.describe("someone outside the community", () => {
   test.use({ persona: "outsider" });
 
   test("cannot read an item's history", async ({ page, world }) => {
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
     await expect(page.getByText("could not be loaded")).toBeVisible();
     await expect(page.getByText("Lanternfall prompt completion")).toHaveCount(
@@ -181,7 +184,9 @@ test.describe("item URLs", () => {
     page,
     world,
   }) => {
-    await page.goto(`/item-types/${world.itemTypes.potion.id}`);
+    await page.goto(
+      `${world.community.url}/item-types/${world.itemTypes.potion.id}`,
+    );
     await expect(
       page.getByRole("heading", { level: 1, name: "Trait Change Potion" }),
     ).toBeVisible();
@@ -193,10 +198,10 @@ test.describe("item URLs", () => {
   }) => {
     // Added in a0a2e5a to fix a broken external link. Kept as a redirect so
     // there is one canonical URL rather than two that render the same thing.
-    await page.goto(`/item/${world.itemTypes.potion.id}`);
+    await page.goto(`${world.community.url}/item/${world.itemTypes.potion.id}`);
 
     await expect(page).toHaveURL(
-      new RegExp(`/item-types/${world.itemTypes.potion.id}$`),
+      `${world.community.url}/item-types/${world.itemTypes.potion.id}`,
     );
     await expect(
       page.getByRole("heading", { level: 1, name: "Trait Change Potion" }),
@@ -233,7 +238,9 @@ test.describe("item URLs", () => {
     await expect(lockets.getByTestId("expand-group")).toHaveCount(0);
     await expect(
       lockets.getByTestId("holding-item").getByRole("link"),
-    ).toHaveAttribute("href", itemUrl(world.community.id, grantItem[0].id));
+      // A path, not a URL: the item's page is on this same community host, so
+      // the link never names an origin.
+    ).toHaveAttribute("href", `/items/${grantItem[0].id}`);
 
     await lockets.getByTestId("holding-item").getByRole("link").click();
     await expect(page.getByTestId("item-status")).toContainText(
@@ -249,7 +256,7 @@ test.describe("chain of custody and facts", () => {
     page,
     world,
   }) => {
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
     const custody = page.getByTestId("chain-of-custody");
     await expect(custody).toContainText(world.users.member.username);
@@ -267,28 +274,37 @@ test.describe("chain of custody and facts", () => {
     page,
     world,
   }) => {
-    await page.goto(itemUrl(world.community.id, world.importedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.importedItems.ids[0]));
 
     await expect(page.getByTestId("item-facts")).toContainText(
       "Predates the ledger",
     );
   });
 
-  test("a wrong community in the URL redirects to the right one", async ({
+  test("an item opened on another community's host moves to its own", async ({
     page,
     world,
   }) => {
-    // The permission check resolves the community from the item, so a mismatched
-    // URL is not a security hole -- it would just frame the page with the wrong
-    // community's navigation.
+    // The permission check resolves the community from the item, so the wrong
+    // host is not a security hole -- it would just frame the page with the
+    // wrong community's navigation. The correction is a change of ORIGIN now,
+    // which is why the page does it with a whole-page navigation rather than
+    // the router.
+    const { createCommunity: elsewhere } = await world
+      .as("commadmin")
+      .gql(SeedCreateCommunityDocument, {
+        createCommunityInput: {
+          name: "Distant Marsh",
+          slug: "distant-marsh",
+        },
+      });
+
     await page.goto(
-      `/communities/${world.roles.member}/items/${world.grantedItems.ids[0]}`,
+      communityUrl(elsewhere.slug, `/items/${world.grantedItems.ids[0]}`),
     );
 
     await expect(page).toHaveURL(
-      new RegExp(
-        `/communities/${world.community.id}/items/${world.grantedItems.ids[0]}$`,
-      ),
+      itemUrl(world.community.url, world.grantedItems.ids[0]),
     );
   });
 });
@@ -304,7 +320,7 @@ test.describe("revoking from the item page", () => {
     page,
     world,
   }) => {
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
     await page.getByTestId("revoke-item").click();
     await page
@@ -333,7 +349,7 @@ test.describe("revoking from the item page", () => {
   }) => {
     // The reason is public and required -- it is what the member sees on the
     // item's history afterwards.
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[1]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[1]));
 
     await page.getByTestId("revoke-item").click();
     await expect(page.getByTestId("confirm-revoke")).toBeDisabled();
@@ -347,7 +363,7 @@ test.describe("a member without item permissions", () => {
   test.use({ persona: "member" });
 
   test("is not offered a revoke control", async ({ page, world }) => {
-    await page.goto(itemUrl(world.community.id, world.grantedItems.ids[0]));
+    await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
     await expect(page.getByTestId("item-status")).toBeVisible();
     await expect(page.getByTestId("revoke-item")).toHaveCount(0);

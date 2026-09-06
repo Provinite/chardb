@@ -14,6 +14,7 @@ import { DeleteConfirmationDialog } from "../components/DeleteConfirmationDialog
 // import { CommentList } from '../components/CommentList';
 import { TextViewer } from "../components/TextViewer";
 import { Markdown } from "../components/Markdown";
+import { characterUrl } from "../lib/communityHost";
 // import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
@@ -304,7 +305,9 @@ const CharacterInfo = styled.div`
   border: 1px solid ${({ theme }) => theme.colors.border};
 `;
 
-const CharacterLink = styled(Link)`
+// An anchor rather than a router link: a character is served from its
+// community's own host, which is a different origin to this page.
+const CharacterLink = styled.a`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -316,6 +319,21 @@ const CharacterLink = styled(Link)`
     text-decoration: underline;
   }
 `;
+
+/**
+ * Leave for a character's page.
+ *
+ * Media lives at the apex and a character on its community's host, so this is
+ * a change of origin and not something the router can do.
+ */
+const goToCharacter = (character: {
+  id: string;
+  species?: { community?: { slug: string } | null } | null;
+}) => {
+  window.location.assign(
+    characterUrl(character.id, character.species?.community?.slug),
+  );
+};
 
 export const MediaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -333,8 +351,8 @@ export const MediaPage: React.FC = () => {
     onCompleted: () => {
       toast.success(`Media "${media?.title}" has been deleted successfully`);
       // Navigate back to the appropriate page
-      if (media?.characterId) {
-        navigate(`/character/${media.characterId}`);
+      if (media?.character) {
+        goToCharacter(media.character);
       } else if (media?.galleryId) {
         navigate(`/gallery/${media.galleryId}`);
       } else {
@@ -355,8 +373,8 @@ export const MediaPage: React.FC = () => {
   const media = data?.mediaItem;
 
   const handleBackClick = () => {
-    if (media?.characterId) {
-      navigate(`/character/${media.characterId}`);
+    if (media?.character) {
+      goToCharacter(media.character);
     } else if (media?.galleryId) {
       navigate(`/gallery/${media.galleryId}`);
     } else {
@@ -513,7 +531,12 @@ export const MediaPage: React.FC = () => {
 
       {media.character && (
         <CharacterInfo>
-          <CharacterLink to={`/character/${media.character.id}`}>
+          <CharacterLink
+            href={characterUrl(
+              media.character.id,
+              media.character.species?.community?.slug,
+            )}
+          >
             📖 {media.character.name}
           </CharacterLink>
         </CharacterInfo>

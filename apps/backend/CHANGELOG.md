@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Communities have a permanent `slug`**, the subdomain they are served from,
+  with a reserved-name list and a `communityBySlug` query; existing communities
+  were backfilled from their names (#339).
+
+### Changed
+
+- **BREAKING: the refresh token is an `HttpOnly` cookie, not a payload field.**
+  `AuthPayload` no longer carries `refreshToken`, `refreshToken` takes no
+  argument, and there is a new `logout` mutation; every signed-in user is
+  signed out once on deploy (#339).
+
+- **CORS is an allowlist rather than a reflector.** `origin: true` alongside
+  `credentials: true` would have handed any site a credentialed session once a
+  cookie existed; the apex and `*.$ROOT_DOMAIN` are now the only origins
+  accepted (#339).
+
 ### Fixed
 
 - **A member's private media no longer appears on their public profile.**

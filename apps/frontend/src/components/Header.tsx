@@ -3,6 +3,9 @@ import { Link, useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar, Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { useCommunityHost } from "../contexts/CommunityHostContext";
+import { apexUrl, loginUrlReturningHere } from "../lib/communityHost";
+import { HostAwareLink } from "./HostAwareLink";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./notifications/NotificationBell";
 
@@ -34,7 +37,7 @@ const Nav = styled.nav`
   gap: ${({ theme }) => theme.spacing.lg};
 `;
 
-const NavLink = styled(Link)`
+const NavLink = styled(HostAwareLink)`
   color: ${({ theme }) => theme.colors.text.primary};
   text-decoration: none;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
@@ -50,7 +53,7 @@ const UserMenu = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
-const UserInfo = styled(Link)`
+const UserInfo = styled(HostAwareLink)`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -70,6 +73,7 @@ const Username = styled.span`
 
 export const Header: React.FC = () => {
   const { user, logout } = useAuth();
+  const { slug: communitySlug } = useCommunityHost();
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -87,10 +91,17 @@ export const Header: React.FC = () => {
 
           {user ? (
             <UserMenu>
-              <NavLink to="/character/create">Create Character</NavLink>
-              <NavLink to="/upload">Upload</NavLink>
+              {/* A character is created in a community, so this only exists on
+                  a community host. At the apex there is no community to create
+                  it in and no route to offer. */}
+              {communitySlug && (
+                <NavLink to="/character/create">Create Character</NavLink>
+              )}
+              {/* Media belongs to a person, not a community, so uploading is
+                  always an apex page -- from a community host this leaves. */}
+              <NavLink to={apexUrl("/upload")}>Upload</NavLink>
               <NotificationBell />
-              <UserInfo to={`/user/${user.username}`}>
+              <UserInfo to={apexUrl(`/user/${user.username}`)}>
                 <Avatar
                   image={user.avatarImage}
                   name={user.displayName || user.username}
@@ -107,7 +118,9 @@ export const Header: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate("/login")}
+                // Carries where they were, so signing in from a community host
+                // comes back to it rather than dropping them at the apex.
+                onClick={() => navigate(loginUrlReturningHere())}
               >
                 Login
               </Button>

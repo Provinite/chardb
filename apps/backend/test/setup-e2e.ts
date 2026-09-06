@@ -11,6 +11,8 @@ import { JwtModule } from "@nestjs/jwt";
 import { ThrottlerModule } from "@nestjs/throttler";
 import * as request from "supertest";
 import * as jwt from "jsonwebtoken";
+import * as cookieParser from "cookie-parser";
+import type { Request, Response } from "express";
 import { DatabaseService } from "../src/database/database.service";
 import { CustomThrottlerGuard } from "../src/middleware/custom-throttler.guard";
 import { OptionalJwtAuthGuard } from "../src/auth/guards/optional-jwt-auth.guard";
@@ -53,6 +55,14 @@ export class TestApp {
           sortSchema: true,
           playground: false,
           introspection: false,
+          // Mirrors the real app's context factory. The auth resolver reaches
+          // for `ctx.res` to set the refresh cookie and `ctx.req` to read it
+          // back, so leaving this to the driver's default would make every
+          // cookie assertion depend on an implementation detail of the driver.
+          context: ({ req, res }: { req: Request; res: Response }) => ({
+            req,
+            res,
+          }),
         }),
         JwtModule.register({
           secret: "test-jwt-secret-key-for-testing-only",
@@ -64,6 +74,9 @@ export class TestApp {
     }).compile();
 
     this.app = this.moduleRef.createNestApplication();
+    // The refresh token arrives as a cookie, so `req.cookies` has to be
+    // populated here exactly as `main.ts` does it.
+    this.app.use(cookieParser());
     this.app.useGlobalPipes(
       new ValidationPipe({
         whitelist: true,
@@ -178,12 +191,20 @@ export class TestApp {
 
   async createTestCommunity(
     name?: string,
-  ): Promise<{ id: string; name: string }> {
+  ): Promise<{ id: string; name: string; slug: string }> {
     const timestamp = Date.now();
+    const resolvedName = name ?? `Test Community ${timestamp}`;
+    // `slug` is unique like `name` is, so it has to vary with the name and not
+    // only with the clock: two communities created in the same millisecond
+    // under different names must still get different slugs.
+    const slug = `${resolvedName
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40)}-${timestamp}`;
+
     return this.db.community.create({
-      data: {
-        name: name ?? `Test Community ${timestamp}`,
-      },
+      data: { name: resolvedName, slug },
     });
   }
 
@@ -276,11 +297,12 @@ export const mockUser = {
 
 // Common GraphQL queries for testing
 export const AUTH_QUERIES = {
+  // The refresh token is not in either payload any more -- it comes back as an
+  // HttpOnly `chardb_rt` cookie, so tests that need it read Set-Cookie.
   LOGIN: `
     mutation login($input: LoginInput!) {
       login(input: $input) {
         accessToken
-        refreshToken
       }
     }
   `,
@@ -289,7 +311,6 @@ export const AUTH_QUERIES = {
     mutation signup($input: SignupInput!) {
       signup(input: $input) {
         accessToken
-        refreshToken
       }
     }
   `,

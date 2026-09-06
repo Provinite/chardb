@@ -6,11 +6,12 @@ const test = presetTest("community-basic");
 /**
  * The community moderation index, and the dead link that produced it (#352).
  *
- * The admin dashboard's "Content Moderation" card pointed at
- * `/communities/:id/moderation`, which was never a registered route, so it
- * fell through to the catch-all NotFoundPage. The same feature worked from the
- * sidebar, which links to `/moderation/images` directly -- which is why the
- * report described one entry point 404ing and another working.
+ * The admin dashboard's "Content Moderation" card pointed at a path that was
+ * never a registered route, so it fell through to the catch-all NotFoundPage.
+ * The same feature worked from the sidebar, which links to the queue directly
+ * -- which is why the report described one entry point 404ing and another
+ * working. (The paths have since lost their `/communities/:id` prefix, the
+ * community being the host now; the dead-link shape is what these guard.)
  *
  * The first test here is the regression, and it navigates by clicking rather
  * than with `page.goto`: the bug was in a link, so typing its destination into
@@ -58,9 +59,7 @@ test.describe("a moderator who can only moderate images", () => {
       .first()
       .click();
 
-    await expect(page).toHaveURL(
-      new RegExp(`/communities/${world.community.id}/moderation$`),
-    );
+    await expect(page).toHaveURL(`${world.community.url}/moderation`);
     await expect(page.getByText("Page Not Found")).toHaveCount(0);
     await expect(
       page.getByRole("heading", { level: 1, name: "Content Moderation" }),
@@ -82,9 +81,7 @@ test.describe("a moderator who can only moderate images", () => {
     await page.goto(`${world.community.url}/moderation`);
     await queueCard(page, "Image Moderation", 1).click();
 
-    await expect(page).toHaveURL(
-      new RegExp(`/communities/${world.community.id}/moderation/images$`),
-    );
+    await expect(page).toHaveURL(`${world.community.url}/moderation/images`);
   });
 
   test("the sidebar carries a Moderation entry", async ({ page, world }) => {
@@ -114,9 +111,7 @@ test.describe("a moderator who can only review traits", () => {
     await page.goto(`${world.community.url}/moderation`);
     await queueCard(page, "Trait Review", 1).click();
 
-    await expect(page).toHaveURL(
-      new RegExp(`/communities/${world.community.id}/moderation/traits$`),
-    );
+    await expect(page).toHaveURL(`${world.community.url}/moderation/traits`);
   });
 });
 

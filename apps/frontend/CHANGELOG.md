@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Every community is served from its own subdomain.** `willowmere.chardb.cc`
+  replaces `/communities/:communityId/...`, and its characters, species, traits,
+  variants and item types move under it too; old URLs redirect (#339).
+
+- **Signing in is now one session for the whole site.** The refresh token moved
+  from `localStorage` to an `HttpOnly` cookie on the parent domain, so one
+  sign-in covers the apex and every community subdomain (#339).
+
 ### Added
 
 - **A member's characters and galleries each have a page.**

@@ -1,19 +1,27 @@
 import { presetTest, expect } from "../../src/fixtures.js";
+import { urlStartingWith } from "../../src/config.js";
 
 const test = presetTest("community-items");
 
 /**
  * Which sidebar a trade page leaves you looking at.
  *
- * `Layout` sits outside `Routes`, so the navigation cannot call `useParams()`
- * and reads community context off the pathname instead. That makes the shape
- * of a URL a load-bearing part of the navigation rather than a cosmetic
- * choice: `/trades?community=<id>` was in a community the sidebar could not
- * see, and dropped the member to global nav with no way back except the
- * browser's back button (#293).
+ * The navigation reads the HOSTNAME now. `Layout` sits outside `Routes`, so it
+ * can never call `useParams()`, and it used to answer "which community am I
+ * in?" by matching `location.pathname` against a list of patterns -- which made
+ * the shape of a URL a load-bearing part of the navigation and left
+ * `/trades?community=<id>` in a community the sidebar could not see (#293).
+ * `CommunityHostProvider` reads the hostname instead, before the router has
+ * decided anything, so the question has an answer on every page of a community
+ * host and no answer at all at the apex (#339).
  *
- * Nothing asserted on the sidebar before this file, which is exactly how that
- * shipped -- the list narrowed correctly, so every test of the list passed.
+ * What these specs protect is therefore not a regex any more but the split
+ * itself: a community's own inbox is on the community's host and comes with
+ * community navigation, the cross-community inbox is at the apex and comes with
+ * global navigation, and following the links between them keeps that true. Both
+ * inboxes still exist because "everything waiting on me" and "this community's
+ * offers" are different questions; a later tidy-up that collapses them would
+ * take the first one away.
  */
 test.describe("trade pages and community context", () => {
   test.use({ persona: "member" });
@@ -46,21 +54,19 @@ test.describe("trade pages and community context", () => {
   }) => {
     await page.goto(`${world.community.url}/members`);
 
-    // The reported bug, in the sequence a member actually hits it: click
-    // Trades in the community sidebar, and the sidebar you clicked it in
-    // disappears.
+    // The sequence a member actually hits: click Trades in the community
+    // sidebar, and see whether the sidebar you clicked it in is still there.
     await communityNav(page).getByRole("link", { name: "Trades" }).click();
 
-    await expect(page).toHaveURL(new RegExp(`/communities/[^/]+/trades$`));
+    await expect(page).toHaveURL(`${world.community.url}/trades`);
     await expect(communityNav(page)).toBeVisible();
   });
 
   test("the cross-community inbox stays on global nav", async ({ page }) => {
+    // Relative, so it resolves against the apex `baseURL` -- which is the
+    // point: this inbox belongs to the person, not to any one community.
     await page.goto("/trades");
 
-    // Pinned deliberately. Two inboxes exist because "everything waiting on
-    // me" and "this community's offers" are different questions, and a later
-    // tidy-up that collapses them would take the first one away.
     await expect(globalNav(page)).toBeVisible();
     await expect(page.getByTestId("trade-scope")).toHaveCount(0);
   });
@@ -76,19 +82,20 @@ test.describe("trade pages and community context", () => {
     await page.getByTestId("send-offer").click();
     await page.waitForURL(/\/trades\/[0-9a-f-]{36}$/);
 
-    // Sending lands on the offer, and the offer is somewhere inside the
-    // community rather than adrift of it.
+    // Sending lands on the offer, and the offer is on the community's host
+    // rather than adrift of it.
     await expect(page).toHaveURL(
-      new RegExp(`/communities/${world.community.id}/trades/[0-9a-f-]{36}$`),
+      urlStartingWith(`${world.community.url}/trades/`),
     );
     await expect(communityNav(page)).toBeVisible();
 
     // And the same holds arriving the other way, from the cross-community
-    // list, because a row links through the trade's own community.
+    // list at the apex: a row links through the trade's own community, which
+    // now means it crosses hosts.
     await page.goto("/trades");
     await page.getByTestId("trade-row").first().click();
     await expect(page).toHaveURL(
-      new RegExp(`/communities/${world.community.id}/trades/[0-9a-f-]{36}$`),
+      urlStartingWith(`${world.community.url}/trades/`),
     );
     await expect(communityNav(page)).toBeVisible();
   });

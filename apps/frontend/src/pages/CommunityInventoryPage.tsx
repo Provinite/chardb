@@ -5,10 +5,13 @@ import { Package, ChevronDown } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CurrencyWallet } from "../components/currency/CurrencyWallet";
 import { useAuth } from "../contexts/AuthContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 import { toast } from "react-hot-toast";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import {
-  useCommunityByIdQuery,
   useGetMemberHoldingsQuery,
   useGetUserProfileQuery,
   useUseItemMutation,
@@ -267,21 +270,16 @@ const formatDate = (iso: string) =>
   });
 
 export const CommunityInventoryPage: React.FC = () => {
-  const { communityId, username } = useParams<{
-    communityId: string;
-    username?: string;
-  }>();
+  const communityId = useCommunityId();
+  const { username } = useParams<{ username?: string }>();
   const { user } = useAuth();
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const { data: communityData } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  const community = useHostCommunity();
 
   // No username in the route means "my own", which is the common case and
-  // keeps /communities/:id/inventory working as it always has.
+  // keeps /inventory working as it always has.
   const viewingSelf = !username || username === user?.username;
 
   // The route names a person, not an id, because that is what a shareable URL
@@ -410,9 +408,7 @@ export const CommunityInventoryPage: React.FC = () => {
       <Header>
         <div>
           <Title>{viewingSelf ? "Your Inventory" : `${who}'s Items`}</Title>
-          <Subtitle>
-            Items in {communityData?.community?.name || "this community"}
-          </Subtitle>
+          <Subtitle>Items in {community?.name || "this community"}</Subtitle>
         </div>
       </Header>
 
@@ -511,9 +507,7 @@ export const CommunityInventoryPage: React.FC = () => {
                   <Items>
                     {h.items.map((item, i) => (
                       <ItemRow key={item.id} data-testid="holding-item">
-                        <Link
-                          to={`/communities/${communityId}/items/${item.id}`}
-                        >
+                        <Link to={`/items/${item.id}`}>
                           #{i + 1}
                           <Since>{formatDate(item.createdAt)}</Since>
                         </Link>
@@ -539,7 +533,7 @@ export const CommunityInventoryPage: React.FC = () => {
                         {viewingSelf && h.itemType.useTraitEditGrant && (
                           <UseButton
                             as={Link}
-                            to={`/communities/${communityId}/edit-kits/${item.id}`}
+                            to={`/edit-kits/${item.id}`}
                             data-testid={`use-item-${item.id}`}
                           >
                             Edit a character
@@ -552,7 +546,7 @@ export const CommunityInventoryPage: React.FC = () => {
                         {viewingSelf && h.itemType.useVariantChangeGrant && (
                           <UseButton
                             as={Link}
-                            to={`/communities/${communityId}/variant-changes/${item.id}`}
+                            to={`/variant-changes/${item.id}`}
                             data-testid={`use-item-${item.id}`}
                           >
                             Change a variant

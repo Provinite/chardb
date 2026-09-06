@@ -19,10 +19,19 @@ database name and docker compose project name.
 | `0` | the legacy instance | the historical ones: 3000, 4000, 5433, 5440, 4566, 4310/4311 |
 | `1`–`15` | everyone else | a contiguous block at `20000 + slot*100` |
 
-Slot 0 exists so the checkout you have bookmarked at localhost:3000, whose OAuth
-callbacks are registered against localhost:4000, and whose postgres volume is
+Slot 0 exists so the checkout you have bookmarked on port 3000, whose OAuth
+callbacks are registered against port 4000, and whose postgres volume is
 `docker_postgres_data`, keeps all three. On slot 0 nothing at all is injected —
 the `.env` files are the only source of configuration, exactly as before.
+
+**That includes the root domain**, which is the one thing slot 0 now has to be
+told by hand. Since communities are served from their own subdomains, the app
+runs on `dev.localhost` and the API on `api.dev.localhost` rather than on
+`localhost` — bare `localhost` is a public suffix, so `api.localhost` and
+`willowmere.localhost` would be different sites and `SameSite=Lax` would stop
+the session cookie ever crossing between them. Every other slot gets
+`ROOT_DOMAIN`, `VITE_ROOT_DOMAIN` and a matching `VITE_API_URL` injected; slot 0
+needs all three in its `.env` files. See the `.env.example` in each app.
 
 Who gets it:
 
@@ -204,10 +213,13 @@ human types into a browser. The costs:
 
 ## Limits
 
-- **OAuth login only works on slot 0.** DeviantArt, Discord and ToyHouse
-  callbacks are registered provider-side against `localhost:4000`. Other
-  instances get a self-consistent callback URL, but the provider will reject it.
-  Use the seeded personas in [LOCAL_DEV_SEED_DATA.md](../LOCAL_DEV_SEED_DATA.md).
+- **OAuth account linking only works on slot 0.** DeviantArt, Discord and
+  ToyHouse callbacks are registered provider-side against `localhost:4000`.
+  Other instances get a self-consistent callback URL, but the provider will
+  reject it. This is linking, not signing in — sign in with the seeded personas
+  in [LOCAL_DEV_SEED_DATA.md](../LOCAL_DEV_SEED_DATA.md), which works on every
+  slot and, since the session cookie covers the whole root domain, on every
+  community subdomain at once.
 - **`yarn install` is per checkout.** Yarn 4 workspaces do not share
   `node_modules` between checkouts of any kind.
 

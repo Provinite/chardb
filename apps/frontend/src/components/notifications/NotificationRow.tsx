@@ -1,7 +1,7 @@
 import React from "react";
-import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
+import { HostAwareLink } from "../HostAwareLink";
 import type { NotificationFieldsFragment } from "../../graphql/notifications.graphql";
 import {
   notificationActorName,
@@ -65,7 +65,14 @@ const Bare = styled.div`
   color: inherit;
 `;
 
-const RowLink = styled(Link)`
+/**
+ * `notificationHref` answers with an absolute URL, and MOST of them are on a
+ * community host the router cannot reach -- but not all. The bell renders in
+ * the header on every host, so a notification about the community you are
+ * already looking at points at this origin, and reloading the app to follow it
+ * would be waste. `HostAwareLink` tells the two apart.
+ */
+const RowLink = styled(HostAwareLink)`
   text-decoration: none;
   color: inherit;
   display: block;

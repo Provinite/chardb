@@ -56,6 +56,15 @@ const PORTS = {
   postgres: { legacy: 5433, offset: 2 },
   postgresTest: { legacy: 5440, offset: 3 },
   localstack: { legacy: 4566, offset: 4 },
+  // The browser suite provisions its own LocalStack, so an image upload in a
+  // spec is a real upload. Separate from the dev instance's so a suite run and
+  // a running app never share a bucket.
+  //
+  // Deliberately BELOW 40, not beside the other e2e ports: 40+ is the worker
+  // fan-out range, where each worker adds `worker * 2`, so offset 42 is
+  // worker 1's backend. One container is shared across workers either way --
+  // the same arrangement postgres-test already has.
+  e2eLocalstack: { legacy: 4567, offset: 5 },
   e2eBackend: { legacy: 4310, offset: 40 },
   e2eFrontend: { legacy: 4311, offset: 41 },
 };
@@ -67,6 +76,13 @@ const PORTS = {
  * Setting anything else here orphans the slot-0 checkout's database.
  */
 const LEGACY_COMPOSE_PROJECT = "docker";
+
+/**
+ * The root domain the browser suite serves itself from. Mirrors the default in
+ * `apps/e2e/src/config.ts`, which is where it is actually read; this copy only
+ * exists so `yarn instance` can print the right hosts.
+ */
+const E2E_ROOT_DOMAIN = process.env.E2E_ROOT_DOMAIN ?? "e2e.localhost";
 
 // ---------------------------------------------------------------- registry
 
@@ -376,6 +392,7 @@ export function describe(slot, root = null) {
     localstack: port("localstack"),
     e2eBackend: port("e2eBackend"),
     e2eFrontend: port("e2eFrontend"),
+    e2eLocalstack: port("e2eLocalstack"),
   };
 
   const names = {
@@ -389,8 +406,29 @@ export function describe(slot, root = null) {
     prizeQueue: "chardb-prize-distribution",
   };
 
-  const backendUrl = `http://localhost:${ports.backend}`;
-  const frontendUrl = `http://localhost:${ports.frontend}`;
+  // The domain communities hang off locally: `willowmere.dev.localhost`.
+  //
+  // A spare label, not bare `localhost`, and the reason is `SameSite=Lax` on
+  // the refresh cookie. `localhost` is a public suffix, so `api.localhost` and
+  // `willowmere.localhost` would be different *sites* and the browser would
+  // never attach the cookie to a call made from a community host -- every
+  // subdomain would appear signed out. Under `dev.localhost` they are one
+  // site, exactly as `api.chardb.cc` and `willowmere.chardb.cc` are in
+  // production. Every `*.localhost` label resolves to loopback with no
+  // /etc/hosts entry, so this costs nothing to set up.
+  const rootDomain = process.env.CHARDB_ROOT_DOMAIN ?? "dev.localhost";
+
+  // Served from `api.` under the root domain for the same reason: the cookie
+  // is scoped to the domain, and it has to reach the API.
+  //
+  // Browser-facing only. Only browsers implement the `*.localhost` rule --
+  // glibc does not -- so a Node process resolving this name gets ENOTFOUND.
+  // Anything server-side uses `backendLoopbackUrl` below instead.
+  const backendUrl = `http://api.${rootDomain}:${ports.backend}`;
+  const frontendUrl = `http://${rootDomain}:${ports.frontend}`;
+
+  // The same server, addressed the way a Node process can actually reach it.
+  const backendLoopbackUrl = `http://localhost:${ports.backend}`;
   const localstackUrl = `http://localhost:${ports.localstack}`;
 
   const env = {
@@ -404,9 +442,16 @@ export function describe(slot, root = null) {
     FRONTEND_PORT: String(ports.frontend),
     FRONTEND_URL: frontendUrl,
     VITE_API_URL: backendUrl,
+    // The apex the frontend compares `window.location.hostname` against, and
+    // the domain the backend pins the refresh cookie to. Both sides must agree
+    // or the session does not survive a page load.
+    ROOT_DOMAIN: rootDomain,
+    VITE_ROOT_DOMAIN: rootDomain,
     // Read by packages/database's persona seeder and the da-import CLI, which
     // talk to the backend over HTTP rather than to the database directly.
-    GRAPHQL_ENDPOINT: `${backendUrl}/graphql`,
+    // Loopback, not the `api.` name: both are Node processes, and Node cannot
+    // resolve `*.localhost`.
+    GRAPHQL_ENDPOINT: `${backendLoopbackUrl}/graphql`,
 
     // Dev database.
     POSTGRES_PORT: String(ports.postgres),
@@ -421,6 +466,7 @@ export function describe(slot, root = null) {
     // Browser e2e suite (apps/e2e). Consumed by apps/e2e/src/config.ts.
     E2E_BACKEND_PORT: String(ports.e2eBackend),
     E2E_FRONTEND_PORT: String(ports.e2eFrontend),
+    E2E_LOCALSTACK_PORT: String(ports.e2eLocalstack),
     E2E_PG_PORT: String(ports.postgresTest),
     E2E_DB_NAME: names.e2eDatabase,
 
@@ -662,9 +708,13 @@ function main(argv) {
       `localhost:${ports.postgresTest}/${names.testDatabase}`,
     ],
     ["localstack", urls.localstackUrl],
-    ["e2e backend", `http://127.0.0.1:${ports.e2eBackend}`],
-    ["e2e frontend", `http://127.0.0.1:${ports.e2eFrontend}`],
+    // The browser suite runs under its own root domain (see apps/e2e's
+    // config.ts) for the same SameSite reason the dev servers do; these are the
+    // hosts Playwright actually points at.
+    ["e2e backend", `http://api.${E2E_ROOT_DOMAIN}:${ports.e2eBackend}`],
+    ["e2e frontend", `http://${E2E_ROOT_DOMAIN}:${ports.e2eFrontend}`],
     ["e2e database", names.e2eDatabase],
+    ["e2e localstack", `http://localhost:${ports.e2eLocalstack}`],
     ["otel service", names.otelService],
   ];
   const width = Math.max(...rows.map(([k]) => k.length));

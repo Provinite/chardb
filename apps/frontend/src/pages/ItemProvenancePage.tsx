@@ -1,10 +1,12 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import styled, { css } from "styled-components";
-import { useParams, Link, Navigate } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Package, ArrowLeft, Lock, Trash2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { useCommunityId } from "../contexts/CommunityHostContext";
+import { communityUrl } from "../lib/communityHost";
 import {
   ItemTransactionKind,
   useGetItemWithProvenanceQuery,
@@ -553,11 +555,9 @@ const describe = (row: ItemTransactionFieldsFragment): React.ReactNode => {
 };
 
 export const ItemProvenancePage: React.FC = () => {
-  const { communityId, itemId } = useParams<{
-    communityId: string;
-    itemId: string;
-  }>();
-  const { permissions } = useUserCommunityRole(communityId);
+  const communityId = useCommunityId();
+  const { itemId } = useParams<{ itemId: string }>();
+  const { permissions } = useUserCommunityRole(communityId ?? undefined);
   const [revokeOpen, setRevokeOpen] = useState(false);
   const [reason, setReason] = useState("");
   const [staffNote, setStaffNote] = useState("");
@@ -569,7 +569,23 @@ export const ItemProvenancePage: React.FC = () => {
 
   const [revokeItems, { loading: revoking }] = useRevokeItemsMutation();
 
-  if (loading && !data) {
+  // The host says which community's navigation surrounds the page. An item
+  // belonging to another community is served from that community's own host,
+  // so putting the reader in front of the right address is a change of origin
+  // and not something the router can do.
+  const owningCommunity = data?.item?.itemType.community;
+  const wrongHost = Boolean(
+    owningCommunity && communityId && communityId !== owningCommunity.id,
+  );
+  const owningSlug = owningCommunity?.slug;
+
+  useEffect(() => {
+    if (wrongHost && owningSlug && itemId) {
+      window.location.replace(communityUrl(owningSlug, `/items/${itemId}`));
+    }
+  }, [wrongHost, owningSlug, itemId]);
+
+  if ((loading && !data) || wrongHost) {
     return (
       <LoadingContainer>
         <LoadingSpinner />
@@ -597,16 +613,6 @@ export const ItemProvenancePage: React.FC = () => {
   const item = data.item;
   const history = data.itemProvenance;
   const community = item.itemType.community;
-
-  // The route carries a community so the page sits inside that community's
-  // navigation. If the URL names the wrong one, send the reader to the right
-  // address rather than showing them a sidebar for a community this item has
-  // nothing to do with.
-  if (community && communityId !== community.id) {
-    return (
-      <Navigate to={`/communities/${community.id}/items/${item.id}`} replace />
-    );
-  }
 
   const destroyed = Boolean(item.destroyedAt);
   const holder = name(item.owner);
@@ -812,9 +818,7 @@ export const ItemProvenancePage: React.FC = () => {
                 <>
                   <dt>Community</dt>
                   <dd>
-                    <Link to={`/communities/${community.id}`}>
-                      {community.name}
-                    </Link>
+                    <Link to="/">{community.name}</Link>
                   </dd>
                 </>
               )}

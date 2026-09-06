@@ -5,21 +5,51 @@ import type {
   SpotlightActionGroupData,
 } from "@mantine/spotlight";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCommunityMembersByUserQuery } from "../../generated/graphql";
+import { useCommunityHost } from "../../contexts/CommunityHostContext";
+import { apexUrl, communityUrl } from "../../lib/communityHost";
 
 export function useSpotlightActions(): SpotlightActionGroupData[] {
   const { user } = useAuth();
+  const { slug: hostSlug, community: hostCommunity } = useCommunityHost();
+  const hostCommunityId = hostCommunity?.id ?? null;
   const navigate = useNavigate();
 
-  const { data: communitiesData } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || "", first: 50 },
-    skip: !user?.id,
-  });
+  // Off the viewer: `me` already carries the memberships, and asking for them
+  // separately could not start until `me` had returned the id to ask with.
+  const communitiesData = user?.communityMemberships;
 
   return useMemo(() => {
     const groups: SpotlightActionGroupData[] = [];
 
     const nav = (path: string) => () => navigate(path);
+
+    /**
+     * A whole-page navigation, for a destination on another host. The router
+     * cannot cross an origin, so anything leaving this one has to go this way.
+     */
+    const leave = (url: string) => () => {
+      window.location.assign(url);
+    };
+
+    /**
+     * Something that lives at the apex: a route from here, a page load from a
+     * community host.
+     */
+    const apex = (path: string) =>
+      hostSlug ? leave(apexUrl(path)) : nav(path);
+
+    /**
+     * A page inside one of the viewer's communities.
+     *
+     * On that community's own host it is just a route. From anywhere else it
+     * is another origin, named directly -- the memberships on `me` carry the
+     * slug, so there is no need for the apex's `/communities/:id` forwarder
+     * and the two extra hops it costs.
+     */
+    const inCommunity = (slug: string, communityId: string, path: string) =>
+      communityId === hostCommunityId
+        ? nav(path || "/")
+        : leave(communityUrl(slug, path || "/"));
 
     // General — always visible
     groups.push({
@@ -29,7 +59,9 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
           id: "home",
           label: "Home",
           description: "Go to the home page",
-          onClick: nav("/"),
+          // The site's home, not the community's -- `/` on a community host is
+          // that community.
+          onClick: apex("/"),
         },
         ...(user
           ? [
@@ -37,13 +69,13 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
                 id: "dashboard",
                 label: "Dashboard",
                 description: "Your personal dashboard",
-                onClick: nav("/dashboard"),
+                onClick: apex("/dashboard"),
               },
               {
                 id: "feed",
                 label: "Feed",
                 description: "Activity feed",
-                onClick: nav("/feed"),
+                onClick: apex("/feed"),
               },
             ]
           : []),
@@ -58,19 +90,21 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
           id: "browse-characters",
           label: "Browse Characters",
           description: "View all characters",
-          onClick: nav("/characters"),
+          // Every character on the site, so the apex's `/characters`; the same
+          // path on a community host is that community's roster.
+          onClick: apex("/characters"),
         },
         {
           id: "browse-galleries",
           label: "Browse Galleries",
           description: "View all galleries",
-          onClick: nav("/galleries"),
+          onClick: apex("/galleries"),
         },
         {
           id: "browse-media",
           label: "Browse Media",
           description: "View all media",
-          onClick: nav("/media"),
+          onClick: apex("/media"),
         },
       ],
     });
@@ -85,19 +119,19 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
           id: "my-characters",
           label: "My Characters",
           description: "Your characters",
-          onClick: nav("/my/characters"),
+          onClick: apex("/my/characters"),
         },
         {
           id: "my-galleries",
           label: "My Galleries",
           description: "Your galleries",
-          onClick: nav("/my/galleries"),
+          onClick: apex("/my/galleries"),
         },
         {
           id: "my-media",
           label: "My Media",
           description: "Your media",
-          onClick: nav("/my/media"),
+          onClick: apex("/my/media"),
         },
       ],
     });
@@ -110,19 +144,19 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
           id: "liked-characters",
           label: "Liked Characters",
           description: "Characters you liked",
-          onClick: nav("/liked/characters"),
+          onClick: apex("/liked/characters"),
         },
         {
           id: "liked-galleries",
           label: "Liked Galleries",
           description: "Galleries you liked",
-          onClick: nav("/liked/galleries"),
+          onClick: apex("/liked/galleries"),
         },
         {
           id: "liked-media",
           label: "Liked Media",
           description: "Media you liked",
-          onClick: nav("/liked/media"),
+          onClick: apex("/liked/media"),
         },
       ],
     });
@@ -131,29 +165,36 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
     groups.push({
       group: "Create",
       actions: [
-        {
-          id: "create-character",
-          label: "Create Character",
-          description: "Create a new character",
-          onClick: nav("/character/create"),
-        },
+        // Only offered on a community host. A character is created inside a
+        // community, so the apex has neither a route for it nor a community to
+        // pick -- the way in from there is to open one first.
+        ...(hostSlug
+          ? [
+              {
+                id: "create-character",
+                label: "Create Character",
+                description: "Create a new character",
+                onClick: nav("/character/create"),
+              },
+            ]
+          : []),
         {
           id: "upload-media",
           label: "Upload Media",
           description: "Upload new media",
-          onClick: nav("/upload"),
+          onClick: apex("/upload"),
         },
         {
           id: "create-gallery",
           label: "Create Gallery",
           description: "Create a new gallery",
-          onClick: nav("/gallery/create"),
+          onClick: apex("/gallery/create"),
         },
         {
           id: "create-text",
           label: "Create Text",
           description: "Create a new text post",
-          onClick: nav("/text/create"),
+          onClick: apex("/text/create"),
         },
       ],
     });
@@ -166,19 +207,19 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
           id: "my-profile",
           label: "Edit Profile",
           description: "View and edit your profile",
-          onClick: nav(`/user/${user.username}`),
+          onClick: apex(`/user/${user.username}`),
         },
         {
           id: "my-communities",
           label: "My Communities",
           description: "View your communities",
-          onClick: nav("/my/communities"),
+          onClick: apex("/my/communities"),
         },
         {
           id: "join-community",
           label: "Join Community",
           description: "Join a new community",
-          onClick: nav("/join-community"),
+          onClick: apex("/join-community"),
         },
       ],
     });
@@ -192,32 +233,35 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: "site-admin",
             label: "Site Admin",
             description: "Site administration panel",
-            onClick: nav("/admin"),
+            // The site's admin panel, so the apex's `/admin`. A community host
+            // serves that same path as its own admin dashboard.
+            onClick: apex("/admin"),
           },
           {
             id: "site-invite-codes",
             label: "Site Invite Codes",
             description: "Manage site-wide invite codes",
-            onClick: nav("/admin/site-invite-codes"),
+            onClick: apex("/admin/site-invite-codes"),
           },
           {
             id: "admin-communities",
             label: "Community Management",
             description: "Manage all communities",
-            onClick: nav("/admin/communities"),
+            onClick: apex("/admin/communities"),
           },
         ],
       });
     }
 
     // Dynamic community groups
-    const memberships = communitiesData?.communityMembersByUser?.nodes;
+    const memberships = communitiesData?.nodes;
     if (memberships) {
       for (const membership of memberships) {
         const { role } = membership;
         const community = role.community;
         const cId = community.id;
         const cName = community.name;
+        const cSlug = community.slug;
 
         const hasAdminPermissions =
           role.canCreateRole ||
@@ -238,19 +282,19 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-overview`,
             label: "Overview",
             description: `${cName} overview`,
-            onClick: nav(`/communities/${cId}`),
+            onClick: inCommunity(cSlug, cId, ""),
           },
           {
             id: `c-${cId}-members`,
             label: "Members",
             description: `${cName} members`,
-            onClick: nav(`/communities/${cId}/members`),
+            onClick: inCommunity(cSlug, cId, "/members"),
           },
           {
             id: `c-${cId}-inventory`,
             label: "Inventory",
             description: `${cName} inventory`,
-            onClick: nav(`/communities/${cId}/inventory`),
+            onClick: inCommunity(cSlug, cId, "/inventory"),
           },
         ];
 
@@ -259,7 +303,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-invite-codes`,
             label: "Invite Codes",
             description: `${cName} invite codes`,
-            onClick: nav(`/communities/${cId}/invite-codes`),
+            onClick: inCommunity(cSlug, cId, "/invite-codes"),
           });
         }
 
@@ -268,7 +312,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-settings`,
             label: "Settings",
             description: `${cName} settings`,
-            onClick: nav(`/communities/${cId}/settings`),
+            onClick: inCommunity(cSlug, cId, "/settings"),
           });
         }
 
@@ -278,13 +322,13 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
               id: `c-${cId}-admin`,
               label: "Admin Dashboard",
               description: `${cName} admin dashboard`,
-              onClick: nav(`/communities/${cId}/admin`),
+              onClick: inCommunity(cSlug, cId, "/admin"),
             },
             {
               id: `c-${cId}-colors`,
               label: "Color Palette",
               description: `${cName} color palette`,
-              onClick: nav(`/communities/${cId}/admin/colors`),
+              onClick: inCommunity(cSlug, cId, "/admin/colors"),
             },
           );
         }
@@ -294,7 +338,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-items`,
             label: "Items Admin",
             description: `${cName} items administration`,
-            onClick: nav(`/communities/${cId}/admin/items`),
+            onClick: inCommunity(cSlug, cId, "/admin/items"),
           });
         }
 
@@ -303,7 +347,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-species`,
             label: "Species Management",
             description: `${cName} species management`,
-            onClick: nav(`/communities/${cId}/species`),
+            onClick: inCommunity(cSlug, cId, "/species"),
           });
         }
 
@@ -312,7 +356,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
             id: `c-${cId}-permissions`,
             label: "Permissions",
             description: `${cName} role permissions`,
-            onClick: nav(`/communities/${cId}/permissions`),
+            onClick: inCommunity(cSlug, cId, "/permissions"),
           });
         }
 
@@ -338,7 +382,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
               "flagged",
               "content",
             ],
-            onClick: nav(`/communities/${cId}/moderation`),
+            onClick: inCommunity(cSlug, cId, "/moderation"),
           });
         }
 
@@ -361,7 +405,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
               "queue",
               "moderation",
             ],
-            onClick: nav(`/communities/${cId}/moderation/images`),
+            onClick: inCommunity(cSlug, cId, "/moderation/images"),
           });
         }
 
@@ -382,7 +426,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
               "queue",
               "moderation",
             ],
-            onClick: nav(`/communities/${cId}/moderation/traits`),
+            onClick: inCommunity(cSlug, cId, "/moderation/traits"),
           });
         }
 
@@ -391,5 +435,5 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
     }
 
     return groups;
-  }, [user, communitiesData, navigate]);
+  }, [user, communitiesData, navigate, hostSlug, hostCommunityId]);
 }

@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { useParams } from "react-router-dom";
 import { Palette, Plus, Edit2, Trash2, X, Check } from "lucide-react";
 import { Button, Card } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import { toast } from "react-hot-toast";
 import {
   useGetCommunityColorsQuery,
@@ -210,7 +210,7 @@ interface ColorFormData {
 }
 
 export const CommunityColorPalettePage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingColor, setEditingColor] = useState<{
     id: string;

@@ -5,6 +5,7 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useGetLikedCharactersQuery, LikeableType } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
+import { characterUrl } from "../lib/communityHost";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -71,7 +72,9 @@ const CardActions = styled.div`
   margin-top: ${({ theme }) => theme.spacing.md};
 `;
 
-const ViewButton = styled(Link)`
+// An anchor rather than a router link: a character is served from its
+// community's own host, which is a different origin to this page.
+const ViewButton = styled.a`
   display: inline-flex;
   align-items: center;
   padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
@@ -202,7 +205,7 @@ export const LikedCharactersPage: React.FC = () => {
         </EmptyState>
       ) : (
         <Grid>
-          {likedCharacters.map((character: any) => (
+          {likedCharacters.map((character) => (
             <CharacterCard key={character.id}>
               <CardContent>
                 <CharacterName>{character.name}</CharacterName>
@@ -211,7 +214,12 @@ export const LikedCharactersPage: React.FC = () => {
                 )}
 
                 <CardActions>
-                  <ViewButton to={`/character/${character.id}`}>
+                  <ViewButton
+                    href={characterUrl(
+                      character.id,
+                      character.species?.community?.slug,
+                    )}
+                  >
                     View Character
                   </ViewButton>
                   <LikeButton

@@ -65,8 +65,16 @@ resource "aws_cloudfront_distribution" "static_site" {
   comment             = "${var.name} static site distribution"
   default_root_object = var.default_root_object
 
-  # Configure aliases if custom domain is provided
-  aliases = var.domain_name != null ? [var.domain_name] : []
+  # Configure aliases if custom domain is provided.
+  #
+  # The wildcard alias exists because communities are addressed by subdomain
+  # (willowmere.chardb.cc). They are not separate sites: every one of them is
+  # this same bundle, which reads the hostname to decide which community it is
+  # showing. One distribution therefore serves all of them, and no per-community
+  # infrastructure has to be created when a community is.
+  aliases = var.domain_name != null ? (
+    var.serve_wildcard_subdomains ? [var.domain_name, "*.${var.domain_name}"] : [var.domain_name]
+  ) : []
 
   default_cache_behavior {
     allowed_methods        = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
@@ -182,6 +190,26 @@ resource "aws_route53_record" "static_site" {
 
   zone_id = var.route53_zone_id
   name    = var.domain_name
+  type    = "A"
+
+  alias {
+    name                   = aws_cloudfront_distribution.static_site.domain_name
+    zone_id                = aws_cloudfront_distribution.static_site.hosted_zone_id
+    evaluate_target_health = false
+  }
+}
+
+# Wildcard record for community subdomains.
+#
+# Communities are created in the app, not in Terraform, so their hostnames
+# cannot be enumerated here -- this record answers for all of them at once.
+# Route53 prefers an exact match over a wildcard, so siblings that already have
+# their own record (api, images) keep pointing where they do.
+resource "aws_route53_record" "static_site_wildcard" {
+  count = var.serve_wildcard_subdomains && var.route53_zone_id != null && var.domain_name != null ? 1 : 0
+
+  zone_id = var.route53_zone_id
+  name    = "*.${var.domain_name}"
   type    = "A"
 
   alias {

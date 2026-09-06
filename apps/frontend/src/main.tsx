@@ -9,6 +9,7 @@ import "@mantine/spotlight/styles.css";
 import { client } from "./lib/apollo";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
+import { CommunityHostProvider } from "./contexts/CommunityHostContext";
 import { ThemedToaster } from "./components/ThemedToaster";
 import App from "./App";
 import { SpotlightNavigation } from "./components/spotlight/SpotlightNavigation";
@@ -21,9 +22,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
         <ThemeProvider>
           <ThemedMantineProvider>
             <AuthProvider>
-              <SpotlightNavigation />
-              <App />
-              <ThemedToaster />
+              {/* Outside <App /> because Layout, the navigation and the route
+                  table all need to know which community's host this is before
+                  any of them render. */}
+              <CommunityHostProvider>
+                <SpotlightNavigation />
+                <App />
+                <ThemedToaster />
+              </CommunityHostProvider>
             </AuthProvider>
           </ThemedMantineProvider>
         </ThemeProvider>

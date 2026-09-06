@@ -426,7 +426,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     if (isMyo) return false;
     if (!user || !selectedSpecies) return false;
     return (
-      user.communityMemberships?.some(
+      user.communityMemberships?.nodes.some(
         (membership) =>
           membership.role.communityId === selectedSpecies.communityId &&
           membership.role.canCreateOrphanedCharacter,
@@ -677,7 +677,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
                     ? "Species selection is required. Non-species character creation coming soon to all users!"
                     : undefined
                 }
-                userCommunityMemberships={user?.communityMemberships}
+                userCommunityMemberships={user?.communityMemberships?.nodes}
               />
 
               {/* Staff's to assign, so it is absent under a ticket. An

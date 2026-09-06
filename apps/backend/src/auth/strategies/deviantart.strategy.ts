@@ -2,10 +2,17 @@ import { Injectable } from "@nestjs/common";
 import { PassportStrategy } from "@nestjs/passport";
 import { Strategy } from "passport-oauth2";
 import { ConfigService } from "@nestjs/config";
-
 export interface DeviantArtProfile {
   uuid: string;
   username: string;
+}
+
+/** What `validate` puts on `req.user`, mirroring `ToyhouseOAuthPayload`. */
+export interface DeviantArtOAuthPayload {
+  providerAccountId: string;
+  displayName: string;
+  accessToken: string;
+  refreshToken: string;
 }
 
 @Injectable()
@@ -33,7 +40,12 @@ export class DeviantArtStrategy extends PassportStrategy(
   /**
    * Override authenticate to inject custom state parameter
    */
-  authenticate(req: any, options?: any) {
+  // `any` rather than express's Request: @types/passport bundles its own nested
+  // copy of @types/express, and the two Request types are structurally
+  // incompatible, so this override cannot be typed against either without
+  // failing to match the other. The body reads one property.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  authenticate(req: any, options?: Record<string, unknown>) {
     // If oauthState is set in the request (from controller), use it
     const state = req.oauthState;
     if (state) {
@@ -48,7 +60,7 @@ export class DeviantArtStrategy extends PassportStrategy(
    */
   async fetchUserProfile(
     accessToken: string,
-    done: (err?: Error | null, profile?: any) => void,
+    done: (err?: Error | null, profile?: DeviantArtProfile) => void,
   ) {
     try {
       const response = await fetch(
@@ -84,7 +96,7 @@ export class DeviantArtStrategy extends PassportStrategy(
     accessToken: string,
     refreshToken: string,
     profile: DeviantArtProfile,
-  ) {
+  ): Promise<DeviantArtOAuthPayload> {
     return {
       providerAccountId: profile.uuid,
       displayName: profile.username,

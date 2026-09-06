@@ -457,7 +457,7 @@ test.describe("spending an MYO ticket, through the page", () => {
     page,
     world,
   }) => {
-    await page.goto(`/communities/${world.community.id}/inventory`);
+    await page.goto(`${world.community.url}/inventory`);
 
     // member holds two, so the group is collapsed behind its disclosure.
     await page
@@ -483,7 +483,9 @@ test.describe("spending an MYO ticket, through the page", () => {
     page,
     world,
   }) => {
-    await page.goto(`/character/create?ticket=${world.myoItems.ticketIds[0]}`);
+    await page.goto(
+      `${world.community.url}/character/create?ticket=${world.myoItems.ticketIds[0]}`,
+    );
 
     await expect(page.getByTestId("myo-species")).toHaveText(
       world.species.name,
@@ -505,7 +507,9 @@ test.describe("spending an MYO ticket, through the page", () => {
     page,
     world,
   }) => {
-    await page.goto(`/character/create?ticket=${world.myoItems.ticketIds[0]}`);
+    await page.goto(
+      `${world.community.url}/character/create?ticket=${world.myoItems.ticketIds[0]}`,
+    );
 
     await expect(page.getByTestId("myo-ticket-panel")).toBeVisible();
     // Staff's to assign. Absent rather than disabled: a disabled field is
@@ -519,7 +523,7 @@ test.describe("spending an MYO ticket, through the page", () => {
 
   test("makes the character and takes the ticket", async ({ page, world }) => {
     const itemId = world.myoItems.ticketIds[0];
-    await page.goto(`/character/create?ticket=${itemId}`);
+    await page.goto(`${world.community.url}/character/create?ticket=${itemId}`);
 
     await page.getByTestId(`myo-variant-${world.variants.uncommon.id}`).click();
     await page.locator("#name").fill("Pagebound");
@@ -543,7 +547,7 @@ test.describe("spending an MYO ticket, through the page", () => {
 
   test("cancelling the confirm redeems nothing", async ({ page, world }) => {
     const itemId = world.myoItems.ticketIds[0];
-    await page.goto(`/character/create?ticket=${itemId}`);
+    await page.goto(`${world.community.url}/character/create?ticket=${itemId}`);
 
     await page.getByTestId(`myo-variant-${world.variants.uncommon.id}`).click();
     await page.locator("#name").fill("Unmade");
@@ -563,7 +567,9 @@ test.describe("spending an MYO ticket, through the page", () => {
     page,
     world,
   }) => {
-    await page.goto(`/character/create?ticket=${world.myoItems.ticketIds[0]}`);
+    await page.goto(
+      `${world.community.url}/character/create?ticket=${world.myoItems.ticketIds[0]}`,
+    );
 
     await page.locator("#name").fill("Undecided");
     // Two variants on this ticket, so nothing is auto-picked and the server
@@ -581,7 +587,7 @@ test.describe("spending an MYO ticket, through the page", () => {
       },
     });
 
-    await page.goto(`/character/create?ticket=${itemId}`);
+    await page.goto(`${world.community.url}/character/create?ticket=${itemId}`);
 
     // Said before they write a character, not after they submit one. The
     // grant hangs off the item *type*, which still has one -- so this fails
@@ -610,7 +616,9 @@ test.describe("spending an MYO ticket, through the page", () => {
         },
       });
 
-    await page.goto(`/character/create?ticket=${grantItem[0].id}`);
+    await page.goto(
+      `${world.community.url}/character/create?ticket=${grantItem[0].id}`,
+    );
 
     await expect(page.getByTestId("myo-ticket-unusable")).toBeVisible();
     await expect(page.getByTestId("submit-character")).toBeDisabled();
@@ -620,7 +628,9 @@ test.describe("spending an MYO ticket, through the page", () => {
     page,
     world,
   }) => {
-    await page.goto(`/item-types/${world.itemTypes.myoTicket.id}`);
+    await page.goto(
+      `${world.community.url}/item-types/${world.itemTypes.myoTicket.id}`,
+    );
 
     // Before this the allow-list appeared only on the create page, which
     // nobody can reach without already holding one -- useless to somebody

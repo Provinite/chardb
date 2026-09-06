@@ -1,15 +1,18 @@
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Search, Plus, Trash2, Edit, Palette, Database } from "lucide-react";
 import { Button, Modal, Input, ErrorMessage } from "@chardb/ui";
 import {
   useSpeciesByCommunityQuery,
   useCreateSpeciesMutation,
   useDeleteSpeciesMutation,
-  useCommunityByIdQuery,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 
 /**
  * Species Management Dashboard
@@ -28,8 +31,8 @@ import { toast } from "react-hot-toast";
  * - Responsive card-based layout
  * - Comprehensive error handling and loading states
  *
- * URL Parameters:
- * - communityId: Filter species by specific community
+ * The community comes from the hostname, so the page is always scoped to
+ * whichever community is being browsed.
  *
  * Permissions:
  * - Requires canCreateSpecies permission for creation
@@ -39,11 +42,7 @@ import { toast } from "react-hot-toast";
  * @example Usage in routing:
  * ```tsx
  * <Route
- *   path="/admin/species"
- *   element={<ProtectedRoute><SpeciesManagementPage /></ProtectedRoute>}
- * />
- * <Route
- *   path="/communities/:communityId/species"
+ *   path="/species"
  *   element={<ProtectedRoute><SpeciesManagementPage /></ProtectedRoute>}
  * />
  * ```
@@ -335,7 +334,7 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
 
 export const SpeciesManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -354,12 +353,9 @@ export const SpeciesManagementPage: React.FC = () => {
     fetchPolicy: "cache-and-network",
   });
 
-  // Fetch the specific community
-  const { data: communityData, loading: communityLoading } =
-    useCommunityByIdQuery({
-      variables: { id: communityId ?? "" },
-      skip: !communityId,
-    });
+  // The host context already holds this community; querying it back by id
+  // fetched the same record a second time on every page load.
+  const community = useHostCommunity();
 
   const [createSpeciesMutation] = useCreateSpeciesMutation({
     onCompleted: (data) => {
@@ -384,7 +380,7 @@ export const SpeciesManagementPage: React.FC = () => {
   });
 
   // Get the specific community data
-  const currentCommunity = communityData?.community;
+  const currentCommunity = community;
 
   // Filtered species based on search query
   const filteredSpecies = useMemo(() => {
@@ -403,7 +399,7 @@ export const SpeciesManagementPage: React.FC = () => {
       <Container>
         <Header>
           <Title>Species Management</Title>
-          <Subtitle>Community ID is required</Subtitle>
+          <Subtitle>This address names no community</Subtitle>
         </Header>
       </Container>
     );
@@ -455,10 +451,9 @@ export const SpeciesManagementPage: React.FC = () => {
   // `&& !data` on each: cache-and-network reports loading while revalidating
   // in the background, and swapping a populated page for the loading skeleton
   // every visit would be worse than the staleness it fixes.
-  if (
-    (speciesLoading && !speciesData) ||
-    (communityLoading && !communityData)
-  ) {
+  // Only the species list is worth waiting for; the community came with the
+  // host.
+  if (speciesLoading && !speciesData) {
     return (
       <Container>
         <Header>

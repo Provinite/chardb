@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
@@ -585,15 +586,15 @@ export const EditMediaPage: React.FC = () => {
                     <option value="">No galleries yet</option>
                   </Select>
                   <div style={{ marginTop: "0.5rem" }}>
-                    <a
-                      href="/gallery/create"
+                    <Link
+                      to="/gallery/create"
                       style={{
                         fontSize: "0.875rem",
                         color: "var(--color-primary)",
                       }}
                     >
                       Create your first gallery
-                    </a>
+                    </Link>
                   </div>
                 </>
               ) : (

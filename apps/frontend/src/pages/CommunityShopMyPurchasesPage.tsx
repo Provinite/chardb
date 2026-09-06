@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { useParams, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { Receipt, Undo2, Search, X, Check } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
   useGetMyShopPurchaseLinesQuery,
   useRefundShopPurchaseLineMutation,
@@ -216,7 +217,7 @@ const STATUS_CHIPS: Array<{
 ];
 
 export const CommunityShopMyPurchasesPage: React.FC = () => {
-  const { communityId } = useParams<{ communityId: string }>();
+  const communityId = useCommunityId();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ShopPurchaseLineStatus | undefined>();
   const [limit, setLimit] = useState(PAGE_SIZE);
@@ -290,8 +291,7 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
         <Subtitle>
           Everything you have bought here, newest first. You can undo a purchase
           for fifteen minutes; after that it is a staff decision, and each row
-          says which it is.{" "}
-          <Link to={`/communities/${communityId}/shop`}>Back to the shop</Link>
+          says which it is. <Link to="/shop">Back to the shop</Link>
         </Subtitle>
       </Header>
 

@@ -5,7 +5,7 @@ import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { CommunityNavigationSidebar } from "./navigation/CommunityNavigationSidebar";
 import { GlobalNavigationSidebar } from "./navigation/GlobalNavigationSidebar";
-import { isCommunityRoute } from "../lib/communityRoutes";
+import { useCommunityHost } from "../contexts/CommunityHostContext";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -36,7 +36,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarPreference, setSidebarPreference] =
     useState<SidebarPreference>("auto");
 
-  const isCommunityScopedRoute = isCommunityRoute(location.pathname);
+  // Which sidebar belongs here is now a property of the host, not the path.
+  // It used to be `isCommunityRoute(location.pathname)` against six patterns,
+  // kept in sync by hand with a second copy in the sidebar itself (#293); the
+  // hostname answers the same question without either.
+  const { community } = useCommunityHost();
+  const isCommunityScopedRoute = community !== null;
 
   // Determine which sidebar to show based on preference and route
   const showCommunitySidebar =

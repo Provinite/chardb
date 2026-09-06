@@ -32,6 +32,40 @@ export function makeActor(key: string, persona: Persona | null): Actor {
   const authHeader = (): Record<string, string> =>
     persona ? { authorization: `Bearer ${persona.accessToken}` } : {};
 
+  /**
+   * One request, with the HTTP response handed back alongside the data.
+   *
+   * The response is here for one caller: `login` returns only an access token
+   * now and puts the refresh token in a `Set-Cookie` header, so seeding a
+   * persona means reading a header rather than a field (#339).
+   */
+  async function gqlWithResponse<TResult, TVariables>(
+    document: TypedDocumentNode<TResult, TVariables>,
+    variables?: TVariables,
+  ): Promise<{ data: TResult; response: Response }> {
+    const res = await fetch(CFG.graphqlUrl, {
+      method: "POST",
+      headers: { "content-type": "application/json", ...authHeader() },
+      body: JSON.stringify({
+        query: print(document),
+        variables: variables ?? {},
+      }),
+    });
+    const body = (await res.json()) as {
+      data?: TResult;
+      errors?: Array<{ message: string }>;
+    };
+    if (body.errors?.length) {
+      throw new GraphQLRequestError(key, operationName(document), body.errors);
+    }
+    if (!res.ok) {
+      throw new Error(
+        `GraphQL HTTP ${res.status} for ${operationName(document)} as "${key}"`,
+      );
+    }
+    return { data: body.data as TResult, response: res };
+  }
+
   return {
     key,
     persona,
@@ -44,32 +78,10 @@ export function makeActor(key: string, persona: Persona | null): Actor {
       document: TypedDocumentNode<TResult, TVariables>,
       variables?: TVariables,
     ): Promise<TResult> {
-      const res = await fetch(CFG.graphqlUrl, {
-        method: "POST",
-        headers: { "content-type": "application/json", ...authHeader() },
-        body: JSON.stringify({
-          query: print(document),
-          variables: variables ?? {},
-        }),
-      });
-      const body = (await res.json()) as {
-        data?: TResult;
-        errors?: Array<{ message: string }>;
-      };
-      if (body.errors?.length) {
-        throw new GraphQLRequestError(
-          key,
-          operationName(document),
-          body.errors,
-        );
-      }
-      if (!res.ok) {
-        throw new Error(
-          `GraphQL HTTP ${res.status} for ${operationName(document)} as "${key}"`,
-        );
-      }
-      return body.data as TResult;
+      return (await gqlWithResponse(document, variables)).data;
     },
+
+    gqlWithResponse,
 
     async rest(path: string, init: RequestInit = {}) {
       return fetch(`${CFG.backendUrl}${path}`, {

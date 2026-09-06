@@ -175,8 +175,9 @@ jobs:
       - name: Initialise Terraform
         run: terraform -chdir=infra/environments/${{ env.TF_ENVIRONMENT }} init -input=false
 
-      # VITE_API_URL and VITE_VERSION are baked in at build time. The version
-      # shown in the UI is the release tag, not the package.json version.
+      # VITE_API_URL, VITE_VERSION and VITE_ROOT_DOMAIN are baked in at build
+      # time. The version shown in the UI is the release tag, not the
+      # package.json version.
       - name: Build and publish frontend
         run: |
           source ./scripts/get-terraform-outputs.sh "$TF_ENVIRONMENT"
@@ -186,5 +187,10 @@ jobs:
             exit 1
           fi
 
-          ./scripts/build-frontend.sh "$TF_ENVIRONMENT" "$BACKEND_URL" "${{ steps.v.outputs.tag }}"
+          if [ -z "$ROOT_DOMAIN" ]; then
+            echo "::error::Could not resolve ROOT_DOMAIN from Terraform outputs"
+            exit 1
+          fi
+
+          ./scripts/build-frontend.sh "$TF_ENVIRONMENT" "$BACKEND_URL" "${{ steps.v.outputs.tag }}" "$ROOT_DOMAIN"
           ./scripts/deploy-frontend.sh "$TF_ENVIRONMENT"
