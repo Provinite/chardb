@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import {
@@ -110,6 +111,8 @@ const EmptyActions = styled.div`
 `;
 
 export const MyCommunitiesPage: React.FC = () => {
+  usePageMeta({ title: "My Communities" });
+
   const { user } = useAuth();
 
   const { data, loading, error } = useCommunityMembersByUserQuery({

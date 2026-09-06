@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -300,6 +301,8 @@ const TraitActions = styled.div`
 `;
 
 export const EditCharacterPage: React.FC = () => {
+  usePageMeta({ title: "Edit Character" });
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();

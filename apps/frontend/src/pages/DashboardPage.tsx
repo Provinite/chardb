@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
@@ -104,6 +105,8 @@ const WelcomeMessage = styled.p`
 `;
 
 export const DashboardPage: React.FC = () => {
+  usePageMeta({ title: "Dashboard" });
+
   const { user } = useAuth();
 
   return (

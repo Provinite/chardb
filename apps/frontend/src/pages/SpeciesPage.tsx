@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useParams } from "react-router-dom";
 import styled from "styled-components";
 import {
@@ -234,6 +235,8 @@ export const SpeciesPage: React.FC = () => {
     fetchPolicy: "cache-and-network",
     errorPolicy: "all",
   });
+
+  usePageMeta({ title: data?.speciesById?.name ?? "Species" });
 
   // Fetch trait count for this species
   const { data: traitsData } = useTraitsBySpeciesQuery({

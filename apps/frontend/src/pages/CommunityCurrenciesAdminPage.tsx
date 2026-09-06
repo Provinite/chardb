@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import {
@@ -359,6 +360,8 @@ const blankForm = {
 };
 
 export const CommunityCurrenciesAdminPage: React.FC = () => {
+  usePageMeta({ title: "Currencies" });
+
   const communityId = useCommunityId();
   const { permissions, community } = useUserCommunityRole(
     communityId ?? undefined,

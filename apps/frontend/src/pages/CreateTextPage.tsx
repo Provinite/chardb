@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { usePageMeta } from "../lib/pageMeta";
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -285,6 +286,8 @@ const LoadingSpinner = styled.div`
 `;
 
 export const CreateTextPage: React.FC = () => {
+  usePageMeta({ title: "New Text Post" });
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { user } = useAuth();

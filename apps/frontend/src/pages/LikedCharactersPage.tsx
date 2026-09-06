@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -147,6 +148,8 @@ const ErrorContainer = styled.div`
 `;
 
 export const LikedCharactersPage: React.FC = () => {
+  usePageMeta({ title: "Liked Characters" });
+
   const { user } = useAuth();
 
   const { data, loading, error } = useGetLikedCharactersQuery({

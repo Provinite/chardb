@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { useSearchParams, Link } from "react-router-dom";
 import { Coins, Search } from "lucide-react";
@@ -309,6 +310,8 @@ function describeForCommunity(row: CurrencyTransactionFieldsFragment): {
 }
 
 export const CommunityCurrencyLedgerPage: React.FC = () => {
+  usePageMeta({ title: "Currency Ledger" });
+
   const communityId = useCommunityId();
   const [searchParams, setSearchParams] = useSearchParams();
 

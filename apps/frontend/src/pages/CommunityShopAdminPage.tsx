@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import { Store, Plus, Edit2, EyeOff, Eye, X } from "lucide-react";
@@ -304,6 +305,8 @@ const blankDraft = (currencyId: string): DraftPrice => ({
 });
 
 export const CommunityShopAdminPage: React.FC = () => {
+  usePageMeta({ title: "Shop Admin" });
+
   const communityId = useCommunityId();
   const { permissions } = useUserCommunityRole(communityId ?? undefined);
 

@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
@@ -155,6 +156,8 @@ const ErrorContainer = styled.div`
 
 export const FollowingPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+
+  usePageMeta({ title: `Who @${username} Follows` });
 
   const { data, loading, error } = useGetFollowingQuery({
     variables: { username: username! },

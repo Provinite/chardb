@@ -11,6 +11,7 @@ import { RandomCharacterButton } from "../components/RandomCharacterButton";
 import { FollowButton } from "../components/FollowButton";
 import { MediaGrid } from "../components/MediaGrid";
 import { characterUrl } from "../lib/communityHost";
+import { usePageMeta } from "../lib/pageMeta";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -306,6 +307,21 @@ export const UserProfilePage: React.FC = () => {
   // Fetch external accounts only if viewing own profile
   const { data: externalAccountsData } = useMyExternalAccountsQuery({
     skip: !data?.userProfile?.isOwnProfile,
+  });
+
+  const profileUser = data?.userProfile?.user;
+  usePageMeta({
+    // Both names: the display name is what people recognise, the username is
+    // what the URL says. The username is in the URL, so it titles the page
+    // immediately and the display name joins it when the profile lands.
+    title: profileUser?.displayName
+      ? `${profileUser.displayName} (@${profileUser.username})`
+      : `@${username}`,
+    description: profileUser?.bio || `${username} on CharDB`,
+    image:
+      profileUser?.avatarImage?.thumbnailUrl ??
+      profileUser?.avatarImage?.originalUrl,
+    type: "profile",
   });
 
   if (loading) {

@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowLeft, ArrowUpRight } from "lucide-react";
@@ -79,6 +80,8 @@ const Meta = styled.span`
  * Nothing is spent here. This is a list of links.
  */
 export const VariantChangeCharacterPickerPage: React.FC = () => {
+  usePageMeta({ title: "Choose a Character" });
+
   const { itemId } = useParams<{ itemId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();

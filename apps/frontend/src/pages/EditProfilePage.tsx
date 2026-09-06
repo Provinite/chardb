@@ -1,4 +1,5 @@
 import React, { useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -284,6 +285,8 @@ const EmptyState = styled.div`
 `;
 
 export const EditProfilePage: React.FC = () => {
+  usePageMeta({ title: "Edit Profile" });
+
   const navigate = useNavigate();
   const { data: meData, loading: meLoading } = useMeQuery();
   const [updateProfile, { loading: updating }] = useUpdateProfileMutation();

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -305,6 +306,8 @@ const TagsHelp = styled.p`
 `;
 
 export const CreateCharacterPageEnhanced: React.FC = () => {
+  usePageMeta({ title: "Create Character" });
+
   const navigate = useNavigate();
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);

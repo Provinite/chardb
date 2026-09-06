@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { usePageMeta } from "../lib/pageMeta";
 
 const Wrapper = styled.div`
   max-width: 640px;
@@ -25,17 +26,21 @@ const Body = styled.p`
  *
  * Reload rather than a link away, because the thing to do is try again.
  */
-export const CommunityUnreachable: React.FC = () => (
-  <Wrapper>
-    <h1>Something went wrong</h1>
-    <Body>
-      This community could not be loaded. The address is probably fine -- the
-      site could not be reached to look it up.
-    </Body>
-    <Body>
-      <button type="button" onClick={() => window.location.reload()}>
-        Try again
-      </button>
-    </Body>
-  </Wrapper>
-);
+export const CommunityUnreachable: React.FC = () => {
+  usePageMeta({ title: "Something Went Wrong" });
+
+  return (
+    <Wrapper>
+      <h1>Something went wrong</h1>
+      <Body>
+        This community could not be loaded. The address is probably fine -- the
+        site could not be reached to look it up.
+      </Body>
+      <Body>
+        <button type="button" onClick={() => window.location.reload()}>
+          Try again
+        </button>
+      </Body>
+    </Wrapper>
+  );
+};

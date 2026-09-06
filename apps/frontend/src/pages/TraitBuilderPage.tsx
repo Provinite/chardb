@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
@@ -548,6 +549,8 @@ const TraitModal: React.FC<TraitModalProps> = ({
 };
 
 export const TraitBuilderPage: React.FC = () => {
+  usePageMeta({ title: "Traits" });
+
   const { speciesId } = useParams<{ speciesId: string }>();
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

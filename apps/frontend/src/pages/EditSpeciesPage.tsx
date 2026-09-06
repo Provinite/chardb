@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Save } from "lucide-react";
@@ -128,6 +129,8 @@ interface EditSpeciesFormData {
 }
 
 export const EditSpeciesPage: React.FC = () => {
+  usePageMeta({ title: "Edit Species" });
+
   const navigate = useNavigate();
   const { speciesId } = useParams<{ speciesId: string }>();
 

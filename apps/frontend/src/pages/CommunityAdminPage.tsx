@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import {
@@ -119,6 +120,8 @@ const ErrorContainer = styled.div`
 `;
 
 export const CommunityAdminPage: React.FC = () => {
+  usePageMeta({ title: "Community Admin" });
+
   const communityId = useCommunityId();
   const { user } = useAuth();
 

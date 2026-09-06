@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { useParams, Link } from "react-router-dom";
 import { Package, ArrowLeft, Lock, Trash2 } from "lucide-react";
@@ -555,6 +556,8 @@ const describe = (row: ItemTransactionFieldsFragment): React.ReactNode => {
 };
 
 export const ItemProvenancePage: React.FC = () => {
+  usePageMeta({ title: "Item History" });
+
   const communityId = useCommunityId();
   const { itemId } = useParams<{ itemId: string }>();
   const { permissions } = useUserCommunityRole(communityId ?? undefined);

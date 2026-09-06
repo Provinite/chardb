@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -110,6 +111,8 @@ const PAGE_SIZE = 24;
  */
 export const UserGalleriesPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+
+  usePageMeta({ title: `@${username}'s Galleries` });
 
   const { data: identity, loading: identityLoading } = useUserIdentityQuery({
     variables: { username: username! },

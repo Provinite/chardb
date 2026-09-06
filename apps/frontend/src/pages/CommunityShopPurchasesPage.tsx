@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { apexUrl } from "../lib/communityHost";
@@ -153,6 +154,8 @@ const Empty = styled.div`
 `;
 
 export const CommunityShopPurchasesPage: React.FC = () => {
+  usePageMeta({ title: "Shop Purchases" });
+
   const communityId = useCommunityId();
   const { permissions, loading: roleLoading } = useUserCommunityRole(
     communityId ?? undefined,

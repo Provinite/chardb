@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Settings, ArrowLeft } from "lucide-react";
 import {
@@ -77,6 +78,8 @@ const Content = styled.div`
 `;
 
 export const CommunitySettingsPage: React.FC = () => {
+  usePageMeta({ title: "Community Settings" });
+
   const communityId = useCommunityId();
 
   // The host context already holds this community; querying it back by id

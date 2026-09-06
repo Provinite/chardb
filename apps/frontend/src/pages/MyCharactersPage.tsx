@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -96,6 +97,8 @@ const ErrorContainer = styled.div`
 const PAGE_SIZE = 24;
 
 export const MyCharactersPage: React.FC = () => {
+  usePageMeta({ title: "My Characters" });
+
   const { user } = useAuth();
 
   const { data, loading, error, fetchMore } = useGetMyCharactersQuery({

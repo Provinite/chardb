@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
@@ -193,6 +194,8 @@ const LoadingContainer = styled.div`
 `;
 
 export const CommunityMembersPage: React.FC = () => {
+  usePageMeta({ title: "Members" });
+
   const communityId = useCommunityId();
   const { user } = useAuth();
   const [search, setSearch] = useState("");

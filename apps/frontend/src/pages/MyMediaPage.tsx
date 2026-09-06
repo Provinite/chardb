@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -91,6 +92,8 @@ const ErrorContainer = styled.div`
 `;
 
 export const MyMediaPage: React.FC = () => {
+  usePageMeta({ title: "My Media" });
+
   const { user } = useAuth();
 
   const { data, loading, error } = useGetMyMediaQuery({

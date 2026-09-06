@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
@@ -102,6 +103,8 @@ const LoadingContainer = styled.div`
 type MediaFilter = "all" | "images" | "text";
 
 export const MediaLibraryPage: React.FC = () => {
+  usePageMeta({ title: "Browse Media" });
+
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
@@ -194,7 +197,7 @@ export const MediaLibraryPage: React.FC = () => {
       )}
 
       <MediaGrid
-        media={media as any}
+        media={media}
         showOwner={true}
         loading={loading}
         emptyMessage={

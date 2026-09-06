@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
@@ -31,6 +32,8 @@ const ErrorDescription = styled.p`
 `;
 
 export const NotFoundPage: React.FC = () => {
+  usePageMeta({ title: "Page Not Found" });
+
   return (
     <Container>
       <ErrorCode>404</ErrorCode>

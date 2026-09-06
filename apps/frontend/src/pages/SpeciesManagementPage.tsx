@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useNavigate, Link } from "react-router-dom";
 import { Search, Plus, Trash2, Edit, Palette, Database } from "lucide-react";
@@ -333,6 +334,8 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
 };
 
 export const SpeciesManagementPage: React.FC = () => {
+  usePageMeta({ title: "Species Management" });
+
   const navigate = useNavigate();
   const communityId = useCommunityId();
 

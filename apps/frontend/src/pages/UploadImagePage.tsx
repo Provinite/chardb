@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
@@ -384,6 +385,8 @@ interface UploadImageResponse {
 }
 
 export const UploadImagePage: React.FC = () => {
+  usePageMeta({ title: "Upload an Image" });
+
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();

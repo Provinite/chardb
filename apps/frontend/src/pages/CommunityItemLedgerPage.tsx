@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import { Package, Search, Lock } from "lucide-react";
@@ -458,6 +459,8 @@ const PartyCell: React.FC<{
 };
 
 export const CommunityItemLedgerPage: React.FC = () => {
+  usePageMeta({ title: "Item Ledger" });
+
   const communityId = useCommunityId();
   const [search, setSearch] = useState("");
   const [activeKinds, setActiveKinds] = useState<ItemTransactionKind[]>([]);

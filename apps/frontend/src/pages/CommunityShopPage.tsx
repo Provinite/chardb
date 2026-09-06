@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import {
@@ -420,6 +421,8 @@ const blockedReason = (
 };
 
 export const CommunityShopPage: React.FC = () => {
+  usePageMeta({ title: "Shop" });
+
   const communityId = useCommunityId();
   const { user } = useAuth();
   const cart = useShopCart(communityId ?? undefined);
