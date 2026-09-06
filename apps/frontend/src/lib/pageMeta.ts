@@ -20,6 +20,7 @@
  * later, and because an in-app "copy link" preview would read them.
  */
 import { useEffect } from "react";
+import { stripMarkdown } from "./stripMarkdown";
 
 export interface PageMeta {
   /** Page name, without the site suffix -- "Ash", not "Ash | CharDB". */
@@ -56,8 +57,23 @@ const DESCRIPTION_MAX = 200;
  */
 const WORD_BOUNDARY_MIN = Math.floor(DESCRIPTION_MAX * 0.75);
 
+/**
+ * Strip markdown, flatten to one line, then cut.
+ *
+ * Character details, gallery and media descriptions and user bios are markdown,
+ * and nothing that reads `og:description` renders it: Discord, Slack and
+ * Google's snippet print the string they are given. A character whose details
+ * open with a heading was unfurling as `# About Ash This is a **test**...`.
+ *
+ * The stripping is first, not last. Cutting first would land the truncation
+ * inside the syntax and leave a dangling `**`, and would spend part of the 200
+ * characters on markup rather than on words.
+ *
+ * Plain text passes through `stripMarkdown` unchanged, which matters because
+ * the generated fallbacks ("Posted by some_user_name") come through here too.
+ */
 const truncate = (text: string): string => {
-  const flat = text.replace(/\s+/g, " ").trim();
+  const flat = stripMarkdown(text).replace(/\s+/g, " ").trim();
   if (flat.length <= DESCRIPTION_MAX) return flat;
 
   const cut = flat.slice(0, DESCRIPTION_MAX);

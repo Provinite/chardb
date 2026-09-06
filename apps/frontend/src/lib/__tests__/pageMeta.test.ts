@@ -27,6 +27,74 @@ describe("applyPageMeta", () => {
     );
   });
 
+  /**
+   * Character details, gallery and media descriptions and user bios are all
+   * markdown, and a card has no markdown renderer -- Discord, Slack and
+   * Google's snippet print whatever they are given. A character whose details
+   * open with a heading was unfurling as "# About Ash This is a test..." with
+   * the syntax intact.
+   */
+  describe("markdown in descriptions", () => {
+    it("strips headings and emphasis", () => {
+      applyPageMeta({
+        title: "Ash",
+        description: "# About Ash\n\nThis is a **test** character for _Ash_.",
+      });
+
+      const description = content('meta[property="og:description"]') ?? "";
+      expect(description).toBe("About Ash This is a test character for Ash.");
+      expect(description).not.toContain("#");
+      expect(description).not.toContain("**");
+      expect(description).not.toContain("_");
+    });
+
+    it("keeps link text and drops the URL", () => {
+      applyPageMeta({
+        title: "Ash",
+        description: "Art by [mara](https://example.com/mara).",
+      });
+
+      expect(content('meta[property="og:description"]')).toBe("Art by mara.");
+    });
+
+    it("flattens a list into one line", () => {
+      applyPageMeta({
+        title: "Ash",
+        description: "Traits:\n\n- horned\n- winged",
+      });
+
+      const description = content('meta[property="og:description"]') ?? "";
+      expect(description).not.toContain("-");
+      expect(description).toContain("horned");
+      expect(description).toContain("winged");
+    });
+
+    it("leaves plain text alone", () => {
+      // The generated fallbacks are not markdown, and must survive unchanged --
+      // an underscore in a username especially.
+      applyPageMeta({ title: "Ash", description: "Posted by some_user_name" });
+      expect(content('meta[property="og:description"]')).toBe(
+        "Posted by some_user_name",
+      );
+    });
+
+    it("truncates after stripping, not before", () => {
+      // Otherwise the cut lands inside the syntax and the 200 characters are
+      // spent on asterisks rather than on words. Trimmed, because `** ... **`
+      // with a space before the closing pair is not emphasis in CommonMark --
+      // it is literal text, and would legitimately keep its asterisks.
+      applyPageMeta({
+        title: "Ash",
+        description: `**${"word ".repeat(80).trim()}**`,
+      });
+
+      const description = content('meta[property="og:description"]') ?? "";
+      expect(description).not.toContain("*");
+      expect(description.length).toBeLessThanOrEqual(201);
+      expect(description.startsWith("word word")).toBe(true);
+    });
+  });
+
   it("collapses whitespace", () => {
     applyPageMeta({ title: "Ash", description: "  a\n\n  b   c  " });
     expect(content('meta[property="og:description"]')).toBe("a b c");
