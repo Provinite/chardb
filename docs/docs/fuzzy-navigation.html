@@ -6,7 +6,7 @@
     <title>Fuzzy Page Navigation - Feature Walkthrough</title>
     <meta
       name="description"
-      content="Jump to any page in CharDB instantly with the Find page spotlight: open it with Ctrl+K, type a few characters, and pick the page you need."
+      content="Jump to any page in CharDB instantly with the Find page spotlight: open it with Ctrl+K, type a few characters, and pick the page you need. Type @ to find a member instead."
     />
     <link
       rel="canonical"
@@ -17,7 +17,7 @@
     <meta property="og:title" content="Fuzzy Page Navigation" />
     <meta
       property="og:description"
-      content="Jump to any page in CharDB instantly with the Find page spotlight: open it with Ctrl+K, type a few characters, and pick the page you need."
+      content="Jump to any page in CharDB instantly with the Find page spotlight: open it with Ctrl+K, type a few characters, and pick the page you need. Type @ to find a member instead."
     />
     <meta
       property="og:url"
@@ -228,7 +228,10 @@
     <div class="container">
       <header>
         <h1>Fuzzy Page Navigation</h1>
-        <p>Quickly jump to any page in CharDB with the "Find page" spotlight</p>
+        <p>
+          Quickly jump to any page &mdash; or any member &mdash; in CharDB with
+          the "Find page" spotlight
+        </p>
       </header>
 
       <!-- Overview -->
@@ -241,7 +244,9 @@
           <p>
             CharDB now includes a fuzzy page finder that lets you jump to any
             page instantly. Instead of clicking through menus, type a few
-            characters and select the page you need.
+            characters and select the page you need. Inside a community, typing
+            <kbd>@</kbd> switches the same box to searching
+            <strong>people</strong> instead of pages.
           </p>
 
           <div class="feature-list">
@@ -264,6 +269,11 @@
               <div class="icon">&#x1F3F7;&#xFE0F;</div>
               <h4>Categorized Results</h4>
               <p>Results grouped by section for easy scanning</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F464;</div>
+              <h4>Find People</h4>
+              <p>Type <kbd>@</kbd> to search this community's members</p>
             </div>
           </div>
         </div>
@@ -454,10 +464,90 @@
         </div>
       </div>
 
-      <!-- Step 5: Navigating -->
+      <!-- Step 5: Members -->
       <div class="step">
         <div class="step-header">
           <div class="step-number">5</div>
+          <h2 class="step-title">Finding a Person, Not a Page</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Inside a community, typing <kbd>@</kbd> switches the box from pages
+            to <strong>people</strong>. <kbd>@</kbd> on its own lists who is
+            here; <strong>"@neo"</strong> narrows to the members whose name or
+            username matches. The input says so &mdash; its placeholder reads
+            "Search pages, or @ for members..."
+          </p>
+          <p>
+            The sigil is the whole gate. Without it the box searches pages
+            exactly as it always did, and never asks the server about people at
+            all.
+          </p>
+          <p>
+            Member search is scoped to the community you are standing in. The
+            same name means a different person in each community, so at the apex
+            &mdash; outside any community &mdash; the box answers "Open a
+            community to search its members".
+          </p>
+
+          <div class="highlight-box">
+            <strong>Tip:</strong> if a page search comes up empty, the "no
+            results" line reminds you of the sigil: "No pages found... try @ for
+            members".
+          </div>
+
+          <p>
+            Picking a person does not leave the box. It narrows one level down
+            to <strong>their</strong> pages &mdash; Profile, Inventory,
+            Characters, and Propose trade &mdash; because picking someone is
+            only half a request, and the other half is which of their pages you
+            wanted. "Propose trade" is hidden on your own name, since you cannot
+            trade with yourself.
+          </p>
+        </div>
+        <div class="screenshot-row">
+          <div class="screenshot">
+            <img
+              src="spotlight-members.png"
+              alt="The spotlight listing this community's members after typing @"
+            />
+            <div class="screenshot-caption">
+              <kbd>@</kbd> on its own &mdash; everyone in this community
+            </div>
+          </div>
+          <div class="screenshot">
+            <img
+              src="spotlight-member-pages.png"
+              alt="The spotlight listing one member's pages: Profile, Inventory, Characters, Propose trade"
+            />
+            <div class="screenshot-caption">
+              Picking a person offers their pages rather than navigating away
+            </div>
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <p>
+            Keep typing past the slash to narrow that second list the same way
+            you narrow pages. <strong>"@othermember/inv"</strong> leaves only
+            Inventory, so reaching what someone holds is one uninterrupted run
+            of keystrokes from <kbd>Ctrl+K</kbd>.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="spotlight-member-narrowed.png"
+            alt="The spotlight narrowed to one member's Inventory page by typing past the slash"
+          />
+          <div class="screenshot-caption">
+            Typing past the slash narrows to one of that member's pages
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6: Navigating -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
           <h2 class="step-title">Navigating to a Page</h2>
         </div>
         <div class="step-content">

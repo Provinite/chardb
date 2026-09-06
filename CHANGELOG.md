@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Fuzzy navigation documents the `@` member search** — a sixth step with
+  three screenshots: listing who is here, the pages one person offers, and
+  narrowing past the slash (#349).
+
 ## [v12.0.0] - 2026-09-06
 
 ### Changed

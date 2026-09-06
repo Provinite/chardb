@@ -25,6 +25,7 @@ import { CommunityAdminPage } from "../pages/CommunityAdminPage";
 import { CommunityInviteCodesPage } from "../pages/CommunityInviteCodesPage";
 import { PermissionManagementPage } from "../pages/PermissionManagementPage";
 import { CommunityMembersPage } from "../pages/CommunityMembersPage";
+import { CommunityMemberProfilePage } from "../pages/CommunityMemberProfilePage";
 import { CommunitySettingsPage } from "../pages/CommunitySettingsPage";
 import { CommunityItemsAdminPage } from "../pages/CommunityItemsAdminPage";
 import { CommunityColorPalettePage } from "../pages/CommunityColorPalettePage";
@@ -287,8 +288,26 @@ export const CommunityRoutes: React.FC = () => (
         </ProtectedRoute>
       }
     />
+    {/* One person, seen from inside one community: their role here, what
+        they hold here, who they are here. The apex `/user/:username` has none
+        of that context and cannot grow it -- it does not know which community
+        you came from. */}
     <Route
-      path="/members/:username/items"
+      path="/members/:username"
+      element={
+        <ProtectedRoute>
+          <CommunityMemberProfilePage />
+        </ProtectedRoute>
+      }
+    />
+    {/* Same page either way: inventories are public within a community, so a
+        named member's holdings and your own are one view with different
+        actions rather than two pages of the same facts. The segment says
+        `inventory` in both shapes -- it used to say `items` here and
+        `inventory` for your own, which is how the feature came to be
+        unfindable (#349). */}
+    <Route
+      path="/members/:username/inventory"
       element={
         <ProtectedRoute>
           <CommunityInventoryPage />

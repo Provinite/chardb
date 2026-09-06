@@ -11,9 +11,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Markdown no longer leaks into `og:description`**, and `stripMarkdown` no longer returns escaped text like `some\_user\_name` — which also reached the media card's preview line.
 
+- **A long name on the members list painted over the role tag beside it**, and
+  a narrow enough window crushed it away entirely. Rows now wrap (#349).
+
 ### Added
 
 - **Every page sets its own title and OpenGraph tags**, replacing the one static title all 80-odd routes shared; chat unfurlers still see only the site card, which needs server-side rendering.
+
+- **A member has a profile inside a community**, at `/members/:username` on
+  that community's host: their role here, their characters here, and the way
+  through to their inventory or a trade (#349).
+
+- **The search box finds members, not just pages.** `@` inside a community
+  switches it to people and `@` alone lists who is here; picking one opens
+  their pages — profile, inventory, characters, propose a trade — without
+  leaving the box. Without the sigil it searches pages exactly as before
+  (#349).
+
+- **The trade composer links out to the partner's full inventory**, which
+  includes the items its own pane leaves out as untradeable (#349).
+
+### Changed
+
+- **Breaking: a member's inventory moved from `/members/:username/items` to
+  `.../inventory`**, matching the segment your own already used. Links to the
+  old path 404 (#349).
+
+- **A member's name on the members list now opens their community profile**
+  rather than their apex site profile (#349).
 
 ## [v12.0.0] - 2026-09-06
 

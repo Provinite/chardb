@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`communityMemberRoles(communityId, userId)`** — what one member's standing
+  in one community is called. Gated on membership, unlike
+  `communityMembersByUser`, which is about yourself everywhere (#349).
+
+### Changed
+
+- **`Community.members(search:)` returns exact name matches first.** The limit
+  is applied in SQL, so the person you actually named could lose the cut to
+  five people who merely contain your spelling of them (#349).
+
 ## [v12.0.0] - 2026-09-06
 
 ### Added

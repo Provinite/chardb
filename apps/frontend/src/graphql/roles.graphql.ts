@@ -174,6 +174,21 @@ export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
   }
 `;
 
+/**
+ * What one person's standing in one community is called.
+ *
+ * Only the name: the member profile page prints the role as a label, and the
+ * permission flags on a role are staff's business, not a visitor's.
+ */
+export const COMMUNITY_MEMBER_ROLES = gql`
+  query CommunityMemberRoles($communityId: ID!, $userId: ID!) {
+    communityMemberRoles(communityId: $communityId, userId: $userId) {
+      id
+      name
+    }
+  }
+`;
+
 export const UPDATE_COMMUNITY_MEMBER = gql`
   mutation UpdateCommunityMember(
     $id: ID!

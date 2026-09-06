@@ -16,7 +16,7 @@ const test = presetTest("community-items");
 const ownUrl = (communityUrl: string) => `${communityUrl}/inventory`;
 
 const memberUrl = (communityUrl: string, username: string) =>
-  `${communityUrl}/members/${username}/items`;
+  `${communityUrl}/members/${username}/inventory`;
 
 const group = (page: Page, itemTypeId: string) =>
   page.locator(
@@ -205,7 +205,7 @@ test.describe("reaching holdings from the member list", () => {
     ).toContainText("Quartermaster");
   });
 
-  test("clicking a member's Items reaches their holdings", async ({
+  test("clicking a member's Inventory reaches their holdings", async ({
     page,
     world,
   }) => {
@@ -217,7 +217,7 @@ test.describe("reaching holdings from the member list", () => {
       .locator(
         `[data-testid="member-row"][data-username="${world.users.othermember.username}"]`,
       )
-      .getByRole("link", { name: /Items/ })
+      .getByRole("link", { name: /Inventory/ })
       .click();
 
     await expect(page).toHaveURL(

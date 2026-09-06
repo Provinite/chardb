@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDebouncedValue } from "@mantine/hooks";
 import type {
   SpotlightActionData,
   SpotlightActionGroupData,
@@ -7,16 +8,78 @@ import type {
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityHost } from "../../contexts/CommunityHostContext";
 import { apexUrl, communityUrl } from "../../lib/communityHost";
+import { useGetCommunityMembersQuery } from "../../generated/graphql";
+import { drillQuery, parseSpotlightQuery } from "./spotlightQuery";
 
-export function useSpotlightActions(): SpotlightActionGroupData[] {
+/** People matching what was typed. Picking one opens their pages. */
+export const MEMBER_GROUP = "Members";
+
+/** One person's pages, once you have picked them. */
+export const MEMBER_PAGES_GROUP = "Member pages";
+
+/** Enough to recognise the person you meant; more is a members list. */
+const MEMBER_RESULT_LIMIT = 5;
+
+/**
+ * Which community the viewer is standing in, or undefined at the apex.
+ *
+ * Member search is scoped to it rather than fanned out across every community
+ * the viewer belongs to: a name means a different person in each of them, and
+ * one query per membership per keystroke is not a search box.
+ *
+ * The hostname answers this, not the pathname (#339) -- on a community host
+ * every path is that community's, and `/communities/:id` no longer appears in
+ * a URL at all.
+ */
+export function useActiveCommunityId(): string | undefined {
+  const { community } = useCommunityHost();
+  return community?.id;
+}
+
+export function useSpotlightActions(
+  query: string,
+  /** Rewrites the box, for the actions that narrow it rather than navigate. */
+  setQuery: (query: string) => void,
+): SpotlightActionGroupData[] {
   const { user } = useAuth();
   const { slug: hostSlug, community: hostCommunity } = useCommunityHost();
   const hostCommunityId = hostCommunity?.id ?? null;
   const navigate = useNavigate();
+  const communityName = hostCommunity?.name ?? "this community";
 
   // Off the viewer: `me` already carries the memberships, and asking for them
   // separately could not start until `me` had returned the id to ask with.
   const communitiesData = user?.communityMemberships;
+
+  // Every keystroke would otherwise be a round trip. 200ms is below the point
+  // where the list feels like it is lagging the box.
+  const [debouncedQuery] = useDebouncedValue(query.trim(), 200);
+  // Memoised: it is a dependency of the actions below, and a fresh object
+  // every render would rebuild the whole list on every render.
+  const parsed = useMemo(
+    () => parseSpotlightQuery(debouncedQuery),
+    [debouncedQuery],
+  );
+
+  // Both people modes hit the same query. Once a person is picked it searches
+  // for their name exactly, which the server sorts first -- so the same
+  // request that listed the candidates also resolves the one you chose, and
+  // Apollo serves the rest of the drill-down from cache while you type it.
+  const memberSearch =
+    parsed.mode === "people"
+      ? parsed.term
+      : parsed.mode === "person"
+        ? parsed.username
+        : "";
+
+  const { data: memberData } = useGetCommunityMembersQuery({
+    variables: {
+      communityId: hostCommunityId ?? "",
+      search: memberSearch || null,
+      limit: MEMBER_RESULT_LIMIT,
+    },
+    skip: !user?.id || !hostCommunityId || parsed.mode === "pages",
+  });
 
   return useMemo(() => {
     const groups: SpotlightActionGroupData[] = [];
@@ -50,6 +113,79 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
       communityId === hostCommunityId
         ? nav(path || "/")
         : leave(communityUrl(slug, path || "/"));
+
+    // `parsed.mode` again rather than trusting the skip: Apollo hands back the
+    // last result for a skipped query, so without it the people you found stay
+    // on screen after you have cleared the box.
+    const members =
+      parsed.mode === "pages" ? [] : (memberData?.community?.members ?? []);
+
+    if (hostCommunityId && parsed.mode === "people" && members.length > 0) {
+      groups.push({
+        group: MEMBER_GROUP,
+        actions: members.map((member) => ({
+          id: `member-${member.id}`,
+          label: member.displayName || member.username,
+          description: `@${member.username}`,
+          // Narrows the box instead of leaving it. Picking a person is half a
+          // request -- the other half is which of their pages you wanted, and
+          // asking it here beats loading one to navigate off it.
+          onClick: () => setQuery(drillQuery(member.username)),
+          closeSpotlightOnTrigger: false,
+        })),
+      });
+    }
+
+    if (hostCommunityId && parsed.mode === "person") {
+      // The server sorts an exact name first, so this is the person named in
+      // the query rather than whoever merely contains their spelling.
+      const member = members.find(
+        (m) => m.username.toLowerCase() === parsed.username.toLowerCase(),
+      );
+      // Member search only runs on a community host, so every path here is
+      // already this community's -- a route, never a page load.
+      const base = `/members/${parsed.username}`;
+
+      if (member) {
+        const who = member.displayName || member.username;
+        const pages: SpotlightActionData[] = [
+          {
+            id: `member-page-profile-${member.id}`,
+            label: "Profile",
+            description: `${who} in ${communityName}`,
+            onClick: nav(base),
+          },
+          {
+            id: `member-page-inventory-${member.id}`,
+            label: "Inventory",
+            description: `What ${who} holds in ${communityName}`,
+            onClick: nav(`${base}/inventory`),
+          },
+          {
+            id: `member-page-characters-${member.id}`,
+            label: "Characters",
+            // Says "every" because it is the whole site rather than here --
+            // the ones belonging to this community are on the profile above,
+            // and the site-wide list lives at the apex.
+            description: `Every character ${who} owns`,
+            onClick: apex(`/user/${member.username}/characters`),
+          },
+        ];
+
+        // Hidden on yourself: the server refuses a trade with yourself, so
+        // offering it would be a dead end.
+        if (member.id !== user?.id) {
+          pages.push({
+            id: `member-page-trade-${member.id}`,
+            label: "Propose trade",
+            description: `Open a trade with ${who}`,
+            onClick: nav(`/trades/new?with=${member.id}`),
+          });
+        }
+
+        groups.push({ group: MEMBER_PAGES_GROUP, actions: pages });
+      }
+    }
 
     // General — always visible
     groups.push({
@@ -435,5 +571,15 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
     }
 
     return groups;
-  }, [user, communitiesData, navigate, hostSlug, hostCommunityId]);
+  }, [
+    user,
+    communitiesData,
+    navigate,
+    hostSlug,
+    hostCommunityId,
+    communityName,
+    setQuery,
+    memberData,
+    parsed,
+  ]);
 }
