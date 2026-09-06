@@ -125,16 +125,28 @@ test.describe("community hosts", () => {
     ).resolves.toBe(true);
   });
 
-  test("a subdomain no community holds says so", async ({ page }) => {
+  test("a subdomain no community holds goes to the apex", async ({ page }) => {
     // The wildcard DNS record answers for every label, so a typo or a deleted
-    // community reaches the app exactly as a real one does. The app loaded
-    // fine; there is simply nothing here, which is a page and not an error.
+    // community reaches the app exactly as a real one does. There is nothing
+    // there and nothing worth saying about it, so it becomes the front page.
     await page.goto(communityUrl("nowhere-at-all"));
 
-    await expect(
-      page.getByRole("heading", { level: 1, name: "No community here" }),
-    ).toBeVisible();
+    await expect(page).toHaveURL(apexUrl("/"));
     await expect(communityNav(page)).toHaveCount(0);
+    await expect(globalNav(page)).toBeVisible();
+  });
+
+  test("a label that could never be a slug goes to the apex too", async ({
+    page,
+  }) => {
+    // Same destination by a different route: `ab` is too short to be a slug, so
+    // it resolves to no community rather than to one that is missing. Both are
+    // addresses nobody meant to type, and used to behave differently -- this
+    // one quietly served the whole apex site under the wrong hostname.
+    await page.goto(communityUrl("ab"));
+
+    await expect(page).toHaveURL(apexUrl("/"));
+    await expect(globalNav(page)).toBeVisible();
   });
 
   test("remembers which community the host is, between page loads", async ({
@@ -158,27 +170,37 @@ test.describe("community hosts", () => {
   test("forgets a host that stops resolving", async ({ page }) => {
     // The remembered id must not outlive the community. A deleted one would
     // otherwise keep a dead id in play on that host forever.
-    await page.goto(communityUrl("nowhere-at-all"));
-    await page.evaluate(() =>
+    // Seeded before the app boots, not by visiting first: that host redirects
+    // on sight now, so there is no moment on it in which to run a script.
+    await page.context().addInitScript(() => {
       window.localStorage.setItem(
         "chardb.community.nowhere-at-all",
         JSON.stringify({
           id: "00000000-0000-0000-0000-000000000000",
           name: "Gone",
         }),
-      ),
+      );
+    });
+
+    await page.goto(communityUrl("nowhere-at-all"));
+    await expect(page).toHaveURL(apexUrl("/"));
+
+    // Read out of the browser context rather than by navigating back: that
+    // host redirects on sight now, which destroys the execution context before
+    // an evaluate can run on it.
+    //
+    // Scoped to the community's own origin, because the init script above runs
+    // on every navigation -- including the redirect -- so the apex origin ends
+    // up holding a copy that says nothing about whether the community host
+    // forgot its own.
+    const { origins } = await page.context().storageState();
+    const onThatHost = origins.find(
+      (o) => o.origin === communityUrl("nowhere-at-all").replace(/\/$/, ""),
     );
-
-    await page.reload();
-
-    await expect(
-      page.getByRole("heading", { level: 1, name: "No community here" }),
-    ).toBeVisible();
-    await expect(
-      page.evaluate(() =>
-        window.localStorage.getItem("chardb.community.nowhere-at-all"),
-      ),
-    ).resolves.toBeNull();
+    const stored = onThatHost?.localStorage.find(
+      (e) => e.name === "chardb.community.nowhere-at-all",
+    );
+    expect(stored).toBeUndefined();
   });
 });
 

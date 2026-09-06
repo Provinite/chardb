@@ -30,27 +30,50 @@ export const ROOT_DOMAIN: string =
 const APEX_ALIASES = new Set(["www"]);
 
 /**
- * The community slug a hostname names, or `null` for the apex.
+ * What a hostname names.
  *
- * Returns null rather than throwing for anything unrecognised. The wildcard
- * DNS record answers for every label, so `nonsense.chardb.cc` reaches the app
- * exactly as a real community does; treating that as apex-with-no-community is
- * the caller's problem to render, not an exception to raise here.
+ * Three cases and not two, because `null` was doing double duty: "this is the
+ * apex" and "this label named nothing" are different questions, and collapsing
+ * them made a hostname like `ab.chardb.cc` -- too short to be a slug -- quietly
+ * serve the whole apex site under the wrong name. The wildcard DNS record
+ * answers for every label, so an address nobody holds is reachable and has to
+ * be decided about rather than fallen into.
  */
-export const parseCommunitySlug = (hostname: string): string | null => {
+export type HostTarget =
+  | { kind: "apex" }
+  | { kind: "community"; slug: string }
+  | { kind: "unknown" };
+
+/** What `hostname` names: the apex, a community, or nothing. */
+export const resolveHost = (hostname: string): HostTarget => {
   const host = hostname.toLowerCase();
-  if (host === ROOT_DOMAIN) return null;
+  if (host === ROOT_DOMAIN) return { kind: "apex" };
 
   const suffix = `.${ROOT_DOMAIN}`;
-  if (!host.endsWith(suffix)) return null;
+  // Not under the root domain at all -- a CloudFront hostname before DNS
+  // cutover, or a proxy. It IS serving the apex, and there is no label to look
+  // a community up by, so treating it as the apex is the honest answer.
+  if (!host.endsWith(suffix)) return { kind: "apex" };
 
   const label = host.slice(0, -suffix.length);
   // Only a single label is a community. `a.b.chardb.cc` is not one.
-  if (label.includes(".")) return null;
-  if (APEX_ALIASES.has(label)) return null;
+  if (label.includes(".")) return { kind: "unknown" };
+  if (APEX_ALIASES.has(label)) return { kind: "apex" };
 
-  return isValidCommunitySlug(label) ? label : null;
+  return isValidCommunitySlug(label)
+    ? { kind: "community", slug: label }
+    : { kind: "unknown" };
 };
+
+/** The community slug a hostname names, or null if it names no community. */
+export const parseCommunitySlug = (hostname: string): string | null => {
+  const target = resolveHost(hostname);
+  return target.kind === "community" ? target.slug : null;
+};
+
+/** What the page currently open is being served as. */
+export const currentHostTarget = (): HostTarget =>
+  resolveHost(window.location.hostname);
 
 /** The community slug for the page currently open, or null at the apex. */
 export const currentCommunitySlug = (): string | null =>

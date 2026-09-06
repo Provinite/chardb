@@ -1,3 +1,5 @@
+import { CFG } from "../config.js";
+
 /**
  * The session cookie, from the harness's side.
  *
@@ -9,8 +11,16 @@
  * Mirrors apps/backend/src/auth/refresh-cookie.ts. Duplicated rather than
  * imported: the e2e package deliberately depends on the backend's HTTP surface
  * and generated schema, not on its source.
+ *
+ * The name carries the root domain because production and staging share one --
+ * staging is `dev.chardb.cc`, a subdomain of `chardb.cc` -- so a shared name
+ * would let either shadow the other's cookie. Both sides derive it from the
+ * same value rather than configuring it, so they cannot drift.
  */
-export const REFRESH_COOKIE_NAME = "chardb_rt";
+export const REFRESH_COOKIE_NAME = `chardb_session_${CFG.rootDomain.replace(
+  /[^a-z0-9]+/gi,
+  "_",
+)}`;
 
 /**
  * The refresh cookie's VALUE from a login/signup response.

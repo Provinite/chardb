@@ -1,11 +1,12 @@
+import { useEffect } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useCommunityHost } from "./contexts/CommunityHostContext";
+import { apexUrl } from "./lib/communityHost";
 import { Layout } from "./components/Layout";
 import { LoadingSpinner } from "./components/LoadingSpinner";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ApexRoutes } from "./routes/ApexRoutes";
 import { CommunityRoutes } from "./routes/CommunityRoutes";
-import { UnknownCommunityPage } from "./pages/UnknownCommunityPage";
 
 /**
  * Picks the route table from the hostname.
@@ -22,7 +23,24 @@ import { UnknownCommunityPage } from "./pages/UnknownCommunityPage";
  */
 function App() {
   const { loading: authLoading } = useAuth();
-  const { slug, community, loading: hostLoading } = useCommunityHost();
+  const { community, isUnknownHost, loading: hostLoading } = useCommunityHost();
+
+  // An address that names no community -- a typo, a deleted community, a label
+  // that could never have been a slug. The wildcard record answers for every
+  // one of them, so they are all reachable; none of them is a place. Send them
+  // to the apex without comment rather than explaining a URL nobody meant to
+  // type.
+  useEffect(() => {
+    if (isUnknownHost) window.location.replace(apexUrl("/"));
+  }, [isUnknownHost]);
+
+  if (isUnknownHost) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
+  }
 
   if (authLoading || hostLoading) {
     return (
@@ -35,14 +53,7 @@ function App() {
   return (
     <Layout>
       <ScrollToTop />
-      {slug === null ? (
-        <ApexRoutes />
-      ) : community ? (
-        <CommunityRoutes />
-      ) : (
-        // A subdomain the wildcard record answered for but no community holds.
-        <UnknownCommunityPage slug={slug} />
-      )}
+      {community ? <CommunityRoutes /> : <ApexRoutes />}
     </Layout>
   );
 }

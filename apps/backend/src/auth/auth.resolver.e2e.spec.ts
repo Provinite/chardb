@@ -3,7 +3,9 @@ import { AuthModule } from "./auth.module";
 import { DatabaseModule } from "../database/database.module";
 import { UsersModule } from "../users/users.module";
 import * as bcrypt from "bcrypt";
-import { REFRESH_COOKIE_NAME } from "./refresh-cookie";
+import { refreshCookieName } from "./refresh-cookie";
+
+const COOKIE = refreshCookieName();
 
 /**
  * The refresh token off a response's Set-Cookie header.
@@ -17,10 +19,10 @@ function refreshCookie(response: {
 }): string | undefined {
   const raw = response.headers["set-cookie"];
   const cookies = Array.isArray(raw) ? raw : raw ? [raw] : [];
-  const match = cookies.find((c) => c.startsWith(`${REFRESH_COOKIE_NAME}=`));
+  const match = cookies.find((c) => c.startsWith(`${COOKIE}=`));
   if (!match) return undefined;
 
-  const value = match.slice(REFRESH_COOKIE_NAME.length + 1).split(";")[0];
+  const value = match.slice(COOKIE.length + 1).split(";")[0];
   return value || undefined;
 }
 
@@ -304,7 +306,7 @@ describe("AuthResolver (e2e)", () => {
 
       const value = refreshCookie(signupResponse);
       if (!value) throw new Error("signup did not set a refresh cookie");
-      cookie = `${REFRESH_COOKIE_NAME}=${value}`;
+      cookie = `${COOKIE}=${value}`;
     });
 
     it("should generate a new access token from the refresh cookie", async () => {
@@ -343,7 +345,7 @@ describe("AuthResolver (e2e)", () => {
           }
         `,
         {},
-        { Cookie: `${REFRESH_COOKIE_NAME}=invalid-refresh-token` },
+        { Cookie: `${COOKIE}=invalid-refresh-token` },
       );
 
       expect(response.status).toBe(200);
@@ -363,14 +365,14 @@ describe("AuthResolver (e2e)", () => {
           }
         `,
         {},
-        { Cookie: `${REFRESH_COOKIE_NAME}=invalid-refresh-token` },
+        { Cookie: `${COOKIE}=invalid-refresh-token` },
       );
 
       const raw = response.headers["set-cookie"];
       const cookies = Array.isArray(raw) ? raw : raw ? [raw] : [];
-      expect(
-        cookies.some((c: string) => c.startsWith(`${REFRESH_COOKIE_NAME}=;`)),
-      ).toBe(true);
+      expect(cookies.some((c: string) => c.startsWith(`${COOKIE}=;`))).toBe(
+        true,
+      );
     });
   });
 
@@ -387,9 +389,9 @@ describe("AuthResolver (e2e)", () => {
 
       const raw = response.headers["set-cookie"];
       const cookies = Array.isArray(raw) ? raw : raw ? [raw] : [];
-      expect(
-        cookies.some((c: string) => c.startsWith(`${REFRESH_COOKIE_NAME}=;`)),
-      ).toBe(true);
+      expect(cookies.some((c: string) => c.startsWith(`${COOKIE}=;`))).toBe(
+        true,
+      );
     });
   });
 });

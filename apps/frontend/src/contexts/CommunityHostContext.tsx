@@ -7,7 +7,7 @@ import React, {
   ReactNode,
 } from "react";
 import { useCommunityBySlugQuery } from "../generated/graphql";
-import { currentCommunitySlug } from "../lib/communityHost";
+import { currentHostTarget } from "../lib/communityHost";
 
 /**
  * What the host resolves to: the whole community record.
@@ -86,6 +86,12 @@ interface CommunityHostContextType {
   /** True while the slug is still being resolved. Always false at the apex. */
   loading: boolean;
   /**
+   * True when this hostname names nothing -- a label no community holds, or
+   * one that could never be a slug. Both are addresses somebody can reach,
+   * because the wildcard DNS record answers for every label.
+   */
+  isUnknownHost: boolean;
+  /**
    * Re-read the host community. For the pages that can CHANGE it -- renaming
    * it, linking a Discord guild -- which previously held their own query and
    * refetched that.
@@ -116,7 +122,8 @@ export const CommunityHostProvider: React.FC<{ children: ReactNode }> = ({
 }) => {
   // The hostname cannot change without a page load, so this is read once
   // rather than watched.
-  const slug = useMemo(() => currentCommunitySlug(), []);
+  const target = useMemo(() => currentHostTarget(), []);
+  const slug = target.kind === "community" ? target.slug : null;
 
   // What this host resolved to last time. Apollo's cache is per page load, so
   // without this every visit blocks the whole app on the same answer to the
@@ -156,11 +163,16 @@ export const CommunityHostProvider: React.FC<{ children: ReactNode }> = ({
       community: fetched ?? remembered,
       // Nothing to wait for when this host is already known.
       loading: Boolean(slug) && loading && !remembered,
+      // Either the label could never be a slug, or it is one nobody holds.
+      // The app treats both the same way: this address is not a community.
+      isUnknownHost:
+        target.kind === "unknown" ||
+        (target.kind === "community" && !loading && !fetched && !remembered),
       refetch: () => {
         void refetch();
       },
     }),
-    [slug, fetched, remembered, loading, refetch],
+    [slug, target, fetched, remembered, loading, refetch],
   );
 
   return (

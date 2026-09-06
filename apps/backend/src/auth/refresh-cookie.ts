@@ -19,7 +19,27 @@ import type { CookieOptions, Request, Response } from "express";
  * refresh token, which is a straight improvement over `localStorage`, and is
  * why the value is never returned to the client any more.
  */
-export const REFRESH_COOKIE_NAME = "chardb_rt";
+/**
+ * Named per root domain, e.g. `chardb_session_chardb_cc`.
+ *
+ * Because staging lives at `dev.chardb.cc`, a subdomain of production, the
+ * production cookie is scoped `Domain=.chardb.cc` and is therefore sent to
+ * staging as well -- that is what makes community subdomains work and it
+ * cannot be narrowed. Sharing a NAME on top of that is what turns an exposure
+ * into an attack: a subdomain can set a cookie for its parent, the `Cookie`
+ * header carries no domain to tell two same-named cookies apart, and the
+ * server picks one arbitrarily. Distinct names mean staging cannot shadow
+ * production's session, and neither environment reads a cookie belonging to
+ * the other.
+ *
+ * This is a mitigation, not a fix: the credential still crosses the boundary.
+ * The fix is moving staging off the production registrable domain.
+ *
+ * Derived rather than configured so the two can never drift: the cookie is
+ * scoped to this domain, so its name is a function of the same value.
+ */
+export const refreshCookieName = (): string =>
+  `chardb_session_${(process.env.ROOT_DOMAIN || "localhost").replace(/[^a-z0-9]+/gi, "_")}`;
 
 /**
  * Matches the 7-day expiry `AuthService` signs the refresh token with. The
@@ -58,7 +78,7 @@ const baseOptions = (): CookieOptions => ({
 
 /** Issue or rotate the refresh cookie on a response. */
 export const setRefreshCookie = (res: Response, token: string): void => {
-  res.cookie(REFRESH_COOKIE_NAME, token, {
+  res.cookie(refreshCookieName(), token, {
     ...baseOptions(),
     maxAge: REFRESH_COOKIE_MAX_AGE_MS,
   });
@@ -72,9 +92,9 @@ export const setRefreshCookie = (res: Response, token: string): void => {
  * `baseOptions` rather than being spelled out at each call site.
  */
 export const clearRefreshCookie = (res: Response): void => {
-  res.clearCookie(REFRESH_COOKIE_NAME, baseOptions());
+  res.clearCookie(refreshCookieName(), baseOptions());
 };
 
 /** The refresh token the browser sent, if any. */
 export const readRefreshCookie = (req: Request): string | undefined =>
-  (req.cookies as Record<string, string> | undefined)?.[REFRESH_COOKIE_NAME];
+  (req.cookies as Record<string, string> | undefined)?.[refreshCookieName()];
