@@ -4,7 +4,8 @@ import styled from "styled-components";
 import { Avatar, Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
-import { loginUrlReturningHere } from "../lib/communityHost";
+import { apexUrl, loginUrlReturningHere } from "../lib/communityHost";
+import { HostAwareLink } from "./HostAwareLink";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./notifications/NotificationBell";
 
@@ -36,7 +37,7 @@ const Nav = styled.nav`
   gap: ${({ theme }) => theme.spacing.lg};
 `;
 
-const NavLink = styled(Link)`
+const NavLink = styled(HostAwareLink)`
   color: ${({ theme }) => theme.colors.text.primary};
   text-decoration: none;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
@@ -52,7 +53,7 @@ const UserMenu = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
-const UserInfo = styled(Link)`
+const UserInfo = styled(HostAwareLink)`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -96,9 +97,11 @@ export const Header: React.FC = () => {
               {communitySlug && (
                 <NavLink to="/character/create">Create Character</NavLink>
               )}
-              <NavLink to="/upload">Upload</NavLink>
+              {/* Media belongs to a person, not a community, so uploading is
+                  always an apex page -- from a community host this leaves. */}
+              <NavLink to={apexUrl("/upload")}>Upload</NavLink>
               <NotificationBell />
-              <UserInfo to={`/user/${user.username}`}>
+              <UserInfo to={apexUrl(`/user/${user.username}`)}>
                 <Avatar
                   image={user.avatarImage}
                   name={user.displayName || user.username}

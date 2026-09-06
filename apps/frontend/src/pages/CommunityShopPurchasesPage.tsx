@@ -1,6 +1,8 @@
 import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
+import { apexUrl } from "../lib/communityHost";
+import { HostAwareLink } from "../components/HostAwareLink";
 import { Receipt, Undo2, Search, X } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { toast } from "react-hot-toast";
@@ -285,10 +287,12 @@ export const CommunityShopPurchasesPage: React.FC = () => {
           <Purchase key={purchase.id} data-testid={`purchase-${purchase.id}`}>
             <PurchaseHead>
               <Buyer>
-                <Link to={`/user/${purchase.buyer?.username ?? ""}`}>
+                <HostAwareLink
+                  to={apexUrl(`/user/${purchase.buyer?.username ?? ""}`)}
+                >
                   {purchase.buyer?.displayName ||
                     `@${purchase.buyer?.username ?? "someone"}`}
-                </Link>
+                </HostAwareLink>
               </Buyer>
               <When>{new Date(purchase.createdAt).toLocaleString()}</When>
             </PurchaseHead>
