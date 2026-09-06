@@ -5,9 +5,11 @@ import { ArrowLeftRight, X } from "lucide-react";
 import { Avatar, Button } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
-import { useCommunityId } from "../contexts/CommunityHostContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 import { apexUrl, communityUrl } from "../lib/communityHost";
-import { useCommunityByIdQuery } from "../generated/graphql";
 import {
   EffectiveTradeStatus,
   useTradesQuery,
@@ -174,10 +176,7 @@ export const TradesPage: React.FC = () => {
   );
   const [limit, setLimit] = useState(PAGE_SIZE);
 
-  const { data: communityData } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  const community = useHostCommunity();
 
   const { data, loading, error } = useTradesQuery({
     variables: { communityId, status, first: limit },
@@ -229,7 +228,7 @@ export const TradesPage: React.FC = () => {
         // Dropping the narrowing means leaving this community's host for the
         // cross-community inbox at the apex, which the router cannot do.
         <Scope href={apexUrl("/trades")} data-testid="trade-scope">
-          {communityData?.community.name ?? "This community"} only
+          {community?.name ?? "This community"} only
           <X size={12} />
         </Scope>
       )}

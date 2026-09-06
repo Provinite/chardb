@@ -7,10 +7,12 @@ import {
   useSpeciesByCommunityQuery,
   useCreateSpeciesMutation,
   useDeleteSpeciesMutation,
-  useCommunityByIdQuery,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
-import { useCommunityId } from "../contexts/CommunityHostContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 
 /**
  * Species Management Dashboard
@@ -351,12 +353,9 @@ export const SpeciesManagementPage: React.FC = () => {
     fetchPolicy: "cache-and-network",
   });
 
-  // Fetch the specific community
-  const { data: communityData, loading: communityLoading } =
-    useCommunityByIdQuery({
-      variables: { id: communityId ?? "" },
-      skip: !communityId,
-    });
+  // The host context already holds this community; querying it back by id
+  // fetched the same record a second time on every page load.
+  const community = useHostCommunity();
 
   const [createSpeciesMutation] = useCreateSpeciesMutation({
     onCompleted: (data) => {
@@ -381,7 +380,7 @@ export const SpeciesManagementPage: React.FC = () => {
   });
 
   // Get the specific community data
-  const currentCommunity = communityData?.community;
+  const currentCommunity = community;
 
   // Filtered species based on search query
   const filteredSpecies = useMemo(() => {
@@ -452,10 +451,9 @@ export const SpeciesManagementPage: React.FC = () => {
   // `&& !data` on each: cache-and-network reports loading while revalidating
   // in the background, and swapping a populated page for the loading skeleton
   // every visit would be worse than the staleness it fixes.
-  if (
-    (speciesLoading && !speciesData) ||
-    (communityLoading && !communityData)
-  ) {
+  // Only the species list is worth waiting for; the community came with the
+  // host.
+  if (speciesLoading && !speciesData) {
     return (
       <Container>
         <Header>

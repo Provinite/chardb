@@ -11,12 +11,12 @@ import {
 } from "lucide-react";
 import { Title, Subtitle, Card } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import {
-  useCommunityByIdQuery,
-  useCommunityMembersByUserQuery,
-} from "../generated/graphql";
+import { useCommunityMembersByUserQuery } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
-import { useCommunityId } from "../contexts/CommunityHostContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 import { apexUrl } from "../lib/communityHost";
 
 /**
@@ -123,14 +123,9 @@ export const CommunityAdminPage: React.FC = () => {
   const { user } = useAuth();
 
   // Fetch community data
-  const {
-    data: communityData,
-    loading: communityLoading,
-    error: communityError,
-  } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  // The host context already holds this community; querying it back by id
+  // fetched the same record a second time on every page load.
+  const community = useHostCommunity();
 
   // Fetch user's membership in this community to get role and permissions
   const {
@@ -154,8 +149,9 @@ export const CommunityAdminPage: React.FC = () => {
     );
   }
 
-  // Loading states
-  if (communityLoading || membershipLoading) {
+  // Loading states. The community itself is not among them any more -- the
+  // host resolved it before this page mounted.
+  if (membershipLoading) {
     return (
       <Container>
         <LoadingContainer>
@@ -166,22 +162,18 @@ export const CommunityAdminPage: React.FC = () => {
   }
 
   // Error states
-  if (communityError || membershipError) {
+  if (membershipError) {
     return (
       <Container>
         <ErrorContainer>
           <Title>Error Loading Community</Title>
           <Subtitle>
-            {communityError?.message ||
-              membershipError?.message ||
-              "Unable to load community data"}
+            {membershipError?.message || "Unable to load community data"}
           </Subtitle>
         </ErrorContainer>
       </Container>
     );
   }
-
-  const community = communityData?.community;
 
   // Find user's membership in this specific community
   const userMembership = membershipData?.communityMembersByUser?.nodes?.find(

@@ -3,10 +3,12 @@ import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import { Package, Search, Lock } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useCommunityId } from "../contexts/CommunityHostContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 import {
   ItemTransactionKind,
-  useCommunityByIdQuery,
   useGetItemTransactionsQuery,
   type ItemTransactionFieldsFragment,
 } from "../generated/graphql";
@@ -461,10 +463,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
   const [activeKinds, setActiveKinds] = useState<ItemTransactionKind[]>([]);
   const [limit, setLimit] = useState(PAGE_SIZE);
 
-  const { data: communityData } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  const community = useHostCommunity();
 
   const filters = useMemo(
     () => ({
@@ -512,8 +511,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
       <Header>
         <Title>Item Ledger</Title>
         <Subtitle>
-          Every item movement in{" "}
-          {communityData?.community?.name || "this community"}
+          Every item movement in {community?.name || "this community"}
         </Subtitle>
       </Header>
 

@@ -10,14 +10,22 @@ import { useCommunityBySlugQuery } from "../generated/graphql";
 import { currentCommunitySlug } from "../lib/communityHost";
 
 /**
- * What the host resolves to.
+ * What the host resolves to: the whole community record.
  *
- * Deliberately narrow. Everything reachable from a community host can query
- * whatever else it needs about that community; what this context owes them is
- * which community it is, and promising more would mean the remembered copy
- * below had to carry more too.
+ * The full record rather than an id, because otherwise every page on a
+ * community host took the id from here and immediately queried `community(id:)`
+ * for the same row -- an identical selection set, fetched twice per page load,
+ * on ten pages. `communityBySlug` already returned all of it.
+ *
+ * The cost is that the remembered copy below carries more, so a `name` or
+ * `memberCount` edited since the last visit is stale for one render before the
+ * refetch lands. The id it is keyed on cannot go stale.
  */
-type HostCommunity = { id: string; name: string; slug: string };
+type HostCommunity = NonNullable<
+  NonNullable<
+    ReturnType<typeof useCommunityBySlugQuery>["data"]
+  >["communityBySlug"]
+>;
 
 /** Where a resolved host is remembered between page loads. */
 const storageKey = (slug: string) => `chardb.community.${slug}`;
@@ -50,9 +58,9 @@ const readRemembered = (slug: string | null): HostCommunity | null => {
   return null;
 };
 
-const rememberCommunity = (slug: string, id: string, name: string): void => {
+const rememberCommunity = (slug: string, community: HostCommunity): void => {
   try {
-    window.localStorage.setItem(storageKey(slug), JSON.stringify({ id, name }));
+    window.localStorage.setItem(storageKey(slug), JSON.stringify(community));
   } catch {
     // Storage full or unavailable; the app works without it.
   }
@@ -77,6 +85,12 @@ interface CommunityHostContextType {
   community: HostCommunity | null;
   /** True while the slug is still being resolved. Always false at the apex. */
   loading: boolean;
+  /**
+   * Re-read the host community. For the pages that can CHANGE it -- renaming
+   * it, linking a Discord guild -- which previously held their own query and
+   * refetched that.
+   */
+  refetch: () => void;
 }
 
 const CommunityHostContext = createContext<
@@ -111,7 +125,7 @@ export const CommunityHostProvider: React.FC<{ children: ReactNode }> = ({
   // the mapping is permanent rather than merely cacheable.
   const [remembered, setRemembered] = useState(() => readRemembered(slug));
 
-  const { data, loading } = useCommunityBySlugQuery({
+  const { data, loading, refetch } = useCommunityBySlugQuery({
     variables: { slug: slug ?? "" },
     skip: !slug,
     fetchPolicy: "cache-first",
@@ -130,7 +144,7 @@ export const CommunityHostProvider: React.FC<{ children: ReactNode }> = ({
       return;
     }
 
-    rememberCommunity(slug, fetched.id, fetched.name);
+    rememberCommunity(slug, fetched);
   }, [slug, loading, fetched]);
 
   const value = useMemo<CommunityHostContextType>(
@@ -142,8 +156,11 @@ export const CommunityHostProvider: React.FC<{ children: ReactNode }> = ({
       community: fetched ?? remembered,
       // Nothing to wait for when this host is already known.
       loading: Boolean(slug) && loading && !remembered,
+      refetch: () => {
+        void refetch();
+      },
     }),
-    [slug, fetched, remembered, loading],
+    [slug, fetched, remembered, loading, refetch],
   );
 
   return (
@@ -172,3 +189,15 @@ export const useCommunityHost = (): CommunityHostContextType => {
  */
 export const useCommunityId = (): string | null =>
   useCommunityHost().community?.id ?? null;
+
+/**
+ * The community whose host this is, whole.
+ *
+ * Prefer this over `useCommunityId()` followed by `useCommunityByIdQuery`:
+ * that pair asked the server for a record this context is already holding,
+ * with the same selection set, once per page load. `community(id:)` is still
+ * the right call for a community that is NOT the host's -- the legacy-URL
+ * forwarder resolves an arbitrary id and has no other way.
+ */
+export const useHostCommunity = (): HostCommunity | null =>
+  useCommunityHost().community;

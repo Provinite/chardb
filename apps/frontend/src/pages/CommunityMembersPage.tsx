@@ -4,13 +4,13 @@ import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
 import { Users, Search, Package, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
-import { useCommunityId } from "../contexts/CommunityHostContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 import { apexUrl } from "../lib/communityHost";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import {
-  useCommunityByIdQuery,
-  useCommunityMembersWithRolesQuery,
-} from "../generated/graphql";
+import { useCommunityMembersWithRolesQuery } from "../generated/graphql";
 
 /**
  * Who is in this community, and what each of them holds.
@@ -198,10 +198,7 @@ export const CommunityMembersPage: React.FC = () => {
   const [search, setSearch] = useState("");
   const [limit, setLimit] = useState(PAGE_SIZE);
 
-  const { data: communityData } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  const community = useHostCommunity();
 
   const { data, loading, error } = useCommunityMembersWithRolesQuery({
     variables: { communityId: communityId!, first: limit },
@@ -259,9 +256,7 @@ export const CommunityMembersPage: React.FC = () => {
     <Container>
       <Header>
         <Title>Members</Title>
-        <Subtitle>
-          Everyone in {communityData?.community?.name || "this community"}
-        </Subtitle>
+        <Subtitle>Everyone in {community?.name || "this community"}</Subtitle>
       </Header>
 
       <SearchWrap>

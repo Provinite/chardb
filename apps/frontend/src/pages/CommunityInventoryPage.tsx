@@ -5,11 +5,13 @@ import { Package, ChevronDown } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CurrencyWallet } from "../components/currency/CurrencyWallet";
 import { useAuth } from "../contexts/AuthContext";
-import { useCommunityId } from "../contexts/CommunityHostContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 import { toast } from "react-hot-toast";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import {
-  useCommunityByIdQuery,
   useGetMemberHoldingsQuery,
   useGetUserProfileQuery,
   useUseItemMutation,
@@ -274,10 +276,7 @@ export const CommunityInventoryPage: React.FC = () => {
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
-  const { data: communityData } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-  });
+  const community = useHostCommunity();
 
   // No username in the route means "my own", which is the common case and
   // keeps /inventory working as it always has.
@@ -409,9 +408,7 @@ export const CommunityInventoryPage: React.FC = () => {
       <Header>
         <div>
           <Title>{viewingSelf ? "Your Inventory" : `${who}'s Items`}</Title>
-          <Subtitle>
-            Items in {communityData?.community?.name || "this community"}
-          </Subtitle>
+          <Subtitle>Items in {community?.name || "this community"}</Subtitle>
         </div>
       </Header>
 

@@ -10,16 +10,17 @@ import {
   HelpText,
   Card,
 } from "@chardb/ui";
-import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
-  useCommunityByIdQuery,
   useSpeciesByCommunityQuery,
   useGetCharactersQuery,
   useCommunityMembersByUserQuery,
 } from "../generated/graphql";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { useCommunityId } from "../contexts/CommunityHostContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 import { apexUrl } from "../lib/communityHost";
 
 /**
@@ -168,19 +169,6 @@ const ViewButton = styled(Button)`
   padding: 0.5rem 1rem;
 `;
 
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 4rem;
-`;
-
-const ErrorContainer = styled.div`
-  text-align: center;
-  padding: 4rem 2rem;
-  color: ${({ theme }) => theme.colors.error};
-`;
-
 const NotFoundContainer = styled.div`
   text-align: center;
   padding: 4rem 2rem;
@@ -191,12 +179,10 @@ export const CommunityPage: React.FC = () => {
   const communityId = useCommunityId();
   const { user } = useAuth();
 
-  const { data, loading, error } = useCommunityByIdQuery({
-    variables: { id: communityId! },
-    skip: !communityId,
-    fetchPolicy: "cache-and-network",
-    errorPolicy: "all",
-  });
+  // The host context already holds this community -- it is the one whose host
+  // this is -- so querying it back by id fetched the same record twice per
+  // page load.
+  const hostCommunity = useHostCommunity();
 
   // Fetch species count for this community
   const { data: speciesData } = useSpeciesByCommunityQuery({
@@ -221,33 +207,10 @@ export const CommunityPage: React.FC = () => {
     fetchPolicy: "cache-and-network",
   });
 
-  // `&& !data`: this query is cache-and-network, which reports loading on
-  // every background revalidation, so a bare check blanks the page on revisit.
-  if (loading && !data) {
-    return (
-      <Container>
-        <LoadingContainer>
-          <LoadingSpinner size="lg" />
-        </LoadingContainer>
-      </Container>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container>
-        <ErrorContainer>
-          <Heading2>Error Loading Community</Heading2>
-          <HelpText>
-            Unable to load community information. Please try refreshing the
-            page.
-          </HelpText>
-        </ErrorContainer>
-      </Container>
-    );
-  }
-
-  if (!data?.community) {
+  // No loading or error branch any more: `App` mounts the community route
+  // table only once the host has resolved, so by the time this renders the
+  // answer is already in hand. Null here means the address names no community.
+  if (!hostCommunity) {
     return (
       <Container>
         <NotFoundContainer>
@@ -261,7 +224,7 @@ export const CommunityPage: React.FC = () => {
     );
   }
 
-  const community = data.community;
+  const community = hostCommunity;
 
   // Get actual counts from GraphQL queries
   const speciesCount = speciesData?.speciesByCommunity?.totalCount || 0;

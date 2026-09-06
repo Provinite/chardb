@@ -8,10 +8,11 @@ import {
   HelpText,
   ErrorMessage,
 } from "@chardb/ui";
-import { useCommunityByIdQuery } from "../graphql/communities.graphql";
-import { LoadingSpinner } from "../components/LoadingSpinner";
 import { DiscordIntegrationSettings } from "../components/DiscordIntegrationSettings";
-import { useCommunityId } from "../contexts/CommunityHostContext";
+import {
+  useCommunityHost,
+  useCommunityId,
+} from "../contexts/CommunityHostContext";
 
 const Container = styled.div`
   display: flex;
@@ -75,20 +76,12 @@ const Content = styled.div`
   gap: 1.5rem;
 `;
 
-const LoadingContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 3rem;
-`;
-
 export const CommunitySettingsPage: React.FC = () => {
   const communityId = useCommunityId();
 
-  const { data, loading, error, refetch } = useCommunityByIdQuery({
-    variables: { id: communityId || "" },
-    skip: !communityId,
-  });
+  // The host context already holds this community; querying it back by id
+  // fetched the same record a second time on every page load.
+  const { community, refetch } = useCommunityHost();
 
   if (!communityId) {
     return (
@@ -99,17 +92,9 @@ export const CommunitySettingsPage: React.FC = () => {
     );
   }
 
-  if (loading) {
-    return (
-      <Container>
-        <LoadingContainer>
-          <LoadingSpinner size="lg" />
-        </LoadingContainer>
-      </Container>
-    );
-  }
-
-  if (error || !data?.community) {
+  // No loading branch: the host resolved this community before the page
+  // mounted, so it is either here or the address names none.
+  if (!community) {
     return (
       <Container>
         <Header>
@@ -123,12 +108,10 @@ export const CommunitySettingsPage: React.FC = () => {
             </BackButton>
           </HeaderTop>
         </Header>
-        <ErrorMessage message={error?.message || "Community not found"} />
+        <ErrorMessage message="Community not found" />
       </Container>
     );
   }
-
-  const community = data.community;
 
   return (
     <Container>

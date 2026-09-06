@@ -8,7 +8,10 @@ import {
   GrantTarget,
 } from "../components/GrantTargetSelector";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { useCommunityId } from "../contexts/CommunityHostContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 import { ColorSelector } from "../components/colors";
 import { ImageUpload, ImageFile } from "../components/ImageUpload";
 import { ItemUsePayoutEditor } from "../components/items/ItemUsePayoutEditor";
@@ -20,7 +23,6 @@ import { toast } from "react-hot-toast";
 import {
   type GrantItemInput,
   type ItemTypeFieldsFragment,
-  useCommunityByIdQuery,
   useGetCommunityMembersQuery,
   useGetItemTypesQuery,
   useCreateItemTypeMutation,
@@ -373,11 +375,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
     useState<ItemTypeFieldsFragment | null>(null);
   const [imageFile, setImageFile] = useState<ImageFile | null>(null);
 
-  const { data: communityData, loading: communityLoading } =
-    useCommunityByIdQuery({
-      variables: { id: communityId! },
-      skip: !communityId,
-    });
+  // The host context already holds this community; querying it back by id
+  // fetched the same record a second time on every page load.
+  const community = useHostCommunity();
 
   const {
     data: itemTypesData,
@@ -655,9 +655,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
   // on every background revalidation too, and blanking a populated page to a
   // spinner each time somebody visits it would be worse than the staleness
   // this is here to fix.
-  const isFirstLoad =
-    (communityLoading && !communityData) ||
-    (itemTypesLoading && !itemTypesData);
+  // The community is not part of this any more: the host resolved it before
+  // the page mounted, so there is nothing to wait for.
+  const isFirstLoad = itemTypesLoading && !itemTypesData;
 
   if (isFirstLoad) {
     return (
@@ -689,8 +689,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
       <Header>
         <Title>Item Types Administration</Title>
         <Subtitle>
-          Manage item types and grant items to users in{" "}
-          {communityData?.community?.name}
+          Manage item types and grant items to users in {community?.name}
         </Subtitle>
       </Header>
 
@@ -1093,8 +1092,8 @@ export const CommunityItemsAdminPage: React.FC = () => {
                 usersLoading={membersLoading}
                 allowPendingOwner={true}
                 allowUnassigned={false}
-                discordGuildId={communityData?.community?.discordGuildId}
-                discordGuildName={communityData?.community?.discordGuildName}
+                discordGuildId={community?.discordGuildId}
+                discordGuildName={community?.discordGuildName}
                 userLabel="Assign to User"
                 pendingOwnerLabel="Orphaned with Pending Owner"
                 communityId={communityId!}
