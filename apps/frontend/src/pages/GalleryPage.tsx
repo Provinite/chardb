@@ -334,8 +334,9 @@ export const GalleryPage: React.FC = () => {
 
   // The cover is whatever the gallery leads with, skipping anything flagged
   // NSFW rather than falling back to no image at the first one.
-  const cover = mediaItems.find((item) => item.image && !item.image.isNsfw)
-    ?.image;
+  const cover = mediaItems.find(
+    (item) => item.image && !item.image.isNsfw,
+  )?.image;
 
   usePageMeta(
     gallery
