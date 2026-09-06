@@ -109,6 +109,14 @@ export const CFG = {
    * The suite's own LocalStack, so an upload in a spec really reaches S3.
    * Not shared with the dev instance's: a suite run empties the bucket, and
    * doing that to a running app's images would be unkind.
+   *
+   * No `idx` multiplier, unlike the backend and frontend ports: one container
+   * is shared across workers, the same arrangement postgres-test has. Postgres
+   * then isolates per worker by database name; the bucket has no equivalent,
+   * so workers share it. That is safe for what the specs assert -- the upload
+   * spec checks the object count GREW rather than reaching an exact number,
+   * and the bucket is emptied once at teardown rather than per worker -- but
+   * a spec that wants an exact count needs isolation this does not provide.
    */
   localstackPort: num(process.env.E2E_LOCALSTACK_PORT, 4567),
 

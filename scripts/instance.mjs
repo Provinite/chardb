@@ -56,12 +56,17 @@ const PORTS = {
   postgres: { legacy: 5433, offset: 2 },
   postgresTest: { legacy: 5440, offset: 3 },
   localstack: { legacy: 4566, offset: 4 },
-  e2eBackend: { legacy: 4310, offset: 40 },
-  e2eFrontend: { legacy: 4311, offset: 41 },
   // The browser suite provisions its own LocalStack, so an image upload in a
   // spec is a real upload. Separate from the dev instance's so a suite run and
   // a running app never share a bucket.
-  e2eLocalstack: { legacy: 4567, offset: 42 },
+  //
+  // Deliberately BELOW 40, not beside the other e2e ports: 40+ is the worker
+  // fan-out range, where each worker adds `worker * 2`, so offset 42 is
+  // worker 1's backend. One container is shared across workers either way --
+  // the same arrangement postgres-test already has.
+  e2eLocalstack: { legacy: 4567, offset: 5 },
+  e2eBackend: { legacy: 4310, offset: 40 },
+  e2eFrontend: { legacy: 4311, offset: 41 },
 };
 
 /**
@@ -709,6 +714,7 @@ function main(argv) {
     ["e2e backend", `http://api.${E2E_ROOT_DOMAIN}:${ports.e2eBackend}`],
     ["e2e frontend", `http://${E2E_ROOT_DOMAIN}:${ports.e2eFrontend}`],
     ["e2e database", names.e2eDatabase],
+    ["e2e localstack", `http://localhost:${ports.e2eLocalstack}`],
     ["otel service", names.otelService],
   ];
   const width = Math.max(...rows.map(([k]) => k.length));
