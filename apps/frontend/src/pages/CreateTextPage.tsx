@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -526,15 +527,15 @@ export const CreateTextPage: React.FC = () => {
                     <option>No galleries yet</option>
                   </Select>
                   <div style={{ marginTop: "0.5rem" }}>
-                    <a
-                      href="/gallery/create"
+                    <Link
+                      to="/gallery/create"
                       style={{
                         fontSize: "0.875rem",
                         color: "var(--color-primary)",
                       }}
                     >
                       Create your first gallery
-                    </a>
+                    </Link>
                   </div>
                 </>
               ) : (

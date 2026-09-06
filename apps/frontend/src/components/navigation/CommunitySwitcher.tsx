@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { ChevronDown, Check, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityMembersByUserQuery } from "../../generated/graphql";
-import { apexUrl } from "../../lib/communityHost";
+import { apexUrl, communityUrl } from "../../lib/communityHost";
 
 interface CommunitySwitcherProps {
   className?: string;
@@ -261,12 +261,13 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
    * navigation and not a router one -- there is no route from
    * `willowmere.chardb.cc` to `cloverse.chardb.cc`.
    *
-   * It goes via the apex's `/communities/:id` forwarder rather than naming the
-   * target host outright because `CommunityMembersByUser` selects the
-   * community's id and name but not its slug.
+   * Straight to the target host, not via the apex's `/communities/:id`
+   * forwarder: that would load the apex, fetch the id to resolve a slug, and
+   * then load the community -- three hops to reach a host this menu is already
+   * naming.
    */
-  const handleCommunitySelect = (selectedCommunityId: string) => {
-    window.location.assign(apexUrl(`/communities/${selectedCommunityId}`));
+  const handleCommunitySelect = (slug: string) => {
+    window.location.assign(communityUrl(slug));
     setIsOpen(false);
     setSearchQuery("");
   };
@@ -320,7 +321,7 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
               <CommunityItem
                 key={community.id}
                 $isActive={community.id === communityId}
-                onClick={() => handleCommunitySelect(community.id)}
+                onClick={() => handleCommunitySelect(community.slug)}
                 role="option"
                 aria-selected={community.id === communityId}
               >

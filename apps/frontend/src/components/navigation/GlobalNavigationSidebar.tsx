@@ -19,7 +19,7 @@ import { CommunityNavigationGroup } from "./CommunityNavigationGroup";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityMembersByUserQuery } from "../../generated/graphql";
 import { useCommunityHost } from "../../contexts/CommunityHostContext";
-import { apexUrl } from "../../lib/communityHost";
+import { apexUrl, communityUrl } from "../../lib/communityHost";
 
 interface GlobalNavigationSidebarProps {
   className?: string;
@@ -367,16 +367,17 @@ export const GlobalNavigationSidebar: React.FC<
               <LoadingContainer>Loading communities...</LoadingContainer>
             ) : communities.length > 0 ? (
               <>
-                {/* Every community is its own host, so these are absolute URLs
-                    -- `CommunityNavigationItem` renders them as anchors. They
-                    go via the apex's `/communities/:id` forwarder rather than
-                    straight to `<slug>.chardb.cc` because
-                    `CommunityMembersByUser` selects the community's id and name
-                    but not its slug. */}
+                {/* Every community is its own host, so these are absolute
+                    URLs -- `CommunityNavigationItem` renders them as anchors.
+                    Straight to the community, not via the apex's
+                    `/communities/:id` forwarder: that route has to load the
+                    apex, fetch the id to resolve a slug, and then load the
+                    community, which is three hops to reach a host this list
+                    already knows the name of. */}
                 {communities.map((community) => (
                   <CommunityNavigationItem
                     key={community.id}
-                    to={apexUrl(`/communities/${community.id}`)}
+                    to={communityUrl(community.slug)}
                     icon={Users}
                     label={community.name}
                     isNested
