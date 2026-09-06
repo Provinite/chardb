@@ -1,5 +1,5 @@
 import { presetTest, expect } from "../../src/fixtures.js";
-import { communityUrl } from "../../src/config.js";
+import { apexUrl, communityUrl, urlStartingWith } from "../../src/config.js";
 
 const test = presetTest("community-basic");
 
@@ -26,13 +26,13 @@ const test = presetTest("community-basic");
  *     a session that stopped at the apex, because storageState seeds the
  *     cookie directly.
  */
+const communityNav = (page: import("@playwright/test").Page) =>
+  page.getByRole("navigation", { name: "Community navigation" });
+const globalNav = (page: import("@playwright/test").Page) =>
+  page.getByRole("navigation", { name: "Global navigation" });
+
 test.describe("community hosts", () => {
   test.use({ persona: "member" });
-
-  const communityNav = (page: import("@playwright/test").Page) =>
-    page.getByRole("navigation", { name: "Community navigation" });
-  const globalNav = (page: import("@playwright/test").Page) =>
-    page.getByRole("navigation", { name: "Global navigation" });
 
   test("serves the community at the root of its own host", async ({
     page,
@@ -134,5 +134,70 @@ test.describe("one session across hosts", () => {
 
     await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Login" })).toHaveCount(0);
+  });
+
+  test("signing in from a community host comes back to it", async ({
+    page,
+    world,
+  }) => {
+    // Signing in has to happen at the apex -- that is where the cookie for the
+    // whole parent domain is set -- but leaving a community should not be a
+    // one-way trip. Router state cannot carry the way back, because the trip
+    // crosses an ORIGIN and `location.state` does not survive that; the return
+    // address has to be in the URL.
+    //
+    // A PUBLIC community page, because this is the journey that starts by
+    // clicking Login rather than by being bounced there: somewhere a signed-out
+    // visitor can actually stand and see the button.
+    await page.goto(`${world.community.url}/characters`);
+
+    await page.getByRole("button", { name: "Login" }).click();
+
+    // Anchored on the APEX login page, not any `/login`. The community host has
+    // one too -- it is the hop that sends you here -- and filling the form on
+    // that one races the redirect and loses what was typed.
+    await expect(page).toHaveURL(urlStartingWith(apexUrl("/login")));
+
+    await page.getByLabel("Email").fill(world.users.member.email);
+    await page.getByLabel("Password").fill(world.users.member.password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    // Back where they started, not stranded on the apex dashboard.
+    await expect(page).toHaveURL(`${world.community.url}/characters`);
+    await expect(communityNav(page)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
+  });
+
+  test("a signed-out visitor to a protected community page returns to it", async ({
+    page,
+    world,
+  }) => {
+    // The same journey, entered by URL rather than by clicking: ProtectedRoute
+    // bounces to /login, which on a community host is itself a hop to the
+    // apex. Two redirects, and the destination has to survive both.
+    await page.goto(`${world.community.url}/settings`);
+
+    await expect(page).toHaveURL(urlStartingWith(apexUrl("/login")));
+    await page.getByLabel("Email").fill(world.users.commadmin.email);
+    await page.getByLabel("Password").fill(world.users.commadmin.password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    await expect(page).toHaveURL(`${world.community.url}/settings`);
+  });
+
+  test("a forged return address is ignored", async ({ page, world }) => {
+    // The return address is attacker-controllable, so it is an open redirect
+    // waiting to happen. Anything not under this site's root domain is
+    // discarded rather than followed.
+    await page.goto(
+      `${apexUrl("/login")}?next=${encodeURIComponent("https://evil.example/phish")}`,
+    );
+
+    await page.getByLabel("Email").fill(world.users.member.email);
+    await page.getByLabel("Password").fill(world.users.member.password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    await expect(page).not.toHaveURL(/evil\.example/);
+    await expect(page).toHaveURL(apexUrl("/dashboard"));
   });
 });

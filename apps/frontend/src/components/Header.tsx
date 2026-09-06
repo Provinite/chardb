@@ -4,6 +4,7 @@ import styled from "styled-components";
 import { Avatar, Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
+import { loginUrlReturningHere } from "../lib/communityHost";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./notifications/NotificationBell";
 
@@ -114,7 +115,9 @@ export const Header: React.FC = () => {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => navigate("/login")}
+                // Carries where they were, so signing in from a community host
+                // comes back to it rather than dropping them at the apex.
+                onClick={() => navigate(loginUrlReturningHere())}
               >
                 Login
               </Button>

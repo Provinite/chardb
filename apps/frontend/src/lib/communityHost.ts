@@ -75,6 +75,80 @@ export const communityUrl = (slug: string, path = "/"): string =>
   `${origin(`${slug}.${ROOT_DOMAIN}`)}${path}`;
 
 /**
+ * The query parameter carrying where to go back to after signing in.
+ *
+ * Signing in always happens at the apex, because that is where the cookie for
+ * the whole parent domain is set -- so leaving a community host is unavoidable.
+ * Coming back is not: the return address rides in the URL because
+ * `location.state`, which the router would otherwise use, does not survive a
+ * navigation across origins.
+ */
+export const RETURN_TO_PARAM = "next";
+
+/**
+ * The URL to return to after signing in, or `null` if there is not a safe one.
+ *
+ * A return address is attacker-controllable by construction -- it is a query
+ * parameter on a public page -- so this is an open redirect unless it is
+ * checked. Only this site's own hosts are accepted: the apex, or exactly one
+ * label under it, which is what a community is. `https://chardb.cc.evil.example`
+ * and `https://evil.example/?x=chardb.cc` both fail, because the comparison is
+ * against a parsed hostname rather than the string.
+ *
+ * Relative paths are accepted and returned as-is; they cannot leave the origin.
+ */
+export const safeReturnUrl = (raw: string | null): string | null => {
+  if (!raw) return null;
+
+  // A path, not a URL. `//evil.example` is protocol-relative and would leave
+  // the site, so a second slash disqualifies it.
+  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
+
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    return null;
+  }
+
+  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
+
+  const host = url.hostname.toLowerCase();
+  if (host === ROOT_DOMAIN) return raw;
+
+  const suffix = `.${ROOT_DOMAIN}`;
+  if (!host.endsWith(suffix)) return null;
+
+  const label = host.slice(0, -suffix.length);
+  return label.length > 0 && !label.includes(".") ? raw : null;
+};
+
+/**
+ * Pages that are not somewhere to come back to.
+ *
+ * Returning to `/login` after signing in means arriving at the sign-in form
+ * already signed in, and returning to it from itself nests one return address
+ * inside another until the URL is unreadable.
+ */
+const NOT_A_RETURN_DESTINATION = new Set([
+  "/login",
+  "/signup",
+  "/forgot-password",
+]);
+
+/**
+ * A `/login` link that remembers where it was clicked from.
+ *
+ * The current page goes in as an absolute URL, because it may be on a
+ * community host while the login page never is.
+ */
+export const loginUrlReturningHere = (): string => {
+  if (NOT_A_RETURN_DESTINATION.has(window.location.pathname)) return "/login";
+
+  return `/login?${RETURN_TO_PARAM}=${encodeURIComponent(window.location.href)}`;
+};
+
+/**
  * Absolute URL for a character, wherever it lives.
  *
  * A character reached its community through a nullable `speciesId`, so one

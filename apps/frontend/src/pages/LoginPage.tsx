@@ -6,6 +6,7 @@ import { z } from "zod";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { RETURN_TO_PARAM, safeReturnUrl } from "../lib/communityHost";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -100,7 +101,22 @@ export const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || "/dashboard";
+  /**
+   * Where to go once signed in.
+   *
+   * `?next=` first, because that is the only channel that survives the trip
+   * from a community host -- signing in happens at the apex, and router state
+   * does not cross an origin. `location.state` still covers the apex-only
+   * journeys that never leave, and the dashboard is the fallback.
+   *
+   * `safeReturnUrl` is what stops this being an open redirect: the parameter
+   * is attacker-controllable, so anything not on one of this site's own hosts
+   * is discarded.
+   */
+  const returnTo =
+    safeReturnUrl(new URLSearchParams(location.search).get(RETURN_TO_PARAM)) ??
+    location.state?.from?.pathname ??
+    "/dashboard";
 
   const {
     register,
@@ -115,7 +131,14 @@ export const LoginPage: React.FC = () => {
     try {
       const success = await login(data.email, data.password);
       if (success) {
-        navigate(from, { replace: true });
+        // A community host is a different origin, which the router cannot
+        // reach -- that one needs a whole-page navigation. A path stays in the
+        // router so the apex case keeps its client-side transition.
+        if (returnTo.startsWith("/")) {
+          navigate(returnTo, { replace: true });
+        } else {
+          window.location.replace(returnTo);
+        }
       }
     } finally {
       setIsLoading(false);

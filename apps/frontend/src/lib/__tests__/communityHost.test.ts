@@ -4,7 +4,11 @@ import {
   suggestCommunitySlug,
   isValidCommunitySlug,
 } from "@chardb/shared";
-import { parseCommunitySlug, ROOT_DOMAIN } from "../communityHost";
+import {
+  parseCommunitySlug,
+  safeReturnUrl,
+  ROOT_DOMAIN,
+} from "../communityHost";
 
 /**
  * `ROOT_DOMAIN` is read from the environment once, at module load, so these
@@ -54,6 +58,50 @@ describe("parseCommunitySlug", () => {
     expect(parseCommunitySlug(`WILLOWMERE.${root.toUpperCase()}`)).toBe(
       "willowmere",
     );
+  });
+});
+
+describe("safeReturnUrl", () => {
+  // This is the only thing between a query parameter on a public page and an
+  // open redirect, so the cases that matter are the near misses.
+  it("accepts this site's own hosts", () => {
+    expect(safeReturnUrl(`http://${root}:1234/dashboard`)).toBe(
+      `http://${root}:1234/dashboard`,
+    );
+    expect(safeReturnUrl(`http://willowmere.${root}:1234/members`)).toBe(
+      `http://willowmere.${root}:1234/members`,
+    );
+  });
+
+  it("accepts a plain path, which cannot leave the origin", () => {
+    expect(safeReturnUrl("/members")).toBe("/members");
+  });
+
+  it("refuses a protocol-relative path", () => {
+    // `//evil.example` is a URL, not a path, and would leave the site.
+    expect(safeReturnUrl("//evil.example")).toBeNull();
+    expect(safeReturnUrl("//evil.example/phish")).toBeNull();
+  });
+
+  it("refuses another site that merely contains the root domain", () => {
+    expect(safeReturnUrl(`https://${root}.evil.example/phish`)).toBeNull();
+    expect(safeReturnUrl(`https://evil.example/?x=${root}`)).toBeNull();
+    expect(safeReturnUrl(`https://not${root}/`)).toBeNull();
+  });
+
+  it("refuses more than one label under the root domain", () => {
+    expect(safeReturnUrl(`http://a.b.${root}:1234/`)).toBeNull();
+  });
+
+  it("refuses non-http schemes", () => {
+    expect(safeReturnUrl("javascript:alert(1)")).toBeNull();
+    expect(safeReturnUrl(`data:text/html,<script>alert(1)</script>`)).toBeNull();
+  });
+
+  it("refuses nothing and nonsense", () => {
+    expect(safeReturnUrl(null)).toBeNull();
+    expect(safeReturnUrl("")).toBeNull();
+    expect(safeReturnUrl("not a url")).toBeNull();
   });
 });
 
