@@ -7,11 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v12.0.0] - 2026-09-06
+
 ### Changed
 
 - **Local development moved to `dev.localhost`**, with the API on
   `api.dev.localhost` — bare `localhost` is a public suffix, so the session
   cookie could not have crossed subdomains under it (#339).
+
+- **CI shards the browser E2E suite across six runners** and caches the backend, frontend and workspace build outputs between runs, taking the job down from ~9m; a merge job stitches the shard reports into one artifact (#353).
 
 ### Added
 
@@ -58,10 +62,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   an unconfigured one carries nothing (#232).
 
 - **A "Changing a Character's Rarity" walkthrough** (`docs/docs/character-rarity.html`).
-
-### Changed
-
-- **CI shards the browser E2E suite across six runners** and caches the backend, frontend and workspace build outputs between runs, taking the job down from ~9m; a merge job stitches the shard reports into one artifact (#353).
 
 ### Fixed
 

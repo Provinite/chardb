@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v12.0.0] - 2026-09-06
+
 ### Changed
 
 - **Every community is served from its own subdomain.** `willowmere.chardb.cc`
