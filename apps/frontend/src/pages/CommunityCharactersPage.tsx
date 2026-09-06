@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { CharacterListView } from "../components/CharacterListView";
@@ -40,6 +41,8 @@ const ErrorContainer = styled.div`
 `;
 
 export const CommunityCharactersPage: React.FC = () => {
+  usePageMeta({ title: "Characters" });
+
   const communityId = useCommunityId();
 
   // The host context already resolved this community; querying it back by id

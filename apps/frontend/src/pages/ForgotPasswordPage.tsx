@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -110,6 +111,8 @@ const BackLink = styled(Link)`
 `;
 
 export const ForgotPasswordPage: React.FC = () => {
+  usePageMeta({ title: "Reset Your Password" });
+
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [forgotPassword] = useForgotPasswordMutation();

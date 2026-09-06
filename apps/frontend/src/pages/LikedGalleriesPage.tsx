@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -179,6 +180,8 @@ const ErrorContainer = styled.div`
 `;
 
 export const LikedGalleriesPage: React.FC = () => {
+  usePageMeta({ title: "Liked Galleries" });
+
   const { user } = useAuth();
 
   const { data, loading, error } = useGetLikedGalleriesQuery({

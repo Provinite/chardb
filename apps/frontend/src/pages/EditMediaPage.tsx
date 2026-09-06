@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { usePageMeta } from "../lib/pageMeta";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
@@ -296,6 +297,8 @@ const Checkbox = styled.input.attrs({ type: "checkbox" })`
 `;
 
 export const EditMediaPage: React.FC = () => {
+  usePageMeta({ title: "Edit Media" });
+
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();

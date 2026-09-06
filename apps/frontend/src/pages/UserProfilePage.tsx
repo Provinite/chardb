@@ -310,22 +310,19 @@ export const UserProfilePage: React.FC = () => {
   });
 
   const profileUser = data?.userProfile?.user;
-  usePageMeta(
-    profileUser
-      ? {
-          // Both names: the display name is what people recognise, the
-          // username is what the URL says.
-          title: profileUser.displayName
-            ? `${profileUser.displayName} (@${profileUser.username})`
-            : `@${profileUser.username}`,
-          description: profileUser.bio || `${profileUser.username} on CharDB`,
-          image:
-            profileUser.avatarImage?.thumbnailUrl ??
-            profileUser.avatarImage?.originalUrl,
-          type: "profile",
-        }
-      : null,
-  );
+  usePageMeta({
+    // Both names: the display name is what people recognise, the username is
+    // what the URL says. The username is in the URL, so it titles the page
+    // immediately and the display name joins it when the profile lands.
+    title: profileUser?.displayName
+      ? `${profileUser.displayName} (@${profileUser.username})`
+      : `@${username}`,
+    description: profileUser?.bio || `${username} on CharDB`,
+    image:
+      profileUser?.avatarImage?.thumbnailUrl ??
+      profileUser?.avatarImage?.originalUrl,
+    type: "profile",
+  });
 
   if (loading) {
     return (

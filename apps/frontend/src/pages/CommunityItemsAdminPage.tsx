@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift, ExternalLink } from "lucide-react";
@@ -367,6 +368,8 @@ const LoadingContainer = styled.div`
 `;
 
 export const CommunityItemsAdminPage: React.FC = () => {
+  usePageMeta({ title: "Items Admin" });
+
   const communityId = useCommunityId();
   const { user } = useAuth();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

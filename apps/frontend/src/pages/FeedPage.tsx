@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
@@ -190,6 +191,8 @@ const LoginPromptText = styled.p`
 `;
 
 export const FeedPage: React.FC = () => {
+  usePageMeta({ title: "Feed" });
+
   const { user } = useAuth();
 
   const { data, loading, error } = useGetActivityFeedQuery({

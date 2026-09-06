@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { HostAwareLink } from "../components/HostAwareLink";
 import styled, { css } from "styled-components";
 import { ArrowLeftRight, X } from "lucide-react";
@@ -166,6 +167,8 @@ const LoadingWrap = styled.div`
  * it. Which way a row points is said in its own text.
  */
 export const TradesPage: React.FC = () => {
+  usePageMeta({ title: "Trades" });
+
   const { user } = useAuth();
   // Which community, if any, this list is narrowed to. The page is mounted on
   // both hosts: on a community's own host it is that community's inbox, and at

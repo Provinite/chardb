@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { useAuth } from "../contexts/AuthContext";
@@ -205,6 +206,8 @@ const ErrorMessage = styled.div`
 `;
 
 export function DeviantArtBackfillPage() {
+  usePageMeta({ title: "DeviantArt Backfill" });
+
   const { user } = useAuth();
   const [jobId, setJobId] = useState<string | null>(null);
   const [isDone, setIsDone] = useState(false);

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -266,6 +267,8 @@ const LoadingSpinner = styled.div`
 `;
 
 export const CreateGalleryPage: React.FC = () => {
+  usePageMeta({ title: "Create Gallery" });
+
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
 

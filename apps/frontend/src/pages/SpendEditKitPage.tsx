@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
@@ -115,6 +116,8 @@ const ButtonRow = styled.div`
  * it is fixed. Either way nothing is spent until submit.
  */
 export const SpendEditKitPage: React.FC = () => {
+  usePageMeta({ title: "Edit Traits" });
+
   const { characterId } = useParams<{ characterId: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();

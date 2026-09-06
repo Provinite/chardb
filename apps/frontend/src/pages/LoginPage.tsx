@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -96,6 +97,8 @@ const SignupLink = styled(Link)`
 `;
 
 export const LoginPage: React.FC = () => {
+  usePageMeta({ title: "Sign In" });
+
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const navigate = useNavigate();

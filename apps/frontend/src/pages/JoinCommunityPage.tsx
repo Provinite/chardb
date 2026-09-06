@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -105,6 +106,8 @@ const PreviewText = styled.p`
 `;
 
 export const JoinCommunityPage: React.FC = () => {
+  usePageMeta({ title: "Join a Community" });
+
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();

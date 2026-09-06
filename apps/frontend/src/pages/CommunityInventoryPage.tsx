@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { useParams, Link } from "react-router-dom";
 import { Package, ChevronDown } from "lucide-react";
@@ -272,6 +273,10 @@ const formatDate = (iso: string) =>
 export const CommunityInventoryPage: React.FC = () => {
   const communityId = useCommunityId();
   const { username } = useParams<{ username?: string }>();
+
+  // Two routes reach this page: `/inventory`, which is your own, and
+  // `/members/:username/items`, which is somebody else's.
+  usePageMeta({ title: username ? `@${username}'s Items` : "Inventory" });
   const { user } = useAuth();
 
   const [expanded, setExpanded] = useState<Set<string>>(new Set());

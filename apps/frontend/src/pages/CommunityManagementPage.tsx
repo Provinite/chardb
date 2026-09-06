@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Plus, Settings, Trash2, ExternalLink, Search } from "lucide-react";
 import {
@@ -198,6 +199,8 @@ const EmptyState = styled.div`
 `;
 
 export function CommunityManagementPage() {
+  usePageMeta({ title: "Community Management" });
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 

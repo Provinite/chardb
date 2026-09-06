@@ -10,9 +10,10 @@
  * that does not exist yet, and adding these tags does not bring it closer.
  *
  * What it is for, in descending order of how much it matters: the browser tab
- * and history entry, which currently say "CharDB - Character Hub" on all 60-odd
- * routes; bookmarks and the share sheet on mobile, which read `document.title`;
- * and Googlebot, which does render JavaScript, so this is the copy it indexes.
+ * and history entry, which said "CharDB - Character Hub" on every one of the
+ * site's routes before this; bookmarks and the share sheet on mobile, which
+ * read `document.title`; and Googlebot, which does render JavaScript, so this
+ * is the copy it indexes.
  *
  * The OG tags are kept in sync with the title here anyway, because a page whose
  * `<head>` disagrees with itself is the kind of thing that is discovered much
@@ -113,22 +114,28 @@ export const applyPageMeta = (meta: PageMeta): void => {
 };
 
 /**
- * Describe the current page.
+ * Describe the current page. Every routed page calls this.
  *
- * Pass `null` while the data is still loading and the tags are left alone --
- * the previous page's title stays up for the length of the fetch, which reads
- * better than a flash of "Loading | CharDB" in the tab.
+ * `title` is required rather than nullable, and that is the whole mechanism
+ * that keeps titles correct. There is no cleanup here and no route-level
+ * fallback anywhere: the title is only ever right because the page that is
+ * mounted has set it. A page that returned early without calling this would
+ * leave the previous page's title in the tab -- so a character's name would
+ * still be sitting above `/dashboard`, and bookmarking there would name the
+ * bookmark after a character.
  *
- * There is no cleanup: the next route that calls this overwrites what this one
- * set. Restoring the site defaults on unmount would mean every navigation
- * briefly showed them, and a route that does not call this hook at all is
- * showing the previous title either way.
+ * A page whose title depends on data it is still fetching supplies a generic
+ * one until the data lands -- `data?.species?.name ?? "Species"` -- rather than
+ * skipping the call. The tab then reads "Species", then "Sylvanine", and never
+ * reads whatever the last page was.
  */
-export const usePageMeta = (meta: PageMeta | null): void => {
-  const { title, description, image, type } = meta ?? {};
-
+export const usePageMeta = ({
+  title,
+  description,
+  image,
+  type,
+}: PageMeta): void => {
   useEffect(() => {
-    if (!title) return;
     applyPageMeta({ title, description, image, type });
   }, [title, description, image, type]);
 };

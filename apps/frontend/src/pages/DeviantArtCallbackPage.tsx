@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import toast from "react-hot-toast";
@@ -64,6 +65,8 @@ const Spinner = styled.div`
 `;
 
 export function DeviantArtCallbackPage() {
+  usePageMeta({ title: "Connecting DeviantArt" });
+
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isProcessing, setIsProcessing] = useState(true);

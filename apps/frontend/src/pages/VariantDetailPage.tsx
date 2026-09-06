@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { ArrowLeft, Save, ChevronDown, ChevronUp } from "lucide-react";
@@ -167,6 +168,8 @@ const CollapsibleHeader = styled.div`
 `;
 
 export const VariantDetailPage: React.FC = () => {
+  usePageMeta({ title: "Variant" });
+
   const { variantId } = useParams<{ variantId: string }>();
   const navigate = useNavigate();
 

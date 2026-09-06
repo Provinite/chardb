@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -220,6 +221,8 @@ const ErrorContainer = styled.div`
 `;
 
 export const LikedMediaPage: React.FC = () => {
+  usePageMeta({ title: "Liked Media" });
+
   const { user } = useAuth();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 

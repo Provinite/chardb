@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import {
   Settings,
@@ -125,6 +126,8 @@ const StatValue = styled.div`
 `;
 
 export function SiteAdminPage() {
+  usePageMeta({ title: "Site Admin" });
+
   return (
     <Container>
       <Header>

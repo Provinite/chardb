@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Plus, Trash2, Palette, Database, Settings } from "lucide-react";
@@ -195,6 +196,8 @@ const VariantModal: React.FC<VariantModalProps> = ({
 };
 
 export const SpeciesVariantManagementPage: React.FC = () => {
+  usePageMeta({ title: "Variants" });
+
   const { speciesId } = useParams<{ speciesId: string }>();
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

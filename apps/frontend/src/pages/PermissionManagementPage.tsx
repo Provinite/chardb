@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Shield, Users, Settings, Plus, ArrowLeft } from "lucide-react";
 import { Button, Heading2, SmallText, HelpText } from "@chardb/ui";
@@ -146,6 +147,8 @@ const ErrorContainer = styled.div`
 type TabType = "overview" | "roles";
 
 export const PermissionManagementPage: React.FC = () => {
+  usePageMeta({ title: "Permissions" });
+
   const communityId = useCommunityId();
   const [activeTab, setActiveTab] = useState<TabType>("overview");
   const [showRoleEditor, setShowRoleEditor] = useState(false);

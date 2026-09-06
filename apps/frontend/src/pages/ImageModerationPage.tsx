@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Image, ArrowLeft } from "lucide-react";
 import { Button, Heading2, SmallText, HelpText } from "@chardb/ui";
@@ -62,6 +63,8 @@ const HeaderText = styled.div`
 `;
 
 export const ImageModerationPage: React.FC = () => {
+  usePageMeta({ title: "Image Moderation" });
+
   const communityId = useCommunityId();
 
   if (!communityId) {

@@ -465,27 +465,25 @@ export const CharacterPage: React.FC = () => {
 
   const character = data?.character;
 
-  usePageMeta(
-    character
-      ? {
-          title: character.name,
-          description:
-            character.details ||
-            [
-              character.species?.name,
-              character.owner ? `owned by ${character.owner.username}` : null,
-            ]
-              .filter(Boolean)
-              .join(" · "),
-          // An NSFW image is behind a click-through on the page itself, and a
-          // tab preview or an in-app share sheet reproduces none of that.
-          image: character.mainMedia?.image?.isNsfw
-            ? null
-            : (character.mainMedia?.image?.thumbnailUrl ??
-              character.mainMedia?.image?.originalUrl),
-        }
-      : null,
-  );
+  // "Character" until the name arrives, rather than leaving the previous page's
+  // title up for the length of the fetch.
+  usePageMeta({
+    title: character?.name ?? "Character",
+    description:
+      character?.details ||
+      [
+        character?.species?.name,
+        character?.owner ? `owned by ${character.owner.username}` : null,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+    // An NSFW image is behind a click-through on the page itself, and a tab
+    // preview or an in-app share sheet reproduces none of that.
+    image: character?.mainMedia?.image?.isNsfw
+      ? null
+      : (character?.mainMedia?.image?.thumbnailUrl ??
+        character?.mainMedia?.image?.originalUrl),
+  });
 
   // Get user's permissions in the character's community
   const { permissions, userRole } = useUserCommunityRole(
@@ -533,15 +531,15 @@ export const CharacterPage: React.FC = () => {
   const tradeCommunityId = character?.species?.community?.id;
   const canProposeTrade = Boolean(
     character?.isTradeable &&
-      user &&
-      character.owner &&
-      character.owner.id !== user.id &&
-      // Characters reach a community through their species, and a trade is
-      // scoped to one. No species, no community, nowhere to trade.
-      tradeCommunityId &&
-      // Both parties must be members, and this is the half we can see from
-      // here. An owner who never joined is caught at send instead.
-      userRole,
+    user &&
+    character.owner &&
+    character.owner.id !== user.id &&
+    // Characters reach a community through their species, and a trade is
+    // scoped to one. No species, no community, nowhere to trade.
+    tradeCommunityId &&
+    // Both parties must be members, and this is the half we can see from
+    // here. An owner who never joined is caught at send instead.
+    userRole,
   );
 
   const [deleteCharacter, { loading: deleting }] = useDeleteCharacterMutation();

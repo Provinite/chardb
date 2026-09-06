@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
@@ -117,6 +118,8 @@ const CharacterNote = styled.p`
 `;
 
 export const CreateMediaPage: React.FC = () => {
+  usePageMeta({ title: "Upload Media" });
+
   const [searchParams] = useSearchParams();
   const characterId = searchParams.get("character");
   const galleryId = searchParams.get("gallery");

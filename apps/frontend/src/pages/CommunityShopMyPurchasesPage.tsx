@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { Receipt, Undo2, Search, X, Check } from "lucide-react";
@@ -217,6 +218,8 @@ const STATUS_CHIPS: Array<{
 ];
 
 export const CommunityShopMyPurchasesPage: React.FC = () => {
+  usePageMeta({ title: "My Purchases" });
+
   const communityId = useCommunityId();
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<ShopPurchaseLineStatus | undefined>();

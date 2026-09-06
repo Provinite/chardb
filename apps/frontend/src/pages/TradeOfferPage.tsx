@@ -1,4 +1,5 @@
 import React, { useCallback, useMemo, useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { ArrowDownUp } from "lucide-react";
@@ -193,6 +194,8 @@ function LineRows({
  * belongs behind an affordance, not in the main path.
  */
 export const TradeOfferPage: React.FC = () => {
+  usePageMeta({ title: "Trade Offer" });
+
   const { tradeId } = useParams<{ tradeId: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();

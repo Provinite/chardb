@@ -338,16 +338,13 @@ export const GalleryPage: React.FC = () => {
     (item) => item.image && !item.image.isNsfw,
   )?.image;
 
-  usePageMeta(
-    gallery
-      ? {
-          title: gallery.name,
-          description:
-            gallery.description || `A gallery by ${gallery.owner.username}`,
-          image: cover?.thumbnailUrl ?? cover?.originalUrl,
-        }
+  usePageMeta({
+    title: gallery?.name ?? "Gallery",
+    description: gallery
+      ? gallery.description || `A gallery by ${gallery.owner.username}`
       : null,
-  );
+    image: cover?.thumbnailUrl ?? cover?.originalUrl,
+  });
 
   const handleBackClick = () => {
     navigate("/galleries");

@@ -1,4 +1,5 @@
 import React from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { Image, ClipboardCheck } from "lucide-react";
@@ -133,6 +134,8 @@ const ErrorContainer = styled(MessageContainer)`
 `;
 
 export const CommunityModerationPage: React.FC = () => {
+  usePageMeta({ title: "Content Moderation" });
+
   const communityId = useCommunityId();
 
   // Every hook runs before the guards below. These pages have a history of

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Palette, Plus, Edit2, Trash2, X, Check } from "lucide-react";
 import { Button, Card } from "@chardb/ui";
@@ -210,6 +211,8 @@ interface ColorFormData {
 }
 
 export const CommunityColorPalettePage: React.FC = () => {
+  usePageMeta({ title: "Color Palette" });
+
   const communityId = useCommunityId();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingColor, setEditingColor] = useState<{

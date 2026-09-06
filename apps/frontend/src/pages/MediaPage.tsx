@@ -373,17 +373,15 @@ export const MediaPage: React.FC = () => {
 
   const media = data?.mediaItem;
 
-  usePageMeta(
-    media
-      ? {
-          title: media.title,
-          description: media.description || `Posted by ${media.owner.username}`,
-          image: media.image?.isNsfw
-            ? null
-            : (media.image?.thumbnailUrl ?? media.image?.originalUrl),
-        }
+  usePageMeta({
+    title: media?.title ?? "Media",
+    description: media
+      ? media.description || `Posted by ${media.owner.username}`
       : null,
-  );
+    image: media?.image?.isNsfw
+      ? null
+      : (media?.image?.thumbnailUrl ?? media?.image?.originalUrl),
+  });
 
   const handleBackClick = () => {
     if (media?.character) {

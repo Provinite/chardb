@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
@@ -339,6 +340,8 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
 };
 
 export const EnumValueManagementPage: React.FC = () => {
+  usePageMeta({ title: "Trait Values" });
+
   const { traitId } = useParams<{ traitId: string }>();
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);

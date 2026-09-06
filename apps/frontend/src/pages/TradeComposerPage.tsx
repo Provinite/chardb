@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { ArrowDownUp } from "lucide-react";
 import { Button, Input } from "@chardb/ui";
@@ -262,6 +263,8 @@ const LoadingWrap = styled.div`
  * looser way to ask for one.
  */
 export const TradeComposerPage: React.FC = () => {
+  usePageMeta({ title: "New Trade Offer" });
+
   const communityId = useCommunityId();
   const [params] = useSearchParams();
   const navigate = useNavigate();
