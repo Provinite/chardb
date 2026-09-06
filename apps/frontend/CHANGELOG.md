@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Markdown no longer leaks into `og:description`**, and `stripMarkdown` no longer returns escaped text like `some\_user\_name` — which also reached the media card's preview line.
+
 ### Added
 
 - **Every page sets its own title and OpenGraph tags**, replacing the one static title all 80-odd routes shared; chat unfurlers still see only the site card, which needs server-side rendering.
