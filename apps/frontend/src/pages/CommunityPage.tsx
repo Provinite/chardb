@@ -13,7 +13,6 @@ import {
 import {
   useSpeciesByCommunityQuery,
   useGetCharactersQuery,
-  useCommunityMembersByUserQuery,
 } from "../generated/graphql";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -201,11 +200,7 @@ export const CommunityPage: React.FC = () => {
   });
 
   // Check if current user is a member of this community
-  const { data: userMembershipsData } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || "", first: 100 },
-    skip: !user?.id,
-    fetchPolicy: "cache-and-network",
-  });
+  // Off the viewer: `me` already carries the memberships.
 
   // No loading or error branch any more: `App` mounts the community route
   // table only once the host has resolved, so by the time this renders the
@@ -233,7 +228,7 @@ export const CommunityPage: React.FC = () => {
 
   // Check if current user is a member of this community
   const isMember =
-    userMembershipsData?.communityMembersByUser?.nodes.some(
+    user?.communityMemberships?.nodes.some(
       (membership) => membership.role.community.id === communityId,
     ) || false;
 

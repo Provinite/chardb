@@ -4653,7 +4653,7 @@ type User {
   canGrantGlobalPermissions: Boolean!
   canListInviteCodes: Boolean!
   canListUsers: Boolean!
-  communityMemberships: [CommunityMember!]!
+  communityMemberships(after: String, first: Int = 20): CommunityMemberConnection!
   createdAt: DateTime!
   dateOfBirth: DateTime
   displayName: String

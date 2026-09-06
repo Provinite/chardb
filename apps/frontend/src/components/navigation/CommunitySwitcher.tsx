@@ -2,7 +2,6 @@ import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { ChevronDown, Check, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCommunityMembersByUserQuery } from "../../generated/graphql";
 import { apexUrl, communityUrl } from "../../lib/communityHost";
 
 interface CommunitySwitcherProps {
@@ -222,13 +221,15 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
   const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
 
-  const { data, loading } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || "", first: 100 },
-    skip: !user?.id,
-  });
+  // Off the viewer, not a query of its own: `me` already carries the
+  // memberships, and asking for them separately could not even start until
+  // `me` had returned the id to ask with.
+  const loading = false;
 
   const communities =
-    data?.communityMembersByUser?.nodes?.map((m) => m.role.community) || [];
+    user?.communityMemberships?.nodes
+      ?.map((m) => m.role.community)
+      .filter((c): c is NonNullable<typeof c> => Boolean(c)) ?? [];
   const currentCommunity = communities.find((c) => c.id === communityId);
 
   // Filter communities based on search query

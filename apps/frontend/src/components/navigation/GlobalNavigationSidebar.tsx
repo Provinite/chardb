@@ -17,7 +17,6 @@ import { spotlight } from "@mantine/spotlight";
 import { CommunityNavigationItem } from "./CommunityNavigationItem";
 import { CommunityNavigationGroup } from "./CommunityNavigationGroup";
 import { useAuth } from "../../contexts/AuthContext";
-import { useCommunityMembersByUserQuery } from "../../generated/graphql";
 import { useCommunityHost } from "../../contexts/CommunityHostContext";
 import { apexUrl, communityUrl } from "../../lib/communityHost";
 
@@ -198,17 +197,12 @@ export const GlobalNavigationSidebar: React.FC<
   const apexHref = (path: string): string =>
     communitySlug ? apexUrl(path) : path;
 
-  // Fetch user's communities
-  const { data: communitiesData, loading: communitiesLoading } =
-    useCommunityMembersByUserQuery({
-      variables: { userId: user?.id || "", first: 50 },
-      skip: !user?.id,
-    });
-
+  // Off the viewer: `me` already carries the memberships, and asking for them
+  // separately could not start until `me` had returned the id to ask with.
   const communities =
-    communitiesData?.communityMembersByUser?.nodes?.map(
-      (m) => m.role.community,
-    ) || [];
+    user?.communityMemberships?.nodes
+      ?.map((m) => m.role.community)
+      .filter((c): c is NonNullable<typeof c> => Boolean(c)) ?? [];
 
   return (
     <SidebarContainer
@@ -362,10 +356,10 @@ export const GlobalNavigationSidebar: React.FC<
           icon={Users}
           defaultExpanded
         >
+          {/* No loading branch: the memberships arrive with the viewer, so if
+              `user` is here so are they. */}
           {user &&
-            (communitiesLoading ? (
-              <LoadingContainer>Loading communities...</LoadingContainer>
-            ) : communities.length > 0 ? (
+            (communities.length > 0 ? (
               <>
                 {/* Every community is its own host, so these are absolute
                     URLs -- `CommunityNavigationItem` renders them as anchors.

@@ -6,7 +6,6 @@ import type {
 } from "@mantine/spotlight";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityHost } from "../../contexts/CommunityHostContext";
-import { useCommunityMembersByUserQuery } from "../../generated/graphql";
 import { apexUrl } from "../../lib/communityHost";
 
 export function useSpotlightActions(): SpotlightActionGroupData[] {
@@ -15,10 +14,9 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
   const hostCommunityId = hostCommunity?.id ?? null;
   const navigate = useNavigate();
 
-  const { data: communitiesData } = useCommunityMembersByUserQuery({
-    variables: { userId: user?.id || "", first: 50 },
-    skip: !user?.id,
-  });
+  // Off the viewer: `me` already carries the memberships, and asking for them
+  // separately could not start until `me` had returned the id to ask with.
+  const communitiesData = user?.communityMemberships;
 
   return useMemo(() => {
     const groups: SpotlightActionGroupData[] = [];
@@ -256,7 +254,7 @@ export function useSpotlightActions(): SpotlightActionGroupData[] {
     }
 
     // Dynamic community groups
-    const memberships = communitiesData?.communityMembersByUser?.nodes;
+    const memberships = communitiesData?.nodes;
     if (memberships) {
       for (const membership of memberships) {
         const { role } = membership;

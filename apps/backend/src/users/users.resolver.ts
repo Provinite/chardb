@@ -38,7 +38,9 @@ import { Item as ItemEntity } from "../items/entities/item.entity";
 import { ItemsService } from "../items/items.service";
 import { EmptyStringOnForbiddenFilter } from "../auth/filters/EmptyStringOnForbiddenFilter";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
-import { CommunityMember } from "../community-members/entities/community-member.entity";
+import { CommunityMemberConnection } from "../community-members/entities/community-member.entity";
+import { CommunityMembersService } from "../community-members/community-members.service";
+import { mapPrismaCommunityMemberConnectionToGraphQL } from "../community-members/utils/community-member-resolver-mappers";
 import { DatabaseService } from "../database/database.service";
 import { Image } from "../images/entities/image.entity";
 import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
@@ -59,6 +61,7 @@ export class UsersResolver {
     private readonly externalAccountsService: ExternalAccountsService,
     private readonly itemsService: ItemsService,
     private readonly database: DatabaseService,
+    private readonly communityMembersService: CommunityMembersService,
   ) {}
 
   @AllowGlobalPermission(GlobalPermission.CanListUsers)
@@ -236,19 +239,36 @@ export class UsersResolver {
     return this.externalAccountsService.findByUserId(user.id);
   }
 
+  /**
+   * The communities this user belongs to.
+   *
+   * Reachable only through a `User`, which for the common case is the `me`
+   * root -- so "whose memberships" is the authenticated subject and there is
+   * no argument for a caller to claim. `communityMembersByUser(userId:)` still
+   * exists for a global admin looking at somebody else, where the identity
+   * check inside it is the point of the field rather than a guard against a
+   * wrong argument.
+   *
+   * Paginated, because `me` gates first paint on every page: a member of five
+   * hundred communities must not make the whole app slow. It was an unbounded
+   * list before.
+   */
   @AllowGlobalAdmin()
   @AllowSelf()
-  @ResolveField("communityMemberships", () => [CommunityMember])
+  @ResolveField("communityMemberships", () => CommunityMemberConnection)
   async resolveCommunityMemberships(
     @Parent() user: User,
-  ): Promise<CommunityMember[]> {
-    // Double cast: the Prisma row and the GraphQL entity carry the same
-    // columns but are separate declarations, and the field resolvers on
-    // CommunityMember fill the rest.
-    return this.database.communityMember.findMany({
-      where: { userId: user.id },
-      include: { role: true },
-    }) as unknown as CommunityMember[];
+    @Args("first", { type: () => Int, nullable: true, defaultValue: 20 })
+    first?: number,
+    @Args("after", { type: () => String, nullable: true })
+    after?: string,
+  ): Promise<CommunityMemberConnection> {
+    const result = await this.communityMembersService.findByUser(
+      user.id,
+      first,
+      after,
+    );
+    return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
   @AllowUnauthenticated()

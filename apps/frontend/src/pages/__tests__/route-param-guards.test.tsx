@@ -45,14 +45,26 @@ vi.mock("react-router-dom", async () => {
   return { ...actual, useParams: () => routeParams.current };
 });
 
-// Only `useCommunityId` is stubbed; `useCommunityHost` is left alone so a page
-// that reaches for the community itself still fails loudly rather than
-// silently reading a fixture.
+// The id and the record move together, because that is how the host resolves
+// them: a page holding an id whose community is missing is not a state the app
+// can be in. `useCommunityHost` is still left alone, so a page reaching for the
+// raw context fails loudly rather than reading a fixture.
 vi.mock("../../contexts/CommunityHostContext", async () => {
   const actual = await vi.importActual<
     typeof import("../../contexts/CommunityHostContext")
   >("../../contexts/CommunityHostContext");
-  return { ...actual, useCommunityId: () => hostCommunityId.current };
+  return {
+    ...actual,
+    useCommunityId: () => hostCommunityId.current,
+    useHostCommunity: () =>
+      hostCommunityId.current
+        ? {
+            id: hostCommunityId.current,
+            name: "Test Community",
+            slug: "test-community",
+          }
+        : null,
+  };
 });
 
 // Pages that read the signed-in user go through useAuth, which throws outside

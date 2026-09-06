@@ -71,18 +71,47 @@ export const ME_QUERY = gql`
       privacySettings
       createdAt
       updatedAt
-      communityMemberships {
-        id
-        roleId
-        userId
-        role {
+      # Everything the navigation, the switcher, the command palette and the
+      # per-community permission hook need. They each used to ask
+      # communityMembersByUser for this separately, which could not run until
+      # the me query had told them their own id -- a round trip to learn
+      # something the server never forgot.
+      communityMemberships(first: 100) {
+        nodes {
           id
-          name
-          communityId
-          canCreateCharacter
-          canEditCharacter
-          canCreateOrphanedCharacter
+          roleId
+          userId
+          role {
+            id
+            name
+            communityId
+            community {
+              id
+              name
+              slug
+            }
+            canCreateSpecies
+            canEditSpecies
+            canCreateCharacter
+            canEditCharacter
+            canEditOwnCharacter
+            canEditOwnCharacterRegistry
+            canEditCharacterRegistry
+            canCreateOrphanedCharacter
+            canCreateInviteCode
+            canListInviteCodes
+            canCreateRole
+            canEditRole
+            canRemoveCommunityMember
+            canManageMemberRoles
+            canManageItems
+            canGrantItems
+            canModerateImages
+            canDeleteCharacter
+          }
         }
+        totalCount
+        hasNextPage
       }
     }
   }

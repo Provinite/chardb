@@ -6,8 +6,9 @@
  * queries must still run normally rather than being held back by the `skip`
  * flag they gained when the guard moved below them.
  *
- * The community comes from the hostname now, not the path (#339), so it is
- * `useCommunityId` that gets stubbed here.
+ * The community comes from the hostname now, not the path (#339), so the host
+ * context is what gets stubbed here -- both the id and the record, since the
+ * page reads the whole thing rather than re-querying it by id.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
@@ -24,7 +25,18 @@ vi.mock("../../contexts/CommunityHostContext", async () => {
   const actual = await vi.importActual<
     typeof import("../../contexts/CommunityHostContext")
   >("../../contexts/CommunityHostContext");
-  return { ...actual, useCommunityId: () => hostCommunityId.current };
+  return {
+    ...actual,
+    useCommunityId: () => hostCommunityId.current,
+    useHostCommunity: () =>
+      hostCommunityId.current
+        ? {
+            id: hostCommunityId.current,
+            name: "Test Community",
+            slug: "test-community",
+          }
+        : null,
+  };
 });
 
 vi.mock("react-hot-toast", () => {

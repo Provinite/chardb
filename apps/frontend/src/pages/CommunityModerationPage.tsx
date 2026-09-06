@@ -142,7 +142,6 @@ export const CommunityModerationPage: React.FC = () => {
     community,
     permissions,
     loading: roleLoading,
-    error: roleError,
   } = useUserCommunityRole(communityId ?? undefined);
 
   const canModerateImages = permissions.canModerateImages;
@@ -175,17 +174,6 @@ export const CommunityModerationPage: React.FC = () => {
         <LoadingContainer>
           <LoadingSpinner size="lg" />
         </LoadingContainer>
-      </Container>
-    );
-  }
-
-  if (roleError) {
-    return (
-      <Container>
-        <ErrorContainer>
-          <Title>Error Loading Community</Title>
-          <Subtitle>{roleError.message}</Subtitle>
-        </ErrorContainer>
       </Container>
     );
   }

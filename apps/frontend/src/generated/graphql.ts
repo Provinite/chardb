@@ -4474,7 +4474,7 @@ export type User = {
   canGrantGlobalPermissions: Scalars['Boolean']['output'];
   canListInviteCodes: Scalars['Boolean']['output'];
   canListUsers: Scalars['Boolean']['output'];
-  communityMemberships: Array<CommunityMember>;
+  communityMemberships: CommunityMemberConnection;
   createdAt: Scalars['DateTime']['output'];
   dateOfBirth: Maybe<Scalars['DateTime']['output']>;
   displayName: Maybe<Scalars['String']['output']>;
@@ -4492,6 +4492,12 @@ export type User = {
   userIsFollowing: Scalars['Boolean']['output'];
   username: Scalars['String']['output'];
   website: Maybe<Scalars['String']['output']>;
+};
+
+
+export type UserCommunityMembershipsArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -4591,7 +4597,7 @@ export type ResetPasswordMutation = { __typename?: 'Mutation', resetPassword: bo
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, communityMemberships: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateCharacter: boolean, canEditCharacter: boolean, canCreateOrphanedCharacter: boolean } }> } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, communityMemberships: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canEditSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string } } }> } } };
 
 export type CharacterCardFieldsFragment = { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } };
 
@@ -7037,18 +7043,42 @@ export const MeDocument = gql`
     privacySettings
     createdAt
     updatedAt
-    communityMemberships {
-      id
-      roleId
-      userId
-      role {
+    communityMemberships(first: 100) {
+      nodes {
         id
-        name
-        communityId
-        canCreateCharacter
-        canEditCharacter
-        canCreateOrphanedCharacter
+        roleId
+        userId
+        role {
+          id
+          name
+          communityId
+          community {
+            id
+            name
+            slug
+          }
+          canCreateSpecies
+          canEditSpecies
+          canCreateCharacter
+          canEditCharacter
+          canEditOwnCharacter
+          canEditOwnCharacterRegistry
+          canEditCharacterRegistry
+          canCreateOrphanedCharacter
+          canCreateInviteCode
+          canListInviteCodes
+          canCreateRole
+          canEditRole
+          canRemoveCommunityMember
+          canManageMemberRoles
+          canManageItems
+          canGrantItems
+          canModerateImages
+          canDeleteCharacter
+        }
       }
+      totalCount
+      hasNextPage
     }
   }
 }

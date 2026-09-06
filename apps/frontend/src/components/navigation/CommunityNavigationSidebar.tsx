@@ -305,7 +305,6 @@ export const CommunityNavigationSidebar: React.FC<
     hasInvitePermissions,
     loading,
     isMember,
-    error,
   } = useUserCommunityRole(communityId);
 
   // Not a community host at all: nothing to show, hand back to the global one.
@@ -326,23 +325,6 @@ export const CommunityNavigationSidebar: React.FC<
       >
         <CommunityHeader>
           <LoadingContainer>Loading...</LoadingContainer>
-        </CommunityHeader>
-      </SidebarContainer>
-    );
-  }
-
-  // Show error state if query failed
-  if (error) {
-    return (
-      <SidebarContainer
-        className={className}
-        role="navigation"
-        aria-label="Community navigation"
-      >
-        <CommunityHeader>
-          <LoadingContainer style={{ color: "red" }}>
-            Error loading community data
-          </LoadingContainer>
         </CommunityHeader>
       </SidebarContainer>
     );
