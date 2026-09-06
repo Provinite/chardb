@@ -177,7 +177,12 @@ export const CommentForm: React.FC<CommentFormProps> = ({
         {/* A comment form renders on a character page, which lives on a
             community host -- so this has to carry the way back, and it is a
             router link because /login on this host is a route like any other. */}
-        <Button as={Link} to={loginUrlReturningHere()} variant="primary" size="sm">
+        <Button
+          as={Link}
+          to={loginUrlReturningHere()}
+          variant="primary"
+          size="sm"
+        >
           Log In
         </Button>
       </LoginPrompt>
