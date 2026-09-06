@@ -5,8 +5,9 @@ import {
   isValidCommunitySlug,
 } from "@chardb/shared";
 import {
+  communityUrl,
   parseCommunitySlug,
-  safeReturnUrl,
+  returnDestination,
   ROOT_DOMAIN,
 } from "../communityHost";
 
@@ -61,47 +62,66 @@ describe("parseCommunitySlug", () => {
   });
 });
 
-describe("safeReturnUrl", () => {
-  // This is the only thing between a query parameter on a public page and an
-  // open redirect, so the cases that matter are the near misses.
-  it("accepts this site's own hosts", () => {
-    expect(safeReturnUrl(`http://${root}:1234/dashboard`)).toBe(
-      `http://${root}:1234/dashboard`,
+describe("returnDestination", () => {
+  const params = (init: Record<string, string>) => new URLSearchParams(init);
+
+  it("returns a path when no community is named", () => {
+    // The login page is always on the apex, so a bare path is same-origin and
+    // the router can take it.
+    expect(returnDestination(params({ nextPath: "/dashboard" }))).toBe(
+      "/dashboard",
     );
-    expect(safeReturnUrl(`http://willowmere.${root}:1234/members`)).toBe(
-      `http://willowmere.${root}:1234/members`,
-    );
   });
 
-  it("accepts a plain path, which cannot leave the origin", () => {
-    expect(safeReturnUrl("/members")).toBe("/members");
+  it("builds a community URL when one is named", () => {
+    expect(
+      returnDestination(
+        params({ nextCommunitySlug: "willowmere", nextPath: "/characters" }),
+      ),
+    ).toBe(communityUrl("willowmere", "/characters"));
   });
 
-  it("refuses a protocol-relative path", () => {
-    // `//evil.example` is a URL, not a path, and would leave the site.
-    expect(safeReturnUrl("//evil.example")).toBeNull();
-    expect(safeReturnUrl("//evil.example/phish")).toBeNull();
+  it("keeps query and hash, which are part of the path", () => {
+    expect(
+      returnDestination(
+        params({ nextCommunitySlug: "willowmere", nextPath: "/items?tab=all#x" }),
+      ),
+    ).toBe(communityUrl("willowmere", "/items?tab=all#x"));
   });
 
-  it("refuses another site that merely contains the root domain", () => {
-    expect(safeReturnUrl(`https://${root}.evil.example/phish`)).toBeNull();
-    expect(safeReturnUrl(`https://evil.example/?x=${root}`)).toBeNull();
-    expect(safeReturnUrl(`https://not${root}/`)).toBeNull();
+  // The point of two parameters rather than one URL: a foreign origin has
+  // nowhere to go. There is no scheme to smuggle and no hostname to spoof --
+  // the slug is checked by the rule that decides what a community may be
+  // called, and the destination is built rather than accepted.
+  it("refuses a slug that could not name a community", () => {
+    expect(
+      returnDestination(
+        params({ nextCommunitySlug: "evil.example", nextPath: "/phish" }),
+      ),
+    ).toBeNull();
+    expect(
+      returnDestination(
+        params({ nextCommunitySlug: "willowmere.evil.example", nextPath: "/" }),
+      ),
+    ).toBeNull();
+    expect(
+      returnDestination(params({ nextCommunitySlug: "api", nextPath: "/" })),
+    ).toBeNull();
   });
 
-  it("refuses more than one label under the root domain", () => {
-    expect(safeReturnUrl(`http://a.b.${root}:1234/`)).toBeNull();
+  it("refuses a path that is really a URL", () => {
+    expect(returnDestination(params({ nextPath: "//evil.example" }))).toBeNull();
+    expect(
+      returnDestination(params({ nextPath: "https://evil.example/phish" })),
+    ).toBeNull();
+    expect(
+      returnDestination(params({ nextPath: "javascript:alert(1)" })),
+    ).toBeNull();
   });
 
-  it("refuses non-http schemes", () => {
-    expect(safeReturnUrl("javascript:alert(1)")).toBeNull();
-    expect(safeReturnUrl(`data:text/html,<script>alert(1)</script>`)).toBeNull();
-  });
-
-  it("refuses nothing and nonsense", () => {
-    expect(safeReturnUrl(null)).toBeNull();
-    expect(safeReturnUrl("")).toBeNull();
-    expect(safeReturnUrl("not a url")).toBeNull();
+  it("refuses a path that is not one", () => {
+    expect(returnDestination(params({ nextPath: "dashboard" }))).toBeNull();
+    expect(returnDestination(params({}))).toBeNull();
   });
 });
 

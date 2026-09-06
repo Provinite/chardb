@@ -75,53 +75,27 @@ export const communityUrl = (slug: string, path = "/"): string =>
   `${origin(`${slug}.${ROOT_DOMAIN}`)}${path}`;
 
 /**
- * The query parameter carrying where to go back to after signing in.
+ * Where to come back to after signing in, as two parameters rather than one
+ * URL: which community, and which path within it.
  *
  * Signing in always happens at the apex, because that is where the cookie for
- * the whole parent domain is set -- so leaving a community host is unavoidable.
- * Coming back is not: the return address rides in the URL because
- * `location.state`, which the router would otherwise use, does not survive a
- * navigation across origins.
- */
-export const RETURN_TO_PARAM = "next";
-
-/**
- * The URL to return to after signing in, or `null` if there is not a safe one.
+ * the whole parent domain is set -- so leaving a community host is
+ * unavoidable. Coming back is not, and the way back has to travel in the URL,
+ * because `location.state` does not survive a navigation across origins.
  *
- * A return address is attacker-controllable by construction -- it is a query
- * parameter on a public page -- so this is an open redirect unless it is
- * checked. Only this site's own hosts are accepted: the apex, or exactly one
- * label under it, which is what a community is. `https://chardb.cc.evil.example`
- * and `https://evil.example/?x=chardb.cc` both fail, because the comparison is
- * against a parsed hostname rather than the string.
+ * Split rather than absolute so that a foreign origin cannot be *expressed*.
+ * An absolute URL in a query parameter is an open redirect that has to be
+ * defended against -- parse it, check the scheme, compare the hostname, catch
+ * `//evil.example` and `chardb.cc.evil.example`. A slug and a path have
+ * nowhere to put `evil.example`: the slug is checked by the same rule that
+ * decides what a community may be called, and the destination is *built* by
+ * `communityUrl` rather than taken from the caller. Scheme and port come from
+ * the current page, which is where they should come from anyway.
  *
- * Relative paths are accepted and returned as-is; they cannot leave the origin.
+ * A missing slug means the apex.
  */
-export const safeReturnUrl = (raw: string | null): string | null => {
-  if (!raw) return null;
-
-  // A path, not a URL. `//evil.example` is protocol-relative and would leave
-  // the site, so a second slash disqualifies it.
-  if (raw.startsWith("/") && !raw.startsWith("//")) return raw;
-
-  let url: URL;
-  try {
-    url = new URL(raw);
-  } catch {
-    return null;
-  }
-
-  if (url.protocol !== "http:" && url.protocol !== "https:") return null;
-
-  const host = url.hostname.toLowerCase();
-  if (host === ROOT_DOMAIN) return raw;
-
-  const suffix = `.${ROOT_DOMAIN}`;
-  if (!host.endsWith(suffix)) return null;
-
-  const label = host.slice(0, -suffix.length);
-  return label.length > 0 && !label.includes(".") ? raw : null;
-};
+export const RETURN_SLUG_PARAM = "nextCommunitySlug";
+export const RETURN_PATH_PARAM = "nextPath";
 
 /**
  * Pages that are not somewhere to come back to.
@@ -139,13 +113,43 @@ const NOT_A_RETURN_DESTINATION = new Set([
 /**
  * A `/login` link that remembers where it was clicked from.
  *
- * The current page goes in as an absolute URL, because it may be on a
- * community host while the login page never is.
+ * Relative, because the router resolves it against whichever host it was
+ * clicked on -- and on a community host that `/login` route is the hop to the
+ * apex, which carries these parameters along with the rest of the query.
  */
 export const loginUrlReturningHere = (): string => {
   if (NOT_A_RETURN_DESTINATION.has(window.location.pathname)) return "/login";
 
-  return `/login?${RETURN_TO_PARAM}=${encodeURIComponent(window.location.href)}`;
+  const params = new URLSearchParams();
+  const slug = currentCommunitySlug();
+  if (slug) params.set(RETURN_SLUG_PARAM, slug);
+  params.set(
+    RETURN_PATH_PARAM,
+    `${window.location.pathname}${window.location.search}${window.location.hash}`,
+  );
+
+  return `/login?${params.toString()}`;
+};
+
+/**
+ * Where to go once signed in, built from the two parameters, or `null` if they
+ * do not name anywhere.
+ *
+ * Returns a path when the destination is the apex -- the login page is always
+ * there, so the router can handle it -- and an absolute URL when it is a
+ * community, which is a different origin and needs a whole-page navigation.
+ */
+export const returnDestination = (params: URLSearchParams): string | null => {
+  const path = params.get(RETURN_PATH_PARAM);
+  // `//evil.example` is protocol-relative: a URL wearing a path's clothes.
+  if (!path || !path.startsWith("/") || path.startsWith("//")) return null;
+
+  const slug = params.get(RETURN_SLUG_PARAM);
+  if (!slug) return path;
+
+  // The same rule that decides what a community may be called. A slug that
+  // could not name one cannot name a destination either.
+  return isValidCommunitySlug(slug) ? communityUrl(slug, path) : null;
 };
 
 /**

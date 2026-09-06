@@ -6,7 +6,7 @@ import { z } from "zod";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
-import { RETURN_TO_PARAM, safeReturnUrl } from "../lib/communityHost";
+import { returnDestination } from "../lib/communityHost";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -104,17 +104,13 @@ export const LoginPage: React.FC = () => {
   /**
    * Where to go once signed in.
    *
-   * `?next=` first, because that is the only channel that survives the trip
-   * from a community host -- signing in happens at the apex, and router state
-   * does not cross an origin. `location.state` still covers the apex-only
-   * journeys that never leave, and the dashboard is the fallback.
-   *
-   * `safeReturnUrl` is what stops this being an open redirect: the parameter
-   * is attacker-controllable, so anything not on one of this site's own hosts
-   * is discarded.
+   * The query parameters come first, because they are the only channel that
+   * survives the trip from a community host -- signing in happens at the apex,
+   * and router state does not cross an origin. `location.state` still covers
+   * the apex-only journeys that never leave, and the dashboard is the fallback.
    */
   const returnTo =
-    safeReturnUrl(new URLSearchParams(location.search).get(RETURN_TO_PARAM)) ??
+    returnDestination(new URLSearchParams(location.search)) ??
     location.state?.from?.pathname ??
     "/dashboard";
 

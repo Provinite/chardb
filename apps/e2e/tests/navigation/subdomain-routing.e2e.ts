@@ -186,11 +186,13 @@ test.describe("one session across hosts", () => {
   });
 
   test("a forged return address is ignored", async ({ page, world }) => {
-    // The return address is attacker-controllable, so it is an open redirect
-    // waiting to happen. Anything not under this site's root domain is
-    // discarded rather than followed.
+    // The return address is attacker-controllable, and the reason it is two
+    // parameters rather than one URL is that a foreign origin then has nowhere
+    // to go: `nextCommunitySlug` is checked by the rule that decides what a
+    // community may be called, and the destination is built from it rather
+    // than taken as given. Both halves are tried here.
     await page.goto(
-      `${apexUrl("/login")}?next=${encodeURIComponent("https://evil.example/phish")}`,
+      `${apexUrl("/login")}?nextCommunitySlug=evil.example&nextPath=${encodeURIComponent("//evil.example/phish")}`,
     );
 
     await page.getByLabel("Email").fill(world.users.member.email);
