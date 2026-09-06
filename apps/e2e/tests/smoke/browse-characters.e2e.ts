@@ -1,4 +1,5 @@
 import { presetTest, expect } from "../../src/fixtures.js";
+import { linkToPath } from "../../src/config.js";
 
 const test = presetTest("community-basic");
 
@@ -21,10 +22,10 @@ for (const persona of ["anon", "member", "moderator", "siteadmin"] as const) {
       ).toBeVisible();
 
       await expect(
-        page.locator(`a[href="${world.characters.pending.url}"]`),
+        page.locator(linkToPath(`/character/${world.characters.pending.id}`)),
       ).toBeVisible();
       await expect(
-        page.locator(`a[href="${world.characters.plain.url}"]`),
+        page.locator(linkToPath(`/character/${world.characters.plain.id}`)),
       ).toBeVisible();
     });
   });

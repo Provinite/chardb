@@ -200,3 +200,20 @@ export const apexUrl = (path = ""): string => `${CFG.apexUrl}${path}`;
  */
 export const urlStartingWith = (prefix: string): RegExp =>
   new RegExp(`^${prefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`);
+
+/**
+ * A CSS selector for a link to `path`, whichever host it renders on.
+ *
+ * The app renders a same-origin destination as a router link with a plain
+ * path, and a cross-origin one as an anchor with an absolute URL -- so the
+ * SAME card is `/character/<id>` on that character's own community host and
+ * `http://<slug>.<root>:<port>/character/<id>` when listed at the apex. A spec
+ * that pins one form passes on one host and fails on the other, which is how
+ * `delete-character` broke.
+ *
+ * Matching the end of the href is host-agnostic and still exact about the
+ * path, so it says the thing the spec actually means: this links to that
+ * character. Which HOST a link points at is asserted deliberately, and only in
+ * tests/navigation, where it is the subject rather than an incidental.
+ */
+export const linkToPath = (path: string): string => `a[href$="${path}"]`;

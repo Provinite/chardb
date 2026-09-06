@@ -1,5 +1,6 @@
 import { presetTest, expect } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
+import { linkToPath } from "../../src/config.js";
 const test = presetTest("community-items");
 
 /**
@@ -18,8 +19,8 @@ const test = presetTest("community-items");
 /** Keyed off the character's own URL, which is absolute and names its
  *  community's host -- this list is the site's, at the apex, and a character
  *  lives on its community (#339). Takes `world.characters.<name>.url`. */
-const card = (page: Page, characterUrl: string) =>
-  page.locator(`a[href="${characterUrl}"]`).first();
+const card = (page: Page, characterId: string) =>
+  page.locator(linkToPath(`/character/${characterId}`)).first();
 
 /** Open advanced search, tick these boxes, and search. */
 async function filterBy(page: Page, kinds: string[]) {
@@ -51,17 +52,17 @@ test.describe("browsing by availability", () => {
     // The baseline the filtered cases are read against. Without it a filter
     // that returned nothing would be indistinguishable from a list that was
     // empty to begin with.
-    await expect(card(page, world.characters.bramblefoot.url)).toBeVisible();
-    await expect(card(page, world.characters.hearthstone.url)).toBeVisible();
-    await expect(card(page, world.characters.marrowfen.url)).toBeVisible();
+    await expect(card(page, world.characters.bramblefoot.id)).toBeVisible();
+    await expect(card(page, world.characters.hearthstone.id)).toBeVisible();
+    await expect(card(page, world.characters.marrowfen.id)).toBeVisible();
   });
 
   test("one ticked box narrows to that kind", async ({ page, world }) => {
     await filterBy(page, ["FREEBIE"]);
 
-    await expect(card(page, world.characters.hearthstone.url)).toBeVisible();
-    await expect(card(page, world.characters.bramblefoot.url)).toHaveCount(0);
-    await expect(card(page, world.characters.marrowfen.url)).toHaveCount(0);
+    await expect(card(page, world.characters.hearthstone.id)).toBeVisible();
+    await expect(card(page, world.characters.bramblefoot.id)).toHaveCount(0);
+    await expect(card(page, world.characters.marrowfen.id)).toHaveCount(0);
   });
 
   test("two ticked boxes mean either, not both", async ({ page, world }) => {
@@ -70,9 +71,9 @@ test.describe("browsing by availability", () => {
     // No character is both a freebie and open to trades, so an AND would
     // return an empty page here -- and an empty page reads as a broken filter
     // rather than a strict one. This is the assertion the whole shape rests on.
-    await expect(card(page, world.characters.hearthstone.url)).toBeVisible();
-    await expect(card(page, world.characters.bramblefoot.url)).toBeVisible();
-    await expect(card(page, world.characters.marrowfen.url)).toBeVisible();
+    await expect(card(page, world.characters.hearthstone.id)).toBeVisible();
+    await expect(card(page, world.characters.bramblefoot.id)).toBeVisible();
+    await expect(card(page, world.characters.marrowfen.id)).toBeVisible();
   });
 
   test("a filtered search is a shareable link", async ({ page, world }) => {
@@ -83,8 +84,8 @@ test.describe("browsing by availability", () => {
     // it -- a panel that came up blank next to a filtered list would look
     // like the filter had come from nowhere.
     await page.goto("/characters?availability=FOR_SALE_COIN");
-    await expect(card(page, world.characters.marrowfen.url)).toBeVisible();
-    await expect(card(page, world.characters.bramblefoot.url)).toHaveCount(0);
+    await expect(card(page, world.characters.marrowfen.id)).toBeVisible();
+    await expect(card(page, world.characters.bramblefoot.id)).toHaveCount(0);
 
     await page.getByRole("button", { name: /advanced search/i }).click();
     await expect(
@@ -103,9 +104,9 @@ test.describe("browsing by availability", () => {
     // The boolean the checkbox row replaced. Links and bookmarks carrying it
     // are already out there, and one that quietly stopped filtering would be
     // worse than one that broke loudly.
-    await expect(card(page, world.characters.bramblefoot.url)).toBeVisible();
-    await expect(card(page, world.characters.marrowfen.url)).toBeVisible();
-    await expect(card(page, world.characters.hearthstone.url)).toHaveCount(0);
+    await expect(card(page, world.characters.bramblefoot.id)).toBeVisible();
+    await expect(card(page, world.characters.marrowfen.id)).toBeVisible();
+    await expect(card(page, world.characters.hearthstone.id)).toHaveCount(0);
   });
 });
 

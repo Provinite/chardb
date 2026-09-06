@@ -1,4 +1,5 @@
 import { presetTest, expect } from "../../src/fixtures.js";
+import { linkToPath } from "../../src/config.js";
 
 const test = presetTest("community-basic");
 test.use({ persona: "member" });
@@ -10,7 +11,7 @@ test("opens a character from the list", async ({ page, world }) => {
   // belongs to a community and is served from that community's host, so the
   // card's href is an absolute URL and clicking it changes origin.
   await page.goto("/characters");
-  await page.locator(`a[href="${character.url}"]`).click();
+  await page.locator(linkToPath(`/character/${character.id}`)).click();
 
   await expect(page).toHaveURL(character.url);
   await expect(
