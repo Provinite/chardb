@@ -2,6 +2,7 @@ import React from "react";
 import { Link, useLocation } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { LucideIcon } from "lucide-react";
+import { localPath } from "../../lib/communityHost";
 
 interface CommunityNavigationItemProps {
   /**
@@ -104,10 +105,12 @@ export const CommunityNavigationItem: React.FC<
   CommunityNavigationItemProps
 > = ({ to, icon: Icon, label, badge, isNested = false, disabled = false }) => {
   const location = useLocation();
-  // An absolute URL names another origin, so it is never the page we are on and
-  // never a destination the router can reach.
-  const isCrossHost = /^https?:\/\//.test(to);
-  const isActive = !isCrossHost && location.pathname === to;
+  // Decided by ORIGIN, not by format: an absolute URL that happens to name
+  // this host is still somewhere the router can go, and treating every
+  // absolute URL as foreign would reload the app to reach itself.
+  const path = localPath(to);
+  const isCrossHost = path === null;
+  const isActive = path !== null && location.pathname === path;
 
   const styleProps = {
     $isActive: isActive,
@@ -130,7 +133,7 @@ export const CommunityNavigationItem: React.FC<
       {contents}
     </StyledNavAnchor>
   ) : (
-    <StyledNavItem to={to} {...styleProps}>
+    <StyledNavItem to={path as string} {...styleProps}>
       {contents}
     </StyledNavItem>
   );

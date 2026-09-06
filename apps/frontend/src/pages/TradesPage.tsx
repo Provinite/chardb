@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { HostAwareLink } from "../components/HostAwareLink";
 import styled, { css } from "styled-components";
 import { ArrowLeftRight, X } from "lucide-react";
 import { Avatar, Button } from "@chardb/ui";
@@ -84,12 +84,12 @@ const row = css`
   }
 `;
 
-const Row = styled(Link)`
-  ${row}
-`;
-
-/** The same row when the trade belongs to another community's host. */
-const RowAnchor = styled.a`
+/**
+ * A trade always lives on its own community's host. From the apex inbox that
+ * is somewhere else; from a community inbox it is usually right here, so the
+ * destination decides whether this is a page load.
+ */
+const Row = styled(HostAwareLink)`
   ${row}
 `;
 
@@ -257,10 +257,8 @@ export const TradesPage: React.FC = () => {
             const sides = sidesFor(trade, viewerId);
             // Through the trade's own community, not the one this list is
             // narrowed to -- the global inbox has no narrowing, and an offer
-            // is a single-community thing wherever you found it. At the apex
-            // that community is another host, so the row leaves this origin.
+            // is a single-community thing wherever you found it.
             const path = `/trades/${trade.id}`;
-            const inside = trade.community.id === communityId;
             const body = (
               <>
                 <Avatar image={other.avatarImage} name={name} size={38} />
@@ -278,18 +276,14 @@ export const TradesPage: React.FC = () => {
                 </Meta>
               </>
             );
-            return inside ? (
-              <Row key={trade.id} to={path} data-testid="trade-row">
-                {body}
-              </Row>
-            ) : (
-              <RowAnchor
+            return (
+              <Row
                 key={trade.id}
-                href={communityUrl(trade.community.slug, path)}
+                to={communityUrl(trade.community.slug, path)}
                 data-testid="trade-row"
               >
                 {body}
-              </RowAnchor>
+              </Row>
             );
           })}
         </List>
