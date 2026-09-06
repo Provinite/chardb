@@ -7,11 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v12.0.0] - 2026-09-06
+
 ### Added
 
 - **Communities have a permanent `slug`**, the subdomain they are served from,
   with a reserved-name list and a `communityBySlug` query; existing communities
   were backfilled from their names (#339).
+
+- **Unlisted characters and galleries are no longer listed to other members.**
+  `characters` / `galleries` and their per-owner variants now return PUBLIC
+  plus the viewer's own, matching what `UserStats` has always counted and what
+  "unlisted" means. Unlisted stays reachable by direct link (#321).
+
+- **Send a review queue entry to the back.** `deferTraitReview` and
+  `deferImage` reorder without deciding — status stays PENDING, nothing is
+  applied, refunded, logged or announced — and record a count, a note and who
+  passed on it (#333).
+
+- **Variant change items.** `changeCharacterVariantWithItem` destroys an item
+  and moves one of your characters to the variant it grants. **Applies
+  immediately and opens no review**, unlike the other two redemptions (#172).
+
+- **Variant change grants on an item type**, set with
+  `setItemTypeVariantChangeGrant`: one destination, and the variants it can be
+  spent on. An empty source list covers every variant of the species. New
+  `ItemTransactionSource.VARIANT_CHANGE_REDEMPTION`, with no rejection
+  counterpart — there is no review to refuse.
+
+- **A character's rarity history.** Every variant change records what it moved
+  between, who moved it, why, and the character's traits either side —
+  readable at `characterVariantChanges` (#232).
+
+- **Trait values are validated against the variant**, not just the species. A
+  variant's enabled options are an allow-list, so a value the target variant
+  does not carry is refused.
 
 ### Changed
 
@@ -42,38 +72,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   so its 403 nulled the whole gallery and the page rendered "Gallery not
   found". `Character.userHasLiked` carried the same decorator and is fixed
   alongside it (#173).
-
-### Added
-
-- **Unlisted characters and galleries are no longer listed to other members.**
-  `characters` / `galleries` and their per-owner variants now return PUBLIC
-  plus the viewer's own, matching what `UserStats` has always counted and what
-  "unlisted" means. Unlisted stays reachable by direct link (#321).
-
-- **Send a review queue entry to the back.** `deferTraitReview` and
-  `deferImage` reorder without deciding — status stays PENDING, nothing is
-  applied, refunded, logged or announced — and record a count, a note and who
-  passed on it (#333).
-
-- **Variant change items.** `changeCharacterVariantWithItem` destroys an item
-  and moves one of your characters to the variant it grants. **Applies
-  immediately and opens no review**, unlike the other two redemptions (#172).
-
-- **Variant change grants on an item type**, set with
-  `setItemTypeVariantChangeGrant`: one destination, and the variants it can be
-  spent on. An empty source list covers every variant of the species. New
-  `ItemTransactionSource.VARIANT_CHANGE_REDEMPTION`, with no rejection
-  counterpart — there is no review to refuse.
-
-- **A character's rarity history.** Every variant change records what it moved
-  between, who moved it, why, and the character's traits either side —
-  readable at `characterVariantChanges` (#232).
-
-- **Trait values are validated against the variant**, not just the species. A
-  variant's enabled options are an allow-list, so a value the target variant
-  does not carry is refused.
-
-### Fixed
 
 - **Changing a character's variant was reachable by its owner.** Every other
   registry field is theirs to edit; rarity is what upgrade tickets sell, so it
