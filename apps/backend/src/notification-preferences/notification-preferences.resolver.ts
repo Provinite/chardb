@@ -1,39 +1,23 @@
-import { BadRequestException, Logger } from "@nestjs/common";
+import { BadRequestException } from "@nestjs/common";
 import { Resolver, Query, Mutation, Args } from "@nestjs/graphql";
 import { NotificationChannel } from "@chardb/database";
 import { NotificationPreferencesService } from "./notification-preferences.service";
-import { UnsubscribeTokenService } from "./unsubscribe-token.service";
 import { supportsEmail } from "./notification-preference-defaults";
-import {
-  NotificationPreference,
-  UnsubscribeResult,
-} from "./entities/notification-preference.entity";
-import {
-  UnsubscribeInput,
-  UpdateNotificationPreferenceInput,
-} from "./dto/notification-preference.dto";
+import { NotificationPreference } from "./entities/notification-preference.entity";
+import { UpdateNotificationPreferenceInput } from "./dto/notification-preference.dto";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
-import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 
 /**
  * Preferences are always the caller's own. There is no query for somebody
  * else's and no argument that could name one -- the user id comes from the
- * token, exactly as it does in `NotificationsResolver`.
- *
- * The one unauthenticated entry point is `unsubscribeFromNotificationEmail`,
- * which is authorised by the token in the link rather than by a session, and
- * can only ever switch a single channel off.
+ * token, exactly as it does in `NotificationsResolver`. Every method here is
+ * authenticated; there is no public entry point.
  */
 @Resolver(() => NotificationPreference)
 export class NotificationPreferencesResolver {
-  private readonly logger = new Logger(NotificationPreferencesResolver.name);
-
-  constructor(
-    private readonly preferences: NotificationPreferencesService,
-    private readonly tokens: UnsubscribeTokenService,
-  ) {}
+  constructor(private readonly preferences: NotificationPreferencesService) {}
 
   @AllowAnyAuthenticated()
   @Query(() => [NotificationPreference], {
@@ -75,25 +59,5 @@ export class NotificationPreferencesResolver {
       input.channel,
       input.enabled,
     );
-  }
-
-  @AllowUnauthenticated()
-  @Mutation(() => UnsubscribeResult, {
-    description:
-      "Switches off email for the one kind named by an unsubscribe link. " +
-      "Authorised by the token, not by a session, so it works from a mail " +
-      "client with nobody signed in.",
-  })
-  async unsubscribeFromNotificationEmail(
-    @Args("input") input: UnsubscribeInput,
-  ): Promise<UnsubscribeResult> {
-    const claim = this.tokens.verify(input.token);
-    if (!claim) {
-      this.logger.warn("Rejected an unsubscribe token that did not verify");
-      return { success: false, kind: null };
-    }
-
-    await this.preferences.disableEmail(claim.userId, claim.kind);
-    return { success: true, kind: claim.kind };
   }
 }

@@ -8,7 +8,6 @@ import { DatabaseService } from "../database/database.service";
 import {
   defaultFor,
   NOTIFICATION_KINDS,
-  NOTIFICATION_PREFERENCE_DEFAULTS,
   supportsEmail,
 } from "./notification-preference-defaults";
 
@@ -121,37 +120,5 @@ export class NotificationPreferencesService {
       update: { enabled },
     });
     return this.resolveForUser(userId);
-  }
-
-  /**
-   * Turns one kind's email off, for the unsubscribe link.
-   *
-   * Deliberately narrower than `setPreference`: an unsubscribe token can only
-   * ever switch something off, and only on the email channel. A replayed or
-   * leaked link therefore cannot be used to turn notifications back on for
-   * somebody, which is the one thing an unauthenticated caller must not do.
-   */
-  async disableEmail(userId: string, kind: NotificationKind): Promise<void> {
-    await this.prisma.notificationPreference.upsert({
-      where: {
-        userId_kind_channel: {
-          userId,
-          kind,
-          channel: NotificationChannel.EMAIL,
-        },
-      },
-      create: {
-        userId,
-        kind,
-        channel: NotificationChannel.EMAIL,
-        enabled: false,
-      },
-      update: { enabled: false },
-    });
-  }
-
-  /** Whether `kind` is one this service knows about. Guards untrusted input. */
-  isKnownKind(kind: string): kind is NotificationKind {
-    return kind in NOTIFICATION_PREFERENCE_DEFAULTS;
   }
 }

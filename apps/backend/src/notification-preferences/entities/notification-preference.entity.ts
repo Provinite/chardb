@@ -32,23 +32,3 @@ export class NotificationPreference {
   })
   emailSupported: boolean;
 }
-
-@ObjectType({
-  description: "The outcome of following an unsubscribe link from an email.",
-})
-export class UnsubscribeResult {
-  @Field({
-    description:
-      "False when the link is malformed, tampered with, or names something " +
-      "this version does not recognise. The three are not distinguished.",
-  })
-  success: boolean;
-
-  @Field(() => NotificationKind, {
-    nullable: true,
-    description:
-      "What was switched off, so the page can name it. Null when the link " +
-      "did not verify.",
-  })
-  kind?: NotificationKind | null;
-}

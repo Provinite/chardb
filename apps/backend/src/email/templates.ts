@@ -17,21 +17,22 @@ export interface PasswordChangedContext {
 /**
  * Carried by every optional email and by no transactional one.
  *
- * Password reset and password-changed mail cannot be unsubscribed from, so
- * their contexts deliberately do not extend this. The type is what stops
- * somebody adding the footer to them by habit.
+ * Password reset and password-changed mail have no settings to point at -- they
+ * are sent whatever a member prefers -- so their contexts deliberately do not
+ * extend this. The type is what stops somebody adding the footer to them by
+ * habit and implying an opt-out that does not exist.
  */
-export interface UnsubscribableContext {
-  /** Lands on a page that switches this one kind's email off. */
-  unsubscribeUrl: string;
+export interface OptionalEmailContext {
+  /** The member's notification settings, for the footer to link to. */
+  settingsUrl: string;
 }
 
-export interface ImageApprovedContext extends UnsubscribableContext {
+export interface ImageApprovedContext extends OptionalEmailContext {
   username: string;
   imageName: string;
 }
 
-export interface ImageRejectedContext extends UnsubscribableContext {
+export interface ImageRejectedContext extends OptionalEmailContext {
   username: string;
   imageName: string;
   reason: string;
@@ -41,14 +42,20 @@ export interface ImageRejectedContext extends UnsubscribableContext {
 /**
  * The footer for an optional email.
  *
- * The URL is interpolated unescaped, as `resetUrl` already is, because it is
- * built by us from a base URL and a hex-and-base64url token -- there is no
- * caller-supplied text in it to escape.
+ * Points at the settings page rather than carrying a one-click opt-out. This is
+ * relationship mail about the recipient's own uploads, not marketing, so no
+ * unsubscribe mechanism is required of it -- and a signed one-click link means
+ * a token, an endpoint that accepts it unauthenticated, and a page to land on.
+ * A link is enough.
+ *
+ * The URL is interpolated unescaped, as `resetUrl` already is, because we build
+ * it from a configured base URL and a fixed path -- there is no caller-supplied
+ * text in it to escape.
  */
-const unsubscribeFooter = (context: UnsubscribableContext): string => `
+const optionalEmailFooter = (context: OptionalEmailContext): string => `
     <div class="footer">
         <p>This is an automated notification from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
-        <p><a href="${context.unsubscribeUrl}" style="color: #7f8c8d;">Unsubscribe from these emails</a> &middot; you can change all of your notification settings from your profile.</p>
+        <p>Don't want these? <a href="${context.settingsUrl}" style="color: #7f8c8d;">Choose which emails you get</a> from your profile settings.</p>
     </div>`;
 
 /**
@@ -362,7 +369,7 @@ export const imageApprovedTemplate = (
 
         <p>Your image is now visible to others based on its visibility settings.</p>
     </div>
-${unsubscribeFooter(context)}
+${optionalEmailFooter(context)}
 </body>
 </html>`;
 
@@ -469,6 +476,6 @@ export const imageRejectedTemplate = (
 
         <p>If you believe this was a mistake, please review our community guidelines and contact support if you have questions.</p>
     </div>
-${unsubscribeFooter(context)}
+${optionalEmailFooter(context)}
 </body>
 </html>`;

@@ -11,8 +11,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **A notification section on `/profile/edit`**: a per-kind matrix of in-app and email switches, with security email named as something that is always sent. Kinds with no email template show no email switch rather than a disabled one (#344).
 
-- **`/unsubscribe/:token`**, reached from an email with nobody signed in. It switches off one kind's email and says which (#344).
-
 ### Fixed
 
 - **A failing comment list no longer takes the comment form with it.** The error

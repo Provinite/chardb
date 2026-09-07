@@ -1,5 +1,4 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { ConfigService } from "@nestjs/config";
 import {
   ModerationRejectionReason,
   NotificationChannel,
@@ -10,7 +9,6 @@ import { NotificationsService } from "./notifications.service";
 import { DatabaseService } from "../database/database.service";
 import { EmailService } from "../email/email.service";
 import { NotificationPreferencesService } from "../notification-preferences/notification-preferences.service";
-import { UnsubscribeTokenService } from "../notification-preferences/unsubscribe-token.service";
 import { mockDatabaseService } from "../../test/setup";
 
 /**
@@ -22,7 +20,6 @@ describe("NotificationDispatchService", () => {
 
   const mockNotifications = { create: jest.fn() };
   const mockPreferences = { isEnabled: jest.fn() };
-  const mockTokens = { issue: jest.fn() };
   const mockEmail = {
     sendImageApprovedEmail: jest.fn(),
     sendImageRejectedEmail: jest.fn(),
@@ -47,18 +44,12 @@ describe("NotificationDispatchService", () => {
           provide: NotificationPreferencesService,
           useValue: mockPreferences,
         },
-        { provide: UnsubscribeTokenService, useValue: mockTokens },
         { provide: EmailService, useValue: mockEmail },
-        {
-          provide: ConfigService,
-          useValue: { get: () => "https://chardb.test" },
-        },
       ],
     }).compile();
 
     service = module.get(NotificationDispatchService);
     mockPreferences.isEnabled.mockResolvedValue(true);
-    mockTokens.issue.mockReturnValue("TOKEN");
     mockDatabaseService.user.findUnique.mockResolvedValue({
       email: "member@test.local",
       username: "member",
@@ -82,7 +73,6 @@ describe("NotificationDispatchService", () => {
       "member@test.local",
       "member",
       "sketch.png",
-      "https://chardb.test/unsubscribe/TOKEN",
     );
   });
 
@@ -93,17 +83,6 @@ describe("NotificationDispatchService", () => {
       "u1",
       NotificationKind.IMAGE_APPROVED,
       NotificationChannel.EMAIL,
-    );
-  });
-
-  it("mints the unsubscribe token for that member and that kind", async () => {
-    // A token scoped to the whole account would let one unsubscribe link
-    // silence rejections too.
-    await service.dispatch({ ...approval });
-
-    expect(mockTokens.issue).toHaveBeenCalledWith(
-      "u1",
-      NotificationKind.IMAGE_APPROVED,
     );
   });
 
@@ -124,7 +103,6 @@ describe("NotificationDispatchService", () => {
       "member",
       "sketch.png",
       ModerationRejectionReason.NSFW_NOT_TAGGED,
-      "https://chardb.test/unsubscribe/TOKEN",
       "Please tag this.",
     );
   });

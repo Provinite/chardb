@@ -1877,8 +1877,6 @@ export type Mutation = {
   unlinkDiscordGuild: Community;
   /** Unlink an external account from the current user */
   unlinkExternalAccount: Scalars['Boolean']['output'];
-  /** Switches off email for the one kind named by an unsubscribe link. Authorised by the token, not by a session, so it works from a mail client with nobody signed in. */
-  unsubscribeFromNotificationEmail: UnsubscribeResult;
   /** Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission. */
   updateCharacterProfile: Character;
   /** Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission. */
@@ -2377,11 +2375,6 @@ export type MutationUnlinkDiscordGuildArgs = {
 
 export type MutationUnlinkExternalAccountArgs = {
   input: UnlinkExternalAccountInput;
-};
-
-
-export type MutationUnsubscribeFromNotificationEmailArgs = {
-  input: UnsubscribeInput;
 };
 
 
@@ -4171,21 +4164,6 @@ export type UnlinkExternalAccountInput = {
   provider: ExternalAccountProvider;
 };
 
-/** Follows the unsubscribe link from a notification email. */
-export type UnsubscribeInput = {
-  /** The opaque token from the link. */
-  token: Scalars['String']['input'];
-};
-
-/** The outcome of following an unsubscribe link from an email. */
-export type UnsubscribeResult = {
-  __typename?: 'UnsubscribeResult';
-  /** What was switched off, so the page can name it. Null when the link did not verify. */
-  kind: Maybe<NotificationKind>;
-  /** False when the link is malformed, tampered with, or names something this version does not recognise. The three are not distinguished. */
-  success: Scalars['Boolean']['output'];
-};
-
 /** Input for updating character profile fields */
 export type UpdateCharacterProfileInput = {
   customFields?: InputMaybe<Scalars['String']['input']>;
@@ -5633,13 +5611,6 @@ export type UpdateNotificationPreferenceMutationVariables = Exact<{
 
 
 export type UpdateNotificationPreferenceMutation = { __typename?: 'Mutation', updateNotificationPreference: Array<{ __typename?: 'NotificationPreference', kind: NotificationKind, inApp: boolean, email: boolean, emailSupported: boolean }> };
-
-export type UnsubscribeFromNotificationEmailMutationVariables = Exact<{
-  input: UnsubscribeInput;
-}>;
-
-
-export type UnsubscribeFromNotificationEmailMutation = { __typename?: 'Mutation', unsubscribeFromNotificationEmail: { __typename?: 'UnsubscribeResult', success: boolean, kind: NotificationKind | null } };
 
 export type NotificationFieldsFragment = { __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null };
 
@@ -14070,40 +14041,6 @@ export function useUpdateNotificationPreferenceMutation(baseOptions?: Apollo.Mut
 export type UpdateNotificationPreferenceMutationHookResult = ReturnType<typeof useUpdateNotificationPreferenceMutation>;
 export type UpdateNotificationPreferenceMutationResult = Apollo.MutationResult<UpdateNotificationPreferenceMutation>;
 export type UpdateNotificationPreferenceMutationOptions = Apollo.BaseMutationOptions<UpdateNotificationPreferenceMutation, UpdateNotificationPreferenceMutationVariables>;
-export const UnsubscribeFromNotificationEmailDocument = gql`
-    mutation UnsubscribeFromNotificationEmail($input: UnsubscribeInput!) {
-  unsubscribeFromNotificationEmail(input: $input) {
-    success
-    kind
-  }
-}
-    `;
-export type UnsubscribeFromNotificationEmailMutationFn = Apollo.MutationFunction<UnsubscribeFromNotificationEmailMutation, UnsubscribeFromNotificationEmailMutationVariables>;
-
-/**
- * __useUnsubscribeFromNotificationEmailMutation__
- *
- * To run a mutation, you first call `useUnsubscribeFromNotificationEmailMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useUnsubscribeFromNotificationEmailMutation` returns a tuple that includes:
- * - A mutate function that you can call at any time to execute the mutation
- * - An object with fields that represent the current status of the mutation's execution
- *
- * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
- *
- * @example
- * const [unsubscribeFromNotificationEmailMutation, { data, loading, error }] = useUnsubscribeFromNotificationEmailMutation({
- *   variables: {
- *      input: // value for 'input'
- *   },
- * });
- */
-export function useUnsubscribeFromNotificationEmailMutation(baseOptions?: Apollo.MutationHookOptions<UnsubscribeFromNotificationEmailMutation, UnsubscribeFromNotificationEmailMutationVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<UnsubscribeFromNotificationEmailMutation, UnsubscribeFromNotificationEmailMutationVariables>(UnsubscribeFromNotificationEmailDocument, options);
-      }
-export type UnsubscribeFromNotificationEmailMutationHookResult = ReturnType<typeof useUnsubscribeFromNotificationEmailMutation>;
-export type UnsubscribeFromNotificationEmailMutationResult = Apollo.MutationResult<UnsubscribeFromNotificationEmailMutation>;
-export type UnsubscribeFromNotificationEmailMutationOptions = Apollo.BaseMutationOptions<UnsubscribeFromNotificationEmailMutation, UnsubscribeFromNotificationEmailMutationVariables>;
 export const NotificationsDocument = gql`
     query Notifications($first: Int, $after: String, $unreadOnly: Boolean) {
   notifications(first: $first, after: $after, unreadOnly: $unreadOnly) {

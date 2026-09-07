@@ -2496,11 +2496,6 @@ type Mutation {
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
 
   """
-  Switches off email for the one kind named by an unsubscribe link. Authorised by the token, not by a session, so it works from a mail client with nobody signed in.
-  """
-  unsubscribeFromNotificationEmail(input: UnsubscribeInput!): UnsubscribeResult!
-
-  """
   Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.
   """
   updateCharacterProfile(id: ID!, input: UpdateCharacterProfileInput!): Character!
@@ -4313,25 +4308,6 @@ input TransferCurrencyInput {
 
 input UnlinkExternalAccountInput {
   provider: ExternalAccountProvider!
-}
-
-"""Follows the unsubscribe link from a notification email."""
-input UnsubscribeInput {
-  """The opaque token from the link."""
-  token: String!
-}
-
-"""The outcome of following an unsubscribe link from an email."""
-type UnsubscribeResult {
-  """
-  What was switched off, so the page can name it. Null when the link did not verify.
-  """
-  kind: NotificationKind
-
-  """
-  False when the link is malformed, tampered with, or names something this version does not recognise. The three are not distinguished.
-  """
-  success: Boolean!
 }
 
 """Input for updating character profile fields"""

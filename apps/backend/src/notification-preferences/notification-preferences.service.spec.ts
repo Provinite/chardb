@@ -167,26 +167,6 @@ describe("NotificationPreferencesService", () => {
     });
   });
 
-  describe("disableEmail", () => {
-    it("only ever writes false, and only on the email channel", async () => {
-      // This is what an unsubscribe link is allowed to do. A leaked or replayed
-      // link must not be able to switch anything back on.
-      await service.disableEmail("u1", NotificationKind.IMAGE_APPROVED);
-
-      const call =
-        mockDatabaseService.notificationPreference.upsert.mock.calls.at(
-          -1,
-        )?.[0] as {
-          create: { enabled: boolean; channel: NotificationChannel };
-          update: { enabled: boolean };
-        };
-
-      expect(call.create.enabled).toBe(false);
-      expect(call.update.enabled).toBe(false);
-      expect(call.create.channel).toBe(NotificationChannel.EMAIL);
-    });
-  });
-
   describe("setPreference", () => {
     it("stores an answer that matches the default", async () => {
       // Recording the agreement is what stops a later change of default from

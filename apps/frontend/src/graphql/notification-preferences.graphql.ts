@@ -31,19 +31,9 @@ export const UPDATE_NOTIFICATION_PREFERENCE = gql`
   }
 `;
 
-export const UNSUBSCRIBE_FROM_NOTIFICATION_EMAIL = gql`
-  mutation UnsubscribeFromNotificationEmail($input: UnsubscribeInput!) {
-    unsubscribeFromNotificationEmail(input: $input) {
-      success
-      kind
-    }
-  }
-`;
-
 export {
   useNotificationPreferencesQuery,
   useUpdateNotificationPreferenceMutation,
-  useUnsubscribeFromNotificationEmailMutation,
   NotificationChannel,
   type NotificationPreferenceFieldsFragment,
   type NotificationPreferencesQuery,

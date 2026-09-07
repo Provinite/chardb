@@ -6,7 +6,6 @@ import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
 import { ForgotPasswordPage } from "../pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "../pages/ResetPasswordPage";
-import { UnsubscribePage } from "../pages/UnsubscribePage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { UserProfilePage } from "../pages/UserProfilePage";
 import { UserCharactersPage } from "../pages/UserCharactersPage";
@@ -72,9 +71,6 @@ export const ApexRoutes: React.FC = () => (
     <Route path="/signup" element={<SignupPage />} />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
     <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
-    {/* Reached from a link in an email, so it must work with nobody signed in.
-        The token is the authorisation, and it can only switch one kind off. */}
-    <Route path="/unsubscribe/:token" element={<UnsubscribePage />} />
     <Route path="/characters" element={<CharactersPage />} />
     <Route path="/galleries" element={<GalleriesPage />} />
     <Route path="/gallery/:id" element={<GalleryPage />} />

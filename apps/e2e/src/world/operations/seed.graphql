@@ -1045,14 +1045,6 @@ mutation SeedUpdateNotificationPreference(
   }
 }
 
-# Reached from an email with nobody signed in, so a spec runs it as `anon`.
-mutation SeedUnsubscribeFromNotificationEmail($input: UnsubscribeInput!) {
-  unsubscribeFromNotificationEmail(input: $input) {
-    success
-    kind
-  }
-}
-
 # Reading a recipient's own feed, to prove that moderating an image now reaches
 # the bell as well as (or instead of) the inbox (#344).
 query SeedMyNotifications {

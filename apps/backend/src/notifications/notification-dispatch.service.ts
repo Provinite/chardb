@@ -1,10 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
 import { NotificationChannel, NotificationKind } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import { EmailService } from "../email/email.service";
 import { NotificationPreferencesService } from "../notification-preferences/notification-preferences.service";
-import { UnsubscribeTokenService } from "../notification-preferences/unsubscribe-token.service";
 import { supportsEmail } from "../notification-preferences/notification-preference-defaults";
 import {
   CreateNotificationInput,
@@ -35,21 +33,13 @@ import {
 @Injectable()
 export class NotificationDispatchService {
   private readonly logger = new Logger(NotificationDispatchService.name);
-  private readonly frontendUrl: string;
 
   constructor(
     private readonly prisma: DatabaseService,
     private readonly notifications: NotificationsService,
     private readonly preferences: NotificationPreferencesService,
-    private readonly tokens: UnsubscribeTokenService,
     private readonly email: EmailService,
-    configService: ConfigService,
-  ) {
-    this.frontendUrl = configService.get<string>(
-      "FRONTEND_URL",
-      "http://localhost:3000",
-    );
-  }
+  ) {}
 
   /**
    * Writes the in-app notification and sends the mail, each subject to its own
@@ -102,12 +92,7 @@ export class NotificationDispatchService {
     });
     if (!recipient?.email) return;
 
-    const unsubscribeUrl = `${this.frontendUrl}/unsubscribe/${this.tokens.issue(
-      recipientId,
-      kind,
-    )}`;
-
-    await this.send(kind, data, recipient, unsubscribeUrl);
+    await this.send(kind, data, recipient);
   }
 
   /**
@@ -122,7 +107,6 @@ export class NotificationDispatchService {
     kind: NotificationKind,
     data: AnyNotificationPayload,
     recipient: { email: string; username: string },
-    unsubscribeUrl: string,
   ): Promise<void> {
     switch (kind) {
       case NotificationKind.IMAGE_APPROVED: {
@@ -132,7 +116,6 @@ export class NotificationDispatchService {
           recipient.email,
           recipient.username,
           payload.subjectName,
-          unsubscribeUrl,
         );
         return;
       }
@@ -145,7 +128,6 @@ export class NotificationDispatchService {
           recipient.username,
           payload.subjectName,
           payload.reason,
-          unsubscribeUrl,
           payload.reasonText ?? undefined,
         );
         return;

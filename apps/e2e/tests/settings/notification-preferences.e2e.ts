@@ -2,7 +2,6 @@ import { presetTest, expect } from "../../src/fixtures.js";
 import {
   SeedNotificationPreferencesDocument,
   SeedUpdateNotificationPreferenceDocument,
-  SeedUnsubscribeFromNotificationEmailDocument,
   NotificationChannel,
   NotificationKind,
 } from "../../src/generated/graphql.js";
@@ -143,40 +142,6 @@ test.describe("as a member", () => {
     await expect(page.getByText("Always sent")).toBeVisible();
     await expect(
       page.getByText(/Password resets.*cannot be turned off/),
-    ).toBeVisible();
-  });
-});
-
-test.describe("signed out, from an email link", () => {
-  test.use({ persona: "anon" });
-
-  test.beforeEach(async ({ world }) => {
-    await world.reset();
-  });
-
-  test("an invalid token is refused without an error", async ({ world }) => {
-    // A public endpoint gets fed junk. It has to be a flat no, not a 500, and
-    // it must not say which part was wrong.
-    const { unsubscribeFromNotificationEmail } = await world
-      .as("anon")
-      .gql(SeedUnsubscribeFromNotificationEmailDocument, {
-        input: { token: "not-a-real-token" },
-      });
-
-    expect(unsubscribeFromNotificationEmail.success).toBe(false);
-    expect(unsubscribeFromNotificationEmail.kind).toBeNull();
-  });
-
-  test("the unsubscribe page renders for a token it cannot verify", async ({
-    page,
-  }) => {
-    // The route matters as much as the mutation: the token is a path segment,
-    // and a separator the static host mistakes for a file extension makes this
-    // 404 before React ever sees it.
-    await page.goto("/unsubscribe/aaa~bbb~ccc");
-
-    await expect(
-      page.getByRole("heading", { name: "That link is not valid" }),
     ).toBeVisible();
   });
 });

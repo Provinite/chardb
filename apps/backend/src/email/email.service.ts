@@ -25,6 +25,17 @@ export class EmailService {
   }
 
   /**
+   * Where an optional email's footer sends somebody who wants fewer of them.
+   *
+   * Built here rather than passed in, because it is the same address for every
+   * optional email and a caller that had to supply it is a caller that could
+   * forget to.
+   */
+  private get settingsUrl(): string {
+    return `${this.frontendUrl}/profile/edit`;
+  }
+
+  /**
    * Send a password reset email to the user
    * @param email User's email address
    * @param token Password reset token (not hashed)
@@ -92,16 +103,11 @@ export class EmailService {
 
   /**
    * Send notification when an image is approved
-   *
-   * Optional mail, so `unsubscribeUrl` is required rather than optional: a
-   * notification email that ships without a way out is the thing this
-   * parameter exists to make impossible to forget.
    */
   async sendImageApprovedEmail(
     email: string,
     username: string,
     imageName: string,
-    unsubscribeUrl: string,
   ): Promise<void> {
     try {
       await this.mailerService.sendMail({
@@ -110,7 +116,7 @@ export class EmailService {
         html: imageApprovedTemplate({
           username,
           imageName,
-          unsubscribeUrl,
+          settingsUrl: this.settingsUrl,
         }),
       });
 
@@ -132,7 +138,6 @@ export class EmailService {
     username: string,
     imageName: string,
     reason: ModerationRejectionReason,
-    unsubscribeUrl: string,
     reasonText?: string,
   ): Promise<void> {
     const reasonLabels: Record<ModerationRejectionReason, string> = {
@@ -152,7 +157,7 @@ export class EmailService {
           imageName,
           reason: reasonLabels[reason],
           reasonText,
-          unsubscribeUrl,
+          settingsUrl: this.settingsUrl,
         }),
       });
 

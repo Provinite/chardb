@@ -6,7 +6,7 @@
     <title>Notification Preferences - Feature Walkthrough</title>
     <meta
       name="description"
-      content="Choose what reaches you and how. A per-kind matrix of in-app and email switches, an unsubscribe link in every optional email, and security mail that is always sent."
+      content="Choose what reaches you and how. A per-kind matrix of in-app and email switches, a link back to them from every optional email, and security mail that is always sent."
     />
     <link
       rel="canonical"
@@ -17,7 +17,7 @@
     <meta property="og:title" content="Notification Preferences" />
     <meta
       property="og:description"
-      content="Choose what reaches you and how. A per-kind matrix of in-app and email switches, an unsubscribe link in every optional email, and security mail that is always sent."
+      content="Choose what reaches you and how. A per-kind matrix of in-app and email switches, a link back to them from every optional email, and security mail that is always sent."
     />
     <meta
       property="og:url"
@@ -402,31 +402,36 @@
         </div>
       </div>
 
-      <!-- Unsubscribe -->
+      <!-- The footer link -->
       <div class="step">
         <div class="step-header">
           <div class="step-number">3</div>
-          <h2 class="step-title">Unsubscribing from an email</h2>
+          <h2 class="step-title">Getting here from an email</h2>
         </div>
         <div class="step-content">
           <p>
-            Every optional email carries an unsubscribe link in its footer. It
-            works without signing in &mdash; useful when you are reading mail on
-            a device you are not logged into.
+            Every optional email ends with a line pointing back at these
+            settings:
           </p>
+          <div class="example">
+            Don't want these?
+            <span class="dim">Choose which emails you get</span>
+            from your profile settings.
+          </div>
           <p>
-            The link switches off <em>one kind</em>, the one you were emailed
-            about. It cannot switch anything on, cannot reach any other kind,
-            and cannot touch anybody else's settings.
+            The link opens the settings above, where you can switch off the one
+            kind that prompted the mail &mdash; or any other. Signing in is part
+            of it, because these are your account's settings and changing them
+            is not something a link out of an inbox should be able to do on its
+            own.
           </p>
-        </div>
-        <div class="screenshot">
-          <img
-            src="unsubscribe-confirmation.png"
-            alt="The unsubscribe page confirming that image approval emails have been switched off."
-          />
-          <div class="screenshot-caption">
-            Following the link from an image approval email.
+
+          <div class="highlight-box">
+            <strong>There is no one-click unsubscribe</strong>, and deliberately
+            so. This is mail about your own uploads rather than marketing, so no
+            opt-out mechanism is required of it, and a one-click link would mean
+            a signed token and an endpoint that acts on it with nobody signed
+            in. A link to the settings page does the same job.
           </div>
         </div>
       </div>
@@ -438,7 +443,7 @@
           <h2 class="step-title">What you cannot turn off</h2>
         </div>
         <div class="step-content">
-          <p>Two emails have no switch and no unsubscribe link:</p>
+          <p>Two emails have no switch and no settings link:</p>
           <ul>
             <li>
               <strong>Password reset</strong> &mdash; the message is the

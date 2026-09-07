@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Moderation notification specs** (`tests/moderation/moderation-notifications.e2e.ts`): approving or rejecting an image now reaches the uploader's bell, the rejection carries its reason and the moderator's note, the in-app switch suppresses the row, silencing approvals leaves rejections alone, and the notification goes to the uploader rather than the moderator (#344).
 
-- **Notification preference specs** (`tests/settings/`): the defaults that the issue turns on (approval email off, rejection email on), a toggle surviving a reload and agreeing with the server, kinds without a template offering no email switch, email refused for a kind that does not send any, the always-sent notice, and the unsubscribe route rendering for a token it cannot verify (#344).
+- **Notification preference specs** (`tests/settings/`): the defaults that the issue turns on (approval email off, rejection email on), a toggle surviving a reload and agreeing with the server, kinds without a template offering no email switch, email refused for a kind that does not send any, and the always-sent notice (#344).
 
 - **Comment flow specs** (`tests/comments/`): replying, editing, cancelling an edit, deleting, liking and unliking, commenting on a gallery as well as a character, another member's comment offering no edit or delete, the empty and over-length forms refusing to submit, and a signed-out visitor reading comments but being asked to log in to write. Commenting had no browser coverage at all before this. (#310)
 
