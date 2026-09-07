@@ -14,7 +14,7 @@ import { DatabaseService } from "../database/database.service";
 import { EmailService } from "../email/email.service";
 import { EmailVerificationService } from "../email-verification/email-verification.service";
 import { EmailNotVerifiedError } from "./errors/email-not-verified.error";
-import { Prisma } from "@chardb/database";
+import { Prisma, User } from "@chardb/database";
 
 /**
  * Service layer input types for auth operations.
@@ -53,7 +53,7 @@ export interface SignupServiceInput {
  */
 export interface AuthResponse {
   /** User data without password */
-  user: Omit<Prisma.UserGetPayload<{}>, "passwordHash">;
+  user: Omit<User, "passwordHash">;
   /** JWT access token */
   accessToken: string;
   /** JWT refresh token */
@@ -68,7 +68,7 @@ export interface RefreshTokenResponse {
   accessToken: string;
 }
 
-type PrismaUser = Prisma.UserGetPayload<{}>;
+type PrismaUser = User;
 
 @Injectable()
 export class AuthService {
@@ -92,7 +92,7 @@ export class AuthService {
         user.passwordHash &&
         (await bcrypt.compare(password, user.passwordHash))
       ) {
-        const { passwordHash, ...result } = user;
+        const { passwordHash: _passwordHash, ...result } = user;
         return result;
       }
       return null;
@@ -190,9 +190,12 @@ export class AuthService {
               user: { connect: { id: user.id } },
             },
           });
-        } catch (error: any) {
+        } catch (error) {
           // Handle unique constraint violation with a more user-friendly error
-          if (error.code === "P2002") {
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2002"
+          ) {
             throw new ConflictException(
               "You are already a member of this community",
             );

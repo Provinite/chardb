@@ -49,9 +49,7 @@ export class AuthResolver {
    */
   @AllowUnauthenticated()
   @Mutation(() => Boolean)
-  async signup(
-    @Args("input") signupInput: SignupInput,
-  ): Promise<boolean> {
+  async signup(@Args("input") signupInput: SignupInput): Promise<boolean> {
     const serviceInput = mapSignupInputToService(signupInput);
     await this.authService.signup(serviceInput);
     return true;

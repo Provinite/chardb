@@ -1867,6 +1867,8 @@ export type Mutation = {
   /** Remove a trait list entry */
   removeTraitListEntry: RemovalResponse;
   reorderGalleries: Array<Gallery>;
+  /** Sends another verification email. Always returns true, whatever the address is or is not, so this cannot be used to discover who has an account. Subject to a per-address lifetime cap. */
+  resendVerificationEmail: Scalars['Boolean']['output'];
   resetPassword: Scalars['Boolean']['output'];
   /** Respond to a community invitation (accept or decline) */
   respondToCommunityInvitation: CommunityInvitation;
@@ -1886,7 +1888,7 @@ export type Mutation = {
   setItemTypeUsePayout: ItemType;
   /** Set where an item of this type moves a character, and which characters it can be spent on. Replaces the grant wholesale; a null destination clears it. An empty source list covers every variant of the destination's species. */
   setItemTypeVariantChangeGrant: ItemType;
-  signup: AuthPayload;
+  signup: Scalars['Boolean']['output'];
   toggleFollow: FollowResult;
   toggleLike: LikeResult;
   transferCharacter: Character;
@@ -1940,6 +1942,8 @@ export type Mutation = {
   updateTraitOrders: Array<TraitListEntry>;
   /** Use one of your items up. Destroys it and pays what its type is worth in one transaction, under one batch id across both ledgers. */
   useItem: UseItemResult;
+  /** Confirms an address from the link in a verification email. Following an already-redeemed link for an account that is confirmed succeeds. */
+  verifyEmail: Scalars['Boolean']['output'];
 };
 
 
@@ -2307,6 +2311,11 @@ export type MutationReorderGalleriesArgs = {
 };
 
 
+export type MutationResendVerificationEmailArgs = {
+  input: ResendVerificationEmailInput;
+};
+
+
 export type MutationResetPasswordArgs = {
   input: ResetPasswordInput;
 };
@@ -2546,6 +2555,11 @@ export type MutationUpdateTraitOrdersArgs = {
 
 export type MutationUseItemArgs = {
   input: UseItemInput;
+};
+
+
+export type MutationVerifyEmailArgs = {
+  input: VerifyEmailInput;
 };
 
 /** One thing that happened, addressed to one recipient. Rows are snapshots: the display fields were captured when the notification was written, so a notification about a since-deleted subject still says what happened, and its link is the part that goes dead. */
@@ -3532,6 +3546,10 @@ export type RequestedTradeItemInput = {
   itemId?: InputMaybe<Scalars['ID']['input']>;
   itemTypeId?: InputMaybe<Scalars['ID']['input']>;
   quantity?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type ResendVerificationEmailInput = {
+  email: Scalars['String']['input'];
 };
 
 export type ResetPasswordInput = {
@@ -4563,6 +4581,10 @@ export type UserStats = {
   userId: Scalars['ID']['output'];
 };
 
+export type VerifyEmailInput = {
+  token: Scalars['String']['input'];
+};
+
 /** Visibility levels for content */
 export enum Visibility {
   Private = 'PRIVATE',
@@ -4582,7 +4604,7 @@ export type SignupMutationVariables = Exact<{
 }>;
 
 
-export type SignupMutation = { __typename?: 'Mutation', signup: { __typename?: 'AuthPayload', accessToken: string } };
+export type SignupMutation = { __typename?: 'Mutation', signup: boolean };
 
 export type RefreshTokenMutationVariables = Exact<{ [key: string]: never; }>;
 
@@ -4982,6 +5004,20 @@ export type DeviantartUuidBackfillProgressSubscriptionVariables = Exact<{
 
 
 export type DeviantartUuidBackfillProgressSubscription = { __typename?: 'Subscription', deviantartUuidBackfillProgress: { __typename?: 'DeviantartUuidBackfillProgress', jobId: string, total: number, processed: number, succeeded: number, failed: number, claimed: number, done: boolean, cancelled: boolean, currentRecord: { __typename?: 'DeviantartUuidBackfillRecordResult', pendingOwnershipId: string, characterId: string | null, itemId: string | null, oldValue: string, newValue: string | null, success: boolean, error: string | null, claimed: boolean, claimedByUserId: string | null } | null } };
+
+export type VerifyEmailMutationVariables = Exact<{
+  input: VerifyEmailInput;
+}>;
+
+
+export type VerifyEmailMutation = { __typename?: 'Mutation', verifyEmail: boolean };
+
+export type ResendVerificationEmailMutationVariables = Exact<{
+  input: ResendVerificationEmailInput;
+}>;
+
+
+export type ResendVerificationEmailMutation = { __typename?: 'Mutation', resendVerificationEmail: boolean };
 
 export type SpeciesWithTraitsAndEnumValuesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
@@ -6909,9 +6945,7 @@ export type LoginMutationResult = Apollo.MutationResult<LoginMutation>;
 export type LoginMutationOptions = Apollo.BaseMutationOptions<LoginMutation, LoginMutationVariables>;
 export const SignupDocument = gql`
     mutation Signup($input: SignupInput!) {
-  signup(input: $input) {
-    accessToken
-  }
+  signup(input: $input)
 }
     `;
 export type SignupMutationFn = Apollo.MutationFunction<SignupMutation, SignupMutationVariables>;
@@ -9588,6 +9622,68 @@ export function useDeviantartUuidBackfillProgressSubscription(baseOptions: Apoll
       }
 export type DeviantartUuidBackfillProgressSubscriptionHookResult = ReturnType<typeof useDeviantartUuidBackfillProgressSubscription>;
 export type DeviantartUuidBackfillProgressSubscriptionResult = Apollo.SubscriptionResult<DeviantartUuidBackfillProgressSubscription>;
+export const VerifyEmailDocument = gql`
+    mutation VerifyEmail($input: VerifyEmailInput!) {
+  verifyEmail(input: $input)
+}
+    `;
+export type VerifyEmailMutationFn = Apollo.MutationFunction<VerifyEmailMutation, VerifyEmailMutationVariables>;
+
+/**
+ * __useVerifyEmailMutation__
+ *
+ * To run a mutation, you first call `useVerifyEmailMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useVerifyEmailMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [verifyEmailMutation, { data, loading, error }] = useVerifyEmailMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useVerifyEmailMutation(baseOptions?: Apollo.MutationHookOptions<VerifyEmailMutation, VerifyEmailMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<VerifyEmailMutation, VerifyEmailMutationVariables>(VerifyEmailDocument, options);
+      }
+export type VerifyEmailMutationHookResult = ReturnType<typeof useVerifyEmailMutation>;
+export type VerifyEmailMutationResult = Apollo.MutationResult<VerifyEmailMutation>;
+export type VerifyEmailMutationOptions = Apollo.BaseMutationOptions<VerifyEmailMutation, VerifyEmailMutationVariables>;
+export const ResendVerificationEmailDocument = gql`
+    mutation ResendVerificationEmail($input: ResendVerificationEmailInput!) {
+  resendVerificationEmail(input: $input)
+}
+    `;
+export type ResendVerificationEmailMutationFn = Apollo.MutationFunction<ResendVerificationEmailMutation, ResendVerificationEmailMutationVariables>;
+
+/**
+ * __useResendVerificationEmailMutation__
+ *
+ * To run a mutation, you first call `useResendVerificationEmailMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useResendVerificationEmailMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [resendVerificationEmailMutation, { data, loading, error }] = useResendVerificationEmailMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useResendVerificationEmailMutation(baseOptions?: Apollo.MutationHookOptions<ResendVerificationEmailMutation, ResendVerificationEmailMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ResendVerificationEmailMutation, ResendVerificationEmailMutationVariables>(ResendVerificationEmailDocument, options);
+      }
+export type ResendVerificationEmailMutationHookResult = ReturnType<typeof useResendVerificationEmailMutation>;
+export type ResendVerificationEmailMutationResult = Apollo.MutationResult<ResendVerificationEmailMutation>;
+export type ResendVerificationEmailMutationOptions = Apollo.BaseMutationOptions<ResendVerificationEmailMutation, ResendVerificationEmailMutationVariables>;
 export const SpeciesWithTraitsAndEnumValuesDocument = gql`
     query SpeciesWithTraitsAndEnumValues($speciesId: ID!) {
   speciesById(id: $speciesId) {

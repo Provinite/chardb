@@ -21,10 +21,36 @@ import { setAccessToken } from "../lib/accessToken";
 
 type User = MeQuery["me"];
 
+/**
+ * Why a sign-in did not produce a session.
+ *
+ * `unverified` is separated from `failed` because the two want different
+ * screens: bad credentials wants "try again", an unconfirmed address wants an
+ * offer to send the link again. The distinction comes off the server's
+ * `extensions.code`, not off the message -- see {@link isEmailNotVerified}.
+ */
+export type LoginOutcome = "success" | "unverified" | "failed";
+
+/**
+ * The `extensions.code` the backend puts on a sign-in refused for want of a
+ * confirmed address. Must match `EMAIL_NOT_VERIFIED` in
+ * `apps/backend/src/auth/errors/email-not-verified.error.ts`.
+ */
+const EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED";
+
+function isEmailNotVerified(error: unknown): boolean {
+  return (
+    error instanceof ApolloError &&
+    error.graphQLErrors.some(
+      (graphQLError) => graphQLError.extensions?.code === EMAIL_NOT_VERIFIED,
+    )
+  );
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<LoginOutcome>;
   signup: (
     username: string,
     email: string,
@@ -130,7 +156,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   }, [refreshTokenMutation]);
 
   const login = useCallback(
-    async (email: string, password: string): Promise<boolean> => {
+    async (email: string, password: string): Promise<LoginOutcome> => {
       try {
         const { data } = await loginMutation({
           variables: { input: { email, password } },
@@ -142,13 +168,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           // Fetch user data via authenticated 'me' query
           await refetchMe();
           toast.success("Welcome back!");
-          return true;
+          return "success";
         }
-        return false;
+        return "failed";
       } catch (error) {
+        // No toast for this one. The login page renders it in place, with the
+        // resend offer next to it; a toast would carry the same words and then
+        // disappear before anybody could act on them.
+        if (isEmailNotVerified(error)) {
+          return "unverified";
+        }
         console.error("Login error:", error);
         toast.error(authErrorMessage(error, "Login failed"));
-        return false;
+        return "failed";
       }
     },
     [loginMutation, refetchMe],
@@ -175,12 +207,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           },
         });
 
+        // No session to establish: the account exists but cannot be used until
+        // the address on it is confirmed, so the caller shows the
+        // "check your email" screen rather than navigating to the dashboard.
         if (data?.signup) {
-          setAccessToken(data.signup.accessToken);
-          setHasSession(true);
-          // Fetch user data via authenticated 'me' query
-          await refetchMe();
-          toast.success("Account created successfully!");
           return true;
         }
         return false;
@@ -190,7 +220,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
     },
-    [signupMutation, refetchMe],
+    [signupMutation],
   );
 
   const logout = useCallback(() => {

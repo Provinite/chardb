@@ -8,6 +8,7 @@ import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useInviteCodeByIdQuery } from "../graphql/inviteCodes.graphql";
+import { ResendVerification } from "../components/auth/ResendVerification";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
 const signupSchema = z
@@ -185,6 +186,8 @@ export const SignupPage: React.FC = () => {
   usePageMeta({ title: "Sign Up" });
 
   const [isLoading, setIsLoading] = useState(false);
+  /** Set once the account exists. Swaps the form for the "check your email" card. */
+  const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const { signup, user } = useAuth();
   const navigate = useNavigate();
@@ -238,7 +241,10 @@ export const SignupPage: React.FC = () => {
         data.inviteCode,
       );
       if (success) {
-        navigate("/dashboard");
+        // Not the dashboard: signup no longer produces a session. The account
+        // exists, and stays unusable until somebody follows the link now
+        // sitting in that inbox.
+        setRegisteredEmail(data.email);
       }
     } finally {
       setIsLoading(false);
@@ -283,6 +289,28 @@ export const SignupPage: React.FC = () => {
       </ValidationMessage>
     );
   };
+
+  if (registeredEmail) {
+    return (
+      <Container>
+        <Card>
+          <Title>Check your email</Title>
+
+          <ResendVerification
+            email={registeredEmail}
+            heading="Your account is waiting on one click"
+          >
+            We've sent a link that confirms this address. Follow it and you can
+            sign in — until then the account cannot be used.
+          </ResendVerification>
+
+          <Footer>
+            Already confirmed? <LoginLink to="/login">Sign in here</LoginLink>
+          </Footer>
+        </Card>
+      </Container>
+    );
+  }
 
   return (
     <Container>

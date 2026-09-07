@@ -414,6 +414,7 @@ export const CommunityRoutes: React.FC = () => (
     <Route path="/signup" element={<ApexRedirect />} />
     <Route path="/forgot-password" element={<ApexRedirect />} />
     <Route path="/reset-password/*" element={<ApexRedirect />} />
+    <Route path="/verify-email/*" element={<ApexRedirect />} />
     <Route path="/auth/*" element={<ApexRedirect />} />
     <Route path="/dashboard" element={<ApexRedirect />} />
     <Route path="/feed" element={<ApexRedirect />} />

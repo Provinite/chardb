@@ -22,9 +22,7 @@ export class EmailVerificationResolver {
       "Confirms an address from the link in a verification email. Following " +
       "an already-redeemed link for an account that is confirmed succeeds.",
   })
-  async verifyEmail(
-    @Args("input") input: VerifyEmailInput,
-  ): Promise<boolean> {
+  async verifyEmail(@Args("input") input: VerifyEmailInput): Promise<boolean> {
     await this.verification.redeem(input.token);
     return true;
   }
