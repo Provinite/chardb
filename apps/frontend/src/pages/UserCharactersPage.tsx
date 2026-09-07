@@ -3,13 +3,9 @@ import { usePageMeta } from "../lib/pageMeta";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import { CharacterGrid } from "../components/CharacterGrid";
-import { Pager } from "../components/pagination/Pager";
-import { useOffsetPaging } from "../hooks/useOffsetPaging";
-import {
-  useUserIdentityQuery,
-  useUserCharactersQuery,
-} from "../generated/graphql";
+import { CharacterFolderBrowser } from "../components/character-folders/CharacterFolderBrowser";
+import { useAuth } from "../contexts/AuthContext";
+import { useUserIdentityQuery } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -37,12 +33,6 @@ const BackLink = styled(Link)`
   }
 `;
 
-const EmptyState = styled.div`
-  text-align: center;
-  padding: ${({ theme }) => theme.spacing.xxl};
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
 const LoadingContainer = styled.div`
   display: flex;
   justify-content: center;
@@ -55,8 +45,6 @@ const ErrorContainer = styled.div`
   color: ${({ theme }) => theme.colors.error};
 `;
 
-const PAGE_SIZE = 24;
-
 /**
  * Every character one member owns.
  *
@@ -66,13 +54,21 @@ const PAGE_SIZE = 24;
  * on the unfiltered global browse and presented every character on the site as
  * that member's (#321, #214).
  *
- * The filtering is the server's: `userCharacters` narrows by owner AND by who
- * is asking, so a visitor never sees what the owner has kept back. Doing it
- * here instead would mean shipping someone's private characters to the browser
- * and trusting the page not to draw them.
+ * The listing is now the owner's own folder structure (#350), which is what
+ * makes folders worth having to anyone but their owner: a member with a
+ * hundred characters can arrange how visitors meet them. Private folders and
+ * everything under them are absent, and the server decides that -- doing it
+ * here would mean shipping the names to the browser and trusting the page not
+ * to draw them.
+ *
+ * At the root a visitor sees every character rather than only the unfiled
+ * ones. The owner's root is the pile that empties as they file; a visitor's is
+ * a listing, and one that quietly omitted everything already filed would be
+ * the same class of lie as the dropped filter this page was built to fix.
  */
 export const UserCharactersPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+  const { user: viewer } = useAuth();
 
   usePageMeta({ title: `@${username}'s Characters` });
 
@@ -83,42 +79,7 @@ export const UserCharactersPage: React.FC = () => {
 
   const user = identity?.user;
 
-  const { data, loading, error, fetchMore } = useUserCharactersQuery({
-    variables: {
-      userId: user?.id ?? "",
-      filters: { limit: PAGE_SIZE, offset: 0 },
-    },
-    skip: !user?.id,
-  });
-
-  const characters = data?.userCharacters?.characters ?? [];
-  const total = data?.userCharacters?.total ?? 0;
-
-  const { loadMore, loadingMore } = useOffsetPaging({
-    pageSize: PAGE_SIZE,
-    loaded: characters.length,
-    hasMore: data?.userCharacters?.hasMore ?? false,
-    load: ({ limit, offset }) =>
-      fetchMore({
-        variables: { filters: { limit, offset } },
-        // Append rather than replace, or Load More removes the characters it
-        // was meant to add to.
-        updateQuery: (previous, { fetchMoreResult }) =>
-          fetchMoreResult
-            ? {
-                userCharacters: {
-                  ...fetchMoreResult.userCharacters,
-                  characters: [
-                    ...previous.userCharacters.characters,
-                    ...fetchMoreResult.userCharacters.characters,
-                  ],
-                },
-              }
-            : previous,
-      }),
-  });
-
-  if (identityLoading || (loading && !data)) {
+  if (identityLoading) {
     return (
       <Container>
         <LoadingContainer>
@@ -128,7 +89,7 @@ export const UserCharactersPage: React.FC = () => {
     );
   }
 
-  if (!identityLoading && !user) {
+  if (!user) {
     return (
       <Container>
         <ErrorContainer>
@@ -139,18 +100,7 @@ export const UserCharactersPage: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Container>
-        <ErrorContainer>
-          <h3>Error loading characters</h3>
-          <p>{error.message}</p>
-        </ErrorContainer>
-      </Container>
-    );
-  }
-
-  const displayName = user?.displayName || user?.username;
+  const displayName = user.displayName || user.username;
 
   return (
     <Container data-testid="user-characters-page">
@@ -159,30 +109,17 @@ export const UserCharactersPage: React.FC = () => {
             when it is showing everybody. A per-owner listing that does not say
             whose it is repeats the bug it exists to fix, just more quietly. */}
         <Title>{displayName}'s Characters</Title>
-        <BackLink to={`/user/${user?.username}`}>
+        <BackLink to={`/user/${user.username}`}>
           &larr; Back to profile
         </BackLink>
       </Header>
 
-      {characters.length === 0 ? (
-        <EmptyState>
-          <h3>Nothing to show</h3>
-          <p>{displayName} has no characters you can see.</p>
-        </EmptyState>
-      ) : (
-        <Pager
-          showing={characters.length}
-          total={total}
-          hasMore={data?.userCharacters?.hasMore ?? false}
-          loadingMore={loadingMore}
-          onLoadMore={loadMore}
-          noun="characters"
-        >
-          {/* showOwner={false}: every card on this page has the same owner,
-              and it is named in the heading. */}
-          <CharacterGrid characters={characters} showOwner={false} />
-        </Pager>
-      )}
+      <CharacterFolderBrowser
+        ownerId={user.id}
+        editable={viewer?.id === user.id}
+      />
     </Container>
   );
 };
+
+export default UserCharactersPage;
