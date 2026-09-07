@@ -1052,3 +1052,29 @@ mutation SeedUnsubscribeFromNotificationEmail($input: UnsubscribeInput!) {
     kind
   }
 }
+
+# Reading a recipient's own feed, to prove that moderating an image now reaches
+# the bell as well as (or instead of) the inbox (#344).
+query SeedMyNotifications {
+  notifications(first: 20) {
+    totalCount
+    nodes {
+      id
+      kind
+      subjectType
+      subjectId
+      subjectName
+      reason
+      reasonText
+    }
+  }
+}
+
+# The other half of the moderation pair. Approving already had a seed op;
+# rejecting did not, because nothing asserted anything about it before.
+mutation SeedRejectImage($input: RejectImageInput!) {
+  rejectImage(input: $input) {
+    id
+    action
+  }
+}
