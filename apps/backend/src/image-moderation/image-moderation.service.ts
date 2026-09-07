@@ -577,5 +577,4 @@ export class ImageModerationService {
       },
     });
   }
-
 }

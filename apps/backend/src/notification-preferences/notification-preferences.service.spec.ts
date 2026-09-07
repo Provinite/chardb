@@ -129,8 +129,12 @@ describe("NotificationPreferencesService", () => {
         Object.keys(NOTIFICATION_PREFERENCE_DEFAULTS).length,
       );
       for (const row of resolved) {
-        expect(row.inApp).toBe(NOTIFICATION_PREFERENCE_DEFAULTS[row.kind].inApp);
-        expect(row.email).toBe(NOTIFICATION_PREFERENCE_DEFAULTS[row.kind].email);
+        expect(row.inApp).toBe(
+          NOTIFICATION_PREFERENCE_DEFAULTS[row.kind].inApp,
+        );
+        expect(row.email).toBe(
+          NOTIFICATION_PREFERENCE_DEFAULTS[row.kind].email,
+        );
         expect(row.emailSupported).toBe(supportsEmail(row.kind));
       }
     });

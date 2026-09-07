@@ -140,7 +140,12 @@ export class NotificationPreferencesService {
           channel: NotificationChannel.EMAIL,
         },
       },
-      create: { userId, kind, channel: NotificationChannel.EMAIL, enabled: false },
+      create: {
+        userId,
+        kind,
+        channel: NotificationChannel.EMAIL,
+        enabled: false,
+      },
       update: { enabled: false },
     });
   }

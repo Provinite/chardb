@@ -38,10 +38,7 @@ export class UnsubscribeTokenService {
 
   constructor(configService: ConfigService) {
     const secret = configService.getOrThrow<string>("JWT_SECRET");
-    this.key = crypto
-      .createHmac("sha256", secret)
-      .update(KEY_LABEL)
-      .digest();
+    this.key = crypto.createHmac("sha256", secret).update(KEY_LABEL).digest();
   }
 
   /** The token for one member's one kind. Stable: the same inputs sign alike. */

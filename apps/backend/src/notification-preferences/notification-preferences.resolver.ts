@@ -60,7 +60,10 @@ export class NotificationPreferencesResolver {
     // Refused rather than stored, because a stored "yes" for a kind with no
     // template would start sending the moment somebody wrote one -- consent
     // given before the thing existed, which is not consent.
-    if (input.channel === NotificationChannel.EMAIL && !supportsEmail(input.kind)) {
+    if (
+      input.channel === NotificationChannel.EMAIL &&
+      !supportsEmail(input.kind)
+    ) {
       throw new BadRequestException(
         `${input.kind} does not send email, so it has no email setting.`,
       );
