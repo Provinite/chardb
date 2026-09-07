@@ -14,13 +14,20 @@ export interface PasswordChangedContext {
   supportEmail: string;
 }
 
+export interface EmailVerificationContext {
+  username: string;
+  verifyUrl: string;
+  expiryHours: number;
+}
+
 /**
  * Carried by every optional email and by no transactional one.
  *
- * Password reset and password-changed mail have no settings to point at -- they
- * are sent whatever a member prefers -- so their contexts deliberately do not
- * extend this. The type is what stops somebody adding the footer to them by
- * habit and implying an opt-out that does not exist.
+ * Password reset, password-changed and email-verification mail have no settings
+ * to point at -- they are sent whatever a member prefers, and verification is
+ * sent before there is a member to have a preference -- so their contexts
+ * deliberately do not extend this. The type is what stops somebody adding the
+ * footer to them by habit and implying an opt-out that does not exist.
  */
 export interface OptionalEmailContext {
   /** The member's notification settings, for the footer to link to. */
@@ -279,6 +286,117 @@ export const passwordChangedTemplate = (
     <div class="footer">
         <p>This is an automated security notification from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
         <p>If you have concerns about your account security, please contact our support team.</p>
+    </div>
+</body>
+</html>`;
+
+/**
+ * Email verification template
+ *
+ * Transactional, so no settings footer: an account cannot be used until this
+ * link is followed, which makes it the one email nobody can be opted out of.
+ */
+export const emailVerificationTemplate = (
+  context: EmailVerificationContext,
+): string => `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Your Email Address</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 30px;
+            margin-top: 20px;
+        }
+        h1 {
+            color: #2c3e50;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .button {
+            display: inline-block;
+            background-color: #8b5cf6;
+            color: white;
+            padding: 12px 30px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        .button:hover {
+            background-color: #7c3aed;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 12px;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            font-size: 12px;
+            color: #7f8c8d;
+            border-top: 1px solid #ddd;
+            padding-top: 20px;
+        }
+        .link {
+            color: #8b5cf6;
+            word-break: break-all;
+        }
+        .header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid #8b5cf6;
+            margin-bottom: 30px;
+        }
+        .brand {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        .brand-domain {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="brand">CharDB</div>
+        <div class="brand-domain">chardb.cc</div>
+    </div>
+    <div class="container">
+        <h1>Confirm Your Email Address</h1>
+
+        <p>Hi ${escapeHtml(context.username)},</p>
+
+        <p>Welcome to CharDB. Confirm this address to finish setting up your account — you'll need to do this before you can sign in.</p>
+
+        <a href="${context.verifyUrl}" class="button">Confirm Email Address</a>
+
+        <p>Or copy and paste this link into your browser:</p>
+        <p class="link">${context.verifyUrl}</p>
+
+        <div class="warning">
+            <strong>Important:</strong> This link will expire in ${context.expiryHours} hour(s). If you didn't create a CharDB account, you can safely ignore this email — the account cannot be used until somebody confirms this address.
+        </div>
+    </div>
+
+    <div class="footer">
+        <p>This is an automated email from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
+        <p>If you have any questions, please contact our support team.</p>
     </div>
 </body>
 </html>`;

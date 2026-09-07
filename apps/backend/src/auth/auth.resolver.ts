@@ -40,16 +40,21 @@ export class AuthResolver {
     return mapAuthResponseToGraphQL(serviceResult);
   }
 
+  /**
+   * Creates the account and mails a confirmation link.
+   *
+   * Returns a bare `true` rather than an `AuthPayload`, and sets no refresh
+   * cookie: a new account cannot hold a session until somebody follows that
+   * link, so there is nothing to hand back.
+   */
   @AllowUnauthenticated()
-  @Mutation(() => AuthPayload)
+  @Mutation(() => Boolean)
   async signup(
     @Args("input") signupInput: SignupInput,
-    @Context() ctx: GqlContext,
-  ): Promise<AuthPayload> {
+  ): Promise<boolean> {
     const serviceInput = mapSignupInputToService(signupInput);
-    const serviceResult = await this.authService.signup(serviceInput);
-    setRefreshCookie(ctx.res, serviceResult.refreshToken);
-    return mapAuthResponseToGraphQL(serviceResult);
+    await this.authService.signup(serviceInput);
+    return true;
   }
 
   /**

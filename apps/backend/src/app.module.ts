@@ -42,6 +42,7 @@ import { CurrenciesModule } from "./currencies/currencies.module";
 import { ShopModule } from "./shop/shop.module";
 import { NotificationsModule } from "./notifications/notifications.module";
 import { NotificationPreferencesModule } from "./notification-preferences/notification-preferences.module";
+import { EmailVerificationModule } from "./email-verification/email-verification.module";
 import { TradesModule } from "./trades/trades.module";
 import { CommunityColorsModule } from "./community-colors/community-colors.module";
 import { PendingOwnershipModule } from "./pending-ownership/pending-ownership.module";
@@ -271,6 +272,7 @@ import { Request, Response } from "express";
     ShopModule,
     NotificationsModule,
     NotificationPreferencesModule,
+    EmailVerificationModule,
     TradesModule,
     CommunityColorsModule,
     PendingOwnershipModule,

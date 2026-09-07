@@ -4,6 +4,7 @@ import { ConfigService } from "@nestjs/config";
 import {
   passwordResetTemplate,
   passwordChangedTemplate,
+  emailVerificationTemplate,
   imageApprovedTemplate,
   imageRejectedTemplate,
 } from "./templates";
@@ -66,6 +67,48 @@ export class EmailService {
         error.stack,
       );
       throw new Error("Failed to send password reset email");
+    }
+  }
+
+  /**
+   * Send the "confirm your address" email.
+   *
+   * Rethrows, like the password reset send and unlike the optional ones. The
+   * caller decides what to do with that: signup swallows it, because an account
+   * that exists but whose welcome mail bounced is recoverable from the login
+   * screen, while a signup that 500s after writing the row is not.
+   *
+   * @param email Address to confirm
+   * @param token Verification token (not hashed)
+   * @param username User's username for personalization
+   * @param expiryHours How long the token is good for, for the copy
+   */
+  async sendEmailVerification(
+    email: string,
+    token: string,
+    username: string,
+    expiryHours: number,
+  ): Promise<void> {
+    const verifyUrl = `${this.frontendUrl}/verify-email/${token}`;
+
+    try {
+      await this.mailerService.sendMail({
+        to: email,
+        subject: "Confirm Your Email Address",
+        html: emailVerificationTemplate({
+          username,
+          verifyUrl,
+          expiryHours,
+        }),
+      });
+
+      this.logger.log(`Email verification sent to ${email}`);
+    } catch (error) {
+      this.logger.error(
+        `Failed to send email verification to ${email}`,
+        error.stack,
+      );
+      throw new Error("Failed to send verification email");
     }
   }
 

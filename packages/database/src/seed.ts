@@ -34,6 +34,9 @@ async function main() {
       passwordHash: testPassword,
       displayName: "Test User",
       bio: "A test user for development purposes",
+      // Required, not decoration: `isVerified` gates sign-in, and a seeded
+      // account has no inbox to receive a confirmation link in.
+      isVerified: true,
     },
   });
 

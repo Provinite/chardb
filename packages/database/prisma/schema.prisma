@@ -189,6 +189,9 @@ model User {
   // Password reset tokens
   passwordResetTokens PasswordResetToken[]
 
+  // Email verification tokens
+  emailVerificationTokens EmailVerificationToken[]
+
   // Image moderation actions
   moderationActions ImageModerationAction[] @relation("ModeratorActions")
 
@@ -255,6 +258,35 @@ model PasswordResetToken {
   @@index([tokenHash])
   @@index([userId])
   @@map("password_reset_tokens")
+}
+
+/// One send of a "confirm your address" mail. Rows are kept after redemption
+/// and after the account is gone, because they are also the counter: an address
+/// may be mailed at most EMAIL_VERIFICATION_LIFETIME_LIMIT times ever, so this
+/// feature cannot be turned into a way to mail somebody repeatedly.
+model EmailVerificationToken {
+  id String @id @default(uuid())
+
+  /// Null once the account is deleted. The row stays so the address keeps its
+  /// count -- deleting an account must not hand somebody a fresh six sends.
+  userId String? @map("user_id")
+
+  /// The address mailed, lower-cased. Denormalised from the user on purpose:
+  /// the cap is a property of the address, and has to outlive both the account
+  /// and any future change-of-email.
+  email String @db.VarChar(255)
+
+  tokenHash String   @unique @map("token_hash") @db.VarChar(64)
+  expiresAt DateTime @map("expires_at")
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  // Relations
+  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([email])
+  @@index([userId])
+  @@map("email_verification_tokens")
 }
 
 model Character {

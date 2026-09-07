@@ -12,6 +12,8 @@ import { UsersService } from "../users/users.service";
 import { InviteCodesService } from "../invite-codes/invite-codes.service";
 import { DatabaseService } from "../database/database.service";
 import { EmailService } from "../email/email.service";
+import { EmailVerificationService } from "../email-verification/email-verification.service";
+import { EmailNotVerifiedError } from "./errors/email-not-verified.error";
 import { Prisma } from "@chardb/database";
 
 /**
@@ -76,6 +78,7 @@ export class AuthService {
     private inviteCodesService: InviteCodesService,
     private prisma: DatabaseService,
     private emailService: EmailService,
+    private emailVerificationService: EmailVerificationService,
   ) {}
 
   async validateUser(
@@ -105,6 +108,14 @@ export class AuthService {
       throw new UnauthorizedException("Invalid credentials");
     }
 
+    // Checked after the password, not before: answering differently for a
+    // registered-but-unconfirmed address than for one nobody has ever used
+    // would turn the login form into a way to test whether an address has an
+    // account here.
+    if (!user.isVerified) {
+      throw new EmailNotVerifiedError();
+    }
+
     const payload = { email: user.email, sub: user.id };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: "7d" });
@@ -116,9 +127,16 @@ export class AuthService {
     };
   }
 
-  async signup(input: SignupServiceInput): Promise<AuthResponse> {
+  /**
+   * Create an account. Does not sign anybody in.
+   *
+   * A new account cannot hold a session until its address is confirmed, so
+   * there are no tokens to hand back and no refresh cookie to set -- the caller
+   * goes to the "check your email" screen instead of the dashboard.
+   */
+  async signup(input: SignupServiceInput): Promise<void> {
     const normalizedEmail = input.email.toLowerCase();
-    return await this.prisma.$transaction(async (tx) => {
+    const userId = await this.prisma.$transaction(async (tx) => {
       // 1. Validate invite code first (using regular service, not transaction)
       const inviteCode = await this.inviteCodesService.findOne(
         input.inviteCode,
@@ -183,18 +201,14 @@ export class AuthService {
         }
       }
 
-      // 7. Generate tokens (outside transaction - no DB operations)
-      const { passwordHash, ...userWithoutPassword } = user;
-      const payload = { email: user.email, sub: user.id };
-      const accessToken = this.jwtService.sign(payload);
-      const refreshToken = this.jwtService.sign(payload, { expiresIn: "7d" });
-
-      return {
-        user: userWithoutPassword,
-        accessToken,
-        refreshToken,
-      };
+      return user.id;
     });
+
+    // Sent after the transaction commits, never inside it. An email sent from
+    // within a transaction that then rolls back has already gone -- there is no
+    // un-sending it -- so the account has to be a fact before anybody is told
+    // about it. Delivery failures are swallowed inside `sendForNewUser`.
+    await this.emailVerificationService.sendForNewUser(userId);
   }
 
   async refreshToken(token: string): Promise<RefreshTokenResponse> {
@@ -206,11 +220,25 @@ export class AuthService {
         throw new UnauthorizedException("User not found");
       }
 
+      // Also checked here, not just in `login`. A refresh cookie outlives the
+      // session it came with, so without this a token minted before the account
+      // was ever confirmed would keep renewing itself for a week.
+      if (!user.isVerified) {
+        throw new EmailNotVerifiedError();
+      }
+
       const newPayload = { email: user.email, sub: user.id };
       const accessToken = this.jwtService.sign(newPayload);
 
       return { accessToken };
     } catch (error) {
+      // Passed through rather than flattened. The blanket catch below exists to
+      // stop a malformed or expired cookie leaking anything about why it was
+      // rejected; an unconfirmed address is not that, and the client needs the
+      // code to offer a resend rather than "log in again".
+      if (error instanceof EmailNotVerifiedError) {
+        throw error;
+      }
       throw new UnauthorizedException("Invalid refresh token");
     }
   }
