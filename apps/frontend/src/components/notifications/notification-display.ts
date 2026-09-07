@@ -87,7 +87,7 @@ export function notificationActorName(
 export function notificationSentence(
   notification: NotificationFieldsFragment,
 ): string {
-  const { kind, subjectName, count, amount, reason } = notification;
+  const { kind, subjectName, count, amount, reason, reasonText } = notification;
   const name = subjectName ?? "something";
 
   switch (kind) {
@@ -112,5 +112,44 @@ export function notificationSentence(
       return "accepted your trade";
     case NotificationKind.TradeDeclined:
       return "declined your trade";
+    case NotificationKind.ImageApproved:
+      return `approved ${name}`;
+    case NotificationKind.ImageRejected: {
+      // `reason` is the enum name, snapshotted so that rewording a label does
+      // not rewrite what an old row says. `reasonText` is the moderator's own
+      // words and is shown in preference to the canned label when they wrote
+      // any, because it is the part that tells the uploader what to fix.
+      const why = reasonText ?? rejectionReasonLabel(reason);
+      return why
+        ? `could not approve ${name} — ${why}`
+        : `could not approve ${name}`;
+    }
+  }
+}
+
+/**
+ * The member-facing wording for a `ModerationRejectionReason`.
+ *
+ * Kept beside the sentence that uses it rather than imported from the backend:
+ * these are the words a person reads, and the backend's copy of them is for
+ * the email template. An unrecognised value renders as no reason at all, which
+ * is what a row written by a newer version looks like during a deploy.
+ */
+function rejectionReasonLabel(
+  reason: string | null | undefined,
+): string | null {
+  switch (reason) {
+    case "TOS_VIOLATION":
+      return "it breaks the terms of service";
+    case "NSFW_NOT_TAGGED":
+      return "it needs an NSFW tag";
+    case "SPAM_LOW_QUALITY":
+      return "it was flagged as spam or low quality";
+    case "COPYRIGHT_ISSUE":
+      return "of a copyright or IP issue";
+    case "OTHER":
+      return "it breaks a policy";
+    default:
+      return null;
   }
 }

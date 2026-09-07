@@ -90,6 +90,14 @@ export const client = new ApolloClient({
   link: splitLink,
   cache: new InMemoryCache({
     typePolicies: {
+      // Keyed by kind rather than by an id, because it has none: a preference
+      // row is always the viewer's own, so the kind alone identifies it. Without
+      // this the type is unnormalisable, the mutation's reply cannot be merged
+      // into the query that rendered the switches, and a toggle visibly snaps
+      // back until the next refetch.
+      NotificationPreference: {
+        keyFields: ["kind"],
+      },
       Query: {
         fields: {
           users: {

@@ -1,7 +1,12 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { NotificationKind, NotificationSubjectType } from "@chardb/database";
+import {
+  NotificationChannel,
+  NotificationKind,
+  NotificationSubjectType,
+} from "@chardb/database";
 import { NotificationsService } from "./notifications.service";
 import { DatabaseService } from "../database/database.service";
+import { NotificationPreferencesService } from "../notification-preferences/notification-preferences.service";
 import { mockDatabaseService } from "../../test/setup";
 import {
   parseNotificationPayload,
@@ -63,6 +68,11 @@ describe("notification payloads", () => {
 describe("NotificationsService", () => {
   let service: NotificationsService;
 
+  const mockPreferences = {
+    isEnabled: jest.fn(),
+    filterEnabled: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -70,8 +80,19 @@ describe("NotificationsService", () => {
       providers: [
         NotificationsService,
         { provide: DatabaseService, useValue: mockDatabaseService },
+        {
+          provide: NotificationPreferencesService,
+          useValue: mockPreferences,
+        },
       ],
     }).compile();
+
+    // Nobody has turned anything off unless a test says so, which is also the
+    // real default for a member who has never opened the settings page.
+    mockPreferences.isEnabled.mockResolvedValue(true);
+    mockPreferences.filterEnabled.mockImplementation(
+      async (userIds: string[]) => userIds,
+    );
 
     service = module.get<NotificationsService>(NotificationsService);
   });
@@ -121,9 +142,114 @@ describe("NotificationsService", () => {
 
       expect(lastCreate().actorLabel).toBeNull();
     });
+
+    it("writes nothing when the recipient has turned the kind off in-app", async () => {
+      mockPreferences.isEnabled.mockResolvedValue(false);
+
+      const written = await service.create({
+        recipientId: "u1",
+        kind: NotificationKind.IMAGE_APPROVED,
+        actorUserId: "u2",
+        data: { subjectName: "sketch.png" },
+      });
+
+      expect(written).toBeNull();
+      expect(mockDatabaseService.notification.create).not.toHaveBeenCalled();
+    });
+
+    it("asks about the in-app channel, not the email one", async () => {
+      // The two are separate settings, and reading the wrong one here would
+      // silently tie the badge to whether somebody wanted mail.
+      await service.create({
+        recipientId: "u1",
+        kind: NotificationKind.IMAGE_APPROVED,
+        actorUserId: "u2",
+        data: { subjectName: "sketch.png" },
+      });
+
+      expect(mockPreferences.isEnabled).toHaveBeenCalledWith(
+        "u1",
+        NotificationKind.IMAGE_APPROVED,
+        NotificationChannel.IN_APP,
+        undefined,
+      );
+    });
+
+    it("checks the preference on the caller's transaction client", async () => {
+      // Otherwise the check reads outside a transaction that may have just
+      // written the very preference being asked about.
+      const tx = { notification: { create: jest.fn() } };
+
+      await service.create(
+        {
+          recipientId: "u1",
+          kind: NotificationKind.FOLLOW_RECEIVED,
+          actorUserId: "u2",
+          data: {},
+        },
+        tx as never,
+      );
+
+      expect(mockPreferences.isEnabled).toHaveBeenCalledWith(
+        "u1",
+        NotificationKind.FOLLOW_RECEIVED,
+        NotificationChannel.IN_APP,
+        tx,
+      );
+    });
   });
 
   describe("createMany", () => {
+    it("writes only to the recipients who still want the kind", async () => {
+      mockPreferences.filterEnabled.mockResolvedValue(["u3"]);
+
+      await service.createMany(["u1", "u3"], {
+        kind: NotificationKind.ITEM_GRANTED,
+        actorLabel: "system",
+        data: { subjectName: "Rusty Locket", count: 1 },
+      });
+
+      const rows = (
+        mockDatabaseService.notification.createMany.mock.calls.at(-1)?.[0] as {
+          data: Array<{ recipientId: string }>;
+        }
+      ).data;
+      expect(rows.map((r) => r.recipientId)).toEqual(["u3"]);
+    });
+
+    it("does not query when everyone has turned the kind off", async () => {
+      mockPreferences.filterEnabled.mockResolvedValue([]);
+
+      const result = await service.createMany(["u1", "u2"], {
+        kind: NotificationKind.ITEM_GRANTED,
+        actorLabel: "system",
+        data: { subjectName: "Rusty Locket", count: 1 },
+      });
+
+      expect(result).toEqual({ count: 0 });
+      expect(
+        mockDatabaseService.notification.createMany,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("drops the actor before asking about preferences", async () => {
+      // Filtering the actor out afterwards would work, but asking about
+      // somebody who is not going to be notified is a wasted row in the IN
+      // clause on every fan-out.
+      await service.createMany(["u1", "u2", "u3"], {
+        kind: NotificationKind.FOLLOW_RECEIVED,
+        actorUserId: "u2",
+        data: {},
+      });
+
+      expect(mockPreferences.filterEnabled).toHaveBeenCalledWith(
+        ["u1", "u3"],
+        NotificationKind.FOLLOW_RECEIVED,
+        NotificationChannel.IN_APP,
+        undefined,
+      );
+    });
+
     it("does not notify the actor about their own action", async () => {
       await service.createMany(["u1", "u2", "u3"], {
         kind: NotificationKind.ITEM_GRANTED,

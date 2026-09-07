@@ -206,6 +206,8 @@ model User {
   // addressed to, and who caused it.
   notifications      Notification[] @relation("NotificationRecipient")
   causedNotifications Notification[] @relation("NotificationActor")
+  /// Only the answers that differ from the default; see NotificationPreference.
+  notificationPreferences NotificationPreference[]
 
   // Trading. Two relations for the offers themselves, and six more because
   // every line on the table names both ends of its own movement.
@@ -1754,6 +1756,47 @@ enum NotificationKind {
   TRADE_ACCEPTED
   /// A trade you proposed was declined.
   TRADE_DECLINED
+  /// An image you uploaded cleared moderation.
+  IMAGE_APPROVED
+  /// An image you uploaded was rejected, with a reason.
+  IMAGE_REJECTED
+}
+
+/// How a notification reaches someone.
+///
+/// A kind is a thing that happened; a channel is a way of hearing about it.
+/// Keeping them separate is what lets a member keep the badge for approvals and
+/// still stop the mail, which is the whole complaint behind this table.
+///
+/// Transactional mail -- password reset, password changed -- is deliberately not
+/// expressible here. It has no kind, so it has no preference, so nothing can
+/// switch it off.
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+}
+
+/// One member's answer to one (kind, channel) question.
+///
+/// Sparse on purpose: a row exists only where someone has disagreed with the
+/// default. The defaults themselves live in `notification-preference-defaults.ts`
+/// and are merged on read, so adding a kind needs no backfill and changing a
+/// default takes effect for everyone who never touched it.
+model NotificationPreference {
+  id      String              @id @default(uuid())
+  userId  String              @map("user_id")
+  kind    NotificationKind
+  channel NotificationChannel
+  enabled Boolean
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  /// One answer per question. Also the lookup the send path uses.
+  @@unique([userId, kind, channel])
+  @@map("notification_preferences")
 }
 
 /// What clicking a notification opens.

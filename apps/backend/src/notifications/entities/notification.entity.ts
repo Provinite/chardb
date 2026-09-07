@@ -110,9 +110,18 @@ export class Notification {
 
   @Field(() => String, {
     nullable: true,
-    description: "Why, when staff gave a reason.",
+    description:
+      "Why, when staff gave a reason. For a rejected image this is the " +
+      "ModerationRejectionReason name rather than its label, so that " +
+      "rewording a label does not rewrite what old rows say.",
   })
   reason?: string | null;
+
+  @Field(() => String, {
+    nullable: true,
+    description: "The moderator's own words, when they added any.",
+  })
+  reasonText?: string | null;
 
   @Field(() => String, {
     nullable: true,

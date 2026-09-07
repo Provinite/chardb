@@ -1,10 +1,12 @@
 import { Injectable, Logger } from "@nestjs/common";
 import {
+  NotificationChannel,
   NotificationKind,
   NotificationSubjectType,
   Prisma,
 } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
+import { NotificationPreferencesService } from "../notification-preferences/notification-preferences.service";
 import {
   NotificationPayloads,
   parseNotificationPayload,
@@ -45,7 +47,10 @@ export type LoadedNotification = Omit<
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
 
-  constructor(private readonly prisma: DatabaseService) {}
+  constructor(
+    private readonly prisma: DatabaseService,
+    private readonly preferences: NotificationPreferencesService,
+  ) {}
 
   /**
    * Resolves the actor pair to the one shape the CHECK constraint accepts.
@@ -65,18 +70,32 @@ export class NotificationsService {
   }
 
   /**
-   * Writes one notification.
+   * Writes one notification, unless the recipient has asked not to see this
+   * kind in-app.
    *
    * Producers call this inside whatever transaction they already hold, by
    * passing `tx`. A notification is not worth failing the thing it describes,
    * but a notification about something that then rolled back is worse than
    * none, so it joins the caller's transaction rather than opening its own.
+   *
+   * The preference check lives here rather than at the eight call sites
+   * because this is the only way a row reaches the table -- a producer cannot
+   * forget it, and a producer added tomorrow inherits it. Returns null when the
+   * recipient declined; every caller already discards the value.
    */
   async create<K extends NotificationKind>(
     input: CreateNotificationInput<K>,
     tx?: Prisma.TransactionClient,
   ) {
     const client = tx ?? this.prisma;
+
+    const wanted = await this.preferences.isEnabled(
+      input.recipientId,
+      input.kind,
+      NotificationChannel.IN_APP,
+      tx,
+    );
+    if (!wanted) return null;
 
     // Belt to the compiler's braces: catches anything that reached a producer
     // as `unknown`, and anything whose shape drifted from its schema.
@@ -97,11 +116,13 @@ export class NotificationsService {
   }
 
   /**
-   * Writes the same notification to many recipients.
+   * Writes the same notification to many recipients who want it.
    *
    * One event concerning several people is several rows, because read state is
-   * per person. Recipients are deduplicated, and the actor is dropped from the
-   * list: nobody needs telling about their own action.
+   * per person. Recipients are deduplicated, the actor is dropped from the
+   * list -- nobody needs telling about their own action -- and anyone who has
+   * switched this kind off in-app is filtered out, in one query rather than
+   * one per person.
    */
   async createMany<K extends NotificationKind>(
     recipientIds: string[],
@@ -109,8 +130,14 @@ export class NotificationsService {
     tx?: Prisma.TransactionClient,
   ) {
     const client = tx ?? this.prisma;
-    const recipients = [...new Set(recipientIds)].filter(
+    const candidates = [...new Set(recipientIds)].filter(
       (id) => id !== input.actorUserId,
+    );
+    const recipients = await this.preferences.filterEnabled(
+      candidates,
+      input.kind,
+      NotificationChannel.IN_APP,
+      tx,
     );
     if (recipients.length === 0) return { count: 0 };
 
