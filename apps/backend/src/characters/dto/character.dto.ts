@@ -407,6 +407,28 @@ export class CharacterFiltersInput {
   @IsUUID()
   ownerId?: string;
 
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "Characters filed directly in this folder. Sub-folders are not " +
+      "included -- opening a folder shows what is in it, the way a file " +
+      "browser does. A private folder answers only to its owner.",
+  })
+  @IsOptional()
+  @IsUUID()
+  folderId?: string;
+
+  @Field({
+    nullable: true,
+    description:
+      "Characters in no folder at all: the root of your workspace, and the " +
+      "pile that empties as you file. Yours only -- it describes how you have " +
+      "organised things, which is not a question anyone else can ask.",
+  })
+  @IsOptional()
+  @IsBoolean()
+  unfiled?: boolean;
+
   @Field(() => Visibility, { nullable: true })
   @IsOptional()
   @IsEnum(Visibility)

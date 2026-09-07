@@ -67,6 +67,20 @@ const mockPrismaService = {
     delete: jest.fn(),
     upsert: jest.fn(),
   },
+  characterFolder: {
+    create: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+    count: jest.fn(),
+  },
+  characterFolderEntry: {
+    createMany: jest.fn(),
+    findMany: jest.fn(),
+    deleteMany: jest.fn(),
+    groupBy: jest.fn(),
+  },
   imageTag: {
     create: jest.fn(),
     findUnique: jest.fn(),
