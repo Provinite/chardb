@@ -163,64 +163,70 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
 
   return (
     <Modal isOpen={isOpen} onClose={close} title={title}>
-      <Field
-        autoFocus
-        value={search}
-        placeholder="Find a folder, or type a new name"
-        onChange={(event) => setSearch(event.target.value)}
-        aria-label="Find a folder, or type a new name"
-      />
+      {/* The shared Modal carries no `role="dialog"`, so there is nothing to
+          scope a query to from outside. Folder names appear both here and on
+          the tiles behind, and a selector that cannot tell them apart matches
+          two elements. */}
+      <div data-testid="folder-picker">
+        <Field
+          autoFocus
+          value={search}
+          placeholder="Find a folder, or type a new name"
+          onChange={(event) => setSearch(event.target.value)}
+          aria-label="Find a folder, or type a new name"
+        />
 
-      <List>
-        {allowRoot && !search && (
-          <Row
-            type="button"
-            $depth={0}
-            $selected={selected === null}
-            onClick={() => setSelected(null)}
-          >
-            No folder
-          </Row>
-        )}
+        <List>
+          {allowRoot && !search && (
+            <Row
+              type="button"
+              $depth={0}
+              $selected={selected === null}
+              onClick={() => setSelected(null)}
+            >
+              No folder
+            </Row>
+          )}
 
-        {rows.map(({ folder, depth }) => (
-          <Row
-            key={folder.id}
-            type="button"
-            $depth={search ? 0 : depth}
-            $selected={selected === folder.id}
-            disabled={disabledIds?.has(folder.id)}
-            onClick={() => setSelected(folder.id)}
-          >
-            {folder.isPrivate ? "🔒" : "📁"} {folder.name}
-            <Count>{folder.characterCount}</Count>
-          </Row>
-        ))}
+          {rows.map(({ folder, depth }) => (
+            <Row
+              key={folder.id}
+              type="button"
+              $depth={search ? 0 : depth}
+              $selected={selected === folder.id}
+              disabled={disabledIds?.has(folder.id)}
+              onClick={() => setSelected(folder.id)}
+            >
+              {folder.isPrivate ? "🔒" : "📁"} {folder.name}
+              <Count>{folder.characterCount}</Count>
+            </Row>
+          ))}
 
-        {rows.length === 0 && !canCreate && (
-          <Empty>No folders yet. Type a name to make one.</Empty>
-        )}
-      </List>
+          {rows.length === 0 && !canCreate && (
+            <Empty>No folders yet. Type a name to make one.</Empty>
+          )}
+        </List>
 
-      <Actions>
-        <Button variant="ghost" onClick={close} disabled={busy}>
-          Cancel
-        </Button>
-        {canCreate ? (
-          <Button variant="primary" onClick={createThenSubmit} loading={busy}>
-            Create &ldquo;{typed}&rdquo; and {confirmLabel.toLowerCase()}
+        <Actions>
+          <Button variant="ghost" onClick={close} disabled={busy}>
+            Cancel
           </Button>
-        ) : (
-          <Button
-            variant="primary"
-            onClick={() => void submit(selected)}
-            loading={busy}
-            disabled={selected === null && !allowRoot}
-          >
-            {confirmLabel}
-          </Button>
-        )}
-      </Actions>
+          {canCreate ? (
+            <Button variant="primary" onClick={createThenSubmit} loading={busy}>
+              Create &ldquo;{typed}&rdquo; and {confirmLabel.toLowerCase()}
+            </Button>
+          ) : (
+            <Button
+              variant="primary"
+              onClick={() => void submit(selected)}
+              loading={busy}
+              disabled={selected === null && !allowRoot}
+            >
+              {confirmLabel}
+            </Button>
+          )}
+        </Actions>
+      </div>
     </Modal>
   );
 };

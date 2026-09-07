@@ -171,16 +171,20 @@ export const DraggableCharacter: React.FC<{
   disabled: boolean;
   children: React.ReactNode;
 }> = ({ characterId, disabled, children }) => {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+  const { listeners, setNodeRef, isDragging } = useDraggable({
     id: `${DRAG_CHARACTER_PREFIX}${characterId}`,
     disabled,
   });
 
+  // `attributes` is deliberately not spread. It carries `role="button"` and a
+  // tab stop, and the child here is a card that is already a link -- announcing
+  // it as a button and adding a second stop in front of it makes the page
+  // worse for a keyboard than the drag makes it better. Filing without a mouse
+  // goes through the checkboxes and the folder picker, which are reachable.
   return (
     <div
       ref={setNodeRef}
       style={{ opacity: isDragging ? 0.4 : 1, touchAction: "none" }}
-      {...attributes}
       {...listeners}
     >
       {children}
