@@ -38,6 +38,7 @@ function mapNotification(row: LoadedNotification): Notification {
     count: data && "count" in data ? data.count : null,
     amount: data && "amount" in data ? data.amount : null,
     reason: data && "reason" in data ? data.reason : null,
+    reasonText: data && "reasonText" in data ? data.reasonText : null,
     excerpt: data && "excerpt" in data ? data.excerpt : null,
   };
 }

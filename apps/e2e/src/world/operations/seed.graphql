@@ -1019,3 +1019,54 @@ mutation SeedCreateComment($input: CreateCommentInput!) {
     }
   }
 }
+
+# --- Notification delivery preferences (#344) --------------------------------
+
+# The matrix is sparse in the database: a row exists only where somebody has
+# disagreed with a default. This query is what proves the merge happened, so a
+# spec can assert defaults for a member who has never touched the settings page.
+query SeedNotificationPreferences {
+  notificationPreferences {
+    kind
+    inApp
+    email
+    emailSupported
+  }
+}
+
+mutation SeedUpdateNotificationPreference(
+  $input: UpdateNotificationPreferenceInput!
+) {
+  updateNotificationPreference(input: $input) {
+    kind
+    inApp
+    email
+    emailSupported
+  }
+}
+
+# Reading a recipient's own feed, to prove that moderating an image now reaches
+# the bell as well as (or instead of) the inbox (#344).
+query SeedMyNotifications {
+  notifications(first: 20) {
+    totalCount
+    nodes {
+      id
+      kind
+      subjectType
+      subjectId
+      subjectName
+      reason
+      reasonText
+    }
+  }
+}
+
+# The other half of the moderation pair. Approving already had a seed op;
+# rejecting did not, because nothing asserted anything about it before.
+mutation SeedRejectImage($input: RejectImageInput!) {
+  rejectImage(input: $input) {
+    id
+    action
+  }
+}

@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Moderation notification specs** (`tests/moderation/moderation-notifications.e2e.ts`): approving or rejecting an image now reaches the uploader's bell, the rejection carries its reason and the moderator's note, the in-app switch suppresses the row, silencing approvals leaves rejections alone, and the notification goes to the uploader rather than the moderator (#344).
+
+- **Notification preference specs** (`tests/settings/`): the defaults that the issue turns on (approval email off, rejection email on), a toggle surviving a reload and agreeing with the server, kinds without a template offering no email switch, email refused for a kind that does not send any, and the always-sent notice (#344).
+
 - **Comment flow specs** (`tests/comments/`): replying, editing, cancelling an edit, deleting, liking and unliking, commenting on a gallery as well as a character, another member's comment offering no edit or delete, the empty and over-length forms refusing to submit, and a signed-out visitor reading comments but being asked to log in to write. Commenting had no browser coverage at all before this. (#310)
 
 - **Comment permission regressions**: posting a comment on a character and seeing the count move, the same comment surviving a reload so the read path is covered too, the form staying put when the list read is forced to fail, and the viewer's follow counts resolving rather than 403ing. Each was checked against the unfixed code first. (#310)
@@ -34,6 +38,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Reports merge instead of multiplying**: CI reports as `blob`, each shard uploads its slice, and an `e2e-report` job merges them into the one `playwright-report` artifact. Local runs still write HTML directly. (#353)
 
 ### Fixed
+
+- **The suite's email settings were never read.** `.env.test` set `MAIL_HOST`/`MAIL_PORT`/`MAIL_FROM` under a comment claiming email was disabled for tests; `EmailModule` reads `SMTP_HOST`/`SMTP_PORT`/`EMAIL_FROM`, so the block did nothing. With `SMTP_HOST` unset the module took its SES branch, and where a run's mail actually went depended on whether a developer's gitignored `apps/backend/.env` existed — the e2e backend picks it up, because `ConfigModule` loads `.env` from its cwd. Now pinned to `127.0.0.1`, which cannot deliver offsite whatever is listening (#344).
+
 
 - **Servers no longer outlive a run.** The wrapper scripts signalled their child and called `process.exit` in the same tick, orphaning it with the port still bound — and since Vite runs with `--strictPort`, the next run failed on EADDRINUSE rather than on anything naming the cause. They now wait for the child to exit, force-kill after 10s, and handle SIGHUP. `gracefulShutdown` on both `webServer` entries makes Playwright's reclaim a SIGTERM the servers can act on rather than an uncatchable SIGKILL. (#353)
 

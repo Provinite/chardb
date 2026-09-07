@@ -25,6 +25,17 @@ export class EmailService {
   }
 
   /**
+   * Where an optional email's footer sends somebody who wants fewer of them.
+   *
+   * Built here rather than passed in, because it is the same address for every
+   * optional email and a caller that had to supply it is a caller that could
+   * forget to.
+   */
+  private get settingsUrl(): string {
+    return `${this.frontendUrl}/profile/edit`;
+  }
+
+  /**
    * Send a password reset email to the user
    * @param email User's email address
    * @param token Password reset token (not hashed)
@@ -105,6 +116,7 @@ export class EmailService {
         html: imageApprovedTemplate({
           username,
           imageName,
+          settingsUrl: this.settingsUrl,
         }),
       });
 
@@ -145,6 +157,7 @@ export class EmailService {
           imageName,
           reason: reasonLabels[reason],
           reasonText,
+          settingsUrl: this.settingsUrl,
         }),
       });
 

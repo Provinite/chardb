@@ -223,6 +223,11 @@ const mockPrismaService = {
     updateMany: jest.fn(),
     count: jest.fn(),
   },
+  notificationPreference: {
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+    upsert: jest.fn(),
+  },
   pendingOwnership: {
     create: jest.fn(),
     findUnique: jest.fn(),
