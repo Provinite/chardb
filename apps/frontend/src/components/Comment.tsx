@@ -126,24 +126,28 @@ const ReplyButton = styled.button`
 `;
 
 interface CommentProps {
+  // Optional fields are `| null` rather than `?`, because that is what the
+  // schema says and what the generated types hand over. They used to be `?`,
+  // which does not accept null -- so every caller passed the comment through
+  // `any` and the mismatch stayed invisible.
   comment: {
     id: string;
     content: string;
     createdAt: string;
     authorId: string;
-    parentId?: string;
+    parentId?: string | null;
     isHidden: boolean;
     likesCount: number;
     author: {
       id: string;
       username: string;
-      displayName?: string;
+      displayName?: string | null;
       avatarImage?: {
         id: string;
         originalUrl: string;
-        thumbnailUrl?: string;
-        altText?: string;
-      };
+        thumbnailUrl?: string | null;
+        altText?: string | null;
+      } | null;
     };
   };
   onReply?: (parentId: string) => void;

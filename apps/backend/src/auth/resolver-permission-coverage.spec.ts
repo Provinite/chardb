@@ -99,7 +99,10 @@ const collectResolverMethods = (): ResolverMethod[] => {
   const found: ResolverMethod[] = [];
 
   for (const file of resolverFiles(SRC_ROOT)) {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    // Dynamic by necessity: the point of this test is to find resolver files
+    // rather than be told about them, so a static import list would be the
+    // very thing that goes stale.
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
     const moduleExports = require(file) as Record<string, unknown>;
 
     for (const [exportName, exported] of Object.entries(moduleExports)) {
