@@ -1,7 +1,7 @@
 import { Module } from "@nestjs/common";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
-import { EmailModule } from "../email/email.module";
+import { NotificationsModule } from "../notifications/notifications.module";
 import { CurrenciesModule } from "../currencies/currencies.module";
 import { MediaModule } from "../media/media.module";
 import { ImageModerationService } from "./image-moderation.service";
@@ -14,7 +14,7 @@ import {
   imports: [
     DatabaseModule,
     AuthModule,
-    EmailModule,
+    NotificationsModule,
     MediaModule,
     CurrenciesModule,
   ],

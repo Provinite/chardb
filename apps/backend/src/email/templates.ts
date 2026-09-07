@@ -14,17 +14,42 @@ export interface PasswordChangedContext {
   supportEmail: string;
 }
 
-export interface ImageApprovedContext {
+/**
+ * Carried by every optional email and by no transactional one.
+ *
+ * Password reset and password-changed mail cannot be unsubscribed from, so
+ * their contexts deliberately do not extend this. The type is what stops
+ * somebody adding the footer to them by habit.
+ */
+export interface UnsubscribableContext {
+  /** Lands on a page that switches this one kind's email off. */
+  unsubscribeUrl: string;
+}
+
+export interface ImageApprovedContext extends UnsubscribableContext {
   username: string;
   imageName: string;
 }
 
-export interface ImageRejectedContext {
+export interface ImageRejectedContext extends UnsubscribableContext {
   username: string;
   imageName: string;
   reason: string;
   reasonText?: string;
 }
+
+/**
+ * The footer for an optional email.
+ *
+ * The URL is interpolated unescaped, as `resetUrl` already is, because it is
+ * built by us from a base URL and a hex-and-base64url token -- there is no
+ * caller-supplied text in it to escape.
+ */
+const unsubscribeFooter = (context: UnsubscribableContext): string => `
+    <div class="footer">
+        <p>This is an automated notification from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
+        <p><a href="${context.unsubscribeUrl}" style="color: #7f8c8d;">Unsubscribe from these emails</a> &middot; you can change all of your notification settings from your profile.</p>
+    </div>`;
 
 /**
  * Password reset email template
@@ -337,10 +362,7 @@ export const imageApprovedTemplate = (
 
         <p>Your image is now visible to others based on its visibility settings.</p>
     </div>
-
-    <div class="footer">
-        <p>This is an automated notification from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
-    </div>
+${unsubscribeFooter(context)}
 </body>
 </html>`;
 
@@ -447,9 +469,6 @@ export const imageRejectedTemplate = (
 
         <p>If you believe this was a mistake, please review our community guidelines and contact support if you have questions.</p>
     </div>
-
-    <div class="footer">
-        <p>This is an automated notification from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
-    </div>
+${unsubscribeFooter(context)}
 </body>
 </html>`;

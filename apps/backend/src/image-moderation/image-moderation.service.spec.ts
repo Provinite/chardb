@@ -1,10 +1,16 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ForbiddenException, BadRequestException } from "@nestjs/common";
-import { ModerationStatus, CurrencyTransactionSource } from "@prisma/client";
+import {
+  ModerationStatus,
+  ModerationRejectionReason,
+  NotificationKind,
+  NotificationSubjectType,
+  CurrencyTransactionSource,
+} from "@prisma/client";
 import { ImageModerationService } from "./image-moderation.service";
 import { DatabaseService } from "../database/database.service";
 import { PermissionService } from "../auth/PermissionService";
-import { EmailService } from "../email/email.service";
+import { NotificationDispatchService } from "../notifications/notification-dispatch.service";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { MediaService } from "../media/media.service";
 import { CommunityPermission } from "../auth/CommunityPermission";
@@ -20,10 +26,7 @@ import { mockDatabaseService } from "../../test/setup";
  */
 
 const mockPermissionService = { hasCommunityPermission: jest.fn() };
-const mockEmailService = {
-  sendImageApprovedEmail: jest.fn(),
-  sendImageRejectedEmail: jest.fn(),
-};
+const mockNotificationDispatch = { dispatch: jest.fn() };
 const mockLedger = { credit: jest.fn() };
 const mockMediaService = { findAwardRecipients: jest.fn() };
 
@@ -49,7 +52,10 @@ describe("ImageModerationService", () => {
         ImageModerationService,
         { provide: DatabaseService, useValue: mockDatabaseService },
         { provide: PermissionService, useValue: mockPermissionService },
-        { provide: EmailService, useValue: mockEmailService },
+        {
+          provide: NotificationDispatchService,
+          useValue: mockNotificationDispatch,
+        },
         { provide: CurrencyLedgerService, useValue: mockLedger },
         { provide: MediaService, useValue: mockMediaService },
       ],
@@ -71,6 +77,7 @@ describe("ImageModerationService", () => {
       id: IMAGE_ID,
       moderationStatus: ModerationStatus.PENDING,
       originalFilename: "ridley.png",
+      uploaderId: "uploader-1",
       uploader: { email: "clove@example.test", username: "clove" },
     });
     mockDatabaseService.image.update.mockResolvedValue({});
@@ -109,6 +116,23 @@ describe("ImageModerationService", () => {
     it("pays nobody", async () => {
       await service.approveImage(IMAGE_ID, MODERATOR);
       expect(mockLedger.credit).not.toHaveBeenCalled();
+    });
+
+    it("tells the uploader, naming the moderator as the actor", async () => {
+      // Dispatch decides the channels from the uploader's preferences; the
+      // service's only job is to hand it the right recipient and payload.
+      await service.approveImage(IMAGE_ID, MODERATOR);
+
+      expect(mockNotificationDispatch.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientId: "uploader-1",
+          kind: NotificationKind.IMAGE_APPROVED,
+          actorUserId: MODERATOR,
+          subjectType: NotificationSubjectType.IMAGE,
+          subjectId: IMAGE_ID,
+          data: { subjectName: "ridley.png" },
+        }),
+      );
     });
 
     it("refuses a moderator without permission on this image", async () => {
@@ -320,6 +344,43 @@ describe("ImageModerationService", () => {
       );
 
       expect(mockLedger.credit).not.toHaveBeenCalled();
+    });
+
+    it("snapshots the reason and the moderator's own words", async () => {
+      await service.rejectImage(
+        IMAGE_ID,
+        MODERATOR,
+        ModerationRejectionReason.NSFW_NOT_TAGGED,
+        "Please tag this.",
+      );
+
+      expect(mockNotificationDispatch.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          recipientId: "uploader-1",
+          kind: NotificationKind.IMAGE_REJECTED,
+          data: {
+            subjectName: "ridley.png",
+            reason: ModerationRejectionReason.NSFW_NOT_TAGGED,
+            reasonText: "Please tag this.",
+          },
+        }),
+      );
+    });
+
+    it("writes a null reasonText rather than leaving it absent", async () => {
+      // The payload schema makes it nullable, not optional, so a moderator who
+      // gave no detail produces a row that says so.
+      await service.rejectImage(
+        IMAGE_ID,
+        MODERATOR,
+        ModerationRejectionReason.SPAM_LOW_QUALITY,
+      );
+
+      expect(mockNotificationDispatch.dispatch).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ reasonText: null }),
+        }),
+      );
     });
   });
 

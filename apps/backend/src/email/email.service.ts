@@ -92,11 +92,16 @@ export class EmailService {
 
   /**
    * Send notification when an image is approved
+   *
+   * Optional mail, so `unsubscribeUrl` is required rather than optional: a
+   * notification email that ships without a way out is the thing this
+   * parameter exists to make impossible to forget.
    */
   async sendImageApprovedEmail(
     email: string,
     username: string,
     imageName: string,
+    unsubscribeUrl: string,
   ): Promise<void> {
     try {
       await this.mailerService.sendMail({
@@ -105,6 +110,7 @@ export class EmailService {
         html: imageApprovedTemplate({
           username,
           imageName,
+          unsubscribeUrl,
         }),
       });
 
@@ -126,6 +132,7 @@ export class EmailService {
     username: string,
     imageName: string,
     reason: ModerationRejectionReason,
+    unsubscribeUrl: string,
     reasonText?: string,
   ): Promise<void> {
     const reasonLabels: Record<ModerationRejectionReason, string> = {
@@ -145,6 +152,7 @@ export class EmailService {
           imageName,
           reason: reasonLabels[reason],
           reasonText,
+          unsubscribeUrl,
         }),
       });
 

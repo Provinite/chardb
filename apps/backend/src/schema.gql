@@ -2496,6 +2496,11 @@ type Mutation {
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
 
   """
+  Switches off email for the one kind named by an unsubscribe link. Authorised by the token, not by a session, so it works from a mail client with nobody signed in.
+  """
+  unsubscribeFromNotificationEmail(input: UnsubscribeInput!): UnsubscribeResult!
+
+  """
   Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.
   """
   updateCharacterProfile(id: ID!, input: UpdateCharacterProfileInput!): Character!
@@ -2569,6 +2574,11 @@ type Mutation {
     """Updated media parameters"""
     input: UpdateMediaInput!
   ): Media!
+
+  """
+  Sets one channel for one kind and returns the whole matrix, so a client never has to merge the change in itself.
+  """
+  updateNotificationPreference(input: UpdateNotificationPreferenceInput!): [NotificationPreference!]!
   updateProfile(input: UpdateUserInput!): User!
 
   """Update a role"""
@@ -2669,8 +2679,13 @@ type Notification {
   """When the recipient opened this particular notification."""
   readAt: DateTime
 
-  """Why, when staff gave a reason."""
+  """
+  Why, when staff gave a reason. For a rejected image this is the ModerationRejectionReason name rather than its label, so that rewording a label does not rewrite what old rows say.
+  """
   reason: String
+
+  """The moderator's own words, when they added any."""
+  reasonText: String
 
   """
   When the badge stopped counting this. Set in bulk when the recipient opens the dropdown.
@@ -2689,6 +2704,14 @@ type Notification {
   subjectType: NotificationSubjectType
 }
 
+"""
+How a notification reaches someone. Transactional mail -- password reset and password changed -- is not addressable here: it has no kind, so it has no preference and cannot be switched off.
+"""
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+}
+
 """A page of notifications, newest first."""
 type NotificationConnection {
   hasNextPage: Boolean!
@@ -2702,11 +2725,30 @@ enum NotificationKind {
   COMMENT_RECEIVED
   CURRENCY_RECEIVED
   FOLLOW_RECEIVED
+  IMAGE_APPROVED
+  IMAGE_REJECTED
   ITEM_GRANTED
   ITEM_REVOKED
   TRADE_ACCEPTED
   TRADE_DECLINED
   TRADE_OFFERED
+}
+
+"""
+One kind's delivery settings for the signed-in member, with defaults already applied. A member who has never opened the settings page still gets a full answer here.
+"""
+type NotificationPreference {
+  """Whether it is also emailed."""
+  email: Boolean!
+
+  """
+  False for kinds that have no email template yet. Clients hide the email switch rather than offering one that does nothing.
+  """
+  emailSupported: Boolean!
+
+  """Whether it appears in the bell and the feed."""
+  inApp: Boolean!
+  kind: NotificationKind!
 }
 
 """
@@ -3183,6 +3225,9 @@ type Query {
   The viewer's own purchases, newest first, each line saying whether it can still be undone and why not.
   """
   myShopPurchases(communityId: ID!): [ShopPurchase!]!
+
+  """Your delivery settings, one row per kind, defaults already merged in."""
+  notificationPreferences: [NotificationPreference!]!
 
   """Your notifications, newest first."""
   notifications(after: String, first: Int = 20, unreadOnly: Boolean): NotificationConnection!
@@ -4270,6 +4315,25 @@ input UnlinkExternalAccountInput {
   provider: ExternalAccountProvider!
 }
 
+"""Follows the unsubscribe link from a notification email."""
+input UnsubscribeInput {
+  """The opaque token from the link."""
+  token: String!
+}
+
+"""The outcome of following an unsubscribe link from an email."""
+type UnsubscribeResult {
+  """
+  What was switched off, so the page can name it. Null when the link did not verify.
+  """
+  kind: NotificationKind
+
+  """
+  False when the link is malformed, tampered with, or names something this version does not recognise. The three are not distinguished.
+  """
+  success: Boolean!
+}
+
 """Input for updating character profile fields"""
 input UpdateCharacterProfileInput {
   customFields: String
@@ -4435,6 +4499,15 @@ input UpdateMediaInput {
 
   """Updated visibility setting"""
   visibility: Visibility
+}
+
+"""Sets one channel for one kind, for the caller."""
+input UpdateNotificationPreferenceInput {
+  channel: NotificationChannel!
+
+  """The new setting. There is no toggle, only a value."""
+  enabled: Boolean!
+  kind: NotificationKind!
 }
 
 """Input for updating an existing role"""
