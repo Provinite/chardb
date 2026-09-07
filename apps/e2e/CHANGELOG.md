@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Comment flow specs** (`tests/comments/`): replying, editing, cancelling an edit, deleting, liking and unliking, commenting on a gallery as well as a character, another member's comment offering no edit or delete, the empty and over-length forms refusing to submit, and a signed-out visitor reading comments but being asked to log in to write. Commenting had no browser coverage at all before this. (#310)
+
+- **Comment permission regressions**: posting a comment on a character and seeing the count move, the same comment surviving a reload so the read path is covered too, the form staying put when the list read is forced to fail, and the viewer's follow counts resolving rather than 403ing. Each was checked against the unfixed code first. (#310)
+
 - **Moderation index specs**: the admin dashboard's "Content Moderation" card clicked through to a real page rather than the 404 it used to reach, plus the gating — `imagemod` and `moderator` hold one moderation permission each, so each sees exactly one queue and its pending count, and a plain member is refused even by URL. (#352)
 - **Member discovery specs**: the members list, the search box's `@` mode and its per-member drill-down, and the trade composer, each reaching another member's inventory, plus the community member profile they now route through. (#349)
 - **Signed-out public page specs**: a public gallery and a public character opened with no session, asserted through both the page and the API, each selecting the non-nullable `userHasLiked` that broke them. (#173)

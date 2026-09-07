@@ -145,18 +145,11 @@ export class UsersResolver {
     return { userId };
   }
 
-  // Field resolvers for computed properties
-  @ResolveField("followersCount", () => Int)
-  async resolveFollowersCount(@Parent() _user: User): Promise<number> {
-    // TODO: Implement when social features are added
-    return 0;
-  }
-
-  @ResolveField("followingCount", () => Int)
-  async resolveFollowingCount(@Parent() _user: User): Promise<number> {
-    // TODO: Implement when social features are added
-    return 0;
-  }
+  // `followersCount` and `followingCount` are resolved by `UserFollowResolver`
+  // in the social module. Stubs answering 0 used to sit here, left over from
+  // before social features existed, and because UsersModule is imported ahead
+  // of SocialModule they won -- so the real counts were unreachable, and since
+  // the stubs carried no `@Allow*` the field 403'd for everyone anyway (#310).
 
   @AllowAnyAuthenticated()
   @ResolveField("userIsFollowing", () => Boolean)

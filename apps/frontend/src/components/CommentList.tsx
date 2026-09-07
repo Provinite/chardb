@@ -3,7 +3,14 @@ import styled from "styled-components";
 import { LoadingSpinner } from "./LoadingSpinner";
 import { Comment } from "./Comment";
 import { CommentForm } from "./CommentForm";
-import { useGetCommentsQuery, CommentableType } from "../generated/graphql";
+import {
+  useGetCommentsQuery,
+  CommentableType,
+  type GetCommentsQuery,
+} from "../generated/graphql";
+
+/** One comment as this list selects it, replies and author included. */
+type CommentItem = GetCommentsQuery["comments"]["comments"][number];
 
 const Container = styled.div`
   margin-top: ${({ theme }) => theme.spacing.xl};
@@ -197,17 +204,17 @@ export const CommentList: React.FC<CommentListProps> = ({
   };
 
   // Group comments by parent/replies
-  const topLevelComments = comments.filter((comment: any) => !comment.parentId);
-  const repliesMap = new Map();
+  const topLevelComments = comments.filter((comment) => !comment.parentId);
+  const repliesMap = new Map<string, CommentItem[]>();
 
   comments
-    .filter((comment: any) => comment.parentId)
-    .forEach((reply: any) => {
-      const parentId = reply.parentId;
+    .filter((comment) => comment.parentId)
+    .forEach((reply) => {
+      const parentId = reply.parentId as string;
       if (!repliesMap.has(parentId)) {
         repliesMap.set(parentId, []);
       }
-      repliesMap.get(parentId).push(reply);
+      repliesMap.get(parentId)?.push(reply);
     });
 
   if (loading && !data) {
@@ -223,28 +230,27 @@ export const CommentList: React.FC<CommentListProps> = ({
     );
   }
 
-  if (error) {
-    return (
-      <Container>
-        <SectionHeader>
-          <SectionTitle>Comments</SectionTitle>
-        </SectionHeader>
-        <ErrorContainer>
+  return (
+    <Container data-testid="comments">
+      <SectionHeader>
+        <SectionTitle>Comments</SectionTitle>
+        {!error && (
+          <CommentCount>
+            {total} {total === 1 ? "comment" : "comments"}
+          </CommentCount>
+        )}
+      </SectionHeader>
+
+      {/* Reading and writing fail independently, so they are reported
+          independently. This used to replace the whole section -- form
+          included -- so a failing read took away the ability to write, and
+          the page offered no way forward at all (#310). */}
+      {error && (
+        <ErrorContainer data-testid="comments-error">
           <h4>Failed to load comments</h4>
           <p>{error.message}</p>
         </ErrorContainer>
-      </Container>
-    );
-  }
-
-  return (
-    <Container>
-      <SectionHeader>
-        <SectionTitle>Comments</SectionTitle>
-        <CommentCount>
-          {total} {total === 1 ? "comment" : "comments"}
-        </CommentCount>
-      </SectionHeader>
+      )}
 
       {showCommentForm && (
         <CommentForm
@@ -254,7 +260,7 @@ export const CommentList: React.FC<CommentListProps> = ({
         />
       )}
 
-      {topLevelComments.length === 0 ? (
+      {error ? null : topLevelComments.length === 0 ? (
         <EmptyState>
           <EmptyIcon>💬</EmptyIcon>
           <EmptyTitle>No comments yet</EmptyTitle>
@@ -264,7 +270,7 @@ export const CommentList: React.FC<CommentListProps> = ({
         </EmptyState>
       ) : (
         <CommentsContainer>
-          {topLevelComments.map((comment: any) => {
+          {topLevelComments.map((comment) => {
             const replies = repliesMap.get(comment.id) || [];
 
             return (
@@ -277,7 +283,7 @@ export const CommentList: React.FC<CommentListProps> = ({
 
                 {replies.length > 0 && (
                   <RepliesContainer>
-                    {replies.map((reply: any) => (
+                    {replies.map((reply) => (
                       <Comment
                         key={reply.id}
                         comment={reply}

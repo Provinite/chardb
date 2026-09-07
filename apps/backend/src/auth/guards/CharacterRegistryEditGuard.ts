@@ -1,11 +1,10 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { GqlExecutionContext } from "@nestjs/graphql";
 import { DatabaseService } from "../../database/database.service";
 import { PermissionService } from "../PermissionService";
 import { CommunityResolverService } from "../services/community-resolver.service";
 import { getUserFromContext } from "../utils/get-user-from-context";
-import { getNestedValue } from "../../common/utils/getNestedValue";
+import { resolveGuardPath } from "../utils/resolve-guard-path";
 import { AllowCharacterRegistryEditor } from "../decorators/AllowCharacterRegistryEditor";
 import { CommunityPermission } from "../CommunityPermission";
 import { notDeleted } from "../../common/utils/prisma-filters";
@@ -47,10 +46,11 @@ export class CharacterRegistryEditGuard implements CanActivate {
       return false;
     }
 
-    // Resolve character ID from arguments
-    const gqlContext = GqlExecutionContext.create(context);
-    const args = gqlContext.getArgs();
-    const characterId = getNestedValue(args, config.characterId);
+    // From the arguments, or from the parent when this guards a field resolver
+    // on Character -- see `resolveGuardPath`.
+    const characterId = resolveGuardPath(context, config.characterId) as
+      | string
+      | undefined;
 
     if (!characterId) {
       return false;

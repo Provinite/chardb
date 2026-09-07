@@ -171,19 +171,9 @@ describe("CharacterLikesResolver", () => {
     service = module.get<SocialService>(SocialService);
   });
 
-  describe("likesCount", () => {
-    it("should return the likes count for a character", async () => {
-      jest.spyOn(service, "getLikesCount").mockResolvedValue(10);
-
-      const result = await resolver.likesCount(mockCharacter);
-
-      expect(result).toBe(10);
-      expect(service.getLikesCount).toHaveBeenCalledWith(
-        LikeableType.CHARACTER,
-        "character-1",
-      );
-    });
-  });
+  // No `likesCount` here any more: `Character.likesCount` is resolved by
+  // `CharactersResolver`, whose module is registered first and therefore wins.
+  // The copy this covered was shadowed and unreachable (#310).
 
   describe("userHasLiked", () => {
     it("should return true when user has liked the character", async () => {
@@ -278,18 +268,20 @@ describe("ImageLikesResolver", () => {
     service = module.get<SocialService>(SocialService);
   });
 
-  describe("likesCount", () => {
-    it("should return the likes count for an image", async () => {
-      jest.spyOn(service, "getLikesCount").mockResolvedValue(7);
+  // `Image.likesCount` is a plain field on the image entity, so the copy that
+  // used to be covered here was shadowed and unreachable (#310). This resolver
+  // still owns `userHasLiked`, which had no test of its own.
+  it("resolves userHasLiked for an image", async () => {
+    jest.spyOn(service, "getUserHasLiked").mockResolvedValue(true);
 
-      const result = await resolver.likesCount(mockImage);
+    const result = await resolver.userHasLiked(mockImage, mockAuthUser);
 
-      expect(result).toBe(7);
-      expect(service.getLikesCount).toHaveBeenCalledWith(
-        LikeableType.IMAGE,
-        "image-1",
-      );
-    });
+    expect(result).toBe(true);
+    expect(service.getUserHasLiked).toHaveBeenCalledWith(
+      LikeableType.IMAGE,
+      "image-1",
+      "user-1",
+    );
   });
 });
 
@@ -344,18 +336,20 @@ describe("GalleryLikesResolver", () => {
     service = module.get<SocialService>(SocialService);
   });
 
-  describe("likesCount", () => {
-    it("should return the likes count for a gallery", async () => {
-      jest.spyOn(service, "getLikesCount").mockResolvedValue(3);
+  // `Gallery.likesCount` is resolved by `GalleriesResolver`, so the copy that
+  // used to be covered here was shadowed and unreachable (#310). This resolver
+  // still owns `userHasLiked`, which had no test of its own.
+  it("resolves userHasLiked for a gallery", async () => {
+    jest.spyOn(service, "getUserHasLiked").mockResolvedValue(false);
 
-      const result = await resolver.likesCount(mockGallery);
+    const result = await resolver.userHasLiked(mockGallery, mockAuthUser);
 
-      expect(result).toBe(3);
-      expect(service.getLikesCount).toHaveBeenCalledWith(
-        LikeableType.GALLERY,
-        "gallery-1",
-      );
-    });
+    expect(result).toBe(false);
+    expect(service.getUserHasLiked).toHaveBeenCalledWith(
+      LikeableType.GALLERY,
+      "gallery-1",
+      "user-1",
+    );
   });
 });
 

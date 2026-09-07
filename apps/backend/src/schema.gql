@@ -1424,21 +1424,6 @@ input ImageAwardInput {
   userId: ID!
 }
 
-type ImageConnection {
-  hasMore: Boolean!
-  images: [Image!]!
-  total: Int!
-}
-
-input ImageFiltersInput {
-  artistId: ID
-  isNsfw: Boolean
-  limit: Int! = 20
-  offset: Int! = 0
-  search: String
-  uploaderId: ID
-}
-
 """A moderation action taken on an image"""
 type ImageModerationAction {
   """The moderation action taken"""
@@ -1898,6 +1883,8 @@ type Media {
 
   """Foreign key to image content (null for text media)"""
   imageId: ID
+
+  """Number of likes this media has received"""
   likesCount: Int!
 
   """The user who owns this media"""
@@ -2795,7 +2782,6 @@ type Query {
   activityFeed(input: ActivityFeedInput): [ActivityItem!]!
   character(id: ID!): Character!
   characterGalleries(characterId: ID!, filters: GalleryFiltersInput): GalleryConnection!
-  characterImages(characterId: ID!, filters: ImageFiltersInput): ImageConnection!
 
   """Retrieves media associated with a specific character"""
   characterMedia(
@@ -3057,7 +3043,6 @@ type Query {
   followStatus(userId: ID!): FollowStatus!
   galleries(filters: GalleryFiltersInput): GalleryConnection!
   gallery(id: ID!): Gallery!
-  galleryImages(filters: ImageFiltersInput, galleryId: ID!): ImageConnection!
 
   """Retrieves media from a specific gallery"""
   galleryMedia(
@@ -3075,11 +3060,9 @@ type Query {
 
   """Get count of all pending images across all communities (admin only)"""
   globalPendingImageCount: Int!
-  image(id: ID!): Image!
 
   """Get pending images for a community moderation queue"""
   imageModerationQueue(communityId: ID!, filters: ImageModerationQueueFiltersInput, first: Int = 20, offset: Int = 0): ImageModerationQueueConnection!
-  images(filters: ImageFiltersInput): ImageConnection!
 
   """Get an invite code by ID"""
   inviteCodeById(
@@ -3184,7 +3167,6 @@ type Query {
   """Get all external accounts linked to the current user"""
   myExternalAccounts: [ExternalAccount!]!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
-  myImages(filters: ImageFiltersInput): ImageConnection!
 
   """Retrieves media owned by the current authenticated user"""
   myMedia(
@@ -3404,7 +3386,6 @@ type Query {
   user(id: ID, username: String): User
   userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
   userGalleries(filters: GalleryFiltersInput, userId: ID!): GalleryConnection!
-  userImages(filters: ImageFiltersInput, userId: ID!): ImageConnection!
 
   """Retrieves media owned by a specific user"""
   userMedia(
