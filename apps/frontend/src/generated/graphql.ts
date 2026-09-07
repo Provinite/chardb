@@ -1172,6 +1172,8 @@ export type Image = {
   sensitiveContentDescription: Maybe<Scalars['String']['output']>;
   source: Maybe<Scalars['String']['output']>;
   tags_rel: Maybe<Array<ImageTag>>;
+  /** The region of the original this image's thumbnail is cropped from. Null means the thumbnail is a centre crop, which is what every image did before a crop could be chosen. */
+  thumbnailCrop: Maybe<ImageCrop>;
   thumbnailUrl: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
   uploader: User;
@@ -1184,6 +1186,23 @@ export type ImageAwardInput = {
   /** Positive. Omit the entry to pay nothing. */
   amount: Scalars['Int']['input'];
   userId: Scalars['ID']['input'];
+};
+
+/** A thumbnail framing rect, in the original image's pixels after EXIF rotation is applied -- the same coordinates a browser reports for the image, so a cropper's output can be sent back unchanged. */
+export type ImageCrop = {
+  __typename?: 'ImageCrop';
+  height: Scalars['Int']['output'];
+  width: Scalars['Int']['output'];
+  x: Scalars['Int']['output'];
+  y: Scalars['Int']['output'];
+};
+
+/** A thumbnail framing rect, in the original image's pixels after EXIF rotation is applied. Send back what the cropper measured against the rendered image; the server checks it fits before rendering anything. */
+export type ImageCropInput = {
+  height: Scalars['Int']['input'];
+  width: Scalars['Int']['input'];
+  x: Scalars['Int']['input'];
+  y: Scalars['Int']['input'];
 };
 
 /** A moderation action taken on an image */
@@ -4262,6 +4281,8 @@ export type UpdateImageInput = {
   artistUrl?: InputMaybe<Scalars['String']['input']>;
   isNsfw?: InputMaybe<Scalars['Boolean']['input']>;
   source?: InputMaybe<Scalars['String']['input']>;
+  /** Re-frame the thumbnail, re-rendering it from the original. Explicit null resets it to a centre crop; omitting the field leaves the current framing alone. */
+  thumbnailCrop?: InputMaybe<ImageCropInput>;
 };
 
 /** Input for updating an existing invite code */
@@ -5512,7 +5533,7 @@ export type GetMediaItemQueryVariables = Exact<{
 }>;
 
 
-export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, mediumUrl: string | null, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
+export type GetMediaItemQuery = { __typename?: 'Query', mediaItem: { __typename?: 'Media', id: string, title: string, description: string | null, ownerId: string, characterId: string | null, galleryId: string | null, visibility: Visibility, imageId: string | null, textContentId: string | null, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, gallery: { __typename?: 'Gallery', id: string, name: string } | null, image: { __typename?: 'Image', id: string, originalUrl: string, mediumUrl: string | null, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean, artistName: string | null, artistUrl: string | null, source: string | null, width: number, height: number, fileSize: number, mimeType: string, moderationStatus: ModerationStatus, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null, textContent: { __typename?: 'TextContent', id: string, content: string, wordCount: number, formatting: TextFormatting } | null, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
 export type GetCharacterMediaQueryVariables = Exact<{
   characterId: Scalars['ID']['input'];
@@ -5573,7 +5594,7 @@ export type UpdateImageMutationVariables = Exact<{
 }>;
 
 
-export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, altText: string | null, isNsfw: boolean, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, updatedAt: string } };
+export type UpdateImageMutation = { __typename?: 'Mutation', updateImage: { __typename?: 'Image', id: string, altText: string | null, isNsfw: boolean, artistId: string | null, artistName: string | null, artistUrl: string | null, source: string | null, updatedAt: string, thumbnailUrl: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } };
 
 export type DeleteMediaMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -13232,6 +13253,13 @@ export const GetMediaItemDocument = gql`
       height
       fileSize
       mimeType
+      moderationStatus
+      thumbnailCrop {
+        x
+        y
+        width
+        height
+      }
     }
     textContent {
       id
@@ -13824,6 +13852,13 @@ export const UpdateImageDocument = gql`
     artistUrl
     source
     updatedAt
+    thumbnailUrl
+    thumbnailCrop {
+      x
+      y
+      width
+      height
+    }
   }
 }
     `;

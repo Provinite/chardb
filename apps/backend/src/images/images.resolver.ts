@@ -6,6 +6,7 @@ import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { ImagesService } from "./images.service";
 import { Image as ImageEntity } from "./entities/image.entity";
 import { UpdateImageInput } from "./dto/image.dto";
+import { cropFromColumns } from "./thumbnail-crop";
 
 @Resolver(() => ImageEntity)
 export class ImagesResolver {
@@ -31,7 +32,12 @@ export class ImagesResolver {
     @Args("input") input: UpdateImageInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ) {
-    return this.imagesService.update(id, user.id, input);
+    const image = await this.imagesService.update(id, user.id, input);
+
+    // The service hands back the Prisma row, which carries the crop as four
+    // loose columns. Fold them into the shape the schema declares so a client
+    // can read its own framing back out of the mutation it just sent.
+    return { ...image, thumbnailCrop: cropFromColumns(image) };
   }
 
   @AllowGlobalAdmin()

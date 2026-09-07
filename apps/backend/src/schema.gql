@@ -1410,6 +1410,11 @@ type Image {
   sensitiveContentDescription: String
   source: String
   tags_rel: [ImageTag!]
+
+  """
+  The region of the original this image's thumbnail is cropped from. Null means the thumbnail is a centre crop, which is what every image did before a crop could be chosen.
+  """
+  thumbnailCrop: ImageCrop
   thumbnailUrl: String
   updatedAt: DateTime!
   uploader: User!
@@ -1422,6 +1427,26 @@ input ImageAwardInput {
   """Positive. Omit the entry to pay nothing."""
   amount: Int!
   userId: ID!
+}
+
+"""
+A thumbnail framing rect, in the original image's pixels after EXIF rotation is applied -- the same coordinates a browser reports for the image, so a cropper's output can be sent back unchanged.
+"""
+type ImageCrop {
+  height: Int!
+  width: Int!
+  x: Int!
+  y: Int!
+}
+
+"""
+A thumbnail framing rect, in the original image's pixels after EXIF rotation is applied. Send back what the cropper measured against the rendered image; the server checks it fits before rendering anything.
+"""
+input ImageCropInput {
+  height: Int!
+  width: Int!
+  x: Int!
+  y: Int!
 }
 
 """A moderation action taken on an image"""
@@ -4428,6 +4453,11 @@ input UpdateImageInput {
   artistUrl: String
   isNsfw: Boolean
   source: String
+
+  """
+  Re-frame the thumbnail, re-rendering it from the original. Explicit null resets it to a centre crop; omitting the field leaves the current framing alone.
+  """
+  thumbnailCrop: ImageCropInput
 }
 
 """Input for updating an existing invite code"""

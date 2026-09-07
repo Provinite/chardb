@@ -12,6 +12,17 @@ import { PermissionService } from "../auth/PermissionService";
 import { CommunityResolverService } from "../auth/services/community-resolver.service";
 import { mockDatabaseService } from "../../test/setup";
 
+/**
+ * sharp is stubbed here so these tests stay about orchestration -- permissions,
+ * S3 calls, what lands in the database -- rather than about pixels. Nothing in
+ * this file can tell you a thumbnail is framed correctly, because no image is
+ * ever decoded; `thumbnail-crop.spec.ts` and `image-crop-rendering.spec.ts` run
+ * the real library for that.
+ *
+ * Every method the pipeline chains has to be present and return `this`, or the
+ * chain resolves to undefined and surfaces as the generic "Invalid image file"
+ * BadRequestException rather than as a missing-mock error.
+ */
 jest.mock("sharp", () => {
   return jest.fn(() => ({
     metadata: jest.fn().mockResolvedValue({
@@ -20,9 +31,13 @@ jest.mock("sharp", () => {
       format: "jpeg",
       size: 500000,
     }),
+    rotate: jest.fn().mockReturnThis(),
+    extract: jest.fn().mockReturnThis(),
     resize: jest.fn().mockReturnThis(),
     jpeg: jest.fn().mockReturnThis(),
     png: jest.fn().mockReturnThis(),
+    webp: jest.fn().mockReturnThis(),
+    gif: jest.fn().mockReturnThis(),
     toBuffer: jest.fn().mockResolvedValue(Buffer.from("processed-image")),
   }));
 });

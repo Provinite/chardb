@@ -24,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **You can choose how an image's thumbnail is framed**, when you upload it and
+  afterwards from the image's own page once it has been approved; leaving it
+  alone still uses the centre of the picture (#342).
+
 - **Every page sets its own title and OpenGraph tags**, replacing the one static title all 80-odd routes shared; chat unfurlers still see only the site card, which needs server-side rendering.
 
 - **A member has a profile inside a community**, at `/members/:username` on

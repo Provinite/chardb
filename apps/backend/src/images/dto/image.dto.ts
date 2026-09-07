@@ -1,15 +1,18 @@
-import { Field, InputType, ObjectType, Int, ID } from "@nestjs/graphql";
+import { Field, InputType, Int, ID } from "@nestjs/graphql";
 import {
   IsString,
   IsOptional,
   IsBoolean,
+  IsInt,
   IsNumber,
   IsArray,
   IsUUID,
   MaxLength,
   Min,
   Max,
+  ValidateNested,
 } from "class-validator";
+import { Type } from "class-transformer";
 
 // File upload handled via REST endpoint - this is for GraphQL updates
 @InputType()
@@ -54,6 +57,32 @@ export class CreateImageFromUploadInput {
   source?: string;
 }
 
+@InputType({
+  description:
+    "A thumbnail framing rect, in the original image's pixels after EXIF rotation is applied. Send back what the cropper measured against the rendered image; the server checks it fits before rendering anything.",
+})
+export class ImageCropInput {
+  @Field(() => Int)
+  @IsInt()
+  @Min(0)
+  x: number;
+
+  @Field(() => Int)
+  @IsInt()
+  @Min(0)
+  y: number;
+
+  @Field(() => Int)
+  @IsInt()
+  @Min(1)
+  width: number;
+
+  @Field(() => Int)
+  @IsInt()
+  @Min(1)
+  height: number;
+}
+
 @InputType()
 export class UpdateImageInput {
   @Field({ nullable: true })
@@ -61,6 +90,16 @@ export class UpdateImageInput {
   @IsString()
   @MaxLength(200)
   altText?: string;
+
+  @Field(() => ImageCropInput, {
+    nullable: true,
+    description:
+      "Re-frame the thumbnail, re-rendering it from the original. Explicit null resets it to a centre crop; omitting the field leaves the current framing alone.",
+  })
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ImageCropInput)
+  thumbnailCrop?: ImageCropInput | null;
 
   @Field({ nullable: true })
   @IsOptional()

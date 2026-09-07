@@ -17,6 +17,12 @@ import { S3Service } from "./s3.service";
 import { PermissionService } from "../auth/PermissionService";
 import { CommunityResolverService } from "../auth/services/community-resolver.service";
 import { CommunityPermission } from "../auth/CommunityPermission";
+import {
+  ThumbnailCrop,
+  cropToColumns,
+  orientedDimensions,
+  validateThumbnailCrop,
+} from "./thumbnail-crop";
 
 export interface UploadImageInput {
   file: Express.Multer.File;
@@ -28,6 +34,8 @@ export interface UploadImageInput {
   artistName?: string;
   artistUrl?: string;
   source?: string;
+  /** Thumbnail framing chosen before upload; centre crop when absent. */
+  thumbnailCrop?: ThumbnailCrop;
   // Media record parameters
   characterId?: string;
   itemTypeId?: string;
@@ -44,6 +52,12 @@ export interface UpdateImageInput {
   artistName?: string;
   artistUrl?: string;
   source?: string;
+  /**
+   * A new thumbnail framing. `null` clears it back to a centre crop; omitting
+   * it leaves the existing framing alone. Either of the first two re-renders
+   * the thumbnail from the original.
+   */
+  thumbnailCrop?: ThumbnailCrop | null;
 }
 
 export interface ImageFilters {
@@ -91,6 +105,7 @@ export class ImagesService {
       artistName,
       artistUrl,
       source,
+      thumbnailCrop,
       characterId,
       itemTypeId,
       galleryId,
@@ -125,9 +140,11 @@ export class ImagesService {
     const fileExtension = extname(file.originalname);
     const filename = `${uuid()}${fileExtension}`;
 
-    // Generate all image variants from original buffer
-    const { thumbnail, medium, metadata } = await this.processImage(
+    // Generate all image variants from original buffer. An out-of-bounds crop
+    // is rejected here, before anything reaches S3.
+    const { thumbnail, medium, width, height } = await this.processImage(
       file.buffer,
+      thumbnailCrop,
     );
 
     // Generate imageId upfront for S3 key generation
@@ -187,12 +204,13 @@ export class ImagesService {
           artistName,
           artistUrl,
           source,
-          width: metadata.width!,
-          height: metadata.height!,
+          width,
+          height,
           fileSize: file.size,
           mimeType: file.mimetype,
           isNsfw,
           sensitiveContentDescription,
+          ...cropToColumns(thumbnailCrop ?? null),
         },
         include: {
           uploader: true,
@@ -389,9 +407,22 @@ export class ImagesService {
       }
     }
 
-    return this.db.image.update({
+    const { thumbnailCrop, ...fields } = input;
+
+    // Re-render before writing the row. If the fetch, the render or the upload
+    // fails, the image keeps the thumbnail it already had rather than ending
+    // up with a row pointing at an object that was never created.
+    const reframed =
+      thumbnailCrop === undefined
+        ? null
+        : {
+            ...cropToColumns(thumbnailCrop),
+            thumbnailUrl: await this.regenerateThumbnail(image, thumbnailCrop),
+          };
+
+    const updated = await this.db.image.update({
       where: { id },
-      data: input,
+      data: { ...fields, ...(reframed ?? {}) },
       include: {
         uploader: true,
         artist: true,
@@ -402,6 +433,66 @@ export class ImagesService {
         },
       },
     });
+
+    // Only once the row points at the new object. The other order puts a 404
+    // in every listing that already rendered this image if the write fails.
+    if (
+      reframed &&
+      image.thumbnailUrl &&
+      image.thumbnailUrl !== reframed.thumbnailUrl
+    ) {
+      await this.s3Service.deleteImage(image.thumbnailUrl);
+    }
+
+    return updated;
+  }
+
+  /**
+   * Re-render an image's thumbnail from its stored original, at a new key.
+   *
+   * A new key rather than a rewrite because objects go up with
+   * `Cache-Control: immutable, max-age=31536000` -- rewriting
+   * `{imageId}/thumbnail.png` in place would leave CloudFront, and every
+   * browser that has already loaded it, showing the old framing for a year.
+   * The caller deletes the superseded object once the row has moved.
+   *
+   * Bounds are checked against the original's own dimensions rather than the
+   * row's `width`/`height`: rows written before EXIF rotation was applied hold
+   * the stored size, which is transposed from what the cropper measured.
+   */
+  private async regenerateThumbnail(
+    image: Image,
+    crop: ThumbnailCrop | null,
+  ): Promise<string> {
+    const original = await this.s3Service.getImage(image.originalUrl);
+    const metadata = await sharp(original).metadata();
+
+    const { width, height } = orientedDimensions(
+      metadata.width!,
+      metadata.height!,
+      metadata.orientation,
+    );
+
+    if (crop) {
+      validateThumbnailCrop(crop, width, height);
+    }
+
+    const thumbnail = await this.renderThumbnail(
+      original,
+      metadata.format,
+      crop,
+    );
+
+    const { url } = await this.s3Service.uploadImage({
+      buffer: thumbnail,
+      filename: image.originalFilename,
+      mimeType: this.getThumbnailMimeType(image.mimeType),
+      imageId: image.id,
+      sizeVariant: "thumbnail",
+      keySuffix: uuid().slice(0, 8),
+    });
+
+    return url;
   }
 
   async remove(id: string, userId: string): Promise<boolean> {
@@ -439,25 +530,85 @@ export class ImagesService {
     }
   }
 
-  private async processImage(buffer: Buffer) {
+  /**
+   * Render the 300x300 thumbnail, framed by `crop` when one was chosen.
+   *
+   * `.rotate()` comes first on every path. With no argument it applies the
+   * image's EXIF orientation, which does two things: it puts the pipeline into
+   * the same coordinate space the crop rect was measured in (see the note on
+   * `ThumbnailCrop`), and it stops a photo carrying an orientation tag from
+   * thumbnailing sideways -- which is what happened before, because sharp
+   * drops the tag on output and nothing re-applied the rotation.
+   *
+   * With no rect this is the historical framing: cover-fit on the centre.
+   */
+  private async renderThumbnail(
+    buffer: Buffer,
+    format: string | undefined,
+    crop?: ThumbnailCrop | null,
+  ): Promise<Buffer> {
+    const oriented = sharp(buffer).rotate();
+
+    const framed = crop
+      ? oriented.extract({
+          left: crop.x,
+          top: crop.y,
+          width: crop.width,
+          height: crop.height,
+        })
+      : oriented;
+
+    const resized = framed.resize(this.thumbnailSize, this.thumbnailSize, {
+      fit: "cover",
+      position: "center",
+    });
+
+    switch (format) {
+      // A GIF thumbnails to a still: this pipeline is built without
+      // `{ animated: true }`, so it reads the first frame only.
+      case "gif":
+        return resized.jpeg({ quality: 80 }).toBuffer();
+      // PNG → WebP for smaller file size while preserving transparency
+      case "png":
+        return resized.webp({ quality: 85, lossless: false }).toBuffer();
+      case "jpeg":
+        return resized.jpeg({ quality: 85 }).toBuffer();
+      case "webp":
+        return resized.webp({ quality: 85, lossless: false }).toBuffer();
+      default:
+        return resized.toBuffer();
+    }
+  }
+
+  private async processImage(buffer: Buffer, crop?: ThumbnailCrop | null) {
     const logger = new Logger("ImageProcessing");
 
     try {
-      const image = sharp(buffer);
-      const metadata = await image.metadata();
+      const metadata = await sharp(buffer).metadata();
 
-      logger.log(
-        `Processing image: ${metadata.format} ${metadata.width}x${metadata.height}, size: ${buffer.length} bytes`,
+      // What a browser paints, which is not always what is stored -- see
+      // `orientedDimensions`. This is the space the crop rect is measured in,
+      // and the size recorded on the row.
+      const { width, height } = orientedDimensions(
+        metadata.width!,
+        metadata.height!,
+        metadata.orientation,
       );
 
-      // For GIFs, preserve animation in both original and medium, create static thumbnail
+      logger.log(
+        `Processing image: ${metadata.format} ${width}x${height} (stored ${metadata.width}x${metadata.height}), size: ${buffer.length} bytes`,
+      );
+
+      if (crop) {
+        validateThumbnailCrop(crop, width, height);
+      }
+
+      // For GIFs, preserve animation in the medium variant; the thumbnail is
+      // always a still.
       if (metadata.format === "gif") {
         // Resize GIF for medium variant if needed, preserving animation
         let mediumBuffer = buffer;
-        if (
-          metadata.width! > this.mediumSize ||
-          metadata.height! > this.mediumSize
-        ) {
+        if (width > this.mediumSize || height > this.mediumSize) {
           const mediumGif = sharp(buffer, { animated: true })
             .resize(this.mediumSize, this.mediumSize, {
               fit: "inside",
@@ -467,29 +618,24 @@ export class ImagesService {
           mediumBuffer = await mediumGif.toBuffer();
         }
 
-        // Create static thumbnail for GIFs
-        const thumbnail = image
-          .resize(this.thumbnailSize, this.thumbnailSize, {
-            fit: "cover",
-            position: "center",
-          })
-          .jpeg({ quality: 80 });
-
-        const thumbnailBuffer = await thumbnail.toBuffer();
-
         return {
           medium: mediumBuffer,
-          thumbnail: thumbnailBuffer,
+          thumbnail: await this.renderThumbnail(buffer, metadata.format, crop),
           metadata,
+          width,
+          height,
         };
       }
 
-      // Generate medium (800px web-optimized) variant
-      // Clone the image instance for independent processing
-      let mediumImage = sharp(buffer).resize(this.mediumSize, this.mediumSize, {
-        fit: "inside",
-        withoutEnlargement: true,
-      });
+      // Generate medium (800px web-optimized) variant. Rotated for the same
+      // reason as the thumbnail: without it an EXIF-rotated photo would come
+      // out upright as a thumbnail and sideways at display size.
+      let mediumImage = sharp(buffer)
+        .rotate()
+        .resize(this.mediumSize, this.mediumSize, {
+          fit: "inside",
+          withoutEnlargement: true,
+        });
 
       // Format-specific optimization for medium variant
       if (metadata.format === "png") {
@@ -506,40 +652,25 @@ export class ImagesService {
         mediumImage = mediumImage.webp({ quality: 100, lossless: false });
       }
 
-      // Generate thumbnail variant
-      // Clone the image instance for independent processing
-      let thumbnail = sharp(buffer).resize(
-        this.thumbnailSize,
-        this.thumbnailSize,
-        {
-          fit: "cover",
-          position: "center",
-        },
-      );
-
-      // Format-specific optimization for thumbnail
-      if (metadata.format === "png") {
-        // PNG → WebP for smaller file size while preserving transparency
-        thumbnail = thumbnail.webp({ quality: 85, lossless: false });
-      } else if (metadata.format === "jpeg") {
-        // JPEG → JPEG
-        thumbnail = thumbnail.jpeg({ quality: 85 });
-      } else if (metadata.format === "webp") {
-        // WebP → WebP
-        thumbnail = thumbnail.webp({ quality: 85, lossless: false });
-      }
-
       const [mediumBuffer, thumbnailBuffer] = await Promise.all([
         mediumImage.toBuffer(),
-        thumbnail.toBuffer(),
+        this.renderThumbnail(buffer, metadata.format, crop),
       ]);
 
       return {
         medium: mediumBuffer,
         thumbnail: thumbnailBuffer,
         metadata,
+        width,
+        height,
       };
     } catch (error) {
+      // A rejected crop already says exactly what is wrong with it. Do not
+      // flatten it into the generic message below.
+      if (error instanceof BadRequestException) {
+        throw error;
+      }
+
       logger.error(`Image processing failed:`, error.message || error);
       logger.error(`Stack trace:`, error.stack);
       throw new BadRequestException("Invalid image file or processing failed");
@@ -822,16 +953,22 @@ export class ImagesService {
       `[cleanupOrphanedImage] Image ${imageId} is orphaned, deleting from S3 and database`,
     );
     logger.log(
-      `[cleanupOrphanedImage] URLs - original: ${image.originalUrl}, thumbnail: ${image.thumbnailUrl}`,
+      `[cleanupOrphanedImage] URLs - original: ${image.originalUrl}, medium: ${image.mediumUrl}, thumbnail: ${image.thumbnailUrl}`,
     );
 
     // Delete from S3 (skip base64 images)
     if (image.originalUrl && !image.originalUrl.startsWith("data:")) {
       try {
-        const urlsToDelete = [image.originalUrl];
-        if (image.thumbnailUrl) {
-          urlsToDelete.push(image.thumbnailUrl);
-        }
+        // Every variant the row knows about. `mediumUrl` used to be missing
+        // from this list, which orphaned one object per deleted image; a
+        // re-cropped thumbnail lands on a versioned key, so the row is the
+        // only record of which object is current and dropping one here leaks
+        // it permanently.
+        const urlsToDelete = [
+          image.originalUrl,
+          image.mediumUrl,
+          image.thumbnailUrl,
+        ].filter((url): url is string => Boolean(url));
 
         await this.s3Service.deleteImages(urlsToDelete);
         logger.log(`Deleted ${urlsToDelete.length} image(s) from S3`);

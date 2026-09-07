@@ -1,6 +1,7 @@
 import { Prisma } from "@chardb/database";
 import { Image } from "../entities/image.entity";
 import { mapPrismaUserToGraphQL } from "../../users/utils/user-resolver-mappers";
+import { cropFromColumns } from "../thumbnail-crop";
 
 type PrismaImage = Prisma.ImageGetPayload<{
   include: {
@@ -44,6 +45,7 @@ export function mapPrismaImageToGraphQL(
     isNsfw: prismaImage.isNsfw,
     sensitiveContentDescription:
       prismaImage.sensitiveContentDescription ?? undefined,
+    thumbnailCrop: cropFromColumns(prismaImage) ?? undefined,
     moderationStatus: prismaImage.moderationStatus,
     deferredAt: prismaImage.deferredAt ?? undefined,
     deferredById: prismaImage.deferredById ?? undefined,
