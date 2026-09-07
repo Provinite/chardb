@@ -1,11 +1,21 @@
-import { InputType, Field, ID } from "@nestjs/graphql";
+import { InputType, Field, ID, Int } from "@nestjs/graphql";
 import {
   IsString,
   IsNotEmpty,
   Length,
   IsOptional,
   IsUUID,
+  IsInt,
+  Min,
+  Max,
 } from "class-validator";
+
+/**
+ * An upper bound on forms per variant, so a typo cannot ask the character page
+ * to render a thousand trait sets. Not a product limit -- nobody has asked for
+ * more than a handful -- just a number well past any real use.
+ */
+const MAX_FORMS_CEILING = 10;
 
 @InputType()
 export class CreateSpeciesVariantInput {
@@ -30,6 +40,18 @@ export class CreateSpeciesVariantInput {
   @IsOptional()
   @IsUUID()
   colorId?: string;
+
+  /** How many forms a character on this variant may have */
+  @Field(() => Int, {
+    defaultValue: 1,
+    description:
+      "How many forms a character on this variant may have. One means the variant does not do forms.",
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(MAX_FORMS_CEILING)
+  maxForms?: number;
 }
 
 @InputType()
@@ -60,4 +82,16 @@ export class UpdateSpeciesVariantInput {
   @IsOptional()
   @IsUUID()
   colorId?: string;
+
+  /** How many forms a character on this variant may have */
+  @Field(() => Int, {
+    nullable: true,
+    description:
+      "How many forms a character on this variant may have. Lowering it does not touch characters that already have more.",
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(MAX_FORMS_CEILING)
+  maxForms?: number;
 }

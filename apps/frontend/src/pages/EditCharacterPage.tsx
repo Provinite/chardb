@@ -20,7 +20,6 @@ import {
   AssignCharacterSpeciesInput,
   UpdateCharacterProfileInput,
   UpdateCharacterRegistryInput,
-  CharacterTraitValueInput,
   Visibility,
 } from "../graphql/characters.graphql";
 import { ExternalAccountProvider } from "../generated/graphql";
@@ -35,8 +34,13 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
-import { TraitForm } from "../components/character/TraitForm";
+import { CharacterFormsEditor } from "../components/character/CharacterFormsEditor";
 import { VariantChangePanel } from "../components/character/VariantChangePanel";
+import {
+  draftsFromForms,
+  draftsToInput,
+  type CharacterFormDraft,
+} from "../lib/characterForms";
 import {
   SpeciesDetailsFragment,
   SpeciesVariantDetailsFragment,
@@ -315,10 +319,8 @@ export const EditCharacterPage: React.FC = () => {
   const [selectedVariant, setSelectedVariant] =
     useState<SpeciesVariantDetailsFragment | null>(null);
 
-  // Registry state (traits and registryId)
-  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
-    [],
-  );
+  // Registry state (forms and registryId)
+  const [forms, setForms] = useState<CharacterFormDraft[]>([]);
   const [registryId, setRegistryId] = useState<string>("");
   const [isSubmittingRegistry, setIsSubmittingRegistry] = useState(false);
 
@@ -430,16 +432,8 @@ export const EditCharacterPage: React.FC = () => {
         setSelectedVariant(character.speciesVariant);
       }
 
-      // Set registry values (traits and registryId)
-      if (character.traitValues) {
-        setTraitValues(
-          character.traitValues.map((tv) => ({
-            traitId: tv.traitId,
-            value: tv.value || "",
-            clarifier: tv.clarifier ?? null,
-          })),
-        );
-      }
+      // Set registry values (forms and registryId)
+      setForms(draftsFromForms(character.forms));
       setRegistryId(character.registryId || "");
 
       // Initialize ownership state
@@ -630,7 +624,7 @@ export const EditCharacterPage: React.FC = () => {
     setIsSubmittingRegistry(true);
     try {
       const input: UpdateCharacterRegistryInput = {
-        traitValues,
+        forms: draftsToInput(forms),
         registryId: registryId.trim() || null,
         // Sent whether or not it moved. The server compares against what the
         // character has and only treats a genuine move as a rarity change --
@@ -967,8 +961,8 @@ export const EditCharacterPage: React.FC = () => {
               currentVariantId={character.speciesVariantId ?? null}
               selectedVariantId={selectedVariant?.id ?? null}
               onVariantChange={setSelectedVariant}
-              traitValues={traitValues}
-              onTraitValuesChange={setTraitValues}
+              forms={forms}
+              onFormsChange={setForms}
               reason={variantChangeReason}
               onReasonChange={setVariantChangeReason}
               onUnresolvedChange={setUnresolvedTraits}
@@ -989,13 +983,23 @@ export const EditCharacterPage: React.FC = () => {
               </TagsHelp>
             </FormGroup>
 
-            <TraitForm
+            {/* The limit comes from the variant staff has *selected*, not the
+                one the character has: picking a rarity that allows two forms
+                should let them add the second before saving, and picking one
+                that allows fewer should stop them adding more first. */}
+            <CharacterFormsEditor
               speciesId={character.speciesId}
               speciesVariant={
-                character.speciesVariant as SpeciesVariantDetailsFragment | null
+                (selectedVariant ??
+                  character.speciesVariant) as SpeciesVariantDetailsFragment | null
               }
-              traitValues={traitValues}
-              onChange={setTraitValues}
+              maxForms={
+                selectedVariant?.maxForms ??
+                character.speciesVariant?.maxForms ??
+                1
+              }
+              forms={forms}
+              onChange={setForms}
               disabled={!canEditRegistry || isSubmittingRegistry}
             />
             <TraitActions>

@@ -195,6 +195,7 @@ export const SPECIES_VARIANT_FRAGMENT = gql`
     name
     speciesId
     colorId
+    maxForms
     color {
       id
       name

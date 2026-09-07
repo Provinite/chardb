@@ -12,7 +12,8 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { ItemsService } from "../items/items.service";
 import { CharactersService } from "../characters/characters.service";
-import { mapTraitValues } from "../characters/utils/character-resolver-mappers";
+import { mapForms } from "../characters/utils/character-resolver-mappers";
+import { CharacterFormsService } from "../character-forms/character-forms.service";
 import { notDeleted } from "../common/utils/prisma-filters";
 import { ChangeCharacterVariantWithItemInput } from "./dto/variant-change.dto";
 
@@ -29,6 +30,7 @@ export class VariantChangesService {
     private readonly db: DatabaseService,
     private readonly items: ItemsService,
     private readonly characters: CharactersService,
+    private readonly forms: CharacterFormsService,
   ) {}
 
   /**
@@ -69,7 +71,6 @@ export class VariantChangesService {
         ownerId: true,
         speciesId: true,
         speciesVariantId: true,
-        traitValues: true,
       },
     });
     if (!character) {
@@ -116,19 +117,22 @@ export class VariantChangesService {
       );
     }
 
-    const proposed = mapTraitValues(input.traitValues);
+    const proposed = mapForms(input.forms) ?? [];
 
     // Validated against the **destination**, which is the entire reason this
-    // input carries trait values at all. Judging them against the variant the
+    // input carries forms at all. Judging them against the variant the
     // character is leaving would refuse exactly the change being paid for.
-    await this.characters.validateTraitValues(
+    //
+    // The form *count* is judged there too, and that is a real refusal rather
+    // than a formality: a two-form character moving to a tier that allows one
+    // has to say which form survives, and it says so by submitting one.
+    await this.characters.validateForms(
       character.speciesId,
       proposed,
       grant.toVariantId,
     );
 
-    const previous =
-      character.traitValues as PrismaJson.CharacterTraitValuesJson;
+    const previous = await this.forms.readForms(character.id);
 
     const batchId = randomUUID();
 
@@ -150,8 +154,8 @@ export class VariantChangesService {
         characterId: character.id,
         fromVariantId: character.speciesVariantId,
         toVariantId: grant.toVariantId,
-        previousTraitValues: previous,
-        traitValues: proposed,
+        previousForms: previous,
+        forms: proposed,
         changedById: userId,
         // The audit row says what bought the change. "Redeemed Rare Upgrade
         // Ticket" beside a staff note reading "compensation for #4412" is the

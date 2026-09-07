@@ -329,8 +329,6 @@ model Character {
   /// character's details until that is worth doing properly.
   price             Decimal?          @db.Decimal(10, 2)
   customFields      Json              @default("{}") @map("custom_fields")
-  /// [CharacterTraitValuesJson]
-  traitValues       Json              @default("[]") @map("trait_values")
   traitReviewStatus ModerationStatus? @map("trait_review_status")
   deletedAt         DateTime?         @map("deleted_at")
   deletedById       String?           @map("deleted_by_id")
@@ -374,9 +372,70 @@ model Character {
   // Trait reviews
   traitReviews TraitReview[]
 
+  /// Every form this character has, never fewer than one. See CharacterForm.
+  forms CharacterForm[]
+
   @@unique([speciesId, registryId])
-  @@index([traitValues], type: Gin, map: "character_traitvalues_gin_idx")
   @@map("characters")
+}
+
+/// One appearance of a character, with its own trait set.
+///
+/// A character is one identity -- one registry id, one owner, one trade state
+/// -- that may present as more than one creature. A pillowing with
+/// transformation magic is the case this exists for: two sets of traits, one
+/// masterlist entry. Splitting it into two characters was considered and
+/// rejected, because that gives one creature two registry ids and two
+/// ownership histories to keep in step.
+///
+/// Every character has at least one form. Before forms existed each character
+/// had exactly one trait set, and the migration that added this table gave
+/// each of them a single form to hold it, so "no forms" is a state no
+/// character has ever been in and none should be put into.
+///
+/// Forms deliberately do **not** carry their own `speciesVariantId`. The
+/// variant is the rarity tier and the thing upgrade tickets sell, and it is
+/// also what defines which traits exist and in what order (TraitListEntry,
+/// EnumValueSetting). Per-form variants would mean per-form rarity, which
+/// makes "what is this character worth" a question with more than one answer,
+/// and would leave every item grant -- which matches on a character's single
+/// variant -- unable to say what it was acting on. All of a character's forms
+/// therefore share the character's variant, and differ only in trait values.
+///
+/// How many forms a character may have is a property of its variant
+/// (`SpeciesVariant.maxForms`), so a community decides that transformation is
+/// a thing its Magic tier does and its Common tier does not.
+model CharacterForm {
+  id          String @id @default(uuid())
+  characterId String @map("character_id")
+
+  /// What the owner calls this form -- "Feral", "Anthro", "Awakened". Not
+  /// unique: two forms of one character may share a name without ambiguity,
+  /// since `sortOrder` is what orders them and `id` is what names them.
+  name String @db.VarChar(100)
+
+  /// [CharacterTraitValuesJson]
+  traitValues Json @default("[]") @map("trait_values")
+
+  /// Position in the character's own ordering, from 0. The form at 0 is the
+  /// character's primary form: it is what a listing shows, and what the
+  /// deprecated `Character.traitValues` GraphQL field resolves to.
+  sortOrder Int @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  /// Not `@@unique([characterId, sortOrder])`, deliberately. Reordering forms
+  /// rewrites several rows' positions at once, and a unique constraint that
+  /// Postgres checks per statement rather than per transaction would fire on
+  /// the intermediate state -- swapping two forms would have to route through
+  /// a scratch value to avoid it. Contiguity is instead guaranteed by there
+  /// being one writer: CharactersService.writeForms assigns sortOrder from
+  /// array position on every write.
+  @@index([characterId, sortOrder])
+  @@map("character_forms")
 }
 
 /// One folder in one person's character workspace.
@@ -897,10 +956,15 @@ model CharacterVariantChange {
   /// the difference between a record and an audit trail.
   reason String? @db.Text
 
-  /// [CharacterTraitValuesJson]
-  previousTraitValues Json @map("previous_trait_values")
-  /// [CharacterTraitValuesJson]
-  newTraitValues      Json @map("new_trait_values")
+  /// Every form the character had, before and after. Whole-character
+  /// snapshots rather than per-form ones: a variant change re-routes values
+  /// the destination tier disallows, and it has to do that to every form at
+  /// once, so "which form did this move" has no answer.
+  ///
+  /// [CharacterFormsJson]
+  previousForms Json @map("previous_forms")
+  /// [CharacterFormsJson]
+  newForms      Json @map("new_forms")
 
   createdAt DateTime @default(now()) @map("created_at")
 
@@ -1743,6 +1807,17 @@ model SpeciesVariant {
   name      String   @db.VarChar(100)
   speciesId String   @map("species_id")
   colorId   String?  @map("color_id")
+
+  /// How many forms a character on this variant may have. One means the
+  /// feature is off, which is why it is the default: every variant that
+  /// existed before forms did keeps behaving exactly as it did.
+  ///
+  /// A limit rather than a flag because "this tier gets a second form" is the
+  /// thing a community actually wants to say, and a bare boolean would make
+  /// that "unlimited" -- which for something that changes what a masterlist
+  /// entry is worth, staff should have to opt into a number for.
+  maxForms Int @default(1) @map("max_forms")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -1832,12 +1907,20 @@ model TraitReview {
   status      ModerationStatus  @default(PENDING)
   source      TraitReviewSource
 
-  /// [CharacterTraitValuesJson]
-  proposedTraitValues Json  @map("proposed_trait_values")
-  /// [CharacterTraitValuesJson]
-  previousTraitValues Json  @map("previous_trait_values")
-  /// [CharacterTraitValuesJson]
-  appliedTraitValues  Json? @map("applied_trait_values")
+  /// The whole character's forms, proposed and previous. A review covers
+  /// every form at once rather than naming one: the trait editor saves all of
+  /// a character's forms in a single submit -- adding one form while editing
+  /// another is one action to the member -- and there can only ever be one
+  /// pending review per character anyway (see the partial unique index in
+  /// 20260901210700_one_pending_trait_review_per_character). Per-form reviews
+  /// would need both of those to change to buy nothing.
+  ///
+  /// [CharacterFormsJson]
+  proposedForms Json  @map("proposed_forms")
+  /// [CharacterFormsJson]
+  previousForms Json  @map("previous_forms")
+  /// [CharacterFormsJson]
+  appliedForms  Json? @map("applied_forms")
 
   resolvedAt      DateTime? @map("resolved_at")
   resolvedById    String?   @map("resolved_by_id")

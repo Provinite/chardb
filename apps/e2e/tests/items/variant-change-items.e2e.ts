@@ -20,6 +20,7 @@ import {
   SeedCreateSpeciesVariantDocument,
   SeedCreateCommunityDocument,
 } from "../../src/generated/graphql.js";
+import { baseTraits, oneForm } from "../../src/world/forms.js";
 
 const test = presetTest("community-items");
 
@@ -75,7 +76,7 @@ test.describe("redeeming a variant change item", () => {
           characterId: world.characters.pinefall.id,
           // Blue is permitted by Rare as well as Common, so nothing is
           // stranded and the values carry over unchanged.
-          traitValues: eyes(world, "blue"),
+          forms: oneForm(eyes(world, "blue")),
         },
       });
 
@@ -101,7 +102,7 @@ test.describe("redeeming a variant change item", () => {
       input: {
         itemId: world.variantChangeItems.rareUpgradeIds[0],
         characterId: world.characters.pinefall.id,
-        traitValues: eyes(world, "green"),
+        forms: oneForm(eyes(world, "green")),
       },
     });
 
@@ -110,7 +111,7 @@ test.describe("redeeming a variant change item", () => {
       .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
 
     expect(character.speciesVariantId).toBe(world.variants.rare.id);
-    expect(character.traitValues).toEqual([
+    expect(baseTraits(character)).toEqual([
       {
         traitId: world.traits.eyeColor.id,
         value: world.traits.eyeColor.values.green,
@@ -127,7 +128,7 @@ test.describe("redeeming a variant change item", () => {
       input: {
         itemId: world.variantChangeItems.rareUpgradeIds[0],
         characterId: world.characters.pinefall.id,
-        traitValues: eyes(world, "blue"),
+        forms: oneForm(eyes(world, "blue")),
       },
     });
 
@@ -151,7 +152,7 @@ test.describe("redeeming a variant change item", () => {
       input: {
         itemId: world.variantChangeItems.rareUpgradeIds[0],
         characterId: world.characters.pinefall.id,
-        traitValues: eyes(world, "blue"),
+        forms: oneForm(eyes(world, "blue")),
       },
     });
 
@@ -184,7 +185,7 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.ascensionIds[0],
           characterId: world.characters.bramblefoot.id,
-          traitValues: eyes(world, "amber"),
+          forms: oneForm(eyes(world, "amber")),
         },
       });
 
@@ -204,7 +205,7 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.ascensionIds[0],
           characterId: world.characters.pinefall.id,
-          traitValues: eyes(world, "blue"),
+          forms: oneForm(eyes(world, "blue")),
         },
       }),
     ).rejects.toThrow(/not available to/i);
@@ -225,7 +226,7 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.ascensionIds[0],
           characterId: world.characters.pinefall.id,
-          traitValues: eyes(world, "amber"),
+          forms: oneForm(eyes(world, "amber")),
         },
       });
 
@@ -234,7 +235,7 @@ test.describe("redeeming a variant change item", () => {
     const { character } = await world
       .as("member")
       .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
-    expect(character.traitValues).toEqual([
+    expect(baseTraits(character)).toEqual([
       {
         traitId: world.traits.eyeColor.id,
         value: world.traits.eyeColor.values.amber,
@@ -251,7 +252,7 @@ test.describe("redeeming a variant change item", () => {
           // Emberwake is already Rare.
           itemId: world.variantChangeItems.rareUpgradeIds[0],
           characterId: world.characters.emberwake.id,
-          traitValues: eyes(world, "amber"),
+          forms: oneForm(eyes(world, "amber")),
         },
       }),
     ).rejects.toThrow(/already/i);
@@ -265,7 +266,7 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.rareUpgradeIds[0],
           characterId: world.characters.ashglass.id,
-          traitValues: eyes(world, "amber"),
+          forms: oneForm(eyes(world, "amber")),
         },
       }),
     ).rejects.toThrow(/cannot be redeemed on that character/i);
@@ -278,7 +279,7 @@ test.describe("redeeming a variant change item", () => {
           itemId: world.variantChangeItems.ascensionIds[0],
           // Marrowfen is othermember's.
           characterId: world.characters.marrowfen.id,
-          traitValues: eyes(world, "amber"),
+          forms: oneForm(eyes(world, "amber")),
         },
       }),
     ).rejects.toThrow(/not yours to change/i);
@@ -292,7 +293,7 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.rareUpgradeIds[0],
           characterId: world.characters.marrowfen.id,
-          traitValues: eyes(world, "amber"),
+          forms: oneForm(eyes(world, "amber")),
         },
       }),
     ).rejects.toThrow(/not yours/i);
@@ -309,7 +310,7 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: "00000000-0000-4000-8000-000000000000",
           characterId: world.characters.pinefall.id,
-          traitValues: eyes(world, "blue"),
+          forms: oneForm(eyes(world, "blue")),
         },
       }),
     ).rejects.toThrow(/does not exist/i);
@@ -321,7 +322,7 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.rareUpgradeIds[0],
           characterId: "00000000-0000-4000-8000-000000000000",
-          traitValues: eyes(world, "blue"),
+          forms: oneForm(eyes(world, "blue")),
         },
       }),
     ).rejects.toThrow(/does not exist/i);
@@ -334,7 +335,7 @@ test.describe("redeeming a variant change item", () => {
           // An edit kit. Consumable, held by this member, and the wrong shape.
           itemId: world.editKitItems.kitIds[0],
           characterId: world.characters.pinefall.id,
-          traitValues: eyes(world, "blue"),
+          forms: oneForm(eyes(world, "blue")),
         },
       }),
     ).rejects.toThrow(/does not change a character's variant/i);
@@ -365,7 +366,7 @@ test.describe("redeeming a variant change item", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.pinefall.id,
-        traitValues: eyes(world, "green"),
+        forms: oneForm(eyes(world, "green")),
       },
     });
 
@@ -376,7 +377,7 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.rareUpgradeIds[0],
           characterId: world.characters.pinefall.id,
-          traitValues: eyes(world, "blue"),
+          forms: oneForm(eyes(world, "blue")),
         },
       }),
     ).rejects.toThrow(/awaiting review/i);
@@ -397,7 +398,7 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.ascensionIds[0],
           characterId: world.characters.bramblefoot.id,
-          traitValues: [],
+          forms: oneForm([]),
         },
       }),
     ).rejects.toThrow(/no species/i);
@@ -412,7 +413,7 @@ test.describe("redeeming a variant change item", () => {
       input: {
         itemId,
         characterId: world.characters.pinefall.id,
-        traitValues: eyes(world, "blue"),
+        forms: oneForm(eyes(world, "blue")),
       },
     });
 
@@ -426,7 +427,7 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId,
           characterId: world.characters.pinefall.id,
-          traitValues: eyes(world, "blue"),
+          forms: oneForm(eyes(world, "blue")),
         },
       }),
     ).rejects.toThrow();

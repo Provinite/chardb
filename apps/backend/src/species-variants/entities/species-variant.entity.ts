@@ -1,4 +1,4 @@
-import { ObjectType, Field, ID } from "@nestjs/graphql";
+import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
 import { CommunityColor } from "../../community-colors/entities/community-color.entity";
 
 @ObjectType()
@@ -21,6 +21,13 @@ export class SpeciesVariant {
     description: "ID of the color for this species variant",
   })
   colorId?: string;
+
+  /** How many forms a character on this variant may have */
+  @Field(() => Int, {
+    description:
+      "How many forms a character on this variant may have. One means the variant does not do forms.",
+  })
+  maxForms: number;
 
   /** When the species variant was created */
   @Field({ description: "When the species variant was created" })

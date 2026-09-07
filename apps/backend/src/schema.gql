@@ -44,6 +44,9 @@ input ApproveTraitReviewInput {
 }
 
 input AssignCharacterSpeciesInput {
+  """The character's initial forms"""
+  forms: [CharacterFormInput!]
+
   """Official registry identifier for this character within its species"""
   registryId: String
 
@@ -52,9 +55,6 @@ input AssignCharacterSpeciesInput {
 
   """Species variant ID"""
   speciesVariantId: ID
-
-  """Initial trait values for the character"""
-  traitValues: [CharacterTraitValueInput!]
 }
 
 type AuthPayload {
@@ -76,13 +76,13 @@ input ChangeCharacterVariantWithItemInput {
   """The character to move. Must be yours."""
   characterId: ID!
 
+  """
+  The complete list of forms the character should end up with, in order, not a patch. Must be valid for the variant the item moves it to, which is not necessarily the one it is valid for now.
+  """
+  forms: [CharacterFormInput!]!
+
   """The item to redeem."""
   itemId: ID!
-
-  """
-  The complete set of trait values the character should end up with, not a patch. Must be valid for the variant the item moves it to, which is not necessarily the one it is valid for now.
-  """
-  traitValues: [CharacterTraitValueInput!]!
 }
 
 type Character {
@@ -95,6 +95,9 @@ type Character {
   creatorId: ID
   customFields: String
   details: String
+
+  """This character's forms, in order. Always at least one."""
+  forms: [CharacterForm!]!
   id: ID!
 
   """Free to a good home."""
@@ -156,9 +159,6 @@ type Character {
 
   """Trait review moderation status"""
   traitReviewStatus: ModerationStatus
-
-  """Trait values assigned to this character"""
-  traitValues: [CharacterTraitValue!]!
   updatedAt: DateTime!
   userHasLiked: Boolean!
   visibility: Visibility!
@@ -247,6 +247,58 @@ type CharacterFolder {
   sortOrder: Int!
 }
 
+"""One appearance of a character, with its own trait set"""
+type CharacterForm {
+  characterId: ID!
+  createdAt: DateTime!
+  id: ID!
+
+  """
+  What the owner calls this form -- "Feral", "Awakened"
+  """
+  name: String!
+
+  """
+  Position in the character's own ordering, from 0. The form at 0 is the primary form.
+  """
+  sortOrder: Int!
+
+  """Trait values assigned to this form"""
+  traitValues: [CharacterTraitValue!]!
+  updatedAt: DateTime!
+}
+
+"""One of a character's forms"""
+input CharacterFormInput {
+  """
+  The form to update. Omit to create a new one. A form of another character is refused.
+  """
+  id: ID
+
+  """What the owner calls this form"""
+  name: String!
+
+  """The complete trait set for this form, not a patch"""
+  traitValues: [CharacterTraitValueInput!]!
+}
+
+"""One of a character's forms, frozen at the moment a change was recorded"""
+type CharacterFormSnapshot {
+  """
+  The form this was taken from. Not a reference -- the form may since have been deleted.
+  """
+  formId: ID!
+
+  """The form's name when the snapshot was taken"""
+  name: String!
+
+  """The form's position in the character's order at the time"""
+  sortOrder: Int!
+
+  """The form's trait values when the snapshot was taken"""
+  traitValues: [CharacterTraitValue!]!
+}
+
 """A record of character ownership transfer between users"""
 type CharacterOwnershipChange {
   character: Character
@@ -323,8 +375,12 @@ type CharacterVariantChange {
   """Null when the character had no variant before this."""
   fromVariant: SpeciesVariant
   id: ID!
-  newTraitValues: [CharacterTraitValue!]!
-  previousTraitValues: [CharacterTraitValue!]!
+
+  """Every form the character had after it"""
+  newForms: [CharacterFormSnapshot!]!
+
+  """Every form the character had before the move"""
+  previousForms: [CharacterFormSnapshot!]!
   reason: String
 
   """Null when the variant was cleared rather than changed."""
@@ -566,6 +622,11 @@ input CreateCharacterInput {
   assignToSelf: Boolean! = true
   customFields: String
   details: String
+
+  """
+  The character's forms. Omit for a character with one unnamed form and no traits.
+  """
+  forms: [CharacterFormInput!]! = []
   isFreebie: Boolean! = false
   isOpenToOffers: Boolean! = false
   isSellable: Boolean! = false
@@ -586,9 +647,6 @@ input CreateCharacterInput {
 
   """Source for the trait review. Defaults to CREATION."""
   traitReviewSource: TraitReviewSource
-
-  """Trait values for the character"""
-  traitValues: [CharacterTraitValueInput!]! = []
   visibility: Visibility! = PUBLIC
 }
 
@@ -837,6 +895,11 @@ input CreateSpeciesInput {
 input CreateSpeciesVariantInput {
   """ID of the color for this species variant"""
   colorId: ID
+
+  """
+  How many forms a character on this variant may have. One means the variant does not do forms.
+  """
+  maxForms: Int! = 1
 
   """Name of the species variant"""
   name: String!
@@ -1213,8 +1276,10 @@ type DiscordUserInfo {
 }
 
 input EditAndApproveTraitReviewInput {
-  """The corrected trait values to apply"""
-  correctedTraitValues: [CharacterTraitValueInput!]!
+  """
+  The corrected forms to apply: the character's complete list, in order, not a patch
+  """
+  correctedForms: [CharacterFormInput!]!
 
   """The ID of the review to edit and approve"""
   reviewId: ID!
@@ -1224,13 +1289,13 @@ input EditCharacterTraitsWithKitInput {
   """The character to change. Must be yours."""
   characterId: ID!
 
+  """
+  The complete list of forms being proposed, in order, not a patch. Nothing is applied until staff approve.
+  """
+  forms: [CharacterFormInput!]!
+
   """The kit to spend."""
   itemId: ID!
-
-  """
-  The complete set of trait values being proposed, not a patch. Nothing is applied until staff approve.
-  """
-  traitValues: [CharacterTraitValueInput!]!
 }
 
 """
@@ -3610,6 +3675,11 @@ input RedeemMyoTicketInput {
   customFields: String
   details: String
 
+  """
+  The character's forms. How many are allowed comes from the variant the ticket is being spent on.
+  """
+  forms: [CharacterFormInput!]! = []
+
   """The ticket to spend."""
   itemId: ID!
   name: String!
@@ -3619,7 +3689,6 @@ input RedeemMyoTicketInput {
   """
   speciesVariantId: ID!
   tags: [String!]! = []
-  traitValues: [CharacterTraitValueInput!]! = []
   visibility: Visibility! = PUBLIC
 }
 
@@ -4040,6 +4109,11 @@ type SpeciesVariant {
   """Unique identifier for the species variant"""
   id: ID!
 
+  """
+  How many forms a character on this variant may have. One means the variant does not do forms.
+  """
+  maxForms: Int!
+
   """Name of the species variant"""
   name: String!
 
@@ -4356,8 +4430,10 @@ input TraitOrderInput {
 
 """A trait review for a character"""
 type TraitReview {
-  """The trait values actually applied (if edited)"""
-  appliedTraitValues: [CharacterTraitValue!]
+  """
+  The forms actually applied, when a moderator corrected the proposal before approving it. Null means it was approved exactly as proposed.
+  """
+  appliedForms: [CharacterFormSnapshot!]
 
   """The character being reviewed"""
   character: Character!
@@ -4380,11 +4456,13 @@ type TraitReview {
   deferredById: ID
   id: ID!
 
-  """The previous trait values"""
-  previousTraitValues: [CharacterTraitValue!]!
+  """
+  Every form the character had before. Empty when there was no earlier state, as for a CREATION or MYO review.
+  """
+  previousForms: [CharacterFormSnapshot!]!
 
-  """The proposed trait values"""
-  proposedTraitValues: [CharacterTraitValue!]!
+  """Every form the character would have, as proposed"""
+  proposedForms: [CharacterFormSnapshot!]!
 
   """Reason for rejection"""
   rejectionReason: String
@@ -4514,14 +4592,16 @@ input UpdateCharacterProfileInput {
 
 """Input for updating character registry fields"""
 input UpdateCharacterRegistryInput {
+  """
+  The character's complete form list, in order. Omit to leave its forms alone.
+  """
+  forms: [CharacterFormInput!]
+
   """Official registry identifier for this character within its species"""
   registryId: String
 
   """Species variant ID"""
   speciesVariantId: ID
-
-  """Trait values for the character"""
-  traitValues: [CharacterTraitValueInput!]
 
   """
   Why the variant changed — 'upgrade ticket #204', say. Recorded on the rarity history and ignored when the variant is not changing.
@@ -4768,6 +4848,11 @@ input UpdateSpeciesInput {
 input UpdateSpeciesVariantInput {
   """ID of the color for this species variant"""
   colorId: ID
+
+  """
+  How many forms a character on this variant may have. Lowering it does not touch characters that already have more.
+  """
+  maxForms: Int
 
   """Name of the species variant"""
   name: String

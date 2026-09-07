@@ -10,7 +10,7 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import { TraitReviewSource, ModerationStatus } from "@prisma/client";
-import { CharacterTraitValueInput } from "../../characters/dto/character-trait.dto";
+import { CharacterFormInput } from "../../characters/dto/character-form.dto";
 
 // Register TraitReviewSource enum with GraphQL
 registerEnumType(TraitReviewSource, {
@@ -81,11 +81,12 @@ export class EditAndApproveTraitReviewInput {
   @IsUUID()
   reviewId: string;
 
-  @Field(() => [CharacterTraitValueInput], {
-    description: "The corrected trait values to apply",
+  @Field(() => [CharacterFormInput], {
+    description:
+      "The corrected forms to apply: the character's complete list, in order, not a patch",
   })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => CharacterTraitValueInput)
-  correctedTraitValues: CharacterTraitValueInput[];
+  @Type(() => CharacterFormInput)
+  correctedForms: CharacterFormInput[];
 }

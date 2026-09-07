@@ -26,7 +26,6 @@ import {
   SpeciesDetailsFragment,
   type RedeemMyoTicketInput,
   SpeciesVariantDetailsFragment,
-  CharacterTraitValueInput,
   Visibility,
 } from "../generated/graphql";
 import { useGetCommunityMembersQuery } from "../graphql/communities.graphql";
@@ -34,7 +33,12 @@ import { useAuth } from "../contexts/AuthContext";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { MyoTicketPanel } from "../components/character/MyoTicketPanel";
-import { TraitForm } from "../components/character/TraitForm";
+import { CharacterFormsEditor } from "../components/character/CharacterFormsEditor";
+import {
+  draftsToInput,
+  newFormDraft,
+  type CharacterFormDraft,
+} from "../lib/characterForms";
 import { CharacterDetailsEditor } from "../components/character/CharacterDetailsEditor";
 import { CustomFieldsEditor } from "../components/CustomFieldsEditor";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -367,10 +371,11 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     useState<SpeciesVariantDetailsFragment | null>(null);
   const [registryId, setRegistryId] = useState<string>("");
 
-  // Trait values state
-  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
-    [],
-  );
+  // The character's forms. One to start with, which is all most variants
+  // allow; the editor grows the rest when the chosen rarity permits them.
+  const [forms, setForms] = useState<CharacterFormDraft[]>([
+    newFormDraft("Base"),
+  ]);
 
   // Tags state
   const [tags, setTags] = useState<string[]>([]);
@@ -548,7 +553,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           customFields: cleanedCustomFields,
           visibility: data.visibility,
           tags: tags.length > 0 ? tags : undefined,
-          traitValues: traitValues.length > 0 ? traitValues : undefined,
+          forms: draftsToInput(forms),
         });
         setConfirmingRedeem(true);
         setIsSubmitting(false);
@@ -573,7 +578,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             speciesId: selectedSpecies?.id || undefined,
             speciesVariantId: selectedVariant?.id || undefined,
             registryId: registryId.trim() || undefined,
-            traitValues: traitValues.length > 0 ? traitValues : undefined,
+            forms: draftsToInput(forms),
             // Add pending owner based on characterTarget
             pendingOwner:
               characterTarget?.type === "pending"
@@ -749,11 +754,12 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
         {/* Trait Configuration */}
         {selectedSpecies && (
           <Section>
-            <TraitForm
+            <CharacterFormsEditor
               speciesId={selectedSpecies.id}
               speciesVariant={selectedVariant}
-              traitValues={traitValues}
-              onChange={setTraitValues}
+              maxForms={selectedVariant?.maxForms ?? 1}
+              forms={forms}
+              onChange={setForms}
             />
           </Section>
         )}

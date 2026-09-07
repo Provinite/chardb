@@ -5,6 +5,7 @@ import { ItemsModule } from "../items/items.module";
 import { CharactersModule } from "../characters/characters.module";
 import { TagsModule } from "../tags/tags.module";
 import { TraitReviewModule } from "../trait-review/trait-review.module";
+import { CharacterFormsModule } from "../character-forms/character-forms.module";
 import { MyoService } from "./myo.service";
 import { MyoResolver } from "./myo.resolver";
 
@@ -23,6 +24,7 @@ import { MyoResolver } from "./myo.resolver";
     CharactersModule,
     TagsModule,
     TraitReviewModule,
+    CharacterFormsModule,
   ],
   providers: [MyoService, MyoResolver],
   exports: [MyoService],

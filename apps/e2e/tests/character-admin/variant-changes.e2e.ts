@@ -8,6 +8,11 @@ import {
   SeedCharacterDocument,
   SeedUpdateRoleDocument,
 } from "../../src/generated/graphql.js";
+import {
+  baseTraits,
+  oneForm,
+  snapshotTraits,
+} from "../../src/world/forms.js";
 
 const test = presetTest("community-items");
 
@@ -49,8 +54,8 @@ test.describe("changing a character's variant", () => {
           name,
           speciesId: world.species.id,
           speciesVariantId,
-          traitValues: value
-            ? [{ traitId: world.traits.eyeColor.id, value }]
+          forms: value
+            ? oneForm([{ traitId: world.traits.eyeColor.id, value }])
             : undefined,
         },
       });
@@ -111,12 +116,12 @@ test.describe("changing a character's variant", () => {
       world.as("member").gql(SeedUpdateCharacterRegistryDocument, {
         id,
         input: {
-          traitValues: [
+          forms: oneForm([
             {
               traitId: world.traits.eyeColor.id,
               value: world.traits.eyeColor.values.blue,
             },
-          ],
+          ]),
         },
       }),
     ).resolves.toBeTruthy();
@@ -238,12 +243,12 @@ test.describe("traits that do not exist at the new rarity", () => {
           name,
           speciesId: world.species.id,
           speciesVariantId: variantId,
-          traitValues: [
+          forms: oneForm([
             {
               traitId: world.traits.eyeColor.id,
               value: world.traits.eyeColor.values.blue,
             },
-          ],
+          ]),
         },
       });
     return createCharacter.id;
@@ -260,12 +265,12 @@ test.describe("traits that do not exist at the new rarity", () => {
         id,
         input: {
           speciesVariantId: world.variants.legendary.id,
-          traitValues: [
+          forms: oneForm([
             {
               traitId: world.traits.eyeColor.id,
               value: world.traits.eyeColor.values.blue,
             },
-          ],
+          ]),
         },
       })
       .then(
@@ -284,12 +289,12 @@ test.describe("traits that do not exist at the new rarity", () => {
         id,
         input: {
           speciesVariantId: world.variants.legendary.id,
-          traitValues: [
+          forms: oneForm([
             {
               traitId: world.traits.eyeColor.id,
               value: world.traits.eyeColor.values.amber,
             },
-          ],
+          ]),
         },
       }),
     ).resolves.toBeTruthy();
@@ -297,7 +302,7 @@ test.describe("traits that do not exist at the new rarity", () => {
     const { character } = await world
       .as("member")
       .gql(SeedCharacterDocument, { id });
-    expect(character.traitValues[0].value).toBe(
+    expect(baseTraits(character)[0].value).toBe(
       world.traits.eyeColor.values.amber,
     );
   });
@@ -313,12 +318,12 @@ test.describe("traits that do not exist at the new rarity", () => {
       id,
       input: {
         speciesVariantId: world.variants.legendary.id,
-        traitValues: [
+        forms: oneForm([
           {
             traitId: world.traits.eyeColor.id,
             value: world.traits.eyeColor.values.amber,
           },
-        ],
+        ]),
       },
     });
 
@@ -329,10 +334,10 @@ test.describe("traits that do not exist at the new rarity", () => {
       .as("member")
       .gql(SeedCharacterVariantChangesDocument, { characterId: id });
     const [row] = characterVariantChanges;
-    expect(row.previousTraitValues[0].value).toBe(
+    expect(snapshotTraits(row.previousForms)[0].value).toBe(
       world.traits.eyeColor.values.blue,
     );
-    expect(row.newTraitValues[0].value).toBe(
+    expect(snapshotTraits(row.newForms)[0].value).toBe(
       world.traits.eyeColor.values.amber,
     );
   });
@@ -377,12 +382,12 @@ test.describe("changing rarity, through the page", () => {
           name,
           speciesId: world.species.id,
           speciesVariantId: world.variants.common.id,
-          traitValues: [
+          forms: oneForm([
             {
               traitId: world.traits.eyeColor.id,
               value: world.traits.eyeColor.values.blue,
             },
-          ],
+          ]),
         },
       });
     return createCharacter.id;
@@ -446,7 +451,7 @@ test.describe("changing rarity, through the page", () => {
       .as("member")
       .gql(SeedCharacterDocument, { id });
     expect(character.speciesVariantId).toBe(world.variants.legendary.id);
-    expect(character.traitValues[0].value).toBe(
+    expect(baseTraits(character)[0].value).toBe(
       world.traits.eyeColor.values.amber,
     );
   });

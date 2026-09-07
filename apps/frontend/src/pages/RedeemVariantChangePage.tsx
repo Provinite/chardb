@@ -11,8 +11,12 @@ import {
   useChangeCharacterVariantWithItemMutation,
   useSpeciesWithTraitsAndEnumValuesQuery,
   useEnumValueSettingsBySpeciesVariantQuery,
-  type CharacterTraitValueInput,
 } from "../generated/graphql";
+import {
+  draftsFromForms,
+  draftsToInput,
+  type CharacterFormDraft,
+} from "../lib/characterForms";
 import { useAuth } from "../contexts/AuthContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -263,9 +267,7 @@ export const RedeemVariantChangePage: React.FC = () => {
 
   const [confirming, setConfirming] = useState(false);
 
-  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
-    [],
-  );
+  const [forms, setForms] = useState<CharacterFormDraft[]>([]);
   const [seeded, setSeeded] = useState(false);
 
   // Seeded from what the character has now. Everything the destination
@@ -273,13 +275,7 @@ export const RedeemVariantChangePage: React.FC = () => {
   // it does not.
   useEffect(() => {
     if (seeded || !character) return;
-    setTraitValues(
-      (character.traitValues ?? []).map((tv) => ({
-        traitId: tv.traitId,
-        value: tv.value,
-        ...(tv.clarifier ? { clarifier: tv.clarifier } : {}),
-      })),
-    );
+    setForms(draftsFromForms(character.forms));
     setSeeded(true);
   }, [character, seeded]);
 
@@ -333,15 +329,32 @@ export const RedeemVariantChangePage: React.FC = () => {
     // Treating "not loaded yet" as "permits nothing" would flash a warning
     // naming every trait the character has.
     if (!destination || !settingsData) return [];
-    return strandedValues(traitValues, allowed, optionsById);
-  }, [destination, settingsData, traitValues, allowed, optionsById]);
+    // Every form, not just the primary one: they all move together, and the
+    // server judges all of them against the destination.
+    return forms.flatMap((form, formIndex) =>
+      strandedValues(form.traitValues, allowed, optionsById).map((row) => ({
+        ...row,
+        formIndex,
+        formName: form.name,
+      })),
+    );
+  }, [destination, settingsData, forms, allowed, optionsById]);
 
   /** Replace one stranded value, or drop it when `to` is empty. */
-  const reroute = (index: number, to: string) => {
-    setTraitValues(
-      to
-        ? traitValues.map((tv, i) => (i === index ? { ...tv, value: to } : tv))
-        : traitValues.filter((_, i) => i !== index),
+  const reroute = (formIndex: number, index: number, to: string) => {
+    setForms(
+      forms.map((form, i) =>
+        i === formIndex
+          ? {
+              ...form,
+              traitValues: to
+                ? form.traitValues.map((tv, j) =>
+                    j === index ? { ...tv, value: to } : tv,
+                  )
+                : form.traitValues.filter((_, j) => j !== index),
+            }
+          : form,
+      ),
     );
   };
 
@@ -412,7 +425,11 @@ export const RedeemVariantChangePage: React.FC = () => {
     if (!itemId) return;
     await redeem({
       variables: {
-        input: { itemId, characterId: character.id, traitValues },
+        input: {
+          itemId,
+          characterId: character.id,
+          forms: draftsToInput(forms),
+        },
       },
     });
   };
@@ -492,15 +509,20 @@ export const RedeemVariantChangePage: React.FC = () => {
               allowed.has(ev.id),
             );
             return (
-              <Row key={`${row.traitId}-${row.index}`}>
+              <Row key={`${row.formIndex}-${row.traitId}-${row.index}`}>
                 <Was>
                   {row.traitName}
-                  <span>currently {row.optionName}</span>
+                  <span>
+                    currently {row.optionName}
+                    {forms.length > 1 ? ` · ${row.formName}` : ""}
+                  </span>
                 </Was>
                 <Select
                   data-testid={`variant-change-reroute-${row.traitId}`}
                   defaultValue=""
-                  onChange={(e) => reroute(row.index, e.target.value)}
+                  onChange={(e) =>
+                    reroute(row.formIndex, row.index, e.target.value)
+                  }
                 >
                   <option value="" disabled>
                     Choose a replacement…

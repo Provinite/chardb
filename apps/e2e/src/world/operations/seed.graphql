@@ -165,9 +165,14 @@ query SeedCharacter($id: ID!) {
       id
       name
     }
-    traitValues {
-      traitId
-      value
+    forms {
+      id
+      name
+      sortOrder
+      traitValues {
+        traitId
+        value
+      }
     }
     pendingTraitReviewSource
   }
@@ -478,13 +483,21 @@ query SeedCharacterVariantChanges($characterId: ID!) {
     changedBy {
       username
     }
-    previousTraitValues {
-      traitId
-      value
+    previousForms {
+      formId
+      name
+      traitValues {
+        traitId
+        value
+      }
     }
-    newTraitValues {
-      traitId
-      value
+    newForms {
+      formId
+      name
+      traitValues {
+        traitId
+        value
+      }
     }
   }
 }

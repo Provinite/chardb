@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { Button, Caption } from "@chardb/ui";
 import { TraitReviewSource } from "../../generated/graphql";
-import { TraitDiffDisplay } from "./TraitDiffDisplay";
+import { FormDiffDisplay } from "./FormDiffDisplay";
 import { RevertTraitReviewModal } from "./RevertTraitReviewModal";
 import { DeferQueueEntryModal } from "./DeferQueueEntryModal";
 import { DeferralBadge, DeferralDetail } from "./DeferralNotice";
@@ -259,9 +259,9 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
 
           <DeferralDetail info={review} formatTimeAgo={formatTimeAgo} />
 
-          <TraitDiffDisplay
-            previousTraitValues={review.previousTraitValues}
-            proposedTraitValues={review.proposedTraitValues}
+          <FormDiffDisplay
+            previousForms={review.previousForms}
+            proposedForms={review.proposedForms}
             speciesId={review.character?.speciesId}
             speciesVariantId={review.character?.speciesVariantId}
           />

@@ -20,6 +20,11 @@ import {
   TraitValueType,
 } from "@chardb/database";
 import { TraitReviewService } from "../trait-review/trait-review.service";
+import {
+  CharacterFormsService,
+  CharacterFormWrite,
+  DEFAULT_FORM,
+} from "../character-forms/character-forms.service";
 import { notDeleted } from "../common/utils/prisma-filters";
 import {
   availabilityWhere,
@@ -47,11 +52,14 @@ const PROFILE_FIELDS = new Set([
   "mainMedia",
 ]);
 
-const REGISTRY_FIELDS = new Set([
-  "registryId",
-  "speciesVariant",
-  "traitValues",
-]);
+/**
+ * Forms are not in here because they are not part of a Prisma character
+ * payload -- they are rows of their own, written only by
+ * {@link CharactersService.writeForms}, and the mutations that carry them
+ * check the registry permission themselves. This set is only ever matched
+ * against the keys of a `CharacterUpdateInput`.
+ */
+const REGISTRY_FIELDS = new Set(["registryId", "speciesVariant"]);
 
 export interface PendingOwnerInput {
   provider: ExternalAccountProvider;
@@ -92,12 +100,15 @@ export class CharactersService {
     private readonly deviantArtService: DeviantArtService,
     private readonly permissionService: PermissionService,
     private readonly traitReviewService: TraitReviewService,
+    private readonly forms: CharacterFormsService,
   ) {}
 
   async create(
     userId: string,
     input: {
       characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
+      /** The character's forms. Defaults to one empty form named "Base". */
+      forms?: CharacterFormWrite[];
       tags?: string[];
       pendingOwner?: PendingOwnerInput; // Pending ownership info
       assignToSelf?: boolean; // Whether to assign ownership to the creator
@@ -106,6 +117,7 @@ export class CharactersService {
   ) {
     const { characterData, tags, assignToSelf = true } = input;
     const pendingOwner = input.pendingOwner;
+    const forms = input.forms?.length ? input.forms : [DEFAULT_FORM];
 
     // Determine the actual owner:
     // - If pendingOwner is provided, character is orphaned (ownerId = null)
@@ -116,20 +128,17 @@ export class CharactersService {
 
     // Extract speciesId early for validation and Discord resolution
     const speciesId = characterData.species?.connect?.id;
-    const traitValues = characterData.traitValues;
+    const speciesVariantId = characterData.speciesVariant?.connect?.id;
 
     if (speciesId) {
       await this.assertCanCreateForSpecies(userId, speciesId);
-    }
-
-    // Validate trait values if species and trait values are provided
-    if (
-      speciesId &&
-      traitValues &&
-      Array.isArray(traitValues) &&
-      traitValues.length > 0
-    ) {
-      await this.validateTraitValues(speciesId, traitValues);
+      await this.validateForms(speciesId, forms, speciesVariantId);
+    } else if (forms.length > 1) {
+      // Without a species there is no trait list for a second form to differ
+      // in, so a character that has one is a character with two empty sets.
+      throw new BadRequestException(
+        "A character without a species can only have one form",
+      );
     }
 
     // PRE-VALIDATION: Resolve Discord identifier BEFORE creating character
@@ -190,12 +199,15 @@ export class CharactersService {
         },
       });
 
-      // Auto-create trait review if character has trait values
-      if (traitValues && Array.isArray(traitValues) && traitValues.length > 0) {
+      const written = await this.forms.writeForms(tx, created.id, forms);
+
+      // Auto-create trait review if any form has trait values. The previous
+      // snapshot is an empty *list of forms*: nothing existed before this.
+      if (written.some((form) => form.traitValues.length > 0)) {
         await this.traitReviewService.createReview(
           created.id,
           input.traitReviewSource ?? TraitReviewSource.CREATION,
-          traitValues,
+          written,
           [],
           tx,
         );
@@ -931,13 +943,26 @@ export class CharactersService {
       );
     }
 
-    const traitValues =
-      character.traitValues as PrismaJson.CharacterTraitValuesJson;
+    const forms = await this.forms.readForms(id);
 
-    const flattenedFields = await this.flattenTraitValues(
-      character.speciesId,
-      traitValues,
-    );
+    // Every form's traits are flattened, not just the primary one's. Leaving a
+    // character's other forms out would silently delete them: the forms
+    // themselves go, and custom fields are the only place their values survive.
+    // Their names go in the key when there is more than one form, since two
+    // forms of one character routinely carry the same traits at different
+    // values -- that being the point of having two.
+    const flattenedFields: Record<string, string> = {};
+    for (const form of forms) {
+      const flattened = await this.flattenTraitValues(
+        character.speciesId,
+        form.traitValues,
+      );
+      for (const [traitName, value] of Object.entries(flattened)) {
+        const key =
+          forms.length > 1 ? `${form.name}: ${traitName}` : traitName;
+        flattenedFields[key] = value;
+      }
+    }
 
     const existingCustomFields =
       character.customFields &&
@@ -957,7 +982,6 @@ export class CharactersService {
           speciesId: null,
           speciesVariantId: null,
           registryId: null,
-          traitValues: [],
           traitReviewStatus: null,
           // Trait values take precedence over any existing custom field with
           // the same name — the structured species data is more authoritative
@@ -965,6 +989,9 @@ export class CharactersService {
           customFields: { ...existingCustomFields, ...flattenedFields },
         },
       });
+      // Back to one empty form. A character out of its species has no trait
+      // list, so it has nothing for a second form to differ in.
+      await this.forms.writeForms(tx, id, [DEFAULT_FORM]);
     });
 
     return true;
@@ -1203,12 +1230,14 @@ export class CharactersService {
     userId: string,
     input: {
       characterData: Prisma.CharacterUpdateInput;
+      /** The character's complete form list, or undefined to leave it alone. */
+      forms?: CharacterFormWrite[];
       /** Staff's note on a variant change. Ignored when none happens. */
       variantChangeReason?: string | null;
     },
   ) {
     const character = await this.findOne(id, userId);
-    const { characterData } = input;
+    const { characterData, forms } = input;
 
     // Registry edits require a species
     if (!character.speciesId) {
@@ -1261,26 +1290,24 @@ export class CharactersService {
       ? (connectedVariantId ?? null)
       : character.speciesVariantId;
 
-    if (characterData.traitValues) {
-      const traitValues =
-        characterData.traitValues as PrismaJson.CharacterTraitValuesJson;
-      if (Array.isArray(traitValues) && traitValues.length > 0) {
-        await this.validateTraitValues(
-          character.speciesId,
-          traitValues,
-          effectiveVariantId,
-        );
-      }
+    if (forms) {
+      await this.validateForms(character.speciesId, forms, effectiveVariantId);
     }
 
     // The update and its audit row commit together or not at all. A rarity
     // change with no record of who made it is the thing this table exists to
     // stop.
     const updatedCharacter = await this.db.$transaction(async (tx) => {
+      const previousForms = await this.forms.readForms(id, tx);
+
       const updated = await tx.character.update({
         where: { id },
         data: characterData,
       });
+
+      const newForms = forms
+        ? await this.forms.writeForms(tx, id, forms)
+        : previousForms;
 
       if (variantIsChanging) {
         await this.recordVariantChange(tx, {
@@ -1289,10 +1316,8 @@ export class CharactersService {
           toVariantId: connectedVariantId ?? null,
           changedById: userId,
           reason: input.variantChangeReason?.trim() || null,
-          previousTraitValues:
-            character.traitValues as PrismaJson.CharacterTraitValuesJson,
-          newTraitValues:
-            updated.traitValues as PrismaJson.CharacterTraitValuesJson,
+          previousForms,
+          newForms,
         });
       }
 
@@ -1319,8 +1344,8 @@ export class CharactersService {
       toVariantId: string | null;
       changedById: string;
       reason: string | null;
-      previousTraitValues: PrismaJson.CharacterTraitValuesJson;
-      newTraitValues: PrismaJson.CharacterTraitValuesJson;
+      previousForms: PrismaJson.CharacterFormsJson;
+      newForms: PrismaJson.CharacterFormsJson;
     },
   ) {
     await tx.characterVariantChange.create({ data: row });
@@ -1350,8 +1375,8 @@ export class CharactersService {
       characterId: string;
       fromVariantId: string | null;
       toVariantId: string;
-      previousTraitValues: PrismaJson.CharacterTraitValuesJson;
-      traitValues: PrismaJson.CharacterTraitValuesJson;
+      previousForms: PrismaJson.CharacterFormsJson;
+      forms: CharacterFormWrite[];
       changedById: string;
       reason: string | null;
     },
@@ -1360,9 +1385,14 @@ export class CharactersService {
       where: { id: input.characterId },
       data: {
         speciesVariant: { connect: { id: input.toVariantId } },
-        traitValues: input.traitValues,
       },
     });
+
+    const newForms = await this.forms.writeForms(
+      tx,
+      input.characterId,
+      input.forms,
+    );
 
     await this.recordVariantChange(tx, {
       characterId: input.characterId,
@@ -1370,9 +1400,8 @@ export class CharactersService {
       toVariantId: input.toVariantId,
       changedById: input.changedById,
       reason: input.reason,
-      previousTraitValues: input.previousTraitValues,
-      newTraitValues:
-        updated.traitValues as PrismaJson.CharacterTraitValuesJson,
+      previousForms: input.previousForms,
+      newForms,
     });
 
     return updated;
@@ -1488,7 +1517,7 @@ export class CharactersService {
       speciesId: string;
       speciesVariantId?: string;
       registryId?: string;
-      traitValues?: PrismaJson.CharacterTraitValuesJson;
+      forms?: CharacterFormWrite[];
     },
   ) {
     const character = await this.findOne(id, userId);
@@ -1538,20 +1567,21 @@ export class CharactersService {
       }
     }
 
-    // Validate trait values if provided
-    if (input.traitValues && input.traitValues.length > 0) {
-      await this.validateTraitValues(input.speciesId, input.traitValues);
-    }
+    const forms = input.forms?.length ? input.forms : [DEFAULT_FORM];
+    await this.validateForms(input.speciesId, forms, input.speciesVariantId);
 
     // Update the character with species assignment
-    const updatedCharacter = await this.db.character.update({
-      where: { id },
-      data: {
-        speciesId: input.speciesId,
-        speciesVariantId: input.speciesVariantId,
-        registryId: input.registryId,
-        traitValues: input.traitValues ?? [],
-      },
+    const updatedCharacter = await this.db.$transaction(async (tx) => {
+      const updated = await tx.character.update({
+        where: { id },
+        data: {
+          speciesId: input.speciesId,
+          speciesVariantId: input.speciesVariantId,
+          registryId: input.registryId,
+        },
+      });
+      await this.forms.writeForms(tx, id, forms);
+      return updated;
     });
 
     return updatedCharacter;
@@ -1794,6 +1824,64 @@ export class CharactersService {
       default: // 'created'
         return { createdAt: order } as const;
     }
+  }
+
+  /**
+   * Validate a character's whole form list against its species and variant.
+   *
+   * Each form's values are judged exactly as a single trait set used to be --
+   * all of a character's forms share its variant, so they share its trait
+   * list and its enum allow-list too. What is new is the count: how many forms
+   * a character may have is a property of the variant it sits on, so a
+   * community can decide that transformation is something its Magic tier does
+   * and its Common tier does not.
+   *
+   * A variantless character is capped at one form. Trait values need a variant
+   * to mean anything, so a second form there would be a second set of nothing.
+   */
+  async validateForms(
+    speciesId: string,
+    forms: CharacterFormWrite[],
+    speciesVariantId?: string | null,
+  ) {
+    if (forms.length === 0) {
+      throw new BadRequestException("A character must have at least one form");
+    }
+
+    for (const form of forms) {
+      if (!form.name.trim()) {
+        throw new BadRequestException("Every form needs a name");
+      }
+    }
+
+    const maxForms = await this.maxFormsForVariant(speciesVariantId);
+    if (forms.length > maxForms) {
+      throw new BadRequestException(
+        maxForms === 1
+          ? "This variant does not allow more than one form"
+          : `This variant allows at most ${maxForms} forms`,
+      );
+    }
+
+    for (const form of forms) {
+      if (form.traitValues.length > 0) {
+        await this.validateTraitValues(
+          speciesId,
+          form.traitValues,
+          speciesVariantId,
+        );
+      }
+    }
+  }
+
+  /** How many forms the given variant permits. One, when it has no variant. */
+  private async maxFormsForVariant(speciesVariantId?: string | null) {
+    if (!speciesVariantId) return 1;
+    const variant = await this.db.speciesVariant.findUnique({
+      where: { id: speciesVariantId },
+      select: { maxForms: true },
+    });
+    return variant?.maxForms ?? 1;
   }
 
   /**

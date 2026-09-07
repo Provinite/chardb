@@ -12,6 +12,7 @@ import {
   SeedMemberHoldingsDocument,
   SeedCreateCharacterDocument,
 } from "../../src/generated/graphql.js";
+import { oneForm } from "../../src/world/forms.js";
 
 const test = presetTest("community-items");
 
@@ -153,12 +154,12 @@ test.describe("disposing of a character under redemption review", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.bramblefoot.id,
-        traitValues: [
+        forms: oneForm([
           {
             traitId: world.traits.eyeColor.id,
             value: world.traits.eyeColor.values.blue,
           },
-        ],
+        ]),
       },
     });
 
@@ -199,12 +200,12 @@ test.describe("disposing of a character under redemption review", () => {
         input: {
           name: "Created with traits",
           speciesId: world.species.id,
-          traitValues: [
+          forms: oneForm([
             {
               traitId: world.traits.eyeColor.id,
               value: world.traits.eyeColor.values.green,
             },
-          ],
+          ]),
         },
       });
 
@@ -262,12 +263,12 @@ test.describe("the review queue's actions", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.bramblefoot.id,
-        traitValues: [
+        forms: oneForm([
           {
             traitId: world.traits.eyeColor.id,
             value: world.traits.eyeColor.values.blue,
           },
-        ],
+        ]),
       },
     });
 
