@@ -1070,3 +1070,46 @@ mutation SeedRejectImage($input: RejectImageInput!) {
     action
   }
 }
+
+# Character folders (#350). Seeding through the API rather than the database
+# so the specs exercise the same authorisation the UI does -- a folder created
+# here is one a real request could have made.
+mutation SeedCreateCharacterFolder($input: CreateCharacterFolderInput!) {
+  createCharacterFolder(input: $input) {
+    id
+    name
+    parentId
+    isPrivate
+  }
+}
+
+mutation SeedMoveCharactersToFolder($input: MoveCharactersToFolderInput!) {
+  moveCharactersToFolder(input: $input)
+}
+
+query SeedMyCharacterFolders($communityId: ID) {
+  myCharacterFolders(communityId: $communityId) {
+    id
+    name
+    parentId
+    isPrivate
+    characterCount
+  }
+}
+
+query SeedUserCharacterFolders($userId: ID!) {
+  userCharacterFolders(userId: $userId) {
+    id
+    name
+    parentId
+    isPrivate
+    characterCount
+  }
+}
+
+mutation SeedTransferCharacter($id: ID!, $input: TransferCharacterInput!) {
+  transferCharacter(id: $id, input: $input) {
+    id
+    ownerId
+  }
+}

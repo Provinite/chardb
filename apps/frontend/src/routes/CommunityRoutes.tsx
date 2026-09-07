@@ -3,6 +3,7 @@ import { ProtectedRoute } from "../components/ProtectedRoute";
 
 import { CommunityPage } from "../pages/CommunityPage";
 import { CommunityCharactersPage } from "../pages/CommunityCharactersPage";
+import { CommunityMyCharactersPage } from "../pages/CommunityMyCharactersPage";
 import { CharacterPage } from "../pages/CharacterPage";
 import { CharacterMediaPage } from "../pages/CharacterMediaPage";
 import { CreateCharacterPageEnhanced as CreateCharacterPage } from "../pages/CreateCharacterPageEnhanced";
@@ -65,6 +66,9 @@ const RedirectToItemType: React.FC = () => {
  * What is deliberately NOT here is anything belonging to a person rather than
  * a community -- profiles, galleries, media, the feed, liked lists -- and
  * anything belonging to the site. Those stay at the apex; see `ApexRoutes`.
+ * `/my-characters` is the one apparent exception and is not really one: it is
+ * this community's characters narrowed to the viewer's, not a person's page
+ * served from a community host.
  * `Gallery`, `Media` and `Image` reach a community only through a nullable
  * `characterId`, if at all, so there is no community that owns them to serve
  * them from.
@@ -74,6 +78,20 @@ export const CommunityRoutes: React.FC = () => (
     {/* --- the community itself */}
     <Route path="/" element={<CommunityPage />} />
     <Route path="/characters" element={<CommunityCharactersPage />} />
+
+    {/* The one person-shaped page that belongs on a community host rather than
+        at the apex. It is not "your profile inside Cloverse" -- it is the
+        community's characters narrowed to yours, which is the question #338
+        was filed about, and the answer has to live where the question gets
+        asked. */}
+    <Route
+      path="/my-characters"
+      element={
+        <ProtectedRoute>
+          <CommunityMyCharactersPage />
+        </ProtectedRoute>
+      }
+    />
 
     {/* --- characters. A character reaches its community through its species,
         so one with no species has no host and lives at the apex instead;

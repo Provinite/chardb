@@ -147,6 +147,10 @@ model User {
   profileComments   Comment[]   @relation("UserComments")
   likes             Like[]
 
+  /// This person's character folders. Personal filing, not a shared taxonomy
+  /// -- two people can both keep a "WIP" and neither knows about the other's.
+  characterFolders CharacterFolder[] @relation("UserCharacterFolders")
+
   // Social relations
   followers Follow[] @relation("UserFollowing")
   following Follow[] @relation("UserFollower")
@@ -351,6 +355,10 @@ model Character {
   likes     Like[]
   tags_rel  CharacterTag[]
 
+  /// Where this character's owner filed it. Rows here survive a trade rather
+  /// than being deleted with it -- see CharacterFolderEntry.
+  folderEntries CharacterFolderEntry[]
+
   // Ownership change tracking
   ownershipChanges CharacterOwnershipChange[]
 
@@ -369,6 +377,78 @@ model Character {
   @@unique([speciesId, registryId])
   @@index([traitValues], type: Gin, map: "character_traitvalues_gin_idx")
   @@map("characters")
+}
+
+/// One folder in one person's character workspace.
+///
+/// Deliberately not tags. A tag says what a character is and is shared with
+/// everybody; a folder says where its owner put it and is shared with nobody.
+/// Storing folders as owned tags was tried and abandoned: it put both in one
+/// namespace, so removing the tag `wip` from a character also unfiled it from
+/// the folder `WIP`, and every existing tag read had to learn to exclude
+/// folders forever after.
+model CharacterFolder {
+  id String @id @default(uuid())
+
+  ownerId String @map("owner_id")
+
+  /// Null for a folder at the root of the workspace.
+  parentId String? @map("parent_id")
+
+  name String @db.VarChar(50)
+
+  /// Folders are how a visitor browses a profile, so public is the default.
+  /// Private hides the folder and its whole subtree from everyone else --
+  /// people file things under names like "to sell" and "vent art", and a
+  /// filing system you have to self-censor is not one.
+  isPrivate Boolean @default(false) @map("is_private")
+
+  /// Position among siblings. Everything defaults to 0 and the query orders by
+  /// `(sortOrder, name)`, so a workspace nobody has dragged reads alphabetical
+  /// without needing a flag to say so.
+  sortOrder Int @default(0) @map("sort_order")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  // Relations. Cascade on the self-relation, so deleting a folder takes its
+  // subtree with it; the characters are untouched and reappear at the root.
+  owner      User                   @relation("UserCharacterFolders", fields: [ownerId], references: [id], onDelete: Cascade)
+  parent     CharacterFolder?       @relation("CharacterFolderTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children   CharacterFolder[]      @relation("CharacterFolderTree")
+  characters CharacterFolderEntry[]
+
+  // Sibling names are kept unique by two partial indexes in the migration
+  // rather than by this, which cannot do it alone: Postgres treats nulls as
+  // distinct, so every root folder has a `parentId` that collides with
+  // nothing. The indexes are also on `lower(name)`, so "WIP" and "wip" cannot
+  // sit side by side.
+  @@unique([ownerId, parentId, name])
+  @@index([ownerId, parentId, sortOrder])
+  @@map("character_folders")
+}
+
+/// A character filed in a folder.
+///
+/// A character can be in several folders at once -- "Fursonas" and "Open for
+/// trade" are both true of the same one -- so this is a join rather than a
+/// column on the character.
+///
+/// Nothing deletes these when a character is traded away. Ownership is checked
+/// when folders are read instead, which leaves rows behind but means no future
+/// transfer path can forget to evict. The rows cost nothing and are collected
+/// if the character is ever filed by its new owner.
+model CharacterFolderEntry {
+  folderId    String   @map("folder_id")
+  characterId String   @map("character_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  folder    CharacterFolder @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  character Character       @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@id([folderId, characterId])
+  @@index([characterId])
+  @@map("character_folder_entries")
 }
 
 model Image {

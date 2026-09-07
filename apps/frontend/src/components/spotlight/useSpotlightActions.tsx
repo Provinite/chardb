@@ -420,6 +420,22 @@ export function useSpotlightActions(
             description: `${cName} overview`,
             onClick: inCommunity(cSlug, cId, ""),
           },
+          // Characters, for every member. The spotlight had no character page
+          // for a community at all -- not this one and not the browse -- so
+          // the answer to "where are my Cloverse characters" could not be
+          // typed any more than it could be clicked (#338).
+          {
+            id: `c-${cId}-characters`,
+            label: "Browse Characters",
+            description: `${cName} characters`,
+            onClick: inCommunity(cSlug, cId, "/characters"),
+          },
+          {
+            id: `c-${cId}-my-characters`,
+            label: "My Characters",
+            description: `Your characters in ${cName}`,
+            onClick: inCommunity(cSlug, cId, "/my-characters"),
+          },
           {
             id: `c-${cId}-members`,
             label: "Members",

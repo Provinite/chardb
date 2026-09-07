@@ -16,6 +16,7 @@ import { DatabaseModule } from "./database/database.module";
 import { AuthModule } from "./auth/auth.module";
 import { UsersModule } from "./users/users.module";
 import { CharactersModule } from "./characters/characters.module";
+import { CharacterFoldersModule } from "./character-folders/character-folders.module";
 import { ImagesModule } from "./images/images.module";
 import { MediaModule } from "./media/media.module";
 import { GalleriesModule } from "./galleries/galleries.module";
@@ -246,6 +247,7 @@ import { Request, Response } from "express";
     AuthModule,
     UsersModule,
     CharactersModule,
+    CharacterFoldersModule,
     ImagesModule,
     MediaModule,
     GalleriesModule,

@@ -192,6 +192,11 @@ input CharacterFiltersInput {
   """
   availability: [CharacterAvailability!]
   communityId: ID
+
+  """
+  Characters filed directly in this folder. Sub-folders are not included -- opening a folder shows what is in it, the way a file browser does. A private folder answers only to its owner.
+  """
+  folderId: ID
   isSellable: Boolean @deprecated(reason: "Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only one of these that can also ask for the negative.")
   isTradeable: Boolean @deprecated(reason: "Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only one of these that can also ask for the negative.")
   limit: Int! = 20
@@ -207,7 +212,39 @@ input CharacterFiltersInput {
   speciesId: ID
   speciesVariantId: ID
   tags: [String!]
+
+  """
+  Characters in no folder at all: the root of your workspace, and the pile that empties as you file. Yours only -- it describes how you have organised things, which is not a question anyone else can ask.
+  """
+  unfiled: Boolean
   visibility: Visibility
+}
+
+"""
+One folder in a person's character workspace. Folders nest, hold characters, and belong to exactly one owner.
+"""
+type CharacterFolder {
+  """
+  Characters in this folder and everything nested under it, counted once each however many sub-folders hold them. Excludes characters the owner has since traded away, and characters the viewer may not see.
+  """
+  characterCount: Int!
+  id: ID!
+
+  """
+  Hidden from everyone but the owner, along with everything nested under it.
+  """
+  isPrivate: Boolean!
+
+  """As the owner typed it."""
+  name: String!
+
+  """Null for a folder at the root of the workspace."""
+  parentId: ID
+
+  """
+  Position among siblings. Zero throughout a workspace nobody has reordered, which is what makes the default order alphabetical.
+  """
+  sortOrder: Int!
 }
 
 """A record of character ownership transfer between users"""
@@ -509,6 +546,17 @@ type CommunityMemberConnection {
 
   """Total count of community members matching the query"""
   totalCount: Float!
+}
+
+input CreateCharacterFolderInput {
+  """Hide it, and everything under it, from everyone else."""
+  isPrivate: Boolean = false
+
+  """Folder name, as it should be displayed."""
+  name: String!
+
+  """Folder to nest inside. Omit for a folder at the root."""
+  parentId: ID
 }
 
 input CreateCharacterInput {
@@ -2098,6 +2146,35 @@ enum ModerationStatus {
   REJECTED
 }
 
+"""
+Reparent a folder, reorder it among its siblings, or both. One input because dropping a folder in the browser can mean either, and the drop target decides which.
+"""
+input MoveCharacterFolderInput {
+  id: ID!
+
+  """
+  Where among its new siblings it lands, counting from 0. Omit to put it last. Supplying this fixes the order of that whole sibling group, which until then was alphabetical.
+  """
+  index: Int
+
+  """
+  The new parent. Null moves the folder to the root; omitting it leaves the parent alone.
+  """
+  parentId: ID
+}
+
+"""
+File characters. With `fromFolderId` this is a move; without one it is an add that leaves existing folders alone. A null `toFolderId` with a `fromFolderId` returns them to the root.
+"""
+input MoveCharactersToFolderInput {
+  """
+  All must be yours -- the call is refused rather than partly applied if any is not.
+  """
+  characterIds: [ID!]!
+  fromFolderId: ID
+  toFolderId: ID
+}
+
 type Mutation {
   """
   Accept and settle. Items, characters and coin move in one transaction across all three ledgers, or the whole accept fails.
@@ -2169,6 +2246,7 @@ type Mutation {
     input: CreateTradeInput!
   ): Trade!
   createCharacter(input: CreateCharacterInput!): Character!
+  createCharacterFolder(input: CreateCharacterFolderInput!): CharacterFolder!
 
   """
   Spend an MYO ticket to make a character. Destroys the ticket and creates the character with its traits pending review. Authorized by holding the ticket, not by canCreateCharacter.
@@ -2278,6 +2356,11 @@ type Mutation {
   Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. A character with no species has no community to resolve permissions from, so once it has been removed from its species (see kickCharacterFromSpecies) only a global admin can delete it.
   """
   deleteCharacter(id: ID!): Boolean!
+
+  """
+  Delete a folder and everything nested under it. The characters are untouched and reappear at the root.
+  """
+  deleteCharacterFolder(id: ID!): RemovalResponse!
   deleteComment(id: ID!): Boolean!
   deleteCommunityColor(id: ID!): Boolean!
   deleteGallery(id: ID!): RemovalResponse!
@@ -2337,6 +2420,16 @@ type Mutation {
   Create currency into one or more members' balances. Returns the batch id every row it wrote shares.
   """
   mintCurrency(input: MintCurrencyInput!): String!
+
+  """
+  Reparent or reorder a folder. Returns the whole workspace, because one move renumbers a sibling group.
+  """
+  moveCharacterFolder(input: MoveCharacterFolderInput!): [CharacterFolder!]!
+
+  """
+  File characters, unfile them, or move them between folders. Returns how many characters were affected.
+  """
+  moveCharactersToFolder(input: MoveCharactersToFolderInput!): Int!
 
   """
   Compose an offer. Nothing is reserved: what it names is checked now so you are told early, and checked again decisively at accept.
@@ -2480,6 +2573,11 @@ type Mutation {
   """
   runDeviantartUuidBackfill(jobId: String!): Boolean!
 
+  """
+  Replace the set of folders one character is in. Returns where it ends up.
+  """
+  setCharacterFolders(input: SetCharacterFoldersInput!): [CharacterFolder!]!
+
   """Sets or clears the main media for a character"""
   setCharacterMainMedia(
     """Character ID to update"""
@@ -2524,6 +2622,9 @@ type Mutation {
 
   """Unlink an external account from the current user"""
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
+
+  """Rename a folder, or change whether it is private."""
+  updateCharacterFolder(input: UpdateCharacterFolderInput!): CharacterFolder!
 
   """
   Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.
@@ -2853,6 +2954,11 @@ type PendingOwnership {
 type Query {
   activityFeed(input: ActivityFeedInput): [ActivityItem!]!
   character(id: ID!): Character!
+
+  """
+  Where this character's current owner filed it. Empty for an orphaned character.
+  """
+  characterFolders(characterId: ID!): [CharacterFolder!]!
   characterGalleries(characterId: ID!, filters: GalleryFiltersInput): GalleryConnection!
 
   """Retrieves media associated with a specific character"""
@@ -3230,6 +3336,16 @@ type Query {
   What one member holds of every currency in a community, including the ones they hold none of.
   """
   memberWallet(communityId: ID!, userId: ID!): MemberWallet!
+
+  """
+  Your whole workspace, flat. Nesting is in `parentId`; the client builds the tree.
+  """
+  myCharacterFolders(
+    """
+    Count only characters in this community. Folders span communities, so this narrows the tallies, not the folders -- one holding nothing here reports zero rather than disappearing.
+    """
+    communityId: ID
+  ): [CharacterFolder!]!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
   """Get characters the current user can upload images to"""
@@ -3459,6 +3575,11 @@ type Query {
   """
   unseenNotificationCount: Int!
   user(id: ID, username: String): User
+
+  """
+  How one member's characters are arranged, as far as you may see. Private folders and everything nested under them are left out.
+  """
+  userCharacterFolders(communityId: ID, userId: ID!): [CharacterFolder!]!
   userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
   userGalleries(filters: GalleryFiltersInput, userId: ID!): GalleryConnection!
 
@@ -3660,6 +3781,15 @@ type RoleConnection {
 
   """Total count of roles matching the query"""
   totalCount: Float!
+}
+
+input SetCharacterFoldersInput {
+  characterId: ID!
+
+  """
+  The complete set of folders this character should be in. Anything not listed is removed; an empty list returns it to the root.
+  """
+  folderIds: [ID!]!
 }
 
 input SetItemTypeMyoGrantInput {
@@ -4347,6 +4477,12 @@ input TransferCurrencyInput {
 
 input UnlinkExternalAccountInput {
   provider: ExternalAccountProvider!
+}
+
+input UpdateCharacterFolderInput {
+  id: ID!
+  isPrivate: Boolean
+  name: String
 }
 
 """Input for updating character profile fields"""

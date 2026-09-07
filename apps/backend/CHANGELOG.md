@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Character folders**: `CharacterFolder` and `CharacterFolderEntry`, nested through `parentId`, five deep, private by subtree. `CharacterFiltersInput` gains `folderId` and `unfiled`, and a traded character leaves its old folders by an ownership check at read time rather than by eviction (#350).
+
 - **Email verification.** Signup mails a single-use link and hands back no session; `login` and `refreshToken` refuse an unconfirmed address with an `EMAIL_NOT_VERIFIED` code, so `User.isVerified` now means "confirmed this address" rather than being set by nothing (#372).
 
 - **A hard ceiling of six verification emails per address, ever**, counted on the address rather than the account so the feature cannot become a way to mail somebody repeatedly. Over the cap, under a burst limit, unknown, or already confirmed all answer identically and silently (#372).

@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Community Subdomains - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Every CharDB community is served from its own address. What the URLs look like, why signing in happens at the apex, and which pages belong to a community rather than to you."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/community-subdomains.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Community Subdomains" />
+    <meta
+      property="og:description"
+      content="Every CharDB community is served from its own address. What the URLs look like, why signing in happens at the apex, and which pages belong to a community rather than to you."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/community-subdomains.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/nav-community-switcher.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The CharDB community switcher open, listing the communities a member belongs to with a link to browse all of them."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .screenshot-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .screenshot-row .screenshot img {
+        height: 400px;
+        object-fit: contain;
+        background: #1a1a2e;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      kbd {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85em;
+        color: #555;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+
+      footer .credit {
+        font-size: 0.8rem;
+        opacity: 0.85;
+      }
+
+      @media (max-width: 768px) {
+        .screenshot-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Community Subdomains</h1>
+        <p>Every community has an address of its own</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">The Address Bar Says Where You Are</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A community is served from its own hostname. Cloverse is at
+            <code>cloverse.chardb.cc</code>; the site itself is at
+            <code>chardb.cc</code>. Its pages hang off that host with no
+            community segment in the path at all:
+          </p>
+          <ul>
+            <li><code>cloverse.chardb.cc/</code> &mdash; the community</li>
+            <li>
+              <code>cloverse.chardb.cc/characters</code> &mdash; its characters
+            </li>
+            <li><code>cloverse.chardb.cc/members</code> &mdash; its members</li>
+            <li><code>cloverse.chardb.cc/shop</code> &mdash; its shop</li>
+          </ul>
+          <p>
+            <strong>These pages used to carry the community in the path</strong>
+            &mdash; <code>chardb.cc/communities/&lt;id&gt;/characters</code> and
+            the like. Old links still work; they redirect to the community's own
+            host. It is worth re-saving any bookmark you rely on, so the address
+            you keep is the one you land on.
+          </p>
+          <div class="highlight-box">
+            <strong>The name in the address is chosen once.</strong> A
+            community's slug is fixed when it is created and never changes,
+            because it is what every link to that community is made of. Renaming
+            the community does not move it.
+          </div>
+        </div>
+      </div>
+
+      <!-- Which host -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">What Lives Where</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The split is by <em>who owns the thing</em>, not by where you
+            happened to find it.
+          </p>
+          <p>
+            <strong>On a community's host</strong> &mdash; everything the
+            community owns: its characters, species, traits and variants, its
+            item types, currencies and shop, its members and trades, and its
+            administration.
+          </p>
+          <p>
+            <strong>At the apex</strong> &mdash; everything a person owns, or
+            the site does: profiles, galleries, media, your feed, your liked
+            lists, your own characters across every community, and signing in.
+          </p>
+          <p>
+            <strong>A character is a community's</strong>, reached through its
+            species &mdash; so a character page lives on the host of the
+            community its species belongs to. The exception is a character with
+            no species: it belongs to no community, so it lives at the apex, and
+            following a link to one from a community will land you there.
+          </p>
+          <p>
+            You do not have to work any of this out. Links know which host they
+            need and only cost a page load when they genuinely cross one; the
+            sidebar swaps itself over when you arrive. See
+            <a href="community-navigation.html">Community Navigation</a>.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="nav-community-switcher.png"
+            alt="The community switcher open, listing the member's communities with a Browse All Communities link"
+          />
+          <div class="screenshot-caption">
+            The switcher moves you between hosts &mdash; it is the one control
+            that always crosses
+          </div>
+        </div>
+      </div>
+
+      <!-- Signing in -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Signing In Happens At The Site</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>One sign-in covers every community.</strong> The session is
+            held for the whole domain, so signing in once at
+            <code>chardb.cc</code> signs you in on
+            <code>cloverse.chardb.cc</code> and every other community at the
+            same time.
+          </p>
+          <p>
+            Because of that, the login page is always at the apex. If you follow
+            a sign-in link from inside a community you will notice the address
+            change &mdash; that is deliberate, and you are sent back to the page
+            you came from afterwards.
+          </p>
+          <p>Signing out signs you out everywhere, for the same reason.</p>
+        </div>
+      </div>
+
+      <!-- Addresses that name nothing -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Addresses That Name Nothing</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every name under <code>chardb.cc</code> resolves, whether or not a
+            community holds it. A hostname that names no community is refused
+            rather than quietly serving the site under the wrong name &mdash;
+            otherwise <code>anything.chardb.cc</code> would look like a real
+            place.
+          </p>
+          <p>
+            Some names cannot be communities at all. Things the infrastructure
+            uses or will need &mdash; <code>www</code>, <code>api</code>,
+            <code>admin</code>, <code>docs</code>, <code>status</code>, the mail
+            conventions &mdash; are reserved, as are environment names like
+            <code>dev</code> and <code>staging</code>, which would be actively
+            confusing to hand out. Slugs are between 3 and 63 characters.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Community Subdomains &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

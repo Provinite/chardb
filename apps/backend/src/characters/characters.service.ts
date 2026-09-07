@@ -69,6 +69,8 @@ export interface CharacterServiceFilters {
   communityId?: string;
   tags?: string[];
   ownerId?: string;
+  folderId?: string;
+  unfiled?: boolean;
   visibility?: Visibility;
   isSellable?: boolean;
   isTradeable?: boolean;
@@ -249,6 +251,8 @@ export class CharactersService {
       communityId,
       tags,
       ownerId,
+      folderId,
+      unfiled,
       visibility,
       isSellable,
       isTradeable,
@@ -329,6 +333,37 @@ export class CharactersService {
                 },
               },
             }
+          : {},
+
+        // Folder filter.
+        //
+        // Direct contents only, no descendants -- opening a folder shows what
+        // is in it. The visibility clause is the whole authorisation for this
+        // filter: without it a folder id, which is a bare uuid in a query
+        // string, would read out a private folder to anybody who had one.
+        folderId
+          ? {
+              folderEntries: {
+                some: {
+                  folderId,
+                  folder: {
+                    OR: [
+                      { isPrivate: false },
+                      ...(userId ? [{ ownerId: userId }] : []),
+                    ],
+                  },
+                },
+              },
+            }
+          : {},
+
+        // The root of the workspace: filed nowhere.
+        //
+        // Only ever answered for yourself. "What has this person not got
+        // round to organising" is not a question a visitor gets to ask, and
+        // `ownerId` alone would answer it for anyone who passed a stranger's.
+        unfiled && userId && ownerId === userId
+          ? { folderEntries: { none: { folder: { ownerId: userId } } } }
           : {},
       ],
     };

@@ -1,0 +1,427 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Finding Your Characters - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Four places your characters appear in CharDB and what each one is for: the global list, a community's, your public page, and folders across all of them."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/finding-your-characters.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Finding Your Characters" />
+    <meta
+      property="og:description"
+      content="Four places your characters appear in CharDB and what each one is for: the global list, a community's, your public page, and folders across all of them."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/finding-your-characters.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/nav-member-characters-visitor.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="A member's characters page showing three public folders above a grid of every character a visitor may see."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .screenshot-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .screenshot-row .screenshot img {
+        height: 400px;
+        object-fit: contain;
+        background: #1a1a2e;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      kbd {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85em;
+        color: #555;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+
+      footer .credit {
+        font-size: 0.8rem;
+        opacity: 0.85;
+      }
+
+      @media (max-width: 768px) {
+        .screenshot-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Finding Your Characters</h1>
+        <p>Five lists of characters, and which one answers your question</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Which List You Want</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Characters are listed in five places. They differ by
+            <strong>whose</strong> characters and <strong>where</strong>, and
+            picking the wrong one is the usual reason a character seems to have
+            gone missing.
+          </p>
+          <ul>
+            <li>
+              <strong>My Characters</strong>, in the global sidebar &mdash;
+              everything you own, across every community.
+            </li>
+            <li>
+              <strong>My Characters</strong>, in a community's sidebar &mdash;
+              only the ones in <em>that</em> community.
+            </li>
+            <li>
+              <strong>Browse Characters</strong>, in a community's sidebar
+              &mdash; everyone's, in that community.
+            </li>
+            <li>
+              <strong>All Characters</strong>, in the global sidebar &mdash;
+              everyone's, everywhere.
+            </li>
+            <li>
+              <strong>A member's characters page</strong>, from their profile
+              &mdash; one person's, filtered to what you may see.
+            </li>
+          </ul>
+          <div class="highlight-box">
+            <strong>Nothing here shows fewer characters than it says.</strong>
+            Every one of these counts what it is showing against what there is
+            &mdash; &ldquo;Showing 24 of 137&rdquo; &mdash; and offers
+            <strong>Load More</strong>. A list that stops without saying so was
+            a real bug and is the thing these counts exist to rule out.
+          </div>
+        </div>
+      </div>
+
+      <!-- Everything you own -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Everything You Own</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>My Characters</strong> in the global sidebar is your whole
+            collection, whichever community each character belongs to. It is a
+            folder browser: your folders across the top, and underneath them
+            every character you have not filed into one.
+          </p>
+          <p>
+            If you have never made a folder, that is simply all of them &mdash;
+            nothing is filed, so nothing has left the top level. See
+            <a href="character-folders.html">Character Folders</a>.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-folders-root.png"
+            alt="The global My Characters page with four folder tiles above a grid of unfiled character cards"
+          />
+          <div class="screenshot-caption">
+            Everything you own, arranged the way you arranged it
+          </div>
+        </div>
+      </div>
+
+      <!-- In one community -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Yours, In One Community</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Inside a community, <strong>My Characters</strong> in the sidebar is
+            the same workspace narrowed to that community. The same folders, the
+            same filing &mdash; only the counting changes.
+          </p>
+          <p>
+            Folders belong to you rather than to a community, so one folder can
+            hold characters from several. A folder holding nothing in the
+            community you are looking at still appears, reporting zero, so you
+            can file into it from in here.
+          </p>
+          <p>
+            <strong>Browse Characters</strong>, directly above it, is the other
+            question: everyone's characters in this community, with search and
+            filters over the lot.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-folders-community.png"
+            alt="A community's My Characters page with the same four folders, and My Characters highlighted in the community sidebar beside Browse Characters"
+          />
+          <div class="screenshot-caption">
+            The same folders, counted against this community alone
+          </div>
+        </div>
+      </div>
+
+      <!-- Someone's page -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Somebody Else's &mdash; And Yours, To Them</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A member's profile has <strong>View All</strong> beside Recent
+            Characters, and a clickable <strong>Characters</strong> tile in the
+            stats row. Both reach a page of everything that member owns.
+          </p>
+          <p>
+            <strong>Their folders arrange it.</strong> This is what makes
+            folders worth keeping tidy: it is the page other people meet your
+            collection on. Folders the owner marked private are absent, along
+            with anything nested inside them, and so is every character you are
+            not allowed to see.
+          </p>
+          <p>
+            The top level here lists <em>every</em> character you may see, filed
+            or not &mdash; unlike your own workspace, where the top level is the
+            pile still to be filed. A visitor's list should be complete; an
+            owner's should empty as they work.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="nav-member-characters-visitor.png"
+            alt="A member's characters page seen by somebody else, showing three public folders and the text Showing 11 of 11 characters"
+          />
+          <div class="screenshot-caption">
+            Three folders here, not four &mdash; the owner keeps one private
+          </div>
+        </div>
+      </div>
+
+      <!-- Search -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Or Just Search</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            When you know the character but not where you filed it, do not
+            browse. <kbd>Ctrl+K</kbd> searches pages &mdash; including each
+            community's own character pages, named after the community &mdash;
+            and the browse pages carry a search box over the characters
+            themselves.
+          </p>
+          <p>
+            See <a href="fuzzy-navigation.html">Fuzzy Page Navigation</a> and
+            <a href="community-navigation.html">Community Navigation</a>.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="nav-spotlight-community.png"
+            alt="The page search filtered to charac, showing global character pages and a Test Community group with Browse Characters and My Characters"
+          />
+          <div class="screenshot-caption">
+            The global character pages and each community's, told apart by the
+            group they are in
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Finding Your Characters &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

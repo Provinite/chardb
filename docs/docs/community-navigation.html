@@ -1,0 +1,481 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Community Navigation - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Getting around a CharDB community: what every member sees in the sidebar, what is gated behind staff permissions, the community switcher, and the way back to global navigation."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/community-navigation.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Community Navigation" />
+    <meta
+      property="og:description"
+      content="Getting around a CharDB community: what every member sees in the sidebar, what is gated behind staff permissions, the community switcher, and the way back to global navigation."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/community-navigation.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/nav-community-sidebar-member.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The CharDB community sidebar showing the Community group with Browse Characters, My Characters, Members, Inventory, Trades, Item Ledger, Currencies and Shop."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .screenshot-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .screenshot-row .screenshot img {
+        height: 400px;
+        object-fit: contain;
+        background: #1a1a2e;
+      }
+
+      /* Sidebar shots are 280px wide and very tall, which is the wrong shape
+         for the rules above: stretched to the full column they go soft, and
+         given the two-up row's fixed height they get cut off at the bottom.
+         Shown at their own size instead, centred on the card. The `!important`
+         is to beat `.screenshot-row .screenshot img`, which is more specific
+         and sets the height these need to keep. */
+      .sidebar-shot img {
+        width: auto !important;
+        max-width: 100%;
+        height: auto !important;
+        max-height: 720px;
+        object-fit: contain;
+        background: transparent !important;
+        margin: 0 auto;
+        display: block;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      kbd {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85em;
+        color: #555;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+
+      footer .credit {
+        font-size: 0.8rem;
+        opacity: 0.85;
+      }
+
+      @media (max-width: 768px) {
+        .screenshot-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Community Navigation</h1>
+        <p>What is in a community's sidebar, and who can see it</p>
+      </header>
+
+      <!-- Two sidebars -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Two Sidebars</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            CharDB has <strong>two</strong> navigation sidebars, and which one
+            you get depends on where you are rather than on anything you set.
+          </p>
+          <p>
+            <strong>The global sidebar</strong> is the site: your own
+            characters, galleries and media, what you have liked, your feed, and
+            the browse pages that span every community.
+          </p>
+          <p>
+            <strong>The community sidebar</strong> replaces it whenever you are
+            inside a community you belong to. Everything in it belongs to
+            <em>that</em> community.
+          </p>
+          <p>
+            <strong>View Global Navigation</strong>, at the top of the community
+            sidebar, swaps back without leaving the page you are on. If you open
+            a community you are <em>not</em> a member of, you keep the global
+            sidebar &mdash; there is nothing in the community one you could use.
+          </p>
+        </div>
+        <div class="screenshot-row">
+          <div class="screenshot sidebar-shot">
+            <img
+              src="nav-global-sidebar.png"
+              alt="The global sidebar with My Content, Liked, Activity Feed, Trades, My Profile, Browse and Communities groups"
+            />
+            <div class="screenshot-caption">The global sidebar: the site</div>
+          </div>
+          <div class="screenshot sidebar-shot">
+            <img
+              src="nav-community-sidebar-member.png"
+              alt="The community sidebar with a community switcher, View Global Navigation, Find page, Overview, and a Community group"
+            />
+            <div class="screenshot-caption">
+              The community sidebar: one community
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- What every member sees -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">What Every Member Sees</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The <strong>Community</strong> group is not gated on anything. Being
+            a member of the community is the whole requirement.
+          </p>
+          <ul>
+            <li>
+              <strong>Browse Characters</strong> &mdash; every character in this
+              community.
+            </li>
+            <li>
+              <strong>My Characters</strong> &mdash; only yours, arranged into
+              your folders and counted against this community alone. See
+              <a href="character-folders.html">Character Folders</a>.
+            </li>
+            <li><strong>Members</strong> &mdash; who else is here.</li>
+            <li>
+              <strong>Inventory</strong> &mdash; the items and currency you hold
+              in this community.
+            </li>
+            <li>
+              <strong>Trades</strong> &mdash; the same offers inbox as the
+              global one, narrowed to this community.
+            </li>
+            <li>
+              <strong>Item Ledger</strong> &mdash; where items came from.
+              Deliberately not staff-only: provenance is readable by anybody so
+              it can act as a trust signal in a trade.
+            </li>
+            <li>
+              <strong>Currencies</strong> and <strong>Shop</strong> &mdash; what
+              this community mints and what it sells.
+            </li>
+          </ul>
+
+          <div class="highlight-box">
+            <strong>The two character links used to be staff-only.</strong> They
+            sat under &ldquo;Species &amp; Characters&rdquo;, which appears only
+            for members who can create or edit a species &mdash; so an ordinary
+            member had no link to a community's characters at all, their own
+            included. That is fixed: both now live in the Community group, where
+            everybody can reach them.
+          </div>
+        </div>
+        <div class="screenshot sidebar-shot">
+          <img
+            src="nav-community-sidebar-member.png"
+            alt="The community sidebar as an ordinary member sees it, with Browse Characters and My Characters at the top of the Community group"
+          />
+          <div class="screenshot-caption">
+            An ordinary member's sidebar &mdash; no staff groups at all
+          </div>
+        </div>
+      </div>
+
+      <!-- Staff -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">What Staff See As Well</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Roles carry permissions, and each group below appears only for
+            somebody whose role grants what it needs. A member with none of them
+            sees the sidebar above and nothing more &mdash; not a greyed-out
+            list, but no group at all.
+          </p>
+          <ul>
+            <li>
+              <strong>Invite Codes</strong> and <strong>Settings</strong> join
+              the Community group, for invite and admin permissions
+              respectively.
+            </li>
+            <li>
+              <strong>Species &amp; Characters</strong> &mdash; species
+              management, its traits and its variants. For members who can
+              create or edit a species. When you are looking at one species, its
+              own pages appear here too.
+            </li>
+            <li>
+              <strong>Administration</strong> &mdash; the member dashboard, shop
+              and item administration, permissions, and the moderation queues.
+              Each entry is gated separately, so two staff members with
+              different roles see different lists.
+            </li>
+          </ul>
+        </div>
+        <div class="screenshot sidebar-shot">
+          <img
+            src="nav-community-sidebar-staff.png"
+            alt="The community sidebar for community staff, adding Invite Codes and Settings to the Community group plus Species and Characters and Administration groups"
+          />
+          <div class="screenshot-caption">
+            The same sidebar for community staff
+          </div>
+        </div>
+      </div>
+
+      <!-- Switching -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Switching Communities</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The box at the very top names the community you are in. Open it for
+            every community you belong to, a search box once there are enough of
+            them to need one, and <strong>Browse All Communities</strong> for
+            the ones you do not.
+          </p>
+          <p>
+            Picking one takes you to that community's own address. See
+            <a href="community-subdomains.html">Community Subdomains</a>.
+          </p>
+        </div>
+        <div class="screenshot sidebar-shot">
+          <img
+            src="nav-community-switcher.png"
+            alt="The community switcher open, showing a search box, the current community ticked, and a Browse All Communities link"
+          />
+          <div class="screenshot-caption">
+            The switcher, with a link out to the ones you have not joined
+          </div>
+        </div>
+      </div>
+
+      <!-- Spotlight -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Or Do Not Use The Sidebar</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Find page&hellip;</strong> below the switcher, or
+            <kbd>Ctrl+K</kbd>, opens a search over every page you can reach.
+            Each community you belong to has its own group in it, named after
+            the community, so typing part of a page name reaches it wherever you
+            currently are.
+          </p>
+          <p>
+            Typing <code>charac</code> finds the global character pages
+            <em>and</em> each community's, told apart by the group heading and
+            the line underneath. See
+            <a href="fuzzy-navigation.html">Fuzzy Page Navigation</a> for what
+            else it does, including <code>@</code> to search members.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="nav-spotlight-community.png"
+            alt="The page search filtered to charac, showing a Test Community group containing Browse Characters and My Characters alongside the global groups"
+          />
+          <div class="screenshot-caption">
+            Each community gets its own group, named after it
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Community Navigation &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

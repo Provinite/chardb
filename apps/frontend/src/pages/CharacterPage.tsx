@@ -26,6 +26,7 @@ import { CommentList } from "../components/CommentList";
 import { CharacterMediaGallery } from "../components/CharacterMediaGallery";
 import { Tag } from "../components/Tag";
 import { TagsContainer } from "../components/TagsContainer";
+import { CharacterFoldersSection } from "../components/character-folders/CharacterFoldersSection";
 
 import { CharacterTraitsDisplay } from "../components/character/CharacterTraitsDisplay";
 import { VariantHistory } from "../components/character/VariantHistory";
@@ -891,6 +892,17 @@ export const CharacterPage: React.FC = () => {
           </TagsContainer>
         </ContentSection>
       ) : null}
+
+      {/* Separate from Tags, and deliberately. `wolf` says what this character
+          is and everybody shares the word; `Commissions` says where its owner
+          put it and belongs to them alone (#350). */}
+      <ContentSection>
+        <CharacterFoldersSection
+          characterId={character.id}
+          ownerUsername={character.owner?.username}
+          editable={Boolean(user && character.owner?.id === user.id)}
+        />
+      </ContentSection>
 
       {availability.length > 0 && (
         <ContentSection>
