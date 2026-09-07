@@ -81,13 +81,12 @@ describe("AuthResolver (e2e)", () => {
 
     it("mints a verification token for the new address", async () => {
       const inviteCode = await testApp.createTestInviteCode();
+      // No `displayName`: it is nullable in the schema, so leaving it out has
+      // to be accepted rather than failing validation.
       const input = {
         username: "newuser",
         email: "NewUser@Example.com",
         password: "password123",
-        // Present because `SignupInput.displayName` is nullable in the schema
-        // but carries no `@IsOptional()`, so omitting it is a validation error.
-        displayName: "New User",
         inviteCode,
       };
 
@@ -327,7 +326,6 @@ describe("AuthResolver (e2e)", () => {
           username: `user_${Date.now()}`,
           email,
           password,
-          displayName: "Signed Up",
           inviteCode,
         },
       });

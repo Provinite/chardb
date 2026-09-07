@@ -37,6 +37,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the one suite CI does not run; it is renamed, and given the
   `NotificationsService` that `CommentsService` started requiring.
 
+- **Signing up without a display name was refused.** `SignupInput.displayName` is nullable in the schema but carried no `@IsOptional()`, so the string validators ran on `undefined` and rejected it — the field only worked because the signup form always sent the key (#372).
+
 - **Nobody could comment on a character.** `Comment.likesCount` carried no
   permission decorator, which under a deny-by-default guard chain means
   forbidden to everyone; the field is non-nullable, so the 403 nulled the whole
