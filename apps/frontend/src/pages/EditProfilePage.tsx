@@ -683,8 +683,8 @@ export const EditProfilePage: React.FC = () => {
       <Section>
         <SectionTitle>Notifications</SectionTitle>
         <SectionDescription>
-          Choose what reaches you, and how. Everything here is per kind — turning
-          off approval emails does not turn off rejections.
+          Choose what reaches you, and how. Everything here is per kind —
+          turning off approval emails does not turn off rejections.
         </SectionDescription>
 
         <NotificationPreferencesSettings />
