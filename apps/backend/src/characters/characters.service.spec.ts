@@ -8,6 +8,7 @@ import { DiscordService } from "../discord/discord.service";
 import { DeviantArtService } from "../deviantart/deviantart.service";
 import { PermissionService } from "../auth/PermissionService";
 import { TraitReviewService } from "../trait-review/trait-review.service";
+import { CharacterFormsService } from "../character-forms/character-forms.service";
 import { ModerationStatus, TraitValueType, Visibility } from "@chardb/database";
 import { mockDatabaseService } from "../../test/setup";
 import { CharacterAvailability } from "./character-availability";
@@ -33,6 +34,42 @@ const mockPermissionService = {
 };
 const mockTraitReviewService = { createReview: jest.fn() };
 
+/**
+ * The single writer of a character's traits.
+ *
+ * `readForms` answers with one empty form by default, which is what every
+ * character in these tests has -- the kickFromSpecies cases override it to
+ * hand back the trait values they are about to assert on.
+ */
+const mockCharacterFormsService = {
+  findByCharacter: jest.fn().mockResolvedValue([]),
+  readForms: jest.fn(),
+  writeForms: jest.fn().mockResolvedValue([]),
+  snapshotToWrites: jest.fn().mockResolvedValue([]),
+};
+
+/** A form snapshot, as `readForms` returns one. */
+const form = (
+  traitValues: Array<Record<string, unknown>> = [],
+  overrides: Record<string, unknown> = {},
+) => ({
+  formId: "form1",
+  name: "Base",
+  sortOrder: 0,
+  traitValues,
+  ...overrides,
+});
+
+/**
+ * What the character under test has, trait-wise.
+ *
+ * Traits are rows of their own now rather than a column on the character, so
+ * the character mock no longer carries them and this is where a test says what
+ * they are.
+ */
+const givenForms = (...forms: Array<ReturnType<typeof form>>) =>
+  mockCharacterFormsService.readForms.mockResolvedValue(forms);
+
 const makeCharacter = (overrides: Record<string, unknown> = {}) => ({
   id: "char1",
   name: "Test Character",
@@ -43,7 +80,6 @@ const makeCharacter = (overrides: Record<string, unknown> = {}) => ({
   speciesVariantId: null,
   registryId: null,
   customFields: {},
-  traitValues: [],
   traitReviewStatus: null,
   deletedAt: null,
   deletedById: null,
@@ -75,6 +111,10 @@ describe("CharactersService", () => {
         { provide: DeviantArtService, useValue: mockDeviantArtService },
         { provide: PermissionService, useValue: mockPermissionService },
         { provide: TraitReviewService, useValue: mockTraitReviewService },
+        {
+          provide: CharacterFormsService,
+          useValue: mockCharacterFormsService,
+        },
       ],
     }).compile();
 
@@ -82,6 +122,10 @@ describe("CharactersService", () => {
     db = module.get<DatabaseService>(
       DatabaseService,
     ) as unknown as typeof mockDatabaseService;
+
+    mockCharacterFormsService.readForms.mockReset();
+    mockCharacterFormsService.readForms.mockResolvedValue([form()]);
+    mockCharacterFormsService.writeForms.mockClear();
   });
 
   describe("findOne", () => {
@@ -365,15 +409,15 @@ describe("CharactersService", () => {
       );
     });
 
-    it("should nullify speciesId, speciesVariantId, registryId and clear traitValues", async () => {
+    it("should nullify speciesId, speciesVariantId and registryId, and reduce the character to one empty form", async () => {
       const character = makeCharacter({
         speciesId: "species1",
         speciesVariantId: "variant1",
         registryId: "001",
-        traitValues: [],
         customFields: {},
       });
       db.character.findFirst.mockResolvedValue(character);
+      givenForms(form());
       db.trait.findMany.mockResolvedValue([]);
       db.enumValue.findMany.mockResolvedValue([]);
       db.character.update.mockResolvedValue({ ...character, speciesId: null });
@@ -389,18 +433,22 @@ describe("CharactersService", () => {
             speciesId: null,
             speciesVariantId: null,
             registryId: null,
-            traitValues: [],
           }),
         }),
+      );
+      // Not "no forms": a character out of its species still has to render,
+      // and it has no trait list for a second form to differ in.
+      expect(mockCharacterFormsService.writeForms).toHaveBeenCalledWith(
+        expect.anything(),
+        "char1",
+        [{ name: "Base", traitValues: [] }],
       );
     });
 
     it("should cancel pending trait reviews", async () => {
-      const character = makeCharacter({
-        speciesId: "species1",
-        traitValues: [],
-      });
+      const character = makeCharacter({ speciesId: "species1" });
       db.character.findFirst.mockResolvedValue(character);
+      givenForms(form());
       db.trait.findMany.mockResolvedValue([]);
       db.enumValue.findMany.mockResolvedValue([]);
       db.character.update.mockResolvedValue(character);
@@ -420,10 +468,10 @@ describe("CharactersService", () => {
       ];
       const character = makeCharacter({
         speciesId: "species1",
-        traitValues,
         customFields: { "Existing Field": "kept" },
       });
       db.character.findFirst.mockResolvedValue(character);
+      givenForms(form(traitValues));
       db.trait.findMany.mockResolvedValue([
         { id: "trait1", name: "Eye Color", valueType: TraitValueType.STRING },
       ]);
@@ -451,10 +499,10 @@ describe("CharactersService", () => {
       ];
       const character = makeCharacter({
         speciesId: "species1",
-        traitValues,
         customFields: {},
       });
       db.character.findFirst.mockResolvedValue(character);
+      givenForms(form(traitValues));
       db.trait.findMany.mockResolvedValue([
         { id: "trait1", name: "Eye Color", valueType: TraitValueType.STRING },
       ]);
@@ -481,10 +529,10 @@ describe("CharactersService", () => {
       ];
       const character = makeCharacter({
         speciesId: "species1",
-        traitValues,
         customFields: {},
       });
       db.character.findFirst.mockResolvedValue(character);
+      givenForms(form(traitValues));
       db.trait.findMany.mockResolvedValue([
         { id: "trait1", name: "Pattern", valueType: TraitValueType.ENUM },
       ]);
@@ -513,10 +561,10 @@ describe("CharactersService", () => {
       ];
       const character = makeCharacter({
         speciesId: "species1",
-        traitValues,
         customFields: {},
       });
       db.character.findFirst.mockResolvedValue(character);
+      givenForms(form(traitValues));
       db.trait.findMany.mockResolvedValue([
         { id: "trait1", name: "Pattern", valueType: TraitValueType.ENUM },
       ]);
@@ -546,10 +594,10 @@ describe("CharactersService", () => {
       ];
       const character = makeCharacter({
         speciesId: "species1",
-        traitValues,
         customFields: {},
       });
       db.character.findFirst.mockResolvedValue(character);
+      givenForms(form(traitValues));
       db.trait.findMany.mockResolvedValue([
         { id: "trait1", name: "Colors", valueType: TraitValueType.STRING },
       ]);
