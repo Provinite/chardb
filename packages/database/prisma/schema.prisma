@@ -360,6 +360,24 @@ model Image {
   isNsfw                      Boolean @default(false) @map("is_nsfw")
   sensitiveContentDescription String? @map("sensitive_content_description") @db.Text
 
+  /// Thumbnail framing. The rect the uploader chose, in the ORIGINAL image's
+  /// pixels after EXIF rotation is applied -- the same coordinate space a
+  /// browser shows them, which is the space the cropper measures in.
+  ///
+  /// The rect is stored rather than the cropped output because baking means the
+  /// next edit starts from an already-cropped image and quality falls off with
+  /// every pass. Keeping the rect means the framing stays editable forever, can
+  /// be re-rendered at a size that does not exist yet, and -- if this shape ever
+  /// turns out wrong -- can be migrated as four integers instead of by
+  /// re-processing every image in the bucket.
+  ///
+  /// All four are null together, which means centre crop: exactly the behaviour
+  /// every image had before this existed, so nothing needed backfilling.
+  thumbnailCropX      Int? @map("thumbnail_crop_x")
+  thumbnailCropY      Int? @map("thumbnail_crop_y")
+  thumbnailCropWidth  Int? @map("thumbnail_crop_width")
+  thumbnailCropHeight Int? @map("thumbnail_crop_height")
+
   // Moderation
   moderationStatus ModerationStatus @default(PENDING) @map("moderation_status")
 
