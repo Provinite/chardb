@@ -301,13 +301,13 @@ The application includes GitHub Actions workflows for:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+The source is public so that people can read it and learn from how it is built. It is not open-source software: no license is granted to copy, modify, or redistribute it. All rights reserved.
 
 ## 🆘 Support
 
 If you encounter any issues or have questions:
 
-1. Check the [Issues](https://github.com/your-repo/chardb/issues) page
+1. Check the [Issues](https://github.com/Provinite/chardb/issues) page
 2. Create a new issue with detailed information
 3. Join our community discussions
 
