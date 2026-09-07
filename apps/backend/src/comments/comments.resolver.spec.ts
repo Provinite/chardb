@@ -6,9 +6,26 @@ import { CharactersService } from "../characters/characters.service";
 import { ImagesService } from "../images/images.service";
 import { GalleriesService } from "../galleries/galleries.service";
 import { DatabaseService } from "../database/database.service";
+import { NotificationsService } from "../notifications/notifications.service";
 import { CommentableType } from "./dto/comment.dto";
-import { mockDatabaseService } from "../../test/setup";
+import {
+  mockDatabaseService,
+  mockNotificationsService,
+} from "../../test/setup";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
+
+/**
+ * A unit spec, despite what its name used to say.
+ *
+ * It was `comments.resolver.e2e.spec.ts`, but it builds a testing module out
+ * of mocks and never touches a database, an HTTP request or `TestApp` -- the
+ * three things every other `*.e2e.spec.ts` in this repo does. The name alone
+ * moved it into the e2e config, which the unit config then excludes and CI
+ * never runs, so when `CommentsService` took a `NotificationsService`
+ * dependency the module stopped compiling and all five tests failed silently
+ * for months. Renaming it is the fix for that; adding the missing provider is
+ * only the fix for the symptom.
+ */
 
 const mockUsersService = { findOne: jest.fn() };
 const mockCharactersService = { findOne: jest.fn() };
@@ -62,6 +79,7 @@ describe("CommentsResolver", () => {
         CommentsResolver,
         CommentsService,
         { provide: DatabaseService, useValue: mockDatabaseService },
+        { provide: NotificationsService, useValue: mockNotificationsService },
         { provide: UsersService, useValue: mockUsersService },
         { provide: CharactersService, useValue: mockCharactersService },
         { provide: ImagesService, useValue: mockImagesService },
