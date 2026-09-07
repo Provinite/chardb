@@ -6,10 +6,17 @@ import { Avatar, Button } from "@chardb/ui";
 import {
   useGetMediaItemQuery,
   useDeleteMediaMutation,
+  useUpdateImageMutation,
+  GetMediaItemDocument,
+  ModerationStatus,
 } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { DeleteConfirmationDialog } from "../components/DeleteConfirmationDialog";
+import {
+  ThumbnailCropper,
+  ThumbnailCropRect,
+} from "../components/ThumbnailCropper";
 // import { LikeButton } from '../components/LikeButton';
 // import { CommentList } from '../components/CommentList';
 import { TextViewer } from "../components/TextViewer";
@@ -342,10 +349,24 @@ export const MediaPage: React.FC = () => {
   const { user } = useAuth();
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [showCropper, setShowCropper] = useState(false);
 
   const { data, loading, error } = useGetMediaItemQuery({
     variables: { id: id! },
     skip: !id,
+  });
+
+  const [updateImage, { loading: cropSaving }] = useUpdateImageMutation({
+    // The regenerated thumbnail lands on a new key, so every list that already
+    // rendered this image is holding a URL that no longer exists.
+    refetchQueries: [{ query: GetMediaItemDocument, variables: { id: id! } }],
+    onCompleted: () => {
+      setShowCropper(false);
+      toast.success("Thumbnail updated");
+    },
+    onError: (mutationError) => {
+      toast.error(`Failed to update thumbnail: ${mutationError.message}`);
+    },
   });
 
   const [deleteMedia, { loading: deleteLoading }] = useDeleteMediaMutation({
@@ -395,6 +416,40 @@ export const MediaPage: React.FC = () => {
 
   const handleEditClick = () => {
     navigate(`/media/${id}/edit`);
+  };
+
+  /**
+   * Re-framing is offered only once an image is approved.
+   *
+   * Until then `image` hands back a placeholder in place of every URL, for
+   * everyone including the uploader, so the cropper would frame the
+   * "pending moderation" graphic and measure a rect against its dimensions
+   * rather than the artwork's. Choosing a crop while uploading still works:
+   * that one runs against the local file and never asks the server for the
+   * picture.
+   */
+  const canReframeThumbnail =
+    media?.image?.moderationStatus === ModerationStatus.Approved;
+
+  /**
+   * Rebuilt field by field rather than passed through. What the query returns
+   * carries `__typename`, and the mutation's input rejects unknown fields.
+   */
+  const storedCrop: ThumbnailCropRect | null = media?.image?.thumbnailCrop
+    ? {
+        x: media.image.thumbnailCrop.x,
+        y: media.image.thumbnailCrop.y,
+        width: media.image.thumbnailCrop.width,
+        height: media.image.thumbnailCrop.height,
+      }
+    : null;
+
+  /** `null` puts the thumbnail back on the automatic centre crop. */
+  const handleSaveCrop = (crop: ThumbnailCropRect | null) => {
+    if (!media?.image) return;
+    updateImage({
+      variables: { id: media.image.id, input: { thumbnailCrop: crop } },
+    });
   };
 
   const handleDeleteClick = () => {
@@ -533,6 +588,15 @@ export const MediaPage: React.FC = () => {
             <Button variant="primary" size="sm" onClick={handleEditClick}>
               Edit Content
             </Button>
+            {canReframeThumbnail && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowCropper(true)}
+              >
+                Adjust Thumbnail
+              </Button>
+            )}
             <Button variant="secondary" size="sm" onClick={handleDeleteClick}>
               Delete
             </Button>
@@ -641,6 +705,21 @@ export const MediaPage: React.FC = () => {
         itemName={media?.title}
         isLoading={deleteLoading}
       />
+
+      {showCropper && media.image && (
+        <ThumbnailCropper
+          isOpen
+          // The original, not the medium: the rect is stored in the original's
+          // pixels, so framing against anything else would need scaling and
+          // would round differently on every save.
+          imageSrc={media.image.originalUrl}
+          initialCrop={storedCrop}
+          busy={cropSaving}
+          onCancel={() => setShowCropper(false)}
+          onConfirm={handleSaveCrop}
+          onReset={storedCrop ? () => handleSaveCrop(null) : undefined}
+        />
+      )}
     </Container>
   );
 };

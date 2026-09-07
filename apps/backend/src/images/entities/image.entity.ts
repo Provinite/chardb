@@ -3,6 +3,31 @@ import { User } from "../../users/entities/user.entity";
 import { Tag } from "../../shared/entities/tag.entity";
 import { ModerationStatus } from "@prisma/client";
 
+/**
+ * Declared before `Image` on purpose. `emitDecoratorMetadata` writes the
+ * annotated type of `Image.thumbnailCrop` into a `design:type` entry that is
+ * evaluated while the class body runs, so a class referenced there has to
+ * already exist -- unlike `ImageTag`, which is only ever referenced as an
+ * array and so resolves to `Array`.
+ */
+@ObjectType({
+  description:
+    "A thumbnail framing rect, in the original image's pixels after EXIF rotation is applied -- the same coordinates a browser reports for the image, so a cropper's output can be sent back unchanged.",
+})
+export class ImageCrop {
+  @Field(() => Int)
+  x: number;
+
+  @Field(() => Int)
+  y: number;
+
+  @Field(() => Int)
+  width: number;
+
+  @Field(() => Int)
+  height: number;
+}
+
 @ObjectType()
 export class Image {
   @Field(() => ID)
@@ -56,6 +81,13 @@ export class Image {
 
   @Field({ nullable: true })
   sensitiveContentDescription?: string;
+
+  @Field(() => ImageCrop, {
+    nullable: true,
+    description:
+      "The region of the original this image's thumbnail is cropped from. Null means the thumbnail is a centre crop, which is what every image did before a crop could be chosen.",
+  })
+  thumbnailCrop?: ImageCrop;
 
   @Field(() => ModerationStatus, {
     description: "Current moderation status of the image",

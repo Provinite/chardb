@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A photo carrying an EXIF orientation tag no longer thumbnails sideways.**
+  Nothing applied the rotation and sharp drops the tag on output, so the medium
+  and thumbnail variants are now rotated to match what a browser paints (#342).
+
+- **Deleting an orphaned image left its medium variant in the bucket**, because
+  the deletion list named only the original and the thumbnail (#342).
+
 - **Nobody could comment on a character.** `Comment.likesCount` carried no
   permission decorator, which under a deny-by-default guard chain means
   forbidden to everyone; the field is non-nullable, so the 403 nulled the whole
@@ -36,6 +43,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   understood that prefix; `resolveGuardPath` is the rule in one place (#310).
 
 ### Added
+
+- **A thumbnail can be framed by hand instead of always being a centre crop.**
+  The rect is stored against the original rather than baked in, so it stays
+  editable and re-renders from the untouched upload; no rect means the centre
+  crop every existing image already had (#342).
 
 - **A test asserting every resolver method declares who may call it.** A
   `@Query`, `@Mutation`, `@ResolveField` or `@Subscription` with no `@Allow*` is

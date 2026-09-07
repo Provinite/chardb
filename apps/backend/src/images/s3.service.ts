@@ -4,6 +4,7 @@ import {
   S3Client,
   PutObjectCommand,
   DeleteObjectCommand,
+  GetObjectCommand,
   PutObjectCommandInput,
 } from "@aws-sdk/client-s3";
 
@@ -13,6 +14,16 @@ export interface UploadImageOptions {
   mimeType: string;
   imageId: string; // Image ID for S3 key generation
   sizeVariant?: "original" | "thumbnail" | "medium" | "full";
+  /**
+   * Distinguishes this object from an earlier one of the same variant, as
+   * `{imageId}/thumbnail-{suffix}.{ext}`.
+   *
+   * Objects are written `Cache-Control: immutable, max-age=31536000`, so
+   * rewriting a key in place is invisible to CloudFront and to every browser
+   * that has already seen it -- for a year. Anything that regenerates a
+   * variant has to land on a new key and delete the old object instead.
+   */
+  keySuffix?: string;
 }
 
 export interface UploadImageResult {
@@ -59,14 +70,16 @@ export class S3Service {
    * Upload an image to S3
    */
   async uploadImage(options: UploadImageOptions): Promise<UploadImageResult> {
-    const { buffer, filename, mimeType, imageId, sizeVariant } = options;
+    const { buffer, filename, mimeType, imageId, sizeVariant, keySuffix } =
+      options;
 
     // Extract file extension
     const extension = this.getExtension(filename, mimeType);
 
-    // Generate S3 key with pattern: {imageId}/{variant}.{ext}
+    // Generate S3 key with pattern: {imageId}/{variant}[-{suffix}].{ext}
     const variantSuffix = sizeVariant || "original";
-    const key = `${imageId}/${variantSuffix}.${extension}`;
+    const versionPart = keySuffix ? `-${keySuffix}` : "";
+    const key = `${imageId}/${variantSuffix}${versionPart}.${extension}`;
 
     // Sanitize filename for Content-Disposition header
     const sanitizedFilename = this.sanitizeFilename(filename);
@@ -102,6 +115,43 @@ export class S3Service {
         error.stack,
       );
       throw new Error(`Failed to upload image: ${error.message}`);
+    }
+  }
+
+  /**
+   * Read an object's bytes back out of S3.
+   *
+   * Unlike `deleteImage`, this deliberately throws. It exists so a variant can
+   * be re-rendered from the original, and swallowing a read failure there
+   * would replace a good thumbnail with a broken one.
+   */
+  async getImage(keyOrUrl: string): Promise<Buffer> {
+    const key = this.extractKeyFromUrl(keyOrUrl);
+
+    if (!key) {
+      throw new Error(`Could not extract an S3 key from: ${keyOrUrl}`);
+    }
+
+    try {
+      const response = await this.s3Client.send(
+        new GetObjectCommand({ Bucket: this.bucketName, Key: key }),
+      );
+
+      if (!response.Body) {
+        throw new Error("S3 returned an empty body");
+      }
+
+      const bytes = await response.Body.transformToByteArray();
+
+      this.logger.log(`Successfully read image from S3: ${key}`);
+
+      return Buffer.from(bytes);
+    } catch (error) {
+      this.logger.error(
+        `Failed to read image from S3: ${error.message}`,
+        error.stack,
+      );
+      throw new Error(`Failed to read image from S3: ${error.message}`);
     }
   }
 
