@@ -1,6 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { Visibility, Prisma } from "@chardb/database";
+import { Visibility, Prisma, ModerationStatus } from "@chardb/database";
 import { notDeleted } from "../common/utils/prisma-filters";
 
 /**
@@ -49,6 +53,11 @@ export interface UpdateUserServiceInput {
   website?: string;
   /** User's date of birth */
   dateOfBirth?: Date;
+  /**
+   * The image to use as this user's avatar. `null` removes it; omitting the
+   * field leaves the current avatar alone.
+   */
+  avatarImageId?: string | null;
   /** Privacy settings */
   privacySettings?: UserPrivacySettings;
 }
@@ -115,11 +124,63 @@ export class UsersService {
       updateData.dateOfBirth = input.dateOfBirth;
     if (input.privacySettings !== undefined)
       updateData.privacySettings = input.privacySettings;
+    if (input.avatarImageId !== undefined) {
+      await this.assertUsableAsAvatar(id, input.avatarImageId);
+      updateData.avatarImage = input.avatarImageId
+        ? { connect: { id: input.avatarImageId } }
+        : { disconnect: true };
+    }
 
     return this.db.user.update({
       where: { id },
       data: updateData,
     });
+  }
+
+  /**
+   * Whether `userId` may put `imageId` on their profile.
+   *
+   * Two gates, and both are load-bearing:
+   *
+   * Ownership, because the column takes a bare id and nothing else checks it.
+   * Without this, any id in the table can be pointed at -- someone else's
+   * unlisted art, or an image whose media is private -- and displayed under
+   * your name.
+   *
+   * Approval, because an avatar is the one image in the app that renders
+   * without going through `Media.image`, which is where every other surface
+   * masks the URLs of anything not APPROVED. It is checked again at read time
+   * (`UsersResolver.resolveAvatarImage`) rather than only here, because
+   * approval is revocable: `rejectImage` turns an APPROVED image REJECTED and
+   * nothing clears the column, so a write-time check alone would let a
+   * rejected picture keep showing on every byline in the app forever.
+   */
+  private async assertUsableAsAvatar(
+    userId: string,
+    imageId: string | null,
+  ): Promise<void> {
+    if (!imageId) return;
+
+    const image = await this.db.image.findUnique({
+      where: { id: imageId },
+      select: { uploaderId: true, moderationStatus: true },
+    });
+
+    // Not found and not yours are the same answer on purpose. Distinguishing
+    // them turns this into a way to ask whether an id exists.
+    if (!image || image.uploaderId !== userId) {
+      throw new NotFoundException(
+        "That image does not exist, or was not uploaded by you",
+      );
+    }
+
+    if (image.moderationStatus !== ModerationStatus.APPROVED) {
+      throw new BadRequestException(
+        image.moderationStatus === ModerationStatus.REJECTED
+          ? "That image was rejected in moderation and cannot be used as an avatar"
+          : "That image is still waiting on moderation. It can be your avatar once it is approved",
+      );
+    }
   }
 
   async getUserCharactersCount(userId: string, includePrivate = false) {

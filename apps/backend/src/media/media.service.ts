@@ -9,7 +9,10 @@ import { TagsService } from "../tags/tags.service";
 import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
 import { ModerationStatus } from "@prisma/client";
 import { ImagesService } from "../images/images.service";
-import { notDeleted } from "../common/utils/prisma-filters";
+import {
+  notDeleted,
+  mediaBelongingToCommunity,
+} from "../common/utils/prisma-filters";
 import { MediaAwardRelation } from "./entities/media-award-recipient.entity";
 
 /**
@@ -586,9 +589,7 @@ export class MediaService {
     const where: Prisma.MediaWhereInput = {
       imageId: { not: null },
       image: { moderationStatus: ModerationStatus.PENDING },
-      character: {
-        species: { communityId },
-      },
+      ...mediaBelongingToCommunity(communityId),
     };
 
     const [items, total] = await Promise.all([
@@ -641,28 +642,30 @@ export class MediaService {
       where: {
         imageId: { not: null },
         image: { moderationStatus: ModerationStatus.PENDING },
-        character: {
-          species: { communityId },
-        },
+        ...mediaBelongingToCommunity(communityId),
       },
     });
   }
 
   /**
-   * Which community a media belongs to, via its character's species.
+   * Which community a media belongs to.
    *
-   * The same path the moderation queue filters on, so anything the queue
-   * returns resolves here. Null for media with no character -- a gallery
-   * upload belongs to no community and therefore to no currency.
+   * The same two paths the moderation queue filters on, in the same order, so
+   * anything the queue returns resolves here. Still null for media that names
+   * no community by either route -- an upload made at the apex belongs to no
+   * community and therefore to no currency.
    */
   async getCommunityIdForMedia(mediaId: string): Promise<string | null> {
     const media = await this.db.media.findUnique({
       where: { id: mediaId },
       select: {
+        communityId: true,
         character: { select: { species: { select: { communityId: true } } } },
       },
     });
-    return media?.character?.species?.communityId ?? null;
+    return (
+      media?.character?.species?.communityId ?? media?.communityId ?? null
+    );
   }
 
   /**

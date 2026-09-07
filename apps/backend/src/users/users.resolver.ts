@@ -37,6 +37,8 @@ import { Inventory } from "../items/entities/inventory.entity";
 import { Item as ItemEntity } from "../items/entities/item.entity";
 import { ItemsService } from "../items/items.service";
 import { EmptyStringOnForbiddenFilter } from "../auth/filters/EmptyStringOnForbiddenFilter";
+import { NullOnForbiddenFilter } from "../auth/filters/NullOnForbiddenFilter";
+import { ModerationStatus } from "@prisma/client";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
 import { CommunityMemberConnection } from "../community-members/entities/community-member.entity";
 import { CommunityMembersService } from "../community-members/community-members.service";
@@ -264,6 +266,25 @@ export class UsersResolver {
     return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }
 
+  /**
+   * The avatar, if there is one that may be shown.
+   *
+   * An avatar is the only image in the app that does not reach a viewer
+   * through `Media.image`, which is where every other surface masks the URLs
+   * of anything not APPROVED. Without the check below, setting an avatar would
+   * be a way to publish an unmoderated -- or already rejected -- picture to
+   * every profile, byline and card in the app.
+   *
+   * Checked here and not only at write time because approval is revocable:
+   * `rejectImage` turns an APPROVED image REJECTED and nothing clears
+   * `avatarImageId`, so a write-time check alone would stop mattering the
+   * moment a moderator changed their mind.
+   *
+   * `null` rather than the placeholder URL `MediaResolver.image` substitutes.
+   * A media card has to render something in the space; an avatar does not --
+   * `Avatar` draws the person's initials for a null image, which is what it
+   * already does for everyone who has never set one.
+   */
   @AllowUnauthenticated()
   @ResolveField("avatarImage", () => Image, { nullable: true })
   async resolveAvatarImage(@Parent() user: User): Promise<Image | null> {
@@ -282,7 +303,48 @@ export class UsersResolver {
       return null;
     }
 
+    if (prismaImage.moderationStatus !== ModerationStatus.APPROVED) {
+      return null;
+    }
+
     return mapPrismaImageToGraphQL(prismaImage);
+  }
+
+  /**
+   * Why your avatar is not showing, for you only.
+   *
+   * `avatarImage` above goes null for a pending or rejected image, which on
+   * its own leaves the owner looking at their initials with no explanation --
+   * indistinguishable from the upload having failed. This says which it is.
+   *
+   * Owner-only, and deliberately carries no URL: a moderation status is not
+   * something a visitor is owed about someone else, and the picture itself is
+   * still masked everywhere until it is approved. It mirrors
+   * `Media.pendingModerationImage`, which exists for the same reason on the
+   * other side of the same gate.
+   */
+  @AllowGlobalAdmin()
+  @AllowSelf()
+  @UseFilters(NullOnForbiddenFilter)
+  @ResolveField("avatarImageModerationStatus", () => ModerationStatus, {
+    nullable: true,
+    description:
+      "Moderation status of the image set as your avatar, whether or not it is showing. Null when no avatar is set. Visible only to the account it belongs to.",
+    middleware: [sentinelValueMiddleware],
+  })
+  async resolveAvatarImageModerationStatus(
+    @Parent() user: User,
+  ): Promise<ModerationStatus | null> {
+    if (!user.avatarImageId) {
+      return null;
+    }
+
+    const image = await this.database.image.findUnique({
+      where: { id: user.avatarImageId },
+      select: { moderationStatus: true },
+    });
+
+    return image?.moderationStatus ?? null;
   }
 
   @AllowAnyAuthenticated()

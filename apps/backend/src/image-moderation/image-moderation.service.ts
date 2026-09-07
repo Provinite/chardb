@@ -20,6 +20,7 @@ import {
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { MediaService } from "../media/media.service";
 import { ImageModerationQueueFiltersInput } from "./dto/image-moderation.dto";
+import { mediaBelongingToCommunity } from "../common/utils/prisma-filters";
 import {
   queueImageInclude,
   moderationActionInclude,
@@ -171,13 +172,28 @@ export class ImageModerationService {
   }
 
   /**
-   * Get the community ID associated with an image
-   * Resolution path: Image -> Media -> Character -> Species -> Community
+   * The community answerable for an image, or null when no community is.
+   *
+   * Two resolution paths, tried in that order:
+   *   Image -> Media -> Character -> Species -> Community
+   *   Image -> Media -> Community  (`Media.communityId`)
+   *
+   * The character path wins because it is the live answer: a character moved
+   * into another community's species takes its media with it, while the
+   * column was written once at upload and cannot follow. The column exists for
+   * media that has no character at all -- a gallery upload, a user avatar --
+   * which before it resolved to null and so could only ever be moderated by a
+   * site admin.
+   *
+   * `findFirst` because one image can hang off several media. Which one
+   * answers is arbitrary and always has been; the queue shows one of them, and
+   * a moderator acting on the queue is acting on that one.
    */
   async getImageCommunityId(imageId: string): Promise<string | null> {
     const media = await this.db.media.findFirst({
       where: { imageId },
       select: {
+        communityId: true,
         character: {
           select: {
             species: {
@@ -188,7 +204,9 @@ export class ImageModerationService {
       },
     });
 
-    return media?.character?.species?.communityId ?? null;
+    return (
+      media?.character?.species?.communityId ?? media?.communityId ?? null
+    );
   }
 
   /**
@@ -202,15 +220,7 @@ export class ImageModerationService {
   ) {
     const whereClause: Prisma.ImageWhereInput = {
       moderationStatus: ModerationStatus.PENDING,
-      media: {
-        some: {
-          character: {
-            species: {
-              communityId,
-            },
-          },
-        },
-      },
+      media: { some: mediaBelongingToCommunity(communityId) },
     };
 
     // Apply filters
@@ -554,15 +564,7 @@ export class ImageModerationService {
     return this.db.image.count({
       where: {
         moderationStatus: ModerationStatus.PENDING,
-        media: {
-          some: {
-            character: {
-              species: {
-                communityId,
-              },
-            },
-          },
-        },
+        media: { some: mediaBelongingToCommunity(communityId) },
       },
     });
   }

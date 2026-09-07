@@ -675,6 +675,21 @@ model Media {
   galleryId   String?    @map("gallery_id")
   visibility  Visibility @default(PUBLIC)
 
+  /// Which community reviews this upload when no character says.
+  ///
+  /// An image reached its moderators through `character -> species ->
+  /// community` and no other way, so anything uploaded without a character --
+  /// a gallery picture, a user avatar -- belonged to no community and appeared
+  /// in no community's queue. It sat PENDING, and PENDING means every URL on
+  /// it is masked, so the upload was invisible forever unless a site admin
+  /// happened to clear the global queue.
+  ///
+  /// Recorded at upload time from the host the uploader was on, which is the
+  /// only moment anyone knows the answer. The character path still wins where
+  /// there is a character: a character moved to another community's species
+  /// takes its media with it, and a value frozen at upload could not.
+  communityId String?    @map("community_id")
+
   // Content references (exactly one must be non-null)
   imageId       String? @map("image_id")
   textContentId String? @map("text_content_id")
@@ -686,6 +701,7 @@ model Media {
   owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
   gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: SetNull)
+  community Community? @relation(fields: [communityId], references: [id], onDelete: SetNull)
 
   // Content relations
   image       Image?       @relation(fields: [imageId], references: [id], onDelete: Cascade)
@@ -756,6 +772,8 @@ model Community {
   shopPurchases        ShopPurchase[]
   notifications        Notification[]
   trades               Trade[]
+  /// Uploads that name this community directly; see `Media.communityId`.
+  media                Media[]
 
   @@map("communities")
 }

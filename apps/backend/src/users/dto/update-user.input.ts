@@ -1,10 +1,11 @@
-import { InputType, Field } from "@nestjs/graphql";
+import { InputType, Field, ID } from "@nestjs/graphql";
 import {
   IsString,
   MaxLength,
   IsOptional,
   IsUrl,
   IsDateString,
+  IsUUID,
 } from "class-validator";
 import { GraphQLJSON } from "graphql-type-json";
 
@@ -31,6 +32,15 @@ export class UpdateUserInput {
   @IsOptional()
   @IsDateString()
   dateOfBirth?: string;
+
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "An image you uploaded, to show as your avatar. It must be approved in moderation first. Explicit null removes your avatar; omitting the field leaves it alone.",
+  })
+  @IsOptional()
+  @IsUUID()
+  avatarImageId?: string | null;
 
   @Field(() => GraphQLJSON, { nullable: true })
   @IsOptional()
