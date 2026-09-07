@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **E2E: 26 character-form specs** — 16 against the API, including who may add a form and who may raise a variant's limit, and 10 driving the browser through the editor, the edit-kit and MYO routes, the review queue's per-form diff and the two refusals that must land before an item is spent (#343).
+
+- **A "Character Forms" walkthrough** (`docs/docs/character-forms.html`), ten steps with eight screenshots: turning forms on per rarity, adding one as staff and as a member, what the reviewer sees, the MYO route, and what happens when a limit is lowered under a character (#343).
+
 - **`yarn db:query prod`** — a read-only psql against the production database,
   with the credential fetched at run time rather than stored. It reaches `psql`
   through libpq's `PG*` variables rather than as an argument, since

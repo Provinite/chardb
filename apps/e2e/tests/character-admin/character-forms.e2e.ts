@@ -9,6 +9,8 @@ import {
   SeedEditCharacterTraitsWithKitDocument,
   SeedApproveTraitReviewDocument,
   SeedTraitReviewQueueDocument,
+  SeedRevertTraitReviewDocument,
+  SeedUpdateRoleDocument,
 } from "../../src/generated/graphql.js";
 import { oneForm } from "../../src/world/forms.js";
 
@@ -313,6 +315,147 @@ test.describe("character forms", () => {
         },
       }),
     ).resolves.toBeTruthy();
+  });
+
+  /**
+   * Who may add a form.
+   *
+   * Traits used to be listed in `REGISTRY_FIELDS`, which is what
+   * `validateFieldPermissions` matches a Prisma payload against. Forms are
+   * rows rather than a column, so they are not in that set and cannot be --
+   * which leaves the mutation's own guard as the only thing standing between a
+   * member and a second design. These are the tests that say so out loud.
+   *
+   * The refusals read "Forbidden resource" rather than anything about forms:
+   * `CharacterRegistryEditGuard` returns false and Nest turns that into a
+   * `ForbiddenException`, which is the same answer every other registry field
+   * gets. Matching on it rather than on `toThrow()` alone keeps these from
+   * passing on an unrelated error.
+   */
+  test.describe("permissions", () => {
+    test("a member without registry rights cannot add a form", async ({
+      world,
+    }) => {
+      await allowForms(world, world.variants.common.id, 2);
+
+      // The stock Member role carries neither registry permission, which is
+      // why edit kits exist at all.
+      await expect(
+        world.as("member").gql(SeedUpdateCharacterRegistryDocument, {
+          id: world.characters.pinefall.id,
+          input: {
+            forms: [
+              { name: "Base", traitValues: eyes(world, "blue") },
+              { name: "Awakened", traitValues: eyes(world, "green") },
+            ],
+          },
+        }),
+      ).rejects.toThrow(/forbidden/i);
+
+      const { character } = await world
+        .as("member")
+        .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
+      expect(character.forms).toHaveLength(1);
+    });
+
+    test("an owner holding their own registry rights can add one", async ({
+      world,
+    }) => {
+      // The other half. Refusing the member above must not also refuse the
+      // permission that exists precisely to let owners edit their own design.
+      await allowForms(world, world.variants.common.id, 2);
+      await world.as("commadmin").gql(SeedUpdateRoleDocument, {
+        id: world.roles.member,
+        updateRoleInput: { canEditOwnCharacterRegistry: true },
+      });
+
+      await expect(
+        world.as("member").gql(SeedUpdateCharacterRegistryDocument, {
+          id: world.characters.pinefall.id,
+          input: {
+            forms: [
+              { name: "Base", traitValues: eyes(world, "blue") },
+              { name: "Awakened", traitValues: eyes(world, "green") },
+            ],
+          },
+        }),
+      ).resolves.toBeTruthy();
+    });
+
+    test("own-registry rights do not reach somebody else's character", async ({
+      world,
+    }) => {
+      await allowForms(world, world.variants.common.id, 2);
+      await world.as("commadmin").gql(SeedUpdateRoleDocument, {
+        id: world.roles.member,
+        updateRoleInput: { canEditOwnCharacterRegistry: true },
+      });
+
+      // Marrowfen is othermember's. "Own" has to mean own.
+      await expect(
+        world.as("member").gql(SeedUpdateCharacterRegistryDocument, {
+          id: world.characters.marrowfen.id,
+          input: { forms: oneForm([]) },
+        }),
+      ).rejects.toThrow(/forbidden/i);
+    });
+
+    test("an ordinary member cannot raise a variant's form limit", async ({
+      world,
+    }) => {
+      // The limit decides whether a character can carry a second design, so it
+      // is staff's the same way the rest of the variant is.
+      await expect(
+        world.as("member").gql(SeedUpdateSpeciesVariantDocument, {
+          id: world.variants.common.id,
+          updateSpeciesVariantInput: { maxForms: 2 },
+        }),
+      ).rejects.toThrow(/forbidden/i);
+    });
+  });
+
+  test("refusing a proposed form leaves the character alone and returns the kit", async ({
+    world,
+  }) => {
+    await allowForms(world, world.variants.common.id, 2);
+    const before = await world
+      .as("member")
+      .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
+
+    await world.as("member").gql(SeedEditCharacterTraitsWithKitDocument, {
+      input: {
+        itemId: world.editKitItems.kitIds[0],
+        characterId: world.characters.pinefall.id,
+        forms: [
+          {
+            id: before.character.forms[0].id,
+            name: "Base",
+            traitValues: eyes(world, "blue"),
+          },
+          { name: "Awakened", traitValues: eyes(world, "green") },
+        ],
+      },
+    });
+
+    const { traitReviewQueue } = await world
+      .as("commadmin")
+      .gql(SeedTraitReviewQueueDocument, { communityId: world.community.id });
+    const entry = traitReviewQueue.items.find(
+      (i) => i.review.characterId === world.characters.pinefall.id,
+    );
+    expect(entry).toBeDefined();
+
+    await world.as("commadmin").gql(SeedRevertTraitReviewDocument, {
+      input: { reviewId: entry!.review.id, reason: "Not this one" },
+    });
+
+    // The proposed form never existed, so there is nothing to revert -- and
+    // the character must not lose the form it already had.
+    const after = await world
+      .as("member")
+      .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
+    expect(after.character.forms).toHaveLength(1);
+    expect(after.character.forms[0].id).toBe(before.character.forms[0].id);
   });
 
   test("lowering a variant's limit leaves existing characters alone", async ({
