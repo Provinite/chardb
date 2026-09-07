@@ -1002,3 +1002,20 @@ query SeedViewerFollowCounts {
     followingCount
   }
 }
+
+# Posting a comment as somebody other than the persona driving the browser --
+# the arrangement for "you cannot edit someone else's" and for anything a
+# signed-out visitor has to be able to read. Selects `likesCount` deliberately:
+# that is the field that was forbidden, so an operation omitting it would keep
+# passing against the bug (#310).
+mutation SeedCreateComment($input: CreateCommentInput!) {
+  createComment(input: $input) {
+    id
+    content
+    likesCount
+    author {
+      id
+      username
+    }
+  }
+}

@@ -262,7 +262,11 @@ export const Comment: React.FC<CommentProps> = ({
   }
 
   return (
-    <CommentContainer isReply={isReply}>
+    <CommentContainer
+      isReply={isReply}
+      data-testid="comment"
+      data-comment-id={comment.id}
+    >
       <CommentHeader>
         <Avatar
           image={comment.author.avatarImage}
