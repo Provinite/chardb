@@ -1877,6 +1877,8 @@ export type Mutation = {
   unlinkDiscordGuild: Community;
   /** Unlink an external account from the current user */
   unlinkExternalAccount: Scalars['Boolean']['output'];
+  /** Switches off email for the one kind named by an unsubscribe link. Authorised by the token, not by a session, so it works from a mail client with nobody signed in. */
+  unsubscribeFromNotificationEmail: UnsubscribeResult;
   /** Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission. */
   updateCharacterProfile: Character;
   /** Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission. */
@@ -1901,6 +1903,8 @@ export type Mutation = {
   updateItemType: ItemType;
   /** Updates media metadata (title, description, etc.) */
   updateMedia: Media;
+  /** Sets one channel for one kind and returns the whole matrix, so a client never has to merge the change in itself. */
+  updateNotificationPreference: Array<NotificationPreference>;
   updateProfile: User;
   /** Update a role */
   updateRole: Role;
@@ -2376,6 +2380,11 @@ export type MutationUnlinkExternalAccountArgs = {
 };
 
 
+export type MutationUnsubscribeFromNotificationEmailArgs = {
+  input: UnsubscribeInput;
+};
+
+
 export type MutationUpdateCharacterProfileArgs = {
   id: Scalars['ID']['input'];
   input: UpdateCharacterProfileInput;
@@ -2466,6 +2475,11 @@ export type MutationUpdateMediaArgs = {
 };
 
 
+export type MutationUpdateNotificationPreferenceArgs = {
+  input: UpdateNotificationPreferenceInput;
+};
+
+
 export type MutationUpdateProfileArgs = {
   input: UpdateUserInput;
 };
@@ -2544,8 +2558,10 @@ export type Notification = {
   kind: NotificationKind;
   /** When the recipient opened this particular notification. */
   readAt: Maybe<Scalars['DateTime']['output']>;
-  /** Why, when staff gave a reason. */
+  /** Why, when staff gave a reason. For a rejected image this is the ModerationRejectionReason name rather than its label, so that rewording a label does not rewrite what old rows say. */
   reason: Maybe<Scalars['String']['output']>;
+  /** The moderator's own words, when they added any. */
+  reasonText: Maybe<Scalars['String']['output']>;
   /** When the badge stopped counting this. Set in bulk when the recipient opens the dropdown. */
   seenAt: Maybe<Scalars['DateTime']['output']>;
   /** The subject's id. Deliberately not a foreign key, so it may name something that has since been deleted. */
@@ -2554,6 +2570,12 @@ export type Notification = {
   subjectName: Maybe<Scalars['String']['output']>;
   subjectType: Maybe<NotificationSubjectType>;
 };
+
+/** How a notification reaches someone. Transactional mail -- password reset and password changed -- is not addressable here: it has no kind, so it has no preference and cannot be switched off. */
+export enum NotificationChannel {
+  Email = 'EMAIL',
+  InApp = 'IN_APP'
+}
 
 /** A page of notifications, newest first. */
 export type NotificationConnection = {
@@ -2569,12 +2591,26 @@ export enum NotificationKind {
   CommentReceived = 'COMMENT_RECEIVED',
   CurrencyReceived = 'CURRENCY_RECEIVED',
   FollowReceived = 'FOLLOW_RECEIVED',
+  ImageApproved = 'IMAGE_APPROVED',
+  ImageRejected = 'IMAGE_REJECTED',
   ItemGranted = 'ITEM_GRANTED',
   ItemRevoked = 'ITEM_REVOKED',
   TradeAccepted = 'TRADE_ACCEPTED',
   TradeDeclined = 'TRADE_DECLINED',
   TradeOffered = 'TRADE_OFFERED'
 }
+
+/** One kind's delivery settings for the signed-in member, with defaults already applied. A member who has never opened the settings page still gets a full answer here. */
+export type NotificationPreference = {
+  __typename?: 'NotificationPreference';
+  /** Whether it is also emailed. */
+  email: Scalars['Boolean']['output'];
+  /** False for kinds that have no email template yet. Clients hide the email switch rather than offering one that does nothing. */
+  emailSupported: Scalars['Boolean']['output'];
+  /** Whether it appears in the bell and the feed. */
+  inApp: Scalars['Boolean']['output'];
+  kind: NotificationKind;
+};
 
 /** What clicking the notification opens. Paired with subjectId, and null on notifications that link nowhere. */
 export enum NotificationSubjectType {
@@ -2768,6 +2804,8 @@ export type Query = {
   myShopPurchaseLines: ShopPurchaseLineConnection;
   /** The viewer's own purchases, newest first, each line saying whether it can still be undone and why not. */
   myShopPurchases: Array<ShopPurchase>;
+  /** Your delivery settings, one row per kind, defaults already merged in. */
+  notificationPreferences: Array<NotificationPreference>;
   /** Your notifications, newest first. */
   notifications: NotificationConnection;
   /** Get count of pending images for a community */
@@ -4133,6 +4171,21 @@ export type UnlinkExternalAccountInput = {
   provider: ExternalAccountProvider;
 };
 
+/** Follows the unsubscribe link from a notification email. */
+export type UnsubscribeInput = {
+  /** The opaque token from the link. */
+  token: Scalars['String']['input'];
+};
+
+/** The outcome of following an unsubscribe link from an email. */
+export type UnsubscribeResult = {
+  __typename?: 'UnsubscribeResult';
+  /** What was switched off, so the page can name it. Null when the link did not verify. */
+  kind: Maybe<NotificationKind>;
+  /** False when the link is malformed, tampered with, or names something this version does not recognise. The three are not distinguished. */
+  success: Scalars['Boolean']['output'];
+};
+
 /** Input for updating character profile fields */
 export type UpdateCharacterProfileInput = {
   customFields?: InputMaybe<Scalars['String']['input']>;
@@ -4272,6 +4325,14 @@ export type UpdateMediaInput = {
   title?: InputMaybe<Scalars['String']['input']>;
   /** Updated visibility setting */
   visibility?: InputMaybe<Visibility>;
+};
+
+/** Sets one channel for one kind, for the caller. */
+export type UpdateNotificationPreferenceInput = {
+  channel: NotificationChannel;
+  /** The new setting. There is no toggle, only a value. */
+  enabled: Scalars['Boolean']['input'];
+  kind: NotificationKind;
 };
 
 /** Input for updating an existing role */
@@ -5559,7 +5620,28 @@ export type RemoveMediaTagsMutationVariables = Exact<{
 
 export type RemoveMediaTagsMutation = { __typename?: 'Mutation', removeMediaTags: { __typename?: 'Media', id: string, tags_rel: Array<{ __typename?: 'MediaTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }> | null } };
 
-export type NotificationFieldsFragment = { __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null };
+export type NotificationPreferenceFieldsFragment = { __typename?: 'NotificationPreference', kind: NotificationKind, inApp: boolean, email: boolean, emailSupported: boolean };
+
+export type NotificationPreferencesQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type NotificationPreferencesQuery = { __typename?: 'Query', notificationPreferences: Array<{ __typename?: 'NotificationPreference', kind: NotificationKind, inApp: boolean, email: boolean, emailSupported: boolean }> };
+
+export type UpdateNotificationPreferenceMutationVariables = Exact<{
+  input: UpdateNotificationPreferenceInput;
+}>;
+
+
+export type UpdateNotificationPreferenceMutation = { __typename?: 'Mutation', updateNotificationPreference: Array<{ __typename?: 'NotificationPreference', kind: NotificationKind, inApp: boolean, email: boolean, emailSupported: boolean }> };
+
+export type UnsubscribeFromNotificationEmailMutationVariables = Exact<{
+  input: UnsubscribeInput;
+}>;
+
+
+export type UnsubscribeFromNotificationEmailMutation = { __typename?: 'Mutation', unsubscribeFromNotificationEmail: { __typename?: 'UnsubscribeResult', success: boolean, kind: NotificationKind | null } };
+
+export type NotificationFieldsFragment = { __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null };
 
 export type NotificationsQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -5568,7 +5650,7 @@ export type NotificationsQueryVariables = Exact<{
 }>;
 
 
-export type NotificationsQuery = { __typename?: 'Query', notifications: { __typename?: 'NotificationConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null }> } };
+export type NotificationsQuery = { __typename?: 'Query', notifications: { __typename?: 'NotificationConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null }> } };
 
 export type UnseenNotificationCountQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -6451,6 +6533,14 @@ export const ItemTransactionFieldsFragmentDoc = gql`
   }
 }
     ${UserBasicFragmentDoc}`;
+export const NotificationPreferenceFieldsFragmentDoc = gql`
+    fragment NotificationPreferenceFields on NotificationPreference {
+  kind
+  inApp
+  email
+  emailSupported
+}
+    `;
 export const NotificationFieldsFragmentDoc = gql`
     fragment NotificationFields on Notification {
   id
@@ -6466,6 +6556,7 @@ export const NotificationFieldsFragmentDoc = gql`
   count
   amount
   reason
+  reasonText
   excerpt
   actor {
     id
@@ -13907,6 +13998,112 @@ export function useRemoveMediaTagsMutation(baseOptions?: Apollo.MutationHookOpti
 export type RemoveMediaTagsMutationHookResult = ReturnType<typeof useRemoveMediaTagsMutation>;
 export type RemoveMediaTagsMutationResult = Apollo.MutationResult<RemoveMediaTagsMutation>;
 export type RemoveMediaTagsMutationOptions = Apollo.BaseMutationOptions<RemoveMediaTagsMutation, RemoveMediaTagsMutationVariables>;
+export const NotificationPreferencesDocument = gql`
+    query NotificationPreferences {
+  notificationPreferences {
+    ...NotificationPreferenceFields
+  }
+}
+    ${NotificationPreferenceFieldsFragmentDoc}`;
+
+/**
+ * __useNotificationPreferencesQuery__
+ *
+ * To run a query within a React component, call `useNotificationPreferencesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useNotificationPreferencesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useNotificationPreferencesQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useNotificationPreferencesQuery(baseOptions?: Apollo.QueryHookOptions<NotificationPreferencesQuery, NotificationPreferencesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<NotificationPreferencesQuery, NotificationPreferencesQueryVariables>(NotificationPreferencesDocument, options);
+      }
+export function useNotificationPreferencesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<NotificationPreferencesQuery, NotificationPreferencesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<NotificationPreferencesQuery, NotificationPreferencesQueryVariables>(NotificationPreferencesDocument, options);
+        }
+export function useNotificationPreferencesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<NotificationPreferencesQuery, NotificationPreferencesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<NotificationPreferencesQuery, NotificationPreferencesQueryVariables>(NotificationPreferencesDocument, options);
+        }
+export type NotificationPreferencesQueryHookResult = ReturnType<typeof useNotificationPreferencesQuery>;
+export type NotificationPreferencesLazyQueryHookResult = ReturnType<typeof useNotificationPreferencesLazyQuery>;
+export type NotificationPreferencesSuspenseQueryHookResult = ReturnType<typeof useNotificationPreferencesSuspenseQuery>;
+export type NotificationPreferencesQueryResult = Apollo.QueryResult<NotificationPreferencesQuery, NotificationPreferencesQueryVariables>;
+export const UpdateNotificationPreferenceDocument = gql`
+    mutation UpdateNotificationPreference($input: UpdateNotificationPreferenceInput!) {
+  updateNotificationPreference(input: $input) {
+    ...NotificationPreferenceFields
+  }
+}
+    ${NotificationPreferenceFieldsFragmentDoc}`;
+export type UpdateNotificationPreferenceMutationFn = Apollo.MutationFunction<UpdateNotificationPreferenceMutation, UpdateNotificationPreferenceMutationVariables>;
+
+/**
+ * __useUpdateNotificationPreferenceMutation__
+ *
+ * To run a mutation, you first call `useUpdateNotificationPreferenceMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateNotificationPreferenceMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateNotificationPreferenceMutation, { data, loading, error }] = useUpdateNotificationPreferenceMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateNotificationPreferenceMutation(baseOptions?: Apollo.MutationHookOptions<UpdateNotificationPreferenceMutation, UpdateNotificationPreferenceMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateNotificationPreferenceMutation, UpdateNotificationPreferenceMutationVariables>(UpdateNotificationPreferenceDocument, options);
+      }
+export type UpdateNotificationPreferenceMutationHookResult = ReturnType<typeof useUpdateNotificationPreferenceMutation>;
+export type UpdateNotificationPreferenceMutationResult = Apollo.MutationResult<UpdateNotificationPreferenceMutation>;
+export type UpdateNotificationPreferenceMutationOptions = Apollo.BaseMutationOptions<UpdateNotificationPreferenceMutation, UpdateNotificationPreferenceMutationVariables>;
+export const UnsubscribeFromNotificationEmailDocument = gql`
+    mutation UnsubscribeFromNotificationEmail($input: UnsubscribeInput!) {
+  unsubscribeFromNotificationEmail(input: $input) {
+    success
+    kind
+  }
+}
+    `;
+export type UnsubscribeFromNotificationEmailMutationFn = Apollo.MutationFunction<UnsubscribeFromNotificationEmailMutation, UnsubscribeFromNotificationEmailMutationVariables>;
+
+/**
+ * __useUnsubscribeFromNotificationEmailMutation__
+ *
+ * To run a mutation, you first call `useUnsubscribeFromNotificationEmailMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnsubscribeFromNotificationEmailMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unsubscribeFromNotificationEmailMutation, { data, loading, error }] = useUnsubscribeFromNotificationEmailMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUnsubscribeFromNotificationEmailMutation(baseOptions?: Apollo.MutationHookOptions<UnsubscribeFromNotificationEmailMutation, UnsubscribeFromNotificationEmailMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnsubscribeFromNotificationEmailMutation, UnsubscribeFromNotificationEmailMutationVariables>(UnsubscribeFromNotificationEmailDocument, options);
+      }
+export type UnsubscribeFromNotificationEmailMutationHookResult = ReturnType<typeof useUnsubscribeFromNotificationEmailMutation>;
+export type UnsubscribeFromNotificationEmailMutationResult = Apollo.MutationResult<UnsubscribeFromNotificationEmailMutation>;
+export type UnsubscribeFromNotificationEmailMutationOptions = Apollo.BaseMutationOptions<UnsubscribeFromNotificationEmailMutation, UnsubscribeFromNotificationEmailMutationVariables>;
 export const NotificationsDocument = gql`
     query Notifications($first: Int, $after: String, $unreadOnly: Boolean) {
   notifications(first: $first, after: $after, unreadOnly: $unreadOnly) {

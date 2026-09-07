@@ -23,6 +23,7 @@ export const NOTIFICATION_FRAGMENT = gql`
     count
     amount
     reason
+    reasonText
     excerpt
     actor {
       id

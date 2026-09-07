@@ -14,6 +14,7 @@ import {
   ExternalAccountProvider,
 } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { NotificationPreferencesSettings } from "../components/settings/NotificationPreferencesSettings";
 import { getAccessToken } from "../lib/accessToken";
 
 const updateProfileSchema = z.object({
@@ -676,6 +677,17 @@ export const EditProfilePage: React.FC = () => {
             </SmallButton>
           )}
         </div>
+      </Section>
+
+      {/* Notification Preferences Section */}
+      <Section>
+        <SectionTitle>Notifications</SectionTitle>
+        <SectionDescription>
+          Choose what reaches you, and how. Everything here is per kind — turning
+          off approval emails does not turn off rejections.
+        </SectionDescription>
+
+        <NotificationPreferencesSettings />
       </Section>
     </Container>
   );
