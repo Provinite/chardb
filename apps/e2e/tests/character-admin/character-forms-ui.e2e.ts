@@ -331,7 +331,9 @@ test.describe("a member's routes to a second form", () => {
       `${world.community.url}/character/${world.characters.pinefall.id}/change-variant?item=${itemId}`,
     );
 
-    await expect(page.getByTestId("variant-change-too-many-forms")).toBeVisible();
+    await expect(
+      page.getByTestId("variant-change-too-many-forms"),
+    ).toBeVisible();
     await expect(page.getByTestId("submit-variant-change")).toBeDisabled();
 
     const { item } = await world
