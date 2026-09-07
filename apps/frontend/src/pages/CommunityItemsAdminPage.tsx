@@ -22,6 +22,7 @@ import { ItemUseVariantChangeGrantEditor } from "../components/items/ItemUseVari
 import { useAuth } from "../contexts/AuthContext";
 import { toast } from "react-hot-toast";
 import { getAccessToken } from "../lib/accessToken";
+import { API_BASE_URL } from "../lib/communityHost";
 import {
   type GrantItemInput,
   type ItemTypeFieldsFragment,
@@ -464,8 +465,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
       formDataToSend.append("altText", formData.name);
       formDataToSend.append("visibility", "PUBLIC");
 
-      const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
-      const response = await fetch(`${apiUrl}/images/upload`, {
+      const response = await fetch(`${API_BASE_URL}/images/upload`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${getAccessToken()}`,

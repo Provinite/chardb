@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Starting an account link now sends credentials to the API**, so the browser keeps the cookie the callback uses to check the flow came back to the browser that began it (#379).
+
+- **One `API_BASE_URL` instead of five copies of the fallback.** Account linking and the two image uploads had drifted to `|| "http://localhost:4000"` while Apollo derived `api.${ROOT_DOMAIN}`, so the app could address two different API hosts at once — which the linking flow's browser binding cannot survive (#379).
+
 - **A failing comment list no longer takes the comment form with it.** The error
   replaced the whole section, so one failing read removed the ability to write
   and left no way forward; the two now fail independently (#310).

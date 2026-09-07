@@ -15,7 +15,7 @@ import {
   ThumbnailCropper,
   ThumbnailCropRect,
 } from "../components/ThumbnailCropper";
-import { characterUrl } from "../lib/communityHost";
+import { API_BASE_URL, characterUrl } from "../lib/communityHost";
 import { getAccessToken } from "../lib/accessToken";
 
 const Container = styled.div`
@@ -552,8 +552,7 @@ export const UploadImagePage: React.FC = () => {
           formDataToSend.append("thumbnailCropHeight", String(crop.height));
         }
 
-        const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
-        const response = await fetch(`${apiUrl}/images/upload`, {
+        const response = await fetch(`${API_BASE_URL}/images/upload`, {
           method: "POST",
           headers: {
             Authorization: `Bearer ${getAccessToken()}`,

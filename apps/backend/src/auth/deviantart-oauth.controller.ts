@@ -10,17 +10,7 @@ import { ExternalAccountProvider } from "@prisma/client";
 import { CurrentUser } from "./decorators/CurrentUser";
 import { User } from "@prisma/client";
 import { DeviantArtOAuthPayload } from "./strategies/deviantart.strategy";
-import {
-  resolveRequestOrigin,
-  resolveReturnOrigin,
-} from "./oauth-return-origin";
-
-/** The `state` token this controller signs and then reads back on the callback. */
-interface OAuthState {
-  sub: string;
-  /** Origin to return the user to; see `oauth-return-origin.ts`. */
-  ret?: string;
-}
+import { consumeLinkState, issueLinkState } from "./oauth-link-state";
 
 @Controller("auth/deviantart")
 export class DeviantArtOAuthController {
@@ -30,23 +20,35 @@ export class DeviantArtOAuthController {
     private externalAccountsService: ExternalAccountsService,
   ) {}
 
+  private frontendUrl(): string {
+    return (
+      this.configService.get<string>("FRONTEND_URL") || "http://localhost:3000"
+    );
+  }
+
   /**
    * Initiates the DeviantArt OAuth flow by returning the OAuth URL
    * Requires authentication via JWT in Authorization header
+   *
+   * `passthrough` on the response because the body is still the return value;
+   * the response is here only so `issueLinkState` can set the nonce cookie
+   * that binds the flow to this browser (see `oauth-link-state.ts`).
    */
   @Get()
   @AllowAnyAuthenticated()
-  async initiateOAuth(@CurrentUser() user: User, @Req() req: Request) {
-    const jwtSecret = this.configService.get("JWT_SECRET");
-    const frontendUrl =
-      this.configService.get("FRONTEND_URL") || "http://localhost:3000";
-    const payload: OAuthState = {
-      sub: user.id,
-      ret: resolveRequestOrigin(req, frontendUrl),
-    };
-    const state = this.jwtService.sign(payload, {
-      secret: jwtSecret + "_O",
-      expiresIn: "10m",
+  async initiateOAuth(
+    @CurrentUser() user: User,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    const state = issueLinkState({
+      jwtService: this.jwtService,
+      jwtSecret: this.configService.getOrThrow<string>("JWT_SECRET"),
+      provider: "deviantart",
+      userId: user.id,
+      req,
+      res,
+      frontendUrl: this.frontendUrl(),
     });
     const clientId = this.configService.get("DEVIANTART_CLIENT_ID");
     const callbackUrl =
@@ -73,29 +75,24 @@ export class DeviantArtOAuthController {
   @AllowUnauthenticated()
   @UseGuards(AuthGuard("deviantart"))
   async handleCallback(@Req() req: Request, @Res() res: Response) {
-    const frontendUrl =
-      this.configService.get("FRONTEND_URL") || "http://localhost:3000";
+    const frontendUrl = this.frontendUrl();
     // Reassigned as soon as the state token parses. Failures before that point
     // -- a missing or expired state -- have no trustworthy origin to honour and
     // land on the apex.
     let returnBase = frontendUrl;
 
     try {
-      const state = req.query.state as string;
-      if (!state) {
-        throw new Error("Missing state parameter");
-      }
-
-      let userId: string;
-      try {
-        const jwtSecret = this.configService.get("JWT_SECRET");
-        const statePayload = this.jwtService.verify<OAuthState>(state, {
-          secret: jwtSecret + "_O",
-        });
-        userId = statePayload.sub;
-        returnBase = resolveReturnOrigin(statePayload.ret, frontendUrl);
-      } catch (error) {
-        throw new Error("Invalid or expired state token");
+      const link = consumeLinkState({
+        jwtService: this.jwtService,
+        jwtSecret: this.configService.getOrThrow<string>("JWT_SECRET"),
+        provider: "deviantart",
+        req,
+        res,
+        frontendUrl,
+      });
+      returnBase = link.returnBase;
+      if (!link.ok) {
+        throw new Error(link.error);
       }
 
       // Get the OAuth data from Passport
@@ -106,7 +103,7 @@ export class DeviantArtOAuthController {
 
       // Link the account directly in the backend (this automatically claims pending items)
       const result = await this.externalAccountsService.linkExternalAccount(
-        userId,
+        link.userId,
         ExternalAccountProvider.DEVIANTART,
         oauthData.providerAccountId,
         oauthData.displayName,

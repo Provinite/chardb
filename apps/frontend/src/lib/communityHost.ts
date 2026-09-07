@@ -24,6 +24,25 @@ export const ROOT_DOMAIN: string =
   import.meta.env.VITE_ROOT_DOMAIN ?? "localhost";
 
 /**
+ * Where the API lives.
+ *
+ * Derived from the root domain rather than hardcoded, because the API has to
+ * be under it: the session cookie is scoped to that domain, and a
+ * `localhost:4000` default would never receive it from `dev.localhost`. That
+ * failure looks like being signed out on every page load, with no error.
+ *
+ * One constant rather than the same fallback written out at each call site.
+ * Five of them had drifted to `|| "http://localhost:4000"` while Apollo
+ * derived `api.${ROOT_DOMAIN}`, so the app addressed two different API hosts
+ * at once. That is no longer survivable: the OAuth linking flow's binding
+ * cookie is set by the host serving `/auth/<provider>` and only comes back to
+ * the host the provider redirects to, so the two disagreeing means no account
+ * can be linked at all (#379).
+ */
+export const API_BASE_URL: string =
+  import.meta.env.VITE_API_URL || `http://api.${ROOT_DOMAIN}:4000`;
+
+/**
  * Hosts that are the apex even though they are a label under it. `www` is
  * reserved from slugs for exactly this reason, so it can never be a community.
  */

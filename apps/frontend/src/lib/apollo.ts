@@ -12,15 +12,9 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import { Kind, OperationTypeNode } from "graphql";
 import { createClient } from "graphql-ws";
 import { getAccessToken, setAccessToken } from "./accessToken";
-import { apexUrl, ROOT_DOMAIN } from "./communityHost";
+import { apexUrl, API_BASE_URL } from "./communityHost";
 
-// The fallback is derived from the root domain rather than hardcoded, because
-// the API has to be under it: the refresh cookie is scoped to the domain, and
-// a `localhost:4000` default would never receive it from `dev.localhost`. That
-// failure looks like being signed out on every page load, with no error.
-const httpUrl = import.meta.env.VITE_API_URL
-  ? `${import.meta.env.VITE_API_URL}/graphql`
-  : `http://api.${ROOT_DOMAIN}:4000/graphql`;
+const httpUrl = `${API_BASE_URL}/graphql`;
 const wsUrl = httpUrl.replace(/^http/, "ws");
 
 const httpLink = createHttpLink({
