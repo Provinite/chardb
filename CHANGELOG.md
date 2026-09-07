@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`yarn db:query prod`** — a read-only psql against the production database,
+  with the credential fetched at run time rather than stored. It reaches `psql`
+  through libpq's `PG*` variables rather than as an argument, since
+  `/proc/<pid>/cmdline` is world-readable.
+
 - **A "Commenting" walkthrough** (`docs/docs/commenting.html`), five steps with
   five screenshots: leaving a comment, replying, liking, editing or deleting
   your own, and what a signed-out visitor sees. The first documentation of any

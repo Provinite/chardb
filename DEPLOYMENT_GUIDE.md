@@ -544,6 +544,30 @@ docker compose exec backend yarn workspace @chardb/backend db:seed
 exit
 ```
 
+### Querying the production database
+
+```bash
+yarn db:query prod                                   # interactive psql
+yarn db:query prod -c "select count(*) from images"  # one-shot
+yarn db:query prod -f report.sql --csv               # from a file
+```
+
+The connection URL is read from Parameter Store at run time — the same value
+the running task uses — and passed to `psql` through libpq's `PG*` variables
+rather than as an argument, so it never reaches the terminal, a file, or shell
+history. Nothing is read from Terraform state and no credential lives in the
+repository.
+
+Sessions are read-only and require TLS. Treat read-only as a guard rail rather
+than a boundary: the credential can write, and an interactive session can turn
+the setting off. A genuinely read-only role would be an infrastructure change.
+
+A connection that hangs and then times out usually means this machine's address
+is not allowed through.
+
+Dev manages its credentials differently — use
+`source ./scripts/get-terraform-outputs.sh dev`.
+
 ## ✅ Phase 4: Verification and Testing
 
 ### Step 8: **Verify Deployment**

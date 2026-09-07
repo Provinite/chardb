@@ -13,6 +13,7 @@
     "dev:backend": "yarn workspace @chardb/backend dev",
     "dev:frontend": "yarn workspace @chardb/frontend dev",
     "dev:agent": "yarn dev | tee dev.log",
+    "db:query": "node scripts/db-query.mjs",
     "instance": "node scripts/instance.mjs",
     "instance:init": "node scripts/instance-init.mjs",
     "instance:list": "node scripts/instance.mjs --list",
