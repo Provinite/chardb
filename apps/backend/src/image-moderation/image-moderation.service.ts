@@ -8,10 +8,12 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { PermissionService } from "../auth/PermissionService";
 import { CommunityPermission } from "../auth/CommunityPermission";
-import { EmailService } from "../email/email.service";
+import { NotificationDispatchService } from "../notifications/notification-dispatch.service";
 import {
   ModerationStatus,
   ModerationRejectionReason,
+  NotificationKind,
+  NotificationSubjectType,
   Prisma,
   CurrencyTransactionSource,
 } from "@prisma/client";
@@ -37,7 +39,7 @@ export class ImageModerationService {
   constructor(
     private readonly db: DatabaseService,
     private readonly permissionService: PermissionService,
-    private readonly emailService: EmailService,
+    private readonly notificationDispatch: NotificationDispatchService,
     private readonly currencyLedger: CurrencyLedgerService,
     private readonly mediaService: MediaService,
   ) {}
@@ -407,12 +409,17 @@ export class ImageModerationService {
       return { action: created, credit: paid };
     });
 
-    // Send notification email
-    await this.sendApprovalNotification(
-      image.uploader.email,
-      image.uploader.username,
-      image.originalFilename,
-    );
+    // Tell the uploader, on whichever channels they want. After the
+    // transaction on purpose: dispatch may send mail, and mail cannot be
+    // rolled back.
+    await this.notificationDispatch.dispatch({
+      recipientId: image.uploaderId,
+      kind: NotificationKind.IMAGE_APPROVED,
+      actorUserId: moderatorId,
+      subjectType: NotificationSubjectType.IMAGE,
+      subjectId: image.id,
+      data: { subjectName: image.originalFilename },
+    });
 
     if (credit && credit.skipped.length > 0) {
       // Not an error -- the approval is what mattered and it succeeded -- but
@@ -483,14 +490,19 @@ export class ImageModerationService {
       }),
     ]);
 
-    // Send notification email
-    await this.sendRejectionNotification(
-      image.uploader.email,
-      image.uploader.username,
-      image.originalFilename,
-      reason,
-      reasonText,
-    );
+    // As above: after the transaction, because this may send mail.
+    await this.notificationDispatch.dispatch({
+      recipientId: image.uploaderId,
+      kind: NotificationKind.IMAGE_REJECTED,
+      actorUserId: moderatorId,
+      subjectType: NotificationSubjectType.IMAGE,
+      subjectId: image.id,
+      data: {
+        subjectName: image.originalFilename,
+        reason,
+        reasonText: reasonText ?? null,
+      },
+    });
 
     return action;
   }
@@ -564,49 +576,5 @@ export class ImageModerationService {
         moderationStatus: ModerationStatus.PENDING,
       },
     });
-  }
-
-  /**
-   * Send approval notification email
-   */
-  private async sendApprovalNotification(
-    email: string,
-    username: string,
-    imageName: string,
-  ): Promise<void> {
-    try {
-      await this.emailService.sendImageApprovedEmail(
-        email,
-        username,
-        imageName,
-      );
-    } catch (error) {
-      // Log but don't fail the operation
-      console.error("Failed to send approval notification email:", error);
-    }
-  }
-
-  /**
-   * Send rejection notification email
-   */
-  private async sendRejectionNotification(
-    email: string,
-    username: string,
-    imageName: string,
-    reason: ModerationRejectionReason,
-    reasonText?: string,
-  ): Promise<void> {
-    try {
-      await this.emailService.sendImageRejectedEmail(
-        email,
-        username,
-        imageName,
-        reason,
-        reasonText,
-      );
-    } catch (error) {
-      // Log but don't fail the operation
-      console.error("Failed to send rejection notification email:", error);
-    }
   }
 }

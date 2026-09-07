@@ -14,17 +14,49 @@ export interface PasswordChangedContext {
   supportEmail: string;
 }
 
-export interface ImageApprovedContext {
+/**
+ * Carried by every optional email and by no transactional one.
+ *
+ * Password reset and password-changed mail have no settings to point at -- they
+ * are sent whatever a member prefers -- so their contexts deliberately do not
+ * extend this. The type is what stops somebody adding the footer to them by
+ * habit and implying an opt-out that does not exist.
+ */
+export interface OptionalEmailContext {
+  /** The member's notification settings, for the footer to link to. */
+  settingsUrl: string;
+}
+
+export interface ImageApprovedContext extends OptionalEmailContext {
   username: string;
   imageName: string;
 }
 
-export interface ImageRejectedContext {
+export interface ImageRejectedContext extends OptionalEmailContext {
   username: string;
   imageName: string;
   reason: string;
   reasonText?: string;
 }
+
+/**
+ * The footer for an optional email.
+ *
+ * Points at the settings page rather than carrying a one-click opt-out. This is
+ * relationship mail about the recipient's own uploads, not marketing, so no
+ * unsubscribe mechanism is required of it -- and a signed one-click link means
+ * a token, an endpoint that accepts it unauthenticated, and a page to land on.
+ * A link is enough.
+ *
+ * The URL is interpolated unescaped, as `resetUrl` already is, because we build
+ * it from a configured base URL and a fixed path -- there is no caller-supplied
+ * text in it to escape.
+ */
+const optionalEmailFooter = (context: OptionalEmailContext): string => `
+    <div class="footer">
+        <p>This is an automated notification from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
+        <p>Don't want these? <a href="${context.settingsUrl}" style="color: #7f8c8d;">Choose which emails you get</a> from your profile settings.</p>
+    </div>`;
 
 /**
  * Password reset email template
@@ -337,10 +369,7 @@ export const imageApprovedTemplate = (
 
         <p>Your image is now visible to others based on its visibility settings.</p>
     </div>
-
-    <div class="footer">
-        <p>This is an automated notification from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
-    </div>
+${optionalEmailFooter(context)}
 </body>
 </html>`;
 
@@ -447,9 +476,6 @@ export const imageRejectedTemplate = (
 
         <p>If you believe this was a mistake, please review our community guidelines and contact support if you have questions.</p>
     </div>
-
-    <div class="footer">
-        <p>This is an automated notification from <strong>CharDB.cc</strong>. Please do not reply to this message.</p>
-    </div>
+${optionalEmailFooter(context)}
 </body>
 </html>`;

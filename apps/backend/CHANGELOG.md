@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Notification delivery preferences**, per kind and per channel, checked in `NotificationsService.create` so every kind respects them without a call site opting in. Image approval no longer emails by default; rejection still does (#344).
+
+- **A settings link in every optional email's footer.** No one-click unsubscribe: this is mail about the recipient's own uploads rather than marketing, so none is required of it, and a signed link would mean a token plus an endpoint that acts on it unauthenticated. Password reset and password-changed mail carries no such footer and cannot be opted out of — `AuthService` reaches `EmailService` directly and imports neither the preference nor the dispatch service (#344).
+
 ### Fixed
 
 - **A photo carrying an EXIF orientation tag no longer thumbnails sideways.**

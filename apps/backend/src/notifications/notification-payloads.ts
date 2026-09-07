@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { NotificationKind } from "@chardb/database";
+import { ModerationRejectionReason, NotificationKind } from "@chardb/database";
 
 /**
  * The snapshot each kind of notification stores in `Notification.data`.
@@ -68,6 +68,21 @@ const payloadSchemas = {
     currencyCount: z.number().int().nonnegative(),
   }),
   [NotificationKind.TRADE_DECLINED]: z.object({}),
+
+  [NotificationKind.IMAGE_APPROVED]: z.object({
+    /** The filename the uploader gave it, which is how they know which one. */
+    subjectName: z.string().max(255),
+  }),
+
+  [NotificationKind.IMAGE_REJECTED]: z.object({
+    subjectName: z.string().max(255),
+    // The reason is snapshotted as its enum name rather than its rendered
+    // label, so rewording a label does not rewrite history in old rows. The
+    // renderer maps it, exactly as the email template already does.
+    reason: z.nativeEnum(ModerationRejectionReason),
+    /** The moderator's own words, when they added any. */
+    reasonText: z.string().max(500).nullable(),
+  }),
 } as const satisfies Record<NotificationKind, z.ZodObject<z.ZodRawShape>>;
 
 /** The payload shape for each kind, keyed by kind. */
