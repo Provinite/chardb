@@ -9,11 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **My Characters is a folder browser**: nested folders, filing by drag or in bulk, and the unfiled pile as the top level. A member's characters page browses their public folders too (#350).
+
+- **A community has its own My Characters**, in the sidebar beside Browse Characters, with the same folders counted against that community alone (#338).
+
 - **A "check your email" step after signup**, since signup no longer signs anybody in, plus `/verify-email/:token` to redeem the link and a resend offer on both that screen and the login form when an unconfirmed account is refused (#372).
 
 - **A notification section on `/profile/edit`**: a per-kind matrix of in-app and email switches, with security email named as something that is always sent. Kinds with no email template show no email switch rather than a disabled one (#344).
 
 ### Fixed
+
+- **A community's character links were staff-only.** Browse Characters sat in a group gated on species permissions, so an ordinary member had no link to a community's characters at all (#338).
 
 - **A failing comment list no longer takes the comment form with it.** The error
   replaced the whole section, so one failing read removed the ability to write

@@ -1,5 +1,6 @@
 import React from "react";
 import styled, { css } from "styled-components";
+import { Folder as FolderGlyph, FolderLock } from "lucide-react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -15,6 +16,24 @@ export const DROP_PREFIX = "drop-folder:";
 export const DRAG_FOLDER_PREFIX = "drag-folder:";
 export const DRAG_CHARACTER_PREFIX = "drag-character:";
 export const ROOT_DROP_ID = "drop-folder:root";
+
+/**
+ * The glyph in front of a folder's name, and the only thing that says a folder
+ * is private wherever one is listed.
+ *
+ * Lucide rather than an emoji: the rest of the app's iconography is lucide,
+ * and an emoji renders at whatever size and weight the platform's font decides
+ * -- or as a tofu box where the font has no glyph at all.
+ */
+export const FolderIcon: React.FC<{ isPrivate: boolean; size?: number }> = ({
+  isPrivate,
+  size = 16,
+}) =>
+  isPrivate ? (
+    <FolderLock size={size} aria-label="Private folder" />
+  ) : (
+    <FolderGlyph size={size} aria-hidden />
+  );
 
 const Tile = styled.div<{ $over: boolean; $dragging: boolean }>`
   display: flex;
@@ -140,7 +159,7 @@ export const FolderTile: React.FC<FolderTileProps> = ({
         }
       }}
     >
-      <span aria-hidden>{folder.isPrivate ? "🔒" : "📁"}</span>
+      <FolderIcon isPrivate={folder.isPrivate} />
       <Name>{folder.name}</Name>
       <Count>{folder.characterCount}</Count>
       {editable && onMenu && !reordering && (

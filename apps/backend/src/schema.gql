@@ -28,48 +28,32 @@ input ApproveImageInput {
   """
   awards: [ImageAwardInput!]
 
-  """
-  Required when awards are given. Must belong to this community.
-  """
+  """Required when awards are given. Must belong to this community."""
   currencyId: ID
 
-  """
-  The ID of the image to approve
-  """
+  """The ID of the image to approve"""
   imageId: ID!
 
-  """
-  Staff-only note recorded on the reward's ledger rows.
-  """
+  """Staff-only note recorded on the reward's ledger rows."""
   staffNote: String
 }
 
 input ApproveTraitReviewInput {
-  """
-  The ID of the review to approve
-  """
+  """The ID of the review to approve"""
   reviewId: ID!
 }
 
 input AssignCharacterSpeciesInput {
-  """
-  Official registry identifier for this character within its species
-  """
+  """Official registry identifier for this character within its species"""
   registryId: String
 
-  """
-  Species ID to assign to the character
-  """
+  """Species ID to assign to the character"""
   speciesId: ID!
 
-  """
-  Species variant ID
-  """
+  """Species variant ID"""
   speciesVariantId: ID
 
-  """
-  Initial trait values for the character
-  """
+  """Initial trait values for the character"""
   traitValues: [CharacterTraitValueInput!]
 }
 
@@ -78,29 +62,21 @@ type AuthPayload {
 }
 
 input BurnCurrencyInput {
-  """
-  How much to remove, as a positive number.
-  """
+  """How much to remove, as a positive number."""
   amount: Int!
   currencyId: ID!
 
-  """
-  Member-facing. Required, because it is public.
-  """
+  """Member-facing. Required, because it is public."""
   reason: String!
   staffNote: String
   userId: ID!
 }
 
 input ChangeCharacterVariantWithItemInput {
-  """
-  The character to move. Must be yours.
-  """
+  """The character to move. Must be yours."""
   characterId: ID!
 
-  """
-  The item to redeem.
-  """
+  """The item to redeem."""
   itemId: ID!
 
   """
@@ -112,9 +88,7 @@ input ChangeCharacterVariantWithItemInput {
 type Character {
   _count: CharacterCount!
 
-  """
-  The active pending trait review for this character
-  """
+  """The active pending trait review for this character"""
   activeTraitReview: TraitReview
   createdAt: DateTime!
   creator: User
@@ -123,25 +97,17 @@ type Character {
   details: String
   id: ID!
 
-  """
-  Free to a good home.
-  """
+  """Free to a good home."""
   isFreebie: Boolean!
 
-  """
-  Open to offers, without saying in advance what kind.
-  """
+  """Open to offers, without saying in advance what kind."""
   isOpenToOffers: Boolean!
   isOrphaned: Boolean!
 
-  """
-  For sale, in real money. Paired with `price`.
-  """
+  """For sale, in real money. Paired with `price`."""
   isSellable: Boolean!
 
-  """
-  For sale, in a community's own currency.
-  """
+  """For sale, in a community's own currency."""
   isSellableForCoin: Boolean!
 
   """
@@ -149,27 +115,19 @@ type Character {
   """
   isTradeable: Boolean!
 
-  """
-  Open to trades for art.
-  """
+  """Open to trades for art."""
   isTradeableForArt: Boolean!
   likesCount: Int!
 
-  """
-  Main media item for this character (image or text)
-  """
+  """Main media item for this character (image or text)"""
   mainMedia: Media
 
-  """
-  ID of the main media item for this character
-  """
+  """ID of the main media item for this character"""
   mainMediaId: ID
   name: String!
   owner: User
 
-  """
-  ID of the owner. Null for orphaned/community-owned characters.
-  """
+  """ID of the owner. Null for orphaned/community-owned characters."""
   ownerId: ID
   pendingOwnership: PendingOwnership
 
@@ -179,41 +137,27 @@ type Character {
   pendingTraitReviewSource: TraitReviewSource
   price: Float
 
-  """
-  Official registry identifier for this character within its species
-  """
+  """Official registry identifier for this character within its species"""
   registryId: String
 
-  """
-  Species this character belongs to
-  """
+  """Species this character belongs to"""
   species: Species
 
-  """
-  ID of the species this character belongs to
-  """
+  """ID of the species this character belongs to"""
   speciesId: ID
 
-  """
-  Species variant this character belongs to
-  """
+  """Species variant this character belongs to"""
   speciesVariant: SpeciesVariant
 
-  """
-  ID of the species variant this character belongs to
-  """
+  """ID of the species variant this character belongs to"""
   speciesVariantId: ID
   tags: [String!]!
   tags_rel: [CharacterTag!]!
 
-  """
-  Trait review moderation status
-  """
+  """Trait review moderation status"""
   traitReviewStatus: ModerationStatus
 
-  """
-  Trait values assigned to this character
-  """
+  """Trait values assigned to this character"""
   traitValues: [CharacterTraitValue!]!
   updatedAt: DateTime!
   userHasLiked: Boolean!
@@ -253,14 +197,8 @@ input CharacterFiltersInput {
   Characters filed directly in this folder. Sub-folders are not included -- opening a folder shows what is in it, the way a file browser does. A private folder answers only to its owner.
   """
   folderId: ID
-  isSellable: Boolean
-    @deprecated(
-      reason: "Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only one of these that can also ask for the negative."
-    )
-  isTradeable: Boolean
-    @deprecated(
-      reason: "Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only one of these that can also ask for the negative."
-    )
+  isSellable: Boolean @deprecated(reason: "Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only one of these that can also ask for the negative.")
+  isTradeable: Boolean @deprecated(reason: "Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only one of these that can also ask for the negative.")
   limit: Int! = 20
   maxPrice: Float
   minPrice: Float
@@ -297,14 +235,10 @@ type CharacterFolder {
   """
   isPrivate: Boolean!
 
-  """
-  As the owner typed it.
-  """
+  """As the owner typed it."""
   name: String!
 
-  """
-  Null for a folder at the root of the workspace.
-  """
+  """Null for a folder at the root of the workspace."""
   parentId: ID
 
   """
@@ -313,62 +247,40 @@ type CharacterFolder {
   sortOrder: Int!
 }
 
-"""
-A record of character ownership transfer between users
-"""
+"""A record of character ownership transfer between users"""
 type CharacterOwnershipChange {
   character: Character
 
-  """
-  The ID of the character whose ownership was changed
-  """
+  """The ID of the character whose ownership was changed"""
   characterId: ID!
 
-  """
-  When the ownership change occurred
-  """
+  """When the ownership change occurred"""
   createdAt: DateTime!
   fromUser: User
 
-  """
-  The ID of the previous owner (null for initial character creation)
-  """
+  """The ID of the previous owner (null for initial character creation)"""
   fromUserId: ID
 
-  """
-  Unique identifier for the ownership change record
-  """
+  """Unique identifier for the ownership change record"""
   id: ID!
   toUser: User!
 
-  """
-  The ID of the new owner
-  """
+  """The ID of the new owner"""
   toUserId: ID!
 }
 
-"""
-Paginated list of character ownership changes with connection metadata
-"""
+"""Paginated list of character ownership changes with connection metadata"""
 type CharacterOwnershipChangeConnection {
-  """
-  Whether there are more character ownership changes after this page
-  """
+  """Whether there are more character ownership changes after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are character ownership changes before this page
-  """
+  """Whether there are character ownership changes before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  The character ownership changes in this page
-  """
+  """The character ownership changes in this page"""
   nodes: [CharacterOwnershipChange!]!
 
-  """
-  Total count of character ownership changes matching the query
-  """
+  """Total count of character ownership changes matching the query"""
   totalCount: Float!
 }
 
@@ -377,45 +289,29 @@ type CharacterTag {
   tag: Tag!
 }
 
-"""
-A trait value assigned to a character
-"""
+"""A trait value assigned to a character"""
 type CharacterTraitValue {
-  """
-  Optional free-text clarifier displayed parenthetically with the value
-  """
+  """Optional free-text clarifier displayed parenthetically with the value"""
   clarifier: String
   enumValue: EnumValue
   trait: Trait
 
-  """
-  The ID of the trait this value belongs to
-  """
+  """The ID of the trait this value belongs to"""
   traitId: ID!
 
-  """
-  The value of the trait
-  """
+  """The value of the trait"""
   value: String
 }
 
-"""
-Input for setting a character trait value
-"""
+"""Input for setting a character trait value"""
 input CharacterTraitValueInput {
-  """
-  Optional free-text clarifier displayed parenthetically with the value
-  """
+  """Optional free-text clarifier displayed parenthetically with the value"""
   clarifier: String
 
-  """
-  The ID of the trait
-  """
+  """The ID of the trait"""
   traitId: ID!
 
-  """
-  The value of the trait
-  """
+  """The value of the trait"""
   value: String
 }
 
@@ -424,18 +320,14 @@ type CharacterVariantChange {
   characterId: ID!
   createdAt: DateTime!
 
-  """
-  Null when the character had no variant before this.
-  """
+  """Null when the character had no variant before this."""
   fromVariant: SpeciesVariant
   id: ID!
   newTraitValues: [CharacterTraitValue!]!
   previousTraitValues: [CharacterTraitValue!]!
   reason: String
 
-  """
-  Null when the variant was cleared rather than changed.
-  """
+  """Null when the variant was cleared rather than changed."""
   toVariant: SpeciesVariant
 }
 
@@ -449,25 +341,17 @@ input CheckoutInput {
 }
 
 input CheckoutLineInputDto {
-  """
-  At most ten. The same limit applies across lines.
-  """
+  """At most ten. The same limit applies across lines."""
   quantity: Int!
   shopItemId: ID!
 
-  """
-  Which price option was chosen.
-  """
+  """Which price option was chosen."""
   shopPriceId: ID!
 }
 
-"""
-Input for claiming an invite code
-"""
+"""Input for claiming an invite code"""
 input ClaimInviteCodeInput {
-  """
-  The ID of the user who is claiming this invite code
-  """
+  """The ID of the user who is claiming this invite code"""
   userId: ID!
 }
 
@@ -507,9 +391,7 @@ input CommentFiltersInput {
   parentId: ID
 }
 
-"""
-Types of entities that can be commented on
-"""
+"""Types of entities that can be commented on"""
 enum CommentableType {
   CHARACTER
   GALLERY
@@ -518,39 +400,25 @@ enum CommentableType {
 }
 
 type Community {
-  """
-  When the community was created
-  """
+  """When the community was created"""
   createdAt: DateTime!
 
-  """
-  Discord guild (server) ID linked to this community
-  """
+  """Discord guild (server) ID linked to this community"""
   discordGuildId: String
 
-  """
-  Discord guild (server) name for display
-  """
+  """Discord guild (server) name for display"""
   discordGuildName: String
 
-  """
-  Unique identifier for the community
-  """
+  """Unique identifier for the community"""
   id: ID!
 
-  """
-  Number of members in the community
-  """
+  """Number of members in the community"""
   memberCount: Int!
 
-  """
-  Community members with optional search filtering
-  """
+  """Community members with optional search filtering"""
   members(limit: Int! = 10, search: String): [User!]!
 
-  """
-  Name of the community
-  """
+  """Name of the community"""
   name: String!
 
   """
@@ -558,9 +426,7 @@ type Community {
   """
   slug: String!
 
-  """
-  When the community was last updated
-  """
+  """When the community was last updated"""
   updatedAt: DateTime!
 }
 
@@ -575,195 +441,121 @@ type CommunityColor {
 }
 
 type CommunityConnection {
-  """
-  Whether there are more communities after this page
-  """
+  """Whether there are more communities after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are more communities before this page
-  """
+  """Whether there are more communities before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  List of communities in this connection
-  """
+  """List of communities in this connection"""
   nodes: [Community!]!
 
-  """
-  Total number of communities available
-  """
+  """Total number of communities available"""
   totalCount: Float!
 }
 
-"""
-An invitation for a user to join a community with a specific role
-"""
+"""An invitation for a user to join a community with a specific role"""
 type CommunityInvitation {
-  """
-  Whether the invitation has been accepted
-  """
+  """Whether the invitation has been accepted"""
   accepted: Boolean!
 
-  """
-  When the invitation was accepted
-  """
+  """When the invitation was accepted"""
   acceptedAt: DateTime
   community: Community
 
-  """
-  The ID of the community the invitation is for
-  """
+  """The ID of the community the invitation is for"""
   communityId: ID!
 
-  """
-  When the invitation was created
-  """
+  """When the invitation was created"""
   createdAt: DateTime!
 
-  """
-  Whether the invitation has been declined
-  """
+  """Whether the invitation has been declined"""
   declined: Boolean!
 
-  """
-  When the invitation was declined
-  """
+  """When the invitation was declined"""
   declinedAt: DateTime
 
-  """
-  Unique identifier for the community invitation
-  """
+  """Unique identifier for the community invitation"""
   id: ID!
   invitee: User
 
-  """
-  The ID of the user being invited
-  """
+  """The ID of the user being invited"""
   inviteeId: ID!
   inviter: User
 
-  """
-  The ID of the user who created the invitation
-  """
+  """The ID of the user who created the invitation"""
   inviterId: ID!
 
-  """
-  Whether the invitation is still pending
-  """
+  """Whether the invitation is still pending"""
   pending: Boolean!
   role: Role
 
-  """
-  The ID of the role to grant when the invitation is accepted
-  """
+  """The ID of the role to grant when the invitation is accepted"""
   roleId: ID!
 }
 
-"""
-Paginated list of community invitations with connection metadata
-"""
+"""Paginated list of community invitations with connection metadata"""
 type CommunityInvitationConnection {
-  """
-  Whether there are more community invitations after this page
-  """
+  """Whether there are more community invitations after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are community invitations before this page
-  """
+  """Whether there are community invitations before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  The community invitations in this page
-  """
+  """The community invitations in this page"""
   nodes: [CommunityInvitation!]!
 
-  """
-  Total count of community invitations matching the query
-  """
+  """Total count of community invitations matching the query"""
   totalCount: Float!
 }
 
-"""
-A membership record linking a user to a community role
-"""
+"""A membership record linking a user to a community role"""
 type CommunityMember {
-  """
-  When the membership was created
-  """
+  """When the membership was created"""
   createdAt: DateTime!
 
-  """
-  Unique identifier for the community member record
-  """
+  """Unique identifier for the community member record"""
   id: ID!
 
-  """
-  The role this member has
-  """
+  """The role this member has"""
   role: Role!
 
-  """
-  The ID of the role this member has
-  """
+  """The ID of the role this member has"""
   roleId: ID!
 
-  """
-  When the membership was last updated
-  """
+  """When the membership was last updated"""
   updatedAt: DateTime!
 
-  """
-  The user who is the member
-  """
+  """The user who is the member"""
   user: User!
 
-  """
-  The ID of the user who is the member
-  """
+  """The ID of the user who is the member"""
   userId: ID!
 }
 
-"""
-Paginated list of community members with connection metadata
-"""
+"""Paginated list of community members with connection metadata"""
 type CommunityMemberConnection {
-  """
-  Whether there are more community members after this page
-  """
+  """Whether there are more community members after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are community members before this page
-  """
+  """Whether there are community members before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  The community members in this page
-  """
+  """The community members in this page"""
   nodes: [CommunityMember!]!
 
-  """
-  Total count of community members matching the query
-  """
+  """Total count of community members matching the query"""
   totalCount: Float!
 }
 
 input CreateCharacterFolderInput {
-  """
-  Hide it, and everything under it, from everyone else.
-  """
+  """Hide it, and everything under it, from everyone else."""
   isPrivate: Boolean = false
 
-  """
-  Folder name, as it should be displayed.
-  """
+  """Folder name, as it should be displayed."""
   name: String!
 
-  """
-  Folder to nest inside. Omit for a folder at the root.
-  """
+  """Folder to nest inside. Omit for a folder at the root."""
   parentId: ID
 }
 
@@ -782,49 +574,33 @@ input CreateCharacterInput {
   isTradeableForArt: Boolean! = false
   name: String!
 
-  """
-  Create character with pending ownership for an external account
-  """
+  """Create character with pending ownership for an external account"""
   pendingOwner: PendingOwnerInput
   price: Float
 
-  """
-  Official registry identifier for this character within its species
-  """
+  """Official registry identifier for this character within its species"""
   registryId: String
   speciesId: ID
   speciesVariantId: ID
   tags: [String!]! = []
 
-  """
-  Source for the trait review. Defaults to CREATION.
-  """
+  """Source for the trait review. Defaults to CREATION."""
   traitReviewSource: TraitReviewSource
 
-  """
-  Trait values for the character
-  """
+  """Trait values for the character"""
   traitValues: [CharacterTraitValueInput!]! = []
   visibility: Visibility! = PUBLIC
 }
 
-"""
-Input for creating a new character ownership change record
-"""
+"""Input for creating a new character ownership change record"""
 input CreateCharacterOwnershipChangeInput {
-  """
-  The ID of the character whose ownership is being changed
-  """
+  """The ID of the character whose ownership is being changed"""
   characterId: ID!
 
-  """
-  The ID of the previous owner (null for initial character creation)
-  """
+  """The ID of the previous owner (null for initial character creation)"""
   fromUserId: ID
 
-  """
-  The ID of the new owner
-  """
+  """The ID of the new owner"""
   toUserId: ID!
 }
 
@@ -842,9 +618,7 @@ input CreateCommunityColorInput {
 }
 
 input CreateCommunityInput {
-  """
-  Name of the community
-  """
+  """Name of the community"""
   name: String!
 
   """
@@ -853,43 +627,27 @@ input CreateCommunityInput {
   slug: String!
 }
 
-"""
-Input for creating a new community invitation
-"""
+"""Input for creating a new community invitation"""
 input CreateCommunityInvitationInput {
-  """
-  The ID of the community the invitation is for
-  """
+  """The ID of the community the invitation is for"""
   communityId: ID!
 
-  """
-  The ID of the user being invited
-  """
+  """The ID of the user being invited"""
   inviteeId: ID!
 
-  """
-  The ID of the user who is creating the invitation
-  """
+  """The ID of the user who is creating the invitation"""
   inviterId: ID!
 
-  """
-  The ID of the role to grant when the invitation is accepted
-  """
+  """The ID of the role to grant when the invitation is accepted"""
   roleId: ID!
 }
 
-"""
-Input for creating a new community membership
-"""
+"""Input for creating a new community membership"""
 input CreateCommunityMemberInput {
-  """
-  The ID of the role to assign to the member
-  """
+  """The ID of the role to assign to the member"""
   roleId: ID!
 
-  """
-  The ID of the user to make a member
-  """
+  """The ID of the user to make a member"""
   userId: ID!
 }
 
@@ -911,36 +669,24 @@ input CreateCurrencyInput {
 }
 
 input CreateEnumValueInput {
-  """
-  ID of the color for this enum value
-  """
+  """ID of the color for this enum value"""
   colorId: ID
 
-  """
-  Name/display text of this enum value
-  """
+  """Name/display text of this enum value"""
   name: String!
 
-  """
-  Display order within the trait's enum values
-  """
+  """Display order within the trait's enum values"""
   order: Int = 0
 
-  """
-  ID of the trait this enum value belongs to
-  """
+  """ID of the trait this enum value belongs to"""
   traitId: ID!
 }
 
 input CreateEnumValueSettingInput {
-  """
-  ID of the enum value this setting allows
-  """
+  """ID of the enum value this setting allows"""
   enumValueId: ID!
 
-  """
-  ID of the species variant this setting belongs to
-  """
+  """ID of the species variant this setting belongs to"""
   speciesVariantId: ID!
 }
 
@@ -952,28 +698,18 @@ input CreateGalleryInput {
   visibility: Visibility! = PUBLIC
 }
 
-"""
-Input for creating a new invite code
-"""
+"""Input for creating a new invite code"""
 input CreateInviteCodeInput {
-  """
-  The ID of the user who is creating this invite code
-  """
+  """The ID of the user who is creating this invite code"""
   creatorId: ID!
 
-  """
-  The invite code string (alphanumeric and hyphens only)
-  """
+  """The invite code string (alphanumeric and hyphens only)"""
   id: String!
 
-  """
-  Maximum number of times this invite code can be claimed
-  """
+  """Maximum number of times this invite code can be claimed"""
   maxClaims: Int!
 
-  """
-  The ID of the role to grant when this invite code is used
-  """
+  """The ID of the role to grant when this invite code is used"""
   roleId: ID
 }
 
@@ -991,43 +727,27 @@ input CreateItemTypeInput {
   name: String!
 }
 
-"""
-Input for creating a new role
-"""
+"""Input for creating a new role"""
 input CreateRoleInput {
-  """
-  Whether members with this role can create new characters
-  """
+  """Whether members with this role can create new characters"""
   canCreateCharacter: Boolean! = false
 
-  """
-  Whether members with this role can create invite codes
-  """
+  """Whether members with this role can create invite codes"""
   canCreateInviteCode: Boolean! = false
 
-  """
-  Whether members with this role can create orphaned characters
-  """
+  """Whether members with this role can create orphaned characters"""
   canCreateOrphanedCharacter: Boolean! = false
 
-  """
-  Whether members with this role can create new roles
-  """
+  """Whether members with this role can create new roles"""
   canCreateRole: Boolean! = false
 
-  """
-  Whether members with this role can create new species
-  """
+  """Whether members with this role can create new species"""
   canCreateSpecies: Boolean! = false
 
-  """
-  Whether members with this role can delete characters in this community
-  """
+  """Whether members with this role can delete characters in this community"""
   canDeleteCharacter: Boolean! = false
 
-  """
-  Whether members with this role can edit characters
-  """
+  """Whether members with this role can edit characters"""
   canEditCharacter: Boolean! = false
 
   """
@@ -1035,9 +755,7 @@ input CreateRoleInput {
   """
   canEditCharacterRegistry: Boolean! = false
 
-  """
-  Whether members with this role can edit their own characters
-  """
+  """Whether members with this role can edit their own characters"""
   canEditOwnCharacter: Boolean! = false
 
   """
@@ -1045,34 +763,22 @@ input CreateRoleInput {
   """
   canEditOwnCharacterRegistry: Boolean! = false
 
-  """
-  Whether members with this role can edit existing roles
-  """
+  """Whether members with this role can edit existing roles"""
   canEditRole: Boolean! = false
 
-  """
-  Whether members with this role can edit species
-  """
+  """Whether members with this role can edit species"""
   canEditSpecies: Boolean! = false
 
-  """
-  Whether members with this role can grant items to community members
-  """
+  """Whether members with this role can grant items to community members"""
   canGrantItems: Boolean! = false
 
-  """
-  Whether members with this role can list invite codes
-  """
+  """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean! = false
 
-  """
-  Whether members with this role can create, edit, and delete item types
-  """
+  """Whether members with this role can create, edit, and delete item types"""
   canManageItems: Boolean! = false
 
-  """
-  Whether members with this role can change other members' roles
-  """
+  """Whether members with this role can change other members' roles"""
   canManageMemberRoles: Boolean! = false
 
   """
@@ -1080,14 +786,10 @@ input CreateRoleInput {
   """
   canModerateImages: Boolean! = false
 
-  """
-  Whether members with this role can remove community members
-  """
+  """Whether members with this role can remove community members"""
   canRemoveCommunityMember: Boolean! = false
 
-  """
-  Whether members with this role can upload images to any character
-  """
+  """Whether members with this role can upload images to any character"""
   canUploadCharacterImages: Boolean! = false
 
   """
@@ -1095,14 +797,10 @@ input CreateRoleInput {
   """
   canUploadOwnCharacterImages: Boolean! = false
 
-  """
-  The ID of the community this role belongs to
-  """
+  """The ID of the community this role belongs to"""
   communityId: ID!
 
-  """
-  The name of the role
-  """
+  """The name of the role"""
   name: String!
 }
 
@@ -1110,105 +808,67 @@ input CreateShopItemInput {
   communityId: ID!
   description: String
 
-  """
-  What buying this grants.
-  """
+  """What buying this grants."""
   itemTypeId: ID!
 
-  """
-  Omit for no cap.
-  """
+  """Omit for no cap."""
   maxPerUser: Int
   name: String
 
-  """
-  At least one, or nobody can buy it.
-  """
+  """At least one, or nobody can buy it."""
   prices: [ShopPriceInput!]!
   sortOrder: Int
 
-  """
-  Omit for unlimited.
-  """
+  """Omit for unlimited."""
   stock: Int
 }
 
 input CreateSpeciesInput {
-  """
-  ID of the community that owns this species
-  """
+  """ID of the community that owns this species"""
   communityId: ID!
 
-  """
-  Whether this species has an associated image
-  """
+  """Whether this species has an associated image"""
   hasImage: Boolean = false
 
-  """
-  Name of the species
-  """
+  """Name of the species"""
   name: String!
 }
 
 input CreateSpeciesVariantInput {
-  """
-  ID of the color for this species variant
-  """
+  """ID of the color for this species variant"""
   colorId: ID
 
-  """
-  Name of the species variant
-  """
+  """Name of the species variant"""
   name: String!
 
-  """
-  ID of the species this variant belongs to
-  """
+  """ID of the species this variant belongs to"""
   speciesId: ID!
 }
 
-"""
-Input type for creating new text media
-"""
+"""Input type for creating new text media"""
 input CreateTextMediaInput {
-  """
-  Optional character to associate with this media
-  """
+  """Optional character to associate with this media"""
   characterId: ID
 
-  """
-  The actual text content
-  """
+  """The actual text content"""
   content: String!
 
-  """
-  Optional description for the text media
-  """
+  """Optional description for the text media"""
   description: String
 
-  """
-  Text formatting type (plaintext or markdown)
-  """
+  """Text formatting type (plaintext or markdown)"""
   formatting: TextFormatting! = PLAINTEXT
 
-  """
-  Optional gallery to add this media to
-  """
+  """Optional gallery to add this media to"""
   galleryId: ID
 
-  """
-  Optional tags to associate with this media
-  """
+  """Optional tags to associate with this media"""
   tags: [String!]
 
-  """
-  Title for the text media
-  """
+  """Title for the text media"""
   title: String!
 
-  """
-  Visibility setting for the media
-  """
+  """Visibility setting for the media"""
   visibility: Visibility! = PUBLIC
 }
 
@@ -1238,71 +898,45 @@ input CreateTraitInput {
   """
   allowsClarifier: Boolean = false
 
-  """
-  Whether this trait allows multiple values per character
-  """
+  """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean = false
 
-  """
-  ID of the color for this trait
-  """
+  """ID of the color for this trait"""
   colorId: ID
 
-  """
-  Name of the trait
-  """
+  """Name of the trait"""
   name: String!
 
-  """
-  ID of the species this trait belongs to
-  """
+  """ID of the species this trait belongs to"""
   speciesId: ID!
 
-  """
-  Type of values this trait can store
-  """
+  """Type of values this trait can store"""
   valueType: TraitValueType!
 }
 
 input CreateTraitListEntryInput {
-  """
-  Default integer value for this trait
-  """
+  """Default integer value for this trait"""
   defaultValueInt: Int
 
-  """
-  Default string value for this trait
-  """
+  """Default string value for this trait"""
   defaultValueString: String
 
-  """
-  Default timestamp value for this trait
-  """
+  """Default timestamp value for this trait"""
   defaultValueTimestamp: DateTime
 
-  """
-  Display order of this trait in the variant's trait list
-  """
+  """Display order of this trait in the variant's trait list"""
   order: Int!
 
-  """
-  Whether this trait is required for critters using this variant
-  """
+  """Whether this trait is required for critters using this variant"""
   required: Boolean!
 
-  """
-  ID of the species variant this entry belongs to
-  """
+  """ID of the species variant this entry belongs to"""
   speciesVariantId: ID!
 
-  """
-  ID of the trait this entry configures
-  """
+  """ID of the trait this entry configures"""
   traitId: ID!
 
-  """
-  Type of values this trait stores
-  """
+  """Type of values this trait stores"""
   valueType: TraitValueType!
 }
 
@@ -1315,9 +949,7 @@ type Currency {
   """
   archivedAt: DateTime
 
-  """
-  Short display code, unique within the community: "HC".
-  """
+  """Short display code, unique within the community: "HC"."""
   code: String!
   colorId: ID
   communityId: ID!
@@ -1338,9 +970,7 @@ type Currency {
   updatedAt: DateTime!
 }
 
-"""
-What one member holds of one currency.
-"""
+"""What one member holds of one currency."""
 type CurrencyBalance {
   amount: Int!
   currency: Currency!
@@ -1351,27 +981,19 @@ type CurrencyBalance {
 }
 
 type CurrencyBalanceLine {
-  """
-  Zero when the member has never held any of this currency.
-  """
+  """Zero when the member has never held any of this currency."""
   amount: Int!
   currency: Currency!
 
-  """
-  When this balance last moved. Null if it never has.
-  """
+  """When this balance last moved. Null if it never has."""
   updatedAt: DateTime
 }
 
-"""
-What a community's currency is doing, in aggregate.
-"""
+"""What a community's currency is doing, in aggregate."""
 type CurrencySupply {
   currency: Currency!
 
-  """
-  Members holding a non-zero balance.
-  """
+  """Members holding a non-zero balance."""
   holders: Int!
 
   """
@@ -1379,14 +1001,10 @@ type CurrencySupply {
   """
   inCirculation: Int!
 
-  """
-  The largest single balance. Zero when nobody holds any.
-  """
+  """The largest single balance. Zero when nobody holds any."""
   largestBalance: Int!
 
-  """
-  Minted over the last 30 days.
-  """
+  """Minted over the last 30 days."""
   mintedLast30Days: Int!
 
   """
@@ -1405,9 +1023,7 @@ type CurrencyTransaction {
   actorLabel: String
   actorUser: User
 
-  """
-  Null for anything the system did on its own.
-  """
+  """Null for anything the system did on its own."""
   actorUserId: ID
 
   """
@@ -1426,9 +1042,7 @@ type CurrencyTransaction {
   batchId: ID!
   counterparty: User
 
-  """
-  The member on the other side of a transfer.
-  """
+  """The member on the other side of a transfer."""
   counterpartyId: ID
   createdAt: DateTime!
   currency: Currency!
@@ -1436,9 +1050,7 @@ type CurrencyTransaction {
   id: ID!
   kind: CurrencyTransactionKind!
 
-  """
-  Member-facing. Visible to anyone who can read this statement.
-  """
+  """Member-facing. Visible to anyone who can read this statement."""
   reason: String
 
   """
@@ -1457,9 +1069,7 @@ type CurrencyTransaction {
   staffNote: String
   user: User
 
-  """
-  Whose balance this row moved.
-  """
+  """Whose balance this row moved."""
   userId: ID!
 }
 
@@ -1470,15 +1080,11 @@ type CurrencyTransactionConnection {
 }
 
 input CurrencyTransactionFiltersInput {
-  """
-  Required. A statement is always scoped to one community.
-  """
+  """Required. A statement is always scoped to one community."""
   communityId: ID!
   currencyId: ID
 
-  """
-  Match any of these kinds. Omit for all kinds.
-  """
+  """Match any of these kinds. Omit for all kinds."""
   kinds: [CurrencyTransactionKind!]
   limit: Int! = 25
   offset: Int! = 0
@@ -1494,23 +1100,17 @@ input CurrencyTransactionFiltersInput {
   userId: ID
 }
 
-"""
-How currency moved.
-"""
+"""How currency moved."""
 enum CurrencyTransactionKind {
   """
   Removed from a member's balance by staff, as a correction or a penalty.
   """
   BURN
 
-  """
-  Written by a migration for a balance that predates this ledger.
-  """
+  """Written by a migration for a balance that predates this ledger."""
   IMPORT
 
-  """
-  Created into a member's balance by staff. Coin has no other source.
-  """
+  """Created into a member's balance by staff. Coin has no other source."""
   MINT
 
   """
@@ -1524,13 +1124,9 @@ enum CurrencyTransactionKind {
   TRANSFER
 }
 
-"""
-What caused a currency movement.
-"""
+"""What caused a currency movement."""
 enum CurrencyTransactionSource {
-  """
-  Somebody acted directly, with no other record behind it.
-  """
+  """Somebody acted directly, with no other record behind it."""
   DIRECT
   ITEM_USE
 
@@ -1547,9 +1143,7 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 scalar DateTime
 
 input DeferImageInput {
-  """
-  The ID of the image to send to the back of the queue
-  """
+  """The ID of the image to send to the back of the queue"""
   imageId: ID!
 
   """
@@ -1564,9 +1158,7 @@ input DeferTraitReviewInput {
   """
   note: String
 
-  """
-  The ID of the review to send to the back of the queue
-  """
+  """The ID of the review to send to the back of the queue"""
   reviewId: ID!
 }
 
@@ -1595,68 +1187,44 @@ type DeviantartUuidBackfillRecordResult {
 }
 
 type DiscordGuildInfo {
-  """
-  Whether the bot has access to this guild
-  """
+  """Whether the bot has access to this guild"""
   botHasAccess: Boolean!
 
-  """
-  Discord guild ID
-  """
+  """Discord guild ID"""
   id: ID!
 
-  """
-  Discord guild name
-  """
+  """Discord guild name"""
   name: String!
 }
 
-"""
-Resolved Discord user information
-"""
+"""Resolved Discord user information"""
 type DiscordUserInfo {
-  """
-  URL to user avatar image
-  """
+  """URL to user avatar image"""
   avatarUrl: String
 
-  """
-  Discord display name (may differ from username)
-  """
+  """Discord display name (may differ from username)"""
   displayName: String
 
-  """
-  Discord user ID (snowflake)
-  """
+  """Discord user ID (snowflake)"""
   userId: ID!
 
-  """
-  Discord username
-  """
+  """Discord username"""
   username: String!
 }
 
 input EditAndApproveTraitReviewInput {
-  """
-  The corrected trait values to apply
-  """
+  """The corrected trait values to apply"""
   correctedTraitValues: [CharacterTraitValueInput!]!
 
-  """
-  The ID of the review to edit and approve
-  """
+  """The ID of the review to edit and approve"""
   reviewId: ID!
 }
 
 input EditCharacterTraitsWithKitInput {
-  """
-  The character to change. Must be yours.
-  """
+  """The character to change. Must be yours."""
   characterId: ID!
 
-  """
-  The kit to spend.
-  """
+  """The kit to spend."""
   itemId: ID!
 
   """
@@ -1677,130 +1245,82 @@ enum EffectiveTradeStatus {
 }
 
 type EnumValue {
-  """
-  The color associated with this enum value
-  """
+  """The color associated with this enum value"""
   color: CommunityColor
 
-  """
-  ID of the color for this enum value
-  """
+  """ID of the color for this enum value"""
   colorId: ID
 
-  """
-  When the enum value was created
-  """
+  """When the enum value was created"""
   createdAt: DateTime!
 
-  """
-  Unique identifier for the enum value
-  """
+  """Unique identifier for the enum value"""
   id: ID!
 
-  """
-  Name/display text of this enum value
-  """
+  """Name/display text of this enum value"""
   name: String!
 
-  """
-  Display order within the trait's enum values
-  """
+  """Display order within the trait's enum values"""
   order: Int!
 
-  """
-  The trait this enum value belongs to
-  """
+  """The trait this enum value belongs to"""
   trait: Trait!
 
-  """
-  ID of the trait this enum value belongs to
-  """
+  """ID of the trait this enum value belongs to"""
   traitId: ID!
 
-  """
-  When the enum value was last updated
-  """
+  """When the enum value was last updated"""
   updatedAt: DateTime!
 }
 
 type EnumValueConnection {
-  """
-  Whether there are more enum values after this page
-  """
+  """Whether there are more enum values after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are more enum values before this page
-  """
+  """Whether there are more enum values before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  List of enum values in this connection
-  """
+  """List of enum values in this connection"""
   nodes: [EnumValue!]!
 
-  """
-  Total number of enum values available
-  """
+  """Total number of enum values available"""
   totalCount: Float!
 }
 
 type EnumValueSetting {
-  """
-  When the enum value setting was created
-  """
+  """When the enum value setting was created"""
   createdAt: DateTime!
 
-  """
-  The enum value this setting allows
-  """
+  """The enum value this setting allows"""
   enumValue: EnumValue!
 
-  """
-  ID of the enum value this setting allows
-  """
+  """ID of the enum value this setting allows"""
   enumValueId: ID!
 
-  """
-  Unique identifier for the enum value setting
-  """
+  """Unique identifier for the enum value setting"""
   id: ID!
 
-  """
-  The species variant this setting belongs to
-  """
+  """The species variant this setting belongs to"""
   speciesVariant: SpeciesVariant!
 
-  """
-  ID of the species variant this setting belongs to
-  """
+  """ID of the species variant this setting belongs to"""
   speciesVariantId: ID!
 
-  """
-  When the enum value setting was last updated
-  """
+  """When the enum value setting was last updated"""
   updatedAt: DateTime!
 }
 
 type EnumValueSettingConnection {
-  """
-  Whether there are more enum value settings after this page
-  """
+  """Whether there are more enum value settings after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are more enum value settings before this page
-  """
+  """Whether there are more enum value settings before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  List of enum value settings in this connection
-  """
+  """List of enum value settings in this connection"""
   nodes: [EnumValueSetting!]!
 
-  """
-  Total number of enum value settings available
-  """
+  """Total number of enum value settings available"""
   totalCount: Float!
 }
 
@@ -1814,9 +1334,7 @@ type ExternalAccount {
   userId: ID!
 }
 
-"""
-The external account provider type
-"""
+"""The external account provider type"""
 enum ExternalAccountProvider {
   DEVIANTART
   DISCORD
@@ -1885,14 +1403,10 @@ input GrantItemInput {
   itemTypeId: ID!
   metadata: String
 
-  """
-  Create item with pending ownership for an external account
-  """
+  """Create item with pending ownership for an external account"""
   pendingOwner: PendingOwnerInput
 
-  """
-  How many to create. At most 100.
-  """
+  """How many to create. At most 100."""
   quantity: Int! = 1
 
   """
@@ -1900,14 +1414,10 @@ input GrantItemInput {
   """
   reason: String
 
-  """
-  Staff-only detail recorded on the ledger. Never shown to members.
-  """
+  """Staff-only detail recorded on the ledger. Never shown to members."""
   staffNote: String
 
-  """
-  User ID to grant item to. Required if pendingOwner is not provided.
-  """
+  """User ID to grant item to. Required if pendingOwner is not provided."""
   userId: ID
 }
 
@@ -1919,14 +1429,10 @@ type Image {
   artistUrl: String
   createdAt: DateTime!
 
-  """
-  How many times this image has been sent to the back
-  """
+  """How many times this image has been sent to the back"""
   deferralCount: Int!
 
-  """
-  Why the last moderator passed on this image
-  """
+  """Why the last moderator passed on this image"""
   deferralNote: String
 
   """
@@ -1934,9 +1440,7 @@ type Image {
   """
   deferredAt: DateTime
 
-  """
-  The moderator who last sent this image to the back
-  """
+  """The moderator who last sent this image to the back"""
   deferredBy: User
   deferredById: ID
   fileSize: Int!
@@ -1947,9 +1451,7 @@ type Image {
   mediumUrl: String
   mimeType: String!
 
-  """
-  Current moderation status of the image
-  """
+  """Current moderation status of the image"""
   moderationStatus: ModerationStatus!
   originalFilename: String!
   originalUrl: String!
@@ -1970,9 +1472,7 @@ type Image {
 }
 
 input ImageAwardInput {
-  """
-  Positive. Omit the entry to pay nothing.
-  """
+  """Positive. Omit the entry to pay nothing."""
   amount: Int!
   userId: ID!
 }
@@ -1997,18 +1497,12 @@ input ImageCropInput {
   y: Int!
 }
 
-"""
-A moderation action taken on an image
-"""
+"""A moderation action taken on an image"""
 type ImageModerationAction {
-  """
-  The moderation action taken
-  """
+  """The moderation action taken"""
   action: ModerationStatus!
 
-  """
-  When the moderation action was taken
-  """
+  """When the moderation action was taken"""
   createdAt: DateTime!
 
   """
@@ -2021,78 +1515,50 @@ type ImageModerationAction {
   moderator: User!
   moderatorId: ID!
 
-  """
-  The reason for rejection (if rejected)
-  """
+  """The reason for rejection (if rejected)"""
   reason: ModerationRejectionReason
 
-  """
-  Additional details about the rejection
-  """
+  """Additional details about the rejection"""
   reasonText: String
 }
 
-"""
-Paginated list of images in the moderation queue
-"""
+"""Paginated list of images in the moderation queue"""
 type ImageModerationQueueConnection {
-  """
-  Whether there are more images after this page
-  """
+  """Whether there are more images after this page"""
   hasMore: Boolean!
   items: [ImageModerationQueueItem!]!
 
-  """
-  Total count of pending images
-  """
+  """Total count of pending images"""
   total: Int!
 }
 
 input ImageModerationQueueFiltersInput {
-  """
-  Filter images uploaded after this date
-  """
+  """Filter images uploaded after this date"""
   uploadedAfter: DateTime
 
-  """
-  Filter images uploaded before this date
-  """
+  """Filter images uploaded before this date"""
   uploadedBefore: DateTime
 
-  """
-  Filter by uploader ID
-  """
+  """Filter by uploader ID"""
   uploaderId: ID
 }
 
-"""
-An item in the moderation queue
-"""
+"""An item in the moderation queue"""
 type ImageModerationQueueItem {
-  """
-  ID of the associated character (if any)
-  """
+  """ID of the associated character (if any)"""
   characterId: ID
 
-  """
-  Name of the associated character (if any)
-  """
+  """Name of the associated character (if any)"""
   characterName: String
 
-  """
-  ID of the associated community (if any)
-  """
+  """ID of the associated community (if any)"""
   communityId: ID
 
-  """
-  Name of the associated community (if any)
-  """
+  """Name of the associated community (if any)"""
   communityName: String
   image: Image!
 
-  """
-  Title of the associated media (if any)
-  """
+  """Title of the associated media (if any)"""
   mediaTitle: String
 }
 
@@ -2111,84 +1577,52 @@ type Inventory {
 An invite code that can be used to join a community with an optional role
 """
 type InviteCode {
-  """
-  Number of times this invite code has been claimed
-  """
+  """Number of times this invite code has been claimed"""
   claimCount: Int!
 
-  """
-  When the invite code was created
-  """
+  """When the invite code was created"""
   createdAt: DateTime!
 
-  """
-  The user who created this invite code
-  """
+  """The user who created this invite code"""
   creator: User!
 
-  """
-  The ID of the user who created this invite code
-  """
+  """The ID of the user who created this invite code"""
   creatorId: ID!
 
-  """
-  The unique invite code string
-  """
+  """The unique invite code string"""
   id: ID!
 
-  """
-  Whether this invite code is still available for use
-  """
+  """Whether this invite code is still available for use"""
   isAvailable: Boolean!
 
-  """
-  Maximum number of times this invite code can be claimed
-  """
+  """Maximum number of times this invite code can be claimed"""
   maxClaims: Int!
 
-  """
-  Number of remaining uses for this invite code
-  """
+  """Number of remaining uses for this invite code"""
   remainingClaims: Int!
 
-  """
-  The role to grant when this invite code is used
-  """
+  """The role to grant when this invite code is used"""
   role: Role
 
-  """
-  The ID of the role to grant when this invite code is used
-  """
+  """The ID of the role to grant when this invite code is used"""
   roleId: ID
 
-  """
-  When the invite code was last updated
-  """
+  """When the invite code was last updated"""
   updatedAt: DateTime!
 }
 
-"""
-Paginated list of invite codes with connection metadata
-"""
+"""Paginated list of invite codes with connection metadata"""
 type InviteCodeConnection {
-  """
-  Whether there are more invite codes after this page
-  """
+  """Whether there are more invite codes after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are invite codes before this page
-  """
+  """Whether there are invite codes before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  The invite codes in this page
-  """
+  """The invite codes in this page"""
   nodes: [InviteCode!]!
 
-  """
-  Total count of invite codes matching the query
-  """
+  """Total count of invite codes matching the query"""
   totalCount: Float!
 }
 
@@ -2210,13 +1644,9 @@ type Item {
   updatedAt: DateTime!
 }
 
-"""
-Item circulation across a whole community, by item type.
-"""
+"""Item circulation across a whole community, by item type."""
 type ItemEconomyReport {
-  """
-  Largest circulation first.
-  """
+  """Largest circulation first."""
   itemTypes: [ItemTypeEconomy!]!
 
   """
@@ -2224,19 +1654,13 @@ type ItemEconomyReport {
   """
   netRecently: Int!
 
-  """
-  Live items across every type.
-  """
+  """Live items across every type."""
   totalCirculation: Int!
 
-  """
-  Distinct members holding at least one item of any type.
-  """
+  """Distinct members holding at least one item of any type."""
   totalHolders: Int!
 
-  """
-  Unclaimed items across every type.
-  """
+  """Unclaimed items across every type."""
   totalUnclaimed: Int!
 }
 
@@ -2250,9 +1674,7 @@ type ItemTransaction {
   actorLabel: String
   actorUser: User
 
-  """
-  Null for anything the system did on its own.
-  """
+  """Null for anything the system did on its own."""
   actorUserId: ID
 
   """
@@ -2275,9 +1697,7 @@ type ItemTransaction {
   itemTypeId: ID!
   kind: ItemTransactionKind!
 
-  """
-  Member-facing. Visible to anyone who can read the ledger.
-  """
+  """Member-facing. Visible to anyone who can read the ledger."""
   reason: String
 
   """
@@ -2295,16 +1715,12 @@ type ItemTransactionConnection {
 }
 
 input ItemTransactionFiltersInput {
-  """
-  Required. The ledger is always scoped to one community.
-  """
+  """Required. The ledger is always scoped to one community."""
   communityId: ID!
   itemId: ID
   itemTypeId: ID
 
-  """
-  Match any of these kinds. Omit for all kinds.
-  """
+  """Match any of these kinds. Omit for all kinds."""
   kinds: [ItemTransactionKind!]
   limit: Int! = 25
   offset: Int! = 0
@@ -2320,34 +1736,22 @@ input ItemTransactionFiltersInput {
   userId: ID
 }
 
-"""
-How an item moved.
-"""
+"""How an item moved."""
 enum ItemTransactionKind {
-  """
-  Released from pending ownership once an external account was linked.
-  """
+  """Released from pending ownership once an external account was linked."""
   CLAIM
 
-  """
-  Minted by staff or a bot and given to someone.
-  """
+  """Minted by staff or a bot and given to someone."""
   GRANT
   IMPORT
 
-  """
-  Taken back and destroyed. Always a correction.
-  """
+  """Taken back and destroyed. Always a correction."""
   REVOKE
 
-  """
-  Moved between two members.
-  """
+  """Moved between two members."""
   TRANSFER
 
-  """
-  Consumed by its holder.
-  """
+  """Consumed by its holder."""
   USE
 }
 
@@ -2382,18 +1786,12 @@ type ItemTypeConnection {
   total: Int!
 }
 
-"""
-One item type, and how it is doing.
-"""
+"""One item type, and how it is doing."""
 type ItemTypeEconomy {
-  """
-  Live items of this type. Destroyed ones are not counted.
-  """
+  """Live items of this type. Destroyed ones are not counted."""
   circulation: Int!
 
-  """
-  Items granted in the last 30 days.
-  """
+  """Items granted in the last 30 days."""
   grantedRecently: Int!
 
   """
@@ -2402,9 +1800,7 @@ type ItemTypeEconomy {
   holderCount: Int!
   itemType: ItemType!
 
-  """
-  Items revoked in the last 30 days.
-  """
+  """Items revoked in the last 30 days."""
   revokedRecently: Int!
 
   """
@@ -2448,9 +1844,7 @@ input ItemUsePayoutComponentInput {
 type ItemUseTraitEditGrant {
   id: ID!
 
-  """
-  Never empty -- a grant covering nothing is cleared instead.
-  """
+  """Never empty -- a grant covering nothing is cleared instead."""
   species: [ItemUseTraitEditGrantSpecies!]!
 }
 
@@ -2476,9 +1870,7 @@ type ItemUseVariantChangeGrant {
   """
   species: Species!
 
-  """
-  What the character becomes. Exactly one, so a member never chooses.
-  """
+  """What the character becomes. Exactly one, so a member never chooses."""
   toVariant: SpeciesVariant!
 }
 
@@ -2499,9 +1891,7 @@ type LikeStatus {
   likesCount: Float!
 }
 
-"""
-Types of entities that can be liked
-"""
+"""Types of entities that can be liked"""
 enum LikeableType {
   CHARACTER
   COMMENT
@@ -2515,13 +1905,9 @@ input LoginInput {
   password: String!
 }
 
-"""
-Input type for managing media tags
-"""
+"""Input type for managing media tags"""
 input ManageMediaTagsInput {
-  """
-  Array of tag names to add or remove
-  """
+  """Array of tag names to add or remove"""
   tagNames: [String!]!
 }
 
@@ -2529,58 +1915,38 @@ input ManageTagsInput {
   tagNames: [String!]!
 }
 
-"""
-Polymorphic media that can represent both images and text content
-"""
+"""Polymorphic media that can represent both images and text content"""
 type Media {
   """
   People who could be awarded currency for this media. Null unless the viewer holds canGrantItems in the owning community.
   """
   awardRecipients: [MediaAwardRecipient!]
 
-  """
-  The character this media is associated with, if any
-  """
+  """The character this media is associated with, if any"""
   character: Character
 
-  """
-  Number of characters this media is associated with
-  """
+  """Number of characters this media is associated with"""
   characterCount: Int!
 
-  """
-  Optional ID of the character this media is associated with
-  """
+  """Optional ID of the character this media is associated with"""
   characterId: ID
 
-  """
-  When the media was created
-  """
+  """When the media was created"""
   createdAt: DateTime!
 
-  """
-  Optional description for the media
-  """
+  """Optional description for the media"""
   description: String
 
-  """
-  The gallery this media belongs to, if any
-  """
+  """The gallery this media belongs to, if any"""
   gallery: Gallery
 
-  """
-  Number of galleries this media appears in
-  """
+  """Number of galleries this media appears in"""
   galleryCount: Int!
 
-  """
-  Optional ID of the gallery this media belongs to
-  """
+  """Optional ID of the gallery this media belongs to"""
   galleryId: ID
 
-  """
-  Unique identifier for the media
-  """
+  """Unique identifier for the media"""
   id: ID!
 
   """
@@ -2588,24 +1954,16 @@ type Media {
   """
   image: Image
 
-  """
-  Foreign key to image content (null for text media)
-  """
+  """Foreign key to image content (null for text media)"""
   imageId: ID
 
-  """
-  Number of likes this media has received
-  """
+  """Number of likes this media has received"""
   likesCount: Int!
 
-  """
-  The user who owns this media
-  """
+  """The user who owns this media"""
   owner: User!
 
-  """
-  ID of the user who owns this media
-  """
+  """ID of the user who owns this media"""
   ownerId: ID!
 
   """
@@ -2613,35 +1971,23 @@ type Media {
   """
   pendingModerationImage: Image
 
-  """
-  Tag relationships for this media
-  """
+  """Tag relationships for this media"""
   tags_rel: [MediaTag!]
 
-  """
-  Text content (populated for text media)
-  """
+  """Text content (populated for text media)"""
   textContent: TextContent
 
-  """
-  Foreign key to text content (null for image media)
-  """
+  """Foreign key to text content (null for image media)"""
   textContentId: ID
 
-  """
-  User-provided title for the media
-  """
+  """User-provided title for the media"""
   title: String!
 
-  """
-  When the media was last updated
-  """
+  """When the media was last updated"""
   updatedAt: DateTime!
   userHasLiked: Boolean!
 
-  """
-  Visibility setting for the media
-  """
+  """Visibility setting for the media"""
   visibility: Visibility!
 }
 
@@ -2662,9 +2008,7 @@ type MediaAwardRecipient {
   userId: ID!
 }
 
-"""
-How a person is connected to a piece of media.
-"""
+"""How a person is connected to a piece of media."""
 enum MediaAwardRelation {
   ARTIST
   CHARACTER_OWNER
@@ -2672,107 +2016,67 @@ enum MediaAwardRelation {
   UPLOADER
 }
 
-"""
-Paginated connection result for media queries
-"""
+"""Paginated connection result for media queries"""
 type MediaConnection {
-  """
-  Whether there are more items available after this page
-  """
+  """Whether there are more items available after this page"""
   hasMore: Boolean!
 
-  """
-  Total number of image media items in the full result set
-  """
+  """Total number of image media items in the full result set"""
   imageCount: Float!
 
-  """
-  Array of media items for this page
-  """
+  """Array of media items for this page"""
   media: [Media!]!
 
-  """
-  Total number of text media items in the full result set
-  """
+  """Total number of text media items in the full result set"""
   textCount: Float!
 
-  """
-  Total number of media items matching the query
-  """
+  """Total number of media items matching the query"""
   total: Float!
 }
 
-"""
-Input type for filtering and paginating media queries
-"""
+"""Input type for filtering and paginating media queries"""
 input MediaFiltersInput {
-  """
-  Filter by associated character ID
-  """
+  """Filter by associated character ID"""
   characterId: ID
 
-  """
-  Filter by gallery ID
-  """
+  """Filter by gallery ID"""
   galleryId: ID
 
-  """
-  Maximum number of results to return
-  """
+  """Maximum number of results to return"""
   limit: Float
 
-  """
-  Filter by media type (image or text)
-  """
+  """Filter by media type (image or text)"""
   mediaType: MediaType
 
-  """
-  Number of results to skip for pagination
-  """
+  """Number of results to skip for pagination"""
   offset: Float
 
-  """
-  Filter by owner user ID
-  """
+  """Filter by owner user ID"""
   ownerId: ID
 
-  """
-  Search term to filter by title and description
-  """
+  """Search term to filter by title and description"""
   search: String
 
-  """
-  Filter by visibility level
-  """
+  """Filter by visibility level"""
   visibility: Visibility
 }
 
-"""
-Junction entity for media-tag relationships
-"""
+"""Junction entity for media-tag relationships"""
 type MediaTag {
-  """
-  The media this tag is associated with
-  """
+  """The media this tag is associated with"""
   media: Media
 
-  """
-  The tag applied to the media
-  """
+  """The tag applied to the media"""
   tag: Tag!
 }
 
-"""
-The type of media content for filtering
-"""
+"""The type of media content for filtering"""
 enum MediaType {
   IMAGE
   TEXT
 }
 
-"""
-Every item of one type that a member holds.
-"""
+"""Every item of one type that a member holds."""
 type MemberHolding {
   count: Int!
   itemType: ItemType!
@@ -2783,18 +2087,12 @@ type MemberHolding {
   items: [Item!]!
 }
 
-"""
-One member's holdings in one community, with what they are still owed.
-"""
+"""One member's holdings in one community, with what they are still owed."""
 type MemberHoldingsReport {
-  """
-  Distinct item types held.
-  """
+  """Distinct item types held."""
   distinctTypes: Int!
 
-  """
-  Largest holding first.
-  """
+  """Largest holding first."""
   holdings: [MemberHolding!]!
   member: User!
 
@@ -2803,9 +2101,7 @@ type MemberHoldingsReport {
   """
   pendingItems: Int!
 
-  """
-  Live items held, across every type.
-  """
+  """Live items held, across every type."""
   totalItems: Int!
 }
 
@@ -2821,27 +2117,19 @@ type MemberWallet {
 }
 
 input MintCurrencyInput {
-  """
-  How much each named member receives. Positive.
-  """
+  """How much each named member receives. Positive."""
   amount: Int!
   currencyId: ID!
 
-  """
-  Member-facing. Required, because it is public.
-  """
+  """Member-facing. Required, because it is public."""
   reason: String!
   staffNote: String
 
-  """
-  Who receives it. At least one.
-  """
+  """Who receives it. At least one."""
   userIds: [ID!]!
 }
 
-"""
-The reason for rejecting an image
-"""
+"""The reason for rejecting an image"""
 enum ModerationRejectionReason {
   COPYRIGHT_ISSUE
   NSFW_NOT_TAGGED
@@ -2850,9 +2138,7 @@ enum ModerationRejectionReason {
   TOS_VIOLATION
 }
 
-"""
-The moderation status of an image
-"""
+"""The moderation status of an image"""
 enum ModerationStatus {
   APPROVED
   CANCELLED
@@ -2903,78 +2189,51 @@ type Mutation {
   ): Trade!
   addCharacterTags(id: ID!, input: ManageTagsInput!): Character!
 
-  """
-  Adds tags to a media item
-  """
+  """Adds tags to a media item"""
   addMediaTags(
-    """
-    Media ID to add tags to
-    """
+    """Media ID to add tags to"""
     id: ID!
 
-    """
-    Tags to add to the media
-    """
+    """Tags to add to the media"""
     input: ManageMediaTagsInput!
   ): Media!
 
-  """
-  Approve an image (moderator action)
-  """
+  """Approve an image (moderator action)"""
   approveImage(input: ApproveImageInput!): ImageModerationAction!
 
-  """
-  Approve a trait review (moderator action)
-  """
+  """Approve a trait review (moderator action)"""
   approveTraitReview(input: ApproveTraitReviewInput!): TraitReview!
 
   """
   Assign a species to a character for the first time. Only valid for characters without a species. Requires canCreateCharacter permission for the species.
   """
-  assignCharacterSpecies(
-    id: ID!
-    input: AssignCharacterSpeciesInput!
-  ): Character!
+  assignCharacterSpecies(id: ID!, input: AssignCharacterSpeciesInput!): Character!
 
   """
   Remove currency from a member's balance. Refuses to take more than they hold.
   """
   burnCurrency(input: BurnCurrencyInput!): String!
 
-  """
-  Cancel a running DeviantArt UUID backfill job.
-  """
+  """Cancel a running DeviantArt UUID backfill job."""
   cancelDeviantartUuidBackfill: Boolean!
 
-  """
-  Withdraw an offer you sent.
-  """
+  """Withdraw an offer you sent."""
   cancelTrade(id: ID!): Trade!
 
   """
   Redeem an item to move one of your characters to the variant that item grants. Destroys the item and applies the change immediately -- there is no review. Authorized by holding the item, not by canEditCharacterRegistry.
   """
-  changeCharacterVariantWithItem(
-    input: ChangeCharacterVariantWithItemInput!
-  ): Character!
+  changeCharacterVariantWithItem(input: ChangeCharacterVariantWithItemInput!): Character!
 
-  """
-  Buy a cart. Everything commits together, or nothing does.
-  """
+  """Buy a cart. Everything commits together, or nothing does."""
   checkout(input: CheckoutInput!): ShopPurchase!
 
-  """
-  Claim an invite code to join a community
-  """
+  """Claim an invite code to join a community"""
   claimInviteCode(
-    """
-    Invite code claim data
-    """
+    """Invite code claim data"""
     claimInviteCodeInput: ClaimInviteCodeInput!
 
-    """
-    Invite code ID
-    """
+    """Invite code ID"""
     id: ID!
   ): InviteCode!
 
@@ -2982,9 +2241,7 @@ type Mutation {
   Answer an offer with a different one. Declines the original and sends the replacement in a single step, so opening a counter and thinking better of it costs the offer nothing. Returns the new trade.
   """
   counterTrade(
-    """
-    The offer being answered. It is declined.
-    """
+    """The offer being answered. It is declined."""
     id: ID!
     input: CreateTradeInput!
   ): Trade!
@@ -2996,139 +2253,87 @@ type Mutation {
   """
   createCharacterFromMyoTicket(input: RedeemMyoTicketInput!): Character!
 
-  """
-  Create a new character ownership change record
-  """
+  """Create a new character ownership change record"""
   createCharacterOwnershipChange(
-    """
-    Character ownership change creation data
-    """
+    """Character ownership change creation data"""
     createCharacterOwnershipChangeInput: CreateCharacterOwnershipChangeInput!
   ): CharacterOwnershipChange!
   createComment(input: CreateCommentInput!): Comment!
 
-  """
-  Create a new community
-  """
+  """Create a new community"""
   createCommunity(
-    """
-    Community creation data
-    """
+    """Community creation data"""
     createCommunityInput: CreateCommunityInput!
   ): Community!
   createCommunityColor(input: CreateCommunityColorInput!): CommunityColor!
 
-  """
-  Create a new community invitation
-  """
+  """Create a new community invitation"""
   createCommunityInvitation(
-    """
-    Community invitation creation data
-    """
+    """Community invitation creation data"""
     createCommunityInvitationInput: CreateCommunityInvitationInput!
   ): CommunityInvitation!
 
-  """
-  Create a new community membership
-  """
+  """Create a new community membership"""
   createCommunityMember(
-    """
-    Community membership creation data
-    """
+    """Community membership creation data"""
     createCommunityMemberInput: CreateCommunityMemberInput!
   ): CommunityMember!
   createCurrency(input: CreateCurrencyInput!): Currency!
 
-  """
-  Create a new enum value
-  """
+  """Create a new enum value"""
   createEnumValue(
-    """
-    Enum value creation data
-    """
+    """Enum value creation data"""
     createEnumValueInput: CreateEnumValueInput!
   ): EnumValue!
 
-  """
-  Create a new enum value setting
-  """
+  """Create a new enum value setting"""
   createEnumValueSetting(
-    """
-    Enum value setting creation data
-    """
+    """Enum value setting creation data"""
     createEnumValueSettingInput: CreateEnumValueSettingInput!
   ): EnumValueSetting!
   createGallery(input: CreateGalleryInput!): Gallery!
 
-  """
-  Create a new invite code
-  """
+  """Create a new invite code"""
   createInviteCode(
-    """
-    Invite code creation data
-    """
+    """Invite code creation data"""
     createInviteCodeInput: CreateInviteCodeInput!
   ): InviteCode!
   createItemType(input: CreateItemTypeInput!): ItemType!
 
-  """
-  Create a new role
-  """
+  """Create a new role"""
   createRole(
-    """
-    Role creation data
-    """
+    """Role creation data"""
     createRoleInput: CreateRoleInput!
   ): Role!
   createShopItem(input: CreateShopItemInput!): ShopItem!
 
-  """
-  Create a new species
-  """
+  """Create a new species"""
   createSpecies(
-    """
-    Species creation data
-    """
+    """Species creation data"""
     createSpeciesInput: CreateSpeciesInput!
   ): Species!
 
-  """
-  Create a new species variant
-  """
+  """Create a new species variant"""
   createSpeciesVariant(
-    """
-    Species variant creation data
-    """
+    """Species variant creation data"""
     createSpeciesVariantInput: CreateSpeciesVariantInput!
   ): SpeciesVariant!
 
-  """
-  Creates a new text media item
-  """
+  """Creates a new text media item"""
   createTextMedia(
-    """
-    Text media creation parameters
-    """
+    """Text media creation parameters"""
     input: CreateTextMediaInput!
   ): Media!
 
-  """
-  Create a new trait
-  """
+  """Create a new trait"""
   createTrait(
-    """
-    Trait creation data
-    """
+    """Trait creation data"""
     createTraitInput: CreateTraitInput!
   ): Trait!
 
-  """
-  Create a new trait list entry
-  """
+  """Create a new trait list entry"""
   createTraitListEntry(
-    """
-    Trait list entry creation data
-    """
+    """Trait list entry creation data"""
     createTraitListEntryInput: CreateTraitListEntryInput!
   ): TraitListEntry!
 
@@ -3162,29 +2367,19 @@ type Mutation {
   deleteImage(id: ID!): Boolean!
   deleteItemType(id: ID!): Boolean!
 
-  """
-  Deletes a media item and its associated content
-  """
+  """Deletes a media item and its associated content"""
   deleteMedia(
-    """
-    Media ID to delete
-    """
+    """Media ID to delete"""
     id: ID!
   ): Boolean!
 
-  """
-  Edit and approve a trait review (moderator action)
-  """
-  editAndApproveTraitReview(
-    input: EditAndApproveTraitReviewInput!
-  ): TraitReview!
+  """Edit and approve a trait review (moderator action)"""
+  editAndApproveTraitReview(input: EditAndApproveTraitReviewInput!): TraitReview!
 
   """
   Spend an edit kit to propose a change to one of your characters' traits. Destroys the kit and creates a pending USER_EDIT review; the character is unchanged until staff approve it. Authorized by holding the kit, not by canEditOwnCharacterRegistry.
   """
-  editCharacterTraitsWithKit(
-    input: EditCharacterTraitsWithKitInput!
-  ): TraitReview!
+  editCharacterTraitsWithKit(input: EditCharacterTraitsWithKitInput!): TraitReview!
   forgotPassword(input: ForgotPasswordInput!): Boolean!
 
   """
@@ -3197,26 +2392,18 @@ type Mutation {
   """
   kickCharacterFromSpecies(id: ID!): Boolean!
 
-  """
-  Link a Discord guild to a community
-  """
+  """Link a Discord guild to a community"""
   linkDiscordGuild(
-    """
-    Community ID
-    """
+    """Community ID"""
     communityId: ID!
 
-    """
-    Discord guild ID
-    """
+    """Discord guild ID"""
     guildId: ID!
   ): Community!
   login(input: LoginInput!): AuthPayload!
   logout: Boolean!
 
-  """
-  Marks all of your notifications read.
-  """
+  """Marks all of your notifications read."""
   markAllNotificationsRead: Int!
 
   """
@@ -3260,39 +2447,25 @@ type Mutation {
   """
   refundShopPurchaseLine(lineId: ID!): ShopPurchaseLine!
 
-  """
-  Reject an image (moderator action)
-  """
+  """Reject an image (moderator action)"""
   rejectImage(input: RejectImageInput!): ImageModerationAction!
 
-  """
-  Remove a character ownership change record
-  """
+  """Remove a character ownership change record"""
   removeCharacterOwnershipChange(
-    """
-    Character ownership change ID
-    """
+    """Character ownership change ID"""
     id: ID!
   ): RemovalResponse!
   removeCharacterTags(id: ID!, input: ManageTagsInput!): Character!
 
-  """
-  Remove a community
-  """
+  """Remove a community"""
   removeCommunity(
-    """
-    Community ID
-    """
+    """Community ID"""
     id: ID!
   ): RemovalResponse!
 
-  """
-  Remove a community invitation
-  """
+  """Remove a community invitation"""
   removeCommunityInvitation(
-    """
-    Community invitation ID
-    """
+    """Community invitation ID"""
     id: ID!
   ): CommunityInvitation!
 
@@ -3300,104 +2473,64 @@ type Mutation {
   Remove a community membership (leave community OR remove member with permission)
   """
   removeCommunityMember(
-    """
-    Community member ID
-    """
+    """Community member ID"""
     id: ID!
   ): CommunityMember!
 
-  """
-  Remove an enum value
-  """
+  """Remove an enum value"""
   removeEnumValue(
-    """
-    Enum value ID
-    """
+    """Enum value ID"""
     id: ID!
   ): RemovalResponse!
 
-  """
-  Remove an enum value setting
-  """
+  """Remove an enum value setting"""
   removeEnumValueSetting(
-    """
-    Enum value setting ID
-    """
+    """Enum value setting ID"""
     id: ID!
   ): RemovalResponse!
 
-  """
-  Remove an invite code
-  """
+  """Remove an invite code"""
   removeInviteCode(
-    """
-    Invite code ID
-    """
+    """Invite code ID"""
     id: ID!
   ): RemovalResponse!
 
-  """
-  Removes tags from a media item
-  """
+  """Removes tags from a media item"""
   removeMediaTags(
-    """
-    Media ID to remove tags from
-    """
+    """Media ID to remove tags from"""
     id: ID!
 
-    """
-    Tags to remove from the media
-    """
+    """Tags to remove from the media"""
     input: ManageMediaTagsInput!
   ): Media!
 
-  """
-  Remove a role
-  """
+  """Remove a role"""
   removeRole(
-    """
-    Role ID
-    """
+    """Role ID"""
     id: ID!
   ): RemovalResponse!
 
-  """
-  Remove a species
-  """
+  """Remove a species"""
   removeSpecies(
-    """
-    Species ID
-    """
+    """Species ID"""
     id: ID!
   ): RemovalResponse!
 
-  """
-  Remove a species variant
-  """
+  """Remove a species variant"""
   removeSpeciesVariant(
-    """
-    Species variant ID
-    """
+    """Species variant ID"""
     id: ID!
   ): RemovalResponse!
 
-  """
-  Remove a trait
-  """
+  """Remove a trait"""
   removeTrait(
-    """
-    Trait ID
-    """
+    """Trait ID"""
     id: ID!
   ): RemovalResponse!
 
-  """
-  Remove a trait list entry
-  """
+  """Remove a trait list entry"""
   removeTraitListEntry(
-    """
-    Trait list entry ID
-    """
+    """Trait list entry ID"""
     id: ID!
   ): RemovalResponse!
   reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
@@ -3408,18 +2541,12 @@ type Mutation {
   resendVerificationEmail(input: ResendVerificationEmailInput!): Boolean!
   resetPassword(input: ResetPasswordInput!): Boolean!
 
-  """
-  Respond to a community invitation (accept or decline)
-  """
+  """Respond to a community invitation (accept or decline)"""
   respondToCommunityInvitation(
-    """
-    Community invitation ID
-    """
+    """Community invitation ID"""
     id: ID!
 
-    """
-    Response data (accept or decline)
-    """
+    """Response data (accept or decline)"""
     respondToCommunityInvitationInput: RespondToCommunityInvitationInput!
   ): CommunityInvitation!
 
@@ -3434,14 +2561,10 @@ type Mutation {
   revokeItems(
     itemIds: [ID!]!
 
-    """
-    Member-facing. Shown on the items' public provenance.
-    """
+    """Member-facing. Shown on the items' public provenance."""
     reason: String!
 
-    """
-    Staff-only detail. Never shown to members.
-    """
+    """Staff-only detail. Never shown to members."""
     staffNote: String
   ): Int!
 
@@ -3455,18 +2578,12 @@ type Mutation {
   """
   setCharacterFolders(input: SetCharacterFoldersInput!): [CharacterFolder!]!
 
-  """
-  Sets or clears the main media for a character
-  """
+  """Sets or clears the main media for a character"""
   setCharacterMainMedia(
-    """
-    Character ID to update
-    """
+    """Character ID to update"""
     id: ID!
 
-    """
-    Main media setting parameters
-    """
+    """Main media setting parameters"""
     input: SetMainMediaInput!
   ): Character!
 
@@ -3488,135 +2605,84 @@ type Mutation {
   """
   Set where an item of this type moves a character, and which characters it can be spent on. Replaces the grant wholesale; a null destination clears it. An empty source list covers every variant of the destination's species.
   """
-  setItemTypeVariantChangeGrant(
-    input: SetItemTypeVariantChangeGrantInput!
-  ): ItemType!
+  setItemTypeVariantChangeGrant(input: SetItemTypeVariantChangeGrantInput!): ItemType!
   signup(input: SignupInput!): Boolean!
   toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
 
-  """
-  Send currency to another member. Writes both sides as one batch.
-  """
+  """Send currency to another member. Writes both sides as one batch."""
   transferCurrency(input: TransferCurrencyInput!): String!
 
-  """
-  Unlink a Discord guild from a community
-  """
+  """Unlink a Discord guild from a community"""
   unlinkDiscordGuild(
-    """
-    Community ID
-    """
+    """Community ID"""
     communityId: ID!
   ): Community!
 
-  """
-  Unlink an external account from the current user
-  """
+  """Unlink an external account from the current user"""
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
 
-  """
-  Rename a folder, or change whether it is private.
-  """
+  """Rename a folder, or change whether it is private."""
   updateCharacterFolder(input: UpdateCharacterFolderInput!): CharacterFolder!
 
   """
   Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission.
   """
-  updateCharacterProfile(
-    id: ID!
-    input: UpdateCharacterProfileInput!
-  ): Character!
+  updateCharacterProfile(id: ID!, input: UpdateCharacterProfileInput!): Character!
 
   """
   Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission.
   """
-  updateCharacterRegistry(
-    id: ID!
-    input: UpdateCharacterRegistryInput!
-  ): Character!
+  updateCharacterRegistry(id: ID!, input: UpdateCharacterRegistryInput!): Character!
   updateComment(id: ID!, input: UpdateCommentInput!): Comment!
 
-  """
-  Update a community
-  """
+  """Update a community"""
   updateCommunity(
-    """
-    Community ID
-    """
+    """Community ID"""
     id: ID!
 
-    """
-    Community update data
-    """
+    """Community update data"""
     updateCommunityInput: UpdateCommunityInput!
   ): Community!
-  updateCommunityColor(
-    id: ID!
-    input: UpdateCommunityColorInput!
-  ): CommunityColor!
+  updateCommunityColor(id: ID!, input: UpdateCommunityColorInput!): CommunityColor!
 
-  """
-  Update a community membership (change role)
-  """
+  """Update a community membership (change role)"""
   updateCommunityMember(
-    """
-    Community member ID
-    """
+    """Community member ID"""
     id: ID!
 
-    """
-    Community membership update data
-    """
+    """Community membership update data"""
     updateCommunityMemberInput: UpdateCommunityMemberInput!
   ): CommunityMember!
   updateCurrency(id: ID!, input: UpdateCurrencyInput!): Currency!
 
-  """
-  Update an enum value
-  """
+  """Update an enum value"""
   updateEnumValue(
-    """
-    Enum value ID
-    """
+    """Enum value ID"""
     id: ID!
 
-    """
-    Enum value update data
-    """
+    """Enum value update data"""
     updateEnumValueInput: UpdateEnumValueInput!
   ): EnumValue!
 
-  """
-  Update an enum value setting
-  """
+  """Update an enum value setting"""
   updateEnumValueSetting(
-    """
-    Enum value setting ID
-    """
+    """Enum value setting ID"""
     id: ID!
 
-    """
-    Enum value setting update data
-    """
+    """Enum value setting update data"""
     updateEnumValueSettingInput: UpdateEnumValueSettingInput!
   ): EnumValueSetting!
   updateGallery(id: ID!, input: UpdateGalleryInput!): Gallery!
   updateImage(id: ID!, input: UpdateImageInput!): Image!
 
-  """
-  Update an invite code
-  """
+  """Update an invite code"""
   updateInviteCode(
-    """
-    Invite code ID
-    """
+    """Invite code ID"""
     id: ID!
 
-    """
-    Invite code update data
-    """
+    """Invite code update data"""
     updateInviteCodeInput: UpdateInviteCodeInput!
   ): InviteCode!
 
@@ -3626,127 +2692,79 @@ type Mutation {
   updateItem(id: ID!, input: UpdateItemInput!): Item!
   updateItemType(id: ID!, input: UpdateItemTypeInput!): ItemType!
 
-  """
-  Updates media metadata (title, description, etc.)
-  """
+  """Updates media metadata (title, description, etc.)"""
   updateMedia(
-    """
-    Media ID to update
-    """
+    """Media ID to update"""
     id: ID!
 
-    """
-    Updated media parameters
-    """
+    """Updated media parameters"""
     input: UpdateMediaInput!
   ): Media!
 
   """
   Sets one channel for one kind and returns the whole matrix, so a client never has to merge the change in itself.
   """
-  updateNotificationPreference(
-    input: UpdateNotificationPreferenceInput!
-  ): [NotificationPreference!]!
+  updateNotificationPreference(input: UpdateNotificationPreferenceInput!): [NotificationPreference!]!
   updateProfile(input: UpdateUserInput!): User!
 
-  """
-  Update a role
-  """
+  """Update a role"""
   updateRole(
-    """
-    Role ID
-    """
+    """Role ID"""
     id: ID!
 
-    """
-    Role update data
-    """
+    """Role update data"""
     updateRoleInput: UpdateRoleInput!
   ): Role!
   updateShopItem(id: ID!, input: UpdateShopItemInput!): ShopItem!
 
-  """
-  Update a species
-  """
+  """Update a species"""
   updateSpecies(
-    """
-    Species ID
-    """
+    """Species ID"""
     id: ID!
 
-    """
-    Species update data
-    """
+    """Species update data"""
     updateSpeciesInput: UpdateSpeciesInput!
   ): Species!
 
-  """
-  Update a species variant
-  """
+  """Update a species variant"""
   updateSpeciesVariant(
-    """
-    Species variant ID
-    """
+    """Species variant ID"""
     id: ID!
 
-    """
-    Species variant update data
-    """
+    """Species variant update data"""
     updateSpeciesVariantInput: UpdateSpeciesVariantInput!
   ): SpeciesVariant!
 
-  """
-  Updates the text content of a text media item
-  """
+  """Updates the text content of a text media item"""
   updateTextContent(
-    """
-    Updated text content parameters
-    """
+    """Updated text content parameters"""
     input: UpdateTextContentInput!
 
-    """
-    Media ID containing the text content to update
-    """
+    """Media ID containing the text content to update"""
     mediaId: ID!
   ): Media!
 
-  """
-  Update a trait
-  """
+  """Update a trait"""
   updateTrait(
-    """
-    Trait ID
-    """
+    """Trait ID"""
     id: ID!
 
-    """
-    Trait update data
-    """
+    """Trait update data"""
     updateTraitInput: UpdateTraitInput!
   ): Trait!
 
-  """
-  Update a trait list entry
-  """
+  """Update a trait list entry"""
   updateTraitListEntry(
-    """
-    Trait list entry ID
-    """
+    """Trait list entry ID"""
     id: ID!
 
-    """
-    Trait list entry update data
-    """
+    """Trait list entry update data"""
     updateTraitListEntryInput: UpdateTraitListEntryInput!
   ): TraitListEntry!
 
-  """
-  Batch update trait display orders for a species variant
-  """
+  """Batch update trait display orders for a species variant"""
   updateTraitOrders(
-    """
-    Trait order updates for a species variant
-    """
+    """Trait order updates for a species variant"""
     input: UpdateTraitOrdersInput!
   ): [TraitListEntry!]!
 
@@ -3765,47 +2783,31 @@ type Mutation {
 One thing that happened, addressed to one recipient. Rows are snapshots: the display fields were captured when the notification was written, so a notification about a since-deleted subject still says what happened, and its link is the part that goes dead.
 """
 type Notification {
-  """
-  Who caused it. Null when it was not a person.
-  """
+  """Who caused it. Null when it was not a person."""
   actor: User
 
-  """
-  Names a non-user actor: "system". Set exactly when actor is null.
-  """
+  """Names a non-user actor: "system". Set exactly when actor is null."""
   actorLabel: String
 
-  """
-  How much currency arrived.
-  """
+  """How much currency arrived."""
   amount: Int
 
-  """
-  Free text, for the kinds that carry it.
-  """
+  """Free text, for the kinds that carry it."""
   body: String
 
-  """
-  The community this belongs to, for kinds that are scoped to one.
-  """
+  """The community this belongs to, for kinds that are scoped to one."""
   community: Community
 
-  """
-  How many, for the kinds that move a quantity of something.
-  """
+  """How many, for the kinds that move a quantity of something."""
   count: Int
   createdAt: DateTime!
 
-  """
-  Enough of a comment to recognise it in a dropdown row.
-  """
+  """Enough of a comment to recognise it in a dropdown row."""
   excerpt: String
   id: ID!
   kind: NotificationKind!
 
-  """
-  When the recipient opened this particular notification.
-  """
+  """When the recipient opened this particular notification."""
   readAt: DateTime
 
   """
@@ -3813,9 +2815,7 @@ type Notification {
   """
   reason: String
 
-  """
-  The moderator's own words, when they added any.
-  """
+  """The moderator's own words, when they added any."""
   reasonText: String
 
   """
@@ -3843,9 +2843,7 @@ enum NotificationChannel {
   IN_APP
 }
 
-"""
-A page of notifications, newest first.
-"""
+"""A page of notifications, newest first."""
 type NotificationConnection {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
@@ -3853,9 +2851,7 @@ type NotificationConnection {
   totalCount: Int!
 }
 
-"""
-What happened. Determines which of the snapshot fields below are set.
-"""
+"""What happened. Determines which of the snapshot fields below are set."""
 enum NotificationKind {
   COMMENT_RECEIVED
   CURRENCY_RECEIVED
@@ -3873,9 +2869,7 @@ enum NotificationKind {
 One kind's delivery settings for the signed-in member, with defaults already applied. A member who has never opened the settings page still gets a full answer here.
 """
 type NotificationPreference {
-  """
-  Whether it is also emailed.
-  """
+  """Whether it is also emailed."""
   email: Boolean!
 
   """
@@ -3883,9 +2877,7 @@ type NotificationPreference {
   """
   emailSupported: Boolean!
 
-  """
-  Whether it appears in the bell and the feed.
-  """
+  """Whether it appears in the bell and the feed."""
   inApp: Boolean!
   kind: NotificationKind!
 }
@@ -3913,16 +2905,12 @@ input OfferedTradeItemInput {
 }
 
 input OwnerIdUpdate {
-  """
-  Set owner ID (null = orphan character)
-  """
+  """Set owner ID (null = orphan character)"""
   set: ID
 }
 
 input PendingOwnerInput {
-  """
-  The external account provider
-  """
+  """The external account provider"""
   provider: ExternalAccountProvider!
 
   """
@@ -3932,47 +2920,33 @@ input PendingOwnerInput {
 }
 
 input PendingOwnerUpdate {
-  """
-  Set pending owner (null = clear pending owner)
-  """
+  """Set pending owner (null = clear pending owner)"""
   set: PendingOwnerInput
 }
 
 type PendingOwnership {
   character: Character
 
-  """
-  Character ID if this is a pending character ownership
-  """
+  """Character ID if this is a pending character ownership"""
   characterId: ID
 
-  """
-  When this pending ownership was claimed
-  """
+  """When this pending ownership was claimed"""
   claimedAt: DateTime
   claimedByUser: User
 
-  """
-  User who claimed this pending ownership
-  """
+  """User who claimed this pending ownership"""
   claimedByUserId: ID
 
-  """
-  When this pending ownership was created
-  """
+  """When this pending ownership was created"""
   createdAt: DateTime!
   displayIdentifier: String
   id: ID!
   item: Item
 
-  """
-  Item ID if this is a pending item ownership
-  """
+  """Item ID if this is a pending item ownership"""
   itemId: ID
 
-  """
-  The external account provider (Discord, DeviantArt, etc.)
-  """
+  """The external account provider (Discord, DeviantArt, etc.)"""
   provider: ExternalAccountProvider!
   providerAccountId: String!
 }
@@ -3985,126 +2959,77 @@ type Query {
   Where this character's current owner filed it. Empty for an orphaned character.
   """
   characterFolders(characterId: ID!): [CharacterFolder!]!
-  characterGalleries(
-    characterId: ID!
-    filters: GalleryFiltersInput
-  ): GalleryConnection!
+  characterGalleries(characterId: ID!, filters: GalleryFiltersInput): GalleryConnection!
 
-  """
-  Retrieves media associated with a specific character
-  """
+  """Retrieves media associated with a specific character"""
   characterMedia(
-    """
-    Character ID whose media to retrieve
-    """
+    """Character ID whose media to retrieve"""
     characterId: ID!
 
-    """
-    Optional filters for media query
-    """
+    """Optional filters for media query"""
     filters: MediaFiltersInput
   ): MediaConnection!
 
-  """
-  Get a character ownership change by ID
-  """
+  """Get a character ownership change by ID"""
   characterOwnershipChangeById(
-    """
-    Character ownership change ID
-    """
+    """Character ownership change ID"""
     id: ID!
   ): CharacterOwnershipChange!
 
-  """
-  Get all character ownership changes with pagination
-  """
+  """Get all character ownership changes with pagination"""
   characterOwnershipChanges(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of ownership changes to return
-    """
+    """Number of ownership changes to return"""
     first: Int = 20
   ): CharacterOwnershipChangeConnection!
 
-  """
-  Get character ownership changes by character ID with pagination
-  """
+  """Get character ownership changes by character ID with pagination"""
   characterOwnershipChangesByCharacter(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Character ID
-    """
+    """Character ID"""
     characterId: ID!
 
-    """
-    Number of ownership changes to return
-    """
+    """Number of ownership changes to return"""
     first: Int = 20
   ): CharacterOwnershipChangeConnection!
 
-  """
-  Get character ownership changes by user ID with pagination
-  """
+  """Get character ownership changes by user ID with pagination"""
   characterOwnershipChangesByUser(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of ownership changes to return
-    """
+    """Number of ownership changes to return"""
     first: Int = 20
 
-    """
-    User ID (can be from or to user)
-    """
+    """User ID (can be from or to user)"""
     userId: ID!
   ): CharacterOwnershipChangeConnection!
 
-  """
-  Get the active pending trait review for a character
-  """
+  """Get the active pending trait review for a character"""
   characterTraitReview(characterId: ID!): TraitReview
 
-  """
-  Every change to this character's variant, newest first.
-  """
+  """Every change to this character's variant, newest first."""
   characterVariantChanges(characterId: ID!): [CharacterVariantChange!]!
   characters(filters: CharacterFiltersInput): CharacterConnection!
   comment(id: ID!): Comment!
   comments(filters: CommentFiltersInput!): CommentConnection!
 
-  """
-  Get all communities with pagination
-  """
+  """Get all communities with pagination"""
   communities(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of communities to return
-    """
+    """Number of communities to return"""
     first: Int = 20
   ): CommunityConnection!
 
-  """
-  Get a community by ID
-  """
+  """Get a community by ID"""
   community(
-    """
-    Community ID
-    """
+    """Community ID"""
     id: ID!
   ): Community!
 
@@ -4112,421 +3037,250 @@ type Query {
   Get a community by its subdomain label. Null if no community holds that slug.
   """
   communityBySlug(
-    """
-    Subdomain label, e.g. `cloverse`
-    """
+    """Subdomain label, e.g. `cloverse`"""
     slug: String!
   ): Community
   communityColor(id: ID!): CommunityColor!
   communityColors(communityId: ID!): [CommunityColor!]!
 
-  """
-  Get a community invitation by ID
-  """
+  """Get a community invitation by ID"""
   communityInvitationById(
-    """
-    Community invitation ID
-    """
+    """Community invitation ID"""
     id: ID!
   ): CommunityInvitation!
 
-  """
-  Get all community invitations with pagination
-  """
+  """Get all community invitations with pagination"""
   communityInvitations(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of community invitations to return
-    """
+    """Number of community invitations to return"""
     first: Int = 20
   ): CommunityInvitationConnection!
 
-  """
-  Get community invitations by community ID with pagination
-  """
+  """Get community invitations by community ID with pagination"""
   communityInvitationsByCommunity(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Community ID
-    """
+    """Community ID"""
     communityId: ID!
 
-    """
-    Number of community invitations to return
-    """
+    """Number of community invitations to return"""
     first: Int = 20
   ): CommunityInvitationConnection!
 
-  """
-  Get community invitations by invitee ID with pagination
-  """
+  """Get community invitations by invitee ID with pagination"""
   communityInvitationsByInvitee(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of community invitations to return
-    """
+    """Number of community invitations to return"""
     first: Int = 20
 
-    """
-    Invitee ID
-    """
+    """Invitee ID"""
     inviteeId: ID!
   ): CommunityInvitationConnection!
 
-  """
-  Get a community member by ID
-  """
+  """Get a community member by ID"""
   communityMemberById(
-    """
-    Community member ID
-    """
+    """Community member ID"""
     id: ID!
   ): CommunityMember!
 
-  """
-  Roles a user holds in a community
-  """
+  """Roles a user holds in a community"""
   communityMemberRoles(
-    """
-    Community ID
-    """
+    """Community ID"""
     communityId: ID!
 
-    """
-    User ID
-    """
+    """User ID"""
     userId: ID!
   ): [Role!]!
 
-  """
-  Get all community members with pagination
-  """
+  """Get all community members with pagination"""
   communityMembers(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of community members to return
-    """
+    """Number of community members to return"""
     first: Int = 20
   ): CommunityMemberConnection!
 
-  """
-  Get community members by community ID with pagination
-  """
+  """Get community members by community ID with pagination"""
   communityMembersByCommunity(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Community ID
-    """
+    """Community ID"""
     communityId: ID!
 
-    """
-    Number of community members to return
-    """
+    """Number of community members to return"""
     first: Int = 20
   ): CommunityMemberConnection!
 
-  """
-  Get community members by user ID with pagination
-  """
+  """Get community members by user ID with pagination"""
   communityMembersByUser(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of community members to return
-    """
+    """Number of community members to return"""
     first: Int = 20
 
-    """
-    User ID
-    """
+    """User ID"""
     userId: ID!
   ): CommunityMemberConnection!
 
   """
   Every member's purchases, newest first, for staff handling a refund past the buyer's own undo window.
   """
-  communityShopPurchases(
-    buyerId: ID
-    communityId: ID!
-    limit: Int = 50
-  ): [ShopPurchase!]!
+  communityShopPurchases(buyerId: ID, communityId: ID!, limit: Int = 50): [ShopPurchase!]!
 
-  """
-  Every currency a community defines. Readable by any member.
-  """
+  """Every currency a community defines. Readable by any member."""
   currencies(communityId: ID!, includeArchived: Boolean! = false): [Currency!]!
   currency(id: ID!): Currency!
 
-  """
-  Who holds a currency, largest balance first.
-  """
-  currencyHolders(
-    currencyId: ID!
-    limit: Int! = 50
-    offset: Int! = 0
-  ): [CurrencyBalance!]!
+  """Who holds a currency, largest balance first."""
+  currencyHolders(currencyId: ID!, limit: Int! = 50, offset: Int! = 0): [CurrencyBalance!]!
 
-  """
-  Circulation, holders, and 30-day mint and removal volume per currency.
-  """
+  """Circulation, holders, and 30-day mint and removal volume per currency."""
   currencySupply(communityId: ID!): [CurrencySupply!]!
 
   """
   The currency ledger for one community, newest first. A transfer is two rows sharing a batchId. Readable by any member.
   """
-  currencyTransactions(
-    filters: CurrencyTransactionFiltersInput!
-  ): CurrencyTransactionConnection!
+  currencyTransactions(filters: CurrencyTransactionFiltersInput!): CurrencyTransactionConnection!
 
-  """
-  Get the Discord bot invite URL
-  """
+  """Get the Discord bot invite URL"""
   discordBotInviteUrl: String!
 
-  """
-  Get an enum value by ID
-  """
+  """Get an enum value by ID"""
   enumValueById(
-    """
-    Enum value ID
-    """
+    """Enum value ID"""
     id: ID!
   ): EnumValue!
 
-  """
-  Get an enum value setting by ID
-  """
+  """Get an enum value setting by ID"""
   enumValueSettingById(
-    """
-    Enum value setting ID
-    """
+    """Enum value setting ID"""
     id: ID!
   ): EnumValueSetting!
 
-  """
-  Get all enum value settings with pagination
-  """
+  """Get all enum value settings with pagination"""
   enumValueSettings(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of enum value settings to return
-    """
+    """Number of enum value settings to return"""
     first: Int = 20
   ): EnumValueSettingConnection!
 
-  """
-  Get enum value settings by enum value ID with pagination
-  """
+  """Get enum value settings by enum value ID with pagination"""
   enumValueSettingsByEnumValue(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Enum value ID
-    """
+    """Enum value ID"""
     enumValueId: ID!
 
-    """
-    Number of enum value settings to return
-    """
+    """Number of enum value settings to return"""
     first: Int = 20
   ): EnumValueSettingConnection!
 
-  """
-  Get enum value settings by species variant ID with pagination
-  """
+  """Get enum value settings by species variant ID with pagination"""
   enumValueSettingsBySpeciesVariant(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of enum value settings to return
-    """
+    """Number of enum value settings to return"""
     first: Int = 20
 
-    """
-    Species variant ID
-    """
+    """Species variant ID"""
     speciesVariantId: ID!
   ): EnumValueSettingConnection!
 
-  """
-  Get all enum values with pagination
-  """
+  """Get all enum values with pagination"""
   enumValues(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of enum values to return
-    """
+    """Number of enum values to return"""
     first: Int = 20
   ): EnumValueConnection!
 
-  """
-  Get enum values by trait ID with pagination
-  """
+  """Get enum values by trait ID with pagination"""
   enumValuesByTrait(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of enum values to return
-    """
+    """Number of enum values to return"""
     first: Int = 20
 
-    """
-    Trait ID
-    """
+    """Trait ID"""
     traitId: ID!
   ): EnumValueConnection!
   followStatus(userId: ID!): FollowStatus!
   galleries(filters: GalleryFiltersInput): GalleryConnection!
   gallery(id: ID!): Gallery!
 
-  """
-  Retrieves media from a specific gallery
-  """
+  """Retrieves media from a specific gallery"""
   galleryMedia(
-    """
-    Optional filters for media query
-    """
+    """Optional filters for media query"""
     filters: MediaFiltersInput
 
-    """
-    Gallery ID whose media to retrieve
-    """
+    """Gallery ID whose media to retrieve"""
     galleryId: ID!
   ): MediaConnection!
   getFollowers(username: String!): FollowListResult!
   getFollowing(username: String!): FollowListResult!
 
-  """
-  Get all pending images across all communities (admin only)
-  """
-  globalImageModerationQueue(
-    filters: ImageModerationQueueFiltersInput
-    first: Int = 20
-    offset: Int = 0
-  ): ImageModerationQueueConnection!
+  """Get all pending images across all communities (admin only)"""
+  globalImageModerationQueue(filters: ImageModerationQueueFiltersInput, first: Int = 20, offset: Int = 0): ImageModerationQueueConnection!
 
-  """
-  Get count of all pending images across all communities (admin only)
-  """
+  """Get count of all pending images across all communities (admin only)"""
   globalPendingImageCount: Int!
 
-  """
-  Get pending images for a community moderation queue
-  """
-  imageModerationQueue(
-    communityId: ID!
-    filters: ImageModerationQueueFiltersInput
-    first: Int = 20
-    offset: Int = 0
-  ): ImageModerationQueueConnection!
+  """Get pending images for a community moderation queue"""
+  imageModerationQueue(communityId: ID!, filters: ImageModerationQueueFiltersInput, first: Int = 20, offset: Int = 0): ImageModerationQueueConnection!
 
-  """
-  Get an invite code by ID
-  """
+  """Get an invite code by ID"""
   inviteCodeById(
-    """
-    Invite code ID
-    """
+    """Invite code ID"""
     id: ID!
   ): InviteCode!
 
-  """
-  Get all invite codes with pagination
-  """
+  """Get all invite codes with pagination"""
   inviteCodes(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Community ID to filter by. If null, returns only global invite codes
-    """
+    """Community ID to filter by. If null, returns only global invite codes"""
     communityId: ID
 
-    """
-    Number of invite codes to return
-    """
+    """Number of invite codes to return"""
     first: Int = 20
   ): InviteCodeConnection!
 
-  """
-  Get invite codes by creator ID with pagination
-  """
+  """Get invite codes by creator ID with pagination"""
   inviteCodesByCreator(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Creator ID
-    """
+    """Creator ID"""
     creatorId: ID!
 
-    """
-    Number of invite codes to return
-    """
+    """Number of invite codes to return"""
     first: Int = 20
   ): InviteCodeConnection!
 
-  """
-  Get invite codes by role ID with pagination
-  """
+  """Get invite codes by role ID with pagination"""
   inviteCodesByRole(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of invite codes to return
-    """
+    """Number of invite codes to return"""
     first: Int = 20
 
-    """
-    Role ID
-    """
+    """Role ID"""
     roleId: ID!
   ): InviteCodeConnection!
 
@@ -4540,17 +3294,13 @@ type Query {
   """
   itemEconomy(communityId: ID!): ItemEconomyReport!
 
-  """
-  Every ledger row for one stack, oldest first. The provenance timeline.
-  """
+  """Every ledger row for one stack, oldest first. The provenance timeline."""
   itemProvenance(itemId: ID!): [ItemTransaction!]!
 
   """
   The item ledger for one community, newest first. Readable by any member.
   """
-  itemTransactions(
-    filters: ItemTransactionFiltersInput!
-  ): ItemTransactionConnection!
+  itemTransactions(filters: ItemTransactionFiltersInput!): ItemTransactionConnection!
   itemType(id: ID!): ItemType!
   itemTypes(filters: ItemTypeFiltersInput): ItemTypeConnection!
   likeStatus(entityId: ID!, entityType: LikeableType!): LikeStatus!
@@ -4560,34 +3310,22 @@ type Query {
   likedMedia(filters: MediaFiltersInput): MediaConnection!
   me: User!
 
-  """
-  Retrieves paginated media with filtering and visibility controls
-  """
+  """Retrieves paginated media with filtering and visibility controls"""
   media(
-    """
-    Optional filters for media query
-    """
+    """Optional filters for media query"""
     filters: MediaFiltersInput
   ): MediaConnection!
 
-  """
-  Retrieves a single media item by ID
-  """
+  """Retrieves a single media item by ID"""
   mediaItem(
-    """
-    Media ID to retrieve
-    """
+    """Media ID to retrieve"""
     id: ID!
   ): Media!
 
   """
   Get pending media for moderation queue (use pendingModerationImage field for actual image URLs)
   """
-  mediaModerationQueue(
-    communityId: ID!
-    first: Int = 20
-    offset: Int = 0
-  ): MediaConnection!
+  mediaModerationQueue(communityId: ID!, first: Int = 20, offset: Int = 0): MediaConnection!
 
   """
   One member's live holdings in one community, grouped by item type and not paginated -- an inventory is a whole thing.
@@ -4610,348 +3348,208 @@ type Query {
   ): [CharacterFolder!]!
   myCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
-  """
-  Get characters the current user can upload images to
-  """
-  myCharactersForImageUpload(
-    filters: CharacterFiltersInput
-  ): CharacterConnection!
+  """Get characters the current user can upload images to"""
+  myCharactersForImageUpload(filters: CharacterFiltersInput): CharacterConnection!
   myEditableCharacters(filters: CharacterFiltersInput): CharacterConnection!
 
-  """
-  Get all external accounts linked to the current user
-  """
+  """Get all external accounts linked to the current user"""
   myExternalAccounts: [ExternalAccount!]!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
 
-  """
-  Retrieves media owned by the current authenticated user
-  """
+  """Retrieves media owned by the current authenticated user"""
   myMedia(
-    """
-    Optional filters for media query
-    """
+    """Optional filters for media query"""
     filters: MediaFiltersInput
   ): MediaConnection!
 
   """
   The viewer's own purchase lines, newest first, searchable and paged. A line is what a buyer counts and acts on, so it is the level a history filters at.
   """
-  myShopPurchaseLines(
-    filters: ShopPurchaseLineFiltersInput!
-  ): ShopPurchaseLineConnection!
+  myShopPurchaseLines(filters: ShopPurchaseLineFiltersInput!): ShopPurchaseLineConnection!
 
   """
   The viewer's own purchases, newest first, each line saying whether it can still be undone and why not.
   """
   myShopPurchases(communityId: ID!): [ShopPurchase!]!
 
-  """
-  Your delivery settings, one row per kind, defaults already merged in.
-  """
+  """Your delivery settings, one row per kind, defaults already merged in."""
   notificationPreferences: [NotificationPreference!]!
 
-  """
-  Your notifications, newest first.
-  """
-  notifications(
-    after: String
-    first: Int = 20
-    unreadOnly: Boolean
-  ): NotificationConnection!
+  """Your notifications, newest first."""
+  notifications(after: String, first: Int = 20, unreadOnly: Boolean): NotificationConnection!
 
-  """
-  Get count of pending images for a community
-  """
+  """Get count of pending images for a community"""
   pendingImageCount(communityId: ID!): Int!
 
-  """
-  Get count of pending trait reviews for a community
-  """
+  """Get count of pending trait reviews for a community"""
   pendingTraitReviewCount(communityId: ID!): Int!
 
   """
   Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters.
   """
   resolveDiscordUser(
-    """
-    Community ID (for guild context)
-    """
+    """Community ID (for guild context)"""
     communityId: ID!
 
-    """
-    Discord username (@handle), display name, or numeric user ID
-    """
+    """Discord username (@handle), display name, or numeric user ID"""
     identifier: String!
   ): DiscordUserInfo!
 
-  """
-  Get a role by ID
-  """
+  """Get a role by ID"""
   roleById(
-    """
-    Role ID
-    """
+    """Role ID"""
     id: ID!
   ): Role!
 
-  """
-  Get all roles with pagination
-  """
+  """Get all roles with pagination"""
   roles(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of roles to return
-    """
+    """Number of roles to return"""
     first: Int = 20
   ): RoleConnection!
 
-  """
-  Get roles by community ID with pagination
-  """
+  """Get roles by community ID with pagination"""
   rolesByCommunity(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Community ID
-    """
+    """Community ID"""
     communityId: ID!
 
-    """
-    Number of roles to return
-    """
+    """Number of roles to return"""
     first: Int = 20
   ): RoleConnection!
 
-  """
-  Search for tags by name or get popular suggestions
-  """
+  """Search for tags by name or get popular suggestions"""
   searchTags(
-    """
-    Maximum number of tags to return (default: 10, max: 50)
-    """
+    """Maximum number of tags to return (default: 10, max: 50)"""
     limit: Float = 10
 
-    """
-    Search term to filter tags. If empty, returns popular suggestions
-    """
+    """Search term to filter tags. If empty, returns popular suggestions"""
     search: String
   ): [Tag!]!
 
-  """
-  What a community sells, priced, with what the viewer can afford.
-  """
+  """What a community sells, priced, with what the viewer can afford."""
   shopItems(communityId: ID!, includeInactive: Boolean! = false): [ShopItem!]!
 
-  """
-  Get all species with pagination
-  """
+  """Get all species with pagination"""
   species(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of species to return
-    """
+    """Number of species to return"""
     first: Int = 20
   ): SpeciesConnection!
 
-  """
-  Get species by community ID with pagination
-  """
+  """Get species by community ID with pagination"""
   speciesByCommunity(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Community ID
-    """
+    """Community ID"""
     communityId: ID!
 
-    """
-    Number of species to return
-    """
+    """Number of species to return"""
     first: Int = 20
   ): SpeciesConnection!
 
-  """
-  Get a species by ID
-  """
+  """Get a species by ID"""
   speciesById(
-    """
-    Species ID
-    """
+    """Species ID"""
     id: ID!
   ): Species!
 
-  """
-  Get a species variant by ID
-  """
+  """Get a species variant by ID"""
   speciesVariantById(
-    """
-    Species variant ID
-    """
+    """Species variant ID"""
     id: ID!
   ): SpeciesVariant!
 
-  """
-  Get all species variants with pagination
-  """
+  """Get all species variants with pagination"""
   speciesVariants(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of species variants to return
-    """
+    """Number of species variants to return"""
     first: Int = 20
   ): SpeciesVariantConnection!
 
-  """
-  Get species variants by species ID with pagination
-  """
+  """Get species variants by species ID with pagination"""
   speciesVariantsBySpecies(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of species variants to return
-    """
+    """Number of species variants to return"""
     first: Int = 20
 
-    """
-    Species ID
-    """
+    """Species ID"""
     speciesId: ID!
   ): SpeciesVariantConnection!
 
-  """
-  One of your trades. Readable by either party, nobody else.
-  """
+  """One of your trades. Readable by either party, nobody else."""
   trade(id: ID!): Trade!
 
   """
   Your trades, newest first -- both the offers waiting on you and the ones you have out.
   """
-  trades(
-    after: String
-    communityId: ID
-    first: Int = 20
-    status: EffectiveTradeStatus
-  ): TradeConnection!
+  trades(after: String, communityId: ID, first: Int = 20, status: EffectiveTradeStatus): TradeConnection!
 
-  """
-  Get a trait by ID
-  """
+  """Get a trait by ID"""
   traitById(
-    """
-    Trait ID
-    """
+    """Trait ID"""
     id: ID!
   ): Trait!
 
-  """
-  Get all trait list entries with pagination
-  """
+  """Get all trait list entries with pagination"""
   traitListEntries(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of trait list entries to return
-    """
+    """Number of trait list entries to return"""
     first: Int = 20
   ): TraitListEntryConnection!
 
-  """
-  Get trait list entries by species variant ID with pagination
-  """
+  """Get trait list entries by species variant ID with pagination"""
   traitListEntriesBySpeciesVariant(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of trait list entries to return
-    """
+    """Number of trait list entries to return"""
     first: Int = 20
 
-    """
-    Species variant ID
-    """
+    """Species variant ID"""
     speciesVariantId: ID!
   ): TraitListEntryConnection!
 
-  """
-  Get trait list entries by trait ID with pagination
-  """
+  """Get trait list entries by trait ID with pagination"""
   traitListEntriesByTrait(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of trait list entries to return
-    """
+    """Number of trait list entries to return"""
     first: Int = 20
 
-    """
-    Trait ID
-    """
+    """Trait ID"""
     traitId: ID!
   ): TraitListEntryConnection!
 
-  """
-  Get a trait list entry by ID
-  """
+  """Get a trait list entry by ID"""
   traitListEntryById(
-    """
-    Trait list entry ID
-    """
+    """Trait list entry ID"""
     id: ID!
   ): TraitListEntry!
 
-  """
-  Get trait reviews for a community moderation queue
-  """
-  traitReviewQueue(
-    communityId: ID!
-    filters: TraitReviewQueueFiltersInput
-    first: Int = 20
-    offset: Int = 0
-  ): TraitReviewQueueConnection!
+  """Get trait reviews for a community moderation queue"""
+  traitReviewQueue(communityId: ID!, filters: TraitReviewQueueFiltersInput, first: Int = 20, offset: Int = 0): TraitReviewQueueConnection!
 
-  """
-  Get all traits with pagination
-  """
+  """Get all traits with pagination"""
   traits(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of traits to return
-    """
+    """Number of traits to return"""
     first: Int = 20
   ): TraitConnection!
 
@@ -4959,24 +3557,16 @@ type Query {
   Get traits by species ID with pagination, optionally ordered by variant-specific order
   """
   traitsBySpecies(
-    """
-    Cursor for pagination
-    """
+    """Cursor for pagination"""
     after: String
 
-    """
-    Number of traits to return
-    """
+    """Number of traits to return"""
     first: Int = 20
 
-    """
-    Species ID
-    """
+    """Species ID"""
     speciesId: ID!
 
-    """
-    Optional species variant ID for ordered trait display
-    """
+    """Optional species variant ID for ordered trait display"""
     variantId: ID
   ): TraitConnection!
 
@@ -4990,56 +3580,37 @@ type Query {
   How one member's characters are arranged, as far as you may see. Private folders and everything nested under them are left out.
   """
   userCharacterFolders(communityId: ID, userId: ID!): [CharacterFolder!]!
-  userCharacters(
-    filters: CharacterFiltersInput
-    userId: ID!
-  ): CharacterConnection!
+  userCharacters(filters: CharacterFiltersInput, userId: ID!): CharacterConnection!
   userGalleries(filters: GalleryFiltersInput, userId: ID!): GalleryConnection!
 
-  """
-  Retrieves media owned by a specific user
-  """
+  """Retrieves media owned by a specific user"""
   userMedia(
-    """
-    Optional filters for media query
-    """
+    """Optional filters for media query"""
     filters: MediaFiltersInput
 
-    """
-    User ID whose media to retrieve
-    """
+    """User ID whose media to retrieve"""
     userId: ID!
   ): MediaConnection!
   userProfile(username: String!): UserProfile
   userStats(userId: ID!): UserStats!
   users(limit: Int! = 20, offset: Int! = 0): UserConnection!
 
-  """
-  Validate that the bot has access to a Discord guild
-  """
+  """Validate that the bot has access to a Discord guild"""
   validateDiscordGuild(
-    """
-    Community ID
-    """
+    """Community ID"""
     communityId: ID!
 
-    """
-    Discord guild ID
-    """
+    """Discord guild ID"""
     guildId: ID!
   ): DiscordGuildInfo!
 }
 
 input RedeemMyoTicketInput {
-  """
-  A JSON document, carried as a string, as elsewhere.
-  """
+  """A JSON document, carried as a string, as elsewhere."""
   customFields: String
   details: String
 
-  """
-  The ticket to spend.
-  """
+  """The ticket to spend."""
   itemId: ID!
   name: String!
 
@@ -5053,34 +3624,22 @@ input RedeemMyoTicketInput {
 }
 
 input RejectImageInput {
-  """
-  The ID of the image to reject
-  """
+  """The ID of the image to reject"""
   imageId: ID!
 
-  """
-  The reason for rejection
-  """
+  """The reason for rejection"""
   reason: ModerationRejectionReason!
 
-  """
-  Additional details about the rejection (required when reason is OTHER)
-  """
+  """Additional details about the rejection (required when reason is OTHER)"""
   reasonText: String
 }
 
-"""
-Response confirming successful removal of an entity
-"""
+"""Response confirming successful removal of an entity"""
 type RemovalResponse {
-  """
-  Optional message about the removal
-  """
+  """Optional message about the removal"""
   message: String
 
-  """
-  Whether the entity was successfully removed
-  """
+  """Whether the entity was successfully removed"""
   removed: Boolean!
 }
 
@@ -5106,65 +3665,41 @@ input ResetPasswordInput {
   token: String!
 }
 
-"""
-Input for responding to a community invitation
-"""
+"""Input for responding to a community invitation"""
 input RespondToCommunityInvitationInput {
-  """
-  Whether to accept (true) or decline (false) the invitation
-  """
+  """Whether to accept (true) or decline (false) the invitation"""
   accept: Boolean!
 }
 
 input RevertTraitReviewInput {
-  """
-  Reason for rejection
-  """
+  """Reason for rejection"""
   reason: String!
 
-  """
-  The ID of the review to reject
-  """
+  """The ID of the review to reject"""
   reviewId: ID!
 }
 
-"""
-A role within a community that defines permissions for members
-"""
+"""A role within a community that defines permissions for members"""
 type Role {
-  """
-  Whether members with this role can create new characters
-  """
+  """Whether members with this role can create new characters"""
   canCreateCharacter: Boolean!
 
-  """
-  Whether members with this role can create invite codes
-  """
+  """Whether members with this role can create invite codes"""
   canCreateInviteCode: Boolean!
 
-  """
-  Whether members with this role can create orphaned characters
-  """
+  """Whether members with this role can create orphaned characters"""
   canCreateOrphanedCharacter: Boolean!
 
-  """
-  Whether members with this role can create new roles
-  """
+  """Whether members with this role can create new roles"""
   canCreateRole: Boolean!
 
-  """
-  Whether members with this role can create new species
-  """
+  """Whether members with this role can create new species"""
   canCreateSpecies: Boolean!
 
-  """
-  Whether members with this role can delete characters in this community
-  """
+  """Whether members with this role can delete characters in this community"""
   canDeleteCharacter: Boolean!
 
-  """
-  Whether members with this role can edit characters
-  """
+  """Whether members with this role can edit characters"""
   canEditCharacter: Boolean!
 
   """
@@ -5172,9 +3707,7 @@ type Role {
   """
   canEditCharacterRegistry: Boolean!
 
-  """
-  Whether members with this role can edit their own characters
-  """
+  """Whether members with this role can edit their own characters"""
   canEditOwnCharacter: Boolean!
 
   """
@@ -5182,34 +3715,22 @@ type Role {
   """
   canEditOwnCharacterRegistry: Boolean!
 
-  """
-  Whether members with this role can edit existing roles
-  """
+  """Whether members with this role can edit existing roles"""
   canEditRole: Boolean!
 
-  """
-  Whether members with this role can edit species
-  """
+  """Whether members with this role can edit species"""
   canEditSpecies: Boolean!
 
-  """
-  Whether members with this role can grant items to community members
-  """
+  """Whether members with this role can grant items to community members"""
   canGrantItems: Boolean!
 
-  """
-  Whether members with this role can list invite codes
-  """
+  """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean!
 
-  """
-  Whether members with this role can create, edit, and delete item types
-  """
+  """Whether members with this role can create, edit, and delete item types"""
   canManageItems: Boolean!
 
-  """
-  Whether members with this role can change other members' roles
-  """
+  """Whether members with this role can change other members' roles"""
   canManageMemberRoles: Boolean!
 
   """
@@ -5217,14 +3738,10 @@ type Role {
   """
   canModerateImages: Boolean!
 
-  """
-  Whether members with this role can remove community members
-  """
+  """Whether members with this role can remove community members"""
   canRemoveCommunityMember: Boolean!
 
-  """
-  Whether members with this role can upload images to any character
-  """
+  """Whether members with this role can upload images to any character"""
   canUploadCharacterImages: Boolean!
 
   """
@@ -5232,59 +3749,37 @@ type Role {
   """
   canUploadOwnCharacterImages: Boolean!
 
-  """
-  The community this role belongs to
-  """
+  """The community this role belongs to"""
   community: Community!
 
-  """
-  The ID of the community this role belongs to
-  """
+  """The ID of the community this role belongs to"""
   communityId: ID!
 
-  """
-  When the role was created
-  """
+  """When the role was created"""
   createdAt: DateTime!
 
-  """
-  Unique identifier for the role
-  """
+  """Unique identifier for the role"""
   id: ID!
 
-  """
-  The name of the role
-  """
+  """The name of the role"""
   name: String!
 
-  """
-  When the role was last updated
-  """
+  """When the role was last updated"""
   updatedAt: DateTime!
 }
 
-"""
-Paginated list of roles with connection metadata
-"""
+"""Paginated list of roles with connection metadata"""
 type RoleConnection {
-  """
-  Whether there are more roles after this page
-  """
+  """Whether there are more roles after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are roles before this page
-  """
+  """Whether there are roles before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  The roles in this page
-  """
+  """The roles in this page"""
   nodes: [Role!]!
 
-  """
-  Total count of roles matching the query
-  """
+  """Total count of roles matching the query"""
   totalCount: Float!
 }
 
@@ -5305,25 +3800,19 @@ input SetItemTypeMyoGrantInput {
   """
   speciesId: ID
 
-  """
-  Replaces the grant wholesale. Empty clears it.
-  """
+  """Replaces the grant wholesale. Empty clears it."""
   speciesVariantIds: [ID!]!
 }
 
 input SetItemTypeTraitEditGrantInput {
   itemTypeId: ID!
 
-  """
-  Replaces the grant wholesale. Empty clears it.
-  """
+  """Replaces the grant wholesale. Empty clears it."""
   species: [TraitEditGrantSpeciesInput!]!
 }
 
 input SetItemTypeUsePayoutInput {
-  """
-  Replaces the payout wholesale. Empty clears it.
-  """
+  """Replaces the payout wholesale. Empty clears it."""
   components: [ItemUsePayoutComponentInput!]!
   itemTypeId: ID!
 }
@@ -5345,9 +3834,7 @@ input SetMainMediaInput {
   mediaId: ID
 }
 
-"""
-Something a community sells for its own currency.
-"""
+"""Something a community sells for its own currency."""
 type ShopItem {
   active: Boolean!
   communityId: ID!
@@ -5357,14 +3844,10 @@ type ShopItem {
   itemType: ItemType!
   itemTypeId: ID!
 
-  """
-  Null means no cap. Counted across every purchase.
-  """
+  """Null means no cap. Counted across every purchase."""
   maxPerUser: Int
 
-  """
-  Falls back to the item type's name when unset.
-  """
+  """Falls back to the item type's name when unset."""
   name: String
   prices: [ShopPrice!]!
 
@@ -5394,9 +3877,7 @@ type ShopPrice {
   sortOrder: Int!
 }
 
-"""
-One currency a price option asks for.
-"""
+"""One currency a price option asks for."""
 type ShopPriceComponent {
   amount: Int!
   currency: Currency!
@@ -5416,13 +3897,9 @@ input ShopPriceInput {
   components: [ShopPriceComponentInput!]!
 }
 
-"""
-One checkout.
-"""
+"""One checkout."""
 type ShopPurchase {
-  """
-  Who bought it. What a staff view is looking at.
-  """
+  """Who bought it. What a staff view is looking at."""
   buyer: User
   buyerId: ID!
   communityId: ID!
@@ -5448,9 +3925,7 @@ type ShopPurchaseLine {
   """
   purchasedAt: DateTime!
 
-  """
-  Why it cannot be undone, when it cannot.
-  """
+  """Why it cannot be undone, when it cannot."""
   refundBlockedReason: String
 
   """
@@ -5469,15 +3944,11 @@ type ShopPurchaseLineConnection {
   hasMore: Boolean!
   lines: [ShopPurchaseLine!]!
 
-  """
-  Every line matching the filters, not just this page.
-  """
+  """Every line matching the filters, not just this page."""
   total: Int!
 }
 
-"""
-What one unit of a purchase cost, at the time.
-"""
+"""What one unit of a purchase cost, at the time."""
 type ShopPurchaseLineCost {
   amount: Int!
   currency: Currency!
@@ -5485,9 +3956,7 @@ type ShopPurchaseLineCost {
 }
 
 input ShopPurchaseLineFiltersInput {
-  """
-  Required. A purchase history is always one community's.
-  """
+  """Required. A purchase history is always one community's."""
   communityId: ID!
   limit: Int! = 25
   offset: Int! = 0
@@ -5497,15 +3966,11 @@ input ShopPurchaseLineFiltersInput {
   """
   search: String
 
-  """
-  Omit for both.
-  """
+  """Omit for both."""
   status: ShopPurchaseLineStatus
 }
 
-"""
-Whether a purchase line still stands or has been refunded.
-"""
+"""Whether a purchase line still stands or has been refunded."""
 enum ShopPurchaseLineStatus {
   ACTIVE
   REFUNDED
@@ -5520,142 +3985,90 @@ input SignupInput {
 }
 
 type Species {
-  """
-  The community that owns this species
-  """
+  """The community that owns this species"""
   community: Community!
 
-  """
-  ID of the community that owns this species
-  """
+  """ID of the community that owns this species"""
   communityId: ID!
 
-  """
-  When the species was created
-  """
+  """When the species was created"""
   createdAt: DateTime!
 
-  """
-  Whether this species has an associated image
-  """
+  """Whether this species has an associated image"""
   hasImage: Boolean!
 
-  """
-  Unique identifier for the species
-  """
+  """Unique identifier for the species"""
   id: ID!
 
-  """
-  Name of the species
-  """
+  """Name of the species"""
   name: String!
 
-  """
-  Traits associated with this species
-  """
+  """Traits associated with this species"""
   traits: [Trait!]!
 
-  """
-  When the species was last updated
-  """
+  """When the species was last updated"""
   updatedAt: DateTime!
 }
 
 type SpeciesConnection {
-  """
-  Whether there are more species after this page
-  """
+  """Whether there are more species after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are more species before this page
-  """
+  """Whether there are more species before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  List of species in this connection
-  """
+  """List of species in this connection"""
   nodes: [Species!]!
 
-  """
-  Total number of species available
-  """
+  """Total number of species available"""
   totalCount: Float!
 }
 
 type SpeciesVariant {
-  """
-  The color associated with this species variant
-  """
+  """The color associated with this species variant"""
   color: CommunityColor
 
-  """
-  ID of the color for this species variant
-  """
+  """ID of the color for this species variant"""
   colorId: ID
 
-  """
-  When the species variant was created
-  """
+  """When the species variant was created"""
   createdAt: DateTime!
 
-  """
-  Enum value settings for this species variant
-  """
+  """Enum value settings for this species variant"""
   enumValueSettings: [EnumValueSetting!]!
 
-  """
-  Unique identifier for the species variant
-  """
+  """Unique identifier for the species variant"""
   id: ID!
 
-  """
-  Name of the species variant
-  """
+  """Name of the species variant"""
   name: String!
 
-  """
-  The species this variant belongs to
-  """
+  """The species this variant belongs to"""
   species: Species!
 
-  """
-  ID of the species this variant belongs to
-  """
+  """ID of the species this variant belongs to"""
   speciesId: ID!
 
-  """
-  When the species variant was last updated
-  """
+  """When the species variant was last updated"""
   updatedAt: DateTime!
 }
 
 type SpeciesVariantConnection {
-  """
-  Whether there are more species variants after this page
-  """
+  """Whether there are more species variants after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are more species variants before this page
-  """
+  """Whether there are more species variants before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  List of species variants in this connection
-  """
+  """List of species variants in this connection"""
   nodes: [SpeciesVariant!]!
 
-  """
-  Total number of species variants available
-  """
+  """Total number of species variants available"""
   totalCount: Float!
 }
 
 type Subscription {
-  deviantartUuidBackfillProgress(
-    jobId: String!
-  ): DeviantartUuidBackfillProgress!
+  deviantartUuidBackfillProgress(jobId: String!): DeviantartUuidBackfillProgress!
 }
 
 type Tag {
@@ -5667,34 +4080,22 @@ type Tag {
   name: String!
 }
 
-"""
-Text content with formatting and word count information
-"""
+"""Text content with formatting and word count information"""
 type TextContent {
-  """
-  The actual text content
-  """
+  """The actual text content"""
   content: String!
 
-  """
-  Text formatting type (plaintext or markdown)
-  """
+  """Text formatting type (plaintext or markdown)"""
   formatting: TextFormatting!
 
-  """
-  Unique identifier for the text content
-  """
+  """Unique identifier for the text content"""
   id: ID!
 
-  """
-  Automatically calculated word count
-  """
+  """Automatically calculated word count"""
   wordCount: Float!
 }
 
-"""
-The formatting type for text content
-"""
+"""The formatting type for text content"""
 enum TextFormatting {
   MARKDOWN
   PLAINTEXT
@@ -5742,15 +4143,11 @@ One character on the table, moving one way. Always a specific character: there i
 type TradeCharacter {
   character: Character!
 
-  """
-  Who receives them.
-  """
+  """Who receives them."""
   destinationUser: User!
   id: ID!
 
-  """
-  Who hands them over.
-  """
+  """Who hands them over."""
   sourceUser: User!
 }
 
@@ -5761,9 +4158,7 @@ input TradeCharacterInput {
   characterId: ID!
 }
 
-"""
-Coin on the table, in one direction.
-"""
+"""Coin on the table, in one direction."""
 input TradeCoinInput {
   amount: Int!
   currencyId: ID!
@@ -5774,9 +4169,7 @@ input TradeCoinInput {
   fromProposer: Boolean!
 }
 
-"""
-A page of trades, newest first.
-"""
+"""A page of trades, newest first."""
 type TradeConnection {
   hasNextPage: Boolean!
   hasPreviousPage: Boolean!
@@ -5784,9 +4177,7 @@ type TradeConnection {
   totalCount: Int!
 }
 
-"""
-Coin on the table, moving one way.
-"""
+"""Coin on the table, moving one way."""
 type TradeCurrencyLine {
   """
   Always positive. Direction is the source and destination, not a sign. Opposing amounts in one currency are netted when the offer is written.
@@ -5802,9 +4193,7 @@ type TradeCurrencyLine {
 One line on the table: either a specific item, or a quantity of an item type that any rows can satisfy.
 """
 type TradeItem {
-  """
-  Who receives it.
-  """
+  """Who receives it."""
   destinationUser: User!
   id: ID!
 
@@ -5818,14 +4207,10 @@ type TradeItem {
   """
   itemType: ItemType
 
-  """
-  How many of itemType. Null on a line that names a row.
-  """
+  """How many of itemType. Null on a line that names a row."""
   quantity: Int
 
-  """
-  Who hands it over.
-  """
+  """Who hands it over."""
   sourceUser: User!
 }
 
@@ -5833,14 +4218,10 @@ type TradeItem {
 Which of your rows satisfy one by-type line. Optional -- omit it and rows are chosen for you, newest first. Supply it when one particular copy is one you would rather keep.
 """
 input TradeSelectionInput {
-  """
-  Exactly as many rows as the line's quantity.
-  """
+  """Exactly as many rows as the line's quantity."""
   itemIds: [ID!]!
 
-  """
-  The TradeItem line being satisfied.
-  """
+  """The TradeItem line being satisfied."""
   tradeItemId: ID!
 }
 
@@ -5850,81 +4231,51 @@ type Trait {
   """
   allowsClarifier: Boolean!
 
-  """
-  Whether this trait allows multiple values per character
-  """
+  """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean!
 
-  """
-  The color associated with this trait
-  """
+  """The color associated with this trait"""
   color: CommunityColor
 
-  """
-  ID of the color for this trait
-  """
+  """ID of the color for this trait"""
   colorId: ID
 
-  """
-  When the trait was created
-  """
+  """When the trait was created"""
   createdAt: DateTime!
 
-  """
-  Enum values for this trait (only populated for ENUM traits)
-  """
+  """Enum values for this trait (only populated for ENUM traits)"""
   enumValues: [EnumValue!]!
 
-  """
-  Unique identifier for the trait
-  """
+  """Unique identifier for the trait"""
   id: ID!
 
-  """
-  Name of the trait
-  """
+  """Name of the trait"""
   name: String!
 
-  """
-  The species this trait belongs to
-  """
+  """The species this trait belongs to"""
   species: Species!
 
-  """
-  ID of the species this trait belongs to
-  """
+  """ID of the species this trait belongs to"""
   speciesId: ID!
 
-  """
-  When the trait was last updated
-  """
+  """When the trait was last updated"""
   updatedAt: DateTime!
 
-  """
-  Type of values this trait can store
-  """
+  """Type of values this trait can store"""
   valueType: TraitValueType!
 }
 
 type TraitConnection {
-  """
-  Whether there are more traits after this page
-  """
+  """Whether there are more traits after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are more traits before this page
-  """
+  """Whether there are more traits before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  List of traits in this connection
-  """
+  """List of traits in this connection"""
   nodes: [Trait!]!
 
-  """
-  Total number of traits available
-  """
+  """Total number of traits available"""
   totalCount: Float!
 }
 
@@ -5938,135 +4289,85 @@ input TraitEditGrantSpeciesInput {
 }
 
 type TraitListEntry {
-  """
-  When the trait list entry was created
-  """
+  """When the trait list entry was created"""
   createdAt: DateTime!
 
-  """
-  Display value for the default value based on type
-  """
+  """Display value for the default value based on type"""
   defaultDisplayValue: String
 
-  """
-  Default integer value for this trait
-  """
+  """Default integer value for this trait"""
   defaultValueInt: Int
 
-  """
-  Default string value for this trait
-  """
+  """Default string value for this trait"""
   defaultValueString: String
 
-  """
-  Default timestamp value for this trait
-  """
+  """Default timestamp value for this trait"""
   defaultValueTimestamp: DateTime
 
-  """
-  Unique identifier for the trait list entry
-  """
+  """Unique identifier for the trait list entry"""
   id: ID!
 
-  """
-  Display order of this trait in the variant's trait list
-  """
+  """Display order of this trait in the variant's trait list"""
   order: Int!
 
-  """
-  Whether this trait is required for critters using this variant
-  """
+  """Whether this trait is required for critters using this variant"""
   required: Boolean!
 
-  """
-  The species variant this entry belongs to
-  """
+  """The species variant this entry belongs to"""
   speciesVariant: SpeciesVariant!
 
-  """
-  ID of the species variant this entry belongs to
-  """
+  """ID of the species variant this entry belongs to"""
   speciesVariantId: ID!
 
-  """
-  The trait this entry configures
-  """
+  """The trait this entry configures"""
   trait: Trait!
 
-  """
-  ID of the trait this entry configures
-  """
+  """ID of the trait this entry configures"""
   traitId: ID!
 
-  """
-  When the trait list entry was last updated
-  """
+  """When the trait list entry was last updated"""
   updatedAt: DateTime!
 
-  """
-  Type of values this trait stores
-  """
+  """Type of values this trait stores"""
   valueType: TraitValueType!
 }
 
 type TraitListEntryConnection {
-  """
-  Whether there are more trait list entries after this page
-  """
+  """Whether there are more trait list entries after this page"""
   hasNextPage: Boolean!
 
-  """
-  Whether there are more trait list entries before this page
-  """
+  """Whether there are more trait list entries before this page"""
   hasPreviousPage: Boolean!
 
-  """
-  List of trait list entries in this connection
-  """
+  """List of trait list entries in this connection"""
   nodes: [TraitListEntry!]!
 
-  """
-  Total number of trait list entries available
-  """
+  """Total number of trait list entries available"""
   totalCount: Float!
 }
 
 input TraitOrderInput {
-  """
-  New display order for this trait
-  """
+  """New display order for this trait"""
   order: Int!
 
-  """
-  ID of the trait
-  """
+  """ID of the trait"""
   traitId: ID!
 }
 
-"""
-A trait review for a character
-"""
+"""A trait review for a character"""
 type TraitReview {
-  """
-  The trait values actually applied (if edited)
-  """
+  """The trait values actually applied (if edited)"""
   appliedTraitValues: [CharacterTraitValue!]
 
-  """
-  The character being reviewed
-  """
+  """The character being reviewed"""
   character: Character!
   characterId: ID!
   createdAt: DateTime!
 
-  """
-  How many times this review has been sent to the back
-  """
+  """How many times this review has been sent to the back"""
   deferralCount: Int!
 
-  """
-  Why the last moderator passed on this review
-  """
+  """Why the last moderator passed on this review"""
   deferralNote: String
 
   """
@@ -6074,36 +4375,24 @@ type TraitReview {
   """
   deferredAt: DateTime
 
-  """
-  The moderator who last sent this review to the back
-  """
+  """The moderator who last sent this review to the back"""
   deferredBy: User
   deferredById: ID
   id: ID!
 
-  """
-  The previous trait values
-  """
+  """The previous trait values"""
   previousTraitValues: [CharacterTraitValue!]!
 
-  """
-  The proposed trait values
-  """
+  """The proposed trait values"""
   proposedTraitValues: [CharacterTraitValue!]!
 
-  """
-  Reason for rejection
-  """
+  """Reason for rejection"""
   rejectionReason: String
 
-  """
-  When the review was resolved
-  """
+  """When the review was resolved"""
   resolvedAt: DateTime
 
-  """
-  The moderator who resolved this review
-  """
+  """The moderator who resolved this review"""
   resolvedBy: User
   resolvedById: ID
   source: TraitReviewSource!
@@ -6111,68 +4400,44 @@ type TraitReview {
   updatedAt: DateTime!
 }
 
-"""
-Paginated list of trait reviews in the queue
-"""
+"""Paginated list of trait reviews in the queue"""
 type TraitReviewQueueConnection {
-  """
-  Whether there are more reviews after this page
-  """
+  """Whether there are more reviews after this page"""
   hasMore: Boolean!
   items: [TraitReviewQueueItem!]!
 
-  """
-  Total count of pending reviews
-  """
+  """Total count of pending reviews"""
   total: Int!
 }
 
 input TraitReviewQueueFiltersInput {
-  """
-  Filter by source
-  """
+  """Filter by source"""
   source: TraitReviewSource
 
-  """
-  Filter by status
-  """
+  """Filter by status"""
   status: ModerationStatus
 }
 
-"""
-An item in the trait review queue
-"""
+"""An item in the trait review queue"""
 type TraitReviewQueueItem {
-  """
-  ID of the character
-  """
+  """ID of the character"""
   characterId: ID!
 
-  """
-  Name of the character
-  """
+  """Name of the character"""
   characterName: String!
 
-  """
-  Registry ID of the character
-  """
+  """Registry ID of the character"""
   registryId: String
   review: TraitReview!
 
-  """
-  Name of the species
-  """
+  """Name of the species"""
   speciesName: String
 
-  """
-  Name of the species variant
-  """
+  """Name of the species variant"""
   variantName: String
 }
 
-"""
-The source that triggered a trait review
-"""
+"""The source that triggered a trait review"""
 enum TraitReviewSource {
   CREATION
   IMPORT
@@ -6180,28 +4445,18 @@ enum TraitReviewSource {
   USER_EDIT
 }
 
-"""
-Types of values that traits can store
-"""
+"""Types of values that traits can store"""
 enum TraitValueType {
-  """
-  Enumerated value from predefined list
-  """
+  """Enumerated value from predefined list"""
   ENUM
 
-  """
-  Integer/numeric value
-  """
+  """Integer/numeric value"""
   INTEGER
 
-  """
-  String/text value
-  """
+  """String/text value"""
   STRING
 
-  """
-  Timestamp/date value
-  """
+  """Timestamp/date value"""
   TIMESTAMP
 }
 
@@ -6213,14 +4468,10 @@ input TransferCurrencyInput {
   amount: Int!
   currencyId: ID!
 
-  """
-  Member-facing note on the transfer.
-  """
+  """Member-facing note on the transfer."""
   reason: String
 
-  """
-  Who receives it.
-  """
+  """Who receives it."""
   toUserId: ID!
 }
 
@@ -6234,9 +4485,7 @@ input UpdateCharacterFolderInput {
   name: String
 }
 
-"""
-Input for updating character profile fields
-"""
+"""Input for updating character profile fields"""
 input UpdateCharacterProfileInput {
   customFields: String
   details: String
@@ -6263,23 +4512,15 @@ input UpdateCharacterProfileInput {
   visibility: Visibility
 }
 
-"""
-Input for updating character registry fields
-"""
+"""Input for updating character registry fields"""
 input UpdateCharacterRegistryInput {
-  """
-  Official registry identifier for this character within its species
-  """
+  """Official registry identifier for this character within its species"""
   registryId: String
 
-  """
-  Species variant ID
-  """
+  """Species variant ID"""
   speciesVariantId: ID
 
-  """
-  Trait values for the character
-  """
+  """Trait values for the character"""
   traitValues: [CharacterTraitValueInput!]
 
   """
@@ -6298,19 +4539,13 @@ input UpdateCommunityColorInput {
 }
 
 input UpdateCommunityInput {
-  """
-  Name of the community
-  """
+  """Name of the community"""
   name: String
 }
 
-"""
-Input for updating an existing community membership
-"""
+"""Input for updating an existing community membership"""
 input UpdateCommunityMemberInput {
-  """
-  The ID of the role to assign to the member
-  """
+  """The ID of the role to assign to the member"""
   roleId: ID!
 }
 
@@ -6332,36 +4567,24 @@ input UpdateCurrencyInput {
 }
 
 input UpdateEnumValueInput {
-  """
-  ID of the color for this enum value
-  """
+  """ID of the color for this enum value"""
   colorId: ID
 
-  """
-  Name/display text of this enum value
-  """
+  """Name/display text of this enum value"""
   name: String
 
-  """
-  Display order within the trait's enum values
-  """
+  """Display order within the trait's enum values"""
   order: Int
 
-  """
-  ID of the trait this enum value belongs to
-  """
+  """ID of the trait this enum value belongs to"""
   traitId: ID
 }
 
 input UpdateEnumValueSettingInput {
-  """
-  ID of the enum value this setting allows
-  """
+  """ID of the enum value this setting allows"""
   enumValueId: ID
 
-  """
-  ID of the species variant this setting belongs to
-  """
+  """ID of the species variant this setting belongs to"""
   speciesVariantId: ID
 }
 
@@ -6387,18 +4610,12 @@ input UpdateImageInput {
   thumbnailCrop: ImageCropInput
 }
 
-"""
-Input for updating an existing invite code
-"""
+"""Input for updating an existing invite code"""
 input UpdateInviteCodeInput {
-  """
-  Maximum number of times this invite code can be claimed
-  """
+  """Maximum number of times this invite code can be claimed"""
   maxClaims: Int
 
-  """
-  The ID of the role to grant when this invite code is used
-  """
+  """The ID of the role to grant when this invite code is used"""
   roleId: ID
 }
 
@@ -6419,91 +4636,57 @@ input UpdateItemTypeInput {
   name: String
 }
 
-"""
-Input type for updating media metadata
-"""
+"""Input type for updating media metadata"""
 input UpdateMediaInput {
-  """
-  Updated character association
-  """
+  """Updated character association"""
   characterId: ID
 
-  """
-  Updated description for the media
-  """
+  """Updated description for the media"""
   description: String
 
-  """
-  Updated gallery association
-  """
+  """Updated gallery association"""
   galleryId: ID
 
-  """
-  Updated tags
-  """
+  """Updated tags"""
   tags: [String!]
 
-  """
-  Updated title for the media
-  """
+  """Updated title for the media"""
   title: String
 
-  """
-  Updated visibility setting
-  """
+  """Updated visibility setting"""
   visibility: Visibility
 }
 
-"""
-Sets one channel for one kind, for the caller.
-"""
+"""Sets one channel for one kind, for the caller."""
 input UpdateNotificationPreferenceInput {
   channel: NotificationChannel!
 
-  """
-  The new setting. There is no toggle, only a value.
-  """
+  """The new setting. There is no toggle, only a value."""
   enabled: Boolean!
   kind: NotificationKind!
 }
 
-"""
-Input for updating an existing role
-"""
+"""Input for updating an existing role"""
 input UpdateRoleInput {
-  """
-  Whether members with this role can create new characters
-  """
+  """Whether members with this role can create new characters"""
   canCreateCharacter: Boolean
 
-  """
-  Whether members with this role can create invite codes
-  """
+  """Whether members with this role can create invite codes"""
   canCreateInviteCode: Boolean
 
-  """
-  Whether members with this role can create orphaned characters
-  """
+  """Whether members with this role can create orphaned characters"""
   canCreateOrphanedCharacter: Boolean
 
-  """
-  Whether members with this role can create new roles
-  """
+  """Whether members with this role can create new roles"""
   canCreateRole: Boolean
 
-  """
-  Whether members with this role can create new species
-  """
+  """Whether members with this role can create new species"""
   canCreateSpecies: Boolean
 
-  """
-  Whether members with this role can delete characters in this community
-  """
+  """Whether members with this role can delete characters in this community"""
   canDeleteCharacter: Boolean
 
-  """
-  Whether members with this role can edit characters
-  """
+  """Whether members with this role can edit characters"""
   canEditCharacter: Boolean
 
   """
@@ -6511,9 +4694,7 @@ input UpdateRoleInput {
   """
   canEditCharacterRegistry: Boolean
 
-  """
-  Whether members with this role can edit their own characters
-  """
+  """Whether members with this role can edit their own characters"""
   canEditOwnCharacter: Boolean
 
   """
@@ -6521,34 +4702,22 @@ input UpdateRoleInput {
   """
   canEditOwnCharacterRegistry: Boolean
 
-  """
-  Whether members with this role can edit existing roles
-  """
+  """Whether members with this role can edit existing roles"""
   canEditRole: Boolean
 
-  """
-  Whether members with this role can edit species
-  """
+  """Whether members with this role can edit species"""
   canEditSpecies: Boolean
 
-  """
-  Whether members with this role can grant items to community members
-  """
+  """Whether members with this role can grant items to community members"""
   canGrantItems: Boolean
 
-  """
-  Whether members with this role can list invite codes
-  """
+  """Whether members with this role can list invite codes"""
   canListInviteCodes: Boolean
 
-  """
-  Whether members with this role can create, edit, and delete item types
-  """
+  """Whether members with this role can create, edit, and delete item types"""
   canManageItems: Boolean
 
-  """
-  Whether members with this role can change other members' roles
-  """
+  """Whether members with this role can change other members' roles"""
   canManageMemberRoles: Boolean
 
   """
@@ -6556,14 +4725,10 @@ input UpdateRoleInput {
   """
   canModerateImages: Boolean
 
-  """
-  Whether members with this role can remove community members
-  """
+  """Whether members with this role can remove community members"""
   canRemoveCommunityMember: Boolean
 
-  """
-  Whether members with this role can upload images to any character
-  """
+  """Whether members with this role can upload images to any character"""
   canUploadCharacterImages: Boolean
 
   """
@@ -6571,9 +4736,7 @@ input UpdateRoleInput {
   """
   canUploadOwnCharacterImages: Boolean
 
-  """
-  The name of the role
-  """
+  """The name of the role"""
   name: String
 }
 
@@ -6592,51 +4755,33 @@ input UpdateShopItemInput {
 }
 
 input UpdateSpeciesInput {
-  """
-  ID of the community that owns this species
-  """
+  """ID of the community that owns this species"""
   communityId: ID
 
-  """
-  Whether this species has an associated image
-  """
+  """Whether this species has an associated image"""
   hasImage: Boolean
 
-  """
-  Name of the species
-  """
+  """Name of the species"""
   name: String
 }
 
 input UpdateSpeciesVariantInput {
-  """
-  ID of the color for this species variant
-  """
+  """ID of the color for this species variant"""
   colorId: ID
 
-  """
-  Name of the species variant
-  """
+  """Name of the species variant"""
   name: String
 
-  """
-  ID of the species this variant belongs to
-  """
+  """ID of the species this variant belongs to"""
   speciesId: ID
 }
 
-"""
-Input type for updating text content specifically
-"""
+"""Input type for updating text content specifically"""
 input UpdateTextContentInput {
-  """
-  Updated text content
-  """
+  """Updated text content"""
   content: String
 
-  """
-  Updated text formatting type
-  """
+  """Updated text formatting type"""
   formatting: TextFormatting
 }
 
@@ -6646,83 +4791,53 @@ input UpdateTraitInput {
   """
   allowsClarifier: Boolean
 
-  """
-  Whether this trait allows multiple values per character
-  """
+  """Whether this trait allows multiple values per character"""
   allowsMultipleValues: Boolean
 
-  """
-  ID of the color for this trait
-  """
+  """ID of the color for this trait"""
   colorId: ID
 
-  """
-  Name of the trait
-  """
+  """Name of the trait"""
   name: String
 
-  """
-  ID of the species this trait belongs to
-  """
+  """ID of the species this trait belongs to"""
   speciesId: ID
 
-  """
-  Type of values this trait can store
-  """
+  """Type of values this trait can store"""
   valueType: TraitValueType
 }
 
 input UpdateTraitListEntryInput {
-  """
-  Default integer value for this trait
-  """
+  """Default integer value for this trait"""
   defaultValueInt: Int
 
-  """
-  Default string value for this trait
-  """
+  """Default string value for this trait"""
   defaultValueString: String
 
-  """
-  Default timestamp value for this trait
-  """
+  """Default timestamp value for this trait"""
   defaultValueTimestamp: DateTime
 
-  """
-  Display order of this trait in the variant's trait list
-  """
+  """Display order of this trait in the variant's trait list"""
   order: Int
 
-  """
-  Whether this trait is required for critters using this variant
-  """
+  """Whether this trait is required for critters using this variant"""
   required: Boolean
 
-  """
-  ID of the species variant this entry belongs to
-  """
+  """ID of the species variant this entry belongs to"""
   speciesVariantId: ID
 
-  """
-  ID of the trait this entry configures
-  """
+  """ID of the trait this entry configures"""
   traitId: ID
 
-  """
-  Type of values this trait stores
-  """
+  """Type of values this trait stores"""
   valueType: TraitValueType
 }
 
 input UpdateTraitOrdersInput {
-  """
-  Array of trait order updates
-  """
+  """Array of trait order updates"""
   traitOrders: [TraitOrderInput!]!
 
-  """
-  ID of the species variant
-  """
+  """ID of the species variant"""
   variantId: ID!
 }
 
@@ -6744,9 +4859,7 @@ type UseItemResult {
   """
   batchId: String!
 
-  """
-  What was used up, for the message.
-  """
+  """What was used up, for the message."""
   itemTypeName: String!
   payout: [ItemUsePayoutComponent!]!
 }
@@ -6759,10 +4872,7 @@ type User {
   canGrantGlobalPermissions: Boolean!
   canListInviteCodes: Boolean!
   canListUsers: Boolean!
-  communityMemberships(
-    after: String
-    first: Int = 20
-  ): CommunityMemberConnection!
+  communityMemberships(after: String, first: Int = 20): CommunityMemberConnection!
   createdAt: DateTime!
   dateOfBirth: DateTime
   displayName: String
@@ -6772,9 +4882,7 @@ type User {
   followingCount: Int!
   id: ID!
 
-  """
-  User's inventories across different communities
-  """
+  """User's inventories across different communities"""
   inventories(communityId: ID): [Inventory!]!
   isAdmin: Boolean!
   isVerified: Boolean!
@@ -6795,68 +4903,44 @@ type UserConnection {
 type UserProfile {
   canViewPrivateContent: Boolean!
 
-  """
-  Characters featured or highlighted by this user
-  """
+  """Characters featured or highlighted by this user"""
   featuredCharacters: [Character!]!
   isOwnProfile: Boolean!
 
-  """
-  Recently created or updated characters by this user
-  """
+  """Recently created or updated characters by this user"""
   recentCharacters: [Character!]!
 
-  """
-  Recently created or updated galleries by this user
-  """
+  """Recently created or updated galleries by this user"""
   recentGalleries: [Gallery!]!
 
-  """
-  Recently uploaded media (images and text) by this user
-  """
+  """Recently uploaded media (images and text) by this user"""
   recentMedia: [Media!]!
 
-  """
-  User statistics including counts and engagement metrics
-  """
+  """User statistics including counts and engagement metrics"""
   stats: UserStats!
   user: User!
 }
 
 type UserStats {
-  """
-  Total number of characters owned by this user
-  """
+  """Total number of characters owned by this user"""
   charactersCount: Int!
 
-  """
-  Number of users following this user
-  """
+  """Number of users following this user"""
   followersCount: Int!
 
-  """
-  Number of users this user is following
-  """
+  """Number of users this user is following"""
   followingCount: Int!
 
-  """
-  Total number of galleries created by this user
-  """
+  """Total number of galleries created by this user"""
   galleriesCount: Int!
 
-  """
-  Number of this user's image media the asker is allowed to see
-  """
+  """Number of this user's image media the asker is allowed to see"""
   imagesCount: Int!
 
-  """
-  Total number of likes received across all user's content
-  """
+  """Total number of likes received across all user's content"""
   totalLikes: Int!
 
-  """
-  Total number of views across all user's content
-  """
+  """Total number of views across all user's content"""
   totalViews: Int!
   userId: ID!
 }
@@ -6865,9 +4949,7 @@ input VerifyEmailInput {
   token: String!
 }
 
-"""
-Visibility levels for content
-"""
+"""Visibility levels for content"""
 enum Visibility {
   PRIVATE
   PUBLIC

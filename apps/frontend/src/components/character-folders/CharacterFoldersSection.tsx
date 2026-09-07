@@ -10,6 +10,7 @@ import {
 import { HostAwareLink } from "../HostAwareLink";
 import { apexUrl } from "../../lib/communityHost";
 import { flattenTree, Folder } from "./folderTree";
+import { FolderIcon } from "./FolderTile";
 
 const Section = styled.section`
   margin-top: ${({ theme }) => theme.spacing.lg};
@@ -171,7 +172,7 @@ export const CharacterFoldersSection: React.FC<
                   : `/my/characters?folder=${folder.id}`,
               )}
             >
-              <span aria-hidden>{folder.isPrivate ? "🔒" : "📁"}</span>
+              <FolderIcon isPrivate={folder.isPrivate} />
               {folder.name}
             </Chip>
           ))}
@@ -207,7 +208,7 @@ export const CharacterFoldersSection: React.FC<
                     })
                   }
                 />
-                <span aria-hidden>{folder.isPrivate ? "🔒" : "📁"}</span>
+                <FolderIcon isPrivate={folder.isPrivate} />
                 {folder.name}
               </Row>
             ))}

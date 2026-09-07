@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import styled from "styled-components";
 import { Button, Modal } from "@chardb/ui";
 import { flattenTree, Folder } from "./folderTree";
+import { FolderIcon } from "./FolderTile";
 
 const Field = styled.input`
   width: 100%;
@@ -197,7 +198,8 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
               disabled={disabledIds?.has(folder.id)}
               onClick={() => setSelected(folder.id)}
             >
-              {folder.isPrivate ? "🔒" : "📁"} {folder.name}
+              <FolderIcon isPrivate={folder.isPrivate} />
+              {folder.name}
               <Count>{folder.characterCount}</Count>
             </Row>
           ))}

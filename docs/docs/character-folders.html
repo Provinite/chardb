@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Character Folders - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Arrange a large collection of characters into folders in CharDB: nest them, file by dragging or in bulk, keep some private, and let visitors browse your profile by them."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/character-folders.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Character Folders" />
+    <meta
+      property="og:description"
+      content="Arrange a large collection of characters into folders in CharDB: nest them, file by dragging or in bulk, keep some private, and let visitors browse your profile by them."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/character-folders.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/character-folders-root.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The CharDB My Characters page showing a row of folder tiles above a grid of character cards."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .screenshot-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .screenshot-row .screenshot img {
+        height: 400px;
+        object-fit: contain;
+        background: #1a1a2e;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      kbd {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85em;
+        color: #555;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+
+      footer .credit {
+        font-size: 0.8rem;
+        opacity: 0.85;
+      }
+
+      @media (max-width: 768px) {
+        .screenshot-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Character Folders</h1>
+        <p>
+          Somewhere to put a hundred characters, and a way for visitors to
+          browse them
+        </p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>My Characters is a file browser.</strong> Folders across the
+            top, the characters filed here underneath, and a breadcrumb to get
+            back up. Click a folder to open it.
+          </p>
+          <p>
+            The top level holds your folders and every character that is in
+            <em>no</em> folder. So if you have never made one, you see your
+            whole collection exactly as you did before &mdash; nothing is filed
+            yet. Characters leave the top level as you file them, which makes it
+            a pile that empties.
+          </p>
+          <p>
+            A character can be in more than one folder. &ldquo;Fursonas&rdquo;
+            and &ldquo;Open for trade&rdquo; are both true of the same
+            character, and making you pick one would be asking a question with
+            no right answer.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">&#x1F4C1;</div>
+              <h4>Nest them</h4>
+              <p>Folders go inside folders, five levels deep</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F446;</div>
+              <h4>Three ways to file</h4>
+              <p>Drag, tick several, or from a character's own page</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F512;</div>
+              <h4>Private if you want</h4>
+              <p>A private folder is yours alone, and so is everything in it</p>
+            </div>
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-folders-root.png"
+            alt="The My Characters page with four folder tiles named Commissions, Fursonas, Retired and To sell, each with a count, above a grid of character cards"
+          />
+          <div class="screenshot-caption">
+            The top level: your folders, then everything not yet filed
+          </div>
+        </div>
+      </div>
+
+      <!-- Filing -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Three Ways to File</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Drag a card onto a folder.</strong> Pick a character up and
+            drop it on a folder tile. The tile lights up while the card is over
+            it. Dragging <em>moves</em> the character: it leaves the folder you
+            are looking at and lands in the one you dropped it on.
+          </p>
+          <p>
+            <strong>Tick several, then move them together.</strong> Every card
+            has a checkbox in its top-left corner. Tick a few and a bar appears
+            with <strong>Move to folder</strong>. This is the one to use when
+            you are clearing a hundred characters rather than filing the one you
+            happened to be looking at. <strong>Also add to</strong> beside it
+            adds them to a second folder without taking them out of the first.
+          </p>
+          <p>
+            <strong>From the character's own page.</strong> Every character has
+            a <strong>Folders</strong> section, with an <strong>Edit</strong>
+            button if the character is yours. Tick every folder it should be in
+            and save.
+          </p>
+
+          <div class="highlight-box">
+            <strong>You do not have to make the folder first.</strong> The box
+            you pick a folder from is also the box you name a new one in. Type a
+            name that does not exist yet and it is created as the characters go
+            into it.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-folders-bulk.png"
+            alt="Two character cards with their checkboxes ticked, and a bar above the grid reading 2 selected with buttons for Move to folder, Also add to, and Clear"
+          />
+          <div class="screenshot-caption">
+            Ticking cards brings up the bar &mdash; the one for clearing a big
+            pile
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-folders-picker.png"
+            alt="A dialog titled Move to folder listing No folder, Commissions with 2024 and 2025 indented under it, Fursonas, Retired and To sell, each with a count"
+          />
+          <div class="screenshot-caption">
+            Pick an existing folder, or type a name that does not exist yet
+          </div>
+        </div>
+      </div>
+
+      <!-- Nesting -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Folders Inside Folders</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Open a folder and press <strong>New folder</strong> and the new one
+            is made inside it. You can nest five levels deep, which is further
+            than anyone organising characters tends to go.
+          </p>
+          <p>
+            <strong>A folder shows what is filed directly in it</strong>, the
+            way a file browser does. Opening <em>Commissions</em> shows the
+            <em>2024</em> and <em>2025</em> folders inside it, not the
+            characters filed in those.
+          </p>
+          <p>
+            <strong>The count is the other way round.</strong> A folder's number
+            counts everything underneath it, however deep, so a folder whose
+            characters are all one level down still reports them rather than
+            reading as empty. A character filed in two sub-folders of the same
+            parent counts once.
+          </p>
+          <p>
+            To move a folder somewhere else, open it and use
+            <strong>Move</strong>. <strong>Reorder folders</strong> at the top
+            right turns dragging into reordering for as long as it is on; the
+            rest of the time dragging a folder onto another puts it inside.
+            Folders you have never dragged sort alphabetically.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-folders-nested.png"
+            alt="The Commissions folder open, showing a breadcrumb reading All characters then Commissions, two folder tiles named 2024 and 2025, and the text Nothing filed here yet"
+          />
+          <div class="screenshot-caption">
+            Inside Commissions: its two sub-folders, and nothing filed directly
+            in it
+          </div>
+        </div>
+      </div>
+
+      <!-- Visibility -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Who Can See Them</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Folders are public by default</strong>, and that is the
+            point of them. Your folders appear on your characters page
+            (<code>/user/&lt;you&gt;/characters</code>), so somebody arriving at
+            a hundred characters meets them arranged the way you arranged them
+            rather than as one wall. A character's page names the folders it is
+            in, and each one links to that part of your listing.
+          </p>
+          <p>
+            <strong>Make a folder private</strong> from inside it and it
+            disappears for everybody else &mdash; along with every folder nested
+            under it, whether or not those are private themselves. Nothing filed
+            in a private folder is hidden by it: the characters keep their own
+            visibility, and only the filing is yours alone.
+          </p>
+          <p>
+            Two things stay yours in any case. Sub-folders you have marked
+            private, and the top-level view of what you have not filed yet
+            &mdash; a visitor's top level lists <em>every</em> character you let
+            them see, rather than only the unfiled ones.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Folders are not tags.</strong> A tag says what a character
+            <em>is</em> and everybody on the site shares the word;
+            <code>wolf</code> means the same thing on every character it is
+            applied to. A folder says where you <em>put</em> it, belongs only to
+            you, and is suggested to nobody. Two people can both keep a
+            &ldquo;WIP&rdquo; and neither knows about the other's.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-folders-edit-on-character.png"
+            alt="A character page with a Folders section showing a Fursonas chip, and a dialog titled Folders for this character listing every folder with checkboxes, Fursonas ticked"
+          />
+          <div class="screenshot-caption">
+            A character's own page: where it is filed, and the box to change it
+          </div>
+        </div>
+      </div>
+
+      <!-- Communities -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Inside a Community</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A community's sidebar has <strong>My Characters</strong> beside
+            <strong>Browse Characters</strong>. It opens the same workspace with
+            the same folders, counted against that community alone.
+          </p>
+          <p>
+            Folders belong to you rather than to a community, so one folder can
+            hold characters from several. A folder with nothing in
+            <em>this</em> community still appears, reporting zero &mdash; the
+            row keeps the same shape wherever you are, and you can file into a
+            folder from inside a community it is empty in.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-folders-community.png"
+            alt="A community's My Characters page, with My Characters highlighted in the community sidebar beside Browse Characters, showing the same four folders"
+          />
+          <div class="screenshot-caption">
+            The same folders inside a community, counted against it alone
+          </div>
+        </div>
+      </div>
+
+      <!-- Housekeeping -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Deleting, and Trading Away</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Deleting a folder never deletes characters.</strong>
+            Whatever was in it goes back to the top level. Folders nested inside
+            it are deleted with it, and their characters come back too.
+          </p>
+          <p>
+            <strong
+              >A character that leaves your hands leaves your folders.</strong
+            >
+            However it went &mdash; a trade, a direct transfer, a claim &mdash;
+            it stops being counted and stops being listed, and it appears in the
+            new owner's top level for them to file as they like.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Character Folders &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>
