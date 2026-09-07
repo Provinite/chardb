@@ -381,6 +381,28 @@ export const CommunityNavigationSidebar: React.FC<
 
           {/* Community Section */}
           <CommunityNavigationGroup title="Community" icon={Users}>
+            {/* Characters, for everybody.
+
+                These used to sit under "Species & Characters", which is gated
+                on species permissions -- so an ordinary member had no link to
+                a community's characters at all, their own included. That is
+                the whole of #338: the question "when I go to Cloverse, where
+                can I view my Cloverse characters" was asked by somebody who
+                could not see either entry. Species *management* is still
+                staff-only and stays where it was. */}
+            <CommunityNavigationItem
+              to={`${communityBasePath}/characters`}
+              icon={User}
+              label="Browse Characters"
+              isNested
+            />
+            <CommunityNavigationItem
+              to={`${communityBasePath}/my-characters`}
+              icon={FolderOpen}
+              label="My Characters"
+              isNested
+            />
+
             {/* Members - visible to all community members */}
             <CommunityNavigationItem
               to={`${communityBasePath}/members`}
@@ -495,22 +517,6 @@ export const CommunityNavigationSidebar: React.FC<
                   </>
                 )}
 
-                {/* Always visible species management links */}
-                <CommunityNavigationItem
-                  to={`${communityBasePath}/characters`}
-                  icon={User}
-                  label="Browse Characters"
-                  isNested
-                />
-                {/* Beside Browse Characters rather than anywhere else: the
-                    question this answers is "where are MINE", and it is asked
-                    while looking at everyone's (#338). */}
-                <CommunityNavigationItem
-                  to={`${communityBasePath}/my-characters`}
-                  icon={FolderOpen}
-                  label="My Characters"
-                  isNested
-                />
                 <CommunityNavigationItem
                   to={`${communityBasePath}/species`}
                   icon={Dna}
