@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Deploy logs no longer read as an inventory of the infrastructure.** Workflow logs on this public repository printed the staging host's IP and instance id, the ECR and SQS URLs, the images bucket and CDN domain, and the CloudFront distribution id; these are now masked out of Actions logs, and the summary block that reprinted them on every `source` is one line there (#378).
+
 ### Added
 
 - **`yarn db:query prod`** — a read-only psql against the production database,

@@ -46,15 +46,20 @@ BUCKET_NAME=$(terraform output -raw frontend_bucket_name)
 CLOUDFRONT_DISTRIBUTION_ID=$(terraform output -raw frontend_cloudfront_distribution_id)
 WEBSITE_URL=$(terraform output -raw frontend_website_url)
 
+# Before anything prints them, including the AWS CLI itself: `s3 sync` names the
+# bucket on every uploaded object and `create-invalidation` echoes the
+# distribution id back in its reply, so removing the echoes below would not on
+# its own keep either out of a public log (#378).
+source "$SCRIPT_DIR/lib/mask-in-actions.sh"
+mask_in_actions BUCKET_NAME CLOUDFRONT_DISTRIBUTION_ID
+
 if [ -z "$BUCKET_NAME" ] || [ -z "$CLOUDFRONT_DISTRIBUTION_ID" ]; then
     echo "❌ Missing required terraform outputs"
-    echo "BUCKET_NAME: $BUCKET_NAME"
-    echo "CLOUDFRONT_DISTRIBUTION_ID: $CLOUDFRONT_DISTRIBUTION_ID"
+    # Which output failed to load is the diagnostic; its value is not.
+    echo "BUCKET_NAME: ${BUCKET_NAME:+[present]}"
+    echo "CLOUDFRONT_DISTRIBUTION_ID: ${CLOUDFRONT_DISTRIBUTION_ID:+[present]}"
     exit 1
 fi
-
-echo "📁 S3 Bucket: $BUCKET_NAME"
-echo "🌐 CloudFront Distribution: $CLOUDFRONT_DISTRIBUTION_ID"
 
 # Navigate back to project root
 cd "$PROJECT_ROOT"
@@ -79,7 +84,11 @@ INVALIDATION_ID=$(aws cloudfront create-invalidation \
     --output text)
 
 echo "⏳ Invalidation created: $INVALIDATION_ID"
-echo "   You can check status with: aws cloudfront get-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --id $INVALIDATION_ID"
+# Only worth printing where someone can act on it. In Actions the distribution
+# id is masked, so the command would arrive with a `***` in it and help nobody.
+if [ -z "${GITHUB_ACTIONS:-}" ]; then
+    echo "   You can check status with: aws cloudfront get-invalidation --distribution-id $CLOUDFRONT_DISTRIBUTION_ID --id $INVALIDATION_ID"
+fi
 
 echo "✅ Frontend deployment completed successfully!"
 echo "🌐 Website URL: $WEBSITE_URL"
