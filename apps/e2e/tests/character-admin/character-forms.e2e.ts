@@ -30,7 +30,10 @@ test.describe("character forms", () => {
   });
 
   const eyes = (world: World<CommunityItemsWorld>, colour: string) => [
-    { traitId: world.traits.eyeColor.id, value: world.traits.eyeColor.values[colour] },
+    {
+      traitId: world.traits.eyeColor.id,
+      value: world.traits.eyeColor.values[colour],
+    },
   ];
 
   /** Turn forms on for a variant, which every variant starts with off. */

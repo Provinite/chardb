@@ -508,14 +508,14 @@ export const RedeemVariantChangePage: React.FC = () => {
             {destination?.name} does not allow {forms.length} forms
           </RerouteHead>
           <Note>
-            This character has {forms.length} forms and{" "}
-            {destination?.name} allows{" "}
+            This character has {forms.length} forms and {destination?.name}{" "}
+            allows{" "}
             {destination?.maxForms === 1
               ? "one"
               : String(destination?.maxForms ?? 1)}
-            . Dropping one is a design change rather than a rarity change, so
-            it is not something this item can do &mdash; ask staff to remove a
-            form first, and then redeem this.
+            . Dropping one is a design change rather than a rarity change, so it
+            is not something this item can do &mdash; ask staff to remove a form
+            first, and then redeem this.
           </Note>
         </Reroute>
       )}
@@ -573,9 +573,7 @@ export const RedeemVariantChangePage: React.FC = () => {
       <ButtonRow>
         <Button
           onClick={() => setConfirming(true)}
-          disabled={
-            redeeming || !itemId || stranded.length > 0 || tooManyForms
-          }
+          disabled={redeeming || !itemId || stranded.length > 0 || tooManyForms}
           data-testid="submit-variant-change"
         >
           {redeeming
