@@ -6,6 +6,7 @@ import { LoginPage } from "../pages/LoginPage";
 import { SignupPage } from "../pages/SignupPage";
 import { ForgotPasswordPage } from "../pages/ForgotPasswordPage";
 import { ResetPasswordPage } from "../pages/ResetPasswordPage";
+import { VerifyEmailPage } from "../pages/VerifyEmailPage";
 import { DashboardPage } from "../pages/DashboardPage";
 import { UserProfilePage } from "../pages/UserProfilePage";
 import { UserCharactersPage } from "../pages/UserCharactersPage";
@@ -71,6 +72,7 @@ export const ApexRoutes: React.FC = () => (
     <Route path="/signup" element={<SignupPage />} />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />
     <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
+    <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
     <Route path="/characters" element={<CharactersPage />} />
     <Route path="/galleries" element={<GalleriesPage />} />
     <Route path="/gallery/:id" element={<GalleryPage />} />

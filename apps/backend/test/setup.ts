@@ -228,6 +228,12 @@ const mockPrismaService = {
     findMany: jest.fn(),
     upsert: jest.fn(),
   },
+  emailVerificationToken: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    count: jest.fn(),
+  },
   pendingOwnership: {
     create: jest.fn(),
     findUnique: jest.fn(),

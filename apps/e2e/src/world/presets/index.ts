@@ -1,5 +1,6 @@
 import communityBasic from "./community-basic.js";
 import communityItems from "./community-items.js";
+import emailVerification from "./email-verification.js";
 import type { PresetDef } from "../types.js";
 
 /**
@@ -9,6 +10,7 @@ import type { PresetDef } from "../types.js";
 export const PRESETS = {
   "community-basic": communityBasic,
   "community-items": communityItems,
+  "email-verification": emailVerification,
 } as const satisfies Record<string, PresetDef<unknown>>;
 
 export type PresetName = keyof typeof PRESETS;

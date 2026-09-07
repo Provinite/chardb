@@ -3,6 +3,7 @@ import { AuthModule } from "./auth.module";
 import { DatabaseModule } from "../database/database.module";
 import { UsersModule } from "../users/users.module";
 import * as bcrypt from "bcrypt";
+import { createHash } from "node:crypto";
 import { refreshCookieName } from "./refresh-cookie";
 
 const COOKIE = refreshCookieName();
@@ -61,10 +62,11 @@ describe("AuthResolver (e2e)", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.signup).toMatchObject({
-        accessToken: expect.any(String),
-      });
-      expect(refreshCookie(response)).toEqual(expect.any(String));
+      expect(response.body.data.signup).toBe(true);
+
+      // No session: the account cannot be used until its address is confirmed,
+      // so there is nothing to hand back and no refresh cookie to set.
+      expect(refreshCookie(response)).toBeUndefined();
 
       // Verify user was created in database
       const db = testApp.getDb();
@@ -74,6 +76,34 @@ describe("AuthResolver (e2e)", () => {
 
       expect(user).toBeTruthy();
       expect(user!.username).toBe(input.username);
+      expect(user!.isVerified).toBe(false);
+    });
+
+    it("mints a verification token for the new address", async () => {
+      const inviteCode = await testApp.createTestInviteCode();
+      // No `displayName`: it is nullable in the schema, so leaving it out has
+      // to be accepted rather than failing validation.
+      const input = {
+        username: "newuser",
+        email: "NewUser@Example.com",
+        password: "password123",
+        inviteCode,
+      };
+
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input,
+      });
+      expect(response.body.errors).toBeUndefined();
+
+      const db = testApp.getDb();
+      const tokens = await db.emailVerificationToken.findMany({
+        where: { email: "newuser@example.com" },
+      });
+
+      expect(tokens).toHaveLength(1);
+      // Hashed at rest, and never a `.`, so it survives a URL path segment.
+      expect(tokens[0].tokenHash).toMatch(/^[0-9a-f]{64}$/);
+      expect(tokens[0].used).toBe(false);
     });
 
     it("should reject duplicate email", async () => {
@@ -182,6 +212,7 @@ describe("AuthResolver (e2e)", () => {
           email: "test@example.com",
           displayName: "Test User",
           passwordHash,
+          isVerified: true,
         },
       });
     });
@@ -232,6 +263,160 @@ describe("AuthResolver (e2e)", () => {
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
       expect(response.body.errors[0].message).toContain("Invalid credentials");
+    });
+
+    it("refuses an account whose address was never confirmed", async () => {
+      const db = testApp.getDb();
+      await db.user.create({
+        data: {
+          username: "unconfirmed",
+          email: "unconfirmed@example.com",
+          passwordHash: await bcrypt.hash("password123", 10),
+          isVerified: false,
+        },
+      });
+
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input: {
+          email: "unconfirmed@example.com",
+          password: "password123",
+        },
+      });
+
+      expect(response.status).toBe(200);
+      // A code, not prose: the login screen branches on this to offer a resend
+      // instead of "try again".
+      expect(response.body.errors[0].extensions.code).toBe(
+        "EMAIL_NOT_VERIFIED",
+      );
+      expect(refreshCookie(response)).toBeUndefined();
+    });
+
+    it("does not distinguish an unconfirmed account from a wrong password", async () => {
+      const db = testApp.getDb();
+      await db.user.create({
+        data: {
+          username: "unconfirmed",
+          email: "unconfirmed@example.com",
+          passwordHash: await bcrypt.hash("password123", 10),
+          isVerified: false,
+        },
+      });
+
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input: {
+          email: "unconfirmed@example.com",
+          password: "wrongpassword",
+        },
+      });
+
+      // Answering "unconfirmed" here would make the login form a way to test
+      // which addresses are registered, without knowing any password.
+      expect(response.body.errors[0].message).toContain("Invalid credentials");
+    });
+  });
+
+  describe("email verification", () => {
+    const password = "password123";
+
+    const signupWith = async (email: string): Promise<void> => {
+      const inviteCode = await testApp.createTestInviteCode();
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input: {
+          username: `user_${Date.now()}`,
+          email,
+          password,
+          inviteCode,
+        },
+      });
+      // Asserted, or a rejected signup would leave every count below at zero
+      // and the caps would look enforced when nothing had been sent at all.
+      expect(response.body.errors).toBeUndefined();
+    };
+
+    it("confirms the account when the link is followed", async () => {
+      const db = testApp.getDb();
+      const user = await testApp.createTestUser({
+        email: "redeem@example.com",
+        passwordHash: await bcrypt.hash(password, 10),
+        isVerified: false,
+      });
+
+      // Minted here rather than read out of the email: the raw token is never
+      // stored, and only its SHA-256 is, so the mail is the only place it ever
+      // appears. Writing the row directly exercises the same redemption path.
+      const token = "b".repeat(64);
+      await db.emailVerificationToken.create({
+        data: {
+          userId: user.id,
+          email: user.email,
+          tokenHash: createHash("sha256").update(token).digest("hex"),
+          expiresAt: new Date(Date.now() + 60_000),
+        },
+      });
+
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.VERIFY_EMAIL, {
+        input: { token },
+      });
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.verifyEmail).toBe(true);
+
+      const after = await db.user.findUnique({ where: { id: user.id } });
+      expect(after!.isVerified).toBe(true);
+
+      // ...and the account can now sign in, which is the whole point.
+      const login = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input: { email: "redeem@example.com", password },
+      });
+      expect(login.body.data.login.accessToken).toEqual(expect.any(String));
+    });
+
+    it("rejects a token nobody minted", async () => {
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.VERIFY_EMAIL, {
+        input: { token: "c".repeat(64) },
+      });
+
+      expect(response.body.errors).toBeDefined();
+      expect(response.body.errors[0].message).toContain("Invalid or expired");
+    });
+
+    it("never mints more tokens for an address than it is allowed", async () => {
+      const email = "capped@example.com";
+      await signupWith(email);
+
+      const db = testApp.getDb();
+      for (let i = 0; i < 10; i += 1) {
+        const response = await testApp.graphqlRequest(
+          AUTH_QUERIES.RESEND_VERIFICATION_EMAIL,
+          { input: { email } },
+        );
+        // Always true, whatever happened: an answer that varied would say
+        // whether the address is registered.
+        expect(response.body.data.resendVerificationEmail).toBe(true);
+      }
+
+      const minted = await db.emailVerificationToken.count({
+        where: { email },
+      });
+      expect(minted).toBeGreaterThan(0);
+      expect(minted).toBeLessThanOrEqual(6);
+    });
+
+    it("says yes for an address with no account, and mints nothing", async () => {
+      const response = await testApp.graphqlRequest(
+        AUTH_QUERIES.RESEND_VERIFICATION_EMAIL,
+        { input: { email: "nobody@example.com" } },
+      );
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.resendVerificationEmail).toBe(true);
+
+      const db = testApp.getDb();
+      const minted = await db.emailVerificationToken.count({
+        where: { email: "nobody@example.com" },
+      });
+      expect(minted).toBe(0);
     });
   });
 
@@ -290,22 +475,26 @@ describe("AuthResolver (e2e)", () => {
   describe("refreshToken", () => {
     let cookie: string;
 
+    // Signed in rather than signed up: signup issues no cookie any more, since
+    // a brand new account cannot hold a session until it is confirmed.
     beforeEach(async () => {
-      const inviteCode = await testApp.createTestInviteCode();
-      const input = {
-        username: "testuser",
-        email: "test@example.com",
-        password: "password123",
-        displayName: "Test User",
-        inviteCode,
-      };
-
-      const signupResponse = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
-        input,
+      const db = testApp.getDb();
+      await db.user.create({
+        data: {
+          username: "testuser",
+          email: "test@example.com",
+          displayName: "Test User",
+          passwordHash: await bcrypt.hash("password123", 10),
+          isVerified: true,
+        },
       });
 
-      const value = refreshCookie(signupResponse);
-      if (!value) throw new Error("signup did not set a refresh cookie");
+      const loginResponse = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input: { email: "test@example.com", password: "password123" },
+      });
+
+      const value = refreshCookie(loginResponse);
+      if (!value) throw new Error("login did not set a refresh cookie");
       cookie = `${COOKIE}=${value}`;
     });
 

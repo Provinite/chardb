@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Email Verification - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Signing up sends a link instead of a session. Confirm the address and the account opens; until then it cannot sign in, and one address will never receive more than six of these emails."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/email-verification.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Email Verification" />
+    <meta
+      property="og:description"
+      content="Signing up sends a link instead of a session. Confirm the address and the account opens; until then it cannot sign in, and one address will never receive more than six of these emails."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/email-verification.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/email-verification-check-email.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The CharDB check-your-email screen, shown straight after signing up."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+        overflow-x: auto;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Email Verification</h1>
+        <p>An account opens when its address answers</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Signing up used to hand back a session immediately, and nothing ever
+            checked that the address on the account belonged to the person
+            holding it. Now signup sends a link and nothing else: the account
+            exists, and stays shut until somebody follows that link.
+          </p>
+          <p>
+            The reason is deliverability, not ceremony. Mail to a typo'd address
+            bounces on every send, and a stranger who never signed up reports it
+            as spam rather than hunting for an unsubscribe link. Both attach to
+            the sending domain. There is a security half too: whoever really
+            owns a mistyped address would otherwise receive that account's
+            password resets.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">✉️</div>
+              <h4>One link</h4>
+              <p>Single use, good for 24 hours, sent the moment you sign up.</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🔒</div>
+              <h4>No session first</h4>
+              <p>Signing in is refused until the address answers.</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">🧯</div>
+              <h4>Six, ever</h4>
+              <p>The hard ceiling on how much mail one address can receive.</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Everyone who already had an account is confirmed.</strong>
+            Nobody is asked to answer a message they never had the chance to
+            receive. The gate applies from here on.
+          </div>
+        </div>
+      </div>
+
+      <!-- Signing up -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Signing up</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The form is unchanged &mdash; invite code, username, address,
+            password. What changes is where it lands.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="email-verification-signup.png"
+            alt="The CharDB signup form, filled in with an invite code, username, email address and password."
+          />
+          <div class="screenshot-caption">
+            The signup form, filled in and ready to submit.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="email-verification-check-email.png"
+            alt="The check-your-email card, naming the address the link was sent to and offering to resend it."
+          />
+          <div class="screenshot-caption">
+            Where signup ends now: a card naming the address, not the dashboard.
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <div class="highlight-box">
+            <strong>The address is shown back to you.</strong> A typo is the
+            most likely reason the email never arrives, and it is invisible the
+            moment the form clears &mdash; so the confirmation names what it
+            sent to.
+          </div>
+        </div>
+      </div>
+
+      <!-- The email -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">The email</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            One button and the same link in plain text underneath, for the mail
+            clients that will not render the button.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="email-verification-email.png"
+            alt="The verification email as delivered, with a Confirm Email Address button and the same link written out below it."
+          />
+          <div class="screenshot-caption">
+            The delivered message, in MailHog. No settings footer: this one
+            cannot be opted out of.
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <p>The link carries the token as the last path segment:</p>
+          <div class="example">
+            https://chardb.cc/verify-email/<span class="dim"
+              >98d8c8e09858159e55d9eb76555852a473bb02233c0db34773df09d76ee96e21</span
+            >
+          </div>
+          <p>
+            The token is 32 random bytes written as hex, which matters for two
+            reasons. Only its SHA-256 is stored, so the database cannot give the
+            link back to anybody who reads it &mdash; including us. And hex has
+            no <code>.</code> in it: a dot in the last path segment makes the
+            single-page app's history fallback skip its rewrite, and the page
+            would 404 before it ever loaded.
+          </p>
+        </div>
+      </div>
+
+      <!-- Before you confirm -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Trying to sign in first</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The password is checked first and the refusal comes after it, so the
+            login form cannot be used to find out which addresses have accounts.
+            Get the password wrong and you are told the credentials are wrong,
+            whatever state the account is in.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="email-verification-login-refused.png"
+            alt="The login page, refusing an unconfirmed account and offering a button to resend the confirmation link."
+          />
+          <div class="screenshot-caption">
+            The right password, an unconfirmed address, and a way out.
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <div class="highlight-box">
+            <strong>Resending says the same thing to everyone.</strong> An
+            address nobody registered, one already confirmed, and one that has
+            used up its allowance all get the same answer:
+            <em
+              >if that address still needs confirming, a new link is on its
+              way</em
+            >. Anything more definite would be a way to test whether somebody
+            has an account here.
+          </div>
+        </div>
+      </div>
+
+      <!-- Following the link -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Following the link</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The page redeems on load rather than behind another button &mdash;
+            the token is already in the URL, so a button would only add a step.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="email-verification-confirmed.png"
+            alt="The confirmation page, saying the address is confirmed and the account is ready, with a Sign in button."
+          />
+          <div class="screenshot-caption">
+            Done. The account can sign in from here on.
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <div class="highlight-box">
+            <strong>Clicking twice is fine.</strong> Mail clients and corporate
+            link scanners fetch URLs before a human ever clicks, so a single-use
+            token is routinely spent by a machine. Following an already-redeemed
+            link for an account that is confirmed reports success &mdash;
+            because that is the truth about the account.
+          </div>
+        </div>
+      </div>
+
+      <!-- When it does not work -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">When the link doesn't work</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Links last a day. An expired one, a spent one on an account that is
+            still unconfirmed, and one that was never minted all end here.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="email-verification-bad-link.png"
+            alt="The failure page, saying the verification link is invalid or expired and pointing back to sign in."
+          />
+          <div class="screenshot-caption">
+            A link that no longer opens anything, and where to go next.
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <p>
+            The way out is the login screen: the right password on an
+            unconfirmed account produces the resend offer from step 3.
+          </p>
+        </div>
+      </div>
+
+      <!-- The cap -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">Six emails, ever</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A feature that mails an address on request is a feature somebody can
+            point at a stranger. So there is a ceiling, and it is a lifetime
+            count rather than a window &mdash; a window resets, and a script is
+            happy to wait.
+          </p>
+          <ul>
+            <li>
+              <strong>Six per address, ever.</strong> Signup spends one, leaving
+              five resends. Counted on the address, not the account, so deleting
+              one and registering again does not hand out a fresh six.
+            </li>
+            <li>
+              <strong>Three per fifteen minutes</strong>, so all of them cannot
+              arrive at once because somebody leant on the button.
+            </li>
+          </ul>
+          <p>
+            The reach is narrower than it looks. An address can only ever be
+            registered once, so signup spends at most one of the six; and a
+            resend for an address with no unconfirmed account behind it sends
+            nothing at all. There is no way to put mail in the inbox of somebody
+            who never signed up.
+          </p>
+
+          <div class="highlight-box">
+            <strong>If an address genuinely never receives.</strong> Six
+            attempts is the end of the automatic road. An administrator can mark
+            the account confirmed by hand &mdash; the same backstop that covers
+            a mailbox which silently drops everything we send it.
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Email Verification &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

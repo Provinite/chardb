@@ -11,11 +11,11 @@ export const LOGIN_MUTATION = gql`
   }
 `;
 
+// Returns a bare boolean, not a payload. Signup no longer produces a session:
+// the account cannot be used until the address on it is confirmed.
 export const SIGNUP_MUTATION = gql`
   mutation Signup($input: SignupInput!) {
-    signup(input: $input) {
-      accessToken
-    }
+    signup(input: $input)
   }
 `;
 

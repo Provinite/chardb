@@ -8,6 +8,7 @@ import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { returnDestination } from "../lib/communityHost";
+import { ResendVerification } from "../components/auth/ResendVerification";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -100,6 +101,13 @@ export const LoginPage: React.FC = () => {
   usePageMeta({ title: "Sign In" });
 
   const [isLoading, setIsLoading] = useState(false);
+  /**
+   * Set when the password was right but the address has never been confirmed.
+   * Holds the address rather than a boolean so the resend panel can send to it
+   * and show it back -- a typo at signup is the likeliest reason the first
+   * email never arrived.
+   */
+  const [unverifiedEmail, setUnverifiedEmail] = useState<string | null>(null);
   const { login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -127,9 +135,12 @@ export const LoginPage: React.FC = () => {
 
   const onSubmit = async (data: LoginForm) => {
     setIsLoading(true);
+    setUnverifiedEmail(null);
     try {
-      const success = await login(data.email, data.password);
-      if (success) {
+      const outcome = await login(data.email, data.password);
+      if (outcome === "unverified") {
+        setUnverifiedEmail(data.email);
+      } else if (outcome === "success") {
         // A community host is a different origin, which the router cannot
         // reach -- that one needs a whole-page navigation. A path stays in the
         // router so the apex case keeps its client-side transition.
@@ -148,6 +159,16 @@ export const LoginPage: React.FC = () => {
     <Container>
       <Card>
         <Title>Welcome Back</Title>
+
+        {unverifiedEmail && (
+          <ResendVerification
+            email={unverifiedEmail}
+            heading="Confirm your email address first"
+          >
+            Your password was right, but this account still needs its address
+            confirmed before it can be used.
+          </ResendVerification>
+        )}
 
         <Form onSubmit={handleSubmit(onSubmit)}>
           <FormGroup>

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Email verification specs** (`tests/settings/email-verification.e2e.ts`) and the `email-verification` preset: signup ending at "check your email" rather than the dashboard, an unconfirmed sign-in refused and offered a resend, the link confirming the account so it can then sign in, and expired and spent links refused (#372).
+
 - **Moderation notification specs** (`tests/moderation/moderation-notifications.e2e.ts`): approving or rejecting an image now reaches the uploader's bell, the rejection carries its reason and the moderator's note, the in-app switch suppresses the row, silencing approvals leaves rejections alone, and the notification goes to the uploader rather than the moderator (#344).
 
 - **Notification preference specs** (`tests/settings/`): the defaults that the issue turns on (approval email off, rejection email on), a toggle surviving a reload and agreeing with the server, kinds without a template offering no email switch, email refused for a kind that does not send any, and the always-sent notice (#344).

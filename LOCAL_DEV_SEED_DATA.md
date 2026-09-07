@@ -20,6 +20,11 @@ The script is **idempotent** - safe to run multiple times without creating dupli
 
 All users share the same password: **`test123`**
 
+Every seeded persona is created with `isVerified: true`, so they can sign in
+straight away. An account made through the signup form cannot: it is refused
+until the verification link is followed, and in local development that email
+lands in MailHog at <http://localhost:8025> (`yarn shared:up`).
+
 ### Credentials Table
 
 | Persona | Email | Username | Password |

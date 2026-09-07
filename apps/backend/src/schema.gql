@@ -2441,6 +2441,11 @@ type Mutation {
     id: ID!
   ): RemovalResponse!
   reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
+
+  """
+  Sends another verification email. Always returns true, whatever the address is or is not, so this cannot be used to discover who has an account. Subject to a per-address lifetime cap.
+  """
+  resendVerificationEmail(input: ResendVerificationEmailInput!): Boolean!
   resetPassword(input: ResetPasswordInput!): Boolean!
 
   """Respond to a community invitation (accept or decline)"""
@@ -2503,7 +2508,7 @@ type Mutation {
   Set where an item of this type moves a character, and which characters it can be spent on. Replaces the grant wholesale; a null destination clears it. An empty source list covers every variant of the destination's species.
   """
   setItemTypeVariantChangeGrant(input: SetItemTypeVariantChangeGrantInput!): ItemType!
-  signup(input: SignupInput!): AuthPayload!
+  signup(input: SignupInput!): Boolean!
   toggleFollow(input: ToggleFollowInput!): FollowResult!
   toggleLike(input: ToggleLikeInput!): LikeResult!
   transferCharacter(id: ID!, input: TransferCharacterInput!): Character!
@@ -2666,6 +2671,11 @@ type Mutation {
   Use one of your items up. Destroys it and pays what its type is worth in one transaction, under one batch id across both ledgers.
   """
   useItem(input: UseItemInput!): UseItemResult!
+
+  """
+  Confirms an address from the link in a verification email. Following an already-redeemed link for an account that is confirmed succeeds.
+  """
+  verifyEmail(input: VerifyEmailInput!): Boolean!
 }
 
 """
@@ -3523,6 +3533,10 @@ input RequestedTradeItemInput {
   itemId: ID
   itemTypeId: ID
   quantity: Int
+}
+
+input ResendVerificationEmailInput {
+  email: String!
 }
 
 input ResetPasswordInput {
@@ -4793,6 +4807,10 @@ type UserStats {
   """Total number of views across all user's content"""
   totalViews: Int!
   userId: ID!
+}
+
+input VerifyEmailInput {
+  token: String!
 }
 
 """Visibility levels for content"""

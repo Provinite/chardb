@@ -1,5 +1,11 @@
 import { ObjectType, Field, InputType } from "@nestjs/graphql";
-import { IsEmail, IsString, MinLength, MaxLength } from "class-validator";
+import {
+  IsEmail,
+  IsString,
+  IsOptional,
+  MinLength,
+  MaxLength,
+} from "class-validator";
 
 @InputType()
 export class LoginInput {
@@ -30,7 +36,12 @@ export class SignupInput {
   @MaxLength(100)
   password: string;
 
+  // `@IsOptional()` because the field is nullable in the schema. Without it the
+  // string validators run on `undefined` and reject it, so a signup that leaves
+  // the display name out -- which the form advertises as allowed -- fails
+  // validation instead.
   @Field({ nullable: true })
+  @IsOptional()
   @IsString()
   @MaxLength(100)
   displayName?: string;
