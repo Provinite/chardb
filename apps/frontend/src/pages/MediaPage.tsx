@@ -8,6 +8,7 @@ import {
   useDeleteMediaMutation,
   useUpdateImageMutation,
   GetMediaItemDocument,
+  ModerationStatus,
 } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
@@ -418,6 +419,19 @@ export const MediaPage: React.FC = () => {
   };
 
   /**
+   * Re-framing is offered only once an image is approved.
+   *
+   * Until then `image` hands back a placeholder in place of every URL, for
+   * everyone including the uploader, so the cropper would frame the
+   * "pending moderation" graphic and measure a rect against its dimensions
+   * rather than the artwork's. Choosing a crop while uploading still works:
+   * that one runs against the local file and never asks the server for the
+   * picture.
+   */
+  const canReframeThumbnail =
+    media?.image?.moderationStatus === ModerationStatus.Approved;
+
+  /**
    * Rebuilt field by field rather than passed through. What the query returns
    * carries `__typename`, and the mutation's input rejects unknown fields.
    */
@@ -574,7 +588,7 @@ export const MediaPage: React.FC = () => {
             <Button variant="primary" size="sm" onClick={handleEditClick}>
               Edit Content
             </Button>
-            {isImageMedia && (
+            {canReframeThumbnail && (
               <Button
                 variant="outline"
                 size="sm"

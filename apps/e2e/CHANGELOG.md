@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Thumbnail crop specs** (`tests/images/thumbnail-crop.e2e.ts`): framing chosen at upload and changed afterwards, asserted against the row and the bucket rather than the page — a thumbnail is not rendered anywhere the crop is chosen from, and the things that break are invisible from the browser (whether the regenerated object took a new key instead of overwriting one served `immutable` for a year, and whether the superseded object was deleted rather than leaked). Includes the case that the control is withheld until an image is approved, since every URL is a placeholder until then. (#342)
+
 - **Comment flow specs** (`tests/comments/`): replying, editing, cancelling an edit, deleting, liking and unliking, commenting on a gallery as well as a character, another member's comment offering no edit or delete, the empty and over-length forms refusing to submit, and a signed-out visitor reading comments but being asked to log in to write. Commenting had no browser coverage at all before this. (#310)
 
 - **Comment permission regressions**: posting a comment on a character and seeing the count move, the same comment surviving a reload so the read path is covered too, the form staying put when the list read is forced to fail, and the viewer's follow counts resolving rather than 403ing. Each was checked against the unfixed code first. (#310)

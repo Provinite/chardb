@@ -105,6 +105,9 @@ export const GET_MEDIA_ITEM = gql`
         height
         fileSize
         mimeType
+        # Re-framing needs the real original to render against, and this
+        # resolver masks every URL until an image is approved.
+        moderationStatus
         thumbnailCrop {
           x
           y

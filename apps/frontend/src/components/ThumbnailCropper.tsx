@@ -33,10 +33,16 @@ interface ThumbnailCropperProps {
   title?: string;
 }
 
+/**
+ * Height gives way on a short window. The shared `Modal` caps itself at 80vh
+ * and scrolls, so a fixed height pushes Cancel and the confirm button below
+ * the fold -- reachable only by scrolling a dialog that does not look
+ * scrollable.
+ */
 const CropArea = styled.div`
   position: relative;
   width: 100%;
-  height: 320px;
+  height: min(320px, 42vh);
   background: ${({ theme }) => theme.colors.text.primary};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   overflow: hidden;
