@@ -59,10 +59,11 @@ test.describe("as the comment's author", () => {
     await expect(page.getByText("1 comment", { exact: true })).toBeVisible();
 
     await page.getByRole("button", { name: "Reply", exact: true }).click();
+    await page.getByPlaceholder(/^Reply to /).fill("A reply");
     await page
-      .getByPlaceholder(/^Reply to /)
-      .fill("A reply");
-    await page.getByRole("button", { name: "Reply", exact: true }).last().click();
+      .getByRole("button", { name: "Reply", exact: true })
+      .last()
+      .click();
 
     await expect(page.getByText("A reply")).toBeVisible();
 
@@ -177,7 +178,9 @@ test.describe("as another member", () => {
     await page.goto(world.characters.marrowfen.url);
 
     await expect(page.getByText("Not yours to touch")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Edit", exact: true }),
+    ).toHaveCount(0);
     await expect(
       page.getByRole("button", { name: "Delete", exact: true }),
     ).toHaveCount(0);
