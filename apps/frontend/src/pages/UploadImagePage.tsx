@@ -11,6 +11,10 @@ import {
 } from "../generated/graphql";
 import { CharacterTypeahead } from "../components/CharacterTypeahead";
 import { MarkdownEditor } from "../components/MarkdownEditor";
+import {
+  ThumbnailCropper,
+  ThumbnailCropRect,
+} from "../components/ThumbnailCropper";
 import { characterUrl } from "../lib/communityHost";
 import { getAccessToken } from "../lib/accessToken";
 
@@ -384,6 +388,20 @@ interface UploadImageResponse {
   };
 }
 
+const ThumbnailRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.sm} 0;
+  flex-wrap: wrap;
+`;
+
+const ThumbnailSummary = styled.span`
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
 export const UploadImagePage: React.FC = () => {
   usePageMeta({ title: "Upload an Image" });
 
@@ -391,6 +409,9 @@ export const UploadImagePage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [files, setFiles] = useState<ImageFile[]>([]);
+  /** Chosen thumbnail framing, keyed by the staged file's id. */
+  const [crops, setCrops] = useState<Record<string, ThumbnailCropRect>>({});
+  const [croppingFile, setCroppingFile] = useState<ImageFile | null>(null);
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string>("");
   const [uploadedImages, setUploadedImages] = useState<UploadedImage[]>([]);
@@ -453,6 +474,20 @@ export const UploadImagePage: React.FC = () => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  const handleFilesChange = (next: ImageFile[]) => {
+    setFiles(next);
+
+    // Drop framing for files that are no longer staged. Ids are generated per
+    // pick, so re-adding the same picture is a different file with no crop.
+    setCrops((previous) =>
+      Object.fromEntries(
+        Object.entries(previous).filter(([id]) =>
+          next.some((file) => file.id === id),
+        ),
+      ),
+    );
+  };
+
   const handleUpload = async (uploadFiles: ImageFile[]) => {
     if (!user) {
       setError("You must be logged in to upload images");
@@ -505,6 +540,17 @@ export const UploadImagePage: React.FC = () => {
             formDataToSend.append("artistLabel", formData.artistLabel);
         }
         formDataToSend.append("visibility", formData.visibility);
+
+        // Thumbnail framing, if one was chosen. Sent as four fields because
+        // multipart has no nesting; the backend takes all four or none, and
+        // sending nothing leaves it on the automatic centre crop.
+        const crop = crops[imageFile.id];
+        if (crop) {
+          formDataToSend.append("thumbnailCropX", String(crop.x));
+          formDataToSend.append("thumbnailCropY", String(crop.y));
+          formDataToSend.append("thumbnailCropWidth", String(crop.width));
+          formDataToSend.append("thumbnailCropHeight", String(crop.height));
+        }
 
         const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:4000";
         const response = await fetch(`${apiUrl}/images/upload`, {
@@ -673,10 +719,28 @@ export const UploadImagePage: React.FC = () => {
                 <SectionTitle>Basics</SectionTitle>
                 <ImageUpload
                   files={files}
-                  onFilesChange={setFiles}
+                  onFilesChange={handleFilesChange}
                   maxFiles={1}
                   disabled={uploading}
                 />
+                {files.map((file) => (
+                  <ThumbnailRow key={file.id}>
+                    <ThumbnailSummary>
+                      {crops[file.id]
+                        ? "Thumbnail: your crop"
+                        : "Thumbnail: centre of the image"}
+                    </ThumbnailSummary>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={uploading}
+                      onClick={() => setCroppingFile(file)}
+                    >
+                      {crops[file.id] ? "Change crop" : "Choose crop"}
+                    </Button>
+                  </ThumbnailRow>
+                ))}
                 <div>
                   <Label>Title (optional)</Label>
                   <Input
@@ -986,6 +1050,33 @@ export const UploadImagePage: React.FC = () => {
             </div>
           </Sidebar>
         </MainLayout>
+      )}
+
+      {croppingFile && (
+        <ThumbnailCropper
+          isOpen
+          // The local object URL the picker already made, so the crop happens
+          // against the file in hand rather than waiting on a round trip.
+          imageSrc={croppingFile.preview}
+          initialCrop={crops[croppingFile.id]}
+          onCancel={() => setCroppingFile(null)}
+          onConfirm={(crop) => {
+            setCrops((previous) => ({ ...previous, [croppingFile.id]: crop }));
+            setCroppingFile(null);
+          }}
+          onReset={
+            crops[croppingFile.id]
+              ? () => {
+                  setCrops((previous) => {
+                    const next = { ...previous };
+                    delete next[croppingFile.id];
+                    return next;
+                  });
+                  setCroppingFile(null);
+                }
+              : undefined
+          }
+        />
       )}
     </Container>
   );

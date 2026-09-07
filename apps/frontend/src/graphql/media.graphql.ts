@@ -105,6 +105,12 @@ export const GET_MEDIA_ITEM = gql`
         height
         fileSize
         mimeType
+        thumbnailCrop {
+          x
+          y
+          width
+          height
+        }
       }
       textContent {
         id
@@ -468,6 +474,15 @@ export const UPDATE_IMAGE = gql`
       artistUrl
       source
       updatedAt
+      # Re-framing regenerates the thumbnail at a new key, so the URL changes
+      # on this mutation and the cache has to learn the new one.
+      thumbnailUrl
+      thumbnailCrop {
+        x
+        y
+        width
+        height
+      }
     }
   }
 `;
