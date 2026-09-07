@@ -119,7 +119,9 @@ describe("EmailVerificationService", () => {
     it("says nothing and sends nothing for an address with no account", async () => {
       mockDatabaseService.user.findUnique.mockResolvedValue(null);
 
-      await expect(service.resend("nobody@test.local")).resolves.toBeUndefined();
+      await expect(
+        service.resend("nobody@test.local"),
+      ).resolves.toBeUndefined();
       expect(mockEmail.sendEmailVerification).not.toHaveBeenCalled();
     });
 

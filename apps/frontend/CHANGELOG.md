@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A "check your email" step after signup**, since signup no longer signs anybody in, plus `/verify-email/:token` to redeem the link and a resend offer on both that screen and the login form when an unconfirmed account is refused (#372).
+
 - **A notification section on `/profile/edit`**: a per-kind matrix of in-app and email switches, with security email named as something that is always sent. Kinds with no email template show no email switch rather than a disabled one (#344).
 
 ### Fixed

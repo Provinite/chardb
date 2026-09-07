@@ -9,9 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Email verification.** Signup mails a single-use link and hands back no session; `login` and `refreshToken` refuse an unconfirmed address with an `EMAIL_NOT_VERIFIED` code, so `User.isVerified` now means "confirmed this address" rather than being set by nothing (#372).
+
+- **A hard ceiling of six verification emails per address, ever**, counted on the address rather than the account so the feature cannot become a way to mail somebody repeatedly. Over the cap, under a burst limit, unknown, or already confirmed all answer identically and silently (#372).
+
 - **Notification delivery preferences**, per kind and per channel, checked in `NotificationsService.create` so every kind respects them without a call site opting in. Image approval no longer emails by default; rejection still does (#344).
 
 - **A settings link in every optional email's footer.** No one-click unsubscribe: this is mail about the recipient's own uploads rather than marketing, so none is required of it, and a signed link would mean a token plus an endpoint that acts on it unauthenticated. Password reset and password-changed mail carries no such footer and cannot be opted out of — `AuthService` reaches `EmailService` directly and imports neither the preference nor the dispatch service (#344).
+
+### Changed
+
+- **Breaking: `signup` returns `Boolean!` instead of `AuthPayload!`** and sets no refresh cookie. A new account cannot hold a session until its address is confirmed, so there is nothing to hand back (#372).
+
+- **Every existing account is backfilled as verified** by the `email_verification` migration. Nobody who already has an account is asked to confirm an address over mail they never had the chance to answer (#372).
 
 ### Fixed
 
