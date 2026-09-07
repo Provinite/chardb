@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Commenting - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Leave a comment on a character or a gallery in CharDB, reply to what someone else said, like a comment, and edit or delete your own."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/commenting.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Commenting" />
+    <meta
+      property="og:description"
+      content="Leave a comment on a character or a gallery in CharDB, reply to what someone else said, like a comment, and edit or delete your own."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/commenting.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/comment-thread.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="A CharDB comment thread: one member's comment with a like, and a reply beneath it."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .screenshot-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .screenshot-row .screenshot img {
+        height: 400px;
+        object-fit: contain;
+        background: #1a1a2e;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      kbd {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85em;
+        color: #555;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      @media (max-width: 768px) {
+        .screenshot-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Commenting</h1>
+        <p>
+          Say something about a character or a gallery, and reply to what
+          somebody else said
+        </p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every <strong>character page</strong> and every
+            <strong>gallery page</strong> carries a Comments section at the
+            bottom. It is the same section in both places, so anything below
+            works identically whichever one you are looking at.
+          </p>
+          <p>
+            Comments are <strong>public to read</strong>. Anyone can open a
+            character and see what has been said about it, whether or not they
+            are signed in and whether or not they are a member of that
+            community. Writing needs an account.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">&#x1F4AC;</div>
+              <h4>Threads</h4>
+              <p>Reply to a comment and your reply sits under it</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x2764;&#xFE0F;</div>
+              <h4>Likes</h4>
+              <p>Every comment has its own heart and count</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x270F;&#xFE0F;</div>
+              <h4>Yours to change</h4>
+              <p>Edit or delete anything you wrote</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F514;</div>
+              <h4>The owner hears</h4>
+              <p>Commenting notifies whoever owns the page</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Leaving a Comment</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Scroll to <strong>Comments</strong> at the bottom of the page. The
+            form sits at the top of the section, above everything already said,
+            so you never have to scroll past a long thread to reach it.
+          </p>
+          <p>
+            Type and press <strong>Comment</strong>. The button stays greyed out
+            until you have typed something &mdash; whitespace on its own does
+            not count &mdash; and the counter beneath the box tracks how much of
+            the <strong>2000 character</strong> limit you have left. Go over it
+            and the button greys out again rather than silently cutting your
+            comment short.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Who finds out:</strong> posting notifies the person who owns
+            the character or gallery, unless that person is you. Commenting on
+            your own work is not news, so it stays quiet.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="comment-form.png"
+            alt="The Comments section: a comment form above one existing comment"
+          />
+          <div class="screenshot-caption">
+            The form sits above the conversation, not below it
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Replying to Somebody</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every top-level comment has a <strong>Reply</strong> link beneath
+            it. Clicking it opens a second box directly under that comment,
+            already addressed to whoever wrote it, with its own Reply and Cancel
+            buttons.
+          </p>
+          <p>
+            Threads are <strong>one level deep</strong> on purpose. A reply
+            carries no Reply link of its own, so a conversation stays a comment
+            and the answers to it rather than fanning out into a tree nobody can
+            follow.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Caveat:</strong> a reply notifies the owner of the page, not
+            the person you are replying to. If you want to be sure they see it,
+            say their name.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="comment-replying.png"
+            alt="A reply box open directly beneath the comment it answers"
+          />
+          <div class="screenshot-caption">
+            Reply opens a box under that comment, addressed to its author
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Liking a Comment</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Each comment carries its own heart and count, replies included.
+            Clicking it fills the heart in and the count goes up; clicking again
+            takes it back. There is no separate confirmation and nothing to undo
+            &mdash; the heart is the toggle.
+          </p>
+          <p>
+            The count is visible to everyone, including signed-out visitors. The
+            heart is only clickable once you are signed in.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="comment-thread.png"
+            alt="A liked comment with a reply nested beneath it"
+          />
+          <div class="screenshot-caption">
+            A liked comment, with a reply beneath it. Edit and Delete appear
+            only on the reply, because that is the one belonging to the viewer
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Editing and Deleting Your Own</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Edit</strong> and <strong>Delete</strong> appear only on
+            comments you wrote. They are absent from everybody else's, which is
+            the quickest way to tell at a glance which comments in a thread are
+            yours.
+          </p>
+          <p>
+            Edit turns the comment into a text box in place, with
+            <strong>Save</strong> and <strong>Cancel</strong>. Cancel restores
+            what was there before, so a half-finished edit costs nothing. Delete
+            asks first, and cannot be undone once confirmed.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="comment-editing.png"
+            alt="A comment turned into an editable text box with Save and Cancel"
+          />
+          <div class="screenshot-caption">
+            Editing happens in place; Cancel puts the original back
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Signed Out</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A visitor with no account reads the whole conversation exactly as a
+            member does &mdash; every comment, every reply, every like count.
+            Nothing is hidden behind signing in.
+          </p>
+          <p>
+            Where the form would be there is a prompt and a
+            <strong>Log In</strong> button instead. That is the only difference.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="comment-signed-out.png"
+            alt="The Comments section as a signed-out visitor: comments readable, a log in prompt where the form would be"
+          />
+          <div class="screenshot-caption">
+            Comments read normally; the form is replaced by a prompt to log in
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Commenting &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

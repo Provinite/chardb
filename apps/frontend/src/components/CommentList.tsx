@@ -231,7 +231,7 @@ export const CommentList: React.FC<CommentListProps> = ({
   }
 
   return (
-    <Container>
+    <Container data-testid="comments">
       <SectionHeader>
         <SectionTitle>Comments</SectionTitle>
         {!error && (

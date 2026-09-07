@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A "Commenting" walkthrough** (`docs/docs/commenting.html`), five steps with
+  five screenshots: leaving a comment, replying, liking, editing or deleting
+  your own, and what a signed-out visitor sees. The first documentation of any
+  social feature (#310).
+
 - **Fuzzy navigation documents the `@` member search** — a sixth step with
   three screenshots: listing who is here, the pages one person offers, and
   narrowing past the slash (#349).

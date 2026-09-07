@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the character's owner and by staff who can edit its registry — not made
   public, because it carries a member's unapproved proposed traits (#310).
 
+### Changed
+
+- **`@AllowEntityOwner` and `@AllowCharacterRegistryEditor` can now read their
+  id from the parent** with a `$root.` path, so they work on a `@ResolveField`,
+  which has no arguments to name one in. `CommunityPermissionGuard` already
+  understood that prefix; `resolveGuardPath` is the rule in one place (#310).
+
 ### Added
 
 - **A test asserting every resolver method declares who may call it.** A
