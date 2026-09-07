@@ -608,6 +608,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
+          # Logs on this repository are public. The account id is not a secret,
+          # but it is half of every ECR URL and role ARN the deploy touches, and
+          # a permanent public log should not double as an inventory (#378).
+          mask-aws-account-id: true
 
       # terraform_wrapper wraps the binary in a script that captures output;
       # the deploy scripts parse `terraform output -json`, so it has to be off.
@@ -644,7 +648,7 @@ jobs:
       - name: Verify backend health
         run: |
           source ./scripts/get-terraform-outputs.sh "$TF_ENVIRONMENT"
-          echo "Polling http://$SERVER_IP:4000/health"
+          echo "Polling the staging backend's /health"
           for attempt in $(seq 1 30); do
             if curl -fsS --max-time 10 "http://$SERVER_IP:4000/health" > /dev/null; then
               echo "✅ Backend healthy after ${attempt} attempt(s)"
@@ -728,6 +732,10 @@ jobs:
         with:
           role-to-assume: ${{ secrets.AWS_DEPLOY_ROLE_ARN }}
           aws-region: us-east-1
+          # Logs on this repository are public. The account id is not a secret,
+          # but it is half of every ECR URL and role ARN the deploy touches, and
+          # a permanent public log should not double as an inventory (#378).
+          mask-aws-account-id: true
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v4

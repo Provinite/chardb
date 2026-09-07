@@ -10,6 +10,10 @@
 # Executing it instead prints a redacted summary and exports nothing, since a
 # child process cannot alter its parent's environment.
 #
+# Inside GitHub Actions the summary shrinks to a single line and every
+# identifier below is masked out of the log, because this repository is public
+# (#378). Run by hand, nothing changes.
+#
 # ---------------------------------------------------------------------------
 # VARIABLES EXPORTED
 #
@@ -47,6 +51,8 @@
 #     S3_IMAGES_BUCKET          Image storage bucket name
 #     CLOUDFRONT_IMAGES_DOMAIN  Image CDN domain
 # ---------------------------------------------------------------------------
+
+source "$(dirname "${BASH_SOURCE[0]}")/lib/mask-in-actions.sh"
 
 _tf_outputs_load() {
     local environment="${1:-prod}"
@@ -133,10 +139,39 @@ _tf_outputs_load() {
     fi
 
     unset -f _tf_output
+
+    # Masked here, at the end of the load, rather than at either call site.
+    # `::add-mask::` only redacts lines printed after it, so the one safe place
+    # is between these values becoming known and anything -- the summary below
+    # included -- printing them. Doing it inside the load also means all four
+    # deploy jobs are covered without four copies of the list.
+    mask_in_actions \
+        SERVER_IP \
+        INSTANCE_ID \
+        ECR_REPOSITORY_URL \
+        SQS_QUEUE_URL \
+        S3_IMAGES_BUCKET \
+        CLOUDFRONT_IMAGES_DOMAIN
+
     return 0
 }
 
+# In Actions this prints one line instead of the block. The block is a
+# deployment inventory and the logs are public (#378); nobody reads it there
+# anyway, since the deploy either works or fails on the next line. It is not
+# dropped altogether, because silence would make a failed load look exactly
+# like a successful one.
+#
+# Gated on GITHUB_ACTIONS rather than behind a verbose flag so that every human
+# use of this script is unchanged -- the header above advertises the summary,
+# and a developer sourcing it by hand should not have to learn a flag to keep
+# what they already had.
 _tf_outputs_summary() {
+    if [ -n "${GITHUB_ACTIONS:-}" ]; then
+        echo "✅ Terraform outputs loaded (${1:-prod})" >&2
+        return 0
+    fi
+
     cat >&2 <<SUMMARY
 ✅ Terraform outputs loaded:
    Environment:         ${1:-prod}

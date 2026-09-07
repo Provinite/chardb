@@ -83,9 +83,13 @@ source ./scripts/get-terraform-outputs.sh "$ENVIRONMENT"
 
 if [ -z "$SERVER_IP" ] || [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$ECR_REPOSITORY_URL" ] || [ -z "$ROOT_DOMAIN" ]; then
     echo "❌ Missing required Terraform outputs"
-    echo "SERVER_IP: $SERVER_IP"
+    # Present/missing is the whole diagnostic here -- which output failed to
+    # load, not what it would have contained -- so these report it the way
+    # SSH_PRIVATE_KEY already did rather than printing the values into a public
+    # log (#378).
+    echo "SERVER_IP: ${SERVER_IP:+[present]}"
     echo "SSH_PRIVATE_KEY: ${SSH_PRIVATE_KEY:+[present]}"
-    echo "ECR_REPOSITORY_URL: $ECR_REPOSITORY_URL"
+    echo "ECR_REPOSITORY_URL: ${ECR_REPOSITORY_URL:+[present]}"
     # Fails here rather than at runtime: without it the CORS allowlist falls
     # back to `localhost` and refuses every origin the site is actually served
     # from, which looks like an outage rather than a missing variable.
@@ -93,7 +97,7 @@ if [ -z "$SERVER_IP" ] || [ -z "$SSH_PRIVATE_KEY" ] || [ -z "$ECR_REPOSITORY_URL
     exit 1
 fi
 
-echo "🚀 Deploying CharDB to $SERVER_IP (environment: $ENVIRONMENT)"
+echo "🚀 Deploying CharDB (environment: $ENVIRONMENT)"
 
 # Resolve how to reach the host. Defaults to tunnelling SSH over Session
 # Manager, which is what lets GitHub Actions deploy without the security group
@@ -183,7 +187,6 @@ if [ -f .env ]; then
     source .env
     set +a
     echo "✅ Loaded environment variables from .env"
-    echo "ECR URL: $ECR_REPOSITORY_URL"
 else
     echo "❌ .env file not found"
     exit 1
@@ -344,8 +347,6 @@ echo "🚀 Executing deployment on server..."
 ssh "${SSH_OPTS[@]}" "$REMOTE_TARGET" "cd ~/app && chmod +x deploy-remote.sh && ./deploy-remote.sh"
 
 echo "✅ Deployment completed successfully!"
-echo "🌐 Your application should be available at:"
-echo "   - Backend API: http://$SERVER_IP:4000"
 echo ""
 echo "📝 To SSH into the server:"
 echo "   ./scripts/ssh-dev.sh"
