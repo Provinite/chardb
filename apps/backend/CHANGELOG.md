@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **An OAuth account-linking `state` token no longer works from any browser.** Starting a link sets a nonce cookie on the API host whose hash the callback now requires, so a leaked state can no longer fasten a provider identity onto somebody else's account — flows in flight across the deploy fail and have to be restarted (#379).
+
 - **A photo carrying an EXIF orientation tag no longer thumbnails sideways.**
   Nothing applied the rotation and sharp drops the tag on output, so the medium
   and thumbnail variants are now rotated to match what a browser paints (#342).

@@ -15,6 +15,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Starting an account link now sends credentials to the API**, so the browser keeps the cookie the callback uses to check the flow came back to the browser that began it (#379).
+
 - **A failing comment list no longer takes the comment form with it.** The error
   replaced the whole section, so one failing read removed the ability to write
   and left no way forward; the two now fail independently (#310).

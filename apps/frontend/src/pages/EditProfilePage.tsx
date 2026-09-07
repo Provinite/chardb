@@ -372,6 +372,11 @@ export const EditProfilePage: React.FC = () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        // The API is a different origin, and a cross-origin response's
+        // Set-Cookie is discarded unless the request was credentialed. This
+        // response carries the nonce cookie that binds the flow to this
+        // browser, so without it the callback rejects every link (#379).
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -412,6 +417,9 @@ export const EditProfilePage: React.FC = () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        // Carries back the nonce cookie the callback checks; see the
+        // DeviantArt handler above (#379).
+        credentials: "include",
       });
 
       if (!response.ok) {
@@ -451,6 +459,9 @@ export const EditProfilePage: React.FC = () => {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+        // Carries back the nonce cookie the callback checks; see the
+        // DeviantArt handler above (#379).
+        credentials: "include",
       });
 
       if (!response.ok) {
