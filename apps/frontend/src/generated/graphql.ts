@@ -178,6 +178,8 @@ export type CharacterFiltersInput = {
   /** Any of these, not all -- a row of checkboxes. An empty or omitted list is no filter rather than one matching nothing. */
   availability?: InputMaybe<Array<CharacterAvailability>>;
   communityId?: InputMaybe<Scalars['ID']['input']>;
+  /** Characters filed directly in this folder. Sub-folders are not included -- opening a folder shows what is in it, the way a file browser does. A private folder answers only to its owner. */
+  folderId?: InputMaybe<Scalars['ID']['input']>;
   /** @deprecated Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only one of these that can also ask for the negative. */
   isSellable?: InputMaybe<Scalars['Boolean']['input']>;
   /** @deprecated Use `availability: [TRADE_CHARACTERS]`. Kept because it is the only one of these that can also ask for the negative. */
@@ -195,7 +197,25 @@ export type CharacterFiltersInput = {
   speciesId?: InputMaybe<Scalars['ID']['input']>;
   speciesVariantId?: InputMaybe<Scalars['ID']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
+  /** Characters in no folder at all: the root of your workspace, and the pile that empties as you file. Yours only -- it describes how you have organised things, which is not a question anyone else can ask. */
+  unfiled?: InputMaybe<Scalars['Boolean']['input']>;
   visibility?: InputMaybe<Visibility>;
+};
+
+/** One folder in a person's character workspace. Folders nest, hold characters, and belong to exactly one owner. */
+export type CharacterFolder = {
+  __typename?: 'CharacterFolder';
+  /** Characters in this folder and everything nested under it, counted once each however many sub-folders hold them. Excludes characters the owner has since traded away, and characters the viewer may not see. */
+  characterCount: Scalars['Int']['output'];
+  id: Scalars['ID']['output'];
+  /** Hidden from everyone but the owner, along with everything nested under it. */
+  isPrivate: Scalars['Boolean']['output'];
+  /** As the owner typed it. */
+  name: Scalars['String']['output'];
+  /** Null for a folder at the root of the workspace. */
+  parentId: Maybe<Scalars['ID']['output']>;
+  /** Position among siblings. Zero throughout a workspace nobody has reordered, which is what makes the default order alphabetical. */
+  sortOrder: Scalars['Int']['output'];
 };
 
 /** A record of character ownership transfer between users */
@@ -464,6 +484,15 @@ export type CommunityMemberConnection = {
   nodes: Array<CommunityMember>;
   /** Total count of community members matching the query */
   totalCount: Scalars['Float']['output'];
+};
+
+export type CreateCharacterFolderInput = {
+  /** Hide it, and everything under it, from everyone else. */
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  /** Folder name, as it should be displayed. */
+  name: Scalars['String']['input'];
+  /** Folder to nest inside. Omit for a folder at the root. */
+  parentId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 export type CreateCharacterInput = {
@@ -1732,6 +1761,23 @@ export enum ModerationStatus {
   Rejected = 'REJECTED'
 }
 
+/** Reparent a folder, reorder it among its siblings, or both. One input because dropping a folder in the browser can mean either, and the drop target decides which. */
+export type MoveCharacterFolderInput = {
+  id: Scalars['ID']['input'];
+  /** Where among its new siblings it lands, counting from 0. Omit to put it last. Supplying this fixes the order of that whole sibling group, which until then was alphabetical. */
+  index?: InputMaybe<Scalars['Int']['input']>;
+  /** The new parent. Null moves the folder to the root; omitting it leaves the parent alone. */
+  parentId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** File characters. With `fromFolderId` this is a move; without one it is an add that leaves existing folders alone. A null `toFolderId` with a `fromFolderId` returns them to the root. */
+export type MoveCharactersToFolderInput = {
+  /** All must be yours -- the call is refused rather than partly applied if any is not. */
+  characterIds: Array<Scalars['ID']['input']>;
+  fromFolderId?: InputMaybe<Scalars['ID']['input']>;
+  toFolderId?: InputMaybe<Scalars['ID']['input']>;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   /** Accept and settle. Items, characters and coin move in one transaction across all three ledgers, or the whole accept fails. */
@@ -1760,6 +1806,7 @@ export type Mutation = {
   /** Answer an offer with a different one. Declines the original and sends the replacement in a single step, so opening a counter and thinking better of it costs the offer nothing. Returns the new trade. */
   counterTrade: Trade;
   createCharacter: Character;
+  createCharacterFolder: CharacterFolder;
   /** Spend an MYO ticket to make a character. Destroys the ticket and creates the character with its traits pending review. Authorized by holding the ticket, not by canCreateCharacter. */
   createCharacterFromMyoTicket: Character;
   /** Create a new character ownership change record */
@@ -1802,6 +1849,8 @@ export type Mutation = {
   deferTraitReview: TraitReview;
   /** Soft-delete a character. Requires CanDeleteCharacter permission in the character's community, or global admin. A character with no species has no community to resolve permissions from, so once it has been removed from its species (see kickCharacterFromSpecies) only a global admin can delete it. */
   deleteCharacter: Scalars['Boolean']['output'];
+  /** Delete a folder and everything nested under it. The characters are untouched and reappear at the root. */
+  deleteCharacterFolder: RemovalResponse;
   deleteComment: Scalars['Boolean']['output'];
   deleteCommunityColor: Scalars['Boolean']['output'];
   deleteGallery: RemovalResponse;
@@ -1830,6 +1879,10 @@ export type Mutation = {
   markNotificationsSeen: Scalars['Int']['output'];
   /** Create currency into one or more members' balances. Returns the batch id every row it wrote shares. */
   mintCurrency: Scalars['String']['output'];
+  /** Reparent or reorder a folder. Returns the whole workspace, because one move renumbers a sibling group. */
+  moveCharacterFolder: Array<CharacterFolder>;
+  /** File characters, unfile them, or move them between folders. Returns how many characters were affected. */
+  moveCharactersToFolder: Scalars['Int']['output'];
   /** Compose an offer. Nothing is reserved: what it names is checked now so you are told early, and checked again decisively at accept. */
   proposeTrade: Trade;
   /** Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete. */
@@ -1878,6 +1931,8 @@ export type Mutation = {
   revokeItems: Scalars['Int']['output'];
   /** Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this). */
   runDeviantartUuidBackfill: Scalars['Boolean']['output'];
+  /** Replace the set of folders one character is in. Returns where it ends up. */
+  setCharacterFolders: Array<CharacterFolder>;
   /** Sets or clears the main media for a character */
   setCharacterMainMedia: Character;
   /** Set which characters a ticket of this type can make. Replaces the grant wholesale; an empty variant list clears it. Needs the same permission as editing the item type, because it hands out the right to create characters. */
@@ -1898,6 +1953,8 @@ export type Mutation = {
   unlinkDiscordGuild: Community;
   /** Unlink an external account from the current user */
   unlinkExternalAccount: Scalars['Boolean']['output'];
+  /** Rename a folder, or change whether it is private. */
+  updateCharacterFolder: CharacterFolder;
   /** Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission. */
   updateCharacterProfile: Character;
   /** Update character registry fields (registryId, variant, traits). Requires canEditOwnCharacterRegistry (for owned) or canEditCharacterRegistry (for any) permission. */
@@ -2015,6 +2072,11 @@ export type MutationCounterTradeArgs = {
 
 export type MutationCreateCharacterArgs = {
   input: CreateCharacterInput;
+};
+
+
+export type MutationCreateCharacterFolderArgs = {
+  input: CreateCharacterFolderInput;
 };
 
 
@@ -2138,6 +2200,11 @@ export type MutationDeleteCharacterArgs = {
 };
 
 
+export type MutationDeleteCharacterFolderArgs = {
+  id: Scalars['ID']['input'];
+};
+
+
 export type MutationDeleteCommentArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2211,6 +2278,16 @@ export type MutationMarkNotificationsReadArgs = {
 
 export type MutationMintCurrencyArgs = {
   input: MintCurrencyInput;
+};
+
+
+export type MutationMoveCharacterFolderArgs = {
+  input: MoveCharacterFolderInput;
+};
+
+
+export type MutationMoveCharactersToFolderArgs = {
+  input: MoveCharactersToFolderInput;
 };
 
 
@@ -2344,6 +2421,11 @@ export type MutationRunDeviantartUuidBackfillArgs = {
 };
 
 
+export type MutationSetCharacterFoldersArgs = {
+  input: SetCharacterFoldersInput;
+};
+
+
 export type MutationSetCharacterMainMediaArgs = {
   id: Scalars['ID']['input'];
   input: SetMainMediaInput;
@@ -2403,6 +2485,11 @@ export type MutationUnlinkDiscordGuildArgs = {
 
 export type MutationUnlinkExternalAccountArgs = {
   input: UnlinkExternalAccountInput;
+};
+
+
+export type MutationUpdateCharacterFolderArgs = {
+  input: UpdateCharacterFolderInput;
 };
 
 
@@ -2699,6 +2786,8 @@ export type Query = {
   __typename?: 'Query';
   activityFeed: Array<ActivityItem>;
   character: Character;
+  /** Where this character's current owner filed it. Empty for an orphaned character. */
+  characterFolders: Array<CharacterFolder>;
   characterGalleries: GalleryConnection;
   /** Retrieves media associated with a specific character */
   characterMedia: MediaConnection;
@@ -2817,6 +2906,8 @@ export type Query = {
   memberHoldings: MemberHoldingsReport;
   /** What one member holds of every currency in a community, including the ones they hold none of. */
   memberWallet: MemberWallet;
+  /** Your whole workspace, flat. Nesting is in `parentId`; the client builds the tree. */
+  myCharacterFolders: Array<CharacterFolder>;
   myCharacters: CharacterConnection;
   /** Get characters the current user can upload images to */
   myCharactersForImageUpload: CharacterConnection;
@@ -2885,6 +2976,8 @@ export type Query = {
   /** How many notifications the badge should show. Its own query, and a bare indexed count, because it is the one thing polled on a timer. */
   unseenNotificationCount: Scalars['Int']['output'];
   user: Maybe<User>;
+  /** How one member's characters are arranged, as far as you may see. Private folders and everything nested under them are left out. */
+  userCharacterFolders: Array<CharacterFolder>;
   userCharacters: CharacterConnection;
   userGalleries: GalleryConnection;
   /** Retrieves media owned by a specific user */
@@ -2904,6 +2997,11 @@ export type QueryActivityFeedArgs = {
 
 export type QueryCharacterArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type QueryCharacterFoldersArgs = {
+  characterId: Scalars['ID']['input'];
 };
 
 
@@ -3271,6 +3369,11 @@ export type QueryMemberWalletArgs = {
 };
 
 
+export type QueryMyCharacterFoldersArgs = {
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
 export type QueryMyCharactersArgs = {
   filters?: InputMaybe<CharacterFiltersInput>;
 };
@@ -3466,6 +3569,12 @@ export type QueryUserArgs = {
 };
 
 
+export type QueryUserCharacterFoldersArgs = {
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+  userId: Scalars['ID']['input'];
+};
+
+
 export type QueryUserCharactersArgs = {
   filters?: InputMaybe<CharacterFiltersInput>;
   userId: Scalars['ID']['input'];
@@ -3638,6 +3747,12 @@ export type RoleConnection = {
   nodes: Array<Role>;
   /** Total count of roles matching the query */
   totalCount: Scalars['Float']['output'];
+};
+
+export type SetCharacterFoldersInput = {
+  characterId: Scalars['ID']['input'];
+  /** The complete set of folders this character should be in. Anything not listed is removed; an empty list returns it to the root. */
+  folderIds: Array<Scalars['ID']['input']>;
 };
 
 export type SetItemTypeMyoGrantInput = {
@@ -4201,6 +4316,12 @@ export type UnlinkExternalAccountInput = {
   provider: ExternalAccountProvider;
 };
 
+export type UpdateCharacterFolderInput = {
+  id: Scalars['ID']['input'];
+  isPrivate?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+};
+
 /** Input for updating character profile fields */
 export type UpdateCharacterProfileInput = {
   customFields?: InputMaybe<Scalars['String']['input']>;
@@ -4634,6 +4755,72 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, communityMemberships: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canEditSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string } } }> } } };
+
+export type CharacterFolderFieldsFragment = { __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number };
+
+export type GetMyCharacterFoldersQueryVariables = Exact<{
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type GetMyCharacterFoldersQuery = { __typename?: 'Query', myCharacterFolders: Array<{ __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number }> };
+
+export type GetUserCharacterFoldersQueryVariables = Exact<{
+  userId: Scalars['ID']['input'];
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type GetUserCharacterFoldersQuery = { __typename?: 'Query', userCharacterFolders: Array<{ __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number }> };
+
+export type GetCharacterFoldersQueryVariables = Exact<{
+  characterId: Scalars['ID']['input'];
+}>;
+
+
+export type GetCharacterFoldersQuery = { __typename?: 'Query', characterFolders: Array<{ __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number }> };
+
+export type CreateCharacterFolderMutationVariables = Exact<{
+  input: CreateCharacterFolderInput;
+}>;
+
+
+export type CreateCharacterFolderMutation = { __typename?: 'Mutation', createCharacterFolder: { __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number } };
+
+export type UpdateCharacterFolderMutationVariables = Exact<{
+  input: UpdateCharacterFolderInput;
+}>;
+
+
+export type UpdateCharacterFolderMutation = { __typename?: 'Mutation', updateCharacterFolder: { __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number } };
+
+export type MoveCharacterFolderMutationVariables = Exact<{
+  input: MoveCharacterFolderInput;
+}>;
+
+
+export type MoveCharacterFolderMutation = { __typename?: 'Mutation', moveCharacterFolder: Array<{ __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number }> };
+
+export type DeleteCharacterFolderMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type DeleteCharacterFolderMutation = { __typename?: 'Mutation', deleteCharacterFolder: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
+
+export type MoveCharactersToFolderMutationVariables = Exact<{
+  input: MoveCharactersToFolderInput;
+}>;
+
+
+export type MoveCharactersToFolderMutation = { __typename?: 'Mutation', moveCharactersToFolder: number };
+
+export type SetCharacterFoldersMutationVariables = Exact<{
+  input: SetCharacterFoldersInput;
+}>;
+
+
+export type SetCharacterFoldersMutation = { __typename?: 'Mutation', setCharacterFolders: Array<{ __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number }> };
 
 export type CharacterCardFieldsFragment = { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } };
 
@@ -6230,6 +6417,16 @@ export type UpdateProfileMutationVariables = Exact<{
 
 export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } };
 
+export const CharacterFolderFieldsFragmentDoc = gql`
+    fragment CharacterFolderFields on CharacterFolder {
+  id
+  parentId
+  name
+  isPrivate
+  sortOrder
+  characterCount
+}
+    `;
 export const UserBasicFragmentDoc = gql`
     fragment UserBasic on User {
   id
@@ -7194,6 +7391,324 @@ export type MeQueryHookResult = ReturnType<typeof useMeQuery>;
 export type MeLazyQueryHookResult = ReturnType<typeof useMeLazyQuery>;
 export type MeSuspenseQueryHookResult = ReturnType<typeof useMeSuspenseQuery>;
 export type MeQueryResult = Apollo.QueryResult<MeQuery, MeQueryVariables>;
+export const GetMyCharacterFoldersDocument = gql`
+    query GetMyCharacterFolders($communityId: ID) {
+  myCharacterFolders(communityId: $communityId) {
+    ...CharacterFolderFields
+  }
+}
+    ${CharacterFolderFieldsFragmentDoc}`;
+
+/**
+ * __useGetMyCharacterFoldersQuery__
+ *
+ * To run a query within a React component, call `useGetMyCharacterFoldersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetMyCharacterFoldersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetMyCharacterFoldersQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useGetMyCharacterFoldersQuery(baseOptions?: Apollo.QueryHookOptions<GetMyCharacterFoldersQuery, GetMyCharacterFoldersQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetMyCharacterFoldersQuery, GetMyCharacterFoldersQueryVariables>(GetMyCharacterFoldersDocument, options);
+      }
+export function useGetMyCharacterFoldersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetMyCharacterFoldersQuery, GetMyCharacterFoldersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetMyCharacterFoldersQuery, GetMyCharacterFoldersQueryVariables>(GetMyCharacterFoldersDocument, options);
+        }
+export function useGetMyCharacterFoldersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetMyCharacterFoldersQuery, GetMyCharacterFoldersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetMyCharacterFoldersQuery, GetMyCharacterFoldersQueryVariables>(GetMyCharacterFoldersDocument, options);
+        }
+export type GetMyCharacterFoldersQueryHookResult = ReturnType<typeof useGetMyCharacterFoldersQuery>;
+export type GetMyCharacterFoldersLazyQueryHookResult = ReturnType<typeof useGetMyCharacterFoldersLazyQuery>;
+export type GetMyCharacterFoldersSuspenseQueryHookResult = ReturnType<typeof useGetMyCharacterFoldersSuspenseQuery>;
+export type GetMyCharacterFoldersQueryResult = Apollo.QueryResult<GetMyCharacterFoldersQuery, GetMyCharacterFoldersQueryVariables>;
+export const GetUserCharacterFoldersDocument = gql`
+    query GetUserCharacterFolders($userId: ID!, $communityId: ID) {
+  userCharacterFolders(userId: $userId, communityId: $communityId) {
+    ...CharacterFolderFields
+  }
+}
+    ${CharacterFolderFieldsFragmentDoc}`;
+
+/**
+ * __useGetUserCharacterFoldersQuery__
+ *
+ * To run a query within a React component, call `useGetUserCharacterFoldersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUserCharacterFoldersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUserCharacterFoldersQuery({
+ *   variables: {
+ *      userId: // value for 'userId'
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useGetUserCharacterFoldersQuery(baseOptions: Apollo.QueryHookOptions<GetUserCharacterFoldersQuery, GetUserCharacterFoldersQueryVariables> & ({ variables: GetUserCharacterFoldersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetUserCharacterFoldersQuery, GetUserCharacterFoldersQueryVariables>(GetUserCharacterFoldersDocument, options);
+      }
+export function useGetUserCharacterFoldersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetUserCharacterFoldersQuery, GetUserCharacterFoldersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetUserCharacterFoldersQuery, GetUserCharacterFoldersQueryVariables>(GetUserCharacterFoldersDocument, options);
+        }
+export function useGetUserCharacterFoldersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetUserCharacterFoldersQuery, GetUserCharacterFoldersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetUserCharacterFoldersQuery, GetUserCharacterFoldersQueryVariables>(GetUserCharacterFoldersDocument, options);
+        }
+export type GetUserCharacterFoldersQueryHookResult = ReturnType<typeof useGetUserCharacterFoldersQuery>;
+export type GetUserCharacterFoldersLazyQueryHookResult = ReturnType<typeof useGetUserCharacterFoldersLazyQuery>;
+export type GetUserCharacterFoldersSuspenseQueryHookResult = ReturnType<typeof useGetUserCharacterFoldersSuspenseQuery>;
+export type GetUserCharacterFoldersQueryResult = Apollo.QueryResult<GetUserCharacterFoldersQuery, GetUserCharacterFoldersQueryVariables>;
+export const GetCharacterFoldersDocument = gql`
+    query GetCharacterFolders($characterId: ID!) {
+  characterFolders(characterId: $characterId) {
+    ...CharacterFolderFields
+  }
+}
+    ${CharacterFolderFieldsFragmentDoc}`;
+
+/**
+ * __useGetCharacterFoldersQuery__
+ *
+ * To run a query within a React component, call `useGetCharacterFoldersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCharacterFoldersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCharacterFoldersQuery({
+ *   variables: {
+ *      characterId: // value for 'characterId'
+ *   },
+ * });
+ */
+export function useGetCharacterFoldersQuery(baseOptions: Apollo.QueryHookOptions<GetCharacterFoldersQuery, GetCharacterFoldersQueryVariables> & ({ variables: GetCharacterFoldersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetCharacterFoldersQuery, GetCharacterFoldersQueryVariables>(GetCharacterFoldersDocument, options);
+      }
+export function useGetCharacterFoldersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCharacterFoldersQuery, GetCharacterFoldersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetCharacterFoldersQuery, GetCharacterFoldersQueryVariables>(GetCharacterFoldersDocument, options);
+        }
+export function useGetCharacterFoldersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCharacterFoldersQuery, GetCharacterFoldersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetCharacterFoldersQuery, GetCharacterFoldersQueryVariables>(GetCharacterFoldersDocument, options);
+        }
+export type GetCharacterFoldersQueryHookResult = ReturnType<typeof useGetCharacterFoldersQuery>;
+export type GetCharacterFoldersLazyQueryHookResult = ReturnType<typeof useGetCharacterFoldersLazyQuery>;
+export type GetCharacterFoldersSuspenseQueryHookResult = ReturnType<typeof useGetCharacterFoldersSuspenseQuery>;
+export type GetCharacterFoldersQueryResult = Apollo.QueryResult<GetCharacterFoldersQuery, GetCharacterFoldersQueryVariables>;
+export const CreateCharacterFolderDocument = gql`
+    mutation CreateCharacterFolder($input: CreateCharacterFolderInput!) {
+  createCharacterFolder(input: $input) {
+    ...CharacterFolderFields
+  }
+}
+    ${CharacterFolderFieldsFragmentDoc}`;
+export type CreateCharacterFolderMutationFn = Apollo.MutationFunction<CreateCharacterFolderMutation, CreateCharacterFolderMutationVariables>;
+
+/**
+ * __useCreateCharacterFolderMutation__
+ *
+ * To run a mutation, you first call `useCreateCharacterFolderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateCharacterFolderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createCharacterFolderMutation, { data, loading, error }] = useCreateCharacterFolderMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateCharacterFolderMutation(baseOptions?: Apollo.MutationHookOptions<CreateCharacterFolderMutation, CreateCharacterFolderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateCharacterFolderMutation, CreateCharacterFolderMutationVariables>(CreateCharacterFolderDocument, options);
+      }
+export type CreateCharacterFolderMutationHookResult = ReturnType<typeof useCreateCharacterFolderMutation>;
+export type CreateCharacterFolderMutationResult = Apollo.MutationResult<CreateCharacterFolderMutation>;
+export type CreateCharacterFolderMutationOptions = Apollo.BaseMutationOptions<CreateCharacterFolderMutation, CreateCharacterFolderMutationVariables>;
+export const UpdateCharacterFolderDocument = gql`
+    mutation UpdateCharacterFolder($input: UpdateCharacterFolderInput!) {
+  updateCharacterFolder(input: $input) {
+    ...CharacterFolderFields
+  }
+}
+    ${CharacterFolderFieldsFragmentDoc}`;
+export type UpdateCharacterFolderMutationFn = Apollo.MutationFunction<UpdateCharacterFolderMutation, UpdateCharacterFolderMutationVariables>;
+
+/**
+ * __useUpdateCharacterFolderMutation__
+ *
+ * To run a mutation, you first call `useUpdateCharacterFolderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateCharacterFolderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateCharacterFolderMutation, { data, loading, error }] = useUpdateCharacterFolderMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateCharacterFolderMutation(baseOptions?: Apollo.MutationHookOptions<UpdateCharacterFolderMutation, UpdateCharacterFolderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateCharacterFolderMutation, UpdateCharacterFolderMutationVariables>(UpdateCharacterFolderDocument, options);
+      }
+export type UpdateCharacterFolderMutationHookResult = ReturnType<typeof useUpdateCharacterFolderMutation>;
+export type UpdateCharacterFolderMutationResult = Apollo.MutationResult<UpdateCharacterFolderMutation>;
+export type UpdateCharacterFolderMutationOptions = Apollo.BaseMutationOptions<UpdateCharacterFolderMutation, UpdateCharacterFolderMutationVariables>;
+export const MoveCharacterFolderDocument = gql`
+    mutation MoveCharacterFolder($input: MoveCharacterFolderInput!) {
+  moveCharacterFolder(input: $input) {
+    ...CharacterFolderFields
+  }
+}
+    ${CharacterFolderFieldsFragmentDoc}`;
+export type MoveCharacterFolderMutationFn = Apollo.MutationFunction<MoveCharacterFolderMutation, MoveCharacterFolderMutationVariables>;
+
+/**
+ * __useMoveCharacterFolderMutation__
+ *
+ * To run a mutation, you first call `useMoveCharacterFolderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useMoveCharacterFolderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [moveCharacterFolderMutation, { data, loading, error }] = useMoveCharacterFolderMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useMoveCharacterFolderMutation(baseOptions?: Apollo.MutationHookOptions<MoveCharacterFolderMutation, MoveCharacterFolderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<MoveCharacterFolderMutation, MoveCharacterFolderMutationVariables>(MoveCharacterFolderDocument, options);
+      }
+export type MoveCharacterFolderMutationHookResult = ReturnType<typeof useMoveCharacterFolderMutation>;
+export type MoveCharacterFolderMutationResult = Apollo.MutationResult<MoveCharacterFolderMutation>;
+export type MoveCharacterFolderMutationOptions = Apollo.BaseMutationOptions<MoveCharacterFolderMutation, MoveCharacterFolderMutationVariables>;
+export const DeleteCharacterFolderDocument = gql`
+    mutation DeleteCharacterFolder($id: ID!) {
+  deleteCharacterFolder(id: $id) {
+    removed
+    message
+  }
+}
+    `;
+export type DeleteCharacterFolderMutationFn = Apollo.MutationFunction<DeleteCharacterFolderMutation, DeleteCharacterFolderMutationVariables>;
+
+/**
+ * __useDeleteCharacterFolderMutation__
+ *
+ * To run a mutation, you first call `useDeleteCharacterFolderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDeleteCharacterFolderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [deleteCharacterFolderMutation, { data, loading, error }] = useDeleteCharacterFolderMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useDeleteCharacterFolderMutation(baseOptions?: Apollo.MutationHookOptions<DeleteCharacterFolderMutation, DeleteCharacterFolderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DeleteCharacterFolderMutation, DeleteCharacterFolderMutationVariables>(DeleteCharacterFolderDocument, options);
+      }
+export type DeleteCharacterFolderMutationHookResult = ReturnType<typeof useDeleteCharacterFolderMutation>;
+export type DeleteCharacterFolderMutationResult = Apollo.MutationResult<DeleteCharacterFolderMutation>;
+export type DeleteCharacterFolderMutationOptions = Apollo.BaseMutationOptions<DeleteCharacterFolderMutation, DeleteCharacterFolderMutationVariables>;
+export const MoveCharactersToFolderDocument = gql`
+    mutation MoveCharactersToFolder($input: MoveCharactersToFolderInput!) {
+  moveCharactersToFolder(input: $input)
+}
+    `;
+export type MoveCharactersToFolderMutationFn = Apollo.MutationFunction<MoveCharactersToFolderMutation, MoveCharactersToFolderMutationVariables>;
+
+/**
+ * __useMoveCharactersToFolderMutation__
+ *
+ * To run a mutation, you first call `useMoveCharactersToFolderMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useMoveCharactersToFolderMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [moveCharactersToFolderMutation, { data, loading, error }] = useMoveCharactersToFolderMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useMoveCharactersToFolderMutation(baseOptions?: Apollo.MutationHookOptions<MoveCharactersToFolderMutation, MoveCharactersToFolderMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<MoveCharactersToFolderMutation, MoveCharactersToFolderMutationVariables>(MoveCharactersToFolderDocument, options);
+      }
+export type MoveCharactersToFolderMutationHookResult = ReturnType<typeof useMoveCharactersToFolderMutation>;
+export type MoveCharactersToFolderMutationResult = Apollo.MutationResult<MoveCharactersToFolderMutation>;
+export type MoveCharactersToFolderMutationOptions = Apollo.BaseMutationOptions<MoveCharactersToFolderMutation, MoveCharactersToFolderMutationVariables>;
+export const SetCharacterFoldersDocument = gql`
+    mutation SetCharacterFolders($input: SetCharacterFoldersInput!) {
+  setCharacterFolders(input: $input) {
+    ...CharacterFolderFields
+  }
+}
+    ${CharacterFolderFieldsFragmentDoc}`;
+export type SetCharacterFoldersMutationFn = Apollo.MutationFunction<SetCharacterFoldersMutation, SetCharacterFoldersMutationVariables>;
+
+/**
+ * __useSetCharacterFoldersMutation__
+ *
+ * To run a mutation, you first call `useSetCharacterFoldersMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetCharacterFoldersMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setCharacterFoldersMutation, { data, loading, error }] = useSetCharacterFoldersMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useSetCharacterFoldersMutation(baseOptions?: Apollo.MutationHookOptions<SetCharacterFoldersMutation, SetCharacterFoldersMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetCharacterFoldersMutation, SetCharacterFoldersMutationVariables>(SetCharacterFoldersDocument, options);
+      }
+export type SetCharacterFoldersMutationHookResult = ReturnType<typeof useSetCharacterFoldersMutation>;
+export type SetCharacterFoldersMutationResult = Apollo.MutationResult<SetCharacterFoldersMutation>;
+export type SetCharacterFoldersMutationOptions = Apollo.BaseMutationOptions<SetCharacterFoldersMutation, SetCharacterFoldersMutationVariables>;
 export const UserCharactersDocument = gql`
     query UserCharacters($userId: ID!, $filters: CharacterFiltersInput) {
   userCharacters(userId: $userId, filters: $filters) {
