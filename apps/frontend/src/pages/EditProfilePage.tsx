@@ -16,6 +16,7 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { NotificationPreferencesSettings } from "../components/settings/NotificationPreferencesSettings";
 import { getAccessToken } from "../lib/accessToken";
+import { API_BASE_URL } from "../lib/communityHost";
 
 const updateProfileSchema = z.object({
   displayName: z.string().max(100).optional(),
@@ -366,9 +367,7 @@ export const EditProfilePage: React.FC = () => {
 
     try {
       // Fetch the OAuth URL from the backend with authentication in header
-      const backendUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:4000";
-      const response = await fetch(`${backendUrl}/auth/deviantart`, {
+      const response = await fetch(`${API_BASE_URL}/auth/deviantart`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -411,9 +410,7 @@ export const EditProfilePage: React.FC = () => {
 
     try {
       // Fetch the OAuth URL from the backend with authentication in header
-      const backendUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:4000";
-      const response = await fetch(`${backendUrl}/auth/discord`, {
+      const response = await fetch(`${API_BASE_URL}/auth/discord`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -453,9 +450,7 @@ export const EditProfilePage: React.FC = () => {
     }
 
     try {
-      const backendUrl =
-        import.meta.env.VITE_API_URL || "http://localhost:4000";
-      const response = await fetch(`${backendUrl}/auth/toyhouse`, {
+      const response = await fetch(`${API_BASE_URL}/auth/toyhouse`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
