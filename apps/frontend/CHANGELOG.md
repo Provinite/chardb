@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **A community's character links were staff-only.** Browse Characters sat in a group gated on species permissions, so an ordinary member had no link to a community's characters at all (#338).
 
+- **The page search could not reach a community's characters.** Each community's spotlight group listed Overview, Members and Inventory but no character page, so the answer to "where are my characters here" could not be typed any more than it could be clicked (#338).
+
 - **A failing comment list no longer takes the comment form with it.** The error
   replaced the whole section, so one failing read removed the ability to write
   and left no way forward; the two now fail independently (#310).
