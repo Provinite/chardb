@@ -9,6 +9,7 @@ import {
   Mail,
   Settings,
   Dna,
+  FolderOpen,
   Shield,
   Lock,
   Image,
@@ -499,6 +500,15 @@ export const CommunityNavigationSidebar: React.FC<
                   to={`${communityBasePath}/characters`}
                   icon={User}
                   label="Browse Characters"
+                  isNested
+                />
+                {/* Beside Browse Characters rather than anywhere else: the
+                    question this answers is "where are MINE", and it is asked
+                    while looking at everyone's (#338). */}
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/my-characters`}
+                  icon={FolderOpen}
+                  label="My Characters"
                   isNested
                 />
                 <CommunityNavigationItem
