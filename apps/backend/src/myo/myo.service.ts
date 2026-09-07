@@ -80,7 +80,12 @@ export class MyoService {
       );
     }
 
-    const forms = mapForms(input.forms) ?? [DEFAULT_FORM];
+    // `forms` defaults to an empty list rather than being absent, so this
+    // checks the length rather than nullishness: a ticket redeemed without
+    // choosing any traits still makes a character, and that character still
+    // needs a form to put them in later.
+    const submitted = mapForms(input.forms);
+    const forms = submitted?.length ? submitted : [DEFAULT_FORM];
     await this.characters.validateForms(
       grant.speciesId,
       forms,

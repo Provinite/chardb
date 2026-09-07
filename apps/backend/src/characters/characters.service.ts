@@ -1290,7 +1290,14 @@ export class CharactersService {
       : character.speciesVariantId;
 
     if (forms) {
-      await this.validateForms(character.speciesId, forms, effectiveVariantId);
+      // Judged against the destination variant, values included: this is the
+      // path that re-routes what a rarity change strands, and it always was.
+      await this.validateForms(
+        character.speciesId,
+        forms,
+        effectiveVariantId,
+        true,
+      );
     }
 
     // The update and its audit row commit together or not at all. A rarity
@@ -1826,22 +1833,33 @@ export class CharactersService {
   }
 
   /**
-   * Validate a character's whole form list against its species and variant.
+   * Validate a character's whole form list.
    *
    * Each form's values are judged exactly as a single trait set used to be --
-   * all of a character's forms share its variant, so they share its trait
-   * list and its enum allow-list too. What is new is the count: how many forms
-   * a character may have is a property of the variant it sits on, so a
-   * community can decide that transformation is something its Magic tier does
-   * and its Common tier does not.
+   * all of a character's forms share the character's variant, so they share
+   * its trait list. What is new is the count: how many forms a character may
+   * have is a property of the variant it sits on, so a community can decide
+   * that transformation is something its Magic tier does and its Common tier
+   * does not.
    *
    * A variantless character is capped at one form. Trait values need a variant
    * to mean anything, so a second form there would be a second set of nothing.
+   *
+   * `judgeValuesAgainstVariant` is separate from `speciesVariantId` on purpose,
+   * rather than the variant simply implying both. The variant's enum allow-list
+   * is only consulted on the two paths that consulted it before forms existed
+   * -- the staff registry editor and a variant-change redemption -- and turning
+   * it on everywhere else would be a silent tightening: a community that has
+   * enum traits but no `EnumValueSetting` rows permits *nothing* by that
+   * reading, so character creation would start refusing every enum value it
+   * accepts today. Widening that check is its own change, with its own
+   * migration for the communities it would break.
    */
   async validateForms(
     speciesId: string,
     forms: CharacterFormWrite[],
     speciesVariantId?: string | null,
+    judgeValuesAgainstVariant = false,
   ) {
     if (forms.length === 0) {
       throw new BadRequestException("A character must have at least one form");
@@ -1867,7 +1885,7 @@ export class CharactersService {
         await this.validateTraitValues(
           speciesId,
           form.traitValues,
-          speciesVariantId,
+          judgeValuesAgainstVariant ? speciesVariantId : undefined,
         );
       }
     }

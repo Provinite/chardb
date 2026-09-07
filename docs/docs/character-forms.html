@@ -1,0 +1,524 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Character Forms - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="A character can present as more than one creature. A form is one appearance, with its own trait set, on the same masterlist entry. Communities turn it on per rarity."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/character-forms.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Character Forms" />
+    <meta
+      property="og:description"
+      content="A character can present as more than one creature. A form is one appearance, with its own trait set, on the same masterlist entry."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/character-forms.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/character-forms-switcher.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="A CharDB character page showing Base and Awakened tabs above its traits."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Character Forms</h1>
+        <p>One entry. More than one creature.</p>
+      </header>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">What this is</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Some designs are two creatures. A pillowing with transformation
+            magic looks one way ordinarily and another when it changes &mdash;
+            different markings, different colours, sometimes a different
+            silhouette. Until now a character held exactly one trait set, so the
+            second appearance had nowhere to live.
+          </p>
+          <p>
+            A <strong>form</strong> is one appearance of a character, with its
+            own trait set. A character can have several, and they all hang off
+            the same masterlist entry: one registry identifier, one owner, one
+            trade state.
+          </p>
+          <div class="highlight-box">
+            <strong>Not two characters.</strong> Making a transformation into a
+            second entry was the obvious alternative and is the wrong one: it
+            gives one creature two registry numbers, two ownership histories and
+            two things to keep in step. A form is a second appearance, not a
+            second character.
+          </div>
+          <p>
+            Every character has at least one form. Characters that existed
+            before this feature have exactly one, named <strong>Base</strong>,
+            holding the traits they already had &mdash; nothing about them
+            changed.
+          </p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Turning it on, per rarity</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Forms are off everywhere by default, and a community switches them
+            on for the rarities that should have them. On a variant&rsquo;s
+            management page, <strong>Forms</strong> is how many trait sets a
+            character at that rarity may have. One means no forms, which is the
+            ordinary case and what every existing variant starts at.
+          </p>
+          <p>
+            Putting the setting on the variant rather than the species is
+            deliberate: &ldquo;our Magic tier transforms and our Common tier
+            does not&rdquo; is the thing communities actually want to say.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-forms-limit.png"
+            alt="The Forms control on a species variant's management page, set to 2."
+          />
+          <div class="screenshot-caption">
+            Lowering this later leaves characters that already have more forms
+            alone. Staff changing a number should not silently delete somebody
+            else&rsquo;s design.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Adding one</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Once a rarity allows more than one, the trait editor grows a name
+            field per form and an <strong>Add a form</strong> button. Each form
+            has its own traits and its own name &mdash; &ldquo;Feral&rdquo;,
+            &ldquo;Awakened&rdquo;, whatever the community calls it &mdash; and
+            can be reordered or removed. The first form in the list is the
+            primary one, and is what listings show.
+          </p>
+          <p>
+            On a rarity that allows only one form, none of this appears. The
+            editor is the bare trait form it always was, so a community that
+            never uses transformations never sees the feature.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-forms-editor.png"
+            alt="A character's edit page with two forms, Base and Awakened, each with its own Markings field."
+          />
+          <div class="screenshot-caption">
+            Both forms are edited against the same rarity, so they offer the
+            same trait list &mdash; they differ in the values, not in what
+            traits exist.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Who can add one, and what gets reviewed</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Adding a form is a trait change, and it goes through whatever route
+            trait changes already go through for that person. Nothing new was
+            invented for it, and nothing was loosened.
+          </p>
+          <ul>
+            <li>
+              <strong>Staff</strong> with <em>edit any character&rsquo;s
+              registry</em> add or remove forms directly, from the
+              character&rsquo;s edit page, as they already edit traits.
+            </li>
+            <li>
+              <strong>Owners</strong> who can edit their own character&rsquo;s
+              registry do the same on their own characters.
+            </li>
+            <li>
+              <strong>Everyone else</strong> spends an
+              <a href="edit-kits.html">edit kit</a>, which proposes the change
+              and puts it in the
+              <a href="trait-review.html">trait review queue</a>. Nothing is
+              applied until staff approve it &mdash; the new form does not exist
+              until then.
+            </li>
+          </ul>
+          <div class="highlight-box">
+            <strong>A review covers the whole character.</strong> One save can
+            add a form and edit another, so a review carries every form the
+            character would have rather than naming one. The queue shows the
+            diff form by form, and marks a form that is being added or removed.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">On the character page</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A character with more than one form gets a row of tabs above its
+            traits. A character with one gets no tabs at all, and reads exactly
+            as it did before.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-forms-switcher.png"
+            alt="A character page showing Base and Awakened tabs, with the Awakened form's traits below."
+          />
+          <div class="screenshot-caption">
+            Landing on the character shows its primary form. The tabs swap which
+            trait set is on screen.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">What forms deliberately do not do</h2>
+        </div>
+        <div class="step-content">
+          <table class="kinds">
+            <thead>
+              <tr>
+                <th>Not this</th>
+                <th>Why</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>A form with its own rarity</td>
+                <td>
+                  Rarity is what
+                  <a href="variant-change-items.html">upgrade tickets</a> sell,
+                  so a character with two of them has no answer to &ldquo;what
+                  is this worth&rdquo;. All of a character&rsquo;s forms share
+                  its rarity.
+                </td>
+              </tr>
+              <tr>
+                <td>A form with its own registry identifier</td>
+                <td>
+                  The identifier names the masterlist entry, and forms are one
+                  entry.
+                </td>
+              </tr>
+              <tr>
+                <td>A form traded on its own</td>
+                <td>
+                  Same reason. If a community wants two separately tradeable
+                  things, those are two characters.
+                </td>
+              </tr>
+              <tr>
+                <td>A form with its own image</td>
+                <td>
+                  Not yet. All of a character&rsquo;s media is shared for now;
+                  per-form imagery is a follow-up.
+                </td>
+              </tr>
+              <tr>
+                <td>A character with no forms</td>
+                <td>
+                  Removing the last one is refused. That is not &ldquo;no
+                  traits&rdquo;, it is a character that cannot be rendered.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">
+            Moving a two-form character between rarities
+          </h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A rarity is an allow-list, and
+            <a href="character-rarity.html">changing one</a> can strand values
+            the destination does not permit. With forms, every form is checked,
+            and the re-routing panel names which form each stranded value is in.
+          </p>
+          <p>
+            The form <em>count</em> is checked too. Moving a two-form character
+            to a rarity that allows one is done by saying which form it keeps
+            &mdash; the change is refused until you do, rather than a form being
+            quietly dropped.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Character Forms &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

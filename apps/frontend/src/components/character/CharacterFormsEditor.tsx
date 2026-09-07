@@ -62,6 +62,26 @@ const Help = styled.p`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
+/**
+ * What the editor says about the limit.
+ *
+ * The over-limit case is real rather than defensive: staff can lower a
+ * variant's limit, and characters that already have more forms keep them
+ * rather than being silently trimmed. Somebody then has to remove one before
+ * the next save, and this is where they find that out -- the server refuses it
+ * either way, but not until they have pressed Save.
+ */
+function limitMessage(count: number, maxForms: number): string {
+  const allowance = maxForms === 1 ? "one form" : `${maxForms} forms`;
+  if (count > maxForms) {
+    return `This rarity allows ${allowance}. Remove ${count - maxForms} before saving.`;
+  }
+  if (count === maxForms) {
+    return `This rarity allows ${allowance}, which this character has.`;
+  }
+  return `This rarity allows up to ${allowance}.`;
+}
+
 interface Props {
   forms: CharacterFormDraft[];
   onChange: (forms: CharacterFormDraft[]) => void;
@@ -185,11 +205,7 @@ export const CharacterFormsEditor: React.FC<Props> = ({
           >
             <Plus size={16} /> Add a form
           </Button>
-          <Help>
-            {forms.length >= maxForms
-              ? `This rarity allows ${maxForms} forms, which this character has.`
-              : `This rarity allows up to ${maxForms} forms.`}
-          </Help>
+          <Help>{limitMessage(forms.length, maxForms)}</Help>
         </div>
       )}
     </Forms>

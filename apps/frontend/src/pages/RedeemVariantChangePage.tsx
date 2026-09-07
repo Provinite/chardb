@@ -340,6 +340,17 @@ export const RedeemVariantChangePage: React.FC = () => {
     );
   }, [destination, settingsData, forms, allowed, optionsById]);
 
+  /**
+   * The destination allows fewer forms than this character has.
+   *
+   * Refused here rather than at the server, because the server's refusal
+   * arrives after the member has pressed a button that spends an item they
+   * paid for. Unlike a stranded trait value there is nothing to re-pick: which
+   * form a character keeps is a design decision, not a re-route.
+   */
+  const tooManyForms =
+    !!destination && forms.length > (destination.maxForms ?? 1);
+
   /** Replace one stranded value, or drop it when `to` is empty. */
   const reroute = (formIndex: number, index: number, to: string) => {
     setForms(
@@ -490,6 +501,25 @@ export const RedeemVariantChangePage: React.FC = () => {
         )}
       </Panel>
 
+      {tooManyForms && (
+        <Reroute data-testid="variant-change-too-many-forms">
+          <RerouteHead>
+            <AlertTriangle size={18} />
+            {destination?.name} does not allow {forms.length} forms
+          </RerouteHead>
+          <Note>
+            This character has {forms.length} forms and{" "}
+            {destination?.name} allows{" "}
+            {destination?.maxForms === 1
+              ? "one"
+              : String(destination?.maxForms ?? 1)}
+            . Dropping one is a design change rather than a rarity change, so
+            it is not something this item can do &mdash; ask staff to remove a
+            form first, and then redeem this.
+          </Note>
+        </Reroute>
+      )}
+
       {stranded.length > 0 && (
         <Reroute data-testid="variant-change-reroute">
           <RerouteHead>
@@ -543,7 +573,9 @@ export const RedeemVariantChangePage: React.FC = () => {
       <ButtonRow>
         <Button
           onClick={() => setConfirming(true)}
-          disabled={redeeming || !itemId || stranded.length > 0}
+          disabled={
+            redeeming || !itemId || stranded.length > 0 || tooManyForms
+          }
           data-testid="submit-variant-change"
         >
           {redeeming

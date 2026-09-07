@@ -130,6 +130,7 @@ export class VariantChangesService {
       character.speciesId,
       proposed,
       grant.toVariantId,
+      true,
     );
 
     const previous = await this.forms.readForms(character.id);

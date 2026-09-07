@@ -71,6 +71,23 @@ mutation SeedCreateSpeciesVariant(
   createSpeciesVariant(createSpeciesVariantInput: $createSpeciesVariantInput) {
     id
     name
+    maxForms
+  }
+}
+
+# How many forms a variant allows. Raising it is what turns character forms on
+# for a rarity; every variant starts at one.
+mutation SeedUpdateSpeciesVariant(
+  $id: ID!
+  $updateSpeciesVariantInput: UpdateSpeciesVariantInput!
+) {
+  updateSpeciesVariant(
+    id: $id
+    updateSpeciesVariantInput: $updateSpeciesVariantInput
+  ) {
+    id
+    name
+    maxForms
   }
 }
 
@@ -124,6 +141,18 @@ query SeedTraitReviewQueue($communityId: ID!, $first: Int, $offset: Int) {
         deferredAt
         deferralCount
         deferralNote
+        # A review names every form the character would have, so a spec can
+        # tell "this proposal adds a form" from "this one edits an existing
+        # form's traits".
+        proposedForms {
+          formId
+          name
+          sortOrder
+          traitValues {
+            traitId
+            value
+          }
+        }
       }
     }
   }

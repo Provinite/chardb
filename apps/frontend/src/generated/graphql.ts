@@ -5776,7 +5776,7 @@ export type GetVariantChangeItemQueryVariables = Exact<{
 }>;
 
 
-export type GetVariantChangeItemQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, acquiredAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string }, fromVariants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null } } };
+export type GetVariantChangeItemQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, acquiredAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string, maxForms: number }, fromVariants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null } } };
 
 export type GetMyVariantChangeItemsQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5784,7 +5784,7 @@ export type GetMyVariantChangeItemsQueryVariables = Exact<{
 }>;
 
 
-export type GetMyVariantChangeItemsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, items: Array<{ __typename?: 'Item', id: string, acquiredAt: string | null }>, itemType: { __typename?: 'ItemType', id: string, name: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string }, fromVariants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null } }> } };
+export type GetMyVariantChangeItemsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', holdings: Array<{ __typename?: 'MemberHolding', count: number, items: Array<{ __typename?: 'Item', id: string, acquiredAt: string | null }>, itemType: { __typename?: 'ItemType', id: string, name: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string, maxForms: number }, fromVariants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null } }> } };
 
 export type ChangeCharacterVariantWithItemMutationVariables = Exact<{
   input: ChangeCharacterVariantWithItemInput;
@@ -13630,6 +13630,7 @@ export const GetVariantChangeItemDocument = gql`
         toVariant {
           id
           name
+          maxForms
         }
         fromVariants {
           id
@@ -13704,6 +13705,7 @@ export const GetMyVariantChangeItemsDocument = gql`
           toVariant {
             id
             name
+            maxForms
           }
           fromVariants {
             id
