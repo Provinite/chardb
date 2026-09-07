@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Five comment resolver tests had been failing silently since #280.** The
+  file was named `*.e2e.spec.ts` despite being a unit spec, which filed it under
+  the one suite CI does not run; it is renamed, and given the
+  `NotificationsService` that `CommentsService` started requiring.
+
 - **Nobody could comment on a character.** `Comment.likesCount` carried no
   permission decorator, which under a deny-by-default guard chain means
   forbidden to everyone; the field is non-nullable, so the 403 nulled the whole
