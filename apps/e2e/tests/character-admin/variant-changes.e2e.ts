@@ -8,11 +8,7 @@ import {
   SeedCharacterDocument,
   SeedUpdateRoleDocument,
 } from "../../src/generated/graphql.js";
-import {
-  baseTraits,
-  oneForm,
-  snapshotTraits,
-} from "../../src/world/forms.js";
+import { baseTraits, oneForm, snapshotTraits } from "../../src/world/forms.js";
 
 const test = presetTest("community-items");
 

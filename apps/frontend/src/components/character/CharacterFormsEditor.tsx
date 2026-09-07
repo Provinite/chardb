@@ -164,9 +164,7 @@ export const CharacterFormsEditor: React.FC<Props> = ({
                 // one is not "no traits", it is a character that cannot be
                 // rendered.
                 disabled={disabled || forms.length === 1}
-                onClick={() =>
-                  onChange(forms.filter((_, i) => i !== index))
-                }
+                onClick={() => onChange(forms.filter((_, i) => i !== index))}
               >
                 <Trash2 size={16} />
               </IconButton>

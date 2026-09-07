@@ -958,8 +958,7 @@ export class CharactersService {
         form.traitValues,
       );
       for (const [traitName, value] of Object.entries(flattened)) {
-        const key =
-          forms.length > 1 ? `${form.name}: ${traitName}` : traitName;
+        const key = forms.length > 1 ? `${form.name}: ${traitName}` : traitName;
         flattenedFields[key] = value;
       }
     }

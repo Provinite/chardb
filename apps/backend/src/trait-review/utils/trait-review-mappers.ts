@@ -45,7 +45,6 @@ export type PrismaTraitReviewQueueItem = Prisma.TraitReviewGetPayload<{
   include: typeof traitReviewQueueInclude;
 }>;
 
-
 /**
  * Maps Prisma TraitReview to GraphQL entity
  */

@@ -46,7 +46,9 @@ export function mapUpdateSpeciesVariantInputToService(
   return result;
 }
 
-type PrismaSpeciesVariant = Prisma.SpeciesVariantGetPayload<{}>;
+type PrismaSpeciesVariant = Prisma.SpeciesVariantGetPayload<
+  Record<string, never>
+>;
 
 /**
  * Maps Prisma SpeciesVariant result to GraphQL SpeciesVariant entity
