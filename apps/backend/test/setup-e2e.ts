@@ -112,6 +112,11 @@ export class TestApp {
     await this.db.tag.deleteMany({});
     await this.db.inviteCode.deleteMany({});
     await this.db.community.deleteMany({});
+    // Explicit, unlike the cascading children above: this table's FK is
+    // `ON DELETE SET NULL` by design, so deleting the users leaves every row
+    // behind -- which is the point in production (the send allowance belongs to
+    // the address, not the account) and a unique-constraint collision here.
+    await this.db.emailVerificationToken.deleteMany({});
     await this.db.user.deleteMany({});
   }
 
@@ -160,6 +165,9 @@ export class TestApp {
       email: `test_${timestamp}@example.com`,
       displayName: "Test User",
       passwordHash: "$2b$10$test.hash.for.testing",
+      // A test user is meant to be a usable account, and `isVerified` gates
+      // sign-in. Pass `isVerified: false` to build one that cannot get in.
+      isVerified: true,
       ...userData,
     };
 
@@ -307,11 +315,23 @@ export const AUTH_QUERIES = {
     }
   `,
 
+  // A bare boolean: signup does not produce a session, because the account
+  // cannot be used until its address is confirmed.
   SIGNUP: `
     mutation signup($input: SignupInput!) {
-      signup(input: $input) {
-        accessToken
-      }
+      signup(input: $input)
+    }
+  `,
+
+  VERIFY_EMAIL: `
+    mutation verifyEmail($input: VerifyEmailInput!) {
+      verifyEmail(input: $input)
+    }
+  `,
+
+  RESEND_VERIFICATION_EMAIL: `
+    mutation resendVerificationEmail($input: ResendVerificationEmailInput!) {
+      resendVerificationEmail(input: $input)
     }
   `,
 
