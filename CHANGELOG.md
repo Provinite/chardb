@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A "User Avatars" walkthrough** (`docs/docs/user-avatars.html`), five steps
+  with five screenshots: where the control is, uploading and framing a picture,
+  what happens while it waits on a moderator, reusing something already
+  uploaded, and where the result shows up (#345).
+
 - **`yarn db:query prod`** — a read-only psql against the production database,
   with the credential fetched at run time rather than stored. It reaches `psql`
   through libpq's `PG*` variables rather than as an argument, since

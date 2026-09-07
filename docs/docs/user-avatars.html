@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>User Avatars - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Set the picture that stands for you in CharDB: upload one and frame it, or pick one you have already uploaded."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/user-avatars.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="User Avatars" />
+    <meta
+      property="og:description"
+      content="Set the picture that stands for you in CharDB: upload one and frame it, or pick one you have already uploaded."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/user-avatars.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/user-avatar-profile.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="A CharDB profile page showing a member's avatar, framed on the character's face."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .screenshot-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+
+      .screenshot-row .screenshot img {
+        height: 400px;
+        object-fit: contain;
+        background: #1a1a2e;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      kbd {
+        display: inline-block;
+        padding: 0.15rem 0.5rem;
+        background: #f8f9fa;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-size: 0.85em;
+        color: #555;
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.1);
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+
+      footer .credit {
+        font-size: 0.8rem;
+        opacity: 0.85;
+      }
+
+      @media (max-width: 768px) {
+        .screenshot-row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>User Avatars</h1>
+        <p>The picture that stands for you</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Your name appears all over CharDB &mdash; on your profile, beside
+            every comment you leave, on the cards that list your characters and
+            your art. Next to it there has always been a circle with your
+            initials in it, and no way to put anything else there.
+          </p>
+          <p>
+            You can now set a picture. Upload a new one, or pick something you
+            have already uploaded, and choose which square of it to use.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">&#x1F4E4;</div>
+              <h4>Upload</h4>
+              <p>Send a new picture straight from this page</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F5C2;&#xFE0F;</div>
+              <h4>Or reuse</h4>
+              <p>Pick something already in your media</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F50D;</div>
+              <h4>Framed by you</h4>
+              <p>Say which square, rather than taking the middle</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x21A9;&#xFE0F;</div>
+              <h4>Undoable</h4>
+              <p>Remove it and go back to your initials whenever</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Avatars are moderated.</strong> A picture you upload waits
+            for a moderator, exactly like any other upload. Until it is approved
+            your initials keep showing, and the page tells you that is what is
+            happening rather than leaving you guessing.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Finding It</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The avatar sits at the top of <strong>Edit Profile</strong>, above
+            your display name and bio. It saves the moment you choose something
+            &mdash; there is no need to press Save Changes further down the
+            page.
+          </p>
+          <p>
+            You can reach this page from a community as well as from the main
+            site. It is the same page and the same single profile either way:
+            what you change here shows everywhere, not just in the community you
+            happened to be in. The page says so when you arrive from one.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="user-avatar-editor.png"
+            alt="The Avatar section at the top of the Edit Profile page, showing the current avatar and buttons to upload a picture, choose from your media, adjust framing, and remove"
+          />
+          <div class="screenshot-caption">
+            The Avatar section, with an avatar already set
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Uploading and Framing One</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Upload a picture</strong> asks for a file and then offers a
+            square frame over it. Drag the picture to reposition it, or use the
+            zoom slider to tighten in.
+          </p>
+          <p>
+            This matters more than it sounds. Character art is usually
+            full-body, and the middle of a full-body drawing is a torso. Framing
+            on the face is the difference between an avatar that is recognisable
+            at 32 pixels and one that is a coloured smudge.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="user-avatar-cropper.png"
+            alt="The Frame your avatar dialog, with a square crop positioned over an illustrated character's face and a zoom slider beneath"
+          />
+          <div class="screenshot-caption">
+            Framing on the face rather than accepting the middle
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">While It Waits</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Once it is sent, the picture goes to your community's moderators
+            like any other upload. Your initials stay up in the meantime, and
+            the page says why.
+          </p>
+          <div class="highlight-box">
+            <strong>Nothing else to do.</strong> You do not have to come back
+            and set it again once it clears &mdash; the moment a moderator
+            approves it, it starts showing.
+          </div>
+          <p>
+            If a picture is rejected, the page tells you that instead, and your
+            initials stay up until you pick a different one.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="user-avatar-pending.png"
+            alt="The Avatar section showing initials and the message: Waiting on a moderator. Your initials show until your picture is approved."
+          />
+          <div class="screenshot-caption">
+            Uploaded, referenced, and waiting on a moderator
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Using Something You Already Uploaded</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Choose from your media</strong> shows the pictures you have
+            uploaded. Click one and it becomes your avatar straight away.
+          </p>
+          <p>
+            Anything still waiting on moderation appears greyed out and labelled
+            rather than hidden, so a picture you know you uploaded is never
+            simply missing from the list.
+          </p>
+          <div class="highlight-box">
+            <strong>One picture, one square.</strong> A picture has a single
+            square thumbnail, used for its own card and everywhere it is listed,
+            and your avatar is that same square. Picking a picture here changes
+            nothing about it. <em>Adjusting the framing afterwards does</em>
+            &mdash; it moves that picture's thumbnail everywhere too, which is
+            usually what you want and is worth knowing before you do it.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="user-avatar-picker.png"
+            alt="The Choose from your media dialog, showing a grid of the member's uploaded pictures with a Cancel button"
+          />
+          <div class="screenshot-caption">
+            Your own uploads, ready to pick from
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Where It Shows Up</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Everywhere your name appears: your profile heading, the corner of
+            every page while you are signed in, your comments, the member lists
+            of the communities you belong to, and the cards that credit you as
+            an owner or an artist.
+          </p>
+          <p>
+            Removing it puts your initials back. The picture itself stays in
+            your media &mdash; removing an avatar is not deleting an upload.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="user-avatar-profile.png"
+            alt="A CharDB profile page with the avatar shown large in the profile heading and again small in the top navigation bar"
+          />
+          <div class="screenshot-caption">
+            Large on the profile, small in the corner, legible at both
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB User Avatars &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

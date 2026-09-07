@@ -663,9 +663,7 @@ export class MediaService {
         character: { select: { species: { select: { communityId: true } } } },
       },
     });
-    return (
-      media?.character?.species?.communityId ?? media?.communityId ?? null
-    );
+    return media?.character?.species?.communityId ?? media?.communityId ?? null;
   }
 
   /**

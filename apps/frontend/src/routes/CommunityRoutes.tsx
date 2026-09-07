@@ -45,6 +45,10 @@ import { TradesPage } from "../pages/TradesPage";
 import { TradeComposerPage } from "../pages/TradeComposerPage";
 import { TradeOfferPage } from "../pages/TradeOfferPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
+import { EditProfilePage } from "../pages/EditProfilePage";
+import { CreateMediaPage } from "../pages/CreateMediaPage";
+import { UploadImagePage } from "../pages/UploadImagePage";
+import { CreateTextPage } from "../pages/CreateTextPage";
 import { ApexRedirect } from "./ApexRedirect";
 
 /** Forwards the legacy singular /item/:id to the canonical item type page. */
@@ -63,15 +67,20 @@ const RedirectToItemType: React.FC = () => {
  * so none of them carry a community segment and no page needs a `:communityId`
  * param: `useCommunityId()` reads it off the hostname instead.
  *
- * What is deliberately NOT here is anything belonging to a person rather than
- * a community -- profiles, galleries, media, the feed, liked lists -- and
- * anything belonging to the site. Those stay at the apex; see `ApexRoutes`.
- * `/my-characters` is the one apparent exception and is not really one: it is
- * this community's characters narrowed to the viewer's, not a person's page
- * served from a community host.
- * `Gallery`, `Media` and `Image` reach a community only through a nullable
- * `characterId`, if at all, so there is no community that owns them to serve
- * them from.
+ * What is deliberately NOT here is anything that reads or lists a person's own
+ * things -- their profile as others see it, their galleries, their media
+ * library, the feed, liked lists -- and anything belonging to the site. Those
+ * stay at the apex; see `ApexRoutes`. `/my-characters` is the one apparent
+ * exception and is not really one: it is this community's characters narrowed
+ * to the viewer's, not a person's page served from a community host.
+ *
+ * The upload pages and the profile editor are here despite belonging to a
+ * person, because they WRITE. Which host you were on when you uploaded is the
+ * only record of which community should moderate the result, and it exists
+ * nowhere else -- a `Gallery`, `Media` or `Image` reaches a community through
+ * a nullable `characterId` if at all, so an upload without a character used to
+ * belong nowhere and be reviewable by nobody but a site admin. Forcing those
+ * pages to the apex threw the answer away before it could be recorded.
  */
 export const CommunityRoutes: React.FC = () => (
   <Routes>
@@ -423,6 +432,54 @@ export const CommunityRoutes: React.FC = () => (
       }
     />
 
+    {/* --- yours rather than the community's, but reachable from here.
+        Sending someone to another host to upload a picture or set an avatar
+        loses the one thing this host knows that the apex does not: which
+        community they were in. That is what decides whose moderators see the
+        upload, so an upload started here is filed here (`Media.communityId`).
+        The pages themselves are unchanged and still edit the one profile and
+        the one media library you have everywhere; they say so on the page. */}
+    <Route
+      path="/profile/edit"
+      element={
+        <ProtectedRoute>
+          <EditProfilePage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/profile"
+      element={
+        <ProtectedRoute>
+          <Navigate to="/profile/edit" replace />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/upload"
+      element={
+        <ProtectedRoute>
+          <CreateMediaPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/image/upload"
+      element={
+        <ProtectedRoute>
+          <UploadImagePage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/text/create"
+      element={
+        <ProtectedRoute>
+          <CreateTextPage />
+        </ProtectedRoute>
+      }
+    />
+
     {/* --- paths that only exist at the apex.
         Someone who edits the URL, or follows a stale link, lands on the right
         page rather than a 404 on the wrong host. Signing in is the important
@@ -437,16 +494,12 @@ export const CommunityRoutes: React.FC = () => (
     <Route path="/dashboard" element={<ApexRedirect />} />
     <Route path="/feed" element={<ApexRedirect />} />
     <Route path="/notifications" element={<ApexRedirect />} />
-    <Route path="/profile/*" element={<ApexRedirect />} />
     <Route path="/user/*" element={<ApexRedirect />} />
     <Route path="/my/*" element={<ApexRedirect />} />
     <Route path="/liked/*" element={<ApexRedirect />} />
     <Route path="/galleries" element={<ApexRedirect />} />
     <Route path="/gallery/*" element={<ApexRedirect />} />
     <Route path="/media/*" element={<ApexRedirect />} />
-    <Route path="/upload" element={<ApexRedirect />} />
-    <Route path="/image/upload" element={<ApexRedirect />} />
-    <Route path="/text/create" element={<ApexRedirect />} />
     <Route path="/join-community" element={<ApexRedirect />} />
 
     <Route path="*" element={<NotFoundPage />} />

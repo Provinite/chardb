@@ -493,6 +493,20 @@ model Image {
   thumbnailCropHeight Int? @map("thumbnail_crop_height")
 
   // Moderation
+  //
+  /// There is an index on this column that Prisma cannot see:
+  /// `images_pending_moderation_idx`, a partial index over
+  /// `(deferred_at NULLS FIRST, created_at) WHERE moderation_status =
+  /// 'PENDING'`. Neither the WHERE clause nor the NULLS FIRST ordering is
+  /// expressible here, and both are what make it work -- it takes the
+  /// community image queue from 128 ms to 0.5 ms at 200k images, and costs
+  /// 48 kB rather than the 8 MB a plain composite would.
+  ///
+  /// Prisma ignores indexes it cannot represent rather than proposing to drop
+  /// them, so this does not show up as drift (checked with `migrate diff` on
+  /// 5.22). It does mean the index lives only in that migration: squash the
+  /// history and it disappears with no warning. See
+  /// `20260907220000_moderation_queue_indexes`.
   moderationStatus ModerationStatus @default(PENDING) @map("moderation_status")
 
   /// Deferral. An image nobody can rule on yet -- the art is mid-reupload, the
@@ -712,6 +726,11 @@ model Media {
   likes        Like[]
   tags_rel     MediaTag[]
 
+  /// For the image moderation queue, which walks from a pending image to the
+  /// media carrying it. The two only pay off together: with `imageId` alone
+  /// the planner drops to a sequential scan on the media-side queue.
+  @@index([imageId])
+  @@index([characterId])
   @@map("media")
 }
 

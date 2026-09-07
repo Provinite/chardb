@@ -8,6 +8,9 @@ import {
   IsUUID,
 } from "class-validator";
 import { GraphQLJSON } from "graphql-type-json";
+// Type-only, so this adds no runtime dependency on the service. The mapper
+// beside this file already reads the same type for the same field.
+import type { UserPrivacySettings } from "../users.service";
 
 @InputType()
 export class UpdateUserInput {
@@ -44,5 +47,5 @@ export class UpdateUserInput {
 
   @Field(() => GraphQLJSON, { nullable: true })
   @IsOptional()
-  privacySettings?: any;
+  privacySettings?: UserPrivacySettings;
 }

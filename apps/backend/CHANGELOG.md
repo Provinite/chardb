@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **User avatars can be set**: `UpdateUserInput.avatarImageId` accepts an image the caller uploaded and an explicit null to remove one. `avatarImage` is withheld until moderation approves it and again if it is ever rejected, so the one image that does not reach viewers through `Media.image` is gated too (#345).
+
+- **`Media.communityId`**, recorded at upload from the host the uploader was on, so a characterless upload reaches a community moderation queue instead of sitting PENDING and invisible until a site admin found it (#345).
+
 - **Character folders**: `CharacterFolder` and `CharacterFolderEntry`, nested through `parentId`, five deep, private by subtree. `CharacterFiltersInput` gains `folderId` and `unfiled`, and a traded character leaves its old folders by an ownership check at read time rather than by eviction (#350).
 
 - **Email verification.** Signup mails a single-use link and hands back no session; `login` and `refreshToken` refuse an unconfirmed address with an `EMAIL_NOT_VERIFIED` code, so `User.isVerified` now means "confirmed this address" rather than being set by nothing (#372).
@@ -20,6 +24,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A settings link in every optional email's footer.** No one-click unsubscribe: this is mail about the recipient's own uploads rather than marketing, so none is required of it, and a signed link would mean a token plus an endpoint that acts on it unauthenticated. Password reset and password-changed mail carries no such footer and cannot be opted out of — `AuthService` reaches `EmailService` directly and imports neither the preference nor the dispatch service (#344).
 
 ### Changed
+
+- **Indexes for the image moderation queue**, which had none: a community's image queue drops from 128 ms to 0.5 ms at 200k images, and the media queue and pending count by about a third. `images` carried nothing but a primary key, so finding a handful of pending uploads meant reading every image ever uploaded (#345).
+
+- **A media's community resolves from the media, not from its character** (`ResolveCommunityFrom({ mediaId })`). Resolving through the character alone denied every field on a characterless upload, which put avatars and gallery pictures in the community queue with no picture on the card and no button that worked (#345).
 
 - **Breaking: `signup` returns `Boolean!` instead of `AuthPayload!`** and sets no refresh cookie. A new account cannot hold a session until its address is confirmed, so there is nothing to hand back (#372).
 

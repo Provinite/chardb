@@ -140,20 +140,24 @@ export class UsersService {
   /**
    * Whether `userId` may put `imageId` on their profile.
    *
-   * Two gates, and both are load-bearing:
+   * Ownership is the gate here, because the column takes a bare id and nothing
+   * else checks it. Without this, any id in the table can be pointed at --
+   * someone else's unlisted art, or an image whose media is private -- and
+   * displayed under your name.
    *
-   * Ownership, because the column takes a bare id and nothing else checks it.
-   * Without this, any id in the table can be pointed at -- someone else's
-   * unlisted art, or an image whose media is private -- and displayed under
-   * your name.
+   * Approval deliberately is NOT a gate on the write. A freshly uploaded
+   * avatar is PENDING by definition, so requiring APPROVED here would mean the
+   * upload path could never set the thing it just uploaded: you would have to
+   * come back after a moderator got to it and set it a second time. Instead
+   * the reference is stored straight away and
+   * `UsersResolver.resolveAvatarImage` refuses to serve it until it is
+   * approved, so the picture simply appears when it clears -- and disappears
+   * again if `rejectImage` later takes it back, which a write-time check could
+   * not have done anyway.
    *
-   * Approval, because an avatar is the one image in the app that renders
-   * without going through `Media.image`, which is where every other surface
-   * masks the URLs of anything not APPROVED. It is checked again at read time
-   * (`UsersResolver.resolveAvatarImage`) rather than only here, because
-   * approval is revocable: `rejectImage` turns an APPROVED image REJECTED and
-   * nothing clears the column, so a write-time check alone would let a
-   * rejected picture keep showing on every byline in the app forever.
+   * REJECTED is refused, because that one can never come good: storing it
+   * would be accepting a save that is guaranteed to show nothing, with no
+   * explanation of why.
    */
   private async assertUsableAsAvatar(
     userId: string,
@@ -174,11 +178,9 @@ export class UsersService {
       );
     }
 
-    if (image.moderationStatus !== ModerationStatus.APPROVED) {
+    if (image.moderationStatus === ModerationStatus.REJECTED) {
       throw new BadRequestException(
-        image.moderationStatus === ModerationStatus.REJECTED
-          ? "That image was rejected in moderation and cannot be used as an avatar"
-          : "That image is still waiting on moderation. It can be your avatar once it is approved",
+        "That image was rejected in moderation and cannot be used as an avatar",
       );
     }
   }

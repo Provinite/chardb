@@ -204,9 +204,7 @@ export class ImageModerationService {
       },
     });
 
-    return (
-      media?.character?.species?.communityId ?? media?.communityId ?? null
-    );
+    return media?.character?.species?.communityId ?? media?.communityId ?? null;
   }
 
   /**

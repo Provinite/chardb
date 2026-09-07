@@ -1,4 +1,4 @@
-import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
+import { ObjectType, Field, ID } from "@nestjs/graphql";
 import { GraphQLJSON } from "graphql-type-json";
 import { ExternalAccount } from "../../external-accounts/entities/external-account.entity";
 import { CommunityMember } from "../../community-members/entities/community-member.entity";
@@ -46,8 +46,14 @@ export class User {
   @Field()
   isAdmin: boolean;
 
+  // `unknown` rather than a shape: the column is Json, Prisma hands it back as
+  // `unknown` because it cannot know what was written, and nothing has
+  // validated the rows already in the table. It is passed straight through to
+  // GraphQLJSON, so claiming a shape here would assert something no code
+  // checks. (Was `any`, which asserted the same thing and silenced the
+  // checker as well.)
   @Field(() => GraphQLJSON)
-  privacySettings: any;
+  privacySettings: unknown;
 
   // Identity permission fields (migrated from clovercoin-app)
   @Field()
