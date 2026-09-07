@@ -1186,22 +1186,6 @@ export type ImageAwardInput = {
   userId: Scalars['ID']['input'];
 };
 
-export type ImageConnection = {
-  __typename?: 'ImageConnection';
-  hasMore: Scalars['Boolean']['output'];
-  images: Array<Image>;
-  total: Scalars['Int']['output'];
-};
-
-export type ImageFiltersInput = {
-  artistId?: InputMaybe<Scalars['ID']['input']>;
-  isNsfw?: InputMaybe<Scalars['Boolean']['input']>;
-  limit?: Scalars['Int']['input'];
-  offset?: Scalars['Int']['input'];
-  search?: InputMaybe<Scalars['String']['input']>;
-  uploaderId?: InputMaybe<Scalars['ID']['input']>;
-};
-
 /** A moderation action taken on an image */
 export type ImageModerationAction = {
   __typename?: 'ImageModerationAction';
@@ -1574,6 +1558,7 @@ export type Media = {
   image: Maybe<Image>;
   /** Foreign key to image content (null for text media) */
   imageId: Maybe<Scalars['ID']['output']>;
+  /** Number of likes this media has received */
   likesCount: Scalars['Int']['output'];
   /** The user who owns this media */
   owner: User;
@@ -2653,7 +2638,6 @@ export type Query = {
   activityFeed: Array<ActivityItem>;
   character: Character;
   characterGalleries: GalleryConnection;
-  characterImages: ImageConnection;
   /** Retrieves media associated with a specific character */
   characterMedia: MediaConnection;
   /** Get a character ownership change by ID */
@@ -2727,7 +2711,6 @@ export type Query = {
   followStatus: FollowStatus;
   galleries: GalleryConnection;
   gallery: Gallery;
-  galleryImages: ImageConnection;
   /** Retrieves media from a specific gallery */
   galleryMedia: MediaConnection;
   getFollowers: FollowListResult;
@@ -2736,10 +2719,8 @@ export type Query = {
   globalImageModerationQueue: ImageModerationQueueConnection;
   /** Get count of all pending images across all communities (admin only) */
   globalPendingImageCount: Scalars['Int']['output'];
-  image: Image;
   /** Get pending images for a community moderation queue */
   imageModerationQueue: ImageModerationQueueConnection;
-  images: ImageConnection;
   /** Get an invite code by ID */
   inviteCodeById: InviteCode;
   /** Get all invite codes with pagination */
@@ -2781,7 +2762,6 @@ export type Query = {
   /** Get all external accounts linked to the current user */
   myExternalAccounts: Array<ExternalAccount>;
   myGalleries: GalleryConnection;
-  myImages: ImageConnection;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
   /** The viewer's own purchase lines, newest first, searchable and paged. A line is what a buyer counts and acts on, so it is the level a history filters at. */
@@ -2843,7 +2823,6 @@ export type Query = {
   user: Maybe<User>;
   userCharacters: CharacterConnection;
   userGalleries: GalleryConnection;
-  userImages: ImageConnection;
   /** Retrieves media owned by a specific user */
   userMedia: MediaConnection;
   userProfile: Maybe<UserProfile>;
@@ -2867,12 +2846,6 @@ export type QueryCharacterArgs = {
 export type QueryCharacterGalleriesArgs = {
   characterId: Scalars['ID']['input'];
   filters?: InputMaybe<GalleryFiltersInput>;
-};
-
-
-export type QueryCharacterImagesArgs = {
-  characterId: Scalars['ID']['input'];
-  filters?: InputMaybe<ImageFiltersInput>;
 };
 
 
@@ -3107,12 +3080,6 @@ export type QueryGalleryArgs = {
 };
 
 
-export type QueryGalleryImagesArgs = {
-  filters?: InputMaybe<ImageFiltersInput>;
-  galleryId: Scalars['ID']['input'];
-};
-
-
 export type QueryGalleryMediaArgs = {
   filters?: InputMaybe<MediaFiltersInput>;
   galleryId: Scalars['ID']['input'];
@@ -3136,21 +3103,11 @@ export type QueryGlobalImageModerationQueueArgs = {
 };
 
 
-export type QueryImageArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
 export type QueryImageModerationQueueArgs = {
   communityId: Scalars['ID']['input'];
   filters?: InputMaybe<ImageModerationQueueFiltersInput>;
   first?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
-};
-
-
-export type QueryImagesArgs = {
-  filters?: InputMaybe<ImageFiltersInput>;
 };
 
 
@@ -3267,11 +3224,6 @@ export type QueryMyEditableCharactersArgs = {
 
 export type QueryMyGalleriesArgs = {
   filters?: InputMaybe<GalleryFiltersInput>;
-};
-
-
-export type QueryMyImagesArgs = {
-  filters?: InputMaybe<ImageFiltersInput>;
 };
 
 
@@ -3458,12 +3410,6 @@ export type QueryUserCharactersArgs = {
 
 export type QueryUserGalleriesArgs = {
   filters?: InputMaybe<GalleryFiltersInput>;
-  userId: Scalars['ID']['input'];
-};
-
-
-export type QueryUserImagesArgs = {
-  filters?: InputMaybe<ImageFiltersInput>;
   userId: Scalars['ID']['input'];
 };
 

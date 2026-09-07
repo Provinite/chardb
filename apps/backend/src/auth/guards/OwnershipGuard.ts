@@ -1,13 +1,12 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
-import { GqlExecutionContext } from "@nestjs/graphql";
 import { getUserFromContext } from "../utils/get-user-from-context";
 import { AllowEntityOwner } from "../decorators/AllowEntityOwner";
 import {
   OwnershipResolutionConfig,
   OwnershipResolutionReference,
 } from "../types/OwnershipResolutionConfig";
-import { getNestedValue } from "../../common/utils/getNestedValue";
+import { resolveGuardPath } from "../utils/resolve-guard-path";
 import { OwnershipService } from "../OwnershipService";
 
 /**
@@ -90,14 +89,14 @@ export class OwnershipGuard implements CanActivate {
     context: ExecutionContext,
     config: OwnershipResolutionConfig,
   ): OwnershipResolutionReference {
-    const gqlContext = GqlExecutionContext.create(context);
-    const args = gqlContext.getArgs();
-
     for (const [key, path] of Object.entries(config)) {
       if (path) {
-        const value = getNestedValue(args, path);
+        const value = resolveGuardPath(context, path);
         if (value) {
-          return { type: key as keyof OwnershipResolutionConfig, value };
+          return {
+            type: key as keyof OwnershipResolutionConfig,
+            value: value as string,
+          };
         }
       }
     }

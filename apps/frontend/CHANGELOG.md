@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A failing comment list no longer takes the comment form with it.** The error
+  replaced the whole section, so one failing read removed the ability to write
+  and left no way forward; the two now fail independently (#310).
+
 - **Markdown no longer leaks into `og:description`**, and `stripMarkdown` no longer returns escaped text like `some\_user\_name` — which also reached the media card's preview line.
 
 - **A long name on the members list painted over the role tag beside it**, and

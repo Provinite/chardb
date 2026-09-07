@@ -223,28 +223,27 @@ export const CommentList: React.FC<CommentListProps> = ({
     );
   }
 
-  if (error) {
-    return (
-      <Container>
-        <SectionHeader>
-          <SectionTitle>Comments</SectionTitle>
-        </SectionHeader>
-        <ErrorContainer>
-          <h4>Failed to load comments</h4>
-          <p>{error.message}</p>
-        </ErrorContainer>
-      </Container>
-    );
-  }
-
   return (
     <Container>
       <SectionHeader>
         <SectionTitle>Comments</SectionTitle>
-        <CommentCount>
-          {total} {total === 1 ? "comment" : "comments"}
-        </CommentCount>
+        {!error && (
+          <CommentCount>
+            {total} {total === 1 ? "comment" : "comments"}
+          </CommentCount>
+        )}
       </SectionHeader>
+
+      {/* Reading and writing fail independently, so they are reported
+          independently. This used to replace the whole section -- form
+          included -- so a failing read took away the ability to write, and
+          the page offered no way forward at all (#310). */}
+      {error && (
+        <ErrorContainer data-testid="comments-error">
+          <h4>Failed to load comments</h4>
+          <p>{error.message}</p>
+        </ErrorContainer>
+      )}
 
       {showCommentForm && (
         <CommentForm
@@ -254,7 +253,7 @@ export const CommentList: React.FC<CommentListProps> = ({
         />
       )}
 
-      {topLevelComments.length === 0 ? (
+      {error ? null : topLevelComments.length === 0 ? (
         <EmptyState>
           <EmptyIcon>💬</EmptyIcon>
           <EmptyTitle>No comments yet</EmptyTitle>

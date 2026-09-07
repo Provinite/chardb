@@ -215,6 +215,10 @@ export class CharacterOwnershipChangesResolver {
    * non-nullable field would make the whole history query fail. Mirrors how
    * GalleriesResolver.resolveCharacter handles the same situation.
    */
+  // Authenticated, matching every query that can reach these: the history
+  // itself is `@AllowAnyAuthenticated()` or admin-only, so a signed-in viewer
+  // holding an ownership change may read what it points at.
+  @AllowAnyAuthenticated()
   @ResolveField("character", () => Character, { nullable: true })
   async resolveCharacter(
     @Parent() ownershipChange: CharacterOwnershipChange,
@@ -230,6 +234,7 @@ export class CharacterOwnershipChangesResolver {
     }
   }
 
+  @AllowAnyAuthenticated()
   @ResolveField("fromUser", () => User, { nullable: true })
   async resolveFromUser(
     @Parent() ownershipChange: CharacterOwnershipChange,
@@ -247,6 +252,7 @@ export class CharacterOwnershipChangesResolver {
     return mapPrismaUserToGraphQL(prismaUser);
   }
 
+  @AllowAnyAuthenticated()
   @ResolveField("toUser", () => User)
   async resolveToUser(
     @Parent() ownershipChange: CharacterOwnershipChange,

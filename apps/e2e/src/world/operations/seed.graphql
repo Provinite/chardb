@@ -987,3 +987,18 @@ mutation SeedRemoveCommunity($id: ID!) {
     removed
   }
 }
+
+# `User.followersCount` and `followingCount` carried no permission decorator, so
+# they were forbidden to everyone (#310). Asserted through the API rather than a
+# page because nothing in the app selects them -- every follower count on screen
+# comes from `UserStats` or `FollowStatus`, which are different types with their
+# own resolvers. A field no page renders is exactly the kind that stays broken
+# unnoticed, which is the argument for the coverage test in
+# `resolver-permission-coverage.spec.ts`.
+query SeedViewerFollowCounts {
+  me {
+    id
+    followersCount
+    followingCount
+  }
+}

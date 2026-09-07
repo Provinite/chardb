@@ -178,18 +178,19 @@ export class SocialResolver {
   }
 }
 
-// Field resolvers for existing entities
+// Field resolvers for existing entities.
+//
+// `likesCount` is deliberately absent from all but CommentLikesResolver below.
+// Character, Image, Gallery and Media each declare that field in their own
+// module, and those declarations win -- a field is resolved by whichever
+// module registers it first, and every one of them is imported into AppModule
+// ahead of SocialModule. The copies that used to sit here were shadowed, so
+// they were dead code that only mattered when it was wrong: undecorated, they
+// were one module reorder away from 403ing the four types that work today
+// (#310).
 @Resolver(() => Character)
 export class CharacterLikesResolver {
   constructor(private readonly socialService: SocialService) {}
-
-  @ResolveField(() => Int)
-  async likesCount(@Parent() character: Character): Promise<number> {
-    return this.socialService.getLikesCount(
-      LikeableType.CHARACTER,
-      character.id,
-    );
-  }
 
   @AllowAnyAuthenticated()
   @ResolveField(() => Boolean)
@@ -209,11 +210,6 @@ export class CharacterLikesResolver {
 export class ImageLikesResolver {
   constructor(private readonly socialService: SocialService) {}
 
-  @ResolveField(() => Int)
-  async likesCount(@Parent() image: Image): Promise<number> {
-    return this.socialService.getLikesCount(LikeableType.IMAGE, image.id);
-  }
-
   @AllowAnyAuthenticated()
   @ResolveField(() => Boolean)
   async userHasLiked(
@@ -231,11 +227,6 @@ export class ImageLikesResolver {
 @Resolver(() => Gallery)
 export class GalleryLikesResolver {
   constructor(private readonly socialService: SocialService) {}
-
-  @ResolveField(() => Int)
-  async likesCount(@Parent() gallery: Gallery): Promise<number> {
-    return this.socialService.getLikesCount(LikeableType.GALLERY, gallery.id);
-  }
 
   @AllowAnyAuthenticated()
   @ResolveField(() => Boolean)
@@ -255,6 +246,19 @@ export class GalleryLikesResolver {
 export class CommentLikesResolver {
   constructor(private readonly socialService: SocialService) {}
 
+  /**
+   * The one `likesCount` in this file that is actually live: no other module
+   * declares it on Comment, so unlike its four siblings this was the resolver
+   * being reached -- and it carried no `@Allow*`, which under a deny-by-default
+   * chain means forbidden to everyone, admins included.
+   *
+   * Unauthenticated because the field is `Int!` and the comment list is public.
+   * A 403 on a non-nullable field nulls its parent, so denying this nulled
+   * every Comment, then the list, and `CommentList` blanked the whole section
+   * -- taking the comment form with it. Nobody could comment on a character
+   * (#310). Same mechanism as the public gallery in #173.
+   */
+  @AllowUnauthenticated()
   @ResolveField(() => Int)
   async likesCount(@Parent() comment: Comment): Promise<number> {
     return this.socialService.getLikesCount(LikeableType.COMMENT, comment.id);
@@ -278,11 +282,6 @@ export class CommentLikesResolver {
 export class MediaLikesResolver {
   constructor(private readonly socialService: SocialService) {}
 
-  @ResolveField(() => Int)
-  async likesCount(@Parent() media: Media): Promise<number> {
-    return this.socialService.getLikesCount(LikeableType.MEDIA, media.id);
-  }
-
   @AllowAnyAuthenticated()
   @ResolveField(() => Boolean)
   async userHasLiked(
@@ -301,11 +300,21 @@ export class MediaLikesResolver {
 export class UserFollowResolver {
   constructor(private readonly socialService: SocialService) {}
 
+  /**
+   * Unauthenticated for the same reason as `Comment.likesCount`: `Int!` on a
+   * public profile page, so a denial nulls the whole User rather than the
+   * field. These were undecorated AND shadowed by stubs in `UsersResolver`
+   * that answered 0 -- the stubs won, so the field 403'd and the real counts
+   * here were never reached. The stubs are gone; this is now the only
+   * declaration (#310).
+   */
+  @AllowUnauthenticated()
   @ResolveField(() => Int)
   async followersCount(@Parent() user: User): Promise<number> {
     return this.socialService.getFollowersCount(user.id);
   }
 
+  @AllowUnauthenticated()
   @ResolveField(() => Int)
   async followingCount(@Parent() user: User): Promise<number> {
     return this.socialService.getFollowingCount(user.id);

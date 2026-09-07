@@ -7,11 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Nobody could comment on a character.** `Comment.likesCount` carried no
+  permission decorator, which under a deny-by-default guard chain means
+  forbidden to everyone; the field is non-nullable, so the 403 nulled the whole
+  comment (#310).
+
+- **`User.followersCount` and `followingCount` were forbidden to everyone**, for
+  the same reason. Stubs in `UsersResolver` answering 0 were shadowing the real
+  implementations and are gone (#310).
+
+- **`Character.activeTraitReview` was forbidden to everyone.** Now readable by
+  the character's owner and by staff who can edit its registry — not made
+  public, because it carries a member's unapproved proposed traits (#310).
+
 ### Added
+
+- **A test asserting every resolver method declares who may call it.** A
+  `@Query`, `@Mutation`, `@ResolveField` or `@Subscription` with no `@Allow*` is
+  not unprotected, it is forbidden to everyone, and that has now caused three
+  user-visible bugs (#173, #310) (#310).
 
 - **`communityMemberRoles(communityId, userId)`** — what one member's standing
   in one community is called. Gated on membership, unlike
   `communityMembersByUser`, which is about yourself everywhere (#349).
+
+### Removed
+
+- **Breaking: the six image queries are gone** — `images`, `image`, `myImages`,
+  `userImages`, `characterImages`, `galleryImages`. All were deliberately
+  blocked by having no permission decorator, so none has been callable; media
+  queries are the supported way to read images (#310).
 
 ### Changed
 
