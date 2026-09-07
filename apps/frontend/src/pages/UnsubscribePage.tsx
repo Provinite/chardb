@@ -105,7 +105,10 @@ export const UnsubscribePage: React.FC = () => {
               you will still see this in the app.
             </Description>
             <Description>
-              Sign in to change any of your other notification settings.
+              {/* Not "sign in to…": this page is reached from an email and
+                  cannot know whether the reader has a session, and telling
+                  somebody who is already signed in to sign in reads as a bug. */}
+              Every other notification setting is on your profile.
             </Description>
             <Footer>
               <BackLink to="/profile/edit">Notification settings</BackLink>
@@ -117,8 +120,8 @@ export const UnsubscribePage: React.FC = () => {
           <>
             <Title>That link is not valid</Title>
             <Description>
-              It may have been altered on its way here. You can change every
-              notification setting from your profile once you are signed in.
+              It may have been altered on its way here. Every notification
+              setting is on your profile.
             </Description>
             <Footer>
               <BackLink to="/profile/edit">Notification settings</BackLink>

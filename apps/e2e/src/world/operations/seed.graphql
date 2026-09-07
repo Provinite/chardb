@@ -1019,3 +1019,36 @@ mutation SeedCreateComment($input: CreateCommentInput!) {
     }
   }
 }
+
+# --- Notification delivery preferences (#344) --------------------------------
+
+# The matrix is sparse in the database: a row exists only where somebody has
+# disagreed with a default. This query is what proves the merge happened, so a
+# spec can assert defaults for a member who has never touched the settings page.
+query SeedNotificationPreferences {
+  notificationPreferences {
+    kind
+    inApp
+    email
+    emailSupported
+  }
+}
+
+mutation SeedUpdateNotificationPreference(
+  $input: UpdateNotificationPreferenceInput!
+) {
+  updateNotificationPreference(input: $input) {
+    kind
+    inApp
+    email
+    emailSupported
+  }
+}
+
+# Reached from an email with nobody signed in, so a spec runs it as `anon`.
+mutation SeedUnsubscribeFromNotificationEmail($input: UnsubscribeInput!) {
+  unsubscribeFromNotificationEmail(input: $input) {
+    success
+    kind
+  }
+}

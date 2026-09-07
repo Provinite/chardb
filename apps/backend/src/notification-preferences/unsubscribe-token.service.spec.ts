@@ -49,10 +49,10 @@ describe("UnsubscribeTokenService", () => {
     const mine = service.issue("user-1", NotificationKind.IMAGE_APPROVED);
     const theirs = service.issue("user-2", NotificationKind.IMAGE_APPROVED);
 
-    const forged = `${theirs.split(".")[0]}.${mine
-      .split(".")
+    const forged = `${theirs.split("~")[0]}~${mine
+      .split("~")
       .slice(1)
-      .join(".")}`;
+      .join("~")}`;
 
     expect(service.verify(forged)).toBeNull();
   });
@@ -61,11 +61,11 @@ describe("UnsubscribeTokenService", () => {
     const approved = service.issue("user-1", NotificationKind.IMAGE_APPROVED);
     const rejected = service.issue("user-1", NotificationKind.IMAGE_REJECTED);
 
-    const [userPart] = approved.split(".");
-    const [, kindPart] = rejected.split(".");
-    const [, , mac] = approved.split(".");
+    const [userPart] = approved.split("~");
+    const [, kindPart] = rejected.split("~");
+    const [, , mac] = approved.split("~");
 
-    expect(service.verify(`${userPart}.${kindPart}.${mac}`)).toBeNull();
+    expect(service.verify(`${userPart}~${kindPart}~${mac}`)).toBeNull();
   });
 
   it("rejects a token signed with a different secret", () => {
@@ -79,9 +79,20 @@ describe("UnsubscribeTokenService", () => {
   it("rejects malformed input without throwing", () => {
     // A public endpoint gets fed junk. Every one of these has to be a quiet
     // null rather than a 500.
-    for (const bad of ["", "nonsense", "a.b", "a.b.c.d", "....", "a.b.c"]) {
+    for (const bad of ["", "nonsense", "a~b", "a~b~c~d", "~~~~", "a~b~c"]) {
       expect(service.verify(bad)).toBeNull();
     }
+  });
+
+  it("contains no dot, so it survives being a path segment", () => {
+    // The token rides in `/unsubscribe/:token`. A dot makes that path look like
+    // a filename, and Vite -- along with every static host serving a
+    // single-page app -- answers with a 404 rather than falling through to
+    // index.html. The link then dies before React ever sees it.
+    const token = service.issue("user-1", NotificationKind.IMAGE_APPROVED);
+
+    expect(token).not.toContain(".");
+    expect(token).toMatch(/^[A-Za-z0-9_~-]+$/);
   });
 
   it("rejects a kind this version does not know", () => {

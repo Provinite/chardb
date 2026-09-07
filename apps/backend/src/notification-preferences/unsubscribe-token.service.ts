@@ -13,6 +13,18 @@ export interface UnsubscribeClaim {
 const KEY_LABEL = "chardb:unsubscribe:v1";
 
 /**
+ * What joins the token's three parts.
+ *
+ * A tilde rather than the dot a JWT would use, because the token is a path
+ * segment (`/unsubscribe/:token`) and a dot makes it look like a filename. Vite
+ * and every static host serving a single-page app answer that with a 404
+ * instead of falling through to index.html, so the page never loads and the
+ * link is dead. Tilde is unreserved in RFC 3986 and is not in the base64url
+ * alphabet, so it cannot appear inside a part and split one in half.
+ */
+const SEPARATOR = "~";
+
+/**
  * Issues and verifies the token in an email's unsubscribe link.
  *
  * Stateless HMAC rather than the `PasswordResetToken` row the rest of the
@@ -44,7 +56,7 @@ export class UnsubscribeTokenService {
   /** The token for one member's one kind. Stable: the same inputs sign alike. */
   issue(userId: string, kind: NotificationKind): string {
     const body = this.body(userId, kind);
-    return `${body}.${this.sign(body)}`;
+    return `${body}${SEPARATOR}${this.sign(body)}`;
   }
 
   /**
@@ -55,11 +67,11 @@ export class UnsubscribeTokenService {
    * useful to tell an anonymous clicker beyond "this link is not valid".
    */
   verify(token: string): UnsubscribeClaim | null {
-    const parts = token.split(".");
+    const parts = token.split(SEPARATOR);
     if (parts.length !== 3) return null;
 
     const [encodedUserId, encodedKind, mac] = parts;
-    const body = `${encodedUserId}.${encodedKind}`;
+    const body = `${encodedUserId}${SEPARATOR}${encodedKind}`;
     if (!this.macMatches(body, mac)) return null;
 
     const userId = decode(encodedUserId);
@@ -70,7 +82,7 @@ export class UnsubscribeTokenService {
   }
 
   private body(userId: string, kind: NotificationKind): string {
-    return `${encode(userId)}.${encode(kind)}`;
+    return `${encode(userId)}${SEPARATOR}${encode(kind)}`;
   }
 
   private sign(body: string): string {

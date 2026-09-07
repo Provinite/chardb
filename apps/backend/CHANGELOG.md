@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Notification delivery preferences**, per kind and per channel, checked in `NotificationsService.create` so every kind respects them without a call site opting in. Image approval no longer emails by default; rejection still does (#344).
+
+- **Unsubscribe links** on every optional email, authorised by a stateless HMAC token that can only switch one kind's email off. Password reset and password-changed mail carries none and cannot be opted out of — `AuthService` reaches `EmailService` directly and imports neither the preference nor the dispatch service (#344).
+
 ### Fixed
 
 - **Nobody could comment on a character.** `Comment.likesCount` carried no
