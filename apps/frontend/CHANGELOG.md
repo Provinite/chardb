@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **An avatar control on `/profile/edit`**: upload a picture and frame it, pick one you already uploaded, adjust the framing, or remove it. It saves on the spot, and says when a picture is waiting on a moderator rather than falling back to initials with no explanation (#345).
+
+- **The profile editor and the upload pages now serve from a community host** as well as the apex, so an upload records which community should review it. The profile is still one profile site-wide and the page says so (#345).
+
 - **Character forms**: a character page gets tabs above its traits when it has more than one form, and the trait editor grows a name field, reordering and an Add a form button once the rarity allows it — a variant's Forms limit is set on its management page (#343).
 
 - **My Characters is a folder browser**: nested folders, filing by drag or in bulk, and the unfiled pile as the top level. A member's characters page browses their public folders too (#350).

@@ -15,6 +15,8 @@ import {
 } from "../generated/graphql";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { NotificationPreferencesSettings } from "../components/settings/NotificationPreferencesSettings";
+import { AvatarSettings } from "../components/settings/AvatarSettings";
+import { useHostCommunity } from "../contexts/CommunityHostContext";
 import { getAccessToken } from "../lib/accessToken";
 import { API_BASE_URL } from "../lib/communityHost";
 
@@ -277,6 +279,17 @@ const SmallButton = styled.button<{ variant?: "danger" | "primary" }>`
   }
 `;
 
+const ScopeNotice = styled.p`
+  margin: 0 0 ${({ theme }) => theme.spacing.lg} 0;
+  padding: ${({ theme }) => theme.spacing.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-left: 4px solid ${({ theme }) => theme.colors.primary};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+`;
+
 const EmptyState = styled.div`
   padding: ${({ theme }) => theme.spacing.xl};
   text-align: center;
@@ -292,6 +305,9 @@ export const EditProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { data: meData, loading: meLoading } = useMeQuery();
   const [updateProfile, { loading: updating }] = useUpdateProfileMutation();
+  // Null at the apex. Only used to say out loud that this page is not scoped
+  // to the community whose host it is being served from.
+  const hostCommunity = useHostCommunity();
 
   // External accounts
   const {
@@ -527,6 +543,31 @@ export const EditProfilePage: React.FC = () => {
         <Title>Edit Profile</Title>
         <Subtitle>Update your profile information</Subtitle>
       </Header>
+
+      {/* This page is reachable from a community's own host as well as the
+          apex, so it can say which community should review an avatar you
+          upload here. The profile itself is not per-community and there are no
+          plans for it to be, so say that outright rather than let the address
+          bar imply otherwise. */}
+      {hostCommunity && (
+        <ScopeNotice>
+          You have one profile across the whole site. Changes here show
+          everywhere, not only in {hostCommunity.name}.
+        </ScopeNotice>
+      )}
+
+      <Section>
+        <SectionTitle>Avatar</SectionTitle>
+        <SectionDescription>
+          The picture that stands for you. Without one, your initials are used.
+        </SectionDescription>
+
+        <AvatarSettings
+          name={meData.me.displayName || meData.me.username}
+          avatarImage={meData.me.avatarImage}
+          moderationStatus={meData.me.avatarImageModerationStatus}
+        />
+      </Section>
 
       <Form onSubmit={handleSubmit(onSubmit)}>
         <FormGroup>

@@ -56,6 +56,35 @@ export class CommunityResolverService {
   }
 
   /**
+   * Get the community ID for a media.
+   *
+   * Two routes, in this order: through its character's species, and failing
+   * that through `Media.communityId`, which is recorded at upload for media
+   * that has no character to answer through. The order matters -- a character
+   * moved into another community's species takes its media with it, and the
+   * column was written once and cannot follow.
+   *
+   * Null when neither answers, which means an upload made at the apex: no
+   * community is responsible for it and only a global admin can act on it.
+   *
+   * @param mediaId - The media ID
+   * @returns The community ID, or null if no community owns this media
+   */
+  async getMediaCommunity(mediaId: string): Promise<string | null> {
+    const media = await this.prisma.media.findUnique({
+      where: { id: mediaId },
+      select: {
+        communityId: true,
+        character: {
+          select: { species: { select: { communityId: true } } },
+        },
+      },
+    });
+
+    return media?.character?.species?.communityId ?? media?.communityId ?? null;
+  }
+
+  /**
    * Get the community ID for a species.
    *
    * @param speciesId - The species ID
@@ -532,6 +561,7 @@ export class CommunityResolverService {
     > = {
       communityId: async (id: string) => id,
       characterId: this.getCharacterCommunity.bind(this),
+      mediaId: this.getMediaCommunity.bind(this),
       speciesId: this.getSpeciesCommunity.bind(this),
       speciesVariantId: this.getSpeciesVariantCommunity.bind(this),
       traitId: this.getTraitCommunity.bind(this),

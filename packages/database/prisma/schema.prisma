@@ -552,6 +552,20 @@ model Image {
   thumbnailCropHeight Int? @map("thumbnail_crop_height")
 
   // Moderation
+  //
+  /// There is an index on this column that Prisma cannot see:
+  /// `images_pending_moderation_idx`, a partial index over
+  /// `(deferred_at NULLS FIRST, created_at) WHERE moderation_status =
+  /// 'PENDING'`. Neither the WHERE clause nor the NULLS FIRST ordering is
+  /// expressible here, and both are what make it work -- it takes the
+  /// community image queue from 128 ms to 0.5 ms at 200k images, and costs
+  /// 48 kB rather than the 8 MB a plain composite would.
+  ///
+  /// Prisma ignores indexes it cannot represent rather than proposing to drop
+  /// them, so this does not show up as drift (checked with `migrate diff` on
+  /// 5.22). It does mean the index lives only in that migration: squash the
+  /// history and it disappears with no warning. See
+  /// `20260907220000_moderation_queue_indexes`.
   moderationStatus ModerationStatus @default(PENDING) @map("moderation_status")
 
   /// Deferral. An image nobody can rule on yet -- the art is mid-reupload, the
@@ -734,6 +748,40 @@ model Media {
   galleryId   String?    @map("gallery_id")
   visibility  Visibility @default(PUBLIC)
 
+  /// This row exists to carry an avatar through moderation, and for nothing
+  /// else.
+  ///
+  /// An avatar is uploaded through the same endpoint as any other picture and
+  /// so gets a Media row like any other picture -- which is what puts it in
+  /// front of a community's moderators, since every queue reaches an image
+  /// through media. But it is not a post. Left in the listings it appears in
+  /// its owner's library as something they never meant to publish, and one
+  /// more accumulates every time they change their avatar.
+  ///
+  /// So the row stays and the listings skip it. Deleting it instead would take
+  /// the picture out of the moderation queue with it; hiding it costs one
+  /// boolean and keeps the queue honest.
+  ///
+  /// The moderation queues deliberately do NOT filter on this. Nothing else
+  /// should read it either: it says how the row got here, not who may see the
+  /// picture.
+  isAvatarUpload Boolean @default(false) @map("is_avatar_upload")
+
+  /// Which community reviews this upload when no character says.
+  ///
+  /// An image reached its moderators through `character -> species ->
+  /// community` and no other way, so anything uploaded without a character --
+  /// a gallery picture, a user avatar -- belonged to no community and appeared
+  /// in no community's queue. It sat PENDING, and PENDING means every URL on
+  /// it is masked, so the upload was invisible forever unless a site admin
+  /// happened to clear the global queue.
+  ///
+  /// Recorded at upload time from the host the uploader was on, which is the
+  /// only moment anyone knows the answer. The character path still wins where
+  /// there is a character: a character moved to another community's species
+  /// takes its media with it, and a value frozen at upload could not.
+  communityId String?    @map("community_id")
+
   // Content references (exactly one must be non-null)
   imageId       String? @map("image_id")
   textContentId String? @map("text_content_id")
@@ -745,6 +793,7 @@ model Media {
   owner     User       @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   character Character? @relation(fields: [characterId], references: [id], onDelete: SetNull)
   gallery   Gallery?   @relation(fields: [galleryId], references: [id], onDelete: SetNull)
+  community Community? @relation(fields: [communityId], references: [id], onDelete: SetNull)
 
   // Content relations
   image       Image?       @relation(fields: [imageId], references: [id], onDelete: Cascade)
@@ -755,6 +804,11 @@ model Media {
   likes        Like[]
   tags_rel     MediaTag[]
 
+  /// For the image moderation queue, which walks from a pending image to the
+  /// media carrying it. The two only pay off together: with `imageId` alone
+  /// the planner drops to a sequential scan on the media-side queue.
+  @@index([imageId])
+  @@index([characterId])
   @@map("media")
 }
 
@@ -815,6 +869,8 @@ model Community {
   shopPurchases        ShopPurchase[]
   notifications        Notification[]
   trades               Trade[]
+  /// Uploads that name this community directly; see `Media.communityId`.
+  media                Media[]
 
   @@map("communities")
 }

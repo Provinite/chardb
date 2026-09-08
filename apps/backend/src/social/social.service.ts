@@ -7,7 +7,7 @@ import {
   userMapperSelect,
   type PublicUser,
 } from "../users/utils/user-resolver-mappers";
-import { notDeleted } from "../common/utils/prisma-filters";
+import { notDeleted, notAvatarUpload } from "../common/utils/prisma-filters";
 import {
   LikeableType,
   ToggleLikeInput,
@@ -538,6 +538,11 @@ export class SocialService {
       likes: {
         some: { userId },
       },
+      // Avatar uploads are not posts and are not listed; see `notAvatarUpload`.
+      // Nothing can have liked one -- they are never shown to be liked -- but
+      // the filter belongs here anyway, so a row that somehow acquired a like
+      // cannot reappear through this listing.
+      ...notAvatarUpload,
     };
 
     // Add additional filters if provided
@@ -765,6 +770,7 @@ export class SocialService {
         where: {
           imageId: { not: null },
           ownerId: { in: followingUserIds },
+          ...notAvatarUpload,
         },
         include: {
           owner: { select: userMapperSelect },

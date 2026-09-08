@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A "User Avatars" walkthrough** (`docs/docs/user-avatars.html`), five steps
+  with five screenshots: where the control is, uploading and framing a picture,
+  what happens while it waits on a moderator, reusing something already
+  uploaded, and where the result shows up (#345).
+
 - **E2E: 26 character-form specs** — 16 against the API, including who may add a form and who may raise a variant's limit, and 10 driving the browser through the editor, the edit-kit and MYO routes, the review queue's per-form diff and the two refusals that must land before an item is spent (#343).
 
 - **A "Character Forms" walkthrough** (`docs/docs/character-forms.html`), ten steps with eight screenshots: turning forms on per rarity, adding one as staff and as a member, what the reviewer sees, the MYO route, and what happens when a limit is lowered under a character (#343).

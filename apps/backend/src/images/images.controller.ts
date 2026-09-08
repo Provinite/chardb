@@ -26,6 +26,8 @@ interface UploadImageBody {
   characterId?: string;
   itemTypeId?: string;
   galleryId?: string;
+  communityId?: string;
+  isAvatarUpload?: string;
   description?: string;
   altText?: string;
   isNsfw?: string;
@@ -105,6 +107,13 @@ export class ImagesController {
       characterId: body.characterId,
       itemTypeId: body.itemTypeId,
       galleryId: body.galleryId,
+      // Which community's moderators see this, for an upload with no
+      // character to answer that. The frontend sends the community whose host
+      // the form was open on; the service checks the uploader belongs to it.
+      communityId: body.communityId,
+      // A profile picture rather than a post. Kept out of every listing; see
+      // `Media.isAvatarUpload`. Only the avatar control sends it.
+      isAvatarUpload: body.isAvatarUpload === "true",
       description: body.description,
       altText: body.altText,
       isNsfw: body.isNsfw === "true",

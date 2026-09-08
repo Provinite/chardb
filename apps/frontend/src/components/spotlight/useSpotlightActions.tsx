@@ -317,8 +317,13 @@ export function useSpotlightActions(
         {
           id: "upload-media",
           label: "Upload Media",
-          description: "Upload new media",
-          onClick: apex("/upload"),
+          // `nav`, not `apex`: uploading stays on the host it was started
+          // from, because that host is what decides which community's
+          // moderators review the result.
+          description: hostSlug
+            ? `Upload new media, reviewed by ${communityName}`
+            : "Upload new media",
+          onClick: nav("/upload"),
         },
         {
           id: "create-gallery",
@@ -329,8 +334,9 @@ export function useSpotlightActions(
         {
           id: "create-text",
           label: "Create Text",
+          // Stays on-host for the same reason as Upload Media above.
           description: "Create a new text post",
-          onClick: apex("/text/create"),
+          onClick: nav("/text/create"),
         },
       ],
     });

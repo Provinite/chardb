@@ -1894,7 +1894,6 @@ export type Mutation = {
   deleteComment: Scalars['Boolean']['output'];
   deleteCommunityColor: Scalars['Boolean']['output'];
   deleteGallery: RemovalResponse;
-  deleteImage: Scalars['Boolean']['output'];
   deleteItemType: Scalars['Boolean']['output'];
   /** Deletes a media item and its associated content */
   deleteMedia: Scalars['Boolean']['output'];
@@ -2256,11 +2255,6 @@ export type MutationDeleteCommunityColorArgs = {
 
 
 export type MutationDeleteGalleryArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationDeleteImageArgs = {
   id: Scalars['ID']['input'];
 };
 
@@ -4664,6 +4658,8 @@ export type UpdateTraitOrdersInput = {
 };
 
 export type UpdateUserInput = {
+  /** An image you uploaded, to show as your avatar. It must be approved in moderation first. Explicit null removes your avatar; omitting the field leaves it alone. */
+  avatarImageId?: InputMaybe<Scalars['ID']['input']>;
   bio?: InputMaybe<Scalars['String']['input']>;
   dateOfBirth?: InputMaybe<Scalars['String']['input']>;
   displayName?: InputMaybe<Scalars['String']['input']>;
@@ -4687,6 +4683,8 @@ export type UseItemResult = {
 export type User = {
   __typename?: 'User';
   avatarImage: Maybe<Image>;
+  /** Moderation status of the image set as your avatar, whether or not it is showing. Null when no avatar is set. Visible only to the account it belongs to. */
+  avatarImageModerationStatus: Maybe<ModerationStatus>;
   bio: Maybe<Scalars['String']['output']>;
   canCreateCommunity: Scalars['Boolean']['output'];
   canCreateInviteCode: Scalars['Boolean']['output'];
@@ -4820,7 +4818,7 @@ export type ResetPasswordMutation = { __typename?: 'Mutation', resetPassword: bo
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, communityMemberships: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canEditSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string } } }> } } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, avatarImageModerationStatus: ModerationStatus | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null, communityMemberships: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canEditSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string } } }> } } };
 
 export type CharacterFolderFieldsFragment = { __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number };
 
@@ -6473,6 +6471,13 @@ export type GetUserProfileQueryVariables = Exact<{
 
 export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, website: string | null, isVerified: boolean, createdAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, visibility: Visibility, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, textContent: { __typename?: 'TextContent', content: string, wordCount: number } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } | null };
 
+export type MyAvatarCandidatesQueryVariables = Exact<{
+  filters?: InputMaybe<MediaFiltersInput>;
+}>;
+
+
+export type MyAvatarCandidatesQuery = { __typename?: 'Query', myMedia: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, moderationStatus: ModerationStatus, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null }> } };
+
 export type GetUserStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
 }>;
@@ -6485,7 +6490,7 @@ export type UpdateProfileMutationVariables = Exact<{
 }>;
 
 
-export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } };
+export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarImageModerationStatus: ModerationStatus | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null } };
 
 export const CharacterFolderFieldsFragmentDoc = gql`
     fragment CharacterFolderFields on CharacterFolder {
@@ -7412,7 +7417,14 @@ export const MeDocument = gql`
       originalUrl
       thumbnailUrl
       altText
+      thumbnailCrop {
+        x
+        y
+        width
+        height
+      }
     }
+    avatarImageModerationStatus
     website
     dateOfBirth
     isVerified
@@ -17923,6 +17935,64 @@ export type GetUserProfileQueryHookResult = ReturnType<typeof useGetUserProfileQ
 export type GetUserProfileLazyQueryHookResult = ReturnType<typeof useGetUserProfileLazyQuery>;
 export type GetUserProfileSuspenseQueryHookResult = ReturnType<typeof useGetUserProfileSuspenseQuery>;
 export type GetUserProfileQueryResult = Apollo.QueryResult<GetUserProfileQuery, GetUserProfileQueryVariables>;
+export const MyAvatarCandidatesDocument = gql`
+    query MyAvatarCandidates($filters: MediaFiltersInput) {
+  myMedia(filters: $filters) {
+    media {
+      id
+      title
+      image {
+        id
+        originalUrl
+        thumbnailUrl
+        altText
+        moderationStatus
+        thumbnailCrop {
+          x
+          y
+          width
+          height
+        }
+      }
+    }
+    total
+    hasMore
+  }
+}
+    `;
+
+/**
+ * __useMyAvatarCandidatesQuery__
+ *
+ * To run a query within a React component, call `useMyAvatarCandidatesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMyAvatarCandidatesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMyAvatarCandidatesQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useMyAvatarCandidatesQuery(baseOptions?: Apollo.QueryHookOptions<MyAvatarCandidatesQuery, MyAvatarCandidatesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MyAvatarCandidatesQuery, MyAvatarCandidatesQueryVariables>(MyAvatarCandidatesDocument, options);
+      }
+export function useMyAvatarCandidatesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MyAvatarCandidatesQuery, MyAvatarCandidatesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MyAvatarCandidatesQuery, MyAvatarCandidatesQueryVariables>(MyAvatarCandidatesDocument, options);
+        }
+export function useMyAvatarCandidatesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MyAvatarCandidatesQuery, MyAvatarCandidatesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MyAvatarCandidatesQuery, MyAvatarCandidatesQueryVariables>(MyAvatarCandidatesDocument, options);
+        }
+export type MyAvatarCandidatesQueryHookResult = ReturnType<typeof useMyAvatarCandidatesQuery>;
+export type MyAvatarCandidatesLazyQueryHookResult = ReturnType<typeof useMyAvatarCandidatesLazyQuery>;
+export type MyAvatarCandidatesSuspenseQueryHookResult = ReturnType<typeof useMyAvatarCandidatesSuspenseQuery>;
+export type MyAvatarCandidatesQueryResult = Apollo.QueryResult<MyAvatarCandidatesQuery, MyAvatarCandidatesQueryVariables>;
 export const GetUserStatsDocument = gql`
     query GetUserStats($userId: ID!) {
   userStats(userId: $userId) {
@@ -17981,7 +18051,14 @@ export const UpdateProfileDocument = gql`
       originalUrl
       thumbnailUrl
       altText
+      thumbnailCrop {
+        x
+        y
+        width
+        height
+      }
     }
+    avatarImageModerationStatus
     website
     dateOfBirth
     isVerified

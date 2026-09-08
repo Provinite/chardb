@@ -1,7 +1,14 @@
-import { Injectable } from "@nestjs/common";
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  Inject,
+  forwardRef,
+} from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { Visibility, Prisma } from "@chardb/database";
-import { notDeleted } from "../common/utils/prisma-filters";
+import { Visibility, Prisma, ModerationStatus } from "@chardb/database";
+import { notDeleted, notAvatarUpload } from "../common/utils/prisma-filters";
+import { ImagesService } from "../images/images.service";
 
 /**
  * Service layer input types for user operations.
@@ -49,13 +56,24 @@ export interface UpdateUserServiceInput {
   website?: string;
   /** User's date of birth */
   dateOfBirth?: Date;
+  /**
+   * The image to use as this user's avatar. `null` removes it; omitting the
+   * field leaves the current avatar alone.
+   */
+  avatarImageId?: string | null;
   /** Privacy settings */
   privacySettings?: UserPrivacySettings;
 }
 
 @Injectable()
 export class UsersService {
-  constructor(private db: DatabaseService) {}
+  constructor(
+    private db: DatabaseService,
+    // `forwardRef` to match the module import; see `UsersModule` for why this
+    // is a cycle at all.
+    @Inject(forwardRef(() => ImagesService))
+    private readonly imagesService: ImagesService,
+  ) {}
 
   async create(input: CreateUserServiceInput) {
     return this.db.user.create({
@@ -115,11 +133,94 @@ export class UsersService {
       updateData.dateOfBirth = input.dateOfBirth;
     if (input.privacySettings !== undefined)
       updateData.privacySettings = input.privacySettings;
+    // The picture this is replacing, read before the write so it can be swept
+    // up after. Only when the avatar is actually part of this update -- every
+    // other field leaves it alone.
+    let displacedImageId: string | null = null;
+    if (input.avatarImageId !== undefined) {
+      await this.assertUsableAsAvatar(id, input.avatarImageId);
 
-    return this.db.user.update({
+      const current = await this.db.user.findUnique({
+        where: { id },
+        select: { avatarImageId: true },
+      });
+      if (
+        current?.avatarImageId &&
+        current.avatarImageId !== input.avatarImageId
+      ) {
+        displacedImageId = current.avatarImageId;
+      }
+
+      updateData.avatarImage = input.avatarImageId
+        ? { connect: { id: input.avatarImageId } }
+        : { disconnect: true };
+    }
+
+    const updated = await this.db.user.update({
       where: { id },
       data: updateData,
     });
+
+    // After the write, so the reference being released is already gone and the
+    // count below sees the truth. `cleanupOrphanedImage` decides for itself:
+    // an image that is still a post in somebody's library, or an item type's
+    // picture, is not rubbish just because it stopped being an avatar. It only
+    // deletes when nothing at all points at it, which for an avatar means the
+    // upload's own media row was deleted at some earlier point and this column
+    // was the last thing keeping the picture alive.
+    if (displacedImageId) {
+      await this.imagesService.cleanupOrphanedImage(displacedImageId);
+    }
+
+    return updated;
+  }
+
+  /**
+   * Whether `userId` may put `imageId` on their profile.
+   *
+   * Ownership is the gate here, because the column takes a bare id and nothing
+   * else checks it. Without this, any id in the table can be pointed at --
+   * someone else's unlisted art, or an image whose media is private -- and
+   * displayed under your name.
+   *
+   * Approval deliberately is NOT a gate on the write. A freshly uploaded
+   * avatar is PENDING by definition, so requiring APPROVED here would mean the
+   * upload path could never set the thing it just uploaded: you would have to
+   * come back after a moderator got to it and set it a second time. Instead
+   * the reference is stored straight away and
+   * `UsersResolver.resolveAvatarImage` refuses to serve it until it is
+   * approved, so the picture simply appears when it clears -- and disappears
+   * again if `rejectImage` later takes it back, which a write-time check could
+   * not have done anyway.
+   *
+   * REJECTED is refused, because that one can never come good: storing it
+   * would be accepting a save that is guaranteed to show nothing, with no
+   * explanation of why.
+   */
+  private async assertUsableAsAvatar(
+    userId: string,
+    imageId: string | null,
+  ): Promise<void> {
+    if (!imageId) return;
+
+    const image = await this.db.image.findUnique({
+      where: { id: imageId },
+      select: { uploaderId: true, moderationStatus: true },
+    });
+
+    // Not found and not yours are the same answer on purpose. Distinguishing
+    // them turns this into a way to ask whether an id exists.
+    if (!image || image.uploaderId !== userId) {
+      throw new NotFoundException(
+        "That image does not exist, or was not uploaded by you",
+      );
+    }
+
+    if (image.moderationStatus === ModerationStatus.REJECTED) {
+      throw new BadRequestException(
+        "That image was rejected in moderation and cannot be used as an avatar",
+      );
+    }
   }
 
   async getUserCharactersCount(userId: string, includePrivate = false) {
@@ -171,6 +272,7 @@ export class UsersService {
         ownerId: userId,
         imageId: { not: null },
         visibility: { in: visibilityFilter },
+        ...notAvatarUpload,
       },
     });
   }
@@ -234,6 +336,7 @@ export class UsersService {
         ownerId: userId,
         imageId: { not: null }, // Only include image media
         visibility: { in: visibilityFilter },
+        ...notAvatarUpload,
       },
       take: limit,
       orderBy: { createdAt: "desc" },

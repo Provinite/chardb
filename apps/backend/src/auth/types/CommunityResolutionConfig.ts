@@ -7,6 +7,16 @@
 export interface CommunityResolutionConfig {
   /** Path to character ID in arguments */
   characterId?: string;
+  /**
+   * Path to a media ID in arguments.
+   *
+   * Prefer this over `characterId` for anything hanging off a media row. A
+   * media reaches a community through its character where it has one and
+   * through `Media.communityId` where it does not, and resolving from the
+   * character alone silently denies everything with no character -- a gallery
+   * upload, a user avatar -- rather than resolving it the other way.
+   */
+  mediaId?: string;
   /** Path to species ID in arguments */
   speciesId?: string;
   /** Path to species variant ID in arguments */
@@ -47,6 +57,7 @@ export interface CommunityResolutionConfig {
 
 export const AllCommunityResolutionKeys = [
   "characterId",
+  "mediaId",
   "speciesId",
   "speciesVariantId",
   "traitId",

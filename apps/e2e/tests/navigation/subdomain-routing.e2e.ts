@@ -153,6 +153,48 @@ test.describe("community hosts", () => {
     await expect(globalNav(page)).toBeVisible();
   });
 
+  /**
+   * The pages that write are served from both hosts (#345).
+   *
+   * They belong to a person rather than a community, so by the rule above they
+   * would live at the apex -- but the host you are on when you upload is the
+   * only record of which community should review the result, and bouncing to
+   * the apex first throws it away before anything can write it down. So these
+   * four stay put instead of redirecting.
+   */
+  test("the pages that write stay on the community host", async ({
+    page,
+    world,
+  }) => {
+    for (const path of ["/profile/edit", "/upload", "/image/upload"]) {
+      await page.goto(`${world.community.url}${path}`);
+      await expect(page).toHaveURL(`${world.community.url}${path}`);
+    }
+
+    // And the profile editor says out loud that it is not scoped to the
+    // community whose host it is being served from.
+    await page.goto(`${world.community.url}/profile/edit`);
+    await expect(
+      page.getByText("one profile across the whole site", { exact: false }),
+    ).toBeVisible();
+  });
+
+  /**
+   * The control for the case above: a specific set of pages moved, not the
+   * apex boundary generally. Reading a profile is still the apex's, and it is
+   * the neighbour of `/profile/edit` in the route table -- so if a change ever
+   * widens `/profile/*` by accident, this is what catches it.
+   */
+  test("reading a profile still belongs to the apex", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(`${world.community.url}/user/member`);
+
+    await expect(page).toHaveURL(apexUrl("/user/member"));
+    await expect(globalNav(page)).toBeVisible();
+  });
+
   test("remembers which community the host is, between page loads", async ({
     page,
     world,
