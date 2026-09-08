@@ -4,6 +4,7 @@ import {
   SeedCharacterDocument,
   SeedEditCharacterTraitsWithKitDocument,
 } from "../../src/generated/graphql.js";
+import { baseTraits, setOnlyForm } from "../../src/world/forms.js";
 
 const test = presetTest("community-items");
 
@@ -191,7 +192,7 @@ test.describe("redeeming a variant change item, through the pages", () => {
       .as("member")
       .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
     expect(character.speciesVariantId).toBe(world.variants.legendary.id);
-    expect(character.traitValues).toEqual([
+    expect(baseTraits(character)).toEqual([
       {
         traitId: world.traits.eyeColor.id,
         value: world.traits.eyeColor.values.amber,
@@ -241,12 +242,18 @@ test.describe("redeeming a variant change item, through the pages", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.pinefall.id,
-        traitValues: [
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.pinefall.id,
           {
-            traitId: world.traits.eyeColor.id,
-            value: world.traits.eyeColor.values.green,
+            traitValues: [
+              {
+                traitId: world.traits.eyeColor.id,
+                value: world.traits.eyeColor.values.green,
+              },
+            ],
           },
-        ],
+        ),
       },
     });
 

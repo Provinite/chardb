@@ -13,6 +13,7 @@ import {
 } from "../../generated/graphql.js";
 import { communityUrl } from "../../config.js";
 import { definePreset, type Persona } from "../types.js";
+import { oneForm } from "../forms.js";
 
 export interface CommunityBasicWorld {
   community: {
@@ -195,10 +196,11 @@ export default definePreset<CommunityBasicWorld>({
       values[name.toLowerCase()] = createEnumValue.id;
     }
 
-    // --- characters. Non-empty traitValues auto-creates a PENDING TraitReview
-    // (source CREATION), which is the trait-review-queue fixture. The value is
-    // seeded by NAME so that kickFromSpecies's flattenTraitValues resolves it
-    // to the display name "Blue" when it flattens into custom fields.
+    // --- characters. A form carrying trait values auto-creates a PENDING
+    // TraitReview (source CREATION), which is the trait-review-queue fixture.
+    // The value is seeded by NAME so that kickFromSpecies's flattenTraitValues
+    // resolves it to the display name "Blue" when it flattens into custom
+    // fields.
     const { createCharacter: pending } = await ctx
       .as("member")
       .gql(SeedCreateCharacterDocument, {
@@ -206,7 +208,7 @@ export default definePreset<CommunityBasicWorld>({
           name: "Mossbrand",
           speciesId: species.id,
           speciesVariantId: variant.id,
-          traitValues: [{ traitId: eyeColor.id, value: "Blue" }],
+          forms: oneForm([{ traitId: eyeColor.id, value: "Blue" }]),
         },
       });
 

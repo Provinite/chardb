@@ -112,7 +112,7 @@ const EmptyState = styled.div`
 
 type CharacterTraitValue = NonNullable<
   GetCharacterQuery["character"]
->["traitValues"][0];
+>["forms"][0]["traitValues"][0];
 
 interface CharacterTraitsDisplayProps {
   traitValues: CharacterTraitValue[];

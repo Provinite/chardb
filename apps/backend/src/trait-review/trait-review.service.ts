@@ -12,6 +12,10 @@ import {
   Prisma,
 } from "@prisma/client";
 import { ItemsService } from "../items/items.service";
+import {
+  CharacterFormsService,
+  CharacterFormWrite,
+} from "../character-forms/character-forms.service";
 import { notDeleted } from "../common/utils/prisma-filters";
 import { TraitReviewQueueFiltersInput } from "./dto/trait-review.dto";
 import {
@@ -25,6 +29,7 @@ export class TraitReviewService {
     private readonly db: DatabaseService,
     // Only for handing a ticket back when an MYO character is refused.
     private readonly items: ItemsService,
+    private readonly forms: CharacterFormsService,
   ) {}
 
   /**
@@ -34,8 +39,8 @@ export class TraitReviewService {
   async createReview(
     characterId: string,
     source: TraitReviewSource,
-    proposedTraitValues: PrismaJson.CharacterTraitValuesJson,
-    previousTraitValues: PrismaJson.CharacterTraitValuesJson,
+    proposedForms: PrismaJson.CharacterFormsJson,
+    previousForms: PrismaJson.CharacterFormsJson,
     tx?: Prisma.TransactionClient,
   ) {
     const client = tx ?? this.db;
@@ -62,8 +67,8 @@ export class TraitReviewService {
       data: {
         characterId,
         source,
-        proposedTraitValues,
-        previousTraitValues,
+        proposedForms,
+        previousForms,
         status: ModerationStatus.PENDING,
       },
       include: traitReviewInclude,
@@ -179,8 +184,8 @@ export class TraitReviewService {
       throw new BadRequestException("Review is not pending");
     }
 
-    const [updatedReview] = await this.db.$transaction([
-      this.db.traitReview.update({
+    const updatedReview = await this.db.$transaction(async (tx) => {
+      const result = await tx.traitReview.update({
         where: { id: reviewId, status: ModerationStatus.PENDING },
         data: {
           status: ModerationStatus.APPROVED,
@@ -188,30 +193,40 @@ export class TraitReviewService {
           resolvedById: moderatorId,
         },
         include: traitReviewInclude,
-      }),
-      this.db.character.update({
+      });
+
+      await tx.character.update({
         where: { id: review.characterId },
-        data: {
-          traitReviewStatus: ModerationStatus.APPROVED,
-          // Approving is what *applies* a USER_EDIT review.
-          //
-          // Every other source writes its values to the character up front and
-          // uses the review to ratify them after the fact, which is fine when
-          // the character is new. An edit kit cannot work that way: the member
-          // would wear an unapproved trait until the queue caught up, and then
-          // lose it in public. So the proposal lives only in the review row,
-          // and this is where it lands.
-          //
-          // Scoped to this source rather than done for all of them. For the
-          // apply-first sources writing `proposedTraitValues` here would be a
-          // no-op today, but only because they happen to agree -- making that
-          // a load-bearing coincidence is how the next source breaks.
-          ...(review.source === TraitReviewSource.USER_EDIT
-            ? { traitValues: review.proposedTraitValues }
-            : {}),
-        },
-      }),
-    ]);
+        data: { traitReviewStatus: ModerationStatus.APPROVED },
+      });
+
+      // Approving is what *applies* a USER_EDIT review.
+      //
+      // Every other source writes its forms to the character up front and uses
+      // the review to ratify them after the fact, which is fine when the
+      // character is new. An edit kit cannot work that way: the member would
+      // wear an unapproved trait until the queue caught up, and then lose it
+      // in public. So the proposal lives only in the review row, and this is
+      // where it lands.
+      //
+      // Scoped to this source rather than done for all of them. For the
+      // apply-first sources writing `proposedForms` here would be a no-op
+      // today, but only because they happen to agree -- making that a
+      // load-bearing coincidence is how the next source breaks.
+      if (review.source === TraitReviewSource.USER_EDIT) {
+        await this.forms.writeForms(
+          tx,
+          review.characterId,
+          await this.forms.snapshotToWrites(
+            tx,
+            review.characterId,
+            review.proposedForms,
+          ),
+        );
+      }
+
+      return result;
+    });
 
     if (review.source === TraitReviewSource.MYO) {
       await this.assignRegistryId(review.characterId);
@@ -412,8 +427,8 @@ export class TraitReviewService {
       });
     }
 
-    const [updatedReview] = await this.db.$transaction([
-      this.db.traitReview.update({
+    const updatedReview = await this.db.$transaction(async (tx) => {
+      const result = await tx.traitReview.update({
         where: { id: reviewId, status: ModerationStatus.PENDING },
         data: {
           status: ModerationStatus.REJECTED,
@@ -422,15 +437,31 @@ export class TraitReviewService {
           rejectionReason: reason,
         },
         include: traitReviewInclude,
-      }),
-      this.db.character.update({
+      });
+
+      await tx.character.update({
         where: { id: review.characterId },
-        data: {
-          traitReviewStatus: ModerationStatus.REJECTED,
-          traitValues: review.previousTraitValues,
-        },
-      }),
-    ]);
+        data: { traitReviewStatus: ModerationStatus.REJECTED },
+      });
+
+      // An empty previous snapshot means there was no earlier approved state
+      // -- which is why CREATION and IMPORT are refused above rather than
+      // reaching here. Restoring it would mean leaving the character with no
+      // forms at all, so it is skipped rather than obeyed.
+      if (review.previousForms.length > 0) {
+        await this.forms.writeForms(
+          tx,
+          review.characterId,
+          await this.forms.snapshotToWrites(
+            tx,
+            review.characterId,
+            review.previousForms,
+          ),
+        );
+      }
+
+      return result;
+    });
 
     return updatedReview;
   }
@@ -533,12 +564,12 @@ export class TraitReviewService {
   }
 
   /**
-   * Edit and approve a trait review - applies corrected trait values
+   * Edit and approve a trait review - applies corrected forms
    */
   async editAndApproveReview(
     reviewId: string,
     moderatorId: string,
-    correctedTraitValues: PrismaJson.CharacterTraitValuesJson,
+    correctedForms: CharacterFormWrite[],
   ) {
     const review = await this.db.traitReview.findUnique({
       where: { id: reviewId },
@@ -553,25 +584,51 @@ export class TraitReviewService {
       throw new BadRequestException("Review is not pending");
     }
 
-    const [updatedReview] = await this.db.$transaction([
-      this.db.traitReview.update({
+    // Validated like any other write, rather than trusted for being staff's.
+    //
+    // This is the only path that reaches `writeForms` with caller-supplied
+    // forms and no check, and being the only one is exactly the problem: a
+    // moderator correcting a review could put a character on more forms than
+    // its rarity permits, or on trait ids from another species, leaving it in
+    // a state every other path refuses and its own trait editor cannot render.
+    // Judged against the character's own variant, since that is what the
+    // corrected values will be displayed and re-edited against.
+    if (review.character.speciesId) {
+      await this.forms.validateForms(
+        review.character.speciesId,
+        correctedForms,
+        review.character.speciesVariantId,
+      );
+    }
+
+    const updatedReview = await this.db.$transaction(async (tx) => {
+      // The character is written first so the applied snapshot recorded on the
+      // review is the one that actually landed, ids and all, rather than a
+      // reconstruction of what was asked for.
+      const appliedForms = await this.forms.writeForms(
+        tx,
+        review.characterId,
+        correctedForms,
+      );
+
+      const result = await tx.traitReview.update({
         where: { id: reviewId, status: ModerationStatus.PENDING },
         data: {
           status: ModerationStatus.APPROVED,
           resolvedAt: new Date(),
           resolvedById: moderatorId,
-          appliedTraitValues: correctedTraitValues,
+          appliedForms,
         },
         include: traitReviewInclude,
-      }),
-      this.db.character.update({
+      });
+
+      await tx.character.update({
         where: { id: review.characterId },
-        data: {
-          traitReviewStatus: ModerationStatus.APPROVED,
-          traitValues: correctedTraitValues,
-        },
-      }),
-    ]);
+        data: { traitReviewStatus: ModerationStatus.APPROVED },
+      });
+
+      return result;
+    });
 
     // Correcting an MYO's traits and approving it is still approving it, so
     // it gets its number the same way.

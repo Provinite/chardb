@@ -9,10 +9,14 @@ import {
   useGetCharacterQuery,
   useGetMyEditKitsQuery,
   useEditCharacterTraitsWithKitMutation,
-  type CharacterTraitValueInput,
 } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
-import { TraitForm } from "../components/character/TraitForm";
+import { CharacterFormsEditor } from "../components/character/CharacterFormsEditor";
+import {
+  draftsFromForms,
+  draftsToChange,
+  type CharacterFormDraft,
+} from "../lib/characterForms";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { kitCovers } from "../lib/editKits";
@@ -194,22 +198,20 @@ export const SpendEditKitPage: React.FC = () => {
    */
   const [confirming, setConfirming] = useState(false);
 
-  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
-    [],
-  );
+  const [forms, setForms] = useState<CharacterFormDraft[]>([]);
+  /** What the page opened on, so the proposal is a diff rather than a list. */
+  const [initialForms, setInitialForms] = useState<CharacterFormDraft[]>([]);
   const [seeded, setSeeded] = useState(false);
+  /** Forms still missing a name. Submitting is blocked on it. */
+  const [unnamedForms, setUnnamedForms] = useState(0);
 
   // Seeded from what the character has now, so the form opens on the current
   // design rather than an empty sheet — this is an edit, not a redesign.
   useEffect(() => {
     if (seeded || !character) return;
-    setTraitValues(
-      (character.traitValues ?? []).map((tv) => ({
-        traitId: tv.traitId,
-        value: tv.value,
-        ...(tv.clarifier ? { clarifier: tv.clarifier } : {}),
-      })),
-    );
+    const loaded = draftsFromForms(character.forms);
+    setForms(loaded);
+    setInitialForms(loaded);
     setSeeded(true);
   }, [character, seeded]);
 
@@ -275,7 +277,11 @@ export const SpendEditKitPage: React.FC = () => {
     if (!kitId) return;
     await spend({
       variables: {
-        input: { itemId: kitId, characterId: character.id, traitValues },
+        input: {
+          itemId: kitId,
+          characterId: character.id,
+          forms: draftsToChange(initialForms, forms),
+        },
       },
     });
   };
@@ -329,18 +335,23 @@ export const SpendEditKitPage: React.FC = () => {
       </Panel>
 
       <Section>
-        <TraitForm
+        {/* A kit buys a trait change, and adding a form is one -- so if the
+            character's rarity allows a second form, this is where a member
+            proposes it. Staff still approve it like any other trait edit. */}
+        <CharacterFormsEditor
           speciesId={character.speciesId!}
           speciesVariant={character.speciesVariant}
-          traitValues={traitValues}
-          onChange={setTraitValues}
+          maxForms={character.speciesVariant?.maxForms ?? 1}
+          forms={forms}
+          onChange={setForms}
+          onUnnamedChange={setUnnamedForms}
         />
       </Section>
 
       <ButtonRow>
         <Button
           onClick={() => setConfirming(true)}
-          disabled={spending || !kitId}
+          disabled={spending || !kitId || unnamedForms > 0}
           data-testid="submit-edit-kit"
         >
           {spending

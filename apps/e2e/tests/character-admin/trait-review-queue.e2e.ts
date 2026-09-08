@@ -4,6 +4,7 @@ import {
   SeedCreateCharacterDocument,
   SeedTraitReviewQueueDocument,
 } from "../../src/generated/graphql.js";
+import { oneForm } from "../../src/world/forms.js";
 import type { CommunityBasicWorld } from "../../src/world/presets/community-basic.js";
 import type { World } from "../../src/world/types.js";
 
@@ -108,7 +109,9 @@ test.describe("sending an entry to the back", () => {
           name: "Duskvane",
           speciesId: world.species.id,
           speciesVariantId: world.species.variantId,
-          traitValues: [{ traitId: world.traits.eyeColor.id, value: "Blue" }],
+          forms: oneForm([
+            { traitId: world.traits.eyeColor.id, value: "Blue" },
+          ]),
         },
       });
     return createCharacter;

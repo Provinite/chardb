@@ -114,6 +114,26 @@ const ColorLabel = styled.label`
   min-width: 100px;
 `;
 
+/**
+ * The same ceiling the backend validates against. A typo here should not be
+ * able to ask a character page to render a thousand trait sets.
+ */
+const MAX_FORMS_CEILING = 10;
+
+const FormsInput = styled.input`
+  width: 5rem;
+  padding: 0.5rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  background: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const FormsHelp = styled.span`
+  font-size: 0.8125rem;
+  color: ${({ theme }) => theme.colors.text.muted};
+`;
+
 const Section = styled.div`
   margin-bottom: 2rem;
 `;
@@ -176,6 +196,7 @@ export const VariantDetailPage: React.FC = () => {
   // State
   const [variantName, setVariantName] = useState("");
   const [variantColorId, setVariantColorId] = useState<string | null>(null);
+  const [maxForms, setMaxForms] = useState(1);
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [entries, setEntries] = useState<TraitListEntryDetailsFragment[]>([]);
   const [hasOrderChanges, setHasOrderChanges] = useState(false);
@@ -194,6 +215,7 @@ export const VariantDetailPage: React.FC = () => {
       if (data.speciesVariantById) {
         setVariantName(data.speciesVariantById.name);
         setVariantColorId(data.speciesVariantById.colorId || null);
+        setMaxForms(data.speciesVariantById.maxForms);
       }
     },
   });
@@ -332,8 +354,9 @@ export const VariantDetailPage: React.FC = () => {
 
     const hasNameChange = variantName !== variant.name;
     const hasColorChange = variantColorId !== variant.colorId;
+    const hasFormsChange = maxForms !== variant.maxForms;
 
-    if (!hasNameChange && !hasColorChange) return;
+    if (!hasNameChange && !hasColorChange && !hasFormsChange) return;
 
     await updateVariantName({
       variables: {
@@ -341,6 +364,7 @@ export const VariantDetailPage: React.FC = () => {
         updateSpeciesVariantInput: {
           name: variantName,
           colorId: variantColorId,
+          maxForms,
         },
       },
     });
@@ -496,7 +520,8 @@ export const VariantDetailPage: React.FC = () => {
 
   const hasNameChanges = variantName !== variant.name;
   const hasColorChanges = variantColorId !== variant.colorId;
-  const hasChanges = hasNameChanges || hasColorChanges;
+  const hasFormsChanges = maxForms !== variant.maxForms;
+  const hasChanges = hasNameChanges || hasColorChanges || hasFormsChanges;
 
   return (
     <Container>
@@ -558,6 +583,30 @@ export const VariantDetailPage: React.FC = () => {
             label=""
             placeholder="No color"
           />
+        </ColorRow>
+
+        <ColorRow>
+          <ColorLabel>Forms:</ColorLabel>
+          <FormsInput
+            type="number"
+            min={1}
+            max={MAX_FORMS_CEILING}
+            value={maxForms}
+            data-testid="variant-max-forms"
+            onChange={(e) =>
+              setMaxForms(
+                Math.min(
+                  MAX_FORMS_CEILING,
+                  Math.max(1, Number(e.target.value) || 1),
+                ),
+              )
+            }
+          />
+          <FormsHelp>
+            How many trait sets a character at this rarity may have. One means
+            no forms, which is the ordinary case. Lowering it leaves characters
+            that already have more alone.
+          </FormsHelp>
         </ColorRow>
       </Header>
 
