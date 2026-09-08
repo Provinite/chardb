@@ -26,6 +26,7 @@ export function mapCreateSpeciesVariantInputToService(
     name: input.name,
     speciesId: input.speciesId,
     colorId: input.colorId,
+    maxForms: input.maxForms,
   };
 }
 
@@ -40,11 +41,14 @@ export function mapUpdateSpeciesVariantInputToService(
   if (input.name !== undefined) result.name = input.name;
   if (input.speciesId !== undefined) result.speciesId = input.speciesId;
   if (input.colorId !== undefined) result.colorId = input.colorId;
+  if (input.maxForms !== undefined) result.maxForms = input.maxForms;
 
   return result;
 }
 
-type PrismaSpeciesVariant = Prisma.SpeciesVariantGetPayload<{}>;
+type PrismaSpeciesVariant = Prisma.SpeciesVariantGetPayload<
+  Record<string, never>
+>;
 
 /**
  * Maps Prisma SpeciesVariant result to GraphQL SpeciesVariant entity
@@ -58,6 +62,7 @@ export function mapPrismaSpeciesVariantToGraphQL(
     name: prismaSpeciesVariant.name,
     speciesId: prismaSpeciesVariant.speciesId,
     colorId: prismaSpeciesVariant.colorId ?? undefined,
+    maxForms: prismaSpeciesVariant.maxForms,
     createdAt: prismaSpeciesVariant.createdAt,
     updatedAt: prismaSpeciesVariant.updatedAt,
   };

@@ -4,6 +4,7 @@ import { ModerationStatus, TraitReviewSource } from "@prisma/client";
 import { TraitReviewService } from "./trait-review.service";
 import { DatabaseService } from "../database/database.service";
 import { ItemsService } from "../items/items.service";
+import { CharacterFormsService } from "../character-forms/character-forms.service";
 import { mockDatabaseService } from "../../test/setup";
 
 /**
@@ -18,6 +19,18 @@ import { mockDatabaseService } from "../../test/setup";
 
 // `createGranted` is how a refused redemption hands the member's item back.
 const mockItemsService = { createGranted: jest.fn() };
+
+/**
+ * Approving and refusing write a character's forms; deferring must not.
+ * Mocked rather than provided for real so that "does not touch the character"
+ * can be asserted as "did not call this", which is the point of these tests.
+ */
+const mockCharacterFormsService = {
+  readForms: jest.fn().mockResolvedValue([]),
+  writeForms: jest.fn().mockResolvedValue([]),
+  snapshotToWrites: jest.fn().mockResolvedValue([]),
+  validateForms: jest.fn().mockResolvedValue(undefined),
+};
 
 describe("TraitReviewService", () => {
   let service: TraitReviewService;
@@ -48,6 +61,10 @@ describe("TraitReviewService", () => {
         TraitReviewService,
         { provide: DatabaseService, useValue: mockDatabaseService },
         { provide: ItemsService, useValue: mockItemsService },
+        {
+          provide: CharacterFormsService,
+          useValue: mockCharacterFormsService,
+        },
       ],
     }).compile();
 
@@ -106,6 +123,9 @@ describe("TraitReviewService", () => {
       await service.deferReview(REVIEW_ID, MODERATOR);
 
       expect(mockDatabaseService.character.update).not.toHaveBeenCalled();
+      // Traits live in forms, so the character row being untouched is no
+      // longer the whole claim.
+      expect(mockCharacterFormsService.writeForms).not.toHaveBeenCalled();
     });
 
     it("does not hand a redemption's item back", async () => {

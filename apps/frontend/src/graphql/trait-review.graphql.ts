@@ -21,6 +21,26 @@ export const TRAIT_VALUE_FIELDS_FRAGMENT = gql`
   }
 `;
 
+/**
+ * One form as a review recorded it.
+ *
+ * Not `CharacterFormFields`: a snapshot has no live row behind it, so it
+ * carries `formId` rather than `id` and cannot be refetched. The two are kept
+ * apart deliberately -- a review has to render the same way in a year, after
+ * the form it describes has been renamed or deleted.
+ */
+export const FORM_SNAPSHOT_FIELDS_FRAGMENT = gql`
+  fragment FormSnapshotFields on CharacterFormSnapshot {
+    formId
+    name
+    sortOrder
+    traitValues {
+      ...TraitValueFields
+    }
+  }
+  ${TRAIT_VALUE_FIELDS_FRAGMENT}
+`;
+
 export const TRAIT_REVIEW_QUEUE = gql`
   query TraitReviewQueue(
     $communityId: ID!
@@ -40,14 +60,14 @@ export const TRAIT_REVIEW_QUEUE = gql`
           characterId
           status
           source
-          proposedTraitValues {
-            ...TraitValueFields
+          proposedForms {
+            ...FormSnapshotFields
           }
-          previousTraitValues {
-            ...TraitValueFields
+          previousForms {
+            ...FormSnapshotFields
           }
-          appliedTraitValues {
-            ...TraitValueFields
+          appliedForms {
+            ...FormSnapshotFields
           }
           rejectionReason
           resolvedAt
@@ -95,7 +115,7 @@ export const TRAIT_REVIEW_QUEUE = gql`
       hasMore
     }
   }
-  ${TRAIT_VALUE_FIELDS_FRAGMENT}
+  ${FORM_SNAPSHOT_FIELDS_FRAGMENT}
 `;
 
 export const PENDING_TRAIT_REVIEW_COUNT = gql`
@@ -110,17 +130,17 @@ export const CHARACTER_TRAIT_REVIEW = gql`
       id
       status
       source
-      proposedTraitValues {
-        ...TraitValueFields
+      proposedForms {
+        ...FormSnapshotFields
       }
-      previousTraitValues {
-        ...TraitValueFields
+      previousForms {
+        ...FormSnapshotFields
       }
       rejectionReason
       createdAt
     }
   }
-  ${TRAIT_VALUE_FIELDS_FRAGMENT}
+  ${FORM_SNAPSHOT_FIELDS_FRAGMENT}
 `;
 
 export const APPROVE_TRAIT_REVIEW = gql`
@@ -173,8 +193,8 @@ export const EDIT_AND_APPROVE_TRAIT_REVIEW = gql`
     editAndApproveTraitReview(input: $input) {
       id
       status
-      appliedTraitValues {
-        ...TraitValueFields
+      appliedForms {
+        ...FormSnapshotFields
       }
       resolvedAt
       resolvedBy {
@@ -183,5 +203,5 @@ export const EDIT_AND_APPROVE_TRAIT_REVIEW = gql`
       }
     }
   }
-  ${TRAIT_VALUE_FIELDS_FRAGMENT}
+  ${FORM_SNAPSHOT_FIELDS_FRAGMENT}
 `;

@@ -10,6 +10,14 @@ import {
 } from "../dto/character.dto";
 import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 import { CharacterTraitValueInput } from "../dto/character-trait.dto";
+import {
+  NewCharacterFormInput,
+  CharacterFormsChangeInput,
+} from "../dto/character-form.dto";
+import {
+  CharacterFormWrite,
+  CharacterFormsChange,
+} from "../../character-forms/character-forms.service";
 import { Character, CharacterConnection } from "../entities/character.entity";
 
 /**
@@ -34,8 +42,57 @@ export function mapTraitValues(
     });
 }
 
+/**
+ * Turn submitted new forms into the service's write shape.
+ *
+ * For the paths that make a character, where there is nothing to patch.
+ */
+export function mapNewForms(
+  forms?: NewCharacterFormInput[],
+): CharacterFormWrite[] | undefined {
+  if (!forms) return undefined;
+  return forms.map((form) => ({
+    name: form.name,
+    traitValues: mapTraitValues(form.traitValues),
+  }));
+}
+
+/**
+ * Turn a submitted change into the service's change shape.
+ *
+ * Returns undefined when nothing was asked for, which is how a caller says
+ * "leave this character's forms alone" -- distinct from asking for a change
+ * that happens to be empty.
+ */
+export function mapFormsChange(
+  change?: CharacterFormsChangeInput | null,
+): CharacterFormsChange | undefined {
+  if (!change) return undefined;
+  const { newForms, updateForms, removeForms } = change;
+  if (!newForms?.length && !updateForms?.length && !removeForms?.length) {
+    return undefined;
+  }
+  return {
+    newForms: newForms?.map((form) => ({
+      name: form.name,
+      traitValues: mapTraitValues(form.traitValues),
+      ...(form.sortOrder !== undefined ? { sortOrder: form.sortOrder } : {}),
+    })),
+    updateForms: updateForms?.map((form) => ({
+      id: form.id,
+      ...(form.name !== undefined ? { name: form.name } : {}),
+      ...(form.traitValues !== undefined
+        ? { traitValues: mapTraitValues(form.traitValues) }
+        : {}),
+      ...(form.sortOrder !== undefined ? { sortOrder: form.sortOrder } : {}),
+    })),
+    removeForms,
+  };
+}
+
 export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
   characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
+  forms?: CharacterFormWrite[];
   tags?: string[];
   pendingOwner?: {
     provider: ExternalAccountProvider;
@@ -76,11 +133,11 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     customFields: characterData.customFields
       ? JSON.parse(characterData.customFields)
       : undefined,
-    traitValues: mapTraitValues(characterData.traitValues),
   };
 
   return {
     characterData: prismaCharacterData,
+    forms: mapNewForms(characterData.forms),
     tags,
     pendingOwner,
     assignToSelf,
@@ -141,12 +198,13 @@ export function mapUpdateCharacterProfileInputToService(
 
 /**
  * Maps UpdateCharacterRegistryInput to service format
- * Registry fields: registryId, speciesVariantId, traitValues
+ * Registry fields: registryId, speciesVariantId, forms
  */
 export function mapUpdateCharacterRegistryInputToService(
   input: UpdateCharacterRegistryInput,
 ): {
   characterData: Prisma.CharacterUpdateInput;
+  forms?: CharacterFormsChange;
 } {
   const characterData: Prisma.CharacterUpdateInput = {};
 
@@ -157,10 +215,8 @@ export function mapUpdateCharacterRegistryInputToService(
       ? { connect: { id: input.speciesVariantId } }
       : { disconnect: true };
   }
-  if (input.traitValues !== undefined)
-    characterData.traitValues = mapTraitValues(input.traitValues);
 
-  return { characterData };
+  return { characterData, forms: mapFormsChange(input.forms) };
 }
 
 // Define the exact Prisma return type
@@ -195,15 +251,6 @@ export function mapPrismaCharacterToGraphQL(
     customFields: prismaCharacter.customFields
       ? JSON.stringify(prismaCharacter.customFields)
       : undefined,
-    traitValues: Array.isArray(prismaCharacter.traitValues)
-      ? (
-          prismaCharacter.traitValues as PrismaJson.CharacterTraitValuesJson
-        ).map((tv) => ({
-          traitId: tv.traitId,
-          value: tv.value,
-          clarifier: tv.clarifier ?? null,
-        }))
-      : [],
     traitReviewStatus: prismaCharacter.traitReviewStatus ?? undefined,
     createdAt: prismaCharacter.createdAt,
     updatedAt: prismaCharacter.updatedAt,

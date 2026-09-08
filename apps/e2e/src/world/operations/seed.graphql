@@ -71,6 +71,23 @@ mutation SeedCreateSpeciesVariant(
   createSpeciesVariant(createSpeciesVariantInput: $createSpeciesVariantInput) {
     id
     name
+    maxForms
+  }
+}
+
+# How many forms a variant allows. Raising it is what turns character forms on
+# for a rarity; every variant starts at one.
+mutation SeedUpdateSpeciesVariant(
+  $id: ID!
+  $updateSpeciesVariantInput: UpdateSpeciesVariantInput!
+) {
+  updateSpeciesVariant(
+    id: $id
+    updateSpeciesVariantInput: $updateSpeciesVariantInput
+  ) {
+    id
+    name
+    maxForms
   }
 }
 
@@ -124,6 +141,18 @@ query SeedTraitReviewQueue($communityId: ID!, $first: Int, $offset: Int) {
         deferredAt
         deferralCount
         deferralNote
+        # A review names every form the character would have, so a spec can
+        # tell "this proposal adds a form" from "this one edits an existing
+        # form's traits".
+        proposedForms {
+          formId
+          name
+          sortOrder
+          traitValues {
+            traitId
+            value
+          }
+        }
       }
     }
   }
@@ -165,9 +194,14 @@ query SeedCharacter($id: ID!) {
       id
       name
     }
-    traitValues {
-      traitId
-      value
+    forms {
+      id
+      name
+      sortOrder
+      traitValues {
+        traitId
+        value
+      }
     }
     pendingTraitReviewSource
   }
@@ -478,14 +512,35 @@ query SeedCharacterVariantChanges($characterId: ID!) {
     changedBy {
       username
     }
-    previousTraitValues {
-      traitId
-      value
+    previousForms {
+      formId
+      name
+      traitValues {
+        traitId
+        value
+      }
     }
-    newTraitValues {
-      traitId
-      value
+    newForms {
+      formId
+      name
+      traitValues {
+        traitId
+        value
+      }
     }
+  }
+}
+
+# First-time species assignment. Only valid on a character that has none, so a
+# spec can prove what it does and does not touch on the way in.
+mutation SeedAssignCharacterSpecies(
+  $id: ID!
+  $input: AssignCharacterSpeciesInput!
+) {
+  assignCharacterSpecies(id: $id, input: $input) {
+    id
+    speciesId
+    speciesVariantId
   }
 }
 
@@ -518,6 +573,26 @@ mutation SeedRevertTraitReview($input: RevertTraitReviewInput!) {
   revertTraitReview(input: $input) {
     id
     status
+  }
+}
+
+# A moderator correcting a proposal before approving it. The only path that
+# reaches the forms writer with caller-supplied forms, so a spec can prove it
+# is validated like every other one rather than trusted for being staff's.
+mutation SeedEditAndApproveTraitReview(
+  $input: EditAndApproveTraitReviewInput!
+) {
+  editAndApproveTraitReview(input: $input) {
+    id
+    status
+    appliedForms {
+      formId
+      name
+      traitValues {
+        traitId
+        value
+      }
+    }
   }
 }
 

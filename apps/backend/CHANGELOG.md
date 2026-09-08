@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Character forms**: `CharacterForm` holds a character's trait values, so one masterlist entry can carry several appearances; how many is `SpeciesVariant.maxForms`, and `CharacterFormsService.writeForms` is now the only writer of a character's traits (#343).
+
 - **Character folders**: `CharacterFolder` and `CharacterFolderEntry`, nested through `parentId`, five deep, private by subtree. `CharacterFiltersInput` gains `folderId` and `unfiled`, and a traded character leaves its old folders by an ownership check at read time rather than by eviction (#350).
 
 - **Email verification.** Signup mails a single-use link and hands back no session; `login` and `refreshToken` refuse an unconfirmed address with an `EMAIL_NOT_VERIFIED` code, so `User.isVerified` now means "confirmed this address" rather than being set by nothing (#372).
@@ -20,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A settings link in every optional email's footer.** No one-click unsubscribe: this is mail about the recipient's own uploads rather than marketing, so none is required of it, and a signed link would mean a token plus an endpoint that acts on it unauthenticated. Password reset and password-changed mail carries no such footer and cannot be opted out of — `AuthService` reaches `EmailService` directly and imports neither the preference nor the dispatch service (#344).
 
 ### Changed
+
+- **Breaking: a character's traits are read and written as forms.** `Character.traitValues`, `TraitReview.{proposed,previous,applied}TraitValues` and `CharacterVariantChange.{previous,new}TraitValues` are gone, and every input that took `traitValues` now takes `forms` (#343).
+
+- **Breaking: forms are changed by patch.** Update inputs take `newForms` / `updateForms` / `removeForms` rather than the character's complete list, so a submission that omits a form no longer deletes it and two people editing different forms stop overwriting each other (#343).
 
 - **Breaking: `signup` returns `Boolean!` instead of `AuthPayload!`** and sets no refresh cookie. A new account cannot hold a session until its address is confirmed, so there is nothing to hand back (#372).
 

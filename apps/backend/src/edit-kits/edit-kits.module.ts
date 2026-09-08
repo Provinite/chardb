@@ -4,6 +4,7 @@ import { AuthModule } from "../auth/auth.module";
 import { ItemsModule } from "../items/items.module";
 import { CharactersModule } from "../characters/characters.module";
 import { TraitReviewModule } from "../trait-review/trait-review.module";
+import { CharacterFormsModule } from "../character-forms/character-forms.module";
 import { EditKitsService } from "./edit-kits.service";
 import { EditKitsResolver } from "./edit-kits.resolver";
 
@@ -21,6 +22,7 @@ import { EditKitsResolver } from "./edit-kits.resolver";
     ItemsModule,
     CharactersModule,
     TraitReviewModule,
+    CharacterFormsModule,
   ],
   providers: [EditKitsService, EditKitsResolver],
   exports: [EditKitsService],

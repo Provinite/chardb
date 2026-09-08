@@ -6,7 +6,7 @@ import {
 } from "../entities/trait-review.entity";
 import { mapPrismaCharacterToGraphQL } from "../../characters/utils/character-resolver-mappers";
 import { mapPrismaUserToGraphQL } from "../../users/utils/user-resolver-mappers";
-import { CharacterTraitValue } from "../../shared/types/character-trait.types";
+import { mapFormsJson } from "../../character-forms/character-form-mappers";
 
 /**
  * Shared include pattern for trait review with character and resolver
@@ -46,19 +46,6 @@ export type PrismaTraitReviewQueueItem = Prisma.TraitReviewGetPayload<{
 }>;
 
 /**
- * Map JSON trait values to GraphQL CharacterTraitValue array
- */
-function mapTraitValuesJson(
-  json: PrismaJson.CharacterTraitValuesJson,
-): CharacterTraitValue[] {
-  return json.map((tv) => ({
-    traitId: tv.traitId,
-    value: tv.value,
-    clarifier: tv.clarifier ?? null,
-  }));
-}
-
-/**
  * Maps Prisma TraitReview to GraphQL entity
  */
 export function mapPrismaTraitReviewToGraphQL(
@@ -69,10 +56,10 @@ export function mapPrismaTraitReviewToGraphQL(
     characterId: prismaReview.characterId,
     status: prismaReview.status,
     source: prismaReview.source,
-    proposedTraitValues: mapTraitValuesJson(prismaReview.proposedTraitValues),
-    previousTraitValues: mapTraitValuesJson(prismaReview.previousTraitValues),
-    appliedTraitValues: prismaReview.appliedTraitValues
-      ? mapTraitValuesJson(prismaReview.appliedTraitValues)
+    proposedForms: mapFormsJson(prismaReview.proposedForms),
+    previousForms: mapFormsJson(prismaReview.previousForms),
+    appliedForms: prismaReview.appliedForms
+      ? mapFormsJson(prismaReview.appliedForms)
       : undefined,
     resolvedAt: prismaReview.resolvedAt ?? undefined,
     resolvedById: prismaReview.resolvedById ?? undefined,
@@ -107,10 +94,10 @@ export function mapPrismaTraitReviewQueueItemToGraphQL(
       characterId: prismaReview.characterId,
       status: prismaReview.status,
       source: prismaReview.source,
-      proposedTraitValues: mapTraitValuesJson(prismaReview.proposedTraitValues),
-      previousTraitValues: mapTraitValuesJson(prismaReview.previousTraitValues),
-      appliedTraitValues: prismaReview.appliedTraitValues
-        ? mapTraitValuesJson(prismaReview.appliedTraitValues)
+      proposedForms: mapFormsJson(prismaReview.proposedForms),
+      previousForms: mapFormsJson(prismaReview.previousForms),
+      appliedForms: prismaReview.appliedForms
+        ? mapFormsJson(prismaReview.appliedForms)
         : undefined,
       resolvedAt: prismaReview.resolvedAt ?? undefined,
       resolvedById: prismaReview.resolvedById ?? undefined,

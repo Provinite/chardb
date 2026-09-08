@@ -19,6 +19,8 @@ export interface CreateSpeciesVariantServiceInput {
   speciesId: string;
   /** ID of the color for this species variant */
   colorId?: string;
+  /** How many forms a character on this variant may have */
+  maxForms?: number;
 }
 
 /**
@@ -31,6 +33,8 @@ export interface UpdateSpeciesVariantServiceInput {
   speciesId?: string;
   /** ID of the color for this species variant */
   colorId?: string | null;
+  /** How many forms a character on this variant may have */
+  maxForms?: number;
 }
 
 @Injectable()
@@ -69,6 +73,7 @@ export class SpeciesVariantsService {
         species: {
           connect: { id: input.speciesId },
         },
+        ...(input.maxForms !== undefined && { maxForms: input.maxForms }),
         ...(input.colorId && {
           color: {
             connect: { id: input.colorId },
@@ -156,6 +161,11 @@ export class SpeciesVariantsService {
     if (input.speciesId !== undefined) {
       updateData.species = { connect: { id: input.speciesId } };
     }
+    // Lowering the limit deliberately does not touch characters that already
+    // have more forms than it. Deleting somebody's second form because staff
+    // changed a number would destroy a design nobody reviewed the removal of;
+    // the limit is checked when a character's forms are next written instead.
+    if (input.maxForms !== undefined) updateData.maxForms = input.maxForms;
     if (input.colorId !== undefined) {
       // Validate colorId if it's being set (not null)
       if (input.colorId) {

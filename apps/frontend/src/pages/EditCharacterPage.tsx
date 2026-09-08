@@ -20,7 +20,6 @@ import {
   AssignCharacterSpeciesInput,
   UpdateCharacterProfileInput,
   UpdateCharacterRegistryInput,
-  CharacterTraitValueInput,
   Visibility,
 } from "../graphql/characters.graphql";
 import { ExternalAccountProvider } from "../generated/graphql";
@@ -35,8 +34,13 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
-import { TraitForm } from "../components/character/TraitForm";
+import { CharacterFormsEditor } from "../components/character/CharacterFormsEditor";
 import { VariantChangePanel } from "../components/character/VariantChangePanel";
+import {
+  draftsFromForms,
+  draftsToChange,
+  type CharacterFormDraft,
+} from "../lib/characterForms";
 import {
   SpeciesDetailsFragment,
   SpeciesVariantDetailsFragment,
@@ -315,16 +319,21 @@ export const EditCharacterPage: React.FC = () => {
   const [selectedVariant, setSelectedVariant] =
     useState<SpeciesVariantDetailsFragment | null>(null);
 
-  // Registry state (traits and registryId)
-  const [traitValues, setTraitValues] = useState<CharacterTraitValueInput[]>(
-    [],
-  );
+  // Registry state (forms and registryId)
+  const [forms, setForms] = useState<CharacterFormDraft[]>([]);
+  /**
+   * The forms as the page opened on them, so a save can send what changed
+   * rather than the whole list. See `draftsToChange`.
+   */
+  const [initialForms, setInitialForms] = useState<CharacterFormDraft[]>([]);
   const [registryId, setRegistryId] = useState<string>("");
   const [isSubmittingRegistry, setIsSubmittingRegistry] = useState(false);
 
   /** Staff's note on a rarity change, and how many traits it strands. */
   const [variantChangeReason, setVariantChangeReason] = useState("");
   const [unresolvedTraits, setUnresolvedTraits] = useState(0);
+  /** Forms still missing a name. The registry save is blocked on it. */
+  const [unnamedForms, setUnnamedForms] = useState(0);
 
   // Pending ownership state
   const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(
@@ -430,16 +439,10 @@ export const EditCharacterPage: React.FC = () => {
         setSelectedVariant(character.speciesVariant);
       }
 
-      // Set registry values (traits and registryId)
-      if (character.traitValues) {
-        setTraitValues(
-          character.traitValues.map((tv) => ({
-            traitId: tv.traitId,
-            value: tv.value || "",
-            clarifier: tv.clarifier ?? null,
-          })),
-        );
-      }
+      // Set registry values (forms and registryId)
+      const loaded = draftsFromForms(character.forms);
+      setForms(loaded);
+      setInitialForms(loaded);
       setRegistryId(character.registryId || "");
 
       // Initialize ownership state
@@ -630,7 +633,7 @@ export const EditCharacterPage: React.FC = () => {
     setIsSubmittingRegistry(true);
     try {
       const input: UpdateCharacterRegistryInput = {
-        traitValues,
+        forms: draftsToChange(initialForms, forms),
         registryId: registryId.trim() || null,
         // Sent whether or not it moved. The server compares against what the
         // character has and only treats a genuine move as a rarity change --
@@ -967,8 +970,8 @@ export const EditCharacterPage: React.FC = () => {
               currentVariantId={character.speciesVariantId ?? null}
               selectedVariantId={selectedVariant?.id ?? null}
               onVariantChange={setSelectedVariant}
-              traitValues={traitValues}
-              onTraitValuesChange={setTraitValues}
+              forms={forms}
+              onFormsChange={setForms}
               reason={variantChangeReason}
               onReasonChange={setVariantChangeReason}
               onUnresolvedChange={setUnresolvedTraits}
@@ -989,13 +992,24 @@ export const EditCharacterPage: React.FC = () => {
               </TagsHelp>
             </FormGroup>
 
-            <TraitForm
+            {/* The limit comes from the variant staff has *selected*, not the
+                one the character has: picking a rarity that allows two forms
+                should let them add the second before saving, and picking one
+                that allows fewer should stop them adding more first. */}
+            <CharacterFormsEditor
               speciesId={character.speciesId}
               speciesVariant={
-                character.speciesVariant as SpeciesVariantDetailsFragment | null
+                (selectedVariant ??
+                  character.speciesVariant) as SpeciesVariantDetailsFragment | null
               }
-              traitValues={traitValues}
-              onChange={setTraitValues}
+              maxForms={
+                selectedVariant?.maxForms ??
+                character.speciesVariant?.maxForms ??
+                1
+              }
+              forms={forms}
+              onChange={setForms}
+              onUnnamedChange={setUnnamedForms}
               disabled={!canEditRegistry || isSubmittingRegistry}
             />
             <TraitActions>
@@ -1010,7 +1024,9 @@ export const EditCharacterPage: React.FC = () => {
                   // A stranded trait value would be refused by the server
                   // anyway; blocking here means staff find out before typing
                   // the rest of the form.
-                  unresolvedTraits > 0
+                  unresolvedTraits > 0 ||
+                  // A nameless form would render as a blank tab.
+                  unnamedForms > 0
                 }
               >
                 {isSubmittingRegistry ? "Saving..." : "Save Species Details"}
