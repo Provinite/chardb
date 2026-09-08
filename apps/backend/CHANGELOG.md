@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Breaking: a character's traits are read and written as forms.** `Character.traitValues`, `TraitReview.{proposed,previous,applied}TraitValues` and `CharacterVariantChange.{previous,new}TraitValues` are gone, and every input that took `traitValues` now takes `forms` (#343).
 
+- **Breaking: forms are changed by patch.** Update inputs take `newForms` / `updateForms` / `removeForms` rather than the character's complete list, so a submission that omits a form no longer deletes it and two people editing different forms stop overwriting each other (#343).
+
 - **Breaking: `signup` returns `Boolean!` instead of `AuthPayload!`** and sets no refresh cookie. A new account cannot hold a session until its address is confirmed, so there is nothing to hand back (#372).
 
 - **Every existing account is backfilled as verified** by the `email_verification` migration. Nobody who already has an account is asked to confirm an address over mail they never had the chance to answer (#372).
