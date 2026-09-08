@@ -254,9 +254,9 @@ test.describe("character forms", () => {
           world.as("commadmin"),
           world.characters.pinefall.id,
           [
-          { name: "Base", traitValues: eyes(world, "blue") },
-          { name: "Awakened", traitValues: eyes(world, "green") },
-        ],
+            { name: "Base", traitValues: eyes(world, "blue") },
+            { name: "Awakened", traitValues: eyes(world, "green") },
+          ],
         ),
       },
     });
@@ -292,9 +292,9 @@ test.describe("character forms", () => {
           world.as("commadmin"),
           world.characters.pinefall.id,
           [
-          { name: "Base", traitValues: eyes(world, "blue") },
-          { name: "Awakened", traitValues: eyes(world, "blue") },
-        ],
+            { name: "Base", traitValues: eyes(world, "blue") },
+            { name: "Awakened", traitValues: eyes(world, "blue") },
+          ],
         ),
       },
     });
@@ -359,9 +359,9 @@ test.describe("character forms", () => {
               world.as("commadmin"),
               world.characters.pinefall.id,
               [
-              { name: "Base", traitValues: eyes(world, "blue") },
-              { name: "Awakened", traitValues: eyes(world, "green") },
-            ],
+                { name: "Base", traitValues: eyes(world, "blue") },
+                { name: "Awakened", traitValues: eyes(world, "green") },
+              ],
             ),
           },
         }),
@@ -392,9 +392,9 @@ test.describe("character forms", () => {
               world.as("commadmin"),
               world.characters.pinefall.id,
               [
-              { name: "Base", traitValues: eyes(world, "blue") },
-              { name: "Awakened", traitValues: eyes(world, "green") },
-            ],
+                { name: "Base", traitValues: eyes(world, "blue") },
+                { name: "Awakened", traitValues: eyes(world, "green") },
+              ],
             ),
           },
         }),
@@ -587,9 +587,9 @@ test.describe("character forms", () => {
           world.as("commadmin"),
           world.characters.pinefall.id,
           [
-          { name: "Base", traitValues: eyes(world, "blue") },
-          { name: "Awakened", traitValues: eyes(world, "blue") },
-        ],
+            { name: "Base", traitValues: eyes(world, "blue") },
+            { name: "Awakened", traitValues: eyes(world, "blue") },
+          ],
         ),
       },
     });

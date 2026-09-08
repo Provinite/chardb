@@ -52,9 +52,9 @@ const giveTwoForms = async (world: World<CommunityItemsWorld>) => {
         world.as("commadmin"),
         world.characters.pinefall.id,
         [
-        { name: "Base", traitValues: eyes(world, "blue") },
-        { name: "Awakened", traitValues: eyes(world, "green") },
-      ],
+          { name: "Base", traitValues: eyes(world, "blue") },
+          { name: "Awakened", traitValues: eyes(world, "green") },
+        ],
       ),
     },
   });
@@ -262,9 +262,9 @@ test.describe("staff editing a character's forms", () => {
           world.as("commadmin"),
           world.characters.pinefall.id,
           [
-          { name: "Base", traitValues: eyes(world, "blue") },
-          { name: "Awakened", traitValues: eyes(world, "blue") },
-        ],
+            { name: "Base", traitValues: eyes(world, "blue") },
+            { name: "Awakened", traitValues: eyes(world, "blue") },
+          ],
         ),
       },
     });
@@ -482,9 +482,9 @@ test.describe("a member's routes to a second form", () => {
           world.as("commadmin"),
           world.characters.pinefall.id,
           [
-          { name: "Base", traitValues: eyes(world, "blue") },
-          { name: "Awakened", traitValues: eyes(world, "blue") },
-        ],
+            { name: "Base", traitValues: eyes(world, "blue") },
+            { name: "Awakened", traitValues: eyes(world, "blue") },
+          ],
         ),
       },
     });

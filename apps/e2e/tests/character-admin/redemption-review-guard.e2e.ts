@@ -154,14 +154,18 @@ test.describe("disposing of a character under redemption review", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.bramblefoot.id,
-        forms: await setOnlyForm(world.as("member"), world.characters.bramblefoot.id, {
-          traitValues: [
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.bramblefoot.id,
           {
-            traitId: world.traits.eyeColor.id,
-            value: world.traits.eyeColor.values.blue,
+            traitValues: [
+              {
+                traitId: world.traits.eyeColor.id,
+                value: world.traits.eyeColor.values.blue,
+              },
+            ],
           },
-        ],
-        }),
+        ),
       },
     });
 
@@ -265,14 +269,18 @@ test.describe("the review queue's actions", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.bramblefoot.id,
-        forms: await setOnlyForm(world.as("member"), world.characters.bramblefoot.id, {
-          traitValues: [
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.bramblefoot.id,
           {
-            traitId: world.traits.eyeColor.id,
-            value: world.traits.eyeColor.values.blue,
+            traitValues: [
+              {
+                traitId: world.traits.eyeColor.id,
+                value: world.traits.eyeColor.values.blue,
+              },
+            ],
           },
-        ],
-        }),
+        ),
       },
     });
 

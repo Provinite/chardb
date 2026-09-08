@@ -56,7 +56,9 @@ export class NewCharacterFormInput {
  */
 @InputType({ description: "A change to one of a character's existing forms" })
 export class UpdateCharacterFormInput {
-  @Field(() => ID, { description: "The form to change. Must be this character's." })
+  @Field(() => ID, {
+    description: "The form to change. Must be this character's.",
+  })
   @IsUUID(4, { message: "Form ID must be a valid UUID" })
   id!: string;
 
@@ -80,7 +82,8 @@ export class UpdateCharacterFormInput {
 
   @Field(() => Int, {
     nullable: true,
-    description: "Where this form should sit, from 0. Omit to leave it where it is.",
+    description:
+      "Where this form should sit, from 0. Omit to leave it where it is.",
   })
   @IsOptional()
   @IsInt()

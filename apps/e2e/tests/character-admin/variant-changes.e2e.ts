@@ -296,11 +296,11 @@ test.describe("traits that do not exist at the new rarity", () => {
           speciesVariantId: world.variants.legendary.id,
           forms: await setOnlyForm(world.as("commadmin"), id, {
             traitValues: [
-            {
-              traitId: world.traits.eyeColor.id,
-              value: world.traits.eyeColor.values.amber,
-            },
-          ],
+              {
+                traitId: world.traits.eyeColor.id,
+                value: world.traits.eyeColor.values.amber,
+              },
+            ],
           }),
         },
       }),
@@ -327,11 +327,11 @@ test.describe("traits that do not exist at the new rarity", () => {
         speciesVariantId: world.variants.legendary.id,
         forms: await setOnlyForm(world.as("commadmin"), id, {
           traitValues: [
-          {
-            traitId: world.traits.eyeColor.id,
-            value: world.traits.eyeColor.values.amber,
-          },
-        ],
+            {
+              traitId: world.traits.eyeColor.id,
+              value: world.traits.eyeColor.values.amber,
+            },
+          ],
         }),
       },
     });

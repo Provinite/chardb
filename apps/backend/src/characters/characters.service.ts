@@ -1292,16 +1292,15 @@ export class CharactersService {
 
     // Resolved against what the character has now, so a submission that only
     // renames one form does not have to resend the others.
-    const plannedForms = forms
-      ? await this.forms.plan(id, forms)
-      : undefined;
+    const plannedForms = forms ? await this.forms.plan(id, forms) : undefined;
 
     // A rarity change re-judges forms the submission never touched: the
     // destination may permit fewer of them, or forbid a value one of them
     // holds. Planning an empty change is how "what would this character have"
     // is asked when the caller said nothing about its forms.
     const formsToJudge =
-      plannedForms ?? (variantIsChanging ? await this.forms.plan(id, {}) : undefined);
+      plannedForms ??
+      (variantIsChanging ? await this.forms.plan(id, {}) : undefined);
 
     if (formsToJudge) {
       // Judged against the destination variant, values included: this is the
@@ -1857,7 +1856,6 @@ export class CharactersService {
         return { createdAt: order } as const;
     }
   }
-
 
   async getLikesCount(characterId: string) {
     return this.db.like.count({

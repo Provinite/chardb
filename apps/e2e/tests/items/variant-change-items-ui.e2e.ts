@@ -242,14 +242,18 @@ test.describe("redeeming a variant change item, through the pages", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.pinefall.id,
-        forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-          traitValues: [
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.pinefall.id,
           {
-            traitId: world.traits.eyeColor.id,
-            value: world.traits.eyeColor.values.green,
+            traitValues: [
+              {
+                traitId: world.traits.eyeColor.id,
+                value: world.traits.eyeColor.values.green,
+              },
+            ],
           },
-        ],
-        }),
+        ),
       },
     });
 

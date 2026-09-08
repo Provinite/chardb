@@ -106,9 +106,13 @@ test.describe("redeeming a variant change item", () => {
       input: {
         itemId: world.variantChangeItems.rareUpgradeIds[0],
         characterId: world.characters.pinefall.id,
-        forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-          traitValues: eyes(world, "green"),
-        }),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.pinefall.id,
+          {
+            traitValues: eyes(world, "green"),
+          },
+        ),
       },
     });
 
@@ -134,9 +138,13 @@ test.describe("redeeming a variant change item", () => {
       input: {
         itemId: world.variantChangeItems.rareUpgradeIds[0],
         characterId: world.characters.pinefall.id,
-        forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-          traitValues: eyes(world, "blue"),
-        }),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.pinefall.id,
+          {
+            traitValues: eyes(world, "blue"),
+          },
+        ),
       },
     });
 
@@ -160,9 +168,13 @@ test.describe("redeeming a variant change item", () => {
       input: {
         itemId: world.variantChangeItems.rareUpgradeIds[0],
         characterId: world.characters.pinefall.id,
-        forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-          traitValues: eyes(world, "blue"),
-        }),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.pinefall.id,
+          {
+            traitValues: eyes(world, "blue"),
+          },
+        ),
       },
     });
 
@@ -195,9 +207,13 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.ascensionIds[0],
           characterId: world.characters.bramblefoot.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.bramblefoot.id, {
-            traitValues: eyes(world, "amber"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.bramblefoot.id,
+            {
+              traitValues: eyes(world, "amber"),
+            },
+          ),
         },
       });
 
@@ -217,9 +233,13 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.ascensionIds[0],
           characterId: world.characters.pinefall.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-            traitValues: eyes(world, "blue"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.pinefall.id,
+            {
+              traitValues: eyes(world, "blue"),
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/not available to/i);
@@ -240,9 +260,13 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.ascensionIds[0],
           characterId: world.characters.pinefall.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-            traitValues: eyes(world, "amber"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.pinefall.id,
+            {
+              traitValues: eyes(world, "amber"),
+            },
+          ),
         },
       });
 
@@ -268,9 +292,13 @@ test.describe("redeeming a variant change item", () => {
           // Emberwake is already Rare.
           itemId: world.variantChangeItems.rareUpgradeIds[0],
           characterId: world.characters.emberwake.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.emberwake.id, {
-            traitValues: eyes(world, "amber"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.emberwake.id,
+            {
+              traitValues: eyes(world, "amber"),
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/already/i);
@@ -284,9 +312,13 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.rareUpgradeIds[0],
           characterId: world.characters.ashglass.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.ashglass.id, {
-            traitValues: eyes(world, "amber"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.ashglass.id,
+            {
+              traitValues: eyes(world, "amber"),
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/cannot be redeemed on that character/i);
@@ -299,9 +331,13 @@ test.describe("redeeming a variant change item", () => {
           itemId: world.variantChangeItems.ascensionIds[0],
           // Marrowfen is othermember's.
           characterId: world.characters.marrowfen.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.marrowfen.id, {
-            traitValues: eyes(world, "amber"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.marrowfen.id,
+            {
+              traitValues: eyes(world, "amber"),
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/not yours to change/i);
@@ -315,9 +351,13 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.rareUpgradeIds[0],
           characterId: world.characters.marrowfen.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.marrowfen.id, {
-            traitValues: eyes(world, "amber"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.marrowfen.id,
+            {
+              traitValues: eyes(world, "amber"),
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/not yours/i);
@@ -334,9 +374,13 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: "00000000-0000-4000-8000-000000000000",
           characterId: world.characters.pinefall.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-            traitValues: eyes(world, "blue"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.pinefall.id,
+            {
+              traitValues: eyes(world, "blue"),
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/does not exist/i);
@@ -363,9 +407,13 @@ test.describe("redeeming a variant change item", () => {
           // An edit kit. Consumable, held by this member, and the wrong shape.
           itemId: world.editKitItems.kitIds[0],
           characterId: world.characters.pinefall.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-            traitValues: eyes(world, "blue"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.pinefall.id,
+            {
+              traitValues: eyes(world, "blue"),
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/does not change a character's variant/i);
@@ -396,9 +444,13 @@ test.describe("redeeming a variant change item", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.pinefall.id,
-        forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-          traitValues: eyes(world, "green"),
-        }),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.pinefall.id,
+          {
+            traitValues: eyes(world, "green"),
+          },
+        ),
       },
     });
 
@@ -409,9 +461,13 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.rareUpgradeIds[0],
           characterId: world.characters.pinefall.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-            traitValues: eyes(world, "blue"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.pinefall.id,
+            {
+              traitValues: eyes(world, "blue"),
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/awaiting review/i);
@@ -432,9 +488,13 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId: world.variantChangeItems.ascensionIds[0],
           characterId: world.characters.bramblefoot.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.bramblefoot.id, {
-            traitValues: [],
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.bramblefoot.id,
+            {
+              traitValues: [],
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/no species/i);
@@ -449,9 +509,13 @@ test.describe("redeeming a variant change item", () => {
       input: {
         itemId,
         characterId: world.characters.pinefall.id,
-        forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-          traitValues: eyes(world, "blue"),
-        }),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.pinefall.id,
+          {
+            traitValues: eyes(world, "blue"),
+          },
+        ),
       },
     });
 
@@ -465,9 +529,13 @@ test.describe("redeeming a variant change item", () => {
         input: {
           itemId,
           characterId: world.characters.pinefall.id,
-          forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
-            traitValues: eyes(world, "blue"),
-          }),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.pinefall.id,
+            {
+              traitValues: eyes(world, "blue"),
+            },
+          ),
         },
       }),
     ).rejects.toThrow();

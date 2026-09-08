@@ -67,7 +67,10 @@ export function removeForms(...ids: string[]): CharacterFormsChangeInput {
 export async function setForms(
   actor: Actor,
   characterId: string,
-  forms: ReadonlyArray<{ name: string; traitValues: CharacterTraitValueInput[] }>,
+  forms: ReadonlyArray<{
+    name: string;
+    traitValues: CharacterTraitValueInput[];
+  }>,
 ): Promise<CharacterFormsChangeInput> {
   const { character } = await actor.gql(SeedCharacterDocument, {
     id: characterId,
