@@ -1854,7 +1854,6 @@ export type Mutation = {
   deleteComment: Scalars['Boolean']['output'];
   deleteCommunityColor: Scalars['Boolean']['output'];
   deleteGallery: RemovalResponse;
-  deleteImage: Scalars['Boolean']['output'];
   deleteItemType: Scalars['Boolean']['output'];
   /** Deletes a media item and its associated content */
   deleteMedia: Scalars['Boolean']['output'];
@@ -2216,11 +2215,6 @@ export type MutationDeleteCommunityColorArgs = {
 
 
 export type MutationDeleteGalleryArgs = {
-  id: Scalars['ID']['input'];
-};
-
-
-export type MutationDeleteImageArgs = {
   id: Scalars['ID']['input'];
 };
 

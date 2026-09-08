@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **User avatars can be set**: `UpdateUserInput.avatarImageId` accepts an image the caller uploaded and an explicit null to remove one. `avatarImage` is withheld until moderation approves it and again if it is ever rejected, so the one image that does not reach viewers through `Media.image` is gated too (#345).
 
+- **`Media.isAvatarUpload`**, backfilled false. An avatar's media row exists so a community's moderators can see the picture, and is now kept out of every listing and count — it is not a post, and one accumulated per avatar change (#345).
+
 - **`Media.communityId`**, recorded at upload from the host the uploader was on, so a characterless upload reaches a community moderation queue instead of sitting PENDING and invisible until a site admin found it (#345).
 
 - **Character folders**: `CharacterFolder` and `CharacterFolderEntry`, nested through `parentId`, five deep, private by subtree. `CharacterFiltersInput` gains `folderId` and `unfiled`, and a traded character leaves its old folders by an ownership check at read time rather than by eviction (#350).
@@ -88,6 +90,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `communityMembersByUser`, which is about yourself everywhere (#349).
 
 ### Removed
+
+- **Breaking: `deleteImage` is gone.** Nothing called it, and what it did was delete the `Image` row while leaving all three S3 objects behind — deleting the media is the supported path and cleans up after itself (#345).
 
 - **Breaking: the six image queries are gone** — `images`, `image`, `myImages`,
   `userImages`, `characterImages`, `galleryImages`. All were deliberately

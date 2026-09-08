@@ -2,10 +2,12 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Visibility, Prisma, ModerationStatus } from "@chardb/database";
-import { notDeleted } from "../common/utils/prisma-filters";
+import { notDeleted, notAvatarUpload } from "../common/utils/prisma-filters";
 import { ImagesService } from "../images/images.service";
 
 /**
@@ -67,6 +69,9 @@ export interface UpdateUserServiceInput {
 export class UsersService {
   constructor(
     private db: DatabaseService,
+    // `forwardRef` to match the module import; see `UsersModule` for why this
+    // is a cycle at all.
+    @Inject(forwardRef(() => ImagesService))
     private readonly imagesService: ImagesService,
   ) {}
 
@@ -267,6 +272,7 @@ export class UsersService {
         ownerId: userId,
         imageId: { not: null },
         visibility: { in: visibilityFilter },
+        ...notAvatarUpload,
       },
     });
   }
@@ -330,6 +336,7 @@ export class UsersService {
         ownerId: userId,
         imageId: { not: null }, // Only include image media
         visibility: { in: visibilityFilter },
+        ...notAvatarUpload,
       },
       take: limit,
       orderBy: { createdAt: "desc" },

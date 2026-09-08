@@ -49,6 +49,12 @@ export interface UploadImageInput {
    * `Media.communityId`.
    */
   communityId?: string;
+  /**
+   * This upload is a profile picture rather than a post. Its Media row exists
+   * so moderators can see it and is kept out of every listing -- see
+   * `Media.isAvatarUpload`.
+   */
+  isAvatarUpload?: boolean;
 }
 
 export interface UpdateImageInput {
@@ -119,6 +125,7 @@ export class ImagesService {
       description,
       visibility,
       communityId,
+      isAvatarUpload = false,
     } = input;
 
     // Validate file
@@ -248,6 +255,7 @@ export class ImagesService {
           characterId: characterId || null,
           galleryId: galleryId || null,
           communityId: reviewingCommunityId,
+          isAvatarUpload,
           visibility: visibility
             ? (visibility.toUpperCase() as Visibility)
             : isNsfw
@@ -512,20 +520,10 @@ export class ImagesService {
     return url;
   }
 
-  async remove(id: string, userId: string): Promise<boolean> {
-    const image = await this.findOne(id);
-
-    // Check ownership
-    if (image.uploaderId !== userId) {
-      throw new ForbiddenException("You can only delete your own images");
-    }
-
-    await this.db.image.delete({
-      where: { id },
-    });
-
-    return true;
-  }
+  // `remove` was here and is gone with the `deleteImage` mutation that was its
+  // only caller. It deleted the row and left the S3 objects, which is the one
+  // thing a delete must not do. `cleanupOrphanedImage` below is the supported
+  // path and is reached by deleting the media instead.
 
   // Image tagging removed - tags should be managed on the associated Media entry instead
 

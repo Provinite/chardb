@@ -160,6 +160,68 @@ describe("community moderation queue, characterless uploads (e2e)", () => {
     });
   });
 
+  /**
+   * An avatar upload is not a post.
+   *
+   * The two halves have to hold together: hidden from every listing, and still
+   * visible to the moderators the row exists for. Getting the second one wrong
+   * would put avatars back where they started -- reviewable by nobody.
+   */
+  describe("avatar uploads", () => {
+    const createAvatarUpload = async () => {
+      const imageId = await createPendingImage();
+      const media = await testApp.getDb().media.create({
+        data: {
+          title: "Someone's avatar",
+          ownerId: uploaderId,
+          imageId,
+          communityId,
+          isAvatarUpload: true,
+          visibility: Visibility.PUBLIC,
+        },
+      });
+      return media.id;
+    };
+
+    it("is kept out of the owner's own media listing", async () => {
+      const avatarId = await createAvatarUpload();
+      const postId = await createMedia({ title: "Real artwork", communityId });
+
+      const listing = await mediaService.findAll(
+        { ownerId: uploaderId },
+        uploaderId,
+      );
+
+      const ids = listing.media.map((row) => row.id);
+      expect(ids).toContain(postId);
+      expect(ids).not.toContain(avatarId);
+      expect(listing.total).toBe(1);
+    });
+
+    it("is still in the community moderation queue", async () => {
+      const avatarId = await createAvatarUpload();
+
+      const queue = await mediaService.findPendingForModeration(communityId);
+
+      expect(queue.media.map((row) => row.id)).toContain(avatarId);
+    });
+
+    /**
+     * The row above is deliberately PUBLIC, so this is the flag doing the work
+     * and not the visibility filter. The real upload is PRIVATE as well, but
+     * two filters that both happen to hide a row make it impossible to tell
+     * which one is holding.
+     */
+    it("is hidden from a visitor even when it is public", async () => {
+      const avatarId = await createAvatarUpload();
+
+      const anonymous = await mediaService.findAll({ ownerId: uploaderId });
+
+      expect(anonymous.media.map((row) => row.id)).not.toContain(avatarId);
+      expect(anonymous.total).toBe(0);
+    });
+  });
+
   describe("resolving a media's community", () => {
     it("reads it off the column when there is no character", async () => {
       const mediaId = await createMedia({ title: "An avatar", communityId });

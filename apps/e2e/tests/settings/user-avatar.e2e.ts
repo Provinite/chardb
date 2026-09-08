@@ -27,6 +27,20 @@ test.describe("choosing an avatar", () => {
   test.use({ persona: "member" });
 
   /**
+   * Every test here starts from a member with no avatar.
+   *
+   * Tests in a file share a world by default, and these all leave one set --
+   * which made them lie to each other. "Waiting on a moderator" is on the page
+   * from the *previous* test's upload, so the next test's wait for it returned
+   * immediately, and the spec went on to read and approve the old image while
+   * the new upload was still in flight. It passed or failed on timing, which
+   * is to say on what had run before it.
+   */
+  test.beforeEach(async ({ world }) => {
+    await world.reset();
+  });
+
+  /**
    * A 200x100 PNG, wider than it is tall, so a square crop is a genuine
    * choice rather than the whole picture.
    */

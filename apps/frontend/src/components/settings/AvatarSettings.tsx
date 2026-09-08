@@ -251,10 +251,12 @@ export const AvatarSettings: React.FC<AvatarSettingsProps> = ({
       const body = new FormData();
       body.append("file", staged.file);
       body.append("title", `${name}'s avatar`);
-      // PRIVATE keeps an avatar out of the owner's public media listing, where
-      // it would otherwise sit among their artwork as a post in its own right.
-      // It changes nothing about the avatar: that is served through the
-      // profile, not through the media row's visibility.
+      // Not a post. The media row exists so a community's moderators can see
+      // the picture -- every queue reaches an image through media -- and is
+      // kept out of every listing, including the owner's own library. PRIVATE
+      // as well, so nothing that reads visibility rather than this flag can
+      // surface it either.
+      body.append("isAvatarUpload", "true");
       body.append("visibility", "PRIVATE");
       body.append("isNsfw", "false");
       body.append("thumbnailCropX", String(crop.x));

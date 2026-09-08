@@ -2364,7 +2364,6 @@ type Mutation {
   deleteComment(id: ID!): Boolean!
   deleteCommunityColor(id: ID!): Boolean!
   deleteGallery(id: ID!): RemovalResponse!
-  deleteImage(id: ID!): Boolean!
   deleteItemType(id: ID!): Boolean!
 
   """Deletes a media item and its associated content"""

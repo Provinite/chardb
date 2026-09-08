@@ -689,6 +689,25 @@ model Media {
   galleryId   String?    @map("gallery_id")
   visibility  Visibility @default(PUBLIC)
 
+  /// This row exists to carry an avatar through moderation, and for nothing
+  /// else.
+  ///
+  /// An avatar is uploaded through the same endpoint as any other picture and
+  /// so gets a Media row like any other picture -- which is what puts it in
+  /// front of a community's moderators, since every queue reaches an image
+  /// through media. But it is not a post. Left in the listings it appears in
+  /// its owner's library as something they never meant to publish, and one
+  /// more accumulates every time they change their avatar.
+  ///
+  /// So the row stays and the listings skip it. Deleting it instead would take
+  /// the picture out of the moderation queue with it; hiding it costs one
+  /// boolean and keeps the queue honest.
+  ///
+  /// The moderation queues deliberately do NOT filter on this. Nothing else
+  /// should read it either: it says how the row got here, not who may see the
+  /// picture.
+  isAvatarUpload Boolean @default(false) @map("is_avatar_upload")
+
   /// Which community reviews this upload when no character says.
   ///
   /// An image reached its moderators through `character -> species ->
