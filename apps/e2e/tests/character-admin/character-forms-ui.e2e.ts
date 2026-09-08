@@ -9,6 +9,7 @@ import {
   SeedMemberHoldingsDocument,
   SeedCharacterDocument,
 } from "../../src/generated/graphql.js";
+import { setForms } from "../../src/world/forms.js";
 
 const test = presetTest("community-items");
 
@@ -47,10 +48,14 @@ const giveTwoForms = async (world: World<CommunityItemsWorld>) => {
   await world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
     id: world.characters.pinefall.id,
     input: {
-      forms: [
+      forms: await setForms(
+        world.as("commadmin"),
+        world.characters.pinefall.id,
+        [
         { name: "Base", traitValues: eyes(world, "blue") },
         { name: "Awakened", traitValues: eyes(world, "green") },
       ],
+      ),
     },
   });
 };
@@ -253,10 +258,14 @@ test.describe("staff editing a character's forms", () => {
     await world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
       id: world.characters.pinefall.id,
       input: {
-        forms: [
+        forms: await setForms(
+          world.as("commadmin"),
+          world.characters.pinefall.id,
+          [
           { name: "Base", traitValues: eyes(world, "blue") },
           { name: "Awakened", traitValues: eyes(world, "blue") },
         ],
+        ),
       },
     });
     // The destination has to allow two forms as well, or the count refusal
@@ -469,10 +478,14 @@ test.describe("a member's routes to a second form", () => {
     await world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
       id: world.characters.pinefall.id,
       input: {
-        forms: [
+        forms: await setForms(
+          world.as("commadmin"),
+          world.characters.pinefall.id,
+          [
           { name: "Base", traitValues: eyes(world, "blue") },
           { name: "Awakened", traitValues: eyes(world, "blue") },
         ],
+        ),
       },
     });
     // The destination has to allow two forms as well, or the count refusal

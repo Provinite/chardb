@@ -38,7 +38,7 @@ import { CharacterFormsEditor } from "../components/character/CharacterFormsEdit
 import { VariantChangePanel } from "../components/character/VariantChangePanel";
 import {
   draftsFromForms,
-  draftsToInput,
+  draftsToChange,
   type CharacterFormDraft,
 } from "../lib/characterForms";
 import {
@@ -321,6 +321,11 @@ export const EditCharacterPage: React.FC = () => {
 
   // Registry state (forms and registryId)
   const [forms, setForms] = useState<CharacterFormDraft[]>([]);
+  /**
+   * The forms as the page opened on them, so a save can send what changed
+   * rather than the whole list. See `draftsToChange`.
+   */
+  const [initialForms, setInitialForms] = useState<CharacterFormDraft[]>([]);
   const [registryId, setRegistryId] = useState<string>("");
   const [isSubmittingRegistry, setIsSubmittingRegistry] = useState(false);
 
@@ -435,7 +440,9 @@ export const EditCharacterPage: React.FC = () => {
       }
 
       // Set registry values (forms and registryId)
-      setForms(draftsFromForms(character.forms));
+      const loaded = draftsFromForms(character.forms);
+      setForms(loaded);
+      setInitialForms(loaded);
       setRegistryId(character.registryId || "");
 
       // Initialize ownership state
@@ -626,7 +633,7 @@ export const EditCharacterPage: React.FC = () => {
     setIsSubmittingRegistry(true);
     try {
       const input: UpdateCharacterRegistryInput = {
-        forms: draftsToInput(forms),
+        forms: draftsToChange(initialForms, forms),
         registryId: registryId.trim() || null,
         // Sent whether or not it moved. The server compares against what the
         // character has and only treats a genuine move as a rarity change --

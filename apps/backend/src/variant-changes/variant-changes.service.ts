@@ -12,7 +12,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { ItemsService } from "../items/items.service";
 import { CharactersService } from "../characters/characters.service";
-import { mapForms } from "../characters/utils/character-resolver-mappers";
+import { mapFormsChange } from "../characters/utils/character-resolver-mappers";
 import { CharacterFormsService } from "../character-forms/character-forms.service";
 import { notDeleted } from "../common/utils/prisma-filters";
 import { ChangeCharacterVariantWithItemInput } from "./dto/variant-change.dto";
@@ -117,7 +117,10 @@ export class VariantChangesService {
       );
     }
 
-    const proposed = mapForms(input.forms) ?? [];
+    const proposed = await this.forms.plan(
+      character.id,
+      mapFormsChange(input.forms) ?? {},
+    );
 
     // Validated against the **destination**, which is the entire reason this
     // input carries forms at all. Judging them against the variant the

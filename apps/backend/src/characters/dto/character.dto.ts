@@ -23,7 +23,10 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import { Visibility, TraitReviewSource } from "@chardb/database";
-import { CharacterFormInput } from "./character-form.dto";
+import {
+  NewCharacterFormInput,
+  CharacterFormsChangeInput,
+} from "./character-form.dto";
 import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 import { CharacterAvailability } from "../character-availability";
 
@@ -121,15 +124,15 @@ export class CreateCharacterInput {
   // has always said so -- the mapper JSON.parses it either way.
   customFields?: string;
 
-  @Field(() => [CharacterFormInput], {
+  @Field(() => [NewCharacterFormInput], {
     defaultValue: [],
     description:
-      "The character's forms. Omit for a character with one unnamed form and no traits.",
+      "The character's forms. Omit for a character with one form named Base and no traits.",
   })
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => CharacterFormInput)
-  forms?: CharacterFormInput[];
+  @Type(() => NewCharacterFormInput)
+  forms?: NewCharacterFormInput[];
 
   @Field(() => PendingOwnerInput, {
     nullable: true,
@@ -307,15 +310,14 @@ export class UpdateCharacterRegistryInput {
   @IsUUID()
   speciesVariantId?: string;
 
-  @Field(() => [CharacterFormInput], {
+  @Field(() => CharacterFormsChangeInput, {
     nullable: true,
-    description:
-      "The character's complete form list, in order. Omit to leave its forms alone.",
+    description: "Forms to add, change or remove. Omit to leave them alone.",
   })
   @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => CharacterFormInput)
-  forms?: CharacterFormInput[];
+  @ValidateNested()
+  @Type(() => CharacterFormsChangeInput)
+  forms?: CharacterFormsChangeInput;
 
   @Field({
     nullable: true,
@@ -354,14 +356,14 @@ export class AssignCharacterSpeciesInput {
   @MaxLength(100)
   registryId?: string;
 
-  @Field(() => [CharacterFormInput], {
+  @Field(() => [NewCharacterFormInput], {
     nullable: true,
     description: "The character's initial forms",
   })
   @IsOptional()
   @ValidateNested({ each: true })
-  @Type(() => CharacterFormInput)
-  forms?: CharacterFormInput[];
+  @Type(() => NewCharacterFormInput)
+  forms?: NewCharacterFormInput[];
 }
 
 @InputType()

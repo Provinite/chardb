@@ -45,7 +45,7 @@ input ApproveTraitReviewInput {
 
 input AssignCharacterSpeciesInput {
   """The character's initial forms"""
-  forms: [CharacterFormInput!]
+  forms: [NewCharacterFormInput!]
 
   """Official registry identifier for this character within its species"""
   registryId: String
@@ -77,9 +77,9 @@ input ChangeCharacterVariantWithItemInput {
   characterId: ID!
 
   """
-  The complete list of forms the character should end up with, in order, not a patch. Must be valid for the variant the item moves it to, which is not necessarily the one it is valid for now.
+  The forms to add, change or remove. What the character ends up with must be valid for the variant the item moves it to, which is not necessarily the one it is valid for now.
   """
-  forms: [CharacterFormInput!]!
+  forms: CharacterFormsChangeInput!
 
   """The item to redeem."""
   itemId: ID!
@@ -268,20 +268,6 @@ type CharacterForm {
   updatedAt: DateTime!
 }
 
-"""One of a character's forms"""
-input CharacterFormInput {
-  """
-  The form to update. Omit to create a new one. A form of another character is refused.
-  """
-  id: ID
-
-  """What the owner calls this form"""
-  name: String!
-
-  """The complete trait set for this form, not a patch"""
-  traitValues: [CharacterTraitValueInput!]!
-}
-
 """One of a character's forms, frozen at the moment a change was recorded"""
 type CharacterFormSnapshot {
   """
@@ -297,6 +283,17 @@ type CharacterFormSnapshot {
 
   """The form's trait values when the snapshot was taken"""
   traitValues: [CharacterTraitValue!]!
+}
+
+"""Changes to a character's forms"""
+input CharacterFormsChangeInput {
+  newForms: [NewCharacterFormInput!]
+
+  """
+  Forms to delete. A character must keep at least one, so removing them all is refused.
+  """
+  removeForms: [ID!]
+  updateForms: [UpdateCharacterFormInput!]
 }
 
 """A record of character ownership transfer between users"""
@@ -624,9 +621,9 @@ input CreateCharacterInput {
   details: String
 
   """
-  The character's forms. Omit for a character with one unnamed form and no traits.
+  The character's forms. Omit for a character with one form named Base and no traits.
   """
-  forms: [CharacterFormInput!]! = []
+  forms: [NewCharacterFormInput!]! = []
   isFreebie: Boolean! = false
   isOpenToOffers: Boolean! = false
   isSellable: Boolean! = false
@@ -1279,7 +1276,7 @@ input EditAndApproveTraitReviewInput {
   """
   The corrected forms to apply: the character's complete list, in order, not a patch
   """
-  correctedForms: [CharacterFormInput!]!
+  correctedForms: [NewCharacterFormInput!]!
 
   """The ID of the review to edit and approve"""
   reviewId: ID!
@@ -1290,9 +1287,9 @@ input EditCharacterTraitsWithKitInput {
   characterId: ID!
 
   """
-  The complete list of forms being proposed, in order, not a patch. Nothing is applied until staff approve.
+  The forms to add, change or remove. Nothing is applied until staff approve, so this describes what the character would become.
   """
-  forms: [CharacterFormInput!]!
+  forms: CharacterFormsChangeInput!
 
   """The kit to spend."""
   itemId: ID!
@@ -2844,6 +2841,20 @@ type Mutation {
   verifyEmail(input: VerifyEmailInput!): Boolean!
 }
 
+"""A form to add to a character"""
+input NewCharacterFormInput {
+  """What the owner calls this form"""
+  name: String!
+
+  """
+  Where this form should sit, from 0. Omit to put it after the character's existing forms.
+  """
+  sortOrder: Int
+
+  """The complete trait set for this form"""
+  traitValues: [CharacterTraitValueInput!]!
+}
+
 """
 One thing that happened, addressed to one recipient. Rows are snapshots: the display fields were captured when the notification was written, so a notification about a since-deleted subject still says what happened, and its link is the part that goes dead.
 """
@@ -3678,7 +3689,7 @@ input RedeemMyoTicketInput {
   """
   The character's forms. How many are allowed comes from the variant the ticket is being spent on.
   """
-  forms: [CharacterFormInput!]! = []
+  forms: [NewCharacterFormInput!]! = []
 
   """The ticket to spend."""
   itemId: ID!
@@ -4563,6 +4574,21 @@ input UpdateCharacterFolderInput {
   name: String
 }
 
+"""A change to one of a character's existing forms"""
+input UpdateCharacterFormInput {
+  """The form to change. Must be this character's."""
+  id: ID!
+  name: String
+
+  """Where this form should sit, from 0. Omit to leave it where it is."""
+  sortOrder: Int
+
+  """
+  The complete trait set this form should end up with, not a patch of it.
+  """
+  traitValues: [CharacterTraitValueInput!]
+}
+
 """Input for updating character profile fields"""
 input UpdateCharacterProfileInput {
   customFields: String
@@ -4592,10 +4618,8 @@ input UpdateCharacterProfileInput {
 
 """Input for updating character registry fields"""
 input UpdateCharacterRegistryInput {
-  """
-  The character's complete form list, in order. Omit to leave its forms alone.
-  """
-  forms: [CharacterFormInput!]
+  """Forms to add, change or remove. Omit to leave them alone."""
+  forms: CharacterFormsChangeInput
 
   """Official registry identifier for this character within its species"""
   registryId: String

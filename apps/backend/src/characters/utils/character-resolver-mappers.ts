@@ -10,8 +10,14 @@ import {
 } from "../dto/character.dto";
 import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 import { CharacterTraitValueInput } from "../dto/character-trait.dto";
-import { CharacterFormInput } from "../dto/character-form.dto";
-import { CharacterFormWrite } from "../../character-forms/character-forms.service";
+import {
+  NewCharacterFormInput,
+  CharacterFormsChangeInput,
+} from "../dto/character-form.dto";
+import {
+  CharacterFormWrite,
+  CharacterFormsChange,
+} from "../../character-forms/character-forms.service";
 import { Character, CharacterConnection } from "../entities/character.entity";
 
 /**
@@ -37,21 +43,51 @@ export function mapTraitValues(
 }
 
 /**
- * Turn submitted forms into the service's write shape.
+ * Turn submitted new forms into the service's write shape.
  *
- * `sortOrder` is not mapped because it is not an input: the funnel takes it
- * from the position of each entry, so a client cannot submit two forms
- * claiming the same place.
+ * For the paths that make a character, where there is nothing to patch.
  */
-export function mapForms(
-  forms?: CharacterFormInput[],
+export function mapNewForms(
+  forms?: NewCharacterFormInput[],
 ): CharacterFormWrite[] | undefined {
   if (!forms) return undefined;
   return forms.map((form) => ({
-    ...(form.id ? { id: form.id } : {}),
     name: form.name,
     traitValues: mapTraitValues(form.traitValues),
   }));
+}
+
+/**
+ * Turn a submitted change into the service's change shape.
+ *
+ * Returns undefined when nothing was asked for, which is how a caller says
+ * "leave this character's forms alone" -- distinct from asking for a change
+ * that happens to be empty.
+ */
+export function mapFormsChange(
+  change?: CharacterFormsChangeInput | null,
+): CharacterFormsChange | undefined {
+  if (!change) return undefined;
+  const { newForms, updateForms, removeForms } = change;
+  if (!newForms?.length && !updateForms?.length && !removeForms?.length) {
+    return undefined;
+  }
+  return {
+    newForms: newForms?.map((form) => ({
+      name: form.name,
+      traitValues: mapTraitValues(form.traitValues),
+      ...(form.sortOrder !== undefined ? { sortOrder: form.sortOrder } : {}),
+    })),
+    updateForms: updateForms?.map((form) => ({
+      id: form.id,
+      ...(form.name !== undefined ? { name: form.name } : {}),
+      ...(form.traitValues !== undefined
+        ? { traitValues: mapTraitValues(form.traitValues) }
+        : {}),
+      ...(form.sortOrder !== undefined ? { sortOrder: form.sortOrder } : {}),
+    })),
+    removeForms,
+  };
 }
 
 export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
@@ -101,7 +137,7 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
 
   return {
     characterData: prismaCharacterData,
-    forms: mapForms(characterData.forms),
+    forms: mapNewForms(characterData.forms),
     tags,
     pendingOwner,
     assignToSelf,
@@ -168,7 +204,7 @@ export function mapUpdateCharacterRegistryInputToService(
   input: UpdateCharacterRegistryInput,
 ): {
   characterData: Prisma.CharacterUpdateInput;
-  forms?: CharacterFormWrite[];
+  forms?: CharacterFormsChange;
 } {
   const characterData: Prisma.CharacterUpdateInput = {};
 
@@ -180,7 +216,7 @@ export function mapUpdateCharacterRegistryInputToService(
       : { disconnect: true };
   }
 
-  return { characterData, forms: mapForms(input.forms) };
+  return { characterData, forms: mapFormsChange(input.forms) };
 }
 
 // Define the exact Prisma return type

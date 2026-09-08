@@ -13,7 +13,13 @@ import {
   SeedEditAndApproveTraitReviewDocument,
   SeedUpdateRoleDocument,
 } from "../../src/generated/graphql.js";
-import { oneForm } from "../../src/world/forms.js";
+import {
+  addForm,
+  editForm,
+  oneForm,
+  setForms,
+  setOnlyForm,
+} from "../../src/world/forms.js";
 
 const test = presetTest("community-items");
 
@@ -122,10 +128,14 @@ test.describe("character forms", () => {
   });
 
   test("removing every form is refused", async ({ world }) => {
+    const { character } = await world
+      .as("member")
+      .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
+
     await expect(
       world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
         id: world.characters.pinefall.id,
-        input: { forms: [] },
+        input: { forms: { removeForms: character.forms.map((f) => f.id) } },
       }),
     ).rejects.toThrow(/at least one form/i);
   });
@@ -143,16 +153,9 @@ test.describe("character forms", () => {
       world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
         id: world.characters.pinefall.id,
         input: {
-          forms: [
-            // Pinefall's own form, plus one of Bramblefoot's. Without the
-            // check this creates Bramblefoot's form under Pinefall.
-            { name: "Base", traitValues: eyes(world, "blue") },
-            {
-              id: other.forms[0].id,
-              name: "Stolen",
-              traitValues: [],
-            },
-          ],
+          // One of Bramblefoot's forms, named on Pinefall. Without the check
+          // this edits another character's design through this one.
+          forms: { updateForms: [{ id: other.forms[0].id, name: "Stolen" }] },
         },
       }),
     ).rejects.toThrow(/does not belong to this character/i);
@@ -171,9 +174,10 @@ test.describe("character forms", () => {
     await world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
       id: world.characters.pinefall.id,
       input: {
-        forms: [
-          { id: formId, name: "Renamed", traitValues: eyes(world, "blue") },
-        ],
+        forms: editForm(formId, {
+          name: "Renamed",
+          traitValues: eyes(world, "blue"),
+        }),
       },
     });
 
@@ -198,14 +202,9 @@ test.describe("character forms", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.pinefall.id,
-        forms: [
-          {
-            id: before.character.forms[0].id,
-            name: "Base",
-            traitValues: eyes(world, "blue"),
-          },
-          { name: "Awakened", traitValues: eyes(world, "green") },
-        ],
+        // Adding a form is all this proposes; the existing one is untouched,
+        // which is what the change shape lets a member say.
+        forms: addForm("Awakened", eyes(world, "green")),
       },
     });
 
@@ -251,10 +250,14 @@ test.describe("character forms", () => {
     await world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
       id: world.characters.pinefall.id,
       input: {
-        forms: [
+        forms: await setForms(
+          world.as("commadmin"),
+          world.characters.pinefall.id,
+          [
           { name: "Base", traitValues: eyes(world, "blue") },
           { name: "Awakened", traitValues: eyes(world, "green") },
         ],
+        ),
       },
     });
 
@@ -285,12 +288,20 @@ test.describe("character forms", () => {
     await world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
       id: world.characters.pinefall.id,
       input: {
-        forms: [
+        forms: await setForms(
+          world.as("commadmin"),
+          world.characters.pinefall.id,
+          [
           { name: "Base", traitValues: eyes(world, "blue") },
           { name: "Awakened", traitValues: eyes(world, "blue") },
         ],
+        ),
       },
     });
+
+    const twoForms = await world
+      .as("member")
+      .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
 
     // Rare is still at one. A form has to be dropped deliberately rather than
     // silently, so the move is refused until the submission says which stays.
@@ -299,10 +310,8 @@ test.describe("character forms", () => {
         id: world.characters.pinefall.id,
         input: {
           speciesVariantId: world.variants.rare.id,
-          forms: [
-            { name: "Base", traitValues: eyes(world, "blue") },
-            { name: "Awakened", traitValues: eyes(world, "blue") },
-          ],
+          // Nothing said about the forms, so both would carry over -- which is
+          // one more than Rare permits.
         },
       }),
     ).rejects.toThrow(/does not allow more than one form/i);
@@ -312,7 +321,8 @@ test.describe("character forms", () => {
         id: world.characters.pinefall.id,
         input: {
           speciesVariantId: world.variants.rare.id,
-          forms: oneForm(eyes(world, "blue")),
+          // Saying which form survives, by naming the one that does not.
+          forms: { removeForms: [twoForms.character.forms[1].id] },
         },
       }),
     ).resolves.toBeTruthy();
@@ -345,10 +355,14 @@ test.describe("character forms", () => {
         world.as("member").gql(SeedUpdateCharacterRegistryDocument, {
           id: world.characters.pinefall.id,
           input: {
-            forms: [
+            forms: await setForms(
+              world.as("commadmin"),
+              world.characters.pinefall.id,
+              [
               { name: "Base", traitValues: eyes(world, "blue") },
               { name: "Awakened", traitValues: eyes(world, "green") },
             ],
+            ),
           },
         }),
       ).rejects.toThrow(/forbidden/i);
@@ -374,10 +388,14 @@ test.describe("character forms", () => {
         world.as("member").gql(SeedUpdateCharacterRegistryDocument, {
           id: world.characters.pinefall.id,
           input: {
-            forms: [
+            forms: await setForms(
+              world.as("commadmin"),
+              world.characters.pinefall.id,
+              [
               { name: "Base", traitValues: eyes(world, "blue") },
               { name: "Awakened", traitValues: eyes(world, "green") },
             ],
+            ),
           },
         }),
       ).resolves.toBeTruthy();
@@ -396,7 +414,7 @@ test.describe("character forms", () => {
       await expect(
         world.as("member").gql(SeedUpdateCharacterRegistryDocument, {
           id: world.characters.marrowfen.id,
-          input: { forms: oneForm([]) },
+          input: { forms: addForm("Trespass") },
         }),
       ).rejects.toThrow(/forbidden/i);
     });
@@ -431,7 +449,11 @@ test.describe("character forms", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.pinefall.id,
-        forms: oneForm(eyes(world, "green")),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.pinefall.id,
+          { traitValues: eyes(world, "green") },
+        ),
       },
     });
 
@@ -475,7 +497,11 @@ test.describe("character forms", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.pinefall.id,
-        forms: oneForm(eyes(world, "green")),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.pinefall.id,
+          { traitValues: eyes(world, "green") },
+        ),
       },
     });
 
@@ -489,13 +515,7 @@ test.describe("character forms", () => {
     await world.as("commadmin").gql(SeedEditAndApproveTraitReviewDocument, {
       input: {
         reviewId: entry!.review.id,
-        correctedForms: [
-          {
-            id: before.character.forms[0].id,
-            name: "Base",
-            traitValues: eyes(world, "amber"),
-          },
-        ],
+        correctedForms: [{ name: "Base", traitValues: eyes(world, "amber") }],
       },
     });
 
@@ -519,14 +539,9 @@ test.describe("character forms", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.pinefall.id,
-        forms: [
-          {
-            id: before.character.forms[0].id,
-            name: "Base",
-            traitValues: eyes(world, "blue"),
-          },
-          { name: "Awakened", traitValues: eyes(world, "green") },
-        ],
+        // Adding a form is all this proposes; the existing one is untouched,
+        // which is what the change shape lets a member say.
+        forms: addForm("Awakened", eyes(world, "green")),
       },
     });
 
@@ -568,10 +583,14 @@ test.describe("character forms", () => {
     await world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
       id: world.characters.pinefall.id,
       input: {
-        forms: [
+        forms: await setForms(
+          world.as("commadmin"),
+          world.characters.pinefall.id,
+          [
           { name: "Base", traitValues: eyes(world, "blue") },
           { name: "Awakened", traitValues: eyes(world, "blue") },
         ],
+        ),
       },
     });
 

@@ -35,7 +35,7 @@ import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { MyoTicketPanel } from "../components/character/MyoTicketPanel";
 import { CharacterFormsEditor } from "../components/character/CharacterFormsEditor";
 import {
-  draftsToInput,
+  draftsToNewForms,
   newFormDraft,
   type CharacterFormDraft,
 } from "../lib/characterForms";
@@ -555,7 +555,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
           customFields: cleanedCustomFields,
           visibility: data.visibility,
           tags: tags.length > 0 ? tags : undefined,
-          forms: draftsToInput(forms),
+          forms: draftsToNewForms(forms),
         });
         setConfirmingRedeem(true);
         setIsSubmitting(false);
@@ -580,7 +580,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             speciesId: selectedSpecies?.id || undefined,
             speciesVariantId: selectedVariant?.id || undefined,
             registryId: registryId.trim() || undefined,
-            forms: draftsToInput(forms),
+            forms: draftsToNewForms(forms),
             // Add pending owner based on characterTarget
             pendingOwner:
               characterTarget?.type === "pending"

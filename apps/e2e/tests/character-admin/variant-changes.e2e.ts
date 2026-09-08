@@ -8,7 +8,12 @@ import {
   SeedCharacterDocument,
   SeedUpdateRoleDocument,
 } from "../../src/generated/graphql.js";
-import { baseTraits, oneForm, snapshotTraits } from "../../src/world/forms.js";
+import {
+  baseTraits,
+  oneForm,
+  setOnlyForm,
+  snapshotTraits,
+} from "../../src/world/forms.js";
 
 const test = presetTest("community-items");
 
@@ -112,12 +117,14 @@ test.describe("changing a character's variant", () => {
       world.as("member").gql(SeedUpdateCharacterRegistryDocument, {
         id,
         input: {
-          forms: oneForm([
-            {
-              traitId: world.traits.eyeColor.id,
-              value: world.traits.eyeColor.values.blue,
-            },
-          ]),
+          forms: await setOnlyForm(world.as("commadmin"), id, {
+            traitValues: [
+              {
+                traitId: world.traits.eyeColor.id,
+                value: world.traits.eyeColor.values.blue,
+              },
+            ],
+          }),
         },
       }),
     ).resolves.toBeTruthy();
@@ -261,12 +268,14 @@ test.describe("traits that do not exist at the new rarity", () => {
         id,
         input: {
           speciesVariantId: world.variants.legendary.id,
-          forms: oneForm([
-            {
-              traitId: world.traits.eyeColor.id,
-              value: world.traits.eyeColor.values.blue,
-            },
-          ]),
+          forms: await setOnlyForm(world.as("commadmin"), id, {
+            traitValues: [
+              {
+                traitId: world.traits.eyeColor.id,
+                value: world.traits.eyeColor.values.blue,
+              },
+            ],
+          }),
         },
       })
       .then(
@@ -285,12 +294,14 @@ test.describe("traits that do not exist at the new rarity", () => {
         id,
         input: {
           speciesVariantId: world.variants.legendary.id,
-          forms: oneForm([
+          forms: await setOnlyForm(world.as("commadmin"), id, {
+            traitValues: [
             {
               traitId: world.traits.eyeColor.id,
               value: world.traits.eyeColor.values.amber,
             },
-          ]),
+          ],
+          }),
         },
       }),
     ).resolves.toBeTruthy();
@@ -314,12 +325,14 @@ test.describe("traits that do not exist at the new rarity", () => {
       id,
       input: {
         speciesVariantId: world.variants.legendary.id,
-        forms: oneForm([
+        forms: await setOnlyForm(world.as("commadmin"), id, {
+          traitValues: [
           {
             traitId: world.traits.eyeColor.id,
             value: world.traits.eyeColor.values.amber,
           },
-        ]),
+        ],
+        }),
       },
     });
 

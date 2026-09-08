@@ -61,7 +61,7 @@ export type ApproveTraitReviewInput = {
 
 export type AssignCharacterSpeciesInput = {
   /** The character's initial forms */
-  forms?: InputMaybe<Array<CharacterFormInput>>;
+  forms?: InputMaybe<Array<NewCharacterFormInput>>;
   /** Official registry identifier for this character within its species */
   registryId?: InputMaybe<Scalars['String']['input']>;
   /** Species ID to assign to the character */
@@ -88,8 +88,8 @@ export type BurnCurrencyInput = {
 export type ChangeCharacterVariantWithItemInput = {
   /** The character to move. Must be yours. */
   characterId: Scalars['ID']['input'];
-  /** The complete list of forms the character should end up with, in order, not a patch. Must be valid for the variant the item moves it to, which is not necessarily the one it is valid for now. */
-  forms: Array<CharacterFormInput>;
+  /** The forms to add, change or remove. What the character ends up with must be valid for the variant the item moves it to, which is not necessarily the one it is valid for now. */
+  forms: CharacterFormsChangeInput;
   /** The item to redeem. */
   itemId: Scalars['ID']['input'];
 };
@@ -233,16 +233,6 @@ export type CharacterForm = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
-/** One of a character's forms */
-export type CharacterFormInput = {
-  /** The form to update. Omit to create a new one. A form of another character is refused. */
-  id?: InputMaybe<Scalars['ID']['input']>;
-  /** What the owner calls this form */
-  name: Scalars['String']['input'];
-  /** The complete trait set for this form, not a patch */
-  traitValues: Array<CharacterTraitValueInput>;
-};
-
 /** One of a character's forms, frozen at the moment a change was recorded */
 export type CharacterFormSnapshot = {
   __typename?: 'CharacterFormSnapshot';
@@ -254,6 +244,14 @@ export type CharacterFormSnapshot = {
   sortOrder: Scalars['Int']['output'];
   /** The form's trait values when the snapshot was taken */
   traitValues: Array<CharacterTraitValue>;
+};
+
+/** Changes to a character's forms */
+export type CharacterFormsChangeInput = {
+  newForms?: InputMaybe<Array<NewCharacterFormInput>>;
+  /** Forms to delete. A character must keep at least one, so removing them all is refused. */
+  removeForms?: InputMaybe<Array<Scalars['ID']['input']>>;
+  updateForms?: InputMaybe<Array<UpdateCharacterFormInput>>;
 };
 
 /** A record of character ownership transfer between users */
@@ -540,8 +538,8 @@ export type CreateCharacterInput = {
   assignToSelf?: Scalars['Boolean']['input'];
   customFields?: InputMaybe<Scalars['String']['input']>;
   details?: InputMaybe<Scalars['String']['input']>;
-  /** The character's forms. Omit for a character with one unnamed form and no traits. */
-  forms?: Array<CharacterFormInput>;
+  /** The character's forms. Omit for a character with one form named Base and no traits. */
+  forms?: Array<NewCharacterFormInput>;
   isFreebie?: Scalars['Boolean']['input'];
   isOpenToOffers?: Scalars['Boolean']['input'];
   isSellable?: Scalars['Boolean']['input'];
@@ -1028,7 +1026,7 @@ export type DiscordUserInfo = {
 
 export type EditAndApproveTraitReviewInput = {
   /** The corrected forms to apply: the character's complete list, in order, not a patch */
-  correctedForms: Array<CharacterFormInput>;
+  correctedForms: Array<NewCharacterFormInput>;
   /** The ID of the review to edit and approve */
   reviewId: Scalars['ID']['input'];
 };
@@ -1036,8 +1034,8 @@ export type EditAndApproveTraitReviewInput = {
 export type EditCharacterTraitsWithKitInput = {
   /** The character to change. Must be yours. */
   characterId: Scalars['ID']['input'];
-  /** The complete list of forms being proposed, in order, not a patch. Nothing is applied until staff approve. */
-  forms: Array<CharacterFormInput>;
+  /** The forms to add, change or remove. Nothing is applied until staff approve, so this describes what the character would become. */
+  forms: CharacterFormsChangeInput;
   /** The kit to spend. */
   itemId: Scalars['ID']['input'];
 };
@@ -2691,6 +2689,16 @@ export type MutationVerifyEmailArgs = {
   input: VerifyEmailInput;
 };
 
+/** A form to add to a character */
+export type NewCharacterFormInput = {
+  /** What the owner calls this form */
+  name: Scalars['String']['input'];
+  /** Where this form should sit, from 0. Omit to put it after the character's existing forms. */
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
+  /** The complete trait set for this form */
+  traitValues: Array<CharacterTraitValueInput>;
+};
+
 /** One thing that happened, addressed to one recipient. Rows are snapshots: the display fields were captured when the notification was written, so a notification about a since-deleted subject still says what happened, and its link is the part that goes dead. */
 export type Notification = {
   __typename?: 'Notification';
@@ -3661,7 +3669,7 @@ export type RedeemMyoTicketInput = {
   customFields?: InputMaybe<Scalars['String']['input']>;
   details?: InputMaybe<Scalars['String']['input']>;
   /** The character's forms. How many are allowed comes from the variant the ticket is being spent on. */
-  forms?: Array<CharacterFormInput>;
+  forms?: Array<NewCharacterFormInput>;
   /** The ticket to spend. */
   itemId: Scalars['ID']['input'];
   name: Scalars['String']['input'];
@@ -4367,6 +4375,17 @@ export type UpdateCharacterFolderInput = {
   name?: InputMaybe<Scalars['String']['input']>;
 };
 
+/** A change to one of a character's existing forms */
+export type UpdateCharacterFormInput = {
+  /** The form to change. Must be this character's. */
+  id: Scalars['ID']['input'];
+  name?: InputMaybe<Scalars['String']['input']>;
+  /** Where this form should sit, from 0. Omit to leave it where it is. */
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
+  /** The complete trait set this form should end up with, not a patch of it. */
+  traitValues?: InputMaybe<Array<CharacterTraitValueInput>>;
+};
+
 /** Input for updating character profile fields */
 export type UpdateCharacterProfileInput = {
   customFields?: InputMaybe<Scalars['String']['input']>;
@@ -4390,8 +4409,8 @@ export type UpdateCharacterProfileInput = {
 
 /** Input for updating character registry fields */
 export type UpdateCharacterRegistryInput = {
-  /** The character's complete form list, in order. Omit to leave its forms alone. */
-  forms?: InputMaybe<Array<CharacterFormInput>>;
+  /** Forms to add, change or remove. Omit to leave them alone. */
+  forms?: InputMaybe<CharacterFormsChangeInput>;
   /** Official registry identifier for this character within its species */
   registryId?: InputMaybe<Scalars['String']['input']>;
   /** Species variant ID */

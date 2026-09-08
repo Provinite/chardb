@@ -14,7 +14,7 @@ import {
 } from "../generated/graphql";
 import {
   draftsFromForms,
-  draftsToInput,
+  draftsToChange,
   type CharacterFormDraft,
 } from "../lib/characterForms";
 import { useAuth } from "../contexts/AuthContext";
@@ -268,6 +268,8 @@ export const RedeemVariantChangePage: React.FC = () => {
   const [confirming, setConfirming] = useState(false);
 
   const [forms, setForms] = useState<CharacterFormDraft[]>([]);
+  /** What the page opened on, so only the re-picks are sent. */
+  const [initialForms, setInitialForms] = useState<CharacterFormDraft[]>([]);
   const [seeded, setSeeded] = useState(false);
 
   // Seeded from what the character has now. Everything the destination
@@ -275,7 +277,9 @@ export const RedeemVariantChangePage: React.FC = () => {
   // it does not.
   useEffect(() => {
     if (seeded || !character) return;
-    setForms(draftsFromForms(character.forms));
+    const loaded = draftsFromForms(character.forms);
+    setForms(loaded);
+    setInitialForms(loaded);
     setSeeded(true);
   }, [character, seeded]);
 
@@ -439,7 +443,7 @@ export const RedeemVariantChangePage: React.FC = () => {
         input: {
           itemId,
           characterId: character.id,
-          forms: draftsToInput(forms),
+          forms: draftsToChange(initialForms, forms),
         },
       },
     });

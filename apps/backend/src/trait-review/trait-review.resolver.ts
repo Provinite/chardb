@@ -19,7 +19,7 @@ import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
-import { mapForms } from "../characters/utils/character-resolver-mappers";
+import { mapNewForms } from "../characters/utils/character-resolver-mappers";
 import {
   mapPrismaTraitReviewToGraphQL,
   mapTraitReviewQueueResultToGraphQL,
@@ -157,7 +157,7 @@ export class TraitReviewResolver {
     const review = await this.traitReviewService.editAndApproveReview(
       input.reviewId,
       user.id,
-      mapForms(input.correctedForms) ?? [],
+      mapNewForms(input.correctedForms) ?? [],
     );
     return mapPrismaTraitReviewToGraphQL(review);
   }

@@ -14,7 +14,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { CharacterFormsEditor } from "../components/character/CharacterFormsEditor";
 import {
   draftsFromForms,
-  draftsToInput,
+  draftsToChange,
   type CharacterFormDraft,
 } from "../lib/characterForms";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -199,6 +199,8 @@ export const SpendEditKitPage: React.FC = () => {
   const [confirming, setConfirming] = useState(false);
 
   const [forms, setForms] = useState<CharacterFormDraft[]>([]);
+  /** What the page opened on, so the proposal is a diff rather than a list. */
+  const [initialForms, setInitialForms] = useState<CharacterFormDraft[]>([]);
   const [seeded, setSeeded] = useState(false);
   /** Forms still missing a name. Submitting is blocked on it. */
   const [unnamedForms, setUnnamedForms] = useState(0);
@@ -207,7 +209,9 @@ export const SpendEditKitPage: React.FC = () => {
   // design rather than an empty sheet — this is an edit, not a redesign.
   useEffect(() => {
     if (seeded || !character) return;
-    setForms(draftsFromForms(character.forms));
+    const loaded = draftsFromForms(character.forms);
+    setForms(loaded);
+    setInitialForms(loaded);
     setSeeded(true);
   }, [character, seeded]);
 
@@ -276,7 +280,7 @@ export const SpendEditKitPage: React.FC = () => {
         input: {
           itemId: kitId,
           characterId: character.id,
-          forms: draftsToInput(forms),
+          forms: draftsToChange(initialForms, forms),
         },
       },
     });

@@ -4,7 +4,7 @@ import {
   SeedCharacterDocument,
   SeedEditCharacterTraitsWithKitDocument,
 } from "../../src/generated/graphql.js";
-import { baseTraits, oneForm } from "../../src/world/forms.js";
+import { baseTraits, setOnlyForm } from "../../src/world/forms.js";
 
 const test = presetTest("community-items");
 
@@ -242,12 +242,14 @@ test.describe("redeeming a variant change item, through the pages", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.pinefall.id,
-        forms: oneForm([
+        forms: await setOnlyForm(world.as("member"), world.characters.pinefall.id, {
+          traitValues: [
           {
             traitId: world.traits.eyeColor.id,
             value: world.traits.eyeColor.values.green,
           },
-        ]),
+        ],
+        }),
       },
     });
 

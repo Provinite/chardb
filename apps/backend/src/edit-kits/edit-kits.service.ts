@@ -14,7 +14,7 @@ import { DatabaseService } from "../database/database.service";
 import { ItemsService } from "../items/items.service";
 import { CharactersService } from "../characters/characters.service";
 import { TraitReviewService } from "../trait-review/trait-review.service";
-import { mapForms } from "../characters/utils/character-resolver-mappers";
+import { mapFormsChange } from "../characters/utils/character-resolver-mappers";
 import {
   CharacterFormsService,
   sameForms,
@@ -105,7 +105,10 @@ export class EditKitsService {
       );
     }
 
-    const proposedWrites = mapForms(input.forms) ?? [];
+    const proposedWrites = await this.forms.plan(
+      character.id,
+      mapFormsChange(input.forms) ?? {},
+    );
     await this.forms.validateForms(
       character.speciesId,
       proposedWrites,

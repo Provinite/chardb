@@ -23,6 +23,7 @@ import { TraitReviewService } from "../trait-review/trait-review.service";
 import {
   CharacterFormsService,
   CharacterFormWrite,
+  CharacterFormsChange,
   DEFAULT_FORM,
 } from "../character-forms/character-forms.service";
 import { notDeleted } from "../common/utils/prisma-filters";
@@ -1229,8 +1230,8 @@ export class CharactersService {
     userId: string,
     input: {
       characterData: Prisma.CharacterUpdateInput;
-      /** The character's complete form list, or undefined to leave it alone. */
-      forms?: CharacterFormWrite[];
+      /** What to do to the character's forms, or undefined to leave them. */
+      forms?: CharacterFormsChange;
       /** Staff's note on a variant change. Ignored when none happens. */
       variantChangeReason?: string | null;
     },
@@ -1289,12 +1290,25 @@ export class CharactersService {
       ? (connectedVariantId ?? null)
       : character.speciesVariantId;
 
-    if (forms) {
+    // Resolved against what the character has now, so a submission that only
+    // renames one form does not have to resend the others.
+    const plannedForms = forms
+      ? await this.forms.plan(id, forms)
+      : undefined;
+
+    // A rarity change re-judges forms the submission never touched: the
+    // destination may permit fewer of them, or forbid a value one of them
+    // holds. Planning an empty change is how "what would this character have"
+    // is asked when the caller said nothing about its forms.
+    const formsToJudge =
+      plannedForms ?? (variantIsChanging ? await this.forms.plan(id, {}) : undefined);
+
+    if (formsToJudge) {
       // Judged against the destination variant, values included: this is the
       // path that re-routes what a rarity change strands, and it always was.
       await this.forms.validateForms(
         character.speciesId,
-        forms,
+        formsToJudge,
         effectiveVariantId,
         true,
       );
@@ -1311,8 +1325,8 @@ export class CharactersService {
         data: characterData,
       });
 
-      const newForms = forms
-        ? await this.forms.writeForms(tx, id, forms)
+      const newForms = plannedForms
+        ? await this.forms.writeForms(tx, id, plannedForms)
         : previousForms;
 
       if (variantIsChanging) {

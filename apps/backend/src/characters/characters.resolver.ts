@@ -64,7 +64,7 @@ import {
   mapUpdateCharacterRegistryInputToService,
   mapPrismaCharacterToGraphQL,
   mapPrismaCharacterConnectionToGraphQL,
-  mapForms,
+  mapNewForms,
 } from "./utils/character-resolver-mappers";
 import { CharacterForm } from "./entities/character-form.entity";
 import { CharacterFormsService } from "../character-forms/character-forms.service";
@@ -275,7 +275,7 @@ export class CharactersResolver {
       speciesId: input.speciesId,
       speciesVariantId: input.speciesVariantId,
       registryId: input.registryId,
-      forms: mapForms(input.forms),
+      forms: mapNewForms(input.forms),
     });
     return mapPrismaCharacterToGraphQL(character);
   }

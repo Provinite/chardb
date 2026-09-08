@@ -12,7 +12,7 @@ import {
   MaxLength,
   ArrayMaxSize,
 } from "class-validator";
-import { CharacterFormInput } from "../../characters/dto/character-form.dto";
+import { NewCharacterFormInput } from "../../characters/dto/character-form.dto";
 
 /**
  * Making a character with a ticket.
@@ -60,7 +60,7 @@ export class RedeemMyoTicketInput {
   @IsEnum(Visibility)
   visibility?: Visibility;
 
-  @Field(() => [CharacterFormInput], {
+  @Field(() => [NewCharacterFormInput], {
     defaultValue: [],
     description:
       "The character's forms. How many are allowed comes from the variant the ticket is being spent on.",
@@ -68,8 +68,8 @@ export class RedeemMyoTicketInput {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => CharacterFormInput)
-  forms?: CharacterFormInput[];
+  @Type(() => NewCharacterFormInput)
+  forms?: NewCharacterFormInput[];
 
   @Field(() => [String], { defaultValue: [] })
   @IsOptional()

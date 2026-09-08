@@ -1,10 +1,12 @@
-import { InputType, Field, ID } from "@nestjs/graphql";
+import { InputType, Field, ID, Int } from "@nestjs/graphql";
 import {
   IsArray,
+  IsInt,
   IsOptional,
   IsString,
   IsUUID,
   MaxLength,
+  Min,
   MinLength,
   ValidateNested,
 } from "class-validator";
@@ -12,26 +14,14 @@ import { Type } from "class-transformer";
 import { CharacterTraitValueInput } from "./character-trait.dto";
 
 /**
- * One form, as submitted.
+ * A form being created.
  *
- * A submission is always the character's **complete** form list, in the order
- * they should end up in -- not a patch. Forms whose `id` is absent are
- * created, forms whose `id` is present are updated, and any of the character's
- * existing forms not named in the list are deleted. `sortOrder` is not an
- * input: it comes from the position of the entry in the list, so the client
- * cannot submit two forms claiming the same place.
+ * Used on its own by the paths that make a character -- creation, an MYO
+ * redemption, first-time species assignment -- where there is nothing to patch
+ * because nothing exists yet.
  */
-@InputType({ description: "One of a character's forms" })
-export class CharacterFormInput {
-  @Field(() => ID, {
-    nullable: true,
-    description:
-      "The form to update. Omit to create a new one. A form of another character is refused.",
-  })
-  @IsOptional()
-  @IsUUID(4, { message: "Form ID must be a valid UUID" })
-  id?: string;
-
+@InputType({ description: "A form to add to a character" })
+export class NewCharacterFormInput {
   @Field(() => String, { description: "What the owner calls this form" })
   @IsString({ message: "Form name must be a string" })
   @MinLength(1, { message: "Form name is required" })
@@ -39,10 +29,106 @@ export class CharacterFormInput {
   name!: string;
 
   @Field(() => [CharacterTraitValueInput], {
-    description: "The complete trait set for this form, not a patch",
+    description: "The complete trait set for this form",
   })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => CharacterTraitValueInput)
   traitValues!: CharacterTraitValueInput[];
+
+  @Field(() => Int, {
+    nullable: true,
+    description:
+      "Where this form should sit, from 0. Omit to put it after the character's existing forms.",
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+}
+
+/**
+ * A change to a form that already exists.
+ *
+ * Every field but `id` is optional and means "leave this alone" when absent,
+ * which is the point: two people editing different things about a character no
+ * longer overwrite each other by echoing back state they never touched.
+ */
+@InputType({ description: "A change to one of a character's existing forms" })
+export class UpdateCharacterFormInput {
+  @Field(() => ID, { description: "The form to change. Must be this character's." })
+  @IsUUID(4, { message: "Form ID must be a valid UUID" })
+  id!: string;
+
+  @Field(() => String, { nullable: true })
+  @IsOptional()
+  @IsString({ message: "Form name must be a string" })
+  @MinLength(1, { message: "Form name cannot be blank" })
+  @MaxLength(100, { message: "Form name must be at most 100 characters" })
+  name?: string;
+
+  @Field(() => [CharacterTraitValueInput], {
+    nullable: true,
+    description:
+      "The complete trait set this form should end up with, not a patch of it.",
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CharacterTraitValueInput)
+  traitValues?: CharacterTraitValueInput[];
+
+  @Field(() => Int, {
+    nullable: true,
+    description: "Where this form should sit, from 0. Omit to leave it where it is.",
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  sortOrder?: number;
+}
+
+/**
+ * What to do to a character's forms.
+ *
+ * Deliberately three lists rather than one complete one. A complete list makes
+ * *forgetting* destructive: a client that submits forms without their ids
+ * deletes every form the character had and mints replacements, and an id is
+ * what a review or an audit row correlates against. Here, removing a form is
+ * something you have to ask for by name.
+ *
+ * It also narrows what two people editing at once can take from each other.
+ * With a complete list, saving your form means resending everybody else's as
+ * they looked when your page loaded; with this, you send only what you
+ * touched. That is not a substitute for real conflict detection (#392) -- two
+ * people editing the *same* form still collide -- but it removes the case
+ * where they were not even working on the same thing.
+ *
+ * Omitting the whole input leaves a character's forms alone.
+ */
+@InputType({ description: "Changes to a character's forms" })
+export class CharacterFormsChangeInput {
+  @Field(() => [NewCharacterFormInput], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => NewCharacterFormInput)
+  newForms?: NewCharacterFormInput[];
+
+  @Field(() => [UpdateCharacterFormInput], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => UpdateCharacterFormInput)
+  updateForms?: UpdateCharacterFormInput[];
+
+  @Field(() => [ID], {
+    nullable: true,
+    description:
+      "Forms to delete. A character must keep at least one, so removing them all is refused.",
+  })
+  @IsOptional()
+  @IsArray()
+  @IsUUID(4, { each: true })
+  removeForms?: string[];
 }

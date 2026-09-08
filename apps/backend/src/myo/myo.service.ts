@@ -11,7 +11,7 @@ import { ItemsService } from "../items/items.service";
 import { CharactersService } from "../characters/characters.service";
 import { TagsService } from "../tags/tags.service";
 import { TraitReviewService } from "../trait-review/trait-review.service";
-import { mapForms } from "../characters/utils/character-resolver-mappers";
+import { mapNewForms } from "../characters/utils/character-resolver-mappers";
 import {
   CharacterFormsService,
   DEFAULT_FORM,
@@ -84,7 +84,7 @@ export class MyoService {
     // checks the length rather than nullishness: a ticket redeemed without
     // choosing any traits still makes a character, and that character still
     // needs a form to put them in later.
-    const submitted = mapForms(input.forms);
+    const submitted = mapNewForms(input.forms);
     const forms = submitted?.length ? submitted : [DEFAULT_FORM];
     await this.forms.validateForms(
       grant.speciesId,

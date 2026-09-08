@@ -1,7 +1,7 @@
 import { Field, InputType, ID } from "@nestjs/graphql";
 import { Type } from "class-transformer";
 import { IsArray, IsUUID, ValidateNested } from "class-validator";
-import { CharacterFormInput } from "../../characters/dto/character-form.dto";
+import { CharacterFormsChangeInput } from "../../characters/dto/character-form.dto";
 
 /**
  * Spending an edit kit on one character's traits.
@@ -16,12 +16,12 @@ import { CharacterFormInput } from "../../characters/dto/character-form.dto";
  *   traits; moving a character between variants is a different product with
  *   different economics (#172).
  *
- * `forms` is the complete list the character should end up with, not a patch.
- * Same shape the create and registry inputs use, and the same shape a trait
- * review stores, so the proposal can be compared against what the character
- * has without either side reconstructing the other. That also makes a kit the
- * route by which a member adds a form to a character whose variant allows one:
- * it is a trait change like any other, and it is reviewed like one.
+ * `forms` says what to add, change or remove, the same shape the registry
+ * editor takes. The server resolves it against what the character has now and
+ * stores the result as the proposal, so the review can be compared against the
+ * character without either side reconstructing the other. That also makes a
+ * kit the route by which a member adds a form to a character whose variant
+ * allows one: it is a trait change like any other, and it is reviewed like one.
  */
 @InputType()
 export class EditCharacterTraitsWithKitInput {
@@ -33,13 +33,12 @@ export class EditCharacterTraitsWithKitInput {
   @IsUUID()
   characterId: string;
 
-  @Field(() => [CharacterFormInput], {
+  @Field(() => CharacterFormsChangeInput, {
     description:
-      "The complete list of forms being proposed, in order, not a patch. " +
-      "Nothing is applied until staff approve.",
+      "The forms to add, change or remove. Nothing is applied until staff " +
+      "approve, so this describes what the character would become.",
   })
-  @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => CharacterFormInput)
-  forms: CharacterFormInput[];
+  @ValidateNested()
+  @Type(() => CharacterFormsChangeInput)
+  forms: CharacterFormsChangeInput;
 }
