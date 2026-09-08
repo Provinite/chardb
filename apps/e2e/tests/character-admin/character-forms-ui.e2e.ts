@@ -142,6 +142,52 @@ test.describe("staff editing a character's forms", () => {
     await expect(page.getByText("Green", { exact: true })).toBeVisible();
   });
 
+  test("a new form must be named before it can be saved", async ({
+    page,
+    world,
+  }) => {
+    // A form's name is the tab on the character page, so an unnamed one would
+    // render as a blank tab nobody can tell from the next.
+    await allowForms(world, world.variants.common.id, 2);
+    await page.goto(editPage(world));
+
+    await page.getByTestId("add-form").click();
+    await expect(page.getByTestId("form-name-1")).toHaveValue("");
+    await expect(page.getByTestId("form-name-error-1")).toBeVisible();
+    await expect(page.getByTestId("save-species-details")).toBeDisabled();
+
+    await page.getByTestId("form-name-1").fill("Awakened");
+    await expect(page.getByTestId("form-name-error-1")).toHaveCount(0);
+    await expect(page.getByTestId("save-species-details")).toBeEnabled();
+  });
+
+  test("says which form is the primary one, and follows a reorder", async ({
+    page,
+    world,
+  }) => {
+    // Being first is otherwise invisible, and it decides what every listing
+    // and every link to this character shows.
+    await giveTwoForms(world);
+    await page.goto(editPage(world));
+
+    const badge = page.getByTestId("primary-form-badge");
+    await expect(badge).toHaveCount(1);
+    await expect(
+      page.getByTestId("form-editor-0").getByTestId("primary-form-badge"),
+    ).toBeVisible();
+
+    await page
+      .getByTestId("form-editor-1")
+      .getByRole("button", { name: "Move up" })
+      .click();
+
+    await expect(page.getByTestId("form-name-0")).toHaveValue("Awakened");
+    await expect(
+      page.getByTestId("form-editor-0").getByTestId("primary-form-badge"),
+    ).toBeVisible();
+    await expect(badge).toHaveCount(1);
+  });
+
   test("the Add button stops at the variant's limit", async ({
     page,
     world,

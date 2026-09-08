@@ -327,6 +327,8 @@ export const EditCharacterPage: React.FC = () => {
   /** Staff's note on a rarity change, and how many traits it strands. */
   const [variantChangeReason, setVariantChangeReason] = useState("");
   const [unresolvedTraits, setUnresolvedTraits] = useState(0);
+  /** Forms still missing a name. The registry save is blocked on it. */
+  const [unnamedForms, setUnnamedForms] = useState(0);
 
   // Pending ownership state
   const [characterTarget, setCharacterTarget] = useState<GrantTarget | null>(
@@ -1000,6 +1002,7 @@ export const EditCharacterPage: React.FC = () => {
               }
               forms={forms}
               onChange={setForms}
+              onUnnamedChange={setUnnamedForms}
               disabled={!canEditRegistry || isSubmittingRegistry}
             />
             <TraitActions>
@@ -1014,7 +1017,9 @@ export const EditCharacterPage: React.FC = () => {
                   // A stranded trait value would be refused by the server
                   // anyway; blocking here means staff find out before typing
                   // the rest of the form.
-                  unresolvedTraits > 0
+                  unresolvedTraits > 0 ||
+                  // A nameless form would render as a blank tab.
+                  unnamedForms > 0
                 }
               >
                 {isSubmittingRegistry ? "Saving..." : "Save Species Details"}

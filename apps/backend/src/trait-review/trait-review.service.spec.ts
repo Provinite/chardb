@@ -29,6 +29,7 @@ const mockCharacterFormsService = {
   readForms: jest.fn().mockResolvedValue([]),
   writeForms: jest.fn().mockResolvedValue([]),
   snapshotToWrites: jest.fn().mockResolvedValue([]),
+  validateForms: jest.fn().mockResolvedValue(undefined),
 };
 
 describe("TraitReviewService", () => {

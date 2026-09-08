@@ -106,7 +106,7 @@ export class EditKitsService {
     }
 
     const proposedWrites = mapForms(input.forms) ?? [];
-    await this.characters.validateForms(
+    await this.forms.validateForms(
       character.speciesId,
       proposedWrites,
       character.speciesVariantId,

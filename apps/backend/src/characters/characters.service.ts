@@ -55,9 +55,9 @@ const PROFILE_FIELDS = new Set([
 /**
  * Forms are not in here because they are not part of a Prisma character
  * payload -- they are rows of their own, written only by
- * {@link CharactersService.writeForms}, and the mutations that carry them
- * check the registry permission themselves. This set is only ever matched
- * against the keys of a `CharacterUpdateInput`.
+ * `CharacterFormsService.writeForms`, and the mutations that carry them check
+ * the registry permission themselves. This set is only ever matched against
+ * the keys of a `CharacterUpdateInput`.
  */
 const REGISTRY_FIELDS = new Set(["registryId", "speciesVariant"]);
 
@@ -132,7 +132,7 @@ export class CharactersService {
 
     if (speciesId) {
       await this.assertCanCreateForSpecies(userId, speciesId);
-      await this.validateForms(speciesId, forms, speciesVariantId);
+      await this.forms.validateForms(speciesId, forms, speciesVariantId);
     } else if (forms.length > 1) {
       // Without a species there is no trait list for a second form to differ
       // in, so a character that has one is a character with two empty sets.
@@ -1292,7 +1292,7 @@ export class CharactersService {
     if (forms) {
       // Judged against the destination variant, values included: this is the
       // path that re-routes what a rarity change strands, and it always was.
-      await this.validateForms(
+      await this.forms.validateForms(
         character.speciesId,
         forms,
         effectiveVariantId,
@@ -1579,7 +1579,7 @@ export class CharactersService {
     // would delete the form it has and create another with a different id,
     // and an id is what a review or an audit row correlates against.
     if (input.forms?.length) {
-      await this.validateForms(
+      await this.forms.validateForms(
         input.speciesId,
         input.forms,
         input.speciesVariantId,
@@ -1844,245 +1844,6 @@ export class CharactersService {
     }
   }
 
-  /**
-   * Validate a character's whole form list.
-   *
-   * Each form's values are judged exactly as a single trait set used to be --
-   * all of a character's forms share the character's variant, so they share
-   * its trait list. What is new is the count: how many forms a character may
-   * have is a property of the variant it sits on, so a community can decide
-   * that transformation is something its Magic tier does and its Common tier
-   * does not.
-   *
-   * A variantless character is capped at one form. Trait values need a variant
-   * to mean anything, so a second form there would be a second set of nothing.
-   *
-   * `judgeValuesAgainstVariant` is separate from `speciesVariantId` on purpose,
-   * rather than the variant simply implying both. The variant's enum allow-list
-   * is only consulted on the two paths that consulted it before forms existed
-   * -- the staff registry editor and a variant-change redemption -- and turning
-   * it on everywhere else would be a silent tightening: a community that has
-   * enum traits but no `EnumValueSetting` rows permits *nothing* by that
-   * reading, so character creation would start refusing every enum value it
-   * accepts today. Widening that check is its own change, with its own
-   * migration for the communities it would break.
-   */
-  async validateForms(
-    speciesId: string,
-    forms: CharacterFormWrite[],
-    speciesVariantId?: string | null,
-    judgeValuesAgainstVariant = false,
-  ) {
-    if (forms.length === 0) {
-      throw new BadRequestException("A character must have at least one form");
-    }
-
-    for (const form of forms) {
-      if (!form.name.trim()) {
-        throw new BadRequestException("Every form needs a name");
-      }
-    }
-
-    const maxForms = await this.maxFormsForVariant(speciesVariantId);
-    if (forms.length > maxForms) {
-      throw new BadRequestException(
-        maxForms === 1
-          ? "This variant does not allow more than one form"
-          : `This variant allows at most ${maxForms} forms`,
-      );
-    }
-
-    for (const form of forms) {
-      if (form.traitValues.length > 0) {
-        await this.validateTraitValues(
-          speciesId,
-          form.traitValues,
-          judgeValuesAgainstVariant ? speciesVariantId : undefined,
-        );
-      }
-    }
-  }
-
-  /** How many forms the given variant permits. One, when it has no variant. */
-  private async maxFormsForVariant(speciesVariantId?: string | null) {
-    if (!speciesVariantId) return 1;
-    const variant = await this.db.speciesVariant.findUnique({
-      where: { id: speciesVariantId },
-      select: { maxForms: true },
-    });
-    return variant?.maxForms ?? 1;
-  }
-
-  /**
-   * Validates that trait values respect the allowsMultipleValues constraint
-   * @param speciesId The species ID to fetch traits for
-   * @param traitValues The trait values to validate
-   * @throws BadRequestException if any single-value trait has multiple values
-   */
-  /** Public for MYO redemption, which creates its character on its own transaction. */
-  async validateTraitValues(
-    speciesId: string,
-    traitValues: PrismaJson.CharacterTraitValuesJson,
-    speciesVariantId?: string | null,
-  ) {
-    // Fetch all traits for this species
-    const traits = await this.db.trait.findMany({
-      where: { speciesId },
-      select: {
-        id: true,
-        name: true,
-        allowsMultipleValues: true,
-        allowsClarifier: true,
-      },
-    });
-
-    // Build a map of traitId -> trait info
-    const traitMap = new Map(
-      traits.map((t) => [
-        t.id,
-        {
-          name: t.name,
-          allowsMultipleValues: t.allowsMultipleValues,
-          allowsClarifier: t.allowsClarifier,
-        },
-      ]),
-    );
-
-    // Group trait values by traitId and count occurrences
-    const traitValueCounts = new Map<
-      string,
-      { count: number; values: string[] }
-    >();
-
-    const violations: string[] = [];
-
-    for (const tv of traitValues) {
-      if (!traitValueCounts.has(tv.traitId)) {
-        traitValueCounts.set(tv.traitId, { count: 0, values: [] });
-      }
-      const entry = traitValueCounts.get(tv.traitId)!;
-      entry.count++;
-      // Convert value to string for display in error messages
-      entry.values.push(String(tv.value));
-
-      // Per-entry validation for clarifier
-      const clarifier = tv.clarifier;
-      if (clarifier !== undefined && clarifier !== null && clarifier !== "") {
-        const traitInfo = traitMap.get(tv.traitId);
-        if (traitInfo && !traitInfo.allowsClarifier) {
-          violations.push(
-            `Trait '${traitInfo.name}' does not allow clarifier text`,
-          );
-        }
-        if (typeof clarifier !== "string") {
-          violations.push(
-            `Clarifier for trait '${traitInfo?.name ?? tv.traitId}' must be a string`,
-          );
-        } else if (clarifier.length > 200) {
-          violations.push(
-            `Clarifier for trait '${traitInfo?.name ?? tv.traitId}' exceeds 200 characters`,
-          );
-        }
-        if (tv.value === null || tv.value === undefined || tv.value === "") {
-          violations.push(
-            `Clarifier for trait '${traitInfo?.name ?? tv.traitId}' requires a value`,
-          );
-        }
-      }
-    }
-
-    // Check for multi-value violations
-    for (const [traitId, { count, values }] of traitValueCounts.entries()) {
-      const traitInfo = traitMap.get(traitId);
-
-      if (!traitInfo) {
-        // Trait doesn't exist for this species
-        violations.push(
-          `Trait with ID '${traitId}' does not exist for this species`,
-        );
-        continue;
-      }
-
-      if (!traitInfo.allowsMultipleValues && count > 1) {
-        violations.push(
-          `Trait '${traitInfo.name}' does not allow multiple values. Found ${count} values: ${values.map((v) => `'${v}'`).join(", ")}`,
-        );
-      }
-    }
-
-    if (speciesVariantId) {
-      violations.push(
-        ...(await this.enumValueViolationsForVariant(
-          traitValues,
-          speciesVariantId,
-        )),
-      );
-    }
-
-    if (violations.length > 0) {
-      throw new BadRequestException(
-        `Trait validation failed:\n${violations.join("\n")}`,
-      );
-    }
-  }
-
-  /**
-   * Enum values this variant does not permit.
-   *
-   * `EnumValueSetting` is an allow-list per variant: a row says "this variant
-   * may use this option". Rarity is usually what it encodes -- a Rare may take
-   * markings a Common may not.
-   *
-   * An allow-list with no rows allows nothing. A trait with no options enabled
-   * for a variant is not available to that variant at all, which is the same
-   * thing the trait list says one level up: a variant nothing is configured
-   * for is dead, not permissive.
-   *
-   * Scoped to enum traits. A free-text or numeric trait has no options to
-   * allow, so it has no settings and must not be read as forbidden.
-   */
-  private async enumValueViolationsForVariant(
-    traitValues: PrismaJson.CharacterTraitValuesJson,
-    speciesVariantId: string,
-  ): Promise<string[]> {
-    const settings = await this.db.enumValueSetting.findMany({
-      where: { speciesVariantId },
-      select: { enumValueId: true },
-    });
-    const allowed = new Set(settings.map((s) => s.enumValueId));
-
-    // Only enum traits are constrained, and only the values that name an enum
-    // option. A value that is not an enum option at all belongs to a text or
-    // numeric trait and is none of this rule's business.
-    // Only string values can name an enum option; a numeric or boolean trait
-    // value is not an id and must not be looked up as one.
-    const candidateIds = traitValues
-      .map((tv) => tv.value)
-      .filter((v): v is string => typeof v === "string");
-    if (candidateIds.length === 0) return [];
-
-    const enumValues = await this.db.enumValue.findMany({
-      where: { id: { in: candidateIds } },
-      select: {
-        id: true,
-        name: true,
-        trait: { select: { name: true } },
-      },
-    });
-
-    const variant = await this.db.speciesVariant.findUnique({
-      where: { id: speciesVariantId },
-      select: { name: true },
-    });
-
-    return enumValues
-      .filter((ev) => !allowed.has(ev.id))
-      .map(
-        (ev) =>
-          `'${ev.name}' is not available to ${variant?.name ?? "this variant"}` +
-          ` for trait '${ev.trait.name}'`,
-      );
-  }
 
   async getLikesCount(characterId: string) {
     return this.db.like.count({

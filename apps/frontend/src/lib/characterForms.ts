@@ -25,10 +25,31 @@ export interface CharacterFormDraft {
 
 let nextKey = 0;
 
-/** A blank form, ready to be filled in. */
-export function newFormDraft(name = "New form"): CharacterFormDraft {
+/**
+ * A blank form, ready to be filled in.
+ *
+ * Unnamed by default rather than "New form": a placeholder name is one nobody
+ * has to notice, and the character page would then carry a tab labelled with
+ * it forever. The editor refuses to save an unnamed form instead.
+ */
+export function newFormDraft(name = ""): CharacterFormDraft {
   nextKey += 1;
   return { key: `new-${nextKey}`, name, traitValues: [] };
+}
+
+/**
+ * How many of these forms still need a name.
+ *
+ * Every form needs one, matching what the server enforces -- deliberately not
+ * "every form once there are two", which would be a second rule that could
+ * drift from the server's. In practice a single-form character always has a
+ * name already; the count is what stops a *second* form being saved nameless,
+ * where the name is the only thing distinguishing the two tabs.
+ */
+export function unnamedForms(
+  forms: ReadonlyArray<CharacterFormDraft>,
+): number {
+  return forms.filter((form) => !form.name.trim()).length;
 }
 
 /** The editor's starting state for a character that has been loaded. */

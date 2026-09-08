@@ -1,10 +1,11 @@
-import React from "react";
+import React, { useEffect } from "react";
 import styled from "styled-components";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
 import { Button, Input } from "@chardb/ui";
 import { TraitForm } from "./TraitForm";
 import {
   newFormDraft,
+  unnamedForms,
   type CharacterFormDraft,
 } from "../../lib/characterForms";
 import type { SpeciesVariantDetailsFragment } from "../../generated/graphql";
@@ -23,7 +24,9 @@ const FormCard = styled.div`
 
 const FormHead = styled.div`
   display: flex;
-  align-items: center;
+  /* Start rather than center: the name field grows a validation line under it,
+     and centering would drag the buttons down with it. */
+  align-items: flex-start;
   gap: ${({ theme }) => theme.spacing.sm};
   margin-bottom: ${({ theme }) => theme.spacing.md};
 `;
@@ -54,6 +57,24 @@ const IconButton = styled.button`
     border-color: ${({ theme }) => theme.colors.primary};
     color: ${({ theme }) => theme.colors.primary};
   }
+`;
+
+const PrimaryBadge = styled.span`
+  flex-shrink: 0;
+  padding: 0.2rem 0.5rem;
+  border-radius: ${({ theme }) => theme.borderRadius.sm};
+  background: ${({ theme }) => theme.colors.primary}18;
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: 0.6875rem;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+`;
+
+const NameError = styled.p`
+  margin: ${({ theme }) => theme.spacing.xs} 0 0;
+  font-size: 0.8125rem;
+  color: ${({ theme }) => theme.colors.error};
 `;
 
 const Help = styled.p`
@@ -90,6 +111,12 @@ interface Props {
   speciesId: string;
   speciesVariant: SpeciesVariantDetailsFragment | null;
   disabled?: boolean;
+  /**
+   * How many forms still need a name, so the page owning the Save button can
+   * block on it. Reported upward rather than handled here for the reason the
+   * stranded-trait count is: this component does not own the submit.
+   */
+  onUnnamedChange?: (count: number) => void;
 }
 
 /**
@@ -113,8 +140,14 @@ export const CharacterFormsEditor: React.FC<Props> = ({
   speciesId,
   speciesVariant,
   disabled,
+  onUnnamedChange,
 }) => {
   const multiple = maxForms > 1 || forms.length > 1;
+  const unnamed = unnamedForms(forms);
+
+  useEffect(() => {
+    onUnnamedChange?.(unnamed);
+  }, [unnamed, onUnnamedChange]);
 
   const update = (index: number, patch: Partial<CharacterFormDraft>) => {
     onChange(forms.map((f, i) => (i === index ? { ...f, ...patch } : f)));
@@ -146,6 +179,17 @@ export const CharacterFormsEditor: React.FC<Props> = ({
         return (
           <FormCard key={form.key} data-testid={`form-editor-${index}`}>
             <FormHead>
+              {/* Which form is primary is otherwise invisible -- it is simply
+                  the one at the top -- and reordering silently changes what
+                  every listing and every link to this character shows. */}
+              {index === 0 && (
+                <PrimaryBadge
+                  data-testid="primary-form-badge"
+                  title="Shown in listings and when somebody opens this character"
+                >
+                  Primary
+                </PrimaryBadge>
+              )}
               <NameField>
                 <Input
                   value={form.name}
@@ -153,9 +197,17 @@ export const CharacterFormsEditor: React.FC<Props> = ({
                   placeholder="Form name, e.g. Awakened"
                   disabled={disabled}
                   maxLength={100}
+                  required
+                  hasError={!form.name.trim()}
                   data-testid={`form-name-${index}`}
                   aria-label={`Name of form ${index + 1}`}
                 />
+                {!form.name.trim() && (
+                  <NameError data-testid={`form-name-error-${index}`}>
+                    Give this form a name &mdash; it is what the tabs on the
+                    character page say.
+                  </NameError>
+                )}
               </NameField>
               <IconButton
                 type="button"

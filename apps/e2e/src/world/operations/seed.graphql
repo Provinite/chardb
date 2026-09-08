@@ -576,6 +576,26 @@ mutation SeedRevertTraitReview($input: RevertTraitReviewInput!) {
   }
 }
 
+# A moderator correcting a proposal before approving it. The only path that
+# reaches the forms writer with caller-supplied forms, so a spec can prove it
+# is validated like every other one rather than trusted for being staff's.
+mutation SeedEditAndApproveTraitReview(
+  $input: EditAndApproveTraitReviewInput!
+) {
+  editAndApproveTraitReview(input: $input) {
+    id
+    status
+    appliedForms {
+      formId
+      name
+      traitValues {
+        traitId
+        value
+      }
+    }
+  }
+}
+
 mutation SeedCreateCurrency($input: CreateCurrencyInput!) {
   createCurrency(input: $input) {
     id

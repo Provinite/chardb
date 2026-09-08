@@ -200,6 +200,8 @@ export const SpendEditKitPage: React.FC = () => {
 
   const [forms, setForms] = useState<CharacterFormDraft[]>([]);
   const [seeded, setSeeded] = useState(false);
+  /** Forms still missing a name. Submitting is blocked on it. */
+  const [unnamedForms, setUnnamedForms] = useState(0);
 
   // Seeded from what the character has now, so the form opens on the current
   // design rather than an empty sheet — this is an edit, not a redesign.
@@ -338,13 +340,14 @@ export const SpendEditKitPage: React.FC = () => {
           maxForms={character.speciesVariant?.maxForms ?? 1}
           forms={forms}
           onChange={setForms}
+          onUnnamedChange={setUnnamedForms}
         />
       </Section>
 
       <ButtonRow>
         <Button
           onClick={() => setConfirming(true)}
-          disabled={spending || !kitId}
+          disabled={spending || !kitId || unnamedForms > 0}
           data-testid="submit-edit-kit"
         >
           {spending

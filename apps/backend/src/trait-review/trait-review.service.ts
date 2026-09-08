@@ -564,7 +564,7 @@ export class TraitReviewService {
   }
 
   /**
-   * Edit and approve a trait review - applies corrected trait values
+   * Edit and approve a trait review - applies corrected forms
    */
   async editAndApproveReview(
     reviewId: string,
@@ -582,6 +582,23 @@ export class TraitReviewService {
 
     if (review.status !== ModerationStatus.PENDING) {
       throw new BadRequestException("Review is not pending");
+    }
+
+    // Validated like any other write, rather than trusted for being staff's.
+    //
+    // This is the only path that reaches `writeForms` with caller-supplied
+    // forms and no check, and being the only one is exactly the problem: a
+    // moderator correcting a review could put a character on more forms than
+    // its rarity permits, or on trait ids from another species, leaving it in
+    // a state every other path refuses and its own trait editor cannot render.
+    // Judged against the character's own variant, since that is what the
+    // corrected values will be displayed and re-edited against.
+    if (review.character.speciesId) {
+      await this.forms.validateForms(
+        review.character.speciesId,
+        correctedForms,
+        review.character.speciesVariantId,
+      );
     }
 
     const updatedReview = await this.db.$transaction(async (tx) => {

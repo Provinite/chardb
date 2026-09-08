@@ -126,7 +126,7 @@ export class VariantChangesService {
     // The form *count* is judged there too, and that is a real refusal rather
     // than a formality: a two-form character moving to a tier that allows one
     // has to say which form survives, and it says so by submitting one.
-    await this.characters.validateForms(
+    await this.forms.validateForms(
       character.speciesId,
       proposed,
       grant.toVariantId,

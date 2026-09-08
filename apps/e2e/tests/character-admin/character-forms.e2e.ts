@@ -10,6 +10,7 @@ import {
   SeedApproveTraitReviewDocument,
   SeedTraitReviewQueueDocument,
   SeedRevertTraitReviewDocument,
+  SeedEditAndApproveTraitReviewDocument,
   SeedUpdateRoleDocument,
 } from "../../src/generated/graphql.js";
 import { oneForm } from "../../src/world/forms.js";
@@ -412,6 +413,98 @@ test.describe("character forms", () => {
         }),
       ).rejects.toThrow(/forbidden/i);
     });
+  });
+
+  test("a moderator's correction is validated like any other write", async ({
+    world,
+  }) => {
+    // `editAndApproveTraitReview` is the only path that hands caller-supplied
+    // forms to the writer, and being staff's is not a reason to skip the
+    // checks -- a correction that exceeded the rarity's limit would leave the
+    // character in a state every other path refuses and its own editor cannot
+    // render.
+    const before = await world
+      .as("member")
+      .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
+
+    await world.as("member").gql(SeedEditCharacterTraitsWithKitDocument, {
+      input: {
+        itemId: world.editKitItems.kitIds[0],
+        characterId: world.characters.pinefall.id,
+        forms: oneForm(eyes(world, "green")),
+      },
+    });
+
+    const { traitReviewQueue } = await world
+      .as("commadmin")
+      .gql(SeedTraitReviewQueueDocument, { communityId: world.community.id });
+    const entry = traitReviewQueue.items.find(
+      (i) => i.review.characterId === world.characters.pinefall.id,
+    );
+    expect(entry).toBeDefined();
+
+    // Common is still at one form.
+    await expect(
+      world.as("commadmin").gql(SeedEditAndApproveTraitReviewDocument, {
+        input: {
+          reviewId: entry!.review.id,
+          correctedForms: [
+            { name: "Base", traitValues: eyes(world, "blue") },
+            { name: "Smuggled", traitValues: eyes(world, "green") },
+          ],
+        },
+      }),
+    ).rejects.toThrow(/does not allow more than one form/i);
+
+    const after = await world
+      .as("member")
+      .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
+    expect(after.character.forms).toHaveLength(1);
+    expect(after.character.forms[0].id).toBe(before.character.forms[0].id);
+  });
+
+  test("a moderator's correction still applies when it is valid", async ({
+    world,
+  }) => {
+    // The other half: validating must not have broken the thing it guards.
+    const before = await world
+      .as("member")
+      .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
+
+    await world.as("member").gql(SeedEditCharacterTraitsWithKitDocument, {
+      input: {
+        itemId: world.editKitItems.kitIds[0],
+        characterId: world.characters.pinefall.id,
+        forms: oneForm(eyes(world, "green")),
+      },
+    });
+
+    const { traitReviewQueue } = await world
+      .as("commadmin")
+      .gql(SeedTraitReviewQueueDocument, { communityId: world.community.id });
+    const entry = traitReviewQueue.items.find(
+      (i) => i.review.characterId === world.characters.pinefall.id,
+    );
+
+    await world.as("commadmin").gql(SeedEditAndApproveTraitReviewDocument, {
+      input: {
+        reviewId: entry!.review.id,
+        correctedForms: [
+          {
+            id: before.character.forms[0].id,
+            name: "Base",
+            traitValues: eyes(world, "amber"),
+          },
+        ],
+      },
+    });
+
+    const after = await world
+      .as("member")
+      .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
+    expect(after.character.forms[0].traitValues[0].value).toBe(
+      world.traits.eyeColor.values.amber,
+    );
   });
 
   test("refusing a proposed form leaves the character alone and returns the kit", async ({

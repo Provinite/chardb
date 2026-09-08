@@ -46,6 +46,7 @@ const mockCharacterFormsService = {
   readForms: jest.fn(),
   writeForms: jest.fn().mockResolvedValue([]),
   snapshotToWrites: jest.fn().mockResolvedValue([]),
+  validateForms: jest.fn().mockResolvedValue(undefined),
 };
 
 /** A form snapshot, as `readForms` returns one. */

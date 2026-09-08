@@ -86,7 +86,7 @@ export class MyoService {
     // needs a form to put them in later.
     const submitted = mapForms(input.forms);
     const forms = submitted?.length ? submitted : [DEFAULT_FORM];
-    await this.characters.validateForms(
+    await this.forms.validateForms(
       grant.speciesId,
       forms,
       input.speciesVariantId,

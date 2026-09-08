@@ -376,6 +376,8 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   const [forms, setForms] = useState<CharacterFormDraft[]>([
     newFormDraft("Base"),
   ]);
+  /** Forms still missing a name. Creating is blocked on it. */
+  const [unnamedForms, setUnnamedForms] = useState(0);
 
   // Tags state
   const [tags, setTags] = useState<string[]>([]);
@@ -760,6 +762,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
               maxForms={selectedVariant?.maxForms ?? 1}
               forms={forms}
               onChange={setForms}
+              onUnnamedChange={setUnnamedForms}
             />
           </Section>
         )}
@@ -902,6 +905,8 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
               // thing the ticket left to the member, and the server refuses a
               // redemption without it.
               (isMyo && (!grant || !selectedVariant)) ||
+              // A nameless form would render as a blank tab on the character.
+              unnamedForms > 0 ||
               (characterTarget?.type === "pending" && !isGrantTargetValid)
             }
           >
