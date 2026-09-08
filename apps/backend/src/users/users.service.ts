@@ -6,6 +6,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { Visibility, Prisma, ModerationStatus } from "@chardb/database";
 import { notDeleted } from "../common/utils/prisma-filters";
+import { ImagesService } from "../images/images.service";
 
 /**
  * Service layer input types for user operations.
@@ -64,7 +65,10 @@ export interface UpdateUserServiceInput {
 
 @Injectable()
 export class UsersService {
-  constructor(private db: DatabaseService) {}
+  constructor(
+    private db: DatabaseService,
+    private readonly imagesService: ImagesService,
+  ) {}
 
   async create(input: CreateUserServiceInput) {
     return this.db.user.create({
@@ -124,17 +128,46 @@ export class UsersService {
       updateData.dateOfBirth = input.dateOfBirth;
     if (input.privacySettings !== undefined)
       updateData.privacySettings = input.privacySettings;
+    // The picture this is replacing, read before the write so it can be swept
+    // up after. Only when the avatar is actually part of this update -- every
+    // other field leaves it alone.
+    let displacedImageId: string | null = null;
     if (input.avatarImageId !== undefined) {
       await this.assertUsableAsAvatar(id, input.avatarImageId);
+
+      const current = await this.db.user.findUnique({
+        where: { id },
+        select: { avatarImageId: true },
+      });
+      if (
+        current?.avatarImageId &&
+        current.avatarImageId !== input.avatarImageId
+      ) {
+        displacedImageId = current.avatarImageId;
+      }
+
       updateData.avatarImage = input.avatarImageId
         ? { connect: { id: input.avatarImageId } }
         : { disconnect: true };
     }
 
-    return this.db.user.update({
+    const updated = await this.db.user.update({
       where: { id },
       data: updateData,
     });
+
+    // After the write, so the reference being released is already gone and the
+    // count below sees the truth. `cleanupOrphanedImage` decides for itself:
+    // an image that is still a post in somebody's library, or an item type's
+    // picture, is not rubbish just because it stopped being an avatar. It only
+    // deletes when nothing at all points at it, which for an avatar means the
+    // upload's own media row was deleted at some earlier point and this column
+    // was the last thing keeping the picture alive.
+    if (displacedImageId) {
+      await this.imagesService.cleanupOrphanedImage(displacedImageId);
+    }
+
+    return updated;
   }
 
   /**

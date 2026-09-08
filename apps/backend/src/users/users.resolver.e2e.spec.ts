@@ -192,6 +192,104 @@ describe("UsersResolver avatars (e2e)", () => {
     });
   });
 
+  /**
+   * Changing an avatar has to take the old picture with it when nothing else
+   * wants it.
+   *
+   * The reachable way to get here is two steps: upload an avatar, then delete
+   * that upload from your media library. The delete keeps the image alive
+   * because `cleanupOrphanedImage` counts avatar references -- correctly, it
+   * is still on your profile -- and at that point the image's only reason to
+   * exist is the column about to be overwritten. Nothing used to look again.
+   */
+  describe("orphaning the previous one", () => {
+    it("deletes an image nothing else references", async () => {
+      // An image with no media at all: what remains after the upload's media
+      // row has been deleted while the picture stayed on the profile.
+      const oldId = await createImage(ownerId, ModerationStatus.APPROVED);
+      const newId = await createImage(ownerId, ModerationStatus.APPROVED);
+      await testApp.getDb().user.update({
+        where: { id: ownerId },
+        data: { avatarImageId: oldId },
+      });
+
+      await testApp.authenticatedGraphqlRequest(
+        UPDATE_PROFILE,
+        { input: { avatarImageId: newId } },
+        ownerToken,
+      );
+
+      await expect(
+        testApp.getDb().image.findUnique({ where: { id: oldId } }),
+      ).resolves.toBeNull();
+      await expect(
+        testApp.getDb().image.findUnique({ where: { id: newId } }),
+      ).resolves.not.toBeNull();
+    });
+
+    it("deletes it when the avatar is removed rather than replaced", async () => {
+      const oldId = await createImage(ownerId, ModerationStatus.APPROVED);
+      await testApp.getDb().user.update({
+        where: { id: ownerId },
+        data: { avatarImageId: oldId },
+      });
+
+      await testApp.authenticatedGraphqlRequest(
+        UPDATE_PROFILE,
+        { input: { avatarImageId: null } },
+        ownerToken,
+      );
+
+      await expect(
+        testApp.getDb().image.findUnique({ where: { id: oldId } }),
+      ).resolves.toBeNull();
+    });
+
+    /**
+     * The other half, and the one that would be a data-loss bug rather than a
+     * leak: a picture that is still a post in your library is not rubbish just
+     * because it stopped being your avatar.
+     */
+    it("keeps an image that still has media", async () => {
+      const oldId = await createImage(ownerId, ModerationStatus.APPROVED);
+      await testApp.getDb().media.create({
+        data: { title: "Real artwork", ownerId, imageId: oldId },
+      });
+      await testApp.getDb().user.update({
+        where: { id: ownerId },
+        data: { avatarImageId: oldId },
+      });
+
+      await testApp.authenticatedGraphqlRequest(
+        UPDATE_PROFILE,
+        { input: { avatarImageId: null } },
+        ownerToken,
+      );
+
+      await expect(
+        testApp.getDb().image.findUnique({ where: { id: oldId } }),
+      ).resolves.not.toBeNull();
+    });
+
+    it("keeps it when the same image is set again", async () => {
+      const imageId = await createImage(ownerId, ModerationStatus.APPROVED);
+      await testApp.getDb().user.update({
+        where: { id: ownerId },
+        data: { avatarImageId: imageId },
+      });
+
+      await testApp.authenticatedGraphqlRequest(
+        UPDATE_PROFILE,
+        { input: { avatarImageId: imageId } },
+        ownerToken,
+      );
+
+      await expect(
+        testApp.getDb().image.findUnique({ where: { id: imageId } }),
+      ).resolves.not.toBeNull();
+    });
+  });
+
   describe("clearing one", () => {
     it("removes the avatar on an explicit null", async () => {
       const imageId = await createImage(ownerId, ModerationStatus.APPROVED);
