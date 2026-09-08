@@ -1,6 +1,6 @@
 import { Field, InputType, ID } from "@nestjs/graphql";
 import { Type } from "class-transformer";
-import { IsArray, IsUUID, ValidateNested } from "class-validator";
+import { IsUUID, ValidateNested } from "class-validator";
 import { CharacterFormsChangeInput } from "../../characters/dto/character-form.dto";
 
 /**

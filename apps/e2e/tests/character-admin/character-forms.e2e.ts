@@ -16,7 +16,6 @@ import {
 import {
   addForm,
   editForm,
-  oneForm,
   setForms,
   setOnlyForm,
 } from "../../src/world/forms.js";
@@ -489,10 +488,6 @@ test.describe("character forms", () => {
     world,
   }) => {
     // The other half: validating must not have broken the thing it guards.
-    const before = await world
-      .as("member")
-      .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
-
     await world.as("member").gql(SeedEditCharacterTraitsWithKitDocument, {
       input: {
         itemId: world.editKitItems.kitIds[0],
