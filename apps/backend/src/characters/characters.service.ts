@@ -1573,8 +1573,18 @@ export class CharactersService {
       }
     }
 
-    const forms = input.forms?.length ? input.forms : [DEFAULT_FORM];
-    await this.validateForms(input.speciesId, forms, input.speciesVariantId);
+    // Submitting no forms leaves the character's alone rather than replacing
+    // them with a fresh empty one. The effect on its traits is the same either
+    // way -- a character with no species has none to keep -- but replacing
+    // would delete the form it has and create another with a different id,
+    // and an id is what a review or an audit row correlates against.
+    if (input.forms?.length) {
+      await this.validateForms(
+        input.speciesId,
+        input.forms,
+        input.speciesVariantId,
+      );
+    }
 
     // Update the character with species assignment
     const updatedCharacter = await this.db.$transaction(async (tx) => {
@@ -1586,7 +1596,9 @@ export class CharactersService {
           registryId: input.registryId,
         },
       });
-      await this.forms.writeForms(tx, id, forms);
+      if (input.forms?.length) {
+        await this.forms.writeForms(tx, id, input.forms);
+      }
       return updated;
     });
 

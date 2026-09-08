@@ -531,6 +531,19 @@ query SeedCharacterVariantChanges($characterId: ID!) {
   }
 }
 
+# First-time species assignment. Only valid on a character that has none, so a
+# spec can prove what it does and does not touch on the way in.
+mutation SeedAssignCharacterSpecies(
+  $id: ID!
+  $input: AssignCharacterSpeciesInput!
+) {
+  assignCharacterSpecies(id: $id, input: $input) {
+    id
+    speciesId
+    speciesVariantId
+  }
+}
+
 mutation SeedDeleteCharacter($id: ID!) {
   deleteCharacter(id: $id)
 }

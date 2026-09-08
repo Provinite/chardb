@@ -391,6 +391,62 @@ describe("CharactersService", () => {
     });
   });
 
+  describe("assignSpecies", () => {
+    /**
+     * Not an e2e test, because the mutation is not reachable end to end: the
+     * only speciesless characters are ones kicked out of a species, and
+     * `AllowCharacterProfileEditor` then has no community to resolve
+     * permissions from. That gap predates forms.
+     */
+    it("leaves the character's existing form alone when none is submitted", async () => {
+      const character = makeCharacter({ speciesId: null });
+      db.character.findFirst.mockResolvedValue(character);
+      db.species.findUnique.mockResolvedValue({
+        id: "species1",
+        communityId: "community1",
+      });
+      db.speciesVariant.findFirst.mockResolvedValue({ id: "variant1" });
+      mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
+      db.character.update.mockResolvedValue(character);
+
+      await service.assignSpecies("char1", "user1", {
+        speciesId: "species1",
+        speciesVariantId: "variant1",
+      });
+
+      // Replacing it would delete the form the character has and create
+      // another with a different id, and an id is what a review or an audit
+      // row correlates against.
+      expect(mockCharacterFormsService.writeForms).not.toHaveBeenCalled();
+    });
+
+    it("writes the forms it is given", async () => {
+      const character = makeCharacter({ speciesId: null });
+      db.character.findFirst.mockResolvedValue(character);
+      db.species.findUnique.mockResolvedValue({
+        id: "species1",
+        communityId: "community1",
+      });
+      db.speciesVariant.findFirst.mockResolvedValue({ id: "variant1" });
+      db.speciesVariant.findUnique.mockResolvedValue({ maxForms: 1 });
+      db.trait.findMany.mockResolvedValue([]);
+      mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
+      db.character.update.mockResolvedValue(character);
+
+      await service.assignSpecies("char1", "user1", {
+        speciesId: "species1",
+        speciesVariantId: "variant1",
+        forms: [{ name: "Base", traitValues: [] }],
+      });
+
+      expect(mockCharacterFormsService.writeForms).toHaveBeenCalledWith(
+        expect.anything(),
+        "char1",
+        [{ name: "Base", traitValues: [] }],
+      );
+    });
+  });
+
   describe("kickFromSpecies", () => {
     it("should throw NotFoundException when character does not exist", async () => {
       db.character.findFirst.mockResolvedValue(null);

@@ -1,4 +1,4 @@
-import { presetTest, expect } from "../../src/fixtures.js";
+import { presetTest, expect, acceptNextDialog } from "../../src/fixtures.js";
 import type { CommunityItemsWorld } from "../../src/world/presets/community-items.js";
 import type { World } from "../../src/world/types.js";
 import type { Browser, Page } from "@playwright/test";
@@ -6,6 +6,8 @@ import {
   SeedUpdateSpeciesVariantDocument,
   SeedUpdateCharacterRegistryDocument,
   SeedItemDocument,
+  SeedMemberHoldingsDocument,
+  SeedCharacterDocument,
 } from "../../src/generated/graphql.js";
 
 const test = presetTest("community-items");
@@ -55,6 +57,21 @@ const giveTwoForms = async (world: World<CommunityItemsWorld>) => {
 
 const editPage = (world: World<CommunityItemsWorld>) =>
   `${world.community.url}/character/${world.characters.pinefall.id}/edit`;
+
+/** How many edit kits `member` is holding right now. */
+const kitsHeld = async (world: World<CommunityItemsWorld>) => {
+  const { memberHoldings } = await world
+    .as("member")
+    .gql(SeedMemberHoldingsDocument, {
+      communityId: world.community.id,
+      userId: world.users.member.userId,
+    });
+  return (
+    memberHoldings.holdings.find(
+      (h) => h.itemType.id === world.itemTypes.editKit.id,
+    )?.count ?? 0
+  );
+};
 
 /** A second signed-in browser context, for the other side of a review. */
 async function pageAs(
@@ -178,6 +195,86 @@ test.describe("staff editing a character's forms", () => {
     await expect(page.getByTestId("character-forms")).toHaveCount(0);
   });
 
+  test("re-routes a stranded value in each form before a rarity change saves", async ({
+    page,
+    world,
+  }) => {
+    // Legendary permits Amber alone, so a two-form character with Blue eyes in
+    // both strands two values rather than one. Before forms this panel had one
+    // row per character, so the second form's value would have gone through
+    // unnoticed and been refused at save.
+    await allowForms(world, world.variants.common.id, 2);
+    await world.as("commadmin").gql(SeedUpdateCharacterRegistryDocument, {
+      id: world.characters.pinefall.id,
+      input: {
+        forms: [
+          { name: "Base", traitValues: eyes(world, "blue") },
+          { name: "Awakened", traitValues: eyes(world, "blue") },
+        ],
+      },
+    });
+    // The destination has to allow two forms as well, or the count refusal
+    // fires first -- which is what makes them separate checks.
+    await allowForms(world, world.variants.legendary.id, 2);
+
+    await page.goto(editPage(world));
+    await page
+      .getByTestId("variant-select")
+      .selectOption(world.variants.legendary.id);
+
+    const reroute = page.getByTestId("variant-reroute");
+    await expect(reroute).toContainText("2 trait values do not exist");
+    // Each row names its form, or two identical-looking rows cannot be told
+    // apart.
+    await expect(reroute).toContainText("Base");
+    await expect(reroute).toContainText("Awakened");
+
+    const save = page.getByTestId("save-species-details");
+    await expect(save).toBeDisabled();
+
+    const pickers = reroute.getByRole("combobox");
+    await expect(pickers).toHaveCount(2);
+    // A resolved row disappears, so the outstanding one is whatever is left.
+    await pickers.first().selectOption(world.traits.eyeColor.values.amber);
+    await expect(pickers).toHaveCount(1);
+    await expect(save).toBeDisabled();
+
+    await pickers.first().selectOption(world.traits.eyeColor.values.amber);
+    await expect(reroute).toHaveCount(0);
+    await expect(save).toBeEnabled();
+  });
+
+  test("removing the character from its species keeps every form's traits", async ({
+    page,
+    world,
+  }) => {
+    // The flatten writes each form's values into custom fields, keyed by form
+    // name once there is more than one -- two forms routinely carry the same
+    // traits at different values, which is the point of having two.
+    await giveTwoForms(world);
+
+    await page.goto(world.characters.pinefall.url);
+    acceptNextDialog(page);
+    await page
+      .getByTestId("character-admin-actions")
+      .getByRole("button", { name: "Remove from Species" })
+      .click();
+
+    const fields = page.getByRole("heading", { level: 3, name: "Fields" });
+    await expect(fields).toBeVisible();
+    const section = page.locator("section, div").filter({ has: fields }).last();
+    await expect(section).toContainText("Base: Eye Color");
+    await expect(section).toContainText("Blue");
+    await expect(section).toContainText("Awakened: Eye Color");
+    await expect(section).toContainText("Green");
+
+    // The structured trait data and the switcher go together.
+    await expect(page.getByTestId("character-forms")).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { level: 3, name: "Character Traits" }),
+    ).toHaveCount(0);
+  });
+
   test("says what to do when the limit has been lowered under the character", async ({
     page,
     world,
@@ -244,6 +341,54 @@ test.describe("a member's routes to a second form", () => {
     await expect(
       page.getByTestId("character-forms").getByRole("tab"),
     ).toHaveText(["Base", "Awakened"]);
+  });
+
+  test("refusing the proposal leaves the character alone and hands the kit back", async ({
+    page,
+    browser,
+    world,
+  }) => {
+    // The other half of the review. A refused form never existed, so there is
+    // nothing to revert to -- the character must keep the form it already had
+    // rather than losing it, and the member must get their kit back.
+    await allowForms(world, world.variants.common.id, 2);
+    const kitId = world.editKitItems.kitIds[0];
+    const heldBefore = await kitsHeld(world);
+
+    await page.goto(
+      `${world.community.url}/character/${world.characters.pinefall.id}/edit-traits?kit=${kitId}`,
+    );
+    await page.getByTestId("add-form").click();
+    await page.getByTestId("form-name-1").fill("Awakened");
+    await page.getByTestId("submit-edit-kit").click();
+    await page.getByTestId("confirm-accept").click();
+    // Polled rather than read once: the click returns before the mutation has
+    // settled, and a bare read here is a race that passes on a fast machine.
+    await expect.poll(() => kitsHeld(world)).toBe(heldBefore - 1);
+
+    const staff = await pageAs(browser, world.storageState("commadmin"));
+    try {
+      await staff.page.goto(`${world.community.url}/moderation/traits`);
+      const card = staff.page.getByTestId("trait-review-card").first();
+      await expect(card).toContainText("New form");
+
+      // Called Refuse rather than Revert on a redemption, because it reverts
+      // nothing -- the proposal was never applied.
+      await card.getByRole("button", { name: "Refuse" }).click();
+      const modal = staff.page.getByTestId("revert-modal");
+      await expect(staff.page.getByTestId("revert-confirm")).toBeDisabled();
+      await modal.getByTestId("revert-reason").fill("Not this one");
+      await staff.page.getByTestId("revert-confirm").click();
+      await expect(card).toHaveCount(0);
+    } finally {
+      await staff.close();
+    }
+
+    await page.goto(world.characters.pinefall.url);
+    await expect(page.getByTestId("character-forms")).toHaveCount(0);
+    await expect(page.getByTestId("trait-name")).toHaveCount(1);
+    // Refusing an edit kit mints a replacement, so the member is whole again.
+    await expect.poll(() => kitsHeld(world)).toBe(heldBefore);
   });
 
   test("an MYO ticket makes a two-form character", async ({ page, world }) => {
@@ -315,6 +460,32 @@ test.describe("a member's routes to a second form", () => {
     await pickers.first().selectOption(world.traits.eyeColor.values.amber);
     await expect(reroute).toHaveCount(0);
     await expect(submit).toBeEnabled();
+
+    // Go through with it: the whole point is that a two-form character can
+    // actually move, not merely that the form is fillable.
+    await submit.click();
+    await page.getByTestId("confirm-accept").click();
+    // The redemption lands the member back on the character. Waiting for that
+    // is what separates reading the result from racing it.
+    await expect(page).toHaveURL(
+      new RegExp(`${world.characters.pinefall.id}$`),
+    );
+
+    const { character } = await world
+      .as("member")
+      .gql(SeedCharacterDocument, { id: world.characters.pinefall.id });
+    expect(character.speciesVariantId).toBe(world.variants.legendary.id);
+    expect(character.forms.map((f) => f.name)).toEqual(["Base", "Awakened"]);
+    // Both forms re-routed, not just the primary one.
+    for (const form of character.forms) {
+      expect(form.traitValues[0].value).toBe(
+        world.traits.eyeColor.values.amber,
+      );
+    }
+    const { item } = await world
+      .as("member")
+      .gql(SeedItemDocument, { id: world.variantChangeItems.ascensionIds[0] });
+    expect(item.destroyedAt).not.toBeNull();
   });
 
   test("a rarity item is blocked before it is spent when the destination allows fewer forms", async ({

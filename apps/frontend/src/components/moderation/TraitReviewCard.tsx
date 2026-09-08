@@ -360,6 +360,7 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
       {showRejectModal && (
         <RevertTraitReviewModal
           characterName={item.characterName}
+          redemption={redemption}
           onRevert={async (reason) => {
             await onRevert(review.id, reason);
             setShowRejectModal(false);

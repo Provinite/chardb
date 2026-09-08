@@ -458,6 +458,16 @@ test.describe("character forms", () => {
     expect(after.character.forms[0].id).toBe(before.character.forms[0].id);
   });
 
+  /*
+   * `assignCharacterSpecies` keeping a character's existing form is covered in
+   * characters.service.spec.ts rather than here, because the mutation is not
+   * reachable end to end: the only way to get a speciesless character is to
+   * kick one out of its species, and `AllowCharacterProfileEditor` then has no
+   * community to resolve permissions from. A global admin passes that guard
+   * but is refused by the service's own `CanCreateCharacter` community check.
+   * That gap predates forms and is not this branch's to close.
+   */
+
   test("lowering a variant's limit leaves existing characters alone", async ({
     world,
   }) => {
