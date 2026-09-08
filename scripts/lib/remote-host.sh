@@ -58,7 +58,9 @@ setup_remote_transport() {
                 -o "ProxyCommand=sh -c \"aws ssm start-session --target %h --document-name AWS-StartSSHSession --parameters 'portNumber=%p' --region ${AWS_REGION:-us-east-1}\""
             )
             REMOTE_TARGET="ec2-user@${INSTANCE_ID}"
-            echo "🔒 Transport: SSH over Session Manager (${INSTANCE_ID})" >&2
+            # Which transport was chosen is the useful part; naming the target
+            # is what put an inventory in a public log (#378).
+            echo "🔒 Transport: SSH over Session Manager" >&2
             ;;
         direct)
             if [ -z "$SERVER_IP" ]; then
@@ -66,7 +68,7 @@ setup_remote_transport() {
                 return 1
             fi
             REMOTE_TARGET="ec2-user@${SERVER_IP}"
-            echo "🔓 Transport: direct SSH to ${SERVER_IP}" >&2
+            echo "🔓 Transport: direct SSH to the Elastic IP" >&2
             ;;
         *)
             echo "❌ Unknown DEPLOY_TRANSPORT '$transport' (expected 'ssm' or 'direct')" >&2

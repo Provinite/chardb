@@ -20,10 +20,15 @@ if ! ECR_REPOSITORY_URL=$(cd "infra/environments/$ENVIRONMENT" && terraform outp
     exit 1
 fi
 
-echo "📦 ECR Repository: $ECR_REPOSITORY_URL"
+# Masked before anything prints it -- `docker build -t` and `docker push` both
+# name the repository on their own account, so dropping the echo that used to
+# be here would not have kept it out of a public log (#378).
+source "$(dirname "$0")/lib/mask-in-actions.sh"
+mask_in_actions ECR_REPOSITORY_URL
 
 # Extract AWS account ID from ECR URL
 AWS_ACCOUNT_ID=$(echo "$ECR_REPOSITORY_URL" | cut -d'.' -f1 | cut -d'/' -f3)
+mask_in_actions AWS_ACCOUNT_ID
 echo "🔐 Logging into ECR..."
 aws ecr get-login-password --region "$AWS_REGION" | docker login --username AWS --password-stdin "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
 
@@ -40,7 +45,6 @@ docker push "${ECR_REPOSITORY_URL}:${IMAGE_TAG}"
 docker push "${ECR_REPOSITORY_URL}:latest"
 
 echo "✅ Successfully built and pushed images:"
-echo "   Repository: $ECR_REPOSITORY_URL"
 echo "   Tags: $IMAGE_TAG, latest"
 echo ""
 echo "🚀 Ready to deploy with:"
