@@ -2,7 +2,7 @@ import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
 import { ModerationStatus, TraitReviewSource } from "@prisma/client";
 import { Character } from "../../characters/entities/character.entity";
 import { User } from "../../users/entities/user.entity";
-import { CharacterTraitValue } from "../../shared/types/character-trait.types";
+import { CharacterFormSnapshot } from "../../shared/types/character-form.types";
 
 @ObjectType({ description: "A trait review for a character" })
 export class TraitReview {
@@ -18,21 +18,23 @@ export class TraitReview {
   @Field(() => TraitReviewSource)
   source: TraitReviewSource;
 
-  @Field(() => [CharacterTraitValue], {
-    description: "The proposed trait values",
+  @Field(() => [CharacterFormSnapshot], {
+    description: "Every form the character would have, as proposed",
   })
-  proposedTraitValues: CharacterTraitValue[];
+  proposedForms: CharacterFormSnapshot[];
 
-  @Field(() => [CharacterTraitValue], {
-    description: "The previous trait values",
+  @Field(() => [CharacterFormSnapshot], {
+    description:
+      "Every form the character had before. Empty when there was no earlier state, as for a CREATION or MYO review.",
   })
-  previousTraitValues: CharacterTraitValue[];
+  previousForms: CharacterFormSnapshot[];
 
-  @Field(() => [CharacterTraitValue], {
+  @Field(() => [CharacterFormSnapshot], {
     nullable: true,
-    description: "The trait values actually applied (if edited)",
+    description:
+      "The forms actually applied, when a moderator corrected the proposal before approving it. Null means it was approved exactly as proposed.",
   })
-  appliedTraitValues?: CharacterTraitValue[];
+  appliedForms?: CharacterFormSnapshot[];
 
   @Field({ nullable: true, description: "When the review was resolved" })
   resolvedAt?: Date;

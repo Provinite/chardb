@@ -41,6 +41,12 @@ export function mapUpdateUserInputToService(
   if (input.dateOfBirth !== undefined) {
     result.dateOfBirth = new Date(input.dateOfBirth);
   }
+  // `null` has to survive this, unlike every other field here: it is how the
+  // client says "remove my avatar", and collapsing it to undefined would make
+  // that indistinguishable from not mentioning the avatar at all.
+  if (input.avatarImageId !== undefined) {
+    result.avatarImageId = input.avatarImageId;
+  }
   if (input.privacySettings !== undefined)
     result.privacySettings = input.privacySettings;
 

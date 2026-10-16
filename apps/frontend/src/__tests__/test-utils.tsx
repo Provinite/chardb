@@ -6,6 +6,7 @@ import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
 import { vi } from "vitest";
 import type { MeQuery, UpdateProfileMutation } from "../generated/graphql";
+import { CommunityHostProvider } from "../contexts/CommunityHostContext";
 
 // Create mock functions first (before vi.mock calls to avoid hoisting issues)
 export const mockNavigate = vi.fn();
@@ -60,8 +61,16 @@ const AllTheProviders: React.FC<AllTheProvidersProps> = ({
     <MockedProvider mocks={mocks}>
       <BrowserRouter>
         <MockThemeProvider>
-          {children}
-          <div data-testid="toaster" />
+          {/* Pages read the host's community from here, and the hook throws
+              rather than returning null when the provider is missing -- so a
+              page that starts consulting it fails every one of its tests with
+              a context error rather than with anything about the page. Under
+              jsdom the hostname is the apex, so this resolves to "no
+              community" synchronously and issues no query. */}
+          <CommunityHostProvider>
+            {children}
+            <div data-testid="toaster" />
+          </CommunityHostProvider>
         </MockThemeProvider>
       </BrowserRouter>
     </MockedProvider>
@@ -116,6 +125,7 @@ export const createMockUser = (
   createdAt: "2023-01-01T00:00:00Z",
   updatedAt: "2023-01-01T00:00:00Z",
   avatarImage: null,
+  avatarImageModerationStatus: null,
   communityMemberships: { totalCount: 0, hasNextPage: false, nodes: [] },
   ...overrides,
 });
@@ -137,6 +147,7 @@ export const createMockUpdatedProfile = (
   website: null,
   dateOfBirth: null,
   isVerified: false,
+  avatarImageModerationStatus: null,
   createdAt: "2023-01-01T00:00:00Z",
   updatedAt: "2023-01-01T00:00:00Z",
   avatarImage: null,

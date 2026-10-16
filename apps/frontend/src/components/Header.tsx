@@ -97,9 +97,11 @@ export const Header: React.FC = () => {
               {communitySlug && (
                 <NavLink to="/character/create">Create Character</NavLink>
               )}
-              {/* Media belongs to a person, not a community, so uploading is
-                  always an apex page -- from a community host this leaves. */}
-              <NavLink to={apexUrl("/upload")}>Upload</NavLink>
+              {/* Relative, so uploading stays on whichever host you clicked
+                  it from. The media is still yours rather than the
+                  community's, but the host decides which moderators review it
+                  -- leaving for the apex first would throw that away. */}
+              <NavLink to="/upload">Upload</NavLink>
               <NotificationBell />
               <UserInfo to={apexUrl(`/user/${user.username}`)}>
                 <Avatar

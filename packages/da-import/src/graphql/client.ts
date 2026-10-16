@@ -144,7 +144,10 @@ export class CharDBClient {
     registryId: string;
     speciesId: string;
     speciesVariantId: string;
-    traitValues: Array<{ traitId: string; value: string }>;
+    forms: Array<{
+      name: string;
+      traitValues: Array<{ traitId: string; value: string }>;
+    }>;
     pendingOwner?: { provider: string; providerAccountId: string };
     assignToSelf: boolean;
     visibility: string;

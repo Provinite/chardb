@@ -11,7 +11,11 @@ import { ItemsService } from "../items/items.service";
 import { CharactersService } from "../characters/characters.service";
 import { TagsService } from "../tags/tags.service";
 import { TraitReviewService } from "../trait-review/trait-review.service";
-import { mapTraitValues } from "../characters/utils/character-resolver-mappers";
+import { mapNewForms } from "../characters/utils/character-resolver-mappers";
+import {
+  CharacterFormsService,
+  DEFAULT_FORM,
+} from "../character-forms/character-forms.service";
 import { RedeemMyoTicketInput } from "./dto/myo.dto";
 
 /**
@@ -30,6 +34,7 @@ export class MyoService {
     private readonly characters: CharactersService,
     private readonly tags: TagsService,
     private readonly traitReviews: TraitReviewService,
+    private readonly forms: CharacterFormsService,
   ) {}
 
   /**
@@ -75,10 +80,17 @@ export class MyoService {
       );
     }
 
-    const traitValues = mapTraitValues(input.traitValues);
-    if (traitValues.length > 0) {
-      await this.characters.validateTraitValues(grant.speciesId, traitValues);
-    }
+    // `forms` defaults to an empty list rather than being absent, so this
+    // checks the length rather than nullishness: a ticket redeemed without
+    // choosing any traits still makes a character, and that character still
+    // needs a form to put them in later.
+    const submitted = mapNewForms(input.forms);
+    const forms = submitted?.length ? submitted : [DEFAULT_FORM];
+    await this.forms.validateForms(
+      grant.speciesId,
+      forms,
+      input.speciesVariantId,
+    );
 
     const characterId = randomUUID();
     const batchId = randomUUID();
@@ -106,7 +118,6 @@ export class MyoService {
           customFields: input.customFields
             ? JSON.parse(input.customFields)
             : undefined,
-          traitValues,
           owner: { connect: { id: userId } },
           creator: { connect: { id: userId } },
           species: { connect: { id: grant.speciesId } },
@@ -114,13 +125,15 @@ export class MyoService {
         },
       });
 
+      const written = await this.forms.writeForms(tx, characterId, forms);
+
       // Always, even when no traits were set. The review is the record that
       // this character came from a ticket and the thing a rejection hangs
       // off; a trait-less MYO still wants staff eyes on it.
       await this.traitReviews.createReview(
         characterId,
         TraitReviewSource.MYO,
-        traitValues,
+        written,
         [],
         tx,
       );

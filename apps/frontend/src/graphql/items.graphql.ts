@@ -670,6 +670,10 @@ export const GET_VARIANT_CHANGE_ITEM = gql`
           toVariant {
             id
             name
+            # The destination's form limit. A two-form character cannot be
+            # moved to a rarity that allows one, and the page says so rather
+            # than letting the redemption be refused after the item is spent.
+            maxForms
           }
           fromVariants {
             id
@@ -716,6 +720,10 @@ export const GET_MY_VARIANT_CHANGE_ITEMS = gql`
             toVariant {
               id
               name
+              # The destination's form limit. A two-form character cannot be
+              # moved to a rarity that allows one, and the page says so rather
+              # than letting the redemption be refused after the item is spent.
+              maxForms
             }
             fromVariants {
               id

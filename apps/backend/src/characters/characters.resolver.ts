@@ -64,12 +64,20 @@ import {
   mapUpdateCharacterRegistryInputToService,
   mapPrismaCharacterToGraphQL,
   mapPrismaCharacterConnectionToGraphQL,
+  mapNewForms,
 } from "./utils/character-resolver-mappers";
+import { CharacterForm } from "./entities/character-form.entity";
+import { CharacterFormsService } from "../character-forms/character-forms.service";
+import {
+  mapFormsJson,
+  mapPrismaCharacterFormToGraphQL,
+} from "../character-forms/character-form-mappers";
 
 @Resolver(() => CharacterEntity)
 export class CharactersResolver {
   constructor(
     private readonly charactersService: CharactersService,
+    private readonly characterFormsService: CharacterFormsService,
     private readonly imagesService: ImagesService,
     private readonly tagsService: TagsService,
     private readonly usersService: UsersService,
@@ -242,9 +250,8 @@ export class CharactersResolver {
         : null,
       changedBy: row.changedBy ? mapPrismaUserToGraphQL(row.changedBy) : null,
       reason: row.reason,
-      previousTraitValues:
-        row.previousTraitValues as PrismaJson.CharacterTraitValuesJson,
-      newTraitValues: row.newTraitValues as PrismaJson.CharacterTraitValuesJson,
+      previousForms: mapFormsJson(row.previousForms),
+      newForms: mapFormsJson(row.newForms),
       createdAt: row.createdAt,
     }));
   }
@@ -268,14 +275,7 @@ export class CharactersResolver {
       speciesId: input.speciesId,
       speciesVariantId: input.speciesVariantId,
       registryId: input.registryId,
-      traitValues: input.traitValues?.map((tv) => {
-        const clarifier = tv.clarifier?.trim();
-        return {
-          traitId: tv.traitId,
-          value: tv.value ?? null,
-          ...(clarifier ? { clarifier } : {}),
-        };
-      }),
+      forms: mapNewForms(input.forms),
     });
     return mapPrismaCharacterToGraphQL(character);
   }
@@ -577,5 +577,24 @@ export class CharactersResolver {
       character.speciesVariantId,
     );
     return mapPrismaSpeciesVariantToGraphQL(prismaResult);
+  }
+
+  /**
+   * A character's forms, in order. Never empty.
+   *
+   * As public as the traits it carries, which is to say: as public as the
+   * character. This is a field resolver rather than part of the character
+   * payload because a listing of a hundred characters has no use for a
+   * hundred trait sets, and the character page asks for it explicitly.
+   */
+  @AllowUnauthenticated()
+  @ResolveField("forms", () => [CharacterForm], {
+    description: "This character's forms, in order. Always at least one.",
+  })
+  async resolveFormsField(
+    @Parent() character: CharacterEntity,
+  ): Promise<CharacterForm[]> {
+    const rows = await this.characterFormsService.findByCharacter(character.id);
+    return rows.map(mapPrismaCharacterFormToGraphQL);
   }
 }

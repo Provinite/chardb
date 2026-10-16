@@ -80,6 +80,9 @@ Quiet, observant, and fiercely loyal to her friends.
 Born in the northern mountains, Aria learned magic from the ancient spirits.`,
       ownerId: testUser.id,
       creatorId: testUser.id,
+      // Every character has at least one form; this one has no species, so
+      // its form has no traits to hold. See CharacterForm in schema.prisma.
+      forms: { create: { name: "Base", sortOrder: 0 } },
     },
   });
 

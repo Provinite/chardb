@@ -16,6 +16,7 @@ import {
   ThumbnailCropRect,
 } from "../components/ThumbnailCropper";
 import { API_BASE_URL, characterUrl } from "../lib/communityHost";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 import { getAccessToken } from "../lib/accessToken";
 
 const Container = styled.div`
@@ -408,6 +409,9 @@ export const UploadImagePage: React.FC = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  // Which community's moderators review this, when the upload has no
+  // character to answer that. Null at the apex, which means the global queue.
+  const hostCommunityId = useCommunityId();
   const [files, setFiles] = useState<ImageFile[]>([]);
   /** Chosen thumbnail framing, keyed by the staged file's id. */
   const [crops, setCrops] = useState<Record<string, ThumbnailCropRect>>({});
@@ -511,6 +515,12 @@ export const UploadImagePage: React.FC = () => {
           formDataToSend.append("galleryId", formData.galleryId);
         if (formData.characterId)
           formDataToSend.append("characterId", formData.characterId);
+        // Sent only when there is no character, which is the only case it is
+        // read in: a character already names the community that reviews its
+        // media, and does it live, so a second answer frozen here could only
+        // ever disagree with it.
+        if (hostCommunityId && !formData.characterId)
+          formDataToSend.append("communityId", hostCommunityId);
         // Handle NSFW flags
         const hasNsfwContent =
           formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive;

@@ -24,8 +24,10 @@ import {
   SeedCreateSpeciesVariantDocument,
   SeedCreateCharacterDocument,
 } from "../../generated/graphql.js";
+import { randomUUID } from "node:crypto";
 import { communityUrl } from "../../config.js";
 import { definePreset, type Persona } from "../types.js";
+import { oneForm } from "../forms.js";
 
 export interface CommunityItemsWorld {
   community: {
@@ -514,13 +516,24 @@ export default definePreset<CommunityItemsWorld>({
     // the browse specs look for those by name on the first page, and would
     // start failing if this filler pushed them off it.
     const FILLER_COUNT = 30;
+    // Ids up front so the form rows can be created in one more statement:
+    // `createMany` returns none, and every character needs at least one form.
+    const fillerIds = Array.from({ length: FILLER_COUNT }, () => randomUUID());
     await ctx.prisma.character.createMany({
-      data: Array.from({ length: FILLER_COUNT }, (_, i) => ({
+      data: fillerIds.map((id, i) => ({
+        id,
         name: `Hollow Understudy ${String(i + 1).padStart(2, "0")}`,
         speciesId: species.id,
         ownerId: member.userId,
         creatorId: member.userId,
         createdAt: new Date("2025-02-01T00:00:00Z"),
+      })),
+    });
+    await ctx.prisma.characterForm.createMany({
+      data: fillerIds.map((characterId) => ({
+        characterId,
+        name: "Base",
+        sortOrder: 0,
       })),
     });
 
@@ -564,9 +577,9 @@ export default definePreset<CommunityItemsWorld>({
             name,
             speciesId: species.id,
             speciesVariantId: variantId,
-            traitValues: [
+            forms: oneForm([
               { traitId: eyeColor.id, value: eyeColorValues[colour] },
-            ],
+            ]),
           },
         });
 

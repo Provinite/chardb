@@ -9,6 +9,7 @@ import {
   SeedCreateCharacterDocument,
   TraitValueType,
 } from "../../src/generated/graphql.js";
+import { oneForm } from "../../src/world/forms.js";
 
 /**
  * Trait display order, on both surfaces that show it.
@@ -91,11 +92,11 @@ test("a character shows its traits in the variant's order, not the stored order"
         name: "Orderling",
         speciesId: world.species.id,
         speciesVariantId: world.species.variantId,
-        traitValues: [
+        forms: oneForm([
           { traitId: ids.Tail, value: "Bobbed" },
           { traitId: ids.Eyes, value: "Gold" },
           { traitId: ids.Horns, value: "Short" },
-        ],
+        ]),
       },
     });
 
@@ -119,11 +120,11 @@ test("reordering the variant reorders characters already using it", async ({
         name: "Orderling",
         speciesId: world.species.id,
         speciesVariantId: world.species.variantId,
-        traitValues: [
+        forms: oneForm([
           { traitId: ids.Tail, value: "Bobbed" },
           { traitId: ids.Eyes, value: "Gold" },
           { traitId: ids.Horns, value: "Short" },
-        ],
+        ]),
       },
     });
 
@@ -162,11 +163,11 @@ test("the trait review queue reads in the variant's order too", async ({
         name: "Orderling",
         speciesId: world.species.id,
         speciesVariantId: world.species.variantId,
-        traitValues: [
+        forms: oneForm([
           { traitId: ids.Eyes, value: "Gold" },
           { traitId: ids.Horns, value: "Short" },
           { traitId: ids.Tail, value: "Bobbed" },
-        ],
+        ]),
       },
     });
 

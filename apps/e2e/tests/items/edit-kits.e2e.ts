@@ -17,6 +17,7 @@ import {
   SeedCreateSpeciesDocument,
   SeedCreateSpeciesVariantDocument,
 } from "../../src/generated/graphql.js";
+import { baseTraits, setOnlyForm } from "../../src/world/forms.js";
 
 const test = presetTest("community-items");
 
@@ -93,7 +94,13 @@ test.describe("spending an edit kit", () => {
         input: {
           itemId: world.editKitItems.kitIds[0],
           characterId: world.characters.bramblefoot.id,
-          traitValues: blueEyes(world),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.bramblefoot.id,
+            {
+              traitValues: blueEyes(world),
+            },
+          ),
         },
       });
 
@@ -107,7 +114,7 @@ test.describe("spending an edit kit", () => {
     const { character } = await world
       .as("member")
       .gql(SeedCharacterDocument, { id: world.characters.bramblefoot.id });
-    expect(character.traitValues).toEqual([]);
+    expect(baseTraits(character)).toEqual([]);
     expect(character.traitReviewStatus).toBe("PENDING");
   });
 
@@ -116,7 +123,13 @@ test.describe("spending an edit kit", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.bramblefoot.id,
-        traitValues: blueEyes(world),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.bramblefoot.id,
+          {
+            traitValues: blueEyes(world),
+          },
+        ),
       },
     });
 
@@ -128,8 +141,8 @@ test.describe("spending an edit kit", () => {
     const { character } = await world
       .as("member")
       .gql(SeedCharacterDocument, { id: world.characters.bramblefoot.id });
-    expect(character.traitValues).toHaveLength(1);
-    expect(character.traitValues[0].value).toBe(
+    expect(baseTraits(character)).toHaveLength(1);
+    expect(baseTraits(character)[0].value).toBe(
       world.traits.eyeColor.values.blue,
     );
     expect(character.traitReviewStatus).toBe("APPROVED");
@@ -142,7 +155,13 @@ test.describe("spending an edit kit", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.bramblefoot.id,
-        traitValues: blueEyes(world),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.bramblefoot.id,
+          {
+            traitValues: blueEyes(world),
+          },
+        ),
       },
     });
     const afterSpending = await kitsHeld(world, world.itemTypes.editKit.id);
@@ -162,7 +181,7 @@ test.describe("spending an edit kit", () => {
     const { character } = await world
       .as("member")
       .gql(SeedCharacterDocument, { id: world.characters.bramblefoot.id });
-    expect(character.traitValues).toEqual([]);
+    expect(baseTraits(character)).toEqual([]);
   });
 
   test("refusing twice returns only one kit", async ({ world }) => {
@@ -170,7 +189,13 @@ test.describe("spending an edit kit", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.bramblefoot.id,
-        traitValues: blueEyes(world),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.bramblefoot.id,
+          {
+            traitValues: blueEyes(world),
+          },
+        ),
       },
     });
     const review = await reviewFor(world, world.characters.bramblefoot.id);
@@ -195,7 +220,13 @@ test.describe("spending an edit kit", () => {
       input: {
         itemId,
         characterId: world.characters.bramblefoot.id,
-        traitValues: blueEyes(world),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.bramblefoot.id,
+          {
+            traitValues: blueEyes(world),
+          },
+        ),
       },
     });
     const after = await kitsHeld(world, world.itemTypes.editKit.id);
@@ -205,7 +236,13 @@ test.describe("spending an edit kit", () => {
         input: {
           itemId,
           characterId: world.characters.hearthstone.id,
-          traitValues: blueEyes(world),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.hearthstone.id,
+            {
+              traitValues: blueEyes(world),
+            },
+          ),
         },
       }),
     ).rejects.toThrow();
@@ -220,7 +257,13 @@ test.describe("spending an edit kit", () => {
       input: {
         itemId: world.editKitItems.kitIds[0],
         characterId: world.characters.bramblefoot.id,
-        traitValues: blueEyes(world),
+        forms: await setOnlyForm(
+          world.as("member"),
+          world.characters.bramblefoot.id,
+          {
+            traitValues: blueEyes(world),
+          },
+        ),
       },
     });
     const after = await kitsHeld(world, world.itemTypes.editKit.id);
@@ -230,12 +273,18 @@ test.describe("spending an edit kit", () => {
         input: {
           itemId: world.editKitItems.kitIds[1],
           characterId: world.characters.bramblefoot.id,
-          traitValues: [
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.bramblefoot.id,
             {
-              traitId: world.traits.eyeColor.id,
-              value: world.traits.eyeColor.values.green,
+              traitValues: [
+                {
+                  traitId: world.traits.eyeColor.id,
+                  value: world.traits.eyeColor.values.green,
+                },
+              ],
             },
-          ],
+          ),
         },
       }),
     ).rejects.toThrow(/already has a change awaiting review/i);
@@ -252,7 +301,13 @@ test.describe("spending an edit kit", () => {
           itemId: world.editKitItems.kitIds[0],
           // Marrowfen is othermember's.
           characterId: world.characters.marrowfen.id,
-          traitValues: blueEyes(world),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.marrowfen.id,
+            {
+              traitValues: blueEyes(world),
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/not yours to edit/i);
@@ -266,7 +321,13 @@ test.describe("spending an edit kit", () => {
         input: {
           itemId: world.editKitItems.kitIds[0],
           characterId: world.characters.marrowfen.id,
-          traitValues: blueEyes(world),
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.marrowfen.id,
+            {
+              traitValues: blueEyes(world),
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/not yours/i);
@@ -282,7 +343,13 @@ test.describe("spending an edit kit", () => {
         input: {
           itemId: world.editKitItems.kitIds[0],
           characterId: world.characters.bramblefoot.id,
-          traitValues: [],
+          forms: await setOnlyForm(
+            world.as("member"),
+            world.characters.bramblefoot.id,
+            {
+              traitValues: [],
+            },
+          ),
         },
       }),
     ).rejects.toThrow(/would change nothing/i);
@@ -345,7 +412,9 @@ test.describe("what an edit kit covers", () => {
         input: {
           itemId: world.editKitItems.kitIds[0],
           characterId: id,
-          traitValues: blueEyes(world),
+          forms: await setOnlyForm(world.as("member"), id, {
+            traitValues: blueEyes(world),
+          }),
         },
       }),
     ).resolves.toBeTruthy();
@@ -363,7 +432,9 @@ test.describe("what an edit kit covers", () => {
         input: {
           itemId: world.editKitItems.kitIds[0],
           characterId: id,
-          traitValues: blueEyes(world),
+          forms: await setOnlyForm(world.as("member"), id, {
+            traitValues: blueEyes(world),
+          }),
         },
       }),
     ).resolves.toBeTruthy();
@@ -385,7 +456,9 @@ test.describe("what an edit kit covers", () => {
         input: {
           itemId: world.editKitItems.commonOnlyKitId,
           characterId: id,
-          traitValues: blueEyes(world),
+          forms: await setOnlyForm(world.as("member"), id, {
+            traitValues: blueEyes(world),
+          }),
         },
       }),
     ).rejects.toThrow(/cannot be used on that character/i);
@@ -403,7 +476,9 @@ test.describe("what an edit kit covers", () => {
         input: {
           itemId: world.editKitItems.commonOnlyKitId,
           characterId: id,
-          traitValues: blueEyes(world),
+          forms: await setOnlyForm(world.as("member"), id, {
+            traitValues: blueEyes(world),
+          }),
         },
       }),
     ).resolves.toBeTruthy();

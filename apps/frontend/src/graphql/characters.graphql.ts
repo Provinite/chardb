@@ -149,6 +149,40 @@ export const GET_CHARACTERS = gql`
   ${USER_BASIC_FRAGMENT}
 `;
 
+/**
+ * One of a character's forms, with everything needed to render its traits.
+ *
+ * A fragment because three documents now ask for the same thing -- reading a
+ * character, saving its registry, and assigning it a species -- and a save
+ * that returned a different shape from the read would leave the Apollo cache
+ * holding half a character.
+ */
+export const CHARACTER_FORM_FIELDS_FRAGMENT = gql`
+  fragment CharacterFormFields on CharacterForm {
+    id
+    name
+    sortOrder
+    traitValues {
+      traitId
+      value
+      clarifier
+      trait {
+        name
+        valueType
+        allowsMultipleValues
+        allowsClarifier
+      }
+      enumValue {
+        name
+        color {
+          id
+          hexCode
+        }
+      }
+    }
+  }
+`;
+
 export const GET_CHARACTER = gql`
   query GetCharacter($id: ID!) {
     character(id: $id) {
@@ -180,6 +214,7 @@ export const GET_CHARACTER = gql`
         name
         speciesId
         colorId
+        maxForms
         createdAt
         updatedAt
         color {
@@ -188,23 +223,8 @@ export const GET_CHARACTER = gql`
           hexCode
         }
       }
-      traitValues {
-        traitId
-        value
-        clarifier
-        trait {
-          name
-          valueType
-          allowsMultipleValues
-          allowsClarifier
-        }
-        enumValue {
-          name
-          color {
-            id
-            hexCode
-          }
-        }
+      forms {
+        ...CharacterFormFields
       }
       traitReviewStatus
       details
@@ -261,6 +281,7 @@ export const GET_CHARACTER = gql`
     }
   }
   ${USER_BASIC_FRAGMENT}
+  ${CHARACTER_FORM_FIELDS_FRAGMENT}
 `;
 
 export const GET_MY_CHARACTERS = gql`
@@ -311,11 +332,6 @@ export const GET_MY_CHARACTERS = gql`
             category
             color
           }
-        }
-        traitValues {
-          traitId
-          value
-          clarifier
         }
         pendingOwnership {
           id
@@ -467,10 +483,8 @@ export const ASSIGN_CHARACTER_SPECIES = gql`
         name
       }
       registryId
-      traitValues {
-        traitId
-        value
-        clarifier
+      forms {
+        ...CharacterFormFields
       }
       ownerId
       creatorId
@@ -505,6 +519,7 @@ export const ASSIGN_CHARACTER_SPECIES = gql`
     }
   }
   ${USER_BASIC_FRAGMENT}
+  ${CHARACTER_FORM_FIELDS_FRAGMENT}
 `;
 
 export const DELETE_CHARACTER = gql`
@@ -691,27 +706,14 @@ export const UPDATE_CHARACTER_REGISTRY = gql`
       speciesVariant {
         id
         name
+        maxForms
       }
-      traitValues {
-        traitId
-        value
-        clarifier
-        trait {
-          name
-          valueType
-          allowsMultipleValues
-          allowsClarifier
-        }
-        enumValue {
-          name
-          color {
-            id
-            hexCode
-          }
-        }
+      forms {
+        ...CharacterFormFields
       }
     }
   }
+  ${CHARACTER_FORM_FIELDS_FRAGMENT}
 `;
 
 export const GET_LIKED_CHARACTERS = gql`

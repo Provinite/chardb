@@ -40,15 +40,12 @@ export class ImagesResolver {
     return { ...image, thumbnailCrop: cropFromColumns(image) };
   }
 
-  @AllowGlobalAdmin()
-  @AllowEntityOwner({ imageId: "id" })
-  @Mutation(() => Boolean)
-  async deleteImage(
-    @Args("id", { type: () => ID }) id: string,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<boolean> {
-    return this.imagesService.remove(id, user.id);
-  }
+  // `deleteImage` was here and is gone. Nothing called it -- no frontend
+  // document, no spec, no other resolver -- and what it did was delete the
+  // Image row while leaving all three S3 objects behind, because it never
+  // went near `cleanupOrphanedImage`. An unreachable mutation that leaks
+  // storage is worse than no mutation. Deleting media is the supported way to
+  // delete a picture, and it cleans up after itself.
 
   // Image tag mutations removed - tags should be managed on Media entries instead
 }

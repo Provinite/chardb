@@ -1,7 +1,8 @@
 import { ObjectType, Field, ID, Float, Int } from "@nestjs/graphql";
 import { Visibility, ModerationStatus } from "@chardb/database";
 import { Tag } from "../../shared/entities/tag.entity";
-import { CharacterTraitValue } from "../../shared/types/character-trait.types";
+import { CharacterFormSnapshot } from "../../shared/types/character-form.types";
+import { CharacterForm } from "./character-form.entity";
 import { SpeciesVariant } from "../../species-variants/entities/species-variant.entity";
 import { User } from "../../users/entities/user.entity";
 
@@ -97,11 +98,11 @@ export class Character {
   @Field(() => String, { nullable: true })
   customFields?: string; // JSON string
 
-  /** Trait values assigned to this character */
-  @Field(() => [CharacterTraitValue], {
-    description: "Trait values assigned to this character",
+  /** Resolved by a field resolver -- see CharactersResolver.resolveFormsField. */
+  @Field(() => [CharacterForm], {
+    description: "This character's forms, in order. Always at least one.",
   })
-  traitValues!: CharacterTraitValue[];
+  forms?: CharacterForm[];
 
   @Field(() => ModerationStatus, {
     nullable: true,
@@ -171,11 +172,15 @@ export class CharacterVariantChange {
   @Field(() => String, { nullable: true })
   reason?: string | null;
 
-  @Field(() => [CharacterTraitValue])
-  previousTraitValues: CharacterTraitValue[];
+  @Field(() => [CharacterFormSnapshot], {
+    description: "Every form the character had before the move",
+  })
+  previousForms: CharacterFormSnapshot[];
 
-  @Field(() => [CharacterTraitValue])
-  newTraitValues: CharacterTraitValue[];
+  @Field(() => [CharacterFormSnapshot], {
+    description: "Every form the character had after it",
+  })
+  newForms: CharacterFormSnapshot[];
 
   @Field()
   createdAt: Date;

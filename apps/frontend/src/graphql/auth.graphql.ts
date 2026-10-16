@@ -58,7 +58,19 @@ export const ME_QUERY = gql`
         originalUrl
         thumbnailUrl
         altText
+        # An avatar IS this thumbnail, so re-framing it is re-framing the
+        # avatar. Selected here so the profile editor's cropper opens on the
+        # framing already chosen rather than back at the centre.
+        thumbnailCrop {
+          x
+          y
+          width
+          height
+        }
       }
+      # Why the avatar is not showing, when one is set but unapproved. Owner-
+      # only, and this query is only ever the owner.
+      avatarImageModerationStatus
       website
       dateOfBirth
       isVerified

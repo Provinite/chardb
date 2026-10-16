@@ -240,38 +240,11 @@ describe("ImagesService", () => {
     });
   });
 
-  describe("remove", () => {
-    it("should delete image successfully", async () => {
-      const imageId = "img1";
-      const userId = "user1";
-
-      db.image.findUnique.mockResolvedValue({
-        id: imageId,
-        uploaderId: userId,
-        uploader: { id: userId },
-        tags_rel: [],
-      });
-      db.image.delete.mockResolvedValue({ id: imageId });
-
-      const result = await service.remove(imageId, userId);
-
-      expect(db.image.delete).toHaveBeenCalledWith({ where: { id: imageId } });
-      expect(result).toBe(true);
-    });
-
-    it("should throw ForbiddenException when non-uploader tries to delete", async () => {
-      db.image.findUnique.mockResolvedValue({
-        id: "img1",
-        uploaderId: "user1",
-        uploader: { id: "user1" },
-        tags_rel: [],
-      });
-
-      await expect(service.remove("img1", "user2")).rejects.toThrow(
-        ForbiddenException,
-      );
-    });
-  });
+  // The `remove` tests were here. The method is gone along with the
+  // `deleteImage` mutation that was its only caller: it deleted the row and
+  // left all three S3 objects behind, and nothing in the app ever called it.
+  // Deleting the media is the supported path, and `cleanupOrphanedImage`
+  // covers it.
 
   describe("findAll", () => {
     it("should return paginated images with proper filtering", async () => {

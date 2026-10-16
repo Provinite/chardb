@@ -420,7 +420,12 @@ export class MediaResolver {
    */
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanModerateImages)
-  @ResolveCommunityFrom({ characterId: "$root.characterId" })
+  // From the media, not from its character. A media with no character still
+  // has a community when the upload recorded one, and resolving through the
+  // character alone denied every characterless upload -- which put avatars and
+  // gallery pictures in the community queue with no picture on the card and no
+  // buttons that worked.
+  @ResolveCommunityFrom({ mediaId: "$root.id" })
   @UseFilters(NullOnForbiddenFilter)
   @ResolveField(() => Image, {
     nullable: true,
@@ -467,7 +472,12 @@ export class MediaResolver {
   // render a widget whose Approve button then throws, leaving the image
   // pending with a permission error. Better to not offer it.
   @AllowCommunityPermission(CommunityPermission.CanGrantItems)
-  @ResolveCommunityFrom({ characterId: "$root.characterId" })
+  // From the media, not from its character. A media with no character still
+  // has a community when the upload recorded one, and resolving through the
+  // character alone denied every characterless upload -- which put avatars and
+  // gallery pictures in the community queue with no picture on the card and no
+  // buttons that worked.
+  @ResolveCommunityFrom({ mediaId: "$root.id" })
   @UseFilters(NullOnForbiddenFilter)
   @ResolveField(() => [MediaAwardRecipient], {
     nullable: true,

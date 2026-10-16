@@ -42,6 +42,19 @@ export interface UploadImageInput {
   galleryId?: string;
   description?: string;
   visibility?: string;
+  /**
+   * The community whose moderators should review this upload, for uploads
+   * that have no character to answer that through. Taken from the host the
+   * uploader was on. Ignored when `characterId` is given -- see
+   * `Media.communityId`.
+   */
+  communityId?: string;
+  /**
+   * This upload is a profile picture rather than a post. Its Media row exists
+   * so moderators can see it and is kept out of every listing -- see
+   * `Media.isAvatarUpload`.
+   */
+  isAvatarUpload?: boolean;
 }
 
 export interface UpdateImageInput {
@@ -111,10 +124,20 @@ export class ImagesService {
       galleryId,
       description,
       visibility,
+      communityId,
+      isAvatarUpload = false,
     } = input;
 
     // Validate file
     this.validateFile(file);
+
+    // Which community reviews this, when no character says. A character
+    // resolves its own community and outranks anything the client sent, so
+    // the column is only written for media that has none -- otherwise the row
+    // would carry a second answer that nothing reads.
+    const reviewingCommunityId = characterId
+      ? null
+      : await this.resolveReviewingCommunity(userId, communityId);
 
     // NOTE: Character/gallery associations now handled through Media system
 
@@ -231,6 +254,8 @@ export class ImagesService {
           ownerId: userId,
           characterId: characterId || null,
           galleryId: galleryId || null,
+          communityId: reviewingCommunityId,
+          isAvatarUpload,
           visibility: visibility
             ? (visibility.toUpperCase() as Visibility)
             : isNsfw
@@ -495,20 +520,10 @@ export class ImagesService {
     return url;
   }
 
-  async remove(id: string, userId: string): Promise<boolean> {
-    const image = await this.findOne(id);
-
-    // Check ownership
-    if (image.uploaderId !== userId) {
-      throw new ForbiddenException("You can only delete your own images");
-    }
-
-    await this.db.image.delete({
-      where: { id },
-    });
-
-    return true;
-  }
+  // `remove` was here and is gone with the `deleteImage` mutation that was its
+  // only caller. It deleted the row and left the S3 objects, which is the one
+  // thing a delete must not do. `cleanupOrphanedImage` below is the supported
+  // path and is reached by deleting the media instead.
 
   // Image tagging removed - tags should be managed on the associated Media entry instead
 
@@ -724,6 +739,50 @@ export class ImagesService {
    * - Orphaned characters: requires `canUploadCharacterImages` or `canCreateOrphanedCharacter`
    * - Permissions are resolved via character→species→community
    */
+  /**
+   * Which community may review a characterless upload.
+   *
+   * Membership is required rather than merely a real id. The value arrives
+   * from the client -- the API is one host for every community, so there is no
+   * `Host` header to read it off -- and without a check anyone could file
+   * their uploads into a community they have nothing to do with, which is a
+   * way to put pictures in front of moderators who never agreed to look at
+   * them.
+   *
+   * A community that has gone missing, or one the uploader has since left, is
+   * not an error: the upload falls back to the global queue rather than
+   * failing. Refusing it would mean an upload that dies because of a
+   * membership change between opening the form and submitting it.
+   */
+  private async resolveReviewingCommunity(
+    userId: string,
+    communityId?: string,
+  ): Promise<string | null> {
+    if (!communityId) return null;
+
+    const membership = await this.db.communityMember.findFirst({
+      where: { userId, role: { communityId } },
+      select: { id: true },
+    });
+
+    if (membership) return communityId;
+
+    // Global admins are in no community and moderate everywhere, so their own
+    // uploads would otherwise never carry one.
+    const user = await this.db.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    });
+    if (!user?.isAdmin) return null;
+
+    const community = await this.db.community.findUnique({
+      where: { id: communityId },
+      select: { id: true },
+    });
+
+    return community?.id ?? null;
+  }
+
   private async verifyCharacterEditPermission(
     userId: string,
     characterId: string,

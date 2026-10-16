@@ -3,6 +3,7 @@ import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
 import { ItemsModule } from "../items/items.module";
 import { CharactersModule } from "../characters/characters.module";
+import { CharacterFormsModule } from "../character-forms/character-forms.module";
 import { VariantChangesService } from "./variant-changes.service";
 import { VariantChangesResolver } from "./variant-changes.resolver";
 
@@ -15,7 +16,13 @@ import { VariantChangesResolver } from "./variant-changes.resolver";
  * outright and opens no review.
  */
 @Module({
-  imports: [DatabaseModule, AuthModule, ItemsModule, CharactersModule],
+  imports: [
+    DatabaseModule,
+    AuthModule,
+    ItemsModule,
+    CharactersModule,
+    CharacterFormsModule,
+  ],
   providers: [VariantChangesService, VariantChangesResolver],
   exports: [VariantChangesService],
 })

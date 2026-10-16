@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 
@@ -29,6 +29,7 @@ import { TagsContainer } from "../components/TagsContainer";
 import { CharacterFoldersSection } from "../components/character-folders/CharacterFoldersSection";
 
 import { CharacterTraitsDisplay } from "../components/character/CharacterTraitsDisplay";
+import { CharacterFormSwitcher } from "../components/character/CharacterFormSwitcher";
 import { VariantHistory } from "../components/character/VariantHistory";
 import { UsableItemsPanel } from "../components/character/UsableItemsPanel";
 import { Markdown } from "../components/Markdown";
@@ -465,6 +466,20 @@ export const CharacterPage: React.FC = () => {
   });
 
   const character = data?.character;
+  const forms = useMemo(() => character?.forms ?? [], [character?.forms]);
+
+  /**
+   * Which form is on screen. Null until the character arrives; then the
+   * primary one, since that is what a listing shows and what somebody
+   * following a link expects to land on.
+   *
+   * Kept here rather than inside the switcher because the traits section is
+   * not the only thing that will read it -- per-form imagery is the next
+   * piece, and a selection owned by the tab strip could not reach it.
+   */
+  const [activeFormId, setActiveFormId] = useState<string | null>(null);
+  const activeForm =
+    forms.find((form) => form.id === activeFormId) ?? forms[0] ?? null;
 
   // "Character" until the name arrives, rather than leaving the previous page's
   // title up for the length of the fetch.
@@ -862,11 +877,23 @@ export const CharacterPage: React.FC = () => {
         </ImageStats>
       )}
 
-      {character.traitValues && character.traitValues.length > 0 && (
+      {/*
+        Shown whenever the character has more than one form, or any traits at
+        all. The old guard was "has traits", which would hide the switcher on a
+        character whose second form is still empty -- exactly the character the
+        switcher exists for.
+      */}
+      {(forms.length > 1 ||
+        forms.some((form) => form.traitValues.length > 0)) && (
         <ContentSection>
           <SectionTitle>Character Traits</SectionTitle>
+          <CharacterFormSwitcher
+            forms={forms}
+            activeFormId={activeForm?.id ?? null}
+            onSelect={setActiveFormId}
+          />
           <CharacterTraitsDisplay
-            traitValues={character.traitValues}
+            traitValues={activeForm?.traitValues ?? []}
             speciesId={character.speciesId}
             speciesVariantId={character.speciesVariantId}
           />

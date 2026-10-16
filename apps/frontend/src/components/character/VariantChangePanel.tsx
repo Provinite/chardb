@@ -7,8 +7,8 @@ import {
   useSpeciesWithTraitsAndEnumValuesQuery,
   useEnumValueSettingsBySpeciesVariantQuery,
   type SpeciesVariantDetailsFragment,
-  type CharacterTraitValueInput,
 } from "../../generated/graphql";
+import type { CharacterFormDraft } from "../../lib/characterForms";
 
 const Wrap = styled.div`
   margin-bottom: 1.25rem;
@@ -100,8 +100,14 @@ interface Props {
   /** The variant staff has picked, which may be the current one. */
   selectedVariantId: string | null;
   onVariantChange: (variant: SpeciesVariantDetailsFragment | null) => void;
-  traitValues: CharacterTraitValueInput[];
-  onTraitValuesChange: (next: CharacterTraitValueInput[]) => void;
+  /**
+   * Every form the character has. All of them are judged against the
+   * destination, because they all sit on the same variant -- a re-route that
+   * only looked at the primary form would let the others through and then be
+   * refused at save.
+   */
+  forms: CharacterFormDraft[];
+  onFormsChange: (next: CharacterFormDraft[]) => void;
   reason: string;
   onReasonChange: (reason: string) => void;
   /** How many values still need re-routing. The parent blocks Save on it. */
@@ -130,8 +136,8 @@ export const VariantChangePanel: React.FC<Props> = ({
   currentVariantId,
   selectedVariantId,
   onVariantChange,
-  traitValues,
-  onTraitValuesChange,
+  forms,
+  onFormsChange,
   reason,
   onReasonChange,
   onUnresolvedChange,
@@ -198,22 +204,37 @@ export const VariantChangePanel: React.FC<Props> = ({
     return map;
   }, [traits]);
 
-  /** Current values the target variant does not permit. */
+  /** Current values the target variant does not permit, in every form. */
   const stranded = useMemo(() => {
     if (!allowed) return [];
-    return strandedValues(traitValues, allowed, optionsById);
-  }, [allowed, traitValues, optionsById]);
+    return forms.flatMap((form, formIndex) =>
+      strandedValues(form.traitValues, allowed, optionsById).map((row) => ({
+        ...row,
+        formIndex,
+        formName: form.name,
+      })),
+    );
+  }, [allowed, forms, optionsById]);
 
   useEffect(() => {
     onUnresolvedChange(stranded.length);
   }, [stranded.length, onUnresolvedChange]);
 
   /** Replace one stranded value, or drop it when `to` is empty. */
-  const reroute = (index: number, to: string) => {
-    onTraitValuesChange(
-      to
-        ? traitValues.map((tv, i) => (i === index ? { ...tv, value: to } : tv))
-        : traitValues.filter((_, i) => i !== index),
+  const reroute = (formIndex: number, index: number, to: string) => {
+    onFormsChange(
+      forms.map((form, i) =>
+        i === formIndex
+          ? {
+              ...form,
+              traitValues: to
+                ? form.traitValues.map((tv, j) =>
+                    j === index ? { ...tv, value: to } : tv,
+                  )
+                : form.traitValues.filter((_, j) => j !== index),
+            }
+          : form,
+      ),
     );
   };
 
@@ -278,16 +299,21 @@ export const VariantChangePanel: React.FC<Props> = ({
               allowed!.has(ev.id),
             );
             return (
-              <Row key={`${row.traitId}-${row.index}`}>
+              <Row key={`${row.formIndex}-${row.traitId}-${row.index}`}>
                 <Was>
                   {row.traitName}
-                  <span>currently {row.optionName}</span>
+                  <span>
+                    currently {row.optionName}
+                    {forms.length > 1 ? ` · ${row.formName}` : ""}
+                  </span>
                 </Was>
                 <Select
                   data-testid={`reroute-${row.traitId}`}
                   defaultValue=""
                   disabled={disabled}
-                  onChange={(e) => reroute(row.index, e.target.value)}
+                  onChange={(e) =>
+                    reroute(row.formIndex, row.index, e.target.value)
+                  }
                 >
                   <option value="" disabled>
                     Choose a replacement…
