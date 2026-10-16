@@ -18,6 +18,7 @@ import {
   type MeQuery,
 } from "../generated/graphql";
 import { setAccessToken } from "../lib/accessToken";
+import { isRateLimited } from "../lib/rateLimit";
 
 type User = MeQuery["me"];
 
@@ -178,6 +179,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (isEmailNotVerified(error)) {
           return "unverified";
         }
+        // The error link has already said so.
+        if (isRateLimited(error)) {
+          return "failed";
+        }
         console.error("Login error:", error);
         toast.error(authErrorMessage(error, "Login failed"));
         return "failed";
@@ -215,6 +220,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
         return false;
       } catch (error) {
+        // The error link has already said so.
+        if (isRateLimited(error)) {
+          return false;
+        }
         console.error("Signup error:", error);
         toast.error(authErrorMessage(error, "Signup failed"));
         return false;

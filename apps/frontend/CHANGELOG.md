@@ -25,6 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **A rate-limited request shows one "wait a minute" message**, keyed on the `TOO_MANY_REQUESTS` code: a single toast however many operations were refused, or in place on the reset-password and verify-email screens, never a generic "failed" on top.
+
 - **A community's character links were staff-only.** Browse Characters sat in a group gated on species permissions, so an ordinary member had no link to a community's characters at all (#338).
 
 - **The page search could not reach a community's characters.** Each community's spotlight group listed Overview, Members and Inventory but no character page, so the answer to "where are my characters here" could not be typed any more than it could be clicked (#338).

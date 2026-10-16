@@ -6,6 +6,7 @@ import { Button } from "@chardb/ui";
 import { ApolloError } from "@apollo/client";
 
 import { useVerifyEmailMutation } from "../graphql/email-verification.graphql";
+import { HANDLES_RATE_LIMIT } from "../lib/rateLimit";
 
 const Container = styled.div`
   max-width: 400px;
@@ -115,7 +116,12 @@ export const VerifyEmailPage: React.FC = () => {
 
     void (async () => {
       try {
-        await verifyEmail({ variables: { input: { token } } });
+        // The error screen below shows the server's message, rate limit
+        // included, so no toast on top of it.
+        await verifyEmail({
+          variables: { input: { token } },
+          context: HANDLES_RATE_LIMIT,
+        });
         setStatus("success");
       } catch (error) {
         setStatus("error");

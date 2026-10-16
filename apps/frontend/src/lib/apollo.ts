@@ -13,6 +13,7 @@ import { Kind, OperationTypeNode } from "graphql";
 import { createClient } from "graphql-ws";
 import { getAccessToken, setAccessToken } from "./accessToken";
 import { apexUrl, API_BASE_URL } from "./communityHost";
+import { hasRateLimitError, notifyRateLimited } from "./rateLimit";
 
 const httpUrl = `${API_BASE_URL}/graphql`;
 const wsUrl = httpUrl.replace(/^http/, "ws");
@@ -46,7 +47,16 @@ const authLink = setContext((_, { headers }) => {
   };
 });
 
-const errorLink = onError(({ graphQLErrors, networkError }) => {
+const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
+  // Throttled anywhere in the app gets the same single toast, unless the
+  // screen that sent it says it shows the message itself.
+  if (
+    hasRateLimitError(graphQLErrors) &&
+    !operation.getContext().handlesRateLimit
+  ) {
+    notifyRateLimited();
+  }
+
   if (graphQLErrors) {
     graphQLErrors.forEach(({ message, locations, path }) =>
       console.log(
