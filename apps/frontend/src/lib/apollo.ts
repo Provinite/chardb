@@ -14,6 +14,7 @@ import { createClient } from "graphql-ws";
 import { getAccessToken, setAccessToken } from "./accessToken";
 import { apexUrl, API_BASE_URL } from "./communityHost";
 import { hasRateLimitError, notifyRateLimited } from "./rateLimit";
+import { rateLimitBackoff } from "./rateLimitBackoff";
 
 const httpUrl = `${API_BASE_URL}/graphql`;
 const wsUrl = httpUrl.replace(/^http/, "ws");
@@ -87,7 +88,9 @@ const splitLink = split(
     );
   },
   wsLink,
-  from([errorLink, authLink, httpLink]),
+  // The backoff sits inside errorLink so a request it holds back still gets
+  // the usual rate-limit toast.
+  from([errorLink, rateLimitBackoff.link, authLink, httpLink]),
 );
 
 export const client = new ApolloClient({

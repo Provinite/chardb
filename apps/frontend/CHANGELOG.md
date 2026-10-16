@@ -25,7 +25,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **A rate-limited request shows one "wait a minute" message**, keyed on the `TOO_MANY_REQUESTS` code: a single toast however many operations were refused, or in place on the reset-password and verify-email screens, never a generic "failed" on top.
+- **A rate-limited request shows one "wait a minute" message**, keyed on the `TOO_MANY_REQUESTS` code: a single toast however many operations were refused, or in place on the reset-password and verify-email screens, never a generic "failed" on top. After a refusal the client sends nothing for 5s, then 7s, then 15s on repeat refusals.
 
 - **A community's character links were staff-only.** Browse Characters sat in a group gated on species permissions, so an ordinary member had no link to a community's characters at all (#338).
 
