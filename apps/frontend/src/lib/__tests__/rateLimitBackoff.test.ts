@@ -3,22 +3,30 @@ import {
   ApolloLink,
   Observable,
   execute,
+  gql,
   type FetchResult,
 } from "@apollo/client";
-import { GraphQLError, parse } from "graphql";
+import { GraphQLError } from "graphql";
 import { createRateLimitBackoff } from "../rateLimitBackoff";
 import { TOO_MANY_REQUESTS } from "../rateLimit";
 
-// parse() rather than a gql tag: codegen validates every gql document in
-// src/ against the real schema, and this one never reaches a server.
-const QUERY = parse("query Ping { ping }");
+// A real field on purpose: codegen validates every gql document in src/
+// against the schema, so this breaks the build if the schema drifts away
+// from it.
+const QUERY = gql`
+  query RateLimitBackoffSpec {
+    me {
+      id
+    }
+  }
+`;
 
 const refusal: FetchResult = {
   errors: [
     new GraphQLError("Too many", { extensions: { code: TOO_MANY_REQUESTS } }),
   ],
 };
-const ok: FetchResult = { data: { ping: true } };
+const ok: FetchResult = { data: { me: { id: "1" } } };
 
 /**
  * A backoff on a hand-wound clock, in front of a network stub that answers

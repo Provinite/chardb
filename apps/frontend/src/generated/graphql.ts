@@ -6492,6 +6492,11 @@ export type UpdateProfileMutationVariables = Exact<{
 
 export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarImageModerationStatus: ModerationStatus | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null } };
 
+export type RateLimitBackoffSpecQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RateLimitBackoffSpecQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string } };
+
 export const CharacterFolderFieldsFragmentDoc = gql`
     fragment CharacterFolderFields on CharacterFolder {
   id
@@ -18093,3 +18098,42 @@ export function useUpdateProfileMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdateProfileMutationHookResult = ReturnType<typeof useUpdateProfileMutation>;
 export type UpdateProfileMutationResult = Apollo.MutationResult<UpdateProfileMutation>;
 export type UpdateProfileMutationOptions = Apollo.BaseMutationOptions<UpdateProfileMutation, UpdateProfileMutationVariables>;
+export const RateLimitBackoffSpecDocument = gql`
+    query RateLimitBackoffSpec {
+  me {
+    id
+  }
+}
+    `;
+
+/**
+ * __useRateLimitBackoffSpecQuery__
+ *
+ * To run a query within a React component, call `useRateLimitBackoffSpecQuery` and pass it any options that fit your needs.
+ * When your component renders, `useRateLimitBackoffSpecQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useRateLimitBackoffSpecQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useRateLimitBackoffSpecQuery(baseOptions?: Apollo.QueryHookOptions<RateLimitBackoffSpecQuery, RateLimitBackoffSpecQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<RateLimitBackoffSpecQuery, RateLimitBackoffSpecQueryVariables>(RateLimitBackoffSpecDocument, options);
+      }
+export function useRateLimitBackoffSpecLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<RateLimitBackoffSpecQuery, RateLimitBackoffSpecQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<RateLimitBackoffSpecQuery, RateLimitBackoffSpecQueryVariables>(RateLimitBackoffSpecDocument, options);
+        }
+export function useRateLimitBackoffSpecSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<RateLimitBackoffSpecQuery, RateLimitBackoffSpecQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<RateLimitBackoffSpecQuery, RateLimitBackoffSpecQueryVariables>(RateLimitBackoffSpecDocument, options);
+        }
+export type RateLimitBackoffSpecQueryHookResult = ReturnType<typeof useRateLimitBackoffSpecQuery>;
+export type RateLimitBackoffSpecLazyQueryHookResult = ReturnType<typeof useRateLimitBackoffSpecLazyQuery>;
+export type RateLimitBackoffSpecSuspenseQueryHookResult = ReturnType<typeof useRateLimitBackoffSpecSuspenseQuery>;
+export type RateLimitBackoffSpecQueryResult = Apollo.QueryResult<RateLimitBackoffSpecQuery, RateLimitBackoffSpecQueryVariables>;
