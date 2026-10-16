@@ -15,6 +15,7 @@ import {
   mapAuthResponseToGraphQL,
 } from "./utils/auth-resolver-mappers";
 import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
+import { CredentialThrottle } from "../middleware/credential-throttle.decorator";
 import {
   clearRefreshCookie,
   readRefreshCookie,
@@ -29,6 +30,7 @@ export class AuthResolver {
   constructor(private authService: AuthService) {}
 
   @AllowUnauthenticated()
+  @CredentialThrottle()
   @Mutation(() => AuthPayload)
   async login(
     @Args("input") loginInput: LoginInput,
@@ -48,6 +50,7 @@ export class AuthResolver {
    * link, so there is nothing to hand back.
    */
   @AllowUnauthenticated()
+  @CredentialThrottle()
   @Mutation(() => Boolean)
   async signup(@Args("input") signupInput: SignupInput): Promise<boolean> {
     const serviceInput = mapSignupInputToService(signupInput);
@@ -99,6 +102,7 @@ export class AuthResolver {
   }
 
   @AllowUnauthenticated()
+  @CredentialThrottle()
   @Mutation(() => Boolean)
   async forgotPassword(
     @Args("input") input: ForgotPasswordInput,
@@ -109,6 +113,7 @@ export class AuthResolver {
   }
 
   @AllowUnauthenticated()
+  @CredentialThrottle()
   @Mutation(() => Boolean)
   async resetPassword(
     @Args("input") input: ResetPasswordInput,

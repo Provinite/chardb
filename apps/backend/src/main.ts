@@ -2,6 +2,7 @@
 import "./tracing";
 
 import { NestFactory } from "@nestjs/core";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { ValidationPipe, Logger } from "@nestjs/common";
 import { AppModule } from "./app.module";
 import { GlobalExceptionFilter } from "./common/filters/global-exception.filter";
@@ -18,9 +19,20 @@ import type { Request, Response, NextFunction } from "express";
 import { isOriginAllowed } from "./auth/allowed-origins";
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: WinstonModule.createLogger(loggerConfig),
   });
+
+  // Exactly one proxy hop is trusted: CloudFront, which appends the viewer's
+  // address to X-Forwarded-For. The NLB behind it works at layer 4 and adds
+  // nothing, so req.ip becomes that last entry -- the one a client cannot
+  // forge, because CloudFront wrote it. Without this, req.ip is the NLB's
+  // private address for every request. Locally there is no proxy and no
+  // X-Forwarded-For, so req.ip is the socket address as before.
+  //
+  // Only sound because the NLB admits nothing but CloudFront; see
+  // infra/modules/nlb-internal.
+  app.set("trust proxy", 1);
 
   // Enable request logging middleware
   app.use((req: Request, res: Response, next: NextFunction) => {
