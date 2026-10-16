@@ -4,6 +4,7 @@ import { toast } from "react-hot-toast";
 import { Button } from "@chardb/ui";
 
 import { useResendVerificationEmailMutation } from "../../graphql/email-verification.graphql";
+import { isRateLimited } from "../../lib/rateLimit";
 
 const Panel = styled.div`
   display: flex;
@@ -62,6 +63,8 @@ export const ResendVerification: React.FC<ResendVerificationProps> = ({
         "If that address still needs confirming, a new link is on its way.",
       );
     } catch (error) {
+      // The error link has already said so.
+      if (isRateLimited(error)) return;
       console.error("Resend verification failed:", error);
       toast.error("Couldn't send that just now. Try again in a moment.");
     }

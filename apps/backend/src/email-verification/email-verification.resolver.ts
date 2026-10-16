@@ -6,6 +6,7 @@ import {
   ResendVerificationEmailInput,
 } from "./dto/email-verification.dto";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
+import { CredentialThrottle } from "../middleware/credential-throttle.decorator";
 
 /**
  * Both mutations are public, and have to be: an account cannot sign in until
@@ -17,6 +18,7 @@ export class EmailVerificationResolver {
   constructor(private readonly verification: EmailVerificationService) {}
 
   @AllowUnauthenticated()
+  @CredentialThrottle()
   @Mutation(() => Boolean, {
     description:
       "Confirms an address from the link in a verification email. Following " +
@@ -28,6 +30,7 @@ export class EmailVerificationResolver {
   }
 
   @AllowUnauthenticated()
+  @CredentialThrottle()
   @Mutation(() => Boolean, {
     description:
       "Sends another verification email. Always returns true, whatever the " +

@@ -229,8 +229,16 @@ Rate limiting is implemented using NestJS ThrottlerModule with hardcoded values 
 
 - Short term: 20 requests per 1 second
 - Long term: 200 requests per 1 minute
+- Credential mutations (`login`, `signup`, `forgotPassword`, `resetPassword`, `verifyEmail`, `resendVerificationEmail`): 10 per minute, via `@CredentialThrottle()`
 
-No environment variables are used for rate limiting configuration.
+Limits are per client address and per resolver or route. They apply to REST routes and to GraphQL root fields, not to nested field resolvers. The client address is the viewer's, because `main.ts` sets `trust proxy` to 1 for CloudFront.
+
+### `RATE_LIMIT_DISABLED`
+
+- **Type**: Boolean (`"true"` to disable)
+- **Required**: No
+- **Description**: Turns rate limiting off entirely. Set in `.env.test` for the e2e suites, which sign in from one address far more often than the limits allow. Never set it in a deployed environment.
+- **Referenced in**: `src/middleware/custom-throttler.guard.ts`
 
 ## Environment-Specific Variables
 

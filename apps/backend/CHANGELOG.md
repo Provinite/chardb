@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`http.server.duration` no longer carries `net.host.name`**, which took any client's `Host` header and grew prod past Grafana's active series limit.
 
+- **Rate limits now apply to GraphQL and key on the real client address.** `trust proxy` makes `req.ip` the CloudFront viewer rather than the NLB, root fields count (nested resolvers don't), and credential mutations allow 10 a minute with a `TOO_MANY_REQUESTS` code.
+
 - **Requests that skip CloudFront get a 403.** With `CLOUDFRONT_SECRET` set, every path but `/health` must carry a matching `X-CloudFront-Secret` header.
 
 - **An OAuth account-linking `state` token no longer works from any browser.** Starting a link sets a nonce cookie on the API host whose hash the callback now requires, so a leaked state can no longer fasten a provider identity onto somebody else's account — flows in flight across the deploy fail and have to be restarted (#379).
