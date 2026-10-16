@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v13.0.0] - 2026-10-16
+
 ### Added
 
 - **An avatar control on `/profile/edit`**: upload a picture and frame it, pick one you already uploaded, adjust the framing, or remove it. It saves on the spot, and says when a picture is waiting on a moderator rather than falling back to initials with no explanation (#345).
@@ -22,6 +24,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **A "check your email" step after signup**, since signup no longer signs anybody in, plus `/verify-email/:token` to redeem the link and a resend offer on both that screen and the login form when an unconfirmed account is refused (#372).
 
 - **A notification section on `/profile/edit`**: a per-kind matrix of in-app and email switches, with security email named as something that is always sent. Kinds with no email template show no email switch rather than a disabled one (#344).
+
+- **You can choose how an image's thumbnail is framed**, when you upload it and
+  afterwards from the image's own page once it has been approved; leaving it
+  alone still uses the centre of the picture (#342).
+
+- **Every page sets its own title and OpenGraph tags**, replacing the one static title all 80-odd routes shared; chat unfurlers still see only the site card, which needs server-side rendering.
+
+- **A member has a profile inside a community**, at `/members/:username` on
+  that community's host: their role here, their characters here, and the way
+  through to their inventory or a trade (#349).
+
+- **The search box finds members, not just pages.** `@` inside a community
+  switches it to people and `@` alone lists who is here; picking one opens
+  their pages — profile, inventory, characters, propose a trade — without
+  leaving the box. Without the sigil it searches pages exactly as before
+  (#349).
+
+- **The trade composer links out to the partner's full inventory**, which
+  includes the items its own pane leaves out as untradeable (#349).
 
 ### Fixed
 
@@ -43,27 +64,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **A long name on the members list painted over the role tag beside it**, and
   a narrow enough window crushed it away entirely. Rows now wrap (#349).
-
-### Added
-
-- **You can choose how an image's thumbnail is framed**, when you upload it and
-  afterwards from the image's own page once it has been approved; leaving it
-  alone still uses the centre of the picture (#342).
-
-- **Every page sets its own title and OpenGraph tags**, replacing the one static title all 80-odd routes shared; chat unfurlers still see only the site card, which needs server-side rendering.
-
-- **A member has a profile inside a community**, at `/members/:username` on
-  that community's host: their role here, their characters here, and the way
-  through to their inventory or a trade (#349).
-
-- **The search box finds members, not just pages.** `@` inside a community
-  switches it to people and `@` alone lists who is here; picking one opens
-  their pages — profile, inventory, characters, propose a trade — without
-  leaving the box. Without the sigil it searches pages exactly as before
-  (#349).
-
-- **The trade composer links out to the partner's full inventory**, which
-  includes the items its own pane leaves out as untradeable (#349).
 
 ### Changed
 

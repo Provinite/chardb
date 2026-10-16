@@ -1,6 +1,6 @@
 {
   "name": "@chardb/backend",
-  "version": "12.0.0",
+  "version": "13.0.0",
   "scripts": {
     "build": "nest build",
     "dev": "node ../../scripts/with-instance.mjs nest start --watch",

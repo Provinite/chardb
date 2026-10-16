@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v13.0.0] - 2026-10-16
+
 ### Added
 
 - **User avatars can be set**: `UpdateUserInput.avatarImageId` accepts an image the caller uploaded and an explicit null to remove one. `avatarImage` is withheld until moderation approves it and again if it is ever rejected, so the one image that does not reach viewers through `Media.image` is gated too (#345).
@@ -27,6 +29,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **A settings link in every optional email's footer.** No one-click unsubscribe: this is mail about the recipient's own uploads rather than marketing, so none is required of it, and a signed link would mean a token plus an endpoint that acts on it unauthenticated. Password reset and password-changed mail carries no such footer and cannot be opted out of — `AuthService` reaches `EmailService` directly and imports neither the preference nor the dispatch service (#344).
 
+- **A thumbnail can be framed by hand instead of always being a centre crop.**
+  The rect is stored against the original rather than baked in, so it stays
+  editable and re-renders from the untouched upload; no rect means the centre
+  crop every existing image already had (#342).
+
+- **A test asserting every resolver method declares who may call it.** A
+  `@Query`, `@Mutation`, `@ResolveField` or `@Subscription` with no `@Allow*` is
+  not unprotected, it is forbidden to everyone, and that has now caused three
+  user-visible bugs (#173, #310) (#310).
+
+- **`communityMemberRoles(communityId, userId)`** — what one member's standing
+  in one community is called. Gated on membership, unlike
+  `communityMembersByUser`, which is about yourself everywhere (#349).
+
 ### Changed
 
 - **Indexes for the image moderation queue**, which had none: a community's image queue drops from 128 ms to 0.5 ms at 200k images, and the media queue and pending count by about a third. `images` carried nothing but a primary key, so finding a handful of pending uploads meant reading every image ever uploaded (#345).
@@ -40,6 +56,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking: `signup` returns `Boolean!` instead of `AuthPayload!`** and sets no refresh cookie. A new account cannot hold a session until its address is confirmed, so there is nothing to hand back (#372).
 
 - **Every existing account is backfilled as verified** by the `email_verification` migration. Nobody who already has an account is asked to confirm an address over mail they never had the chance to answer (#372).
+
+- **`@AllowEntityOwner` and `@AllowCharacterRegistryEditor` can now read their
+  id from the parent** with a `$root.` path, so they work on a `@ResolveField`,
+  which has no arguments to name one in. `CommunityPermissionGuard` already
+  understood that prefix; `resolveGuardPath` is the rule in one place (#310).
+
+- **`Community.members(search:)` returns exact name matches first.** The limit
+  is applied in SQL, so the person you actually named could lose the cut to
+  five people who merely contain your spelling of them (#349).
 
 ### Fixed
 
@@ -78,29 +103,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the character's owner and by staff who can edit its registry — not made
   public, because it carries a member's unapproved proposed traits (#310).
 
-### Changed
-
-- **`@AllowEntityOwner` and `@AllowCharacterRegistryEditor` can now read their
-  id from the parent** with a `$root.` path, so they work on a `@ResolveField`,
-  which has no arguments to name one in. `CommunityPermissionGuard` already
-  understood that prefix; `resolveGuardPath` is the rule in one place (#310).
-
-### Added
-
-- **A thumbnail can be framed by hand instead of always being a centre crop.**
-  The rect is stored against the original rather than baked in, so it stays
-  editable and re-renders from the untouched upload; no rect means the centre
-  crop every existing image already had (#342).
-
-- **A test asserting every resolver method declares who may call it.** A
-  `@Query`, `@Mutation`, `@ResolveField` or `@Subscription` with no `@Allow*` is
-  not unprotected, it is forbidden to everyone, and that has now caused three
-  user-visible bugs (#173, #310) (#310).
-
-- **`communityMemberRoles(communityId, userId)`** — what one member's standing
-  in one community is called. Gated on membership, unlike
-  `communityMembersByUser`, which is about yourself everywhere (#349).
-
 ### Removed
 
 - **Breaking: `deleteImage` is gone.** Nothing called it, and what it did was delete the `Image` row while leaving all three S3 objects behind — deleting the media is the supported path and cleans up after itself (#345).
@@ -109,12 +111,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `userImages`, `characterImages`, `galleryImages`. All were deliberately
   blocked by having no permission decorator, so none has been callable; media
   queries are the supported way to read images (#310).
-
-### Changed
-
-- **`Community.members(search:)` returns exact name matches first.** The limit
-  is applied in SQL, so the person you actually named could lose the cut to
-  five people who merely contain your spelling of them (#349).
 
 ## [v12.0.0] - 2026-09-06
 

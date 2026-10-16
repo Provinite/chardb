@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v13.0.0] - 2026-10-16
+
 ### Security
 
 - **The prod API NLB only admits CloudFront.** Its HTTPS ingress moves from `0.0.0.0/0` to CloudFront's origin-facing prefix list, and the distribution's secret header now reaches the backend as `CLOUDFRONT_SECRET` from SSM.
