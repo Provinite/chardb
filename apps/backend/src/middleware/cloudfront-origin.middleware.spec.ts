@@ -36,7 +36,8 @@ describe("cloudfrontOriginGuard", () => {
 
   it("passes a request carrying the secret", () => {
     expect(
-      run("s3cret", "/graphql", { [CLOUDFRONT_SECRET_HEADER]: "s3cret" }).passed,
+      run("s3cret", "/graphql", { [CLOUDFRONT_SECRET_HEADER]: "s3cret" })
+        .passed,
     ).toBe(true);
   });
 
