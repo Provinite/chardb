@@ -3,18 +3,15 @@ import {
   ApolloLink,
   Observable,
   execute,
-  gql,
   type FetchResult,
 } from "@apollo/client";
-import { GraphQLError } from "graphql";
+import { GraphQLError, parse } from "graphql";
 import { createRateLimitBackoff } from "../rateLimitBackoff";
 import { TOO_MANY_REQUESTS } from "../rateLimit";
 
-const QUERY = gql`
-  query Ping {
-    ping
-  }
-`;
+// parse() rather than a gql tag: codegen validates every gql document in
+// src/ against the real schema, and this one never reaches a server.
+const QUERY = parse("query Ping { ping }");
 
 const refusal: FetchResult = {
   errors: [
