@@ -2,6 +2,7 @@ import { NodeSDK } from "@opentelemetry/sdk-node";
 import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentations-node";
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
+import { createDenyListAttributesProcessor } from "@opentelemetry/sdk-metrics";
 import {
   ATTR_SERVICE_NAME,
   ATTR_SERVICE_VERSION,
@@ -36,6 +37,20 @@ if (tracingDisabled) {
 
     // Trace exporter
     traceExporter: new OTLPTraceExporter({}),
+
+    // net.host.name is copied from the request's Host header, so every
+    // hostname a scanner sends minted a new http.server.duration histogram
+    // (~18 series each). Cumulative temporality re-exports every combination
+    // until the process restarts, which drove prod past Grafana's active
+    // series limit. Spans keep both attributes; only the metric drops them.
+    views: [
+      {
+        instrumentName: "http.server.duration",
+        attributesProcessors: [
+          createDenyListAttributesProcessor(["net.host.name", "net.host.port"]),
+        ],
+      },
+    ],
 
     // Auto-instrumentations with simplified config
     instrumentations: [

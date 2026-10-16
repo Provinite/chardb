@@ -3200,6 +3200,7 @@ __metadata:
     "@opentelemetry/instrumentation-nestjs-core": "npm:0.48.0"
     "@opentelemetry/instrumentation-winston": "npm:^0.52.0"
     "@opentelemetry/resources": "npm:^2.0.1"
+    "@opentelemetry/sdk-metrics": "npm:2.0.1"
     "@opentelemetry/sdk-node": "npm:0.202.0"
     "@opentelemetry/winston-transport": "npm:^0.18.0"
     "@ssut/nestjs-sqs": "npm:^3.0.1"

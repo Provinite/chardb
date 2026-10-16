@@ -51,6 +51,7 @@
     "@opentelemetry/instrumentation-nestjs-core": "0.48.0",
     "@opentelemetry/instrumentation-winston": "^0.52.0",
     "@opentelemetry/resources": "^2.0.1",
+    "@opentelemetry/sdk-metrics": "2.0.1",
     "@opentelemetry/sdk-node": "0.202.0",
     "@opentelemetry/winston-transport": "^0.18.0",
     "@ssut/nestjs-sqs": "^3.0.1",
