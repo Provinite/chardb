@@ -85,6 +85,15 @@ resource "aws_ssm_parameter" "jwt_secret" {
   tags = merge(local.common_tags, { ValueManagedBy = "terraform" })
 }
 
+resource "aws_ssm_parameter" "cloudfront_secret" {
+  name        = "/${var.project_name}/${var.environment}/cloudfront-secret"
+  description = "Shared secret the API CloudFront distribution sends as X-CloudFront-Secret"
+  type        = "SecureString"
+  value       = random_password.cloudfront_secret.result
+
+  tags = merge(local.common_tags, { ValueManagedBy = "terraform" })
+}
+
 resource "aws_ssm_parameter" "database_url" {
   name        = "/${var.project_name}/${var.environment}/database-url"
   description = "PostgreSQL connection URL for Prisma"
@@ -626,12 +635,17 @@ module "ecs" {
       name      = "OTEL_EXPORTER_OTLP_HEADERS"
       valueFrom = module.app_secrets.arns["otel-otlp-headers"]
     },
+    {
+      name      = "CLOUDFRONT_SECRET"
+      valueFrom = aws_ssm_parameter.cloudfront_secret.arn
+    },
   ]
 
   secret_arns = concat(
     [
       aws_ssm_parameter.database_url.arn,
       aws_ssm_parameter.jwt_secret.arn,
+      aws_ssm_parameter.cloudfront_secret.arn,
     ],
     module.app_secrets.arn_list,
   )
