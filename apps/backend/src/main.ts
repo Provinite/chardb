@@ -17,11 +17,16 @@ import { loggerConfig } from "./logger.config";
 import * as cookieParser from "cookie-parser";
 import type { Request, Response, NextFunction } from "express";
 import { isOriginAllowed } from "./auth/allowed-origins";
+import { cloudfrontOriginGuard } from "./middleware/cloudfront-origin.middleware";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: WinstonModule.createLogger(loggerConfig),
   });
+
+  // First, so a request that bypassed CloudFront does no other work. A
+  // pass-through unless CLOUDFRONT_SECRET is set (prod only).
+  app.use(cloudfrontOriginGuard(process.env.CLOUDFRONT_SECRET));
 
   // Exactly one proxy hop is trusted: CloudFront, which appends the viewer's
   // address to X-Forwarded-For. The NLB behind it works at layer 4 and adds
@@ -30,8 +35,9 @@ async function bootstrap() {
   // private address for every request. Locally there is no proxy and no
   // X-Forwarded-For, so req.ip is the socket address as before.
   //
-  // Only sound because the NLB admits nothing but CloudFront; see
-  // infra/modules/nlb-internal.
+  // Only sound because nothing but our CloudFront distribution reaches the
+  // app: the NLB admits only CloudFront's ranges (infra/modules/nlb-internal)
+  // and cloudfrontOriginGuard above rejects any other distribution.
   app.set("trust proxy", 1);
 
   // Enable request logging middleware

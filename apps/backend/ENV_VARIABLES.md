@@ -110,6 +110,16 @@ This document provides a comprehensive list of all environment variables used in
 - **Description**: CORS origin configuration for test environment
 - **Example**: `"http://localhost:3000"`
 
+## Origin Protection
+
+### `CLOUDFRONT_SECRET`
+
+- **Type**: String
+- **Required**: No (prod only)
+- **Description**: The value the API's CloudFront distribution sends as `X-CloudFront-Secret`. When set, every request except `/health` without a matching header gets a 403, because the prod NLB is internet-facing. Unset, the check is off.
+- **Referenced in**: `src/main.ts`, `src/middleware/cloudfront-origin.middleware.ts`
+- **Source in prod**: SSM parameter `/<project>/<env>/cloudfront-secret`, written by Terraform from `random_password.cloudfront_secret`
+
 ## OpenTelemetry Tracing
 
 ### `OTEL_SERVICE_NAME`
