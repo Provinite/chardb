@@ -77,7 +77,10 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
     }
 
     const http = context.switchToHttp();
-    return { req: http.getRequest<Request>(), res: http.getResponse<Response>() };
+    return {
+      req: http.getRequest<Request>(),
+      res: http.getResponse<Response>(),
+    };
   }
 
   /**
