@@ -8,6 +8,11 @@ import styled from "styled-components";
 import toast from "react-hot-toast";
 import { Button } from "@chardb/ui";
 import { useResetPasswordMutation } from "../graphql/auth.graphql";
+import {
+  HANDLES_RATE_LIMIT,
+  isRateLimited,
+  RATE_LIMIT_MESSAGE,
+} from "../lib/rateLimit";
 
 const resetPasswordSchema = z
   .object({
@@ -170,6 +175,7 @@ export const ResetPasswordPage: React.FC = () => {
             newPassword: data.newPassword,
           },
         },
+        context: HANDLES_RATE_LIMIT,
       });
       setIsSuccess(true);
       toast.success("Password reset successfully");
@@ -178,6 +184,11 @@ export const ResetPasswordPage: React.FC = () => {
         navigate("/login");
       }, 2000);
     } catch (error) {
+      // In place only: the form stays as filled in, ready to resubmit.
+      if (isRateLimited(error)) {
+        setResetError(RATE_LIMIT_MESSAGE);
+        return;
+      }
       console.error("Reset password error:", error);
       const errorMessage =
         (error instanceof Error ? error.message : "") ||

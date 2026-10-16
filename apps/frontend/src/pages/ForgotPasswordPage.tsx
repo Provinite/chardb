@@ -6,6 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import styled from "styled-components";
 import toast from "react-hot-toast";
+import { isRateLimited } from "../lib/rateLimit";
 import { Button } from "@chardb/ui";
 import { useForgotPasswordMutation } from "../graphql/auth.graphql";
 
@@ -138,6 +139,8 @@ export const ForgotPasswordPage: React.FC = () => {
       setIsSuccess(true);
       toast.success("Password reset email sent successfully");
     } catch (error) {
+      // The error link has already said so.
+      if (isRateLimited(error)) return;
       console.error("Forgot password error:", error);
       toast.error("Failed to send reset email. Please try again.");
     } finally {
