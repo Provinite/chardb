@@ -22,16 +22,32 @@ resource "aws_security_group" "nlb" {
   }
 }
 
-# Allow HTTPS from CloudFront (all IPs, as CloudFront has many IP ranges)
-# In practice, CloudFront VPC Origin will add custom headers for security
+# Despite this module's name the NLB is internet-facing: CloudFront reaches it
+# as a plain custom origin, not a VPC origin. Admitting only CloudFront's
+# origin-facing ranges stops anything else connecting directly. Those ranges are
+# shared by every distribution in AWS, so the backend also checks the
+# X-CloudFront-Secret header our distribution attaches.
+#
+# The prefix list counts as its max entries (~55) against the security group's
+# 60-rule inbound quota, so a second rule using it will not fit.
+data "aws_ec2_managed_prefix_list" "cloudfront" {
+  name = "com.amazonaws.global.cloudfront.origin-facing"
+}
+
 resource "aws_vpc_security_group_ingress_rule" "https" {
   security_group_id = aws_security_group.nlb.id
 
-  description = "Allow HTTPS from anywhere (CloudFront VPC Origin)"
-  from_port   = 443
-  to_port     = 443
-  ip_protocol = "tcp"
-  cidr_ipv4   = "0.0.0.0/0"
+  description    = "Allow HTTPS from CloudFront origin-facing ranges only"
+  from_port      = 443
+  to_port        = 443
+  ip_protocol    = "tcp"
+  prefix_list_id = data.aws_ec2_managed_prefix_list.cloudfront.id
+
+  # If the provider replaces rather than modifies this rule, never leave the
+  # NLB with no inbound rule in between.
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # Allow HTTP (for health checks or HTTP redirect)
