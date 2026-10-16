@@ -16,11 +16,16 @@ import { loggerConfig } from "./logger.config";
 import * as cookieParser from "cookie-parser";
 import type { Request, Response, NextFunction } from "express";
 import { isOriginAllowed } from "./auth/allowed-origins";
+import { cloudfrontOriginGuard } from "./middleware/cloudfront-origin.middleware";
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     logger: WinstonModule.createLogger(loggerConfig),
   });
+
+  // First, so a request that bypassed CloudFront does no other work. A
+  // pass-through unless CLOUDFRONT_SECRET is set (prod only).
+  app.use(cloudfrontOriginGuard(process.env.CLOUDFRONT_SECRET));
 
   // Enable request logging middleware
   app.use((req: Request, res: Response, next: NextFunction) => {

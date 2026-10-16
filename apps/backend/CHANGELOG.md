@@ -45,6 +45,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`http.server.duration` no longer carries `net.host.name`**, which took any client's `Host` header and grew prod past Grafana's active series limit.
 
+- **Requests that skip CloudFront get a 403.** With `CLOUDFRONT_SECRET` set, every path but `/health` must carry a matching `X-CloudFront-Secret` header.
+
 - **An OAuth account-linking `state` token no longer works from any browser.** Starting a link sets a nonce cookie on the API host whose hash the callback now requires, so a leaked state can no longer fasten a provider identity onto somebody else's account — flows in flight across the deploy fail and have to be restarted (#379).
 
 - **A photo carrying an EXIF orientation tag no longer thumbnails sideways.**
