@@ -90,7 +90,17 @@ export const ProviderIcon: React.FC<ProviderIconProps> = ({
   size = 40,
   withTooltip = true,
 }) => {
-  const mark = MARKS[provider];
+  // Typed as total, but a backend can ship a provider before the frontend
+  // that draws it is deployed; one plain tile beats crashing the page.
+  const mark: ProviderMark = (MARKS[provider] as ProviderMark | undefined) ?? {
+    label: provider.charAt(0) + provider.slice(1).toLowerCase(),
+    background: "#64748B",
+    glyph: (
+      <span style={{ color: "#FFFFFF", fontWeight: 700 }}>
+        {provider.charAt(0)}
+      </span>
+    ),
+  };
   const tile = (
     <Tile
       $size={size}

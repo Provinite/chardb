@@ -21,6 +21,37 @@ import { getAccessToken } from "../lib/accessToken";
 import { API_BASE_URL } from "../lib/communityHost";
 import { ProviderIcon } from "../components/ProviderIcon";
 
+interface LinkableProvider {
+  provider: ExternalAccountProvider;
+  /** The backend route: `/auth/<segment>`. */
+  segment: string;
+  label: string;
+}
+
+/** The providers offered under Connected Accounts, in button order. */
+const LINKABLE_PROVIDERS: readonly LinkableProvider[] = [
+  {
+    provider: ExternalAccountProvider.Deviantart,
+    segment: "deviantart",
+    label: "DeviantArt",
+  },
+  {
+    provider: ExternalAccountProvider.Discord,
+    segment: "discord",
+    label: "Discord",
+  },
+  {
+    provider: ExternalAccountProvider.Toyhouse,
+    segment: "toyhouse",
+    label: "ToyHouse",
+  },
+  {
+    provider: ExternalAccountProvider.Patreon,
+    segment: "patreon",
+    label: "Patreon",
+  },
+];
+
 const updateProfileSchema = z.object({
   displayName: z.string().max(100).optional(),
   bio: z.string().max(1000).optional(),
@@ -364,17 +395,17 @@ export const EditProfilePage: React.FC = () => {
     navigate(`/user/${meData?.me?.username}`);
   };
 
-  const handleLinkDeviantArt = async () => {
+  const handleLink = async ({ segment, label }: LinkableProvider) => {
     const token = getAccessToken();
 
     if (!token) {
-      toast.error("Please log in to link your DeviantArt account");
+      toast.error(`Please log in to link your ${label} account`);
       return;
     }
 
     try {
       // Fetch the OAuth URL from the backend with authentication in header
-      const response = await fetch(`${API_BASE_URL}/auth/deviantart`, {
+      const response = await fetch(`${API_BASE_URL}/auth/${segment}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -402,126 +433,7 @@ export const EditProfilePage: React.FC = () => {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to start DeviantArt linking",
-      );
-    }
-  };
-
-  const handleLinkDiscord = async () => {
-    const token = getAccessToken();
-
-    if (!token) {
-      toast.error("Please log in to link your Discord account");
-      return;
-    }
-
-    try {
-      // Fetch the OAuth URL from the backend with authentication in header
-      const response = await fetch(`${API_BASE_URL}/auth/discord`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        // Carries back the nonce cookie the callback checks; see the
-        // DeviantArt handler above (#379).
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to initiate OAuth flow");
-      }
-
-      const data = await response.json();
-
-      if (!data.url) {
-        throw new Error("No OAuth URL returned");
-      }
-
-      // Redirect to the OAuth URL (no tokens in URL)
-      window.location.href = data.url;
-    } catch (error: unknown) {
-      console.error("Error initiating OAuth:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to start Discord linking",
-      );
-    }
-  };
-
-  const handleLinkToyhouse = async () => {
-    const token = getAccessToken();
-
-    if (!token) {
-      toast.error("Please log in to link your ToyHouse account");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/toyhouse`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        // Carries back the nonce cookie the callback checks; see the
-        // DeviantArt handler above (#379).
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to initiate OAuth flow");
-      }
-
-      const data = await response.json();
-
-      if (!data.url) {
-        throw new Error("No OAuth URL returned");
-      }
-
-      window.location.href = data.url;
-    } catch (error: unknown) {
-      console.error("Error initiating OAuth:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to start ToyHouse linking",
-      );
-    }
-  };
-
-  const handleLinkPatreon = async () => {
-    const token = getAccessToken();
-
-    if (!token) {
-      toast.error("Please log in to link your Patreon account");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/patreon`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        // Carries back the nonce cookie the callback checks; see the
-        // DeviantArt handler above (#379).
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to initiate OAuth flow");
-      }
-
-      const data = await response.json();
-
-      if (!data.url) {
-        throw new Error("No OAuth URL returned");
-      }
-
-      window.location.href = data.url;
-    } catch (error: unknown) {
-      console.error("Error initiating OAuth:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to start Patreon linking",
+          : `Failed to start ${label} linking`,
       );
     }
   };
@@ -724,54 +636,25 @@ export const EditProfilePage: React.FC = () => {
             gap: "0.5rem",
           }}
         >
-          {!externalAccountsData?.myExternalAccounts?.some(
-            (acc) => acc.provider === "DEVIANTART",
-          ) && (
-            <SmallButton variant="primary" onClick={handleLinkDeviantArt}>
+          {LINKABLE_PROVIDERS.filter(
+            ({ provider }) =>
+              !externalAccountsData?.myExternalAccounts?.some(
+                (acc) => acc.provider === provider,
+              ),
+          ).map((linkable) => (
+            <SmallButton
+              key={linkable.provider}
+              variant="primary"
+              onClick={() => handleLink(linkable)}
+            >
               <ProviderIcon
-                provider={ExternalAccountProvider.Deviantart}
+                provider={linkable.provider}
                 size={20}
                 withTooltip={false}
               />
-              Link DeviantArt Account
+              Link {linkable.label} Account
             </SmallButton>
-          )}
-          {!externalAccountsData?.myExternalAccounts?.some(
-            (acc) => acc.provider === "DISCORD",
-          ) && (
-            <SmallButton variant="primary" onClick={handleLinkDiscord}>
-              <ProviderIcon
-                provider={ExternalAccountProvider.Discord}
-                size={20}
-                withTooltip={false}
-              />
-              Link Discord Account
-            </SmallButton>
-          )}
-          {!externalAccountsData?.myExternalAccounts?.some(
-            (acc) => acc.provider === "TOYHOUSE",
-          ) && (
-            <SmallButton variant="primary" onClick={handleLinkToyhouse}>
-              <ProviderIcon
-                provider={ExternalAccountProvider.Toyhouse}
-                size={20}
-                withTooltip={false}
-              />
-              Link ToyHouse Account
-            </SmallButton>
-          )}
-          {!externalAccountsData?.myExternalAccounts?.some(
-            (acc) => acc.provider === "PATREON",
-          ) && (
-            <SmallButton variant="primary" onClick={handleLinkPatreon}>
-              <ProviderIcon
-                provider={ExternalAccountProvider.Patreon}
-                size={20}
-                withTooltip={false}
-              />
-              Link Patreon Account
-            </SmallButton>
-          )}
+          ))}
         </div>
       </Section>
 

@@ -2,18 +2,35 @@ import { InputType, Field, ID } from "@nestjs/graphql";
 import { ExternalAccountProvider } from "@chardb/database";
 import {
   IsEnum,
+  IsIn,
   IsNotEmpty,
   IsString,
   IsUUID,
   MaxLength,
 } from "class-validator";
 
+/**
+ * Providers something can be granted to before its owner joins.
+ *
+ * Narrower than `ExternalAccountProvider`: a pending grant only ever reaches
+ * its owner if what staff type here resolves to the id OAuth stores on link,
+ * and Patreon has no lookup from a handle to its numeric user id.
+ */
+export const PENDING_OWNER_PROVIDERS: readonly ExternalAccountProvider[] = [
+  ExternalAccountProvider.DISCORD,
+  ExternalAccountProvider.DEVIANTART,
+  ExternalAccountProvider.TOYHOUSE,
+];
+
 @InputType()
 export class PendingOwnerInput {
   @Field(() => ExternalAccountProvider, {
-    description: "The external account provider",
+    description:
+      "The external account provider. PATREON is refused: it cannot be a pending owner.",
   })
-  @IsEnum(ExternalAccountProvider)
+  @IsIn(PENDING_OWNER_PROVIDERS, {
+    message: "Pending ownership is not supported for this provider",
+  })
   provider: ExternalAccountProvider;
 
   @Field({

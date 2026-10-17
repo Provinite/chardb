@@ -12,6 +12,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Link Patreon Account** in Connected Accounts on `/profile/edit`, with its `/auth/patreon/callback` landing page (#236).
 - **Linked accounts show provider logos** with a tooltip naming the provider, on `/profile/edit`, its link buttons, and the profile page, replacing the two-letter tiles; the link buttons now stack full-width (#236).
 
+### Fixed
+
+- **The Patreon callback page states its result instead of spinning**, and its return-to-settings timer no longer fires after you navigate away (#236).
+- **An unrecognised linking provider shows a plain tile** rather than crashing the profile pages, for when the backend ships a provider before the frontend (#236).
+
 ## [v13.0.0] - 2026-10-16
 
 ### Added

@@ -458,7 +458,12 @@ export const EditCharacterPage: React.FC = () => {
             avatarImage: character.owner.avatarImage || null,
           },
         });
-      } else if (character.pendingOwnership) {
+      } else if (
+        character.pendingOwnership &&
+        // Never true in practice -- the backend refuses Patreon as a pending
+        // owner -- but the field's type still allows it.
+        character.pendingOwnership.provider !== ExternalAccountProvider.Patreon
+      ) {
         // Character is orphaned with pending ownership
         setCharacterTarget({
           type: "pending",
@@ -533,7 +538,6 @@ export const EditCharacterPage: React.FC = () => {
           DISCORD: ExternalAccountProvider.Discord,
           DEVIANTART: ExternalAccountProvider.Deviantart,
           TOYHOUSE: ExternalAccountProvider.Toyhouse,
-          PATREON: ExternalAccountProvider.Patreon,
         }[characterTarget.provider];
         if (!provider) {
           throw new Error(`Unsupported provider: ${characterTarget.provider}`);

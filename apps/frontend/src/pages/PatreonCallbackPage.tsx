@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import styled from "styled-components";
@@ -19,55 +19,53 @@ const Message = styled.div`
   text-align: center;
 `;
 
-const Spinner = styled.div`
-  border: 3px solid ${(props) => props.theme.colors.border};
-  border-top-color: ${(props) => props.theme.colors.primary};
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  animation: spin 1s linear infinite;
-  margin-bottom: 1rem;
-
-  @keyframes spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
-`;
+/** How long the result stays on screen before returning to Edit Profile. */
+const REDIRECT_DELAY_MS = 2000;
 
 /**
  * Patreon is not a pending-ownership target, so unlike the other provider
  * callbacks there are never claimed characters or items to report.
+ *
+ * The outcome is read straight off the URL the backend redirected to, so
+ * there is nothing to wait for: the page says the result immediately rather
+ * than showing a spinner for a step that has already finished.
  */
 export function PatreonCallbackPage() {
   usePageMeta({ title: "Connecting Patreon" });
 
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const hasProcessed = useRef(false);
+
+  const error = searchParams.get("error");
+  const succeeded = !error && searchParams.get("success") === "true";
+  const message = error
+    ? `Failed to link Patreon account: ${error}`
+    : succeeded
+      ? "Successfully linked Patreon account!"
+      : "Invalid callback response";
 
   useEffect(() => {
-    if (hasProcessed.current) {
-      return;
-    }
-    hasProcessed.current = true;
-
-    const error = searchParams.get("error");
-
-    if (error) {
-      toast.error(`Failed to link Patreon account: ${error}`);
-    } else if (searchParams.get("success")) {
-      toast.success("Successfully linked Patreon account!");
+    // A fixed id, so a re-run of this effect (React's strict-mode double
+    // invoke) replaces the toast instead of stacking a second one.
+    if (succeeded) {
+      toast.success(message, { id: "patreon-link-result" });
     } else {
-      toast.error("Invalid callback response");
+      toast.error(message, { id: "patreon-link-result" });
     }
-    setTimeout(() => navigate("/profile/edit"), 2000);
-  }, [searchParams, navigate]);
+
+    // Cleared on unmount, so someone who navigates away before it fires is
+    // not pulled back to Edit Profile from wherever they went.
+    const timer = setTimeout(
+      () => navigate("/profile/edit"),
+      REDIRECT_DELAY_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [message, succeeded, navigate]);
 
   return (
     <Container>
-      <Spinner />
-      <Message>Completing account linking...</Message>
+      <Message>{message}</Message>
+      <Message>Returning to your profile settings...</Message>
     </Container>
   );
 }
