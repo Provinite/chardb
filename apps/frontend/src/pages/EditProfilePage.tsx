@@ -717,9 +717,11 @@ export const EditProfilePage: React.FC = () => {
         <div
           style={{
             marginTop: "1rem",
+            // One full-width column, matching the linked-account rows above.
+            // Side by side, the longer labels wrap at this card's width.
             display: "flex",
+            flexDirection: "column",
             gap: "0.5rem",
-            flexWrap: "wrap",
           }}
         >
           {!externalAccountsData?.myExternalAccounts?.some(

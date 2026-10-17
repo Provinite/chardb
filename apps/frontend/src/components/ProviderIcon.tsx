@@ -13,14 +13,13 @@ import toyhouseIcon from "../assets/providers/toyhouse.png";
  *   Patreon's own; patreon.com/brand refuses non-browser downloads.
  * - DeviantArt: the Simple Icons mark, coloured as in DeviantArt's app icon.
  *   DeviantArt publishes no brand kit.
- * - Toyhouse: the site's own apple-touch-icon. No brand kit exists either, and
- *   it is a raster, so it is shown as-is rather than recoloured.
+ * - Toyhouse: the house mark from the toyhou.se homepage (`/img/cover-400.png`,
+ *   a one-colour cutout), filled white and set on the site's own charcoal as
+ *   the homepage shows it. No brand kit exists, and no vector version.
  */
 interface ProviderMark {
   label: string;
   background: string;
-  /** For a background that would vanish against a white surface. */
-  outlined?: boolean;
   glyph: React.ReactNode;
 }
 
@@ -60,20 +59,12 @@ const MARKS: Record<ExternalAccountProvider, ProviderMark> = {
   },
   [ExternalAccountProvider.Toyhouse]: {
     label: "Toyhouse",
-    background: "#FFFFFF",
-    outlined: true,
-    glyph: <img src={toyhouseIcon} alt="" width="100%" height="100%" />,
+    background: "#333333",
+    glyph: <img src={toyhouseIcon} alt="" width="62%" height="62%" />,
   },
 };
 
-const Tile = styled.span<{
-  $size: number;
-  $background: string;
-  $outlined: boolean;
-}>`
-  box-sizing: border-box;
-  border: ${({ $outlined, theme }) =>
-    $outlined ? `1px solid ${theme.colors.border}` : "none"};
+const Tile = styled.span<{ $size: number; $background: string }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -104,7 +95,6 @@ export const ProviderIcon: React.FC<ProviderIconProps> = ({
     <Tile
       $size={size}
       $background={mark.background}
-      $outlined={mark.outlined ?? false}
       role="img"
       aria-label={mark.label}
     >
