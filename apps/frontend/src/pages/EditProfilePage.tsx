@@ -691,8 +691,8 @@ export const EditProfilePage: React.FC = () => {
       <Section>
         <SectionTitle>Connected Accounts</SectionTitle>
         <SectionDescription>
-          Link your external accounts (DeviantArt, Discord, ToyHouse, Patreon) to verify
-          ownership and connect with the community
+          Link your external accounts (DeviantArt, Discord, ToyHouse, Patreon)
+          to verify ownership and connect with the community
         </SectionDescription>
 
         {loadingAccounts ? (
@@ -705,9 +705,7 @@ export const EditProfilePage: React.FC = () => {
             {externalAccountsData.myExternalAccounts.map((account) => (
               <AccountItem key={account.id}>
                 <AccountInfo>
-                  <AccountIcon>
-                    {PROVIDER_ICON[account.provider]}
-                  </AccountIcon>
+                  <AccountIcon>{PROVIDER_ICON[account.provider]}</AccountIcon>
                   <AccountDetails>
                     <AccountName>{account.displayName}</AccountName>
                     <AccountProvider>{account.provider}</AccountProvider>

@@ -109,9 +109,7 @@ describe("PatreonStrategy.fetchUserProfile", () => {
   });
 
   it("calls done with an error when the response is missing id", async () => {
-    mockFetch.mockResolvedValueOnce(
-      identity({ vanity: "cooluser" }, null),
-    );
+    mockFetch.mockResolvedValueOnce(identity({ vanity: "cooluser" }, null));
 
     const done = jest.fn();
     await strategy.fetchUserProfile("token-abc", done);
