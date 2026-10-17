@@ -212,21 +212,21 @@ model User {
 
   // Notifications. Two relations because one row names two people: who it was
   // addressed to, and who caused it.
-  notifications      Notification[] @relation("NotificationRecipient")
-  causedNotifications Notification[] @relation("NotificationActor")
+  notifications           Notification[]           @relation("NotificationRecipient")
+  causedNotifications     Notification[]           @relation("NotificationActor")
   /// Only the answers that differ from the default; see NotificationPreference.
   notificationPreferences NotificationPreference[]
 
   // Trading. Two relations for the offers themselves, and six more because
   // every line on the table names both ends of its own movement.
-  proposedTrades           Trade[]             @relation("TradeProposer")
-  receivedTrades           Trade[]             @relation("TradeRecipient")
-  tradeItemsGiven          TradeItem[]         @relation("TradeItemSource")
-  tradeItemsReceived       TradeItem[]         @relation("TradeItemDestination")
-  tradeCharactersGiven     TradeCharacter[]    @relation("TradeCharacterSource")
-  tradeCharactersReceived  TradeCharacter[]    @relation("TradeCharacterDestination")
-  tradeCurrencyGiven       TradeCurrencyLine[] @relation("TradeCurrencySource")
-  tradeCurrencyReceived    TradeCurrencyLine[] @relation("TradeCurrencyDestination")
+  proposedTrades          Trade[]             @relation("TradeProposer")
+  receivedTrades          Trade[]             @relation("TradeRecipient")
+  tradeItemsGiven         TradeItem[]         @relation("TradeItemSource")
+  tradeItemsReceived      TradeItem[]         @relation("TradeItemDestination")
+  tradeCharactersGiven    TradeCharacter[]    @relation("TradeCharacterSource")
+  tradeCharactersReceived TradeCharacter[]    @relation("TradeCharacterDestination")
+  tradeCurrencyGiven      TradeCurrencyLine[] @relation("TradeCurrencySource")
+  tradeCurrencyReceived   TradeCurrencyLine[] @relation("TradeCurrencyDestination")
 
   @@map("users")
 }
@@ -295,16 +295,16 @@ model EmailVerificationToken {
 }
 
 model Character {
-  id                String            @id @default(uuid())
-  name              String            @db.VarChar(100)
-  registryId        String?           @map("registry_id") @db.VarChar(100)
-  speciesId         String?           @map("species_id")
-  speciesVariantId  String?           @map("species_variant_id")
-  details           String?           @db.Text
-  ownerId           String?           @map("owner_id")
-  creatorId         String?           @map("creator_id")
-  mainMediaId       String?           @map("main_media_id")
-  visibility        Visibility        @default(PUBLIC)
+  id               String     @id @default(uuid())
+  name             String     @db.VarChar(100)
+  registryId       String?    @map("registry_id") @db.VarChar(100)
+  speciesId        String?    @map("species_id")
+  speciesVariantId String?    @map("species_variant_id")
+  details          String?    @db.Text
+  ownerId          String?    @map("owner_id")
+  creatorId        String?    @map("creator_id")
+  mainMediaId      String?    @map("main_media_id")
+  visibility       Visibility @default(PUBLIC)
 
   /// What the owner will entertain being asked about, each defaulting to no.
   ///
@@ -316,12 +316,12 @@ model Character {
   /// reads it, at propose and again at settlement, so it is consent to a real
   /// transfer rather than a label. A character open to art trades has not
   /// thereby agreed to be put on a trade table.
-  isSellable        Boolean           @default(false) @map("is_sellable")
-  isSellableForCoin Boolean           @default(false) @map("is_sellable_for_coin")
-  isTradeable       Boolean           @default(false) @map("is_tradeable")
-  isTradeableForArt Boolean           @default(false) @map("is_tradeable_for_art")
-  isOpenToOffers    Boolean           @default(false) @map("is_open_to_offers")
-  isFreebie         Boolean           @default(false) @map("is_freebie")
+  isSellable        Boolean @default(false) @map("is_sellable")
+  isSellableForCoin Boolean @default(false) @map("is_sellable_for_coin")
+  isTradeable       Boolean @default(false) @map("is_tradeable")
+  isTradeableForArt Boolean @default(false) @map("is_tradeable_for_art")
+  isOpenToOffers    Boolean @default(false) @map("is_open_to_offers")
+  isFreebie         Boolean @default(false) @map("is_freebie")
 
   /// Asking price for `isSellable`, in real money. The coin equivalent has no
   /// price field: community currencies are per-community and a character
@@ -781,7 +781,7 @@ model Media {
   /// only moment anyone knows the answer. The character path still wins where
   /// there is a character: a character moved to another community's species
   /// takes its media with it, and a value frozen at upload could not.
-  communityId String?    @map("community_id")
+  communityId String? @map("community_id")
 
   // Content references (exactly one must be non-null)
   imageId       String? @map("image_id")
@@ -1037,10 +1037,10 @@ model CharacterVariantChange {
 }
 
 model CharacterOwnershipChange {
-  id          String   @id @default(uuid())
-  characterId String   @map("character_id")
-  fromUserId  String?  @map("from_user_id")
-  toUserId    String   @map("to_user_id")
+  id          String  @id @default(uuid())
+  characterId String  @map("character_id")
+  fromUserId  String? @map("from_user_id")
+  toUserId    String  @map("to_user_id")
 
   /// Set when this move was one leg of something larger, and carries the same
   /// value as the `settlementBatchId` on the trade that caused it -- the same
@@ -1120,16 +1120,16 @@ model ItemType {
   updatedAt DateTime @updatedAt @map("updated_at")
 
   // Relations
-  community    Community         @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  color        CommunityColor?   @relation(fields: [colorId], references: [id], onDelete: SetNull)
-  image        Image?            @relation("ItemTypeImage", fields: [imageId], references: [id], onDelete: SetNull)
-  items        Item[]
-  transactions ItemTransaction[]
-  tradeLines   TradeItem[]
-  ShopItem     ShopItem[]
-  usePayout    ItemUsePayout?
-  useMyoGrant  ItemUseMyoGrant?
-  useTraitEditGrant ItemUseTraitEditGrant?
+  community             Community                  @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  color                 CommunityColor?            @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  image                 Image?                     @relation("ItemTypeImage", fields: [imageId], references: [id], onDelete: SetNull)
+  items                 Item[]
+  transactions          ItemTransaction[]
+  tradeLines            TradeItem[]
+  ShopItem              ShopItem[]
+  usePayout             ItemUsePayout?
+  useMyoGrant           ItemUseMyoGrant?
+  useTraitEditGrant     ItemUseTraitEditGrant?
   useVariantChangeGrant ItemUseVariantChangeGrant?
 
   @@unique([name, communityId])
@@ -1282,8 +1282,8 @@ model Currency {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  community             Community              @relation(fields: [communityId], references: [id], onDelete: Cascade)
-  color                 CommunityColor?        @relation(fields: [colorId], references: [id], onDelete: SetNull)
+  community             Community                @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  color                 CommunityColor?          @relation(fields: [colorId], references: [id], onDelete: SetNull)
   balances              CurrencyBalance[]
   transactions          CurrencyTransaction[]
   tradeLines            TradeCurrencyLine[]
@@ -1639,10 +1639,10 @@ model ItemUseTraitEditGrantSpecies {
   grantId   String @map("grant_id")
   speciesId String @map("species_id")
 
-  grant ItemUseTraitEditGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
+  grant   ItemUseTraitEditGrant @relation(fields: [grantId], references: [id], onDelete: Cascade)
   /// Restrict, as everywhere else a use effect names something: a species
   /// outstanding kits can still edit cannot be deleted out from under them.
-  species Species @relation(fields: [speciesId], references: [id], onDelete: Restrict)
+  species Species               @relation(fields: [speciesId], references: [id], onDelete: Restrict)
 
   variants ItemUseTraitEditGrantVariant[]
 
@@ -1690,10 +1690,10 @@ model ItemUseVariantChangeGrant {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  itemType ItemType @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
+  itemType  ItemType       @relation(fields: [itemTypeId], references: [id], onDelete: Cascade)
   /// Restrict, as with the other grants: a species or variant that
   /// outstanding tickets still name cannot be deleted out from under them.
-  species  Species  @relation(fields: [speciesId], references: [id], onDelete: Restrict)
+  species   Species        @relation(fields: [speciesId], references: [id], onDelete: Restrict)
   toVariant SpeciesVariant @relation("ItemUseVariantChangeGrantTo", fields: [toVariantId], references: [id], onDelete: Restrict)
 
   fromVariants ItemUseVariantChangeGrantFrom[]
@@ -1810,9 +1810,9 @@ model Species {
   speciesVariants SpeciesVariant[]
 
   /// Item types whose tickets make a character of this species.
-  myoGrants ItemUseMyoGrant[]
+  myoGrants           ItemUseMyoGrant[]
   /// Item types whose edit kits can change a character of this species.
-  traitEditGrants ItemUseTraitEditGrantSpecies[]
+  traitEditGrants     ItemUseTraitEditGrantSpecies[]
   /// Item types whose items move a character of this species between variants.
   variantChangeGrants ItemUseVariantChangeGrant[]
 
@@ -1860,10 +1860,10 @@ model EnumValue {
 }
 
 model SpeciesVariant {
-  id        String   @id @default(uuid())
-  name      String   @db.VarChar(100)
-  speciesId String   @map("species_id")
-  colorId   String?  @map("color_id")
+  id        String  @id @default(uuid())
+  name      String  @db.VarChar(100)
+  speciesId String  @map("species_id")
+  colorId   String? @map("color_id")
 
   /// How many forms a character on this variant may have. One means the
   /// feature is off, which is why it is the default: every variant that
@@ -1886,7 +1886,7 @@ model SpeciesVariant {
   enumValueSettings EnumValueSetting[]
 
   /// Every MYO grant that lists this variant as one a ticket can make.
-  myoGrantVariants ItemUseMyoGrantVariant[]
+  myoGrantVariants       ItemUseMyoGrantVariant[]
   /// Every edit-kit grant limited to this variant.
   traitEditGrantVariants ItemUseTraitEditGrantVariant[]
 
@@ -2315,4 +2315,105 @@ model TradeCurrencyLine {
   /// most one line per currency in practice.
   @@unique([tradeId, currencyId, sourceUserId])
   @@map("trade_currency_lines")
+}
+
+// ─── Halloween trick-or-treat event ─────────────────────────────────────────
+//
+// Imported from the standalone Cloverse Halloween Discord bot, keeping its data
+// model. Everything is keyed by Discord guild and Discord user id, not by
+// community or chardb user: a player needs no chardb account to knock, and a
+// prize finds its owner through pending ownership when they link Discord.
+
+/// One row per Discord guild running the event. Created with defaults the
+/// first time an admin runs `/settings set`.
+model HalloweenGuildSettings {
+  guildId String @id @map("guild_id") @db.VarChar(30)
+
+  /// Hour of the day (0-23, America/Chicago) at which knocks and gifties reset.
+  resetTime    Int       @map("reset_time")
+  knocksPerDay Int       @map("knocks_per_day")
+  startDate    DateTime? @map("start_date") @db.Timestamptz
+  endDate      DateTime? @map("end_date") @db.Timestamptz
+  /// Chance of a knock winning, 0-1.
+  winRate      Float     @map("win_rate")
+  /// Channel every win is also announced in.
+  winChannel   String?   @map("win_channel") @db.VarChar(30)
+
+  prizes          HalloweenPrize[]
+  gifties         HalloweenGifty[]
+  deviantArtUsers HalloweenDeviantArtUser[]
+
+  @@map("halloween_guild_settings")
+}
+
+/// A prize in a guild's pool. `id` is the admin's human-readable slug
+/// ("myo-common"), unique within the guild.
+model HalloweenPrize {
+  guildId      String  @map("guild_id") @db.VarChar(30)
+  id           String  @db.VarChar(30)
+  name         String
+  initialStock Int     @map("initial_stock")
+  currentStock Int     @map("current_stock")
+  weight       Int
+  image        String
+  /// What the winner receives in chardb, if anything. At most one is set
+  /// (a CHECK constraint in the migration); neither is a foreign key, because
+  /// the bot never required the id to exist when the prize was added.
+  itemTypeId   String? @map("item_type_id")
+  characterId  String? @map("character_id")
+
+  guildSettings HalloweenGuildSettings @relation(fields: [guildId], references: [guildId])
+  knockEvents   HalloweenKnockEvent[]
+
+  @@id([guildId, id])
+  @@map("halloween_prizes")
+}
+
+/// One `/knock`. A win carries the prize; a loss has none.
+model HalloweenKnockEvent {
+  id        Int      @id @default(autoincrement())
+  guildId   String   @map("guild_id") @db.VarChar(30)
+  userId    String   @map("user_id") @db.VarChar(30)
+  prizeId   String?  @map("prize_id") @db.VarChar(30)
+  time      DateTime @default(now()) @db.Timestamptz
+  /// A win whose prize has not been chosen yet.
+  isPending Boolean  @default(false) @map("is_pending")
+
+  prize   HalloweenPrize?  @relation(fields: [guildId, prizeId], references: [guildId, id])
+  /// The gifty spent on this knock, if it was paid for with one. A knock paid
+  /// for with a gifty does not count against the daily allowance.
+  gifties HalloweenGifty[]
+
+  @@index([guildId, userId, time])
+  @@map("halloween_knock_events")
+}
+
+/// An extra knock one player gives another. Pending until spent on a knock.
+model HalloweenGifty {
+  id           Int      @id @default(autoincrement())
+  guildId      String   @map("guild_id") @db.VarChar(30)
+  time         DateTime @default(now()) @db.Timestamptz
+  fromUserId   String   @map("from_user_id") @db.VarChar(30)
+  toUserId     String   @map("to_user_id") @db.VarChar(30)
+  knockEventId Int?     @map("knock_event_id")
+
+  guildSettings HalloweenGuildSettings @relation(fields: [guildId], references: [guildId])
+  knockEvent    HalloweenKnockEvent?   @relation(fields: [knockEventId], references: [id])
+
+  @@index([guildId, toUserId])
+  @@index([guildId, fromUserId])
+  @@map("halloween_gifties")
+}
+
+/// The DeviantArt username a player gave with `/deviantart`, for delivering
+/// prizes chardb does not hold.
+model HalloweenDeviantArtUser {
+  guildId        String @map("guild_id") @db.VarChar(30)
+  userId         String @map("user_id") @db.VarChar(30)
+  deviantArtName String @map("deviantart_name") @db.VarChar(30)
+
+  guildSettings HalloweenGuildSettings @relation(fields: [guildId], references: [guildId])
+
+  @@id([userId, guildId])
+  @@map("halloween_deviantart_users")
 }
