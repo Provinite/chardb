@@ -63,6 +63,8 @@ export function formatLastReset(date: Date): string {
   return inChicago(date).toFormat("yyyy-MM-dd h:mm:ss a").toUpperCase();
 }
 
+const NARROW_NO_BREAK_SPACE = String.fromCharCode(0x202f);
+
 /**
  * `10/1/2025, 5:00:00 AM`. The bot printed event dates with a bare
  * `Date#toLocaleString()`, which on Lambda meant en-US in UTC. Newer ICU puts
@@ -71,5 +73,6 @@ export function formatLastReset(date: Date): string {
 export function formatLegacyLocale(date: Date): string {
   return date
     .toLocaleString("en-US", { timeZone: "UTC" })
-    .replace(/ /g, " ");
+    .split(NARROW_NO_BREAK_SPACE)
+    .join(" ");
 }
