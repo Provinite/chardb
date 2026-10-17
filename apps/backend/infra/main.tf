@@ -45,6 +45,7 @@ module "backend_docker_host" {
   deviantart_client_id = var.deviantart_client_id
   discord_client_id    = var.discord_client_id
   toyhouse_client_id   = var.toyhouse_client_id
+  patreon_client_id    = var.patreon_client_id
 
   deviantart_callback_url = var.deviantart_callback_url
 
@@ -53,6 +54,9 @@ module "backend_docker_host" {
 
   # ToyHouse OAuth Configuration
   toyhouse_callback_url = var.toyhouse_callback_url
+
+  # Patreon OAuth Configuration
+  patreon_callback_url = var.patreon_callback_url
 
   # SQS Queue URL
   sqs_queue_url = module.prize_distribution_queue.queue_url

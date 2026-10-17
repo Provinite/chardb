@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Patreon account linking**: `/auth/patreon` links a Patreon identity as an `ExternalAccount` (`PATREON`), using the same browser-bound state flow as the other providers; no Patreon tokens are stored (#236).
+
+### Changed
+
+- **Breaking for local setups: every linking provider's client id and secret are required at boot.** A missing `DISCORD_`/`DEVIANTART_`/`TOYHOUSE_`/`PATREON_` `CLIENT_ID` or `CLIENT_SECRET` now stops the backend from starting, naming the variable (#236).
+- **One factory builds all four linking controllers and strategies**, from per-provider config in `oauth-link-providers.ts` (#236).
+
+### Fixed
+
+- **A declined or failed link returns to the app.** Clicking Deny on the provider, or a failed token exchange, used to strand the user on a bare 401 on the API host; it now redirects to the frontend callback with the reason and spends the nonce (#236).
+- **`PATREON` is refused as a pending owner**, since a Patreon handle cannot be resolved to the id that linking stores (#236).
+
 ## [v13.0.0] - 2026-10-16
 
 ### Added

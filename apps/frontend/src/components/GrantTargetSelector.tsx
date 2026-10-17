@@ -50,11 +50,21 @@ import { ExternalAccountProvider } from "../generated/graphql";
  * ```
  */
 
+/**
+ * Providers something can be granted to before its owner joins. The backend
+ * refuses Patreon as a pending owner: a Patreon handle cannot be resolved to
+ * the numeric id that linking stores.
+ */
+export type PendingOwnerProvider = Exclude<
+  ExternalAccountProvider,
+  ExternalAccountProvider.Patreon
+>;
+
 export type GrantTarget =
   | { type: "user"; userId: string; user: SelectedUser }
   | {
       type: "pending";
-      provider: ExternalAccountProvider;
+      provider: PendingOwnerProvider;
       providerAccountId: string;
     };
 
@@ -249,7 +259,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
   const [selectionMode, setSelectionMode] = useState<
     "user" | "pending" | "unassigned"
   >("user");
-  const [provider, setProvider] = useState<ExternalAccountProvider>(
+  const [provider, setProvider] = useState<PendingOwnerProvider>(
     ExternalAccountProvider.Discord,
   );
   const [accountId, setAccountId] = useState("");
@@ -376,7 +386,7 @@ export const GrantTargetSelector: React.FC<GrantTargetSelectorProps> = ({
     setValidationError(null);
     setCheckError(null);
     setResolvedUser(null);
-    setProvider(newProvider as ExternalAccountProvider);
+    setProvider(newProvider as PendingOwnerProvider);
     // Clear account ID when switching providers
     setAccountId("");
     // Reset check state

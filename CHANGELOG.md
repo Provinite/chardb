@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **An "Account Linking" walkthrough** (`docs/docs/account-linking.html`), four steps with three screenshots: where linking lives, how a link completes, the linked list, and the profile badges (#236).
+- **Prod and dev infra carry Patreon OAuth config**: `patreon_client_id` and `patreon_callback_url` variables, and a `patreon-client-secret` SSM parameter whose value is set by hand; `DEPLOYMENT_GUIDE.md` has the steps (#236).
+
 ## [v13.0.0] - 2026-10-16
 
 ### Security

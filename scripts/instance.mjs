@@ -491,6 +491,7 @@ export function describe(slot, root = null) {
     DEVIANTART_CALLBACK_URL: `${backendUrl}/auth/deviantart/callback`,
     DISCORD_CALLBACK_URL: `${backendUrl}/auth/discord/callback`,
     TOYHOUSE_CALLBACK_URL: `${backendUrl}/auth/toyhouse/callback`,
+    PATREON_CALLBACK_URL: `${backendUrl}/auth/patreon/callback`,
   };
 
   return {

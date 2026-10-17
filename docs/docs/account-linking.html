@@ -1,0 +1,390 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Account Linking - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Link your DeviantArt, Discord, Toyhouse and Patreon accounts to CharDB, and claim what was granted to them before you joined."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/account-linking.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Account Linking" />
+    <meta
+      property="og:description"
+      content="Link your DeviantArt, Discord, Toyhouse and Patreon accounts to CharDB, and claim what was granted to them before you joined."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/account-linking.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/account-linking-linked.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The Connected Accounts section of a CharDB profile, with DeviantArt, Discord, Toyhouse and Patreon accounts linked, each shown with its logo."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul,
+      .step-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        max-width: 520px;
+        margin: 0 auto;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Account Linking</h1>
+        <p>Your accounts elsewhere, connected to the one here</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Most people arrive at CharDB with a history somewhere else &mdash; a
+            DeviantArt gallery, a Toyhouse profile, a Discord name the community
+            already knows. Linking those accounts tells CharDB that they are
+            you.
+          </p>
+          <p>
+            Four sites can be linked, one account each. Linking goes through the
+            other site's own sign-in, so you never give CharDB a password for
+            it.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">&#x1F3A8;</div>
+              <h4>DeviantArt</h4>
+              <p>Your gallery account</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F4AC;</div>
+              <h4>Discord</h4>
+              <p>Where the community talks</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F3E0;</div>
+              <h4>Toyhouse</h4>
+              <p>Your character profiles</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F49B;</div>
+              <h4>Patreon</h4>
+              <p>The account you support creators with</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Things waiting for you are claimed on the spot.</strong>
+            Staff can grant a character or an item to a DeviantArt, Discord or
+            Toyhouse account before its owner has joined CharDB. The moment you
+            link that account, everything granted to it becomes yours.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Finding It</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Linking lives in the <strong>Connected Accounts</strong> section of
+            <strong>Edit Profile</strong>. There is one button for each site you
+            have not linked yet; once a site is linked, its button goes away.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="account-linking-buttons.png"
+            alt="The Connected Accounts section with nothing linked, showing four buttons: Link DeviantArt Account, Link Discord Account, Link ToyHouse Account and Link Patreon Account, each with that site's logo"
+          />
+          <div class="screenshot-caption">
+            Nothing linked yet: one button per site
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Linking an Account</h2>
+        </div>
+        <div class="step-content">
+          <ol>
+            <li>Click the button for the site.</li>
+            <li>
+              You are taken to that site. Sign in if you are not already, and
+              approve CharDB's request.
+            </li>
+            <li>
+              You are sent back to CharDB &mdash; to the community you started
+              from, if you started from one &mdash; and the account appears in
+              your list.
+            </li>
+          </ol>
+          <p>
+            CharDB asks each site only who you are: your account and its name.
+            It does not ask to read or post anything on your behalf, and keeps
+            nothing from the sign-in beyond those two.
+          </p>
+          <div class="highlight-box">
+            <strong>Finish where you started.</strong> A link has to be
+            completed in the same browser that started it, within ten minutes.
+            If you see
+            <em
+              >&ldquo;This linking request was started in a different browser or
+              has expired&rdquo;</em
+            >, click the button again and finish in one go.
+          </div>
+          <p>
+            An account can belong to only one CharDB user. If the account you
+            sign in with is already linked to someone else, the link is refused
+            and nothing changes.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Your Linked Accounts</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Each linked account is listed with its site's logo and the name it
+            goes by there. Hover a logo to see which site it is.
+          </p>
+          <p>
+            <strong>Unlink</strong> removes the connection. Anything you already
+            claimed through it stays yours; unlinking only stops CharDB treating
+            that account as you from then on. To link a different account on the
+            same site, unlink the old one first.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="account-linking-linked.png"
+            alt="The Connected Accounts section with all four sites linked, each row showing the site's logo, the account name, the site name and an Unlink button; a tooltip reading Patreon is shown over the Patreon logo"
+          />
+          <div class="screenshot-caption">
+            All four linked, with the Patreon logo's tooltip showing
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">On Your Profile</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Your profile page lists your linked accounts too, as small badges
+            under a <strong>Connected Accounts</strong> heading.
+          </p>
+          <div class="highlight-box">
+            <strong>Only you see these.</strong> The badges appear when you look
+            at your own profile. Other people visiting it do not see which
+            accounts you have linked.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="account-linking-profile.png"
+            alt="The Connected Accounts heading on a profile page, with four badges, each showing a site's logo and the linked account's name"
+          />
+          <div class="screenshot-caption">
+            The same four accounts, as badges on your own profile
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Account Linking &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

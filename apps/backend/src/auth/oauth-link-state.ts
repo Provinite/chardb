@@ -46,8 +46,12 @@ import {
  * trade worth making for a ten-minute window.
  */
 
-/** The three providers an account can be linked to; also the route segment. */
-export type OAuthLinkProvider = "discord" | "deviantart" | "toyhouse";
+/** The providers an account can be linked to; also the route segment. */
+export type OAuthLinkProvider =
+  | "discord"
+  | "deviantart"
+  | "toyhouse"
+  | "patreon";
 
 /** The `state` token payload, signed on initiate and read back on callback. */
 interface OAuthLinkStatePayload {

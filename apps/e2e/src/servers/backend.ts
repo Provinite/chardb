@@ -42,9 +42,10 @@ async function assertPortFree(port: number): Promise<void> {
  *
  * The child env is built explicitly rather than by layering dotenv files at
  * runtime. .env.test already carries every var whose absence hard-crashes boot
- * (JWT_SECRET, and non-empty TOYHOUSE_/DISCORD_/DEVIANTART_CLIENT_ID plus the
- * Discord bot token and secret), and assembling the env by hand removes any
- * question about which file's DATABASE_URL wins.
+ * (JWT_SECRET, a non-empty CLIENT_ID and CLIENT_SECRET for each of TOYHOUSE_,
+ * DISCORD_, DEVIANTART_ and PATREON_, plus the Discord bot token), and
+ * assembling the env by hand removes any question about which file's
+ * DATABASE_URL wins.
  */
 function readEnvTest(): Record<string, string> {
   const file = path.resolve(REPO_ROOT, "apps/backend/.env.test");

@@ -1128,6 +1128,7 @@ export type ExternalAccount = {
 export enum ExternalAccountProvider {
   Deviantart = 'DEVIANTART',
   Discord = 'DISCORD',
+  Patreon = 'PATREON',
   Toyhouse = 'TOYHOUSE'
 }
 
@@ -2793,7 +2794,7 @@ export type OwnerIdUpdate = {
 };
 
 export type PendingOwnerInput = {
-  /** The external account provider */
+  /** The external account provider. PATREON is refused: it cannot be a pending owner. */
   provider: ExternalAccountProvider;
   /** The account identifier on the external provider (Discord user ID, DeviantArt username, etc.) */
   providerAccountId: Scalars['String']['input'];

@@ -67,6 +67,7 @@ module "app_secrets" {
     "deviantart-client-secret" = "DeviantArt OAuth client secret"
     "toyhouse-client-secret"   = "ToyHouse OAuth client secret"
     "discord-client-secret"    = "Discord OAuth client secret"
+    "patreon-client-secret"    = "Patreon OAuth client secret"
     "discord-bot-token"        = "Discord bot token"
     "otel-otlp-headers"        = "OpenTelemetry OTLP exporter auth headers"
   }
@@ -501,6 +502,14 @@ module "ecs" {
       value = var.toyhouse_callback_url
     },
     {
+      name  = "PATREON_CLIENT_ID"
+      value = var.patreon_client_id
+    },
+    {
+      name  = "PATREON_CALLBACK_URL"
+      value = var.patreon_callback_url
+    },
+    {
       name  = "DISCORD_CLIENT_ID"
       value = var.discord_client_id
     },
@@ -622,6 +631,10 @@ module "ecs" {
     {
       name      = "TOYHOUSE_CLIENT_SECRET"
       valueFrom = module.app_secrets.arns["toyhouse-client-secret"]
+    },
+    {
+      name      = "PATREON_CLIENT_SECRET"
+      valueFrom = module.app_secrets.arns["patreon-client-secret"]
     },
     {
       name      = "DISCORD_CLIENT_SECRET"

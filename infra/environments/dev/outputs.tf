@@ -84,6 +84,11 @@ output "backend_toyhouse_callback_url" {
   value       = module.backend.toyhouse_callback_url
 }
 
+output "backend_patreon_callback_url" {
+  description = "Patreon OAuth callback URL for backend"
+  value       = module.backend.patreon_callback_url
+}
+
 # Frontend infrastructure outputs
 output "frontend_bucket_name" {
   description = "Name of the frontend S3 bucket"
@@ -171,5 +176,11 @@ output "backend_discord_client_id" {
 output "backend_toyhouse_client_id" {
   description = "ToyHouse OAuth client ID for backend"
   value       = module.backend.toyhouse_client_id
+  sensitive   = true
+}
+
+output "backend_patreon_client_id" {
+  description = "Patreon OAuth client ID for backend"
+  value       = module.backend.patreon_client_id
   sensitive   = true
 }

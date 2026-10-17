@@ -7,12 +7,18 @@ import { AuthService } from "./auth.service";
 import { AuthResolver } from "./auth.resolver";
 import { JwtStrategy } from "./strategies/jwt.strategy";
 import { LocalStrategy } from "./strategies/local.strategy";
-import { DeviantArtStrategy } from "./strategies/deviantart.strategy";
-import { DiscordStrategy } from "./strategies/discord.strategy";
-import { ToyhouseStrategy } from "./strategies/toyhouse.strategy";
-import { DeviantArtOAuthController } from "./deviantart-oauth.controller";
-import { DiscordOAuthController } from "./discord-oauth.controller";
-import { ToyhouseOAuthController } from "./toyhouse-oauth.controller";
+import {
+  DeviantArtStrategy,
+  DiscordStrategy,
+  PatreonStrategy,
+  ToyhouseStrategy,
+} from "./strategies/oauth-link.strategy";
+import {
+  DeviantArtOAuthController,
+  DiscordOAuthController,
+  PatreonOAuthController,
+  ToyhouseOAuthController,
+} from "./oauth-link.controller";
 import { UsersModule } from "../users/users.module";
 import { InviteCodesModule } from "../invite-codes/invite-codes.module";
 import { DatabaseModule } from "../database/database.module";
@@ -57,6 +63,7 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
     DeviantArtOAuthController,
     DiscordOAuthController,
     ToyhouseOAuthController,
+    PatreonOAuthController,
   ],
   providers: [
     AuthService,
@@ -66,6 +73,7 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
     DeviantArtStrategy,
     DiscordStrategy,
     ToyhouseStrategy,
+    PatreonStrategy,
     PermissionService,
     OwnershipService,
     CommunityResolverService,

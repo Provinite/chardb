@@ -258,6 +258,17 @@ variable "toyhouse_callback_url" {
   type        = string
 }
 
+variable "patreon_client_id" {
+  description = "Patreon OAuth client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "patreon_callback_url" {
+  description = "Patreon OAuth callback URL"
+  type        = string
+}
+
 ##############################################################################
 # OpenTelemetry Configuration
 ##############################################################################
