@@ -19,14 +19,7 @@ import { AvatarSettings } from "../components/settings/AvatarSettings";
 import { useHostCommunity } from "../contexts/CommunityHostContext";
 import { getAccessToken } from "../lib/accessToken";
 import { API_BASE_URL } from "../lib/communityHost";
-
-/** A `Record` so a new provider fails type-check here until it has an icon. */
-const PROVIDER_ICON: Record<ExternalAccountProvider, string> = {
-  [ExternalAccountProvider.Deviantart]: "DA",
-  [ExternalAccountProvider.Discord]: "DC",
-  [ExternalAccountProvider.Toyhouse]: "TH",
-  [ExternalAccountProvider.Patreon]: "PT",
-};
+import { ProviderIcon } from "../components/ProviderIcon";
 
 const updateProfileSchema = z.object({
   displayName: z.string().max(100).optional(),
@@ -234,19 +227,6 @@ const AccountInfo = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
-const AccountIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  font-size: ${({ theme }) => theme.typography.fontSize.lg};
-`;
-
 const AccountDetails = styled.div`
   display: flex;
   flex-direction: column;
@@ -276,6 +256,9 @@ const SmallButton = styled.button<{ variant?: "danger" | "primary" }>`
     variant === "danger" ? theme.colors.error : "white"};
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
 
   &:hover:not(:disabled) {
     opacity: 0.8;
@@ -705,7 +688,7 @@ export const EditProfilePage: React.FC = () => {
             {externalAccountsData.myExternalAccounts.map((account) => (
               <AccountItem key={account.id}>
                 <AccountInfo>
-                  <AccountIcon>{PROVIDER_ICON[account.provider]}</AccountIcon>
+                  <ProviderIcon provider={account.provider} />
                   <AccountDetails>
                     <AccountName>{account.displayName}</AccountName>
                     <AccountProvider>{account.provider}</AccountProvider>
@@ -743,6 +726,11 @@ export const EditProfilePage: React.FC = () => {
             (acc) => acc.provider === "DEVIANTART",
           ) && (
             <SmallButton variant="primary" onClick={handleLinkDeviantArt}>
+              <ProviderIcon
+                provider={ExternalAccountProvider.Deviantart}
+                size={20}
+                withTooltip={false}
+              />
               Link DeviantArt Account
             </SmallButton>
           )}
@@ -750,6 +738,11 @@ export const EditProfilePage: React.FC = () => {
             (acc) => acc.provider === "DISCORD",
           ) && (
             <SmallButton variant="primary" onClick={handleLinkDiscord}>
+              <ProviderIcon
+                provider={ExternalAccountProvider.Discord}
+                size={20}
+                withTooltip={false}
+              />
               Link Discord Account
             </SmallButton>
           )}
@@ -757,6 +750,11 @@ export const EditProfilePage: React.FC = () => {
             (acc) => acc.provider === "TOYHOUSE",
           ) && (
             <SmallButton variant="primary" onClick={handleLinkToyhouse}>
+              <ProviderIcon
+                provider={ExternalAccountProvider.Toyhouse}
+                size={20}
+                withTooltip={false}
+              />
               Link ToyHouse Account
             </SmallButton>
           )}
@@ -764,6 +762,11 @@ export const EditProfilePage: React.FC = () => {
             (acc) => acc.provider === "PATREON",
           ) && (
             <SmallButton variant="primary" onClick={handleLinkPatreon}>
+              <ProviderIcon
+                provider={ExternalAccountProvider.Patreon}
+                size={20}
+                withTooltip={false}
+              />
               Link Patreon Account
             </SmallButton>
           )}
