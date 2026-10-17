@@ -1400,6 +1400,7 @@ type ExternalAccount {
 enum ExternalAccountProvider {
   DEVIANTART
   DISCORD
+  PATREON
   TOYHOUSE
 }
 

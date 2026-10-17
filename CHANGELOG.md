@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Prod infra carries Patreon OAuth config**: `patreon_client_id` and `patreon_callback_url` variables, and a `patreon-client-secret` SSM parameter whose value is set by hand (#236).
+
 ## [v13.0.0] - 2026-10-16
 
 ### Security

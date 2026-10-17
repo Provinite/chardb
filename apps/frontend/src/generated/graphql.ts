@@ -1128,6 +1128,7 @@ export type ExternalAccount = {
 export enum ExternalAccountProvider {
   Deviantart = 'DEVIANTART',
   Discord = 'DISCORD',
+  Patreon = 'PATREON',
   Toyhouse = 'TOYHOUSE'
 }
 

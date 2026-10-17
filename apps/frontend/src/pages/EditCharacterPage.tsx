@@ -533,6 +533,7 @@ export const EditCharacterPage: React.FC = () => {
           DISCORD: ExternalAccountProvider.Discord,
           DEVIANTART: ExternalAccountProvider.Deviantart,
           TOYHOUSE: ExternalAccountProvider.Toyhouse,
+          PATREON: ExternalAccountProvider.Patreon,
         }[characterTarget.provider];
         if (!provider) {
           throw new Error(`Unsupported provider: ${characterTarget.provider}`);

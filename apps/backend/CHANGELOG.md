@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Patreon account linking**: `/auth/patreon` links a Patreon identity as an `ExternalAccount` (`PATREON`), using the same browser-bound state flow as the other providers; no Patreon tokens are stored (#236).
+
 ## [v13.0.0] - 2026-10-16
 
 ### Added

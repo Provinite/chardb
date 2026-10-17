@@ -20,6 +20,14 @@ import { useHostCommunity } from "../contexts/CommunityHostContext";
 import { getAccessToken } from "../lib/accessToken";
 import { API_BASE_URL } from "../lib/communityHost";
 
+/** A `Record` so a new provider fails type-check here until it has an icon. */
+const PROVIDER_ICON: Record<ExternalAccountProvider, string> = {
+  [ExternalAccountProvider.Deviantart]: "DA",
+  [ExternalAccountProvider.Discord]: "DC",
+  [ExternalAccountProvider.Toyhouse]: "TH",
+  [ExternalAccountProvider.Patreon]: "PT",
+};
+
 const updateProfileSchema = z.object({
   displayName: z.string().max(100).optional(),
   bio: z.string().max(1000).optional(),
@@ -496,6 +504,45 @@ export const EditProfilePage: React.FC = () => {
     }
   };
 
+  const handleLinkPatreon = async () => {
+    const token = getAccessToken();
+
+    if (!token) {
+      toast.error("Please log in to link your Patreon account");
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/patreon`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        // Carries back the nonce cookie the callback checks; see the
+        // DeviantArt handler above (#379).
+        credentials: "include",
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to initiate OAuth flow");
+      }
+
+      const data = await response.json();
+
+      if (!data.url) {
+        throw new Error("No OAuth URL returned");
+      }
+
+      window.location.href = data.url;
+    } catch (error: unknown) {
+      console.error("Error initiating OAuth:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to start Patreon linking",
+      );
+    }
+  };
+
   const handleUnlink = async (provider: ExternalAccountProvider) => {
     if (!confirm(`Are you sure you want to unlink your ${provider} account?`)) {
       return;
@@ -644,7 +691,7 @@ export const EditProfilePage: React.FC = () => {
       <Section>
         <SectionTitle>Connected Accounts</SectionTitle>
         <SectionDescription>
-          Link your external accounts (DeviantArt, Discord, ToyHouse) to verify
+          Link your external accounts (DeviantArt, Discord, ToyHouse, Patreon) to verify
           ownership and connect with the community
         </SectionDescription>
 
@@ -659,15 +706,7 @@ export const EditProfilePage: React.FC = () => {
               <AccountItem key={account.id}>
                 <AccountInfo>
                   <AccountIcon>
-                    {/* Exhaustive: the provider enum has exactly these three,
-                        so there is no fourth case to fall back to. The
-                        `charAt(0)` that used to be here was unreachable, and
-                        only compiled because the row was typed `any`. */}
-                    {account.provider === "DEVIANTART"
-                      ? "DA"
-                      : account.provider === "DISCORD"
-                        ? "DC"
-                        : "TH"}
+                    {PROVIDER_ICON[account.provider]}
                   </AccountIcon>
                   <AccountDetails>
                     <AccountName>{account.displayName}</AccountName>
@@ -721,6 +760,13 @@ export const EditProfilePage: React.FC = () => {
           ) && (
             <SmallButton variant="primary" onClick={handleLinkToyhouse}>
               Link ToyHouse Account
+            </SmallButton>
+          )}
+          {!externalAccountsData?.myExternalAccounts?.some(
+            (acc) => acc.provider === "PATREON",
+          ) && (
+            <SmallButton variant="primary" onClick={handleLinkPatreon}>
+              Link Patreon Account
             </SmallButton>
           )}
         </div>

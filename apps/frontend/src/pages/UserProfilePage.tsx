@@ -416,7 +416,9 @@ export const UserProfilePage: React.FC = () => {
                       ? "DA"
                       : account.provider === "DISCORD"
                         ? "DC"
-                        : account.provider.charAt(0)}
+                        : account.provider === "PATREON"
+                          ? "PT"
+                          : account.provider.charAt(0)}
                   </AccountIcon>
                   <span>{account.displayName}</span>
                 </ConnectedAccountBadge>

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Link Patreon Account** in Connected Accounts on `/profile/edit`, with its `/auth/patreon/callback` landing page (#236).
+
 ## [v13.0.0] - 2026-10-16
 
 ### Added
