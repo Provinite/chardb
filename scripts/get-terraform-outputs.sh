@@ -44,9 +44,11 @@
 #     DEVIANTART_CLIENT_ID      DeviantArt OAuth client id
 #     DISCORD_CLIENT_ID         Discord OAuth client id
 #     TOYHOUSE_CLIENT_ID        ToyHouse OAuth client id
+#     PATREON_CLIENT_ID         Patreon OAuth client id
 #     DEVIANTART_CALLBACK_URL   DeviantArt OAuth redirect URI
 #     DISCORD_CALLBACK_URL      Discord OAuth redirect URI
 #     TOYHOUSE_CALLBACK_URL     ToyHouse OAuth redirect URI
+#     PATREON_CALLBACK_URL      Patreon OAuth redirect URI
 #     SQS_QUEUE_URL             Prize distribution queue
 #     S3_IMAGES_BUCKET          Image storage bucket name
 #     CLOUDFRONT_IMAGES_DOMAIN  Image CDN domain
@@ -92,7 +94,9 @@ _tf_outputs_load() {
         ROOT_DOMAIN ECR_REPOSITORY_URL \
         SSH_PRIVATE_KEY POSTGRES_PASSWORD JWT_SECRET \
         DEVIANTART_CLIENT_ID DISCORD_CLIENT_ID TOYHOUSE_CLIENT_ID \
+        PATREON_CLIENT_ID \
         DEVIANTART_CALLBACK_URL DISCORD_CALLBACK_URL TOYHOUSE_CALLBACK_URL \
+        PATREON_CALLBACK_URL \
         SQS_QUEUE_URL S3_IMAGES_BUCKET CLOUDFRONT_IMAGES_DOMAIN
 
     SERVER_IP=$(_tf_output "backend_public_ip")
@@ -107,10 +111,12 @@ _tf_outputs_load() {
     DEVIANTART_CLIENT_ID=$(_tf_output "backend_deviantart_client_id")
     DISCORD_CLIENT_ID=$(_tf_output "backend_discord_client_id")
     TOYHOUSE_CLIENT_ID=$(_tf_output "backend_toyhouse_client_id")
+    PATREON_CLIENT_ID=$(_tf_output "backend_patreon_client_id")
 
     DEVIANTART_CALLBACK_URL=$(_tf_output "backend_deviantart_callback_url")
     DISCORD_CALLBACK_URL=$(_tf_output "backend_discord_callback_url")
     TOYHOUSE_CALLBACK_URL=$(_tf_output "backend_toyhouse_callback_url")
+    PATREON_CALLBACK_URL=$(_tf_output "backend_patreon_callback_url")
     SQS_QUEUE_URL=$(_tf_output "backend_sqs_queue_url")
     S3_IMAGES_BUCKET=$(_tf_output "images_bucket_name")
     CLOUDFRONT_IMAGES_DOMAIN=$(_tf_output "images_cloudfront_domain")
@@ -188,6 +194,7 @@ _tf_outputs_summary() {
    DeviantArt callback: $DEVIANTART_CALLBACK_URL
    Discord callback:    $DISCORD_CALLBACK_URL
    ToyHouse callback:   $TOYHOUSE_CALLBACK_URL
+   Patreon callback:    $PATREON_CALLBACK_URL
 
    Secrets (database password, JWT secret, OAuth client secrets, bot token)
    are exported but deliberately not printed.

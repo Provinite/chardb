@@ -247,6 +247,36 @@ only `backend_ssh_allowed_cidr_blocks` and the three callback URLs — no secret
 > Note: the values are still present in Terraform state, because Terraform
 > creates the parameters and reads them back on refresh. See issue #255.
 
+### Adding Patreon (#236)
+
+Patreon is the fourth linking provider, and the backend refuses to boot without
+`PATREON_CLIENT_ID` and `PATREON_CLIENT_SECRET`, the same as the other three.
+Before the first apply and deploy that includes it, in each environment:
+
+1. Register a client at
+   https://www.patreon.com/portal/registration/register-clients (it needs a
+   Patreon creator account), with redirect URI
+   `https://<api host>/auth/patreon/callback`.
+2. Add the two new required variables to the environment's `.tfvars`;
+   `terraform plan` fails without them:
+
+   ```hcl
+   patreon_client_id    = "<client id>"
+   patreon_callback_url = "https://<api host>/auth/patreon/callback"
+   ```
+
+3. Apply, which creates `/chardb/<environment>/patreon-client-secret` holding
+   the placeholder, then set the real secret:
+
+   ```bash
+   aws ssm put-parameter --overwrite --type SecureString \
+     --name /chardb/<environment>/patreon-client-secret --value '<client secret>'
+   ```
+
+   Until this is done, a dev deploy aborts on the placeholder check. Prod has
+   no such check: the backend boots with the placeholder as its secret, and
+   every Patreon link then fails at the token exchange.
+
 ## 🤖 Continuous Deployment to Staging
 
 **A push to `main` deploys itself.** Once `lint`, `verify` and `e2e` pass, the
@@ -319,7 +349,8 @@ terraform apply -var-file=dev.tfvars
 #    while any of them still does.
 for name in deviantart-client-id deviantart-client-secret \
             discord-client-id discord-client-secret discord-bot-token \
-            toyhouse-client-id toyhouse-client-secret; do
+            toyhouse-client-id toyhouse-client-secret \
+            patreon-client-secret; do
   aws ssm put-parameter --overwrite --type SecureString \
     --name "/chardb/dev/$name" --value 'REPLACE_ME'
 done

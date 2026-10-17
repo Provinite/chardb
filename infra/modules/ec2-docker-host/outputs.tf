@@ -81,6 +81,11 @@ output "toyhouse_callback_url" {
   value       = var.toyhouse_callback_url
 }
 
+output "patreon_callback_url" {
+  description = "Patreon OAuth callback URL"
+  value       = var.patreon_callback_url
+}
+
 output "deviantart_client_id" {
   description = "DeviantArt OAuth client ID"
   value       = var.deviantart_client_id
@@ -96,5 +101,11 @@ output "discord_client_id" {
 output "toyhouse_client_id" {
   description = "ToyHouse OAuth client ID"
   value       = var.toyhouse_client_id
+  sensitive   = true
+}
+
+output "patreon_client_id" {
+  description = "Patreon OAuth client ID"
+  value       = var.patreon_client_id
   sensitive   = true
 }

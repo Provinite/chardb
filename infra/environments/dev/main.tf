@@ -156,10 +156,12 @@ module "backend" {
   deviantart_client_id = var.deviantart_client_id
   discord_client_id    = var.discord_client_id
   toyhouse_client_id   = var.toyhouse_client_id
+  patreon_client_id    = var.patreon_client_id
 
   deviantart_callback_url = var.deviantart_callback_url
   discord_callback_url    = var.discord_callback_url
   toyhouse_callback_url   = var.toyhouse_callback_url
+  patreon_callback_url    = var.patreon_callback_url
 }
 
 # Frontend infrastructure
@@ -189,6 +191,7 @@ module "app_secrets" {
     "discord-client-secret"    = "Discord OAuth client secret"
     "discord-bot-token"        = "Discord bot token"
     "toyhouse-client-secret"   = "ToyHouse OAuth client secret"
+    "patreon-client-secret"    = "Patreon OAuth client secret"
   }
 
   tags = local.common_tags
