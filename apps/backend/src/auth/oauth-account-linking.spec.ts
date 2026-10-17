@@ -2,21 +2,26 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { ExternalAccountProvider, User } from "@prisma/client";
 import type { Request, Response } from "express";
-import { DeviantArtOAuthController } from "./deviantart-oauth.controller";
-import { DiscordOAuthController } from "./discord-oauth.controller";
-import { ToyhouseOAuthController } from "./toyhouse-oauth.controller";
+import {
+  DeviantArtOAuthController,
+  DiscordOAuthController,
+  PatreonOAuthController,
+  ToyhouseOAuthController,
+  OAuthLinkControllerShape,
+  createOAuthLinkCallbackGuard,
+} from "./oauth-link.controller";
+import { PATREON } from "./oauth-link-providers";
 import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
 import { LINK_STATE_BROWSER_MISMATCH } from "./oauth-link-state";
 import { mockAuthUser } from "../../test/setup";
 
 /**
- * The browser-binding half of account linking (#379), across all three
- * providers.
+ * The browser-binding half of account linking (#379), across every provider.
  *
- * One parameterised suite rather than three files because the three
- * controllers are identical in this area -- they differ only in the provider
- * enum, the route segment and the authorize URL they build. Anything that
- * drifts between them fails here for the provider that drifted.
+ * One parameterised suite rather than a file per provider. The controllers all
+ * come from one factory (`oauth-link.controller.ts`) and differ only in their
+ * `oauth-link-providers.ts` config, so a provider whose config breaks the flow
+ * fails here by name.
  */
 
 const FRONTEND_URL = "http://localhost:3000";
@@ -27,6 +32,7 @@ const CONFIG: Record<string, string> = {
   DISCORD_CLIENT_ID: "discord-client",
   DEVIANTART_CLIENT_ID: "deviantart-client",
   TOYHOUSE_CLIENT_ID: "toyhouse-client",
+  PATREON_CLIENT_ID: "patreon-client",
 };
 
 const configService = {
@@ -38,15 +44,7 @@ const configService = {
   },
 } as unknown as ConfigService;
 
-/** The shape the three controllers share; enough to drive both routes. */
-interface LinkController {
-  initiateOAuth(
-    user: User,
-    req: Request,
-    res: Response,
-  ): Promise<{ url: string }>;
-  handleCallback(req: Request, res: Response): Promise<void>;
-}
+type LinkController = OAuthLinkControllerShape;
 
 interface FakeResponse {
   cookie: jest.Mock;
@@ -110,6 +108,16 @@ const PROVIDERS = [
       accounts: ExternalAccountsService,
     ): LinkController => new ToyhouseOAuthController(config, jwt, accounts),
   },
+  {
+    name: "patreon",
+    segment: "patreon",
+    enumValue: ExternalAccountProvider.PATREON,
+    build: (
+      config: ConfigService,
+      jwt: JwtService,
+      accounts: ExternalAccountsService,
+    ): LinkController => new PatreonOAuthController(config, jwt, accounts),
+  },
 ];
 
 describe.each(PROVIDERS)(
@@ -161,10 +169,14 @@ describe.each(PROVIDERS)(
       return { state: state as string, nonce };
     };
 
-    const callback = async (cookies: Record<string, string>, state: string) => {
+    const callback = async (
+      cookies: Record<string, string>,
+      state: string,
+      user: unknown = OAUTH_PAYLOAD,
+    ) => {
       const res = makeRes();
       await controller.handleCallback(
-        makeReq({ cookies, query: { state }, user: OAUTH_PAYLOAD }),
+        makeReq({ cookies, query: { state }, user }),
         res as unknown as Response,
       );
       return res;
@@ -248,5 +260,50 @@ describe.each(PROVIDERS)(
         expect.objectContaining({ path: `/auth/${segment}` }),
       );
     });
+
+    it("sends a failed provider leg back to the frontend with its reason, spending the nonce", async () => {
+      const { state, nonce } = await initiate();
+
+      const res = await callback({ [cookieName]: nonce }, state, {
+        failed: true,
+        reason: "The user denied access",
+      });
+
+      expect(accounts.linkExternalAccount).not.toHaveBeenCalled();
+      expect(res.clearCookie).toHaveBeenCalledWith(
+        cookieName,
+        expect.objectContaining({ path: `/auth/${segment}` }),
+      );
+      expect(redirectedTo(res)).toBe(
+        `${FRONTEND_URL}/auth/${segment}/callback?error=${encodeURIComponent(
+          "The user denied access",
+        )}`,
+      );
+    });
   },
 );
+
+describe("the callback guard", () => {
+  // Constructed directly: `handleRequest` reads nothing from the instance.
+  const Guard = createOAuthLinkCallbackGuard(PATREON);
+  const guard = new Guard() as {
+    handleRequest(err: unknown, user: unknown): unknown;
+  };
+
+  it("passes an identity through", () => {
+    expect(guard.handleRequest(null, OAUTH_PAYLOAD)).toEqual(OAUTH_PAYLOAD);
+  });
+
+  it("turns a passport error into a failure carrying its message", () => {
+    expect(
+      guard.handleRequest(new Error("Failed to obtain access token"), false),
+    ).toEqual({ failed: true, reason: "Failed to obtain access token" });
+  });
+
+  it("turns a refusal with no error, such as the user clicking Deny, into a failure", () => {
+    expect(guard.handleRequest(null, false)).toEqual({
+      failed: true,
+      reason: "Patreon did not authorize the link",
+    });
+  });
+});

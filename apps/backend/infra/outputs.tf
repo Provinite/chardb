@@ -97,6 +97,11 @@ output "toyhouse_callback_url" {
   value       = module.backend_docker_host.toyhouse_callback_url
 }
 
+output "patreon_callback_url" {
+  description = "Patreon OAuth callback URL"
+  value       = module.backend_docker_host.patreon_callback_url
+}
+
 # SQS Queue outputs
 output "sqs_queue_url" {
   description = "URL of the prize distribution SQS queue"
@@ -138,5 +143,11 @@ output "discord_client_id" {
 output "toyhouse_client_id" {
   description = "ToyHouse OAuth client ID"
   value       = module.backend_docker_host.toyhouse_client_id
+  sensitive   = true
+}
+
+output "patreon_client_id" {
+  description = "Patreon OAuth client ID"
+  value       = module.backend_docker_host.patreon_client_id
   sensitive   = true
 }

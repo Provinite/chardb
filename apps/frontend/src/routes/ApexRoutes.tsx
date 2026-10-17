@@ -44,6 +44,7 @@ import { DeviantArtBackfillPage } from "../pages/DeviantArtBackfillPage";
 import { DeviantArtCallbackPage } from "../pages/DeviantArtCallbackPage";
 import { DiscordCallbackPage } from "../pages/DiscordCallbackPage";
 import { ToyhouseCallbackPage } from "../pages/ToyhouseCallbackPage";
+import { PatreonCallbackPage } from "../pages/PatreonCallbackPage";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import {
   CharacterHostGuard,
@@ -117,6 +118,7 @@ export const ApexRoutes: React.FC = () => (
     />
     <Route path="/auth/discord/callback" element={<DiscordCallbackPage />} />
     <Route path="/auth/toyhouse/callback" element={<ToyhouseCallbackPage />} />
+    <Route path="/auth/patreon/callback" element={<PatreonCallbackPage />} />
 
     {/* --- the signed-in person's own pages */}
     <Route

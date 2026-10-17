@@ -84,6 +84,11 @@ variable "toyhouse_callback_url" {
   type        = string
 }
 
+variable "patreon_callback_url" {
+  description = "Patreon OAuth callback URL"
+  type        = string
+}
+
 # S3 Image Storage Configuration
 variable "s3_images_bucket_arn" {
   description = "ARN of the S3 bucket for image storage (optional)"
@@ -105,6 +110,12 @@ variable "discord_client_id" {
 
 variable "toyhouse_client_id" {
   description = "ToyHouse OAuth client ID"
+  type        = string
+  sensitive   = true
+}
+
+variable "patreon_client_id" {
+  description = "Patreon OAuth client ID"
   type        = string
   sensitive   = true
 }

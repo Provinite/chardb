@@ -1400,6 +1400,7 @@ type ExternalAccount {
 enum ExternalAccountProvider {
   DEVIANTART
   DISCORD
+  PATREON
   TOYHOUSE
 }
 
@@ -2985,7 +2986,9 @@ input OwnerIdUpdate {
 }
 
 input PendingOwnerInput {
-  """The external account provider"""
+  """
+  The external account provider. PATREON is refused: it cannot be a pending owner.
+  """
   provider: ExternalAccountProvider!
 
   """

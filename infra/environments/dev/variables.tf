@@ -82,6 +82,11 @@ variable "toyhouse_callback_url" {
   type        = string
 }
 
+variable "patreon_callback_url" {
+  description = "Patreon OAuth callback URL"
+  type        = string
+}
+
 # SSH key is now auto-generated during deployment
 
 # Note: Using default VPC, no need to specify VPC/subnet variables
@@ -120,6 +125,12 @@ variable "discord_client_id" {
 
 variable "toyhouse_client_id" {
   description = "ToyHouse OAuth client ID for backend"
+  type        = string
+  sensitive   = true
+}
+
+variable "patreon_client_id" {
+  description = "Patreon OAuth client ID for backend"
   type        = string
   sensitive   = true
 }

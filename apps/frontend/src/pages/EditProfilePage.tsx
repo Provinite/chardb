@@ -19,6 +19,38 @@ import { AvatarSettings } from "../components/settings/AvatarSettings";
 import { useHostCommunity } from "../contexts/CommunityHostContext";
 import { getAccessToken } from "../lib/accessToken";
 import { API_BASE_URL } from "../lib/communityHost";
+import { ProviderIcon } from "../components/ProviderIcon";
+
+interface LinkableProvider {
+  provider: ExternalAccountProvider;
+  /** The backend route: `/auth/<segment>`. */
+  segment: string;
+  label: string;
+}
+
+/** The providers offered under Connected Accounts, in button order. */
+const LINKABLE_PROVIDERS: readonly LinkableProvider[] = [
+  {
+    provider: ExternalAccountProvider.Deviantart,
+    segment: "deviantart",
+    label: "DeviantArt",
+  },
+  {
+    provider: ExternalAccountProvider.Discord,
+    segment: "discord",
+    label: "Discord",
+  },
+  {
+    provider: ExternalAccountProvider.Toyhouse,
+    segment: "toyhouse",
+    label: "ToyHouse",
+  },
+  {
+    provider: ExternalAccountProvider.Patreon,
+    segment: "patreon",
+    label: "Patreon",
+  },
+];
 
 const updateProfileSchema = z.object({
   displayName: z.string().max(100).optional(),
@@ -226,19 +258,6 @@ const AccountInfo = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
-const AccountIcon = styled.div`
-  width: 40px;
-  height: 40px;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  background: ${({ theme }) => theme.colors.primary};
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  font-size: ${({ theme }) => theme.typography.fontSize.lg};
-`;
-
 const AccountDetails = styled.div`
   display: flex;
   flex-direction: column;
@@ -268,6 +287,9 @@ const SmallButton = styled.button<{ variant?: "danger" | "primary" }>`
     variant === "danger" ? theme.colors.error : "white"};
   cursor: pointer;
   transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
 
   &:hover:not(:disabled) {
     opacity: 0.8;
@@ -373,17 +395,17 @@ export const EditProfilePage: React.FC = () => {
     navigate(`/user/${meData?.me?.username}`);
   };
 
-  const handleLinkDeviantArt = async () => {
+  const handleLink = async ({ segment, label }: LinkableProvider) => {
     const token = getAccessToken();
 
     if (!token) {
-      toast.error("Please log in to link your DeviantArt account");
+      toast.error(`Please log in to link your ${label} account`);
       return;
     }
 
     try {
       // Fetch the OAuth URL from the backend with authentication in header
-      const response = await fetch(`${API_BASE_URL}/auth/deviantart`, {
+      const response = await fetch(`${API_BASE_URL}/auth/${segment}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -411,87 +433,7 @@ export const EditProfilePage: React.FC = () => {
       toast.error(
         error instanceof Error
           ? error.message
-          : "Failed to start DeviantArt linking",
-      );
-    }
-  };
-
-  const handleLinkDiscord = async () => {
-    const token = getAccessToken();
-
-    if (!token) {
-      toast.error("Please log in to link your Discord account");
-      return;
-    }
-
-    try {
-      // Fetch the OAuth URL from the backend with authentication in header
-      const response = await fetch(`${API_BASE_URL}/auth/discord`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        // Carries back the nonce cookie the callback checks; see the
-        // DeviantArt handler above (#379).
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to initiate OAuth flow");
-      }
-
-      const data = await response.json();
-
-      if (!data.url) {
-        throw new Error("No OAuth URL returned");
-      }
-
-      // Redirect to the OAuth URL (no tokens in URL)
-      window.location.href = data.url;
-    } catch (error: unknown) {
-      console.error("Error initiating OAuth:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to start Discord linking",
-      );
-    }
-  };
-
-  const handleLinkToyhouse = async () => {
-    const token = getAccessToken();
-
-    if (!token) {
-      toast.error("Please log in to link your ToyHouse account");
-      return;
-    }
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/auth/toyhouse`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        // Carries back the nonce cookie the callback checks; see the
-        // DeviantArt handler above (#379).
-        credentials: "include",
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to initiate OAuth flow");
-      }
-
-      const data = await response.json();
-
-      if (!data.url) {
-        throw new Error("No OAuth URL returned");
-      }
-
-      window.location.href = data.url;
-    } catch (error: unknown) {
-      console.error("Error initiating OAuth:", error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : "Failed to start ToyHouse linking",
+          : `Failed to start ${label} linking`,
       );
     }
   };
@@ -644,8 +586,8 @@ export const EditProfilePage: React.FC = () => {
       <Section>
         <SectionTitle>Connected Accounts</SectionTitle>
         <SectionDescription>
-          Link your external accounts (DeviantArt, Discord, ToyHouse) to verify
-          ownership and connect with the community
+          Link your external accounts (DeviantArt, Discord, ToyHouse, Patreon)
+          to verify ownership and connect with the community
         </SectionDescription>
 
         {loadingAccounts ? (
@@ -658,17 +600,7 @@ export const EditProfilePage: React.FC = () => {
             {externalAccountsData.myExternalAccounts.map((account) => (
               <AccountItem key={account.id}>
                 <AccountInfo>
-                  <AccountIcon>
-                    {/* Exhaustive: the provider enum has exactly these three,
-                        so there is no fourth case to fall back to. The
-                        `charAt(0)` that used to be here was unreachable, and
-                        only compiled because the row was typed `any`. */}
-                    {account.provider === "DEVIANTART"
-                      ? "DA"
-                      : account.provider === "DISCORD"
-                        ? "DC"
-                        : "TH"}
-                  </AccountIcon>
+                  <ProviderIcon provider={account.provider} />
                   <AccountDetails>
                     <AccountName>{account.displayName}</AccountName>
                     <AccountProvider>{account.provider}</AccountProvider>
@@ -697,32 +629,32 @@ export const EditProfilePage: React.FC = () => {
         <div
           style={{
             marginTop: "1rem",
+            // One full-width column, matching the linked-account rows above.
+            // Side by side, the longer labels wrap at this card's width.
             display: "flex",
+            flexDirection: "column",
             gap: "0.5rem",
-            flexWrap: "wrap",
           }}
         >
-          {!externalAccountsData?.myExternalAccounts?.some(
-            (acc) => acc.provider === "DEVIANTART",
-          ) && (
-            <SmallButton variant="primary" onClick={handleLinkDeviantArt}>
-              Link DeviantArt Account
+          {LINKABLE_PROVIDERS.filter(
+            ({ provider }) =>
+              !externalAccountsData?.myExternalAccounts?.some(
+                (acc) => acc.provider === provider,
+              ),
+          ).map((linkable) => (
+            <SmallButton
+              key={linkable.provider}
+              variant="primary"
+              onClick={() => handleLink(linkable)}
+            >
+              <ProviderIcon
+                provider={linkable.provider}
+                size={20}
+                withTooltip={false}
+              />
+              Link {linkable.label} Account
             </SmallButton>
-          )}
-          {!externalAccountsData?.myExternalAccounts?.some(
-            (acc) => acc.provider === "DISCORD",
-          ) && (
-            <SmallButton variant="primary" onClick={handleLinkDiscord}>
-              Link Discord Account
-            </SmallButton>
-          )}
-          {!externalAccountsData?.myExternalAccounts?.some(
-            (acc) => acc.provider === "TOYHOUSE",
-          ) && (
-            <SmallButton variant="primary" onClick={handleLinkToyhouse}>
-              Link ToyHouse Account
-            </SmallButton>
-          )}
+          ))}
         </div>
       </Section>
 

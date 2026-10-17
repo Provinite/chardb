@@ -9,6 +9,7 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { RandomCharacterButton } from "../components/RandomCharacterButton";
 import { FollowButton } from "../components/FollowButton";
+import { ProviderIcon } from "../components/ProviderIcon";
 import { MediaGrid } from "../components/MediaGrid";
 import { characterUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
@@ -291,11 +292,6 @@ const ConnectedAccountBadge = styled.div`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-const AccountIcon = styled.span`
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.primary};
-`;
-
 export const UserProfilePage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
 
@@ -411,13 +407,7 @@ export const UserProfilePage: React.FC = () => {
             <ConnectedAccountsList>
               {externalAccountsData.myExternalAccounts.map((account) => (
                 <ConnectedAccountBadge key={account.id}>
-                  <AccountIcon>
-                    {account.provider === "DEVIANTART"
-                      ? "DA"
-                      : account.provider === "DISCORD"
-                        ? "DC"
-                        : account.provider.charAt(0)}
-                  </AccountIcon>
+                  <ProviderIcon provider={account.provider} size={18} />
                   <span>{account.displayName}</span>
                 </ConnectedAccountBadge>
               ))}
