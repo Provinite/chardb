@@ -43,14 +43,12 @@ describe("HalloweenDashboardService", () => {
           .mockResolvedValue({ halloweenEnabled: true, discordGuildId: GUILD }),
       },
       halloweenKnockEvent: {
-        findUnique: jest
-          .fn()
-          .mockResolvedValue({
-            id: 1,
-            guildId: GUILD,
-            userId: "u",
-            prize: staffPrize,
-          }),
+        findUnique: jest.fn().mockResolvedValue({
+          id: 1,
+          guildId: GUILD,
+          userId: "u",
+          prize: staffPrize,
+        }),
         update: jest.fn(),
       },
     };

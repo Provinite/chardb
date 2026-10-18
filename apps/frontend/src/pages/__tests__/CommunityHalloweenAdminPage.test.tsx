@@ -219,7 +219,9 @@ describe("CommunityHalloweenAdminPage", () => {
     expect(within(done).getByText(/Delivered by @staffer/)).toBeInTheDocument();
 
     const claimed = screen.getByTestId("halloween-win-3");
-    expect(within(claimed).getByText(/On chardb: @linkedfan/)).toBeInTheDocument();
+    expect(
+      within(claimed).getByText(/On chardb: @linkedfan/),
+    ).toBeInTheDocument();
 
     const waiting = screen.getByTestId("halloween-win-4");
     expect(
@@ -230,7 +232,9 @@ describe("CommunityHalloweenAdminPage", () => {
   it("filters to the prizes staff still have to hand over", async () => {
     renderPage();
     await screen.findByTestId("halloween-win-1");
-    await userEvent.click(screen.getByRole("button", { name: /Needs delivery/ }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /Needs delivery/ }),
+    );
     expect(screen.getByTestId("halloween-win-1")).toBeInTheDocument();
     expect(screen.queryByTestId("halloween-win-2")).not.toBeInTheDocument();
     expect(screen.queryByTestId("halloween-win-3")).not.toBeInTheDocument();
@@ -243,7 +247,9 @@ describe("CommunityHalloweenAdminPage", () => {
     await userEvent.click(
       within(row).getByRole("button", { name: /Mark delivered/ }),
     );
-    expect(await within(row).findByText(/Delivered by @me/)).toBeInTheDocument();
+    expect(
+      await within(row).findByText(/Delivered by @me/),
+    ).toBeInTheDocument();
     expect(markDeliveredMock.result).toHaveBeenCalled();
   });
 });

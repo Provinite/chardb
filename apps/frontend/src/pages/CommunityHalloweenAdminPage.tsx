@@ -262,8 +262,8 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
         <Ghost size={28} /> Halloween event
       </Title>
       <Subtitle>
-        Trick-or-treat runs in Discord. This is what has been won, what is
-        left, and which prizes staff still need to hand over. Chardb items and
+        Trick-or-treat runs in Discord. This is what has been won, what is left,
+        and which prizes staff still need to hand over. Chardb items and
         characters deliver themselves once the winner links Discord.
       </Subtitle>
 
