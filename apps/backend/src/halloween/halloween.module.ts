@@ -24,6 +24,8 @@ import { PlayerLock } from "./services/player-lock";
 import { PrizeImageService } from "./services/prize-image.service";
 import { HalloweenDashboardService } from "./dashboard/halloween-dashboard.service";
 import { HalloweenDashboardResolver } from "./dashboard/halloween-dashboard.resolver";
+import { HalloweenAdminService } from "./dashboard/halloween-admin.service";
+import { HalloweenAdminResolver } from "./dashboard/halloween-admin.resolver";
 import { KnockCommand } from "./commands/knock.command";
 import { AdminKnockCommand } from "./commands/adminknock.command";
 import { GiftyCommand } from "./commands/gifty.command";
@@ -73,6 +75,8 @@ const COMMANDS = [
     PrizeImageService,
     HalloweenDashboardService,
     HalloweenDashboardResolver,
+    HalloweenAdminService,
+    HalloweenAdminResolver,
     ...COMMANDS,
     {
       provide: HALLOWEEN_COMMANDS,

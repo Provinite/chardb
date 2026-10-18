@@ -100,8 +100,11 @@ export class HalloweenDashboardService {
     private readonly prizeImages: PrizeImageService,
   ) {}
 
-  /** The community's linked guild, once the event is enabled for it. */
-  private async guildFor(communityId: string): Promise<string | null> {
+  /**
+   * The community's linked guild, null if none, once the event is enabled for
+   * it. Every Halloween operation on chardb starts here.
+   */
+  async guildFor(communityId: string): Promise<string | null> {
     const community = await this.db.community.findUnique({
       where: { id: communityId },
       select: { halloweenEnabled: true, discordGuildId: true },
@@ -115,6 +118,17 @@ export class HalloweenDashboardService {
       );
     }
     return community.discordGuildId;
+  }
+
+  /** As {@link guildFor}, for changes, which need a guild to belong to. */
+  async linkedGuildFor(communityId: string): Promise<string> {
+    const guildId = await this.guildFor(communityId);
+    if (!guildId) {
+      throw new BadRequestException(
+        "Link a Discord server to this community first",
+      );
+    }
+    return guildId;
   }
 
   async getDashboard(communityId: string): Promise<HalloweenDashboard> {
