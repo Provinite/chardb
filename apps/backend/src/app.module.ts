@@ -50,6 +50,7 @@ import { PendingOwnershipModule } from "./pending-ownership/pending-ownership.mo
 import { DiscordModule } from "./discord/discord.module";
 import { DeviantArtModule } from "./deviantart/deviantart.module";
 import { QueueConsumerModule } from "./queue-consumer/queue-consumer.module";
+import { HalloweenModule } from "./halloween/halloween.module";
 import { ImageModerationModule } from "./image-moderation/image-moderation.module";
 import { TraitReviewModule } from "./trait-review/trait-review.module";
 import { MyoModule } from "./myo/myo.module";
@@ -281,6 +282,7 @@ import { Request, Response } from "express";
     DiscordModule,
     DeviantArtModule,
     QueueConsumerModule,
+    HalloweenModule,
     ImageModerationModule,
     TraitReviewModule,
     MyoModule,

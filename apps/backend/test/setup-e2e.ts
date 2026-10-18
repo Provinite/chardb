@@ -1,4 +1,4 @@
-import { Test, TestingModule } from "@nestjs/testing";
+import { Test, TestingModule, TestingModuleBuilder } from "@nestjs/testing";
 import {
   INestApplication,
   ValidationPipe,
@@ -38,8 +38,15 @@ export class TestApp {
   private moduleRef: TestingModule;
   private db: DatabaseService;
 
-  async setup(moduleMetadata: Pick<ModuleMetadata, "imports" | "providers">) {
-    this.moduleRef = await Test.createTestingModule({
+  /**
+   * @param override Replaces providers before compiling -- for a client that
+   *   would otherwise call a real third-party API.
+   */
+  async setup(
+    moduleMetadata: Pick<ModuleMetadata, "imports" | "providers">,
+    override: (builder: TestingModuleBuilder) => TestingModuleBuilder = (b) => b,
+  ) {
+    const builder = Test.createTestingModule({
       imports: [
         ConfigModule.forRoot({
           isGlobal: true,
@@ -71,7 +78,8 @@ export class TestApp {
         ...(moduleMetadata.imports ?? []),
       ],
       providers: moduleMetadata.providers || [],
-    }).compile();
+    });
+    this.moduleRef = await override(builder).compile();
 
     this.app = this.moduleRef.createNestApplication();
     // The refresh token arrives as a cookie, so `req.cookies` has to be
