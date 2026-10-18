@@ -274,9 +274,8 @@ export class HalloweenDashboardService {
   }
 
   /** Joins in what the knock rows cannot say: DeviantArt names and linked accounts. */
-  private async prizeViews(
-    prizes: HalloweenPrize[],
-  ): Promise<HalloweenPrizeView[]> {
+  /** Prizes as the page shows them, images resolved. */
+  async prizeViews(prizes: HalloweenPrize[]): Promise<HalloweenPrizeView[]> {
     const images = await this.prizeImages.imagesFor(prizes);
     return prizes.map((p) => toPrizeView(p, images.get(p) ?? null));
   }

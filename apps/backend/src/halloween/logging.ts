@@ -36,6 +36,8 @@ export const HalloweenLogEvent = {
   SettingsCreated: "halloween.settings.created",
   SettingChanged: "halloween.settings.changed",
   PrizeAdded: "halloween.prize.added",
+  PrizeUpdated: "halloween.prize.updated",
+  PrizeRemoved: "halloween.prize.removed",
   /** Staff marked a prize with no chardb item or character as handed over. */
   PrizeMarkedDelivered: "halloween.prize.marked_delivered",
   PrizeUnmarkedDelivered: "halloween.prize.unmarked_delivered",

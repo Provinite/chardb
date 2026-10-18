@@ -18,7 +18,9 @@ type ImageRow = Prisma.ImageGetPayload<{ select: typeof imageSelect }>;
  * Only an approved image: chardb masks the rest until moderation passes, and
  * Discord should not show what chardb would not.
  */
-const approvedUrl = (image: ImageRow | null | undefined): string | null =>
+export const approvedImageUrl = (
+  image: ImageRow | null | undefined,
+): string | null =>
   image && image.moderationStatus === ModerationStatus.APPROVED
     ? (image.mediumUrl ?? image.originalUrl)
     : null;
@@ -65,10 +67,10 @@ export class PrizeImageService {
         : [],
     ]);
     const itemTypeImages = new Map(
-      itemTypes.map((t) => [t.id, approvedUrl(t.image)]),
+      itemTypes.map((t) => [t.id, approvedImageUrl(t.image)]),
     );
     const characterImages = new Map(
-      characters.map((c) => [c.id, approvedUrl(c.mainMedia?.image)]),
+      characters.map((c) => [c.id, approvedImageUrl(c.mainMedia?.image)]),
     );
 
     return new Map(

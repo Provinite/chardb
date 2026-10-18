@@ -1,7 +1,6 @@
 import {
   ApplicationCommandOptionType,
   type APIApplicationCommandGuildInteraction,
-  type APIApplicationCommandInteractionDataBasicOption,
   type APIApplicationCommandInteractionDataOption,
 } from "@discordjs/core";
 import { ExternalAccountProvider } from "@chardb/database";
@@ -15,23 +14,12 @@ import { HalloweenCommandDispatcher } from "./discord/halloween-command.dispatch
 import { HalloweenDiscordClient } from "./discord/halloween-discord.client";
 import { HalloweenRandom } from "./random";
 import {
-  ADMINISTRATOR,
   GUILD_ID,
   OTHER_USER_ID,
   USER_ID,
   buildInteraction,
 } from "./testing/fixtures";
 import { mockDiscord } from "./testing/command-harness";
-
-const str = (name: string, value: string) =>
-  ({ type: ApplicationCommandOptionType.String, name, value }) as const;
-const int = (name: string, value: number) =>
-  ({ type: ApplicationCommandOptionType.Integer, name, value }) as const;
-const sub = (
-  name: string,
-  options: APIApplicationCommandInteractionDataBasicOption[],
-) =>
-  ({ type: ApplicationCommandOptionType.Subcommand, name, options }) as const;
 
 /**
  * Commands end to end, from the dispatcher down to Postgres. Only Discord is
@@ -100,70 +88,35 @@ describe("Halloween bot (e2e)", () => {
     };
   };
 
-  const admin = { permissions: ADMINISTRATOR };
+  // The event is set up on chardb now (halloween-admin.e2e.spec.ts covers
+  // that), so these start from the rows it would leave.
+  const setUpEvent = ({ knocksPerDay = 2 } = {}) =>
+    db.halloweenGuildSettings.create({
+      data: {
+        guildId: GUILD_ID,
+        startDate: new Date("2020-01-01T06:00:00Z"),
+        resetTime: 6,
+        knocksPerDay,
+        winRate: 0.5,
+      },
+    });
 
-  const setUpEvent = async ({ knocksPerDay = "2" } = {}) => {
-    await run(
-      "settings",
-      [sub("set", [str("setting", "start_date"), str("value", "2020-01-01")])],
-      admin,
-    );
-    await run(
-      "settings",
-      [
-        sub("set", [
-          str("setting", "knocks_per_day"),
-          str("value", knocksPerDay),
-        ]),
-      ],
-      admin,
-    );
-  };
-
-  const addPrize = (
-    id: string,
-    extra: APIApplicationCommandInteractionDataBasicOption[] = [],
-  ) =>
-    run(
-      "prize",
-      [
-        {
-          type: ApplicationCommandOptionType.SubcommandGroup,
-          name: "admin",
-          options: [
-            sub("add", [
-              str("id", id),
-              str("name", `Prize ${id}`),
-              int("stock", 2),
-              str("image", `https://i.test/${id}.png`),
-              ...extra,
-            ]),
-          ],
-        },
-      ],
-      admin,
-    );
+  const addPrize = (id: string, delivers: { itemTypeId?: string } = {}) =>
+    db.halloweenPrize.create({
+      data: {
+        guildId: GUILD_ID,
+        id,
+        name: `Prize ${id}`,
+        initialStock: 2,
+        currentStock: 2,
+        weight: 10,
+        image: delivers.itemTypeId ? null : `https://i.test/${id}.png`,
+        ...delivers,
+      },
+    });
 
   const alwaysWin = () => jest.spyOn(random, "unit").mockReturnValue(0);
   const alwaysLose = () => jest.spyOn(random, "unit").mockReturnValue(0.999);
-
-  it("sets up an event from Discord", async () => {
-    await setUpEvent({ knocksPerDay: "4" });
-    expect(
-      await db.halloweenGuildSettings.findUnique({
-        where: { guildId: GUILD_ID },
-      }),
-    ).toMatchObject({
-      knocksPerDay: 4,
-      resetTime: 6,
-      winRate: 0.5,
-      startDate: new Date("2020-01-01T06:00:00Z"),
-    });
-    const reply = await addPrize("myo");
-    expect(reply.content).toBe(
-      "Added 2 units of Prize myo as myo with weight 10",
-    );
-  });
 
   it("records a losing knock", async () => {
     await setUpEvent();
@@ -184,7 +137,7 @@ describe("Halloween bot (e2e)", () => {
       data: { name: "Candy Corn", communityId: community.id },
     });
     await setUpEvent();
-    await addPrize("candy", [str("item-type-id", itemType.id)]);
+    await addPrize("candy", { itemTypeId: itemType.id });
     alwaysWin();
 
     const reply = await run("knock");
@@ -207,7 +160,7 @@ describe("Halloween bot (e2e)", () => {
   it("keeps the player's knock when the prize cannot be delivered", async () => {
     // An item prize, but no community is linked to the guild.
     await setUpEvent();
-    await addPrize("candy", [str("item-type-id", "no-such-item-type")]);
+    await addPrize("candy", { itemTypeId: "no-such-item-type" });
     alwaysWin();
 
     const reply = await run("knock");
@@ -221,7 +174,7 @@ describe("Halloween bot (e2e)", () => {
   });
 
   it("lets only one of two simultaneous knocks spend the last one", async () => {
-    await setUpEvent({ knocksPerDay: "1" });
+    await setUpEvent({ knocksPerDay: 1 });
     await addPrize("myo");
     alwaysLose();
 
@@ -235,7 +188,7 @@ describe("Halloween bot (e2e)", () => {
   });
 
   it("lets a gifty pay for a knock past the daily allowance", async () => {
-    await setUpEvent({ knocksPerDay: "1" });
+    await setUpEvent({ knocksPerDay: 1 });
     await addPrize("myo");
     alwaysLose();
     await run("knock");

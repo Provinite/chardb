@@ -192,3 +192,31 @@ export class HalloweenWinPage {
   @Field()
   hasMore: boolean;
 }
+
+@ObjectType({ description: "Something a Halloween prize can hand over" })
+export class HalloweenPrizeOption {
+  @Field(() => ID)
+  id: string;
+
+  @Field()
+  name: string;
+
+  @Field(() => String, {
+    nullable: true,
+    description: "Its approved image, which the prize would show",
+  })
+  image: string | null;
+}
+
+@ObjectType({
+  description:
+    "The community's item types, and its characters nobody owns or has " +
+    "been promised: what a new prize can hand over",
+})
+export class HalloweenPrizeOptions {
+  @Field(() => [HalloweenPrizeOption])
+  itemTypes: HalloweenPrizeOption[];
+
+  @Field(() => [HalloweenPrizeOption])
+  characters: HalloweenPrizeOption[];
+}

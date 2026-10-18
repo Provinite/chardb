@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 import { DatabaseModule } from "../database/database.module";
+import { AuthModule } from "../auth/auth.module";
 import { ItemsModule } from "../items/items.module";
 import { PendingOwnershipModule } from "../pending-ownership/pending-ownership.module";
 import { HalloweenConfig } from "./halloween.config";
@@ -56,7 +57,13 @@ const COMMANDS = [
  * `POST /discord/halloween/interactions`.
  */
 @Module({
-  imports: [ConfigModule, DatabaseModule, ItemsModule, PendingOwnershipModule],
+  imports: [
+    ConfigModule,
+    DatabaseModule,
+    AuthModule,
+    ItemsModule,
+    PendingOwnershipModule,
+  ],
   controllers: [HalloweenInteractionsController],
   providers: [
     HalloweenConfig,

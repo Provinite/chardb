@@ -1,11 +1,37 @@
-import { BadRequestException, Injectable, Logger } from "@nestjs/common";
-import type { HalloweenGuildSettings } from "@chardb/database";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  Logger,
+  NotFoundException,
+} from "@nestjs/common";
+import {
+  Prisma,
+  type HalloweenGuildSettings,
+  type HalloweenPrize,
+} from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
+import { notDeleted } from "../../common/utils/prisma-filters";
 import { validateGuildSettings } from "../services/guild-settings.service";
+import {
+  isImageUrl,
+  validatePrize,
+  type PrizeInput,
+} from "../services/prize.service";
+import { PrizeAwardService } from "../services/prize-award.service";
+import { approvedImageUrl } from "../services/prize-image.service";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { HalloweenDashboardService } from "./halloween-dashboard.service";
-import type { HalloweenSettingsInput } from "./halloween-admin.inputs";
-import type { HalloweenEventSettings } from "./halloween-dashboard.types";
+import type {
+  CreateHalloweenPrizeInput,
+  HalloweenSettingsInput,
+  UpdateHalloweenPrizeInput,
+} from "./halloween-admin.inputs";
+import type {
+  HalloweenEventSettings,
+  HalloweenPrizeOptions,
+  HalloweenPrizeView,
+} from "./halloween-dashboard.types";
 
 const SETTING_FIELDS = [
   "startDate",
@@ -42,6 +68,7 @@ export class HalloweenAdminService {
   constructor(
     private readonly db: DatabaseService,
     private readonly dashboard: HalloweenDashboardService,
+    private readonly prizeAward: PrizeAwardService,
   ) {}
 
   /** Creates the guild's settings the first time, replaces them after. */
@@ -97,4 +124,260 @@ export class HalloweenAdminService {
     }
     return toView(saved);
   }
+
+  async createPrize(
+    communityId: string,
+    input: CreateHalloweenPrizeInput,
+    actorUserId: string,
+  ): Promise<HalloweenPrizeView> {
+    const guildId = await this.dashboard.linkedGuildFor(communityId);
+    // Prizes belong to the guild's settings row; the page shows the settings
+    // form first, so this only catches a request made around it.
+    if (!(await this.db.halloweenGuildSettings.count({ where: { guildId } }))) {
+      throw new BadRequestException("Set the event up before adding prizes");
+    }
+
+    const prize: PrizeInput = {
+      guildId,
+      id: input.id,
+      name: input.name,
+      initialStock: input.stock,
+      currentStock: input.stock,
+      weight: input.weight ?? 10,
+      image: input.image ?? null,
+      itemTypeId: input.itemTypeId ?? undefined,
+      characterId: input.characterId ?? undefined,
+    };
+    const validation = validatePrize(prize);
+    if (validation !== true) {
+      throw new BadRequestException(
+        validation.map(({ error }) => error).join(". "),
+      );
+    }
+    const problem = await this.prizeAward.deliveryProblem(prize, guildId);
+    if (problem) {
+      throw new BadRequestException(
+        `This prize couldn't be delivered: ${problem}`,
+      );
+    }
+
+    let saved: HalloweenPrize;
+    try {
+      saved = await this.db.halloweenPrize.create({ data: prize });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw new ConflictException(
+          `There is already a prize called "${prize.id}"`,
+        );
+      }
+      throw error;
+    }
+
+    this.logger.log({
+      event: HalloweenLogEvent.PrizeAdded,
+      message: `Added prize ${saved.id} to guild ${guildId} from chardb`,
+      communityId,
+      guildId,
+      actorUserId,
+      prizeId: saved.id,
+      name: saved.name,
+      initialStock: saved.initialStock,
+      weight: saved.weight,
+      image: saved.image,
+      itemTypeId: saved.itemTypeId,
+      characterId: saved.characterId,
+    } satisfies HalloweenLogLine);
+
+    const [view] = await this.dashboard.prizeViews([saved]);
+    return view;
+  }
+
+  async updatePrize(
+    communityId: string,
+    prizeId: string,
+    input: UpdateHalloweenPrizeInput,
+    actorUserId: string,
+  ): Promise<HalloweenPrizeView> {
+    const guildId = await this.dashboard.linkedGuildFor(communityId);
+    const prize = await this.findPrize(guildId, prizeId);
+    const isChardbPrize = Boolean(prize.itemTypeId || prize.characterId);
+
+    const changes: Prisma.HalloweenPrizeUpdateInput = {};
+    const problems: string[] = [];
+    if (input.name !== undefined) {
+      if (!input.name.trim()) problems.push("A prize needs a name");
+      changes.name = input.name;
+    }
+    if (input.weight !== undefined) {
+      if (input.weight < 0 || input.weight > 1000) {
+        problems.push("Weight must be a whole number from 0 to 1000");
+      }
+      changes.weight = input.weight;
+    }
+    if (input.image !== undefined) {
+      if (isChardbPrize) {
+        problems.push(
+          "A chardb prize shows its item's or character's own image",
+        );
+      } else if (!input.image || !isImageUrl(input.image)) {
+        problems.push(
+          "image must be an https or http string URL to a png or jpg image",
+        );
+      }
+      changes.image = input.image;
+    }
+    if (input.currentStock !== undefined) {
+      if (input.currentStock < 0 || input.currentStock > 999) {
+        problems.push("Stock must be a whole number from 0 to 999");
+      }
+      // Moving the starting stock by the same amount keeps "given out"
+      // (initial - current) as it was.
+      changes.currentStock = input.currentStock;
+      changes.initialStock =
+        prize.initialStock + (input.currentStock - prize.currentStock);
+    }
+    if (problems.length) {
+      throw new BadRequestException(problems.join(". "));
+    }
+
+    const saved = await this.db.halloweenPrize.update({
+      where: { guildId_id: { guildId, id: prizeId } },
+      data: changes,
+    });
+
+    this.logger.log({
+      event: HalloweenLogEvent.PrizeUpdated,
+      message: `Changed prize ${prizeId} in guild ${guildId} from chardb`,
+      communityId,
+      guildId,
+      actorUserId,
+      prizeId,
+      before: {
+        name: prize.name,
+        weight: prize.weight,
+        image: prize.image,
+        initialStock: prize.initialStock,
+        currentStock: prize.currentStock,
+      },
+      after: {
+        name: saved.name,
+        weight: saved.weight,
+        image: saved.image,
+        initialStock: saved.initialStock,
+        currentStock: saved.currentStock,
+      },
+    } satisfies HalloweenLogLine);
+
+    const [view] = await this.dashboard.prizeViews([saved]);
+    return view;
+  }
+
+  /** Only a prize nobody has won: a win keeps its prize on record. */
+  async removePrize(
+    communityId: string,
+    prizeId: string,
+    actorUserId: string,
+  ): Promise<boolean> {
+    const guildId = await this.dashboard.linkedGuildFor(communityId);
+    const prize = await this.findPrize(guildId, prizeId);
+    const won = await this.db.halloweenKnockEvent.count({
+      where: { guildId, prizeId },
+    });
+    if (won) {
+      throw new ConflictException(
+        "Somebody has won this prize, so it stays on record. Set its stock to 0 instead.",
+      );
+    }
+    await this.db.halloweenPrize.delete({
+      where: { guildId_id: { guildId, id: prizeId } },
+    });
+    this.logger.log({
+      event: HalloweenLogEvent.PrizeRemoved,
+      message: `Removed prize ${prizeId} from guild ${guildId} from chardb`,
+      communityId,
+      guildId,
+      actorUserId,
+      prizeId,
+      name: prize.name,
+      itemTypeId: prize.itemTypeId,
+      characterId: prize.characterId,
+    } satisfies HalloweenLogLine);
+    return true;
+  }
+
+  /**
+   * What a new prize could hand over: the community's item types, and its
+   * characters with no owner and no pending owner.
+   */
+  async prizeOptions(
+    communityId: string,
+    search: string | null,
+  ): Promise<HalloweenPrizeOptions> {
+    await this.dashboard.guildFor(communityId);
+    const name = search?.trim()
+      ? { contains: search.trim(), mode: "insensitive" as const }
+      : undefined;
+    const imageSelect = {
+      originalUrl: true,
+      mediumUrl: true,
+      moderationStatus: true,
+    } satisfies Prisma.ImageSelect;
+
+    const [itemTypes, characters] = await Promise.all([
+      this.db.itemType.findMany({
+        where: { communityId, ...(name ? { name } : {}) },
+        select: { id: true, name: true, image: { select: imageSelect } },
+        orderBy: { name: "asc" },
+        take: OPTIONS_LIMIT,
+      }),
+      this.db.character.findMany({
+        where: {
+          species: { communityId },
+          ownerId: null,
+          pendingOwnership: null,
+          ...notDeleted,
+          ...(name ? { name } : {}),
+        },
+        select: {
+          id: true,
+          name: true,
+          mainMedia: { select: { image: { select: imageSelect } } },
+        },
+        orderBy: { name: "asc" },
+        take: OPTIONS_LIMIT,
+      }),
+    ]);
+
+    return {
+      itemTypes: itemTypes.map((t) => ({
+        id: t.id,
+        name: t.name,
+        image: approvedImageUrl(t.image),
+      })),
+      characters: characters.map((c) => ({
+        id: c.id,
+        name: c.name,
+        image: approvedImageUrl(c.mainMedia?.image),
+      })),
+    };
+  }
+
+  private async findPrize(
+    guildId: string,
+    prizeId: string,
+  ): Promise<HalloweenPrize> {
+    const prize = await this.db.halloweenPrize.findUnique({
+      where: { guildId_id: { guildId, id: prizeId } },
+    });
+    if (!prize) {
+      throw new NotFoundException(`No prize called "${prizeId}"`);
+    }
+    return prize;
+  }
 }
+
+/** How many of each kind the picker offers per search. */
+const OPTIONS_LIMIT = 25;

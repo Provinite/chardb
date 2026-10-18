@@ -1,5 +1,6 @@
 import { Args, ID, Int, Mutation, Query, Resolver } from "@nestjs/graphql";
-import { Logger } from "@nestjs/common";
+import { ForbiddenException, Logger } from "@nestjs/common";
+import { PermissionService } from "../../auth/PermissionService";
 import { AllowCommunityPermission } from "../../auth/decorators/AllowCommunityPermission";
 import { AllowGlobalAdmin } from "../../auth/decorators/AllowGlobalAdmin";
 import { ResolveCommunityFrom } from "../../auth/decorators/ResolveCommunityFrom";
@@ -29,26 +30,55 @@ export class HalloweenDashboardResolver {
   constructor(
     private readonly dashboard: HalloweenDashboardService,
     private readonly db: DatabaseService,
+    private readonly permissions: PermissionService,
   ) {}
 
   /**
-   * Gated on `canGrantItems`, as the shop's purchase list is: these are the
-   * people who hand prizes out.
+   * Reading is open to the people who hand prizes out (`canGrantItems`, as
+   * the shop's purchase list is) and to those who set the pool up
+   * (`canManageItems`). The decorator takes one permission, so it admits any
+   * member and this narrows it.
    */
-  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  private async assertCanView(
+    userId: string,
+    communityId: string,
+  ): Promise<void> {
+    const [canGrant, canManage] = await Promise.all([
+      this.permissions.hasCommunityPermission(
+        userId,
+        communityId,
+        CommunityPermission.CanGrantItems,
+      ),
+      this.permissions.hasCommunityPermission(
+        userId,
+        communityId,
+        CommunityPermission.CanManageItems,
+      ),
+    ]);
+    if (!canGrant && !canManage) {
+      throw new ForbiddenException(
+        "Seeing the Halloween event needs permission to grant or manage items",
+      );
+    }
+  }
+
+  @AllowCommunityPermission(CommunityPermission.Any)
   @ResolveCommunityFrom({ communityId: "communityId" })
   @Query(() => HalloweenDashboard, {
     description:
       "The Halloween event in this community's Discord server: settings, " +
-      "totals, prize pool and every win. Requires the event to be enabled.",
+      "totals and prize pool. Requires the event to be enabled, and " +
+      "canGrantItems or canManageItems.",
   })
   async halloweenDashboard(
     @Args("communityId", { type: () => ID }) communityId: string,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenDashboard> {
+    await this.assertCanView(user.id, communityId);
     return this.dashboard.getDashboard(communityId);
   }
 
-  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  @AllowCommunityPermission(CommunityPermission.Any)
   @ResolveCommunityFrom({ communityId: "communityId" })
   @Query(() => HalloweenWinPage, {
     description:
@@ -66,7 +96,9 @@ export class HalloweenDashboardResolver {
     limit: number,
     @Args("offset", { type: () => Int, nullable: true, defaultValue: 0 })
     offset: number,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenWinPage> {
+    await this.assertCanView(user.id, communityId);
     return this.dashboard.getWins(communityId, filter, limit, offset);
   }
 

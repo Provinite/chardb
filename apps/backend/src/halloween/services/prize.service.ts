@@ -10,7 +10,8 @@ export interface PrizeInput {
   initialStock: number;
   currentStock: number;
   weight: number;
-  image: string;
+  /** Only for a prize staff hand over; a chardb prize shows its own image. */
+  image?: string | null;
   itemTypeId?: string;
   characterId?: string;
 }
@@ -27,7 +28,7 @@ type Rule = [
  */
 export const PRIZE_ID = /^[a-z][a-z-]{1,24}$/;
 
-const isImageUrl = (image: string): boolean => {
+export const isImageUrl = (image: string): boolean => {
   try {
     const url = new URL(image);
     return (
@@ -52,11 +53,12 @@ export function validatePrize(
     itemTypeId,
     characterId,
   } = prize;
+  const isChardbPrize = Boolean(itemTypeId || characterId);
   const rules: Rule[] = [
     [
       "*",
       "All prize fields are required",
-      () => Boolean(id && guildId && name && initialStock && weight && image),
+      () => Boolean(id && guildId && name && initialStock && weight),
     ],
     [
       "id",
@@ -81,7 +83,12 @@ export function validatePrize(
     [
       "image",
       "image must be an https or http string URL to a png or jpg image",
-      () => isImageUrl(image),
+      () => isChardbPrize || (typeof image === "string" && isImageUrl(image)),
+    ],
+    [
+      "image",
+      "A chardb prize shows its item's or character's own image",
+      () => !isChardbPrize || !image,
     ],
     [
       "itemTypeId",

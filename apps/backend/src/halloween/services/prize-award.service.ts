@@ -36,8 +36,24 @@ export class PrizeAwardService {
     guildId: string,
     tx: Prisma.TransactionClient = this.db,
   ): Promise<void> {
+    const problem = await this.deliveryProblem(prize, guildId, tx);
+    if (problem) {
+      throw this.undeliverable(prize, problem);
+    }
+  }
+
+  /**
+   * Why the prize could not be delivered, or null if it could. Checked when
+   * a prize is added on chardb and again when it is won, since the item type
+   * or character can change in between.
+   */
+  async deliveryProblem(
+    prize: { itemTypeId?: string | null; characterId?: string | null },
+    guildId: string,
+    tx: Prisma.TransactionClient = this.db,
+  ): Promise<string | null> {
     if (!prize.itemTypeId && !prize.characterId) {
-      return;
+      return null;
     }
 
     // Whatever the prize hands over has to belong to the community this
@@ -47,10 +63,7 @@ export class PrizeAwardService {
       where: { discordGuildId: guildId },
     });
     if (!community) {
-      throw this.undeliverable(
-        prize,
-        `no community is linked to Discord guild ${guildId}`,
-      );
+      return `no community is linked to Discord guild ${guildId}`;
     }
 
     if (prize.itemTypeId) {
@@ -58,16 +71,10 @@ export class PrizeAwardService {
         where: { id: prize.itemTypeId },
       });
       if (!itemType) {
-        throw this.undeliverable(
-          prize,
-          `item type ${prize.itemTypeId} not found`,
-        );
+        return `item type ${prize.itemTypeId} not found`;
       }
       if (itemType.communityId !== community.id) {
-        throw this.undeliverable(
-          prize,
-          `item type ${prize.itemTypeId} belongs to another community`,
-        );
+        return `item type ${prize.itemTypeId} belongs to another community`;
       }
     }
 
@@ -77,35 +84,24 @@ export class PrizeAwardService {
         include: { species: { select: { communityId: true } } },
       });
       if (!character) {
-        throw this.undeliverable(
-          prize,
-          `character ${prize.characterId} not found`,
-        );
+        return `character ${prize.characterId} not found`;
       }
       // A character belongs to a community through its species; one with no
       // species belongs to none, so no guild may give it away.
       if (character.species?.communityId !== community.id) {
-        throw this.undeliverable(
-          prize,
-          `character ${prize.characterId} does not belong to community ${community.id}`,
-        );
+        return `character ${prize.characterId} belongs to another community`;
       }
       if (character.ownerId !== null) {
-        throw this.undeliverable(
-          prize,
-          `character ${prize.characterId} is already owned`,
-        );
+        return `character ${prize.characterId} is already owned`;
       }
       const pending = await tx.pendingOwnership.findUnique({
         where: { characterId: prize.characterId },
       });
       if (pending) {
-        throw this.undeliverable(
-          prize,
-          `character ${prize.characterId} is already pending for someone`,
-        );
+        return `character ${prize.characterId} is already pending for someone`;
       }
     }
+    return null;
   }
 
   async award(prize: HalloweenPrize, discordUserId: string): Promise<void> {

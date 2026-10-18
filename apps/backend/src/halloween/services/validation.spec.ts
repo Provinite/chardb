@@ -90,9 +90,30 @@ describe("validatePrize", () => {
     expect(validatePrize(valid)).toBe(true);
   });
 
-  it("accepts a CharDB item type or character", () => {
-    expect(validatePrize({ ...valid, itemTypeId: "it-1" })).toBe(true);
-    expect(validatePrize({ ...valid, characterId: "ch-1" })).toBe(true);
+  const chardbPrize = { ...valid, image: null };
+
+  it("accepts a CharDB item type or character, with no image of its own", () => {
+    expect(validatePrize({ ...chardbPrize, itemTypeId: "it-1" })).toBe(true);
+    expect(validatePrize({ ...chardbPrize, characterId: "ch-1" })).toBe(true);
+  });
+
+  it("refuses an image URL on a CharDB prize", () => {
+    expect(validatePrize({ ...valid, itemTypeId: "it-1" })).toEqual([
+      {
+        field: "image",
+        error: "A chardb prize shows its item's or character's own image",
+      },
+    ]);
+  });
+
+  it("requires an image for a prize staff hand over", () => {
+    expect(validatePrize({ ...valid, image: null })).toEqual([
+      {
+        field: "image",
+        error:
+          "image must be an https or http string URL to a png or jpg image",
+      },
+    ]);
   });
 
   it("requires every field", () => {
@@ -156,7 +177,11 @@ describe("validatePrize", () => {
 
   it("refuses both an item type and a character", () => {
     expect(
-      validatePrize({ ...valid, itemTypeId: "it-1", characterId: "ch-1" }),
+      validatePrize({
+        ...chardbPrize,
+        itemTypeId: "it-1",
+        characterId: "ch-1",
+      }),
     ).toEqual([
       {
         field: "*",
@@ -166,7 +191,7 @@ describe("validatePrize", () => {
   });
 
   it("refuses empty CharDB ids", () => {
-    expect(validatePrize({ ...valid, itemTypeId: "" })).toContainEqual({
+    expect(validatePrize({ ...chardbPrize, itemTypeId: "" })).toContainEqual({
       field: "itemTypeId",
       error: "itemTypeId must be a non-empty string if provided",
     });
