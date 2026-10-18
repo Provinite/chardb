@@ -98,6 +98,17 @@ const fillBasics = async () => {
   await userEvent.type(stock, "300");
 };
 
+/** The shared radios hide the input itself; people click its label. */
+const chooseType = async (name: string) => {
+  const label = screen.getByRole("radio", { name }).closest("label");
+  if (!label) throw new Error(`No label for the ${name} radio`);
+  await userEvent.click(label);
+};
+
+/** Opens the picker's list: it shows nothing until two letters are typed. */
+const search = async (box: RegExp, text: string) =>
+  userEvent.type(screen.getByRole("combobox", { name: box }), text);
+
 describe("HalloweenPrizeForm", () => {
   describe("adding", () => {
     it("adds a prize staff hand over, with an image URL", async () => {
@@ -122,6 +133,7 @@ describe("HalloweenPrizeForm", () => {
           result,
         },
       ]);
+      await chooseType("Other / off-site");
       await userEvent.type(screen.getByLabelText(/Short name/), "adopt");
       await userEvent.type(screen.getByLabelText(/^Name/), "Spooky Adopt");
       const stock = screen.getByLabelText(/^Stock/);
@@ -134,6 +146,14 @@ describe("HalloweenPrizeForm", () => {
       await userEvent.click(screen.getByRole("button", { name: "Add prize" }));
       await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
       expect(result).toHaveBeenCalled();
+    });
+
+    it("starts on an item prize, and asks for nothing until someone types", () => {
+      renderForm({}, []);
+      expect(screen.getByRole("radio", { name: "Item" })).toBeChecked();
+      expect(
+        screen.getByRole("combobox", { name: /Item type/ }),
+      ).toBeInTheDocument();
     });
 
     it("asks what kind of prize it is before its names", () => {
@@ -177,13 +197,9 @@ describe("HalloweenPrizeForm", () => {
           result,
         },
       ]);
-      await userEvent.click(screen.getByLabelText("Item"));
       expect(screen.queryByLabelText(/Image URL/)).not.toBeInTheDocument();
 
-      await userEvent.type(
-        screen.getByRole("combobox", { name: /Item type/ }),
-        "edit",
-      );
+      await search(/Item type/, "edit");
       const option = await screen.findByRole("option", { name: /Edit Kit/ });
       expect(option.querySelector("img")).toHaveAttribute(
         "src",
@@ -203,12 +219,9 @@ describe("HalloweenPrizeForm", () => {
     });
 
     it("leaves names someone typed alone when they pick", async () => {
-      renderForm({}, [optionsMock(null)]);
-      await userEvent.click(screen.getByLabelText("Item"));
+      renderForm({}, [optionsMock("ed")]);
       await userEvent.type(screen.getByLabelText(/^Name/), "Kit of Edits");
-      await userEvent.click(
-        screen.getByRole("combobox", { name: /Item type/ }),
-      );
+      await search(/Item type/, "ed");
       await userEvent.click(
         await screen.findByRole("option", { name: /Edit Kit/ }),
       );
@@ -217,25 +230,22 @@ describe("HalloweenPrizeForm", () => {
     });
 
     it("forgets names it filled in when the prize type changes", async () => {
-      renderForm({}, [optionsMock(null)]);
-      await userEvent.click(screen.getByLabelText("Item"));
-      await userEvent.click(
-        screen.getByRole("combobox", { name: /Item type/ }),
-      );
+      renderForm({}, [optionsMock("ed")]);
+      await search(/Item type/, "ed");
       await userEvent.click(
         await screen.findByRole("option", { name: /Edit Kit/ }),
       );
-      await userEvent.click(screen.getByLabelText("Character"));
+      await chooseType("Character");
       expect(screen.getByLabelText(/^Name/)).toHaveValue("");
       expect(screen.getByLabelText(/Short name/)).toHaveValue("");
     });
 
     it("says which characters are left out", async () => {
-      renderForm({}, [optionsMock(null)]);
-      await userEvent.click(screen.getByLabelText("Character"));
+      renderForm({}, []);
+      await chooseType("Character");
       expect(
         screen.getByText(
-          "Characters already owned or pending ownership do not show up in this list.",
+          "Characters already owned, pending ownership, or already a prize do not show up in this list.",
         ),
       ).toBeInTheDocument();
     });
@@ -250,7 +260,7 @@ describe("HalloweenPrizeForm", () => {
         },
       }));
       const onSaved = renderForm({}, [
-        optionsMock(null),
+        optionsMock("gh"),
         {
           request: {
             query: CreateHalloweenPrizeDocument,
@@ -268,10 +278,8 @@ describe("HalloweenPrizeForm", () => {
           result,
         },
       ]);
-      await userEvent.click(screen.getByLabelText("Character"));
-      await userEvent.click(
-        screen.getByRole("combobox", { name: /Character/ }),
-      );
+      await chooseType("Character");
+      await search(/Character/, "gh");
       await userEvent.click(
         await screen.findByRole("option", { name: /Free Ghost/ }),
       );
@@ -283,9 +291,8 @@ describe("HalloweenPrizeForm", () => {
     });
 
     it("needs a pick before a chardb prize can be added", async () => {
-      renderForm({}, [optionsMock(null)]);
+      renderForm({}, []);
       await fillBasics();
-      await userEvent.click(screen.getByLabelText("Item"));
       expect(screen.getByRole("button", { name: "Add prize" })).toBeDisabled();
     });
 
@@ -312,6 +319,7 @@ describe("HalloweenPrizeForm", () => {
           },
         },
       ]);
+      await chooseType("Other / off-site");
       await fillBasics();
       await userEvent.type(
         screen.getByLabelText(/Image URL/),

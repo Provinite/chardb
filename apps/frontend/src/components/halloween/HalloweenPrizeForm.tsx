@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Button, Input } from "@chardb/ui";
+import {
+  Button,
+  CharacterTypeahead,
+  Input,
+  ItemTypeTypeahead,
+  Radio,
+  RadioGroup,
+  type SearchSelectOption,
+} from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import {
   HalloweenPrizeDelivery,
@@ -11,10 +19,6 @@ import {
   type HalloweenPrizeFieldsFragment,
   type UpdateHalloweenPrizeInput,
 } from "../../generated/graphql";
-import {
-  HalloweenPrizePicker,
-  type PrizePickerOption,
-} from "./HalloweenPrizePicker";
 import { prizeIdFrom } from "./prizeId";
 
 /**
@@ -57,23 +61,21 @@ const Fieldset = styled.fieldset`
   border: none;
   padding: 0;
   margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem 1.25rem;
 
   legend {
+    padding: 0;
     font-size: 0.875rem;
     font-weight: 600;
     color: ${({ theme }) => theme.colors.text.primary};
     margin-bottom: 0.35rem;
   }
+`;
 
-  label {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-  }
+/** The shared radios, side by side: three short choices fit on one line. */
+const PrizeTypes = styled(RadioGroup)`
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
 `;
 
 const Actions = styled.div`
@@ -114,21 +116,22 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
   const [stock, setStock] = useState(String(prize?.currentStock ?? 1));
   const [weight, setWeight] = useState(String(prize?.weight ?? 10));
   const [delivery, setDelivery] = useState<HalloweenPrizeDelivery>(
-    prize?.delivery ?? HalloweenPrizeDelivery.Staff,
+    prize?.delivery ?? HalloweenPrizeDelivery.ChardbItem,
   );
   const [image, setImage] = useState(
     prize?.delivery === HalloweenPrizeDelivery.Staff ? (prize.image ?? "") : "",
   );
-  const [pick, setPick] = useState<PrizePickerOption | null>(null);
+  const [pick, setPick] = useState<SearchSelectOption | null>(null);
   const [search, setSearch] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const isStaffPrize = delivery === HalloweenPrizeDelivery.Staff;
   const isItemPrize = delivery === HalloweenPrizeDelivery.ChardbItem;
+  // Nothing is listed until someone types, so nothing is asked for either.
   const { data: optionsData, loading: optionsLoading } =
     useHalloweenPrizeOptionsQuery({
       variables: { communityId, search },
-      skip: editing || isStaffPrize,
+      skip: editing || isStaffPrize || !search,
     });
   const options =
     (isItemPrize
@@ -148,7 +151,7 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
     if (!idTyped) setId("");
   };
 
-  const choosePick = (option: PrizePickerOption | null) => {
+  const choosePick = (option: SearchSelectOption | null) => {
     setPick(option);
     if (!option) return;
     if (!nameTyped) setName(option.name);
@@ -196,35 +199,17 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
       {!editing && (
         <Fieldset>
           <legend>Prize type</legend>
-          <label>
-            <input
-              type="radio"
-              name="prize-delivery"
-              checked={isItemPrize}
-              onChange={() => chooseDelivery(HalloweenPrizeDelivery.ChardbItem)}
-            />
-            Item
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="prize-delivery"
-              checked={delivery === HalloweenPrizeDelivery.ChardbCharacter}
-              onChange={() =>
-                chooseDelivery(HalloweenPrizeDelivery.ChardbCharacter)
-              }
-            />
-            Character
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="prize-delivery"
-              checked={isStaffPrize}
-              onChange={() => chooseDelivery(HalloweenPrizeDelivery.Staff)}
-            />
-            Other / off-site
-          </label>
+          <PrizeTypes
+            name="prize-type"
+            value={delivery}
+            onChange={(next) => chooseDelivery(next as HalloweenPrizeDelivery)}
+          >
+            <Radio value={HalloweenPrizeDelivery.ChardbItem}>Item</Radio>
+            <Radio value={HalloweenPrizeDelivery.ChardbCharacter}>
+              Character
+            </Radio>
+            <Radio value={HalloweenPrizeDelivery.Staff}>Other / off-site</Radio>
+          </PrizeTypes>
         </Fieldset>
       )}
 
@@ -247,19 +232,29 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
       ) : (
         !editing && (
           <Field>
-            <HalloweenPrizePicker
-              key={delivery}
-              label={isItemPrize ? "Item type" : "Character"}
-              options={options}
-              loading={optionsLoading}
-              selected={pick}
-              onSearch={setSearch}
-              onSelect={choosePick}
-            />
+            {isItemPrize ? (
+              <ItemTypeTypeahead
+                key={delivery}
+                value={pick}
+                onChange={choosePick}
+                onSearch={setSearch}
+                options={options}
+                loading={optionsLoading}
+              />
+            ) : (
+              <CharacterTypeahead
+                key={delivery}
+                value={pick}
+                onChange={choosePick}
+                onSearch={setSearch}
+                options={options}
+                loading={optionsLoading}
+              />
+            )}
             <Hint>
               {isItemPrize
                 ? "The prize shows the item type's own image."
-                : "Characters already owned or pending ownership do not show up in this list."}
+                : "Characters already owned, pending ownership, or already a prize do not show up in this list."}
             </Hint>
           </Field>
         )
