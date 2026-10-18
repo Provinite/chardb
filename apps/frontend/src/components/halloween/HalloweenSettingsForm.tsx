@@ -27,7 +27,7 @@ const Field = styled.div`
 
 const Label = styled.label`
   font-size: 0.875rem;
-  font-weight: 600;
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
