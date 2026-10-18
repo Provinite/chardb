@@ -2,7 +2,7 @@ import type { HalloweenPrize } from "@chardb/database";
 
 /**
  * A markdown link to what the prize hands over on chardb, or undefined for a
- * prize that is delivered by hand.
+ * prize with no chardb item or character (staff deliver those themselves).
  */
 export function formatChardbLink(
   prize: Pick<HalloweenPrize, "itemTypeId" | "characterId">,

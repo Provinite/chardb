@@ -320,7 +320,7 @@ describe("/knock", () => {
       );
     });
 
-    it("does not claim delivery of a hand-delivered prize", async () => {
+    it("does not log a delivery for a prize with no chardb item or character", async () => {
       win();
       await knock(interaction);
       expect(log).not.toHaveBeenCalledWith(
@@ -561,7 +561,7 @@ describe("/knock", () => {
       expect(award.award).toHaveBeenCalledWith(candy, USER_ID);
     });
 
-    it("has nothing to deliver for a hand-delivered prize", async () => {
+    it("delivers nothing for a prize with no chardb item or character", async () => {
       await knock();
       expect(award.award).not.toHaveBeenCalled();
     });

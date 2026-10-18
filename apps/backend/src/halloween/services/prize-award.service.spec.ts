@@ -60,7 +60,7 @@ describe("PrizeAwardService", () => {
     const validate = (p: HalloweenPrize) =>
       service.validate(p, GUILD_ID, tx as unknown as DatabaseService);
 
-    it("has nothing to check for a hand-delivered prize", async () => {
+    it("has nothing to check for a prize with no chardb item or character", async () => {
       await expect(validate(prize())).resolves.toBeUndefined();
       expect(tx.community.findFirst).not.toHaveBeenCalled();
     });
@@ -149,7 +149,7 @@ describe("PrizeAwardService", () => {
       );
     });
 
-    it("does nothing for a hand-delivered prize", async () => {
+    it("does nothing for a prize with no chardb item or character", async () => {
       await service.award(prize(), USER_ID);
       expect(items.grantItem).not.toHaveBeenCalled();
       expect(pendingOwnership.createForCharacter).not.toHaveBeenCalled();
