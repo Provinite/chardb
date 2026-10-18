@@ -31,7 +31,10 @@ const YYYY_MM_DD = /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/;
 /** Midnight at the start of that day in Chicago. */
 const chicagoMidnight = (s: string): Date => {
   const [year, month, day] = s.split("-").map((n) => Number.parseInt(n, 10));
-  return DateTime.fromObject({ year, month, day }, { zone: EVENT_TIMEZONE }).toJSDate();
+  return DateTime.fromObject(
+    { year, month, day },
+    { zone: EVENT_TIMEZONE },
+  ).toJSDate();
 };
 
 /** The `setting` choices registered with Discord, by value. */
@@ -83,14 +86,18 @@ export class SettingsCommand implements HalloweenCommandHandler {
     private readonly db: DatabaseService,
   ) {}
 
-  async handle(interaction: APIApplicationCommandGuildInteraction): Promise<void> {
+  async handle(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<void> {
     const chat = requireChatInput(interaction);
     const { options } = chat.data;
     if (!options || !options.length) {
       throw new HalloweenDiscordError({
         thrownFrom: "SettingsCommand",
         message: "No subcommand provided",
-        sourceError: new Error("Expected options on settings command, got none."),
+        sourceError: new Error(
+          "Expected options on settings command, got none.",
+        ),
       });
     }
     const [subCommand] = options;

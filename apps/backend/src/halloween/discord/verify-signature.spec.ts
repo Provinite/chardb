@@ -50,10 +50,20 @@ describe("verifyDiscordSignature", () => {
   it("rejects a missing signature or timestamp", () => {
     const signature = signatureFor(timestamp + body);
     expect(
-      verifyDiscordSignature(publicKeyHex, undefined, Buffer.from(body), signature),
+      verifyDiscordSignature(
+        publicKeyHex,
+        undefined,
+        Buffer.from(body),
+        signature,
+      ),
     ).toBe(false);
     expect(
-      verifyDiscordSignature(publicKeyHex, timestamp, Buffer.from(body), undefined),
+      verifyDiscordSignature(
+        publicKeyHex,
+        timestamp,
+        Buffer.from(body),
+        undefined,
+      ),
     ).toBe(false);
   });
 

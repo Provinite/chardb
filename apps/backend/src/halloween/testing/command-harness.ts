@@ -20,7 +20,10 @@ export function stubUi(now = new Date(TIMESTAMP)): HalloweenUi {
 }
 
 export type DiscordMock = {
-  [K in "editOriginalResponse" | "createChannelMessage" | "getOriginalResponse"]: jest.Mock;
+  [K in
+    | "editOriginalResponse"
+    | "createChannelMessage"
+    | "getOriginalResponse"]: jest.Mock;
 };
 
 export function mockDiscord(): DiscordMock & HalloweenDiscordClient {

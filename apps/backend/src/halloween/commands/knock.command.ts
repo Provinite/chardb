@@ -67,12 +67,16 @@ export class KnockCommand implements HalloweenCommandHandler {
     private readonly db: DatabaseService,
   ) {}
 
-  async handle(interaction: APIApplicationCommandGuildInteraction): Promise<void> {
+  async handle(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<void> {
     await this.knock(requireChatInput(interaction));
   }
 
   /** Also how `/adminknock` knocks on a player's behalf. */
-  async knock(interaction: APIChatInputApplicationCommandGuildInteraction): Promise<void> {
+  async knock(
+    interaction: APIChatInputApplicationCommandGuildInteraction,
+  ): Promise<void> {
     const guildId = interaction.guild_id;
     const userId = interaction.member.user.id;
 
@@ -82,19 +86,29 @@ export class KnockCommand implements HalloweenCommandHandler {
       const settings = await this.guildSettings.get(guildId, tx);
 
       const status = this.guildSettings.eventStatus(settings);
-      const dates = { startDate: settings.startDate, endDate: settings.endDate };
+      const dates = {
+        startDate: settings.startDate,
+        endDate: settings.endDate,
+      };
       if (status === EventStatus.Ended) {
         throw new EventEndedError({ thrownFrom: "KnockCommand", ...dates });
       }
       if (status === EventStatus.NotStartedYet) {
-        throw new EventNotStartedError({ thrownFrom: "KnockCommand", ...dates });
+        throw new EventNotStartedError({
+          thrownFrom: "KnockCommand",
+          ...dates,
+        });
       }
 
       if (!(await this.prizes.hasInStock(guildId, tx))) {
         throw new OutOfPrizesError({ thrownFrom: "KnockCommand", guildId });
       }
 
-      const knockCount = await this.knocks.countSinceLastReset(settings, userId, tx);
+      const knockCount = await this.knocks.countSinceLastReset(
+        settings,
+        userId,
+        tx,
+      );
       let gifty: HalloweenGifty | null = null;
       if (knockCount >= settings.knocksPerDay) {
         gifty = await this.gifties.nextPending(guildId, userId, tx);
@@ -123,12 +137,14 @@ export class KnockCommand implements HalloweenCommandHandler {
 
     if (won) {
       // After commit; see PrizeAwardService for why it cannot be inside.
-      await this.prizeAward.award(won, userId).catch((error: unknown) =>
-        this.logger.error(
-          `Prize ${won.id} won by ${userId} in ${guildId} was not delivered; grant it by hand`,
-          error instanceof Error ? error.stack : String(error),
-        ),
-      );
+      await this.prizeAward
+        .award(won, userId)
+        .catch((error: unknown) =>
+          this.logger.error(
+            `Prize ${won.id} won by ${userId} in ${guildId} was not delivered; grant it by hand`,
+            error instanceof Error ? error.stack : String(error),
+          ),
+        );
     }
   }
 
@@ -141,7 +157,10 @@ export class KnockCommand implements HalloweenCommandHandler {
   ): Promise<null> {
     const guildId = interaction.guild_id;
     const userId = interaction.member.user.id;
-    const knockEvent = await this.knocks.save({ guildId, userId, prizeId: null }, tx);
+    const knockEvent = await this.knocks.save(
+      { guildId, userId, prizeId: null },
+      tx,
+    );
     if (gifty) {
       gifty = await this.gifties.fulfill(gifty, knockEvent, tx);
     }
@@ -219,8 +238,15 @@ export class KnockCommand implements HalloweenCommandHandler {
     await this.prizes.decrementStock(prize.id, guildId, tx);
     await this.prizeAward.validate(prize, guildId, tx);
 
-    const knockCount = await this.knocks.countSinceLastReset(settings, userId, tx);
-    const deviantArtUser = await this.deviantArtUsers.get({ guildId, userId }, tx);
+    const knockCount = await this.knocks.countSinceLastReset(
+      settings,
+      userId,
+      tx,
+    );
+    const deviantArtUser = await this.deviantArtUsers.get(
+      { guildId, userId },
+      tx,
+    );
 
     const fields: APIEmbedField[] = [{ name: "Prize", value: prize.name }];
     const chardbLink = formatChardbLink(prize);

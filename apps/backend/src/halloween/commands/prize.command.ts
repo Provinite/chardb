@@ -44,16 +44,37 @@ const asIs = (s: string) => s;
 const asInt = (s: string) => Number.parseInt(s, 10);
 
 const ADD_OPTIONS: Record<string, AddOption> = {
-  id: { field: "id", validate: (s) => /^[a-z][a-z-]{2,25}$/.test(s), transform: asIs },
+  id: {
+    field: "id",
+    validate: (s) => /^[a-z][a-z-]{2,25}$/.test(s),
+    transform: asIs,
+  },
   name: { field: "name", validate: () => true, transform: asIs },
-  stock: { field: "initialStock", validate: (s) => /^[0-9]+$/.test(s), transform: asInt },
+  stock: {
+    field: "initialStock",
+    validate: (s) => /^[0-9]+$/.test(s),
+    transform: asInt,
+  },
   image: { field: "image", validate: () => true, transform: asIs },
-  weight: { field: "weight", validate: (s) => /^[0-9]+$/.test(s), transform: asInt },
-  "item-type-id": { field: "itemTypeId", validate: (s) => s.length > 0, transform: asIs },
-  "character-id": { field: "characterId", validate: (s) => s.length > 0, transform: asIs },
+  weight: {
+    field: "weight",
+    validate: (s) => /^[0-9]+$/.test(s),
+    transform: asInt,
+  },
+  "item-type-id": {
+    field: "itemTypeId",
+    validate: (s) => s.length > 0,
+    transform: asIs,
+  },
+  "character-id": {
+    field: "characterId",
+    validate: (s) => s.length > 0,
+    transform: asIs,
+  },
 };
 
-const capitalizeFirstLetter = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);
+const capitalizeFirstLetter = (s: string) =>
+  s.charAt(0).toUpperCase() + s.slice(1);
 
 /** `/prize list` for everyone; `/prize admin add` for administrators. */
 @Injectable()
@@ -67,7 +88,9 @@ export class PrizeCommand implements HalloweenCommandHandler {
     private readonly random: HalloweenRandom,
   ) {}
 
-  async handle(interaction: APIApplicationCommandGuildInteraction): Promise<void> {
+  async handle(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<void> {
     const chat = requireChatInput(interaction);
     const { options } = chat.data;
     if (!options || !options.length) {
@@ -179,7 +202,10 @@ export class PrizeCommand implements HalloweenCommandHandler {
 
     const prize: Partial<PrizeInput> = { guildId: interaction.guild_id };
     for (const option of subCommand.options ?? []) {
-      const handler = Object.prototype.hasOwnProperty.call(ADD_OPTIONS, option.name)
+      const handler = Object.prototype.hasOwnProperty.call(
+        ADD_OPTIONS,
+        option.name,
+      )
         ? ADD_OPTIONS[option.name]
         : undefined;
       if (!handler) {
@@ -187,7 +213,9 @@ export class PrizeCommand implements HalloweenCommandHandler {
           thrownFrom: "PrizeCommand.add",
           message: `Unexpected option, ${option.name}. Valid options are `,
           sourceError: new Error(
-            `Unexpected option ${option.name}. Expected one of: ${Object.values(ADD_OPTIONS)
+            `Unexpected option ${option.name}. Expected one of: ${Object.values(
+              ADD_OPTIONS,
+            )
               .map((o) => o.field)
               .join(", ")}`,
           ),
@@ -221,7 +249,8 @@ export class PrizeCommand implements HalloweenCommandHandler {
       throw new HalloweenDiscordError({
         thrownFrom: "PrizeCommand.add",
         message: `Couldn't save prize`,
-        sourceError: error instanceof Error ? error : new Error(JSON.stringify(error)),
+        sourceError:
+          error instanceof Error ? error : new Error(JSON.stringify(error)),
       });
     }
 

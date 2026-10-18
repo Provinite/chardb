@@ -1,5 +1,9 @@
 import { Injectable } from "@nestjs/common";
-import type { APIEmbedAuthor, APIEmbedFooter, APIInteraction } from "@discordjs/core";
+import type {
+  APIEmbedAuthor,
+  APIEmbedFooter,
+  APIInteraction,
+} from "@discordjs/core";
 import { HalloweenConfig } from "../halloween.config";
 import { HalloweenRandom } from "../random";
 import { HalloweenClock } from "../clock";

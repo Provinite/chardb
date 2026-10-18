@@ -15,7 +15,11 @@ export interface PrizeInput {
   characterId?: string;
 }
 
-type Rule = [field: keyof HalloweenPrize | "*", error: string, ok: () => boolean];
+type Rule = [
+  field: keyof HalloweenPrize | "*",
+  error: string,
+  ok: () => boolean,
+];
 
 const isImageUrl = (image: string): boolean => {
   try {
@@ -32,21 +36,36 @@ const isImageUrl = (image: string): boolean => {
 export function validatePrize(
   prize: Omit<PrizeInput, "currentStock">,
 ): true | ValidationFieldError[] {
-  const { id, guildId, name, initialStock, weight, image, itemTypeId, characterId } =
-    prize;
+  const {
+    id,
+    guildId,
+    name,
+    initialStock,
+    weight,
+    image,
+    itemTypeId,
+    characterId,
+  } = prize;
   const rules: Rule[] = [
     [
       "*",
       "All prize fields are required",
       () => Boolean(id && guildId && name && initialStock && weight && image),
     ],
-    ["id", "id must be 2-25 lowercase characters", () => /^[a-z-]{2,25}$/.test(id)],
+    [
+      "id",
+      "id must be 2-25 lowercase characters",
+      () => /^[a-z-]{2,25}$/.test(id),
+    ],
     ["guildId", "guildId must be a non-empty string", () => guildId.length > 0],
     ["name", "name must be a string", () => typeof name === "string"],
     [
       "initialStock",
       "initialStock must be a positive integer less than 1000",
-      () => Number.isInteger(initialStock) && initialStock > 0 && initialStock < 1000,
+      () =>
+        Number.isInteger(initialStock) &&
+        initialStock > 0 &&
+        initialStock < 1000,
     ],
     [
       "weight",

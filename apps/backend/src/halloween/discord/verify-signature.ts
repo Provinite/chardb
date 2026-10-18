@@ -24,7 +24,10 @@ export function verifyDiscordSignature(
   }
   try {
     const key = createPublicKey({
-      key: Buffer.concat([ED25519_SPKI_PREFIX, Buffer.from(publicKeyHex, "hex")]),
+      key: Buffer.concat([
+        ED25519_SPKI_PREFIX,
+        Buffer.from(publicKeyHex, "hex"),
+      ]),
       format: "der",
       type: "spki",
     });

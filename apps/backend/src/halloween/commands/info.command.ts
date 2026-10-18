@@ -18,7 +18,9 @@ export class InfoCommand implements HalloweenCommandHandler {
     private readonly guildSettings: GuildSettingsService,
   ) {}
 
-  async handle(interaction: APIApplicationCommandGuildInteraction): Promise<void> {
+  async handle(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<void> {
     requireChatInput(interaction);
     const settings = await this.guildSettings.get(interaction.guild_id);
     await this.discord.editOriginalResponse(interaction.token, {
@@ -41,7 +43,9 @@ export class InfoCommand implements HalloweenCommandHandler {
             },
             {
               name: "End Date",
-              value: settings.endDate ? formatChicagoDate(settings.endDate) : "N/A",
+              value: settings.endDate
+                ? formatChicagoDate(settings.endDate)
+                : "N/A",
             },
             {
               name: "Win Rate (per knock)",

@@ -45,10 +45,10 @@ describe("HalloweenDiscordClient", () => {
   it("edits the deferred reply through the interaction webhook", async () => {
     mockPatch.mockResolvedValue({ id: "m1" });
     await client.editOriginalResponse("tok", { content: "hi" });
-    expect(mockPatch).toHaveBeenCalledWith(
-      ORIGINAL_RESPONSE_ROUTE,
-      { body: { content: "hi" }, auth: false },
-    );
+    expect(mockPatch).toHaveBeenCalledWith(ORIGINAL_RESPONSE_ROUTE, {
+      body: { content: "hi" },
+      auth: false,
+    });
   });
 
   it("fetches the deferred reply", async () => {
@@ -56,10 +56,9 @@ describe("HalloweenDiscordClient", () => {
     await expect(client.getOriginalResponse("tok")).resolves.toEqual({
       id: "m1",
     });
-    expect(mockGet).toHaveBeenCalledWith(
-      ORIGINAL_RESPONSE_ROUTE,
-      { auth: false },
-    );
+    expect(mockGet).toHaveBeenCalledWith(ORIGINAL_RESPONSE_ROUTE, {
+      auth: false,
+    });
   });
 
   it("reports a missing deferred reply as unavailable", async () => {
@@ -79,7 +78,9 @@ describe("HalloweenDiscordClient", () => {
   });
 
   it("reports any HTTP failure fetching the reply as unavailable", async () => {
-    mockGet.mockRejectedValue(new HTTPError(502, "Bad Gateway", "GET", "/x", {}));
+    mockGet.mockRejectedValue(
+      new HTTPError(502, "Bad Gateway", "GET", "/x", {}),
+    );
     await expect(client.getOriginalResponse("tok")).rejects.toBeInstanceOf(
       DiscordWebhookMessageUnavailableError,
     );

@@ -64,7 +64,9 @@ export class CreditsCommand implements HalloweenCommandHandler {
     private readonly ui: HalloweenUi,
   ) {}
 
-  async handle(interaction: APIApplicationCommandGuildInteraction): Promise<void> {
+  async handle(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<void> {
     requireChatInput(interaction);
     await this.discord.editOriginalResponse(interaction.token, {
       embeds: [

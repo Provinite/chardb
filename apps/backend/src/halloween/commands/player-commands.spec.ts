@@ -48,7 +48,11 @@ describe("/deviantart", () => {
 
   it("saves the player's DeviantArt name", async () => {
     await run([
-      { type: ApplicationCommandOptionType.String, name: "da_username", value: "provinite" },
+      {
+        type: ApplicationCommandOptionType.String,
+        name: "da_username",
+        value: "provinite",
+      },
     ]);
     expect(deviantArt.save).toHaveBeenCalledWith({
       deviantArtName: "provinite",
@@ -78,7 +82,13 @@ describe("/deviantart", () => {
 
   it("requires the name as text", async () => {
     await expect(
-      run([{ type: ApplicationCommandOptionType.Integer, name: "da_username", value: 4 }]),
+      run([
+        {
+          type: ApplicationCommandOptionType.Integer,
+          name: "da_username",
+          value: 4,
+        },
+      ]),
     ).rejects.toThrow(
       "Invalid option type for DeviantArt username. Expected a string",
     );
@@ -86,7 +96,13 @@ describe("/deviantart", () => {
 
   it("refuses an empty name", async () => {
     await expect(
-      run([{ type: ApplicationCommandOptionType.String, name: "da_username", value: "" }]),
+      run([
+        {
+          type: ApplicationCommandOptionType.String,
+          name: "da_username",
+          value: "",
+        },
+      ]),
     ).rejects.toThrow("Invalid DeviantArt name provided. Must not be empty.");
   });
 
@@ -98,7 +114,13 @@ describe("/deviantart", () => {
     });
     deviantArt.save.mockRejectedValue(invalid);
     await expect(
-      run([{ type: ApplicationCommandOptionType.String, name: "da_username", value: "a b" }]),
+      run([
+        {
+          type: ApplicationCommandOptionType.String,
+          name: "da_username",
+          value: "a b",
+        },
+      ]),
     ).rejects.toBe(invalid);
   });
 });
@@ -168,9 +190,10 @@ describe("/gifty", () => {
     );
   });
 
-  const toUser = (userId: string) => [
-    { type: ApplicationCommandOptionType.User, name: "user", value: userId },
-  ] as APIApplicationCommandInteractionDataOption[];
+  const toUser = (userId: string) =>
+    [
+      { type: ApplicationCommandOptionType.User, name: "user", value: userId },
+    ] as APIApplicationCommandInteractionDataOption[];
 
   it("sends a gifty with the slash command", async () => {
     await command.handle(
@@ -261,7 +284,11 @@ describe("/gifty", () => {
       }),
     );
     await command.handle(
-      buildInteraction({ id: "ref-3", name: "gifty", options: toUser(OTHER_USER_ID) }),
+      buildInteraction({
+        id: "ref-3",
+        name: "gifty",
+        options: toUser(OTHER_USER_ID),
+      }),
     );
     expect(lastReply(discord)).toEqual({
       embeds: [

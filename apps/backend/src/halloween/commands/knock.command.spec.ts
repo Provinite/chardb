@@ -55,7 +55,10 @@ const settings: HalloweenGuildSettings = {
 
 const LAST_RESET = new Date("2025-10-17T11:00:00Z");
 
-const prize = (id: string, overrides: Partial<HalloweenPrize> = {}): HalloweenPrize => ({
+const prize = (
+  id: string,
+  overrides: Partial<HalloweenPrize> = {},
+): HalloweenPrize => ({
   guildId: GUILD_ID,
   id,
   name: `Prize ${id}`,
@@ -68,7 +71,9 @@ const prize = (id: string, overrides: Partial<HalloweenPrize> = {}): HalloweenPr
   ...overrides,
 });
 
-const knockEvent = (overrides: Partial<HalloweenKnockEvent> = {}): HalloweenKnockEvent => ({
+const knockEvent = (
+  overrides: Partial<HalloweenKnockEvent> = {},
+): HalloweenKnockEvent => ({
   id: 41,
   guildId: GUILD_ID,
   userId: USER_ID,
@@ -101,7 +106,11 @@ describe("/knock", () => {
     eventStatus: jest.Mock;
     lastReset: jest.Mock;
   };
-  let prizes: { hasInStock: jest.Mock; inStock: jest.Mock; decrementStock: jest.Mock };
+  let prizes: {
+    hasInStock: jest.Mock;
+    inStock: jest.Mock;
+    decrementStock: jest.Mock;
+  };
   let knocks: {
     save: jest.Mock;
     countSinceLastReset: jest.Mock;
@@ -207,10 +216,13 @@ describe("/knock", () => {
 
     it("refuses a player out of knocks and gifties", async () => {
       knocks.countSinceLastReset.mockResolvedValue(3);
-      const error = (await knock().catch((e: unknown) => e)) as TooManyKnocksError;
+      const error = (await knock().catch(
+        (e: unknown) => e,
+      )) as TooManyKnocksError;
       expect(error).toBeInstanceOf(TooManyKnocksError);
       expect(
-        (error.responseBody(buildInteraction(), stubUi()).embeds ?? [])[0].fields,
+        (error.responseBody(buildInteraction(), stubUi()).embeds ?? [])[0]
+          .fields,
       ).toEqual([
         { name: "Knocks Per Day", value: "3" },
         { name: "Reset Time", value: "6 AM US Central Time" },
@@ -270,7 +282,8 @@ describe("/knock", () => {
       expect(lastReply(discord)).toMatchObject({
         allowed_mentions: { users: [OTHER_USER_ID, USER_ID] },
       });
-      const fields = (lastReply(discord) as { embeds: Embed[] }).embeds[0].fields;
+      const fields = (lastReply(discord) as { embeds: Embed[] }).embeds[0]
+        .fields;
       expect(fields?.[0]).toEqual({
         name: "Knock Gifted By",
         value: `<@${OTHER_USER_ID}>`,
@@ -355,7 +368,8 @@ describe("/knock", () => {
     it("links the prize on chardb", async () => {
       prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
       await knock();
-      const fields = (lastReply(discord) as { embeds: Embed[] }).embeds[0].fields;
+      const fields = (lastReply(discord) as { embeds: Embed[] }).embeds[0]
+        .fields;
       expect(fields?.[1]).toEqual({
         name: "CharDB",
         value: "[View on CharDB](https://chardb.cc/item/it-1)",
@@ -366,7 +380,8 @@ describe("/knock", () => {
       knocks.countSinceLastReset.mockResolvedValue(3);
       gifties.nextPending.mockResolvedValue(gifty());
       await knock();
-      const fields = (lastReply(discord) as { embeds: Embed[] }).embeds[0].fields;
+      const fields = (lastReply(discord) as { embeds: Embed[] }).embeds[0]
+        .fields;
       expect(fields).toContainEqual({
         name: "Knock Gifted By",
         value: `<@${OTHER_USER_ID}> (Go thank them!)`,
@@ -443,7 +458,10 @@ describe("/knock", () => {
 });
 
 describe("/adminknock", () => {
-  const knock = { name: "knock", knock: jest.fn().mockResolvedValue(undefined) };
+  const knock = {
+    name: "knock",
+    knock: jest.fn().mockResolvedValue(undefined),
+  };
   const command = new AdminKnockCommand(knock as unknown as KnockCommand);
   const target = (userId: string) =>
     [
@@ -455,7 +473,10 @@ describe("/adminknock", () => {
   it("is for administrators only", async () => {
     await expect(
       command.handle(
-        buildInteraction({ name: "adminknock", options: target(OTHER_USER_ID) }),
+        buildInteraction({
+          name: "adminknock",
+          options: target(OTHER_USER_ID),
+        }),
       ),
     ).rejects.toThrow("You lack the required permissions for that command.");
   });
@@ -465,18 +486,26 @@ describe("/adminknock", () => {
       command.handle(
         buildInteraction({ name: "adminknock", permissions: ADMINISTRATOR }),
       ),
-    ).rejects.toThrow("You must provide a target user for the adminknock command");
+    ).rejects.toThrow(
+      "You must provide a target user for the adminknock command",
+    );
     await expect(
       command.handle(
         buildInteraction({
           name: "adminknock",
           permissions: ADMINISTRATOR,
           options: [
-            { type: ApplicationCommandOptionType.String, name: "user", value: "x" },
+            {
+              type: ApplicationCommandOptionType.String,
+              name: "user",
+              value: "x",
+            },
           ],
         }),
       ),
-    ).rejects.toThrow("You must provide a target user for the adminknock command");
+    ).rejects.toThrow(
+      "You must provide a target user for the adminknock command",
+    );
   });
 
   it("knocks as the target, with their allowance and prizes", async () => {

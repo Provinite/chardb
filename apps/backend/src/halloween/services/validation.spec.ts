@@ -131,10 +131,13 @@ describe("validatePrize", () => {
     ]) {
       expect(validatePrize({ ...valid, image })).toContainEqual({
         field: "image",
-        error: "image must be an https or http string URL to a png or jpg image",
+        error:
+          "image must be an https or http string URL to a png or jpg image",
       });
     }
-    expect(validatePrize({ ...valid, image: "http://x.test/a.jpg" })).toBe(true);
+    expect(validatePrize({ ...valid, image: "http://x.test/a.jpg" })).toBe(
+      true,
+    );
   });
 
   it("refuses both an item type and a character", () => {
@@ -170,7 +173,9 @@ describe("validateKnockEventForCreate", () => {
   it("requires a numeric user id", () => {
     expect(
       validateKnockEventForCreate({ guildId: "1", userId: "x", prizeId: null }),
-    ).toEqual([{ field: "userId", error: "UserID should be a numeric string" }]);
+    ).toEqual([
+      { field: "userId", error: "UserID should be a numeric string" },
+    ]);
   });
 
   it("requires ids", () => {

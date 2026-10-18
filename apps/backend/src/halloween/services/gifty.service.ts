@@ -74,7 +74,11 @@ export class GiftyService {
   ): Promise<true | ValidationFieldError[]> {
     const numeric = (s: string) => /^\d+$/.test(s);
     const rules: [string, string, () => boolean | Promise<boolean>][] = [
-      ["guildId", "Guild ID must be a numeric string", () => numeric(gifty.guildId)],
+      [
+        "guildId",
+        "Guild ID must be a numeric string",
+        () => numeric(gifty.guildId),
+      ],
       [
         "fromUserId",
         "from user id must be a numeric string",
@@ -98,7 +102,9 @@ export class GiftyService {
             this.settings.get(gifty.guildId, tx),
             this.lastSent(gifty.guildId, gifty.fromUserId, tx),
           ]);
-          return !lastGifty || this.settings.lastReset(settings) > lastGifty.time;
+          return (
+            !lastGifty || this.settings.lastReset(settings) > lastGifty.time
+          );
         },
       ],
     ];

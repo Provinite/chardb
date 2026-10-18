@@ -32,7 +32,9 @@ describe("PrizeAwardService", () => {
 
   beforeEach(() => {
     tx = {
-      community: { findFirst: jest.fn().mockResolvedValue({ id: "community-1" }) },
+      community: {
+        findFirst: jest.fn().mockResolvedValue({ id: "community-1" }),
+      },
       itemType: {
         findUnique: jest
           .fn()
@@ -64,7 +66,9 @@ describe("PrizeAwardService", () => {
     });
 
     it("accepts an item type of the guild's community", async () => {
-      await expect(validate(prize({ itemTypeId: "it-1" }))).resolves.toBeUndefined();
+      await expect(
+        validate(prize({ itemTypeId: "it-1" })),
+      ).resolves.toBeUndefined();
       expect(tx.community.findFirst).toHaveBeenCalledWith({
         where: { discordGuildId: GUILD_ID },
       });
@@ -72,9 +76,9 @@ describe("PrizeAwardService", () => {
 
     it("refuses an item prize in a guild no community is linked to", async () => {
       tx.community.findFirst.mockResolvedValue(null);
-      await expect(validate(prize({ itemTypeId: "it-1" }))).rejects.toBeInstanceOf(
-        HalloweenDiscordError,
-      );
+      await expect(
+        validate(prize({ itemTypeId: "it-1" })),
+      ).rejects.toBeInstanceOf(HalloweenDiscordError);
     });
 
     it("refuses an item type that does not exist", async () => {
@@ -85,35 +89,40 @@ describe("PrizeAwardService", () => {
     });
 
     it("refuses another community's item type", async () => {
-      tx.itemType.findUnique.mockResolvedValue({ id: "it-1", communityId: "other" });
-      await expect(validate(prize({ itemTypeId: "it-1" }))).rejects.toBeInstanceOf(
-        HalloweenDiscordError,
-      );
+      tx.itemType.findUnique.mockResolvedValue({
+        id: "it-1",
+        communityId: "other",
+      });
+      await expect(
+        validate(prize({ itemTypeId: "it-1" })),
+      ).rejects.toBeInstanceOf(HalloweenDiscordError);
     });
 
     it("accepts an unowned character", async () => {
-      await expect(validate(prize({ characterId: "ch-1" }))).resolves.toBeUndefined();
+      await expect(
+        validate(prize({ characterId: "ch-1" })),
+      ).resolves.toBeUndefined();
     });
 
     it("refuses a missing character", async () => {
       tx.character.findFirst.mockResolvedValue(null);
-      await expect(validate(prize({ characterId: "ch-1" }))).rejects.toBeInstanceOf(
-        HalloweenDiscordError,
-      );
+      await expect(
+        validate(prize({ characterId: "ch-1" })),
+      ).rejects.toBeInstanceOf(HalloweenDiscordError);
     });
 
     it("refuses a character someone already owns", async () => {
       tx.character.findFirst.mockResolvedValue({ id: "ch-1", ownerId: "u" });
-      await expect(validate(prize({ characterId: "ch-1" }))).rejects.toBeInstanceOf(
-        HalloweenDiscordError,
-      );
+      await expect(
+        validate(prize({ characterId: "ch-1" })),
+      ).rejects.toBeInstanceOf(HalloweenDiscordError);
     });
 
     it("refuses a character already promised to someone", async () => {
       tx.pendingOwnership.findUnique.mockResolvedValue({ id: "po" });
-      await expect(validate(prize({ characterId: "ch-1" }))).rejects.toBeInstanceOf(
-        HalloweenDiscordError,
-      );
+      await expect(
+        validate(prize({ characterId: "ch-1" })),
+      ).rejects.toBeInstanceOf(HalloweenDiscordError);
     });
   });
 

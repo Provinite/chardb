@@ -21,7 +21,10 @@ import {
   stubUi,
 } from "../testing/command-harness";
 
-const prize = (id: string, overrides: Partial<HalloweenPrize> = {}): HalloweenPrize => ({
+const prize = (
+  id: string,
+  overrides: Partial<HalloweenPrize> = {},
+): HalloweenPrize => ({
   guildId: GUILD_ID,
   id,
   name: `Prize ${id}`,
@@ -84,7 +87,8 @@ describe("/prize", () => {
   const run = (
     options: APIApplicationCommandInteractionDataOption[] | undefined,
     permissions = ADMINISTRATOR,
-  ) => command.handle(buildInteraction({ name: "prize", options, permissions }));
+  ) =>
+    command.handle(buildInteraction({ name: "prize", options, permissions }));
 
   describe("routing", () => {
     it("requires a subcommand", async () => {
@@ -135,7 +139,10 @@ describe("/prize", () => {
             description:
               "These are the remaining prizes still to go for the event!",
             fields: [
-              { name: "Prize myo", value: "Just one remaining ||stock1|wg: 10||" },
+              {
+                name: "Prize myo",
+                value: "Just one remaining ||stock1|wg: 10||",
+              },
               {
                 name: "Prize adopt",
                 value:
@@ -173,8 +180,9 @@ describe("/prize", () => {
   });
 
   describe("admin add", () => {
-    const add = (options: APIApplicationCommandInteractionDataOption[]) =>
-      [adminGroup(sub("add", options))];
+    const add = (options: APIApplicationCommandInteractionDataOption[]) => [
+      adminGroup(sub("add", options)),
+    ];
     const required = [
       str("id", "myo-common"),
       str("name", "Common MYO"),
@@ -205,7 +213,9 @@ describe("/prize", () => {
     });
 
     it("takes a weight and a CharDB item type", async () => {
-      await run(add([...required, int("weight", 3), str("item-type-id", "it-1")]));
+      await run(
+        add([...required, int("weight", 3), str("item-type-id", "it-1")]),
+      );
       expect(prizes.save).toHaveBeenCalledWith(
         expect.objectContaining({ weight: 3, itemTypeId: "it-1" }),
       );
@@ -251,7 +261,10 @@ describe("/prize", () => {
     it("reports any other failure to save", async () => {
       prizes.save.mockRejectedValue(new Error("duplicate key"));
       await expect(run(add(required))).rejects.toThrow(
-        new HalloweenDiscordError({ thrownFrom: "t", message: "Couldn't save prize" }),
+        new HalloweenDiscordError({
+          thrownFrom: "t",
+          message: "Couldn't save prize",
+        }),
       );
     });
   });

@@ -27,7 +27,10 @@ const str = (name: string, value: string) =>
   ({ type: ApplicationCommandOptionType.String, name, value }) as const;
 const int = (name: string, value: number) =>
   ({ type: ApplicationCommandOptionType.Integer, name, value }) as const;
-const sub = (name: string, options: APIApplicationCommandInteractionDataBasicOption[]) =>
+const sub = (
+  name: string,
+  options: APIApplicationCommandInteractionDataBasicOption[],
+) =>
   ({ type: ApplicationCommandOptionType.Subcommand, name, options }) as const;
 
 /**
@@ -100,11 +103,27 @@ describe("Halloween bot (e2e)", () => {
   const admin = { permissions: ADMINISTRATOR };
 
   const setUpEvent = async ({ knocksPerDay = "2" } = {}) => {
-    await run("settings", [sub("set", [str("setting", "start_date"), str("value", "2020-01-01")])], admin);
-    await run("settings", [sub("set", [str("setting", "knocks_per_day"), str("value", knocksPerDay)])], admin);
+    await run(
+      "settings",
+      [sub("set", [str("setting", "start_date"), str("value", "2020-01-01")])],
+      admin,
+    );
+    await run(
+      "settings",
+      [
+        sub("set", [
+          str("setting", "knocks_per_day"),
+          str("value", knocksPerDay),
+        ]),
+      ],
+      admin,
+    );
   };
 
-  const addPrize = (id: string, extra: APIApplicationCommandInteractionDataBasicOption[] = []) =>
+  const addPrize = (
+    id: string,
+    extra: APIApplicationCommandInteractionDataBasicOption[] = [],
+  ) =>
     run(
       "prize",
       [
@@ -131,7 +150,9 @@ describe("Halloween bot (e2e)", () => {
   it("sets up an event from Discord", async () => {
     await setUpEvent({ knocksPerDay: "4" });
     expect(
-      await db.halloweenGuildSettings.findUnique({ where: { guildId: GUILD_ID } }),
+      await db.halloweenGuildSettings.findUnique({
+        where: { guildId: GUILD_ID },
+      }),
     ).toMatchObject({
       knocksPerDay: 4,
       resetTime: 6,
@@ -139,7 +160,9 @@ describe("Halloween bot (e2e)", () => {
       startDate: new Date("2020-01-01T06:00:00Z"),
     });
     const reply = await addPrize("myo");
-    expect(reply.content).toBe("Added 2 units of Prize myo as myo with weight 10");
+    expect(reply.content).toBe(
+      "Added 2 units of Prize myo as myo with weight 10",
+    );
   });
 
   it("records a losing knock", async () => {
@@ -169,9 +192,7 @@ describe("Halloween bot (e2e)", () => {
     expect(reply.embeds?.[0].title).toBe("Winner!");
     const knock = await db.halloweenKnockEvent.findFirstOrThrow();
     expect(knock).toMatchObject({ prizeId: "candy", isPending: false });
-    expect(
-      (await db.halloweenPrize.findFirstOrThrow()).currentStock,
-    ).toBe(1);
+    expect((await db.halloweenPrize.findFirstOrThrow()).currentStock).toBe(1);
     const item = await db.item.findFirstOrThrow({
       where: { itemTypeId: itemType.id },
       include: { pendingOwnership: true },
@@ -219,10 +240,20 @@ describe("Halloween bot (e2e)", () => {
     alwaysLose();
     await run("knock");
 
-    const gifted = await run("gifty", [
-      { type: ApplicationCommandOptionType.User, name: "user", value: USER_ID },
-    ], { userId: OTHER_USER_ID });
-    expect(gifted.embeds?.[0].title).toBe("Cloverse Halloween 2026 - New Gifty!");
+    const gifted = await run(
+      "gifty",
+      [
+        {
+          type: ApplicationCommandOptionType.User,
+          name: "user",
+          value: USER_ID,
+        },
+      ],
+      { userId: OTHER_USER_ID },
+    );
+    expect(gifted.embeds?.[0].title).toBe(
+      "Cloverse Halloween 2026 - New Gifty!",
+    );
 
     const reply = await run("knock");
     expect(reply.embeds?.[0].fields?.[0]).toEqual({
@@ -241,6 +272,8 @@ describe("Halloween bot (e2e)", () => {
 
   it("tells players in a server that is not set up", async () => {
     const reply = await run("knock");
-    expect(reply.embeds?.[0].title).toBe("Cloverse Halloween 2026 - Not Ready Yet");
+    expect(reply.embeds?.[0].title).toBe(
+      "Cloverse Halloween 2026 - Not Ready Yet",
+    );
   });
 });

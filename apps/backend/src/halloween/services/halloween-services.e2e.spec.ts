@@ -287,9 +287,9 @@ describe("Halloween services (e2e)", () => {
         userId: ALICE,
         prizeId: null,
       });
-      await expect(knocks.fulfillPending(done.id, "myo")).rejects.toBeInstanceOf(
-        DiscordReportableError,
-      );
+      await expect(
+        knocks.fulfillPending(done.id, "myo"),
+      ).rejects.toBeInstanceOf(DiscordReportableError);
     });
   });
 
@@ -299,7 +299,10 @@ describe("Halloween services (e2e)", () => {
     });
 
     const send = (from = ALICE, to = BOB, rateLimit = true) =>
-      gifties.save({ guildId: GUILD, fromUserId: from, toUserId: to }, { rateLimit });
+      gifties.save(
+        { guildId: GUILD, fromUserId: from, toUserId: to },
+        { rateLimit },
+      );
 
     it("saves a pending gifty", async () => {
       const gifty = await send();
@@ -337,7 +340,9 @@ describe("Halloween services (e2e)", () => {
     });
 
     it("refuses non-numeric user ids", async () => {
-      const error = (await send(ALICE, "bob").catch((e: unknown) => e)) as ValidationError;
+      const error = (await send(ALICE, "bob").catch(
+        (e: unknown) => e,
+      )) as ValidationError;
       expect(error.validationErrors).toEqual([
         { field: "toUserId", error: "to user id must be a numeric string" },
       ]);
@@ -395,9 +400,19 @@ describe("Halloween services (e2e)", () => {
     });
 
     it("saves and replaces a player's DeviantArt name", async () => {
-      expect(await deviantArt.get({ guildId: GUILD, userId: ALICE })).toBeNull();
-      await deviantArt.save({ guildId: GUILD, userId: ALICE, deviantArtName: "first" });
-      await deviantArt.save({ guildId: GUILD, userId: ALICE, deviantArtName: "second-1" });
+      expect(
+        await deviantArt.get({ guildId: GUILD, userId: ALICE }),
+      ).toBeNull();
+      await deviantArt.save({
+        guildId: GUILD,
+        userId: ALICE,
+        deviantArtName: "first",
+      });
+      await deviantArt.save({
+        guildId: GUILD,
+        userId: ALICE,
+        deviantArtName: "second-1",
+      });
       expect(await deviantArt.get({ guildId: GUILD, userId: ALICE })).toEqual({
         guildId: GUILD,
         userId: ALICE,

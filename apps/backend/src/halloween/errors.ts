@@ -3,13 +3,10 @@ import type {
   RESTPatchAPIWebhookWithTokenMessageJSONBody,
 } from "@discordjs/core";
 import { Color, EVENT_NAME, HalloweenUi } from "./discord/ui";
-import {
-  formatLastReset,
-  formatLegacyLocale,
-  formatResetHour,
-} from "./time";
+import { formatLastReset, formatLegacyLocale, formatResetHour } from "./time";
 
-export type InteractionResponseBody = RESTPatchAPIWebhookWithTokenMessageJSONBody;
+export type InteractionResponseBody =
+  RESTPatchAPIWebhookWithTokenMessageJSONBody;
 
 interface ReportableOptions {
   thrownFrom: string;

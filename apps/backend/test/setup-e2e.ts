@@ -44,7 +44,8 @@ export class TestApp {
    */
   async setup(
     moduleMetadata: Pick<ModuleMetadata, "imports" | "providers">,
-    override: (builder: TestingModuleBuilder) => TestingModuleBuilder = (b) => b,
+    override: (builder: TestingModuleBuilder) => TestingModuleBuilder = (b) =>
+      b,
   ) {
     const builder = Test.createTestingModule({
       imports: [

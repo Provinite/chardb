@@ -32,7 +32,9 @@ export class GiftyCommand implements HalloweenCommandHandler {
     private readonly db: DatabaseService,
   ) {}
 
-  async handle(interaction: APIApplicationCommandGuildInteraction): Promise<void> {
+  async handle(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<void> {
     const guildId = interaction.guild_id;
     const fromUserId = interaction.member.user.id;
     const toUserId = this.recipient(interaction);
@@ -67,7 +69,8 @@ export class GiftyCommand implements HalloweenCommandHandler {
 
       await this.discord.editOriginalResponse(interaction.token, {
         allowed_mentions: {
-          users: fromUserId === toUserId ? [fromUserId] : [fromUserId, toUserId],
+          users:
+            fromUserId === toUserId ? [fromUserId] : [fromUserId, toUserId],
         },
         embeds: [
           {
@@ -83,7 +86,9 @@ export class GiftyCommand implements HalloweenCommandHandler {
     });
   }
 
-  private recipient(interaction: APIApplicationCommandGuildInteraction): string {
+  private recipient(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): string {
     if (isUserCommand(interaction)) {
       return interaction.data.target_id;
     }

@@ -1,6 +1,9 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import type { APIApplicationCommandGuildInteraction } from "@discordjs/core";
-import { HALLOWEEN_COMMANDS, HalloweenCommandHandler } from "./halloween-command";
+import {
+  HALLOWEEN_COMMANDS,
+  HalloweenCommandHandler,
+} from "./halloween-command";
 import { HalloweenDiscordClient } from "./halloween-discord.client";
 import { HalloweenUi } from "./ui";
 import {
@@ -37,7 +40,9 @@ export class HalloweenCommandDispatcher {
   }
 
   /** Never rejects: there is no caller left to hear about it. */
-  async dispatch(interaction: APIApplicationCommandGuildInteraction): Promise<void> {
+  async dispatch(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<void> {
     const commandName = interaction.data.name.toLowerCase();
     try {
       await this.waitForOriginalResponse(interaction);
@@ -103,7 +108,10 @@ export class HalloweenCommandDispatcher {
     const context = `/${commandName} failed for user ${interaction.member.user.id} in guild ${interaction.guild_id} (interaction ${interaction.id}): ${reportable.message} [from ${reportable.thrownFrom}]`;
     if (reportable.logAsError) {
       const cause = reportable.sourceError ?? reportable;
-      this.logger.error(context, error instanceof Error ? error.stack : cause.stack);
+      this.logger.error(
+        context,
+        error instanceof Error ? error.stack : cause.stack,
+      );
     } else {
       this.logger.warn(context);
     }

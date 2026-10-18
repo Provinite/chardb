@@ -24,7 +24,9 @@ export class DeviantArtCommand implements HalloweenCommandHandler {
     private readonly deviantArtUsers: DeviantArtUserService,
   ) {}
 
-  async handle(interaction: APIApplicationCommandGuildInteraction): Promise<void> {
+  async handle(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<void> {
     const chat = requireChatInput(interaction);
     const { options } = chat.data;
     if (!options || !options.length) {
@@ -41,7 +43,8 @@ export class DeviantArtCommand implements HalloweenCommandHandler {
     if (option.type !== ApplicationCommandOptionType.String) {
       throw new HalloweenDiscordError({
         thrownFrom: "DeviantArtCommand",
-        message: "Invalid option type for DeviantArt username. Expected a string",
+        message:
+          "Invalid option type for DeviantArt username. Expected a string",
         sourceError: new Error(
           `Got a non-string option in the first slot for command ${this.name}`,
         ),

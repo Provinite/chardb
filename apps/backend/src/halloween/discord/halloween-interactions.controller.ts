@@ -96,15 +96,18 @@ export class HalloweenInteractionsController {
       };
     }
 
-    const guildInteraction = interaction as APIApplicationCommandGuildInteraction;
+    const guildInteraction =
+      interaction as APIApplicationCommandGuildInteraction;
     // Not before: editing the deferred reply needs Discord to have it first.
     res.on("finish", () => {
-      void this.dispatcher.dispatch(guildInteraction).catch((error: unknown) =>
-        this.logger.error(
-          `Dispatch of interaction ${guildInteraction.id} escaped its handler`,
-          error instanceof Error ? error.stack : String(error),
-        ),
-      );
+      void this.dispatcher
+        .dispatch(guildInteraction)
+        .catch((error: unknown) =>
+          this.logger.error(
+            `Dispatch of interaction ${guildInteraction.id} escaped its handler`,
+            error instanceof Error ? error.stack : String(error),
+          ),
+        );
     });
 
     return {

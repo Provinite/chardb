@@ -18,7 +18,9 @@ export class AdminKnockCommand implements HalloweenCommandHandler {
 
   constructor(private readonly knockCommand: KnockCommand) {}
 
-  async handle(interaction: APIApplicationCommandGuildInteraction): Promise<void> {
+  async handle(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<void> {
     const chat = requireChatInput(interaction);
     requireAdministrator(chat, "AdminKnockCommand");
 

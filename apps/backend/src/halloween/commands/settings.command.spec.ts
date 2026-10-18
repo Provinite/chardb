@@ -40,7 +40,11 @@ const subcommand = (
 
 const setOptions = (setting: string, value: string) =>
   subcommand("set", [
-    { type: ApplicationCommandOptionType.String, name: "setting", value: setting },
+    {
+      type: ApplicationCommandOptionType.String,
+      name: "setting",
+      value: setting,
+    },
     { type: ApplicationCommandOptionType.String, name: "value", value },
   ]);
 
@@ -85,7 +89,10 @@ describe("/settings", () => {
   describe("routing", () => {
     it("requires a subcommand", async () => {
       await expect(run(undefined)).rejects.toThrow(
-        new HalloweenDiscordError({ thrownFrom: "t", message: "No subcommand provided" }),
+        new HalloweenDiscordError({
+          thrownFrom: "t",
+          message: "No subcommand provided",
+        }),
       );
     });
 
@@ -216,9 +223,17 @@ describe("/settings", () => {
       ["reset_time", "13", { resetTime: 13 }],
       ["win_rate", "0.25", { winRate: 0.25 }],
       ["win_rate", ".5", { winRate: 0.5 }],
-      ["win_channel", "300000000000000010", { winChannel: "300000000000000010" }],
+      [
+        "win_channel",
+        "300000000000000010",
+        { winChannel: "300000000000000010" },
+      ],
       // Midnight in Chicago: CDT is UTC-5.
-      ["start_date", "2026-10-01", { startDate: new Date("2026-10-01T05:00:00Z") }],
+      [
+        "start_date",
+        "2026-10-01",
+        { startDate: new Date("2026-10-01T05:00:00Z") },
+      ],
       // And CST is UTC-6.
       ["end_date", "2026-11-03", { endDate: new Date("2026-11-03T06:00:00Z") }],
     ])("stores %s %s", async (setting, value, expected) => {
@@ -230,9 +245,9 @@ describe("/settings", () => {
       guildSettings.has.mockResolvedValue(false);
       await run(setOptions("knocks_per_day", "4"));
       expect(guildSettings.createDefaults).toHaveBeenCalledWith(GUILD_ID, tx);
-      expect(guildSettings.createDefaults.mock.invocationCallOrder[0]).toBeLessThan(
-        guildSettings.update.mock.invocationCallOrder[0],
-      );
+      expect(
+        guildSettings.createDefaults.mock.invocationCallOrder[0],
+      ).toBeLessThan(guildSettings.update.mock.invocationCallOrder[0]);
     });
 
     it("confirms the change", async () => {

@@ -15,7 +15,9 @@ export class TestWinCommand implements HalloweenCommandHandler {
     private readonly guildSettings: GuildSettingsService,
   ) {}
 
-  async handle(interaction: APIApplicationCommandGuildInteraction): Promise<void> {
+  async handle(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<void> {
     const chat = requireChatInput(interaction);
     requireAdministrator(
       chat,

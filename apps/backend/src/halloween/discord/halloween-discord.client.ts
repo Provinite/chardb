@@ -37,9 +37,12 @@ export class HalloweenDiscordClient {
    */
   async getOriginalResponse(interactionToken: string): Promise<APIMessage> {
     try {
-      return (await this.rest.get(this.originalResponseRoute(interactionToken), {
-        auth: false,
-      })) as APIMessage;
+      return (await this.rest.get(
+        this.originalResponseRoute(interactionToken),
+        {
+          auth: false,
+        },
+      )) as APIMessage;
     } catch (error) {
       if (error instanceof DiscordAPIError || error instanceof HTTPError) {
         throw new DiscordWebhookMessageUnavailableError(interactionToken);
@@ -53,10 +56,13 @@ export class HalloweenDiscordClient {
     interactionToken: string,
     body: InteractionResponseBody,
   ): Promise<APIMessage> {
-    return (await this.rest.patch(this.originalResponseRoute(interactionToken), {
-      body,
-      auth: false,
-    })) as APIMessage;
+    return (await this.rest.patch(
+      this.originalResponseRoute(interactionToken),
+      {
+        body,
+        auth: false,
+      },
+    )) as APIMessage;
   }
 
   async createChannelMessage(

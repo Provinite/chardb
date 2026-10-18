@@ -52,12 +52,10 @@ describe("HalloweenCommandDispatcher", () => {
   it("waits until Discord has registered the deferred reply", async () => {
     const interaction = buildInteraction();
     await dispatcher.dispatch(interaction);
-    expect(discord.getOriginalResponse).toHaveBeenCalledWith(
-      interaction.token,
-    );
-    expect(discord.getOriginalResponse.mock.invocationCallOrder[0]).toBeLessThan(
-      knock.handle.mock.invocationCallOrder[0],
-    );
+    expect(discord.getOriginalResponse).toHaveBeenCalledWith(interaction.token);
+    expect(
+      discord.getOriginalResponse.mock.invocationCallOrder[0],
+    ).toBeLessThan(knock.handle.mock.invocationCallOrder[0]);
   });
 
   it("retries finding the deferred reply", async () => {

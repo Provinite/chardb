@@ -9,7 +9,11 @@ import {
 } from "../errors";
 import { getEventStatus, getLastReset, type EventStatus } from "../time";
 
-type Rule = [field: keyof HalloweenGuildSettings, error: string, ok: () => boolean];
+type Rule = [
+  field: keyof HalloweenGuildSettings,
+  error: string,
+  ok: () => boolean,
+];
 
 export function validateGuildSettings(
   settings: HalloweenGuildSettings,
@@ -22,7 +26,11 @@ export function validateGuildSettings(
       "Start date must be before end date if they are both set",
       () => !startDate || !endDate || startDate < endDate,
     ],
-    ["guildId", "Guild ID should be a numeric string", () => /^\d+$/.test(guildId)],
+    [
+      "guildId",
+      "Guild ID should be a numeric string",
+      () => /^\d+$/.test(guildId),
+    ],
     [
       "knocksPerDay",
       "Knocks per day should be a positive whole number",
@@ -68,7 +76,10 @@ export class GuildSettingsService {
     return settings;
   }
 
-  async has(guildId: string, tx: Prisma.TransactionClient = this.db): Promise<boolean> {
+  async has(
+    guildId: string,
+    tx: Prisma.TransactionClient = this.db,
+  ): Promise<boolean> {
     return (await tx.halloweenGuildSettings.count({ where: { guildId } })) > 0;
   }
 

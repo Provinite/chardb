@@ -50,7 +50,10 @@ export class PrizeAwardService {
         where: { id: prize.itemTypeId },
       });
       if (!itemType) {
-        throw this.undeliverable(prize, `item type ${prize.itemTypeId} not found`);
+        throw this.undeliverable(
+          prize,
+          `item type ${prize.itemTypeId} not found`,
+        );
       }
       if (itemType.communityId !== community.id) {
         throw this.undeliverable(
@@ -65,7 +68,10 @@ export class PrizeAwardService {
         where: { id: prize.characterId, ...notDeleted },
       });
       if (!character) {
-        throw this.undeliverable(prize, `character ${prize.characterId} not found`);
+        throw this.undeliverable(
+          prize,
+          `character ${prize.characterId} not found`,
+        );
       }
       if (character.ownerId !== null) {
         throw this.undeliverable(
