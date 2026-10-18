@@ -34,6 +34,13 @@ export class Community {
   })
   discordGuildName: string | null;
 
+  /** Whether the Halloween event's pages are shown; site admins set it */
+  @Field({
+    description:
+      "Whether the Halloween event's pages are shown for this community. Only a site admin can change it.",
+  })
+  halloweenEnabled: boolean;
+
   /** When the community was created */
   @Field({ description: "When the community was created" })
   createdAt: Date;

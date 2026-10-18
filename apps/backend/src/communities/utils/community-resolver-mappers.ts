@@ -55,6 +55,7 @@ export function mapPrismaCommunityToGraphQL(
     slug: prismaCommunity.slug,
     discordGuildId: prismaCommunity.discordGuildId,
     discordGuildName: prismaCommunity.discordGuildName,
+    halloweenEnabled: prismaCommunity.halloweenEnabled,
     createdAt: prismaCommunity.createdAt,
     updatedAt: prismaCommunity.updatedAt,
   };

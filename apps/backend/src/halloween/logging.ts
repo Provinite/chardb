@@ -36,6 +36,11 @@ export const HalloweenLogEvent = {
   SettingsCreated: "halloween.settings.created",
   SettingChanged: "halloween.settings.changed",
   PrizeAdded: "halloween.prize.added",
+  /** Staff marked a prize with no chardb item or character as handed over. */
+  PrizeMarkedDelivered: "halloween.prize.marked_delivered",
+  PrizeUnmarkedDelivered: "halloween.prize.unmarked_delivered",
+  /** A site admin turned the event on or off for a community. */
+  CommunityToggled: "halloween.community.toggled",
   DeviantArtSaved: "halloween.deviantart.saved",
   WinChannelTested: "halloween.win_channel.tested",
 } as const;
