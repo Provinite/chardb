@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Halloween Event - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Run a community's Halloween trick-or-treat event from CharDB: turn it on, set it up, fill the prize pool with items and characters, and track the prizes staff hand over."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/halloween-event.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Halloween Event" />
+    <meta
+      property="og:description"
+      content="Run a community's Halloween trick-or-treat event from CharDB: turn it on, set it up, fill the prize pool with items and characters, and track the prizes staff hand over."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/halloween-event.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/halloween-command-center.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The Halloween event page of a community, with totals, the event's settings, the prize pool and the win feed."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul,
+      .step-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        max-width: 520px;
+        margin: 0 auto 1.5rem;
+      }
+
+      .screenshot.wide {
+        max-width: 100%;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #e0e0e0;
+        vertical-align: top;
+      }
+
+      th {
+        color: #333;
+        background: #f8f9fa;
+      }
+
+      code {
+        background: #f3f3f8;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        font-size: 0.875em;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Halloween Event</h1>
+        <p>Trick-or-treat in Discord, run from CharDB</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every October, players knock on the door in the community's Discord
+            server with <code>/knock</code>. Each knock has a chance of winning
+            a prize from the community's prize pool. Players get a few knocks a
+            day, and can gift a friend an extra one.
+          </p>
+          <p>
+            The game itself happens in Discord. CharDB is where staff run it:
+            set it up, decide what can be won, and keep track of who won what.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">&#x1F6AA;</div>
+              <h4>Knocks</h4>
+              <p>A few chances a day to win, in Discord</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F381;</div>
+              <h4>Gifties</h4>
+              <p>One extra knock, sent to a friend</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F383;</div>
+              <h4>Prizes</h4>
+              <p>CharDB items and characters, or anything staff hand over</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F47B;</div>
+              <h4>Event page</h4>
+              <p>Settings, the prize pool, and every win</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Items and characters deliver themselves.</strong> A CharDB
+            item or character a player wins goes to their Discord account on
+            CharDB straight away. If they haven't joined or linked Discord yet,
+            it waits for them and is theirs the moment they do.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Turning It On</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The event is off for every community until a
+            <strong>site admin</strong> turns it on. Each community's card in
+            <strong>Community Management</strong> has a
+            <strong>Halloween</strong> button that switches it between
+            <em>on</em> and <em>off</em>.
+          </p>
+          <p>
+            The community also needs its Discord server linked in its settings.
+            That's how CharDB knows which server's event belongs to it.
+          </p>
+          <div class="highlight-box">
+            <strong>This only controls CharDB's side.</strong> While it's off,
+            the community's staff don't see the event page or its card. The bot
+            keeps answering in Discord either way.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="halloween-toggle.png"
+            alt="A community's card in Community Management, with Invite Codes, Manage, Halloween: on and Delete buttons"
+          />
+          <div class="screenshot-caption">
+            A community with the event turned on
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Finding the Event Page</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Once the event is on, a <strong>Halloween Event</strong> card
+            appears on the community's <strong>Administration</strong> page. It
+            leads to the event page.
+          </p>
+          <p>Two permissions open the page, and each unlocks its own part:</p>
+          <table>
+            <tr>
+              <th>Permission</th>
+              <th>What it lets you do</th>
+            </tr>
+            <tr>
+              <td>Manage items</td>
+              <td>
+                Set the event up, change its settings, and fill the prize pool
+              </td>
+            </tr>
+            <tr>
+              <td>Grant items</td>
+              <td>Mark the prizes staff hand over as delivered</td>
+            </tr>
+          </table>
+          <p>
+            Either one lets you see the page: the totals, the prize pool and
+            every win.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="halloween-admin-card.png"
+            alt="The Halloween Event card on the community Administration page, with a ghost icon and the text: Run the trick-or-treat event: its settings and prize pool, what players have won, and which prizes staff still need to hand over."
+          />
+          <div class="screenshot-caption">
+            The card on the community's Administration page
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Setting the Event Up</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Until the event is set up, the page shows only its settings form.
+            Someone who can only grant items is told it isn't set up yet.
+          </p>
+          <ul>
+            <li>
+              <strong>Starts</strong> and <strong>Ends</strong>: when knocking
+              opens and closes, in your own time zone. Leave Starts blank to
+              keep it closed, or Ends blank to run until you stop it.
+            </li>
+            <li>
+              <strong>Knocks per day</strong>: how many knocks each player gets
+              between resets.
+            </li>
+            <li>
+              <strong>Reset hour</strong>: when everyone's knocks and gifties
+              come back each day, in US Central time.
+            </li>
+            <li>
+              <strong>Win rate</strong>: the chance that any one knock wins a
+              prize.
+            </li>
+            <li>
+              <strong>Win channel ID</strong>: optional. A Discord channel where
+              every win is announced, besides the reply to the player.
+            </li>
+          </ul>
+          <p>
+            Players can knock once the start date has passed and there are
+            prizes in the pool.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-setup.png"
+            alt="The event page before setup, titled Set up the event, with Starts, Ends, Knocks per day, Reset hour, Win rate and Win channel ID fields and a Set up the event button"
+          />
+          <div class="screenshot-caption">
+            The first visit: settings come first
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">The Event Page</h2>
+        </div>
+        <div class="step-content">
+          <p>Once it's set up, the page has four parts:</p>
+          <ol>
+            <li>
+              <strong>Totals</strong>: knocks, wins, players, gifties sent, and
+              prizes still waiting for staff to hand over.
+            </li>
+            <li>
+              <strong>Settings</strong>, with <strong>Edit settings</strong> to
+              change them.
+            </li>
+            <li>
+              <strong>Prize pool</strong>: each prize with its picture, how many
+              are left of how many, its weight, and its type.
+            </li>
+            <li>
+              <strong>Wins</strong>: every winning knock, newest first, with the
+              winner's Discord account, who gifted the knock if anyone did,
+              their DeviantArt name, and where the prize is.
+            </li>
+          </ol>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-command-center.png"
+            alt="The event page with totals (9 knocks, 4 wins, 5 players, 2 gifties sent, 1 to deliver), the settings listed one per line, a prize pool of three prizes with Edit and Remove buttons, and a win feed with All, Needs delivery and Delivered filters"
+          />
+          <div class="screenshot-caption">
+            The event page, partway through an event
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Adding Prizes</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Add prize</strong> opens the prize form. First pick what
+            kind of prize it is:
+          </p>
+          <table>
+            <tr>
+              <th>Prize type</th>
+              <th>What the winner gets</th>
+            </tr>
+            <tr>
+              <td>Item</td>
+              <td>One of the community's items, in their inventory</td>
+            </tr>
+            <tr>
+              <td>Character</td>
+              <td>A character nobody owns yet, as their own</td>
+            </tr>
+            <tr>
+              <td>Other / off-site</td>
+              <td>
+                Anything else, such as a DeviantArt adopt. Staff hand it over
+                and mark it delivered.
+              </td>
+            </tr>
+          </table>
+          <p>
+            For an item or a character, type at least two letters of its name
+            and pick it from the list. Picking one fills in the prize's
+            <strong>Name</strong> and <strong>Short name</strong> for you,
+            unless you've already typed your own.
+          </p>
+          <ul>
+            <li>
+              <strong>Short name</strong>: how the prize is known behind the
+              scenes. 2&ndash;25 lowercase letters and hyphens, starting with a
+              letter, and it can't be changed later.
+            </li>
+            <li>
+              <strong>Stock</strong>: how many can be won. Fungible prizes such
+              as edit kits can have hundreds.
+            </li>
+            <li>
+              <strong>Weight</strong>: how likely this prize is to be the one
+              won, compared with the others. A prize with more left is
+              proportionally more likely.
+            </li>
+          </ul>
+        </div>
+        <div class="screenshot">
+          <img
+            src="halloween-add-item.png"
+            alt="The Add a prize form with Item selected and lo typed into the Item type box, listing Heirloom Locket and MYO Slot — Rare"
+          />
+          <div class="screenshot-caption">Searching the community's items</div>
+        </div>
+        <div class="step-content">
+          <p>
+            The character list leaves out characters that are already owned,
+            already promised to someone, or already a prize.
+          </p>
+          <div class="highlight-box">
+            <strong>Pictures come from CharDB.</strong> An item or character
+            prize shows the item's or character's own picture, once a moderator
+            has approved it. Only an Other / off-site prize takes a picture
+            link.
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="halloween-add-character.png"
+            alt="The Add a prize form with Character selected and Lantern Moth picked; Name reads Lantern Moth and Short name reads lantern-moth"
+          />
+          <div class="screenshot-caption">
+            A character picked: its names are filled in
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">Changing the Prize Pool</h2>
+        </div>
+        <div class="step-content">
+          <ul>
+            <li>
+              <strong>Edit</strong> changes a prize's name, weight, picture link
+              (for an Other / off-site prize) and how many are left. The total
+              moves with it, so the number already won stays right.
+            </li>
+            <li>
+              <strong>Remove</strong> takes a prize out of the pool for good,
+              after asking. A prize somebody has already won can't be removed,
+              because the win still points at it. Set its stock to 0 instead.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">Delivering Prizes</h2>
+        </div>
+        <div class="step-content">
+          <p>Each win's status says where its prize is:</p>
+          <table>
+            <tr>
+              <th>Status</th>
+              <th>Meaning</th>
+            </tr>
+            <tr>
+              <td>On chardb: @name</td>
+              <td>An item or character, already with the winner on CharDB</td>
+            </tr>
+            <tr>
+              <td>Waiting for them to link Discord</td>
+              <td>
+                An item or character, waiting for the winner to link their
+                Discord account
+              </td>
+            </tr>
+            <tr>
+              <td>Staff to deliver</td>
+              <td>An Other / off-site prize nobody has handed over yet</td>
+            </tr>
+            <tr>
+              <td>Delivered by @name</td>
+              <td>
+                An Other / off-site prize, with who handed it over and when
+              </td>
+            </tr>
+          </table>
+          <p>
+            <strong>Needs delivery</strong> narrows the list to the prizes still
+            to hand over. Once you've handed one over, click
+            <strong>Mark delivered</strong>. If that was a mistake,
+            <strong>Undo</strong> asks first, then clears who delivered it and
+            when.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-undo-delivered.png"
+            alt="The win feed behind a dialog titled Mark not delivered?, reading This clears who delivered it and when, with Cancel and Mark not delivered buttons"
+          />
+          <div class="screenshot-caption">Undoing a delivery asks first</div>
+        </div>
+      </div>
+
+      <!-- Step 8 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">8</div>
+          <h2 class="step-title">In Discord</h2>
+        </div>
+        <div class="step-content">
+          <p>Players use these commands in the community's server:</p>
+          <table>
+            <tr>
+              <th>Command</th>
+              <th>What it does</th>
+            </tr>
+            <tr>
+              <td><code>/knock</code></td>
+              <td>Knock for a chance at a prize</td>
+            </tr>
+            <tr>
+              <td><code>/gifty</code></td>
+              <td>
+                Send a friend one extra knock, once per reset. Also on a
+                member's right-click menu.
+              </td>
+            </tr>
+            <tr>
+              <td><code>/prize list</code></td>
+              <td>A sample of the prizes still to be won</td>
+            </tr>
+            <tr>
+              <td><code>/info</code>, <code>/help</code></td>
+              <td>The event's dates and rules, and how to take part</td>
+            </tr>
+            <tr>
+              <td><code>/deviantart</code></td>
+              <td>Save your DeviantArt name, for prizes delivered there</td>
+            </tr>
+          </table>
+          <p>
+            Server administrators also have <code>/adminknock</code>, to knock
+            on behalf of a player who can't, and <code>/testwin</code>, to check
+            the bot can post in the win channel.
+          </p>
+          <div class="highlight-box">
+            <strong>Settings and prizes live on CharDB now.</strong> The old
+            <code>/settings</code> and <code>/prize admin</code> commands still
+            appear in Discord for the moment, but only reply with a link to the
+            event page.
+          </div>
+          <p>
+            When many players knock at the same moment, a knock that can't be
+            answered in time says
+            <em
+              >&ldquo;Lots of knocking right now. Try again in a
+              moment.&rdquo;</em
+            >
+            Nothing is used up, so the player can simply knock again.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Halloween Event &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>
