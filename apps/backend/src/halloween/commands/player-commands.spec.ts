@@ -1,0 +1,294 @@
+import {
+  ApplicationCommandOptionType,
+  type APIApplicationCommandInteractionDataOption,
+} from "@discordjs/core";
+import { DeviantArtCommand } from "./deviantart.command";
+import { TestWinCommand } from "./testwin.command";
+import { GiftyCommand } from "./gifty.command";
+import { Color } from "../discord/ui";
+import { DeviantArtUserService } from "../services/deviantart-user.service";
+import { GuildSettingsService } from "../services/guild-settings.service";
+import { GiftyService } from "../services/gifty.service";
+import { PlayerLock } from "../services/player-lock";
+import { DatabaseService } from "../../database/database.service";
+import { HalloweenDiscordError, ValidationError } from "../errors";
+import {
+  ADMINISTRATOR,
+  GUILD_ID,
+  OTHER_USER_ID,
+  USER_ID,
+  buildInteraction,
+  buildUserCommandInteraction,
+} from "../testing/fixtures";
+import {
+  AUTHOR,
+  TIMESTAMP,
+  lastReply,
+  mockDiscord,
+  stubUi,
+} from "../testing/command-harness";
+
+describe("/deviantart", () => {
+  let discord: ReturnType<typeof mockDiscord>;
+  let deviantArt: { save: jest.Mock };
+  let command: DeviantArtCommand;
+
+  beforeEach(() => {
+    discord = mockDiscord();
+    deviantArt = { save: jest.fn().mockResolvedValue(undefined) };
+    command = new DeviantArtCommand(
+      discord,
+      stubUi(),
+      deviantArt as unknown as DeviantArtUserService,
+    );
+  });
+
+  const run = (options?: APIApplicationCommandInteractionDataOption[]) =>
+    command.handle(buildInteraction({ name: "deviantart", options }));
+
+  it("saves the player's DeviantArt name", async () => {
+    await run([
+      { type: ApplicationCommandOptionType.String, name: "da_username", value: "provinite" },
+    ]);
+    expect(deviantArt.save).toHaveBeenCalledWith({
+      deviantArtName: "provinite",
+      guildId: GUILD_ID,
+      userId: USER_ID,
+    });
+    expect(lastReply(discord)).toEqual({
+      embeds: [
+        {
+          author: AUTHOR,
+          timestamp: TIMESTAMP,
+          color: Color.Primary,
+          title: "Cloverse Halloween 2026 - Setting",
+          description:
+            "Your DeviantArt name has been saved! You can use the _/deviantart_ command again at any time to update it.",
+          fields: [{ name: "DeviantArt Username", value: "provinite" }],
+        },
+      ],
+    });
+  });
+
+  it("requires a name", async () => {
+    await expect(run(undefined)).rejects.toThrow(
+      "You must provide your deviant art username as an option to this command",
+    );
+  });
+
+  it("requires the name as text", async () => {
+    await expect(
+      run([{ type: ApplicationCommandOptionType.Integer, name: "da_username", value: 4 }]),
+    ).rejects.toThrow(
+      "Invalid option type for DeviantArt username. Expected a string",
+    );
+  });
+
+  it("refuses an empty name", async () => {
+    await expect(
+      run([{ type: ApplicationCommandOptionType.String, name: "da_username", value: "" }]),
+    ).rejects.toThrow("Invalid DeviantArt name provided. Must not be empty.");
+  });
+
+  it("passes on the service's validation", async () => {
+    const invalid = new ValidationError({
+      thrownFrom: "t",
+      message: "DeviantArt username validation failed",
+      validationErrors: [],
+    });
+    deviantArt.save.mockRejectedValue(invalid);
+    await expect(
+      run([{ type: ApplicationCommandOptionType.String, name: "da_username", value: "a b" }]),
+    ).rejects.toBe(invalid);
+  });
+});
+
+describe("/testwin", () => {
+  let discord: ReturnType<typeof mockDiscord>;
+  let guildSettings: { get: jest.Mock };
+  let command: TestWinCommand;
+
+  beforeEach(() => {
+    discord = mockDiscord();
+    guildSettings = {
+      get: jest.fn().mockResolvedValue({ winChannel: "300000000000000009" }),
+    };
+    command = new TestWinCommand(
+      discord,
+      guildSettings as unknown as GuildSettingsService,
+    );
+  });
+
+  const run = (permissions = ADMINISTRATOR) =>
+    command.handle(buildInteraction({ name: "testwin", permissions }));
+
+  it("is for administrators only", async () => {
+    await expect(run("0")).rejects.toThrow(
+      "You are missing the required permissions to use this command",
+    );
+  });
+
+  it("posts a test message to the win channel", async () => {
+    await run();
+    expect(discord.createChannelMessage).toHaveBeenCalledWith(
+      "300000000000000009",
+      { content: "Test message" },
+    );
+    expect(lastReply(discord)).toEqual({ content: "Sent test message." });
+  });
+
+  it("says when there is no win channel", async () => {
+    guildSettings.get.mockResolvedValue({ winChannel: null });
+    await run();
+    expect(discord.createChannelMessage).not.toHaveBeenCalled();
+    expect(lastReply(discord)).toEqual({ content: "Win channel isn't set." });
+  });
+});
+
+describe("/gifty", () => {
+  let discord: ReturnType<typeof mockDiscord>;
+  let gifties: { save: jest.Mock };
+  let lock: { acquire: jest.Mock };
+  let command: GiftyCommand;
+  const tx = { tx: true };
+
+  beforeEach(() => {
+    discord = mockDiscord();
+    gifties = { save: jest.fn().mockResolvedValue({ id: 1 }) };
+    lock = { acquire: jest.fn().mockResolvedValue(undefined) };
+    const db = {
+      $transaction: jest.fn((fn: (t: unknown) => Promise<unknown>) => fn(tx)),
+    } as unknown as DatabaseService;
+    command = new GiftyCommand(
+      discord,
+      stubUi(),
+      gifties as unknown as GiftyService,
+      lock as unknown as PlayerLock,
+      db,
+    );
+  });
+
+  const toUser = (userId: string) => [
+    { type: ApplicationCommandOptionType.User, name: "user", value: userId },
+  ] as APIApplicationCommandInteractionDataOption[];
+
+  it("sends a gifty with the slash command", async () => {
+    await command.handle(
+      buildInteraction({ name: "gifty", options: toUser(OTHER_USER_ID) }),
+    );
+    expect(gifties.save).toHaveBeenCalledWith(
+      { guildId: GUILD_ID, fromUserId: USER_ID, toUserId: OTHER_USER_ID },
+      { rateLimit: true },
+      tx,
+    );
+    expect(lastReply(discord)).toEqual({
+      allowed_mentions: { users: [USER_ID, OTHER_USER_ID] },
+      embeds: [
+        {
+          author: AUTHOR,
+          timestamp: TIMESTAMP,
+          color: Color.Primary,
+          title: "Cloverse Halloween 2026 - New Gifty!",
+          description: `<@${USER_ID}> is spreading the love! They just sent a one-time-use extra knock to a lucky friend.`,
+          fields: [{ name: "Recipient", value: `<@${OTHER_USER_ID}>` }],
+        },
+      ],
+    });
+  });
+
+  it("sends a gifty by right-clicking a member", async () => {
+    await command.handle(
+      buildUserCommandInteraction({ targetId: OTHER_USER_ID }),
+    );
+    expect(gifties.save).toHaveBeenCalledWith(
+      expect.objectContaining({ toUserId: OTHER_USER_ID }),
+      { rateLimit: true },
+      tx,
+    );
+  });
+
+  it("serialises one sender's gifties", async () => {
+    await command.handle(
+      buildInteraction({ name: "gifty", options: toUser(OTHER_USER_ID) }),
+    );
+    expect(lock.acquire).toHaveBeenCalledWith(tx, "gifty", GUILD_ID, USER_ID);
+    expect(lock.acquire.mock.invocationCallOrder[0]).toBeLessThan(
+      gifties.save.mock.invocationCallOrder[0],
+    );
+  });
+
+  it("mentions a self-gifter once", async () => {
+    await command.handle(
+      buildInteraction({ name: "gifty", options: toUser(USER_ID) }),
+    );
+    expect(lastReply(discord)).toMatchObject({
+      allowed_mentions: { users: [USER_ID] },
+    });
+  });
+
+  it("lifts the rate limit for administrators", async () => {
+    await command.handle(
+      buildInteraction({
+        name: "gifty",
+        options: toUser(OTHER_USER_ID),
+        permissions: ADMINISTRATOR,
+      }),
+    );
+    expect(gifties.save).toHaveBeenCalledWith(
+      expect.anything(),
+      { rateLimit: false },
+      tx,
+    );
+  });
+
+  it("requires a recipient", async () => {
+    const error = (await command
+      .handle(buildInteraction({ name: "gifty" }))
+      .catch((e: unknown) => e)) as HalloweenDiscordError;
+    expect(error).toBeInstanceOf(HalloweenDiscordError);
+    expect(error.message).toBe("No user specified");
+    expect(error.logAsError).toBe(false);
+  });
+
+  it("explains the once-per-reset limit", async () => {
+    gifties.save.mockRejectedValue(
+      new ValidationError({
+        thrownFrom: "t",
+        message: "Gifty validation failed",
+        validationErrors: [
+          { field: "*", error: "Each user may only send one gifty per reset" },
+        ],
+      }),
+    );
+    await command.handle(
+      buildInteraction({ id: "ref-3", name: "gifty", options: toUser(OTHER_USER_ID) }),
+    );
+    expect(lastReply(discord)).toEqual({
+      embeds: [
+        {
+          author: AUTHOR,
+          timestamp: TIMESTAMP,
+          color: Color.Error,
+          title: "Cloverse Halloween 2026 - Gifty Already Sent",
+          description:
+            "You have already sent a gifty since the last reset. Try again soon!",
+          footer: { text: "Reference ID: ref-3" },
+        },
+      ],
+    });
+  });
+
+  it("passes on any other validation failure", async () => {
+    const invalid = new ValidationError({
+      thrownFrom: "t",
+      message: "Gifty validation failed",
+      validationErrors: [{ field: "toUserId", error: "bad" }],
+    });
+    gifties.save.mockRejectedValue(invalid);
+    await expect(
+      command.handle(
+        buildInteraction({ name: "gifty", options: toUser(OTHER_USER_ID) }),
+      ),
+    ).rejects.toBe(invalid);
+  });
+});
