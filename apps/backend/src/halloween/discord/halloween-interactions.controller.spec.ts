@@ -21,7 +21,13 @@ describe("HalloweenInteractionsController", () => {
   const NOW_SECONDS = String(Math.floor(NOW.getTime() / 1000));
 
   let app: INestApplication;
-  const dispatch = jest.fn().mockResolvedValue(undefined);
+  const afterReply = jest.fn().mockResolvedValue(undefined);
+  const dispatched = (reply: object = { content: "Knock knock" }) => ({
+    reply,
+    outcome: "ok",
+    afterReply,
+  });
+  const dispatch = jest.fn();
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -43,7 +49,10 @@ describe("HalloweenInteractionsController", () => {
     await app.close();
   });
 
-  beforeEach(() => dispatch.mockClear());
+  beforeEach(() => {
+    dispatch.mockReset().mockResolvedValue(dispatched());
+    afterReply.mockClear();
+  });
 
   /** POST a body signed the way Discord signs it. */
   const signedPost = (
@@ -136,6 +145,36 @@ describe("HalloweenInteractionsController", () => {
       );
     });
 
+    it("logs a reply that never reached Discord, and still finishes the command's work", async () => {
+      const error = jest.spyOn(Logger.prototype, "error").mockImplementation();
+      // Slower than the client is willing to wait, as Discord gives up after
+      // three seconds.
+      dispatch.mockImplementation(
+        () =>
+          new Promise((resolve) =>
+            setTimeout(
+              () => resolve(dispatched({ embeds: [{ title: "Winner!" }] })),
+              150,
+            ),
+          ),
+      );
+      await signedPost(buildInteraction({ id: "ref-4", name: "knock" }))
+        .timeout(50)
+        .catch(() => undefined);
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.ReplyNotSent,
+          interactionId: "ref-4",
+          command: "knock",
+          outcome: "ok",
+          replyTitle: "Winner!",
+          durationMs: expect.any(Number),
+        }),
+      );
+      expect(afterReply).toHaveBeenCalledTimes(1);
+    });
+
     it("warns about an interaction type it does not handle", async () => {
       await signedPost({ type: 3, id: "ref-3", token: "t" });
       expect(warn).toHaveBeenCalledWith(
@@ -182,18 +221,23 @@ describe("HalloweenInteractionsController", () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
-  it("defers a guild command and then runs it", async () => {
+  it("answers a guild command with its reply, then does the command's later work", async () => {
     const interaction = buildInteraction({ name: "knock" });
     const res = await signedPost(interaction);
-    expect(res.status).toBe(200);
-    expect(res.body).toEqual({ type: 5, data: {} });
-    await new Promise((resolve) => setImmediate(resolve));
     expect(dispatch).toHaveBeenCalledWith(interaction);
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ type: 4, data: { content: "Knock knock" } });
+    await new Promise((resolve) => setImmediate(resolve));
+    expect(afterReply).toHaveBeenCalledTimes(1);
   });
 
-  it("defers /deviantart privately", async () => {
+  it("keeps a reply's own flags, such as a private /deviantart answer", async () => {
+    dispatch.mockResolvedValue(dispatched({ flags: 64, content: "Saved" }));
     const res = await signedPost(buildInteraction({ name: "deviantart" }));
-    expect(res.body).toEqual({ type: 5, data: { flags: 64 } });
+    expect(res.body).toEqual({
+      type: 4,
+      data: { flags: 64, content: "Saved" },
+    });
   });
 
   it("refuses a command used outside a guild", async () => {

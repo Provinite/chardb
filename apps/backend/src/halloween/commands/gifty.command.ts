@@ -5,11 +5,14 @@ import {
 } from "@discordjs/core";
 import type { HalloweenGifty } from "@chardb/database";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
-import type { HalloweenCommandHandler } from "../discord/halloween-command";
-import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
+import type {
+  HalloweenCommandHandler,
+  HalloweenCommandResult,
+} from "../discord/halloween-command";
 import { Color, EVENT_NAME, HalloweenUi } from "../discord/ui";
 import { GiftyService } from "../services/gifty.service";
 import { PlayerLock } from "../services/player-lock";
+import { lockedTransaction } from "../services/locked-transaction";
 import { DatabaseService } from "../../database/database.service";
 import {
   HalloweenDiscordError,
@@ -28,7 +31,6 @@ export class GiftyCommand implements HalloweenCommandHandler {
   private readonly logger = new Logger(GiftyCommand.name);
 
   constructor(
-    private readonly discord: HalloweenDiscordClient,
     private readonly ui: HalloweenUi,
     private readonly gifties: GiftyService,
     private readonly lock: PlayerLock,
@@ -37,7 +39,7 @@ export class GiftyCommand implements HalloweenCommandHandler {
 
   async handle(
     interaction: APIApplicationCommandGuildInteraction,
-  ): Promise<void> {
+  ): Promise<HalloweenCommandResult> {
     const guildId = interaction.guild_id;
     const fromUserId = interaction.member.user.id;
     const toUserId = this.recipient(interaction);
@@ -49,41 +51,61 @@ export class GiftyCommand implements HalloweenCommandHandler {
       toUserId,
     };
 
-    const sent = await this.db.$transaction(async (tx) => {
-      await this.lock.acquire(tx, "gifty", guildId, fromUserId);
-      let gifty: HalloweenGifty;
-      try {
-        gifty = await this.gifties.save(
-          { guildId, fromUserId, toUserId },
-          { rateLimit: !rateLimitSkipped },
-          tx,
-        );
-      } catch (error) {
-        if (error instanceof ValidationError && isGiftyRateLimitError(error)) {
-          this.logger.log({
-            event: HalloweenLogEvent.GiftyRateLimited,
-            message: `Refused a second gifty from ${fromUserId} this reset`,
-            ...who,
-          } satisfies HalloweenLogLine);
-          await this.discord.editOriginalResponse(interaction.token, {
-            embeds: [
-              {
-                author: this.ui.author(),
-                timestamp: this.ui.timestamp(),
-                color: Color.Error,
-                title: `${EVENT_NAME} - Gifty Already Sent`,
-                description:
-                  "You have already sent a gifty since the last reset. Try again soon!",
-                footer: this.ui.errorFooter(interaction),
-              },
-            ],
-          });
-          return null;
+    const sent = await lockedTransaction(
+      this.db,
+      "GiftyCommand",
+      async (tx): Promise<HalloweenGifty | null> => {
+        await this.lock.acquire(tx, "gifty", guildId, fromUserId);
+        try {
+          return await this.gifties.save(
+            { guildId, fromUserId, toUserId },
+            { rateLimit: !rateLimitSkipped },
+            tx,
+          );
+        } catch (error) {
+          if (
+            error instanceof ValidationError &&
+            isGiftyRateLimitError(error)
+          ) {
+            return null;
+          }
+          throw error;
         }
-        throw error;
-      }
+      },
+    );
 
-      await this.discord.editOriginalResponse(interaction.token, {
+    if (!sent) {
+      this.logger.log({
+        event: HalloweenLogEvent.GiftyRateLimited,
+        message: `Refused a second gifty from ${fromUserId} this reset`,
+        ...who,
+      } satisfies HalloweenLogLine);
+      return {
+        reply: {
+          embeds: [
+            {
+              author: this.ui.author(),
+              timestamp: this.ui.timestamp(),
+              color: Color.Error,
+              title: `${EVENT_NAME} - Gifty Already Sent`,
+              description:
+                "You have already sent a gifty since the last reset. Try again soon!",
+              footer: this.ui.errorFooter(interaction),
+            },
+          ],
+        },
+      };
+    }
+
+    this.logger.log({
+      event: HalloweenLogEvent.GiftySent,
+      message: `Gifty ${sent.id} sent from ${fromUserId} to ${toUserId}`,
+      ...who,
+      giftyId: sent.id,
+      rateLimitSkipped,
+    } satisfies HalloweenLogLine);
+    return {
+      reply: {
         allowed_mentions: {
           users:
             fromUserId === toUserId ? [fromUserId] : [fromUserId, toUserId],
@@ -98,19 +120,8 @@ export class GiftyCommand implements HalloweenCommandHandler {
             fields: [{ name: "Recipient", value: `<@${toUserId}>` }],
           },
         ],
-      });
-      return gifty;
-    });
-
-    if (sent) {
-      this.logger.log({
-        event: HalloweenLogEvent.GiftySent,
-        message: `Gifty ${sent.id} sent from ${fromUserId} to ${toUserId}`,
-        ...who,
-        giftyId: sent.id,
-        rateLimitSkipped,
-      } satisfies HalloweenLogLine);
-    }
+      },
+    };
   }
 
   private recipient(

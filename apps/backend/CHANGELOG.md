@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **The Halloween trick-or-treat Discord bot now runs in the backend**, at `POST /discord/halloween/interactions`, with every command and reply carried over from the standalone bot; a chardb item or character prize is now checked inside the knock, so one that cannot be delivered fails the knock instead of being announced and dropped (#399).
+- **Halloween commands answer in the interaction's own response, with no deferred reply**; a win commits before Discord shows it, a reply that never arrives is logged as `halloween.interaction.reply_not_sent`, and a knock that can't get its locks in time answers "busy" with nothing saved (#399).
 - **Every Halloween bot interaction is logged as structured `halloween.*` events carrying the interaction id** (the "Reference ID" players see), with a trace span per command (#399).
 - **`halloweenDashboard`, `halloweenWins` and `setHalloweenPrizeDelivered`** (`canGrantItems`; reads also `canManageItems`), and **`Community.halloweenEnabled`** set by site admins with `setCommunityHalloweenEnabled` (#399).
 - **The Halloween event is set up on chardb**: `updateHalloweenSettings`, `createHalloweenPrize`, `updateHalloweenPrize`, `removeHalloweenPrize`, `halloweenPrizeItemTypes` and `halloweenPrizeCharacters` (`canManageItems`); `/settings` and `/prize admin` now reply with a link to the page (#399, #400).

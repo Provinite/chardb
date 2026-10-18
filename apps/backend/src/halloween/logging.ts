@@ -5,8 +5,14 @@
  * for that one value turns up the whole story of a command.
  */
 export const HalloweenLogEvent = {
-  /** A signed command arrived and was acknowledged. */
+  /** A signed command arrived. */
   InteractionReceived: "halloween.interaction.received",
+  /**
+   * The reply never reached Discord: the connection closed first, usually
+   * because Discord stopped waiting after three seconds. Whatever the command
+   * saved stands; `replyTitle` says what the player missed.
+   */
+  ReplyNotSent: "halloween.interaction.reply_not_sent",
   /** A request failed the signature check. */
   InteractionRejected: "halloween.interaction.rejected",
   /** Discord's endpoint check. */
@@ -16,12 +22,10 @@ export const HalloweenLogEvent = {
   /** An interaction type the bot does not handle (buttons, autocomplete...). */
   UnsupportedInteraction: "halloween.interaction.unsupported",
 
-  /** A command finished; `outcome` is ok, refused, failed or unavailable. */
+  /** A command finished; `outcome` is ok, refused or failed. */
   CommandCompleted: "halloween.command.completed",
-  /** The deferred reply never appeared, so the command did not run. */
-  ReplyUnavailable: "halloween.command.reply_unavailable",
-  /** The player could not be told why their command failed. */
-  ReportFailed: "halloween.command.report_failed",
+  /** Work a command left for after its reply failed. */
+  AfterReplyFailed: "halloween.command.after_reply_failed",
 
   KnockRolled: "halloween.knock.rolled",
   KnockLost: "halloween.knock.lost",
@@ -45,6 +49,8 @@ export const HalloweenLogEvent = {
   CommunityToggled: "halloween.community.toggled",
   DeviantArtSaved: "halloween.deviantart.saved",
   WinChannelTested: "halloween.win_channel.tested",
+  /** A win that stands, but never reached the win channel. */
+  WinChannelPostFailed: "halloween.win_channel.post_failed",
 } as const;
 
 export type HalloweenLogEvent =

@@ -1,12 +1,9 @@
-import type {
-  APIInteraction,
-  RESTPatchAPIWebhookWithTokenMessageJSONBody,
-} from "@discordjs/core";
+import type { APIInteraction } from "@discordjs/core";
 import { Color, EVENT_NAME, HalloweenUi } from "./discord/ui";
+import type { HalloweenReply } from "./discord/halloween-command";
 import { formatLastReset, formatLegacyLocale, formatResetHour } from "./time";
 
-export type InteractionResponseBody =
-  RESTPatchAPIWebhookWithTokenMessageJSONBody;
+export type InteractionResponseBody = HalloweenReply;
 
 interface ReportableOptions {
   thrownFrom: string;
@@ -19,10 +16,7 @@ interface ReportableOptions {
   sourceError?: Error;
 }
 
-/**
- * An error the player is told about, by editing the deferred "thinking..."
- * reply into `responseBody`.
- */
+/** An error the player is told about: `responseBody` becomes the reply. */
 export class DiscordReportableError extends Error {
   readonly thrownFrom: string;
   readonly logAsError: boolean;
@@ -210,6 +204,38 @@ export class OutOfPrizesError extends DiscordReportableError {
   }
 }
 
+/**
+ * A knock or gifty could not get its locks or finish inside its deadline,
+ * because many arrived at once. Nothing was saved; trying again works.
+ */
+export class BusyError extends DiscordReportableError {
+  constructor(options: { thrownFrom: string; sourceError?: Error }) {
+    super("Too busy to answer in time", {
+      thrownFrom: options.thrownFrom,
+      logAsError: false,
+      sourceError: options.sourceError,
+    });
+  }
+
+  responseBody(
+    interaction: Pick<APIInteraction, "id">,
+    ui: HalloweenUi,
+  ): InteractionResponseBody {
+    return {
+      embeds: [
+        {
+          author: ui.author(),
+          timestamp: ui.timestamp(),
+          color: Color.Warning,
+          title: `${EVENT_NAME} - Busy`,
+          description: "Lots of knocking right now. Try again in a moment.",
+          footer: ui.errorFooter(interaction),
+        },
+      ],
+    };
+  }
+}
+
 export class TooManyKnocksError extends DiscordReportableError {
   constructor(
     private readonly details: {
@@ -311,17 +337,4 @@ export class ValidationError extends DiscordReportableError {
 /** The one gifty rule that is about the sender, not the record. */
 export function isGiftyRateLimitError(error: ValidationError): boolean {
   return error.validationErrors.some(({ field }) => field === "*");
-}
-
-/**
- * The deferred reply could not be found -- Discord never registered it. Not
- * reportable: there is no message to edit.
- */
-export class DiscordWebhookMessageUnavailableError extends Error {
-  constructor(readonly interactionId: string) {
-    super(
-      "Discord webhook is unavailable. This may mean the interaction took too long to acknowledge",
-    );
-    this.name = "DiscordWebhookMessageUnavailableError";
-  }
 }

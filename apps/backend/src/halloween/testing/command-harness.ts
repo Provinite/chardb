@@ -19,24 +19,10 @@ export function stubUi(now = new Date(TIMESTAMP)): HalloweenUi {
   } as unknown as HalloweenUi;
 }
 
-export type DiscordMock = {
-  [K in
-    | "editOriginalResponse"
-    | "createChannelMessage"
-    | "getOriginalResponse"]: jest.Mock;
-};
+export type DiscordMock = { createChannelMessage: jest.Mock };
 
 export function mockDiscord(): DiscordMock & HalloweenDiscordClient {
   return {
-    editOriginalResponse: jest.fn().mockResolvedValue({ id: "message" }),
     createChannelMessage: jest.fn().mockResolvedValue({ id: "message" }),
-    getOriginalResponse: jest.fn().mockResolvedValue({ id: "message" }),
   } as unknown as DiscordMock & HalloweenDiscordClient;
-}
-
-/** The body the command edited the deferred reply into. */
-export function lastReply(discord: DiscordMock): unknown {
-  const calls = discord.editOriginalResponse.mock.calls;
-  expect(calls.length).toBeGreaterThan(0);
-  return calls[calls.length - 1][1];
 }

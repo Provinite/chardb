@@ -4,27 +4,29 @@ import { SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
 import {
   HALLOWEEN_COMMANDS,
   HalloweenCommandHandler,
+  type HalloweenCommandResult,
+  type HalloweenReply,
 } from "./halloween-command";
-import { HalloweenDiscordClient } from "./halloween-discord.client";
 import { HalloweenUi } from "./ui";
-import {
-  DiscordReportableError,
-  DiscordWebhookMessageUnavailableError,
-  HalloweenDiscordError,
-} from "../errors";
+import { DiscordReportableError, HalloweenDiscordError } from "../errors";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
-
-const sleep = (ms: number) =>
-  new Promise<void>((resolve) => setTimeout(resolve, ms));
 
 const stackOf = (error: unknown): string =>
   error instanceof Error ? (error.stack ?? error.message) : String(error);
 
 /**
  * How a command ended. `refused` is an expected no -- out of knocks, event
- * over -- and `failed` is a fault. `unavailable` means it never ran.
+ * over -- and `failed` is a fault.
  */
-type Outcome = "ok" | "refused" | "failed" | "unavailable";
+export type Outcome = "ok" | "refused" | "failed";
+
+/** A command that has run: the reply to send, and what is left after it. */
+export interface DispatchedCommand {
+  reply: HalloweenReply;
+  outcome: Outcome;
+  /** Never rejects; a failure is logged. */
+  afterReply: () => Promise<void>;
+}
 
 /** The fields that identify a command on every line logged about it. */
 interface CommandFields {
@@ -34,13 +36,15 @@ interface CommandFields {
   userId: string;
 }
 
+const nothingLeft = () => Promise.resolve();
+
 /**
- * Runs a deferred command and turns whatever it throws into a reply. The
- * bot's command Lambda, minus the queue in front of it.
+ * Runs a command and turns whatever it throws into a reply. The bot's
+ * command Lambda, minus the queue in front of it.
  *
- * Each command runs in its own trace span, because it runs after the HTTP
- * request that carried it has finished; its database and Discord calls nest
- * under that span.
+ * The command runs in its own trace span, tagged with who ran what; so does
+ * whatever it leaves for after the reply, which runs once the HTTP response
+ * that carried the command has finished.
  */
 @Injectable()
 export class HalloweenCommandDispatcher {
@@ -48,60 +52,82 @@ export class HalloweenCommandDispatcher {
   private readonly tracer = trace.getTracer("chardb-halloween", "1.0.0");
   private readonly commands: Map<string, HalloweenCommandHandler>;
 
-  /**
-   * Pauses between attempts to find the deferred reply. Editing it before
-   * Discord has registered the acknowledgement 404s; the bot hit this often
-   * enough to always check first, and its queue retried when the check failed.
-   */
-  originalResponseRetryDelaysMs = [250, 1000];
-
   constructor(
     @Inject(HALLOWEEN_COMMANDS) commands: HalloweenCommandHandler[],
-    private readonly discord: HalloweenDiscordClient,
     private readonly ui: HalloweenUi,
   ) {
     this.commands = new Map(commands.map((c) => [c.name, c]));
   }
 
-  /** Never rejects: there is no caller left to hear about it. */
+  /** Never rejects: a failure becomes the reply. */
   async dispatch(
     interaction: APIApplicationCommandGuildInteraction,
-  ): Promise<void> {
+  ): Promise<DispatchedCommand> {
     const fields: CommandFields = {
       interactionId: interaction.id,
       command: interaction.data.name.toLowerCase(),
       guildId: interaction.guild_id,
       userId: interaction.member.user.id,
     };
-    await this.tracer.startActiveSpan(
+    const attributes = {
+      "halloween.interaction_id": fields.interactionId,
+      "halloween.command": fields.command,
+      "halloween.guild_id": fields.guildId,
+      "halloween.user_id": fields.userId,
+    };
+    const { result, outcome } = await this.tracer.startActiveSpan(
       `halloween.command ${fields.command}`,
-      {
-        kind: SpanKind.INTERNAL,
-        attributes: {
-          "halloween.interaction_id": fields.interactionId,
-          "halloween.command": fields.command,
-          "halloween.guild_id": fields.guildId,
-          "halloween.user_id": fields.userId,
-        },
-      },
+      { kind: SpanKind.INTERNAL, attributes },
       async (span) => {
-        const outcome = await this.run(interaction, fields);
-        span.setAttributes({ "halloween.outcome": outcome });
+        const ran = await this.run(interaction, fields);
+        span.setAttributes({ "halloween.outcome": ran.outcome });
         span.setStatus({
           code:
-            outcome === "failed" || outcome === "unavailable"
-              ? SpanStatusCode.ERROR
-              : SpanStatusCode.OK,
+            ran.outcome === "failed" ? SpanStatusCode.ERROR : SpanStatusCode.OK,
         });
         span.end();
+        return ran;
       },
     );
+
+    const later = result.afterReply;
+    return {
+      reply: result.reply,
+      outcome,
+      afterReply: later
+        ? () =>
+            this.tracer.startActiveSpan(
+              `halloween.after_reply ${fields.command}`,
+              { kind: SpanKind.INTERNAL, attributes },
+              async (span) => {
+                try {
+                  await later();
+                  span.setStatus({ code: SpanStatusCode.OK });
+                } catch (error) {
+                  span.setStatus({ code: SpanStatusCode.ERROR });
+                  this.logger.error(
+                    {
+                      event: HalloweenLogEvent.AfterReplyFailed,
+                      message: `Work after the reply to /${fields.command} failed`,
+                      ...fields,
+                      cause:
+                        error instanceof Error ? error.message : String(error),
+                    } satisfies HalloweenLogLine,
+                    stackOf(error),
+                  );
+                } finally {
+                  span.end();
+                }
+              },
+            )
+        : nothingLeft,
+    };
   }
 
   private async run(
     interaction: APIApplicationCommandGuildInteraction,
     fields: CommandFields,
-  ): Promise<Outcome> {
+  ): Promise<{ result: HalloweenCommandResult; outcome: Outcome }> {
     const started = Date.now();
     const completed = (outcome: Outcome, message: string) => ({
       event: HalloweenLogEvent.CommandCompleted,
@@ -112,24 +138,6 @@ export class HalloweenCommandDispatcher {
     });
 
     try {
-      await this.waitForOriginalResponse(interaction);
-    } catch (error) {
-      this.logger.error(
-        {
-          event: HalloweenLogEvent.ReplyUnavailable,
-          message: `Deferred reply for /${fields.command} never appeared; not running it`,
-          ...fields,
-          attempts: this.originalResponseRetryDelaysMs.length + 1,
-        } satisfies HalloweenLogLine,
-        stackOf(error),
-      );
-      this.logger.error(
-        completed("unavailable", `/${fields.command} did not run`),
-      );
-      return "unavailable";
-    }
-
-    try {
       const command = this.commands.get(fields.command);
       if (!command) {
         throw new HalloweenDiscordError({
@@ -138,9 +146,9 @@ export class HalloweenCommandDispatcher {
           sourceError: new Error(`Unknown command: ${fields.command}`),
         });
       }
-      await command.handle(interaction);
+      const result = await command.handle(interaction);
       this.logger.log(completed("ok", `/${fields.command} succeeded`));
-      return "ok";
+      return { result, outcome: "ok" };
     } catch (error) {
       const reportable =
         error instanceof DiscordReportableError
@@ -185,50 +193,10 @@ export class HalloweenCommandDispatcher {
         });
       }
 
-      await this.report(reportable, interaction, fields);
-      return outcome;
-    }
-  }
-
-  private async waitForOriginalResponse(
-    interaction: APIApplicationCommandGuildInteraction,
-  ): Promise<void> {
-    for (const delay of [...this.originalResponseRetryDelaysMs, null]) {
-      try {
-        await this.discord.getOriginalResponse(interaction.token);
-        return;
-      } catch (error) {
-        if (
-          !(error instanceof DiscordWebhookMessageUnavailableError) ||
-          delay === null
-        ) {
-          throw error;
-        }
-        await sleep(delay);
-      }
-    }
-  }
-
-  /** Edits the deferred reply into the error the player should see. */
-  private async report(
-    reportable: DiscordReportableError,
-    interaction: APIApplicationCommandGuildInteraction,
-    fields: CommandFields,
-  ): Promise<void> {
-    try {
-      await this.discord.editOriginalResponse(
-        interaction.token,
-        reportable.responseBody(interaction, this.ui),
-      );
-    } catch (reportError) {
-      this.logger.error(
-        {
-          event: HalloweenLogEvent.ReportFailed,
-          message: `Could not tell the player about the failure of /${fields.command}`,
-          ...fields,
-        } satisfies HalloweenLogLine,
-        stackOf(reportError),
-      );
+      return {
+        result: { reply: reportable.responseBody(interaction, this.ui) },
+        outcome,
+      };
     }
   }
 }

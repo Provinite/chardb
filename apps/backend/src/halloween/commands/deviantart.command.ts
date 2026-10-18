@@ -1,34 +1,33 @@
 import { Injectable, Logger } from "@nestjs/common";
 import {
   ApplicationCommandOptionType,
+  MessageFlags,
   type APIApplicationCommandGuildInteraction,
 } from "@discordjs/core";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
-import type { HalloweenCommandHandler } from "../discord/halloween-command";
-import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
+import type {
+  HalloweenCommandHandler,
+  HalloweenCommandResult,
+} from "../discord/halloween-command";
 import { Color, EVENT_NAME, HalloweenUi } from "../discord/ui";
 import { DeviantArtUserService } from "../services/deviantart-user.service";
 import { HalloweenDiscordError } from "../errors";
 import { requireChatInput } from "./command-helpers";
 
-/**
- * `/deviantart <da_username>`. Its reply is private (see the interactions
- * controller).
- */
+/** `/deviantart <da_username>`. Its reply is private to the player. */
 @Injectable()
 export class DeviantArtCommand implements HalloweenCommandHandler {
   readonly name = "deviantart";
   private readonly logger = new Logger(DeviantArtCommand.name);
 
   constructor(
-    private readonly discord: HalloweenDiscordClient,
     private readonly ui: HalloweenUi,
     private readonly deviantArtUsers: DeviantArtUserService,
   ) {}
 
   async handle(
     interaction: APIApplicationCommandGuildInteraction,
-  ): Promise<void> {
+  ): Promise<HalloweenCommandResult> {
     const chat = requireChatInput(interaction);
     const { options } = chat.data;
     if (!options || !options.length) {
@@ -77,17 +76,20 @@ export class DeviantArtCommand implements HalloweenCommandHandler {
       deviantArtName,
     } satisfies HalloweenLogLine);
 
-    await this.discord.editOriginalResponse(chat.token, {
-      embeds: [
-        {
-          author: this.ui.author(),
-          timestamp: this.ui.timestamp(),
-          color: Color.Primary,
-          title: `${EVENT_NAME} - Setting`,
-          description: `Your DeviantArt name has been saved! You can use the _/${this.name}_ command again at any time to update it.`,
-          fields: [{ name: "DeviantArt Username", value: deviantArtName }],
-        },
-      ],
-    });
+    return {
+      reply: {
+        flags: MessageFlags.Ephemeral,
+        embeds: [
+          {
+            author: this.ui.author(),
+            timestamp: this.ui.timestamp(),
+            color: Color.Primary,
+            title: `${EVENT_NAME} - Setting`,
+            description: `Your DeviantArt name has been saved! You can use the _/${this.name}_ command again at any time to update it.`,
+            fields: [{ name: "DeviantArt Username", value: deviantArtName }],
+          },
+        ],
+      },
+    };
   }
 }

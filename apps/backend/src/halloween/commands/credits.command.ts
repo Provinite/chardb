@@ -1,7 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import type { APIApplicationCommandGuildInteraction } from "@discordjs/core";
-import type { HalloweenCommandHandler } from "../discord/halloween-command";
-import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
+import type {
+  HalloweenCommandHandler,
+  HalloweenCommandResult,
+} from "../discord/halloween-command";
 import { Color, EVENT_NAME, HalloweenUi } from "../discord/ui";
 import { requireChatInput } from "./command-helpers";
 
@@ -59,28 +61,27 @@ const CREDITS = [
 export class CreditsCommand implements HalloweenCommandHandler {
   readonly name = "credits";
 
-  constructor(
-    private readonly discord: HalloweenDiscordClient,
-    private readonly ui: HalloweenUi,
-  ) {}
+  constructor(private readonly ui: HalloweenUi) {}
 
   async handle(
     interaction: APIApplicationCommandGuildInteraction,
-  ): Promise<void> {
+  ): Promise<HalloweenCommandResult> {
     requireChatInput(interaction);
-    await this.discord.editOriginalResponse(interaction.token, {
-      embeds: [
-        {
-          author: this.ui.author(),
-          color: Color.Primary,
-          title: `${EVENT_NAME} - Credits`,
-          timestamp: this.ui.timestamp(),
-          fields: CREDITS.map(({ credit, names }) => ({
-            name: credit,
-            value: names.join(", "),
-          })),
-        },
-      ],
-    });
+    return {
+      reply: {
+        embeds: [
+          {
+            author: this.ui.author(),
+            color: Color.Primary,
+            title: `${EVENT_NAME} - Credits`,
+            timestamp: this.ui.timestamp(),
+            fields: CREDITS.map(({ credit, names }) => ({
+              name: credit,
+              value: names.join(", "),
+            })),
+          },
+        ],
+      },
+    };
   }
 }

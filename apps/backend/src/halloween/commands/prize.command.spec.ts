@@ -11,13 +11,7 @@ import { PrizeService } from "../services/prize.service";
 import { PrizeImageService } from "../services/prize-image.service";
 import { OutOfPrizesError } from "../errors";
 import { ADMINISTRATOR, GUILD_ID, buildInteraction } from "../testing/fixtures";
-import {
-  AUTHOR,
-  TIMESTAMP,
-  lastReply,
-  mockDiscord,
-  stubUi,
-} from "../testing/command-harness";
+import { AUTHOR, TIMESTAMP, stubUi } from "../testing/command-harness";
 
 const prize = (
   id: string,
@@ -56,15 +50,16 @@ const str = (name: string, value: string) =>
   ({ type: ApplicationCommandOptionType.String, name, value }) as const;
 
 describe("/prize", () => {
-  let discord: ReturnType<typeof mockDiscord>;
   let prizes: { inStock: jest.Mock; save: jest.Mock };
   let random: HalloweenRandom;
   let images: { imagesFor: jest.Mock };
   let links: { halloweenPage: jest.Mock };
   let command: PrizeCommand;
+  /** What the last run answered with. */
+  let reply: unknown;
 
   beforeEach(() => {
-    discord = mockDiscord();
+    reply = undefined;
     prizes = {
       inStock: jest.fn().mockResolvedValue([]),
       save: jest.fn((p: HalloweenPrize) => Promise.resolve(p)),
@@ -85,7 +80,6 @@ describe("/prize", () => {
         .mockResolvedValue("https://cloverse.chardb.cc/admin/halloween"),
     };
     command = new PrizeCommand(
-      discord,
       stubUi(),
       prizes as unknown as PrizeService,
       images as unknown as PrizeImageService,
@@ -94,11 +88,16 @@ describe("/prize", () => {
     );
   });
 
-  const run = (
+  const run = async (
     options: APIApplicationCommandInteractionDataOption[] | undefined,
     permissions = ADMINISTRATOR,
-  ) =>
-    command.handle(buildInteraction({ name: "prize", options, permissions }));
+  ) => {
+    const result = await command.handle(
+      buildInteraction({ name: "prize", options, permissions }),
+    );
+    reply = result.reply;
+    return result;
+  };
 
   describe("routing", () => {
     it("requires a subcommand", async () => {
@@ -133,7 +132,7 @@ describe("/prize", () => {
       ]);
       await run([sub("list")], "0");
       expect(prizes.inStock).toHaveBeenCalledWith(GUILD_ID);
-      expect(lastReply(discord)).toEqual({
+      expect(reply).toEqual({
         embeds: [
           {
             author: AUTHOR,
@@ -176,9 +175,8 @@ describe("/prize", () => {
         ]),
       );
       await run([sub("list")], "0");
-      const [embed] = (
-        lastReply(discord) as { embeds: { image?: { url?: string } }[] }
-      ).embeds;
+      const [embed] = (reply as { embeds: { image?: { url?: string } }[] })
+        .embeds;
       expect(embed.image).toEqual({ url: "https://cdn.test/candy.webp" });
     });
 
@@ -188,7 +186,7 @@ describe("/prize", () => {
       );
       await run([sub("list")], "0");
       const [embed] = (
-        lastReply(discord) as {
+        reply as {
           embeds: { description: string; fields: unknown[] }[];
         }
       ).embeds;
@@ -208,7 +206,7 @@ describe("/prize", () => {
       async (name) => {
         await run([adminGroup(sub(name, [str("id", "myo")]))]);
         expect(links.halloweenPage).toHaveBeenCalledWith(GUILD_ID);
-        expect(lastReply(discord)).toEqual({
+        expect(reply).toEqual({
           content:
             "Prize management has moved to the Halloween page on chardb: https://cloverse.chardb.cc/admin/halloween",
         });
@@ -219,7 +217,7 @@ describe("/prize", () => {
     it("says where to look when there is no page to link to", async () => {
       links.halloweenPage.mockResolvedValue(null);
       await run([adminGroup(sub("add"))]);
-      expect(lastReply(discord)).toEqual({
+      expect(reply).toEqual({
         content:
           "Prize management has moved to the Halloween page on chardb, under the community's Administration.",
       });

@@ -1,7 +1,9 @@
 import { Injectable } from "@nestjs/common";
 import type { APIApplicationCommandGuildInteraction } from "@discordjs/core";
-import type { HalloweenCommandHandler } from "../discord/halloween-command";
-import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
+import type {
+  HalloweenCommandHandler,
+  HalloweenCommandResult,
+} from "../discord/halloween-command";
 import { HalloweenLinks } from "../halloween-links";
 import { movedToChardb } from "./moved-to-chardb";
 
@@ -14,20 +16,16 @@ import { movedToChardb } from "./moved-to-chardb";
 export class SettingsCommand implements HalloweenCommandHandler {
   readonly name = "settings";
 
-  constructor(
-    private readonly discord: HalloweenDiscordClient,
-    private readonly links: HalloweenLinks,
-  ) {}
+  constructor(private readonly links: HalloweenLinks) {}
 
   async handle(
     interaction: APIApplicationCommandGuildInteraction,
-  ): Promise<void> {
-    await this.discord.editOriginalResponse(
-      interaction.token,
-      movedToChardb(
+  ): Promise<HalloweenCommandResult> {
+    return {
+      reply: movedToChardb(
         "Event settings have",
         await this.links.halloweenPage(interaction.guild_id),
       ),
-    );
+    };
   }
 }

@@ -13,7 +13,10 @@ import { GuildSettingsService } from "../services/guild-settings.service";
 import { GiftyService } from "../services/gifty.service";
 import { PlayerLock } from "../services/player-lock";
 import { DatabaseService } from "../../database/database.service";
-import { HalloweenDiscordError, ValidationError } from "../errors";
+import { Prisma } from "@chardb/database";
+import { BusyError, HalloweenDiscordError, ValidationError } from "../errors";
+import { LOCKED_TRANSACTION_OPTIONS } from "../services/locked-transaction";
+import { MessageFlags } from "@discordjs/core";
 import {
   ADMINISTRATOR,
   GUILD_ID,
@@ -25,21 +28,17 @@ import {
 import {
   AUTHOR,
   TIMESTAMP,
-  lastReply,
   mockDiscord,
   stubUi,
 } from "../testing/command-harness";
 
 describe("/deviantart", () => {
-  let discord: ReturnType<typeof mockDiscord>;
   let deviantArt: { save: jest.Mock };
   let command: DeviantArtCommand;
 
   beforeEach(() => {
-    discord = mockDiscord();
     deviantArt = { save: jest.fn().mockResolvedValue(undefined) };
     command = new DeviantArtCommand(
-      discord,
       stubUi(),
       deviantArt as unknown as DeviantArtUserService,
     );
@@ -48,8 +47,8 @@ describe("/deviantart", () => {
   const run = (options?: APIApplicationCommandInteractionDataOption[]) =>
     command.handle(buildInteraction({ name: "deviantart", options }));
 
-  it("saves the player's DeviantArt name", async () => {
-    await run([
+  it("saves the player's DeviantArt name, and says so privately", async () => {
+    const { reply } = await run([
       {
         type: ApplicationCommandOptionType.String,
         name: "da_username",
@@ -61,7 +60,8 @@ describe("/deviantart", () => {
       guildId: GUILD_ID,
       userId: USER_ID,
     });
-    expect(lastReply(discord)).toEqual({
+    expect(reply).toEqual({
+      flags: MessageFlags.Ephemeral,
       embeds: [
         {
           author: AUTHOR,
@@ -158,6 +158,7 @@ describe("/testwin", () => {
   let discord: ReturnType<typeof mockDiscord>;
   let guildSettings: { get: jest.Mock };
   let command: TestWinCommand;
+  let reply: unknown;
 
   beforeEach(() => {
     discord = mockDiscord();
@@ -170,8 +171,11 @@ describe("/testwin", () => {
     );
   });
 
-  const run = (permissions = ADMINISTRATOR) =>
-    command.handle(buildInteraction({ name: "testwin", permissions }));
+  const run = async (permissions = ADMINISTRATOR) => {
+    ({ reply } = await command.handle(
+      buildInteraction({ name: "testwin", permissions }),
+    ));
+  };
 
   it("is for administrators only", async () => {
     await expect(run("0")).rejects.toThrow(
@@ -185,7 +189,7 @@ describe("/testwin", () => {
       "300000000000000009",
       { content: "Test message" },
     );
-    expect(lastReply(discord)).toEqual({ content: "Sent test message." });
+    expect(reply).toEqual({ content: "Sent test message." });
   });
 
   it("logs the test", async () => {
@@ -213,31 +217,52 @@ describe("/testwin", () => {
     guildSettings.get.mockResolvedValue({ winChannel: null });
     await run();
     expect(discord.createChannelMessage).not.toHaveBeenCalled();
-    expect(lastReply(discord)).toEqual({ content: "Win channel isn't set." });
+    expect(reply).toEqual({ content: "Win channel isn't set." });
   });
 });
 
 describe("/gifty", () => {
-  let discord: ReturnType<typeof mockDiscord>;
   let gifties: { save: jest.Mock };
   let lock: { acquire: jest.Mock };
+  let transaction: jest.Mock;
   let command: GiftyCommand;
   const tx = { tx: true };
 
   beforeEach(() => {
-    discord = mockDiscord();
     gifties = { save: jest.fn().mockResolvedValue({ id: 1 }) };
     lock = { acquire: jest.fn().mockResolvedValue(undefined) };
-    const db = {
-      $transaction: jest.fn((fn: (t: unknown) => Promise<unknown>) => fn(tx)),
-    } as unknown as DatabaseService;
+    transaction = jest.fn((fn: (t: unknown) => Promise<unknown>) => fn(tx));
+    const db = { $transaction: transaction } as unknown as DatabaseService;
     command = new GiftyCommand(
-      discord,
       stubUi(),
       gifties as unknown as GiftyService,
       lock as unknown as PlayerLock,
       db,
     );
+  });
+
+  it("gives up quickly rather than keep Discord waiting", async () => {
+    await command.handle(
+      buildInteraction({ name: "gifty", options: toUser(OTHER_USER_ID) }),
+    );
+    expect(transaction).toHaveBeenCalledWith(
+      expect.any(Function),
+      LOCKED_TRANSACTION_OPTIONS,
+    );
+  });
+
+  it("answers busy when its locks are not free in time", async () => {
+    transaction.mockRejectedValue(
+      new Prisma.PrismaClientKnownRequestError("Transaction timed out", {
+        code: "P2028",
+        clientVersion: "test",
+      }),
+    );
+    await expect(
+      command.handle(
+        buildInteraction({ name: "gifty", options: toUser(OTHER_USER_ID) }),
+      ),
+    ).rejects.toBeInstanceOf(BusyError);
   });
 
   const toUser = (userId: string) =>
@@ -246,7 +271,7 @@ describe("/gifty", () => {
     ] as APIApplicationCommandInteractionDataOption[];
 
   it("sends a gifty with the slash command", async () => {
-    await command.handle(
+    const { reply } = await command.handle(
       buildInteraction({ name: "gifty", options: toUser(OTHER_USER_ID) }),
     );
     expect(gifties.save).toHaveBeenCalledWith(
@@ -254,7 +279,7 @@ describe("/gifty", () => {
       { rateLimit: true },
       tx,
     );
-    expect(lastReply(discord)).toEqual({
+    expect(reply).toEqual({
       allowed_mentions: { users: [USER_ID, OTHER_USER_ID] },
       embeds: [
         {
@@ -344,10 +369,10 @@ describe("/gifty", () => {
   });
 
   it("mentions a self-gifter once", async () => {
-    await command.handle(
+    const { reply } = await command.handle(
       buildInteraction({ name: "gifty", options: toUser(USER_ID) }),
     );
-    expect(lastReply(discord)).toMatchObject({
+    expect(reply).toMatchObject({
       allowed_mentions: { users: [USER_ID] },
     });
   });
@@ -386,14 +411,14 @@ describe("/gifty", () => {
         ],
       }),
     );
-    await command.handle(
+    const { reply } = await command.handle(
       buildInteraction({
         id: "ref-3",
         name: "gifty",
         options: toUser(OTHER_USER_ID),
       }),
     );
-    expect(lastReply(discord)).toEqual({
+    expect(reply).toEqual({
       embeds: [
         {
           author: AUTHOR,

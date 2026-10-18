@@ -3,7 +3,10 @@ import {
   ApplicationCommandOptionType,
   type APIApplicationCommandGuildInteraction,
 } from "@discordjs/core";
-import type { HalloweenCommandHandler } from "../discord/halloween-command";
+import type {
+  HalloweenCommandHandler,
+  HalloweenCommandResult,
+} from "../discord/halloween-command";
 import { HalloweenDiscordError } from "../errors";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { KnockCommand } from "./knock.command";
@@ -23,7 +26,7 @@ export class AdminKnockCommand implements HalloweenCommandHandler {
 
   async handle(
     interaction: APIApplicationCommandGuildInteraction,
-  ): Promise<void> {
+  ): Promise<HalloweenCommandResult> {
     const chat = requireChatInput(interaction);
     requireAdministrator(chat, "AdminKnockCommand");
 
@@ -51,7 +54,7 @@ export class AdminKnockCommand implements HalloweenCommandHandler {
       targetUserId: option.value,
     } satisfies HalloweenLogLine);
 
-    await this.knockCommand.knock({
+    return this.knockCommand.knock({
       ...chat,
       data: { ...chat.data, name: this.knockCommand.name },
       member: {

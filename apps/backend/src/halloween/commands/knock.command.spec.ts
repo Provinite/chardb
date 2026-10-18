@@ -23,12 +23,15 @@ import { PrizeAwardService } from "../services/prize-award.service";
 import { PlayerLock } from "../services/player-lock";
 import { PrizeImageService } from "../services/prize-image.service";
 import { DatabaseService } from "../../database/database.service";
+import { Prisma } from "@chardb/database";
 import {
+  BusyError,
   EventEndedError,
   EventNotStartedError,
   OutOfPrizesError,
   TooManyKnocksError,
 } from "../errors";
+import { LOCKED_TRANSACTION_OPTIONS } from "../services/locked-transaction";
 import { EventStatus } from "../time";
 import {
   ADMINISTRATOR,
@@ -41,7 +44,6 @@ import {
   AUTHOR,
   CANDY,
   TIMESTAMP,
-  lastReply,
   mockDiscord,
   stubUi,
 } from "../testing/command-harness";
@@ -195,9 +197,60 @@ describe("/knock", () => {
     );
   });
 
-  const knock = (overrides = {}) =>
-    command.handle(buildInteraction({ name: "knock", ...overrides }));
+  /** What the last knock answered with. */
+  let reply: unknown;
+  /** The command alone, as the dispatcher runs it before replying. */
+  const knockOnly = async (overrides = {}) => {
+    const result = await command.handle(
+      buildInteraction({ name: "knock", ...overrides }),
+    );
+    reply = result.reply;
+    return result;
+  };
+  /** The command, then what it left for after the reply. */
+  const knock = async (overrides = {}) => {
+    const result = await knockOnly(overrides);
+    await result.afterReply?.();
+    return result;
+  };
   const win = () => (random.unit as jest.Mock).mockReturnValue(0.1);
+
+  describe("staying inside Discord's three seconds", () => {
+    it("gives up quickly rather than keep Discord waiting", async () => {
+      await knock();
+      expect(db.$transaction).toHaveBeenCalledWith(
+        expect.any(Function),
+        LOCKED_TRANSACTION_OPTIONS,
+      );
+    });
+
+    it("answers busy when its locks are not free in time", async () => {
+      db.$transaction.mockRejectedValue(
+        new Prisma.PrismaClientKnownRequestError("Transaction timed out", {
+          code: "P2028",
+          clientVersion: "test",
+        }),
+      );
+      await expect(knock()).rejects.toBeInstanceOf(BusyError);
+    });
+
+    it("makes no Discord call inside the transaction", async () => {
+      win();
+      guildSettings.get.mockResolvedValue({
+        ...settings,
+        winChannel: "300000000000000009",
+      });
+      db.$transaction.mockImplementation(
+        async (fn: (t: unknown) => Promise<unknown>) => {
+          const result = await fn(tx);
+          expect(discord.createChannelMessage).not.toHaveBeenCalled();
+          return result;
+        },
+      );
+      await knock();
+      expect(discord.createChannelMessage).toHaveBeenCalled();
+    });
+  });
 
   describe("before rolling", () => {
     it("works inside one transaction holding the player's lock", async () => {
@@ -364,7 +417,7 @@ describe("/knock", () => {
         { guildId: GUILD_ID, userId: USER_ID, prizeId: null },
         tx,
       );
-      expect(lastReply(discord)).toEqual({
+      expect(reply).toEqual({
         allowed_mentions: { users: [USER_ID] },
         embeds: [
           {
@@ -402,11 +455,10 @@ describe("/knock", () => {
         expect.objectContaining({ id: 41 }),
         tx,
       );
-      expect(lastReply(discord)).toMatchObject({
+      expect(reply).toMatchObject({
         allowed_mentions: { users: [OTHER_USER_ID, USER_ID] },
       });
-      const fields = (lastReply(discord) as { embeds: Embed[] }).embeds[0]
-        .fields;
+      const fields = (reply as { embeds: Embed[] }).embeds[0].fields;
       expect(fields?.[0]).toEqual({
         name: "Knock Gifted By",
         value: `<@${OTHER_USER_ID}>`,
@@ -424,7 +476,7 @@ describe("/knock", () => {
         gifty({ fromUserId: USER_ID, toUserId: USER_ID }),
       );
       await knock();
-      expect(lastReply(discord)).toMatchObject({
+      expect(reply).toMatchObject({
         allowed_mentions: { users: [USER_ID] },
       });
     });
@@ -467,7 +519,7 @@ describe("/knock", () => {
         .mockResolvedValueOnce(2); // after it
       gifties.pendingCount.mockResolvedValue(1);
       await knock();
-      expect(lastReply(discord)).toEqual({
+      expect(reply).toEqual({
         allowed_mentions: { users: [USER_ID] },
         embeds: [
           {
@@ -494,8 +546,7 @@ describe("/knock", () => {
       images.imageFor.mockResolvedValue("https://cdn.test/candy.webp");
       await knock();
       expect(images.imageFor).toHaveBeenCalledWith(candy);
-      const [embed] = (lastReply(discord) as { embeds: { image?: unknown }[] })
-        .embeds;
+      const [embed] = (reply as { embeds: { image?: unknown }[] }).embeds;
       expect(embed.image).toEqual({ url: "https://cdn.test/candy.webp" });
     });
 
@@ -505,15 +556,14 @@ describe("/knock", () => {
       ]);
       images.imageFor.mockResolvedValue(null);
       await knock();
-      const [embed] = (lastReply(discord) as { embeds: object[] }).embeds;
+      const [embed] = (reply as { embeds: object[] }).embeds;
       expect(embed).not.toHaveProperty("image");
     });
 
     it("links the prize on chardb", async () => {
       prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
       await knock();
-      const fields = (lastReply(discord) as { embeds: Embed[] }).embeds[0]
-        .fields;
+      const fields = (reply as { embeds: Embed[] }).embeds[0].fields;
       expect(fields?.[1]).toEqual({
         name: "CharDB",
         value: "[View on CharDB](https://chardb.cc/item/it-1)",
@@ -524,8 +574,7 @@ describe("/knock", () => {
       knocks.countSinceLastReset.mockResolvedValue(3);
       gifties.nextPending.mockResolvedValue(gifty());
       await knock();
-      const fields = (lastReply(discord) as { embeds: Embed[] }).embeds[0]
-        .fields;
+      const fields = (reply as { embeds: Embed[] }).embeds[0].fields;
       expect(fields).toContainEqual({
         name: "Knock Gifted By",
         value: `<@${OTHER_USER_ID}> (Go thank them!)`,
@@ -539,7 +588,7 @@ describe("/knock", () => {
         { guildId: GUILD_ID, userId: USER_ID },
         tx,
       );
-      const embeds = (lastReply(discord) as { embeds: unknown[] }).embeds;
+      const embeds = (reply as { embeds: unknown[] }).embeds;
       expect(embeds[1]).toEqual({
         author: AUTHOR,
         title: "Reminder",
@@ -550,43 +599,58 @@ describe("/knock", () => {
       });
     });
 
-    it("also announces the win in the win channel, without the reminder", async () => {
+    it("also announces the win in the win channel, after the reply, without the reminder", async () => {
       guildSettings.get.mockResolvedValue({
         ...settings,
         winChannel: "300000000000000009",
       });
       deviantArt.get.mockResolvedValue(null);
-      await knock();
+      const { afterReply } = await knockOnly();
+      expect(discord.createChannelMessage).not.toHaveBeenCalled();
+      await afterReply?.();
       const [channel, message] = discord.createChannelMessage.mock.calls[0];
       expect(channel).toBe("300000000000000009");
       expect(message.embeds).toHaveLength(1);
       expect(message.embeds[0].title).toBe("Winner!");
     });
 
-    it("checks the prize can be delivered before announcing it", async () => {
-      await knock();
-      expect(award.validate).toHaveBeenCalledWith(prize("myo"), GUILD_ID, tx);
-      expect(award.validate.mock.invocationCallOrder[0]).toBeLessThan(
-        discord.editOriginalResponse.mock.invocationCallOrder[0],
+    it("keeps the win when the win channel post fails, and logs it", async () => {
+      const error = jest.spyOn(Logger.prototype, "error").mockImplementation();
+      guildSettings.get.mockResolvedValue({
+        ...settings,
+        winChannel: "300000000000000009",
+      });
+      discord.createChannelMessage.mockRejectedValue(
+        new Error("Missing Access"),
       );
+      prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      await expect(knock({ id: "ref-2" })).resolves.toBeDefined();
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.WinChannelPostFailed,
+          interactionId: "ref-2",
+          winChannel: "300000000000000009",
+          prizeId: "myo",
+          cause: "Missing Access",
+        }),
+        expect.stringContaining("Missing Access"),
+      );
+      // The prize is still delivered.
+      expect(award.award).toHaveBeenCalled();
+      error.mockRestore();
     });
 
-    it("delivers the prize after the knock commits", async () => {
+    it("checks the prize can be delivered inside the knock", async () => {
+      await knock();
+      expect(award.validate).toHaveBeenCalledWith(prize("myo"), GUILD_ID, tx);
+    });
+
+    it("delivers the prize after the reply", async () => {
       const candy = prize("myo", { itemTypeId: "it-1" });
       prizes.inStock.mockResolvedValue([candy]);
-      let committed = false;
-      db.$transaction.mockImplementation(
-        async (fn: (t: unknown) => Promise<unknown>) => {
-          const result = await fn(tx);
-          committed = true;
-          return result;
-        },
-      );
-      award.award.mockImplementation(() => {
-        expect(committed).toBe(true);
-        return Promise.resolve();
-      });
-      await knock();
+      const { afterReply } = await knockOnly();
+      expect(award.award).not.toHaveBeenCalled();
+      await afterReply?.();
       expect(award.award).toHaveBeenCalledWith(candy, USER_ID);
     });
 
@@ -598,7 +662,9 @@ describe("/knock", () => {
     it("does not undo the win if delivery then fails", async () => {
       prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
       award.award.mockRejectedValue(new Error("database blip"));
-      await expect(knock()).resolves.toBeUndefined();
+      await expect(knock()).resolves.toMatchObject({
+        reply: { embeds: [expect.objectContaining({ title: "Winner!" })] },
+      });
     });
 
     it("fails the whole knock when the last prize went to someone else first", async () => {
@@ -610,9 +676,10 @@ describe("/knock", () => {
 });
 
 describe("/adminknock", () => {
+  const knocked = { reply: { content: "knocked" } };
   const knock = {
     name: "knock",
-    knock: jest.fn().mockResolvedValue(undefined),
+    knock: jest.fn().mockResolvedValue(knocked),
   };
   const command = new AdminKnockCommand(knock as unknown as KnockCommand);
   const target = (userId: string) =>
@@ -688,7 +755,7 @@ describe("/adminknock", () => {
       permissions: ADMINISTRATOR,
       options: target(OTHER_USER_ID),
     });
-    await command.handle(interaction);
+    await expect(command.handle(interaction)).resolves.toBe(knocked);
     const [asTarget] = knock.knock.mock.calls[0];
     expect(asTarget.member.user.id).toBe(OTHER_USER_ID);
     expect(asTarget.data.name).toBe("knock");

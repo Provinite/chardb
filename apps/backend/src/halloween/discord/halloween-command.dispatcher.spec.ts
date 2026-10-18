@@ -1,12 +1,7 @@
 import { HalloweenCommandDispatcher } from "./halloween-command.dispatcher";
 import type { HalloweenCommandHandler } from "./halloween-command";
-import { HalloweenDiscordClient } from "./halloween-discord.client";
 import { HalloweenUi } from "./ui";
-import {
-  DiscordWebhookMessageUnavailableError,
-  HalloweenDiscordError,
-  OutOfPrizesError,
-} from "../errors";
+import { HalloweenDiscordError, OutOfPrizesError } from "../errors";
 import { GUILD_ID, USER_ID, buildInteraction } from "../testing/fixtures";
 import { HalloweenLogEvent } from "../logging";
 import { Logger } from "@nestjs/common";
@@ -20,25 +15,16 @@ describe("HalloweenCommandDispatcher", () => {
     errorFooter: (i: { id: string }) => ({ text: `Reference ID: ${i.id}` }),
   } as unknown as HalloweenUi;
 
-  let discord: {
-    getOriginalResponse: jest.Mock;
-    editOriginalResponse: jest.Mock;
-  };
+  const answer = { content: "Knock knock" };
   let knock: HalloweenCommandHandler & { handle: jest.Mock };
   let dispatcher: HalloweenCommandDispatcher;
 
   beforeEach(() => {
-    discord = {
-      getOriginalResponse: jest.fn().mockResolvedValue({ id: "m" }),
-      editOriginalResponse: jest.fn().mockResolvedValue({ id: "m" }),
+    knock = {
+      name: "knock",
+      handle: jest.fn().mockResolvedValue({ reply: answer }),
     };
-    knock = { name: "knock", handle: jest.fn().mockResolvedValue(undefined) };
-    dispatcher = new HalloweenCommandDispatcher(
-      [knock],
-      discord as unknown as HalloweenDiscordClient,
-      ui,
-    );
-    dispatcher.originalResponseRetryDelaysMs = [0, 0];
+    dispatcher = new HalloweenCommandDispatcher([knock], ui);
   });
 
   describe("logging", () => {
@@ -100,32 +86,23 @@ describe("HalloweenCommandDispatcher", () => {
       );
     });
 
-    it("logs a command that never ran because its reply never appeared", async () => {
-      discord.getOriginalResponse.mockRejectedValue(
-        new DiscordWebhookMessageUnavailableError("t"),
+    it("logs work after the reply that failed, without rejecting", async () => {
+      knock.handle.mockResolvedValue({
+        reply: answer,
+        afterReply: () => Promise.reject(new Error("late failure")),
+      });
+      const { afterReply } = await dispatcher.dispatch(
+        buildInteraction({ id: "ref-1" }),
       );
-      await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
+      await expect(afterReply()).resolves.toBeUndefined();
       expect(error).toHaveBeenCalledWith(
         expect.objectContaining({
-          event: HalloweenLogEvent.ReplyUnavailable,
+          event: HalloweenLogEvent.AfterReplyFailed,
           interactionId: "ref-1",
-          attempts: 3,
+          command: "knock",
+          cause: "late failure",
         }),
-        expect.any(String),
-      );
-      expect(error).toHaveBeenCalledWith(completed("unavailable"));
-    });
-
-    it("logs failing to tell the player about a failure", async () => {
-      knock.handle.mockRejectedValue(new Error("first"));
-      discord.editOriginalResponse.mockRejectedValue(new Error("second"));
-      await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
-      expect(error).toHaveBeenCalledWith(
-        expect.objectContaining({
-          event: HalloweenLogEvent.ReportFailed,
-          interactionId: "ref-1",
-        }),
-        expect.stringContaining("second"),
+        expect.stringContaining("late failure"),
       );
     });
 
@@ -147,12 +124,7 @@ describe("HalloweenCommandDispatcher", () => {
         .mockReturnValue(
           tracer as unknown as ReturnType<typeof trace.getTracer>,
         );
-      dispatcher = new HalloweenCommandDispatcher(
-        [knock],
-        discord as unknown as HalloweenDiscordClient,
-        ui,
-      );
-      dispatcher.originalResponseRetryDelaysMs = [];
+      dispatcher = new HalloweenCommandDispatcher([knock], ui);
       await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
       expect(tracer.startActiveSpan).toHaveBeenCalledWith(
         "halloween.command knock",
@@ -173,10 +145,12 @@ describe("HalloweenCommandDispatcher", () => {
     });
   });
 
-  it("runs the command named by the interaction", async () => {
+  it("runs the command named by the interaction, and answers with its reply", async () => {
     const interaction = buildInteraction({ name: "knock" });
-    await dispatcher.dispatch(interaction);
+    const { reply, outcome } = await dispatcher.dispatch(interaction);
     expect(knock.handle).toHaveBeenCalledWith(interaction);
+    expect(reply).toBe(answer);
+    expect(outcome).toBe("ok");
   });
 
   it("matches command names case-insensitively", async () => {
@@ -184,77 +158,48 @@ describe("HalloweenCommandDispatcher", () => {
     expect(knock.handle).toHaveBeenCalled();
   });
 
-  it("waits until Discord has registered the deferred reply", async () => {
-    const interaction = buildInteraction();
-    await dispatcher.dispatch(interaction);
-    expect(discord.getOriginalResponse).toHaveBeenCalledWith(interaction.token);
-    expect(
-      discord.getOriginalResponse.mock.invocationCallOrder[0],
-    ).toBeLessThan(knock.handle.mock.invocationCallOrder[0]);
+  it("leaves the command's later work for after the reply", async () => {
+    const later = jest.fn().mockResolvedValue(undefined);
+    knock.handle.mockResolvedValue({ reply: answer, afterReply: later });
+    const { afterReply } = await dispatcher.dispatch(buildInteraction());
+    expect(later).not.toHaveBeenCalled();
+    await afterReply();
+    expect(later).toHaveBeenCalled();
   });
 
-  it("retries finding the deferred reply", async () => {
-    discord.getOriginalResponse
-      .mockRejectedValueOnce(new DiscordWebhookMessageUnavailableError("t"))
-      .mockResolvedValueOnce({ id: "m" });
-    await dispatcher.dispatch(buildInteraction());
-    expect(discord.getOriginalResponse).toHaveBeenCalledTimes(2);
-    expect(knock.handle).toHaveBeenCalled();
-  });
-
-  it("gives up quietly when the deferred reply never appears", async () => {
-    discord.getOriginalResponse.mockRejectedValue(
-      new DiscordWebhookMessageUnavailableError("t"),
-    );
-    await expect(dispatcher.dispatch(buildInteraction())).resolves.toBe(
-      undefined,
-    );
-    expect(discord.getOriginalResponse).toHaveBeenCalledTimes(3);
-    expect(knock.handle).not.toHaveBeenCalled();
-    expect(discord.editOriginalResponse).not.toHaveBeenCalled();
+  it("has nothing to do after the reply when the command left nothing", async () => {
+    const { afterReply } = await dispatcher.dispatch(buildInteraction());
+    await expect(afterReply()).resolves.toBeUndefined();
   });
 
   it("tells the player about an unknown command", async () => {
     const interaction = buildInteraction({ name: "dance" });
-    await dispatcher.dispatch(interaction);
-    expect(discord.editOriginalResponse).toHaveBeenCalledWith(
-      interaction.token,
+    const { reply, outcome } = await dispatcher.dispatch(interaction);
+    expect(reply).toEqual(
       new HalloweenDiscordError({
         thrownFrom: "test",
         message: "Unknown command, use /help for details",
       }).responseBody(interaction, ui),
     );
+    expect(outcome).toBe("failed");
   });
 
   it("shows a reportable error's own response", async () => {
     const interaction = buildInteraction();
     const error = new OutOfPrizesError({ thrownFrom: "test", guildId: "1" });
     knock.handle.mockRejectedValue(error);
-    await dispatcher.dispatch(interaction);
-    expect(discord.editOriginalResponse).toHaveBeenCalledWith(
-      interaction.token,
-      error.responseBody(interaction, ui),
-    );
+    const { reply, outcome } = await dispatcher.dispatch(interaction);
+    expect(reply).toEqual(error.responseBody(interaction, ui));
+    expect(outcome).toBe("refused");
   });
 
-  it("apologises for anything else", async () => {
+  it("apologises for anything else, and never rejects", async () => {
     const interaction = buildInteraction({ id: "ref-9" });
     knock.handle.mockRejectedValue(new Error("database on fire"));
-    await dispatcher.dispatch(interaction);
-    expect(discord.editOriginalResponse).toHaveBeenCalledWith(
-      interaction.token,
-      {
-        content:
-          "Something went wrong. Also, something went wrong while trying to tell you what went wrong. This is awkward. Reference ID: ref-9",
-      },
-    );
-  });
-
-  it("never rejects, even when reporting the error fails", async () => {
-    knock.handle.mockRejectedValue(new Error("first"));
-    discord.editOriginalResponse.mockRejectedValue(new Error("second"));
-    await expect(dispatcher.dispatch(buildInteraction())).resolves.toBe(
-      undefined,
-    );
+    const { reply } = await dispatcher.dispatch(interaction);
+    expect(reply).toEqual({
+      content:
+        "Something went wrong. Also, something went wrong while trying to tell you what went wrong. This is awkward. Reference ID: ref-9",
+    });
   });
 });

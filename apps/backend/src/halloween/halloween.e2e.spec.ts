@@ -49,7 +49,6 @@ describe("Halloween bot (e2e)", () => {
     );
     db = testApp.getDb();
     dispatcher = testApp.getModuleRef().get(HalloweenCommandDispatcher);
-    dispatcher.originalResponseRetryDelaysMs = [];
     random = testApp.getModuleRef().get(HalloweenRandom);
   });
 
@@ -63,7 +62,10 @@ describe("Halloween bot (e2e)", () => {
     jest.restoreAllMocks();
   });
 
-  /** Runs a command; returns what the deferred reply was edited into. */
+  /**
+   * Runs a command as the endpoint does: the reply, then whatever the command
+   * left for after it. Returns the reply.
+   */
   const run = async (
     name: string,
     options?: APIApplicationCommandInteractionDataOption[],
@@ -76,13 +78,11 @@ describe("Halloween bot (e2e)", () => {
       userId,
       permissions,
     });
-    await dispatcher.dispatch(
+    const { reply, afterReply } = await dispatcher.dispatch(
       interaction as APIApplicationCommandGuildInteraction,
     );
-    const calls = discord.editOriginalResponse.mock.calls.filter(
-      ([token]) => token === interaction.token,
-    );
-    return calls[calls.length - 1]?.[1] as {
+    await afterReply();
+    return reply as {
       content?: string;
       embeds?: { title?: string; fields?: { name: string; value: string }[] }[];
     };
@@ -185,6 +185,36 @@ describe("Halloween bot (e2e)", () => {
       "Cloverse Halloween 2026 - Too Many Knocks",
       "No one was home",
     ]);
+  });
+
+  it("answers busy, and spends nothing, when the player's lock stays taken too long", async () => {
+    await setUpEvent();
+    await addPrize("myo");
+    alwaysWin();
+
+    // Another knock by the same player, stuck holding the lock for longer
+    // than a knock may wait for it.
+    const key = `halloween:knock:${GUILD_ID}:${USER_ID}`;
+    let held!: () => void;
+    const locked = new Promise<void>((resolve) => (held = resolve));
+    const holder = db.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`;
+        held();
+        await tx.$executeRaw`SELECT pg_sleep(2.5)`;
+      },
+      { timeout: 10_000 },
+    );
+    await locked;
+
+    const started = Date.now();
+    const reply = await run("knock");
+    expect(Date.now() - started).toBeLessThan(3000);
+    expect(reply.embeds?.[0].title).toBe("Cloverse Halloween 2026 - Busy");
+    await holder;
+    expect(await db.halloweenKnockEvent.count()).toBe(0);
+    const [prize] = await db.halloweenPrize.findMany();
+    expect(prize.currentStock).toBe(2);
   });
 
   it("lets a gifty pay for a knock past the daily allowance", async () => {

@@ -22,7 +22,10 @@ import {
 } from "@discordjs/core";
 import { AllowUnauthenticated } from "../../auth/decorators/AllowUnauthenticated";
 import { HalloweenConfig } from "../halloween.config";
-import { HalloweenCommandDispatcher } from "./halloween-command.dispatcher";
+import {
+  HalloweenCommandDispatcher,
+  type DispatchedCommand,
+} from "./halloween-command.dispatcher";
 import {
   verifyDiscordSignature,
   type SignatureCheck,
@@ -30,14 +33,14 @@ import {
 import { HalloweenClock } from "../clock";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 
-/** Commands whose reply only the player who ran them can see. */
-const PRIVATE_COMMANDS = new Set(["deviantart"]);
-
 /**
  * The Halloween bot's Interactions Endpoint URL. Discord POSTs every slash
- * command here and expects an answer within three seconds, so a command is
- * only acknowledged here -- a deferred "thinking..." reply -- and runs after
- * the response has gone.
+ * command here and expects the answer within three seconds, so the command
+ * runs here and its reply is the response. Anything it leaves for later --
+ * announcing a win, delivering a prize -- runs once the response has gone.
+ *
+ * Discord does not confirm it showed the reply. If the connection closes
+ * before the response goes out, that is logged as `reply_not_sent`.
  *
  * Unauthenticated and unthrottled: the Ed25519 signature is the
  * authentication, and every player's knock arrives from the same few Discord
@@ -57,10 +60,10 @@ export class HalloweenInteractionsController {
 
   @Post("interactions")
   @HttpCode(HttpStatus.OK)
-  interactions(
+  async interactions(
     @Req() req: RawBodyRequest<Request>,
     @Res({ passthrough: true }) res: Response,
-  ): APIInteractionResponse {
+  ): Promise<APIInteractionResponse> {
     const check: SignatureCheck =
       req.rawBody === undefined
         ? { ok: false, reason: "missing_headers" }
@@ -137,33 +140,58 @@ export class HalloweenInteractionsController {
 
     const guildInteraction =
       interaction as APIApplicationCommandGuildInteraction;
+    const command = guildInteraction.data.name.toLowerCase();
     this.logger.log({
       event: HalloweenLogEvent.InteractionReceived,
-      message: `Received /${guildInteraction.data.name}`,
+      message: `Received /${command}`,
       interactionId: guildInteraction.id,
-      command: guildInteraction.data.name,
+      command,
       guildId: guildInteraction.guild_id,
       userId: guildInteraction.member.user.id,
     } satisfies HalloweenLogLine);
-    // Not before: editing the deferred reply needs Discord to have it first.
-    res.on("finish", () => {
-      void this.dispatcher
-        .dispatch(guildInteraction)
-        .catch((error: unknown) =>
-          this.logger.error(
-            `Dispatch of interaction ${guildInteraction.id} escaped its handler`,
-            error instanceof Error ? error.stack : String(error),
-          ),
-        );
+
+    // Listening before the command runs: Discord can give up and close the
+    // connection while it is still running.
+    const started = Date.now();
+    let dispatched: DispatchedCommand | null = null;
+    let lost = false;
+    let finishedUp = false;
+    const finishUp = () => {
+      if (finishedUp || !dispatched) return;
+      finishedUp = true;
+      void dispatched.afterReply();
+    };
+    const reportLost = (done: DispatchedCommand) => {
+      this.logger.error({
+        event: HalloweenLogEvent.ReplyNotSent,
+        message: `The reply to /${command} never reached Discord`,
+        interactionId: guildInteraction.id,
+        command,
+        guildId: guildInteraction.guild_id,
+        userId: guildInteraction.member.user.id,
+        outcome: done.outcome,
+        replyTitle: done.reply.embeds?.[0]?.title ?? done.reply.content ?? null,
+        durationMs: Date.now() - started,
+      } satisfies HalloweenLogLine);
+    };
+    res.on("finish", finishUp);
+    res.on("close", () => {
+      if (res.writableFinished) return;
+      lost = true;
+      if (dispatched) {
+        reportLost(dispatched);
+        finishUp();
+      }
     });
 
+    dispatched = await this.dispatcher.dispatch(guildInteraction);
+    if (lost) {
+      reportLost(dispatched);
+      finishUp();
+    }
     return {
-      type: InteractionResponseType.DeferredChannelMessageWithSource,
-      data: {
-        flags: PRIVATE_COMMANDS.has(guildInteraction.data.name.toLowerCase())
-          ? MessageFlags.Ephemeral
-          : undefined,
-      },
+      type: InteractionResponseType.ChannelMessageWithSource,
+      data: dispatched.reply,
     };
   }
 }

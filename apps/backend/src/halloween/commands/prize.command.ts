@@ -5,8 +5,10 @@ import {
   type APIChatInputApplicationCommandGuildInteraction,
   type APIEmbed,
 } from "@discordjs/core";
-import type { HalloweenCommandHandler } from "../discord/halloween-command";
-import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
+import type {
+  HalloweenCommandHandler,
+  HalloweenCommandResult,
+} from "../discord/halloween-command";
 import { Color, EVENT_NAME, HalloweenUi } from "../discord/ui";
 import { HalloweenRandom } from "../random";
 import { HalloweenLinks } from "../halloween-links";
@@ -41,7 +43,6 @@ export class PrizeCommand implements HalloweenCommandHandler {
   readonly name = "prize";
 
   constructor(
-    private readonly discord: HalloweenDiscordClient,
     private readonly ui: HalloweenUi,
     private readonly prizes: PrizeService,
     private readonly prizeImages: PrizeImageService,
@@ -51,7 +52,7 @@ export class PrizeCommand implements HalloweenCommandHandler {
 
   async handle(
     interaction: APIApplicationCommandGuildInteraction,
-  ): Promise<void> {
+  ): Promise<HalloweenCommandResult> {
     const chat = requireChatInput(interaction);
     const { options } = chat.data;
     if (!options || !options.length) {
@@ -98,19 +99,18 @@ export class PrizeCommand implements HalloweenCommandHandler {
 
   private async moved(
     interaction: APIChatInputApplicationCommandGuildInteraction,
-  ): Promise<void> {
-    await this.discord.editOriginalResponse(
-      interaction.token,
-      movedToChardb(
+  ): Promise<HalloweenCommandResult> {
+    return {
+      reply: movedToChardb(
         "Prize management has",
         await this.links.halloweenPage(interaction.guild_id),
       ),
-    );
+    };
   }
 
   private async list(
     interaction: APIChatInputApplicationCommandGuildInteraction,
-  ): Promise<void> {
+  ): Promise<HalloweenCommandResult> {
     const allPrizes = await this.prizes.inStock(interaction.guild_id);
     const prizes = this.random.shuffle(allPrizes).slice(0, LIST_SAMPLE_SIZE);
     if (!prizes.length) {
@@ -168,6 +168,6 @@ export class PrizeCommand implements HalloweenCommandHandler {
       }
     });
 
-    await this.discord.editOriginalResponse(interaction.token, { embeds });
+    return { reply: { embeds } };
   }
 }
