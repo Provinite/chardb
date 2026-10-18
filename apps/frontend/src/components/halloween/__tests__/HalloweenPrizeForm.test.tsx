@@ -14,10 +14,13 @@ vi.mock("react-hot-toast", () => {
   return { default: stub, toast: stub, Toaster: () => null };
 });
 
+import { InMemoryCache } from "@apollo/client";
 import {
   CreateHalloweenPrizeDocument,
+  HalloweenPrizeCharactersDocument,
   HalloweenPrizeDelivery,
-  HalloweenPrizeOptionsDocument,
+  HalloweenPrizeItemTypesDocument,
+  ModerationStatus,
   UpdateHalloweenPrizeDocument,
 } from "../../../generated/graphql";
 import { HalloweenPrizeForm } from "../HalloweenPrizeForm";
@@ -39,43 +42,78 @@ const prizeView = (overrides: Record<string, unknown> = {}) => ({
   ...overrides,
 });
 
-const optionsMock = (search: string | null): MockedResponse => ({
-  request: {
-    query: HalloweenPrizeOptionsDocument,
-    variables: { communityId: COMMUNITY_ID, search },
-  },
-  result: {
-    data: {
-      halloweenPrizeOptions: {
-        __typename: "HalloweenPrizeOptions",
-        itemTypes: [
-          {
-            __typename: "HalloweenPrizeOption",
-            id: "it-1",
-            name: "Edit Kit",
-            image: "https://cdn.test/kit.webp",
-          },
-        ],
-        characters: [
-          {
-            __typename: "HalloweenPrizeOption",
-            id: "ch-1",
-            name: "Free Ghost",
-            image: null,
-          },
-        ],
-      },
-    },
-  },
+const image = (
+  moderationStatus: ModerationStatus,
+  thumbnailUrl = "https://cdn.test/kit-thumb.webp",
+) => ({
+  __typename: "Image" as const,
+  id: "img-1",
+  thumbnailUrl,
+  mediumUrl: "https://cdn.test/kit-medium.webp",
+  originalUrl: "https://cdn.test/kit.webp",
+  moderationStatus,
 });
+
+const itemTypesMock = (
+  search: string,
+  itemImage: ReturnType<typeof image> | null = image(ModerationStatus.Approved),
+) => {
+  const result = vi.fn(() => ({
+    data: {
+      halloweenPrizeItemTypes: [
+        {
+          __typename: "ItemType" as const,
+          id: "it-1",
+          name: "Edit Kit",
+          image: itemImage,
+        },
+      ],
+    },
+  }));
+  return {
+    request: {
+      query: HalloweenPrizeItemTypesDocument,
+      variables: { communityId: COMMUNITY_ID, search },
+    },
+    result,
+  } satisfies MockedResponse;
+};
+
+const charactersMock = (search: string) => {
+  const result = vi.fn(() => ({
+    data: {
+      halloweenPrizeCharacters: [
+        {
+          __typename: "Character" as const,
+          id: "ch-1",
+          name: "Free Ghost",
+          species: {
+            __typename: "Species" as const,
+            id: "sp-1",
+            name: "Lanternkin",
+          },
+          mainMedia: null,
+        },
+      ],
+    },
+  }));
+  return {
+    request: {
+      query: HalloweenPrizeCharactersDocument,
+      variables: { communityId: COMMUNITY_ID, search },
+    },
+    result,
+  } satisfies MockedResponse;
+};
 
 const renderForm = (
   props: Partial<React.ComponentProps<typeof HalloweenPrizeForm>>,
   mocks: MockedResponse[],
+  cache?: InMemoryCache,
 ) => {
   const onSaved = vi.fn();
   render(
-    <MockedProvider mocks={mocks}>
+    <MockedProvider mocks={mocks} cache={cache}>
       <ThemeProvider theme={lightTheme}>
         <HalloweenPrizeForm
           communityId={COMMUNITY_ID}
@@ -177,9 +215,10 @@ describe("HalloweenPrizeForm", () => {
           }),
         },
       }));
+      const characters = charactersMock("edit");
       const onSaved = renderForm({}, [
-        optionsMock(null),
-        optionsMock("edit"),
+        itemTypesMock("edit"),
+        characters,
         {
           request: {
             query: CreateHalloweenPrizeDocument,
@@ -203,8 +242,10 @@ describe("HalloweenPrizeForm", () => {
       const option = await screen.findByRole("option", { name: /Edit Kit/ });
       expect(option.querySelector("img")).toHaveAttribute(
         "src",
-        "https://cdn.test/kit.webp",
+        "https://cdn.test/kit-thumb.webp",
       );
+      // Only the item types are asked for.
+      expect(characters.result).not.toHaveBeenCalled();
       await userEvent.click(option);
 
       expect(screen.getByLabelText(/^Name/)).toHaveValue("Edit Kit");
@@ -218,8 +259,15 @@ describe("HalloweenPrizeForm", () => {
       expect(result).toHaveBeenCalled();
     });
 
+    it("shows an item type's image only once a moderator has approved it", async () => {
+      renderForm({}, [itemTypesMock("ed", image(ModerationStatus.Pending))]);
+      await search(/Item type/, "ed");
+      const option = await screen.findByRole("option", { name: /Edit Kit/ });
+      expect(option.querySelector("img")).toBeNull();
+    });
+
     it("leaves names someone typed alone when they pick", async () => {
-      renderForm({}, [optionsMock("ed")]);
+      renderForm({}, [itemTypesMock("ed")]);
       await userEvent.type(screen.getByLabelText(/^Name/), "Kit of Edits");
       await search(/Item type/, "ed");
       await userEvent.click(
@@ -230,7 +278,7 @@ describe("HalloweenPrizeForm", () => {
     });
 
     it("forgets names it filled in when the prize type changes", async () => {
-      renderForm({}, [optionsMock("ed")]);
+      renderForm({}, [itemTypesMock("ed")]);
       await search(/Item type/, "ed");
       await userEvent.click(
         await screen.findByRole("option", { name: /Edit Kit/ }),
@@ -259,35 +307,52 @@ describe("HalloweenPrizeForm", () => {
           }),
         },
       }));
-      const onSaved = renderForm({}, [
-        optionsMock("gh"),
-        {
-          request: {
-            query: CreateHalloweenPrizeDocument,
-            variables: {
-              communityId: COMMUNITY_ID,
-              input: {
-                id: "edit-kit",
-                name: "Edit Kit",
-                stock: 300,
-                weight: 10,
-                characterId: "ch-1",
+      const itemTypes = itemTypesMock("gh");
+      const cache = new InMemoryCache();
+      const onSaved = renderForm(
+        {},
+        [
+          charactersMock("gh"),
+          itemTypes,
+          {
+            request: {
+              query: CreateHalloweenPrizeDocument,
+              variables: {
+                communityId: COMMUNITY_ID,
+                input: {
+                  id: "edit-kit",
+                  name: "Edit Kit",
+                  stock: 300,
+                  weight: 10,
+                  characterId: "ch-1",
+                },
               },
             },
+            result,
           },
-          result,
-        },
-      ]);
+        ],
+        cache,
+      );
       await chooseType("Character");
       await search(/Character/, "gh");
-      await userEvent.click(
-        await screen.findByRole("option", { name: /Free Ghost/ }),
-      );
+      const option = await screen.findByRole("option", { name: /Free Ghost/ });
+      expect(option).toHaveTextContent("Lanternkin");
+      // Only the characters are asked for.
+      expect(itemTypes.result).not.toHaveBeenCalled();
+      await userEvent.click(option);
       await userEvent.clear(screen.getByLabelText(/Short name/));
       await userEvent.clear(screen.getByLabelText(/^Name/));
       await fillBasics();
+
+      const cachedSearches = () =>
+        Object.keys(cache.extract().ROOT_QUERY ?? {}).filter((key) =>
+          key.startsWith("halloweenPrizeCharacters"),
+        );
+      expect(cachedSearches()).not.toHaveLength(0);
       await userEvent.click(screen.getByRole("button", { name: "Add prize" }));
       await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
+      // The character is a prize now: no earlier search may offer it again.
+      expect(cachedSearches()).toHaveLength(0);
     });
 
     it("needs a pick before a chardb prize can be added", async () => {

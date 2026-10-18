@@ -12,9 +12,12 @@ import {
 } from "./halloween-admin.inputs";
 import {
   HalloweenEventSettings,
-  HalloweenPrizeOptions,
   HalloweenPrizeView,
 } from "./halloween-dashboard.types";
+import { ItemType } from "../../items/entities/item-type.entity";
+import { mapPrismaItemTypeToGraphQL } from "../../items/utils/item-type-resolver-mappers";
+import { Character } from "../../characters/entities/character.entity";
+import { mapPrismaCharacterToGraphQL } from "../../characters/utils/character-resolver-mappers";
 
 /**
  * Running the Halloween event from chardb. Gated on `canManageItems`: this is
@@ -84,16 +87,31 @@ export class HalloweenAdminResolver {
 
   @AllowCommunityPermission(CommunityPermission.CanManageItems)
   @ResolveCommunityFrom({ communityId: "communityId" })
-  @Query(() => HalloweenPrizeOptions, {
+  @Query(() => [ItemType], {
     description:
-      "What a new Halloween prize can hand over: item types, and characters " +
-      "nobody owns or has been promised (25 of each per search)",
+      "Item types of the community a new Halloween prize could hand over, " +
+      "by name (25 per search)",
   })
-  async halloweenPrizeOptions(
+  async halloweenPrizeItemTypes(
     @Args("communityId", { type: () => ID }) communityId: string,
-    @Args("search", { type: () => String, nullable: true })
-    search: string | null,
-  ): Promise<HalloweenPrizeOptions> {
-    return this.admin.prizeOptions(communityId, search);
+    @Args("search") search: string,
+  ): Promise<ItemType[]> {
+    const itemTypes = await this.admin.prizeItemTypes(communityId, search);
+    return itemTypes.map(mapPrismaItemTypeToGraphQL);
+  }
+
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => [Character], {
+    description:
+      "Characters of the community a new Halloween prize could hand over, by " +
+      "name: no owner, no pending owner, and not a prize already (25 per search)",
+  })
+  async halloweenPrizeCharacters(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("search") search: string,
+  ): Promise<Character[]> {
+    const characters = await this.admin.prizeCharacters(communityId, search);
+    return characters.map(mapPrismaCharacterToGraphQL);
   }
 }

@@ -1554,23 +1554,6 @@ enum HalloweenPrizeDelivery {
   STAFF
 }
 
-"""Something a Halloween prize can hand over"""
-type HalloweenPrizeOption {
-  id: ID!
-
-  """Its approved image, which the prize would show"""
-  image: String
-  name: String!
-}
-
-"""
-The community's item types, and its characters nobody owns or has been promised: what a new prize can hand over
-"""
-type HalloweenPrizeOptions {
-  characters: [HalloweenPrizeOption!]!
-  itemTypes: [HalloweenPrizeOption!]!
-}
-
 """A prize in the guild's pool"""
 type HalloweenPrizeView {
   characterId: String
@@ -3508,9 +3491,14 @@ type Query {
   halloweenDashboard(communityId: ID!): HalloweenDashboard!
 
   """
-  What a new Halloween prize can hand over: item types, and characters nobody owns or has been promised (25 of each per search)
+  Characters of the community a new Halloween prize could hand over, by name: no owner, no pending owner, and not a prize already (25 per search)
   """
-  halloweenPrizeOptions(communityId: ID!, search: String): HalloweenPrizeOptions!
+  halloweenPrizeCharacters(communityId: ID!, search: String!): [Character!]!
+
+  """
+  Item types of the community a new Halloween prize could hand over, by name (25 per search)
+  """
+  halloweenPrizeItemTypes(communityId: ID!, search: String!): [ItemType!]!
 
   """
   The Halloween event's wins, newest first, a page at a time (at most 100).

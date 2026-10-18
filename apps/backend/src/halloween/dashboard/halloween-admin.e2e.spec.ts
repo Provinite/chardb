@@ -3,6 +3,7 @@ import { DatabaseModule } from "../../database/database.module";
 import { AuthModule } from "../../auth/auth.module";
 import { DatabaseService } from "../../database/database.service";
 import { HalloweenModule } from "../halloween.module";
+import { CharactersModule } from "../../characters/characters.module";
 import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { mockDiscord } from "../testing/command-harness";
 
@@ -39,7 +40,15 @@ describe("Halloween management (e2e)", () => {
   beforeAll(async () => {
     testApp = new TestApp();
     await testApp.setup(
-      { imports: [DatabaseModule, AuthModule, HalloweenModule] },
+      {
+        // CharactersModule resolves a character's species and media.
+        imports: [
+          DatabaseModule,
+          AuthModule,
+          CharactersModule,
+          HalloweenModule,
+        ],
+      },
       (builder) =>
         builder
           .overrideProvider(HalloweenDiscordClient)
@@ -194,11 +203,17 @@ describe("Halloween management (e2e)", () => {
         removeHalloweenPrize(communityId: $communityId, prizeId: $prizeId)
       }
     `;
-    const OPTIONS = `
-      query Options($communityId: ID!, $search: String) {
-        halloweenPrizeOptions(communityId: $communityId, search: $search) {
-          itemTypes { id name }
-          characters { id name }
+    const ITEM_TYPES = `
+      query ItemTypes($communityId: ID!, $search: String!) {
+        halloweenPrizeItemTypes(communityId: $communityId, search: $search) {
+          id name image { id }
+        }
+      }
+    `;
+    const CHARACTERS = `
+      query Characters($communityId: ID!, $search: String!) {
+        halloweenPrizeCharacters(communityId: $communityId, search: $search) {
+          id name species { name } mainMedia { id }
         }
       }
     `;
@@ -494,13 +509,35 @@ describe("Halloween management (e2e)", () => {
       });
     });
 
-    describe("halloweenPrizeOptions", () => {
-      it("offers the community's item types and its unowned, unclaimed characters", async () => {
+    describe("halloweenPrizeItemTypes", () => {
+      it("searches the community's own item types", async () => {
         await db.itemType.create({ data: { name: "Edit Kit", communityId } });
+        await db.itemType.create({ data: { name: "Candy", communityId } });
         await db.itemType.create({
-          data: { name: "Foreign", communityId: otherCommunityId },
+          data: { name: "Edit Foreign", communityId: otherCommunityId },
         });
+        const res = await gql(ITEM_TYPES, { search: "edit" });
+        expect(res.body.errors).toBeUndefined();
+        expect(res.body.data.halloweenPrizeItemTypes).toEqual([
+          { id: expect.any(String), name: "Edit Kit", image: null },
+        ]);
+      });
+
+      it("is for members who can manage items", async () => {
+        const res = await gql(ITEM_TYPES, { search: "ed" }, granterToken);
+        expect(res.body.errors?.[0]).toBeDefined();
+      });
+    });
+
+    describe("halloweenPrizeCharacters", () => {
+      it("searches the community's unowned, unclaimed characters", async () => {
         const free = await character({ name: "Free Ghost" });
+        await db.character.create({
+          data: {
+            name: "Foreign Ghost",
+            speciesId: (await testApp.createTestSpecies(otherCommunityId)).id,
+          },
+        });
         const owner = await testApp.createTestUser({
           username: `owner_${Date.now()}`,
           email: `owner_${Date.now()}@example.com`,
@@ -515,12 +552,16 @@ describe("Halloween management (e2e)", () => {
           },
         });
 
-        const res = await gql(OPTIONS, {});
+        const res = await gql(CHARACTERS, { search: "ghost" });
         expect(res.body.errors).toBeUndefined();
-        expect(res.body.data.halloweenPrizeOptions).toEqual({
-          itemTypes: [{ id: expect.any(String), name: "Edit Kit" }],
-          characters: [{ id: free.id, name: "Free Ghost" }],
-        });
+        expect(res.body.data.halloweenPrizeCharacters).toEqual([
+          {
+            id: free.id,
+            name: "Free Ghost",
+            species: { name: expect.any(String) },
+            mainMedia: null,
+          },
+        ]);
       });
 
       it("leaves out characters already in the prize pool", async () => {
@@ -534,23 +575,14 @@ describe("Halloween management (e2e)", () => {
             characterId: pooled.id,
           },
         });
-        const res = await gql(OPTIONS, {});
-        expect(res.body.data.halloweenPrizeOptions.characters).toEqual([
-          { id: free.id, name: "Free Ghost" },
-        ]);
-      });
-
-      it("searches by name", async () => {
-        await db.itemType.create({ data: { name: "Edit Kit", communityId } });
-        await db.itemType.create({ data: { name: "Candy", communityId } });
-        const res = await gql(OPTIONS, { search: "edit" });
-        expect(res.body.data.halloweenPrizeOptions.itemTypes).toEqual([
-          { id: expect.any(String), name: "Edit Kit" },
+        const res = await gql(CHARACTERS, { search: "ghost" });
+        expect(res.body.data.halloweenPrizeCharacters).toEqual([
+          expect.objectContaining({ id: free.id, name: "Free Ghost" }),
         ]);
       });
 
       it("is for members who can manage items", async () => {
-        const res = await gql(OPTIONS, {}, granterToken);
+        const res = await gql(CHARACTERS, { search: "gh" }, granterToken);
         expect(res.body.errors?.[0]).toBeDefined();
       });
     });

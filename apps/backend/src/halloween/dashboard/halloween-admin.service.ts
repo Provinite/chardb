@@ -7,8 +7,10 @@ import {
 } from "@nestjs/common";
 import {
   Prisma,
+  type Character,
   type HalloweenGuildSettings,
   type HalloweenPrize,
+  type ItemType,
 } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
 import { notDeleted } from "../../common/utils/prisma-filters";
@@ -19,7 +21,6 @@ import {
   type PrizeInput,
 } from "../services/prize.service";
 import { PrizeAwardService } from "../services/prize-award.service";
-import { approvedImageUrl } from "../services/prize-image.service";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { HalloweenDashboardService } from "./halloween-dashboard.service";
 import type {
@@ -29,7 +30,6 @@ import type {
 } from "./halloween-admin.inputs";
 import type {
   HalloweenEventSettings,
-  HalloweenPrizeOptions,
   HalloweenPrizeView,
 } from "./halloween-dashboard.types";
 
@@ -321,14 +321,27 @@ export class HalloweenAdminService {
     return true;
   }
 
-  /**
-   * What a new prize could hand over: the community's item types, and its
-   * characters with no owner, no pending owner, and no prize already.
-   */
-  async prizeOptions(
+  /** Item types of the community whose name contains `search`. */
+  async prizeItemTypes(
     communityId: string,
-    search: string | null,
-  ): Promise<HalloweenPrizeOptions> {
+    search: string,
+  ): Promise<ItemType[]> {
+    await this.dashboard.guildFor(communityId);
+    return this.db.itemType.findMany({
+      where: { communityId, name: nameContains(search) },
+      orderBy: { name: "asc" },
+      take: OPTIONS_LIMIT,
+    });
+  }
+
+  /**
+   * Characters of the community whose name contains `search` and that could
+   * be a new prize: no owner, no pending owner, and no prize already.
+   */
+  async prizeCharacters(
+    communityId: string,
+    search: string,
+  ): Promise<Character[]> {
     const guildId = await this.dashboard.guildFor(communityId);
     // A character already in the pool can't be a second prize.
     const pooled = guildId
@@ -340,53 +353,18 @@ export class HalloweenAdminService {
     const pooledCharacterIds = pooled.flatMap((p) =>
       p.characterId ? [p.characterId] : [],
     );
-    const name = search?.trim()
-      ? { contains: search.trim(), mode: "insensitive" as const }
-      : undefined;
-    const imageSelect = {
-      originalUrl: true,
-      mediumUrl: true,
-      moderationStatus: true,
-    } satisfies Prisma.ImageSelect;
-
-    const [itemTypes, characters] = await Promise.all([
-      this.db.itemType.findMany({
-        where: { communityId, ...(name ? { name } : {}) },
-        select: { id: true, name: true, image: { select: imageSelect } },
-        orderBy: { name: "asc" },
-        take: OPTIONS_LIMIT,
-      }),
-      this.db.character.findMany({
-        where: {
-          species: { communityId },
-          ownerId: null,
-          pendingOwnership: null,
-          id: { notIn: pooledCharacterIds },
-          ...notDeleted,
-          ...(name ? { name } : {}),
-        },
-        select: {
-          id: true,
-          name: true,
-          mainMedia: { select: { image: { select: imageSelect } } },
-        },
-        orderBy: { name: "asc" },
-        take: OPTIONS_LIMIT,
-      }),
-    ]);
-
-    return {
-      itemTypes: itemTypes.map((t) => ({
-        id: t.id,
-        name: t.name,
-        image: approvedImageUrl(t.image),
-      })),
-      characters: characters.map((c) => ({
-        id: c.id,
-        name: c.name,
-        image: approvedImageUrl(c.mainMedia?.image),
-      })),
-    };
+    return this.db.character.findMany({
+      where: {
+        species: { communityId },
+        ownerId: null,
+        pendingOwnership: null,
+        id: { notIn: pooledCharacterIds },
+        name: nameContains(search),
+        ...notDeleted,
+      },
+      orderBy: { name: "asc" },
+      take: OPTIONS_LIMIT,
+    });
   }
 
   private async findPrize(
@@ -403,5 +381,10 @@ export class HalloweenAdminService {
   }
 }
 
-/** How many of each kind the picker offers per search. */
+/** How many matches the picker offers per search. */
 const OPTIONS_LIMIT = 25;
+
+const nameContains = (search: string) => ({
+  contains: search.trim(),
+  mode: "insensitive" as const,
+});

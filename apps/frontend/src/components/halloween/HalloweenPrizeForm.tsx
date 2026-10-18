@@ -12,14 +12,23 @@ import {
 import { toast } from "react-hot-toast";
 import {
   HalloweenPrizeDelivery,
+  ModerationStatus,
   useCreateHalloweenPrizeMutation,
-  useHalloweenPrizeOptionsQuery,
+  useHalloweenPrizeCharactersQuery,
+  useHalloweenPrizeItemTypesQuery,
   useUpdateHalloweenPrizeMutation,
   type CreateHalloweenPrizeInput,
+  type HalloweenPickerImageFragment,
   type HalloweenPrizeFieldsFragment,
   type UpdateHalloweenPrizeInput,
 } from "../../generated/graphql";
 import { prizeIdFrom } from "./prizeId";
+
+/** The picture a prize would show: approved images only, as on Discord. */
+const pickerImage = (image: HalloweenPickerImageFragment | null | undefined) =>
+  image?.moderationStatus === ModerationStatus.Approved
+    ? (image.thumbnailUrl ?? image.mediumUrl ?? image.originalUrl)
+    : null;
 
 /**
  * Adding a Halloween prize, or changing one: what `/prize admin add` did in
@@ -127,18 +136,43 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
 
   const isStaffPrize = delivery === HalloweenPrizeDelivery.Staff;
   const isItemPrize = delivery === HalloweenPrizeDelivery.ChardbItem;
-  // Nothing is listed until someone types, so nothing is asked for either.
-  const { data: optionsData, loading: optionsLoading } =
-    useHalloweenPrizeOptionsQuery({
-      variables: { communityId, search },
-      skip: editing || isStaffPrize || !search,
+  const isCharacterPrize = delivery === HalloweenPrizeDelivery.ChardbCharacter;
+  // Nothing is listed until someone types, so nothing is asked for either;
+  // and only the kind being picked is asked for.
+  const { data: itemTypesData, loading: itemTypesLoading } =
+    useHalloweenPrizeItemTypesQuery({
+      variables: { communityId, search: search ?? "" },
+      skip: editing || !isItemPrize || !search,
     });
-  const options =
-    (isItemPrize
-      ? optionsData?.halloweenPrizeOptions.itemTypes
-      : optionsData?.halloweenPrizeOptions.characters) ?? [];
+  const { data: charactersData, loading: charactersLoading } =
+    useHalloweenPrizeCharactersQuery({
+      variables: { communityId, search: search ?? "" },
+      skip: editing || !isCharacterPrize || !search,
+    });
+  const itemTypeOptions = (itemTypesData?.halloweenPrizeItemTypes ?? []).map(
+    (itemType) => ({
+      id: itemType.id,
+      name: itemType.name,
+      image: pickerImage(itemType.image),
+    }),
+  );
+  const characterOptions = (charactersData?.halloweenPrizeCharacters ?? []).map(
+    (character) => ({
+      id: character.id,
+      name: character.name,
+      image: pickerImage(character.mainMedia?.image),
+      subtitle: character.species?.name ?? null,
+    }),
+  );
 
-  const [create, { loading: creating }] = useCreateHalloweenPrizeMutation();
+  const [create, { loading: creating }] = useCreateHalloweenPrizeMutation({
+    // A new prize can take a character off the list; earlier searches would
+    // still offer it.
+    update: (cache) => {
+      cache.evict({ fieldName: "halloweenPrizeCharacters" });
+      cache.gc();
+    },
+  });
   const [update, { loading: updating }] = useUpdateHalloweenPrizeMutation();
   const busy = creating || updating;
 
@@ -181,9 +215,7 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
           weight: Number(weight),
           ...(isStaffPrize ? { image } : {}),
           ...(isItemPrize && pick ? { itemTypeId: pick.id } : {}),
-          ...(delivery === HalloweenPrizeDelivery.ChardbCharacter && pick
-            ? { characterId: pick.id }
-            : {}),
+          ...(isCharacterPrize && pick ? { characterId: pick.id } : {}),
         };
         const result = await create({ variables: { communityId, input } });
         if (result.data) onSaved(result.data.createHalloweenPrize);
@@ -238,8 +270,8 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
                 value={pick}
                 onChange={choosePick}
                 onSearch={setSearch}
-                options={options}
-                loading={optionsLoading}
+                options={itemTypeOptions}
+                loading={itemTypesLoading}
               />
             ) : (
               <CharacterTypeahead
@@ -247,8 +279,8 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
                 value={pick}
                 onChange={choosePick}
                 onSearch={setSearch}
-                options={options}
-                loading={optionsLoading}
+                options={characterOptions}
+                loading={charactersLoading}
               />
             )}
             <Hint>

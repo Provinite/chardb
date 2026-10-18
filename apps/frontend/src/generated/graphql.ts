@@ -1270,22 +1270,6 @@ export enum HalloweenPrizeDelivery {
   Staff = 'STAFF'
 }
 
-/** Something a Halloween prize can hand over */
-export type HalloweenPrizeOption = {
-  __typename?: 'HalloweenPrizeOption';
-  id: Scalars['ID']['output'];
-  /** Its approved image, which the prize would show */
-  image: Maybe<Scalars['String']['output']>;
-  name: Scalars['String']['output'];
-};
-
-/** The community's item types, and its characters nobody owns or has been promised: what a new prize can hand over */
-export type HalloweenPrizeOptions = {
-  __typename?: 'HalloweenPrizeOptions';
-  characters: Array<HalloweenPrizeOption>;
-  itemTypes: Array<HalloweenPrizeOption>;
-};
-
 /** A prize in the guild's pool */
 export type HalloweenPrizeView = {
   __typename?: 'HalloweenPrizeView';
@@ -3104,8 +3088,10 @@ export type Query = {
   globalPendingImageCount: Scalars['Int']['output'];
   /** The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems. */
   halloweenDashboard: HalloweenDashboard;
-  /** What a new Halloween prize can hand over: item types, and characters nobody owns or has been promised (25 of each per search) */
-  halloweenPrizeOptions: HalloweenPrizeOptions;
+  /** Characters of the community a new Halloween prize could hand over, by name: no owner, no pending owner, and not a prize already (25 per search) */
+  halloweenPrizeCharacters: Array<Character>;
+  /** Item types of the community a new Halloween prize could hand over, by name (25 per search) */
+  halloweenPrizeItemTypes: Array<ItemType>;
   /** The Halloween event's wins, newest first, a page at a time (at most 100). */
   halloweenWins: HalloweenWinPage;
   /** Get pending images for a community moderation queue */
@@ -3508,9 +3494,15 @@ export type QueryHalloweenDashboardArgs = {
 };
 
 
-export type QueryHalloweenPrizeOptionsArgs = {
+export type QueryHalloweenPrizeCharactersArgs = {
   communityId: Scalars['ID']['input'];
-  search?: InputMaybe<Scalars['String']['input']>;
+  search: Scalars['String']['input'];
+};
+
+
+export type QueryHalloweenPrizeItemTypesArgs = {
+  communityId: Scalars['ID']['input'];
+  search: Scalars['String']['input'];
 };
 
 
@@ -5773,13 +5765,23 @@ export type RemoveHalloweenPrizeMutationVariables = Exact<{
 
 export type RemoveHalloweenPrizeMutation = { __typename?: 'Mutation', removeHalloweenPrize: boolean };
 
-export type HalloweenPrizeOptionsQueryVariables = Exact<{
+export type HalloweenPickerImageFragment = { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus };
+
+export type HalloweenPrizeItemTypesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
-  search?: InputMaybe<Scalars['String']['input']>;
+  search: Scalars['String']['input'];
 }>;
 
 
-export type HalloweenPrizeOptionsQuery = { __typename?: 'Query', halloweenPrizeOptions: { __typename?: 'HalloweenPrizeOptions', itemTypes: Array<{ __typename?: 'HalloweenPrizeOption', id: string, name: string, image: string | null }>, characters: Array<{ __typename?: 'HalloweenPrizeOption', id: string, name: string, image: string | null }> } };
+export type HalloweenPrizeItemTypesQuery = { __typename?: 'Query', halloweenPrizeItemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus } | null }> };
+
+export type HalloweenPrizeCharactersQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  search: Scalars['String']['input'];
+}>;
+
+
+export type HalloweenPrizeCharactersQuery = { __typename?: 'Query', halloweenPrizeCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null, mainMedia: { __typename?: 'Media', id: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus } | null } | null }> };
 
 export type ImageModerationQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -7062,6 +7064,15 @@ export const HalloweenSettingsFieldsFragmentDoc = gql`
   resetTime
   winRate
   winChannel
+}
+    `;
+export const HalloweenPickerImageFragmentDoc = gql`
+    fragment HalloweenPickerImage on Image {
+  id
+  thumbnailUrl
+  mediumUrl
+  originalUrl
+  moderationStatus
 }
     `;
 export const ItemTypeFieldsFragmentDoc = gql`
@@ -12318,56 +12329,103 @@ export function useRemoveHalloweenPrizeMutation(baseOptions?: Apollo.MutationHoo
 export type RemoveHalloweenPrizeMutationHookResult = ReturnType<typeof useRemoveHalloweenPrizeMutation>;
 export type RemoveHalloweenPrizeMutationResult = Apollo.MutationResult<RemoveHalloweenPrizeMutation>;
 export type RemoveHalloweenPrizeMutationOptions = Apollo.BaseMutationOptions<RemoveHalloweenPrizeMutation, RemoveHalloweenPrizeMutationVariables>;
-export const HalloweenPrizeOptionsDocument = gql`
-    query HalloweenPrizeOptions($communityId: ID!, $search: String) {
-  halloweenPrizeOptions(communityId: $communityId, search: $search) {
-    itemTypes {
-      id
-      name
-      image
-    }
-    characters {
-      id
-      name
-      image
+export const HalloweenPrizeItemTypesDocument = gql`
+    query HalloweenPrizeItemTypes($communityId: ID!, $search: String!) {
+  halloweenPrizeItemTypes(communityId: $communityId, search: $search) {
+    id
+    name
+    image {
+      ...HalloweenPickerImage
     }
   }
 }
-    `;
+    ${HalloweenPickerImageFragmentDoc}`;
 
 /**
- * __useHalloweenPrizeOptionsQuery__
+ * __useHalloweenPrizeItemTypesQuery__
  *
- * To run a query within a React component, call `useHalloweenPrizeOptionsQuery` and pass it any options that fit your needs.
- * When your component renders, `useHalloweenPrizeOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useHalloweenPrizeItemTypesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHalloweenPrizeItemTypesQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useHalloweenPrizeOptionsQuery({
+ * const { data, loading, error } = useHalloweenPrizeItemTypesQuery({
  *   variables: {
  *      communityId: // value for 'communityId'
  *      search: // value for 'search'
  *   },
  * });
  */
-export function useHalloweenPrizeOptionsQuery(baseOptions: Apollo.QueryHookOptions<HalloweenPrizeOptionsQuery, HalloweenPrizeOptionsQueryVariables> & ({ variables: HalloweenPrizeOptionsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useHalloweenPrizeItemTypesQuery(baseOptions: Apollo.QueryHookOptions<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables> & ({ variables: HalloweenPrizeItemTypesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<HalloweenPrizeOptionsQuery, HalloweenPrizeOptionsQueryVariables>(HalloweenPrizeOptionsDocument, options);
+        return Apollo.useQuery<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>(HalloweenPrizeItemTypesDocument, options);
       }
-export function useHalloweenPrizeOptionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenPrizeOptionsQuery, HalloweenPrizeOptionsQueryVariables>) {
+export function useHalloweenPrizeItemTypesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<HalloweenPrizeOptionsQuery, HalloweenPrizeOptionsQueryVariables>(HalloweenPrizeOptionsDocument, options);
+          return Apollo.useLazyQuery<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>(HalloweenPrizeItemTypesDocument, options);
         }
-export function useHalloweenPrizeOptionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenPrizeOptionsQuery, HalloweenPrizeOptionsQueryVariables>) {
+export function useHalloweenPrizeItemTypesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<HalloweenPrizeOptionsQuery, HalloweenPrizeOptionsQueryVariables>(HalloweenPrizeOptionsDocument, options);
+          return Apollo.useSuspenseQuery<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>(HalloweenPrizeItemTypesDocument, options);
         }
-export type HalloweenPrizeOptionsQueryHookResult = ReturnType<typeof useHalloweenPrizeOptionsQuery>;
-export type HalloweenPrizeOptionsLazyQueryHookResult = ReturnType<typeof useHalloweenPrizeOptionsLazyQuery>;
-export type HalloweenPrizeOptionsSuspenseQueryHookResult = ReturnType<typeof useHalloweenPrizeOptionsSuspenseQuery>;
-export type HalloweenPrizeOptionsQueryResult = Apollo.QueryResult<HalloweenPrizeOptionsQuery, HalloweenPrizeOptionsQueryVariables>;
+export type HalloweenPrizeItemTypesQueryHookResult = ReturnType<typeof useHalloweenPrizeItemTypesQuery>;
+export type HalloweenPrizeItemTypesLazyQueryHookResult = ReturnType<typeof useHalloweenPrizeItemTypesLazyQuery>;
+export type HalloweenPrizeItemTypesSuspenseQueryHookResult = ReturnType<typeof useHalloweenPrizeItemTypesSuspenseQuery>;
+export type HalloweenPrizeItemTypesQueryResult = Apollo.QueryResult<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>;
+export const HalloweenPrizeCharactersDocument = gql`
+    query HalloweenPrizeCharacters($communityId: ID!, $search: String!) {
+  halloweenPrizeCharacters(communityId: $communityId, search: $search) {
+    id
+    name
+    species {
+      id
+      name
+    }
+    mainMedia {
+      id
+      image {
+        ...HalloweenPickerImage
+      }
+    }
+  }
+}
+    ${HalloweenPickerImageFragmentDoc}`;
+
+/**
+ * __useHalloweenPrizeCharactersQuery__
+ *
+ * To run a query within a React component, call `useHalloweenPrizeCharactersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHalloweenPrizeCharactersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHalloweenPrizeCharactersQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      search: // value for 'search'
+ *   },
+ * });
+ */
+export function useHalloweenPrizeCharactersQuery(baseOptions: Apollo.QueryHookOptions<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables> & ({ variables: HalloweenPrizeCharactersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>(HalloweenPrizeCharactersDocument, options);
+      }
+export function useHalloweenPrizeCharactersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>(HalloweenPrizeCharactersDocument, options);
+        }
+export function useHalloweenPrizeCharactersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>(HalloweenPrizeCharactersDocument, options);
+        }
+export type HalloweenPrizeCharactersQueryHookResult = ReturnType<typeof useHalloweenPrizeCharactersQuery>;
+export type HalloweenPrizeCharactersLazyQueryHookResult = ReturnType<typeof useHalloweenPrizeCharactersLazyQuery>;
+export type HalloweenPrizeCharactersSuspenseQueryHookResult = ReturnType<typeof useHalloweenPrizeCharactersSuspenseQuery>;
+export type HalloweenPrizeCharactersQueryResult = Apollo.QueryResult<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>;
 export const ImageModerationQueueDocument = gql`
     query ImageModerationQueue($communityId: ID!, $filters: ImageModerationQueueFiltersInput, $first: Int, $offset: Int) {
   imageModerationQueue(
