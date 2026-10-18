@@ -339,18 +339,20 @@ export const CommunityAdminPage: React.FC = () => {
           </AdminCard>
         )}
         {/* Halloween - only where a site admin has turned the event on. */}
-        {community.halloweenEnabled && userRole.canGrantItems && (
-          <AdminCard to="/admin/halloween">
-            <CardIcon>
-              <Ghost size={24} />
-            </CardIcon>
-            <CardTitle>Halloween Event</CardTitle>
-            <CardDescription>
-              See what trick-or-treaters have won, what is left in the prize
-              pool, and which prizes staff still need to hand over.
-            </CardDescription>
-          </AdminCard>
-        )}
+        {community.halloweenEnabled &&
+          (userRole.canGrantItems || userRole.canManageItems) && (
+            <AdminCard to="/admin/halloween">
+              <CardIcon>
+                <Ghost size={24} />
+              </CardIcon>
+              <CardTitle>Halloween Event</CardTitle>
+              <CardDescription>
+                Run the trick-or-treat event: its settings and prize pool, what
+                players have won, and which prizes staff still need to hand
+                over.
+              </CardDescription>
+            </AdminCard>
+          )}
       </AdminGrid>
     </Container>
   );

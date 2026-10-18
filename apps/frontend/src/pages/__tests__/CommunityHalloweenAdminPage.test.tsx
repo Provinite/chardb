@@ -13,7 +13,7 @@ import { lightTheme } from "@chardb/ui";
 const COMMUNITY_ID = "11111111-1111-4111-8111-111111111111";
 
 const host = vi.hoisted(() => ({ halloweenEnabled: true }));
-const role = vi.hoisted(() => ({ canGrantItems: true }));
+const role = vi.hoisted(() => ({ canGrantItems: true, canManageItems: true }));
 
 vi.mock("../../contexts/CommunityHostContext", async () => {
   const actual = await vi.importActual<
@@ -34,7 +34,10 @@ vi.mock("../../contexts/CommunityHostContext", async () => {
 vi.mock("../../hooks/useUserCommunityRole", () => ({
   useUserCommunityRole: () => ({
     loading: false,
-    permissions: { canGrantItems: role.canGrantItems },
+    permissions: {
+      canGrantItems: role.canGrantItems,
+      canManageItems: role.canManageItems,
+    },
   }),
 }));
 
@@ -48,6 +51,7 @@ import {
   HalloweenPrizeDelivery,
   HalloweenWinFilter,
   HalloweenWinsDocument,
+  RemoveHalloweenPrizeDocument,
   SetHalloweenPrizeDeliveredDocument,
 } from "../../generated/graphql";
 import { CommunityHalloweenAdminPage } from "../CommunityHalloweenAdminPage";
@@ -141,13 +145,21 @@ const dashboard = (toDeliver = 1) => ({
   prizes: [adopt, candy],
 });
 
-const dashboardMock = (toDeliver = 1): MockedResponse => ({
+const dashboardMock = (
+  toDeliver = 1,
+  overrides: Record<string, unknown> = {},
+): MockedResponse => ({
   request: {
     query: HalloweenDashboardDocument,
     variables: { communityId: COMMUNITY_ID },
   },
-  result: { data: { halloweenDashboard: dashboard(toDeliver) } },
+  result: {
+    data: { halloweenDashboard: { ...dashboard(toDeliver), ...overrides } },
+  },
 });
+
+/** A server whose event has never been set up. */
+const notSetUpMock = dashboardMock(0, { settings: null, prizes: [] });
 
 const winsMock = (
   filter: HalloweenWinFilter,
@@ -208,6 +220,7 @@ describe("CommunityHalloweenAdminPage", () => {
   beforeEach(() => {
     host.halloweenEnabled = true;
     role.canGrantItems = true;
+    role.canManageItems = true;
     markDeliveredMock.result.mockClear();
   });
 
@@ -219,11 +232,12 @@ describe("CommunityHalloweenAdminPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("needs permission to grant items", () => {
+  it("needs permission to grant or manage items", () => {
     role.canGrantItems = false;
+    role.canManageItems = false;
     renderPage([]);
     expect(
-      screen.getByText(/needs permission to grant items/),
+      screen.getByText(/needs permission to grant or manage items/),
     ).toBeInTheDocument();
   });
 
@@ -297,6 +311,111 @@ describe("CommunityHalloweenAdminPage", () => {
     expect(
       screen.queryByRole("button", { name: /Load more/ }),
     ).not.toBeInTheDocument();
+  });
+
+  describe("running the event", () => {
+    it("asks for the settings first when the event is not set up", async () => {
+      renderPage([notSetUpMock, winsMock(HalloweenWinFilter.All, [])]);
+      expect(
+        await screen.findByRole("button", { name: "Set up the event" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByTestId("halloween-prize-pool"),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: /Add prize/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("tells someone who cannot set it up that it is not set up", async () => {
+      role.canManageItems = false;
+      renderPage([notSetUpMock, winsMock(HalloweenWinFilter.All, [])]);
+      expect(
+        await screen.findByText(/has not been set up yet/),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Set up the event" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("lets a manager change the settings", async () => {
+      renderPage();
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Edit settings" }),
+      );
+      expect(screen.getByTestId("halloween-settings-form")).toBeInTheDocument();
+      expect(screen.getByLabelText(/Knocks per day/)).toHaveValue(3);
+    });
+
+    it("lets a manager add a prize", async () => {
+      renderPage();
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Add prize" }),
+      );
+      expect(screen.getByLabelText(/Short name/)).toBeInTheDocument();
+    });
+
+    it("lets a manager edit a prize", async () => {
+      renderPage();
+      const pool = await screen.findByTestId("halloween-prize-pool");
+      await userEvent.click(
+        within(pool).getByRole("button", { name: "Edit Spooky Adopt" }),
+      );
+      expect(screen.getByLabelText(/Short name/)).toHaveValue("adopt");
+      expect(screen.getByLabelText(/^Stock left/)).toHaveValue(1);
+    });
+
+    it("removes a prize after asking", async () => {
+      const removed = vi.fn(() => ({ data: { removeHalloweenPrize: true } }));
+      renderPage([
+        dashboardMock(),
+        allWins,
+        {
+          request: {
+            query: RemoveHalloweenPrizeDocument,
+            variables: { communityId: COMMUNITY_ID, prizeId: "adopt" },
+          },
+          result: removed,
+        },
+        dashboardMock(1, { prizes: [candy] }),
+      ]);
+      const pool = await screen.findByTestId("halloween-prize-pool");
+      await userEvent.click(
+        within(pool).getByRole("button", { name: "Remove Spooky Adopt" }),
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Remove" }));
+      await vi.waitFor(() => expect(removed).toHaveBeenCalled());
+      await vi.waitFor(() =>
+        expect(
+          within(pool).queryByText("Spooky Adopt"),
+        ).not.toBeInTheDocument(),
+      );
+    });
+
+    it("shows people who only hand prizes out no way to change the pool", async () => {
+      role.canManageItems = false;
+      renderPage();
+      const pool = await screen.findByTestId("halloween-prize-pool");
+      expect(
+        screen.queryByRole("button", { name: "Add prize" }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Edit settings" }),
+      ).not.toBeInTheDocument();
+      expect(
+        within(pool).queryByRole("button", { name: /Edit|Remove/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("shows people who only manage the pool no Mark delivered", async () => {
+      role.canGrantItems = false;
+      renderPage();
+      const row = await screen.findByTestId("halloween-win-1");
+      expect(within(row).getByText("Staff to deliver")).toBeInTheDocument();
+      expect(
+        within(row).queryByRole("button", { name: /Mark delivered/ }),
+      ).not.toBeInTheDocument();
+    });
   });
 
   it("marks a prize delivered and refreshes the count", async () => {

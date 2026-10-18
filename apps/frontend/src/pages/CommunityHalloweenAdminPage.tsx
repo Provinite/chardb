@@ -1,10 +1,13 @@
 import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
-import { Ghost, Check, Undo2 } from "lucide-react";
-import { Button } from "@chardb/ui";
+import { Ghost, Check, Undo2, Pencil, Trash2 } from "lucide-react";
+import { Button, Modal } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { ConfirmDialog } from "../components/ConfirmDialog";
+import { HalloweenSettingsForm } from "../components/halloween/HalloweenSettingsForm";
+import { HalloweenPrizeForm } from "../components/halloween/HalloweenPrizeForm";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import {
   useCommunityId,
@@ -17,7 +20,9 @@ import {
   HalloweenWinFilter,
   useHalloweenDashboardQuery,
   useHalloweenWinsQuery,
+  useRemoveHalloweenPrizeMutation,
   useSetHalloweenPrizeDeliveredMutation,
+  type HalloweenPrizeFieldsFragment,
   type HalloweenWinFieldsFragment,
 } from "../generated/graphql";
 
@@ -57,6 +62,37 @@ const SectionTitle = styled.h2`
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 2rem 0 0.75rem 0;
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+
+  ${SectionTitle} {
+    margin-bottom: 0.75rem;
+  }
+`;
+
+const PrizeName = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+`;
+
+const Thumb = styled.img`
+  width: 36px;
+  height: 36px;
+  object-fit: cover;
+  border-radius: 6px;
+  flex-shrink: 0;
+`;
+
+const RowActions = styled.div`
+  display: flex;
+  gap: 0.4rem;
+  justify-content: flex-end;
 `;
 
 const Stats = styled.div`
@@ -186,12 +222,24 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
     HalloweenWinFilter.All,
   );
   const [busyId, setBusyId] = useState<number | null>(null);
+  const [editingSettings, setEditingSettings] = useState(false);
+  /** The prize form: open with null to add, with a prize to edit. */
+  const [prizeForm, setPrizeForm] = useState<{
+    prize: HalloweenPrizeFieldsFragment | null;
+  } | null>(null);
+  const [removing, setRemoving] = useState<HalloweenPrizeFieldsFragment | null>(
+    null,
+  );
 
   const enabled = Boolean(community?.halloweenEnabled);
-  const allowed = Boolean(permissions.canGrantItems);
+  // Handing prizes out and setting the pool up are different jobs: either
+  // one shows the page, and each unlocks its own buttons.
+  const canGrant = Boolean(permissions.canGrantItems);
+  const canManage = Boolean(permissions.canManageItems);
+  const allowed = canGrant || canManage;
   const skip = !communityId || !enabled || !allowed;
 
-  const { data, loading, error } = useHalloweenDashboardQuery({
+  const { data, loading, error, refetch } = useHalloweenDashboardQuery({
     variables: { communityId: communityId as string },
     skip,
     fetchPolicy: "cache-and-network",
@@ -216,6 +264,24 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
   const [setDelivered] = useSetHalloweenPrizeDeliveredMutation({
     refetchQueries: [HalloweenDashboardDocument],
   });
+  const [removePrize, { loading: removingPrize }] =
+    useRemoveHalloweenPrizeMutation({
+      refetchQueries: [HalloweenDashboardDocument],
+    });
+
+  const handleRemove = async (prize: HalloweenPrizeFieldsFragment) => {
+    if (!communityId) return;
+    try {
+      await removePrize({ variables: { communityId, prizeId: prize.id } });
+      toast.success(`Removed ${prize.name}`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not remove that prize",
+      );
+    } finally {
+      setRemoving(null);
+    }
+  };
 
   const dashboard = data?.halloweenDashboard;
   const page = winsData?.halloweenWins;
@@ -286,8 +352,8 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
     return (
       <Container>
         <Empty>
-          The Halloween event&apos;s prize feed needs permission to grant items
-          in this community.
+          The Halloween event&apos;s page needs permission to grant or manage
+          items in this community.
         </Empty>
       </Container>
     );
@@ -309,15 +375,34 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
         <Ghost size={28} /> Halloween event
       </Title>
       <Subtitle>
-        Trick-or-treat runs in Discord. This is what has been won, what is left,
-        and which prizes staff still need to hand over. Chardb items and
-        characters deliver themselves once the winner links Discord.
+        Players trick-or-treat in Discord; the event is run from here. Chardb
+        items and characters deliver themselves once the winner links Discord;
+        anything else, staff hand over and mark delivered.
       </Subtitle>
 
       {!dashboard.guildId ? (
         <Empty>
           Link a Discord server in community settings to see the event here.
         </Empty>
+      ) : !settings ? (
+        canManage ? (
+          <>
+            <SectionTitle>Set up the event</SectionTitle>
+            <Subtitle>
+              Players can knock once there is a start date and some prizes.
+            </Subtitle>
+            <HalloweenSettingsForm
+              communityId={communityId}
+              settings={null}
+              onSaved={() => void refetch()}
+            />
+          </>
+        ) : (
+          <Empty>
+            The event has not been set up yet. Someone who can manage items sets
+            it up here.
+          </Empty>
+        )
       ) : (
         <>
           <Stats data-testid="halloween-summary">
@@ -342,25 +427,54 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
               <StatLabel>To deliver</StatLabel>
             </Stat>
           </Stats>
-          <SettingsLine>
-            {settings ? (
-              <>
-                {settings.startDate
-                  ? `Runs ${formatDate(settings.startDate)}`
-                  : "No start date"}
-                {settings.endDate
-                  ? ` – ${formatDate(settings.endDate)}`
-                  : ", no end date"}
-                {` · ${settings.knocksPerDay} knocks a day, resetting at ${settings.resetTime}:00 US Central · ${Math.round(settings.winRate * 100)}% win rate`}
-              </>
-            ) : (
-              "Not set up yet: an admin runs /settings set in Discord."
+          <SectionHeader>
+            <SectionTitle>Settings</SectionTitle>
+            {canManage && !editingSettings && (
+              <Button
+                variant="secondary"
+                onClick={() => setEditingSettings(true)}
+              >
+                Edit settings
+              </Button>
             )}
-          </SettingsLine>
+          </SectionHeader>
+          {editingSettings ? (
+            <HalloweenSettingsForm
+              communityId={communityId}
+              settings={settings}
+              onSaved={() => {
+                setEditingSettings(false);
+                void refetch();
+              }}
+              onCancel={() => setEditingSettings(false)}
+            />
+          ) : (
+            <SettingsLine>
+              {settings.startDate
+                ? `Runs ${formatDate(settings.startDate)}`
+                : "No start date"}
+              {settings.endDate
+                ? ` – ${formatDate(settings.endDate)}`
+                : ", no end date"}
+              {` · ${settings.knocksPerDay} knocks a day, resetting at ${settings.resetTime}:00 US Central · ${Math.round(settings.winRate * 100)}% win rate`}
+              {settings.winChannel &&
+                ` · wins announced in channel ${settings.winChannel}`}
+            </SettingsLine>
+          )}
 
-          <SectionTitle>Prize pool</SectionTitle>
+          <SectionHeader>
+            <SectionTitle>Prize pool</SectionTitle>
+            {canManage && (
+              <Button
+                variant="primary"
+                onClick={() => setPrizeForm({ prize: null })}
+              >
+                Add prize
+              </Button>
+            )}
+          </SectionHeader>
           {dashboard.prizes.length === 0 ? (
-            <Empty>No prizes yet. Add them with /prize admin add.</Empty>
+            <Empty>No prizes yet.</Empty>
           ) : (
             <TableWrap>
               <Table data-testid="halloween-prize-pool">
@@ -370,17 +484,43 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                     <th>Left</th>
                     <th>Weight</th>
                     <th>Delivery</th>
+                    {canManage && <th aria-label="Actions" />}
                   </tr>
                 </thead>
                 <tbody>
                   {dashboard.prizes.map((prize) => (
                     <tr key={prize.id}>
                       <td>
-                        {prize.name} <Muted>({prize.id})</Muted>
+                        <PrizeName>
+                          {prize.image && <Thumb src={prize.image} alt="" />}
+                          <span>
+                            {prize.name} <Muted>({prize.id})</Muted>
+                          </span>
+                        </PrizeName>
                       </td>
                       <td>{`${prize.currentStock} / ${prize.initialStock}`}</td>
                       <td>{prize.weight}</td>
                       <td>{DELIVERY_LABEL[prize.delivery]}</td>
+                      {canManage && (
+                        <td>
+                          <RowActions>
+                            <Button
+                              variant="secondary"
+                              aria-label={`Edit ${prize.name}`}
+                              onClick={() => setPrizeForm({ prize })}
+                            >
+                              <Pencil size={14} />
+                            </Button>
+                            <Button
+                              variant="secondary"
+                              aria-label={`Remove ${prize.name}`}
+                              onClick={() => setRemoving(prize)}
+                            >
+                              <Trash2 size={14} />
+                            </Button>
+                          </RowActions>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -472,6 +612,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                       <td>
                         <WinStatus
                           win={win}
+                          canMark={canGrant}
                           busy={busyId === win.id}
                           onChange={(delivered) =>
                             void handleDelivered(win, delivered)
@@ -502,15 +643,55 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
           )}
         </>
       )}
+
+      <Modal
+        isOpen={prizeForm !== null}
+        onClose={() => setPrizeForm(null)}
+        title={
+          prizeForm?.prize ? `Edit ${prizeForm.prize.name}` : "Add a prize"
+        }
+      >
+        {prizeForm && (
+          <HalloweenPrizeForm
+            communityId={communityId}
+            prize={prizeForm.prize}
+            onSaved={() => {
+              setPrizeForm(null);
+              void refetch();
+            }}
+            onCancel={() => setPrizeForm(null)}
+          />
+        )}
+      </Modal>
+
+      {/* Only offered for a prize, and refused by the server for one
+          somebody has won: a win keeps its prize on record. */}
+      <ConfirmDialog
+        open={removing !== null}
+        destructive
+        title={removing ? `Remove ${removing.name}?` : "Remove prize?"}
+        confirmLabel="Remove"
+        busyLabel="Removing…"
+        busy={removingPrize}
+        onCancel={() => setRemoving(null)}
+        onConfirm={() => {
+          if (removing) void handleRemove(removing);
+        }}
+      >
+        It comes out of the pool for good. A prize somebody has already won
+        cannot be removed; set its stock to 0 instead.
+      </ConfirmDialog>
     </Container>
   );
 };
 
 const WinStatus: React.FC<{
   win: HalloweenWinFieldsFragment;
+  /** Marking needs permission to grant items; managing the pool alone does not give it. */
+  canMark: boolean;
   busy: boolean;
   onChange: (delivered: boolean) => void;
-}> = ({ win, busy, onChange }) => {
+}> = ({ win, canMark, busy, onChange }) => {
   if (!isStaffPrize(win)) {
     // Granted to the winner's Discord account at the win; whether they have
     // it yet depends only on whether they have linked Discord.
@@ -530,14 +711,16 @@ const WinStatus: React.FC<{
           Delivered by @{win.deliveredBy?.username ?? "someone"},{" "}
           {formatDate(win.deliveredAt)}
         </span>
-        <Button
-          variant="secondary"
-          disabled={busy}
-          onClick={() => onChange(false)}
-          aria-label="Undo delivered"
-        >
-          <Undo2 size={14} /> Undo
-        </Button>
+        {canMark && (
+          <Button
+            variant="secondary"
+            disabled={busy}
+            onClick={() => onChange(false)}
+            aria-label="Undo delivered"
+          >
+            <Undo2 size={14} /> Undo
+          </Button>
+        )}
       </Status>
     );
   }
@@ -545,9 +728,15 @@ const WinStatus: React.FC<{
   return (
     <Status>
       <span>Staff to deliver</span>
-      <Button variant="primary" disabled={busy} onClick={() => onChange(true)}>
-        <Check size={14} /> {busy ? "Saving…" : "Mark delivered"}
-      </Button>
+      {canMark && (
+        <Button
+          variant="primary"
+          disabled={busy}
+          onClick={() => onChange(true)}
+        >
+          <Check size={14} /> {busy ? "Saving…" : "Mark delivered"}
+        </Button>
+      )}
     </Status>
   );
 };

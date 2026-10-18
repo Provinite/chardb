@@ -758,6 +758,20 @@ input CreateGalleryInput {
   visibility: Visibility! = PUBLIC
 }
 
+input CreateHalloweenPrizeInput {
+  characterId: String
+
+  """Short name for the prize, e.g. myo-common"""
+  id: String!
+
+  """For a prize staff hand over themselves only"""
+  image: String
+  itemTypeId: String
+  name: String!
+  stock: Int!
+  weight: Int = 10
+}
+
 """Input for creating a new invite code"""
 input CreateInviteCodeInput {
   """The ID of the user who is creating this invite code"""
@@ -1540,6 +1554,23 @@ enum HalloweenPrizeDelivery {
   STAFF
 }
 
+"""Something a Halloween prize can hand over"""
+type HalloweenPrizeOption {
+  id: ID!
+
+  """Its approved image, which the prize would show"""
+  image: String
+  name: String!
+}
+
+"""
+The community's item types, and its characters nobody owns or has been promised: what a new prize can hand over
+"""
+type HalloweenPrizeOptions {
+  characters: [HalloweenPrizeOption!]!
+  itemTypes: [HalloweenPrizeOption!]!
+}
+
 """A prize in the guild's pool"""
 type HalloweenPrizeView {
   characterId: String
@@ -1548,11 +1579,30 @@ type HalloweenPrizeView {
 
   """The admin's slug for it, e.g. myo-common"""
   id: ID!
-  image: String!
+
+  """
+  The URL staff gave, or a chardb prize's own approved item or character image
+  """
+  image: String
   initialStock: Int!
   itemTypeId: String
   name: String!
   weight: Int!
+}
+
+input HalloweenSettingsInput {
+  endDate: DateTime
+  knocksPerDay: Int!
+
+  """Hour of the day, US Central, 0-23"""
+  resetTime: Int!
+  startDate: DateTime
+
+  """Discord channel id wins are also announced in"""
+  winChannel: String
+
+  """Chance of a knock winning, 0-1"""
+  winRate: Float!
 }
 
 """One winning knock"""
@@ -2465,6 +2515,9 @@ type Mutation {
   ): EnumValueSetting!
   createGallery(input: CreateGalleryInput!): Gallery!
 
+  """Add a prize to the Halloween event's pool"""
+  createHalloweenPrize(communityId: ID!, input: CreateHalloweenPrizeInput!): HalloweenPrizeView!
+
   """Create a new invite code"""
   createInviteCode(
     """Invite code creation data"""
@@ -2659,6 +2712,9 @@ type Mutation {
     """Enum value setting ID"""
     id: ID!
   ): RemovalResponse!
+
+  """Remove a Halloween prize nobody has won. A won prize stays on record."""
+  removeHalloweenPrize(communityId: ID!, prizeId: ID!): Boolean!
 
   """Remove an invite code"""
   removeInviteCode(
@@ -2856,6 +2912,16 @@ type Mutation {
     updateEnumValueSettingInput: UpdateEnumValueSettingInput!
   ): EnumValueSetting!
   updateGallery(id: ID!, input: UpdateGalleryInput!): Gallery!
+
+  """
+  Change a Halloween prize's name, weight, stock or (for a prize staff hand over) image
+  """
+  updateHalloweenPrize(communityId: ID!, input: UpdateHalloweenPrizeInput!, prizeId: ID!): HalloweenPrizeView!
+
+  """
+  Set the Halloween event's dates, knocks per day, reset hour, win rate and win channel. Creates them the first time.
+  """
+  updateHalloweenSettings(communityId: ID!, input: HalloweenSettingsInput!): HalloweenEventSettings!
   updateImage(id: ID!, input: UpdateImageInput!): Image!
 
   """Update an invite code"""
@@ -3437,9 +3503,14 @@ type Query {
   globalPendingImageCount: Int!
 
   """
-  The Halloween event in this community's Discord server: settings, totals, prize pool and every win. Requires the event to be enabled.
+  The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems.
   """
   halloweenDashboard(communityId: ID!): HalloweenDashboard!
+
+  """
+  What a new Halloween prize can hand over: item types, and characters nobody owns or has been promised (25 of each per search)
+  """
+  halloweenPrizeOptions(communityId: ID!, search: String): HalloweenPrizeOptions!
 
   """
   The Halloween event's wins, newest first, a page at a time (at most 100).
@@ -4829,6 +4900,18 @@ input UpdateGalleryInput {
   name: String
   sortOrder: Int
   visibility: Visibility
+}
+
+input UpdateHalloweenPrizeInput {
+  """
+  How many are left. The starting stock moves by the same amount, so what has been given out stays the same.
+  """
+  currentStock: Int
+
+  """For a prize staff hand over themselves only"""
+  image: String
+  name: String
+  weight: Int
 }
 
 input UpdateImageInput {

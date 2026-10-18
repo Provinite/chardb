@@ -105,3 +105,78 @@ export const SET_HALLOWEEN_PRIZE_DELIVERED_MUTATION = gql`
   }
   ${HALLOWEEN_WIN_FRAGMENT}
 `;
+
+export const HALLOWEEN_SETTINGS_FRAGMENT = gql`
+  fragment HalloweenSettingsFields on HalloweenEventSettings {
+    startDate
+    endDate
+    knocksPerDay
+    resetTime
+    winRate
+    winChannel
+  }
+`;
+
+export const UPDATE_HALLOWEEN_SETTINGS_MUTATION = gql`
+  mutation UpdateHalloweenSettings(
+    $communityId: ID!
+    $input: HalloweenSettingsInput!
+  ) {
+    updateHalloweenSettings(communityId: $communityId, input: $input) {
+      ...HalloweenSettingsFields
+    }
+  }
+  ${HALLOWEEN_SETTINGS_FRAGMENT}
+`;
+
+export const CREATE_HALLOWEEN_PRIZE_MUTATION = gql`
+  mutation CreateHalloweenPrize(
+    $communityId: ID!
+    $input: CreateHalloweenPrizeInput!
+  ) {
+    createHalloweenPrize(communityId: $communityId, input: $input) {
+      ...HalloweenPrizeFields
+    }
+  }
+  ${HALLOWEEN_PRIZE_FRAGMENT}
+`;
+
+export const UPDATE_HALLOWEEN_PRIZE_MUTATION = gql`
+  mutation UpdateHalloweenPrize(
+    $communityId: ID!
+    $prizeId: ID!
+    $input: UpdateHalloweenPrizeInput!
+  ) {
+    updateHalloweenPrize(
+      communityId: $communityId
+      prizeId: $prizeId
+      input: $input
+    ) {
+      ...HalloweenPrizeFields
+    }
+  }
+  ${HALLOWEEN_PRIZE_FRAGMENT}
+`;
+
+export const REMOVE_HALLOWEEN_PRIZE_MUTATION = gql`
+  mutation RemoveHalloweenPrize($communityId: ID!, $prizeId: ID!) {
+    removeHalloweenPrize(communityId: $communityId, prizeId: $prizeId)
+  }
+`;
+
+export const HALLOWEEN_PRIZE_OPTIONS_QUERY = gql`
+  query HalloweenPrizeOptions($communityId: ID!, $search: String) {
+    halloweenPrizeOptions(communityId: $communityId, search: $search) {
+      itemTypes {
+        id
+        name
+        image
+      }
+      characters {
+        id
+        name
+        image
+      }
+    }
+  }
+`;
