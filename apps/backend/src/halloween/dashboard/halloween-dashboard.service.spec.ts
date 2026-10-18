@@ -12,6 +12,7 @@ import {
   HalloweenWinFilter,
 } from "./halloween-dashboard.types";
 import { DatabaseService } from "../../database/database.service";
+import { PrizeImageService } from "../services/prize-image.service";
 
 const GUILD = "100000000000000001";
 
@@ -55,7 +56,12 @@ describe("HalloweenDashboardService", () => {
         update: jest.fn(),
       },
     };
-    service = new HalloweenDashboardService(db as unknown as DatabaseService);
+    service = new HalloweenDashboardService(
+      db as unknown as DatabaseService,
+      {
+        imagesFor: () => Promise.resolve(new Map()),
+      } as unknown as PrizeImageService,
+    );
   });
 
   it("refuses a community the event is not enabled for", async () => {

@@ -11,6 +11,7 @@ import {
   type Prisma,
 } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
+import { PrizeImageService } from "../services/prize-image.service";
 import {
   mapPrismaUserToGraphQL,
   userMapperSelect,
@@ -66,14 +67,17 @@ export function prizeDelivery(
   return HalloweenPrizeDelivery.STAFF;
 }
 
-function toPrizeView(prize: HalloweenPrize): HalloweenPrizeView {
+function toPrizeView(
+  prize: HalloweenPrize,
+  image: string | null,
+): HalloweenPrizeView {
   return {
     id: prize.id,
     name: prize.name,
     initialStock: prize.initialStock,
     currentStock: prize.currentStock,
     weight: prize.weight,
-    image: prize.image,
+    image,
     delivery: prizeDelivery(prize),
     itemTypeId: prize.itemTypeId,
     characterId: prize.characterId,
@@ -91,7 +95,10 @@ function toPrizeView(prize: HalloweenPrize): HalloweenPrizeView {
 export class HalloweenDashboardService {
   private readonly logger = new Logger(HalloweenDashboardService.name);
 
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly prizeImages: PrizeImageService,
+  ) {}
 
   /** The community's linked guild, once the event is enabled for it. */
   private async guildFor(communityId: string): Promise<string | null> {
@@ -168,7 +175,7 @@ export class HalloweenDashboardService {
         players: players[0].count,
         toDeliver,
       },
-      prizes: prizes.map(toPrizeView),
+      prizes: await this.prizeViews(prizes),
     };
   }
 
@@ -253,12 +260,19 @@ export class HalloweenDashboardService {
   }
 
   /** Joins in what the knock rows cannot say: DeviantArt names and linked accounts. */
+  private async prizeViews(
+    prizes: HalloweenPrize[],
+  ): Promise<HalloweenPrizeView[]> {
+    const images = await this.prizeImages.imagesFor(prizes);
+    return prizes.map((p) => toPrizeView(p, images.get(p) ?? null));
+  }
+
   private async toWins(
     guildId: string,
     rows: WinRow[],
   ): Promise<HalloweenWin[]> {
     const winnerIds = [...new Set(rows.map((r) => r.userId))];
-    const [deviantArtUsers, linkedAccounts] = await Promise.all([
+    const [deviantArtUsers, linkedAccounts, images] = await Promise.all([
       this.db.halloweenDeviantArtUser.findMany({
         where: { guildId, userId: { in: winnerIds } },
       }),
@@ -269,6 +283,9 @@ export class HalloweenDashboardService {
         },
         include: { user: { select: userMapperSelect } },
       }),
+      this.prizeImages.imagesFor(
+        rows.flatMap((r) => (r.prize ? [r.prize] : [])),
+      ),
     ]);
     const deviantArtNames = new Map(
       deviantArtUsers.map((d) => [d.userId, d.deviantArtName]),
@@ -288,7 +305,7 @@ export class HalloweenDashboardService {
           linkedUser: linked ? mapPrismaUserToGraphQL(linked) : null,
           deviantArtName: deviantArtNames.get(row.userId) ?? null,
           giftyFromDiscordUserId: row.gifties[0]?.fromUserId ?? null,
-          prize: toPrizeView(row.prize),
+          prize: toPrizeView(row.prize, images.get(row.prize) ?? null),
           deliveredAt: row.deliveredAt,
           deliveredBy: row.deliveredBy
             ? mapPrismaUserToGraphQL(row.deliveredBy)

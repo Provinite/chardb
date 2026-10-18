@@ -21,6 +21,7 @@ import { GiftyService } from "./services/gifty.service";
 import { DeviantArtUserService } from "./services/deviantart-user.service";
 import { PrizeAwardService } from "./services/prize-award.service";
 import { PlayerLock } from "./services/player-lock";
+import { PrizeImageService } from "./services/prize-image.service";
 import { HalloweenDashboardService } from "./dashboard/halloween-dashboard.service";
 import { HalloweenDashboardResolver } from "./dashboard/halloween-dashboard.resolver";
 import { KnockCommand } from "./commands/knock.command";
@@ -69,6 +70,7 @@ const COMMANDS = [
     DeviantArtUserService,
     PrizeAwardService,
     PlayerLock,
+    PrizeImageService,
     HalloweenDashboardService,
     HalloweenDashboardResolver,
     ...COMMANDS,

@@ -21,6 +21,7 @@ import { GiftyService } from "../services/gifty.service";
 import { DeviantArtUserService } from "../services/deviantart-user.service";
 import { PrizeAwardService } from "../services/prize-award.service";
 import { PlayerLock } from "../services/player-lock";
+import { PrizeImageService } from "../services/prize-image.service";
 import { DatabaseService } from "../../database/database.service";
 import {
   EventEndedError,
@@ -127,6 +128,7 @@ describe("/knock", () => {
   };
   let deviantArt: { get: jest.Mock };
   let award: { validate: jest.Mock; award: jest.Mock };
+  let images: { imageFor: jest.Mock };
   let lock: { acquire: jest.Mock };
   let random: HalloweenRandom;
   let db: { $transaction: jest.Mock };
@@ -167,6 +169,9 @@ describe("/knock", () => {
       validate: jest.fn().mockResolvedValue(undefined),
       award: jest.fn().mockResolvedValue(undefined),
     };
+    images = {
+      imageFor: jest.fn((p: HalloweenPrize) => Promise.resolve(p.image)),
+    };
     lock = { acquire: jest.fn().mockResolvedValue(undefined) };
     random = new HalloweenRandom();
     jest.spyOn(random, "unit").mockReturnValue(0.99); // a loss
@@ -183,6 +188,7 @@ describe("/knock", () => {
       gifties as unknown as GiftyService,
       deviantArt as unknown as DeviantArtUserService,
       award as unknown as PrizeAwardService,
+      images as unknown as PrizeImageService,
       lock as unknown as PlayerLock,
       random,
       db as unknown as DatabaseService,
@@ -480,6 +486,27 @@ describe("/knock", () => {
           },
         ],
       });
+    });
+
+    it("shows a chardb prize's own image", async () => {
+      const candy = prize("candy", { image: null, itemTypeId: "it-1" });
+      prizes.inStock.mockResolvedValue([candy]);
+      images.imageFor.mockResolvedValue("https://cdn.test/candy.webp");
+      await knock();
+      expect(images.imageFor).toHaveBeenCalledWith(candy);
+      const [embed] = (lastReply(discord) as { embeds: { image?: unknown }[] })
+        .embeds;
+      expect(embed.image).toEqual({ url: "https://cdn.test/candy.webp" });
+    });
+
+    it("leaves the image out when the prize has none to show", async () => {
+      prizes.inStock.mockResolvedValue([
+        prize("candy", { image: null, itemTypeId: "it-1" }),
+      ]);
+      images.imageFor.mockResolvedValue(null);
+      await knock();
+      const [embed] = (lastReply(discord) as { embeds: object[] }).embeds;
+      expect(embed).not.toHaveProperty("image");
     });
 
     it("links the prize on chardb", async () => {

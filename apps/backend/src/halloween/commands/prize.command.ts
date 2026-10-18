@@ -13,6 +13,7 @@ import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { Color, EVENT_NAME, HalloweenUi } from "../discord/ui";
 import { HalloweenRandom } from "../random";
 import { PrizeService, type PrizeInput } from "../services/prize.service";
+import { PrizeImageService } from "../services/prize-image.service";
 import {
   DiscordReportableError,
   HalloweenDiscordError,
@@ -87,6 +88,7 @@ export class PrizeCommand implements HalloweenCommandHandler {
     private readonly discord: HalloweenDiscordClient,
     private readonly ui: HalloweenUi,
     private readonly prizes: PrizeService,
+    private readonly prizeImages: PrizeImageService,
     private readonly random: HalloweenRandom,
   ) {}
 
@@ -167,6 +169,8 @@ export class PrizeCommand implements HalloweenCommandHandler {
       },
     ];
 
+    const prizeImages = await this.prizeImages.imagesFor(prizes);
+
     // An embed holds 25 fields. With at most 20 prizes this never splits, but
     // the bot's chunking is kept for when the sample size changes.
     let images: string[] = [];
@@ -180,12 +184,15 @@ export class PrizeCommand implements HalloweenCommandHandler {
         name: prize.name,
         value: chardbLink ? `${stockInfo} | ${chardbLink}` : stockInfo,
       });
-      if (prize.initialStock > 1) {
-        images.push(prize.image);
+      const image = prizeImages.get(prize);
+      if (prize.initialStock > 1 && image) {
+        images.push(image);
       }
       const isLast = index === prizes.length - 1;
       if ((index && index % 24 === 0) || isLast) {
-        embed.image = { url: this.random.element(images) };
+        if (images.length) {
+          embed.image = { url: this.random.element(images) };
+        }
         if (!isLast) {
           embeds.push({ ...baseEmbed, fields: [] });
           images = [];

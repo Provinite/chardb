@@ -1,4 +1,4 @@
-import { ExternalAccountProvider } from "@chardb/database";
+import { ExternalAccountProvider, ModerationStatus } from "@chardb/database";
 import { TestApp } from "../../../test/setup-e2e";
 import { DatabaseModule } from "../../database/database.module";
 import { AuthModule } from "../../auth/auth.module";
@@ -19,7 +19,7 @@ const DASHBOARD = `
       guildId
       settings { knocksPerDay resetTime winRate winChannel startDate endDate }
       summary { knocks wins giftiesSent players toDeliver }
-      prizes { id name initialStock currentStock weight delivery itemTypeId characterId }
+      prizes { id name initialStock currentStock weight image delivery itemTypeId characterId }
     }
   }
 `;
@@ -129,8 +129,25 @@ describe("Halloween dashboard (e2e)", () => {
 
   /** A guild mid-event: two prizes, two wins, a loss and a gifty. */
   const seedEvent = async () => {
+    const uploader = await db.user.findFirstOrThrow({
+      where: { username: staffUsername },
+    });
+    const candyImage = await db.image.create({
+      data: {
+        filename: "candy.png",
+        originalFilename: "candy.png",
+        originalUrl: "https://cdn.test/candy/original.png",
+        mediumUrl: "https://cdn.test/candy/medium.webp",
+        uploaderId: uploader.id,
+        width: 100,
+        height: 100,
+        fileSize: 999,
+        mimeType: "image/png",
+        moderationStatus: ModerationStatus.APPROVED,
+      },
+    });
     const itemType = await db.itemType.create({
-      data: { name: "Candy Corn", communityId },
+      data: { name: "Candy Corn", communityId, imageId: candyImage.id },
     });
     await db.halloweenGuildSettings.create({
       data: {
@@ -159,7 +176,7 @@ describe("Halloween dashboard (e2e)", () => {
           initialStock: 5,
           currentStock: 4,
           weight: 10,
-          image: "https://i.test/candy.png",
+          image: null,
           itemTypeId: itemType.id,
         },
       ],
@@ -245,6 +262,7 @@ describe("Halloween dashboard (e2e)", () => {
           initialStock: 2,
           currentStock: 1,
           weight: 10,
+          image: "https://i.test/adopt.png",
           delivery: "STAFF",
           itemTypeId: null,
           characterId: null,
@@ -255,6 +273,8 @@ describe("Halloween dashboard (e2e)", () => {
           initialStock: 5,
           currentStock: 4,
           weight: 10,
+          // The item type's own, moderation-approved picture.
+          image: "https://cdn.test/candy/medium.webp",
           delivery: "CHARDB_ITEM",
           itemTypeId,
           characterId: null,

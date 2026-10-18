@@ -9,6 +9,7 @@ import { PrizeCommand } from "./prize.command";
 import { Color } from "../discord/ui";
 import { HalloweenRandom } from "../random";
 import { PrizeService } from "../services/prize.service";
+import { PrizeImageService } from "../services/prize-image.service";
 import {
   HalloweenDiscordError,
   OutOfPrizesError,
@@ -70,6 +71,7 @@ describe("/prize", () => {
   let discord: ReturnType<typeof mockDiscord>;
   let prizes: { inStock: jest.Mock; save: jest.Mock };
   let random: HalloweenRandom;
+  let images: { imagesFor: jest.Mock };
   let command: PrizeCommand;
 
   beforeEach(() => {
@@ -83,10 +85,16 @@ describe("/prize", () => {
     jest.spyOn(random, "unit").mockReturnValue(0);
     jest.spyOn(random, "int").mockReturnValue(0);
     jest.spyOn(random, "shuffle").mockImplementation((items) => [...items]);
+    images = {
+      imagesFor: jest.fn((list: HalloweenPrize[]) =>
+        Promise.resolve(new Map(list.map((p) => [p, p.image]))),
+      ),
+    };
     command = new PrizeCommand(
       discord,
       stubUi(),
       prizes as unknown as PrizeService,
+      images as unknown as PrizeImageService,
       random,
     );
   });
@@ -166,6 +174,23 @@ describe("/prize", () => {
           },
         ],
       });
+    });
+
+    it("shows chardb prizes with their own image, and skips any without one", async () => {
+      const candy = prize("candy", { image: null, itemTypeId: "it-1" });
+      const ghost = prize("ghost", { image: null, characterId: "ch-1" });
+      prizes.inStock.mockResolvedValue([ghost, candy]);
+      images.imagesFor.mockResolvedValue(
+        new Map([
+          [ghost, null],
+          [candy, "https://cdn.test/candy.webp"],
+        ]),
+      );
+      await run([sub("list")], "0");
+      const [embed] = (
+        lastReply(discord) as { embeds: { image?: { url?: string } }[] }
+      ).embeds;
+      expect(embed.image).toEqual({ url: "https://cdn.test/candy.webp" });
     });
 
     it("samples 20 when there are more", async () => {

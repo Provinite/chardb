@@ -97,8 +97,12 @@ export class HalloweenPrizeView {
   @Field(() => Int)
   weight: number;
 
-  @Field()
-  image: string;
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "The URL staff gave, or a chardb prize's own approved item or character image",
+  })
+  image: string | null;
 
   @Field(() => HalloweenPrizeDelivery)
   delivery: HalloweenPrizeDelivery;

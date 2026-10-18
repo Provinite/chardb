@@ -21,6 +21,7 @@ import { KnockEventService } from "../services/knock-event.service";
 import { GiftyService } from "../services/gifty.service";
 import { DeviantArtUserService } from "../services/deviantart-user.service";
 import { PrizeAwardService } from "../services/prize-award.service";
+import { PrizeImageService } from "../services/prize-image.service";
 import { PlayerLock } from "../services/player-lock";
 import { DatabaseService } from "../../database/database.service";
 import {
@@ -69,6 +70,7 @@ export class KnockCommand implements HalloweenCommandHandler {
     private readonly gifties: GiftyService,
     private readonly deviantArtUsers: DeviantArtUserService,
     private readonly prizeAward: PrizeAwardService,
+    private readonly prizeImages: PrizeImageService,
     private readonly lock: PlayerLock,
     private readonly random: HalloweenRandom,
     private readonly db: DatabaseService,
@@ -300,6 +302,7 @@ export class KnockCommand implements HalloweenCommandHandler {
       { guildId, userId },
       tx,
     );
+    const imageUrl = await this.prizeImages.imageFor(prize);
 
     const fields: APIEmbedField[] = [{ name: "Prize", value: prize.name }];
     const chardbLink = formatChardbLink(prize);
@@ -327,7 +330,7 @@ export class KnockCommand implements HalloweenCommandHandler {
           author: this.ui.author(),
           title: "Winner!",
           description: "You won! Congratulations on your lovely new prize!",
-          image: { url: prize.image },
+          ...(imageUrl ? { image: { url: imageUrl } } : {}),
           color: Color.Primary,
           fields,
           timestamp: this.ui.timestamp(),

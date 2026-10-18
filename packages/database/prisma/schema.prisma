@@ -2363,7 +2363,9 @@ model HalloweenPrize {
   initialStock Int     @map("initial_stock")
   currentStock Int     @map("current_stock")
   weight       Int
-  image        String
+  /// The picture for a prize staff hand over themselves. Null for a chardb
+  /// prize, which shows its item type's or character's own image instead.
+  image        String?
   /// What the winner receives in chardb, if anything. At most one is set
   /// (a CHECK constraint in the migration); neither is a foreign key, because
   /// the bot never required the id to exist when the prize was added.
