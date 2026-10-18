@@ -256,11 +256,19 @@ export function SearchSelect<T extends SearchSelectOption>({
   const searchable = query.length >= minSearchLength;
   const listed = searchable ? options : [];
 
+  // The last text handed to onSearch. Until the current text has gone out,
+  // an empty list means "not asked yet", not "nothing matched".
+  const [sent, setSent] = useState<string | null>(null);
+  const pending = typed.current && searchable && query !== sent;
+
   // The timer lives in the closure, so the cleanup always clears the run it
   // belongs to -- including on unmount.
   useEffect(() => {
     if (!typed.current || !searchable) return;
-    const timeout = setTimeout(() => onSearch(query), SEARCH_DELAY_MS);
+    const timeout = setTimeout(() => {
+      onSearch(query);
+      setSent(query);
+    }, SEARCH_DELAY_MS);
     return () => clearTimeout(timeout);
   }, [query, searchable, onSearch]);
 
@@ -313,7 +321,7 @@ export function SearchSelect<T extends SearchSelectOption>({
 
   const note = !searchable
     ? `Type at least ${minSearchLength} characters to search`
-    : loading && listed.length === 0
+    : (loading || pending) && listed.length === 0
       ? "Searching..."
       : listed.length === 0
         ? emptyText

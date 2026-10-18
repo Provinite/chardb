@@ -119,13 +119,17 @@ describe("CharacterTypeahead", () => {
     ).toBeInTheDocument();
   });
 
-  it("says when nothing matched", async () => {
+  it("says when nothing matched, once the search has gone out", async () => {
     render(<Harness options={[]} />);
     await userEvent.type(
       screen.getByRole("combobox", { name: "Character" }),
       "zz",
     );
-    expect(screen.getByText("No characters found")).toBeInTheDocument();
+    // Typing has paused for less than the search delay: nothing has been
+    // asked yet, so "nothing found" would be a guess.
+    expect(screen.queryByText("No characters found")).not.toBeInTheDocument();
+    expect(screen.getByText("Searching...")).toBeInTheDocument();
+    expect(await screen.findByText("No characters found")).toBeInTheDocument();
   });
 
   it("can list everything as soon as it opens", async () => {
@@ -155,6 +159,6 @@ describe("ItemTypeTypeahead", () => {
       screen.getByRole("combobox", { name: "Item type" }),
       "zz",
     );
-    expect(screen.getByText("No item types found")).toBeInTheDocument();
+    expect(await screen.findByText("No item types found")).toBeInTheDocument();
   });
 });
