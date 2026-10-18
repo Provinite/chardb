@@ -3,24 +3,14 @@ import {
   type APIApplicationCommandInteractionDataOption,
 } from "@discordjs/core";
 import type { HalloweenPrize } from "@chardb/database";
-import { Logger } from "@nestjs/common";
-import { HalloweenLogEvent } from "../logging";
 import { PrizeCommand } from "./prize.command";
 import { Color } from "../discord/ui";
 import { HalloweenRandom } from "../random";
+import { HalloweenLinks } from "../halloween-links";
 import { PrizeService } from "../services/prize.service";
 import { PrizeImageService } from "../services/prize-image.service";
-import {
-  HalloweenDiscordError,
-  OutOfPrizesError,
-  ValidationError,
-} from "../errors";
-import {
-  ADMINISTRATOR,
-  GUILD_ID,
-  USER_ID,
-  buildInteraction,
-} from "../testing/fixtures";
+import { OutOfPrizesError } from "../errors";
+import { ADMINISTRATOR, GUILD_ID, buildInteraction } from "../testing/fixtures";
 import {
   AUTHOR,
   TIMESTAMP,
@@ -64,14 +54,13 @@ const adminGroup = (child: APIApplicationCommandInteractionDataOption) =>
 
 const str = (name: string, value: string) =>
   ({ type: ApplicationCommandOptionType.String, name, value }) as const;
-const int = (name: string, value: number) =>
-  ({ type: ApplicationCommandOptionType.Integer, name, value }) as const;
 
 describe("/prize", () => {
   let discord: ReturnType<typeof mockDiscord>;
   let prizes: { inStock: jest.Mock; save: jest.Mock };
   let random: HalloweenRandom;
   let images: { imagesFor: jest.Mock };
+  let links: { halloweenPage: jest.Mock };
   let command: PrizeCommand;
 
   beforeEach(() => {
@@ -90,11 +79,17 @@ describe("/prize", () => {
         Promise.resolve(new Map(list.map((p) => [p, p.image]))),
       ),
     };
+    links = {
+      halloweenPage: jest
+        .fn()
+        .mockResolvedValue("https://cloverse.chardb.cc/admin/halloween"),
+    };
     command = new PrizeCommand(
       discord,
       stubUi(),
       prizes as unknown as PrizeService,
       images as unknown as PrizeImageService,
+      links as unknown as HalloweenLinks,
       random,
     );
   });
@@ -116,13 +111,7 @@ describe("/prize", () => {
       );
     });
 
-    it("has no edit command yet, as in the bot", async () => {
-      await expect(run([adminGroup(sub("edit"))])).rejects.toThrow(
-        "Unknown prize sub command",
-      );
-    });
-
-    it("only offers add under admin", async () => {
+    it("only offers the admin subcommands under admin", async () => {
       await expect(run([sub("add")])).rejects.toThrow(
         "Unknown prize sub command",
       );
@@ -211,120 +200,29 @@ describe("/prize", () => {
     });
   });
 
-  describe("admin add", () => {
-    const add = (options: APIApplicationCommandInteractionDataOption[]) => [
-      adminGroup(sub("add", options)),
-    ];
-    const required = [
-      str("id", "myo-common"),
-      str("name", "Common MYO"),
-      int("stock", 5),
-      str("image", "https://i.test/myo.png"),
-    ];
+  // Prizes are managed on chardb now. The admin subcommands stay registered
+  // with Discord until they are removed there, so they point at the page.
+  describe("admin", () => {
+    it.each(["add", "edit"])(
+      "points /prize admin %s at the Halloween page",
+      async (name) => {
+        await run([adminGroup(sub(name, [str("id", "myo")]))]);
+        expect(links.halloweenPage).toHaveBeenCalledWith(GUILD_ID);
+        expect(lastReply(discord)).toEqual({
+          content:
+            "Prize management has moved to the Halloween page on chardb: https://cloverse.chardb.cc/admin/halloween",
+        });
+        expect(prizes.save).not.toHaveBeenCalled();
+      },
+    );
 
-    it("is for administrators only", async () => {
-      await expect(run(add(required), "0")).rejects.toThrow(
-        "You lack the required permissions for that command.",
-      );
-    });
-
-    it("adds a prize with full stock and the default weight", async () => {
-      await run(add(required));
-      expect(prizes.save).toHaveBeenCalledWith({
-        guildId: GUILD_ID,
-        id: "myo-common",
-        name: "Common MYO",
-        initialStock: 5,
-        currentStock: 5,
-        image: "https://i.test/myo.png",
-        weight: 10,
-      });
+    it("says where to look when there is no page to link to", async () => {
+      links.halloweenPage.mockResolvedValue(null);
+      await run([adminGroup(sub("add"))]);
       expect(lastReply(discord)).toEqual({
-        content: "Added 5 units of Common MYO as myo-common with weight 10",
+        content:
+          "Prize management has moved to the Halloween page on chardb, under the community's Administration.",
       });
-    });
-
-    it("logs the added prize and who added it", async () => {
-      const log = jest.spyOn(Logger.prototype, "log").mockImplementation();
-      await command.handle(
-        buildInteraction({
-          id: "ref-1",
-          name: "prize",
-          options: add([...required, str("item-type-id", "it-1")]),
-          permissions: ADMINISTRATOR,
-        }),
-      );
-      expect(log).toHaveBeenCalledWith(
-        expect.objectContaining({
-          event: HalloweenLogEvent.PrizeAdded,
-          interactionId: "ref-1",
-          guildId: GUILD_ID,
-          adminUserId: USER_ID,
-          prizeId: "myo-common",
-          name: "Common MYO",
-          initialStock: 5,
-          weight: 10,
-          image: "https://i.test/myo.png",
-          itemTypeId: "it-1",
-        }),
-      );
-      log.mockRestore();
-    });
-
-    it("takes a weight and a CharDB item type", async () => {
-      await run(
-        add([...required, int("weight", 3), str("item-type-id", "it-1")]),
-      );
-      expect(prizes.save).toHaveBeenCalledWith(
-        expect.objectContaining({ weight: 3, itemTypeId: "it-1" }),
-      );
-    });
-
-    it("takes a CharDB character", async () => {
-      await run(add([...required, str("character-id", "ch-1")]));
-      expect(prizes.save).toHaveBeenCalledWith(
-        expect.objectContaining({ characterId: "ch-1" }),
-      );
-    });
-
-    // The bot defaulted any falsy weight, so 0 became 10.
-    it("treats a weight of 0 as the default", async () => {
-      await run(add([...required, int("weight", 0)]));
-      expect(prizes.save).toHaveBeenCalledWith(
-        expect.objectContaining({ weight: 10 }),
-      );
-    });
-
-    it("refuses an id that is not a lowercase slug", async () => {
-      await expect(
-        run(add([str("id", "My Prize"), ...required.slice(1)])),
-      ).rejects.toThrow("Couldn't process value for field id");
-    });
-
-    it("refuses an unknown option", async () => {
-      await expect(run(add([...required, str("colour", "x")]))).rejects.toThrow(
-        "Unexpected option, colour. Valid options are ",
-      );
-    });
-
-    it("passes on the service's validation", async () => {
-      const invalid = new ValidationError({
-        thrownFrom: "t",
-        message: "Prize validation failed",
-        validationErrors: [],
-      });
-      prizes.save.mockRejectedValue(invalid);
-      await expect(run(add(required))).rejects.toBe(invalid);
-    });
-
-    it("reports any other failure to save", async () => {
-      prizes.save.mockRejectedValue(new Error("duplicate key"));
-      await expect(run(add(required))).rejects.toThrow(
-        new HalloweenDiscordError({
-          thrownFrom: "t",
-          message: "Couldn't save prize",
-        }),
-      );
     });
   });
 });

@@ -95,76 +95,11 @@ describe("Halloween services (e2e)", () => {
         MissingGuildSettingsError,
       );
     });
-
-    it("creates the bot's defaults", async () => {
-      await settings.createDefaults(GUILD);
-      expect(await settings.get(GUILD)).toEqual({
-        guildId: GUILD,
-        resetTime: 6,
-        knocksPerDay: 2,
-        startDate: null,
-        endDate: null,
-        winRate: 0.5,
-        winChannel: null,
-      });
-    });
-
-    it("knows whether a guild is set up", async () => {
-      expect(await settings.has(GUILD)).toBe(false);
-      await createSettings();
-      expect(await settings.has(GUILD)).toBe(true);
-    });
-
-    it("updates one field at a time", async () => {
-      await createSettings();
-      await settings.update(GUILD, { knocksPerDay: 5 });
-      expect((await settings.get(GUILD)).knocksPerDay).toBe(5);
-    });
-
-    it("validates the whole record on update", async () => {
-      await createSettings({ endDate: new Date("2025-10-01T05:00:00Z") });
-      const error = await settings
-        .update(GUILD, { startDate: new Date("2025-11-01T05:00:00Z") })
-        .catch((e: unknown) => e);
-      expect(error).toBeInstanceOf(ValidationError);
-      expect((await settings.get(GUILD)).startDate).toBeNull();
-    });
   });
 
   describe("PrizeService", () => {
     beforeEach(async () => {
       await createSettings();
-    });
-
-    it("saves a prize with full stock", async () => {
-      await prizes.save({
-        id: "myo-common",
-        guildId: GUILD,
-        name: "Common MYO",
-        initialStock: 4,
-        currentStock: 4,
-        weight: 10,
-        image: "https://i.test/myo.png",
-      });
-      expect(
-        await db.halloweenPrize.findUniqueOrThrow({
-          where: { guildId_id: { guildId: GUILD, id: "myo-common" } },
-        }),
-      ).toMatchObject({ initialStock: 4, currentStock: 4, itemTypeId: null });
-    });
-
-    it("refuses an invalid prize", async () => {
-      await expect(
-        prizes.save({
-          id: "X",
-          guildId: GUILD,
-          name: "x",
-          initialStock: 1,
-          currentStock: 1,
-          weight: 1,
-          image: "https://i.test/x.png",
-        }),
-      ).rejects.toBeInstanceOf(ValidationError);
     });
 
     it("lists only prizes still in stock", async () => {

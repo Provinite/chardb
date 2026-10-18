@@ -4,7 +4,6 @@ import { DatabaseService } from "../../database/database.service";
 import { HalloweenClock } from "../clock";
 import {
   MissingGuildSettingsError,
-  ValidationError,
   type ValidationFieldError,
 } from "../errors";
 import { getEventStatus, getLastReset, type EventStatus } from "../time";
@@ -74,59 +73,6 @@ export class GuildSettingsService {
       });
     }
     return settings;
-  }
-
-  async has(
-    guildId: string,
-    tx: Prisma.TransactionClient = this.db,
-  ): Promise<boolean> {
-    return (await tx.halloweenGuildSettings.count({ where: { guildId } })) > 0;
-  }
-
-  /** What `/settings set` starts from in a guild that has never been set up. */
-  async createDefaults(
-    guildId: string,
-    tx: Prisma.TransactionClient = this.db,
-  ): Promise<HalloweenGuildSettings> {
-    const settings: HalloweenGuildSettings = {
-      guildId,
-      endDate: null,
-      knocksPerDay: 2,
-      resetTime: 6,
-      startDate: null,
-      winRate: 0.5,
-      winChannel: null,
-    };
-    const validation = validateGuildSettings(settings);
-    if (validation !== true) {
-      throw new ValidationError({
-        message: "Prize validation failed",
-        validationErrors: validation,
-        thrownFrom: "GuildSettingsService.createDefaults",
-      });
-    }
-    return tx.halloweenGuildSettings.create({ data: settings });
-  }
-
-  /** Merges `changes` into the stored settings and validates the result. */
-  async update(
-    guildId: string,
-    changes: Partial<Omit<HalloweenGuildSettings, "guildId">>,
-    tx: Prisma.TransactionClient = this.db,
-  ): Promise<HalloweenGuildSettings> {
-    const updated = { ...(await this.get(guildId, tx)), ...changes };
-    const validation = validateGuildSettings(updated);
-    if (validation !== true) {
-      throw new ValidationError({
-        message: "Guild Settings validatiion failed during update",
-        validationErrors: validation,
-        thrownFrom: "GuildSettingsService.update",
-      });
-    }
-    return tx.halloweenGuildSettings.update({
-      where: { guildId },
-      data: changes,
-    });
   }
 
   lastReset(settings: Pick<HalloweenGuildSettings, "resetTime">): Date {

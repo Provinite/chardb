@@ -23,6 +23,7 @@ import { DeviantArtUserService } from "./services/deviantart-user.service";
 import { PrizeAwardService } from "./services/prize-award.service";
 import { PlayerLock } from "./services/player-lock";
 import { PrizeImageService } from "./services/prize-image.service";
+import { HalloweenLinks } from "./halloween-links";
 import { HalloweenDashboardService } from "./dashboard/halloween-dashboard.service";
 import { HalloweenDashboardResolver } from "./dashboard/halloween-dashboard.resolver";
 import { HalloweenAdminService } from "./dashboard/halloween-admin.service";
@@ -80,6 +81,7 @@ const COMMANDS = [
     PrizeAwardService,
     PlayerLock,
     PrizeImageService,
+    HalloweenLinks,
     HalloweenDashboardService,
     HalloweenDashboardResolver,
     HalloweenAdminService,

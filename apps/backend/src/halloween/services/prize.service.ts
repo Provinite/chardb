@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { HalloweenPrize, Prisma } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
-import { ValidationError, type ValidationFieldError } from "../errors";
+import type { ValidationFieldError } from "../errors";
 
 export interface PrizeInput {
   id: string;
@@ -143,19 +143,6 @@ export class PrizeService {
         where: { guildId, currentStock: { gt: 0 } },
       })) > 0
     );
-  }
-
-  /** Database errors (a duplicate id, a guild with no settings) propagate. */
-  async save(prize: PrizeInput): Promise<HalloweenPrize> {
-    const validation = validatePrize(prize);
-    if (validation !== true) {
-      throw new ValidationError({
-        message: "Prize validation failed",
-        validationErrors: validation,
-        thrownFrom: "PrizeService.save",
-      });
-    }
-    return this.db.halloweenPrize.create({ data: prize });
   }
 
   async decrementStock(
