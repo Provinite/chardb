@@ -23,6 +23,20 @@ registerEnumType(HalloweenPrizeDelivery, {
   description: "How a Halloween prize reaches its winner",
 });
 
+/** Which wins the win feed shows. */
+export enum HalloweenWinFilter {
+  ALL = "ALL",
+  /** STAFF prizes nobody has marked delivered yet. */
+  NEEDS_DELIVERY = "NEEDS_DELIVERY",
+  /** Prizes staff have marked delivered. */
+  DELIVERED = "DELIVERED",
+}
+
+registerEnumType(HalloweenWinFilter, {
+  name: "HalloweenWinFilter",
+  description: "Which Halloween wins to list",
+});
+
 @ObjectType({
   description: "The event's settings in a guild, as /settings sets them",
 })
@@ -59,6 +73,11 @@ export class HalloweenEventSummary {
 
   @Field(() => Int, { description: "Distinct Discord users who have knocked" })
   players: number;
+
+  @Field(() => Int, {
+    description: "Wins of STAFF prizes not yet marked delivered",
+  })
+  toDeliver: number;
 }
 
 @ObjectType({ description: "A prize in the guild's pool" })
@@ -156,7 +175,16 @@ export class HalloweenDashboard {
 
   @Field(() => [HalloweenPrizeView])
   prizes: HalloweenPrizeView[];
+}
 
-  @Field(() => [HalloweenWin], { description: "Newest first" })
+@ObjectType({ description: "A page of Halloween wins, newest first" })
+export class HalloweenWinPage {
+  @Field(() => [HalloweenWin])
   wins: HalloweenWin[];
+
+  @Field(() => Int, { description: "How many wins match the filter in all" })
+  total: number;
+
+  @Field()
+  hasMore: boolean;
 }

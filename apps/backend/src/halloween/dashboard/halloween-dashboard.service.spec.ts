@@ -7,7 +7,10 @@ import {
   HalloweenDashboardService,
   prizeDelivery,
 } from "./halloween-dashboard.service";
-import { HalloweenPrizeDelivery } from "./halloween-dashboard.types";
+import {
+  HalloweenPrizeDelivery,
+  HalloweenWinFilter,
+} from "./halloween-dashboard.types";
 import { DatabaseService } from "../../database/database.service";
 
 const GUILD = "100000000000000001";
@@ -83,7 +86,30 @@ describe("HalloweenDashboardService", () => {
     await expect(service.getDashboard("c")).resolves.toMatchObject({
       guildId: null,
       prizes: [],
-      wins: [],
+      summary: { wins: 0, toDeliver: 0 },
+    });
+    await expect(
+      service.getWins("c", HalloweenWinFilter.ALL, 50, 0),
+    ).resolves.toEqual({ wins: [], total: 0, hasMore: false });
+  });
+
+  describe("getWins", () => {
+    beforeEach(() => {
+      Object.assign(db.halloweenKnockEvent, {
+        findMany: jest.fn().mockResolvedValue([]),
+        count: jest.fn().mockResolvedValue(0),
+      });
+      Object.assign(db, {
+        halloweenDeviantArtUser: { findMany: jest.fn().mockResolvedValue([]) },
+        externalAccount: { findMany: jest.fn().mockResolvedValue([]) },
+      });
+    });
+
+    it("never returns more than 100 wins in a page", async () => {
+      await service.getWins("c", HalloweenWinFilter.ALL, 5000, 0);
+      expect(
+        (db.halloweenKnockEvent as unknown as { findMany: jest.Mock }).findMany,
+      ).toHaveBeenCalledWith(expect.objectContaining({ take: 100, skip: 0 }));
     });
   });
 

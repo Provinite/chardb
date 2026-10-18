@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Ghost, Check, Undo2 } from "lucide-react";
@@ -10,9 +10,13 @@ import {
   useCommunityId,
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
+import { useOffsetPaging } from "../hooks/useOffsetPaging";
 import {
+  HalloweenDashboardDocument,
   HalloweenPrizeDelivery,
+  HalloweenWinFilter,
   useHalloweenDashboardQuery,
+  useHalloweenWinsQuery,
   useSetHalloweenPrizeDeliveredMutation,
   type HalloweenWinFieldsFragment,
 } from "../generated/graphql";
@@ -134,6 +138,14 @@ const Status = styled.div`
   flex-wrap: wrap;
 `;
 
+const Paging = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+`;
+
 const Empty = styled.div`
   border: 1px dashed ${({ theme }) => theme.colors.border};
   border-radius: 12px;
@@ -142,13 +154,10 @@ const Empty = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-type Filter = "all" | "needs-delivery" | "delivered";
+const WINS_PAGE_SIZE = 50;
 
 const isStaffPrize = (win: HalloweenWinFieldsFragment) =>
   win.prize.delivery === HalloweenPrizeDelivery.Staff;
-
-const needsDelivery = (win: HalloweenWinFieldsFragment) =>
-  isStaffPrize(win) && !win.deliveredAt;
 
 const DELIVERY_LABEL: Record<HalloweenPrizeDelivery, string> = {
   [HalloweenPrizeDelivery.ChardbItem]: "Chardb item",
@@ -173,28 +182,66 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
   const { permissions, loading: roleLoading } = useUserCommunityRole(
     communityId ?? undefined,
   );
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<HalloweenWinFilter>(
+    HalloweenWinFilter.All,
+  );
   const [busyId, setBusyId] = useState<number | null>(null);
 
   const enabled = Boolean(community?.halloweenEnabled);
   const allowed = Boolean(permissions.canGrantItems);
+  const skip = !communityId || !enabled || !allowed;
 
   const { data, loading, error } = useHalloweenDashboardQuery({
     variables: { communityId: communityId as string },
-    skip: !communityId || !enabled || !allowed,
+    skip,
     fetchPolicy: "cache-and-network",
   });
-  const [setDelivered] = useSetHalloweenPrizeDeliveredMutation();
+  // Filtered and paged on the server: an event can run to thousands of wins.
+  const {
+    data: winsData,
+    loading: winsLoading,
+    fetchMore,
+  } = useHalloweenWinsQuery({
+    variables: {
+      communityId: communityId as string,
+      filter,
+      limit: WINS_PAGE_SIZE,
+      offset: 0,
+    },
+    skip,
+    fetchPolicy: "cache-and-network",
+  });
+  // The dashboard is refetched for its "to deliver" count; the win itself
+  // updates in place through the cache.
+  const [setDelivered] = useSetHalloweenPrizeDeliveredMutation({
+    refetchQueries: [HalloweenDashboardDocument],
+  });
 
   const dashboard = data?.halloweenDashboard;
-  const wins = useMemo(() => dashboard?.wins ?? [], [dashboard]);
-  const shown = useMemo(() => {
-    if (filter === "needs-delivery") return wins.filter(needsDelivery);
-    if (filter === "delivered")
-      return wins.filter((w) => isStaffPrize(w) && w.deliveredAt);
-    return wins;
-  }, [wins, filter]);
-  const outstanding = wins.filter(needsDelivery).length;
+  const page = winsData?.halloweenWins;
+  const wins = page?.wins ?? [];
+
+  const { loadMore, loadingMore } = useOffsetPaging({
+    pageSize: WINS_PAGE_SIZE,
+    loaded: wins.length,
+    hasMore: page?.hasMore ?? false,
+    load: ({ limit, offset }) =>
+      fetchMore({
+        variables: { limit, offset },
+        updateQuery: (previous, { fetchMoreResult }) =>
+          fetchMoreResult
+            ? {
+                halloweenWins: {
+                  ...fetchMoreResult.halloweenWins,
+                  wins: [
+                    ...previous.halloweenWins.wins,
+                    ...fetchMoreResult.halloweenWins.wins,
+                  ],
+                },
+              }
+            : previous,
+      }),
+  });
 
   const handleDelivered = async (
     win: HalloweenWinFieldsFragment,
@@ -291,7 +338,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
               <StatLabel>Gifties sent</StatLabel>
             </Stat>
             <Stat>
-              <StatValue>{outstanding}</StatValue>
+              <StatValue>{summary.toDeliver}</StatValue>
               <StatLabel>To deliver</StatLabel>
             </Stat>
           </Stats>
@@ -344,28 +391,40 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
           <SectionTitle>Wins</SectionTitle>
           <Filters>
             <Button
-              variant={filter === "all" ? "primary" : "secondary"}
-              onClick={() => setFilter("all")}
+              variant={
+                filter === HalloweenWinFilter.All ? "primary" : "secondary"
+              }
+              onClick={() => setFilter(HalloweenWinFilter.All)}
             >
-              All ({wins.length})
+              All ({summary.wins})
             </Button>
             <Button
-              variant={filter === "needs-delivery" ? "primary" : "secondary"}
-              onClick={() => setFilter("needs-delivery")}
+              variant={
+                filter === HalloweenWinFilter.NeedsDelivery
+                  ? "primary"
+                  : "secondary"
+              }
+              onClick={() => setFilter(HalloweenWinFilter.NeedsDelivery)}
             >
-              Needs delivery ({outstanding})
+              Needs delivery ({summary.toDeliver})
             </Button>
             <Button
-              variant={filter === "delivered" ? "primary" : "secondary"}
-              onClick={() => setFilter("delivered")}
+              variant={
+                filter === HalloweenWinFilter.Delivered
+                  ? "primary"
+                  : "secondary"
+              }
+              onClick={() => setFilter(HalloweenWinFilter.Delivered)}
             >
               Delivered
             </Button>
           </Filters>
 
-          {shown.length === 0 ? (
+          {winsLoading && !page ? (
+            <LoadingSpinner />
+          ) : wins.length === 0 ? (
             <Empty>
-              {wins.length === 0
+              {filter === HalloweenWinFilter.All
                 ? "Nobody has won anything yet."
                 : "No win matches that."}
             </Empty>
@@ -382,7 +441,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {shown.map((win) => (
+                  {wins.map((win) => (
                     <tr key={win.id} data-testid={`halloween-win-${win.id}`}>
                       <td>{formatDate(win.time)}</td>
                       <td>
@@ -424,6 +483,22 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                 </tbody>
               </Table>
             </TableWrap>
+          )}
+          {page && wins.length > 0 && (
+            <Paging>
+              <Muted>
+                Showing {wins.length} of {page.total}
+              </Muted>
+              {page.hasMore && (
+                <Button
+                  variant="secondary"
+                  disabled={loadingMore}
+                  onClick={loadMore}
+                >
+                  {loadingMore ? "Loading…" : "Load more"}
+                </Button>
+              )}
+            </Paging>
           )}
         </>
       )}

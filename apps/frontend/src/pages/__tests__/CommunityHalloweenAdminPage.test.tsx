@@ -46,6 +46,8 @@ vi.mock("react-hot-toast", () => {
 import {
   HalloweenDashboardDocument,
   HalloweenPrizeDelivery,
+  HalloweenWinFilter,
+  HalloweenWinsDocument,
   SetHalloweenPrizeDeliveredDocument,
 } from "../../generated/graphql";
 import { CommunityHalloweenAdminPage } from "../CommunityHalloweenAdminPage";
@@ -115,7 +117,7 @@ const unclaimedCandyWin = win({
   prize: candy,
 });
 
-const dashboard = {
+const dashboard = (toDeliver = 1) => ({
   __typename: "HalloweenDashboard" as const,
   communityId: COMMUNITY_ID,
   guildId: "100000000000000001",
@@ -134,18 +136,46 @@ const dashboard = {
     wins: 4,
     giftiesSent: 1,
     players: 5,
+    toDeliver,
   },
   prizes: [adopt, candy],
-  wins: [unclaimedCandyWin, candyWin, deliveredAdoptWin, adoptWin],
-};
+});
 
-const dashboardMock: MockedResponse = {
+const dashboardMock = (toDeliver = 1): MockedResponse => ({
   request: {
     query: HalloweenDashboardDocument,
     variables: { communityId: COMMUNITY_ID },
   },
-  result: { data: { halloweenDashboard: dashboard } },
-};
+  result: { data: { halloweenDashboard: dashboard(toDeliver) } },
+});
+
+const winsMock = (
+  filter: HalloweenWinFilter,
+  wins: unknown[],
+  { offset = 0, total = wins.length, hasMore = false } = {},
+): MockedResponse => ({
+  request: {
+    query: HalloweenWinsDocument,
+    variables: { communityId: COMMUNITY_ID, filter, limit: 50, offset },
+  },
+  result: {
+    data: {
+      halloweenWins: {
+        __typename: "HalloweenWinPage",
+        total,
+        hasMore,
+        wins,
+      },
+    },
+  },
+});
+
+const allWins = winsMock(HalloweenWinFilter.All, [
+  unclaimedCandyWin,
+  candyWin,
+  deliveredAdoptWin,
+  adoptWin,
+]);
 
 const markDeliveredMock = {
   request: {
@@ -163,7 +193,7 @@ const markDeliveredMock = {
   })),
 };
 
-const renderPage = (mocks: MockedResponse[] = [dashboardMock]) =>
+const renderPage = (mocks: MockedResponse[] = [dashboardMock(), allWins]) =>
   render(<CommunityHalloweenAdminPage />, {
     wrapper: ({ children }) => (
       <MockedProvider mocks={mocks}>
@@ -229,20 +259,48 @@ describe("CommunityHalloweenAdminPage", () => {
     ).toBeInTheDocument();
   });
 
-  it("filters to the prizes staff still have to hand over", async () => {
-    renderPage();
+  it("asks the server for the prizes staff still have to hand over", async () => {
+    renderPage([
+      dashboardMock(),
+      allWins,
+      winsMock(HalloweenWinFilter.NeedsDelivery, [adoptWin]),
+    ]);
     await screen.findByTestId("halloween-win-1");
     await userEvent.click(
-      screen.getByRole("button", { name: /Needs delivery/ }),
+      screen.getByRole("button", { name: /Needs delivery \(1\)/ }),
     );
+    expect(await screen.findByText(/Showing 1 of 1/)).toBeInTheDocument();
     expect(screen.getByTestId("halloween-win-1")).toBeInTheDocument();
-    expect(screen.queryByTestId("halloween-win-2")).not.toBeInTheDocument();
     expect(screen.queryByTestId("halloween-win-3")).not.toBeInTheDocument();
-    expect(screen.queryByTestId("halloween-win-4")).not.toBeInTheDocument();
   });
 
-  it("marks a prize delivered", async () => {
-    renderPage([dashboardMock, markDeliveredMock]);
+  it("loads more wins a page at a time", async () => {
+    renderPage([
+      dashboardMock(),
+      winsMock(HalloweenWinFilter.All, [unclaimedCandyWin, candyWin], {
+        total: 4,
+        hasMore: true,
+      }),
+      winsMock(HalloweenWinFilter.All, [deliveredAdoptWin, adoptWin], {
+        offset: 2,
+        total: 4,
+        hasMore: false,
+      }),
+    ]);
+    await screen.findByTestId("halloween-win-4");
+    expect(screen.queryByTestId("halloween-win-1")).not.toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /Load more/ }));
+
+    expect(await screen.findByTestId("halloween-win-1")).toBeInTheDocument();
+    expect(screen.getByTestId("halloween-win-4")).toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: /Load more/ }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("marks a prize delivered and refreshes the count", async () => {
+    renderPage([dashboardMock(), allWins, markDeliveredMock, dashboardMock(0)]);
     const row = await screen.findByTestId("halloween-win-1");
     await userEvent.click(
       within(row).getByRole("button", { name: /Mark delivered/ }),
@@ -251,5 +309,8 @@ describe("CommunityHalloweenAdminPage", () => {
       await within(row).findByText(/Delivered by @me/),
     ).toBeInTheDocument();
     expect(markDeliveredMock.result).toHaveBeenCalled();
+    expect(
+      await screen.findByRole("button", { name: /Needs delivery \(0\)/ }),
+    ).toBeInTheDocument();
   });
 });

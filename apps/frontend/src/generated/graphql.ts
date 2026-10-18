@@ -1223,8 +1223,6 @@ export type HalloweenDashboard = {
   /** Null until an admin runs /settings set in Discord */
   settings: Maybe<HalloweenEventSettings>;
   summary: HalloweenEventSummary;
-  /** Newest first */
-  wins: Array<HalloweenWin>;
 };
 
 /** The event's settings in a guild, as /settings sets them */
@@ -1248,6 +1246,8 @@ export type HalloweenEventSummary = {
   knocks: Scalars['Int']['output'];
   /** Distinct Discord users who have knocked */
   players: Scalars['Int']['output'];
+  /** Wins of STAFF prizes not yet marked delivered */
+  toDeliver: Scalars['Int']['output'];
   wins: Scalars['Int']['output'];
 };
 
@@ -1289,6 +1289,22 @@ export type HalloweenWin = {
   linkedUser: Maybe<User>;
   prize: HalloweenPrizeView;
   time: Scalars['DateTime']['output'];
+};
+
+/** Which Halloween wins to list */
+export enum HalloweenWinFilter {
+  All = 'ALL',
+  Delivered = 'DELIVERED',
+  NeedsDelivery = 'NEEDS_DELIVERY'
+}
+
+/** A page of Halloween wins, newest first */
+export type HalloweenWinPage = {
+  __typename?: 'HalloweenWinPage';
+  hasMore: Scalars['Boolean']['output'];
+  /** How many wins match the filter in all */
+  total: Scalars['Int']['output'];
+  wins: Array<HalloweenWin>;
 };
 
 export type Image = {
@@ -3014,6 +3030,8 @@ export type Query = {
   globalPendingImageCount: Scalars['Int']['output'];
   /** The Halloween event in this community's Discord server: settings, totals, prize pool and every win. Requires the event to be enabled. */
   halloweenDashboard: HalloweenDashboard;
+  /** The Halloween event's wins, newest first, a page at a time (at most 100). */
+  halloweenWins: HalloweenWinPage;
   /** Get pending images for a community moderation queue */
   imageModerationQueue: ImageModerationQueueConnection;
   /** Get an invite code by ID */
@@ -3411,6 +3429,14 @@ export type QueryGlobalImageModerationQueueArgs = {
 
 export type QueryHalloweenDashboardArgs = {
   communityId: Scalars['ID']['input'];
+};
+
+
+export type QueryHalloweenWinsArgs = {
+  communityId: Scalars['ID']['input'];
+  filter?: InputMaybe<HalloweenWinFilter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
 
@@ -5600,7 +5626,17 @@ export type HalloweenDashboardQueryVariables = Exact<{
 }>;
 
 
-export type HalloweenDashboardQuery = { __typename?: 'Query', halloweenDashboard: { __typename?: 'HalloweenDashboard', communityId: string, guildId: string | null, settings: { __typename?: 'HalloweenEventSettings', startDate: string | null, endDate: string | null, knocksPerDay: number, resetTime: number, winRate: number, winChannel: string | null } | null, summary: { __typename?: 'HalloweenEventSummary', knocks: number, wins: number, giftiesSent: number, players: number }, prizes: Array<{ __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }>, wins: Array<{ __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null }> } };
+export type HalloweenDashboardQuery = { __typename?: 'Query', halloweenDashboard: { __typename?: 'HalloweenDashboard', communityId: string, guildId: string | null, settings: { __typename?: 'HalloweenEventSettings', startDate: string | null, endDate: string | null, knocksPerDay: number, resetTime: number, winRate: number, winChannel: string | null } | null, summary: { __typename?: 'HalloweenEventSummary', knocks: number, wins: number, giftiesSent: number, players: number, toDeliver: number }, prizes: Array<{ __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }> } };
+
+export type HalloweenWinsQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  filter?: InputMaybe<HalloweenWinFilter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type HalloweenWinsQuery = { __typename?: 'Query', halloweenWins: { __typename?: 'HalloweenWinPage', total: number, hasMore: boolean, wins: Array<{ __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null }> } };
 
 export type SetHalloweenPrizeDeliveredMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -11867,17 +11903,14 @@ export const HalloweenDashboardDocument = gql`
       wins
       giftiesSent
       players
+      toDeliver
     }
     prizes {
       ...HalloweenPrizeFields
     }
-    wins {
-      ...HalloweenWinFields
-    }
   }
 }
-    ${HalloweenPrizeFieldsFragmentDoc}
-${HalloweenWinFieldsFragmentDoc}`;
+    ${HalloweenPrizeFieldsFragmentDoc}`;
 
 /**
  * __useHalloweenDashboardQuery__
@@ -11911,6 +11944,58 @@ export type HalloweenDashboardQueryHookResult = ReturnType<typeof useHalloweenDa
 export type HalloweenDashboardLazyQueryHookResult = ReturnType<typeof useHalloweenDashboardLazyQuery>;
 export type HalloweenDashboardSuspenseQueryHookResult = ReturnType<typeof useHalloweenDashboardSuspenseQuery>;
 export type HalloweenDashboardQueryResult = Apollo.QueryResult<HalloweenDashboardQuery, HalloweenDashboardQueryVariables>;
+export const HalloweenWinsDocument = gql`
+    query HalloweenWins($communityId: ID!, $filter: HalloweenWinFilter, $limit: Int, $offset: Int) {
+  halloweenWins(
+    communityId: $communityId
+    filter: $filter
+    limit: $limit
+    offset: $offset
+  ) {
+    total
+    hasMore
+    wins {
+      ...HalloweenWinFields
+    }
+  }
+}
+    ${HalloweenWinFieldsFragmentDoc}`;
+
+/**
+ * __useHalloweenWinsQuery__
+ *
+ * To run a query within a React component, call `useHalloweenWinsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHalloweenWinsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHalloweenWinsQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      filter: // value for 'filter'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useHalloweenWinsQuery(baseOptions: Apollo.QueryHookOptions<HalloweenWinsQuery, HalloweenWinsQueryVariables> & ({ variables: HalloweenWinsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HalloweenWinsQuery, HalloweenWinsQueryVariables>(HalloweenWinsDocument, options);
+      }
+export function useHalloweenWinsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenWinsQuery, HalloweenWinsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HalloweenWinsQuery, HalloweenWinsQueryVariables>(HalloweenWinsDocument, options);
+        }
+export function useHalloweenWinsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenWinsQuery, HalloweenWinsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HalloweenWinsQuery, HalloweenWinsQueryVariables>(HalloweenWinsDocument, options);
+        }
+export type HalloweenWinsQueryHookResult = ReturnType<typeof useHalloweenWinsQuery>;
+export type HalloweenWinsLazyQueryHookResult = ReturnType<typeof useHalloweenWinsLazyQuery>;
+export type HalloweenWinsSuspenseQueryHookResult = ReturnType<typeof useHalloweenWinsSuspenseQuery>;
+export type HalloweenWinsQueryResult = Apollo.QueryResult<HalloweenWinsQuery, HalloweenWinsQueryVariables>;
 export const SetHalloweenPrizeDeliveredDocument = gql`
     mutation SetHalloweenPrizeDelivered($communityId: ID!, $knockEventId: Int!, $delivered: Boolean!) {
   setHalloweenPrizeDelivered(

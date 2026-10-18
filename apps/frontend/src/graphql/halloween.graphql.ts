@@ -56,16 +56,36 @@ export const HALLOWEEN_DASHBOARD_QUERY = gql`
         wins
         giftiesSent
         players
+        toDeliver
       }
       prizes {
         ...HalloweenPrizeFields
       }
+    }
+  }
+  ${HALLOWEEN_PRIZE_FRAGMENT}
+`;
+
+export const HALLOWEEN_WINS_QUERY = gql`
+  query HalloweenWins(
+    $communityId: ID!
+    $filter: HalloweenWinFilter
+    $limit: Int
+    $offset: Int
+  ) {
+    halloweenWins(
+      communityId: $communityId
+      filter: $filter
+      limit: $limit
+      offset: $offset
+    ) {
+      total
+      hasMore
       wins {
         ...HalloweenWinFields
       }
     }
   }
-  ${HALLOWEEN_PRIZE_FRAGMENT}
   ${HALLOWEEN_WIN_FRAGMENT}
 `;
 

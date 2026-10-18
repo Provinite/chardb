@@ -11,7 +11,12 @@ import { Community } from "../../communities/entities/community.entity";
 import { mapPrismaCommunityToGraphQL } from "../../communities/utils/community-resolver-mappers";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { HalloweenDashboardService } from "./halloween-dashboard.service";
-import { HalloweenDashboard, HalloweenWin } from "./halloween-dashboard.types";
+import {
+  HalloweenDashboard,
+  HalloweenWin,
+  HalloweenWinFilter,
+  HalloweenWinPage,
+} from "./halloween-dashboard.types";
 
 /**
  * The Halloween event's web side. Discord stays where the event is run; this
@@ -41,6 +46,28 @@ export class HalloweenDashboardResolver {
     @Args("communityId", { type: () => ID }) communityId: string,
   ): Promise<HalloweenDashboard> {
     return this.dashboard.getDashboard(communityId);
+  }
+
+  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => HalloweenWinPage, {
+    description:
+      "The Halloween event's wins, newest first, a page at a time (at most 100).",
+  })
+  async halloweenWins(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("filter", {
+      type: () => HalloweenWinFilter,
+      nullable: true,
+      defaultValue: HalloweenWinFilter.ALL,
+    })
+    filter: HalloweenWinFilter,
+    @Args("limit", { type: () => Int, nullable: true, defaultValue: 50 })
+    limit: number,
+    @Args("offset", { type: () => Int, nullable: true, defaultValue: 0 })
+    offset: number,
+  ): Promise<HalloweenWinPage> {
+    return this.dashboard.getWins(communityId, filter, limit, offset);
   }
 
   @AllowCommunityPermission(CommunityPermission.CanGrantItems)

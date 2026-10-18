@@ -1502,9 +1502,6 @@ type HalloweenDashboard {
   """Null until an admin runs /settings set in Discord"""
   settings: HalloweenEventSettings
   summary: HalloweenEventSummary!
-
-  """Newest first"""
-  wins: [HalloweenWin!]!
 }
 
 """The event's settings in a guild, as /settings sets them"""
@@ -1530,6 +1527,9 @@ type HalloweenEventSummary {
 
   """Distinct Discord users who have knocked"""
   players: Int!
+
+  """Wins of STAFF prizes not yet marked delivered"""
+  toDeliver: Int!
   wins: Int!
 }
 
@@ -1575,6 +1575,22 @@ type HalloweenWin {
   linkedUser: User
   prize: HalloweenPrizeView!
   time: DateTime!
+}
+
+"""Which Halloween wins to list"""
+enum HalloweenWinFilter {
+  ALL
+  DELIVERED
+  NEEDS_DELIVERY
+}
+
+"""A page of Halloween wins, newest first"""
+type HalloweenWinPage {
+  hasMore: Boolean!
+
+  """How many wins match the filter in all"""
+  total: Int!
+  wins: [HalloweenWin!]!
 }
 
 type Image {
@@ -3424,6 +3440,11 @@ type Query {
   The Halloween event in this community's Discord server: settings, totals, prize pool and every win. Requires the event to be enabled.
   """
   halloweenDashboard(communityId: ID!): HalloweenDashboard!
+
+  """
+  The Halloween event's wins, newest first, a page at a time (at most 100).
+  """
+  halloweenWins(communityId: ID!, filter: HalloweenWinFilter = ALL, limit: Int = 50, offset: Int = 0): HalloweenWinPage!
 
   """Get pending images for a community moderation queue"""
   imageModerationQueue(communityId: ID!, filters: ImageModerationQueueFiltersInput, first: Int = 20, offset: Int = 0): ImageModerationQueueConnection!

@@ -21,6 +21,8 @@ import {
   HalloweenPrizeDelivery,
   HalloweenPrizeView,
   HalloweenWin,
+  HalloweenWinFilter,
+  HalloweenWinPage,
 } from "./halloween-dashboard.types";
 
 const winInclude = {
@@ -32,6 +34,29 @@ const winInclude = {
 type WinRow = Prisma.HalloweenKnockEventGetPayload<{
   include: typeof winInclude;
 }>;
+
+/** The most wins one page of the feed returns, whatever the caller asks. */
+const MAX_WINS_PAGE = 100;
+
+/** A prize nothing delivers but staff. */
+const staffPrize = {
+  is: { itemTypeId: null, characterId: null },
+} satisfies Prisma.HalloweenPrizeNullableRelationFilter;
+
+function winsWhere(
+  guildId: string,
+  filter: HalloweenWinFilter,
+): Prisma.HalloweenKnockEventWhereInput {
+  const win = { guildId, prizeId: { not: null }, isPending: false };
+  switch (filter) {
+    case HalloweenWinFilter.NEEDS_DELIVERY:
+      return { ...win, prize: staffPrize, deliveredAt: null };
+    case HalloweenWinFilter.DELIVERED:
+      return { ...win, deliveredAt: { not: null } };
+    default:
+      return win;
+  }
+}
 
 export function prizeDelivery(
   prize: Pick<HalloweenPrize, "itemTypeId" | "characterId">,
@@ -92,34 +117,39 @@ export class HalloweenDashboardService {
         communityId,
         guildId: null,
         settings: null,
-        summary: { knocks: 0, wins: 0, giftiesSent: 0, players: 0 },
+        summary: {
+          knocks: 0,
+          wins: 0,
+          giftiesSent: 0,
+          players: 0,
+          toDeliver: 0,
+        },
         prizes: [],
-        wins: [],
       };
     }
 
-    const [settings, prizes, winRows, knocks, giftiesSent, players] =
+    const [settings, prizes, knocks, wins, toDeliver, giftiesSent, players] =
       await Promise.all([
         this.db.halloweenGuildSettings.findUnique({ where: { guildId } }),
         this.db.halloweenPrize.findMany({
           where: { guildId },
           orderBy: { id: "asc" },
         }),
-        this.db.halloweenKnockEvent.findMany({
-          where: { guildId, prizeId: { not: null }, isPending: false },
-          include: winInclude,
-          orderBy: [{ time: "desc" }, { id: "desc" }],
-        }),
         this.db.halloweenKnockEvent.count({ where: { guildId } }),
-        this.db.halloweenGifty.count({ where: { guildId } }),
-        this.db.halloweenKnockEvent.findMany({
-          where: { guildId },
-          distinct: ["userId"],
-          select: { userId: true },
+        this.db.halloweenKnockEvent.count({
+          where: winsWhere(guildId, HalloweenWinFilter.ALL),
         }),
+        this.db.halloweenKnockEvent.count({
+          where: winsWhere(guildId, HalloweenWinFilter.NEEDS_DELIVERY),
+        }),
+        this.db.halloweenGifty.count({ where: { guildId } }),
+        this.db.$queryRaw<[{ count: number }]>`
+          SELECT COUNT(DISTINCT "user_id")::int AS count
+          FROM "halloween_knock_events"
+          WHERE "guild_id" = ${guildId}
+        `,
       ]);
 
-    const wins = await this.toWins(guildId, winRows);
     return {
       communityId,
       guildId,
@@ -133,12 +163,43 @@ export class HalloweenDashboardService {
       },
       summary: {
         knocks,
-        wins: wins.length,
+        wins,
         giftiesSent,
-        players: players.length,
+        players: players[0].count,
+        toDeliver,
       },
       prizes: prizes.map(toPrizeView),
-      wins,
+    };
+  }
+
+  /** A page of the win feed, newest first. */
+  async getWins(
+    communityId: string,
+    filter: HalloweenWinFilter,
+    limit: number,
+    offset: number,
+  ): Promise<HalloweenWinPage> {
+    const guildId = await this.guildFor(communityId);
+    if (!guildId) {
+      return { wins: [], total: 0, hasMore: false };
+    }
+    const take = Math.min(Math.max(limit, 1), MAX_WINS_PAGE);
+    const skip = Math.max(offset, 0);
+    const where = winsWhere(guildId, filter);
+    const [rows, total] = await Promise.all([
+      this.db.halloweenKnockEvent.findMany({
+        where,
+        include: winInclude,
+        orderBy: [{ time: "desc" }, { id: "desc" }],
+        take,
+        skip,
+      }),
+      this.db.halloweenKnockEvent.count({ where }),
+    ]);
+    return {
+      wins: await this.toWins(guildId, rows),
+      total,
+      hasMore: skip + rows.length < total,
     };
   }
 

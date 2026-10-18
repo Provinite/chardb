@@ -18,8 +18,17 @@ const DASHBOARD = `
       communityId
       guildId
       settings { knocksPerDay resetTime winRate winChannel startDate endDate }
-      summary { knocks wins giftiesSent players }
+      summary { knocks wins giftiesSent players toDeliver }
       prizes { id name initialStock currentStock weight delivery itemTypeId characterId }
+    }
+  }
+`;
+
+const WINS = `
+  query Wins($communityId: ID!, $filter: HalloweenWinFilter, $limit: Int, $offset: Int) {
+    halloweenWins(communityId: $communityId, filter: $filter, limit: $limit, offset: $offset) {
+      total
+      hasMore
       wins {
         id
         discordUserId
@@ -205,8 +214,8 @@ describe("Halloween dashboard (e2e)", () => {
   };
 
   describe("halloweenDashboard", () => {
-    it("shows staff the settings, totals, prize pool and wins, newest first", async () => {
-      const { adoptWin, candyWin, itemTypeId, linked } = await seedEvent();
+    it("shows staff the settings, totals and prize pool", async () => {
+      const { itemTypeId } = await seedEvent();
 
       const res = await testApp.authenticatedGraphqlRequest(
         DASHBOARD,
@@ -220,7 +229,14 @@ describe("Halloween dashboard (e2e)", () => {
         communityId,
         guildId: GUILD,
         settings: { knocksPerDay: 3, resetTime: 6, winRate: 0.4 },
-        summary: { knocks: 3, wins: 2, giftiesSent: 1, players: 2 },
+        // Two people knocked; one prize is staff-delivered and not yet handed over.
+        summary: {
+          knocks: 3,
+          wins: 2,
+          giftiesSent: 1,
+          players: 2,
+          toDeliver: 1,
+        },
       });
       expect(dashboard.prizes).toEqual([
         {
@@ -244,28 +260,6 @@ describe("Halloween dashboard (e2e)", () => {
           characterId: null,
         },
       ]);
-      expect(dashboard.wins).toEqual([
-        {
-          id: candyWin.id,
-          discordUserId: LINKED_WINNER,
-          linkedUser: { id: linked.id, username: linked.username },
-          deviantArtName: null,
-          giftyFromDiscordUserId: GIFTER,
-          prize: { id: "candy", delivery: "CHARDB_ITEM" },
-          deliveredAt: null,
-          deliveredBy: null,
-        },
-        {
-          id: adoptWin.id,
-          discordUserId: WINNER,
-          linkedUser: null,
-          deviantArtName: "spooky-fan",
-          giftyFromDiscordUserId: null,
-          prize: { id: "adopt", delivery: "STAFF" },
-          deliveredAt: null,
-          deliveredBy: null,
-        },
-      ]);
     });
 
     it("is empty, not an error, before a Discord server is linked", async () => {
@@ -282,9 +276,14 @@ describe("Halloween dashboard (e2e)", () => {
       expect(res.body.data.halloweenDashboard).toMatchObject({
         guildId: null,
         settings: null,
-        summary: { knocks: 0, wins: 0, giftiesSent: 0, players: 0 },
+        summary: {
+          knocks: 0,
+          wins: 0,
+          giftiesSent: 0,
+          players: 0,
+          toDeliver: 0,
+        },
         prizes: [],
-        wins: [],
       });
     });
 
@@ -308,6 +307,105 @@ describe("Halloween dashboard (e2e)", () => {
         { communityId },
         staffToken,
       );
+      expect(res.body.errors?.[0].message).toBe(
+        "The Halloween event is not enabled for this community",
+      );
+    });
+  });
+
+  describe("halloweenWins", () => {
+    const wins = (variables: Record<string, unknown>, token = staffToken) =>
+      testApp.authenticatedGraphqlRequest(
+        WINS,
+        { communityId, ...variables },
+        token,
+      );
+
+    it("lists every win newest first, with who won and how it is delivered", async () => {
+      const { adoptWin, candyWin, linked } = await seedEvent();
+      const res = await wins({});
+      expect(res.body.errors).toBeUndefined();
+      expect(res.body.data.halloweenWins).toEqual({
+        total: 2,
+        hasMore: false,
+        wins: [
+          {
+            id: candyWin.id,
+            discordUserId: LINKED_WINNER,
+            linkedUser: { id: linked.id, username: linked.username },
+            deviantArtName: null,
+            giftyFromDiscordUserId: GIFTER,
+            prize: { id: "candy", delivery: "CHARDB_ITEM" },
+            deliveredAt: null,
+            deliveredBy: null,
+          },
+          {
+            id: adoptWin.id,
+            discordUserId: WINNER,
+            linkedUser: null,
+            deviantArtName: "spooky-fan",
+            giftyFromDiscordUserId: null,
+            prize: { id: "adopt", delivery: "STAFF" },
+            deliveredAt: null,
+            deliveredBy: null,
+          },
+        ],
+      });
+    });
+
+    it("filters to the staff prizes still to hand over, and to those handed over", async () => {
+      const { adoptWin } = await seedEvent();
+      const needs = await wins({ filter: "NEEDS_DELIVERY" });
+      expect(
+        needs.body.data.halloweenWins.wins.map((w: { id: number }) => w.id),
+      ).toEqual([adoptWin.id]);
+
+      await testApp.authenticatedGraphqlRequest(
+        SET_DELIVERED,
+        { communityId, knockEventId: adoptWin.id, delivered: true },
+        staffToken,
+      );
+      expect(
+        (await wins({ filter: "NEEDS_DELIVERY" })).body.data.halloweenWins,
+      ).toMatchObject({
+        total: 0,
+        wins: [],
+      });
+      expect(
+        (await wins({ filter: "DELIVERED" })).body.data.halloweenWins.wins.map(
+          (w: { id: number }) => w.id,
+        ),
+      ).toEqual([adoptWin.id]);
+    });
+
+    it("pages through the wins", async () => {
+      const { adoptWin, candyWin } = await seedEvent();
+      const first = await wins({ limit: 1, offset: 0 });
+      expect(first.body.data.halloweenWins).toMatchObject({
+        total: 2,
+        hasMore: true,
+        wins: [{ id: candyWin.id }],
+      });
+      const second = await wins({ limit: 1, offset: 1 });
+      expect(second.body.data.halloweenWins).toMatchObject({
+        total: 2,
+        hasMore: false,
+        wins: [{ id: adoptWin.id }],
+      });
+    });
+
+    it("refuses members without permission to grant items", async () => {
+      await seedEvent();
+      const res = await wins({}, memberToken);
+      expect(res.body.errors?.[0]).toBeDefined();
+    });
+
+    it("refuses a community the event is not turned on for", async () => {
+      await db.community.update({
+        where: { id: communityId },
+        data: { halloweenEnabled: false },
+      });
+      const res = await wins({});
       expect(res.body.errors?.[0].message).toBe(
         "The Halloween event is not enabled for this community",
       );
