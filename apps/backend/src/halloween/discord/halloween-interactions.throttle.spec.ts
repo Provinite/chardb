@@ -7,12 +7,14 @@ import { HalloweenInteractionsController } from "./halloween-interactions.contro
 import { HalloweenCommandDispatcher } from "./halloween-command.dispatcher";
 import { HalloweenConfig } from "../halloween.config";
 import { CustomThrottlerGuard } from "../../middleware/custom-throttler.guard";
+import { ALL_THROTTLES } from "../../middleware/throttles";
 import { testConfig } from "../testing/fixtures";
 
 /**
  * Every player's command reaches the endpoint from the same few Discord
  * addresses, so the per-address rate limit must not apply to it. Built with
- * the app's real guard and its two named throttlers, at limits small enough to
+ * the app's real guard and every throttler the app registers -- names from
+ * ALL_THROTTLES, so a new one is covered here too -- at limits small enough to
  * trip in a test.
  */
 describe("HalloweenInteractionsController rate limiting", () => {
@@ -23,10 +25,13 @@ describe("HalloweenInteractionsController rate limiting", () => {
     delete process.env.RATE_LIMIT_DISABLED;
     const moduleRef = await Test.createTestingModule({
       imports: [
-        ThrottlerModule.forRoot([
-          { name: "short", ttl: 60_000, limit: 2 },
-          { name: "long", ttl: 60_000, limit: 3 },
-        ]),
+        ThrottlerModule.forRoot(
+          ALL_THROTTLES.map((throttle) => ({
+            ...throttle,
+            ttl: 60_000,
+            limit: 2,
+          })),
+        ),
       ],
       controllers: [HalloweenInteractionsController],
       providers: [

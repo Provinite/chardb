@@ -10,6 +10,7 @@ import {
   type RawBodyRequest,
 } from "@nestjs/common";
 import { SkipThrottle } from "@nestjs/throttler";
+import { SKIP_ALL_THROTTLES } from "../../middleware/throttles";
 import type { Request, Response } from "express";
 import {
   InteractionResponseType,
@@ -40,9 +41,7 @@ const PRIVATE_COMMANDS = new Set(["deviantart"]);
  */
 @Controller("discord/halloween")
 @AllowUnauthenticated()
-// Named: a bare @SkipThrottle() only skips a throttler called "default", and
-// app.module's are "short" and "long".
-@SkipThrottle({ short: true, long: true })
+@SkipThrottle(SKIP_ALL_THROTTLES)
 export class HalloweenInteractionsController {
   private readonly logger = new Logger(HalloweenInteractionsController.name);
 

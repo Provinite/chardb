@@ -51,6 +51,7 @@ import { DiscordModule } from "./discord/discord.module";
 import { DeviantArtModule } from "./deviantart/deviantart.module";
 import { QueueConsumerModule } from "./queue-consumer/queue-consumer.module";
 import { HalloweenModule } from "./halloween/halloween.module";
+import { ALL_THROTTLES } from "./middleware/throttles";
 import { ImageModerationModule } from "./image-moderation/image-moderation.module";
 import { TraitReviewModule } from "./trait-review/trait-review.module";
 import { MyoModule } from "./myo/myo.module";
@@ -64,18 +65,7 @@ import { Request, Response } from "express";
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-    ThrottlerModule.forRoot([
-      {
-        name: "short",
-        ttl: 1000, // 1 second window
-        limit: 20, // 20 requests per second (more reasonable for dev)
-      },
-      {
-        name: "long",
-        ttl: 60000, // 1 minute window
-        limit: 200, // 200 requests per minute (increased for Vite)
-      },
-    ]),
+    ThrottlerModule.forRoot([...ALL_THROTTLES]),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       autoSchemaFile: join(process.cwd(), "src/schema.gql"),
