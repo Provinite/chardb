@@ -40,7 +40,9 @@ const PRIVATE_COMMANDS = new Set(["deviantart"]);
  */
 @Controller("discord/halloween")
 @AllowUnauthenticated()
-@SkipThrottle()
+// Named: a bare @SkipThrottle() only skips a throttler called "default", and
+// app.module's are "short" and "long".
+@SkipThrottle({ short: true, long: true })
 export class HalloweenInteractionsController {
   private readonly logger = new Logger(HalloweenInteractionsController.name);
 
