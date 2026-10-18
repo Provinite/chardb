@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Halloween event page** at `/admin/halloween`: win feed, prize pool and totals, with "mark delivered" for prizes staff hand over; shown to `canGrantItems` holders where a site admin has turned the event on from Community Management (#399).
+- **Halloween event page** at `/admin/halloween`, where a site admin has turned the event on from Community Management: settings and prize pool (add, edit, remove, picking chardb item types and characters) for `canManageItems`, and the win feed with "mark delivered" for `canGrantItems` (#399).
 - **Link Patreon Account** in Connected Accounts on `/profile/edit`, with its `/auth/patreon/callback` landing page (#236).
 - **Linked accounts show provider logos** with a tooltip naming the provider, on `/profile/edit`, its link buttons, and the profile page, replacing the two-letter tiles; the link buttons now stack full-width (#236).
 
