@@ -5,20 +5,20 @@ import * as request from "supertest";
 import { HalloweenInteractionsController } from "./halloween-interactions.controller";
 import { HalloweenCommandDispatcher } from "./halloween-command.dispatcher";
 import { HalloweenConfig } from "../halloween.config";
+import { HalloweenClock } from "../clock";
 import {
   GUILD_ID,
   USER_ID,
   buildInteraction,
+  fixedClock,
   testConfig,
 } from "../testing/fixtures";
 import { HalloweenLogEvent } from "../logging";
 
 describe("HalloweenInteractionsController", () => {
   const { publicKey, privateKey } = generateKeyPairSync("ed25519");
-  const publicKeyHex = Buffer.from(
-    publicKey.export({ format: "jwk" }).x as string,
-    "base64url",
-  ).toString("hex");
+  const NOW = new Date("2026-10-18T12:00:00Z");
+  const NOW_SECONDS = String(Math.floor(NOW.getTime() / 1000));
 
   let app: INestApplication;
   const dispatch = jest.fn().mockResolvedValue(undefined);
@@ -29,8 +29,9 @@ describe("HalloweenInteractionsController", () => {
       providers: [
         {
           provide: HalloweenConfig,
-          useValue: { ...testConfig(), publicKey: publicKeyHex },
+          useValue: { ...testConfig(), publicKey },
         },
+        { provide: HalloweenClock, useValue: fixedClock(NOW.toISOString()) },
         { provide: HalloweenCommandDispatcher, useValue: { dispatch } },
       ],
     }).compile();
@@ -45,9 +46,12 @@ describe("HalloweenInteractionsController", () => {
   beforeEach(() => dispatch.mockClear());
 
   /** POST a body signed the way Discord signs it. */
-  const signedPost = (payload: unknown, tamper?: (body: string) => string) => {
+  const signedPost = (
+    payload: unknown,
+    tamper?: (body: string) => string,
+    timestamp = NOW_SECONDS,
+  ) => {
     const body = JSON.stringify(payload);
-    const timestamp = "1697558400";
     const signature = sign(
       null,
       Buffer.from(timestamp + body),
@@ -88,13 +92,28 @@ describe("HalloweenInteractionsController", () => {
     it("warns about a request that fails the signature check", async () => {
       await request(app.getHttpServer())
         .post("/discord/halloween/interactions")
-        .set("X-Signature-Timestamp", "1697558400")
+        .set("X-Signature-Timestamp", NOW_SECONDS)
         .send({ type: 1 });
       expect(warn).toHaveBeenCalledWith(
         expect.objectContaining({
           event: HalloweenLogEvent.InteractionRejected,
+          reason: "missing_headers",
           hasSignature: false,
           hasTimestamp: true,
+        }),
+      );
+    });
+
+    it("says when a rejected request was signed but stale", async () => {
+      await signedPost(
+        { type: 1 },
+        undefined,
+        String(Number(NOW_SECONDS) - 600),
+      );
+      expect(warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.InteractionRejected,
+          reason: "stale_timestamp",
         }),
       );
     });
@@ -127,6 +146,16 @@ describe("HalloweenInteractionsController", () => {
         }),
       );
     });
+  });
+
+  it("rejects a correctly signed request replayed ten minutes later", async () => {
+    const res = await signedPost(
+      buildInteraction({ name: "knock" }),
+      undefined,
+      String(Number(NOW_SECONDS) - 600),
+    );
+    expect(res.status).toBe(401);
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
   it("rejects an unsigned request", async () => {

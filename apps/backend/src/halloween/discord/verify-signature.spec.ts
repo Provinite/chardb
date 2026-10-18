@@ -1,89 +1,103 @@
-import { generateKeyPairSync, sign, KeyObject } from "crypto";
+import { generateKeyPairSync, sign } from "crypto";
 import { verifyDiscordSignature } from "./verify-signature";
-
-function rawPublicKeyHex(publicKey: KeyObject): string {
-  const jwk = publicKey.export({ format: "jwk" });
-  return Buffer.from(jwk.x as string, "base64url").toString("hex");
-}
 
 describe("verifyDiscordSignature", () => {
   const { publicKey, privateKey } = generateKeyPairSync("ed25519");
-  const publicKeyHex = rawPublicKeyHex(publicKey);
-  const timestamp = "1697558400";
+  const now = new Date("2026-10-18T12:00:00Z");
+  const timestamp = String(Math.floor(now.getTime() / 1000));
   const body = JSON.stringify({ type: 1 });
-  const signatureFor = (message: string) =>
-    sign(null, Buffer.from(message), privateKey).toString("hex");
+  const signatureFor = (message: string, key = privateKey) =>
+    sign(null, Buffer.from(message), key).toString("hex");
 
-  it("accepts a body signed over timestamp + body", () => {
-    expect(
-      verifyDiscordSignature(
-        publicKeyHex,
-        timestamp,
-        Buffer.from(body),
-        signatureFor(timestamp + body),
-      ),
-    ).toBe(true);
+  const verify = (
+    overrides: Partial<{
+      timestamp: string | undefined;
+      body: string;
+      signature: string | undefined;
+      now: Date;
+    }> = {},
+  ) =>
+    verifyDiscordSignature(
+      publicKey,
+      "timestamp" in overrides ? overrides.timestamp : timestamp,
+      Buffer.from(overrides.body ?? body),
+      "signature" in overrides
+        ? overrides.signature
+        : signatureFor(timestamp + body),
+      overrides.now ?? now,
+    );
+
+  it("accepts a fresh body signed over timestamp + body", () => {
+    expect(verify()).toEqual({ ok: true });
   });
 
   it("rejects a different body under the same signature", () => {
-    expect(
-      verifyDiscordSignature(
-        publicKeyHex,
-        timestamp,
-        Buffer.from(JSON.stringify({ type: 2 })),
-        signatureFor(timestamp + body),
-      ),
-    ).toBe(false);
+    expect(verify({ body: JSON.stringify({ type: 2 }) })).toEqual({
+      ok: false,
+      reason: "bad_signature",
+    });
   });
 
   it("rejects a different timestamp under the same signature", () => {
-    expect(
-      verifyDiscordSignature(
-        publicKeyHex,
-        "1697558401",
-        Buffer.from(body),
-        signatureFor(timestamp + body),
-      ),
-    ).toBe(false);
+    expect(verify({ timestamp: String(Number(timestamp) + 1) })).toEqual({
+      ok: false,
+      reason: "bad_signature",
+    });
   });
 
   it("rejects a missing signature or timestamp", () => {
-    const signature = signatureFor(timestamp + body);
-    expect(
-      verifyDiscordSignature(
-        publicKeyHex,
-        undefined,
-        Buffer.from(body),
-        signature,
-      ),
-    ).toBe(false);
-    expect(
-      verifyDiscordSignature(
-        publicKeyHex,
-        timestamp,
-        Buffer.from(body),
-        undefined,
-      ),
-    ).toBe(false);
+    expect(verify({ timestamp: undefined })).toEqual({
+      ok: false,
+      reason: "missing_headers",
+    });
+    expect(verify({ signature: undefined })).toEqual({
+      ok: false,
+      reason: "missing_headers",
+    });
   });
 
   it("rejects a malformed signature rather than throwing", () => {
-    expect(
-      verifyDiscordSignature(publicKeyHex, timestamp, Buffer.from(body), "zz"),
-    ).toBe(false);
+    expect(verify({ signature: "zz" })).toEqual({
+      ok: false,
+      reason: "bad_signature",
+    });
   });
 
   it("rejects a signature from another key", () => {
     const other = generateKeyPairSync("ed25519");
     expect(
-      verifyDiscordSignature(
-        publicKeyHex,
-        timestamp,
-        Buffer.from(body),
-        sign(null, Buffer.from(timestamp + body), other.privateKey).toString(
-          "hex",
-        ),
-      ),
-    ).toBe(false);
+      verify({ signature: signatureFor(timestamp + body, other.privateKey) }),
+    ).toEqual({ ok: false, reason: "bad_signature" });
+  });
+
+  describe("freshness", () => {
+    const minutes = (n: number) => new Date(now.getTime() + n * 60_000);
+
+    it("accepts a timestamp up to five minutes old or ahead", () => {
+      expect(verify({ now: minutes(5) })).toEqual({ ok: true });
+      expect(verify({ now: minutes(-5) })).toEqual({ ok: true });
+    });
+
+    // A captured, validly signed request must not be replayable later.
+    it("rejects a correctly signed request more than five minutes old", () => {
+      expect(verify({ now: minutes(5.1) })).toEqual({
+        ok: false,
+        reason: "stale_timestamp",
+      });
+    });
+
+    it("rejects one more than five minutes in the future", () => {
+      expect(verify({ now: minutes(-5.1) })).toEqual({
+        ok: false,
+        reason: "stale_timestamp",
+      });
+    });
+
+    it("rejects a timestamp that is not a number", () => {
+      const iso = now.toISOString();
+      expect(
+        verify({ timestamp: iso, signature: signatureFor(iso + body) }),
+      ).toEqual({ ok: false, reason: "stale_timestamp" });
+    });
   });
 });

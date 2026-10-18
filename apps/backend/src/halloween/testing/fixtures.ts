@@ -5,6 +5,7 @@ import {
   ApplicationCommandType,
   InteractionType,
 } from "@discordjs/core";
+import { generateKeyPairSync } from "crypto";
 import type { HalloweenClock } from "../clock";
 import type { HalloweenConfig } from "../halloween.config";
 
@@ -22,7 +23,7 @@ export function testConfig(): Pick<
 > {
   return {
     applicationId: "896600597053202462",
-    publicKey: "ab".repeat(32),
+    publicKey: generateKeyPairSync("ed25519").publicKey,
     botToken: "test-halloween-bot-token",
     imageBaseUrl: "https://images.test/halloween/",
   };

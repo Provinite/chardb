@@ -23,7 +23,11 @@ import {
 import { AllowUnauthenticated } from "../../auth/decorators/AllowUnauthenticated";
 import { HalloweenConfig } from "../halloween.config";
 import { HalloweenCommandDispatcher } from "./halloween-command.dispatcher";
-import { verifyDiscordSignature } from "./verify-signature";
+import {
+  verifyDiscordSignature,
+  type SignatureCheck,
+} from "./verify-signature";
+import { HalloweenClock } from "../clock";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 
 /** Commands whose reply only the player who ran them can see. */
@@ -47,6 +51,7 @@ export class HalloweenInteractionsController {
 
   constructor(
     private readonly config: HalloweenConfig,
+    private readonly clock: HalloweenClock,
     private readonly dispatcher: HalloweenCommandDispatcher,
   ) {}
 
@@ -56,20 +61,25 @@ export class HalloweenInteractionsController {
     @Req() req: RawBodyRequest<Request>,
     @Res({ passthrough: true }) res: Response,
   ): APIInteractionResponse {
-    const verified =
-      req.rawBody !== undefined &&
-      verifyDiscordSignature(
-        this.config.publicKey,
-        req.header("X-Signature-Timestamp"),
-        req.rawBody,
-        req.header("X-Signature-Ed25519"),
-      );
-    if (!verified) {
-      // Discord sends some of these on purpose when the endpoint URL is
-      // saved, to check they are refused; a steady stream means a key is wrong.
+    const check: SignatureCheck =
+      req.rawBody === undefined
+        ? { ok: false, reason: "missing_headers" }
+        : verifyDiscordSignature(
+            this.config.publicKey,
+            req.header("X-Signature-Timestamp"),
+            req.rawBody,
+            req.header("X-Signature-Ed25519"),
+            this.clock.now(),
+          );
+    if (!check.ok) {
+      // Discord sends some bad signatures on purpose when the endpoint URL
+      // is saved, to check they are refused; a steady stream of
+      // bad_signature means the key is wrong, and stale_timestamp means a
+      // replay or a badly skewed clock.
       this.logger.warn({
         event: HalloweenLogEvent.InteractionRejected,
-        message: "Refused an interaction with an invalid signature",
+        message: `Refused an interaction: ${check.reason}`,
+        reason: check.reason,
         hasSignature: Boolean(req.header("X-Signature-Ed25519")),
         hasTimestamp: Boolean(req.header("X-Signature-Timestamp")),
         hasRawBody: req.rawBody !== undefined,
