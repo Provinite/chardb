@@ -160,6 +160,19 @@ export class HalloweenAdminService {
         `This prize couldn't be delivered: ${problem}`,
       );
     }
+    // A character is one of a kind: a second prize for it could only ever
+    // fail to deliver.
+    if (prize.characterId) {
+      const existing = await this.db.halloweenPrize.findFirst({
+        where: { guildId, characterId: prize.characterId },
+        select: { id: true },
+      });
+      if (existing) {
+        throw new ConflictException(
+          `That character is already the prize "${existing.id}"`,
+        );
+      }
+    }
 
     let saved: HalloweenPrize;
     try {
@@ -310,13 +323,23 @@ export class HalloweenAdminService {
 
   /**
    * What a new prize could hand over: the community's item types, and its
-   * characters with no owner and no pending owner.
+   * characters with no owner, no pending owner, and no prize already.
    */
   async prizeOptions(
     communityId: string,
     search: string | null,
   ): Promise<HalloweenPrizeOptions> {
-    await this.dashboard.guildFor(communityId);
+    const guildId = await this.dashboard.guildFor(communityId);
+    // A character already in the pool can't be a second prize.
+    const pooled = guildId
+      ? await this.db.halloweenPrize.findMany({
+          where: { guildId, characterId: { not: null } },
+          select: { characterId: true },
+        })
+      : [];
+    const pooledCharacterIds = pooled.flatMap((p) =>
+      p.characterId ? [p.characterId] : [],
+    );
     const name = search?.trim()
       ? { contains: search.trim(), mode: "insensitive" as const }
       : undefined;
@@ -338,6 +361,7 @@ export class HalloweenAdminService {
           species: { communityId },
           ownerId: null,
           pendingOwnership: null,
+          id: { notIn: pooledCharacterIds },
           ...notDeleted,
           ...(name ? { name } : {}),
         },

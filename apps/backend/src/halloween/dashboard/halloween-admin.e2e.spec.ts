@@ -339,6 +339,30 @@ describe("Halloween management (e2e)", () => {
         expect(res.body.errors?.[0].message).toMatch(/already owned/);
       });
 
+      it("refuses a character that is already a prize", async () => {
+        const ghost = await character();
+        await gql(CREATE, {
+          input: {
+            id: "ghost",
+            name: "Ghost",
+            stock: 1,
+            characterId: ghost.id,
+          },
+        });
+        const res = await gql(CREATE, {
+          input: {
+            id: "ghost-again",
+            name: "Ghost",
+            stock: 1,
+            characterId: ghost.id,
+          },
+        });
+        expect(res.body.errors?.[0].message).toBe(
+          'That character is already the prize "ghost"',
+        );
+        expect(await db.halloweenPrize.count()).toBe(1);
+      });
+
       it("refuses a second prize with the same id", async () => {
         await gql(CREATE, { input: staffPrize });
         const res = await gql(CREATE, { input: staffPrize });
@@ -497,6 +521,23 @@ describe("Halloween management (e2e)", () => {
           itemTypes: [{ id: expect.any(String), name: "Edit Kit" }],
           characters: [{ id: free.id, name: "Free Ghost" }],
         });
+      });
+
+      it("leaves out characters already in the prize pool", async () => {
+        const pooled = await character({ name: "Pooled Ghost" });
+        const free = await character({ name: "Free Ghost" });
+        await gql(CREATE, {
+          input: {
+            id: "pooled",
+            name: "Pooled Ghost",
+            stock: 1,
+            characterId: pooled.id,
+          },
+        });
+        const res = await gql(OPTIONS, {});
+        expect(res.body.data.halloweenPrizeOptions.characters).toEqual([
+          { id: free.id, name: "Free Ghost" },
+        ]);
       });
 
       it("searches by name", async () => {
