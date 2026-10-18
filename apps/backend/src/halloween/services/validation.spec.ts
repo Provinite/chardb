@@ -102,12 +102,26 @@ describe("validatePrize", () => {
     });
   });
 
-  it("requires a 2-25 character lowercase id", () => {
-    expect(validatePrize({ ...valid, id: "MYO" })).toContainEqual({
+  it.each([
+    ["uppercase", "MYO"],
+    ["one character", "m"],
+    ["26 characters", "a".repeat(26)],
+    ["a leading hyphen", "-myo"],
+    ["a digit", "myo2"],
+  ])("refuses an id with %s", (_why, id) => {
+    expect(validatePrize({ ...valid, id })).toContainEqual({
       field: "id",
-      error: "id must be 2-25 lowercase characters",
+      error:
+        "id must be 2-25 lowercase letters and hyphens, starting with a letter",
     });
   });
+
+  it.each([["my"], ["a".repeat(25)], ["myo-common"]])(
+    "accepts the id %s",
+    (id) => {
+      expect(validatePrize({ ...valid, id })).toBe(true);
+    },
+  );
 
   it("requires 1-999 stock", () => {
     expect(validatePrize({ ...valid, initialStock: 1000 })).toContainEqual({

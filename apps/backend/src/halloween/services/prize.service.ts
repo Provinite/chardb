@@ -21,6 +21,12 @@ type Rule = [
   ok: () => boolean,
 ];
 
+/**
+ * A prize's id: the slug admins and the database know it by, e.g.
+ * `myo-common`. 2-25 characters, starting with a letter.
+ */
+export const PRIZE_ID = /^[a-z][a-z-]{1,24}$/;
+
 const isImageUrl = (image: string): boolean => {
   try {
     const url = new URL(image);
@@ -54,8 +60,8 @@ export function validatePrize(
     ],
     [
       "id",
-      "id must be 2-25 lowercase characters",
-      () => /^[a-z-]{2,25}$/.test(id),
+      "id must be 2-25 lowercase letters and hyphens, starting with a letter",
+      () => PRIZE_ID.test(id),
     ],
     ["guildId", "guildId must be a non-empty string", () => guildId.length > 0],
     ["name", "name must be a string", () => typeof name === "string"],
