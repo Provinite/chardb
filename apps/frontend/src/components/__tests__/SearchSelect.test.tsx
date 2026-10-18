@@ -132,6 +132,28 @@ describe("CharacterTypeahead", () => {
     expect(await screen.findByText("No characters found")).toBeInTheDocument();
   });
 
+  it("says the search failed instead of that nothing matched", async () => {
+    render(
+      <ThemeProvider theme={lightTheme}>
+        <CharacterTypeahead
+          value={null}
+          options={[]}
+          onSearch={vi.fn()}
+          onChange={vi.fn()}
+          searchError="Couldn't search characters. Try again."
+        />
+      </ThemeProvider>,
+    );
+    await userEvent.type(
+      screen.getByRole("combobox", { name: "Character" }),
+      "zz",
+    );
+    expect(
+      await screen.findByText("Couldn't search characters. Try again."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("No characters found")).not.toBeInTheDocument();
+  });
+
   it("can list everything as soon as it opens", async () => {
     const onSearch = vi.fn();
     render(

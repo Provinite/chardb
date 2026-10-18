@@ -288,6 +288,44 @@ describe("HalloweenPrizeForm", () => {
       expect(screen.getByLabelText(/Short name/)).toHaveValue("");
     });
 
+    it("starts afresh when the prize type changes and changes back", async () => {
+      renderForm({}, [itemTypesMock("ed"), charactersMock("ca")]);
+      await search(/Item type/, "ed");
+      expect(
+        await screen.findByRole("option", { name: /Edit Kit/ }),
+      ).toBeInTheDocument();
+
+      await chooseType("Character");
+      expect(screen.getByRole("combobox", { name: /Character/ })).toHaveValue(
+        "",
+      );
+      await chooseType("Item");
+      const box = screen.getByRole("combobox", { name: /Item type/ });
+      expect(box).toHaveValue("");
+      await userEvent.type(box, "ca");
+      // The old search's results never stand in for the new one's.
+      expect(
+        screen.queryByRole("option", { name: /Edit Kit/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("says the search failed rather than that nothing matched", async () => {
+      renderForm({}, [
+        {
+          request: {
+            query: HalloweenPrizeItemTypesDocument,
+            variables: { communityId: COMMUNITY_ID, search: "ed" },
+          },
+          error: new Error("Network down"),
+        },
+      ]);
+      await search(/Item type/, "ed");
+      expect(
+        await screen.findByText("Couldn't search item types. Try again."),
+      ).toBeInTheDocument();
+      expect(screen.queryByText("No item types found")).not.toBeInTheDocument();
+    });
+
     it("says which characters are left out", async () => {
       renderForm({}, []);
       await chooseType("Character");

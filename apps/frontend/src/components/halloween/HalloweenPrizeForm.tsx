@@ -139,16 +139,22 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
   const isCharacterPrize = delivery === HalloweenPrizeDelivery.ChardbCharacter;
   // Nothing is listed until someone types, so nothing is asked for either;
   // and only the kind being picked is asked for.
-  const { data: itemTypesData, loading: itemTypesLoading } =
-    useHalloweenPrizeItemTypesQuery({
-      variables: { communityId, search: search ?? "" },
-      skip: editing || !isItemPrize || !search,
-    });
-  const { data: charactersData, loading: charactersLoading } =
-    useHalloweenPrizeCharactersQuery({
-      variables: { communityId, search: search ?? "" },
-      skip: editing || !isCharacterPrize || !search,
-    });
+  const {
+    data: itemTypesData,
+    loading: itemTypesLoading,
+    error: itemTypesError,
+  } = useHalloweenPrizeItemTypesQuery({
+    variables: { communityId, search: search ?? "" },
+    skip: editing || !isItemPrize || !search,
+  });
+  const {
+    data: charactersData,
+    loading: charactersLoading,
+    error: charactersError,
+  } = useHalloweenPrizeCharactersQuery({
+    variables: { communityId, search: search ?? "" },
+    skip: editing || !isCharacterPrize || !search,
+  });
   const itemTypeOptions = (itemTypesData?.halloweenPrizeItemTypes ?? []).map(
     (itemType) => ({
       id: itemType.id,
@@ -272,6 +278,11 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
                 onSearch={setSearch}
                 options={itemTypeOptions}
                 loading={itemTypesLoading}
+                searchError={
+                  itemTypesError
+                    ? "Couldn't search item types. Try again."
+                    : undefined
+                }
               />
             ) : (
               <CharacterTypeahead
@@ -281,6 +292,11 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
                 onSearch={setSearch}
                 options={characterOptions}
                 loading={charactersLoading}
+                searchError={
+                  charactersError
+                    ? "Couldn't search characters. Try again."
+                    : undefined
+                }
               />
             )}
             <Hint>

@@ -41,7 +41,13 @@ export interface SearchSelectProps<T extends SearchSelectOption> {
   onSearch: (search: string) => void;
   options: T[];
   loading?: boolean;
+  /** A problem with the field itself, shown under the box. */
   error?: string;
+  /**
+   * The last search failed. Shown in the list in place of results, so a
+   * failure never reads as "nothing matched".
+   */
+  searchError?: string;
   label: string;
   placeholder?: string;
   disabled?: boolean;
@@ -211,9 +217,10 @@ const Item = styled.li<{ $highlighted: boolean }>`
   }
 `;
 
-const Note = styled.li`
+const Note = styled.li<{ $error?: boolean }>`
   padding: ${({ theme }) => theme.spacing.md};
-  color: ${({ theme }) => theme.colors.text.muted};
+  color: ${({ theme, $error }) =>
+    $error ? theme.colors.error : theme.colors.text.muted};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
   text-align: center;
 `;
@@ -237,6 +244,7 @@ export function SearchSelect<T extends SearchSelectOption>({
   options,
   loading = false,
   error,
+  searchError,
   label,
   placeholder = "Search...",
   disabled = false,
@@ -319,13 +327,17 @@ export function SearchSelect<T extends SearchSelectOption>({
     }
   };
 
+  const searching = (loading || pending) && listed.length === 0;
+  const failed = searchable && !searching && Boolean(searchError);
   const note = !searchable
     ? `Type at least ${minSearchLength} characters to search`
-    : (loading || pending) && listed.length === 0
+    : searching
       ? "Searching..."
-      : listed.length === 0
-        ? emptyText
-        : null;
+      : failed
+        ? searchError
+        : listed.length === 0
+          ? emptyText
+          : null;
 
   return (
     <Container ref={containerRef}>
@@ -383,7 +395,9 @@ export function SearchSelect<T extends SearchSelectOption>({
       {open && !value && (
         <Dropdown id={listId} role="listbox" aria-label={label}>
           {note ? (
-            <Note>{note}</Note>
+            <Note $error={failed} role={failed ? "alert" : undefined}>
+              {note}
+            </Note>
           ) : (
             listed.map((option, index) => (
               <Item

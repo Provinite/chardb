@@ -44,7 +44,9 @@ export const MyCharacterTypeahead: React.FC<MyCharacterTypeaheadProps> = ({
       onSearch={setSearch}
       options={options}
       loading={loading}
-      error={error ? "Could not load your characters" : undefined}
+      searchError={
+        error ? "Couldn't load your characters. Try again." : undefined
+      }
       placeholder={placeholder}
       disabled={disabled}
       minSearchLength={0}
