@@ -9,6 +9,7 @@ This document provides a comprehensive list of all environment variables used in
 - [Server Configuration](#server-configuration)
 - [CORS Configuration](#cors-configuration)
 - [OpenTelemetry Tracing](#opentelemetry-tracing)
+- [Halloween Bot](#halloween-bot)
 - [Rate Limiting](#rate-limiting)
 - [Environment-Specific Variables](#environment-specific-variables)
 
@@ -222,6 +223,38 @@ This document provides a comprehensive list of all environment variables used in
 - **Format**: `https://sqs.{region}.amazonaws.com/{account-id}/{queue-name}`
 - **Example**: `"https://sqs.us-east-1.amazonaws.com/123456789012/chardb-prize-distribution"`
 - **Note**: Queue is created via Terraform infrastructure. Consumer uses IAM role-based authentication (no credentials needed).
+
+## Halloween Bot
+
+The trick-or-treat event's Discord bot is its own Discord application, separate from the one behind `DISCORD_CLIENT_ID`. All four are required at boot. In deployed environments each comes from an SSM parameter of the same name in kebab case under `/<project>/<env>/` (`halloween-discord-bot-token`, ...).
+
+### `HALLOWEEN_DISCORD_APPLICATION_ID`
+
+- **Type**: String (Discord snowflake)
+- **Required**: Yes
+- **Description**: The Halloween bot's application ID, used to edit interaction replies.
+- **Referenced in**: `src/halloween/halloween.config.ts`
+
+### `HALLOWEEN_DISCORD_PUBLIC_KEY`
+
+- **Type**: String (hex)
+- **Required**: Yes
+- **Description**: The application's Public Key (General Information page). Verifies that a request to `POST /discord/halloween/interactions` came from Discord.
+- **Referenced in**: `src/halloween/halloween.config.ts`
+
+### `HALLOWEEN_DISCORD_BOT_TOKEN`
+
+- **Type**: String
+- **Required**: Yes
+- **Description**: The bot's token, for posting win announcements to the win channel.
+- **Referenced in**: `src/halloween/halloween.config.ts`
+
+### `HALLOWEEN_IMAGE_BASE_URL`
+
+- **Type**: String (URL)
+- **Required**: Yes
+- **Description**: Where the embed author icons (`icon/0.png`-`icon/10.png`) and candy images (`candy/0.png`-`candy/129.png`) are served from. A trailing slash is added if missing.
+- **Referenced in**: `src/halloween/halloween.config.ts`
 
 ## Rate Limiting
 

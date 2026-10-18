@@ -192,6 +192,13 @@ module "app_secrets" {
     "discord-bot-token"        = "Discord bot token"
     "toyhouse-client-secret"   = "ToyHouse OAuth client secret"
     "patreon-client-secret"    = "Patreon OAuth client secret"
+
+    # The Halloween bot is a separate Discord application. Only the token is
+    # secret; the rest live here too so the bot's config is in one place.
+    "halloween-discord-application-id" = "Halloween bot Discord application ID"
+    "halloween-discord-public-key"     = "Halloween bot Discord interactions public key"
+    "halloween-discord-bot-token"      = "Halloween bot Discord bot token"
+    "halloween-image-base-url"         = "Base URL of the Halloween bot's icon and candy images"
   }
 
   tags = local.common_tags

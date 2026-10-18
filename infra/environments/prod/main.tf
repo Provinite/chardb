@@ -70,6 +70,13 @@ module "app_secrets" {
     "patreon-client-secret"    = "Patreon OAuth client secret"
     "discord-bot-token"        = "Discord bot token"
     "otel-otlp-headers"        = "OpenTelemetry OTLP exporter auth headers"
+
+    # The Halloween bot is a separate Discord application. Only the token is
+    # secret; the rest live here too so the bot's config is in one place.
+    "halloween-discord-application-id" = "Halloween bot Discord application ID"
+    "halloween-discord-public-key"     = "Halloween bot Discord interactions public key"
+    "halloween-discord-bot-token"      = "Halloween bot Discord bot token"
+    "halloween-image-base-url"         = "Base URL of the Halloween bot's icon and candy images"
   }
 
   tags = local.common_tags
@@ -647,6 +654,22 @@ module "ecs" {
     {
       name      = "OTEL_EXPORTER_OTLP_HEADERS"
       valueFrom = module.app_secrets.arns["otel-otlp-headers"]
+    },
+    {
+      name      = "HALLOWEEN_DISCORD_APPLICATION_ID"
+      valueFrom = module.app_secrets.arns["halloween-discord-application-id"]
+    },
+    {
+      name      = "HALLOWEEN_DISCORD_PUBLIC_KEY"
+      valueFrom = module.app_secrets.arns["halloween-discord-public-key"]
+    },
+    {
+      name      = "HALLOWEEN_DISCORD_BOT_TOKEN"
+      valueFrom = module.app_secrets.arns["halloween-discord-bot-token"]
+    },
+    {
+      name      = "HALLOWEEN_IMAGE_BASE_URL"
+      valueFrom = module.app_secrets.arns["halloween-image-base-url"]
     },
     {
       name      = "CLOUDFRONT_SECRET"

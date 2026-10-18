@@ -233,6 +233,25 @@ Afterwards, delete these five now-undeclared lines from your local
 `deviantart_client_secret`, `discord_client_secret`, `toyhouse_client_secret`,
 `discord_bot_token`, `otel_otlp_headers`.
 
+### Halloween bot parameters
+
+The Halloween trick-or-treat bot is its own Discord application, so it has
+its own four parameters: `halloween-discord-application-id`,
+`halloween-discord-public-key`, `halloween-discord-bot-token` and
+`halloween-image-base-url`. The backend refuses to boot without them.
+
+**Prod needs the same two-step apply as above**: `-target=module.app_secrets`,
+fill the four parameters, then the full apply. A single apply would start the
+task with the placeholder values.
+
+Adding the parameters does not route any traffic. The bot keeps answering from
+its old stack until its **Interactions Endpoint URL** in the Discord developer
+portal is changed to `https://<prod API domain>/discord/halloween/interactions`.
+Discord sends a signed PING when you save it, and refuses the change unless the
+backend answers, so save it only after the deploy is live. Putting the old URL
+back is the rollback. Only one environment can receive the bot's interactions
+at a time; dev needs the parameters only to boot.
+
 ### How dev reads them
 
 `deploy.sh` no longer writes the OAuth client ids, client secrets or bot token
@@ -350,7 +369,9 @@ terraform apply -var-file=dev.tfvars
 for name in deviantart-client-id deviantart-client-secret \
             discord-client-id discord-client-secret discord-bot-token \
             toyhouse-client-id toyhouse-client-secret \
-            patreon-client-secret; do
+            patreon-client-secret \
+            halloween-discord-application-id halloween-discord-public-key \
+            halloween-discord-bot-token halloween-image-base-url; do
   aws ssm put-parameter --overwrite --type SecureString \
     --name "/chardb/dev/$name" --value 'REPLACE_ME'
 done
