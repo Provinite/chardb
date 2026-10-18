@@ -25,6 +25,7 @@ export const COMMUNITIES_QUERY = gql`
         id
         name
         slug
+        halloweenEnabled
         createdAt
         updatedAt
       }
@@ -63,6 +64,7 @@ export const COMMUNITY_BY_SLUG_QUERY = gql`
       slug
       discordGuildId
       discordGuildName
+      halloweenEnabled
       memberCount
       createdAt
       updatedAt
@@ -133,6 +135,16 @@ export const VALIDATE_DISCORD_GUILD_QUERY = gql`
       id
       name
       botHasAccess
+    }
+  }
+`;
+
+/** Site admins only. */
+export const SET_COMMUNITY_HALLOWEEN_ENABLED_MUTATION = gql`
+  mutation SetCommunityHalloweenEnabled($communityId: ID!, $enabled: Boolean!) {
+    setCommunityHalloweenEnabled(communityId: $communityId, enabled: $enabled) {
+      id
+      halloweenEnabled
     }
   }
 `;

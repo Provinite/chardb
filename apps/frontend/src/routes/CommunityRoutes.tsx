@@ -29,6 +29,7 @@ import { CommunityMembersPage } from "../pages/CommunityMembersPage";
 import { CommunityMemberProfilePage } from "../pages/CommunityMemberProfilePage";
 import { CommunitySettingsPage } from "../pages/CommunitySettingsPage";
 import { CommunityItemsAdminPage } from "../pages/CommunityItemsAdminPage";
+import { CommunityHalloweenAdminPage } from "../pages/CommunityHalloweenAdminPage";
 import { CommunityColorPalettePage } from "../pages/CommunityColorPalettePage";
 import { CommunityInventoryPage } from "../pages/CommunityInventoryPage";
 import { CommunityItemLedgerPage } from "../pages/CommunityItemLedgerPage";
@@ -402,6 +403,14 @@ export const CommunityRoutes: React.FC = () => (
       element={
         <ProtectedRoute>
           <CommunityShopPurchasesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/halloween"
+      element={
+        <ProtectedRoute>
+          <CommunityHalloweenAdminPage />
         </ProtectedRoute>
       }
     />
