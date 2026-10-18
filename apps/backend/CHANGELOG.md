@@ -9,10 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The Halloween trick-or-treat Discord bot now runs in the backend**, at `POST /discord/halloween/interactions`, with every command and reply carried over from the standalone bot; a chardb item or character prize is now checked inside the knock, so one that cannot be delivered fails the knock instead of being announced and dropped.
 - **Patreon account linking**: `/auth/patreon` links a Patreon identity as an `ExternalAccount` (`PATREON`), using the same browser-bound state flow as the other providers; no Patreon tokens are stored (#236).
 
 ### Changed
 
+- **Breaking for local setups: four `HALLOWEEN_*` variables are required at boot**, the Halloween bot's own Discord application credentials and image URL; see `.env.example`.
 - **Breaking for local setups: every linking provider's client id and secret are required at boot.** A missing `DISCORD_`/`DEVIANTART_`/`TOYHOUSE_`/`PATREON_` `CLIENT_ID` or `CLIENT_SECRET` now stops the backend from starting, naming the variable (#236).
 - **One factory builds all four linking controllers and strategies**, from per-provider config in `oauth-link-providers.ts` (#236).
 
