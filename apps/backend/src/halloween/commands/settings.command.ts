@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
+import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import {
   ApplicationCommandOptionType,
   type APIApplicationCommandGuildInteraction,
@@ -78,6 +79,7 @@ const isSetting = (s: string): s is keyof typeof SETTINGS =>
 @Injectable()
 export class SettingsCommand implements HalloweenCommandHandler {
   readonly name = "settings";
+  private readonly logger = new Logger(SettingsCommand.name);
 
   constructor(
     private readonly discord: HalloweenDiscordClient,
@@ -213,13 +215,15 @@ export class SettingsCommand implements HalloweenCommandHandler {
       });
     }
 
-    await this.db.$transaction(async (tx) => {
-      if (!(await this.guildSettings.has(interaction.guild_id, tx))) {
-        await this.guildSettings.createDefaults(interaction.guild_id, tx);
-      }
+    const change = await this.db.$transaction(async (tx) => {
+      const created = !(await this.guildSettings.has(interaction.guild_id, tx));
+      const before = created
+        ? await this.guildSettings.createDefaults(interaction.guild_id, tx)
+        : await this.guildSettings.get(interaction.guild_id, tx);
+      const newValue = setting.transform(value);
       await this.guildSettings.update(
         interaction.guild_id,
-        { [setting.field]: setting.transform(value) },
+        { [setting.field]: newValue },
         tx,
       );
       await this.discord.editOriginalResponse(interaction.token, {
@@ -236,6 +240,30 @@ export class SettingsCommand implements HalloweenCommandHandler {
           },
         ],
       });
+      return { created, oldValue: before[setting.field], newValue };
     });
+
+    // The settings row keeps only the latest values, so these lines are the
+    // only history of who changed what.
+    const who = {
+      interactionId: interaction.id,
+      guildId: interaction.guild_id,
+      adminUserId: interaction.member.user.id,
+    };
+    if (change.created) {
+      this.logger.log({
+        event: HalloweenLogEvent.SettingsCreated,
+        message: `Set up the event in guild ${interaction.guild_id} with defaults`,
+        ...who,
+      } satisfies HalloweenLogLine);
+    }
+    this.logger.log({
+      event: HalloweenLogEvent.SettingChanged,
+      message: `Changed ${selected} in guild ${interaction.guild_id}`,
+      ...who,
+      setting: selected,
+      oldValue: change.oldValue,
+      newValue: change.newValue,
+    } satisfies HalloweenLogLine);
   }
 }

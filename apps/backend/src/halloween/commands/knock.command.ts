@@ -31,6 +31,7 @@ import {
 } from "../errors";
 import { EventStatus } from "../time";
 import { formatChardbLink } from "../chardb-link";
+import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { requireChatInput } from "./command-helpers";
 
 /**
@@ -38,6 +39,12 @@ import { requireChatInput } from "./command-helpers";
  * Prisma's 5s default is too tight for that.
  */
 const KNOCK_TRANSACTION_OPTIONS = { maxWait: 10_000, timeout: 20_000 };
+
+/** What a committed knock leaves to do: deliver the prize, log the outcome. */
+interface KnockResult {
+  prize: HalloweenPrize | null;
+  log: HalloweenLogLine;
+}
 
 /**
  * `/knock`: trick or treat.
@@ -79,8 +86,9 @@ export class KnockCommand implements HalloweenCommandHandler {
   ): Promise<void> {
     const guildId = interaction.guild_id;
     const userId = interaction.member.user.id;
+    const who = { interactionId: interaction.id, guildId, userId };
 
-    const won = await this.db.$transaction(async (tx) => {
+    const result = await this.db.$transaction(async (tx) => {
       // Before reading the allowance, so two knocks at once cannot both pass.
       await this.lock.acquire(tx, "knock", guildId, userId);
       const settings = await this.guildSettings.get(guildId, tx);
@@ -126,25 +134,54 @@ export class KnockCommand implements HalloweenCommandHandler {
 
       const roll = this.random.unit();
       const win = roll <= settings.winRate;
-      this.logger.log(
-        `Knock by ${userId} in ${guildId}: rolled ${roll} against ${settings.winRate}, ${win ? "win" : "loss"}${gifty ? ` (gifty ${gifty.id})` : ""}`,
-      );
+      this.logger.log({
+        event: HalloweenLogEvent.KnockRolled,
+        message: `Knock by ${userId} rolled ${roll} against ${settings.winRate}: ${win ? "win" : "loss"}`,
+        ...who,
+        roll,
+        winRate: settings.winRate,
+        win,
+        knocksUsed: knockCount,
+        knocksPerDay: settings.knocksPerDay,
+        giftyId: gifty?.id ?? null,
+      } satisfies HalloweenLogLine);
 
       return win
         ? this.win(interaction, settings, gifty, tx)
         : this.lose(interaction, settings, knockCount, gifty, tx);
     }, KNOCK_TRANSACTION_OPTIONS);
 
-    if (won) {
+    // Logged only once committed, so the log never shows a win that was
+    // rolled back.
+    this.logger.log(result.log);
+
+    const prize = result.prize;
+    if (prize && (prize.itemTypeId || prize.characterId)) {
+      const delivery = {
+        ...who,
+        prizeId: prize.id,
+        itemTypeId: prize.itemTypeId,
+        characterId: prize.characterId,
+      };
       // After commit; see PrizeAwardService for why it cannot be inside.
-      await this.prizeAward
-        .award(won, userId)
-        .catch((error: unknown) =>
-          this.logger.error(
-            `Prize ${won.id} won by ${userId} in ${guildId} was not delivered; grant it by hand`,
-            error instanceof Error ? error.stack : String(error),
-          ),
+      try {
+        await this.prizeAward.award(prize, userId);
+        this.logger.log({
+          event: HalloweenLogEvent.PrizeDelivered,
+          message: `Delivered prize ${prize.id} to Discord user ${userId}`,
+          ...delivery,
+        } satisfies HalloweenLogLine);
+      } catch (error) {
+        this.logger.error(
+          {
+            event: HalloweenLogEvent.PrizeDeliveryFailed,
+            message: `Prize ${prize.id} won by ${userId} was not delivered; grant it by hand`,
+            ...delivery,
+            cause: error instanceof Error ? error.message : String(error),
+          } satisfies HalloweenLogLine,
+          error instanceof Error ? error.stack : String(error),
         );
+      }
     }
   }
 
@@ -154,7 +191,7 @@ export class KnockCommand implements HalloweenCommandHandler {
     knockCount: number,
     gifty: HalloweenGifty | null,
     tx: Prisma.TransactionClient,
-  ): Promise<null> {
+  ): Promise<KnockResult> {
     const guildId = interaction.guild_id;
     const userId = interaction.member.user.id;
     const knockEvent = await this.knocks.save(
@@ -165,22 +202,20 @@ export class KnockCommand implements HalloweenCommandHandler {
       gifty = await this.gifties.fulfill(gifty, knockEvent, tx);
     }
 
+    // Negative while spending gifties.
+    const remainingKnocks = Math.max(
+      0,
+      settings.knocksPerDay - (knockCount + 1),
+    );
+    const bankedGifties = await this.gifties.pendingCount(guildId, userId, tx);
+
     const fields: APIEmbedField[] = [];
     if (gifty) {
       fields.push({ name: "Knock Gifted By", value: `<@${gifty.fromUserId}>` });
     }
     fields.push(
-      {
-        name: "Remaining Knocks",
-        // Negative while spending gifties.
-        value: `${Math.max(0, settings.knocksPerDay - (knockCount + 1))}`,
-        inline: true,
-      },
-      {
-        name: "Banked Gifties",
-        value: `${await this.gifties.pendingCount(guildId, userId, tx)}`,
-        inline: true,
-      },
+      { name: "Remaining Knocks", value: `${remainingKnocks}`, inline: true },
+      { name: "Banked Gifties", value: `${bankedGifties}`, inline: true },
       { name: "Trick or Treater", value: `<@${userId}>` },
     );
 
@@ -206,7 +241,21 @@ export class KnockCommand implements HalloweenCommandHandler {
         },
       ],
     });
-    return null;
+    return {
+      prize: null,
+      log: {
+        event: HalloweenLogEvent.KnockLost,
+        message: `Knock by ${userId} lost`,
+        interactionId: interaction.id,
+        guildId,
+        userId,
+        knockEventId: knockEvent.id,
+        giftyId: gifty?.id ?? null,
+        giftyFrom: gifty?.fromUserId ?? null,
+        remainingKnocks,
+        bankedGifties,
+      },
+    };
   }
 
   private async win(
@@ -214,7 +263,7 @@ export class KnockCommand implements HalloweenCommandHandler {
     settings: HalloweenGuildSettings,
     gifty: HalloweenGifty | null,
     tx: Prisma.TransactionClient,
-  ): Promise<HalloweenPrize> {
+  ): Promise<KnockResult> {
     const guildId = interaction.guild_id;
     const userId = interaction.member.user.id;
     const knockEvent = await this.knocks.save(
@@ -235,7 +284,11 @@ export class KnockCommand implements HalloweenCommandHandler {
       pool.map((p) => p.currentStock * p.weight),
     );
     await this.knocks.fulfillPending(knockEvent.id, prize.id, tx);
-    await this.prizes.decrementStock(prize.id, guildId, tx);
+    const { currentStock: stockRemaining } = await this.prizes.decrementStock(
+      prize.id,
+      guildId,
+      tx,
+    );
     await this.prizeAward.validate(prize, guildId, tx);
 
     const knockCount = await this.knocks.countSinceLastReset(
@@ -259,17 +312,11 @@ export class KnockCommand implements HalloweenCommandHandler {
         value: `<@${gifty.fromUserId}> (Go thank them!)`,
       });
     }
+    const remainingKnocks = Math.max(0, settings.knocksPerDay - knockCount);
+    const bankedGifties = await this.gifties.pendingCount(guildId, userId, tx);
     fields.push(
-      {
-        name: "Remaining Knocks",
-        value: `${Math.max(0, settings.knocksPerDay - knockCount)}`,
-        inline: true,
-      },
-      {
-        name: "Banked Gifties",
-        value: `${await this.gifties.pendingCount(guildId, userId, tx)}`,
-        inline: true,
-      },
+      { name: "Remaining Knocks", value: `${remainingKnocks}`, inline: true },
+      { name: "Banked Gifties", value: `${bankedGifties}`, inline: true },
       { name: "Winner", value: `<@${userId}>` },
     );
 
@@ -309,6 +356,27 @@ export class KnockCommand implements HalloweenCommandHandler {
     if (settings.winChannel) {
       await this.discord.createChannelMessage(settings.winChannel, message);
     }
-    return prize;
+    return {
+      prize,
+      log: {
+        event: HalloweenLogEvent.KnockWon,
+        message: `Knock by ${userId} won ${prize.id} (${stockRemaining} left)`,
+        interactionId: interaction.id,
+        guildId,
+        userId,
+        knockEventId: knockEvent.id,
+        prizeId: prize.id,
+        prizeName: prize.name,
+        stockRemaining,
+        itemTypeId: prize.itemTypeId,
+        characterId: prize.characterId,
+        giftyId: gifty?.id ?? null,
+        giftyFrom: gifty?.fromUserId ?? null,
+        remainingKnocks,
+        bankedGifties,
+        hasDeviantArt: deviantArtUser !== null,
+        announcedIn: settings.winChannel,
+      },
+    };
   }
 }

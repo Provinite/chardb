@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **The Halloween trick-or-treat Discord bot now runs in the backend**, at `POST /discord/halloween/interactions`, with every command and reply carried over from the standalone bot; a chardb item or character prize is now checked inside the knock, so one that cannot be delivered fails the knock instead of being announced and dropped (#399).
+- **Every Halloween bot interaction is logged as structured `halloween.*` events carrying the interaction id** (the "Reference ID" players see), with a trace span per command (#399).
 - **Patreon account linking**: `/auth/patreon` links a Patreon identity as an `ExternalAccount` (`PATREON`), using the same browser-bound state flow as the other providers; no Patreon tokens are stored (#236).
 
 ### Changed

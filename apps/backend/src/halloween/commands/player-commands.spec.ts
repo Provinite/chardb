@@ -2,6 +2,8 @@ import {
   ApplicationCommandOptionType,
   type APIApplicationCommandInteractionDataOption,
 } from "@discordjs/core";
+import { Logger } from "@nestjs/common";
+import { HalloweenLogEvent } from "../logging";
 import { DeviantArtCommand } from "./deviantart.command";
 import { TestWinCommand } from "./testwin.command";
 import { GiftyCommand } from "./gifty.command";
@@ -72,6 +74,33 @@ describe("/deviantart", () => {
         },
       ],
     });
+  });
+
+  it("logs the saved name", async () => {
+    const log = jest.spyOn(Logger.prototype, "log").mockImplementation();
+    await command.handle(
+      buildInteraction({
+        id: "ref-1",
+        name: "deviantart",
+        options: [
+          {
+            type: ApplicationCommandOptionType.String,
+            name: "da_username",
+            value: "provinite",
+          },
+        ],
+      }),
+    );
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: HalloweenLogEvent.DeviantArtSaved,
+        interactionId: "ref-1",
+        guildId: GUILD_ID,
+        userId: USER_ID,
+        deviantArtName: "provinite",
+      }),
+    );
+    log.mockRestore();
   });
 
   it("requires a name", async () => {
@@ -159,6 +188,27 @@ describe("/testwin", () => {
     expect(lastReply(discord)).toEqual({ content: "Sent test message." });
   });
 
+  it("logs the test", async () => {
+    const log = jest.spyOn(Logger.prototype, "log").mockImplementation();
+    await command.handle(
+      buildInteraction({
+        id: "ref-1",
+        name: "testwin",
+        permissions: ADMINISTRATOR,
+      }),
+    );
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: HalloweenLogEvent.WinChannelTested,
+        interactionId: "ref-1",
+        adminUserId: USER_ID,
+        winChannel: "300000000000000009",
+        sent: true,
+      }),
+    );
+    log.mockRestore();
+  });
+
   it("says when there is no win channel", async () => {
     guildSettings.get.mockResolvedValue({ winChannel: null });
     await run();
@@ -238,6 +288,59 @@ describe("/gifty", () => {
     expect(lock.acquire.mock.invocationCallOrder[0]).toBeLessThan(
       gifties.save.mock.invocationCallOrder[0],
     );
+  });
+
+  it("logs the gifty", async () => {
+    const log = jest.spyOn(Logger.prototype, "log").mockImplementation();
+    await command.handle(
+      buildInteraction({
+        id: "ref-1",
+        name: "gifty",
+        options: toUser(OTHER_USER_ID),
+        permissions: ADMINISTRATOR,
+      }),
+    );
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: HalloweenLogEvent.GiftySent,
+        interactionId: "ref-1",
+        guildId: GUILD_ID,
+        fromUserId: USER_ID,
+        toUserId: OTHER_USER_ID,
+        giftyId: 1,
+        rateLimitSkipped: true,
+      }),
+    );
+    log.mockRestore();
+  });
+
+  it("logs a refused second gifty", async () => {
+    const log = jest.spyOn(Logger.prototype, "log").mockImplementation();
+    gifties.save.mockRejectedValue(
+      new ValidationError({
+        thrownFrom: "t",
+        message: "Gifty validation failed",
+        validationErrors: [
+          { field: "*", error: "Each user may only send one gifty per reset" },
+        ],
+      }),
+    );
+    await command.handle(
+      buildInteraction({
+        id: "ref-1",
+        name: "gifty",
+        options: toUser(OTHER_USER_ID),
+      }),
+    );
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: HalloweenLogEvent.GiftyRateLimited,
+        interactionId: "ref-1",
+        fromUserId: USER_ID,
+        toUserId: OTHER_USER_ID,
+      }),
+    );
+    log.mockRestore();
   });
 
   it("mentions a self-gifter once", async () => {

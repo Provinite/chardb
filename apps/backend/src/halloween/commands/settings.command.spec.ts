@@ -3,12 +3,19 @@ import {
   type APIApplicationCommandInteractionDataOption,
 } from "@discordjs/core";
 import type { HalloweenGuildSettings } from "@chardb/database";
+import { Logger } from "@nestjs/common";
+import { HalloweenLogEvent } from "../logging";
 import { SettingsCommand } from "./settings.command";
 import { Color } from "../discord/ui";
 import { GuildSettingsService } from "../services/guild-settings.service";
 import { DatabaseService } from "../../database/database.service";
 import { HalloweenDiscordError, ValidationError } from "../errors";
-import { ADMINISTRATOR, GUILD_ID, buildInteraction } from "../testing/fixtures";
+import {
+  ADMINISTRATOR,
+  GUILD_ID,
+  USER_ID,
+  buildInteraction,
+} from "../testing/fixtures";
 import {
   AUTHOR,
   TIMESTAMP,
@@ -248,6 +255,52 @@ describe("/settings", () => {
       expect(
         guildSettings.createDefaults.mock.invocationCallOrder[0],
       ).toBeLessThan(guildSettings.update.mock.invocationCallOrder[0]);
+    });
+
+    it("logs who changed what, from what", async () => {
+      const log = jest.spyOn(Logger.prototype, "log").mockImplementation();
+      await command.handle(
+        buildInteraction({
+          id: "ref-1",
+          name: "settings",
+          options: setOptions("win_rate", "0.25"),
+          permissions: ADMINISTRATOR,
+        }),
+      );
+      expect(log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.SettingChanged,
+          interactionId: "ref-1",
+          guildId: GUILD_ID,
+          adminUserId: USER_ID,
+          setting: "win_rate",
+          oldValue: 0.35,
+          newValue: 0.25,
+        }),
+      );
+      log.mockRestore();
+    });
+
+    it("logs setting a guild up for the first time", async () => {
+      const log = jest.spyOn(Logger.prototype, "log").mockImplementation();
+      guildSettings.has.mockResolvedValue(false);
+      await command.handle(
+        buildInteraction({
+          id: "ref-1",
+          name: "settings",
+          options: setOptions("knocks_per_day", "4"),
+          permissions: ADMINISTRATOR,
+        }),
+      );
+      expect(log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.SettingsCreated,
+          interactionId: "ref-1",
+          guildId: GUILD_ID,
+          adminUserId: USER_ID,
+        }),
+      );
+      log.mockRestore();
     });
 
     it("confirms the change", async () => {

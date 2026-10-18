@@ -3,6 +3,8 @@ import {
   type APIApplicationCommandInteractionDataOption,
 } from "@discordjs/core";
 import type { HalloweenPrize } from "@chardb/database";
+import { Logger } from "@nestjs/common";
+import { HalloweenLogEvent } from "../logging";
 import { PrizeCommand } from "./prize.command";
 import { Color } from "../discord/ui";
 import { HalloweenRandom } from "../random";
@@ -12,7 +14,12 @@ import {
   OutOfPrizesError,
   ValidationError,
 } from "../errors";
-import { ADMINISTRATOR, GUILD_ID, buildInteraction } from "../testing/fixtures";
+import {
+  ADMINISTRATOR,
+  GUILD_ID,
+  USER_ID,
+  buildInteraction,
+} from "../testing/fixtures";
 import {
   AUTHOR,
   TIMESTAMP,
@@ -210,6 +217,33 @@ describe("/prize", () => {
       expect(lastReply(discord)).toEqual({
         content: "Added 5 units of Common MYO as myo-common with weight 10",
       });
+    });
+
+    it("logs the added prize and who added it", async () => {
+      const log = jest.spyOn(Logger.prototype, "log").mockImplementation();
+      await command.handle(
+        buildInteraction({
+          id: "ref-1",
+          name: "prize",
+          options: add([...required, str("item-type-id", "it-1")]),
+          permissions: ADMINISTRATOR,
+        }),
+      );
+      expect(log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.PrizeAdded,
+          interactionId: "ref-1",
+          guildId: GUILD_ID,
+          adminUserId: USER_ID,
+          prizeId: "myo-common",
+          name: "Common MYO",
+          initialStock: 5,
+          weight: 10,
+          image: "https://i.test/myo.png",
+          itemTypeId: "it-1",
+        }),
+      );
+      log.mockRestore();
     });
 
     it("takes a weight and a CharDB item type", async () => {

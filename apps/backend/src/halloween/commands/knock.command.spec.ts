@@ -8,6 +8,8 @@ import type {
   HalloweenKnockEvent,
   HalloweenPrize,
 } from "@chardb/database";
+import { Logger } from "@nestjs/common";
+import { HalloweenLogEvent } from "../logging";
 import { KnockCommand } from "./knock.command";
 import { AdminKnockCommand } from "./adminknock.command";
 import { Color } from "../discord/ui";
@@ -138,7 +140,9 @@ describe("/knock", () => {
     prizes = {
       hasInStock: jest.fn().mockResolvedValue(true),
       inStock: jest.fn().mockResolvedValue([prize("myo")]),
-      decrementStock: jest.fn().mockResolvedValue(undefined),
+      decrementStock: jest.fn((id: string) =>
+        Promise.resolve(prize(id, { currentStock: 4 })),
+      ),
     };
     knocks = {
       save: jest.fn((k: Partial<HalloweenKnockEvent>) =>
@@ -229,6 +233,117 @@ describe("/knock", () => {
         { name: "Last Reset Time", value: "2025-10-17 6:00:00 AM" },
       ]);
       expect(knocks.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("logging", () => {
+    let log: jest.SpyInstance;
+    let error: jest.SpyInstance;
+    const interaction = { id: "ref-1" };
+
+    beforeEach(() => {
+      log = jest.spyOn(Logger.prototype, "log").mockImplementation();
+      error = jest.spyOn(Logger.prototype, "error").mockImplementation();
+    });
+
+    afterEach(() => jest.restoreAllMocks());
+
+    it("logs the roll", async () => {
+      knocks.countSinceLastReset.mockResolvedValue(1);
+      await knock(interaction);
+      expect(log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.KnockRolled,
+          interactionId: "ref-1",
+          guildId: GUILD_ID,
+          userId: USER_ID,
+          roll: 0.99,
+          winRate: 0.4,
+          win: false,
+          knocksUsed: 1,
+          knocksPerDay: 3,
+          giftyId: null,
+        }),
+      );
+    });
+
+    it("logs a loss with its knock record", async () => {
+      knocks.countSinceLastReset.mockResolvedValue(3);
+      gifties.nextPending.mockResolvedValue(gifty());
+      await knock(interaction);
+      expect(log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.KnockLost,
+          interactionId: "ref-1",
+          knockEventId: 41,
+          giftyId: 7,
+          giftyFrom: OTHER_USER_ID,
+        }),
+      );
+    });
+
+    it("logs what a win gave and what is left", async () => {
+      win();
+      prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      prizes.decrementStock.mockResolvedValue(
+        prize("myo", { itemTypeId: "it-1", currentStock: 4 }),
+      );
+      await knock(interaction);
+      expect(log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.KnockWon,
+          interactionId: "ref-1",
+          guildId: GUILD_ID,
+          userId: USER_ID,
+          knockEventId: 41,
+          prizeId: "myo",
+          prizeName: "Prize myo",
+          stockRemaining: 4,
+          itemTypeId: "it-1",
+          characterId: null,
+          giftyId: null,
+        }),
+      );
+    });
+
+    it("logs a delivered chardb prize", async () => {
+      win();
+      prizes.inStock.mockResolvedValue([prize("myo", { characterId: "ch-1" })]);
+      await knock(interaction);
+      expect(log).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.PrizeDelivered,
+          interactionId: "ref-1",
+          prizeId: "myo",
+          characterId: "ch-1",
+        }),
+      );
+    });
+
+    it("does not claim delivery of a hand-delivered prize", async () => {
+      win();
+      await knock(interaction);
+      expect(log).not.toHaveBeenCalledWith(
+        expect.objectContaining({ event: HalloweenLogEvent.PrizeDelivered }),
+      );
+    });
+
+    it("logs a failed delivery as an error to act on", async () => {
+      win();
+      prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      award.award.mockRejectedValue(new Error("database blip"));
+      await knock(interaction);
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.PrizeDeliveryFailed,
+          interactionId: "ref-1",
+          userId: USER_ID,
+          prizeId: "myo",
+          itemTypeId: "it-1",
+          cause: "database blip",
+        }),
+        expect.stringContaining("database blip"),
+      );
     });
   });
 
@@ -428,6 +543,8 @@ describe("/knock", () => {
     });
 
     it("delivers the prize after the knock commits", async () => {
+      const candy = prize("myo", { itemTypeId: "it-1" });
+      prizes.inStock.mockResolvedValue([candy]);
       let committed = false;
       db.$transaction.mockImplementation(
         async (fn: (t: unknown) => Promise<unknown>) => {
@@ -441,10 +558,16 @@ describe("/knock", () => {
         return Promise.resolve();
       });
       await knock();
-      expect(award.award).toHaveBeenCalledWith(prize("myo"), USER_ID);
+      expect(award.award).toHaveBeenCalledWith(candy, USER_ID);
+    });
+
+    it("has nothing to deliver for a hand-delivered prize", async () => {
+      await knock();
+      expect(award.award).not.toHaveBeenCalled();
     });
 
     it("does not undo the win if delivery then fails", async () => {
+      prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
       award.award.mockRejectedValue(new Error("database blip"));
       await expect(knock()).resolves.toBeUndefined();
     });
@@ -506,6 +629,28 @@ describe("/adminknock", () => {
     ).rejects.toThrow(
       "You must provide a target user for the adminknock command",
     );
+  });
+
+  it("logs who knocked for whom", async () => {
+    const log = jest.spyOn(Logger.prototype, "log").mockImplementation();
+    await command.handle(
+      buildInteraction({
+        id: "ref-1",
+        name: "adminknock",
+        permissions: ADMINISTRATOR,
+        options: target(OTHER_USER_ID),
+      }),
+    );
+    expect(log).toHaveBeenCalledWith(
+      expect.objectContaining({
+        event: HalloweenLogEvent.AdminKnock,
+        interactionId: "ref-1",
+        guildId: GUILD_ID,
+        adminUserId: USER_ID,
+        targetUserId: OTHER_USER_ID,
+      }),
+    );
+    log.mockRestore();
   });
 
   it("knocks as the target, with their allowance and prizes", async () => {

@@ -144,7 +144,9 @@ describe("HalloweenCommandDispatcher", () => {
       };
       jest
         .spyOn(trace, "getTracer")
-        .mockReturnValue(tracer as unknown as ReturnType<typeof trace.getTracer>);
+        .mockReturnValue(
+          tracer as unknown as ReturnType<typeof trace.getTracer>,
+        );
       dispatcher = new HalloweenCommandDispatcher(
         [knock],
         discord as unknown as HalloweenDiscordClient,

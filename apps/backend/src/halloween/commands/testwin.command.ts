@@ -1,5 +1,6 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import type { APIApplicationCommandGuildInteraction } from "@discordjs/core";
+import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import type { HalloweenCommandHandler } from "../discord/halloween-command";
 import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { GuildSettingsService } from "../services/guild-settings.service";
@@ -9,6 +10,7 @@ import { requireAdministrator, requireChatInput } from "./command-helpers";
 @Injectable()
 export class TestWinCommand implements HalloweenCommandHandler {
   readonly name = "testwin";
+  private readonly logger = new Logger(TestWinCommand.name);
 
   constructor(
     private readonly discord: HalloweenDiscordClient,
@@ -25,6 +27,17 @@ export class TestWinCommand implements HalloweenCommandHandler {
       "You are missing the required permissions to use this command",
     );
     const settings = await this.guildSettings.get(chat.guild_id);
+    this.logger.log({
+      event: HalloweenLogEvent.WinChannelTested,
+      message: settings.winChannel
+        ? `Posting a test message to win channel ${settings.winChannel}`
+        : "Win channel test: no win channel set",
+      interactionId: chat.id,
+      guildId: chat.guild_id,
+      adminUserId: chat.member.user.id,
+      winChannel: settings.winChannel,
+      sent: settings.winChannel !== null,
+    } satisfies HalloweenLogLine);
     if (settings.winChannel) {
       await this.discord.createChannelMessage(settings.winChannel, {
         content: "Test message",

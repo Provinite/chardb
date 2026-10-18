@@ -1,8 +1,10 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import {
   ApplicationCommandOptionType,
   type APIApplicationCommandGuildInteraction,
 } from "@discordjs/core";
+import type { HalloweenGifty } from "@chardb/database";
+import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import type { HalloweenCommandHandler } from "../discord/halloween-command";
 import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { Color, EVENT_NAME, HalloweenUi } from "../discord/ui";
@@ -23,6 +25,7 @@ import { isAdministrator, isChatInput, isUserCommand } from "./command-helpers";
 @Injectable()
 export class GiftyCommand implements HalloweenCommandHandler {
   readonly name = "gifty";
+  private readonly logger = new Logger(GiftyCommand.name);
 
   constructor(
     private readonly discord: HalloweenDiscordClient,
@@ -38,17 +41,30 @@ export class GiftyCommand implements HalloweenCommandHandler {
     const guildId = interaction.guild_id;
     const fromUserId = interaction.member.user.id;
     const toUserId = this.recipient(interaction);
+    const rateLimitSkipped = isAdministrator(interaction);
+    const who = {
+      interactionId: interaction.id,
+      guildId,
+      fromUserId,
+      toUserId,
+    };
 
-    await this.db.$transaction(async (tx) => {
+    const sent = await this.db.$transaction(async (tx) => {
       await this.lock.acquire(tx, "gifty", guildId, fromUserId);
+      let gifty: HalloweenGifty;
       try {
-        await this.gifties.save(
+        gifty = await this.gifties.save(
           { guildId, fromUserId, toUserId },
-          { rateLimit: !isAdministrator(interaction) },
+          { rateLimit: !rateLimitSkipped },
           tx,
         );
       } catch (error) {
         if (error instanceof ValidationError && isGiftyRateLimitError(error)) {
+          this.logger.log({
+            event: HalloweenLogEvent.GiftyRateLimited,
+            message: `Refused a second gifty from ${fromUserId} this reset`,
+            ...who,
+          } satisfies HalloweenLogLine);
           await this.discord.editOriginalResponse(interaction.token, {
             embeds: [
               {
@@ -62,7 +78,7 @@ export class GiftyCommand implements HalloweenCommandHandler {
               },
             ],
           });
-          return;
+          return null;
         }
         throw error;
       }
@@ -83,7 +99,18 @@ export class GiftyCommand implements HalloweenCommandHandler {
           },
         ],
       });
+      return gifty;
     });
+
+    if (sent) {
+      this.logger.log({
+        event: HalloweenLogEvent.GiftySent,
+        message: `Gifty ${sent.id} sent from ${fromUserId} to ${toUserId}`,
+        ...who,
+        giftyId: sent.id,
+        rateLimitSkipped,
+      } satisfies HalloweenLogLine);
+    }
   }
 
   private recipient(

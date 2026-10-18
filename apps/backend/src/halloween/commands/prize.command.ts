@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
+import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import {
   ApplicationCommandOptionType,
   type APIApplicationCommandGuildInteraction,
@@ -80,6 +81,7 @@ const capitalizeFirstLetter = (s: string) =>
 @Injectable()
 export class PrizeCommand implements HalloweenCommandHandler {
   readonly name = "prize";
+  private readonly logger = new Logger(PrizeCommand.name);
 
   constructor(
     private readonly discord: HalloweenDiscordClient,
@@ -257,5 +259,19 @@ export class PrizeCommand implements HalloweenCommandHandler {
     await this.discord.editOriginalResponse(interaction.token, {
       content: `Added ${saved.initialStock} units of ${saved.name} as ${saved.id} with weight ${saved.weight}`,
     });
+    this.logger.log({
+      event: HalloweenLogEvent.PrizeAdded,
+      message: `Added prize ${saved.id} to guild ${interaction.guild_id}`,
+      interactionId: interaction.id,
+      guildId: interaction.guild_id,
+      adminUserId: interaction.member.user.id,
+      prizeId: saved.id,
+      name: saved.name,
+      initialStock: saved.initialStock,
+      weight: saved.weight,
+      image: saved.image,
+      itemTypeId: saved.itemTypeId ?? null,
+      characterId: saved.characterId ?? null,
+    } satisfies HalloweenLogLine);
   }
 }

@@ -1,8 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import {
   ApplicationCommandOptionType,
   type APIApplicationCommandGuildInteraction,
 } from "@discordjs/core";
+import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import type { HalloweenCommandHandler } from "../discord/halloween-command";
 import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { Color, EVENT_NAME, HalloweenUi } from "../discord/ui";
@@ -17,6 +18,7 @@ import { requireChatInput } from "./command-helpers";
 @Injectable()
 export class DeviantArtCommand implements HalloweenCommandHandler {
   readonly name = "deviantart";
+  private readonly logger = new Logger(DeviantArtCommand.name);
 
   constructor(
     private readonly discord: HalloweenDiscordClient,
@@ -66,6 +68,14 @@ export class DeviantArtCommand implements HalloweenCommandHandler {
       guildId: chat.guild_id,
       userId: chat.member.user.id,
     });
+    this.logger.log({
+      event: HalloweenLogEvent.DeviantArtSaved,
+      message: `Saved DeviantArt name for ${chat.member.user.id}`,
+      interactionId: chat.id,
+      guildId: chat.guild_id,
+      userId: chat.member.user.id,
+      deviantArtName,
+    } satisfies HalloweenLogLine);
 
     await this.discord.editOriginalResponse(chat.token, {
       embeds: [

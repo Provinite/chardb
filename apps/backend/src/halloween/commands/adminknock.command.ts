@@ -1,10 +1,11 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import {
   ApplicationCommandOptionType,
   type APIApplicationCommandGuildInteraction,
 } from "@discordjs/core";
 import type { HalloweenCommandHandler } from "../discord/halloween-command";
 import { HalloweenDiscordError } from "../errors";
+import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { KnockCommand } from "./knock.command";
 import { requireAdministrator, requireChatInput } from "./command-helpers";
 
@@ -15,6 +16,8 @@ import { requireAdministrator, requireChatInput } from "./command-helpers";
 @Injectable()
 export class AdminKnockCommand implements HalloweenCommandHandler {
   readonly name = "adminknock";
+
+  private readonly logger = new Logger(AdminKnockCommand.name);
 
   constructor(private readonly knockCommand: KnockCommand) {}
 
@@ -36,6 +39,17 @@ export class AdminKnockCommand implements HalloweenCommandHandler {
         ),
       });
     }
+
+    // The knock's own lines name only the target, so this is the record that
+    // an admin did it.
+    this.logger.log({
+      event: HalloweenLogEvent.AdminKnock,
+      message: `Admin ${chat.member.user.id} knocking for ${option.value}`,
+      interactionId: chat.id,
+      guildId: chat.guild_id,
+      adminUserId: chat.member.user.id,
+      targetUserId: option.value,
+    } satisfies HalloweenLogLine);
 
     await this.knockCommand.knock({
       ...chat,
