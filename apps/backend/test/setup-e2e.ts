@@ -96,6 +96,11 @@ export class TestApp {
 
   async clearDatabase() {
     // Clear all tables in the correct order (respecting foreign keys)
+    await this.db.halloweenGifty.deleteMany({});
+    await this.db.halloweenKnockEvent.deleteMany({});
+    await this.db.halloweenPrize.deleteMany({});
+    await this.db.halloweenDeviantArtUser.deleteMany({});
+    await this.db.halloweenGuildSettings.deleteMany({});
     await this.db.characterTag.deleteMany({});
     await this.db.imageTag.deleteMany({});
     await this.db.mediaTag.deleteMany({});
