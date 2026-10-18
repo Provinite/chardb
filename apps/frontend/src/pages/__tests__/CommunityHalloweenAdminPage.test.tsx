@@ -253,6 +253,42 @@ describe("CommunityHalloweenAdminPage", () => {
     expect(within(pool).getByText("Candy Corn")).toBeInTheDocument();
   });
 
+  it("lists the settings one per line, without seconds", async () => {
+    renderPage();
+    const settings = await screen.findByTestId("halloween-settings");
+    expect(within(settings).getByText("Knocks a day")).toBeInTheDocument();
+    expect(within(settings).getByText("3")).toBeInTheDocument();
+    expect(within(settings).getByText("Win rate")).toBeInTheDocument();
+    expect(within(settings).getByText("40%")).toBeInTheDocument();
+    expect(settings.textContent).not.toMatch(/\d:\d\d:\d\d/);
+  });
+
+  it("labels each prize's buttons", async () => {
+    renderPage();
+    const pool = await screen.findByTestId("halloween-prize-pool");
+    expect(
+      within(pool).getByRole("button", { name: "Edit Spooky Adopt" }),
+    ).toHaveTextContent("Edit");
+    expect(
+      within(pool).getByRole("button", { name: "Remove Spooky Adopt" }),
+    ).toHaveTextContent("Remove");
+  });
+
+  it("shows which win filter is on", async () => {
+    renderPage([
+      dashboardMock(),
+      allWins,
+      winsMock(HalloweenWinFilter.NeedsDelivery, [adoptWin]),
+    ]);
+    const all = await screen.findByRole("button", { name: /All \(4\)/ });
+    const needs = screen.getByRole("button", { name: /Needs delivery/ });
+    expect(all).toHaveAttribute("aria-pressed", "true");
+    expect(needs).toHaveAttribute("aria-pressed", "false");
+    await userEvent.click(needs);
+    expect(needs).toHaveAttribute("aria-pressed", "true");
+    expect(all).toHaveAttribute("aria-pressed", "false");
+  });
+
   it("names each prize's type", async () => {
     renderPage();
     const pool = await screen.findByTestId("halloween-prize-pool");

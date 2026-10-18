@@ -1,11 +1,12 @@
 import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
-import { Ghost, Check, Undo2, Pencil, Trash2 } from "lucide-react";
+import { Ghost, Check, Undo2, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button, Modal } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { FilterChip, FilterChips } from "../components/FilterChip";
 import { HalloweenSettingsForm } from "../components/halloween/HalloweenSettingsForm";
 import { HalloweenPrizeForm } from "../components/halloween/HalloweenPrizeForm";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
@@ -119,10 +120,21 @@ const StatLabel = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-const SettingsLine = styled.p`
+const SettingsList = styled.dl`
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 0.4rem 1.5rem;
+  margin: 0;
   font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0.75rem 0 0 0;
+
+  dt {
+    color: ${({ theme }) => theme.colors.text.muted};
+  }
+
+  dd {
+    margin: 0;
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
 `;
 
 const TableWrap = styled.div`
@@ -160,11 +172,8 @@ const Muted = styled.span`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-const Filters = styled.div`
-  display: flex;
-  gap: 0.5rem;
+const Filters = styled(FilterChips)`
   margin-bottom: 0.75rem;
-  flex-wrap: wrap;
 `;
 
 const Status = styled.div`
@@ -205,7 +214,11 @@ const PRIZE_TYPE_LABEL: Record<HalloweenPrizeDelivery, string> = {
   [HalloweenPrizeDelivery.Staff]: "Other / off-site",
 };
 
-const formatDate = (iso: string) => new Date(iso).toLocaleString();
+const formatDate = (iso: string) =>
+  new Date(iso).toLocaleString(undefined, {
+    dateStyle: "medium",
+    timeStyle: "short",
+  });
 
 /** A Discord user, by id: the dashboard has no way to look up names. */
 const DiscordUser: React.FC<{ id: string }> = ({ id }) => (
@@ -439,9 +452,10 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
             {canManage && !editingSettings && (
               <Button
                 variant="secondary"
+                size="sm"
                 onClick={() => setEditingSettings(true)}
               >
-                Edit settings
+                <Pencil size={14} /> Edit settings
               </Button>
             )}
           </SectionHeader>
@@ -456,17 +470,28 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
               onCancel={() => setEditingSettings(false)}
             />
           ) : (
-            <SettingsLine>
-              {settings.startDate
-                ? `Runs ${formatDate(settings.startDate)}`
-                : "No start date"}
-              {settings.endDate
-                ? ` – ${formatDate(settings.endDate)}`
-                : ", no end date"}
-              {` · ${settings.knocksPerDay} knocks a day, resetting at ${settings.resetTime}:00 US Central · ${Math.round(settings.winRate * 100)}% win rate`}
-              {settings.winChannel &&
-                ` · wins announced in channel ${settings.winChannel}`}
-            </SettingsLine>
+            <SettingsList data-testid="halloween-settings">
+              <dt>Starts</dt>
+              <dd>
+                {settings.startDate
+                  ? formatDate(settings.startDate)
+                  : "Not started"}
+              </dd>
+              <dt>Ends</dt>
+              <dd>
+                {settings.endDate
+                  ? formatDate(settings.endDate)
+                  : "Runs until stopped"}
+              </dd>
+              <dt>Knocks a day</dt>
+              <dd>{settings.knocksPerDay}</dd>
+              <dt>Resets at</dt>
+              <dd>{`${settings.resetTime}:00 US Central`}</dd>
+              <dt>Win rate</dt>
+              <dd>{`${Math.round(settings.winRate * 100)}%`}</dd>
+              <dt>Win channel</dt>
+              <dd>{settings.winChannel ?? <Muted>None</Muted>}</dd>
+            </SettingsList>
           )}
 
           <SectionHeader>
@@ -474,9 +499,10 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
             {canManage && (
               <Button
                 variant="primary"
+                size="sm"
                 onClick={() => setPrizeForm({ prize: null })}
               >
-                Add prize
+                <Plus size={14} /> Add prize
               </Button>
             )}
           </SectionHeader>
@@ -513,17 +539,19 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                           <RowActions>
                             <Button
                               variant="secondary"
+                              size="sm"
                               aria-label={`Edit ${prize.name}`}
                               onClick={() => setPrizeForm({ prize })}
                             >
-                              <Pencil size={14} />
+                              <Pencil size={14} /> Edit
                             </Button>
                             <Button
                               variant="danger"
+                              size="sm"
                               aria-label={`Remove ${prize.name}`}
                               onClick={() => setRemoving(prize)}
                             >
-                              <Trash2 size={14} />
+                              <Trash2 size={14} /> Remove
                             </Button>
                           </RowActions>
                         </td>
@@ -537,34 +565,24 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
 
           <SectionTitle>Wins</SectionTitle>
           <Filters>
-            <Button
-              variant={
-                filter === HalloweenWinFilter.All ? "primary" : "secondary"
-              }
+            <FilterChip
+              active={filter === HalloweenWinFilter.All}
               onClick={() => setFilter(HalloweenWinFilter.All)}
             >
               All ({summary.wins})
-            </Button>
-            <Button
-              variant={
-                filter === HalloweenWinFilter.NeedsDelivery
-                  ? "primary"
-                  : "secondary"
-              }
+            </FilterChip>
+            <FilterChip
+              active={filter === HalloweenWinFilter.NeedsDelivery}
               onClick={() => setFilter(HalloweenWinFilter.NeedsDelivery)}
             >
               Needs delivery ({summary.toDeliver})
-            </Button>
-            <Button
-              variant={
-                filter === HalloweenWinFilter.Delivered
-                  ? "primary"
-                  : "secondary"
-              }
+            </FilterChip>
+            <FilterChip
+              active={filter === HalloweenWinFilter.Delivered}
               onClick={() => setFilter(HalloweenWinFilter.Delivered)}
             >
               Delivered
-            </Button>
+            </FilterChip>
           </Filters>
 
           {winsLoading && !page ? (
