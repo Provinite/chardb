@@ -21,6 +21,7 @@ import {
   UpdateHalloweenPrizeDocument,
 } from "../../../generated/graphql";
 import { HalloweenPrizeForm } from "../HalloweenPrizeForm";
+import { prizeIdFrom } from "../prizeId";
 
 const COMMUNITY_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -135,7 +136,18 @@ describe("HalloweenPrizeForm", () => {
       expect(result).toHaveBeenCalled();
     });
 
-    it("picks a chardb item, which brings its own image", async () => {
+    it("asks what kind of prize it is before its names", () => {
+      renderForm({}, []);
+      const kind = screen.getByLabelText("Item");
+      for (const field of [/Short name/, /^Name/]) {
+        expect(
+          kind.compareDocumentPosition(screen.getByLabelText(field)) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+      }
+    });
+
+    it("finds an item type by typing, and names the prize after it", async () => {
       const result = vi.fn(() => ({
         data: {
           createHalloweenPrize: prizeView({
@@ -165,20 +177,67 @@ describe("HalloweenPrizeForm", () => {
           result,
         },
       ]);
-      await fillBasics();
-      await userEvent.click(screen.getByLabelText("A chardb item"));
+      await userEvent.click(screen.getByLabelText("Item"));
       expect(screen.queryByLabelText(/Image URL/)).not.toBeInTheDocument();
 
-      await userEvent.type(screen.getByLabelText(/Search item types/), "edit");
-      await userEvent.click(screen.getByRole("button", { name: "Search" }));
-      await userEvent.click(
-        await screen.findByRole("button", { name: /Edit Kit/ }),
+      await userEvent.type(
+        screen.getByRole("combobox", { name: /Item type/ }),
+        "edit",
       );
-      expect(screen.getByText(/Selected: Edit Kit/)).toBeInTheDocument();
+      const option = await screen.findByRole("option", { name: /Edit Kit/ });
+      expect(option.querySelector("img")).toHaveAttribute(
+        "src",
+        "https://cdn.test/kit.webp",
+      );
+      await userEvent.click(option);
 
+      expect(screen.getByLabelText(/^Name/)).toHaveValue("Edit Kit");
+      expect(screen.getByLabelText(/Short name/)).toHaveValue("edit-kit");
+
+      const stock = screen.getByLabelText(/^Stock/);
+      await userEvent.clear(stock);
+      await userEvent.type(stock, "300");
       await userEvent.click(screen.getByRole("button", { name: "Add prize" }));
       await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
       expect(result).toHaveBeenCalled();
+    });
+
+    it("leaves names someone typed alone when they pick", async () => {
+      renderForm({}, [optionsMock(null)]);
+      await userEvent.click(screen.getByLabelText("Item"));
+      await userEvent.type(screen.getByLabelText(/^Name/), "Kit of Edits");
+      await userEvent.click(
+        screen.getByRole("combobox", { name: /Item type/ }),
+      );
+      await userEvent.click(
+        await screen.findByRole("option", { name: /Edit Kit/ }),
+      );
+      expect(screen.getByLabelText(/^Name/)).toHaveValue("Kit of Edits");
+      expect(screen.getByLabelText(/Short name/)).toHaveValue("edit-kit");
+    });
+
+    it("forgets names it filled in when the prize type changes", async () => {
+      renderForm({}, [optionsMock(null)]);
+      await userEvent.click(screen.getByLabelText("Item"));
+      await userEvent.click(
+        screen.getByRole("combobox", { name: /Item type/ }),
+      );
+      await userEvent.click(
+        await screen.findByRole("option", { name: /Edit Kit/ }),
+      );
+      await userEvent.click(screen.getByLabelText("Character"));
+      expect(screen.getByLabelText(/^Name/)).toHaveValue("");
+      expect(screen.getByLabelText(/Short name/)).toHaveValue("");
+    });
+
+    it("says which characters are left out", async () => {
+      renderForm({}, [optionsMock(null)]);
+      await userEvent.click(screen.getByLabelText("Character"));
+      expect(
+        screen.getByText(
+          "Characters already owned or pending ownership do not show up in this list.",
+        ),
+      ).toBeInTheDocument();
     });
 
     it("picks a chardb character", async () => {
@@ -209,11 +268,16 @@ describe("HalloweenPrizeForm", () => {
           result,
         },
       ]);
-      await fillBasics();
-      await userEvent.click(screen.getByLabelText("A chardb character"));
+      await userEvent.click(screen.getByLabelText("Character"));
       await userEvent.click(
-        await screen.findByRole("button", { name: /Free Ghost/ }),
+        screen.getByRole("combobox", { name: /Character/ }),
       );
+      await userEvent.click(
+        await screen.findByRole("option", { name: /Free Ghost/ }),
+      );
+      await userEvent.clear(screen.getByLabelText(/Short name/));
+      await userEvent.clear(screen.getByLabelText(/^Name/));
+      await fillBasics();
       await userEvent.click(screen.getByRole("button", { name: "Add prize" }));
       await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
     });
@@ -221,7 +285,7 @@ describe("HalloweenPrizeForm", () => {
     it("needs a pick before a chardb prize can be added", async () => {
       renderForm({}, [optionsMock(null)]);
       await fillBasics();
-      await userEvent.click(screen.getByLabelText("A chardb item"));
+      await userEvent.click(screen.getByLabelText("Item"));
       expect(screen.getByRole("button", { name: "Add prize" })).toBeDisabled();
     });
 
@@ -310,7 +374,20 @@ describe("HalloweenPrizeForm", () => {
         [],
       );
       expect(screen.queryByLabelText(/Image URL/)).not.toBeInTheDocument();
-      expect(screen.queryByLabelText("A chardb item")).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Item")).not.toBeInTheDocument();
     });
+  });
+});
+
+describe("prizeIdFrom", () => {
+  it.each([
+    ["Edit Kit", "edit-kit"],
+    ["MYO Slot — Rare", "myo-slot-rare"],
+    ["Café Ghost", "cafe-ghost"],
+    ["3 Candy Corns", "candy-corns"],
+    ["A Very Long Prize Name That Goes On", "a-very-long-prize-name"],
+    ["7", ""],
+  ])("turns %s into %s", (name, id) => {
+    expect(prizeIdFrom(name)).toBe(id);
   });
 });

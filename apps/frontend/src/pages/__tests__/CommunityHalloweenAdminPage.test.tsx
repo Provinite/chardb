@@ -253,6 +253,30 @@ describe("CommunityHalloweenAdminPage", () => {
     expect(within(pool).getByText("Candy Corn")).toBeInTheDocument();
   });
 
+  it("names each prize's type", async () => {
+    renderPage();
+    const pool = await screen.findByTestId("halloween-prize-pool");
+    expect(
+      within(pool).getByRole("columnheader", { name: "Prize type" }),
+    ).toBeInTheDocument();
+    expect(within(pool).getByText("Other / off-site")).toBeInTheDocument();
+    expect(within(pool).getByText("Item")).toBeInTheDocument();
+  });
+
+  it("marks a remove button as destructive", async () => {
+    renderPage();
+    const pool = await screen.findByTestId("halloween-prize-pool");
+    const remove = within(pool).getByRole("button", {
+      name: "Remove Spooky Adopt",
+    });
+    const edit = within(pool).getByRole("button", {
+      name: "Edit Spooky Adopt",
+    });
+    expect(getComputedStyle(remove).backgroundColor).not.toBe(
+      getComputedStyle(edit).backgroundColor,
+    );
+  });
+
   it("says how each win is being delivered", async () => {
     renderPage();
     const toHand = await screen.findByTestId("halloween-win-1");
@@ -430,6 +454,63 @@ describe("CommunityHalloweenAdminPage", () => {
     expect(markDeliveredMock.result).toHaveBeenCalled();
     expect(
       await screen.findByRole("button", { name: /Needs delivery \(0\)/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("keeps the delivery buttons out of the status column", async () => {
+    renderPage();
+    const row = await screen.findByTestId("halloween-win-1");
+    expect(
+      screen.getAllByRole("columnheader", { name: "Actions" }).length,
+    ).toBeGreaterThan(0);
+    const [, , , , status, actions] = within(row).getAllByRole("cell");
+    expect(status).toHaveTextContent(/^Staff to deliver$/);
+    expect(
+      within(actions).getByRole("button", { name: /Mark delivered/ }),
+    ).toBeInTheDocument();
+  });
+
+  it("undoes a delivery only after asking", async () => {
+    const undone = vi.fn(() => ({
+      data: {
+        setHalloweenPrizeDelivered: {
+          ...deliveredAdoptWin,
+          deliveredAt: null,
+          deliveredBy: null,
+        },
+      },
+    }));
+    renderPage([
+      dashboardMock(),
+      allWins,
+      {
+        request: {
+          query: SetHalloweenPrizeDeliveredDocument,
+          variables: {
+            communityId: COMMUNITY_ID,
+            knockEventId: 2,
+            delivered: false,
+          },
+        },
+        result: undone,
+      },
+      dashboardMock(2),
+    ]);
+    const row = await screen.findByTestId("halloween-win-2");
+    await userEvent.click(
+      within(row).getByRole("button", { name: "Undo delivered" }),
+    );
+    expect(undone).not.toHaveBeenCalled();
+    expect(
+      screen.getByText(/clears who delivered it and when/),
+    ).toBeInTheDocument();
+
+    await userEvent.click(
+      screen.getByRole("button", { name: "Mark not delivered" }),
+    );
+    await vi.waitFor(() => expect(undone).toHaveBeenCalled());
+    expect(
+      await within(row).findByText("Staff to deliver"),
     ).toBeInTheDocument();
   });
 });

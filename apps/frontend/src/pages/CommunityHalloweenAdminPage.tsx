@@ -174,6 +174,10 @@ const Status = styled.div`
   flex-wrap: wrap;
 `;
 
+const ActionsCell = styled.td`
+  white-space: nowrap;
+`;
+
 const Paging = styled.div`
   display: flex;
   align-items: center;
@@ -195,10 +199,10 @@ const WINS_PAGE_SIZE = 50;
 const isStaffPrize = (win: HalloweenWinFieldsFragment) =>
   win.prize.delivery === HalloweenPrizeDelivery.Staff;
 
-const DELIVERY_LABEL: Record<HalloweenPrizeDelivery, string> = {
-  [HalloweenPrizeDelivery.ChardbItem]: "Chardb item",
-  [HalloweenPrizeDelivery.ChardbCharacter]: "Chardb character",
-  [HalloweenPrizeDelivery.Staff]: "Staff deliver",
+const PRIZE_TYPE_LABEL: Record<HalloweenPrizeDelivery, string> = {
+  [HalloweenPrizeDelivery.ChardbItem]: "Item",
+  [HalloweenPrizeDelivery.ChardbCharacter]: "Character",
+  [HalloweenPrizeDelivery.Staff]: "Other / off-site",
 };
 
 const formatDate = (iso: string) => new Date(iso).toLocaleString();
@@ -228,6 +232,9 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
     prize: HalloweenPrizeFieldsFragment | null;
   } | null>(null);
   const [removing, setRemoving] = useState<HalloweenPrizeFieldsFragment | null>(
+    null,
+  );
+  const [undoing, setUndoing] = useState<HalloweenWinFieldsFragment | null>(
     null,
   );
 
@@ -483,7 +490,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                     <th>Prize</th>
                     <th>Left</th>
                     <th>Weight</th>
-                    <th>Delivery</th>
+                    <th>Prize type</th>
                     {canManage && <th aria-label="Actions" />}
                   </tr>
                 </thead>
@@ -500,7 +507,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                       </td>
                       <td>{`${prize.currentStock} / ${prize.initialStock}`}</td>
                       <td>{prize.weight}</td>
-                      <td>{DELIVERY_LABEL[prize.delivery]}</td>
+                      <td>{PRIZE_TYPE_LABEL[prize.delivery]}</td>
                       {canManage && (
                         <td>
                           <RowActions>
@@ -512,7 +519,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                               <Pencil size={14} />
                             </Button>
                             <Button
-                              variant="secondary"
+                              variant="danger"
                               aria-label={`Remove ${prize.name}`}
                               onClick={() => setRemoving(prize)}
                             >
@@ -578,6 +585,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                     <th>Prize</th>
                     <th>DeviantArt</th>
                     <th>Status</th>
+                    {canGrant && <th>Actions</th>}
                   </tr>
                 </thead>
                 <tbody>
@@ -610,15 +618,18 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                         )}
                       </td>
                       <td>
-                        <WinStatus
-                          win={win}
-                          canMark={canGrant}
-                          busy={busyId === win.id}
-                          onChange={(delivered) =>
-                            void handleDelivered(win, delivered)
-                          }
-                        />
+                        <WinStatus win={win} />
                       </td>
+                      {canGrant && (
+                        <ActionsCell>
+                          <WinActions
+                            win={win}
+                            busy={busyId === win.id}
+                            onDeliver={() => void handleDelivered(win, true)}
+                            onUndo={() => setUndoing(win)}
+                          />
+                        </ActionsCell>
+                      )}
                     </tr>
                   ))}
                 </tbody>
@@ -681,17 +692,26 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
         It comes out of the pool for good. A prize somebody has already won
         cannot be removed; set its stock to 0 instead.
       </ConfirmDialog>
+
+      <ConfirmDialog
+        open={undoing !== null}
+        title="Mark not delivered?"
+        confirmLabel="Mark not delivered"
+        busyLabel="Saving…"
+        busy={undoing !== null && busyId === undoing.id}
+        onCancel={() => setUndoing(null)}
+        onConfirm={() => {
+          if (!undoing) return;
+          void handleDelivered(undoing, false).then(() => setUndoing(null));
+        }}
+      >
+        This clears who delivered it and when.
+      </ConfirmDialog>
     </Container>
   );
 };
 
-const WinStatus: React.FC<{
-  win: HalloweenWinFieldsFragment;
-  /** Marking needs permission to grant items; managing the pool alone does not give it. */
-  canMark: boolean;
-  busy: boolean;
-  onChange: (delivered: boolean) => void;
-}> = ({ win, canMark, busy, onChange }) => {
+const WinStatus: React.FC<{ win: HalloweenWinFieldsFragment }> = ({ win }) => {
   if (!isStaffPrize(win)) {
     // Granted to the winner's Discord account at the win; whether they have
     // it yet depends only on whether they have linked Discord.
@@ -707,37 +727,41 @@ const WinStatus: React.FC<{
   if (win.deliveredAt) {
     return (
       <Status>
-        <span>
-          Delivered by @{win.deliveredBy?.username ?? "someone"},{" "}
-          {formatDate(win.deliveredAt)}
-        </span>
-        {canMark && (
-          <Button
-            variant="secondary"
-            disabled={busy}
-            onClick={() => onChange(false)}
-            aria-label="Undo delivered"
-          >
-            <Undo2 size={14} /> Undo
-          </Button>
-        )}
+        Delivered by @{win.deliveredBy?.username ?? "someone"},{" "}
+        {formatDate(win.deliveredAt)}
       </Status>
     );
   }
 
-  return (
-    <Status>
-      <span>Staff to deliver</span>
-      {canMark && (
-        <Button
-          variant="primary"
-          disabled={busy}
-          onClick={() => onChange(true)}
-        >
-          <Check size={14} /> {busy ? "Saving…" : "Mark delivered"}
-        </Button>
-      )}
-    </Status>
+  return <Status>Staff to deliver</Status>;
+};
+
+/**
+ * Only shown with permission to grant items; managing the pool alone does
+ * not give it. Chardb prizes deliver themselves, so they get no buttons.
+ */
+const WinActions: React.FC<{
+  win: HalloweenWinFieldsFragment;
+  busy: boolean;
+  onDeliver: () => void;
+  onUndo: () => void;
+}> = ({ win, busy, onDeliver, onUndo }) => {
+  if (!isStaffPrize(win)) return null;
+
+  return win.deliveredAt ? (
+    <Button
+      variant="secondary"
+      size="sm"
+      disabled={busy}
+      onClick={onUndo}
+      aria-label="Undo delivered"
+    >
+      <Undo2 size={14} /> Undo
+    </Button>
+  ) : (
+    <Button variant="primary" size="sm" disabled={busy} onClick={onDeliver}>
+      <Check size={14} /> {busy ? "Saving…" : "Mark delivered"}
+    </Button>
   );
 };
 

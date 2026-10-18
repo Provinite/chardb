@@ -11,6 +11,11 @@ import {
   type HalloweenPrizeFieldsFragment,
   type UpdateHalloweenPrizeInput,
 } from "../../generated/graphql";
+import {
+  HalloweenPrizePicker,
+  type PrizePickerOption,
+} from "./HalloweenPrizePicker";
+import { prizeIdFrom } from "./prizeId";
 
 /**
  * Adding a Halloween prize, or changing one: what `/prize admin add` did in
@@ -53,8 +58,8 @@ const Fieldset = styled.fieldset`
   padding: 0;
   margin: 0;
   display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
+  flex-wrap: wrap;
+  gap: 0.35rem 1.25rem;
 
   legend {
     font-size: 0.875rem;
@@ -68,43 +73,6 @@ const Fieldset = styled.fieldset`
     align-items: center;
     gap: 0.5rem;
     font-size: 0.875rem;
-  }
-`;
-
-const SearchRow = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  align-items: flex-end;
-`;
-
-const Options = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: 0.5rem;
-  max-height: 260px;
-  overflow-y: auto;
-`;
-
-const Option = styled.button<{ $selected: boolean }>`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.35rem;
-  padding: 0.5rem;
-  border-radius: 8px;
-  border: 2px solid
-    ${({ theme, $selected }) =>
-      $selected ? theme.colors.primary : theme.colors.border};
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.primary};
-  cursor: pointer;
-  font-size: 0.8125rem;
-
-  img {
-    width: 64px;
-    height: 64px;
-    object-fit: cover;
-    border-radius: 6px;
   }
 `;
 
@@ -139,6 +107,10 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
   const editing = prize !== null;
   const [id, setId] = useState(prize?.id ?? "");
   const [name, setName] = useState(prize?.name ?? "");
+  // Picking an item or character fills in the names, but never over
+  // something typed by hand.
+  const [idTyped, setIdTyped] = useState(false);
+  const [nameTyped, setNameTyped] = useState(false);
   const [stock, setStock] = useState(String(prize?.currentStock ?? 1));
   const [weight, setWeight] = useState(String(prize?.weight ?? 10));
   const [delivery, setDelivery] = useState<HalloweenPrizeDelivery>(
@@ -147,21 +119,21 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
   const [image, setImage] = useState(
     prize?.delivery === HalloweenPrizeDelivery.Staff ? (prize.image ?? "") : "",
   );
-  const [pick, setPick] = useState<{ id: string; name: string } | null>(null);
-  const [searchText, setSearchText] = useState("");
+  const [pick, setPick] = useState<PrizePickerOption | null>(null);
   const [search, setSearch] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const isStaffPrize = delivery === HalloweenPrizeDelivery.Staff;
+  const isItemPrize = delivery === HalloweenPrizeDelivery.ChardbItem;
   const { data: optionsData, loading: optionsLoading } =
     useHalloweenPrizeOptionsQuery({
       variables: { communityId, search },
       skip: editing || isStaffPrize,
     });
   const options =
-    delivery === HalloweenPrizeDelivery.ChardbItem
+    (isItemPrize
       ? optionsData?.halloweenPrizeOptions.itemTypes
-      : optionsData?.halloweenPrizeOptions.characters;
+      : optionsData?.halloweenPrizeOptions.characters) ?? [];
 
   const [create, { loading: creating }] = useCreateHalloweenPrizeMutation();
   const [update, { loading: updating }] = useUpdateHalloweenPrizeMutation();
@@ -170,8 +142,17 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
   const chooseDelivery = (next: HalloweenPrizeDelivery) => {
     setDelivery(next);
     setPick(null);
-    setSearchText("");
     setSearch(null);
+    // Names filled in from the old pick no longer describe the prize.
+    if (!nameTyped) setName("");
+    if (!idTyped) setId("");
+  };
+
+  const choosePick = (option: PrizePickerOption | null) => {
+    setPick(option);
+    if (!option) return;
+    if (!nameTyped) setName(option.name);
+    if (!idTyped) setId(prizeIdFrom(option.name));
   };
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
@@ -196,9 +177,7 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
           stock: Number(stock),
           weight: Number(weight),
           ...(isStaffPrize ? { image } : {}),
-          ...(delivery === HalloweenPrizeDelivery.ChardbItem && pick
-            ? { itemTypeId: pick.id }
-            : {}),
+          ...(isItemPrize && pick ? { itemTypeId: pick.id } : {}),
           ...(delivery === HalloweenPrizeDelivery.ChardbCharacter && pick
             ? { characterId: pick.id }
             : {}),
@@ -212,14 +191,93 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
     }
   };
 
-  const kindLabel =
-    delivery === HalloweenPrizeDelivery.ChardbItem
-      ? "item types"
-      : "characters";
-
   return (
     <Form onSubmit={(e) => void handleSubmit(e)}>
+      {!editing && (
+        <Fieldset>
+          <legend>Prize type</legend>
+          <label>
+            <input
+              type="radio"
+              name="prize-delivery"
+              checked={isItemPrize}
+              onChange={() => chooseDelivery(HalloweenPrizeDelivery.ChardbItem)}
+            />
+            Item
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="prize-delivery"
+              checked={delivery === HalloweenPrizeDelivery.ChardbCharacter}
+              onChange={() =>
+                chooseDelivery(HalloweenPrizeDelivery.ChardbCharacter)
+              }
+            />
+            Character
+          </label>
+          <label>
+            <input
+              type="radio"
+              name="prize-delivery"
+              checked={isStaffPrize}
+              onChange={() => chooseDelivery(HalloweenPrizeDelivery.Staff)}
+            />
+            Other / off-site
+          </label>
+        </Fieldset>
+      )}
+
+      {isStaffPrize ? (
+        <Field>
+          <Label htmlFor="prize-image">Image URL</Label>
+          <Input
+            id="prize-image"
+            type="url"
+            required
+            value={image}
+            onChange={(e) => setImage(e.target.value)}
+            placeholder="https://…/prize.png"
+          />
+          <Hint>
+            A png or jpg, shown in Discord when it is won. Staff hand this prize
+            over and mark it delivered.
+          </Hint>
+        </Field>
+      ) : (
+        !editing && (
+          <Field>
+            <HalloweenPrizePicker
+              key={delivery}
+              label={isItemPrize ? "Item type" : "Character"}
+              options={options}
+              loading={optionsLoading}
+              selected={pick}
+              onSearch={setSearch}
+              onSelect={choosePick}
+            />
+            <Hint>
+              {isItemPrize
+                ? "The prize shows the item type's own image."
+                : "Characters already owned or pending ownership do not show up in this list."}
+            </Hint>
+          </Field>
+        )
+      )}
+
       <Row>
+        <Field>
+          <Label htmlFor="prize-name">Name</Label>
+          <Input
+            id="prize-name"
+            value={name}
+            required
+            onChange={(e) => {
+              setNameTyped(true);
+              setName(e.target.value);
+            }}
+          />
+        </Field>
         <Field>
           <Label htmlFor="prize-id">Short name</Label>
           <Input
@@ -227,7 +285,10 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
             value={id}
             disabled={editing}
             required
-            onChange={(e) => setId(e.target.value.toLowerCase())}
+            onChange={(e) => {
+              setIdTyped(true);
+              setId(e.target.value.toLowerCase());
+            }}
             placeholder="myo-common"
           />
           <Hint>
@@ -235,15 +296,6 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
               ? "Fixed once added."
               : "2–25 lowercase letters and hyphens, starting with a letter."}
           </Hint>
-        </Field>
-        <Field>
-          <Label htmlFor="prize-name">Name</Label>
-          <Input
-            id="prize-name"
-            value={name}
-            required
-            onChange={(e) => setName(e.target.value)}
-          />
         </Field>
       </Row>
       <Row>
@@ -277,112 +329,6 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
           <Hint>Chance of being drawn, relative to the others.</Hint>
         </Field>
       </Row>
-
-      {!editing && (
-        <Fieldset>
-          <legend>Delivered by</legend>
-          <label>
-            <input
-              type="radio"
-              name="prize-delivery"
-              checked={delivery === HalloweenPrizeDelivery.Staff}
-              onChange={() => chooseDelivery(HalloweenPrizeDelivery.Staff)}
-            />
-            Staff hand it over
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="prize-delivery"
-              checked={delivery === HalloweenPrizeDelivery.ChardbItem}
-              onChange={() => chooseDelivery(HalloweenPrizeDelivery.ChardbItem)}
-            />
-            A chardb item
-          </label>
-          <label>
-            <input
-              type="radio"
-              name="prize-delivery"
-              checked={delivery === HalloweenPrizeDelivery.ChardbCharacter}
-              onChange={() =>
-                chooseDelivery(HalloweenPrizeDelivery.ChardbCharacter)
-              }
-            />
-            A chardb character
-          </label>
-        </Fieldset>
-      )}
-
-      {isStaffPrize ? (
-        <Field>
-          <Label htmlFor="prize-image">Image URL</Label>
-          <Input
-            id="prize-image"
-            type="url"
-            required
-            value={image}
-            onChange={(e) => setImage(e.target.value)}
-            placeholder="https://…/prize.png"
-          />
-          <Hint>A png or jpg, shown in Discord when it is won.</Hint>
-        </Field>
-      ) : (
-        !editing && (
-          <Field>
-            <SearchRow>
-              <Field style={{ flex: 1 }}>
-                <Label htmlFor="prize-search">Search {kindLabel}</Label>
-                <Input
-                  id="prize-search"
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      setSearch(searchText.trim() || null);
-                    }
-                  }}
-                />
-              </Field>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={() => setSearch(searchText.trim() || null)}
-              >
-                Search
-              </Button>
-            </SearchRow>
-            <Hint>
-              {delivery === HalloweenPrizeDelivery.ChardbCharacter
-                ? "Only characters nobody owns or has been promised."
-                : "The prize shows the item type's own image."}
-            </Hint>
-            {optionsLoading && !options ? (
-              <Hint>Loading…</Hint>
-            ) : options && options.length ? (
-              <Options>
-                {options.map((option) => (
-                  <Option
-                    key={option.id}
-                    type="button"
-                    $selected={pick?.id === option.id}
-                    aria-pressed={pick?.id === option.id}
-                    onClick={() =>
-                      setPick({ id: option.id, name: option.name })
-                    }
-                  >
-                    {option.image && <img src={option.image} alt="" />}
-                    {option.name}
-                  </Option>
-                ))}
-              </Options>
-            ) : (
-              <Hint>Nothing found.</Hint>
-            )}
-            {pick && <Hint>Selected: {pick.name}</Hint>}
-          </Field>
-        )
-      )}
 
       <Actions>
         {error && <ErrorText role="alert">{error}</ErrorText>}
