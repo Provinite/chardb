@@ -1,11 +1,11 @@
 import React from "react";
-import { Toaster, toast } from "react-hot-toast";
+import { Toaster, toast, type Toast } from "react-hot-toast";
 import { useTheme } from "../contexts/ThemeContext";
 
 export const ThemedToaster: React.FC = () => {
   const { theme } = useTheme();
 
-  const getToastStyles = (t: any) => {
+  const getToastStyles = (t: Toast) => {
     const baseStyles = {
       background: theme.colors.surface,
       color: theme.colors.text.primary,
