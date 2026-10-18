@@ -80,6 +80,8 @@ const knockEvent = (
   guildId: GUILD_ID,
   userId: USER_ID,
   prizeId: null,
+  deliveredAt: null,
+  deliveredById: null,
   time: new Date(TIMESTAMP),
   isPending: false,
   ...overrides,

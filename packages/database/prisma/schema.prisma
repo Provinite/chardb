@@ -228,6 +228,8 @@ model User {
   tradeCurrencyGiven      TradeCurrencyLine[] @relation("TradeCurrencySource")
   tradeCurrencyReceived   TradeCurrencyLine[] @relation("TradeCurrencyDestination")
 
+  halloweenPrizesDelivered HalloweenKnockEvent[] @relation("HalloweenPrizesDelivered")
+
   @@map("users")
 }
 
@@ -853,8 +855,14 @@ model Community {
   /// 63 characters because that is the maximum length of a single DNS label.
   slug String @unique @db.VarChar(63)
 
-  discordGuildId   String?  @map("discord_guild_id") @db.VarChar(30)
-  discordGuildName String?  @map("discord_guild_name") @db.VarChar(100)
+  discordGuildId   String? @map("discord_guild_id") @db.VarChar(30)
+  discordGuildName String? @map("discord_guild_name") @db.VarChar(100)
+
+  /// Whether the Halloween trick-or-treat event's pages are shown for this
+  /// community. Set by a site admin only: the event is not generally
+  /// available, and a community without it should see nothing about it.
+  /// Controls chardb's UI, not the Discord bot, which answers by guild.
+  halloweenEnabled Boolean  @default(false) @map("halloween_enabled")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
@@ -2379,10 +2387,16 @@ model HalloweenKnockEvent {
   /// A win whose prize has not been chosen yet.
   isPending Boolean  @default(false) @map("is_pending")
 
-  prize   HalloweenPrize?  @relation(fields: [guildId, prizeId], references: [guildId, id])
+  /// When staff marked a prize with no chardb item or character as handed
+  /// over, and who. Chardb prizes deliver themselves and never set these.
+  deliveredAt   DateTime? @map("delivered_at") @db.Timestamptz
+  deliveredById String?   @map("delivered_by_id")
+
+  prize       HalloweenPrize?  @relation(fields: [guildId, prizeId], references: [guildId, id])
+  deliveredBy User?            @relation("HalloweenPrizesDelivered", fields: [deliveredById], references: [id], onDelete: SetNull)
   /// The gifty spent on this knock, if it was paid for with one. A knock paid
   /// for with a gifty does not count against the daily allowance.
-  gifties HalloweenGifty[]
+  gifties     HalloweenGifty[]
 
   @@index([guildId, userId, time])
   @@map("halloween_knock_events")
