@@ -36,16 +36,24 @@ export class PrizeAwardService {
     guildId: string,
     tx: Prisma.TransactionClient = this.db,
   ): Promise<void> {
+    if (!prize.itemTypeId && !prize.characterId) {
+      return;
+    }
+
+    // Whatever the prize hands over has to belong to the community this
+    // Discord server is linked to. Otherwise any server's admin could add a
+    // prize pointing at another community's item type or character.
+    const community = await tx.community.findFirst({
+      where: { discordGuildId: guildId },
+    });
+    if (!community) {
+      throw this.undeliverable(
+        prize,
+        `no community is linked to Discord guild ${guildId}`,
+      );
+    }
+
     if (prize.itemTypeId) {
-      const community = await tx.community.findFirst({
-        where: { discordGuildId: guildId },
-      });
-      if (!community) {
-        throw this.undeliverable(
-          prize,
-          `no community is linked to Discord guild ${guildId}`,
-        );
-      }
       const itemType = await tx.itemType.findUnique({
         where: { id: prize.itemTypeId },
       });
@@ -66,11 +74,20 @@ export class PrizeAwardService {
     if (prize.characterId) {
       const character = await tx.character.findFirst({
         where: { id: prize.characterId, ...notDeleted },
+        include: { species: { select: { communityId: true } } },
       });
       if (!character) {
         throw this.undeliverable(
           prize,
           `character ${prize.characterId} not found`,
+        );
+      }
+      // A character belongs to a community through its species; one with no
+      // species belongs to none, so no guild may give it away.
+      if (character.species?.communityId !== community.id) {
+        throw this.undeliverable(
+          prize,
+          `character ${prize.characterId} does not belong to community ${community.id}`,
         );
       }
       if (character.ownerId !== null) {

@@ -41,7 +41,11 @@ describe("PrizeAwardService", () => {
           .mockResolvedValue({ id: "it-1", communityId: "community-1" }),
       },
       character: {
-        findFirst: jest.fn().mockResolvedValue({ id: "ch-1", ownerId: null }),
+        findFirst: jest.fn().mockResolvedValue({
+          id: "ch-1",
+          ownerId: null,
+          species: { communityId: "community-1" },
+        }),
       },
       pendingOwnership: { findUnique: jest.fn().mockResolvedValue(null) },
     };
@@ -102,6 +106,37 @@ describe("PrizeAwardService", () => {
       await expect(
         validate(prize({ characterId: "ch-1" })),
       ).resolves.toBeUndefined();
+    });
+
+    // Without this, any Discord server's admin could give away an unowned
+    // character from any community on chardb.
+    it("refuses another community's character", async () => {
+      tx.character.findFirst.mockResolvedValue({
+        id: "ch-1",
+        ownerId: null,
+        species: { communityId: "other" },
+      });
+      await expect(
+        validate(prize({ characterId: "ch-1" })),
+      ).rejects.toBeInstanceOf(HalloweenDiscordError);
+    });
+
+    it("refuses a character with no species, and so no community", async () => {
+      tx.character.findFirst.mockResolvedValue({
+        id: "ch-1",
+        ownerId: null,
+        species: null,
+      });
+      await expect(
+        validate(prize({ characterId: "ch-1" })),
+      ).rejects.toBeInstanceOf(HalloweenDiscordError);
+    });
+
+    it("refuses a character prize in a guild no community is linked to", async () => {
+      tx.community.findFirst.mockResolvedValue(null);
+      await expect(
+        validate(prize({ characterId: "ch-1" })),
+      ).rejects.toBeInstanceOf(HalloweenDiscordError);
     });
 
     it("refuses a missing character", async () => {
