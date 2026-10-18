@@ -23,7 +23,6 @@ const Form = styled.form`
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  min-width: min(520px, 80vw);
 `;
 
 const Row = styled.div`
