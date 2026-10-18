@@ -7,7 +7,10 @@ import {
   HalloweenDiscordError,
   OutOfPrizesError,
 } from "../errors";
-import { buildInteraction } from "../testing/fixtures";
+import { GUILD_ID, USER_ID, buildInteraction } from "../testing/fixtures";
+import { HalloweenLogEvent } from "../logging";
+import { Logger } from "@nestjs/common";
+import { trace } from "@opentelemetry/api";
 
 describe("HalloweenCommandDispatcher", () => {
   const ui = {
@@ -36,6 +39,136 @@ describe("HalloweenCommandDispatcher", () => {
       ui,
     );
     dispatcher.originalResponseRetryDelaysMs = [0, 0];
+  });
+
+  describe("logging", () => {
+    let log: jest.SpyInstance;
+    let warn: jest.SpyInstance;
+    let error: jest.SpyInstance;
+
+    beforeEach(() => {
+      log = jest.spyOn(Logger.prototype, "log").mockImplementation();
+      warn = jest.spyOn(Logger.prototype, "warn").mockImplementation();
+      error = jest.spyOn(Logger.prototype, "error").mockImplementation();
+    });
+
+    afterEach(() => jest.restoreAllMocks());
+
+    const completed = (outcome: string) =>
+      expect.objectContaining({
+        event: HalloweenLogEvent.CommandCompleted,
+        interactionId: "ref-1",
+        command: "knock",
+        guildId: GUILD_ID,
+        userId: USER_ID,
+        outcome,
+        durationMs: expect.any(Number),
+      });
+
+    it("logs a command that succeeded", async () => {
+      await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
+      expect(log).toHaveBeenCalledWith(completed("ok"));
+    });
+
+    it("warns about a command the player was refused", async () => {
+      knock.handle.mockRejectedValue(
+        new OutOfPrizesError({ thrownFrom: "KnockCommand", guildId: "1" }),
+      );
+      await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
+      expect(warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.CommandCompleted,
+          interactionId: "ref-1",
+          outcome: "refused",
+          error: "OutOfPrizesError",
+          thrownFrom: "KnockCommand",
+        }),
+      );
+    });
+
+    it("logs a failed command as an error, with its cause", async () => {
+      knock.handle.mockRejectedValue(new Error("database on fire"));
+      await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.CommandCompleted,
+          interactionId: "ref-1",
+          outcome: "failed",
+          cause: "database on fire",
+        }),
+        expect.stringContaining("database on fire"),
+      );
+    });
+
+    it("logs a command that never ran because its reply never appeared", async () => {
+      discord.getOriginalResponse.mockRejectedValue(
+        new DiscordWebhookMessageUnavailableError("t"),
+      );
+      await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.ReplyUnavailable,
+          interactionId: "ref-1",
+          attempts: 3,
+        }),
+        expect.any(String),
+      );
+      expect(error).toHaveBeenCalledWith(completed("unavailable"));
+    });
+
+    it("logs failing to tell the player about a failure", async () => {
+      knock.handle.mockRejectedValue(new Error("first"));
+      discord.editOriginalResponse.mockRejectedValue(new Error("second"));
+      await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: HalloweenLogEvent.ReportFailed,
+          interactionId: "ref-1",
+        }),
+        expect.stringContaining("second"),
+      );
+    });
+
+    it("tags the command's trace span", async () => {
+      const span = {
+        setAttributes: jest.fn(),
+        setStatus: jest.fn(),
+        recordException: jest.fn(),
+        end: jest.fn(),
+      };
+      const tracer = {
+        startActiveSpan: jest.fn(
+          (_name: string, _options: unknown, fn: (s: typeof span) => unknown) =>
+            fn(span),
+        ),
+      };
+      jest
+        .spyOn(trace, "getTracer")
+        .mockReturnValue(tracer as unknown as ReturnType<typeof trace.getTracer>);
+      dispatcher = new HalloweenCommandDispatcher(
+        [knock],
+        discord as unknown as HalloweenDiscordClient,
+        ui,
+      );
+      dispatcher.originalResponseRetryDelaysMs = [];
+      await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
+      expect(tracer.startActiveSpan).toHaveBeenCalledWith(
+        "halloween.command knock",
+        expect.objectContaining({
+          attributes: expect.objectContaining({
+            "halloween.interaction_id": "ref-1",
+            "halloween.command": "knock",
+            "halloween.guild_id": GUILD_ID,
+            "halloween.user_id": USER_ID,
+          }),
+        }),
+        expect.any(Function),
+      );
+      expect(span.setAttributes).toHaveBeenCalledWith({
+        "halloween.outcome": "ok",
+      });
+      expect(span.end).toHaveBeenCalled();
+    });
   });
 
   it("runs the command named by the interaction", async () => {

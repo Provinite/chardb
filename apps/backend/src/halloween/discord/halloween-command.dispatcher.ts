@@ -1,5 +1,6 @@
 import { Inject, Injectable, Logger } from "@nestjs/common";
 import type { APIApplicationCommandGuildInteraction } from "@discordjs/core";
+import { SpanKind, SpanStatusCode, trace } from "@opentelemetry/api";
 import {
   HALLOWEEN_COMMANDS,
   HalloweenCommandHandler,
@@ -11,17 +12,40 @@ import {
   DiscordWebhookMessageUnavailableError,
   HalloweenDiscordError,
 } from "../errors";
+import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 
 const sleep = (ms: number) =>
   new Promise<void>((resolve) => setTimeout(resolve, ms));
 
+const stackOf = (error: unknown): string =>
+  error instanceof Error ? (error.stack ?? error.message) : String(error);
+
+/**
+ * How a command ended. `refused` is an expected no -- out of knocks, event
+ * over -- and `failed` is a fault. `unavailable` means it never ran.
+ */
+type Outcome = "ok" | "refused" | "failed" | "unavailable";
+
+/** The fields that identify a command on every line logged about it. */
+interface CommandFields {
+  interactionId: string;
+  command: string;
+  guildId: string;
+  userId: string;
+}
+
 /**
  * Runs a deferred command and turns whatever it throws into a reply. The
  * bot's command Lambda, minus the queue in front of it.
+ *
+ * Each command runs in its own trace span, because it runs after the HTTP
+ * request that carried it has finished; its database and Discord calls nest
+ * under that span.
  */
 @Injectable()
 export class HalloweenCommandDispatcher {
   private readonly logger = new Logger(HalloweenCommandDispatcher.name);
+  private readonly tracer = trace.getTracer("chardb-halloween", "1.0.0");
   private readonly commands: Map<string, HalloweenCommandHandler>;
 
   /**
@@ -43,29 +67,126 @@ export class HalloweenCommandDispatcher {
   async dispatch(
     interaction: APIApplicationCommandGuildInteraction,
   ): Promise<void> {
-    const commandName = interaction.data.name.toLowerCase();
+    const fields: CommandFields = {
+      interactionId: interaction.id,
+      command: interaction.data.name.toLowerCase(),
+      guildId: interaction.guild_id,
+      userId: interaction.member.user.id,
+    };
+    await this.tracer.startActiveSpan(
+      `halloween.command ${fields.command}`,
+      {
+        kind: SpanKind.INTERNAL,
+        attributes: {
+          "halloween.interaction_id": fields.interactionId,
+          "halloween.command": fields.command,
+          "halloween.guild_id": fields.guildId,
+          "halloween.user_id": fields.userId,
+        },
+      },
+      async (span) => {
+        const outcome = await this.run(interaction, fields);
+        span.setAttributes({ "halloween.outcome": outcome });
+        span.setStatus({
+          code:
+            outcome === "failed" || outcome === "unavailable"
+              ? SpanStatusCode.ERROR
+              : SpanStatusCode.OK,
+        });
+        span.end();
+      },
+    );
+  }
+
+  private async run(
+    interaction: APIApplicationCommandGuildInteraction,
+    fields: CommandFields,
+  ): Promise<Outcome> {
+    const started = Date.now();
+    const completed = (outcome: Outcome, message: string) => ({
+      event: HalloweenLogEvent.CommandCompleted,
+      message,
+      ...fields,
+      outcome,
+      durationMs: Date.now() - started,
+    });
+
     try {
       await this.waitForOriginalResponse(interaction);
     } catch (error) {
       this.logger.error(
-        `Deferred reply for /${commandName} (interaction ${interaction.id}) never appeared; not running it`,
-        error instanceof Error ? error.stack : String(error),
+        {
+          event: HalloweenLogEvent.ReplyUnavailable,
+          message: `Deferred reply for /${fields.command} never appeared; not running it`,
+          ...fields,
+          attempts: this.originalResponseRetryDelaysMs.length + 1,
+        } satisfies HalloweenLogLine,
+        stackOf(error),
       );
-      return;
+      this.logger.error(
+        completed("unavailable", `/${fields.command} did not run`),
+      );
+      return "unavailable";
     }
 
     try {
-      const command = this.commands.get(commandName);
+      const command = this.commands.get(fields.command);
       if (!command) {
         throw new HalloweenDiscordError({
           thrownFrom: "HalloweenCommandDispatcher",
           message: `Unknown command, use /help for details`,
-          sourceError: new Error(`Unknown command: ${commandName}`),
+          sourceError: new Error(`Unknown command: ${fields.command}`),
         });
       }
       await command.handle(interaction);
+      this.logger.log(completed("ok", `/${fields.command} succeeded`));
+      return "ok";
     } catch (error) {
-      await this.report(error, interaction, commandName);
+      const reportable =
+        error instanceof DiscordReportableError
+          ? error
+          : new DiscordReportableError(
+              "An unknown error ocurred while processing your request",
+              {
+                thrownFrom: "HalloweenCommandDispatcher",
+                logAsError: true,
+                sourceError: error instanceof Error ? error : undefined,
+              },
+            );
+      const details = {
+        error: reportable.name,
+        thrownFrom: reportable.thrownFrom,
+        reason: reportable.message,
+      };
+
+      let outcome: Outcome;
+      if (reportable.logAsError) {
+        outcome = "failed";
+        const cause = reportable === error ? reportable.sourceError : error;
+        this.logger.error(
+          {
+            ...completed(
+              outcome,
+              `/${fields.command} failed: ${reportable.message}`,
+            ),
+            ...details,
+            cause: cause instanceof Error ? cause.message : reportable.message,
+          },
+          stackOf(cause ?? reportable),
+        );
+      } else {
+        outcome = "refused";
+        this.logger.warn({
+          ...completed(
+            outcome,
+            `/${fields.command} refused: ${reportable.message}`,
+          ),
+          ...details,
+        });
+      }
+
+      await this.report(reportable, interaction, fields);
+      return outcome;
     }
   }
 
@@ -88,34 +209,12 @@ export class HalloweenCommandDispatcher {
     }
   }
 
+  /** Edits the deferred reply into the error the player should see. */
   private async report(
-    error: unknown,
+    reportable: DiscordReportableError,
     interaction: APIApplicationCommandGuildInteraction,
-    commandName: string,
+    fields: CommandFields,
   ): Promise<void> {
-    const reportable =
-      error instanceof DiscordReportableError
-        ? error
-        : new DiscordReportableError(
-            "An unknown error ocurred while processing your request",
-            {
-              thrownFrom: "HalloweenCommandDispatcher",
-              logAsError: true,
-              sourceError: error instanceof Error ? error : undefined,
-            },
-          );
-
-    const context = `/${commandName} failed for user ${interaction.member.user.id} in guild ${interaction.guild_id} (interaction ${interaction.id}): ${reportable.message} [from ${reportable.thrownFrom}]`;
-    if (reportable.logAsError) {
-      const cause = reportable.sourceError ?? reportable;
-      this.logger.error(
-        context,
-        error instanceof Error ? error.stack : cause.stack,
-      );
-    } else {
-      this.logger.warn(context);
-    }
-
     try {
       await this.discord.editOriginalResponse(
         interaction.token,
@@ -123,8 +222,12 @@ export class HalloweenCommandDispatcher {
       );
     } catch (reportError) {
       this.logger.error(
-        `Could not tell the player about the failure of /${commandName} (interaction ${interaction.id})`,
-        reportError instanceof Error ? reportError.stack : String(reportError),
+        {
+          event: HalloweenLogEvent.ReportFailed,
+          message: `Could not tell the player about the failure of /${fields.command}`,
+          ...fields,
+        } satisfies HalloweenLogLine,
+        stackOf(reportError),
       );
     }
   }

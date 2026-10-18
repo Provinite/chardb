@@ -23,6 +23,7 @@ import { AllowUnauthenticated } from "../../auth/decorators/AllowUnauthenticated
 import { HalloweenConfig } from "../halloween.config";
 import { HalloweenCommandDispatcher } from "./halloween-command.dispatcher";
 import { verifyDiscordSignature } from "./verify-signature";
+import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 
 /** Commands whose reply only the player who ran them can see. */
 const PRIVATE_COMMANDS = new Set(["deviantart"]);
@@ -63,6 +64,16 @@ export class HalloweenInteractionsController {
         req.header("X-Signature-Ed25519"),
       );
     if (!verified) {
+      // Discord sends some of these on purpose when the endpoint URL is
+      // saved, to check they are refused; a steady stream means a key is wrong.
+      this.logger.warn({
+        event: HalloweenLogEvent.InteractionRejected,
+        message: "Refused an interaction with an invalid signature",
+        hasSignature: Boolean(req.header("X-Signature-Ed25519")),
+        hasTimestamp: Boolean(req.header("X-Signature-Timestamp")),
+        hasRawBody: req.rawBody !== undefined,
+        ip: req.ip,
+      } satisfies HalloweenLogLine);
       throw new HttpException(
         { error: { message: "Invalid request, invalid request signature" } },
         HttpStatus.UNAUTHORIZED,
@@ -72,10 +83,20 @@ export class HalloweenInteractionsController {
     const interaction = req.body as APIInteraction;
 
     if (interaction.type === InteractionType.Ping) {
+      this.logger.log({
+        event: HalloweenLogEvent.Ping,
+        message: "Answered Discord's PING",
+      } satisfies HalloweenLogLine);
       return { type: InteractionResponseType.Pong };
     }
 
     if (interaction.type !== InteractionType.ApplicationCommand) {
+      this.logger.warn({
+        event: HalloweenLogEvent.UnsupportedInteraction,
+        message: `Refused interaction of unsupported type ${interaction.type}`,
+        interactionId: interaction.id,
+        interactionType: interaction.type,
+      } satisfies HalloweenLogLine);
       throw new HttpException(
         {
           error: {
@@ -87,6 +108,13 @@ export class HalloweenInteractionsController {
     }
 
     if (!interaction.guild_id) {
+      this.logger.log({
+        event: HalloweenLogEvent.NotInGuild,
+        message: `Refused /${interaction.data.name} outside a server`,
+        interactionId: interaction.id,
+        command: interaction.data.name,
+        userId: interaction.user?.id ?? interaction.member?.user.id,
+      } satisfies HalloweenLogLine);
       return {
         type: InteractionResponseType.ChannelMessageWithSource,
         data: {
@@ -98,6 +126,14 @@ export class HalloweenInteractionsController {
 
     const guildInteraction =
       interaction as APIApplicationCommandGuildInteraction;
+    this.logger.log({
+      event: HalloweenLogEvent.InteractionReceived,
+      message: `Received /${guildInteraction.data.name}`,
+      interactionId: guildInteraction.id,
+      command: guildInteraction.data.name,
+      guildId: guildInteraction.guild_id,
+      userId: guildInteraction.member.user.id,
+    } satisfies HalloweenLogLine);
     // Not before: editing the deferred reply needs Discord to have it first.
     res.on("finish", () => {
       void this.dispatcher
