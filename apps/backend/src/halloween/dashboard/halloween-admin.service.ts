@@ -225,8 +225,8 @@ export class HalloweenAdminService {
       changes.name = input.name;
     }
     if (input.weight !== undefined) {
-      if (input.weight < 0 || input.weight > 1000) {
-        problems.push("Weight must be a whole number from 0 to 1000");
+      if (input.weight < 1 || input.weight > 1000) {
+        problems.push("Weight must be a whole number from 1 to 1000");
       }
       changes.weight = input.weight;
     }
@@ -243,7 +243,12 @@ export class HalloweenAdminService {
       changes.image = input.image;
     }
     if (input.currentStock !== undefined) {
-      if (input.currentStock < 0 || input.currentStock > 999) {
+      // One of a kind: won, it is gone, and putting it back would offer a
+      // character somebody already has. Fixed by hand in the database if
+      // ever needed.
+      if (prize.characterId) {
+        problems.push("A character prize's stock can't be changed");
+      } else if (input.currentStock < 0 || input.currentStock > 999) {
         problems.push("Stock must be a whole number from 0 to 999");
       }
       // Moving the starting stock by the same amount keeps "given out"

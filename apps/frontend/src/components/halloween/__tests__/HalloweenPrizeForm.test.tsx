@@ -358,9 +358,10 @@ describe("HalloweenPrizeForm", () => {
               variables: {
                 communityId: COMMUNITY_ID,
                 input: {
-                  id: "edit-kit",
-                  name: "Edit Kit",
-                  stock: 300,
+                  id: "free-ghost",
+                  name: "Free Ghost",
+                  // One of a kind, always.
+                  stock: 1,
                   weight: 10,
                   characterId: "ch-1",
                 },
@@ -378,9 +379,7 @@ describe("HalloweenPrizeForm", () => {
       // Only the characters are asked for.
       expect(itemTypes.result).not.toHaveBeenCalled();
       await userEvent.click(option);
-      await userEvent.clear(screen.getByLabelText(/Short name/));
-      await userEvent.clear(screen.getByLabelText(/^Name/));
-      await fillBasics();
+      expect(screen.queryByLabelText(/^Stock/)).not.toBeInTheDocument();
 
       const cachedSearches = () =>
         Object.keys(cache.extract().ROOT_QUERY ?? {}).filter((key) =>
@@ -436,6 +435,58 @@ describe("HalloweenPrizeForm", () => {
   });
 
   describe("editing", () => {
+    // The stock sent is the stock set, so it is only sent when someone sets
+    // it: saving a new name must not put back what players won meanwhile.
+    it("leaves the stock alone when only the name changes", async () => {
+      const result = vi.fn(() => ({
+        data: { updateHalloweenPrize: prizeView({ name: "Spookier Adopt" }) },
+      }));
+      const onSaved = renderForm({ prize: prizeView({ currentStock: 1 }) }, [
+        {
+          request: {
+            query: UpdateHalloweenPrizeDocument,
+            variables: {
+              communityId: COMMUNITY_ID,
+              prizeId: "adopt",
+              input: {
+                name: "Spookier Adopt",
+                weight: 10,
+                image: "https://i.test/adopt.png",
+              },
+            },
+          },
+          result,
+        },
+      ]);
+      const name = screen.getByLabelText(/^Name/);
+      await userEvent.clear(name);
+      await userEvent.type(name, "Spookier Adopt");
+      await userEvent.click(screen.getByRole("button", { name: "Save prize" }));
+      await vi.waitFor(() => expect(onSaved).toHaveBeenCalled());
+      expect(result).toHaveBeenCalled();
+    });
+
+    it("offers no stock for a character prize", () => {
+      renderForm(
+        {
+          prize: prizeView({
+            image: null,
+            delivery: HalloweenPrizeDelivery.ChardbCharacter,
+            characterId: "ch-1",
+            initialStock: 1,
+            currentStock: 0,
+          }),
+        },
+        [],
+      );
+      expect(screen.queryByLabelText(/^Stock/)).not.toBeInTheDocument();
+    });
+
+    it("asks for a weight of at least 1", () => {
+      renderForm({ prize: prizeView() }, []);
+      expect(screen.getByLabelText(/^Weight/)).toHaveAttribute("min", "1");
+    });
+
     it("changes the stock left and the weight", async () => {
       const result = vi.fn(() => ({
         data: {

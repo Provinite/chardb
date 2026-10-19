@@ -5,6 +5,7 @@ import { DatabaseService } from "../../database/database.service";
 import { HalloweenClock } from "../clock";
 import { GuildSettingsService } from "./guild-settings.service";
 import { PrizeService } from "./prize.service";
+import { OutOfPrizesError } from "../errors";
 import { KnockEventService } from "./knock-event.service";
 import { GiftyService } from "./gifty.service";
 import { DeviantArtUserService } from "./deviantart-user.service";
@@ -121,11 +122,11 @@ describe("Halloween services (e2e)", () => {
       expect((await prizes.inStock(GUILD))[0].currentStock).toBe(2);
     });
 
-    it("refuses to decrement an exhausted prize", async () => {
+    it("refuses to decrement an exhausted prize, as out of prizes", async () => {
       await createPrize("gone", { currentStock: 0 });
-      await expect(prizes.decrementStock("gone", GUILD)).rejects.toThrow(
-        "No in-stock prize with id gone",
-      );
+      await expect(
+        prizes.decrementStock("gone", GUILD),
+      ).rejects.toBeInstanceOf(OutOfPrizesError);
     });
 
     it("locks the in-stock rows for the rest of the transaction", async () => {

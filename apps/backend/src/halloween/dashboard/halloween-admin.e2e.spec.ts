@@ -320,6 +320,24 @@ describe("Halloween management (e2e)", () => {
         });
       });
 
+      it("refuses a character prize with more than one in stock", async () => {
+        const ghost = await character();
+        const res = await gql(CREATE, {
+          input: { id: "ghost", name: "Ghost", stock: 2, characterId: ghost.id },
+        });
+        expect(res.body.errors?.[0].message).toBe(
+          "A character prize has a stock of 1",
+        );
+        expect(await db.halloweenPrize.count()).toBe(0);
+      });
+
+      it("refuses a weight of 0", async () => {
+        const res = await gql(CREATE, { input: { ...staffPrize, weight: 0 } });
+        expect(res.body.errors?.[0].message).toBe(
+          "weight must be an integer between 1 and 1000",
+        );
+      });
+
       it("refuses another community's item type", async () => {
         const itemType = await db.itemType.create({
           data: { name: "Foreign", communityId: otherCommunityId },
@@ -452,6 +470,40 @@ describe("Halloween management (e2e)", () => {
           initialStock: 1,
           currentStock: 0,
         });
+      });
+
+      it("refuses a weight of 0", async () => {
+        const res = await gql(UPDATE, {
+          prizeId: "adopt",
+          input: { weight: 0 },
+        });
+        expect(res.body.errors?.[0].message).toBe(
+          "Weight must be a whole number from 1 to 1000",
+        );
+      });
+
+      it("never changes a character prize's stock", async () => {
+        const ghost = await character();
+        await gql(CREATE, {
+          input: { id: "ghost", name: "Ghost", stock: 1, characterId: ghost.id },
+        });
+        // Won, so out of stock: putting it back would offer a character
+        // somebody already has.
+        await db.halloweenPrize.update({
+          where: { guildId_id: { guildId: GUILD, id: "ghost" } },
+          data: { currentStock: 0 },
+        });
+        const res = await gql(UPDATE, {
+          prizeId: "ghost",
+          input: { currentStock: 1 },
+        });
+        expect(res.body.errors?.[0].message).toBe(
+          "A character prize's stock can't be changed",
+        );
+        const ghostPrize = await db.halloweenPrize.findUniqueOrThrow({
+          where: { guildId_id: { guildId: GUILD, id: "ghost" } },
+        });
+        expect(ghostPrize.currentStock).toBe(0);
       });
 
       it("refuses a negative stock", async () => {

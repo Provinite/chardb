@@ -203,9 +203,15 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
     setError(null);
     try {
       if (editing) {
+        // The stock sent is the stock set, so it goes only when someone
+        // changed it: otherwise a new name would put back what players won
+        // since the form opened.
+        const stockChanged = Number(stock) !== prize.currentStock;
         const input: UpdateHalloweenPrizeInput = {
           name,
-          currentStock: Number(stock),
+          ...(stockChanged && !isCharacterPrize
+            ? { currentStock: Number(stock) }
+            : {}),
           weight: Number(weight),
           ...(isStaffPrize ? { image } : {}),
         };
@@ -217,7 +223,8 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
         const input: CreateHalloweenPrizeInput = {
           id,
           name,
-          stock: Number(stock),
+          // A character is one of a kind.
+          stock: isCharacterPrize ? 1 : Number(stock),
           weight: Number(weight),
           ...(isStaffPrize ? { image } : {}),
           ...(isItemPrize && pick ? { itemTypeId: pick.id } : {}),
@@ -342,27 +349,31 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
         </Field>
       </Row>
       <Row>
-        <Field>
-          <Label htmlFor="prize-stock">
-            {editing ? "Stock left" : "Stock"}
-          </Label>
-          <Input
-            id="prize-stock"
-            type="number"
-            min={editing ? 0 : 1}
-            max={999}
-            step={1}
-            required
-            value={stock}
-            onChange={(e) => setStock(e.target.value)}
-          />
-        </Field>
+        {/* A character prize is always one of a kind, and is never
+            restocked once won. */}
+        {!isCharacterPrize && (
+          <Field>
+            <Label htmlFor="prize-stock">
+              {editing ? "Stock left" : "Stock"}
+            </Label>
+            <Input
+              id="prize-stock"
+              type="number"
+              min={editing ? 0 : 1}
+              max={999}
+              step={1}
+              required
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+            />
+          </Field>
+        )}
         <Field>
           <Label htmlFor="prize-weight">Weight</Label>
           <Input
             id="prize-weight"
             type="number"
-            min={0}
+            min={1}
             max={1000}
             step={1}
             required

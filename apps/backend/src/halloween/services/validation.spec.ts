@@ -94,7 +94,18 @@ describe("validatePrize", () => {
 
   it("accepts a CharDB item type or character, with no image of its own", () => {
     expect(validatePrize({ ...chardbPrize, itemTypeId: "it-1" })).toBe(true);
-    expect(validatePrize({ ...chardbPrize, characterId: "ch-1" })).toBe(true);
+    expect(
+      validatePrize({ ...chardbPrize, characterId: "ch-1", initialStock: 1 }),
+    ).toBe(true);
+  });
+
+  // A character is one of a kind.
+  it("refuses a character prize with more than one in stock", () => {
+    expect(
+      validatePrize({ ...chardbPrize, characterId: "ch-1", initialStock: 2 }),
+    ).toEqual([
+      { field: "initialStock", error: "A character prize has a stock of 1" },
+    ]);
   });
 
   it("refuses an image URL on a CharDB prize", () => {
@@ -151,10 +162,10 @@ describe("validatePrize", () => {
     });
   });
 
-  it("requires a weight of 0-1000", () => {
-    expect(validatePrize({ ...valid, weight: 1001 })).toContainEqual({
+  it.each([[0], [1001]])("requires a weight of 1-1000, not %s", (weight) => {
+    expect(validatePrize({ ...valid, weight })).toContainEqual({
       field: "weight",
-      error: "weight must be an integer between 0 and 1000",
+      error: "weight must be an integer between 1 and 1000",
     });
   });
 
@@ -179,6 +190,7 @@ describe("validatePrize", () => {
     expect(
       validatePrize({
         ...chardbPrize,
+        initialStock: 1,
         itemTypeId: "it-1",
         characterId: "ch-1",
       }),

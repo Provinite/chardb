@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { HalloweenPrize, Prisma } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
-import type { ValidationFieldError } from "../errors";
+import { OutOfPrizesError, type ValidationFieldError } from "../errors";
 
 export interface PrizeInput {
   id: string;
@@ -58,7 +58,12 @@ export function validatePrize(
     [
       "*",
       "All prize fields are required",
-      () => Boolean(id && guildId && name && initialStock && weight),
+      // Numbers by presence, not truthiness: their own rules say which
+      // values are allowed.
+      () =>
+        Boolean(id && guildId && name) &&
+        Number.isFinite(initialStock) &&
+        Number.isFinite(weight),
     ],
     [
       "id",
@@ -76,9 +81,14 @@ export function validatePrize(
         initialStock < 1000,
     ],
     [
+      "initialStock",
+      "A character prize has a stock of 1",
+      () => !characterId || initialStock === 1,
+    ],
+    [
       "weight",
-      "weight must be an integer between 0 and 1000",
-      () => Number.isInteger(weight) && weight >= 0 && weight <= 1000,
+      "weight must be an integer between 1 and 1000",
+      () => Number.isInteger(weight) && weight >= 1 && weight <= 1000,
     ],
     [
       "image",
@@ -154,7 +164,10 @@ export class PrizeService {
       where: { guildId_id: { guildId, id: prizeId } },
     });
     if (!prize || prize.currentStock === 0) {
-      throw new Error(`No in-stock prize with id ${prizeId}`);
+      throw new OutOfPrizesError({
+        thrownFrom: "PrizeService.decrementStock",
+        guildId,
+      });
     }
     return tx.halloweenPrize.update({
       where: { guildId_id: { guildId, id: prizeId } },
