@@ -504,12 +504,13 @@
             </li>
             <li>
               <strong>Stock</strong>: how many can be won. Fungible prizes such
-              as edit kits can have hundreds.
+              as edit kits can have hundreds. A character is one of a kind, so a
+              character prize has no stock to set: it can be won once.
             </li>
             <li>
               <strong>Weight</strong>: how likely this prize is to be the one
-              won, compared with the others. A prize with more left is
-              proportionally more likely.
+              won, compared with the others, from 1 to 1000. A prize with more
+              left is proportionally more likely.
             </li>
           </ul>
         </div>
@@ -535,10 +536,11 @@
         <div class="screenshot">
           <img
             src="halloween-add-character.png"
-            alt="The Add a prize form with Character selected and Lantern Moth picked; Name reads Lantern Moth and Short name reads lantern-moth"
+            alt="The Add a prize form with Character selected and Lantern Moth picked; Name reads Lantern Moth, Short name reads lantern-moth, and there is a Weight field but no Stock field"
           />
           <div class="screenshot-caption">
-            A character picked: its names are filled in
+            A character picked: its names are filled in, and there is no stock
+            to set
           </div>
         </div>
       </div>
@@ -554,7 +556,13 @@
             <li>
               <strong>Edit</strong> changes a prize's name, weight, picture link
               (for an Other / off-site prize) and how many are left. The total
-              moves with it, so the number already won stays right.
+              moves with it, so the number already won stays right. A new stock
+              is saved only if you changed it, and replaces whatever is left at
+              that moment.
+            </li>
+            <li>
+              A character prize's stock can't be edited. Once its character is
+              won, it stays out of the pool.
             </li>
             <li>
               <strong>Remove</strong> takes a prize out of the pool for good,
