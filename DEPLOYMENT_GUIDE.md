@@ -253,6 +253,39 @@ backend answers, so save it only after the deploy is live. Putting the old URL
 back is the rollback. Only one environment can receive the bot's interactions
 at a time; dev needs the parameters only to boot.
 
+### Alerts to Discord (prod)
+
+CloudWatch alarms post to a Discord channel: each alarm notifies an SNS
+topic, and a small Lambda (`infra/modules/alerts-discord/lambda/index.mjs`)
+turns the notification into a Discord message. The alarms:
+
+| Alarm | Goes off when | What to do |
+|---|---|---|
+| `chardb-prod-halloween-needs-staff` | A chardb prize wasn't delivered, a command's reply never reached Discord, or a win wasn't announced in the win channel | Grant the prize by hand, tell the player, or fix the win channel |
+| `chardb-prod-halloween-errors` | A Halloween command failed, or work after its reply did | A bug: read the error |
+| `chardb-prize-distribution-prod-dlq-messages` | Messages are sitting in the old prize queue's dead-letter queue | Look at the queue |
+
+Each posts again, in green, when it clears. For the log lines behind a
+Halloween alarm, open **CloudWatch → Logs Insights → Queries →
+`chardb-prod/halloween-needs-attention`**; each line carries its
+`interactionId`.
+
+The webhook URL works as a password, so it is never in this repo, in
+Terraform or in an environment variable. Terraform creates
+`/chardb/prod/alerts-discord-webhook-url` with a placeholder; put the real
+URL in by hand, at a prompt so it stays out of your shell history:
+
+```bash
+# In Discord: the channel → Edit Channel → Integrations → Webhooks → New Webhook → Copy Webhook URL
+read -rs URL && aws ssm put-parameter --overwrite --type SecureString \
+  --name /chardb/prod/alerts-discord-webhook-url --value "$URL"; unset URL
+```
+
+Until it is set, alarms still change state but the Lambda fails to post; its
+own errors show in `/aws/lambda/chardb-prod-alerts-discord`. To check the whole
+path, publish a test message to the topic from the SNS console: it arrives in
+Discord as plain text.
+
 ### How dev reads them
 
 `deploy.sh` no longer writes the OAuth client ids, client secrets or bot token

@@ -208,6 +208,11 @@ jobs:
           fi
           echo "Halloween image counts are up to date."
 
+      # The Lambda that posts CloudWatch alarms to Discord is one dependency-free
+      # file outside the workspaces, so no workspace's test run covers it.
+      - name: Test the alerts Lambda
+        run: node --test "infra/modules/alerts-discord/lambda/*.test.mjs"
+
   test:
     name: Unit tests (${{ matrix.name }})
     runs-on: ubuntu-latest

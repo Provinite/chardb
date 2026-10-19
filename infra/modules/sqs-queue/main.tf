@@ -3,9 +3,9 @@ resource "aws_sqs_queue" "main" {
   name                       = var.queue_name
   visibility_timeout_seconds = var.visibility_timeout
   message_retention_seconds  = var.message_retention
-  max_message_size          = var.max_message_size
-  delay_seconds             = 0
-  receive_wait_time_seconds = var.receive_wait_time
+  max_message_size           = var.max_message_size
+  delay_seconds              = 0
+  receive_wait_time_seconds  = var.receive_wait_time
 
   # Dead Letter Queue configuration
   redrive_policy = jsonencode({
@@ -26,9 +26,9 @@ resource "aws_sqs_queue" "main" {
 
 # Dead Letter Queue
 resource "aws_sqs_queue" "dlq" {
-  name                       = "${var.queue_name}-dlq"
-  message_retention_seconds  = var.dlq_message_retention
-  sqs_managed_sse_enabled    = true
+  name                      = "${var.queue_name}-dlq"
+  message_retention_seconds = var.dlq_message_retention
+  sqs_managed_sse_enabled   = true
 
   tags = merge(
     var.tags,
@@ -101,6 +101,7 @@ resource "aws_cloudwatch_metric_alarm" "dlq_messages" {
   threshold           = 0
   alarm_description   = "Alert when messages are in the DLQ for ${var.queue_name}"
   treat_missing_data  = "notBreaching"
+  alarm_actions       = var.alarm_actions
 
   dimensions = {
     QueueName = aws_sqs_queue.dlq.name

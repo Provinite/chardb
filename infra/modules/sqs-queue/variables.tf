@@ -39,6 +39,12 @@ variable "dlq_message_retention" {
   default     = 1209600 # 14 days
 }
 
+variable "alarm_actions" {
+  description = "Where the DLQ alarm notifies, such as an SNS topic. Empty means nobody is told."
+  type        = list(string)
+  default     = []
+}
+
 variable "tags" {
   description = "Tags to apply to all resources"
   type        = map(string)
