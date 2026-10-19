@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Breaking for local setups: three `HALLOWEEN_DISCORD_*` variables are required at boot**, the Halloween bot's own Discord application credentials, along with `FRONTEND_URL`, which its images are served from; see `.env.example` (#399).
 - **Breaking for local setups: every linking provider's client id and secret are required at boot.** A missing `DISCORD_`/`DEVIANTART_`/`TOYHOUSE_`/`PATREON_` `CLIENT_ID` or `CLIENT_SECRET` now stops the backend from starting, naming the variable (#236).
 - **One factory builds all four linking controllers and strategies**, from per-provider config in `oauth-link-providers.ts` (#236).
+- **A Discord server can be linked to only one community**: `communities.discord_guild_id` is unique, and `linkDiscordGuild` refuses a server another community has. The migration fails if two communities already share one (#399).
 
 ### Fixed
 

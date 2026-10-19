@@ -32,7 +32,11 @@ import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 import { DiscordService } from "../discord/discord.service";
 import { DiscordGuildInfo } from "./dto/discord-guild-info.dto";
 import { DiscordUserInfo } from "../discord/dto/discord-user-info.dto";
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  NotFoundException,
+} from "@nestjs/common";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { CommunityPermission } from "../auth/CommunityPermission";
@@ -216,6 +220,15 @@ export class CommunitiesResolver {
     @Args("guildId", { type: () => ID, description: "Discord guild ID" })
     guildId: string,
   ): Promise<Community> {
+    // One community per server; the database refuses a second one too, but
+    // without saying why.
+    const claimed = await this.communitiesService.findByDiscordGuildId(guildId);
+    if (claimed && claimed.id !== communityId) {
+      throw new ConflictException(
+        "That Discord server is already linked to another community",
+      );
+    }
+
     // Verify bot has access to the guild
     const hasAccess = await this.discordService.verifyGuildAccess(guildId);
     if (!hasAccess) {

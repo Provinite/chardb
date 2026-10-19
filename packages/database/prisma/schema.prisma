@@ -855,7 +855,9 @@ model Community {
   /// 63 characters because that is the maximum length of a single DNS label.
   slug String @unique @db.VarChar(63)
 
-  discordGuildId   String? @map("discord_guild_id") @db.VarChar(30)
+  /// One community per Discord server: the bot, the Halloween event and grants
+  /// to Discord accounts all find the community by its server.
+  discordGuildId   String? @unique @map("discord_guild_id") @db.VarChar(30)
   discordGuildName String? @map("discord_guild_name") @db.VarChar(100)
 
   /// Whether the Halloween trick-or-treat event's pages are shown for this

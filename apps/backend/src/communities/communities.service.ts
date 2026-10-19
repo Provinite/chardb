@@ -182,6 +182,13 @@ export class CommunitiesService {
     });
   }
 
+  /** The community linked to a Discord server, if any; there is at most one. */
+  async findByDiscordGuildId(discordGuildId: string) {
+    return this.prisma.community.findUnique({
+      where: { discordGuildId },
+    });
+  }
+
   /** Update a community */
   async update(id: string, input: UpdateCommunityServiceInput) {
     await this.findOne(id); // This will throw if not found
