@@ -4,6 +4,11 @@ import { HalloweenClock } from "../clock";
 import { HalloweenConfig } from "../halloween.config";
 import { buildInteraction, fixedClock, testConfig } from "../testing/fixtures";
 
+jest.mock("./images.generated", () => ({
+  CANDY_IMAGE_COUNT: 7,
+  AUTHOR_ICON_COUNT: 11,
+}));
+
 describe("HalloweenUi", () => {
   let random: HalloweenRandom;
   let ui: HalloweenUi;
@@ -48,12 +53,14 @@ describe("HalloweenUi", () => {
     expect(ui.timestamp()).toBe("2025-10-17T15:30:00.000Z");
   });
 
-  it("picks one of the 130 candy images", () => {
-    jest.spyOn(random, "int").mockReturnValue(129);
+  // The count comes from the images themselves (scripts/halloween-images.mjs);
+  // mocked to 7 here, so a hard-coded count would show.
+  it("picks one of however many candy images there are", () => {
+    jest.spyOn(random, "int").mockReturnValue(6);
     expect(ui.candyImageUrl()).toBe(
-      "https://images.test/halloween/candy/129.png",
+      "https://images.test/halloween/candy/6.png",
     );
-    expect(random.int).toHaveBeenCalledWith(130);
+    expect(random.int).toHaveBeenCalledWith(7);
   });
 
   it("footers errors with the interaction id", () => {

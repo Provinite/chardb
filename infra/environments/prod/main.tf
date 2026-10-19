@@ -76,7 +76,6 @@ module "app_secrets" {
     "halloween-discord-application-id" = "Halloween bot Discord application ID"
     "halloween-discord-public-key"     = "Halloween bot Discord interactions public key"
     "halloween-discord-bot-token"      = "Halloween bot Discord bot token"
-    "halloween-image-base-url"         = "Base URL of the Halloween bot's icon and candy images"
   }
 
   tags = local.common_tags
@@ -666,10 +665,6 @@ module "ecs" {
     {
       name      = "HALLOWEEN_DISCORD_BOT_TOKEN"
       valueFrom = module.app_secrets.arns["halloween-discord-bot-token"]
-    },
-    {
-      name      = "HALLOWEEN_IMAGE_BASE_URL"
-      valueFrom = module.app_secrets.arns["halloween-image-base-url"]
     },
     {
       name      = "CLOUDFRONT_SECRET"

@@ -236,12 +236,13 @@ Afterwards, delete these five now-undeclared lines from your local
 ### Halloween bot parameters
 
 The Halloween trick-or-treat bot is its own Discord application, so it has
-its own four parameters: `halloween-discord-application-id`,
-`halloween-discord-public-key`, `halloween-discord-bot-token` and
-`halloween-image-base-url`. The backend refuses to boot without them.
+its own three parameters: `halloween-discord-application-id`,
+`halloween-discord-public-key` and `halloween-discord-bot-token`. The backend
+refuses to boot without them. Its images ship with the frontend and are served
+from `FRONTEND_URL`, so they need no parameter.
 
 **Prod needs the same two-step apply as above**: `-target=module.app_secrets`,
-fill the four parameters, then the full apply. A single apply would start the
+fill the three parameters, then the full apply. A single apply would start the
 task with the placeholder values.
 
 Adding the parameters does not route any traffic. The bot keeps answering from
@@ -371,7 +372,7 @@ for name in deviantart-client-id deviantart-client-secret \
             toyhouse-client-id toyhouse-client-secret \
             patreon-client-secret \
             halloween-discord-application-id halloween-discord-public-key \
-            halloween-discord-bot-token halloween-image-base-url; do
+            halloween-discord-bot-token; do
   aws ssm put-parameter --overwrite --type SecureString \
     --name "/chardb/dev/$name" --value 'REPLACE_ME'
 done

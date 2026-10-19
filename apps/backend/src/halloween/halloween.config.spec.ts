@@ -6,7 +6,7 @@ const complete = {
   HALLOWEEN_DISCORD_APPLICATION_ID: "896600597053202462",
   HALLOWEEN_DISCORD_PUBLIC_KEY: "ab".repeat(32),
   HALLOWEEN_DISCORD_BOT_TOKEN: "bot-token",
-  HALLOWEEN_IMAGE_BASE_URL: "https://images.example.com/halloween",
+  FRONTEND_URL: "https://chardb.example.com",
 };
 
 const configWith = (values: Record<string, string | undefined>) =>
@@ -43,18 +43,16 @@ describe("HalloweenConfig", () => {
     );
   });
 
-  it("gives the image base URL a trailing slash", () => {
+  // The images ship with the frontend, in public/halloween.
+  it("finds the images where the frontend serves them", () => {
     expect(new HalloweenConfig(configWith(complete)).imageBaseUrl).toBe(
-      "https://images.example.com/halloween/",
+      "https://chardb.example.com/halloween/",
     );
     expect(
       new HalloweenConfig(
-        configWith({
-          ...complete,
-          HALLOWEEN_IMAGE_BASE_URL: "https://images.example.com/halloween/",
-        }),
+        configWith({ ...complete, FRONTEND_URL: "http://localhost:3000/" }),
       ).imageBaseUrl,
-    ).toBe("https://images.example.com/halloween/");
+    ).toBe("http://localhost:3000/halloween/");
   });
 
   it.each(Object.keys(complete))("refuses to start without %s", (key) => {

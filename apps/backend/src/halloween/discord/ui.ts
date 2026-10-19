@@ -7,6 +7,8 @@ import type {
 import { HalloweenConfig } from "../halloween.config";
 import { HalloweenRandom } from "../random";
 import { HalloweenClock } from "../clock";
+// Counted from apps/frontend/public/halloween by scripts/halloween-images.mjs.
+import { AUTHOR_ICON_COUNT, CANDY_IMAGE_COUNT } from "./images.generated";
 
 /**
  * Prefix of every embed title. The bot's yearly re-arm was a find-and-replace
@@ -20,12 +22,6 @@ export enum Color {
   Warning = 0xffff00,
 }
 
-/** How many `candy/N.png` images exist in the image bucket. */
-const CANDY_IMAGE_COUNT = 130;
-
-/** How many `icon/N.png` author icons exist: 0-5 are Daphne, 6-10 Luther. */
-const AUTHOR_ICON_COUNT = 11;
-
 /** The pieces every embed shares. */
 @Injectable()
 export class HalloweenUi {
@@ -35,7 +31,7 @@ export class HalloweenUi {
     private readonly clock: HalloweenClock,
   ) {}
 
-  /** One of the two hosts, with a random portrait. */
+  /** One of the two hosts, with a random portrait: 0-5 Daphne, 6-10 Luther. */
   author(): APIEmbedAuthor {
     const index = this.random.int(AUTHOR_ICON_COUNT);
     return {

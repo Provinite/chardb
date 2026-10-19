@@ -249,12 +249,7 @@ The trick-or-treat event's Discord bot is its own Discord application, separate 
 - **Description**: The bot's token, for posting win announcements to the win channel.
 - **Referenced in**: `src/halloween/halloween.config.ts`
 
-### `HALLOWEEN_IMAGE_BASE_URL`
-
-- **Type**: String (URL)
-- **Required**: Yes
-- **Description**: Where the embed author icons (`icon/0.png`-`icon/10.png`) and candy images (`candy/0.png`-`candy/129.png`) are served from. A trailing slash is added if missing.
-- **Referenced in**: `src/halloween/halloween.config.ts`
+The bot's embed author icons and candy images need no variable of their own. They live in `apps/frontend/public/halloween/{icon,candy}/N.png`, ship with the frontend, and are served from `FRONTEND_URL` + `/halloween/`, so the Halloween bot also requires `FRONTEND_URL`. After adding or removing images, run `yarn halloween:images` to regenerate their counts; CI fails if they are out of date.
 
 ## Rate Limiting
 

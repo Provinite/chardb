@@ -5,9 +5,9 @@ import { parseDiscordPublicKey } from "./discord/verify-signature";
 
 /**
  * The Halloween bot is its own Discord application, separate from the one
- * chardb uses for account linking, so it has its own credentials. All four are
- * required: a backend that cannot answer Discord should fail at boot, not on
- * the first `/knock`.
+ * chardb uses for account linking, so it has its own credentials. All are
+ * required, as is FRONTEND_URL for its images: a backend that cannot answer
+ * Discord should fail at boot, not on the first `/knock`.
  */
 @Injectable()
 export class HalloweenConfig {
@@ -20,7 +20,8 @@ export class HalloweenConfig {
   readonly botToken: string;
   /**
    * Where the embed author icons (`icon/0.png`..) and candy images
-   * (`candy/0.png`..) live. Always ends in `/`.
+   * (`candy/0.png`..) live: the frontend's `public/halloween`, published
+   * with the frontend. Always ends in `/`.
    */
   readonly imageBaseUrl: string;
 
@@ -45,9 +46,9 @@ export class HalloweenConfig {
       );
     }
     this.botToken = required("HALLOWEEN_DISCORD_BOT_TOKEN");
-    const imageBaseUrl = required("HALLOWEEN_IMAGE_BASE_URL");
-    this.imageBaseUrl = imageBaseUrl.endsWith("/")
-      ? imageBaseUrl
-      : `${imageBaseUrl}/`;
+    this.imageBaseUrl = new URL(
+      "/halloween/",
+      required("FRONTEND_URL"),
+    ).toString();
   }
 }

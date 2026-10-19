@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Prod and dev infra carry the Halloween bot's config** as four `halloween-*` SSM parameters set by hand; prod needs the two-step apply in `DEPLOYMENT_GUIDE.md` (#399).
+- **Prod and dev infra carry the Halloween bot's config** as three `halloween-discord-*` SSM parameters set by hand; prod needs the two-step apply in `DEPLOYMENT_GUIDE.md` (#399).
+- **CI checks the Halloween bot's image counts**: `yarn halloween:images` counts `apps/frontend/public/halloween` into `images.generated.ts`, and the drift job fails if it is stale or the numbering has a gap (#399).
 - **A "Halloween Event" walkthrough** (`docs/docs/halloween-event.html`), eight steps with seven screenshots: turning the event on, finding and setting it up, the event page, adding and changing prizes, delivering them, and the Discord commands (#399).
 
 - **An "Account Linking" walkthrough** (`docs/docs/account-linking.html`), four steps with three screenshots: where linking lives, how a link completes, the linked list, and the profile badges (#236).
