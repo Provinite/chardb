@@ -323,7 +323,12 @@ describe("Halloween management (e2e)", () => {
       it("refuses a character prize with more than one in stock", async () => {
         const ghost = await character();
         const res = await gql(CREATE, {
-          input: { id: "ghost", name: "Ghost", stock: 2, characterId: ghost.id },
+          input: {
+            id: "ghost",
+            name: "Ghost",
+            stock: 2,
+            characterId: ghost.id,
+          },
         });
         expect(res.body.errors?.[0].message).toBe(
           "A character prize has a stock of 1",
@@ -485,7 +490,12 @@ describe("Halloween management (e2e)", () => {
       it("never changes a character prize's stock", async () => {
         const ghost = await character();
         await gql(CREATE, {
-          input: { id: "ghost", name: "Ghost", stock: 1, characterId: ghost.id },
+          input: {
+            id: "ghost",
+            name: "Ghost",
+            stock: 1,
+            characterId: ghost.id,
+          },
         });
         // Won, so out of stock: putting it back would offer a character
         // somebody already has.

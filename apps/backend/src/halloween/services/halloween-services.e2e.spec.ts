@@ -124,9 +124,9 @@ describe("Halloween services (e2e)", () => {
 
     it("refuses to decrement an exhausted prize, as out of prizes", async () => {
       await createPrize("gone", { currentStock: 0 });
-      await expect(
-        prizes.decrementStock("gone", GUILD),
-      ).rejects.toBeInstanceOf(OutOfPrizesError);
+      await expect(prizes.decrementStock("gone", GUILD)).rejects.toBeInstanceOf(
+        OutOfPrizesError,
+      );
     });
 
     it("locks the in-stock rows for the rest of the transaction", async () => {
