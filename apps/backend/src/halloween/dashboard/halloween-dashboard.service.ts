@@ -260,7 +260,9 @@ export class HalloweenDashboardService {
       event: delivered
         ? HalloweenLogEvent.PrizeMarkedDelivered
         : HalloweenLogEvent.PrizeUnmarkedDelivered,
-      message: `${delivered ? "Marked" : "Unmarked"} prize ${knock.prize.id} delivered for knock ${knockEventId}`,
+      message: delivered
+        ? "Halloween prize marked delivered"
+        : "Halloween prize marked not delivered",
       communityId,
       guildId,
       knockEventId,

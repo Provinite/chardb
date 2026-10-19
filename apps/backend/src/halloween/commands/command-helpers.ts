@@ -26,7 +26,8 @@ export function requireChatInput(
   if (!isChatInput(interaction)) {
     throw new HalloweenDiscordError({
       thrownFrom: "requireChatInput",
-      message: `Something went wrong while handling your interaction. ERR_UNEXPECTED_INTERACTION_KIND`,
+      message:
+        "Something went wrong while handling your interaction. ERR_UNEXPECTED_INTERACTION_KIND",
       sourceError: new Error(
         `Received unexpected command in ${interaction.data.name} chat command handler. Expected a guild chat command, but got something else.`,
       ),

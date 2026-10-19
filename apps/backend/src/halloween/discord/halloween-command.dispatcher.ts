@@ -108,7 +108,7 @@ export class HalloweenCommandDispatcher {
                   this.logger.error(
                     {
                       event: HalloweenLogEvent.AfterReplyFailed,
-                      message: `Work after the reply to /${fields.command} failed`,
+                      message: "Work after a command's reply failed",
                       ...fields,
                       cause:
                         error instanceof Error ? error.message : String(error),
@@ -142,12 +142,13 @@ export class HalloweenCommandDispatcher {
       if (!command) {
         throw new HalloweenDiscordError({
           thrownFrom: "HalloweenCommandDispatcher",
-          message: `Unknown command, use /help for details`,
-          sourceError: new Error(`Unknown command: ${fields.command}`),
+          message: "Unknown command, use /help for details",
+          // The command's name is on every line logged about it.
+          sourceError: new Error("Unknown command"),
         });
       }
       const result = await command.handle(interaction);
-      this.logger.log(completed("ok", `/${fields.command} succeeded`));
+      this.logger.log(completed("ok", "Command succeeded"));
       return { result, outcome: "ok" };
     } catch (error) {
       const reportable =
@@ -173,10 +174,8 @@ export class HalloweenCommandDispatcher {
         const cause = reportable === error ? reportable.sourceError : error;
         this.logger.error(
           {
-            ...completed(
-              outcome,
-              `/${fields.command} failed: ${reportable.message}`,
-            ),
+            // `reason` says why.
+            ...completed(outcome, "Command failed"),
             ...details,
             cause: cause instanceof Error ? cause.message : reportable.message,
           },
@@ -185,10 +184,7 @@ export class HalloweenCommandDispatcher {
       } else {
         outcome = "refused";
         this.logger.warn({
-          ...completed(
-            outcome,
-            `/${fields.command} refused: ${reportable.message}`,
-          ),
+          ...completed(outcome, "Command refused"),
           ...details,
         });
       }

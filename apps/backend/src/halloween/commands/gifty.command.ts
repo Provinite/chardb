@@ -77,7 +77,7 @@ export class GiftyCommand implements HalloweenCommandHandler {
     if (!sent) {
       this.logger.log({
         event: HalloweenLogEvent.GiftyRateLimited,
-        message: `Refused a second gifty from ${fromUserId} this reset`,
+        message: "Refused a second gifty this reset",
         ...who,
       } satisfies HalloweenLogLine);
       return {
@@ -99,7 +99,7 @@ export class GiftyCommand implements HalloweenCommandHandler {
 
     this.logger.log({
       event: HalloweenLogEvent.GiftySent,
-      message: `Gifty ${sent.id} sent from ${fromUserId} to ${toUserId}`,
+      message: "Gifty sent",
       ...who,
       giftyId: sent.id,
       rateLimitSkipped,

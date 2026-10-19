@@ -143,8 +143,11 @@ export class HalloweenDashboardResolver {
     });
     this.logger.log({
       event: HalloweenLogEvent.CommunityToggled,
-      message: `Halloween ${enabled ? "enabled" : "disabled"} for community ${community.name}`,
+      message: enabled
+        ? "Halloween event turned on for a community"
+        : "Halloween event turned off for a community",
       communityId,
+      communityName: community.name,
       enabled,
       actorUserId: user.id,
     } satisfies HalloweenLogLine);

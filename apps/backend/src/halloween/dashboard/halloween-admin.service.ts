@@ -107,7 +107,7 @@ export class HalloweenAdminService {
     if (!before) {
       this.logger.log({
         event: HalloweenLogEvent.SettingsCreated,
-        message: `Set up the event in guild ${guildId} from chardb`,
+        message: "Halloween event set up from chardb",
         ...who,
       } satisfies HalloweenLogLine);
     }
@@ -115,7 +115,7 @@ export class HalloweenAdminService {
       if (before && sameValue(before[field], saved[field])) continue;
       this.logger.log({
         event: HalloweenLogEvent.SettingChanged,
-        message: `Changed ${field} in guild ${guildId} from chardb`,
+        message: "Halloween event setting changed from chardb",
         ...who,
         setting: field,
         oldValue: before ? before[field] : null,
@@ -191,7 +191,7 @@ export class HalloweenAdminService {
 
     this.logger.log({
       event: HalloweenLogEvent.PrizeAdded,
-      message: `Added prize ${saved.id} to guild ${guildId} from chardb`,
+      message: "Halloween prize added from chardb",
       communityId,
       guildId,
       actorUserId,
@@ -268,7 +268,7 @@ export class HalloweenAdminService {
 
     this.logger.log({
       event: HalloweenLogEvent.PrizeUpdated,
-      message: `Changed prize ${prizeId} in guild ${guildId} from chardb`,
+      message: "Halloween prize changed from chardb",
       communityId,
       guildId,
       actorUserId,
@@ -314,7 +314,7 @@ export class HalloweenAdminService {
     });
     this.logger.log({
       event: HalloweenLogEvent.PrizeRemoved,
-      message: `Removed prize ${prizeId} from guild ${guildId} from chardb`,
+      message: "Halloween prize removed from chardb",
       communityId,
       guildId,
       actorUserId,

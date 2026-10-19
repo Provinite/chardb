@@ -152,7 +152,7 @@ export class KnockCommand implements HalloweenCommandHandler {
         const win = roll <= settings.winRate;
         this.logger.log({
           event: HalloweenLogEvent.KnockRolled,
-          message: `Knock by ${userId} rolled ${roll} against ${settings.winRate}: ${win ? "win" : "loss"}`,
+          message: "Knock rolled",
           ...who,
           roll,
           winRate: settings.winRate,
@@ -202,7 +202,7 @@ export class KnockCommand implements HalloweenCommandHandler {
       this.logger.error(
         {
           event: HalloweenLogEvent.WinChannelPostFailed,
-          message: `Could not announce a win in channel ${channelId}`,
+          message: "Could not announce a win in the win channel",
           interactionId: interaction.id,
           guildId: interaction.guild_id,
           userId: interaction.member.user.id,
@@ -234,14 +234,14 @@ export class KnockCommand implements HalloweenCommandHandler {
       await this.prizeAward.award(prize, userId);
       this.logger.log({
         event: HalloweenLogEvent.PrizeDelivered,
-        message: `Delivered prize ${prize.id} to Discord user ${userId}`,
+        message: "Delivered a chardb prize",
         ...delivery,
       } satisfies HalloweenLogLine);
     } catch (error) {
       this.logger.error(
         {
           event: HalloweenLogEvent.PrizeDeliveryFailed,
-          message: `Prize ${prize.id} won by ${userId} was not delivered; grant it by hand`,
+          message: "A won chardb prize was not delivered; grant it by hand",
           ...delivery,
           cause: error instanceof Error ? error.message : String(error),
         } satisfies HalloweenLogLine,
@@ -311,7 +311,7 @@ export class KnockCommand implements HalloweenCommandHandler {
       prize: null,
       log: {
         event: HalloweenLogEvent.KnockLost,
-        message: `Knock by ${userId} lost`,
+        message: "Knock lost",
         interactionId: interaction.id,
         guildId,
         userId,
@@ -427,7 +427,7 @@ export class KnockCommand implements HalloweenCommandHandler {
       prize,
       log: {
         event: HalloweenLogEvent.KnockWon,
-        message: `Knock by ${userId} won ${prize.id} (${stockRemaining} left)`,
+        message: "Knock won",
         interactionId: interaction.id,
         guildId,
         userId,

@@ -69,7 +69,7 @@ export class DeviantArtCommand implements HalloweenCommandHandler {
     });
     this.logger.log({
       event: HalloweenLogEvent.DeviantArtSaved,
-      message: `Saved DeviantArt name for ${chat.member.user.id}`,
+      message: "Saved a player's DeviantArt name",
       interactionId: chat.id,
       guildId: chat.guild_id,
       userId: chat.member.user.id,

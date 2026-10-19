@@ -81,7 +81,7 @@ export class HalloweenInteractionsController {
       // replay or a badly skewed clock.
       this.logger.warn({
         event: HalloweenLogEvent.InteractionRejected,
-        message: `Refused an interaction: ${check.reason}`,
+        message: "Refused an interaction that failed the signature check",
         reason: check.reason,
         hasSignature: Boolean(req.header("X-Signature-Ed25519")),
         hasTimestamp: Boolean(req.header("X-Signature-Timestamp")),
@@ -107,7 +107,7 @@ export class HalloweenInteractionsController {
     if (interaction.type !== InteractionType.ApplicationCommand) {
       this.logger.warn({
         event: HalloweenLogEvent.UnsupportedInteraction,
-        message: `Refused interaction of unsupported type ${interaction.type}`,
+        message: "Refused an interaction of an unsupported type",
         interactionId: interaction.id,
         interactionType: interaction.type,
       } satisfies HalloweenLogLine);
@@ -124,7 +124,7 @@ export class HalloweenInteractionsController {
     if (!interaction.guild_id) {
       this.logger.log({
         event: HalloweenLogEvent.NotInGuild,
-        message: `Refused /${interaction.data.name} outside a server`,
+        message: "Refused a command used outside a server",
         interactionId: interaction.id,
         command: interaction.data.name,
         userId: interaction.user?.id ?? interaction.member?.user.id,
@@ -143,7 +143,7 @@ export class HalloweenInteractionsController {
     const command = guildInteraction.data.name.toLowerCase();
     this.logger.log({
       event: HalloweenLogEvent.InteractionReceived,
-      message: `Received /${command}`,
+      message: "Received a command",
       interactionId: guildInteraction.id,
       command,
       guildId: guildInteraction.guild_id,
@@ -164,7 +164,7 @@ export class HalloweenInteractionsController {
     const reportLost = (done: DispatchedCommand) => {
       this.logger.error({
         event: HalloweenLogEvent.ReplyNotSent,
-        message: `The reply to /${command} never reached Discord`,
+        message: "A command's reply never reached Discord",
         interactionId: guildInteraction.id,
         command,
         guildId: guildInteraction.guild_id,

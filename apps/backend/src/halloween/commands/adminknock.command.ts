@@ -34,7 +34,7 @@ export class AdminKnockCommand implements HalloweenCommandHandler {
     if (option?.type !== ApplicationCommandOptionType.User) {
       throw new HalloweenDiscordError({
         thrownFrom: "AdminKnockCommand",
-        message: `You must provide a target user for the ${this.name} command`,
+        message: "You must provide a target user for the adminknock command",
         sourceError: new Error(
           option
             ? `Got a non-user option in the first slot for command ${this.name}`
@@ -47,7 +47,7 @@ export class AdminKnockCommand implements HalloweenCommandHandler {
     // an admin did it.
     this.logger.log({
       event: HalloweenLogEvent.AdminKnock,
-      message: `Admin ${chat.member.user.id} knocking for ${option.value}`,
+      message: "Admin knocking for a player",
       interactionId: chat.id,
       guildId: chat.guild_id,
       adminUserId: chat.member.user.id,
