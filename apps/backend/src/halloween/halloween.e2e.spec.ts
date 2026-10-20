@@ -14,6 +14,8 @@ import { HalloweenModule } from "./halloween.module";
 import { HalloweenCommandDispatcher } from "./discord/halloween-command.dispatcher";
 import { HalloweenDiscordClient } from "./discord/halloween-discord.client";
 import { HalloweenRandom } from "./random";
+import { PrizeService } from "./services/prize.service";
+import { GuildSettingsService } from "./services/guild-settings.service";
 import {
   GUILD_ID,
   OTHER_USER_ID,
@@ -59,6 +61,9 @@ describe("Halloween bot (e2e)", () => {
 
   beforeEach(async () => {
     await testApp.clearDatabase();
+    // Each test sets the guild up afresh; /knock would otherwise use the last
+    // test's settings for ten seconds.
+    testApp.getModuleRef().get(GuildSettingsService).invalidate(GUILD_ID);
     jest.clearAllMocks();
     jest.restoreAllMocks();
   });
@@ -216,30 +221,88 @@ describe("Halloween bot (e2e)", () => {
 
   // The bot locked every prize in stock for each win, so winners queued
   // behind one another. Now a winner locks only the prize they take.
-  it("does not keep a winner waiting on a prize someone else is taking", async () => {
-    await setUpEvent();
-    await addPrize("busy");
-    const free = await addPrize("free");
-    alwaysWin();
-    jest.spyOn(random, "weighted").mockReturnValue(free);
-
+  /**
+   * Another winner, holding the guild's prize pool for 2.5 seconds. Wrapped,
+   * since an async function returning the promise would wait for it.
+   */
+  const holdPool = async () => {
     let held!: () => void;
     const locked = new Promise<void>((resolve) => (held = resolve));
     const holder = db.$transaction(
       async (tx) => {
-        await tx.$executeRaw`SELECT 1 FROM "halloween_prizes" WHERE "id" = 'busy' FOR UPDATE`;
+        await testApp
+          .getModuleRef()
+          .get(PrizeService)
+          .lockInStock(GUILD_ID, tx);
         held();
         await tx.$executeRaw`SELECT pg_sleep(2.5)`;
       },
       { timeout: 10_000 },
     );
     await locked;
+    return { holder };
+  };
+
+  it("does not keep a losing knock waiting on a winner", async () => {
+    await setUpEvent();
+    await addPrize("myo");
+    alwaysLose();
+    const { holder } = await holdPool();
 
     const started = Date.now();
     const reply = await run("knock");
-    expect(reply.embeds?.[0].title).toBe("Winner!");
+    expect(reply.embeds?.[0].title).toBe("No one was home");
     expect(Date.now() - started).toBeLessThan(1000);
     await holder;
+  });
+
+  it("answers busy, and spends nothing, when the pool stays taken too long", async () => {
+    await setUpEvent();
+    await addPrize("myo");
+    alwaysWin();
+    const { holder } = await holdPool();
+
+    const started = Date.now();
+    const reply = await run("knock");
+    expect(Date.now() - started).toBeLessThan(3000);
+    expect(reply.embeds?.[0].title).toBe("Cloverse Halloween 2026 - Busy");
+    await holder;
+    expect(await db.halloweenKnockEvent.count()).toBe(0);
+    const [prize] = await db.halloweenPrize.findMany();
+    expect(prize.currentStock).toBe(2);
+  });
+
+  // Each winner picks from what the winners before them left.
+  it("gives two last prizes to two winners at once, one each", async () => {
+    await setUpEvent();
+    await db.halloweenPrize.createMany({
+      data: ["last-a", "last-b"].map((id) => ({
+        guildId: GUILD_ID,
+        id,
+        name: id,
+        initialStock: 1,
+        currentStock: 1,
+        weight: 10,
+        image: `https://i.test/${id}.png`,
+      })),
+    });
+    alwaysWin();
+
+    const replies = await Promise.all([
+      run("knock"),
+      run("knock", undefined, { userId: OTHER_USER_ID }),
+    ]);
+
+    expect(replies.map((r) => r.embeds?.[0].title)).toEqual([
+      "Winner!",
+      "Winner!",
+    ]);
+    const won = await db.halloweenKnockEvent.findMany({
+      orderBy: { prizeId: "asc" },
+    });
+    expect(won.map((k) => k.prizeId)).toEqual(["last-a", "last-b"]);
+    const stock = await db.halloweenPrize.findMany();
+    expect(stock.every((p) => p.currentStock === 0)).toBe(true);
   });
 
   it("keeps the player's knock when the prize cannot be delivered", async () => {

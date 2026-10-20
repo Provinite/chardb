@@ -4,18 +4,23 @@ import { BusyError } from "../errors";
 
 /**
  * How long a statement may wait for a lock: the player's advisory lock, or
- * the prize rows a win takes. Set by `PlayerLock`, which every locked
+ * the guild's prize pool a win takes. Set by `PlayerLock`, which every locked
  * transaction takes first.
+ *
+ * Winners in a guild take turns with the pool, so this is how long the queue
+ * of winners can be: about 15 ms a win in the load test, so roughly 120
+ * winners arriving at once before the rest are told to try again.
  */
-export const LOCK_TIMEOUT_MS = 1500;
+export const LOCK_TIMEOUT_MS = 1800;
 
 /**
- * Discord waits three seconds for the reply, and the reply now waits for the
- * transaction. Both limits together stay inside that, leaving room for the
- * reply itself.
+ * Discord waits three seconds for the reply, and the reply waits for the
+ * transaction: at most `maxWait` for a connection, then `timeout` to run.
+ * Together 2.7 s, leaving the rest for the reply itself. A knock's own work
+ * takes milliseconds, so most of `timeout` is the lock wait above.
  */
 export const LOCKED_TRANSACTION_OPTIONS = {
-  maxWait: 500,
+  maxWait: 700,
   timeout: 2000,
 } as const;
 

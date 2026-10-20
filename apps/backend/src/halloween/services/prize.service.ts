@@ -126,10 +126,7 @@ export function validatePrize(
 export class PrizeService {
   constructor(private readonly db: DatabaseService) {}
 
-  /**
-   * The guild's prizes with stock left, unlocked: a pick from these can lose
-   * its prize to another winner, which `takeOne` reports.
-   */
+  /** The guild's prizes with stock left, unlocked: for showing, not winning. */
   async inStock(
     guildId: string,
     tx: Prisma.TransactionClient = this.db,
@@ -152,23 +149,30 @@ export class PrizeService {
   }
 
   /**
-   * Takes one of a prize, returning it with what is left, or null when someone
-   * else took the last one first. Only that prize's row is locked, and only
-   * for the rest of the caller's transaction, so winners of different prizes
-   * never wait on each other.
+   * The guild's in-stock prizes, locked for the rest of the transaction. A
+   * win picks by stock times weight over the whole pool, so its odds are
+   * exact only if no other win changes the pool meanwhile: winners in a guild
+   * take turns. Locked in id order, so two winners cannot deadlock. A wait
+   * longer than the lock timeout raises Postgres's lock_not_available, which
+   * the knock answers as busy.
    */
-  async takeOne(
+  async lockInStock(
+    guildId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<HalloweenPrize[]> {
+    await tx.$queryRaw`SELECT 1 FROM "halloween_prizes" WHERE "guild_id" = ${guildId} AND "current_stock" > 0 ORDER BY "id" FOR UPDATE`;
+    return this.inStock(guildId, tx);
+  }
+
+  /** One fewer of a prize. For a prize `lockInStock` returned. */
+  async decrement(
     prizeId: string,
     guildId: string,
     tx: Prisma.TransactionClient = this.db,
-  ): Promise<HalloweenPrize | null> {
-    const { count } = await tx.halloweenPrize.updateMany({
-      where: { guildId, id: prizeId, currentStock: { gt: 0 } },
-      data: { currentStock: { decrement: 1 } },
-    });
-    if (count === 0) return null;
-    return tx.halloweenPrize.findUniqueOrThrow({
+  ): Promise<HalloweenPrize> {
+    return tx.halloweenPrize.update({
       where: { guildId_id: { guildId, id: prizeId } },
+      data: { currentStock: { decrement: 1 } },
     });
   }
 }

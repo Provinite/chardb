@@ -1,3 +1,4 @@
+import type { Prisma } from "@chardb/database";
 import { TestApp } from "../../../test/setup-e2e";
 import { DatabaseModule } from "../../database/database.module";
 import { AuthModule } from "../../auth/auth.module";
@@ -114,51 +115,79 @@ describe("Halloween services (e2e)", () => {
       expect(await prizes.hasInStock(GUILD)).toBe(false);
     });
 
-    it("takes one of a prize, returning what is left", async () => {
+    it("decrements a prize's stock", async () => {
       await createPrize("myo");
-      const taken = await prizes.takeOne("myo", GUILD);
-      expect(taken?.currentStock).toBe(2);
-      expect((await prizes.inStock(GUILD))[0].currentStock).toBe(2);
+      const left = await prizes.decrement("myo", GUILD);
+      expect(left.currentStock).toBe(2);
     });
 
-    it("takes nothing from an exhausted prize", async () => {
-      await createPrize("gone", { currentStock: 0 });
-      await expect(prizes.takeOne("gone", GUILD)).resolves.toBeNull();
-      const [gone] = await db.halloweenPrize.findMany();
-      expect(gone.currentStock).toBe(0);
-    });
+    /**
+     * A win picks from the whole pool by stock times weight, so it must see
+     * every win before it: with stocks of one or two at the end of the event,
+     * a stale read would change the odds. One winner at a time holds the
+     * guild's in-stock prizes until they commit.
+     */
+    describe("locking the pool for a win", () => {
+      /** A winner's transaction that holds the pool until let go. */
+      const holdPool = async (
+        onLocked?: (tx: Prisma.TransactionClient) => Promise<void>,
+      ) => {
+        let release!: () => void;
+        const released = new Promise<void>((r) => (release = r));
+        let locked!: () => void;
+        const isLocked = new Promise<void>((r) => (locked = r));
+        const holder = db.$transaction(
+          async (tx) => {
+            await prizes.lockInStock(GUILD, tx);
+            await onLocked?.(tx);
+            locked();
+            await released;
+          },
+          { timeout: 10_000 },
+        );
+        await isLocked;
+        return { release, holder };
+      };
 
-    it("gives the last one to exactly one of two takers", async () => {
-      await createPrize("last", { currentStock: 1 });
-      const [a, b] = await Promise.all([
-        db.$transaction((tx) => prizes.takeOne("last", GUILD, tx)),
-        db.$transaction((tx) => prizes.takeOne("last", GUILD, tx)),
-      ]);
-      expect([a, b].filter(Boolean)).toHaveLength(1);
-      const [last] = await db.halloweenPrize.findMany();
-      expect(last.currentStock).toBe(0);
-    });
-
-    // Winners of different prizes no longer queue behind one another.
-    it("does not wait on another prize that someone is taking", async () => {
-      await createPrize("busy", { currentStock: 1 });
-      await createPrize("free", { currentStock: 1 });
-      let release!: () => void;
-      const held = new Promise<void>((r) => (release = r));
-      const holder = db.$transaction(async (tx) => {
-        await prizes.takeOne("busy", GUILD, tx);
-        await held;
+      it("returns the prizes still in stock", async () => {
+        await createPrize("in-stock");
+        await createPrize("gone", { currentStock: 0 });
+        const pool = await db.$transaction((tx) =>
+          prizes.lockInStock(GUILD, tx),
+        );
+        expect(pool.map((p) => p.id)).toEqual(["in-stock"]);
       });
-      await new Promise((r) => setTimeout(r, 100));
 
-      const started = Date.now();
-      const free = await db.$transaction((tx) =>
-        prizes.takeOne("free", GUILD, tx),
-      );
-      expect(free?.id).toBe("free");
-      expect(Date.now() - started).toBeLessThan(500);
-      release();
-      await holder;
+      it("makes the next winner wait for the one before", async () => {
+        await createPrize("myo");
+        const { release, holder } = await holdPool();
+
+        let second = false;
+        const next = db
+          .$transaction((tx) => prizes.lockInStock(GUILD, tx))
+          .then(() => (second = true));
+        await new Promise((r) => setTimeout(r, 200));
+        expect(second).toBe(false);
+
+        release();
+        await holder;
+        await next;
+        expect(second).toBe(true);
+      });
+
+      it("shows the next winner the stock the one before left", async () => {
+        await createPrize("myo", { currentStock: 1 });
+        await createPrize("cat", { currentStock: 2 });
+        const { release, holder } = await holdPool(async (tx) => {
+          await prizes.decrement("myo", GUILD, tx);
+        });
+
+        const next = db.$transaction((tx) => prizes.lockInStock(GUILD, tx));
+        release();
+        await holder;
+        const pool = await next;
+        expect(pool.map((p) => [p.id, p.currentStock])).toEqual([["cat", 2]]);
+      });
     });
   });
 

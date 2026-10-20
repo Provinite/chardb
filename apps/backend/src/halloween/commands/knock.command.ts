@@ -41,27 +41,24 @@ import { formatChardbLink } from "../chardb-link";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { requireChatInput } from "./command-helpers";
 
-/** How many prizes a win tries to take before it settles for none. */
-const MAX_TAKES = 3;
-
-/**
- * A win as committed: everything its reply needs but the prize's picture,
- * which is looked up after.
- */
-interface Win {
-  /** As taken: its `currentStock` is what is left. */
-  prize: HalloweenPrize;
+/** A knock as committed. Its reply is built after, outside the transaction. */
+interface Spent {
   knockEvent: HalloweenKnockEvent;
+  /** The gifty that paid for it, if the day's knocks were gone. */
   gifty: HalloweenGifty | null;
-  winChannel: string | null;
-  remainingKnocks: number;
-  bankedGifties: number;
-  hasDeviantArt: boolean;
-  takeAttempts: number;
-  takeMs: number;
+  /** Knocks used from today's allowance before this one. */
+  knockCount: number;
 }
 
-type Knocked = { won: false; result: KnockResult } | { won: true; win: Win };
+interface Win extends Spent {
+  /** As taken: its `currentStock` is what is left. */
+  prize: HalloweenPrize;
+  /** `Date.now()` when the win asked for the pool, and when it got it. */
+  poolRequestedAt: number;
+  poolLockedAt: number;
+}
+
+type Knocked = { won: false; lost: Spent } | { won: true; win: Win };
 
 /**
  * What a committed knock answers with and leaves to do: announce a win, log
@@ -83,9 +80,15 @@ interface KnockResult {
  *
  * The bot split this across two Lambdas joined by a queue -- one rolled the
  * dice and saved a pending win, the other picked the prize -- so it could
- * answer Discord within three seconds. Here the whole knock is one
- * transaction, of database work only, and its result is the reply: a knock
+ * answer Discord within three seconds. Here the dice are rolled first, and
+ * what the knock saves is one transaction, of database work only: a knock
  * that fails part-way leaves no trace, and the player keeps it.
+ *
+ * A loss locks only the player. A win also locks the guild's whole prize
+ * pool, so each winner picks from exactly the stock the winners before them
+ * left: at the end of the event, when one-of-a-kind prizes are down to their
+ * last, the odds stay exact. Winners therefore take turns, and everything
+ * that does not depend on the prize is done before a winner joins the queue.
  *
  * A win commits with its prize granted, before Discord shows it. If the reply
  * is lost, the controller logs that; the win and the prize stand.
@@ -124,94 +127,63 @@ export class KnockCommand implements HalloweenCommandHandler {
     const userId = interaction.member.user.id;
     const who = { interactionId: interaction.id, guildId, userId };
 
+    const settings = await this.guildSettings.getCached(guildId);
+    const status = this.guildSettings.eventStatus(settings);
+    const dates = { startDate: settings.startDate, endDate: settings.endDate };
+    if (status === EventStatus.Ended) {
+      throw new EventEndedError({ thrownFrom: "KnockCommand", ...dates });
+    }
+    if (status === EventStatus.NotStartedYet) {
+      throw new EventNotStartedError({ thrownFrom: "KnockCommand", ...dates });
+    }
+    // Unlocked, so it can be stale: a win checks again under the pool's lock.
+    if (!(await this.prizes.hasInStock(guildId))) {
+      throw new OutOfPrizesError({ thrownFrom: "KnockCommand", guildId });
+    }
+
+    const roll = this.random.unit();
+    const win = roll <= settings.winRate;
+    this.logger.log({
+      event: HalloweenLogEvent.KnockRolled,
+      message: "Knock rolled",
+      ...who,
+      roll,
+      winRate: settings.winRate,
+      win,
+    } satisfies HalloweenLogLine);
+
     const started = Date.now();
     const knocked = await lockedTransaction<Knocked>(
       this.db,
       "KnockCommand",
       async (tx) => {
-        // Before reading the allowance, so two knocks at once cannot both pass.
-        await this.lock.acquire(tx, "knock", guildId, userId);
-        const settings = await this.guildSettings.get(guildId, tx);
-
-        const status = this.guildSettings.eventStatus(settings);
-        const dates = {
-          startDate: settings.startDate,
-          endDate: settings.endDate,
-        };
-        if (status === EventStatus.Ended) {
-          throw new EventEndedError({ thrownFrom: "KnockCommand", ...dates });
-        }
-        if (status === EventStatus.NotStartedYet) {
-          throw new EventNotStartedError({
-            thrownFrom: "KnockCommand",
-            ...dates,
-          });
-        }
-
-        if (!(await this.prizes.hasInStock(guildId, tx))) {
-          throw new OutOfPrizesError({ thrownFrom: "KnockCommand", guildId });
-        }
-
-        const knockCount = await this.knocks.countSinceLastReset(
-          settings,
-          userId,
-          tx,
-        );
-        let gifty: HalloweenGifty | null = null;
-        if (knockCount >= settings.knocksPerDay) {
-          gifty = await this.gifties.nextPending(guildId, userId, tx);
-          if (!gifty) {
-            throw new TooManyKnocksError({
-              thrownFrom: "KnockCommand",
-              guildId,
-              userId,
-              knocksPerDay: settings.knocksPerDay,
-              resetTime: settings.resetTime,
-              lastResetTime: this.guildSettings.lastReset(settings),
-            });
-          }
-        }
-
-        const roll = this.random.unit();
-        const win = roll <= settings.winRate;
-        this.logger.log({
-          event: HalloweenLogEvent.KnockRolled,
-          message: "Knock rolled",
-          ...who,
-          roll,
-          winRate: settings.winRate,
-          win,
-          knocksUsed: knockCount,
-          knocksPerDay: settings.knocksPerDay,
-          giftyId: gifty?.id ?? null,
-        } satisfies HalloweenLogLine);
-
+        const allowance = await this.allowance(interaction, settings, tx);
         return win
-          ? {
-              won: true,
-              win: await this.win(interaction, settings, knockCount, gifty, tx),
-            }
+          ? { won: true, win: await this.win(interaction, allowance, tx) }
           : {
               won: false,
-              result: await this.lose(
-                interaction,
-                settings,
-                knockCount,
-                gifty,
-                tx,
-              ),
+              lost: await this.record(interaction, allowance, null, tx),
             };
       },
     );
-    const transactionMs = Date.now() - started;
+    const committedAt = Date.now();
+    const transactionMs = committedAt - started;
 
     const result = knocked.won
-      ? await this.announceable(interaction, knocked.win)
-      : knocked.result;
+      ? await this.announceable(interaction, settings, knocked.win)
+      : await this.lost(interaction, settings, knocked.lost);
+    const timings = knocked.won
+      ? {
+          transactionMs,
+          prizeLockWaitMs:
+            knocked.win.poolLockedAt - knocked.win.poolRequestedAt,
+          prizeLockHeldMs: committedAt - knocked.win.poolLockedAt,
+        }
+      : { transactionMs };
 
     // Logged only once committed, so the log never shows a win that was
     // rolled back.
-    this.logger.log({ ...result.log, transactionMs });
+    this.logger.log({ ...result.log, ...timings });
 
     const { announcement, prize } = result;
     if (!announcement) {
@@ -248,29 +220,79 @@ export class KnockCommand implements HalloweenCommandHandler {
     }
   }
 
-  private async lose(
+  /**
+   * Which of the player's knocks this is: one of the day's, or one a gifty
+   * pays for once those are gone. Takes the player's lock before reading the
+   * allowance, so two knocks at once cannot both pass.
+   */
+  private async allowance(
     interaction: APIChatInputApplicationCommandGuildInteraction,
     settings: HalloweenGuildSettings,
-    knockCount: number,
-    gifty: HalloweenGifty | null,
     tx: Prisma.TransactionClient,
-  ): Promise<KnockResult> {
+  ): Promise<Omit<Spent, "knockEvent">> {
     const guildId = interaction.guild_id;
     const userId = interaction.member.user.id;
+    await this.lock.acquire(tx, "knock", guildId, userId);
+    const knockCount = await this.knocks.countSinceLastReset(
+      settings,
+      userId,
+      tx,
+    );
+    let gifty: HalloweenGifty | null = null;
+    if (knockCount >= settings.knocksPerDay) {
+      // No row lock needed: only this player's knocks spend their gifties,
+      // and the player's lock lets one through at a time.
+      gifty = await this.gifties.nextPending(guildId, userId, tx);
+      if (!gifty) {
+        throw new TooManyKnocksError({
+          thrownFrom: "KnockCommand",
+          guildId,
+          userId,
+          knocksPerDay: settings.knocksPerDay,
+          resetTime: settings.resetTime,
+          lastResetTime: this.guildSettings.lastReset(settings),
+        });
+      }
+    }
+    return { gifty, knockCount };
+  }
+
+  /** Saves the knock, and spends the gifty that paid for it. */
+  private async record(
+    interaction: APIChatInputApplicationCommandGuildInteraction,
+    { gifty, knockCount }: Omit<Spent, "knockEvent">,
+    prizeId: string | null,
+    tx: Prisma.TransactionClient,
+  ): Promise<Spent> {
     const knockEvent = await this.knocks.save(
-      { guildId, userId, prizeId: null },
+      {
+        guildId: interaction.guild_id,
+        userId: interaction.member.user.id,
+        prizeId,
+      },
       tx,
     );
     if (gifty) {
       gifty = await this.gifties.fulfill(gifty, knockEvent, tx);
     }
+    return { knockEvent, gifty, knockCount };
+  }
+
+  /** A committed loss's reply and log line. */
+  private async lost(
+    interaction: APIChatInputApplicationCommandGuildInteraction,
+    settings: HalloweenGuildSettings,
+    { knockEvent, gifty, knockCount }: Spent,
+  ): Promise<KnockResult> {
+    const guildId = interaction.guild_id;
+    const userId = interaction.member.user.id;
 
     // Negative while spending gifties.
     const remainingKnocks = Math.max(
       0,
       settings.knocksPerDay - (knockCount + 1),
     );
-    const bankedGifties = await this.gifties.pendingCount(guildId, userId, tx);
+    const bankedGifties = await this.gifties.pendingCount(guildId, userId);
 
     const fields: APIEmbedField[] = [];
     if (gifty) {
@@ -314,6 +336,8 @@ export class KnockCommand implements HalloweenCommandHandler {
         guildId,
         userId,
         knockEventId: knockEvent.id,
+        knocksUsed: knockCount,
+        knocksPerDay: settings.knocksPerDay,
         giftyId: gifty?.id ?? null,
         giftyFrom: gifty?.fromUserId ?? null,
         remainingKnocks,
@@ -323,90 +347,52 @@ export class KnockCommand implements HalloweenCommandHandler {
   }
 
   /**
-   * Picks a prize by weight and takes one of it. The pool is read unlocked,
-   * so a pick can lose its prize to another winner between the read and the
-   * take; then it picks again from the rest, a few times at most.
+   * Takes the guild's pool, picks a prize by stock times weight, and hands it
+   * over. Every other winner in the guild waits from `lockInStock` until this
+   * commits, so only what depends on the prize happens here.
    */
-  private async takePrize(
-    guildId: string,
-    tx: Prisma.TransactionClient,
-  ): Promise<{ prize: HalloweenPrize; attempts: number }> {
-    let pool = await this.prizes.inStock(guildId, tx);
-    for (let attempt = 1; attempt <= MAX_TAKES && pool.length; attempt++) {
-      const pick = this.random.weighted(
-        pool,
-        pool.map((p) => p.currentStock * p.weight),
-      );
-      // Before taking it, so a misconfigured prize is never used up.
-      await this.prizeAward.validate(pick, guildId, tx);
-      const taken = await this.prizes.takeOne(pick.id, guildId, tx);
-      if (taken) {
-        return { prize: taken, attempts: attempt };
-      }
-      pool = pool.filter((p) => p !== pick);
-    }
-    throw new OutOfPrizesError({ thrownFrom: "KnockCommand.win", guildId });
-  }
-
   private async win(
     interaction: APIChatInputApplicationCommandGuildInteraction,
-    settings: HalloweenGuildSettings,
-    knockCount: number,
-    gifty: HalloweenGifty | null,
+    allowance: Omit<Spent, "knockEvent">,
     tx: Prisma.TransactionClient,
   ): Promise<Win> {
     const guildId = interaction.guild_id;
     const userId = interaction.member.user.id;
 
-    const takeStarted = Date.now();
-    const { prize, attempts } = await this.takePrize(guildId, tx);
-    const takeMs = Date.now() - takeStarted;
-    await this.prizeAward.grant(prize, userId, tx);
-
-    const knockEvent = await this.knocks.save(
-      { guildId, userId, prizeId: prize.id },
-      tx,
-    );
-    if (gifty) {
-      gifty = await this.gifties.fulfill(gifty, knockEvent, tx);
+    const poolRequestedAt = Date.now();
+    const pool = await this.prizes.lockInStock(guildId, tx);
+    const poolLockedAt = Date.now();
+    if (!pool.length) {
+      throw new OutOfPrizesError({ thrownFrom: "KnockCommand.win", guildId });
     }
-
-    const deviantArtUser = await this.deviantArtUsers.get(
-      { guildId, userId },
-      tx,
+    const pick = this.random.weighted(
+      pool,
+      pool.map((p) => p.currentStock * p.weight),
     );
-    return {
-      prize,
-      knockEvent,
-      gifty,
-      winChannel: settings.winChannel,
-      // The count from before this knock; zero while spending gifties.
-      remainingKnocks: Math.max(0, settings.knocksPerDay - (knockCount + 1)),
-      bankedGifties: await this.gifties.pendingCount(guildId, userId, tx),
-      hasDeviantArt: deviantArtUser !== null,
-      takeAttempts: attempts,
-      takeMs,
-    };
+    // Before taking it, so a misconfigured prize is never used up.
+    await this.prizeAward.validate(pick, guildId, tx);
+    const prize = await this.prizes.decrement(pick.id, guildId, tx);
+    await this.prizeAward.grant(prize, userId, tx);
+    const spent = await this.record(interaction, allowance, prize.id, tx);
+    return { ...spent, prize, poolRequestedAt, poolLockedAt };
   }
 
   /** A committed win's reply, its win-channel post, and its log line. */
   private async announceable(
     interaction: APIChatInputApplicationCommandGuildInteraction,
-    {
-      prize,
-      knockEvent,
-      gifty,
-      winChannel,
-      remainingKnocks,
-      bankedGifties,
-      hasDeviantArt,
-      takeAttempts,
-      takeMs,
-    }: Win,
+    { winChannel, knocksPerDay }: HalloweenGuildSettings,
+    { prize, knockEvent, gifty, knockCount }: Win,
   ): Promise<KnockResult> {
     const guildId = interaction.guild_id;
     const userId = interaction.member.user.id;
-    const imageUrl = await this.imageFor(prize, interaction);
+    const [imageUrl, deviantArtUser, bankedGifties] = await Promise.all([
+      this.imageFor(prize, interaction),
+      this.deviantArtUsers.get({ guildId, userId }),
+      this.gifties.pendingCount(guildId, userId),
+    ]);
+    const hasDeviantArt = deviantArtUser !== null;
+    // The count from before this knock; zero while spending gifties.
+    const remainingKnocks = Math.max(0, knocksPerDay - (knockCount + 1));
 
     const fields: APIEmbedField[] = [{ name: "Prize", value: prize.name }];
     const chardbLink = formatChardbLink(prize);
@@ -479,8 +465,8 @@ export class KnockCommand implements HalloweenCommandHandler {
         bankedGifties,
         hasDeviantArt,
         announcedIn: winChannel,
-        takeAttempts,
-        takeMs,
+        knocksUsed: knockCount,
+        knocksPerDay,
       },
     };
   }

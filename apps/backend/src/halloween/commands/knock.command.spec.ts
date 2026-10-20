@@ -109,14 +109,14 @@ describe("/knock", () => {
   const tx = { tx: true };
   let discord: ReturnType<typeof mockDiscord>;
   let guildSettings: {
-    get: jest.Mock;
+    getCached: jest.Mock;
     eventStatus: jest.Mock;
     lastReset: jest.Mock;
   };
   let prizes: {
     hasInStock: jest.Mock;
-    inStock: jest.Mock;
-    takeOne: jest.Mock;
+    lockInStock: jest.Mock;
+    decrement: jest.Mock;
   };
   let knocks: {
     save: jest.Mock;
@@ -138,17 +138,17 @@ describe("/knock", () => {
   beforeEach(() => {
     discord = mockDiscord();
     guildSettings = {
-      get: jest.fn().mockResolvedValue(settings),
+      getCached: jest.fn().mockResolvedValue(settings),
       eventStatus: jest.fn().mockReturnValue(EventStatus.Ongoing),
       lastReset: jest.fn().mockReturnValue(LAST_RESET),
     };
     prizes = {
       hasInStock: jest.fn().mockResolvedValue(true),
-      inStock: jest.fn().mockResolvedValue([prize("myo")]),
+      lockInStock: jest.fn().mockResolvedValue([prize("myo")]),
       // The pool's prize, less the one the winner took.
-      takeOne: jest.fn(async (id: string) => {
+      decrement: jest.fn(async (id: string) => {
         const pool: HalloweenPrize[] =
-          await prizes.inStock.mock.results.at(-1)?.value;
+          await prizes.lockInStock.mock.results.at(-1)?.value;
         const taken = pool.find((p) => p.id === id) ?? prize(id);
         return { ...taken, currentStock: taken.currentStock - 1 };
       }),
@@ -238,7 +238,7 @@ describe("/knock", () => {
 
     it("makes no Discord call inside the transaction", async () => {
       win();
-      guildSettings.get.mockResolvedValue({
+      guildSettings.getCached.mockResolvedValue({
         ...settings,
         winChannel: "300000000000000009",
       });
@@ -255,13 +255,27 @@ describe("/knock", () => {
   });
 
   describe("before rolling", () => {
-    it("works inside one transaction holding the player's lock", async () => {
+    it("reads the guild's cached settings, outside any transaction", async () => {
+      await knock();
+      expect(guildSettings.getCached).toHaveBeenCalledWith(GUILD_ID);
+      expect(guildSettings.getCached.mock.invocationCallOrder[0]).toBeLessThan(
+        db.$transaction.mock.invocationCallOrder[0],
+      );
+    });
+
+    it("holds the player's lock before reading their allowance", async () => {
       await knock();
       expect(lock.acquire).toHaveBeenCalledWith(tx, "knock", GUILD_ID, USER_ID);
       expect(lock.acquire.mock.invocationCallOrder[0]).toBeLessThan(
-        guildSettings.get.mock.invocationCallOrder[0],
+        knocks.countSinceLastReset.mock.invocationCallOrder[0],
       );
-      expect(guildSettings.get).toHaveBeenCalledWith(GUILD_ID, tx);
+    });
+
+    it("rolls before opening a transaction", async () => {
+      await knock();
+      expect(
+        (random.unit as jest.Mock).mock.invocationCallOrder[0],
+      ).toBeLessThan(db.$transaction.mock.invocationCallOrder[0]);
     });
 
     it("refuses once the event is over", async () => {
@@ -275,10 +289,11 @@ describe("/knock", () => {
       await expect(knock()).rejects.toBeInstanceOf(EventNotStartedError);
     });
 
-    it("refuses when every prize is gone", async () => {
+    it("refuses when every prize is gone, before opening a transaction", async () => {
       prizes.hasInStock.mockResolvedValue(false);
       await expect(knock()).rejects.toBeInstanceOf(OutOfPrizesError);
-      expect(knocks.countSinceLastReset).not.toHaveBeenCalled();
+      expect(prizes.hasInStock).toHaveBeenCalledWith(GUILD_ID);
+      expect(db.$transaction).not.toHaveBeenCalled();
     });
 
     it("refuses a player out of knocks and gifties", async () => {
@@ -311,8 +326,9 @@ describe("/knock", () => {
 
     afterEach(() => jest.restoreAllMocks());
 
+    // Before any knock is spent, so a roll can be logged for a knock that was
+    // then refused.
     it("logs the roll", async () => {
-      knocks.countSinceLastReset.mockResolvedValue(1);
       await knock(interaction);
       expect(log).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -323,9 +339,6 @@ describe("/knock", () => {
           roll: 0.99,
           winRate: 0.4,
           win: false,
-          knocksUsed: 1,
-          knocksPerDay: 3,
-          giftyId: null,
         }),
       );
     });
@@ -339,6 +352,8 @@ describe("/knock", () => {
           event: HalloweenLogEvent.KnockLost,
           interactionId: "ref-1",
           knockEventId: 41,
+          knocksUsed: 3,
+          knocksPerDay: 3,
           giftyId: 7,
           giftyFrom: OTHER_USER_ID,
         }),
@@ -347,8 +362,11 @@ describe("/knock", () => {
 
     it("logs what a win gave and what is left", async () => {
       win();
-      prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
-      prizes.takeOne.mockResolvedValue(
+      knocks.countSinceLastReset.mockResolvedValue(1);
+      prizes.lockInStock.mockResolvedValue([
+        prize("myo", { itemTypeId: "it-1" }),
+      ]);
+      prizes.decrement.mockResolvedValue(
         prize("myo", { itemTypeId: "it-1", currentStock: 4 }),
       );
       await knock(interaction);
@@ -365,21 +383,23 @@ describe("/knock", () => {
           itemTypeId: "it-1",
           characterId: null,
           giftyId: null,
-          takeAttempts: 1,
+          knocksUsed: 1,
+          knocksPerDay: 3,
         }),
       );
     });
 
-    // How close a knock came to Discord's three seconds, and how long the
-    // prize row was contended for.
-    it("logs how long the knock and its take of the prize took", async () => {
+    // How close a knock came to Discord's three seconds, and how long winners
+    // queued for the pool and held it.
+    it("logs how long the knock took, and its wait for and hold of the pool", async () => {
       win();
       await knock(interaction);
       expect(log).toHaveBeenCalledWith(
         expect.objectContaining({
           event: HalloweenLogEvent.KnockWon,
           transactionMs: expect.any(Number),
-          takeMs: expect.any(Number),
+          prizeLockWaitMs: expect.any(Number),
+          prizeLockHeldMs: expect.any(Number),
         }),
       );
     });
@@ -447,7 +467,7 @@ describe("/knock", () => {
     it("loses when the roll is above the win rate", async () => {
       (random.unit as jest.Mock).mockReturnValue(0.41);
       await knock();
-      expect(prizes.inStock).not.toHaveBeenCalled();
+      expect(prizes.lockInStock).not.toHaveBeenCalled();
     });
 
     it("spends a gifty once the day's knocks are gone", async () => {
@@ -493,63 +513,39 @@ describe("/knock", () => {
     it("wins when the roll equals the win rate", async () => {
       (random.unit as jest.Mock).mockReturnValue(0.4);
       await knock();
-      expect(prizes.inStock).toHaveBeenCalled();
+      expect(prizes.lockInStock).toHaveBeenCalled();
     });
 
-    it("takes one of the prize, then records the win with it", async () => {
+    it("locks the pool, takes one of the prize, then records the win with it", async () => {
       await knock();
-      expect(prizes.inStock).toHaveBeenCalledWith(GUILD_ID, tx);
-      expect(prizes.takeOne).toHaveBeenCalledWith("myo", GUILD_ID, tx);
+      expect(prizes.lockInStock).toHaveBeenCalledWith(GUILD_ID, tx);
+      expect(prizes.decrement).toHaveBeenCalledWith("myo", GUILD_ID, tx);
       expect(knocks.save).toHaveBeenCalledTimes(1);
       expect(knocks.save).toHaveBeenCalledWith(
         { guildId: GUILD_ID, userId: USER_ID, prizeId: "myo" },
         tx,
       );
-      expect(prizes.takeOne.mock.invocationCallOrder[0]).toBeLessThan(
-        knocks.save.mock.invocationCallOrder[0],
-      );
     });
 
-    describe("when another winner took the prize first", () => {
-      const pool = [prize("a"), prize("b"), prize("c"), prize("d")];
-      let weighted: jest.SpyInstance;
+    // Everything that does not depend on the prize happens first, so a winner
+    // holds the pool, which every other winner waits on, as briefly as it can.
+    it("takes the pool only after the player's lock and allowance", async () => {
+      knocks.countSinceLastReset.mockResolvedValue(3);
+      gifties.nextPending.mockResolvedValue(gifty());
+      await knock();
+      const pool = prizes.lockInStock.mock.invocationCallOrder[0];
+      expect(lock.acquire.mock.invocationCallOrder[0]).toBeLessThan(pool);
+      expect(knocks.countSinceLastReset.mock.invocationCallOrder[0]).toBeLessThan(
+        pool,
+      );
+      expect(gifties.nextPending.mock.invocationCallOrder[0]).toBeLessThan(pool);
+    });
 
-      beforeEach(() => {
-        prizes.inStock.mockResolvedValue(pool);
-        // Always the first prize still in the running.
-        weighted = jest
-          .spyOn(random, "weighted")
-          .mockImplementation((items) => items[0]);
-      });
-
-      it("picks again from what is left", async () => {
-        prizes.takeOne.mockResolvedValueOnce(null);
-        await knock();
-        expect(prizes.takeOne.mock.calls.map(([id]) => id)).toEqual(["a", "b"]);
-        expect(weighted.mock.calls[1][0]).toEqual([
-          prize("b"),
-          prize("c"),
-          prize("d"),
-        ]);
-        expect(knocks.save).toHaveBeenCalledWith(
-          expect.objectContaining({ prizeId: "b" }),
-          tx,
-        );
-      });
-
-      it("gives up after three, as if the pool were empty", async () => {
-        prizes.takeOne.mockResolvedValue(null);
-        await expect(knock()).rejects.toBeInstanceOf(OutOfPrizesError);
-        expect(prizes.takeOne).toHaveBeenCalledTimes(3);
-        expect(knocks.save).not.toHaveBeenCalled();
-      });
-
-      it("gives up when every prize in the pool went", async () => {
-        prizes.inStock.mockResolvedValue([prize("a")]);
-        prizes.takeOne.mockResolvedValue(null);
-        await expect(knock()).rejects.toBeInstanceOf(OutOfPrizesError);
-        expect(prizes.takeOne).toHaveBeenCalledTimes(1);
-      });
+    it("leaves the knock unspent when the pool emptied before its turn", async () => {
+      prizes.lockInStock.mockResolvedValue([]);
+      await expect(knock()).rejects.toBeInstanceOf(OutOfPrizesError);
+      expect(prizes.decrement).not.toHaveBeenCalled();
+      expect(award.grant).not.toHaveBeenCalled();
     });
 
     it("picks a prize weighted by stock times weight", async () => {
@@ -557,7 +553,7 @@ describe("/knock", () => {
         prize("a", { currentStock: 1, weight: 10 }),
         prize("b", { currentStock: 4, weight: 5 }),
       ];
-      prizes.inStock.mockResolvedValue(pool);
+      prizes.lockInStock.mockResolvedValue(pool);
       const weighted = jest.spyOn(random, "weighted");
       await knock();
       expect(weighted).toHaveBeenCalledWith(pool, [10, 20]);
@@ -590,7 +586,7 @@ describe("/knock", () => {
 
     it("shows a chardb prize's own image", async () => {
       const candy = prize("candy", { image: null, itemTypeId: "it-1" });
-      prizes.inStock.mockResolvedValue([candy]);
+      prizes.lockInStock.mockResolvedValue([candy]);
       images.imageFor.mockResolvedValue("https://cdn.test/candy.webp");
       await knock();
       expect(images.imageFor).toHaveBeenCalledWith(
@@ -614,7 +610,7 @@ describe("/knock", () => {
     });
 
     it("leaves the image out when the prize has none to show", async () => {
-      prizes.inStock.mockResolvedValue([
+      prizes.lockInStock.mockResolvedValue([
         prize("candy", { image: null, itemTypeId: "it-1" }),
       ]);
       images.imageFor.mockResolvedValue(null);
@@ -624,7 +620,7 @@ describe("/knock", () => {
     });
 
     it("links the prize on chardb", async () => {
-      prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      prizes.lockInStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
       await knock();
       const fields = (reply as { embeds: Embed[] }).embeds[0].fields;
       expect(fields?.[1]).toEqual({
@@ -647,10 +643,11 @@ describe("/knock", () => {
     it("reminds a winner with no DeviantArt name to set one", async () => {
       deviantArt.get.mockResolvedValue(null);
       await knock();
-      expect(deviantArt.get).toHaveBeenCalledWith(
-        { guildId: GUILD_ID, userId: USER_ID },
-        tx,
-      );
+      // After the commit: a reply detail, not something to hold the pool for.
+      expect(deviantArt.get).toHaveBeenCalledWith({
+        guildId: GUILD_ID,
+        userId: USER_ID,
+      });
       const embeds = (reply as { embeds: unknown[] }).embeds;
       expect(embeds[1]).toEqual({
         author: AUTHOR,
@@ -663,7 +660,7 @@ describe("/knock", () => {
     });
 
     it("also announces the win in the win channel, after the reply, without the reminder", async () => {
-      guildSettings.get.mockResolvedValue({
+      guildSettings.getCached.mockResolvedValue({
         ...settings,
         winChannel: "300000000000000009",
       });
@@ -679,14 +676,14 @@ describe("/knock", () => {
 
     it("keeps the win when the win channel post fails, and logs it", async () => {
       const error = jest.spyOn(Logger.prototype, "error").mockImplementation();
-      guildSettings.get.mockResolvedValue({
+      guildSettings.getCached.mockResolvedValue({
         ...settings,
         winChannel: "300000000000000009",
       });
       discord.createChannelMessage.mockRejectedValue(
         new Error("Missing Access"),
       );
-      prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      prizes.lockInStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
       await expect(knock({ id: "ref-2" })).resolves.toBeDefined();
       expect(error).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -705,13 +702,13 @@ describe("/knock", () => {
       await knock();
       expect(award.validate).toHaveBeenCalledWith(prize("myo"), GUILD_ID, tx);
       expect(award.validate.mock.invocationCallOrder[0]).toBeLessThan(
-        prizes.takeOne.mock.invocationCallOrder[0],
+        prizes.decrement.mock.invocationCallOrder[0],
       );
     });
 
     it("grants the prize inside the knock, with what was taken", async () => {
       const candy = prize("myo", { itemTypeId: "it-1" });
-      prizes.inStock.mockResolvedValue([candy]);
+      prizes.lockInStock.mockResolvedValue([candy]);
       db.$transaction.mockImplementation(
         async (fn: (t: unknown) => Promise<unknown>) => {
           const result = await fn(tx);
@@ -727,22 +724,16 @@ describe("/knock", () => {
     });
 
     it("leaves nothing for after the reply without a win channel", async () => {
-      prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      prizes.lockInStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
       const { afterReply } = await knockOnly();
       expect(afterReply).toBeUndefined();
     });
 
     // The whole knock rolls back, so the player keeps it.
     it("fails the knock when the grant fails", async () => {
-      prizes.inStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      prizes.lockInStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
       award.grant.mockRejectedValue(new Error("database blip"));
       await expect(knock()).rejects.toThrow("database blip");
-    });
-
-    it("fails the whole knock when the last prize went to someone else first", async () => {
-      prizes.inStock.mockResolvedValue([]);
-      await expect(knock()).rejects.toBeInstanceOf(OutOfPrizesError);
-      expect(award.grant).not.toHaveBeenCalled();
     });
   });
 });

@@ -2,6 +2,7 @@ import { Prisma } from "@chardb/database";
 import { BusyError } from "../errors";
 import type { DatabaseService } from "../../database/database.service";
 import {
+  LOCK_TIMEOUT_MS,
   LOCKED_TRANSACTION_OPTIONS,
   lockedTransaction,
 } from "./locked-transaction";
@@ -34,9 +35,24 @@ describe("lockedTransaction", () => {
       expect.any(Function),
       LOCKED_TRANSACTION_OPTIONS,
     );
+    // Leaves room inside Discord's three seconds for the reply itself.
     expect(
       LOCKED_TRANSACTION_OPTIONS.maxWait + LOCKED_TRANSACTION_OPTIONS.timeout,
-    ).toBeLessThan(3000);
+    ).toBeLessThanOrEqual(2700);
+  });
+
+  // Winners queue on the prize pool for up to the lock timeout, so it is as
+  // long as the transaction allows, short of the work done once it is theirs.
+  it("lets a winner queue for most of the transaction", () => {
+    expect(LOCK_TIMEOUT_MS).toBeGreaterThanOrEqual(1800);
+    expect(LOCKED_TRANSACTION_OPTIONS.timeout - LOCK_TIMEOUT_MS).toBeGreaterThanOrEqual(
+      200,
+    );
+  });
+
+  // Every knock needs a connection; in a burst it waits in line for one.
+  it("waits a while for a connection before answering busy", () => {
+    expect(LOCKED_TRANSACTION_OPTIONS.maxWait).toBeGreaterThanOrEqual(700);
   });
 
   it("answers busy when the transaction timed out or never started", async () => {
