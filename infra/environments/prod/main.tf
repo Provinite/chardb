@@ -415,13 +415,13 @@ locals {
   # exactly one kind of line, whatever the values on it. Prod's console logs
   # are not JSON, so these are text terms, not field filters.
   halloween_needs_staff_messages = [
-    "A won chardb prize was not delivered",
     "A command's reply never reached Discord",
     "Could not announce a win in the win channel",
   ]
   halloween_error_messages = [
     "Work after a command's reply failed",
     "Command failed",
+    "Could not look up a won prize's image",
   ]
   metrics_namespace = "${var.project_name}/${var.environment}"
 }
@@ -452,7 +452,7 @@ resource "aws_cloudwatch_log_metric_filter" "halloween_errors" {
 
 resource "aws_cloudwatch_metric_alarm" "halloween_needs_staff" {
   alarm_name          = "${var.project_name}-${var.environment}-halloween-needs-staff"
-  alarm_description   = "A Halloween player is owed something: a chardb prize to grant by hand, a result they may not have seen, or a win that was not announced. Open the halloween-needs-attention query in Logs Insights for the interactionId."
+  alarm_description   = "A Halloween player is owed something: a result they may not have seen, or a win that was not announced. Open the halloween-needs-attention query in Logs Insights for the interactionId."
   namespace           = local.metrics_namespace
   metric_name         = "HalloweenNeedsStaff"
   statistic           = "Sum"
@@ -470,7 +470,7 @@ resource "aws_cloudwatch_metric_alarm" "halloween_needs_staff" {
 
 resource "aws_cloudwatch_metric_alarm" "halloween_errors" {
   alarm_name          = "${var.project_name}-${var.environment}-halloween-errors"
-  alarm_description   = "A Halloween bot command failed, or work after its reply did. Open the halloween-needs-attention query in Logs Insights for the error and its interactionId."
+  alarm_description   = "A Halloween bot command failed, work after its reply did, or a win was shown without its prize's image. Open the halloween-needs-attention query in Logs Insights for the error and its interactionId."
   namespace           = local.metrics_namespace
   metric_name         = "HalloweenErrors"
   statistic           = "Sum"
