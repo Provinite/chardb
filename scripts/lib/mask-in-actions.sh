@@ -9,7 +9,7 @@
 #
 # This repository is public, so every Actions log is world-readable. The values
 # the deploy path handles -- the host's Elastic IP, its instance id, the ECR
-# repository URL, the SQS queue URL, the CloudFront distribution id -- are not
+# repository URL, the CloudFront distribution id -- are not
 # credentials, and knowing them does not by itself let anyone in. The objection
 # is narrower: a permanent public log should not double as an inventory of what
 # is deployed and where (#378).

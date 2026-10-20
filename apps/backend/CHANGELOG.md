@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **One factory builds all four linking controllers and strategies**, from per-provider config in `oauth-link-providers.ts` (#236).
 - **A Discord server can be linked to only one community**: `communities.discord_guild_id` is unique, and `linkDiscordGuild` refuses a server another community has. The migration fails if two communities already share one (#399).
 
+### Removed
+
+- **The SQS prize consumer** (`src/queue-consumer`), with `AWS_SQS_ENABLED`, `AWS_SQS_QUEUE_URL` and the `@ssut/nestjs-sqs` and `@aws-sdk/client-sqs` dependencies; the Halloween bot grants prizes itself (#399).
+
 ### Fixed
 
 - **A declined or failed link returns to the app.** Clicking Deny on the provider, or a failed token exchange, used to strand the user on a bare 401 on the API host; it now redirects to the frontend callback with the reason and spends the nonce (#236).

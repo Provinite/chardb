@@ -49,7 +49,6 @@ import { CommunityColorsModule } from "./community-colors/community-colors.modul
 import { PendingOwnershipModule } from "./pending-ownership/pending-ownership.module";
 import { DiscordModule } from "./discord/discord.module";
 import { DeviantArtModule } from "./deviantart/deviantart.module";
-import { QueueConsumerModule } from "./queue-consumer/queue-consumer.module";
 import { HalloweenModule } from "./halloween/halloween.module";
 import { ALL_THROTTLES } from "./middleware/throttles";
 import { ImageModerationModule } from "./image-moderation/image-moderation.module";
@@ -271,7 +270,6 @@ import { Request, Response } from "express";
     PendingOwnershipModule,
     DiscordModule,
     DeviantArtModule,
-    QueueConsumerModule,
     HalloweenModule,
     ImageModerationModule,
     TraitReviewModule,

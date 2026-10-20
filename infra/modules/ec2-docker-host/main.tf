@@ -248,12 +248,11 @@ resource "aws_instance" "docker_host" {
   iam_instance_profile   = aws_iam_instance_profile.docker_host.name
 
   user_data = base64encode(templatefile("${path.module}/user_data.sh", {
-    db_password   = random_password.db_password.result
-    jwt_secret    = random_password.jwt_secret.result
-    db_host       = var.db_host
-    db_name       = var.db_name
-    db_user       = var.db_user
-    sqs_queue_url = var.sqs_queue_url
+    db_password = random_password.db_password.result
+    jwt_secret  = random_password.jwt_secret.result
+    db_host     = var.db_host
+    db_name     = var.db_name
+    db_user     = var.db_user
   }))
 
   root_block_device {
@@ -272,6 +271,13 @@ resource "aws_instance" "docker_host" {
   tags = merge(var.tags, {
     Name = "${var.name}-docker-host"
   })
+
+  lifecycle {
+    # user_data only runs at first boot; deploy.sh writes the .env the app
+    # actually reads on every deploy. Without this, editing the template would
+    # stop and start the running host for no effect.
+    ignore_changes = [user_data]
+  }
 }
 
 # Associate Elastic IP with instance

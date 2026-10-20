@@ -52,7 +52,7 @@ export interface PendingOwnerInput {
  *
  * Every item mutation carries one so the ledger row it produces can name a
  * responsible party. `actorLabel` covers the paths with no logged-in user --
- * the SQS prize consumer and the pending-ownership claim job.
+ * the Halloween bot's prize grants and the pending-ownership claim job.
  */
 export interface ItemActor {
   actorUserId?: string | null;

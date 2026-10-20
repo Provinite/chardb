@@ -144,17 +144,6 @@ output "images_cdn_url" {
   value       = module.image_cdn.custom_domain_name != null ? "https://${module.image_cdn.custom_domain_name}" : "https://${module.image_cdn.distribution_domain_name}"
 }
 
-# SQS Queue outputs (exposed from backend module)
-output "backend_sqs_queue_url" {
-  description = "URL of the prize distribution SQS queue"
-  value       = module.backend.sqs_queue_url
-}
-
-output "backend_sqs_queue_arn" {
-  description = "ARN of the prize distribution SQS queue"
-  value       = module.backend.sqs_queue_arn
-}
-
 # GitHub Actions CD outputs
 output "github_actions_deploy_role_arn" {
   description = "ARN of the role the deploy workflow assumes via OIDC"

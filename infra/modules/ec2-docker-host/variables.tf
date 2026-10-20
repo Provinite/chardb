@@ -98,12 +98,6 @@ variable "s3_images_bucket_arn" {
   type        = string
 }
 
-variable "sqs_queue_url" {
-  description = "SQS queue URL for prize distribution (optional)"
-  type        = string
-  default     = ""
-}
-
 variable "deviantart_client_id" {
   description = "DeviantArt OAuth client ID"
   type        = string

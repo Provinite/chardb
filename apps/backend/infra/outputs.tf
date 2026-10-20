@@ -102,32 +102,6 @@ output "patreon_callback_url" {
   value       = module.backend_docker_host.patreon_callback_url
 }
 
-# SQS Queue outputs
-output "sqs_queue_url" {
-  description = "URL of the prize distribution SQS queue"
-  value       = module.prize_distribution_queue.queue_url
-}
-
-output "sqs_queue_arn" {
-  description = "ARN of the prize distribution SQS queue"
-  value       = module.prize_distribution_queue.queue_arn
-}
-
-output "sqs_dlq_url" {
-  description = "URL of the prize distribution Dead Letter Queue"
-  value       = module.prize_distribution_queue.dlq_url
-}
-
-output "sqs_consumer_policy_arn" {
-  description = "ARN of the IAM policy for queue consumers"
-  value       = module.prize_distribution_queue.consumer_policy_arn
-}
-
-output "sqs_producer_policy_arn" {
-  description = "ARN of the IAM policy for queue producers (Discord bot)"
-  value       = module.prize_distribution_queue.producer_policy_arn
-}
-
 output "deviantart_client_id" {
   description = "DeviantArt OAuth client ID"
   value       = module.backend_docker_host.deviantart_client_id

@@ -263,7 +263,6 @@ turns the notification into a Discord message. The alarms:
 |---|---|---|
 | `chardb-prod-halloween-needs-staff` | A chardb prize wasn't delivered, a command's reply never reached Discord, or a win wasn't announced in the win channel | Grant the prize by hand, tell the player, or fix the win channel |
 | `chardb-prod-halloween-errors` | A Halloween command failed, or work after its reply did | A bug: read the error |
-| `chardb-prize-distribution-prod-dlq-messages` | Messages are sitting in the old prize queue's dead-letter queue | Look at the queue |
 
 Each posts again, in green, when it clears. For the log lines behind a
 Halloween alarm, open **CloudWatch → Logs Insights → Queries →

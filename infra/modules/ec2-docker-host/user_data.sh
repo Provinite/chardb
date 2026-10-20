@@ -61,10 +61,6 @@ PORT=4000
 POSTGRES_DB=${db_name}
 POSTGRES_USER=${db_user}
 POSTGRES_PASSWORD=${db_password}
-
-# SQS Queue Configuration
-AWS_SQS_QUEUE_URL=${sqs_queue_url}
-AWS_SQS_ENABLED=true
 EOF
 
 # Set proper permissions on .env file
