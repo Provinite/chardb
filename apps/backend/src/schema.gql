@@ -1603,9 +1603,14 @@ type HalloweenWin {
   id: Int!
 
   """
-  The chardb account the winner's Discord is linked to. A chardb prize is theirs already if this is set, and waits for the link if not.
+  The chardb account the winner's Discord is linked to. A chardb prize waits for the link, and then for linkedUserIsMember.
   """
   linkedUser: User
+
+  """
+  Whether the linked account is a member of this community. A chardb prize is theirs once it is, and waits for them to join until then.
+  """
+  linkedUserIsMember: Boolean!
   prize: HalloweenPrizeView!
   time: DateTime!
 }

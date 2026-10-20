@@ -108,6 +108,7 @@ describe("HalloweenDashboardService", () => {
       Object.assign(db, {
         halloweenDeviantArtUser: { findMany: jest.fn().mockResolvedValue([]) },
         externalAccount: { findMany: jest.fn().mockResolvedValue([]) },
+        communityMember: { findMany: jest.fn().mockResolvedValue([]) },
       });
     });
 

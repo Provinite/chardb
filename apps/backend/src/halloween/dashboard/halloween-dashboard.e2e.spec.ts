@@ -33,6 +33,7 @@ const WINS = `
         id
         discordUserId
         linkedUser { id username }
+        linkedUserIsMember
         deviantArtName
         giftyFromDiscordUserId
         prize { id delivery }
@@ -353,6 +354,7 @@ describe("Halloween dashboard (e2e)", () => {
             id: candyWin.id,
             discordUserId: LINKED_WINNER,
             linkedUser: { id: linked.id, username: linked.username },
+            linkedUserIsMember: false,
             deviantArtName: null,
             giftyFromDiscordUserId: GIFTER,
             prize: { id: "candy", delivery: "CHARDB_ITEM" },
@@ -363,6 +365,7 @@ describe("Halloween dashboard (e2e)", () => {
             id: adoptWin.id,
             discordUserId: WINNER,
             linkedUser: null,
+            linkedUserIsMember: false,
             deviantArtName: "spooky-fan",
             giftyFromDiscordUserId: null,
             prize: { id: "adopt", delivery: "STAFF" },
@@ -371,6 +374,20 @@ describe("Halloween dashboard (e2e)", () => {
           },
         ],
       });
+    });
+
+    // A chardb prize is theirs only once they are linked and a member.
+    it("says whether a linked winner is a member of the community", async () => {
+      const { candyWin, linked } = await seedEvent();
+      await testApp.createTestCommunityMember(
+        linked.id,
+        (await testApp.createTestRole(communityId, {})).id,
+      );
+      const res = await wins({});
+      const candy = res.body.data.halloweenWins.wins.find(
+        (w: { id: number }) => w.id === candyWin.id,
+      );
+      expect(candy.linkedUserIsMember).toBe(true);
     });
 
     it("filters to the staff prizes still to hand over, and to those handed over", async () => {

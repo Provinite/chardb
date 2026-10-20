@@ -83,6 +83,7 @@ const win = (overrides: Record<string, unknown>) => ({
   __typename: "HalloweenWin" as const,
   time: "2025-10-10T05:00:00.000Z",
   linkedUser: null,
+  linkedUserIsMember: false,
   deviantArtName: null,
   giftyFromDiscordUserId: null,
   deliveredAt: null,
@@ -112,12 +113,25 @@ const candyWin = win({
     username: "linkedfan",
     displayName: null,
   },
+  linkedUserIsMember: true,
   giftyFromDiscordUserId: "200000000000000003",
   prize: candy,
 });
 const unclaimedCandyWin = win({
   id: 4,
   discordUserId: "200000000000000005",
+  prize: candy,
+});
+/** Linked, but not in the community, so the candy is not theirs yet. */
+const outsiderCandyWin = win({
+  id: 5,
+  discordUserId: "200000000000000006",
+  linkedUser: {
+    __typename: "User",
+    id: "u-outsider",
+    username: "outsider",
+    displayName: null,
+  },
   prize: candy,
 });
 
@@ -183,6 +197,7 @@ const winsMock = (
 });
 
 const allWins = winsMock(HalloweenWinFilter.All, [
+  outsiderCandyWin,
   unclaimedCandyWin,
   candyWin,
   deliveredAdoptWin,
@@ -331,6 +346,12 @@ describe("CommunityHalloweenAdminPage", () => {
     expect(
       within(waiting).getByText("Waiting for them to link Discord"),
     ).toBeInTheDocument();
+
+    const outsider = screen.getByTestId("halloween-win-5");
+    expect(
+      within(outsider).getByText("Waiting for them to join the community"),
+    ).toBeInTheDocument();
+    expect(within(outsider).queryByText(/On chardb/)).not.toBeInTheDocument();
   });
 
   it("asks the server for the prizes staff still have to hand over", async () => {

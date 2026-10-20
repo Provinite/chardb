@@ -1310,8 +1310,10 @@ export type HalloweenWin = {
   giftyFromDiscordUserId: Maybe<Scalars['String']['output']>;
   /** The knock's id */
   id: Scalars['Int']['output'];
-  /** The chardb account the winner's Discord is linked to. A chardb prize is theirs already if this is set, and waits for the link if not. */
+  /** The chardb account the winner's Discord is linked to. A chardb prize waits for the link, and then for linkedUserIsMember. */
   linkedUser: Maybe<User>;
+  /** Whether the linked account is a member of this community. A chardb prize is theirs once it is, and waits for them to join until then. */
+  linkedUserIsMember: Scalars['Boolean']['output'];
   prize: HalloweenPrizeView;
   time: Scalars['DateTime']['output'];
 };
@@ -5702,7 +5704,7 @@ export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Arr
 
 export type HalloweenPrizeFieldsFragment = { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null };
 
-export type HalloweenWinFieldsFragment = { __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null };
+export type HalloweenWinFieldsFragment = { __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, linkedUserIsMember: boolean, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null };
 
 export type HalloweenDashboardQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5719,7 +5721,7 @@ export type HalloweenWinsQueryVariables = Exact<{
 }>;
 
 
-export type HalloweenWinsQuery = { __typename?: 'Query', halloweenWins: { __typename?: 'HalloweenWinPage', total: number, hasMore: boolean, wins: Array<{ __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null }> } };
+export type HalloweenWinsQuery = { __typename?: 'Query', halloweenWins: { __typename?: 'HalloweenWinPage', total: number, hasMore: boolean, wins: Array<{ __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, linkedUserIsMember: boolean, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null }> } };
 
 export type SetHalloweenPrizeDeliveredMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5728,7 +5730,7 @@ export type SetHalloweenPrizeDeliveredMutationVariables = Exact<{
 }>;
 
 
-export type SetHalloweenPrizeDeliveredMutation = { __typename?: 'Mutation', setHalloweenPrizeDelivered: { __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null } };
+export type SetHalloweenPrizeDeliveredMutation = { __typename?: 'Mutation', setHalloweenPrizeDelivered: { __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, linkedUserIsMember: boolean, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null } };
 
 export type HalloweenSettingsFieldsFragment = { __typename?: 'HalloweenEventSettings', startDate: string | null, endDate: string | null, knocksPerDay: number, resetTime: number, winRate: number, winChannel: string | null };
 
@@ -7044,6 +7046,7 @@ export const HalloweenWinFieldsFragmentDoc = gql`
     username
     displayName
   }
+  linkedUserIsMember
   deviantArtName
   giftyFromDiscordUserId
   prize {

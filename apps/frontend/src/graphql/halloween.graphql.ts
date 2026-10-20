@@ -24,6 +24,7 @@ export const HALLOWEEN_WIN_FRAGMENT = gql`
       username
       displayName
     }
+    linkedUserIsMember
     deviantArtName
     giftyFromDiscordUserId
     prize {

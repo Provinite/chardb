@@ -129,9 +129,16 @@ export class HalloweenWin {
     nullable: true,
     description:
       "The chardb account the winner's Discord is linked to. A chardb prize " +
-      "is theirs already if this is set, and waits for the link if not.",
+      "waits for the link, and then for linkedUserIsMember.",
   })
   linkedUser: User | null;
+
+  @Field({
+    description:
+      "Whether the linked account is a member of this community. A chardb " +
+      "prize is theirs once it is, and waits for them to join until then.",
+  })
+  linkedUserIsMember: boolean;
 
   @Field(() => String, { nullable: true })
   deviantArtName: string | null;

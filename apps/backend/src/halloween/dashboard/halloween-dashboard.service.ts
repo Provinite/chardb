@@ -218,7 +218,7 @@ export class HalloweenDashboardService {
       this.db.halloweenKnockEvent.count({ where }),
     ]);
     return {
-      wins: await this.toWins(guildId, rows),
+      wins: await this.toWins(communityId, guildId, rows),
       total,
       hasMore: skip + rows.length < total,
     };
@@ -271,18 +271,22 @@ export class HalloweenDashboardService {
       actorUserId,
     } satisfies HalloweenLogLine);
 
-    const [win] = await this.toWins(guildId, [updated]);
+    const [win] = await this.toWins(communityId, guildId, [updated]);
     return win;
   }
 
-  /** Joins in what the knock rows cannot say: DeviantArt names and linked accounts. */
   /** Prizes as the page shows them, images resolved. */
   async prizeViews(prizes: HalloweenPrize[]): Promise<HalloweenPrizeView[]> {
     const images = await this.prizeImages.imagesFor(prizes);
     return prizes.map((p) => toPrizeView(p, images.get(p) ?? null));
   }
 
+  /**
+   * Joins in what the knock rows cannot say: DeviantArt names, linked
+   * accounts, and whether those belong to the community.
+   */
   private async toWins(
+    communityId: string,
     guildId: string,
     rows: WinRow[],
   ): Promise<HalloweenWin[]> {
@@ -302,6 +306,14 @@ export class HalloweenDashboardService {
         rows.flatMap((r) => (r.prize ? [r.prize] : [])),
       ),
     ]);
+    const members = await this.db.communityMember.findMany({
+      where: {
+        userId: { in: linkedAccounts.map((a) => a.userId) },
+        role: { communityId },
+      },
+      select: { userId: true },
+    });
+    const memberIds = new Set(members.map((m) => m.userId));
     const deviantArtNames = new Map(
       deviantArtUsers.map((d) => [d.userId, d.deviantArtName]),
     );
@@ -318,6 +330,7 @@ export class HalloweenDashboardService {
           time: row.time,
           discordUserId: row.userId,
           linkedUser: linked ? mapPrismaUserToGraphQL(linked) : null,
+          linkedUserIsMember: linked ? memberIds.has(linked.id) : false,
           deviantArtName: deviantArtNames.get(row.userId) ?? null,
           giftyFromDiscordUserId: row.gifties[0]?.fromUserId ?? null,
           prize: toPrizeView(row.prize, images.get(row.prize) ?? null),

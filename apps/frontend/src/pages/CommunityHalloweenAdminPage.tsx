@@ -731,13 +731,20 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
 
 const WinStatus: React.FC<{ win: HalloweenWinFieldsFragment }> = ({ win }) => {
   if (!isStaffPrize(win)) {
-    // Granted to the winner's Discord account at the win; whether they have
-    // it yet depends only on whether they have linked Discord.
-    return win.linkedUser ? (
+    // Granted to the winner's Discord account at the win; it is theirs once
+    // they have linked Discord and are a member of the community.
+    if (!win.linkedUser) {
+      return (
+        <Status>
+          <Muted>Waiting for them to link Discord</Muted>
+        </Status>
+      );
+    }
+    return win.linkedUserIsMember ? (
       <Status>On chardb: @{win.linkedUser.username}</Status>
     ) : (
       <Status>
-        <Muted>Waiting for them to link Discord</Muted>
+        <Muted>Waiting for them to join the community</Muted>
       </Status>
     );
   }
