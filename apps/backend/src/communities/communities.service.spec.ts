@@ -2,6 +2,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { CommunitiesService } from "./communities.service";
 import { DatabaseService } from "../database/database.service";
 import { mockDatabaseService } from "../../test/setup";
+import { CommunityMembershipService } from "../community-membership/community-membership.service";
 
 /**
  * Member search ordering.
@@ -28,6 +29,8 @@ describe("CommunitiesService.getMembers", () => {
       providers: [
         CommunitiesService,
         { provide: DatabaseService, useValue: mockDatabaseService },
+        // Only community creation joins anyone; these specs never do.
+        { provide: CommunityMembershipService, useValue: {} },
       ],
     }).compile();
     service = module.get<CommunitiesService>(CommunitiesService);

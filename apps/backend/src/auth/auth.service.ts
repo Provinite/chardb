@@ -1,9 +1,12 @@
 import {
   Injectable,
+  Inject,
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  forwardRef,
 } from "@nestjs/common";
+import { CommunityMembershipService } from "../community-membership/community-membership.service";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";
@@ -79,6 +82,8 @@ export class AuthService {
     private prisma: DatabaseService,
     private emailService: EmailService,
     private emailVerificationService: EmailVerificationService,
+    @Inject(forwardRef(() => CommunityMembershipService))
+    private membership: CommunityMembershipService,
   ) {}
 
   async validateUser(
@@ -184,11 +189,9 @@ export class AuthService {
       // 6. Create community membership if invite code has a role (within transaction)
       if (updatedInviteCode.roleId) {
         try {
-          await tx.communityMember.create({
-            data: {
-              role: { connect: { id: updatedInviteCode.roleId } },
-              user: { connect: { id: user.id } },
-            },
+          await this.membership.join(tx, {
+            userId: user.id,
+            roleId: updatedInviteCode.roleId,
           });
         } catch (error) {
           // Handle unique constraint violation with a more user-friendly error

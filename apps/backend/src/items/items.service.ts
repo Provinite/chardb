@@ -948,11 +948,20 @@ export class ItemsService {
           resolvedAccountId,
         );
 
-      if (claimedUserId) {
-        // Account is already claimed - assign directly to that user
+      if (
+        claimedUserId &&
+        (await this.pendingOwnershipService.isMember(
+          this.db,
+          claimedUserId,
+          itemType.communityId,
+        ))
+      ) {
+        // Linked and a member - assign directly to that user
         actualOwnerId = claimedUserId;
         pendingOwner = undefined; // Don't create pending ownership
       } else {
+        // Not linked, or linked by someone outside the community: it waits
+        // on the account, and is claimed when they are both.
         // Store resolved data for later use
         pendingOwner = {
           ...pendingOwner,

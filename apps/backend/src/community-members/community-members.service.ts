@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
+import { CommunityMembershipService } from "../community-membership/community-membership.service";
 
 /**
  * Service layer input types for community member operations.
@@ -26,24 +27,16 @@ export interface UpdateCommunityMemberServiceInput {
   roleId?: string;
 }
 
-type PrismaCommunityMember = Prisma.CommunityMemberGetPayload<{}>;
-
 @Injectable()
 export class CommunityMembersService {
-  constructor(private prisma: DatabaseService) {}
+  constructor(
+    private prisma: DatabaseService,
+    private membership: CommunityMembershipService,
+  ) {}
 
   /** Create a new community membership */
   async create(input: CreateCommunityMemberServiceInput) {
-    return this.prisma.communityMember.create({
-      data: {
-        user: {
-          connect: { id: input.userId },
-        },
-        role: {
-          connect: { id: input.roleId },
-        },
-      },
-    });
+    return this.prisma.$transaction((tx) => this.membership.join(tx, input));
   }
 
   /** Find all community members with pagination */

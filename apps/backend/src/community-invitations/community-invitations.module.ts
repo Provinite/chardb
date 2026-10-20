@@ -6,6 +6,7 @@ import { RolesModule } from "../roles/roles.module";
 import { UsersModule } from "../users/users.module";
 import { CommunitiesModule } from "../communities/communities.module";
 import { AuthModule } from "../auth/auth.module";
+import { CommunityMembershipModule } from "../community-membership/community-membership.module";
 
 @Module({
   imports: [
@@ -14,6 +15,7 @@ import { AuthModule } from "../auth/auth.module";
     UsersModule,
     CommunitiesModule,
     forwardRef(() => AuthModule),
+    CommunityMembershipModule,
   ],
   providers: [CommunityInvitationsResolver, CommunityInvitationsService],
   exports: [CommunityInvitationsService],

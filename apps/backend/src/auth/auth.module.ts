@@ -40,6 +40,7 @@ import { OptionalJwtAuthGuard } from "./guards/optional-jwt-auth.guard";
 import { CustomThrottlerGuard } from "../middleware/custom-throttler.guard";
 import { OrGuard } from "./guards/OrGuard";
 import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
+import { CommunityMembershipModule } from "../community-membership/community-membership.module";
 
 @Module({
   imports: [
@@ -58,6 +59,7 @@ import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
     EmailModule,
     EmailVerificationModule,
     forwardRef(() => CommunityMembersModule),
+    forwardRef(() => CommunityMembershipModule),
   ],
   controllers: [
     DeviantArtOAuthController,

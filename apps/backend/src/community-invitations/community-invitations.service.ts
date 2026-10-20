@@ -4,7 +4,7 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { Prisma } from "@chardb/database";
+import { CommunityMembershipService } from "../community-membership/community-membership.service";
 
 /**
  * Service layer input types for community invitations operations.
@@ -36,7 +36,10 @@ interface RespondToCommunityInvitationServiceInput {
 
 @Injectable()
 export class CommunityInvitationsService {
-  constructor(private prisma: DatabaseService) {}
+  constructor(
+    private prisma: DatabaseService,
+    private membership: CommunityMembershipService,
+  ) {}
 
   /** Create a new community invitation */
   async create(input: CreateCommunityInvitationServiceInput) {
@@ -279,37 +282,37 @@ export class CommunityInvitationsService {
       ? { acceptedAt: new Date() }
       : { declinedAt: new Date() };
 
-    const updatedInvitation = await this.prisma.communityInvitation.update({
-      where: { id },
-      data: updateData,
-      include: {
-        role: {
-          include: {
-            community: true,
+    // Accepting and joining commit together.
+    return this.prisma.$transaction(async (tx) => {
+      const updatedInvitation = await tx.communityInvitation.update({
+        where: { id },
+        data: updateData,
+        include: {
+          role: {
+            include: {
+              community: true,
+            },
           },
-        },
-        invitee: true,
-        inviter: true,
-        community: true,
-      },
-    });
-
-    // If accepted, create the community membership
-    if (respondInput.accept) {
-      await this.prisma.communityMember.create({
-        data: {
-          roleId: invitation.roleId,
-          userId: invitation.inviteeId,
+          invitee: true,
+          inviter: true,
+          community: true,
         },
       });
-    }
 
-    return updatedInvitation;
+      if (respondInput.accept) {
+        await this.membership.join(tx, {
+          userId: invitation.inviteeId,
+          roleId: invitation.roleId,
+        });
+      }
+
+      return updatedInvitation;
+    });
   }
 
   /** Remove a community invitation */
   async remove(id: string) {
-    const communityInvitation = await this.findOne(id); // This will throw if not found
+    await this.findOne(id); // This will throw if not found
 
     return this.prisma.communityInvitation.delete({
       where: { id },
