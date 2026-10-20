@@ -14,7 +14,10 @@ import {
 } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
 import { notDeleted } from "../../common/utils/prisma-filters";
-import { validateGuildSettings } from "../services/guild-settings.service";
+import {
+  GuildSettingsService,
+  validateGuildSettings,
+} from "../services/guild-settings.service";
 import {
   isImageUrl,
   validatePrize,
@@ -69,6 +72,7 @@ export class HalloweenAdminService {
     private readonly db: DatabaseService,
     private readonly dashboard: HalloweenDashboardService,
     private readonly prizeAward: PrizeAwardService,
+    private readonly guildSettings: GuildSettingsService,
   ) {}
 
   /** Creates the guild's settings the first time, replaces them after. */
@@ -102,6 +106,7 @@ export class HalloweenAdminService {
       create: next,
       update: next,
     });
+    this.guildSettings.invalidate(guildId);
 
     const who = { communityId, guildId, actorUserId };
     if (!before) {

@@ -52,12 +52,48 @@ export function validateGuildSettings(
     : true;
 }
 
+/** How long a knock may use settings it read earlier. */
+export const SETTINGS_CACHE_MS = 10_000;
+const SETTINGS_CACHE_GUILDS = 100;
+
 @Injectable()
 export class GuildSettingsService {
+  /** Least recently used first: a Map keeps insertion order. */
+  private readonly cache = new Map<
+    string,
+    { settings: HalloweenGuildSettings; readAt: number }
+  >();
+
   constructor(
     private readonly db: DatabaseService,
     private readonly clock: HalloweenClock,
   ) {}
+
+  /**
+   * The guild's settings, as read up to ten seconds ago. For `/knock`, which
+   * reads them on every knock; a change made on chardb clears this
+   * instance's copy, and reaches the others within that time.
+   */
+  async getCached(guildId: string): Promise<HalloweenGuildSettings> {
+    const now = this.clock.now().getTime();
+    const cached = this.cache.get(guildId);
+    this.cache.delete(guildId);
+    if (cached && now - cached.readAt < SETTINGS_CACHE_MS) {
+      this.cache.set(guildId, cached);
+      return cached.settings;
+    }
+    const settings = await this.get(guildId);
+    this.cache.set(guildId, { settings, readAt: now });
+    if (this.cache.size > SETTINGS_CACHE_GUILDS) {
+      const [oldest] = this.cache.keys();
+      this.cache.delete(oldest);
+    }
+    return settings;
+  }
+
+  invalidate(guildId: string): void {
+    this.cache.delete(guildId);
+  }
 
   async get(
     guildId: string,

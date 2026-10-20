@@ -6,6 +6,7 @@ import { HalloweenModule } from "../halloween.module";
 import { CharactersModule } from "../../characters/characters.module";
 import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { mockDiscord } from "../testing/command-harness";
+import { GuildSettingsService } from "../services/guild-settings.service";
 
 const GUILD = "100000000000000001";
 
@@ -128,6 +129,16 @@ describe("Halloween management (e2e)", () => {
         knocksPerDay: 5,
         winChannel: null,
       });
+    });
+
+    // /knock caches settings for ten seconds; a change made here must not
+    // wait that long on this instance.
+    it("reaches the next knock at once", async () => {
+      await update(settingsInput);
+      const settings = testApp.getModuleRef().get(GuildSettingsService);
+      expect((await settings.getCached(GUILD)).knocksPerDay).toBe(3);
+      await update({ ...settingsInput, knocksPerDay: 5 });
+      expect((await settings.getCached(GUILD)).knocksPerDay).toBe(5);
     });
 
     it("refuses settings the bot could not run", async () => {
