@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { HalloweenPrize, Prisma } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
-import { OutOfPrizesError, type ValidationFieldError } from "../errors";
+import type { ValidationFieldError } from "../errors";
 
 export interface PrizeInput {
   id: string;
@@ -127,17 +127,13 @@ export class PrizeService {
   constructor(private readonly db: DatabaseService) {}
 
   /**
-   * The guild's prizes with stock left. With `lock`, the rows stay locked for
-   * the rest of the transaction, so two winners cannot both take the last one.
+   * The guild's prizes with stock left, unlocked: a pick from these can lose
+   * its prize to another winner, which `takeOne` reports.
    */
   async inStock(
     guildId: string,
     tx: Prisma.TransactionClient = this.db,
-    { lock = false }: { lock?: boolean } = {},
   ): Promise<HalloweenPrize[]> {
-    if (lock) {
-      await tx.$queryRaw`SELECT 1 FROM "halloween_prizes" WHERE "guild_id" = ${guildId} AND "current_stock" > 0 FOR UPDATE`;
-    }
     return tx.halloweenPrize.findMany({
       where: { guildId, currentStock: { gt: 0 } },
       orderBy: { id: "asc" },
@@ -155,23 +151,24 @@ export class PrizeService {
     );
   }
 
-  async decrementStock(
+  /**
+   * Takes one of a prize, returning it with what is left, or null when someone
+   * else took the last one first. Only that prize's row is locked, and only
+   * for the rest of the caller's transaction, so winners of different prizes
+   * never wait on each other.
+   */
+  async takeOne(
     prizeId: string,
     guildId: string,
     tx: Prisma.TransactionClient = this.db,
-  ): Promise<HalloweenPrize> {
-    const prize = await tx.halloweenPrize.findUnique({
-      where: { guildId_id: { guildId, id: prizeId } },
-    });
-    if (!prize || prize.currentStock === 0) {
-      throw new OutOfPrizesError({
-        thrownFrom: "PrizeService.decrementStock",
-        guildId,
-      });
-    }
-    return tx.halloweenPrize.update({
-      where: { guildId_id: { guildId, id: prizeId } },
+  ): Promise<HalloweenPrize | null> {
+    const { count } = await tx.halloweenPrize.updateMany({
+      where: { guildId, id: prizeId, currentStock: { gt: 0 } },
       data: { currentStock: { decrement: 1 } },
+    });
+    if (count === 0) return null;
+    return tx.halloweenPrize.findUniqueOrThrow({
+      where: { guildId_id: { guildId, id: prizeId } },
     });
   }
 }

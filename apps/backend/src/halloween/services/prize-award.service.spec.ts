@@ -26,7 +26,7 @@ describe("PrizeAwardService", () => {
     character: { findFirst: jest.Mock };
     pendingOwnership: { findUnique: jest.Mock };
   };
-  let items: { grantItem: jest.Mock };
+  let items: { grantItemInTransaction: jest.Mock };
   let pendingOwnership: { createForCharacter: jest.Mock };
   let service: PrizeAwardService;
 
@@ -49,7 +49,7 @@ describe("PrizeAwardService", () => {
       },
       pendingOwnership: { findUnique: jest.fn().mockResolvedValue(null) },
     };
-    items = { grantItem: jest.fn().mockResolvedValue([]) };
+    items = { grantItemInTransaction: jest.fn().mockResolvedValue([]) };
     pendingOwnership = {
       createForCharacter: jest.fn().mockResolvedValue({ claimed: false }),
     };
@@ -161,32 +161,51 @@ describe("PrizeAwardService", () => {
     });
   });
 
-  describe("award", () => {
+  // Inside the knock's transaction, so the prize commits with the win.
+  describe("grant", () => {
+    const knockTx = { knock: true };
+    const grant = (p: HalloweenPrize) =>
+      service.grant(
+        p,
+        USER_ID,
+        knockTx as unknown as Parameters<PrizeAwardService["grant"]>[2],
+      );
+
     it("grants one of the item to the winner's Discord account", async () => {
-      await service.award(prize({ itemTypeId: "it-1" }), USER_ID);
-      expect(items.grantItem).toHaveBeenCalledWith({
-        itemTypeId: "it-1",
-        quantity: 1,
-        pendingOwner: {
-          provider: ExternalAccountProvider.DISCORD,
-          providerAccountId: USER_ID,
+      await grant(prize({ itemTypeId: "it-1" }));
+      expect(items.grantItemInTransaction).toHaveBeenCalledWith(
+        knockTx,
+        {
+          itemTypeId: "it-1",
+          quantity: 1,
+          pendingOwner: {
+            provider: ExternalAccountProvider.DISCORD,
+            providerAccountId: USER_ID,
+          },
+          actor: {
+            actorLabel: "halloween-bot",
+            reason: "Halloween prize: MYO",
+          },
         },
-        actor: { actorLabel: "halloween-bot", reason: "Halloween prize: MYO" },
-      });
+        // The id came from Discord, signed, so there is no need to ask.
+        { discordIdVerified: true },
+      );
     });
 
     it("hands the character to the winner's Discord account", async () => {
-      await service.award(prize({ characterId: "ch-1" }), USER_ID);
+      await grant(prize({ characterId: "ch-1" }));
       expect(pendingOwnership.createForCharacter).toHaveBeenCalledWith(
         "ch-1",
         ExternalAccountProvider.DISCORD,
         USER_ID,
+        undefined,
+        knockTx,
       );
     });
 
     it("does nothing for a prize with no chardb item or character", async () => {
-      await service.award(prize(), USER_ID);
-      expect(items.grantItem).not.toHaveBeenCalled();
+      await grant(prize());
+      expect(items.grantItemInTransaction).not.toHaveBeenCalled();
       expect(pendingOwnership.createForCharacter).not.toHaveBeenCalled();
     });
   });

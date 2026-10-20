@@ -8,6 +8,7 @@ import type {
 import type {
   HalloweenGifty,
   HalloweenGuildSettings,
+  HalloweenKnockEvent,
   HalloweenPrize,
   Prisma,
 } from "@chardb/database";
@@ -40,9 +41,31 @@ import { formatChardbLink } from "../chardb-link";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { requireChatInput } from "./command-helpers";
 
+/** How many prizes a win tries to take before it settles for none. */
+const MAX_TAKES = 3;
+
 /**
- * What a committed knock answers with and leaves to do: announce a win,
- * deliver the prize, log the outcome.
+ * A win as committed: everything its reply needs but the prize's picture,
+ * which is looked up after.
+ */
+interface Win {
+  /** As taken: its `currentStock` is what is left. */
+  prize: HalloweenPrize;
+  knockEvent: HalloweenKnockEvent;
+  gifty: HalloweenGifty | null;
+  winChannel: string | null;
+  remainingKnocks: number;
+  bankedGifties: number;
+  hasDeviantArt: boolean;
+  takeAttempts: number;
+  takeMs: number;
+}
+
+type Knocked = { won: false; result: KnockResult } | { won: true; win: Win };
+
+/**
+ * What a committed knock answers with and leaves to do: announce a win, log
+ * the outcome.
  */
 interface KnockResult {
   reply: HalloweenReply;
@@ -64,8 +87,8 @@ interface KnockResult {
  * transaction, of database work only, and its result is the reply: a knock
  * that fails part-way leaves no trace, and the player keeps it.
  *
- * The win is committed before Discord shows it. If the reply is lost, the
- * controller logs that; the win stands, and the prize is still delivered.
+ * A win commits with its prize granted, before Discord shows it. If the reply
+ * is lost, the controller logs that; the win and the prize stand.
  */
 @Injectable()
 export class KnockCommand implements HalloweenCommandHandler {
@@ -101,7 +124,8 @@ export class KnockCommand implements HalloweenCommandHandler {
     const userId = interaction.member.user.id;
     const who = { interactionId: interaction.id, guildId, userId };
 
-    const result = await lockedTransaction(
+    const started = Date.now();
+    const knocked = await lockedTransaction<Knocked>(
       this.db,
       "KnockCommand",
       async (tx) => {
@@ -163,30 +187,39 @@ export class KnockCommand implements HalloweenCommandHandler {
         } satisfies HalloweenLogLine);
 
         return win
-          ? this.win(interaction, settings, gifty, tx)
-          : this.lose(interaction, settings, knockCount, gifty, tx);
+          ? {
+              won: true,
+              win: await this.win(interaction, settings, knockCount, gifty, tx),
+            }
+          : {
+              won: false,
+              result: await this.lose(
+                interaction,
+                settings,
+                knockCount,
+                gifty,
+                tx,
+              ),
+            };
       },
     );
+    const transactionMs = Date.now() - started;
+
+    const result = knocked.won
+      ? await this.announceable(interaction, knocked.win)
+      : knocked.result;
 
     // Logged only once committed, so the log never shows a win that was
     // rolled back.
-    this.logger.log(result.log);
+    this.logger.log({ ...result.log, transactionMs });
 
     const { announcement, prize } = result;
-    const isChardbPrize = Boolean(prize?.itemTypeId || prize?.characterId);
-    if (!announcement && !isChardbPrize) {
+    if (!announcement) {
       return { reply: result.reply };
     }
     return {
       reply: result.reply,
-      afterReply: async () => {
-        if (announcement) {
-          await this.announce(announcement, interaction, prize);
-        }
-        if (prize && isChardbPrize) {
-          await this.deliver(prize, interaction);
-        }
-      },
+      afterReply: () => this.announce(announcement, interaction, prize),
     };
   }
 
@@ -208,41 +241,6 @@ export class KnockCommand implements HalloweenCommandHandler {
           userId: interaction.member.user.id,
           winChannel: channelId,
           prizeId: prize?.id ?? null,
-          cause: error instanceof Error ? error.message : String(error),
-        } satisfies HalloweenLogLine,
-        error instanceof Error ? error.stack : String(error),
-      );
-    }
-  }
-
-  /** Hands over a chardb prize. A failure leaves the win, logged to act on. */
-  private async deliver(
-    prize: HalloweenPrize,
-    interaction: APIChatInputApplicationCommandGuildInteraction,
-  ): Promise<void> {
-    const userId = interaction.member.user.id;
-    const delivery = {
-      interactionId: interaction.id,
-      guildId: interaction.guild_id,
-      userId,
-      prizeId: prize.id,
-      itemTypeId: prize.itemTypeId,
-      characterId: prize.characterId,
-    };
-    // After commit; see PrizeAwardService for why it cannot be inside.
-    try {
-      await this.prizeAward.award(prize, userId);
-      this.logger.log({
-        event: HalloweenLogEvent.PrizeDelivered,
-        message: "Delivered a chardb prize",
-        ...delivery,
-      } satisfies HalloweenLogLine);
-    } catch (error) {
-      this.logger.error(
-        {
-          event: HalloweenLogEvent.PrizeDeliveryFailed,
-          message: "A won chardb prize was not delivered; grant it by hand",
-          ...delivery,
           cause: error instanceof Error ? error.message : String(error),
         } satisfies HalloweenLogLine,
         error instanceof Error ? error.stack : String(error),
@@ -324,49 +322,91 @@ export class KnockCommand implements HalloweenCommandHandler {
     };
   }
 
+  /**
+   * Picks a prize by weight and takes one of it. The pool is read unlocked,
+   * so a pick can lose its prize to another winner between the read and the
+   * take; then it picks again from the rest, a few times at most.
+   */
+  private async takePrize(
+    guildId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<{ prize: HalloweenPrize; attempts: number }> {
+    let pool = await this.prizes.inStock(guildId, tx);
+    for (let attempt = 1; attempt <= MAX_TAKES && pool.length; attempt++) {
+      const pick = this.random.weighted(
+        pool,
+        pool.map((p) => p.currentStock * p.weight),
+      );
+      // Before taking it, so a misconfigured prize is never used up.
+      await this.prizeAward.validate(pick, guildId, tx);
+      const taken = await this.prizes.takeOne(pick.id, guildId, tx);
+      if (taken) {
+        return { prize: taken, attempts: attempt };
+      }
+      pool = pool.filter((p) => p !== pick);
+    }
+    throw new OutOfPrizesError({ thrownFrom: "KnockCommand.win", guildId });
+  }
+
   private async win(
     interaction: APIChatInputApplicationCommandGuildInteraction,
     settings: HalloweenGuildSettings,
+    knockCount: number,
     gifty: HalloweenGifty | null,
     tx: Prisma.TransactionClient,
-  ): Promise<KnockResult> {
+  ): Promise<Win> {
     const guildId = interaction.guild_id;
     const userId = interaction.member.user.id;
+
+    const takeStarted = Date.now();
+    const { prize, attempts } = await this.takePrize(guildId, tx);
+    const takeMs = Date.now() - takeStarted;
+    await this.prizeAward.grant(prize, userId, tx);
+
     const knockEvent = await this.knocks.save(
-      { guildId, userId, prizeId: null, isPending: true },
+      { guildId, userId, prizeId: prize.id },
       tx,
     );
     if (gifty) {
       gifty = await this.gifties.fulfill(gifty, knockEvent, tx);
     }
 
-    // Locked: two winners must not both take the last of a prize.
-    const pool = await this.prizes.inStock(guildId, tx, { lock: true });
-    if (!pool.length) {
-      throw new OutOfPrizesError({ thrownFrom: "KnockCommand.win", guildId });
-    }
-    const prize = this.random.weighted(
-      pool,
-      pool.map((p) => p.currentStock * p.weight),
-    );
-    await this.knocks.fulfillPending(knockEvent.id, prize.id, tx);
-    const { currentStock: stockRemaining } = await this.prizes.decrementStock(
-      prize.id,
-      guildId,
-      tx,
-    );
-    await this.prizeAward.validate(prize, guildId, tx);
-
-    const knockCount = await this.knocks.countSinceLastReset(
-      settings,
-      userId,
-      tx,
-    );
     const deviantArtUser = await this.deviantArtUsers.get(
       { guildId, userId },
       tx,
     );
-    const imageUrl = await this.prizeImages.imageFor(prize);
+    return {
+      prize,
+      knockEvent,
+      gifty,
+      winChannel: settings.winChannel,
+      // The count from before this knock; zero while spending gifties.
+      remainingKnocks: Math.max(0, settings.knocksPerDay - (knockCount + 1)),
+      bankedGifties: await this.gifties.pendingCount(guildId, userId, tx),
+      hasDeviantArt: deviantArtUser !== null,
+      takeAttempts: attempts,
+      takeMs,
+    };
+  }
+
+  /** A committed win's reply, its win-channel post, and its log line. */
+  private async announceable(
+    interaction: APIChatInputApplicationCommandGuildInteraction,
+    {
+      prize,
+      knockEvent,
+      gifty,
+      winChannel,
+      remainingKnocks,
+      bankedGifties,
+      hasDeviantArt,
+      takeAttempts,
+      takeMs,
+    }: Win,
+  ): Promise<KnockResult> {
+    const guildId = interaction.guild_id;
+    const userId = interaction.member.user.id;
+    const imageUrl = await this.imageFor(prize, interaction);
 
     const fields: APIEmbedField[] = [{ name: "Prize", value: prize.name }];
     const chardbLink = formatChardbLink(prize);
@@ -379,8 +419,6 @@ export class KnockCommand implements HalloweenCommandHandler {
         value: `<@${gifty.fromUserId}> (Go thank them!)`,
       });
     }
-    const remainingKnocks = Math.max(0, settings.knocksPerDay - knockCount);
-    const bankedGifties = await this.gifties.pendingCount(guildId, userId, tx);
     fields.push(
       { name: "Remaining Knocks", value: `${remainingKnocks}`, inline: true },
       { name: "Banked Gifties", value: `${bankedGifties}`, inline: true },
@@ -407,7 +445,7 @@ export class KnockCommand implements HalloweenCommandHandler {
         ...message,
         embeds: [
           ...(message.embeds ?? []),
-          ...(deviantArtUser
+          ...(hasDeviantArt
             ? []
             : [
                 {
@@ -421,9 +459,7 @@ export class KnockCommand implements HalloweenCommandHandler {
               ]),
         ],
       },
-      announcement: settings.winChannel
-        ? { channelId: settings.winChannel, message }
-        : null,
+      announcement: winChannel ? { channelId: winChannel, message } : null,
       prize,
       log: {
         event: HalloweenLogEvent.KnockWon,
@@ -434,16 +470,45 @@ export class KnockCommand implements HalloweenCommandHandler {
         knockEventId: knockEvent.id,
         prizeId: prize.id,
         prizeName: prize.name,
-        stockRemaining,
+        stockRemaining: prize.currentStock,
         itemTypeId: prize.itemTypeId,
         characterId: prize.characterId,
         giftyId: gifty?.id ?? null,
         giftyFrom: gifty?.fromUserId ?? null,
         remainingKnocks,
         bankedGifties,
-        hasDeviantArt: deviantArtUser !== null,
-        announcedIn: settings.winChannel,
+        hasDeviantArt,
+        announcedIn: winChannel,
+        takeAttempts,
+        takeMs,
       },
     };
+  }
+
+  /**
+   * The prize's picture, after commit so the lookup holds no lock. A failure
+   * shows the win without it.
+   */
+  private async imageFor(
+    prize: HalloweenPrize,
+    interaction: APIChatInputApplicationCommandGuildInteraction,
+  ): Promise<string | null> {
+    try {
+      return await this.prizeImages.imageFor(prize);
+    } catch (error) {
+      this.logger.error(
+        {
+          event: HalloweenLogEvent.PrizeImageLookupFailed,
+          message: "Could not look up a won prize's image",
+          interactionId: interaction.id,
+          guildId: interaction.guild_id,
+          userId: interaction.member.user.id,
+          prizeId: prize.id,
+          cause: error instanceof Error ? error.message : String(error),
+        } satisfies HalloweenLogLine,
+        error instanceof Error ? error.stack : String(error),
+      );
+      return null;
+    }
   }
 }

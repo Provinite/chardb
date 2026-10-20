@@ -17,10 +17,9 @@ import { HalloweenDiscordError } from "../errors";
  *
  * The bot did this by sending a message to chardb's prize queue after telling
  * the player they had won, and only logged a failure. Here the prize is
- * checked inside the knock's transaction, so a prize that cannot be delivered
- * fails the knock (and leaves the player their knock) instead of announcing a
- * win nobody receives. The grant itself runs after the knock commits: chardb's
- * grant services open their own transactions and cannot join this one.
+ * checked and granted inside the knock's transaction: a prize that cannot be
+ * delivered fails the knock (and leaves the player their knock) instead of
+ * announcing a win nobody receives, and a win always comes with its prize.
  */
 @Injectable()
 export class PrizeAwardService {
@@ -30,7 +29,7 @@ export class PrizeAwardService {
     private readonly pendingOwnership: PendingOwnershipService,
   ) {}
 
-  /** Throws if `award` would fail for a reason the data can show now. */
+  /** Throws if `grant` would fail for a reason the data can show now. */
   async validate(
     prize: HalloweenPrize,
     guildId: string,
@@ -104,25 +103,39 @@ export class PrizeAwardService {
     return null;
   }
 
-  async award(prize: HalloweenPrize, discordUserId: string): Promise<void> {
+  /**
+   * Hands the prize over inside the knock's transaction. The Discord id came
+   * signed from Discord, so it is not checked again.
+   */
+  async grant(
+    prize: HalloweenPrize,
+    discordUserId: string,
+    tx: Prisma.TransactionClient,
+  ): Promise<void> {
     if (prize.itemTypeId) {
-      await this.items.grantItem({
-        itemTypeId: prize.itemTypeId,
-        quantity: 1,
-        pendingOwner: {
-          provider: ExternalAccountProvider.DISCORD,
-          providerAccountId: discordUserId,
+      await this.items.grantItemInTransaction(
+        tx,
+        {
+          itemTypeId: prize.itemTypeId,
+          quantity: 1,
+          pendingOwner: {
+            provider: ExternalAccountProvider.DISCORD,
+            providerAccountId: discordUserId,
+          },
+          actor: {
+            actorLabel: "halloween-bot",
+            reason: `Halloween prize: ${prize.name}`,
+          },
         },
-        actor: {
-          actorLabel: "halloween-bot",
-          reason: `Halloween prize: ${prize.name}`,
-        },
-      });
+        { discordIdVerified: true },
+      );
     } else if (prize.characterId) {
       await this.pendingOwnership.createForCharacter(
         prize.characterId,
         ExternalAccountProvider.DISCORD,
         discordUserId,
+        undefined,
+        tx,
       );
     }
   }

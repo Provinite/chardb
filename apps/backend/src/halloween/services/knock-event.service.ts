@@ -6,17 +6,16 @@ import type {
 } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
 import { GuildSettingsService } from "./guild-settings.service";
-import {
-  DiscordReportableError,
-  ValidationError,
-  type ValidationFieldError,
-} from "../errors";
+import { ValidationError, type ValidationFieldError } from "../errors";
 
+/**
+ * A knock as it happened: lost, or won with its prize. The bot saved a win as
+ * pending until a second Lambda picked the prize; nothing here does.
+ */
 export interface KnockEventInput {
   guildId: string;
   userId: string;
   prizeId: string | null;
-  isPending?: boolean;
 }
 
 export function validateKnockEventForCreate({
@@ -72,33 +71,6 @@ export class KnockEventService {
         time: { gt: this.settings.lastReset(settings) },
         gifties: { none: {} },
       },
-    });
-  }
-
-  /** Records the prize a pending win turned into. */
-  async fulfillPending(
-    knockEventId: number,
-    prizeId: string,
-    tx: Prisma.TransactionClient = this.db,
-  ): Promise<HalloweenKnockEvent> {
-    const pending = await tx.halloweenKnockEvent.findFirst({
-      where: { id: knockEventId, isPending: true },
-    });
-    if (!pending) {
-      throw new DiscordReportableError(
-        "Knock event not found during fulfillment",
-        {
-          thrownFrom: "KnockEventService.fulfillPending",
-          logAsError: true,
-          sourceError: new Error(
-            `No knock event found with { id: ${knockEventId}, isPending: true }`,
-          ),
-        },
-      );
-    }
-    return tx.halloweenKnockEvent.update({
-      where: { id: knockEventId },
-      data: { isPending: false, prizeId },
     });
   }
 }

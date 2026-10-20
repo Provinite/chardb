@@ -31,8 +31,8 @@ export const HalloweenLogEvent = {
   KnockLost: "halloween.knock.lost",
   KnockWon: "halloween.knock.won",
   AdminKnock: "halloween.knock.admin",
-  PrizeDelivered: "halloween.prize.delivered",
-  PrizeDeliveryFailed: "halloween.prize.delivery_failed",
+  /** A win that stands, shown without its prize's picture. */
+  PrizeImageLookupFailed: "halloween.prize.image_lookup_failed",
 
   GiftySent: "halloween.gifty.sent",
   GiftyRateLimited: "halloween.gifty.rate_limited",

@@ -5,12 +5,10 @@ import { DatabaseService } from "../../database/database.service";
 import { HalloweenClock } from "../clock";
 import { GuildSettingsService } from "./guild-settings.service";
 import { PrizeService } from "./prize.service";
-import { OutOfPrizesError } from "../errors";
 import { KnockEventService } from "./knock-event.service";
 import { GiftyService } from "./gifty.service";
 import { DeviantArtUserService } from "./deviantart-user.service";
 import {
-  DiscordReportableError,
   MissingGuildSettingsError,
   ValidationError,
   isGiftyRateLimitError,
@@ -116,43 +114,51 @@ describe("Halloween services (e2e)", () => {
       expect(await prizes.hasInStock(GUILD)).toBe(false);
     });
 
-    it("decrements stock", async () => {
+    it("takes one of a prize, returning what is left", async () => {
       await createPrize("myo");
-      await prizes.decrementStock("myo", GUILD);
+      const taken = await prizes.takeOne("myo", GUILD);
+      expect(taken?.currentStock).toBe(2);
       expect((await prizes.inStock(GUILD))[0].currentStock).toBe(2);
     });
 
-    it("refuses to decrement an exhausted prize, as out of prizes", async () => {
+    it("takes nothing from an exhausted prize", async () => {
       await createPrize("gone", { currentStock: 0 });
-      await expect(prizes.decrementStock("gone", GUILD)).rejects.toBeInstanceOf(
-        OutOfPrizesError,
-      );
+      await expect(prizes.takeOne("gone", GUILD)).resolves.toBeNull();
+      const [gone] = await db.halloweenPrize.findMany();
+      expect(gone.currentStock).toBe(0);
     });
 
-    it("locks the in-stock rows for the rest of the transaction", async () => {
+    it("gives the last one to exactly one of two takers", async () => {
       await createPrize("last", { currentStock: 1 });
-      const order: string[] = [];
-      let releaseFirst!: () => void;
-      const firstHolds = new Promise<void>((r) => (releaseFirst = r));
+      const [a, b] = await Promise.all([
+        db.$transaction((tx) => prizes.takeOne("last", GUILD, tx)),
+        db.$transaction((tx) => prizes.takeOne("last", GUILD, tx)),
+      ]);
+      expect([a, b].filter(Boolean)).toHaveLength(1);
+      const [last] = await db.halloweenPrize.findMany();
+      expect(last.currentStock).toBe(0);
+    });
 
-      const first = db.$transaction(async (tx) => {
-        await prizes.inStock(GUILD, tx, { lock: true });
-        order.push("first locked");
-        await firstHolds;
-        await prizes.decrementStock("last", GUILD, tx);
-        order.push("first done");
+    // Winners of different prizes no longer queue behind one another.
+    it("does not wait on another prize that someone is taking", async () => {
+      await createPrize("busy", { currentStock: 1 });
+      await createPrize("free", { currentStock: 1 });
+      let release!: () => void;
+      const held = new Promise<void>((r) => (release = r));
+      const holder = db.$transaction(async (tx) => {
+        await prizes.takeOne("busy", GUILD, tx);
+        await held;
       });
-      // Give the first transaction time to take its lock.
-      await new Promise((r) => setTimeout(r, 200));
-      const second = db.$transaction(async (tx) => {
-        const rows = await prizes.inStock(GUILD, tx, { lock: true });
-        order.push(`second saw ${rows.length}`);
-      });
-      await new Promise((r) => setTimeout(r, 200));
-      releaseFirst();
-      await Promise.all([first, second]);
+      await new Promise((r) => setTimeout(r, 100));
 
-      expect(order).toEqual(["first locked", "first done", "second saw 0"]);
+      const started = Date.now();
+      const free = await db.$transaction((tx) =>
+        prizes.takeOne("free", GUILD, tx),
+      );
+      expect(free?.id).toBe("free");
+      expect(Date.now() - started).toBeLessThan(500);
+      release();
+      await holder;
     });
   });
 
@@ -206,26 +212,13 @@ describe("Halloween services (e2e)", () => {
       expect(await knocks.countSinceLastReset(guild, ALICE)).toBe(1);
     });
 
-    it("awards a prize to a pending knock", async () => {
-      const pending = await knocks.save({
+    it("saves a win with its prize", async () => {
+      const knock = await knocks.save({
         guildId: GUILD,
         userId: ALICE,
-        prizeId: null,
-        isPending: true,
+        prizeId: "myo",
       });
-      const won = await knocks.fulfillPending(pending.id, "myo");
-      expect(won).toMatchObject({ isPending: false, prizeId: "myo" });
-    });
-
-    it("refuses to award a knock that is not pending", async () => {
-      const done = await knocks.save({
-        guildId: GUILD,
-        userId: ALICE,
-        prizeId: null,
-      });
-      await expect(
-        knocks.fulfillPending(done.id, "myo"),
-      ).rejects.toBeInstanceOf(DiscordReportableError);
+      expect(knock).toMatchObject({ isPending: false, prizeId: "myo" });
     });
   });
 

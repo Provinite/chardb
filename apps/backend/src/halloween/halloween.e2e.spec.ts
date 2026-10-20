@@ -9,6 +9,7 @@ import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
 import { DatabaseService } from "../database/database.service";
 import { DiscordService } from "../discord/discord.service";
+import { ItemsService } from "../items/items.service";
 import { HalloweenModule } from "./halloween.module";
 import { HalloweenCommandDispatcher } from "./discord/halloween-command.dispatcher";
 import { HalloweenDiscordClient } from "./discord/halloween-discord.client";
@@ -116,6 +117,19 @@ describe("Halloween bot (e2e)", () => {
     });
 
   const alwaysWin = () => jest.spyOn(random, "unit").mockReturnValue(0);
+
+  /** A community linked to the guild, with an item type it can give away. */
+  const linkedCommunity = async () => {
+    const community = await testApp.createTestCommunity();
+    await db.community.update({
+      where: { id: community.id },
+      data: { discordGuildId: GUILD_ID },
+    });
+    const itemType = await db.itemType.create({
+      data: { name: "Candy Corn", communityId: community.id },
+    });
+    return { community, itemType };
+  };
   const alwaysLose = () => jest.spyOn(random, "unit").mockReturnValue(0.999);
 
   it("records a losing knock", async () => {
@@ -128,14 +142,7 @@ describe("Halloween bot (e2e)", () => {
   });
 
   it("awards a prize and delivers its chardb item to the winner's Discord account", async () => {
-    const community = await testApp.createTestCommunity();
-    await db.community.update({
-      where: { id: community.id },
-      data: { discordGuildId: GUILD_ID },
-    });
-    const itemType = await db.itemType.create({
-      data: { name: "Candy Corn", communityId: community.id },
-    });
+    const { itemType } = await linkedCommunity();
     await setUpEvent();
     await addPrize("candy", { itemTypeId: itemType.id });
     alwaysWin();
@@ -155,6 +162,84 @@ describe("Halloween bot (e2e)", () => {
       provider: ExternalAccountProvider.DISCORD,
       providerAccountId: USER_ID,
     });
+  });
+
+  it("gives a winner who is a linked member the item outright", async () => {
+    const { community, itemType } = await linkedCommunity();
+    const stamp = Date.now();
+    const player = await testApp.createTestUser({
+      username: `player_${stamp}`,
+      email: `player_${stamp}@example.com`,
+    });
+    await testApp.createTestCommunityMember(
+      player.id,
+      (await testApp.createTestRole(community.id)).id,
+    );
+    await db.externalAccount.create({
+      data: {
+        userId: player.id,
+        provider: ExternalAccountProvider.DISCORD,
+        providerAccountId: USER_ID,
+        displayName: "player",
+      },
+    });
+    await setUpEvent();
+    await addPrize("candy", { itemTypeId: itemType.id });
+    alwaysWin();
+
+    await run("knock");
+
+    const item = await db.item.findFirstOrThrow({
+      where: { itemTypeId: itemType.id },
+    });
+    expect(item.ownerId).toBe(player.id);
+  });
+
+  // The grant is part of the knock: if it fails, so does the knock, and the
+  // player keeps it.
+  it("rolls back the whole win when the grant fails", async () => {
+    const { itemType } = await linkedCommunity();
+    await setUpEvent();
+    await addPrize("candy", { itemTypeId: itemType.id });
+    alwaysWin();
+    jest
+      .spyOn(testApp.getModuleRef().get(ItemsService), "grantItemInTransaction")
+      .mockRejectedValue(new Error("database blip"));
+
+    const reply = await run("knock");
+
+    expect(reply.embeds?.[0].title).not.toBe("Winner!");
+    expect(await db.halloweenKnockEvent.count()).toBe(0);
+    expect((await db.halloweenPrize.findFirstOrThrow()).currentStock).toBe(2);
+    expect(await db.item.count()).toBe(0);
+  });
+
+  // The bot locked every prize in stock for each win, so winners queued
+  // behind one another. Now a winner locks only the prize they take.
+  it("does not keep a winner waiting on a prize someone else is taking", async () => {
+    await setUpEvent();
+    await addPrize("busy");
+    const free = await addPrize("free");
+    alwaysWin();
+    jest.spyOn(random, "weighted").mockReturnValue(free);
+
+    let held!: () => void;
+    const locked = new Promise<void>((resolve) => (held = resolve));
+    const holder = db.$transaction(
+      async (tx) => {
+        await tx.$executeRaw`SELECT 1 FROM "halloween_prizes" WHERE "id" = 'busy' FOR UPDATE`;
+        held();
+        await tx.$executeRaw`SELECT pg_sleep(2.5)`;
+      },
+      { timeout: 10_000 },
+    );
+    await locked;
+
+    const started = Date.now();
+    const reply = await run("knock");
+    expect(reply.embeds?.[0].title).toBe("Winner!");
+    expect(Date.now() - started).toBeLessThan(1000);
+    await holder;
   });
 
   it("keeps the player's knock when the prize cannot be delivered", async () => {
