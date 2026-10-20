@@ -535,10 +535,12 @@ describe("/knock", () => {
       await knock();
       const pool = prizes.lockInStock.mock.invocationCallOrder[0];
       expect(lock.acquire.mock.invocationCallOrder[0]).toBeLessThan(pool);
-      expect(knocks.countSinceLastReset.mock.invocationCallOrder[0]).toBeLessThan(
+      expect(
+        knocks.countSinceLastReset.mock.invocationCallOrder[0],
+      ).toBeLessThan(pool);
+      expect(gifties.nextPending.mock.invocationCallOrder[0]).toBeLessThan(
         pool,
       );
-      expect(gifties.nextPending.mock.invocationCallOrder[0]).toBeLessThan(pool);
     });
 
     it("leaves the knock unspent when the pool emptied before its turn", async () => {
@@ -620,7 +622,9 @@ describe("/knock", () => {
     });
 
     it("links the prize on chardb", async () => {
-      prizes.lockInStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      prizes.lockInStock.mockResolvedValue([
+        prize("myo", { itemTypeId: "it-1" }),
+      ]);
       await knock();
       const fields = (reply as { embeds: Embed[] }).embeds[0].fields;
       expect(fields?.[1]).toEqual({
@@ -683,7 +687,9 @@ describe("/knock", () => {
       discord.createChannelMessage.mockRejectedValue(
         new Error("Missing Access"),
       );
-      prizes.lockInStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      prizes.lockInStock.mockResolvedValue([
+        prize("myo", { itemTypeId: "it-1" }),
+      ]);
       await expect(knock({ id: "ref-2" })).resolves.toBeDefined();
       expect(error).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -724,14 +730,18 @@ describe("/knock", () => {
     });
 
     it("leaves nothing for after the reply without a win channel", async () => {
-      prizes.lockInStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      prizes.lockInStock.mockResolvedValue([
+        prize("myo", { itemTypeId: "it-1" }),
+      ]);
       const { afterReply } = await knockOnly();
       expect(afterReply).toBeUndefined();
     });
 
     // The whole knock rolls back, so the player keeps it.
     it("fails the knock when the grant fails", async () => {
-      prizes.lockInStock.mockResolvedValue([prize("myo", { itemTypeId: "it-1" })]);
+      prizes.lockInStock.mockResolvedValue([
+        prize("myo", { itemTypeId: "it-1" }),
+      ]);
       award.grant.mockRejectedValue(new Error("database blip"));
       await expect(knock()).rejects.toThrow("database blip");
     });

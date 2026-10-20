@@ -26,8 +26,9 @@ describe("GuildSettingsService.getCached", () => {
 
   beforeEach(() => {
     now = Date.parse("2025-10-17T15:30:00Z");
-    findUnique = jest.fn(({ where: { guildId } }: { where: { guildId: string } }) =>
-      Promise.resolve(settings(guildId)),
+    findUnique = jest.fn(
+      ({ where: { guildId } }: { where: { guildId: string } }) =>
+        Promise.resolve(settings(guildId)),
     );
     service = new GuildSettingsService(
       { halloweenGuildSettings: { findUnique } } as unknown as DatabaseService,

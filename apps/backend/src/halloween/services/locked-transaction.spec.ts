@@ -45,9 +45,9 @@ describe("lockedTransaction", () => {
   // long as the transaction allows, short of the work done once it is theirs.
   it("lets a winner queue for most of the transaction", () => {
     expect(LOCK_TIMEOUT_MS).toBeGreaterThanOrEqual(1800);
-    expect(LOCKED_TRANSACTION_OPTIONS.timeout - LOCK_TIMEOUT_MS).toBeGreaterThanOrEqual(
-      200,
-    );
+    expect(
+      LOCKED_TRANSACTION_OPTIONS.timeout - LOCK_TIMEOUT_MS,
+    ).toBeGreaterThanOrEqual(200);
   });
 
   // Every knock needs a connection; in a burst it waits in line for one.
