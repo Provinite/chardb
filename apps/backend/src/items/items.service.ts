@@ -16,6 +16,7 @@ import {
   ItemTransactionSource,
   NotificationKind,
   NotificationSubjectType,
+  type ItemType,
 } from "@chardb/database";
 import {
   ItemTransactionsService,
@@ -59,6 +60,30 @@ export interface ItemActor {
   actorLabel?: string | null;
   reason?: string | null;
   staffNote?: string | null;
+}
+
+export interface GrantItemServiceInput {
+  itemTypeId: string;
+  userId?: string | null; // Optional for orphaned items
+  quantity: number;
+  metadata?: Prisma.InputJsonValue;
+  pendingOwner?: PendingOwnerInput; // For pending ownership
+  actor: ItemActor;
+}
+
+export interface GrantOptions {
+  /**
+   * The pending owner's Discord id came from Discord's own signed
+   * interaction, so it is not looked up again.
+   */
+  discordIdVerified?: boolean;
+}
+
+/** Who a grant's items go to, or the account they wait on. */
+interface GrantPlan {
+  itemType: ItemType;
+  ownerId: string | null;
+  pendingOwner?: PendingOwnerInput;
 }
 
 /**
@@ -864,15 +889,54 @@ export class ItemsService {
     return itemIds;
   }
 
-  async grantItem(input: {
-    itemTypeId: string;
-    userId?: string | null; // Optional for orphaned items
-    quantity: number;
-    metadata?: Prisma.InputJsonValue;
-    pendingOwner?: PendingOwnerInput; // For pending ownership
-    actor: ItemActor;
-  }) {
-    const { itemTypeId, userId, quantity, metadata } = input;
+  async grantItem(input: GrantItemServiceInput) {
+    const plan = await this.planGrant(this.db, input, {});
+    // Every item, every ledger row and every claim row commit together or not
+    // at all. A ledger that can disagree with `items` is worse than none: it
+    // looks authoritative while being wrong.
+    const itemIds = await this.db.$transaction((tx) =>
+      this.writeGrant(tx, plan, input),
+    );
+
+    // One read for the whole grant, and outside the transaction: this exists
+    // to answer the caller with whole items, which is not work the write needs
+    // to hold a connection open for.
+    return this.db.item.findMany({
+      where: { id: { in: itemIds } },
+      include: {
+        itemType: { include: { community: true } },
+        owner: true,
+      },
+      orderBy: { id: "asc" },
+    });
+  }
+
+  /**
+   * The same grant, inside a transaction the caller owns, so it commits or
+   * rolls back with the caller's own work. The Halloween bot grants a prize
+   * this way, in the knock that won it.
+   *
+   * @returns The new items' ids.
+   */
+  async grantItemInTransaction(
+    tx: Prisma.TransactionClient,
+    input: GrantItemServiceInput,
+    options: GrantOptions,
+  ): Promise<string[]> {
+    const plan = await this.planGrant(tx, input, options);
+    return this.writeGrant(tx, plan, input);
+  }
+
+  /**
+   * Everything a grant checks and resolves before writing anything: who gets
+   * the items, or which account they wait on.
+   */
+  private async planGrant(
+    client: Prisma.TransactionClient,
+    input: GrantItemServiceInput,
+    options: GrantOptions,
+  ): Promise<GrantPlan> {
+    const { itemTypeId, userId, quantity } = input;
     let pendingOwner = input.pendingOwner;
 
     // VALIDATION: Items must have either an owner or pending owner
@@ -891,11 +955,9 @@ export class ItemsService {
       throw new BadRequestException("Quantity must be at least 1");
     }
 
-    // Also checked here, not only on GrantItemInput. The Discord prize queue
-    // calls this service directly and its own message DTO has no maximum at
-    // all, so a cap that lived on the GraphQL input would leave the one
-    // unbounded caller unbounded -- and it is the expensive one, since a
-    // pending-owner grant writes a claim row per item.
+    // Also checked here, not only on GrantItemInput: callers inside the
+    // backend (the Halloween bot) skip the GraphQL input, and a pending-owner
+    // grant writes a claim row per item.
     if (quantity > MAX_GRANT_QUANTITY) {
       throw new BadRequestException(
         `Cannot grant more than ${MAX_GRANT_QUANTITY} at once`,
@@ -903,7 +965,7 @@ export class ItemsService {
     }
 
     // Get the item type to check if it's stackable
-    const itemType = await this.db.itemType.findUnique({
+    const itemType = await client.itemType.findUnique({
       where: { id: itemTypeId },
     });
 
@@ -926,10 +988,16 @@ export class ItemsService {
           displayIdentifier = pendingOwner.providerAccountId;
         }
 
-        resolvedAccountId = await this.resolveDiscordIdentifier(
-          itemType.communityId,
-          pendingOwner.providerAccountId,
-        );
+        // An id that came from Discord's own signed interaction exists; asking
+        // Discord again would only add an HTTP call to the caller's
+        // transaction.
+        resolvedAccountId =
+          options.discordIdVerified && isNumericId
+            ? pendingOwner.providerAccountId
+            : await this.resolveDiscordIdentifier(
+                itemType.communityId,
+                pendingOwner.providerAccountId,
+              );
       } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
         // DeviantArt uses usernames, so always store as displayIdentifier
         displayIdentifier = pendingOwner.providerAccountId;
@@ -942,16 +1010,22 @@ export class ItemsService {
 
       // Check if the external account has already been claimed by a user
       // If so, assign directly to that user instead of creating pending ownership
-      const claimedUserId =
-        await this.pendingOwnershipService.checkIfAccountClaimed(
-          pendingOwner.provider,
-          resolvedAccountId,
-        );
+      const claimedUserId = (
+        await client.externalAccount.findUnique({
+          where: {
+            provider_providerAccountId: {
+              provider: pendingOwner.provider,
+              providerAccountId: resolvedAccountId,
+            },
+          },
+          select: { userId: true },
+        })
+      )?.userId;
 
       if (
         claimedUserId &&
         (await this.pendingOwnershipService.isMember(
-          this.db,
+          client,
           claimedUserId,
           itemType.communityId,
         ))
@@ -973,7 +1047,7 @@ export class ItemsService {
 
     // Verify user exists and is member of community (skip for orphaned items)
     if (actualOwnerId) {
-      const user = await this.db.user.findUnique({
+      const user = await client.user.findUnique({
         where: { id: actualOwnerId },
       });
 
@@ -982,86 +1056,81 @@ export class ItemsService {
       }
 
       // Verify user is a member of the community that owns this item type
-      const membership = await this.db.communityMember.findFirst({
-        where: {
-          userId: actualOwnerId,
-          role: {
-            communityId: itemType.communityId,
-          },
-        },
-      });
-
-      if (!membership) {
+      if (
+        !(await this.pendingOwnershipService.isMember(
+          client,
+          actualOwnerId,
+          itemType.communityId,
+        ))
+      ) {
         throw new BadRequestException(
           `User is not a member of the community that owns this item type`,
         );
       }
     }
 
-    // Every item and every ledger row commit together or not at all. A ledger
-    // that can disagree with `items` is worse than none: it looks authoritative
-    // while being wrong.
-    //
+    return { itemType, ownerId: actualOwnerId ?? null, pendingOwner };
+  }
+
+  /**
+   * A planned grant's writes: the items with their ledger rows, the
+   * notification, and a claim row per item when they wait on an account.
+   */
+  private async writeGrant(
+    tx: Prisma.TransactionClient,
+    { itemType, ownerId, pendingOwner }: GrantPlan,
+    input: GrantItemServiceInput,
+  ): Promise<string[]> {
     // No stacking, so no read-then-write and no race: N items is N inserts.
-    const itemIds = await this.db.$transaction(async (tx) => {
-      const ids = await this.createGranted(tx, {
-        itemTypeId,
-        communityId: itemType.communityId,
-        ownerId: actualOwnerId ?? null,
-        quantity,
-        metadata,
-        actor: input.actor,
-      });
-
-      // A grant of five identical potions is one notification saying five, not
-      // five notifications. Nothing is sent for a grant still awaiting a claim:
-      // there is no one to tell until the CLAIM names an owner.
-      //
-      // Here rather than in createGranted, so that buying something does not
-      // notify the buyer that they received it. A shop purchase is already the
-      // most direct possible confirmation of itself.
-      if (actualOwnerId) {
-        await this.notifications.create(
-          {
-            recipientId: actualOwnerId,
-            kind: NotificationKind.ITEM_GRANTED,
-            communityId: itemType.communityId,
-            subjectType: NotificationSubjectType.ITEM,
-            subjectId: ids[0],
-            data: { subjectName: itemType.name.slice(0, 200), count: quantity },
-            ...input.actor,
-          },
-          tx,
-        );
-      }
-
-      return ids;
+    const ids = await this.createGranted(tx, {
+      itemTypeId: itemType.id,
+      communityId: itemType.communityId,
+      ownerId,
+      quantity: input.quantity,
+      metadata: input.metadata,
+      actor: input.actor,
     });
+
+    // A grant of five identical potions is one notification saying five, not
+    // five notifications. Nothing is sent for a grant still awaiting a claim:
+    // there is no one to tell until the CLAIM names an owner.
+    //
+    // Here rather than in createGranted, so that buying something does not
+    // notify the buyer that they received it. A shop purchase is already the
+    // most direct possible confirmation of itself.
+    if (ownerId) {
+      await this.notifications.create(
+        {
+          recipientId: ownerId,
+          kind: NotificationKind.ITEM_GRANTED,
+          communityId: itemType.communityId,
+          subjectType: NotificationSubjectType.ITEM,
+          subjectId: ids[0],
+          data: {
+            subjectName: itemType.name.slice(0, 200),
+            count: input.quantity,
+          },
+          ...input.actor,
+        },
+        tx,
+      );
+    }
 
     // Pending ownership is one record per item -- PendingOwnership.itemId is
     // unique, and each instance claims independently.
     if (pendingOwner) {
-      for (const itemId of itemIds) {
+      for (const itemId of ids) {
         await this.pendingOwnershipService.createForItem(
           itemId,
           pendingOwner.provider,
           pendingOwner.providerAccountId, // Already resolved earlier
           pendingOwner.displayIdentifier,
+          tx,
         );
       }
     }
 
-    // One read for the whole grant, and outside the transaction: this exists
-    // to answer the caller with whole items, which is not work the write needs
-    // to hold a connection open for.
-    return this.db.item.findMany({
-      where: { id: { in: itemIds } },
-      include: {
-        itemType: { include: { community: true } },
-        owner: true,
-      },
-      orderBy: { id: "asc" },
-    });
+    return ids;
   }
 
   async findAllItems(filters: ItemFilters = {}) {

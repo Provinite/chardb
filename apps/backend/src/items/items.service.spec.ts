@@ -22,6 +22,7 @@ import { NotificationsService } from "../notifications/notifications.service";
 const mockPendingOwnershipService = {
   createForItem: jest.fn(),
   checkIfAccountClaimed: jest.fn(),
+  isMember: jest.fn(),
 };
 const mockDiscordService = {
   validateUserId: jest.fn(),
@@ -82,6 +83,7 @@ describe("ItemsService", () => {
     mockDatabaseService.communityMember.findFirst.mockResolvedValue({
       id: "member1",
     });
+    mockPendingOwnershipService.isMember.mockResolvedValue(true);
     mockDatabaseService.item.createMany.mockResolvedValue({ count: 1 });
     mockDatabaseService.item.findMany.mockResolvedValue([]);
   });
@@ -305,7 +307,7 @@ describe("ItemsService", () => {
     });
 
     it("refuses to grant to someone outside the community", async () => {
-      mockDatabaseService.communityMember.findFirst.mockResolvedValue(null);
+      mockPendingOwnershipService.isMember.mockResolvedValue(false);
 
       await expect(
         service.grantItem({

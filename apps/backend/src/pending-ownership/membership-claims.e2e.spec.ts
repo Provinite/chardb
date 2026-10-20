@@ -29,6 +29,7 @@ describe("Pending ownership and community membership (e2e)", () => {
   let pending: PendingOwnershipService;
   let accounts: ExternalAccountsService;
   let invites: InviteCodesService;
+  const validateUserId = jest.fn().mockResolvedValue(true);
 
   let communityId: string;
   let memberRoleId: string;
@@ -51,9 +52,7 @@ describe("Pending ownership and community membership (e2e)", () => {
         ],
       },
       (builder) =>
-        builder.overrideProvider(DiscordService).useValue({
-          validateUserId: () => Promise.resolve(true),
-        }),
+        builder.overrideProvider(DiscordService).useValue({ validateUserId }),
     );
     db = testApp.getDb();
     items = testApp.getModuleRef().get(ItemsService);
@@ -173,6 +172,58 @@ describe("Pending ownership and community membership (e2e)", () => {
       await link();
       expect(await itemOwner()).toBeNull();
       expect(await characterOwner()).toBeNull();
+    });
+  });
+
+  // How the Halloween bot grants a prize: inside the knock's own transaction,
+  // so the win and the prize commit together.
+  describe("granting inside a caller's transaction", () => {
+    const grantIn = (
+      tx: Parameters<ItemsService["grantItemInTransaction"]>[0],
+    ) =>
+      items.grantItemInTransaction(
+        tx,
+        {
+          itemTypeId,
+          quantity: 1,
+          pendingOwner: { provider: DISCORD, providerAccountId: DISCORD_ID },
+          actor: { actorLabel: "test" },
+        },
+        { discordIdVerified: true },
+      );
+
+    beforeEach(() => validateUserId.mockClear());
+
+    it("commits with the caller's transaction", async () => {
+      await testApp.createTestCommunityMember(player.id, memberRoleId);
+      await link();
+      await db.$transaction((tx) => grantIn(tx));
+      expect(await itemOwner()).toBe(player.id);
+      expect(await db.itemTransaction.count({ where: { kind: "GRANT" } })).toBe(
+        1,
+      );
+    });
+
+    it("rolls back with it, leaving no item, claim or history", async () => {
+      await expect(
+        db.$transaction(async (tx) => {
+          await grantIn(tx);
+          throw new Error("the knock failed after the grant");
+        }),
+      ).rejects.toThrow("the knock failed after the grant");
+      expect(await db.item.count({ where: { itemTypeId } })).toBe(0);
+      expect(await db.pendingOwnership.count()).toBe(0);
+      expect(await db.itemTransaction.count()).toBe(0);
+    });
+
+    it("does not ask Discord about an id that came from Discord itself", async () => {
+      await db.$transaction((tx) => grantIn(tx));
+      expect(validateUserId).not.toHaveBeenCalled();
+    });
+
+    it("still asks Discord about an id typed in by staff", async () => {
+      await grantToDiscord();
+      expect(validateUserId).toHaveBeenCalledWith(DISCORD_ID);
     });
   });
 
