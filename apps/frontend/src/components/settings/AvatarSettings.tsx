@@ -141,9 +141,13 @@ export const AvatarSettings: React.FC<AvatarSettingsProps> = ({
         throw new Error(failure.message || "Upload failed");
       }
 
+      // The avatar is set from here on. Reported before the refetch, and the
+      // refetch's own failure kept out of the catch below: told the upload
+      // failed, someone would upload again and replace the avatar they just
+      // set. A failed refetch only leaves this page a step behind.
       closeStaged();
-      await client.refetchQueries({ include: ["Me"] });
       toast.success("Avatar updated");
+      void client.refetchQueries({ include: ["Me"] }).catch(() => undefined);
     } catch (error: unknown) {
       toast.error(
         error instanceof Error ? error.message : "Could not upload that image",

@@ -2,18 +2,56 @@
  * The avatar control since #410: an avatar is uploaded, never chosen from
  * your posts, and is never waiting on a moderator.
  */
-import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, vi, afterEach } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MockedProvider } from "@apollo/client/testing";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
 
-vi.mock("react-hot-toast", () => {
-  const stub = { success: vi.fn(), error: vi.fn() };
-  return { default: stub, toast: stub, Toaster: () => null };
+const toastStub = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
+vi.mock("react-hot-toast", () => ({
+  default: toastStub,
+  toast: toastStub,
+  Toaster: () => null,
+}));
+
+const apollo = vi.hoisted(() => ({ refetchQueries: vi.fn() }));
+vi.mock("@apollo/client", async () => {
+  const actual =
+    await vi.importActual<typeof import("@apollo/client")>("@apollo/client");
+  return {
+    ...actual,
+    useApolloClient: () => ({ refetchQueries: apollo.refetchQueries }),
+  };
 });
 
+// The real cropper needs a canvas; this one confirms a fixed square.
+vi.mock("../../ThumbnailCropper", () => ({
+  ThumbnailCropper: ({
+    onConfirm,
+  }: {
+    onConfirm: (crop: {
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+    }) => void;
+  }) => (
+    <button
+      type="button"
+      onClick={() => onConfirm({ x: 0, y: 0, width: 10, height: 10 })}
+    >
+      Use this crop
+    </button>
+  ),
+}));
+
 import { AvatarSettings } from "../AvatarSettings";
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.clearAllMocks();
+});
 
 function renderSettings(
   avatarImage: React.ComponentProps<typeof AvatarSettings>["avatarImage"],
@@ -50,5 +88,40 @@ describe("AvatarSettings", () => {
       screen.queryByText(/waiting on a moderator/i),
     ).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Remove" })).toBeInTheDocument();
+  });
+
+  /**
+   * The upload is what sets the avatar. Once it has answered, a failed
+   * refetch afterwards must not be reported as a failed upload -- someone told
+   * that would upload again, replacing and deleting the avatar they just set.
+   */
+  it("reports a successful upload even if the refetch after it fails", async () => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(async () => new Response(JSON.stringify({ id: "image-1" }))),
+    );
+    vi.stubGlobal("URL", {
+      ...URL,
+      createObjectURL: () => "blob:preview",
+      revokeObjectURL: () => {},
+    });
+    apollo.refetchQueries.mockRejectedValue(new Error("network down"));
+
+    const { container } = renderSettings(null);
+    const input =
+      container.querySelector<HTMLInputElement>('input[type="file"]')!;
+    fireEvent.change(input, {
+      target: {
+        files: [new File(["x"], "avatar.png", { type: "image/png" })],
+      },
+    });
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Use this crop" }),
+    );
+
+    await waitFor(() =>
+      expect(toastStub.success).toHaveBeenCalledWith("Avatar updated"),
+    );
+    expect(toastStub.error).not.toHaveBeenCalled();
   });
 });
