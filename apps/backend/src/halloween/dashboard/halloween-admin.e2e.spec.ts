@@ -7,6 +7,7 @@ import { CharactersModule } from "../../characters/characters.module";
 import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { mockDiscord } from "../testing/command-harness";
 import { GuildSettingsService } from "../services/guild-settings.service";
+import { PrizeService } from "../services/prize.service";
 
 const GUILD = "100000000000000001";
 
@@ -507,6 +508,45 @@ describe("Halloween management (e2e)", () => {
         expect(res.body.data.updateHalloweenPrize).toMatchObject({
           initialStock: 12,
           currentStock: 10,
+        });
+      });
+
+      // A winner holds the pool and takes one while the edit is in flight. The
+      // edit waits its turn, then counts that win as given out.
+      it("keeps a win that lands while the stock is being edited", async () => {
+        await db.halloweenPrize.update({
+          where: { guildId_id: { guildId: GUILD, id: "adopt" } },
+          data: { currentStock: 3 },
+        });
+        const prizes = testApp.getModuleRef().get(PrizeService);
+        let release!: () => void;
+        const released = new Promise<void>((r) => (release = r));
+        let won!: () => void;
+        const hasWon = new Promise<void>((r) => (won = r));
+        const winner = db.$transaction(
+          async (tx) => {
+            await prizes.lockInStock(GUILD, tx);
+            await prizes.decrement("adopt", GUILD, tx);
+            won();
+            await released;
+          },
+          { timeout: 10_000 },
+        );
+        await hasWon;
+
+        const edit = gql(UPDATE, {
+          prizeId: "adopt",
+          input: { currentStock: 5 },
+        });
+        await new Promise((r) => setTimeout(r, 200));
+        release();
+        await winner;
+        const res = await edit;
+
+        // Five given out: the two before, the win, and none lost.
+        expect(res.body.data.updateHalloweenPrize).toMatchObject({
+          initialStock: 8,
+          currentStock: 5,
         });
       });
 

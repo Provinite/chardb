@@ -233,9 +233,53 @@ export class HalloweenAdminService {
     actorUserId: string,
   ): Promise<HalloweenPrizeView> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
-    const prize = await this.findPrize(guildId, prizeId);
-    const isChardbPrize = Boolean(prize.itemTypeId || prize.characterId);
+    // Under the prize's own lock, which winners hold while they take one, and
+    // re-read under it: a win in flight lands first and is counted, rather
+    // than overwritten by a stock read before it.
+    const { prize, saved } = await this.db.$transaction(async (tx) => {
+      await tx.$queryRaw`SELECT 1 FROM "halloween_prizes" WHERE "guild_id" = ${guildId} AND "id" = ${prizeId} FOR UPDATE`;
+      const prize = await this.findPrize(guildId, prizeId, tx);
+      return {
+        prize,
+        saved: await this.applyPrizeChanges(guildId, prize, input, tx),
+      };
+    });
 
+    this.logger.log({
+      event: HalloweenLogEvent.PrizeUpdated,
+      message: "Halloween prize changed from chardb",
+      communityId,
+      guildId,
+      actorUserId,
+      prizeId,
+      before: {
+        name: prize.name,
+        weight: prize.weight,
+        image: prize.image,
+        initialStock: prize.initialStock,
+        currentStock: prize.currentStock,
+      },
+      after: {
+        name: saved.name,
+        weight: saved.weight,
+        image: saved.image,
+        initialStock: saved.initialStock,
+        currentStock: saved.currentStock,
+      },
+    } satisfies HalloweenLogLine);
+
+    const [view] = await this.dashboard.prizeViews([saved]);
+    return view;
+  }
+
+  /** Checks an edit against the prize as it now stands, and saves it. */
+  private async applyPrizeChanges(
+    guildId: string,
+    prize: HalloweenPrize,
+    input: UpdateHalloweenPrizeInput,
+    tx: Prisma.TransactionClient,
+  ): Promise<HalloweenPrize> {
+    const isChardbPrize = Boolean(prize.itemTypeId || prize.characterId);
     const changes: Prisma.HalloweenPrizeUpdateInput = {};
     const problems: string[] = [];
     if (input.name !== undefined) {
@@ -279,36 +323,10 @@ export class HalloweenAdminService {
       throw new BadRequestException(problems.join(". "));
     }
 
-    const saved = await this.db.halloweenPrize.update({
-      where: { guildId_id: { guildId, id: prizeId } },
+    return tx.halloweenPrize.update({
+      where: { guildId_id: { guildId, id: prize.id } },
       data: changes,
     });
-
-    this.logger.log({
-      event: HalloweenLogEvent.PrizeUpdated,
-      message: "Halloween prize changed from chardb",
-      communityId,
-      guildId,
-      actorUserId,
-      prizeId,
-      before: {
-        name: prize.name,
-        weight: prize.weight,
-        image: prize.image,
-        initialStock: prize.initialStock,
-        currentStock: prize.currentStock,
-      },
-      after: {
-        name: saved.name,
-        weight: saved.weight,
-        image: saved.image,
-        initialStock: saved.initialStock,
-        currentStock: saved.currentStock,
-      },
-    } satisfies HalloweenLogLine);
-
-    const [view] = await this.dashboard.prizeViews([saved]);
-    return view;
   }
 
   /** Only a prize nobody has won: a win keeps its prize on record. */
@@ -393,8 +411,9 @@ export class HalloweenAdminService {
   private async findPrize(
     guildId: string,
     prizeId: string,
+    client: Prisma.TransactionClient = this.db,
   ): Promise<HalloweenPrize> {
-    const prize = await this.db.halloweenPrize.findUnique({
+    const prize = await client.halloweenPrize.findUnique({
       where: { guildId_id: { guildId, id: prizeId } },
     });
     if (!prize) {
