@@ -314,10 +314,15 @@ export class HalloweenAdminService {
         problems.push("Stock must be a whole number from 0 to 999");
       }
       // Moving the starting stock by the same amount keeps "given out"
-      // (initial - current) as it was.
+      // (initial - current) as it was. It then has the cap a new prize has.
+      const givenOut = prize.initialStock - prize.currentStock;
+      if (givenOut + input.currentStock > 999) {
+        problems.push(
+          `Stock left plus the ${givenOut} already given out can't be more than 999`,
+        );
+      }
       changes.currentStock = input.currentStock;
-      changes.initialStock =
-        prize.initialStock + (input.currentStock - prize.currentStock);
+      changes.initialStock = givenOut + input.currentStock;
     }
     if (problems.length) {
       throw new BadRequestException(problems.join(". "));

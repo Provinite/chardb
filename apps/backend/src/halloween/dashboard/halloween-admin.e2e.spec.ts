@@ -565,6 +565,30 @@ describe("Halloween management (e2e)", () => {
         });
       });
 
+      // The starting stock is what was given out plus what is left, and has
+      // the same cap as when the prize was added.
+      it("refuses stock that would take the starting stock past 999", async () => {
+        await db.halloweenPrize.update({
+          where: { guildId_id: { guildId: GUILD, id: "adopt" } },
+          data: { initialStock: 600, currentStock: 100 },
+        });
+        const res = await gql(UPDATE, {
+          prizeId: "adopt",
+          input: { currentStock: 500 },
+        });
+        expect(res.body.errors?.[0].message).toBe(
+          "Stock left plus the 500 already given out can't be more than 999",
+        );
+        const ok = await gql(UPDATE, {
+          prizeId: "adopt",
+          input: { currentStock: 499 },
+        });
+        expect(ok.body.data.updateHalloweenPrize).toMatchObject({
+          initialStock: 999,
+          currentStock: 499,
+        });
+      });
+
       it("refuses a weight of 0", async () => {
         const res = await gql(UPDATE, {
           prizeId: "adopt",
