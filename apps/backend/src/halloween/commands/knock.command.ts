@@ -143,7 +143,9 @@ export class KnockCommand implements HalloweenCommandHandler {
     }
 
     const roll = this.random.unit();
-    const win = roll <= settings.winRate;
+    // The roll is in [0, 1): this wins exactly winRate of the time. The bot's
+    // `<=` could win at a rate of 0.
+    const win = roll < settings.winRate;
     this.logger.log({
       event: HalloweenLogEvent.KnockRolled,
       message: "Knock rolled",

@@ -512,10 +512,22 @@ describe("/knock", () => {
   describe("a winning knock", () => {
     beforeEach(win);
 
-    it("wins when the roll equals the win rate", async () => {
+    // The roll is in [0, 1), so `roll < winRate` wins exactly winRate of the
+    // time: never at 0, always at 1.
+    it("wins only when the roll is below the win rate", async () => {
       (random.unit as jest.Mock).mockReturnValue(0.4);
       await knock();
+      expect(prizes.lockInStock).not.toHaveBeenCalled();
+      (random.unit as jest.Mock).mockReturnValue(0.39);
+      await knock();
       expect(prizes.lockInStock).toHaveBeenCalled();
+    });
+
+    it("never wins with a win rate of 0, even on the lowest roll", async () => {
+      guildSettings.getCached.mockResolvedValue({ ...settings, winRate: 0 });
+      (random.unit as jest.Mock).mockReturnValue(0);
+      await knock();
+      expect(prizes.lockInStock).not.toHaveBeenCalled();
     });
 
     it("locks the pool, takes one of the prize, then records the win with it", async () => {
