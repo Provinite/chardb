@@ -134,7 +134,9 @@ test.describe("site-wide image queue", () => {
         .last();
       await card.getByRole("button", { name: "Approve" }).click();
 
-      await expect(admin.page.getByText(`${pending - 1} pending`)).toBeVisible();
+      await expect(
+        admin.page.getByText(`${pending - 1} pending`),
+      ).toBeVisible();
       await expect(picture).toHaveCount(0);
     } finally {
       await admin.close();
