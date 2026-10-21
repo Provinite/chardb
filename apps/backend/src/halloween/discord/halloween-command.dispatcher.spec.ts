@@ -98,7 +98,10 @@ describe("HalloweenCommandDispatcher", () => {
           thrownFrom: "test",
           message: "This prize couldn't be delivered. Please let staff know.",
           sourceError: new Error("Prize is misconfigured"),
-          details: { prizeId: "myo", problem: "the character is already owned" },
+          details: {
+            prizeId: "myo",
+            problem: "the character is already owned",
+          },
         }),
       );
       await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
