@@ -4,6 +4,7 @@ import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import { Package, Search, Lock } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { FilterChip, FilterChips } from "../components/FilterChip";
 import {
   useCommunityId,
   useHostCommunity,
@@ -94,41 +95,6 @@ const SearchInput = styled.input`
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.muted};
   }
-`;
-
-const Chips = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-`;
-
-const Chip = styled.button<{ $active: boolean }>`
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  padding: 0.3rem 0.75rem;
-  border-radius: ${({ theme }) => theme.borderRadius.full};
-  cursor: pointer;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  transition:
-    background 0.12s,
-    border-color 0.12s,
-    color 0.12s;
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
-
-  ${({ $active, theme }) =>
-    $active &&
-    css`
-      background: ${theme.colors.primary}1a;
-      border-color: ${theme.colors.primary}55;
-      color: ${theme.colors.primary};
-      font-weight: 600;
-    `}
 `;
 
 const TableWrap = styled.div`
@@ -534,19 +500,17 @@ export const CommunityItemLedgerPage: React.FC = () => {
             }}
           />
         </SearchWrap>
-        <Chips>
+        <FilterChips>
           {KINDS.map(({ kind, label }) => (
-            <Chip
+            <FilterChip
               key={kind}
-              type="button"
-              aria-pressed={activeKinds.includes(kind)}
-              $active={activeKinds.includes(kind)}
+              active={activeKinds.includes(kind)}
               onClick={() => toggleKind(kind)}
             >
               {label}
-            </Chip>
+            </FilterChip>
           ))}
-        </Chips>
+        </FilterChips>
       </Toolbar>
 
       {error ? (

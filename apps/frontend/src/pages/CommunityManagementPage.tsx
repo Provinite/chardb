@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
-import { Plus, Settings, Trash2, ExternalLink, Search } from "lucide-react";
+import {
+  Plus,
+  Settings,
+  Trash2,
+  ExternalLink,
+  Search,
+  Ghost,
+} from "lucide-react";
+import { useSetCommunityHalloweenEnabledMutation } from "../generated/graphql";
 import {
   useCommunitiesQuery,
   useCreateCommunityMutation,
@@ -250,6 +258,27 @@ export function CommunityManagementPage() {
     },
   });
 
+  const [togglingId, setTogglingId] = useState<string | null>(null);
+  const [setHalloweenEnabledMutation] =
+    useSetCommunityHalloweenEnabledMutation();
+  const setHalloweenEnabled = async (communityId: string, enabled: boolean) => {
+    setTogglingId(communityId);
+    try {
+      const result = await setHalloweenEnabledMutation({
+        variables: { communityId, enabled },
+      });
+      const nowEnabled =
+        result.data?.setCommunityHalloweenEnabled.halloweenEnabled;
+      toast.success(`Halloween event turned ${nowEnabled ? "on" : "off"}`);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not change the event",
+      );
+    } finally {
+      setTogglingId(null);
+    }
+  };
+
   const communities = data?.communities.nodes || [];
   const filteredCommunities = communities.filter((community) =>
     community.name.toLowerCase().includes(searchTerm.toLowerCase()),
@@ -333,7 +362,10 @@ export function CommunityManagementPage() {
       ) : (
         <Grid>
           {filteredCommunities.map((community) => (
-            <CommunityCard key={community.id}>
+            <CommunityCard
+              key={community.id}
+              data-testid={`community-card-${community.id}`}
+            >
               <CardHeader>
                 <div>
                   <CommunityName>{community.name}</CommunityName>
@@ -360,6 +392,21 @@ export function CommunityManagementPage() {
                 <ActionButton>
                   <Settings size={14} />
                   Manage
+                </ActionButton>
+                {/* Site admins only: the event is not generally available,
+                    and a community without it sees nothing about it. */}
+                <ActionButton
+                  aria-pressed={community.halloweenEnabled}
+                  disabled={togglingId === community.id}
+                  onClick={() =>
+                    void setHalloweenEnabled(
+                      community.id,
+                      !community.halloweenEnabled,
+                    )
+                  }
+                >
+                  <Ghost size={14} />
+                  Halloween: {community.halloweenEnabled ? "on" : "off"}
                 </ActionButton>
                 <ActionButton
                   className="danger"

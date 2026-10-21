@@ -70,6 +70,12 @@ module "app_secrets" {
     "patreon-client-secret"    = "Patreon OAuth client secret"
     "discord-bot-token"        = "Discord bot token"
     "otel-otlp-headers"        = "OpenTelemetry OTLP exporter auth headers"
+
+    # The Halloween bot is a separate Discord application. Only the token is
+    # secret; the rest live here too so the bot's config is in one place.
+    "halloween-discord-application-id" = "Halloween bot Discord application ID"
+    "halloween-discord-public-key"     = "Halloween bot Discord interactions public key"
+    "halloween-discord-bot-token"      = "Halloween bot Discord bot token"
   }
 
   tags = local.common_tags
@@ -390,20 +396,105 @@ resource "aws_s3_bucket_policy" "images" {
 }
 
 ##############################################################################
-# SQS Queue for Discord Bot Prize Distribution
+# Alerts to Discord
 ##############################################################################
 
-module "prize_distribution_queue" {
-  source = "../../modules/sqs-queue"
+# Alarms post to a Discord channel through an SNS topic and a small Lambda.
+# The webhook URL is put in by hand; see DEPLOYMENT_GUIDE.md.
+module "alerts_discord" {
+  source = "../../modules/alerts-discord"
 
-  queue_name            = "${var.project_name}-prize-distribution-${var.environment}"
-  visibility_timeout    = 30
-  message_retention     = 345600 # 4 days
-  max_receive_count     = 3
-  dlq_message_retention = 1209600 # 14 days
-  receive_wait_time     = 5       # Long polling - reduces API calls and costs
+  project_name = var.project_name
+  environment  = var.environment
 
   tags = local.common_tags
+}
+
+locals {
+  # The backend's log messages are fixed strings, so each of these matches
+  # exactly one kind of line, whatever the values on it. Prod's console logs
+  # are not JSON, so these are text terms, not field filters.
+  halloween_needs_staff_messages = [
+    "A command's reply never reached Discord",
+    "Could not announce a win in the win channel",
+  ]
+  halloween_error_messages = [
+    "Work after a command's reply failed",
+    "Command failed",
+    "Could not look up a won prize's image",
+  ]
+  metrics_namespace = "${var.project_name}/${var.environment}"
+}
+
+resource "aws_cloudwatch_log_metric_filter" "halloween_needs_staff" {
+  name           = "${var.project_name}-${var.environment}-halloween-needs-staff"
+  log_group_name = module.ecs.log_group_name
+  pattern        = join(" ", [for m in local.halloween_needs_staff_messages : "?\"${m}\""])
+
+  metric_transformation {
+    name      = "HalloweenNeedsStaff"
+    namespace = local.metrics_namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_log_metric_filter" "halloween_errors" {
+  name           = "${var.project_name}-${var.environment}-halloween-errors"
+  log_group_name = module.ecs.log_group_name
+  pattern        = join(" ", [for m in local.halloween_error_messages : "?\"${m}\""])
+
+  metric_transformation {
+    name      = "HalloweenErrors"
+    namespace = local.metrics_namespace
+    value     = "1"
+  }
+}
+
+resource "aws_cloudwatch_metric_alarm" "halloween_needs_staff" {
+  alarm_name          = "${var.project_name}-${var.environment}-halloween-needs-staff"
+  alarm_description   = "A Halloween player is owed something: a result they may not have seen, or a win that was not announced. Open the halloween-needs-attention query in Logs Insights for the interactionId."
+  namespace           = local.metrics_namespace
+  metric_name         = "HalloweenNeedsStaff"
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  # No matching lines means nothing went wrong.
+  treat_missing_data = "notBreaching"
+  alarm_actions      = [module.alerts_discord.topic_arn]
+  ok_actions         = [module.alerts_discord.topic_arn]
+
+  tags = local.common_tags
+}
+
+resource "aws_cloudwatch_metric_alarm" "halloween_errors" {
+  alarm_name          = "${var.project_name}-${var.environment}-halloween-errors"
+  alarm_description   = "A Halloween bot command failed, work after its reply did, or a win was shown without its prize's image. Open the halloween-needs-attention query in Logs Insights for the error and its interactionId."
+  namespace           = local.metrics_namespace
+  metric_name         = "HalloweenErrors"
+  statistic           = "Sum"
+  period              = 300
+  evaluation_periods  = 1
+  threshold           = 1
+  comparison_operator = "GreaterThanOrEqualToThreshold"
+  treat_missing_data  = "notBreaching"
+  alarm_actions       = [module.alerts_discord.topic_arn]
+  ok_actions          = [module.alerts_discord.topic_arn]
+
+  tags = local.common_tags
+}
+
+# One click from an alarm to the lines behind it.
+resource "aws_cloudwatch_query_definition" "halloween_needs_attention" {
+  name            = "${var.project_name}-${var.environment}/halloween-needs-attention"
+  log_group_names = [module.ecs.log_group_name]
+  query_string    = <<-EOT
+    fields @timestamp, @message
+    | filter @message like /${join("|", concat(local.halloween_needs_staff_messages, local.halloween_error_messages))}/
+    | sort @timestamp desc
+    | limit 100
+  EOT
 }
 
 ##############################################################################
@@ -550,15 +641,6 @@ module "ecs" {
       name  = "CLOUDFRONT_IMAGES_DOMAIN"
       value = module.image_cdn.custom_domain_name != null ? module.image_cdn.custom_domain_name : module.image_cdn.distribution_domain_name
     },
-    # SQS Queue Configuration
-    {
-      name  = "AWS_SQS_ENABLED"
-      value = "true"
-    },
-    {
-      name  = "AWS_SQS_QUEUE_URL"
-      value = module.prize_distribution_queue.queue_url
-    },
     # GraphQL Security Configuration
     {
       name  = "GRAPHQL_PLAYGROUND"
@@ -647,6 +729,18 @@ module "ecs" {
     {
       name      = "OTEL_EXPORTER_OTLP_HEADERS"
       valueFrom = module.app_secrets.arns["otel-otlp-headers"]
+    },
+    {
+      name      = "HALLOWEEN_DISCORD_APPLICATION_ID"
+      valueFrom = module.app_secrets.arns["halloween-discord-application-id"]
+    },
+    {
+      name      = "HALLOWEEN_DISCORD_PUBLIC_KEY"
+      valueFrom = module.app_secrets.arns["halloween-discord-public-key"]
+    },
+    {
+      name      = "HALLOWEEN_DISCORD_BOT_TOKEN"
+      valueFrom = module.app_secrets.arns["halloween-discord-bot-token"]
     },
     {
       name      = "CLOUDFRONT_SECRET"
@@ -738,16 +832,6 @@ resource "aws_iam_role_policy" "ecs_task_ses" {
   name   = "${var.project_name}-${var.environment}-ecs-task-ses"
   role   = module.ecs.task_role_name
   policy = data.aws_iam_policy_document.ecs_task_ses.json
-
-  depends_on = [
-    module.ecs,
-  ]
-}
-
-# SQS consumer permissions for ECS task role
-resource "aws_iam_role_policy_attachment" "ecs_task_sqs_consumer" {
-  role       = module.ecs.task_role_name
-  policy_arn = module.prize_distribution_queue.consumer_policy_arn
 
   depends_on = [
     module.ecs,

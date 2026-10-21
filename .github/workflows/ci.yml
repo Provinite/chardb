@@ -195,6 +195,24 @@ jobs:
           fi
           echo "Generated GraphQL types are up to date."
 
+      # The Halloween bot picks a candy image by number, so it needs to know how
+      # many there are. The count is generated from the images; an image added
+      # or removed without regenerating, or a gap in the numbering, fails here.
+      - name: Check Halloween image counts are up to date
+        run: |
+          yarn halloween:images
+          if ! git diff --quiet -- apps/backend/src/halloween/discord/images.generated.ts; then
+            echo "::error file=apps/backend/src/halloween/discord/images.generated.ts::Halloween image counts are out of date. Run 'yarn halloween:images' and commit the result."
+            git diff -- apps/backend/src/halloween/discord/images.generated.ts
+            exit 1
+          fi
+          echo "Halloween image counts are up to date."
+
+      # The Lambda that posts CloudWatch alarms to Discord is one dependency-free
+      # file outside the workspaces, so no workspace's test run covers it.
+      - name: Test the alerts Lambda
+        run: node --test "infra/modules/alerts-discord/lambda/*.test.mjs"
+
   test:
     name: Unit tests (${{ matrix.name }})
     runs-on: ubuntu-latest

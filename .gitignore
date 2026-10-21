@@ -130,3 +130,6 @@ tasks/
 .terraform/
 .terraform.lock.hcl
 *.pem
+
+# Terraform packages the alerts Lambda here at plan time
+infra/modules/alerts-discord/.build/

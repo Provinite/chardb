@@ -22,6 +22,9 @@ import { cloudfrontOriginGuard } from "./middleware/cloudfront-origin.middleware
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     logger: WinstonModule.createLogger(loggerConfig),
+    // Keeps the request bytes as received alongside the parsed body: Discord
+    // signs those exact bytes (halloween/discord/verify-signature.ts).
+    rawBody: true,
   });
 
   // First, so a request that bypassed CloudFront does no other work. A

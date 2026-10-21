@@ -1,0 +1,24 @@
+{
+  "halloween-needs-staff": {
+    "ALARM": {
+      "title": "Halloween: a player may be owed something",
+      "description": "A player's result never reached Discord, or a win was not posted in the win channel. Whatever they won or were gifted is saved either way; they may just not know.",
+      "whatToDo": "Open the halloween-needs-attention query in CloudWatch Logs Insights. Each line names the player, the interactionId (the Reference ID they see) and what they missed. Tell them, or post the win in the win channel by hand."
+    },
+    "OK": {
+      "title": "Halloween: nobody is owed anything new",
+      "description": "No player has missed a result or an announcement in the last 5 minutes."
+    }
+  },
+  "halloween-errors": {
+    "ALARM": {
+      "title": "Halloween: the bot is failing",
+      "description": "A Halloween command failed, work after a reply failed, or a win was shown without its prize's picture. A failed command saved nothing, so the player kept their knock or gifty.",
+      "whatToDo": "Open the halloween-needs-attention query in CloudWatch Logs Insights for the error and its interactionId. If many players are hit, check the backend's health first."
+    },
+    "OK": {
+      "title": "Halloween: the bot is working again",
+      "description": "No Halloween command has failed in the last 5 minutes."
+    }
+  }
+}

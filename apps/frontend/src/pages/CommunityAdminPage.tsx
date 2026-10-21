@@ -9,6 +9,7 @@ import {
   List,
   FileText,
   Palette,
+  Ghost,
 } from "lucide-react";
 import { Title, Subtitle, Card } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -337,6 +338,21 @@ export const CommunityAdminPage: React.FC = () => {
             </CardDescription>
           </AdminCard>
         )}
+        {/* Halloween - only where a site admin has turned the event on. */}
+        {community.halloweenEnabled &&
+          (userRole.canGrantItems || userRole.canManageItems) && (
+            <AdminCard to="/admin/halloween">
+              <CardIcon>
+                <Ghost size={24} />
+              </CardIcon>
+              <CardTitle>Halloween Event</CardTitle>
+              <CardDescription>
+                Run the trick-or-treat event: its settings and prize pool, what
+                players have won, and which prizes staff still need to hand
+                over.
+              </CardDescription>
+            </AdminCard>
+          )}
       </AdminGrid>
     </Container>
   );

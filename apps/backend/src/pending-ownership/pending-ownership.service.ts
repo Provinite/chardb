@@ -61,11 +61,146 @@ export class PendingOwnershipService {
     );
   }
 
+  /** Whether the user belongs to the community, through any role there. */
+  async isMember(
+    client: Prisma.TransactionClient,
+    userId: string,
+    communityId: string,
+  ): Promise<boolean> {
+    return (
+      (await client.communityMember.count({
+        where: { userId, role: { communityId } },
+      })) > 0
+    );
+  }
+
   /**
-   * Create a pending ownership record for a character, with auto-claim if account is already linked.
-   *
-   * If the external account is already linked to a user, the character is automatically claimed
-   * (assigned to that user) instead of creating a pending ownership record.
+   * The community a pending item or character belongs to: an item through its
+   * type, a character through its species. A character with no species
+   * belongs to none.
+   */
+  private async communityOf(
+    client: Prisma.TransactionClient,
+    entity: { itemId?: string | null; characterId?: string | null },
+  ): Promise<string | null> {
+    if (entity.itemId) {
+      const item = await client.item.findUnique({
+        where: { id: entity.itemId },
+        select: { itemType: { select: { communityId: true } } },
+      });
+      return item?.itemType.communityId ?? null;
+    }
+    if (entity.characterId) {
+      const character = await client.character.findUnique({
+        where: { id: entity.characterId },
+        select: { species: { select: { communityId: true } } },
+      });
+      return character?.species?.communityId ?? null;
+    }
+    return null;
+  }
+
+  /**
+   * Who something granted to an outside account can go to right now: the
+   * account's chardb user, if they have linked it and belong to the
+   * community it is from. Otherwise it waits on the account, and is claimed
+   * when both are true (on linking, or on joining).
+   */
+  private async claimantFor(
+    client: Prisma.TransactionClient,
+    provider: ExternalAccountProvider,
+    providerAccountId: string,
+    entity: { itemId?: string | null; characterId?: string | null },
+  ): Promise<string | null> {
+    const account = await client.externalAccount.findUnique({
+      where: {
+        provider_providerAccountId: { provider, providerAccountId },
+      },
+      select: { userId: true },
+    });
+    if (!account) return null;
+    const communityId = await this.communityOf(client, entity);
+    if (
+      communityId &&
+      !(await this.isMember(client, account.userId, communityId))
+    ) {
+      return null;
+    }
+    return account.userId;
+  }
+
+  /** Hands one waiting grant to its claimant and marks it claimed. */
+  private async claimOne(
+    tx: Prisma.TransactionClient,
+    pending: PendingOwnership,
+    userId: string,
+    claimedAt: Date,
+  ): Promise<PendingOwnership> {
+    if (pending.characterId) {
+      await tx.character.update({
+        where: { id: pending.characterId },
+        data: { ownerId: userId },
+      });
+    } else if (pending.itemId) {
+      await tx.item.update({
+        where: { id: pending.itemId },
+        data: { ownerId: userId },
+      });
+      await this.recordItemClaim(tx, pending.itemId, userId, pending.provider);
+    }
+    return tx.pendingOwnership.update({
+      where: { id: pending.id },
+      data: { claimedAt, claimedByUserId: userId },
+      include: { character: true, item: true },
+    });
+  }
+
+  /**
+   * Gives a new member everything waiting for their linked accounts in the
+   * community they just joined. Run in the transaction that creates the
+   * membership (CommunityMembershipService.join), so joining and receiving
+   * commit together.
+   */
+  async claimPendingInCommunity(
+    tx: Prisma.TransactionClient,
+    userId: string,
+    communityId: string,
+  ): Promise<PendingOwnership[]> {
+    const linked = await tx.externalAccount.findMany({
+      where: { userId },
+      select: { provider: true, providerAccountId: true },
+    });
+    if (!linked.length) return [];
+
+    const waiting = await tx.pendingOwnership.findMany({
+      where: {
+        claimedAt: null,
+        OR: linked.map(({ provider, providerAccountId }) => ({
+          provider,
+          providerAccountId,
+        })),
+        AND: [
+          {
+            OR: [
+              { item: { itemType: { communityId } } },
+              { character: { species: { communityId } } },
+            ],
+          },
+        ],
+      },
+    });
+    const now = new Date();
+    const claimed: PendingOwnership[] = [];
+    for (const pending of waiting) {
+      claimed.push(await this.claimOne(tx, pending, userId, now));
+    }
+    return claimed;
+  }
+
+  /**
+   * Create a pending ownership record for a character, or hand the character
+   * straight to the account's user if they have linked it and belong to the
+   * character's community (see claimantFor).
    *
    * @returns Object indicating if character was claimed or pending ownership was created
    */
@@ -74,13 +209,14 @@ export class PendingOwnershipService {
     provider: ExternalAccountProvider,
     providerAccountId: string,
     displayIdentifier?: string,
+    tx: Prisma.TransactionClient = this.prisma,
   ): Promise<{
     claimed: boolean;
     ownerId?: string;
     pendingOwnership?: PendingOwnership;
   }> {
     // Check if character exists
-    const character = await this.prisma.character.findFirst({
+    const character = await tx.character.findFirst({
       where: { id: characterId, ...notDeleted },
     });
     if (!character) {
@@ -88,7 +224,7 @@ export class PendingOwnershipService {
     }
 
     // Check if character already has a pending ownership
-    const existing = await this.prisma.pendingOwnership.findUnique({
+    const existing = await tx.pendingOwnership.findUnique({
       where: { characterId },
     });
     if (existing) {
@@ -97,27 +233,24 @@ export class PendingOwnershipService {
       );
     }
 
-    // Check if the external account is already linked to a user (auto-claim check)
-    const claimedUserId = await this.checkIfAccountClaimed(
-      provider,
-      providerAccountId,
-    );
+    const claimantId = await this.claimantFor(tx, provider, providerAccountId, {
+      characterId,
+    });
 
-    if (claimedUserId) {
-      // Account is already claimed - assign character to the user who owns the account
-      await this.prisma.character.update({
+    if (claimantId) {
+      await tx.character.update({
         where: { id: characterId },
-        data: { ownerId: claimedUserId },
+        data: { ownerId: claimantId },
       });
 
       return {
         claimed: true,
-        ownerId: claimedUserId,
+        ownerId: claimantId,
       };
     }
 
-    // Account not claimed - create pending ownership record
-    const pendingOwnership = await this.prisma.pendingOwnership.create({
+    // Waits on the account until its person links it and is a member.
+    const pendingOwnership = await tx.pendingOwnership.create({
       data: {
         characterId,
         provider,
@@ -145,13 +278,15 @@ export class PendingOwnershipService {
     provider: ExternalAccountProvider,
     providerAccountId: string,
     displayIdentifier?: string,
+    tx?: Prisma.TransactionClient,
   ): Promise<{
     claimed: boolean;
     ownerId?: string;
     pendingOwnership?: PendingOwnership;
   }> {
+    const client = tx ?? this.prisma;
     // Check if item exists
-    const item = await this.prisma.item.findUnique({
+    const item = await client.item.findUnique({
       where: { id: itemId },
     });
     if (!item) {
@@ -159,7 +294,7 @@ export class PendingOwnershipService {
     }
 
     // Check if item already has a pending ownership
-    const existing = await this.prisma.pendingOwnership.findUnique({
+    const existing = await client.pendingOwnership.findUnique({
       where: { itemId },
     });
     if (existing) {
@@ -168,30 +303,36 @@ export class PendingOwnershipService {
       );
     }
 
-    // Check if the external account is already linked to a user (auto-claim check)
-    const claimedUserId = await this.checkIfAccountClaimed(
+    const claimantId = await this.claimantFor(
+      client,
       provider,
       providerAccountId,
+      { itemId },
     );
 
-    if (claimedUserId) {
-      // Account is already claimed - assign item to the user who owns the account
-      await this.prisma.$transaction(async (tx) => {
-        await tx.item.update({
+    if (claimantId) {
+      // The move and its ledger row commit together.
+      const assign = async (t: Prisma.TransactionClient) => {
+        await t.item.update({
           where: { id: itemId },
-          data: { ownerId: claimedUserId },
+          data: { ownerId: claimantId },
         });
-        await this.recordItemClaim(tx, itemId, claimedUserId, provider);
-      });
+        await this.recordItemClaim(t, itemId, claimantId, provider);
+      };
+      if (tx) {
+        await assign(tx);
+      } else {
+        await this.prisma.$transaction(assign);
+      }
 
       return {
         claimed: true,
-        ownerId: claimedUserId,
+        ownerId: claimantId,
       };
     }
 
-    // Account not claimed - create pending ownership record
-    const pendingOwnership = await this.prisma.pendingOwnership.create({
+    // Waits on the account until its person links it and is a member.
+    const pendingOwnership = await client.pendingOwnership.create({
       data: {
         itemId,
         provider,
@@ -246,42 +387,21 @@ export class PendingOwnershipService {
       },
     });
 
-    // Look up the external account within the transaction
-    const externalAccount = await tx.externalAccount.findUnique({
-      where: {
-        provider_providerAccountId: {
-          provider,
-          providerAccountId: newProviderAccountId,
-        },
-      },
-    });
-
-    if (!externalAccount) {
+    // Claimed now only if the account is linked and its person is a member.
+    const userId = await this.claimantFor(
+      tx,
+      provider,
+      newProviderAccountId,
+      entityId,
+    );
+    if (!userId) {
       return { claimed: false };
     }
 
-    const userId = externalAccount.userId;
-
-    if (entityId.characterId) {
-      await tx.character.update({
-        where: { id: entityId.characterId },
-        data: { ownerId: userId },
-      });
-    } else if (entityId.itemId) {
-      await tx.item.update({
-        where: { id: entityId.itemId },
-        data: { ownerId: userId },
-      });
-      await this.recordItemClaim(tx, entityId.itemId, userId, provider);
-    }
-
-    await tx.pendingOwnership.update({
+    const pending = await tx.pendingOwnership.findUniqueOrThrow({
       where: { id: pendingOwnershipId },
-      data: {
-        claimedAt: new Date(),
-        claimedByUserId: userId,
-      },
     });
+    await this.claimOne(tx, pending, userId, new Date());
 
     return { claimed: true, claimedByUserId: userId };
   }
@@ -308,9 +428,9 @@ export class PendingOwnershipService {
   }
 
   /**
-   * Claim all pending items for an account
-   * This transfers ownership of all pending characters and items to the user
-   * Returns the list of claimed items
+   * Claim what was waiting on an account its user has just linked: the
+   * grants from communities they belong to, and characters with no
+   * community. The rest keeps waiting until they join (claimPendingInCommunity).
    */
   async claimAllForAccount(
     userId: string,
@@ -318,64 +438,23 @@ export class PendingOwnershipService {
     providerAccountId: string,
   ): Promise<PendingOwnership[]> {
     // Use a transaction to ensure atomicity and prevent race conditions
-    const result = await this.prisma.$transaction(
-      async (tx: Prisma.TransactionClient) => {
-        // Query for unclaimed items INSIDE transaction to ensure consistent snapshot
-        const pendingItems = await tx.pendingOwnership.findMany({
-          where: {
-            provider,
-            providerAccountId,
-            claimedAt: null,
-          },
-          include: {
-            character: true,
-            item: true,
-          },
-        });
+    return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      // Query for unclaimed items INSIDE transaction to ensure consistent snapshot
+      const pendingItems = await tx.pendingOwnership.findMany({
+        where: { provider, providerAccountId, claimedAt: null },
+      });
 
-        if (pendingItems.length === 0) {
-          return [];
+      const claimed: PendingOwnership[] = [];
+      const now = new Date();
+      for (const pending of pendingItems) {
+        const communityId = await this.communityOf(tx, pending);
+        if (communityId && !(await this.isMember(tx, userId, communityId))) {
+          continue;
         }
-
-        const claimed: PendingOwnership[] = [];
-        const now = new Date();
-
-        for (const pending of pendingItems) {
-          // Transfer ownership based on entity type
-          if (pending.characterId) {
-            await tx.character.update({
-              where: { id: pending.characterId },
-              data: { ownerId: userId },
-            });
-          } else if (pending.itemId) {
-            await tx.item.update({
-              where: { id: pending.itemId },
-              data: { ownerId: userId },
-            });
-            await this.recordItemClaim(tx, pending.itemId, userId, provider);
-          }
-
-          // Mark as claimed
-          const updated = await tx.pendingOwnership.update({
-            where: { id: pending.id },
-            data: {
-              claimedAt: now,
-              claimedByUserId: userId,
-            },
-            include: {
-              character: true,
-              item: true,
-            },
-          });
-
-          claimed.push(updated);
-        }
-
-        return claimed;
-      },
-    );
-
-    return result;
+        claimed.push(await this.claimOne(tx, pending, userId, now));
+      }
+      return claimed;
+    });
   }
 
   /**

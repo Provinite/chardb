@@ -9,7 +9,6 @@
 # it. See docs/PARALLEL_INSTANCES.md.
 
 BUCKET="chardb-images"
-QUEUE="chardb-prize-distribution"
 
 echo "Initializing LocalStack resources..."
 
@@ -37,45 +36,6 @@ awslocal s3api put-bucket-cors --bucket "${BUCKET}" --cors-configuration '{
 }'
 
 echo "✓ S3 bucket '${BUCKET}' created and configured"
-
-# ========================================
-# SQS Setup
-# ========================================
-echo "Setting up SQS queues..."
-
-# Create Dead Letter Queue first
-DLQ_URL=$(awslocal sqs create-queue \
-  --queue-name "${QUEUE}-dlq" \
-  --attributes '{
-    "MessageRetentionPeriod": "1209600"
-  }' \
-  --output text --query 'QueueUrl')
-
-echo "✓ Dead Letter Queue created: $DLQ_URL"
-
-# Get DLQ ARN for main queue configuration
-DLQ_ARN=$(awslocal sqs get-queue-attributes \
-  --queue-url "$DLQ_URL" \
-  --attribute-names QueueArn \
-  --output text --query 'Attributes.QueueArn')
-
-# Create main prize distribution queue with DLQ
-QUEUE_URL=$(awslocal sqs create-queue \
-  --queue-name "${QUEUE}" \
-  --attributes "{
-    \"VisibilityTimeout\": \"30\",
-    \"MessageRetentionPeriod\": \"345600\",
-    \"ReceiveMessageWaitTimeSeconds\": \"5\",
-    \"RedrivePolicy\": \"{\\\"deadLetterTargetArn\\\":\\\"$DLQ_ARN\\\",\\\"maxReceiveCount\\\":3}\"
-  }" \
-  --output text --query 'QueueUrl')
-
-echo "✓ Main queue created: $QUEUE_URL"
-
-# List all queues to verify
-echo ""
-echo "All queues:"
-awslocal sqs list-queues
 
 echo ""
 echo "LocalStack initialization complete!"

@@ -9,8 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Halloween event page** at `/admin/halloween`, where a site admin has turned the event on from Community Management: settings and prize pool (add, edit, remove, searching chardb item types and characters) for `canManageItems`, and the win feed with "mark delivered" and a confirmed undo for `canGrantItems`, and which chardb prizes wait for their winner to link Discord or join (#399).
+- **The Halloween bot's candy images and author icons** ship in `public/halloween`, published with the frontend, instead of the old bot's hand-filled bucket (#399).
 - **Link Patreon Account** in Connected Accounts on `/profile/edit`, with its `/auth/patreon/callback` landing page (#236).
 - **Linked accounts show provider logos** with a tooltip naming the provider, on `/profile/edit`, its link buttons, and the profile page, replacing the two-letter tiles; the link buttons now stack full-width (#236).
+
+### Changed
+
+- **The upload page's character box uses the shared `CharacterTypeahead`** from `@chardb/ui`, showing each character's species (#399).
 
 ### Fixed
 

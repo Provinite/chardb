@@ -1,0 +1,93 @@
+import { Injectable, Logger } from "@nestjs/common";
+import {
+  ApplicationCommandOptionType,
+  MessageFlags,
+  type APIApplicationCommandGuildInteraction,
+} from "@discordjs/core";
+import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
+import type {
+  HalloweenCommandHandler,
+  HalloweenCommandResult,
+} from "../discord/halloween-command";
+import { Color, EVENT_NAME, HalloweenUi } from "../discord/ui";
+import { DeviantArtUserService } from "../services/deviantart-user.service";
+import { HalloweenDiscordError } from "../errors";
+import { requireChatInput } from "./command-helpers";
+
+/** `/deviantart <da_username>`. Its reply is private to the player. */
+@Injectable()
+export class DeviantArtCommand implements HalloweenCommandHandler {
+  readonly name = "deviantart";
+  private readonly logger = new Logger(DeviantArtCommand.name);
+
+  constructor(
+    private readonly ui: HalloweenUi,
+    private readonly deviantArtUsers: DeviantArtUserService,
+  ) {}
+
+  async handle(
+    interaction: APIApplicationCommandGuildInteraction,
+  ): Promise<HalloweenCommandResult> {
+    const chat = requireChatInput(interaction);
+    const { options } = chat.data;
+    if (!options || !options.length) {
+      throw new HalloweenDiscordError({
+        thrownFrom: "DeviantArtCommand",
+        message:
+          "You must provide your deviant art username as an option to this command",
+        sourceError: new Error("No options provided for /deviantart"),
+      });
+    }
+    const [option] = options;
+    if (option.type !== ApplicationCommandOptionType.String) {
+      throw new HalloweenDiscordError({
+        thrownFrom: "DeviantArtCommand",
+        message:
+          "Invalid option type for DeviantArt username. Expected a string",
+        sourceError: new Error(
+          "Got a non-string option in the first slot for /deviantart",
+        ),
+      });
+    }
+    const deviantArtName = option.value;
+    if (!deviantArtName) {
+      throw new HalloweenDiscordError({
+        thrownFrom: "DeviantArtCommand",
+        message: "Invalid DeviantArt name provided. Must not be empty.",
+        sourceError: new Error("Got an empty DeviantArt name"),
+        // The player's mistake, not the bot's.
+        logAsError: false,
+      });
+    }
+
+    await this.deviantArtUsers.save({
+      deviantArtName,
+      guildId: chat.guild_id,
+      userId: chat.member.user.id,
+    });
+    this.logger.log({
+      event: HalloweenLogEvent.DeviantArtSaved,
+      message: "Saved a player's DeviantArt name",
+      interactionId: chat.id,
+      guildId: chat.guild_id,
+      userId: chat.member.user.id,
+      deviantArtName,
+    } satisfies HalloweenLogLine);
+
+    return {
+      reply: {
+        flags: MessageFlags.Ephemeral,
+        embeds: [
+          {
+            author: this.ui.author(),
+            timestamp: this.ui.timestamp(),
+            color: Color.Primary,
+            title: `${EVENT_NAME} - Setting`,
+            description: `Your DeviantArt name has been saved! You can use the _/${this.name}_ command again at any time to update it.`,
+            fields: [{ name: "DeviantArt Username", value: deviantArtName }],
+          },
+        ],
+      },
+    };
+  }
+}

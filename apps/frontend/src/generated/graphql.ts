@@ -405,6 +405,8 @@ export type Community = {
   discordGuildId: Maybe<Scalars['String']['output']>;
   /** Discord guild (server) name for display */
   discordGuildName: Maybe<Scalars['String']['output']>;
+  /** Whether the Halloween event's pages are shown for this community. Only a site admin can change it. */
+  halloweenEnabled: Scalars['Boolean']['output'];
   /** Unique identifier for the community */
   id: Scalars['ID']['output'];
   /** Number of members in the community */
@@ -646,6 +648,18 @@ export type CreateGalleryInput = {
   name: Scalars['String']['input'];
   sortOrder?: Scalars['Int']['input'];
   visibility?: Visibility;
+};
+
+export type CreateHalloweenPrizeInput = {
+  characterId?: InputMaybe<Scalars['String']['input']>;
+  /** Short name for the prize, e.g. myo-common */
+  id: Scalars['String']['input'];
+  /** For a prize staff hand over themselves only */
+  image?: InputMaybe<Scalars['String']['input']>;
+  itemTypeId?: InputMaybe<Scalars['String']['input']>;
+  name: Scalars['String']['input'];
+  stock: Scalars['Int']['input'];
+  weight?: InputMaybe<Scalars['Int']['input']>;
 };
 
 /** Input for creating a new invite code */
@@ -1209,6 +1223,115 @@ export type GrantItemInput = {
   staffNote?: InputMaybe<Scalars['String']['input']>;
   /** User ID to grant item to. Required if pendingOwner is not provided. */
   userId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** The Halloween event as staff see it */
+export type HalloweenDashboard = {
+  __typename?: 'HalloweenDashboard';
+  communityId: Scalars['ID']['output'];
+  /** The community's Discord server, whose events these are. Null until one is linked, and then everything else is empty. */
+  guildId: Maybe<Scalars['String']['output']>;
+  prizes: Array<HalloweenPrizeView>;
+  /** Null until an admin runs /settings set in Discord */
+  settings: Maybe<HalloweenEventSettings>;
+  summary: HalloweenEventSummary;
+};
+
+/** The event's settings in a guild, as /settings sets them */
+export type HalloweenEventSettings = {
+  __typename?: 'HalloweenEventSettings';
+  endDate: Maybe<Scalars['DateTime']['output']>;
+  knocksPerDay: Scalars['Int']['output'];
+  /** Hour of the day, US Central, 0-23 */
+  resetTime: Scalars['Int']['output'];
+  startDate: Maybe<Scalars['DateTime']['output']>;
+  /** Discord channel id */
+  winChannel: Maybe<Scalars['String']['output']>;
+  /** Chance of a knock winning, 0-1 */
+  winRate: Scalars['Float']['output'];
+};
+
+/** Running totals for the event */
+export type HalloweenEventSummary = {
+  __typename?: 'HalloweenEventSummary';
+  giftiesSent: Scalars['Int']['output'];
+  knocks: Scalars['Int']['output'];
+  /** Distinct Discord users who have knocked */
+  players: Scalars['Int']['output'];
+  /** Wins of STAFF prizes not yet marked delivered */
+  toDeliver: Scalars['Int']['output'];
+  wins: Scalars['Int']['output'];
+};
+
+/** How a Halloween prize reaches its winner */
+export enum HalloweenPrizeDelivery {
+  ChardbCharacter = 'CHARDB_CHARACTER',
+  ChardbItem = 'CHARDB_ITEM',
+  Staff = 'STAFF'
+}
+
+/** A prize in the guild's pool */
+export type HalloweenPrizeView = {
+  __typename?: 'HalloweenPrizeView';
+  characterId: Maybe<Scalars['String']['output']>;
+  currentStock: Scalars['Int']['output'];
+  delivery: HalloweenPrizeDelivery;
+  /** The admin's slug for it, e.g. myo-common */
+  id: Scalars['ID']['output'];
+  /** The URL staff gave, or a chardb prize's own approved item or character image */
+  image: Maybe<Scalars['String']['output']>;
+  initialStock: Scalars['Int']['output'];
+  itemTypeId: Maybe<Scalars['String']['output']>;
+  name: Scalars['String']['output'];
+  weight: Scalars['Int']['output'];
+};
+
+export type HalloweenSettingsInput = {
+  endDate?: InputMaybe<Scalars['DateTime']['input']>;
+  knocksPerDay: Scalars['Int']['input'];
+  /** Hour of the day, US Central, 0-23 */
+  resetTime: Scalars['Int']['input'];
+  startDate?: InputMaybe<Scalars['DateTime']['input']>;
+  /** Discord channel id wins are also announced in */
+  winChannel?: InputMaybe<Scalars['String']['input']>;
+  /** Chance of a knock winning, 0-1 */
+  winRate: Scalars['Float']['input'];
+};
+
+/** One winning knock */
+export type HalloweenWin = {
+  __typename?: 'HalloweenWin';
+  /** When staff handed over a STAFF prize */
+  deliveredAt: Maybe<Scalars['DateTime']['output']>;
+  deliveredBy: Maybe<User>;
+  deviantArtName: Maybe<Scalars['String']['output']>;
+  discordUserId: Scalars['String']['output'];
+  /** Discord id of whoever's gifty paid for the knock */
+  giftyFromDiscordUserId: Maybe<Scalars['String']['output']>;
+  /** The knock's id */
+  id: Scalars['Int']['output'];
+  /** The chardb account the winner's Discord is linked to. A chardb prize waits for the link, and then for linkedUserIsMember. */
+  linkedUser: Maybe<User>;
+  /** Whether the linked account is a member of this community. A chardb prize is theirs once it is, and waits for them to join until then. */
+  linkedUserIsMember: Scalars['Boolean']['output'];
+  prize: HalloweenPrizeView;
+  time: Scalars['DateTime']['output'];
+};
+
+/** Which Halloween wins to list */
+export enum HalloweenWinFilter {
+  All = 'ALL',
+  Delivered = 'DELIVERED',
+  NeedsDelivery = 'NEEDS_DELIVERY'
+}
+
+/** A page of Halloween wins, newest first */
+export type HalloweenWinPage = {
+  __typename?: 'HalloweenWinPage';
+  hasMore: Scalars['Boolean']['output'];
+  /** How many wins match the filter in all */
+  total: Scalars['Int']['output'];
+  wins: Array<HalloweenWin>;
 };
 
 export type Image = {
@@ -1866,6 +1989,8 @@ export type Mutation = {
   /** Create a new enum value setting */
   createEnumValueSetting: EnumValueSetting;
   createGallery: Gallery;
+  /** Add a prize to the Halloween event's pool */
+  createHalloweenPrize: HalloweenPrizeView;
   /** Create a new invite code */
   createInviteCode: InviteCode;
   createItemType: ItemType;
@@ -1945,6 +2070,8 @@ export type Mutation = {
   removeEnumValue: RemovalResponse;
   /** Remove an enum value setting */
   removeEnumValueSetting: RemovalResponse;
+  /** Remove a Halloween prize nobody has won. A won prize stays on record. */
+  removeHalloweenPrize: Scalars['Boolean']['output'];
   /** Remove an invite code */
   removeInviteCode: RemovalResponse;
   /** Removes tags from a media item */
@@ -1975,6 +2102,10 @@ export type Mutation = {
   setCharacterFolders: Array<CharacterFolder>;
   /** Sets or clears the main media for a character */
   setCharacterMainMedia: Character;
+  /** Turn the Halloween event's pages on or off for a community (site admins) */
+  setCommunityHalloweenEnabled: Community;
+  /** Mark a prize staff hand over themselves as delivered, or clear the mark. Chardb item and character prizes deliver themselves. */
+  setHalloweenPrizeDelivered: HalloweenWin;
   /** Set which characters a ticket of this type can make. Replaces the grant wholesale; an empty variant list clears it. Needs the same permission as editing the item type, because it hands out the right to create characters. */
   setItemTypeMyoGrant: ItemType;
   /** Set which characters an edit kit of this type can change the traits of. Replaces the grant wholesale; an empty species list clears it. A species with no variants listed covers every variant of it. */
@@ -2011,6 +2142,10 @@ export type Mutation = {
   /** Update an enum value setting */
   updateEnumValueSetting: EnumValueSetting;
   updateGallery: Gallery;
+  /** Change a Halloween prize's name, weight, stock or (for a prize staff hand over) image */
+  updateHalloweenPrize: HalloweenPrizeView;
+  /** Set the Halloween event's dates, knocks per day, reset hour, win rate and win channel. Creates them the first time. */
+  updateHalloweenSettings: HalloweenEventSettings;
   updateImage: Image;
   /** Update an invite code */
   updateInviteCode: InviteCode;
@@ -2172,6 +2307,12 @@ export type MutationCreateEnumValueSettingArgs = {
 
 export type MutationCreateGalleryArgs = {
   input: CreateGalleryInput;
+};
+
+
+export type MutationCreateHalloweenPrizeArgs = {
+  communityId: Scalars['ID']['input'];
+  input: CreateHalloweenPrizeInput;
 };
 
 
@@ -2382,6 +2523,12 @@ export type MutationRemoveEnumValueSettingArgs = {
 };
 
 
+export type MutationRemoveHalloweenPrizeArgs = {
+  communityId: Scalars['ID']['input'];
+  prizeId: Scalars['ID']['input'];
+};
+
+
 export type MutationRemoveInviteCodeArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2464,6 +2611,19 @@ export type MutationSetCharacterFoldersArgs = {
 export type MutationSetCharacterMainMediaArgs = {
   id: Scalars['ID']['input'];
   input: SetMainMediaInput;
+};
+
+
+export type MutationSetCommunityHalloweenEnabledArgs = {
+  communityId: Scalars['ID']['input'];
+  enabled: Scalars['Boolean']['input'];
+};
+
+
+export type MutationSetHalloweenPrizeDeliveredArgs = {
+  communityId: Scalars['ID']['input'];
+  delivered: Scalars['Boolean']['input'];
+  knockEventId: Scalars['Int']['input'];
 };
 
 
@@ -2585,6 +2745,19 @@ export type MutationUpdateEnumValueSettingArgs = {
 export type MutationUpdateGalleryArgs = {
   id: Scalars['ID']['input'];
   input: UpdateGalleryInput;
+};
+
+
+export type MutationUpdateHalloweenPrizeArgs = {
+  communityId: Scalars['ID']['input'];
+  input: UpdateHalloweenPrizeInput;
+  prizeId: Scalars['ID']['input'];
+};
+
+
+export type MutationUpdateHalloweenSettingsArgs = {
+  communityId: Scalars['ID']['input'];
+  input: HalloweenSettingsInput;
 };
 
 
@@ -2915,6 +3088,14 @@ export type Query = {
   globalImageModerationQueue: ImageModerationQueueConnection;
   /** Get count of all pending images across all communities (admin only) */
   globalPendingImageCount: Scalars['Int']['output'];
+  /** The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems. */
+  halloweenDashboard: HalloweenDashboard;
+  /** Characters of the community a new Halloween prize could hand over, by name: no owner, no pending owner, and not a prize already (25 per search) */
+  halloweenPrizeCharacters: Array<Character>;
+  /** Item types of the community a new Halloween prize could hand over, by name (25 per search) */
+  halloweenPrizeItemTypes: Array<ItemType>;
+  /** The Halloween event's wins, newest first, a page at a time (at most 100). */
+  halloweenWins: HalloweenWinPage;
   /** Get pending images for a community moderation queue */
   imageModerationQueue: ImageModerationQueueConnection;
   /** Get an invite code by ID */
@@ -3306,6 +3487,31 @@ export type QueryGetFollowingArgs = {
 export type QueryGlobalImageModerationQueueArgs = {
   filters?: InputMaybe<ImageModerationQueueFiltersInput>;
   first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryHalloweenDashboardArgs = {
+  communityId: Scalars['ID']['input'];
+};
+
+
+export type QueryHalloweenPrizeCharactersArgs = {
+  communityId: Scalars['ID']['input'];
+  search: Scalars['String']['input'];
+};
+
+
+export type QueryHalloweenPrizeItemTypesArgs = {
+  communityId: Scalars['ID']['input'];
+  search: Scalars['String']['input'];
+};
+
+
+export type QueryHalloweenWinsArgs = {
+  communityId: Scalars['ID']['input'];
+  filter?: InputMaybe<HalloweenWinFilter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
 
@@ -4472,6 +4678,15 @@ export type UpdateGalleryInput = {
   visibility?: InputMaybe<Visibility>;
 };
 
+export type UpdateHalloweenPrizeInput = {
+  /** How many are left. The starting stock moves by the same amount, so what has been given out stays the same. */
+  currentStock?: InputMaybe<Scalars['Int']['input']>;
+  /** For a prize staff hand over themselves only */
+  image?: InputMaybe<Scalars['String']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  weight?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type UpdateImageInput = {
   altText?: InputMaybe<Scalars['String']['input']>;
   artistId?: InputMaybe<Scalars['ID']['input']>;
@@ -5038,7 +5253,7 @@ export type CommunitiesQueryVariables = Exact<{
 }>;
 
 
-export type CommunitiesQuery = { __typename?: 'Query', communities: { __typename?: 'CommunityConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Community', id: string, name: string, slug: string, createdAt: string, updatedAt: string }> } };
+export type CommunitiesQuery = { __typename?: 'Query', communities: { __typename?: 'CommunityConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'Community', id: string, name: string, slug: string, halloweenEnabled: boolean, createdAt: string, updatedAt: string }> } };
 
 export type CommunityByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -5052,7 +5267,7 @@ export type CommunityBySlugQueryVariables = Exact<{
 }>;
 
 
-export type CommunityBySlugQuery = { __typename?: 'Query', communityBySlug: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null, memberCount: number, createdAt: string, updatedAt: string } | null };
+export type CommunityBySlugQuery = { __typename?: 'Query', communityBySlug: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null, halloweenEnabled: boolean, memberCount: number, createdAt: string, updatedAt: string } | null };
 
 export type GetCommunityMembersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5097,6 +5312,14 @@ export type ValidateDiscordGuildQueryVariables = Exact<{
 
 
 export type ValidateDiscordGuildQuery = { __typename?: 'Query', validateDiscordGuild: { __typename?: 'DiscordGuildInfo', id: string, name: string, botHasAccess: boolean } };
+
+export type SetCommunityHalloweenEnabledMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  enabled: Scalars['Boolean']['input'];
+}>;
+
+
+export type SetCommunityHalloweenEnabledMutation = { __typename?: 'Mutation', setCommunityHalloweenEnabled: { __typename?: 'Community', id: string, halloweenEnabled: boolean } };
 
 export type LinkDiscordGuildMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5478,6 +5701,89 @@ export type GetLikedGalleriesQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> };
+
+export type HalloweenPrizeFieldsFragment = { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null };
+
+export type HalloweenWinFieldsFragment = { __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, linkedUserIsMember: boolean, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null };
+
+export type HalloweenDashboardQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type HalloweenDashboardQuery = { __typename?: 'Query', halloweenDashboard: { __typename?: 'HalloweenDashboard', communityId: string, guildId: string | null, settings: { __typename?: 'HalloweenEventSettings', startDate: string | null, endDate: string | null, knocksPerDay: number, resetTime: number, winRate: number, winChannel: string | null } | null, summary: { __typename?: 'HalloweenEventSummary', knocks: number, wins: number, giftiesSent: number, players: number, toDeliver: number }, prizes: Array<{ __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }> } };
+
+export type HalloweenWinsQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  filter?: InputMaybe<HalloweenWinFilter>;
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type HalloweenWinsQuery = { __typename?: 'Query', halloweenWins: { __typename?: 'HalloweenWinPage', total: number, hasMore: boolean, wins: Array<{ __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, linkedUserIsMember: boolean, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null }> } };
+
+export type SetHalloweenPrizeDeliveredMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  knockEventId: Scalars['Int']['input'];
+  delivered: Scalars['Boolean']['input'];
+}>;
+
+
+export type SetHalloweenPrizeDeliveredMutation = { __typename?: 'Mutation', setHalloweenPrizeDelivered: { __typename?: 'HalloweenWin', id: number, time: string, discordUserId: string, linkedUserIsMember: boolean, deviantArtName: string | null, giftyFromDiscordUserId: string | null, deliveredAt: string | null, linkedUser: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, prize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }, deliveredBy: { __typename?: 'User', id: string, username: string } | null } };
+
+export type HalloweenSettingsFieldsFragment = { __typename?: 'HalloweenEventSettings', startDate: string | null, endDate: string | null, knocksPerDay: number, resetTime: number, winRate: number, winChannel: string | null };
+
+export type UpdateHalloweenSettingsMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  input: HalloweenSettingsInput;
+}>;
+
+
+export type UpdateHalloweenSettingsMutation = { __typename?: 'Mutation', updateHalloweenSettings: { __typename?: 'HalloweenEventSettings', startDate: string | null, endDate: string | null, knocksPerDay: number, resetTime: number, winRate: number, winChannel: string | null } };
+
+export type CreateHalloweenPrizeMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  input: CreateHalloweenPrizeInput;
+}>;
+
+
+export type CreateHalloweenPrizeMutation = { __typename?: 'Mutation', createHalloweenPrize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null } };
+
+export type UpdateHalloweenPrizeMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  prizeId: Scalars['ID']['input'];
+  input: UpdateHalloweenPrizeInput;
+}>;
+
+
+export type UpdateHalloweenPrizeMutation = { __typename?: 'Mutation', updateHalloweenPrize: { __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null } };
+
+export type RemoveHalloweenPrizeMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  prizeId: Scalars['ID']['input'];
+}>;
+
+
+export type RemoveHalloweenPrizeMutation = { __typename?: 'Mutation', removeHalloweenPrize: boolean };
+
+export type HalloweenPickerImageFragment = { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus };
+
+export type HalloweenPrizeItemTypesQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  search: Scalars['String']['input'];
+}>;
+
+
+export type HalloweenPrizeItemTypesQuery = { __typename?: 'Query', halloweenPrizeItemTypes: Array<{ __typename?: 'ItemType', id: string, name: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus } | null }> };
+
+export type HalloweenPrizeCharactersQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  search: Scalars['String']['input'];
+}>;
+
+
+export type HalloweenPrizeCharactersQuery = { __typename?: 'Query', halloweenPrizeCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null, mainMedia: { __typename?: 'Media', id: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus } | null } | null }> };
 
 export type ImageModerationQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -6717,6 +7023,61 @@ export const EnumValueConnectionDetailsFragmentDoc = gql`
   totalCount
 }
     ${EnumValueDetailsFragmentDoc}`;
+export const HalloweenPrizeFieldsFragmentDoc = gql`
+    fragment HalloweenPrizeFields on HalloweenPrizeView {
+  id
+  name
+  initialStock
+  currentStock
+  weight
+  image
+  delivery
+  itemTypeId
+  characterId
+}
+    `;
+export const HalloweenWinFieldsFragmentDoc = gql`
+    fragment HalloweenWinFields on HalloweenWin {
+  id
+  time
+  discordUserId
+  linkedUser {
+    id
+    username
+    displayName
+  }
+  linkedUserIsMember
+  deviantArtName
+  giftyFromDiscordUserId
+  prize {
+    ...HalloweenPrizeFields
+  }
+  deliveredAt
+  deliveredBy {
+    id
+    username
+  }
+}
+    ${HalloweenPrizeFieldsFragmentDoc}`;
+export const HalloweenSettingsFieldsFragmentDoc = gql`
+    fragment HalloweenSettingsFields on HalloweenEventSettings {
+  startDate
+  endDate
+  knocksPerDay
+  resetTime
+  winRate
+  winChannel
+}
+    `;
+export const HalloweenPickerImageFragmentDoc = gql`
+    fragment HalloweenPickerImage on Image {
+  id
+  thumbnailUrl
+  mediumUrl
+  originalUrl
+  moderationStatus
+}
+    `;
 export const ItemTypeFieldsFragmentDoc = gql`
     fragment ItemTypeFields on ItemType {
   id
@@ -9013,6 +9374,7 @@ export const CommunitiesDocument = gql`
       id
       name
       slug
+      halloweenEnabled
       createdAt
       updatedAt
     }
@@ -9111,6 +9473,7 @@ export const CommunityBySlugDocument = gql`
     slug
     discordGuildId
     discordGuildName
+    halloweenEnabled
     memberCount
     createdAt
     updatedAt
@@ -9383,6 +9746,41 @@ export type ValidateDiscordGuildQueryHookResult = ReturnType<typeof useValidateD
 export type ValidateDiscordGuildLazyQueryHookResult = ReturnType<typeof useValidateDiscordGuildLazyQuery>;
 export type ValidateDiscordGuildSuspenseQueryHookResult = ReturnType<typeof useValidateDiscordGuildSuspenseQuery>;
 export type ValidateDiscordGuildQueryResult = Apollo.QueryResult<ValidateDiscordGuildQuery, ValidateDiscordGuildQueryVariables>;
+export const SetCommunityHalloweenEnabledDocument = gql`
+    mutation SetCommunityHalloweenEnabled($communityId: ID!, $enabled: Boolean!) {
+  setCommunityHalloweenEnabled(communityId: $communityId, enabled: $enabled) {
+    id
+    halloweenEnabled
+  }
+}
+    `;
+export type SetCommunityHalloweenEnabledMutationFn = Apollo.MutationFunction<SetCommunityHalloweenEnabledMutation, SetCommunityHalloweenEnabledMutationVariables>;
+
+/**
+ * __useSetCommunityHalloweenEnabledMutation__
+ *
+ * To run a mutation, you first call `useSetCommunityHalloweenEnabledMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetCommunityHalloweenEnabledMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setCommunityHalloweenEnabledMutation, { data, loading, error }] = useSetCommunityHalloweenEnabledMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      enabled: // value for 'enabled'
+ *   },
+ * });
+ */
+export function useSetCommunityHalloweenEnabledMutation(baseOptions?: Apollo.MutationHookOptions<SetCommunityHalloweenEnabledMutation, SetCommunityHalloweenEnabledMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetCommunityHalloweenEnabledMutation, SetCommunityHalloweenEnabledMutationVariables>(SetCommunityHalloweenEnabledDocument, options);
+      }
+export type SetCommunityHalloweenEnabledMutationHookResult = ReturnType<typeof useSetCommunityHalloweenEnabledMutation>;
+export type SetCommunityHalloweenEnabledMutationResult = Apollo.MutationResult<SetCommunityHalloweenEnabledMutation>;
+export type SetCommunityHalloweenEnabledMutationOptions = Apollo.BaseMutationOptions<SetCommunityHalloweenEnabledMutation, SetCommunityHalloweenEnabledMutationVariables>;
 export const LinkDiscordGuildDocument = gql`
     mutation LinkDiscordGuild($communityId: ID!, $guildId: ID!) {
   linkDiscordGuild(communityId: $communityId, guildId: $guildId) {
@@ -11645,6 +12043,392 @@ export type GetLikedGalleriesQueryHookResult = ReturnType<typeof useGetLikedGall
 export type GetLikedGalleriesLazyQueryHookResult = ReturnType<typeof useGetLikedGalleriesLazyQuery>;
 export type GetLikedGalleriesSuspenseQueryHookResult = ReturnType<typeof useGetLikedGalleriesSuspenseQuery>;
 export type GetLikedGalleriesQueryResult = Apollo.QueryResult<GetLikedGalleriesQuery, GetLikedGalleriesQueryVariables>;
+export const HalloweenDashboardDocument = gql`
+    query HalloweenDashboard($communityId: ID!) {
+  halloweenDashboard(communityId: $communityId) {
+    communityId
+    guildId
+    settings {
+      startDate
+      endDate
+      knocksPerDay
+      resetTime
+      winRate
+      winChannel
+    }
+    summary {
+      knocks
+      wins
+      giftiesSent
+      players
+      toDeliver
+    }
+    prizes {
+      ...HalloweenPrizeFields
+    }
+  }
+}
+    ${HalloweenPrizeFieldsFragmentDoc}`;
+
+/**
+ * __useHalloweenDashboardQuery__
+ *
+ * To run a query within a React component, call `useHalloweenDashboardQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHalloweenDashboardQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHalloweenDashboardQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useHalloweenDashboardQuery(baseOptions: Apollo.QueryHookOptions<HalloweenDashboardQuery, HalloweenDashboardQueryVariables> & ({ variables: HalloweenDashboardQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HalloweenDashboardQuery, HalloweenDashboardQueryVariables>(HalloweenDashboardDocument, options);
+      }
+export function useHalloweenDashboardLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenDashboardQuery, HalloweenDashboardQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HalloweenDashboardQuery, HalloweenDashboardQueryVariables>(HalloweenDashboardDocument, options);
+        }
+export function useHalloweenDashboardSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenDashboardQuery, HalloweenDashboardQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HalloweenDashboardQuery, HalloweenDashboardQueryVariables>(HalloweenDashboardDocument, options);
+        }
+export type HalloweenDashboardQueryHookResult = ReturnType<typeof useHalloweenDashboardQuery>;
+export type HalloweenDashboardLazyQueryHookResult = ReturnType<typeof useHalloweenDashboardLazyQuery>;
+export type HalloweenDashboardSuspenseQueryHookResult = ReturnType<typeof useHalloweenDashboardSuspenseQuery>;
+export type HalloweenDashboardQueryResult = Apollo.QueryResult<HalloweenDashboardQuery, HalloweenDashboardQueryVariables>;
+export const HalloweenWinsDocument = gql`
+    query HalloweenWins($communityId: ID!, $filter: HalloweenWinFilter, $limit: Int, $offset: Int) {
+  halloweenWins(
+    communityId: $communityId
+    filter: $filter
+    limit: $limit
+    offset: $offset
+  ) {
+    total
+    hasMore
+    wins {
+      ...HalloweenWinFields
+    }
+  }
+}
+    ${HalloweenWinFieldsFragmentDoc}`;
+
+/**
+ * __useHalloweenWinsQuery__
+ *
+ * To run a query within a React component, call `useHalloweenWinsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHalloweenWinsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHalloweenWinsQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      filter: // value for 'filter'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useHalloweenWinsQuery(baseOptions: Apollo.QueryHookOptions<HalloweenWinsQuery, HalloweenWinsQueryVariables> & ({ variables: HalloweenWinsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HalloweenWinsQuery, HalloweenWinsQueryVariables>(HalloweenWinsDocument, options);
+      }
+export function useHalloweenWinsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenWinsQuery, HalloweenWinsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HalloweenWinsQuery, HalloweenWinsQueryVariables>(HalloweenWinsDocument, options);
+        }
+export function useHalloweenWinsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenWinsQuery, HalloweenWinsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HalloweenWinsQuery, HalloweenWinsQueryVariables>(HalloweenWinsDocument, options);
+        }
+export type HalloweenWinsQueryHookResult = ReturnType<typeof useHalloweenWinsQuery>;
+export type HalloweenWinsLazyQueryHookResult = ReturnType<typeof useHalloweenWinsLazyQuery>;
+export type HalloweenWinsSuspenseQueryHookResult = ReturnType<typeof useHalloweenWinsSuspenseQuery>;
+export type HalloweenWinsQueryResult = Apollo.QueryResult<HalloweenWinsQuery, HalloweenWinsQueryVariables>;
+export const SetHalloweenPrizeDeliveredDocument = gql`
+    mutation SetHalloweenPrizeDelivered($communityId: ID!, $knockEventId: Int!, $delivered: Boolean!) {
+  setHalloweenPrizeDelivered(
+    communityId: $communityId
+    knockEventId: $knockEventId
+    delivered: $delivered
+  ) {
+    ...HalloweenWinFields
+  }
+}
+    ${HalloweenWinFieldsFragmentDoc}`;
+export type SetHalloweenPrizeDeliveredMutationFn = Apollo.MutationFunction<SetHalloweenPrizeDeliveredMutation, SetHalloweenPrizeDeliveredMutationVariables>;
+
+/**
+ * __useSetHalloweenPrizeDeliveredMutation__
+ *
+ * To run a mutation, you first call `useSetHalloweenPrizeDeliveredMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetHalloweenPrizeDeliveredMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setHalloweenPrizeDeliveredMutation, { data, loading, error }] = useSetHalloweenPrizeDeliveredMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      knockEventId: // value for 'knockEventId'
+ *      delivered: // value for 'delivered'
+ *   },
+ * });
+ */
+export function useSetHalloweenPrizeDeliveredMutation(baseOptions?: Apollo.MutationHookOptions<SetHalloweenPrizeDeliveredMutation, SetHalloweenPrizeDeliveredMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetHalloweenPrizeDeliveredMutation, SetHalloweenPrizeDeliveredMutationVariables>(SetHalloweenPrizeDeliveredDocument, options);
+      }
+export type SetHalloweenPrizeDeliveredMutationHookResult = ReturnType<typeof useSetHalloweenPrizeDeliveredMutation>;
+export type SetHalloweenPrizeDeliveredMutationResult = Apollo.MutationResult<SetHalloweenPrizeDeliveredMutation>;
+export type SetHalloweenPrizeDeliveredMutationOptions = Apollo.BaseMutationOptions<SetHalloweenPrizeDeliveredMutation, SetHalloweenPrizeDeliveredMutationVariables>;
+export const UpdateHalloweenSettingsDocument = gql`
+    mutation UpdateHalloweenSettings($communityId: ID!, $input: HalloweenSettingsInput!) {
+  updateHalloweenSettings(communityId: $communityId, input: $input) {
+    ...HalloweenSettingsFields
+  }
+}
+    ${HalloweenSettingsFieldsFragmentDoc}`;
+export type UpdateHalloweenSettingsMutationFn = Apollo.MutationFunction<UpdateHalloweenSettingsMutation, UpdateHalloweenSettingsMutationVariables>;
+
+/**
+ * __useUpdateHalloweenSettingsMutation__
+ *
+ * To run a mutation, you first call `useUpdateHalloweenSettingsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateHalloweenSettingsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateHalloweenSettingsMutation, { data, loading, error }] = useUpdateHalloweenSettingsMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateHalloweenSettingsMutation(baseOptions?: Apollo.MutationHookOptions<UpdateHalloweenSettingsMutation, UpdateHalloweenSettingsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateHalloweenSettingsMutation, UpdateHalloweenSettingsMutationVariables>(UpdateHalloweenSettingsDocument, options);
+      }
+export type UpdateHalloweenSettingsMutationHookResult = ReturnType<typeof useUpdateHalloweenSettingsMutation>;
+export type UpdateHalloweenSettingsMutationResult = Apollo.MutationResult<UpdateHalloweenSettingsMutation>;
+export type UpdateHalloweenSettingsMutationOptions = Apollo.BaseMutationOptions<UpdateHalloweenSettingsMutation, UpdateHalloweenSettingsMutationVariables>;
+export const CreateHalloweenPrizeDocument = gql`
+    mutation CreateHalloweenPrize($communityId: ID!, $input: CreateHalloweenPrizeInput!) {
+  createHalloweenPrize(communityId: $communityId, input: $input) {
+    ...HalloweenPrizeFields
+  }
+}
+    ${HalloweenPrizeFieldsFragmentDoc}`;
+export type CreateHalloweenPrizeMutationFn = Apollo.MutationFunction<CreateHalloweenPrizeMutation, CreateHalloweenPrizeMutationVariables>;
+
+/**
+ * __useCreateHalloweenPrizeMutation__
+ *
+ * To run a mutation, you first call `useCreateHalloweenPrizeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreateHalloweenPrizeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createHalloweenPrizeMutation, { data, loading, error }] = useCreateHalloweenPrizeMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreateHalloweenPrizeMutation(baseOptions?: Apollo.MutationHookOptions<CreateHalloweenPrizeMutation, CreateHalloweenPrizeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreateHalloweenPrizeMutation, CreateHalloweenPrizeMutationVariables>(CreateHalloweenPrizeDocument, options);
+      }
+export type CreateHalloweenPrizeMutationHookResult = ReturnType<typeof useCreateHalloweenPrizeMutation>;
+export type CreateHalloweenPrizeMutationResult = Apollo.MutationResult<CreateHalloweenPrizeMutation>;
+export type CreateHalloweenPrizeMutationOptions = Apollo.BaseMutationOptions<CreateHalloweenPrizeMutation, CreateHalloweenPrizeMutationVariables>;
+export const UpdateHalloweenPrizeDocument = gql`
+    mutation UpdateHalloweenPrize($communityId: ID!, $prizeId: ID!, $input: UpdateHalloweenPrizeInput!) {
+  updateHalloweenPrize(
+    communityId: $communityId
+    prizeId: $prizeId
+    input: $input
+  ) {
+    ...HalloweenPrizeFields
+  }
+}
+    ${HalloweenPrizeFieldsFragmentDoc}`;
+export type UpdateHalloweenPrizeMutationFn = Apollo.MutationFunction<UpdateHalloweenPrizeMutation, UpdateHalloweenPrizeMutationVariables>;
+
+/**
+ * __useUpdateHalloweenPrizeMutation__
+ *
+ * To run a mutation, you first call `useUpdateHalloweenPrizeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUpdateHalloweenPrizeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [updateHalloweenPrizeMutation, { data, loading, error }] = useUpdateHalloweenPrizeMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      prizeId: // value for 'prizeId'
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useUpdateHalloweenPrizeMutation(baseOptions?: Apollo.MutationHookOptions<UpdateHalloweenPrizeMutation, UpdateHalloweenPrizeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UpdateHalloweenPrizeMutation, UpdateHalloweenPrizeMutationVariables>(UpdateHalloweenPrizeDocument, options);
+      }
+export type UpdateHalloweenPrizeMutationHookResult = ReturnType<typeof useUpdateHalloweenPrizeMutation>;
+export type UpdateHalloweenPrizeMutationResult = Apollo.MutationResult<UpdateHalloweenPrizeMutation>;
+export type UpdateHalloweenPrizeMutationOptions = Apollo.BaseMutationOptions<UpdateHalloweenPrizeMutation, UpdateHalloweenPrizeMutationVariables>;
+export const RemoveHalloweenPrizeDocument = gql`
+    mutation RemoveHalloweenPrize($communityId: ID!, $prizeId: ID!) {
+  removeHalloweenPrize(communityId: $communityId, prizeId: $prizeId)
+}
+    `;
+export type RemoveHalloweenPrizeMutationFn = Apollo.MutationFunction<RemoveHalloweenPrizeMutation, RemoveHalloweenPrizeMutationVariables>;
+
+/**
+ * __useRemoveHalloweenPrizeMutation__
+ *
+ * To run a mutation, you first call `useRemoveHalloweenPrizeMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRemoveHalloweenPrizeMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [removeHalloweenPrizeMutation, { data, loading, error }] = useRemoveHalloweenPrizeMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      prizeId: // value for 'prizeId'
+ *   },
+ * });
+ */
+export function useRemoveHalloweenPrizeMutation(baseOptions?: Apollo.MutationHookOptions<RemoveHalloweenPrizeMutation, RemoveHalloweenPrizeMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RemoveHalloweenPrizeMutation, RemoveHalloweenPrizeMutationVariables>(RemoveHalloweenPrizeDocument, options);
+      }
+export type RemoveHalloweenPrizeMutationHookResult = ReturnType<typeof useRemoveHalloweenPrizeMutation>;
+export type RemoveHalloweenPrizeMutationResult = Apollo.MutationResult<RemoveHalloweenPrizeMutation>;
+export type RemoveHalloweenPrizeMutationOptions = Apollo.BaseMutationOptions<RemoveHalloweenPrizeMutation, RemoveHalloweenPrizeMutationVariables>;
+export const HalloweenPrizeItemTypesDocument = gql`
+    query HalloweenPrizeItemTypes($communityId: ID!, $search: String!) {
+  halloweenPrizeItemTypes(communityId: $communityId, search: $search) {
+    id
+    name
+    image {
+      ...HalloweenPickerImage
+    }
+  }
+}
+    ${HalloweenPickerImageFragmentDoc}`;
+
+/**
+ * __useHalloweenPrizeItemTypesQuery__
+ *
+ * To run a query within a React component, call `useHalloweenPrizeItemTypesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHalloweenPrizeItemTypesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHalloweenPrizeItemTypesQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      search: // value for 'search'
+ *   },
+ * });
+ */
+export function useHalloweenPrizeItemTypesQuery(baseOptions: Apollo.QueryHookOptions<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables> & ({ variables: HalloweenPrizeItemTypesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>(HalloweenPrizeItemTypesDocument, options);
+      }
+export function useHalloweenPrizeItemTypesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>(HalloweenPrizeItemTypesDocument, options);
+        }
+export function useHalloweenPrizeItemTypesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>(HalloweenPrizeItemTypesDocument, options);
+        }
+export type HalloweenPrizeItemTypesQueryHookResult = ReturnType<typeof useHalloweenPrizeItemTypesQuery>;
+export type HalloweenPrizeItemTypesLazyQueryHookResult = ReturnType<typeof useHalloweenPrizeItemTypesLazyQuery>;
+export type HalloweenPrizeItemTypesSuspenseQueryHookResult = ReturnType<typeof useHalloweenPrizeItemTypesSuspenseQuery>;
+export type HalloweenPrizeItemTypesQueryResult = Apollo.QueryResult<HalloweenPrizeItemTypesQuery, HalloweenPrizeItemTypesQueryVariables>;
+export const HalloweenPrizeCharactersDocument = gql`
+    query HalloweenPrizeCharacters($communityId: ID!, $search: String!) {
+  halloweenPrizeCharacters(communityId: $communityId, search: $search) {
+    id
+    name
+    species {
+      id
+      name
+    }
+    mainMedia {
+      id
+      image {
+        ...HalloweenPickerImage
+      }
+    }
+  }
+}
+    ${HalloweenPickerImageFragmentDoc}`;
+
+/**
+ * __useHalloweenPrizeCharactersQuery__
+ *
+ * To run a query within a React component, call `useHalloweenPrizeCharactersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHalloweenPrizeCharactersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHalloweenPrizeCharactersQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      search: // value for 'search'
+ *   },
+ * });
+ */
+export function useHalloweenPrizeCharactersQuery(baseOptions: Apollo.QueryHookOptions<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables> & ({ variables: HalloweenPrizeCharactersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>(HalloweenPrizeCharactersDocument, options);
+      }
+export function useHalloweenPrizeCharactersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>(HalloweenPrizeCharactersDocument, options);
+        }
+export function useHalloweenPrizeCharactersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>(HalloweenPrizeCharactersDocument, options);
+        }
+export type HalloweenPrizeCharactersQueryHookResult = ReturnType<typeof useHalloweenPrizeCharactersQuery>;
+export type HalloweenPrizeCharactersLazyQueryHookResult = ReturnType<typeof useHalloweenPrizeCharactersLazyQuery>;
+export type HalloweenPrizeCharactersSuspenseQueryHookResult = ReturnType<typeof useHalloweenPrizeCharactersSuspenseQuery>;
+export type HalloweenPrizeCharactersQueryResult = Apollo.QueryResult<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>;
 export const ImageModerationQueueDocument = gql`
     query ImageModerationQueue($communityId: ID!, $filters: ImageModerationQueueFiltersInput, $first: Int, $offset: Int) {
   imageModerationQueue(

@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
+import { CommunityMembershipService } from "../community-membership/community-membership.service";
 
 /**
  * Service layer input types for communities operations.
@@ -34,7 +35,10 @@ export interface UpdateCommunityServiceInput {
 
 @Injectable()
 export class CommunitiesService {
-  constructor(private prisma: DatabaseService) {}
+  constructor(
+    private prisma: DatabaseService,
+    private membership: CommunityMembershipService,
+  ) {}
 
   /** Create a new community with default roles and admin membership */
   async create(input: CreateCommunityServiceInput) {
@@ -119,11 +123,9 @@ export class CommunitiesService {
       });
 
       // 3. Create admin membership for the creator
-      await prisma.communityMember.create({
-        data: {
-          userId: input.creatorId,
-          roleId: adminRole.id,
-        },
+      await this.membership.join(prisma, {
+        userId: input.creatorId,
+        roleId: adminRole.id,
       });
 
       return community;
@@ -179,6 +181,13 @@ export class CommunitiesService {
   async findBySlug(slug: string) {
     return this.prisma.community.findUnique({
       where: { slug },
+    });
+  }
+
+  /** The community linked to a Discord server, if any; there is at most one. */
+  async findByDiscordGuildId(discordGuildId: string) {
+    return this.prisma.community.findUnique({
+      where: { discordGuildId },
     });
   }
 

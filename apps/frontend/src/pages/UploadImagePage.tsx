@@ -9,7 +9,7 @@ import {
   useGetMyGalleriesQuery,
   useGetCharacterQuery,
 } from "../generated/graphql";
-import { CharacterTypeahead } from "../components/CharacterTypeahead";
+import { MyCharacterTypeahead } from "../components/MyCharacterTypeahead";
 import { MarkdownEditor } from "../components/MarkdownEditor";
 import {
   ThumbnailCropper,
@@ -936,10 +936,18 @@ export const UploadImagePage: React.FC = () => {
                 </CharacterCard>
               )}
               <div>
-                <CharacterTypeahead
-                  value={formData.characterId}
-                  onChange={(characterId) =>
-                    handleInputChange("characterId", characterId || "")
+                <MyCharacterTypeahead
+                  value={
+                    formData.characterId && selectedCharacter
+                      ? {
+                          id: selectedCharacter.id,
+                          name: selectedCharacter.name,
+                          subtitle: selectedCharacter.species?.name ?? null,
+                        }
+                      : null
+                  }
+                  onChange={(character) =>
+                    handleInputChange("characterId", character?.id ?? "")
                   }
                   placeholder="Search for a character..."
                 />

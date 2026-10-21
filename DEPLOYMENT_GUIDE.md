@@ -233,6 +233,62 @@ Afterwards, delete these five now-undeclared lines from your local
 `deviantart_client_secret`, `discord_client_secret`, `toyhouse_client_secret`,
 `discord_bot_token`, `otel_otlp_headers`.
 
+### Halloween bot parameters
+
+The Halloween trick-or-treat bot is its own Discord application, so it has
+its own three parameters: `halloween-discord-application-id`,
+`halloween-discord-public-key` and `halloween-discord-bot-token`. The backend
+refuses to boot without them. Its images ship with the frontend and are served
+from `FRONTEND_URL`, so they need no parameter.
+
+**Prod needs the same two-step apply as above**: `-target=module.app_secrets`,
+fill the three parameters, then the full apply. A single apply would start the
+task with the placeholder values.
+
+Adding the parameters does not route any traffic. The bot keeps answering from
+its old stack until its **Interactions Endpoint URL** in the Discord developer
+portal is changed to `https://<prod API domain>/discord/halloween/interactions`.
+Discord sends a signed PING when you save it, and refuses the change unless the
+backend answers, so save it only after the deploy is live. Putting the old URL
+back is the rollback. Only one environment can receive the bot's interactions
+at a time; dev needs the parameters only to boot.
+
+### Alerts to Discord (prod)
+
+CloudWatch alarms post to a Discord channel: each alarm notifies an SNS
+topic, and a small Lambda (`infra/modules/alerts-discord/lambda/index.mjs`)
+turns the notification into a Discord message. The alarms:
+
+| Alarm | Goes off when | What to do |
+|---|---|---|
+| `chardb-prod-halloween-needs-staff` | A command's reply never reached Discord, or a win wasn't announced in the win channel | Tell the player, or post the win by hand |
+| `chardb-prod-halloween-errors` | A Halloween command failed, work after its reply did, or a win was shown without its prize's picture | A bug: read the error |
+
+Each posts again, in green, when it clears. What each one says in Discord, going
+off and clearing, is in `infra/modules/alerts-discord/lambda/alerts.json`, keyed
+by the alarm's name without `chardb-prod-`; an alarm not listed there posts its
+name, description and CloudWatch's reason. Every part of the message is cut to
+Discord's limits, which otherwise refuse the whole post. For the log lines behind a
+Halloween alarm, open **CloudWatch → Logs Insights → Queries →
+`chardb-prod/halloween-needs-attention`**; each line carries its
+`interactionId`.
+
+The webhook URL works as a password, so it is never in this repo, in
+Terraform or in an environment variable. Terraform creates
+`/chardb/prod/alerts-discord-webhook-url` with a placeholder; put the real
+URL in by hand, at a prompt so it stays out of your shell history:
+
+```bash
+# In Discord: the channel → Edit Channel → Integrations → Webhooks → New Webhook → Copy Webhook URL
+read -rs URL && aws ssm put-parameter --overwrite --type SecureString \
+  --name /chardb/prod/alerts-discord-webhook-url --value "$URL"; unset URL
+```
+
+Until it is set, alarms still change state but the Lambda fails to post; its
+own errors show in `/aws/lambda/chardb-prod-alerts-discord`. To check the whole
+path, publish a test message to the topic from the SNS console: it arrives in
+Discord as plain text.
+
 ### How dev reads them
 
 `deploy.sh` no longer writes the OAuth client ids, client secrets or bot token
@@ -350,7 +406,9 @@ terraform apply -var-file=dev.tfvars
 for name in deviantart-client-id deviantart-client-secret \
             discord-client-id discord-client-secret discord-bot-token \
             toyhouse-client-id toyhouse-client-secret \
-            patreon-client-secret; do
+            patreon-client-secret \
+            halloween-discord-application-id halloween-discord-public-key \
+            halloween-discord-bot-token; do
   aws ssm put-parameter --overwrite --type SecureString \
     --name "/chardb/dev/$name" --value 'REPLACE_ME'
 done

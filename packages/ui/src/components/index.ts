@@ -2,6 +2,7 @@ export * from "./Avatar";
 export * from "./Button";
 export * from "./TagInput";
 export * from "./UserTypeahead";
+export * from "./SearchSelect";
 export * from "./ErrorMessage";
 export * from "./Modal";
 export * from "./Input";

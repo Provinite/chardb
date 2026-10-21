@@ -9,6 +9,7 @@ This document provides a comprehensive list of all environment variables used in
 - [Server Configuration](#server-configuration)
 - [CORS Configuration](#cors-configuration)
 - [OpenTelemetry Tracing](#opentelemetry-tracing)
+- [Halloween Bot](#halloween-bot)
 - [Rate Limiting](#rate-limiting)
 - [Environment-Specific Variables](#environment-specific-variables)
 
@@ -190,38 +191,43 @@ This document provides a comprehensive list of all environment variables used in
 - **Default**: `"info"`
 - **Valid Values**: `"error"`, `"warn"`, `"info"`, `"debug"`
 
-## AWS SQS Queue Consumer
+## AWS
 
 ### `AWS_REGION`
 
 - **Type**: String
 - **Required**: No
-- **Description**: AWS region for SES, SQS, and other AWS services
-- **Referenced in**:
-  - `src/email/email.module.ts` (line 14)
-  - `src/queue-consumer/queue-consumer.service.ts` (line 30)
+- **Description**: AWS region for SES, S3 and other AWS services
+- **Referenced in**: `src/email/email.module.ts` (line 14)
 - **Default**: `"us-east-1"`
 - **Example**: `"us-east-1"`
 
-### `AWS_SQS_ENABLED`
+## Halloween Bot
 
-- **Type**: Boolean
-- **Required**: No
-- **Description**: Enable/disable the SQS queue consumer for Discord bot prize distribution
-- **Referenced in**: `src/queue-consumer/queue-consumer.service.ts` (line 33)
-- **Default**: `true`
-- **Example**: `"true"` or `"false"`
-- **Note**: Set to `false` to disable queue consumer in local development
+The trick-or-treat event's Discord bot is its own Discord application, separate from the one behind `DISCORD_CLIENT_ID`. All four are required at boot. In deployed environments each comes from an SSM parameter of the same name in kebab case under `/<project>/<env>/` (`halloween-discord-bot-token`, ...).
 
-### `AWS_SQS_QUEUE_URL`
+### `HALLOWEEN_DISCORD_APPLICATION_ID`
 
-- **Type**: String (URL)
-- **Required**: Yes (if `AWS_SQS_ENABLED=true`)
-- **Description**: SQS queue URL for receiving prize distribution events from Discord bot
-- **Referenced in**: `src/queue-consumer/queue-consumer.service.ts` (line 31)
-- **Format**: `https://sqs.{region}.amazonaws.com/{account-id}/{queue-name}`
-- **Example**: `"https://sqs.us-east-1.amazonaws.com/123456789012/chardb-prize-distribution"`
-- **Note**: Queue is created via Terraform infrastructure. Consumer uses IAM role-based authentication (no credentials needed).
+- **Type**: String (Discord snowflake)
+- **Required**: Yes
+- **Description**: The Halloween bot's application ID, used to edit interaction replies.
+- **Referenced in**: `src/halloween/halloween.config.ts`
+
+### `HALLOWEEN_DISCORD_PUBLIC_KEY`
+
+- **Type**: String (hex)
+- **Required**: Yes
+- **Description**: The application's Public Key (General Information page). Verifies that a request to `POST /discord/halloween/interactions` came from Discord.
+- **Referenced in**: `src/halloween/halloween.config.ts`
+
+### `HALLOWEEN_DISCORD_BOT_TOKEN`
+
+- **Type**: String
+- **Required**: Yes
+- **Description**: The bot's token, for posting win announcements to the win channel.
+- **Referenced in**: `src/halloween/halloween.config.ts`
+
+The bot's embed author icons and candy images need no variable of their own. They live in `apps/frontend/public/halloween/{icon,candy}/N.png`, ship with the frontend, and are served from `FRONTEND_URL` + `/halloween/`, so the Halloween bot also requires `FRONTEND_URL`. After adding or removing images, run `yarn halloween:images` to regenerate their counts; CI fails if they are out of date.
 
 ## Rate Limiting
 

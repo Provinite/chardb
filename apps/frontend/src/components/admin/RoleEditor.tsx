@@ -445,9 +445,13 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
 
       onSuccess();
       onClose();
-    } catch (err: any) {
+    } catch (err) {
       console.error("Failed to save role:", err);
-      setError(err.message || "Failed to save role");
+      setError(
+        err instanceof Error && err.message
+          ? err.message
+          : "Failed to save role",
+      );
     }
   };
 

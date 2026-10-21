@@ -91,13 +91,8 @@ yarn workspace @chardb/database db:seed-personas
 
 **Why the order matters:**
 
-- **`instance:up` before `yarn dev`.** The backend's SQS consumer polls a
-  LocalStack queue at boot, and a missing queue throws through winston's
-  exception handler and kills the process. The symptom is a wall of
-  `QueueDoesNotExist` JSON and a backend that was healthy a second ago — not
-  anything that mentions LocalStack being down. A stale `AWS_SQS_QUEUE_URL` in
-  `.env` is not a second cause of this: outside slot 0 the injected value wins,
-  because a variable already in the environment beats any `.env` file.
+- **`instance:up` before `yarn dev`.** The backend needs the instance's
+  Postgres at boot, and image uploads need its LocalStack S3 bucket.
 - **`yarn dev` before `db:seed-personas`.** That seeder drives the GraphQL API
   over HTTP rather than writing to the database, so it needs a running backend.
   It targets your instance automatically (`GRAPHQL_ENDPOINT` is injected); it

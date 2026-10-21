@@ -403,7 +403,6 @@ export function describe(slot, root = null) {
     otelService: `chardb-backend${dash}`,
     // Not instance-scoped -- see the LocalStack note in `env` below.
     imagesBucket: "chardb-images",
-    prizeQueue: "chardb-prize-distribution",
   };
 
   // The domain communities hang off locally: `willowmere.dev.localhost`.
@@ -470,18 +469,16 @@ export function describe(slot, root = null) {
     E2E_PG_PORT: String(ports.postgresTest),
     E2E_DB_NAME: names.e2eDatabase,
 
-    // LocalStack (S3 + SQS).
+    // LocalStack (S3).
     //
-    // Only the port is instance-scoped. The bucket and queue keep their stock
-    // names deliberately: each instance runs its own LocalStack holding exactly
-    // one of each, so a per-instance name would buy no isolation and would mean
-    // two places -- init-aws.sh, which creates them, and the backend, which
-    // uses them -- had to agree about a string. When they disagreed, the
-    // backend crashed at boot polling a queue that did not exist.
+    // Only the port is instance-scoped. The bucket keeps its stock name
+    // deliberately: each instance runs its own LocalStack holding exactly one,
+    // so a per-instance name would buy no isolation and would mean two places
+    // -- init-aws.sh, which creates it, and the backend, which uses it -- had
+    // to agree about a string.
     LOCALSTACK_PORT: String(ports.localstack),
     AWS_ENDPOINT_URL: localstackUrl,
     CLOUDFRONT_IMAGES_DOMAIN: `localhost:${ports.localstack}/${names.imagesBucket}`,
-    AWS_SQS_QUEUE_URL: `${localstackUrl}/000000000000/${names.prizeQueue}`,
 
     // Observability is shared across instances (one Jaeger for the machine),
     // so the service name is what keeps each instance's traces apart.

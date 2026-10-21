@@ -462,6 +462,11 @@ type Community {
   """Discord guild (server) name for display"""
   discordGuildName: String
 
+  """
+  Whether the Halloween event's pages are shown for this community. Only a site admin can change it.
+  """
+  halloweenEnabled: Boolean!
+
   """Unique identifier for the community"""
   id: ID!
 
@@ -751,6 +756,20 @@ input CreateGalleryInput {
   name: String!
   sortOrder: Int! = 0
   visibility: Visibility! = PUBLIC
+}
+
+input CreateHalloweenPrizeInput {
+  characterId: String
+
+  """Short name for the prize, e.g. myo-common"""
+  id: String!
+
+  """For a prize staff hand over themselves only"""
+  image: String
+  itemTypeId: String
+  name: String!
+  stock: Int!
+  weight: Int = 10
 }
 
 """Input for creating a new invite code"""
@@ -1482,6 +1501,134 @@ input GrantItemInput {
 
   """User ID to grant item to. Required if pendingOwner is not provided."""
   userId: ID
+}
+
+"""The Halloween event as staff see it"""
+type HalloweenDashboard {
+  communityId: ID!
+
+  """
+  The community's Discord server, whose events these are. Null until one is linked, and then everything else is empty.
+  """
+  guildId: String
+  prizes: [HalloweenPrizeView!]!
+
+  """Null until an admin runs /settings set in Discord"""
+  settings: HalloweenEventSettings
+  summary: HalloweenEventSummary!
+}
+
+"""The event's settings in a guild, as /settings sets them"""
+type HalloweenEventSettings {
+  endDate: DateTime
+  knocksPerDay: Int!
+
+  """Hour of the day, US Central, 0-23"""
+  resetTime: Int!
+  startDate: DateTime
+
+  """Discord channel id"""
+  winChannel: String
+
+  """Chance of a knock winning, 0-1"""
+  winRate: Float!
+}
+
+"""Running totals for the event"""
+type HalloweenEventSummary {
+  giftiesSent: Int!
+  knocks: Int!
+
+  """Distinct Discord users who have knocked"""
+  players: Int!
+
+  """Wins of STAFF prizes not yet marked delivered"""
+  toDeliver: Int!
+  wins: Int!
+}
+
+"""How a Halloween prize reaches its winner"""
+enum HalloweenPrizeDelivery {
+  CHARDB_CHARACTER
+  CHARDB_ITEM
+  STAFF
+}
+
+"""A prize in the guild's pool"""
+type HalloweenPrizeView {
+  characterId: String
+  currentStock: Int!
+  delivery: HalloweenPrizeDelivery!
+
+  """The admin's slug for it, e.g. myo-common"""
+  id: ID!
+
+  """
+  The URL staff gave, or a chardb prize's own approved item or character image
+  """
+  image: String
+  initialStock: Int!
+  itemTypeId: String
+  name: String!
+  weight: Int!
+}
+
+input HalloweenSettingsInput {
+  endDate: DateTime
+  knocksPerDay: Int!
+
+  """Hour of the day, US Central, 0-23"""
+  resetTime: Int!
+  startDate: DateTime
+
+  """Discord channel id wins are also announced in"""
+  winChannel: String
+
+  """Chance of a knock winning, 0-1"""
+  winRate: Float!
+}
+
+"""One winning knock"""
+type HalloweenWin {
+  """When staff handed over a STAFF prize"""
+  deliveredAt: DateTime
+  deliveredBy: User
+  deviantArtName: String
+  discordUserId: String!
+
+  """Discord id of whoever's gifty paid for the knock"""
+  giftyFromDiscordUserId: String
+
+  """The knock's id"""
+  id: Int!
+
+  """
+  The chardb account the winner's Discord is linked to. A chardb prize waits for the link, and then for linkedUserIsMember.
+  """
+  linkedUser: User
+
+  """
+  Whether the linked account is a member of this community. A chardb prize is theirs once it is, and waits for them to join until then.
+  """
+  linkedUserIsMember: Boolean!
+  prize: HalloweenPrizeView!
+  time: DateTime!
+}
+
+"""Which Halloween wins to list"""
+enum HalloweenWinFilter {
+  ALL
+  DELIVERED
+  NEEDS_DELIVERY
+}
+
+"""A page of Halloween wins, newest first"""
+type HalloweenWinPage {
+  hasMore: Boolean!
+
+  """How many wins match the filter in all"""
+  total: Int!
+  wins: [HalloweenWin!]!
 }
 
 type Image {
@@ -2356,6 +2503,9 @@ type Mutation {
   ): EnumValueSetting!
   createGallery(input: CreateGalleryInput!): Gallery!
 
+  """Add a prize to the Halloween event's pool"""
+  createHalloweenPrize(communityId: ID!, input: CreateHalloweenPrizeInput!): HalloweenPrizeView!
+
   """Create a new invite code"""
   createInviteCode(
     """Invite code creation data"""
@@ -2551,6 +2701,9 @@ type Mutation {
     id: ID!
   ): RemovalResponse!
 
+  """Remove a Halloween prize nobody has won. A won prize stays on record."""
+  removeHalloweenPrize(communityId: ID!, prizeId: ID!): Boolean!
+
   """Remove an invite code"""
   removeInviteCode(
     """Invite code ID"""
@@ -2650,6 +2803,16 @@ type Mutation {
   ): Character!
 
   """
+  Turn the Halloween event's pages on or off for a community (site admins)
+  """
+  setCommunityHalloweenEnabled(communityId: ID!, enabled: Boolean!): Community!
+
+  """
+  Mark a prize staff hand over themselves as delivered, or clear the mark. Chardb item and character prizes deliver themselves.
+  """
+  setHalloweenPrizeDelivered(communityId: ID!, delivered: Boolean!, knockEventId: Int!): HalloweenWin!
+
+  """
   Set which characters a ticket of this type can make. Replaces the grant wholesale; an empty variant list clears it. Needs the same permission as editing the item type, because it hands out the right to create characters.
   """
   setItemTypeMyoGrant(input: SetItemTypeMyoGrantInput!): ItemType!
@@ -2737,6 +2900,16 @@ type Mutation {
     updateEnumValueSettingInput: UpdateEnumValueSettingInput!
   ): EnumValueSetting!
   updateGallery(id: ID!, input: UpdateGalleryInput!): Gallery!
+
+  """
+  Change a Halloween prize's name, weight, stock or (for a prize staff hand over) image
+  """
+  updateHalloweenPrize(communityId: ID!, input: UpdateHalloweenPrizeInput!, prizeId: ID!): HalloweenPrizeView!
+
+  """
+  Set the Halloween event's dates, knocks per day, reset hour, win rate and win channel. Creates them the first time.
+  """
+  updateHalloweenSettings(communityId: ID!, input: HalloweenSettingsInput!): HalloweenEventSettings!
   updateImage(id: ID!, input: UpdateImageInput!): Image!
 
   """Update an invite code"""
@@ -3316,6 +3489,26 @@ type Query {
 
   """Get count of all pending images across all communities (admin only)"""
   globalPendingImageCount: Int!
+
+  """
+  The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems.
+  """
+  halloweenDashboard(communityId: ID!): HalloweenDashboard!
+
+  """
+  Characters of the community a new Halloween prize could hand over, by name: no owner, no pending owner, and not a prize already (25 per search)
+  """
+  halloweenPrizeCharacters(communityId: ID!, search: String!): [Character!]!
+
+  """
+  Item types of the community a new Halloween prize could hand over, by name (25 per search)
+  """
+  halloweenPrizeItemTypes(communityId: ID!, search: String!): [ItemType!]!
+
+  """
+  The Halloween event's wins, newest first, a page at a time (at most 100).
+  """
+  halloweenWins(communityId: ID!, filter: HalloweenWinFilter = ALL, limit: Int = 50, offset: Int = 0): HalloweenWinPage!
 
   """Get pending images for a community moderation queue"""
   imageModerationQueue(communityId: ID!, filters: ImageModerationQueueFiltersInput, first: Int = 20, offset: Int = 0): ImageModerationQueueConnection!
@@ -4700,6 +4893,18 @@ input UpdateGalleryInput {
   name: String
   sortOrder: Int
   visibility: Visibility
+}
+
+input UpdateHalloweenPrizeInput {
+  """
+  How many are left. The starting stock moves by the same amount, so what has been given out stays the same.
+  """
+  currentStock: Int
+
+  """For a prize staff hand over themselves only"""
+  image: String
+  name: String
+  weight: Int
 }
 
 input UpdateImageInput {

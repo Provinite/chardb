@@ -5,6 +5,7 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
+import { CommunityMembershipService } from "../community-membership/community-membership.service";
 import { Prisma } from "@chardb/database";
 
 /**
@@ -47,7 +48,10 @@ interface ClaimInviteCodeServiceInput {
 
 @Injectable()
 export class InviteCodesService {
-  constructor(private prisma: DatabaseService) {}
+  constructor(
+    private prisma: DatabaseService,
+    private membership: CommunityMembershipService,
+  ) {}
 
   /** Create a new invite code */
   async create(input: CreateInviteCodeServiceInput) {
@@ -64,8 +68,11 @@ export class InviteCodesService {
           }),
         },
       });
-    } catch (error: any) {
-      if (error.code === "P2002") {
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
         throw new ConflictException(
           "An invite code with this ID already exists",
         );
@@ -241,15 +248,16 @@ export class InviteCodesService {
       // If there's a role associated, create community membership
       if (inviteCode.roleId) {
         try {
-          await tx.communityMember.create({
-            data: {
-              role: { connect: { id: inviteCode.roleId } },
-              user: { connect: { id: input.userId } },
-            },
+          await this.membership.join(tx, {
+            userId: input.userId,
+            roleId: inviteCode.roleId,
           });
-        } catch (error: any) {
+        } catch (error) {
           // Handle unique constraint violation with a more user-friendly error
-          if (error.code === "P2002") {
+          if (
+            error instanceof Prisma.PrismaClientKnownRequestError &&
+            error.code === "P2002"
+          ) {
             throw new ConflictException(
               "You are already a member of this community",
             );

@@ -9,12 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The Halloween trick-or-treat Discord bot now runs in the backend**, at `POST /discord/halloween/interactions`, with every command and reply carried over from the standalone bot; a chardb item or character prize is now checked and granted inside the knock, so a win always commits with its prize, and each winner draws from exactly the stock the winners before them left (#399).
+- **Halloween commands answer in the interaction's own response, with no deferred reply**; a win commits before Discord shows it, a reply that never arrives is logged as `halloween.interaction.reply_not_sent`, and a knock that can't get its locks in time answers "busy" with nothing saved (#399).
+- **Every Halloween bot interaction is logged as structured `halloween.*` events carrying the interaction id** (the "Reference ID" players see), with a trace span per command (#399).
+- **`halloweenDashboard`, `halloweenWins` and `setHalloweenPrizeDelivered`** (`canGrantItems`; reads also `canManageItems`), and **`Community.halloweenEnabled`** set by site admins with `setCommunityHalloweenEnabled` (#399).
+- **The Halloween event is set up on chardb**: `updateHalloweenSettings`, `createHalloweenPrize`, `updateHalloweenPrize`, `removeHalloweenPrize`, `halloweenPrizeItemTypes` and `halloweenPrizeCharacters` (`canManageItems`); `/settings` and `/prize admin` now reply with a link to the page (#399, #400).
 - **Patreon account linking**: `/auth/patreon` links a Patreon identity as an `ExternalAccount` (`PATREON`), using the same browser-bound state flow as the other providers; no Patreon tokens are stored (#236).
 
 ### Changed
 
+- **Breaking for local setups: three `HALLOWEEN_DISCORD_*` variables are required at boot**, the Halloween bot's own Discord application credentials, along with `FRONTEND_URL`, which its images are served from; see `.env.example` (#399).
 - **Breaking for local setups: every linking provider's client id and secret are required at boot.** A missing `DISCORD_`/`DEVIANTART_`/`TOYHOUSE_`/`PATREON_` `CLIENT_ID` or `CLIENT_SECRET` now stops the backend from starting, naming the variable (#236).
 - **One factory builds all four linking controllers and strategies**, from per-provider config in `oauth-link-providers.ts` (#236).
+- **Something granted to a linked account whose person is not a community member waits on the account**, and is claimed when they join, by any of the five ways in; linking claims only from communities they belong to (#399).
+- **`grantItemInTransaction`** grants inside a caller's transaction; `HalloweenWin.linkedUserIsMember` says whether a chardb prize is its winner's yet (#399).
+- **The Halloween win channel must be in the community's own Discord server**, checked with Discord when it changes (#399).
+- **`/deviantart` works before a server's Halloween event is set up, and `/gifty` says it isn't yet**; migration `20261021120000_halloween_deviantart_before_setup` drops the DeviantArt names' key to the settings (#399).
+- **A Discord server can be linked to only one community**: `communities.discord_guild_id` is unique, and `linkDiscordGuild` refuses a server another community has. The migration fails if two communities already share one (#399).
+
+### Removed
+
+- **The SQS prize consumer** (`src/queue-consumer`), with `AWS_SQS_ENABLED`, `AWS_SQS_QUEUE_URL` and the `@ssut/nestjs-sqs` and `@aws-sdk/client-sqs` dependencies; the Halloween bot grants prizes itself (#399).
 
 ### Fixed
 
