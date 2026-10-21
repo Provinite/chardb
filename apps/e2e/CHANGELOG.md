@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Site admin access specs** (`tests/navigation/site-admin-access.e2e.ts`): a member gets not found on every `/admin` page, a community creator sees only community management, and a site admin opens all of them (#405).
 - **User avatar specs** (`tests/settings/user-avatar.e2e.ts`): uploading from a community host records the chosen crop and that community as the reviewer, an unapproved avatar is withheld from visitors until it is approved, and removing one clears the column (#345).
 
 - **Email verification specs** (`tests/settings/email-verification.e2e.ts`) and the `email-verification` preset: signup ending at "check your email" rather than the dashboard, an unconfirmed sign-in refused and offered a resend, the link confirming the account so it can then sign in, and expired and spent links refused (#372).

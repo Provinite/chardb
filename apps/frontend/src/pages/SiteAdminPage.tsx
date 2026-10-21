@@ -9,6 +9,12 @@ import {
   Activity,
   RefreshCw,
 } from "lucide-react";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  canManageCommunities,
+  canUseSiteInviteCodes,
+  isSiteAdmin,
+} from "../lib/siteAdminAccess";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -128,6 +134,11 @@ const StatValue = styled.div`
 export function SiteAdminPage() {
   usePageMeta({ title: "Site Admin" });
 
+  // The route has already let this viewer in, so there is a user; the
+  // fallback only keeps every card hidden if that ever stops being true.
+  const { user } = useAuth();
+  const allowed = (allow: typeof isSiteAdmin) => !!user && allow(user);
+
   return (
     <Container>
       <Header>
@@ -136,61 +147,76 @@ export function SiteAdminPage() {
       </Header>
 
       <Grid>
-        <AdminCard to="/admin/site-invite-codes">
-          <CardIcon>
-            <Shield size={24} />
-          </CardIcon>
-          <CardTitle>Site Invite Codes</CardTitle>
-          <CardDescription>
-            Manage system-wide invitation codes and user registration
-          </CardDescription>
-        </AdminCard>
+        {allowed(canUseSiteInviteCodes) && (
+          <AdminCard to="/admin/site-invite-codes">
+            <CardIcon>
+              <Shield size={24} />
+            </CardIcon>
+            <CardTitle>Site Invite Codes</CardTitle>
+            <CardDescription>
+              Manage system-wide invitation codes and user registration
+            </CardDescription>
+          </AdminCard>
+        )}
 
-        <AdminCard to="/admin/users">
-          <CardIcon>
-            <Users size={24} />
-          </CardIcon>
-          <CardTitle>User Management</CardTitle>
-          <CardDescription>Manage users across all communities</CardDescription>
-        </AdminCard>
+        {allowed(isSiteAdmin) && (
+          <AdminCard to="/admin/users">
+            <CardIcon>
+              <Users size={24} />
+            </CardIcon>
+            <CardTitle>User Management</CardTitle>
+            <CardDescription>
+              Manage users across all communities
+            </CardDescription>
+          </AdminCard>
+        )}
 
-        <AdminCard to="/admin/communities">
-          <CardIcon>
-            <Database size={24} />
-          </CardIcon>
-          <CardTitle>Community Oversight</CardTitle>
-          <CardDescription>Monitor and manage all communities</CardDescription>
-        </AdminCard>
+        {allowed(canManageCommunities) && (
+          <AdminCard to="/admin/communities">
+            <CardIcon>
+              <Database size={24} />
+            </CardIcon>
+            <CardTitle>Community Oversight</CardTitle>
+            <CardDescription>
+              Monitor and manage all communities
+            </CardDescription>
+          </AdminCard>
+        )}
 
-        <AdminCard to="/admin/system">
-          <CardIcon>
-            <Settings size={24} />
-          </CardIcon>
-          <CardTitle>System Configuration</CardTitle>
-          <CardDescription>
-            Site-level settings and configuration
-          </CardDescription>
-        </AdminCard>
+        {allowed(isSiteAdmin) && (
+          <>
+            <AdminCard to="/admin/system">
+              <CardIcon>
+                <Settings size={24} />
+              </CardIcon>
+              <CardTitle>System Configuration</CardTitle>
+              <CardDescription>
+                Site-level settings and configuration
+              </CardDescription>
+            </AdminCard>
 
-        <AdminCard to="/admin/audit">
-          <CardIcon>
-            <Activity size={24} />
-          </CardIcon>
-          <CardTitle>Audit Logs</CardTitle>
-          <CardDescription>
-            Security monitoring and activity logs
-          </CardDescription>
-        </AdminCard>
+            <AdminCard to="/admin/audit">
+              <CardIcon>
+                <Activity size={24} />
+              </CardIcon>
+              <CardTitle>Audit Logs</CardTitle>
+              <CardDescription>
+                Security monitoring and activity logs
+              </CardDescription>
+            </AdminCard>
 
-        <AdminCard to="/admin/deviantart-backfill">
-          <CardIcon>
-            <RefreshCw size={24} />
-          </CardIcon>
-          <CardTitle>DA UUID Backfill</CardTitle>
-          <CardDescription>
-            Resolve DeviantArt usernames to UUIDs in pending ownership records
-          </CardDescription>
-        </AdminCard>
+            <AdminCard to="/admin/deviantart-backfill">
+              <CardIcon>
+                <RefreshCw size={24} />
+              </CardIcon>
+              <CardTitle>DA UUID Backfill</CardTitle>
+              <CardDescription>
+                Resolve DeviantArt usernames to UUIDs in pending ownership
+                records
+              </CardDescription>
+            </AdminCard>
+          </>
+        )}
       </Grid>
 
       <StatsCard>
