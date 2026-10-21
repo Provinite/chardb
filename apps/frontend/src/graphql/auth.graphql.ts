@@ -68,9 +68,6 @@ export const ME_QUERY = gql`
           height
         }
       }
-      # Why the avatar is not showing, when one is set but unapproved. Owner-
-      # only, and this query is only ever the owner.
-      avatarImageModerationStatus
       website
       dateOfBirth
       isVerified

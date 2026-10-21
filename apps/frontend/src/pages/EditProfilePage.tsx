@@ -507,7 +507,6 @@ export const EditProfilePage: React.FC = () => {
         <AvatarSettings
           name={meData.me.displayName || meData.me.username}
           avatarImage={meData.me.avatarImage}
-          moderationStatus={meData.me.avatarImageModerationStatus}
         />
       </Section>
 
