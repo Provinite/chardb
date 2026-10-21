@@ -9,7 +9,7 @@ import { BusyError } from "../errors";
  *
  * Short, because a knock holding a connection has few winners ahead of it:
  * only those holding the other connections. The longest wait for the pool in
- * the load test was under 400 ms, with 33 connections.
+ * the load test was about 560 ms, with 33 connections; prod has far fewer.
  */
 export const LOCK_TIMEOUT_MS = 800;
 
@@ -19,9 +19,10 @@ export const LOCK_TIMEOUT_MS = 800;
  * Together 2.7 s, leaving the rest for the reply itself.
  *
  * Most of it is `maxWait`. A winner keeps its connection while it queues for
- * the prize pool, so in a burst the line forms for connections: winners take
- * about 12 ms each with the pool, so this lets roughly 150 winning at once
- * through before the rest are told to try again.
+ * the prize pool, so in a burst the line forms for connections. Winners took
+ * 12-18 ms each with the pool in the load test, so roughly 100-150 winning at
+ * once get through before the rest are told to try again; against 40-75 when
+ * the connection wait was 700 ms.
  */
 export const LOCKED_TRANSACTION_OPTIONS = {
   maxWait: 1700,
