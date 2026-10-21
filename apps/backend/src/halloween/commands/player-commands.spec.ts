@@ -258,6 +258,10 @@ describe("/gifty", () => {
       gifties as unknown as GiftyService,
       lock as unknown as PlayerLock,
       db,
+      // The event is set up; halloween.e2e.spec.ts covers a server where not.
+      {
+        getCached: jest.fn().mockResolvedValue({}),
+      } as unknown as GuildSettingsService,
     );
   });
 

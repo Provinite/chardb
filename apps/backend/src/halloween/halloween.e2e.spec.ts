@@ -17,12 +17,14 @@ import { HalloweenRandom } from "./random";
 import { PrizeService } from "./services/prize.service";
 import { GuildSettingsService } from "./services/guild-settings.service";
 import {
+  ADMINISTRATOR,
   GUILD_ID,
   OTHER_USER_ID,
   USER_ID,
   buildInteraction,
 } from "./testing/fixtures";
 import { mockDiscord } from "./testing/command-harness";
+import { Logger } from "@nestjs/common";
 
 /**
  * Commands end to end, from the dispatcher down to Postgres. Only Discord is
@@ -406,5 +408,54 @@ describe("Halloween bot (e2e)", () => {
     expect(reply.embeds?.[0].title).toBe(
       "Cloverse Halloween 2026 - Not Ready Yet",
     );
+  });
+
+  // A name belongs to the player, not to the event: they can save it early.
+  it("saves a DeviantArt name in a server that is not set up yet", async () => {
+    const reply = await run("deviantart", [
+      {
+        type: ApplicationCommandOptionType.String,
+        name: "da_username",
+        value: "early-bird",
+      },
+    ]);
+    expect(reply.embeds?.[0].title).toBe("Cloverse Halloween 2026 - Setting");
+    expect(
+      await db.halloweenDeviantArtUser.findFirstOrThrow({
+        where: { guildId: GUILD_ID, userId: USER_ID },
+      }),
+    ).toMatchObject({ deviantArtName: "early-bird" });
+  });
+
+  // A gifty is limited to one per reset, and the reset is a setting.
+  it.each([
+    ["a player", "0"],
+    ["an admin, who skips the limit", ADMINISTRATOR],
+  ])(
+    "tells %s gifting in a server that is not set up, and saves nothing",
+    async (_who, permissions) => {
+      const reply = await run(
+        "gifty",
+        [
+          {
+            type: ApplicationCommandOptionType.User,
+            name: "user",
+            value: OTHER_USER_ID,
+          },
+        ],
+        { permissions },
+      );
+      expect(reply.embeds?.[0].title).toBe(
+        "Cloverse Halloween 2026 - Not Ready Yet",
+      );
+      expect(await db.halloweenGifty.count()).toBe(0);
+    },
+  );
+
+  // Setting the event up is staff's job, not a fault in the bot.
+  it("does not page staff when a server is not set up", async () => {
+    const error = jest.spyOn(Logger.prototype, "error").mockImplementation();
+    await run("knock");
+    expect(error).not.toHaveBeenCalled();
   });
 });

@@ -166,7 +166,8 @@ export class MissingGuildSettingsError extends DiscordReportableError {
   constructor(options: { thrownFrom: string; guildId: string }) {
     super("No guild settings found", {
       thrownFrom: options.thrownFrom,
-      logAsError: true,
+      // Setting the event up is staff's job, not a fault in the bot.
+      logAsError: false,
       details: { guildId: options.guildId },
     });
   }

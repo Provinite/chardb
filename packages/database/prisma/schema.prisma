@@ -2349,9 +2349,8 @@ model HalloweenGuildSettings {
   /// Channel every win is also announced in.
   winChannel   String?   @map("win_channel") @db.VarChar(30)
 
-  prizes          HalloweenPrize[]
-  gifties         HalloweenGifty[]
-  deviantArtUsers HalloweenDeviantArtUser[]
+  prizes  HalloweenPrize[]
+  gifties HalloweenGifty[]
 
   @@map("halloween_guild_settings")
 }
@@ -2424,13 +2423,12 @@ model HalloweenGifty {
 }
 
 /// The DeviantArt username a player gave with `/deviantart`, for delivering
-/// prizes chardb does not hold.
+/// prizes chardb does not hold. The player's, not the event's: it can be
+/// saved before the guild's event is set up, so it has no key to the settings.
 model HalloweenDeviantArtUser {
   guildId        String @map("guild_id") @db.VarChar(30)
   userId         String @map("user_id") @db.VarChar(30)
   deviantArtName String @map("deviantart_name") @db.VarChar(30)
-
-  guildSettings HalloweenGuildSettings @relation(fields: [guildId], references: [guildId])
 
   @@id([userId, guildId])
   @@map("halloween_deviantart_users")

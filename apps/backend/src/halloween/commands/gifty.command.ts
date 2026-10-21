@@ -14,6 +14,7 @@ import { GiftyService } from "../services/gifty.service";
 import { PlayerLock } from "../services/player-lock";
 import { lockedTransaction } from "../services/locked-transaction";
 import { DatabaseService } from "../../database/database.service";
+import { GuildSettingsService } from "../services/guild-settings.service";
 import {
   HalloweenDiscordError,
   ValidationError,
@@ -35,6 +36,7 @@ export class GiftyCommand implements HalloweenCommandHandler {
     private readonly gifties: GiftyService,
     private readonly lock: PlayerLock,
     private readonly db: DatabaseService,
+    private readonly guildSettings: GuildSettingsService,
   ) {}
 
   async handle(
@@ -50,6 +52,11 @@ export class GiftyCommand implements HalloweenCommandHandler {
       fromUserId,
       toUserId,
     };
+
+    // A gifty belongs to the guild's event, and is limited per reset, which
+    // is one of its settings: until the event is set up there is nothing to
+    // gift towards. Throws the "not ready yet" answer, for admins too.
+    await this.guildSettings.getCached(guildId);
 
     const sent = await lockedTransaction(
       this.db,

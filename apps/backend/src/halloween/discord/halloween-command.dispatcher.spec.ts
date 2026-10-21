@@ -3,7 +3,6 @@ import type { HalloweenCommandHandler } from "./halloween-command";
 import { HalloweenUi } from "./ui";
 import {
   HalloweenDiscordError,
-  MissingGuildSettingsError,
   OutOfPrizesError,
   TooManyKnocksError,
 } from "../errors";
@@ -95,13 +94,22 @@ describe("HalloweenCommandDispatcher", () => {
     // is logged beside them.
     it("logs an error's details as attributes, not in its reason", async () => {
       knock.handle.mockRejectedValue(
-        new MissingGuildSettingsError({ thrownFrom: "test", guildId: "g-9" }),
+        new HalloweenDiscordError({
+          thrownFrom: "test",
+          message: "This prize couldn't be delivered. Please let staff know.",
+          sourceError: new Error("Prize is misconfigured"),
+          details: { prizeId: "myo", problem: "the character is already owned" },
+        }),
       );
       await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
       expect(error).toHaveBeenCalledWith(
         expect.objectContaining({
-          reason: "No guild settings found",
-          errorDetails: { guildId: "g-9" },
+          reason: "This prize couldn't be delivered. Please let staff know.",
+          cause: "Prize is misconfigured",
+          errorDetails: {
+            prizeId: "myo",
+            problem: "the character is already owned",
+          },
         }),
         expect.anything(),
       );

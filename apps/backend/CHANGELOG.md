@@ -24,6 +24,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Something granted to a linked account whose person is not a community member waits on the account**, and is claimed when they join, by any of the five ways in; linking claims only from communities they belong to (#399).
 - **`grantItemInTransaction`** grants inside a caller's transaction; `HalloweenWin.linkedUserIsMember` says whether a chardb prize is its winner's yet (#399).
 - **The Halloween win channel must be in the community's own Discord server**, checked with Discord when it changes (#399).
+- **`/deviantart` works before a server's Halloween event is set up, and `/gifty` says it isn't yet**; migration `20261021120000_halloween_deviantart_before_setup` drops the DeviantArt names' key to the settings (#399).
 - **A Discord server can be linked to only one community**: `communities.discord_guild_id` is unique, and `linkDiscordGuild` refuses a server another community has. The migration fails if two communities already share one (#399).
 
 ### Removed

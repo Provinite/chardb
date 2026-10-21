@@ -118,7 +118,7 @@ describe("Halloween errors", () => {
       thrownFrom: "test",
       guildId: "1",
     });
-    expect(error.logAsError).toBe(true);
+    expect(error.logAsError).toBe(false);
     expect(error.message).toBe("No guild settings found");
     expect(error.details).toEqual({ guildId: "1" });
     expect(error.responseBody(interaction, ui)).toEqual({
