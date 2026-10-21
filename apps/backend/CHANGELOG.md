@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Backend e2e specs on the primary checkout no longer wipe `chardb_dev`**; `setup-e2e.ts` now always points `DATABASE_URL` at the test database, since importing Prisma had loaded the dev URL from `.env` first.
 - **A declined or failed link returns to the app.** Clicking Deny on the provider, or a failed token exchange, used to strand the user on a bare 401 on the API host; it now redirects to the frontend callback with the reason and spends the nonce (#236).
 - **`PATREON` is refused as a pending owner**, since a Patreon handle cannot be resolved to the id that linking stores (#236).
 
