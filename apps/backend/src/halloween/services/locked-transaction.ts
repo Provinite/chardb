@@ -7,21 +7,25 @@ import { BusyError } from "../errors";
  * the guild's prize pool a win takes. Set by `PlayerLock`, which every locked
  * transaction takes first.
  *
- * Winners in a guild take turns with the pool, so this is how long the queue
- * of winners can be: about 15 ms a win in the load test, so roughly 120
- * winners arriving at once before the rest are told to try again.
+ * Short, because a knock holding a connection has few winners ahead of it:
+ * only those holding the other connections. The longest wait for the pool in
+ * the load test was under 400 ms, with 33 connections.
  */
-export const LOCK_TIMEOUT_MS = 1800;
+export const LOCK_TIMEOUT_MS = 800;
 
 /**
  * Discord waits three seconds for the reply, and the reply waits for the
  * transaction: at most `maxWait` for a connection, then `timeout` to run.
- * Together 2.7 s, leaving the rest for the reply itself. A knock's own work
- * takes milliseconds, so most of `timeout` is the lock wait above.
+ * Together 2.7 s, leaving the rest for the reply itself.
+ *
+ * Most of it is `maxWait`. A winner keeps its connection while it queues for
+ * the prize pool, so in a burst the line forms for connections: winners take
+ * about 12 ms each with the pool, so this lets roughly 150 winning at once
+ * through before the rest are told to try again.
  */
 export const LOCKED_TRANSACTION_OPTIONS = {
-  maxWait: 700,
-  timeout: 2000,
+  maxWait: 1700,
+  timeout: 1000,
 } as const;
 
 /** Postgres's lock_not_available, which a lock_timeout raises. */

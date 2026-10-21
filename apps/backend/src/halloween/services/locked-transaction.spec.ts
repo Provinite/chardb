@@ -41,18 +41,21 @@ describe("lockedTransaction", () => {
     ).toBeLessThanOrEqual(2700);
   });
 
-  // Winners queue on the prize pool for up to the lock timeout, so it is as
-  // long as the transaction allows, short of the work done once it is theirs.
-  it("lets a winner queue for most of the transaction", () => {
-    expect(LOCK_TIMEOUT_MS).toBeGreaterThanOrEqual(1800);
+  // A winner keeps its connection while it queues for the prize pool, so in
+  // a burst the line forms for connections, not for the pool: most of the
+  // time goes to waiting for a connection. Once a knock has one, only the
+  // winners already holding connections are ahead of it.
+  it("gives most of the time to waiting for a connection", () => {
+    expect(LOCKED_TRANSACTION_OPTIONS.maxWait).toBeGreaterThanOrEqual(1700);
+    expect(LOCKED_TRANSACTION_OPTIONS.maxWait).toBeGreaterThan(LOCK_TIMEOUT_MS);
+  });
+
+  it("still lets a winner wait its turn for the pool", () => {
+    expect(LOCK_TIMEOUT_MS).toBeGreaterThanOrEqual(800);
+    // The work once the pool is theirs fits in what is left.
     expect(
       LOCKED_TRANSACTION_OPTIONS.timeout - LOCK_TIMEOUT_MS,
     ).toBeGreaterThanOrEqual(200);
-  });
-
-  // Every knock needs a connection; in a burst it waits in line for one.
-  it("waits a while for a connection before answering busy", () => {
-    expect(LOCKED_TRANSACTION_OPTIONS.maxWait).toBeGreaterThanOrEqual(700);
   });
 
   it("answers busy when the transaction timed out or never started", async () => {
