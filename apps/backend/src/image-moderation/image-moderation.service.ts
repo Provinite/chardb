@@ -569,11 +569,16 @@ export class ImageModerationService {
 
   /**
    * Get global pending image count
+   *
+   * Only images some media points at, because the global queue reaches images
+   * through media. A pending prize or item-type picture has none and could
+   * never be listed there.
    */
   async getGlobalPendingCount(): Promise<number> {
     return this.db.image.count({
       where: {
         moderationStatus: ModerationStatus.PENDING,
+        media: { some: {} },
       },
     });
   }

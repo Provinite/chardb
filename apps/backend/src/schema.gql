@@ -3487,6 +3487,11 @@ type Query {
   """Get all pending images across all communities (admin only)"""
   globalImageModerationQueue(filters: ImageModerationQueueFiltersInput, first: Int = 20, offset: Int = 0): ImageModerationQueueConnection!
 
+  """
+  Get pending media across the whole site for moderation (site admins only; use pendingModerationImage for actual image URLs)
+  """
+  globalMediaModerationQueue(first: Int = 20, offset: Int = 0): MediaConnection!
+
   """Get count of all pending images across all communities (admin only)"""
   globalPendingImageCount: Int!
 
