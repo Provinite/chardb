@@ -44,6 +44,7 @@ import {
   AUTHOR,
   CANDY,
   TIMESTAMP,
+  linksFor,
   mockDiscord,
   stubUi,
 } from "../testing/command-harness";
@@ -193,6 +194,7 @@ describe("/knock", () => {
       deviantArt as unknown as DeviantArtUserService,
       award as unknown as PrizeAwardService,
       images as unknown as PrizeImageService,
+      linksFor("cloverse"),
       lock as unknown as PlayerLock,
       random,
       db as unknown as DatabaseService,
@@ -629,7 +631,7 @@ describe("/knock", () => {
       const fields = (reply as { embeds: Embed[] }).embeds[0].fields;
       expect(fields?.[1]).toEqual({
         name: "CharDB",
-        value: "[View on CharDB](https://chardb.cc/item/it-1)",
+        value: "[View on CharDB](https://cloverse.chardb.cc/item-types/it-1)",
       });
     });
 

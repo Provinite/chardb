@@ -37,7 +37,7 @@ import {
   TooManyKnocksError,
 } from "../errors";
 import { EventStatus } from "../time";
-import { formatChardbLink } from "../chardb-link";
+import { HalloweenLinks } from "../halloween-links";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { requireChatInput } from "./command-helpers";
 
@@ -108,6 +108,7 @@ export class KnockCommand implements HalloweenCommandHandler {
     private readonly deviantArtUsers: DeviantArtUserService,
     private readonly prizeAward: PrizeAwardService,
     private readonly prizeImages: PrizeImageService,
+    private readonly links: HalloweenLinks,
     private readonly lock: PlayerLock,
     private readonly random: HalloweenRandom,
     private readonly db: DatabaseService,
@@ -385,17 +386,18 @@ export class KnockCommand implements HalloweenCommandHandler {
   ): Promise<KnockResult> {
     const guildId = interaction.guild_id;
     const userId = interaction.member.user.id;
-    const [imageUrl, deviantArtUser, bankedGifties] = await Promise.all([
-      this.imageFor(prize, interaction),
-      this.deviantArtUsers.get({ guildId, userId }),
-      this.gifties.pendingCount(guildId, userId),
-    ]);
+    const [imageUrl, deviantArtUser, bankedGifties, chardbLink] =
+      await Promise.all([
+        this.imageFor(prize, interaction),
+        this.deviantArtUsers.get({ guildId, userId }),
+        this.gifties.pendingCount(guildId, userId),
+        this.links.chardbLink(guildId, prize),
+      ]);
     const hasDeviantArt = deviantArtUser !== null;
     // The count from before this knock; zero while spending gifties.
     const remainingKnocks = Math.max(0, knocksPerDay - (knockCount + 1));
 
     const fields: APIEmbedField[] = [{ name: "Prize", value: prize.name }];
-    const chardbLink = formatChardbLink(prize);
     if (chardbLink) {
       fields.push({ name: "CharDB", value: chardbLink });
     }

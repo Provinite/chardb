@@ -15,7 +15,6 @@ import { HalloweenLinks } from "../halloween-links";
 import { PrizeService } from "../services/prize.service";
 import { PrizeImageService } from "../services/prize-image.service";
 import { HalloweenDiscordError, OutOfPrizesError } from "../errors";
-import { formatChardbLink } from "../chardb-link";
 import { requireChatInput } from "./command-helpers";
 import { movedToChardb } from "./moved-to-chardb";
 
@@ -137,20 +136,23 @@ export class PrizeCommand implements HalloweenCommandHandler {
       },
     ];
 
-    const prizeImages = await this.prizeImages.imagesFor(prizes);
+    const [prizeImages, chardbLink] = await Promise.all([
+      this.prizeImages.imagesFor(prizes),
+      this.links.chardbLinks(interaction.guild_id),
+    ]);
 
     // An embed holds 25 fields. With at most 20 prizes this never splits, but
     // the bot's chunking is kept for when the sample size changes.
     let images: string[] = [];
     prizes.forEach((prize, index) => {
       const embed = embeds[embeds.length - 1];
-      const chardbLink = formatChardbLink(prize);
+      const link = chardbLink(prize);
       const stockInfo = `${capitalizeFirstLetter(
         this.random.vagueNumberName(prize.currentStock),
       )} ${this.random.element(REMAINING_SYNONYMS)} ||stock${prize.currentStock}|wg: ${prize.weight}||`;
       embed.fields?.push({
         name: prize.name,
-        value: chardbLink ? `${stockInfo} | ${chardbLink}` : stockInfo,
+        value: link ? `${stockInfo} | ${link}` : stockInfo,
       });
       const image = prizeImages.get(prize);
       if (prize.initialStock > 1 && image) {

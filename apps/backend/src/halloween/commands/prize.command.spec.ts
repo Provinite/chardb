@@ -11,7 +11,12 @@ import { PrizeService } from "../services/prize.service";
 import { PrizeImageService } from "../services/prize-image.service";
 import { OutOfPrizesError } from "../errors";
 import { ADMINISTRATOR, GUILD_ID, buildInteraction } from "../testing/fixtures";
-import { AUTHOR, TIMESTAMP, stubUi } from "../testing/command-harness";
+import {
+  AUTHOR,
+  TIMESTAMP,
+  linksFor,
+  stubUi,
+} from "../testing/command-harness";
 
 const prize = (
   id: string,
@@ -53,7 +58,7 @@ describe("/prize", () => {
   let prizes: { inStock: jest.Mock; save: jest.Mock };
   let random: HalloweenRandom;
   let images: { imagesFor: jest.Mock };
-  let links: { halloweenPage: jest.Mock };
+  let links: HalloweenLinks;
   let command: PrizeCommand;
   /** What the last run answered with. */
   let reply: unknown;
@@ -74,16 +79,13 @@ describe("/prize", () => {
         Promise.resolve(new Map(list.map((p) => [p, p.image]))),
       ),
     };
-    links = {
-      halloweenPage: jest
-        .fn()
-        .mockResolvedValue("https://cloverse.chardb.cc/admin/halloween"),
-    };
+    links = linksFor("cloverse");
+    jest.spyOn(links, "halloweenPage");
     command = new PrizeCommand(
       stubUi(),
       prizes as unknown as PrizeService,
       images as unknown as PrizeImageService,
-      links as unknown as HalloweenLinks,
+      links,
       random,
     );
   });
@@ -149,12 +151,12 @@ describe("/prize", () => {
               {
                 name: "Prize adopt",
                 value:
-                  "A bunch remaining ||stock7|wg: 3|| | [View on CharDB](https://chardb.cc/item/it-1)",
+                  "A bunch remaining ||stock7|wg: 3|| | [View on CharDB](https://cloverse.chardb.cc/item-types/it-1)",
               },
               {
                 name: "Prize char",
                 value:
-                  "Tons remaining ||stock30|wg: 10|| | [View on CharDB](https://chardb.cc/character/ch-1)",
+                  "Tons remaining ||stock30|wg: 10|| | [View on CharDB](https://cloverse.chardb.cc/character/ch-1)",
               },
             ],
             // Only prizes that started with more than one in stock are shown.
@@ -215,7 +217,7 @@ describe("/prize", () => {
     );
 
     it("says where to look when there is no page to link to", async () => {
-      links.halloweenPage.mockResolvedValue(null);
+      jest.spyOn(links, "halloweenPage").mockResolvedValue(null);
       await run([adminGroup(sub("add"))]);
       expect(reply).toEqual({
         content:

@@ -1,5 +1,8 @@
 import type { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import type { HalloweenUi } from "../discord/ui";
+import { ConfigService } from "@nestjs/config";
+import { HalloweenLinks } from "../halloween-links";
+import type { DatabaseService } from "../../database/database.service";
 
 export const AUTHOR = {
   name: "Daphne",
@@ -17,6 +20,22 @@ export function stubUi(now = new Date(TIMESTAMP)): HalloweenUi {
     candyImageUrl: () => CANDY,
     errorFooter: (i: { id: string }) => ({ text: `Reference ID: ${i.id}` }),
   } as unknown as HalloweenUi;
+}
+
+/**
+ * The real links, for a guild linked to the community `slug` on chardb.cc,
+ * so a spec sees the URLs players would.
+ */
+export function linksFor(slug: string): HalloweenLinks {
+  return new HalloweenLinks(
+    new ConfigService({
+      FRONTEND_URL: "https://chardb.cc",
+      ROOT_DOMAIN: "chardb.cc",
+    }),
+    {
+      community: { findFirst: () => Promise.resolve({ slug }) },
+    } as unknown as DatabaseService,
+  );
 }
 
 export type DiscordMock = { createChannelMessage: jest.Mock };
