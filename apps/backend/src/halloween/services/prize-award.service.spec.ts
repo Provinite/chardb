@@ -92,6 +92,26 @@ describe("PrizeAwardService", () => {
       );
     });
 
+    // What is wrong, and with which prize, goes beside the static message.
+    it("says which prize, and what is wrong with it, as details", async () => {
+      tx.character.findFirst.mockResolvedValue({
+        id: "ch-1",
+        ownerId: "someone",
+        species: { communityId: "community-1" },
+      });
+      const error = (await validate(prize({ characterId: "ch-1" })).catch(
+        (e: unknown) => e,
+      )) as HalloweenDiscordError;
+      expect(error.sourceError?.message).toBe("Prize is misconfigured");
+      expect(error.details).toEqual({
+        prizeId: "myo",
+        guildId: GUILD_ID,
+        itemTypeId: null,
+        characterId: "ch-1",
+        problem: "the character is already owned",
+      });
+    });
+
     it("refuses another community's item type", async () => {
       tx.itemType.findUnique.mockResolvedValue({
         id: "it-1",

@@ -92,7 +92,8 @@ export class PrizeCommand implements HalloweenCommandHandler {
     throw new HalloweenDiscordError({
       thrownFrom: "PrizeCommand",
       message: "Unknown prize sub command",
-      sourceError: new Error(`No handler found for prize subcommand ${name}`),
+      sourceError: new Error("No handler found for the prize subcommand"),
+      details: { subcommand: name },
     });
   }
 

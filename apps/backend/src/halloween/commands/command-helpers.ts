@@ -28,8 +28,9 @@ export function requireChatInput(
       thrownFrom: "requireChatInput",
       message:
         "Something went wrong while handling your interaction. ERR_UNEXPECTED_INTERACTION_KIND",
+      // The command's name is on every line logged about it.
       sourceError: new Error(
-        `Received unexpected command in ${interaction.data.name} chat command handler. Expected a guild chat command, but got something else.`,
+        "Expected a guild chat command, but got another kind of interaction",
       ),
     });
   }

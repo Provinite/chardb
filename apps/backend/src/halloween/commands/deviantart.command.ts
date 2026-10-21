@@ -35,9 +35,7 @@ export class DeviantArtCommand implements HalloweenCommandHandler {
         thrownFrom: "DeviantArtCommand",
         message:
           "You must provide your deviant art username as an option to this command",
-        sourceError: new Error(
-          `No interaction options provided for command ${this.name}`,
-        ),
+        sourceError: new Error("No options provided for /deviantart"),
       });
     }
     const [option] = options;
@@ -47,7 +45,7 @@ export class DeviantArtCommand implements HalloweenCommandHandler {
         message:
           "Invalid option type for DeviantArt username. Expected a string",
         sourceError: new Error(
-          `Got a non-string option in the first slot for command ${this.name}`,
+          "Got a non-string option in the first slot for /deviantart",
         ),
       });
     }

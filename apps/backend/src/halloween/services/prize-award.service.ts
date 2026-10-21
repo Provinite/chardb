@@ -42,7 +42,8 @@ export class PrizeAwardService {
   }
 
   /**
-   * Why the prize could not be delivered, or null if it could. Checked when
+   * Why the prize could not be delivered, or null if it could: one of a few
+   * fixed phrases, which name no ids. Checked when
    * a prize is added on chardb and again when it is won, since the item type
    * or character can change in between.
    */
@@ -62,7 +63,7 @@ export class PrizeAwardService {
       where: { discordGuildId: guildId },
     });
     if (!community) {
-      return `no community is linked to Discord guild ${guildId}`;
+      return "no community is linked to this Discord server";
     }
 
     if (prize.itemTypeId) {
@@ -70,10 +71,10 @@ export class PrizeAwardService {
         where: { id: prize.itemTypeId },
       });
       if (!itemType) {
-        return `item type ${prize.itemTypeId} not found`;
+        return "the item type no longer exists";
       }
       if (itemType.communityId !== community.id) {
-        return `item type ${prize.itemTypeId} belongs to another community`;
+        return "the item type belongs to another community";
       }
     }
 
@@ -83,21 +84,21 @@ export class PrizeAwardService {
         include: { species: { select: { communityId: true } } },
       });
       if (!character) {
-        return `character ${prize.characterId} not found`;
+        return "the character no longer exists";
       }
       // A character belongs to a community through its species; one with no
       // species belongs to none, so no guild may give it away.
       if (character.species?.communityId !== community.id) {
-        return `character ${prize.characterId} belongs to another community`;
+        return "the character belongs to another community";
       }
       if (character.ownerId !== null) {
-        return `character ${prize.characterId} is already owned`;
+        return "the character is already owned";
       }
       const pending = await tx.pendingOwnership.findUnique({
         where: { characterId: prize.characterId },
       });
       if (pending) {
-        return `character ${prize.characterId} is already pending for someone`;
+        return "the character is already promised to someone";
       }
     }
     return null;
@@ -140,13 +141,18 @@ export class PrizeAwardService {
     }
   }
 
-  private undeliverable(prize: HalloweenPrize, reason: string) {
+  private undeliverable(prize: HalloweenPrize, problem: string) {
     return new HalloweenDiscordError({
       thrownFrom: "PrizeAwardService.validate",
       message: "This prize couldn't be delivered. Please let staff know.",
-      sourceError: new Error(
-        `Prize ${prize.id} in guild ${prize.guildId} is misconfigured: ${reason}`,
-      ),
+      sourceError: new Error("Prize is misconfigured"),
+      details: {
+        prizeId: prize.id,
+        guildId: prize.guildId,
+        itemTypeId: prize.itemTypeId,
+        characterId: prize.characterId,
+        problem,
+      },
     });
   }
 }

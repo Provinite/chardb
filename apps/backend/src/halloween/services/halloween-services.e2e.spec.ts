@@ -346,9 +346,11 @@ describe("Halloween services (e2e)", () => {
       const spent = await gifties.fulfill(gifty, knock);
       expect(spent.knockEventId).toBe(knock.id);
       expect(await gifties.pendingCount(GUILD, BOB)).toBe(0);
-      await expect(gifties.fulfill(spent, knock)).rejects.toBeInstanceOf(
-        ValidationError,
-      );
+      const twice = (await gifties
+        .fulfill(spent, knock)
+        .catch((e: unknown) => e)) as ValidationError;
+      expect(twice).toBeInstanceOf(ValidationError);
+      expect(twice.details).toEqual({ giftyId: spent.id });
     });
   });
 

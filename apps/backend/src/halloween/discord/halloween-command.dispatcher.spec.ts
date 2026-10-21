@@ -1,7 +1,12 @@
 import { HalloweenCommandDispatcher } from "./halloween-command.dispatcher";
 import type { HalloweenCommandHandler } from "./halloween-command";
 import { HalloweenUi } from "./ui";
-import { HalloweenDiscordError, OutOfPrizesError } from "../errors";
+import {
+  HalloweenDiscordError,
+  MissingGuildSettingsError,
+  OutOfPrizesError,
+  TooManyKnocksError,
+} from "../errors";
 import { GUILD_ID, USER_ID, buildInteraction } from "../testing/fixtures";
 import { HalloweenLogEvent } from "../logging";
 import { Logger } from "@nestjs/common";
@@ -83,6 +88,42 @@ describe("HalloweenCommandDispatcher", () => {
           cause: "database on fire",
         }),
         expect.stringContaining("database on fire"),
+      );
+    });
+
+    // Messages are static, so one search finds every occurrence; what varies
+    // is logged beside them.
+    it("logs an error's details as attributes, not in its reason", async () => {
+      knock.handle.mockRejectedValue(
+        new MissingGuildSettingsError({ thrownFrom: "test", guildId: "g-9" }),
+      );
+      await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
+      expect(error).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reason: "No guild settings found",
+          errorDetails: { guildId: "g-9" },
+        }),
+        expect.anything(),
+      );
+    });
+
+    it("logs a refusal's details too", async () => {
+      knock.handle.mockRejectedValue(
+        new TooManyKnocksError({
+          thrownFrom: "KnockCommand",
+          guildId: "g-9",
+          userId: "u-9",
+          knocksPerDay: 3,
+          resetTime: 6,
+          lastResetTime: new Date("2025-10-17T11:00:00Z"),
+        }),
+      );
+      await dispatcher.dispatch(buildInteraction({ id: "ref-1" }));
+      expect(warn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          reason: "Too many knocks",
+          errorDetails: { guildId: "g-9", userId: "u-9" },
+        }),
       );
     });
 

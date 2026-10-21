@@ -166,6 +166,7 @@ export class HalloweenCommandDispatcher {
         error: reportable.name,
         thrownFrom: reportable.thrownFrom,
         reason: reportable.message,
+        ...(reportable.details ? { errorDetails: reportable.details } : {}),
       };
 
       let outcome: Outcome;

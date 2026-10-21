@@ -14,13 +14,21 @@ interface ReportableOptions {
    */
   logAsError: boolean;
   sourceError?: Error;
+  /**
+   * What varies between occurrences, logged beside the message as
+   * `errorDetails`, so the message itself stays the same every time.
+   */
+  details?: ErrorDetails;
 }
+
+export type ErrorDetails = Record<string, string | number | null>;
 
 /** An error the player is told about: `responseBody` becomes the reply. */
 export class DiscordReportableError extends Error {
   readonly thrownFrom: string;
   readonly logAsError: boolean;
   readonly sourceError?: Error;
+  readonly details?: ErrorDetails;
 
   constructor(message: string, options: ReportableOptions) {
     super(message);
@@ -28,6 +36,7 @@ export class DiscordReportableError extends Error {
     this.thrownFrom = options.thrownFrom;
     this.logAsError = options.logAsError;
     this.sourceError = options.sourceError;
+    this.details = options.details;
   }
 
   responseBody(
@@ -49,11 +58,13 @@ export class HalloweenDiscordError extends DiscordReportableError {
     message: string;
     sourceError?: Error;
     logAsError?: boolean;
+    details?: ErrorDetails;
   }) {
     super(options.message, {
       thrownFrom: options.thrownFrom,
       sourceError: options.sourceError,
       logAsError: options.logAsError ?? true,
+      details: options.details,
     });
   }
 
@@ -153,9 +164,10 @@ export class EventNotStartedError extends DiscordReportableError {
 
 export class MissingGuildSettingsError extends DiscordReportableError {
   constructor(options: { thrownFrom: string; guildId: string }) {
-    super(`No guild settings found for guild ID ${options.guildId}`, {
+    super("No guild settings found", {
       thrownFrom: options.thrownFrom,
       logAsError: true,
+      details: { guildId: options.guildId },
     });
   }
 
@@ -238,7 +250,7 @@ export class BusyError extends DiscordReportableError {
 
 export class TooManyKnocksError extends DiscordReportableError {
   constructor(
-    private readonly details: {
+    private readonly allowance: {
       thrownFrom: string;
       guildId: string;
       userId: string;
@@ -247,10 +259,11 @@ export class TooManyKnocksError extends DiscordReportableError {
       lastResetTime: Date;
     },
   ) {
-    super(
-      `Too many knocks for user ${details.userId} in guild ${details.guildId}`,
-      { thrownFrom: details.thrownFrom, logAsError: false },
-    );
+    super("Too many knocks", {
+      thrownFrom: allowance.thrownFrom,
+      logAsError: false,
+      details: { guildId: allowance.guildId, userId: allowance.userId },
+    });
   }
 
   responseBody(
@@ -268,15 +281,15 @@ export class TooManyKnocksError extends DiscordReportableError {
           fields: [
             {
               name: "Knocks Per Day",
-              value: this.details.knocksPerDay.toString(),
+              value: this.allowance.knocksPerDay.toString(),
             },
             {
               name: "Reset Time",
-              value: formatResetHour(this.details.resetTime, ui.now()),
+              value: formatResetHour(this.allowance.resetTime, ui.now()),
             },
             {
               name: "Last Reset Time",
-              value: formatLastReset(this.details.lastResetTime),
+              value: formatLastReset(this.allowance.lastResetTime),
             },
           ],
         },
@@ -301,11 +314,13 @@ export class ValidationError extends DiscordReportableError {
     sourceError?: Error;
     /** False for what a player typed; true (the default) for the bot's faults. */
     logAsError?: boolean;
+    details?: ErrorDetails;
   }) {
     super("Validation failed", {
       thrownFrom: options.thrownFrom,
       sourceError: options.sourceError,
       logAsError: options.logAsError ?? true,
+      details: options.details,
     });
     this.displayMessage = options.message;
     this.validationErrors = options.validationErrors;

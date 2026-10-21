@@ -28,10 +28,10 @@ export class GiftyService {
     tx: Prisma.TransactionClient = this.db,
   ): Promise<HalloweenGifty> {
     if (gifty.knockEventId !== null) {
-      const message = `Attempted to use gifty with id ${gifty.id} on a knock but it was already fulfilled `;
       throw new ValidationError({
-        message,
+        message: "This gifty was already used on a knock",
         thrownFrom: "GiftyService.fulfill",
+        details: { giftyId: gifty.id },
         validationErrors: [
           {
             field: "gifty",

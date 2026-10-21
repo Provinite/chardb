@@ -36,7 +36,7 @@ export class TestWinCommand implements HalloweenCommandHandler {
     this.logger.log({
       event: HalloweenLogEvent.WinChannelTested,
       message: settings.winChannel
-        ? `Posting a test message to win channel ${settings.winChannel}`
+        ? "Posting a test message to the win channel"
         : "Win channel test: no win channel set",
       interactionId: chat.id,
       guildId: chat.guild_id,
