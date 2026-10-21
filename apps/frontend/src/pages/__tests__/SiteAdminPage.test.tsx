@@ -2,12 +2,26 @@
  * The site admin index links to the site-wide image queue with its pending
  * count, so an avatar uploaded at the apex has somewhere to be approved (#404).
  */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { MockedProvider, MockedResponse } from "@apollo/client/testing";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
+
+// The card and its count are for site admins only (#405).
+vi.mock("../../contexts/AuthContext", () => ({
+  useAuth: () => ({
+    user: {
+      id: "u1",
+      isAdmin: true,
+      canCreateInviteCode: false,
+      canListInviteCodes: false,
+      canCreateCommunity: false,
+    },
+    loading: false,
+  }),
+}));
 
 import { GlobalPendingImageCountDocument } from "../../generated/graphql";
 import { SiteAdminPage } from "../SiteAdminPage";

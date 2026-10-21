@@ -160,9 +160,9 @@ test.describe("site-wide image queue", () => {
   });
 
   /**
-   * The route only checks for a session (#405), so what keeps the queue to
-   * site admins is the server. Someone else's pending upload must not reach a
-   * member who types the address in.
+   * Someone else's pending upload must not reach a member who types the
+   * address in. The route shows them not found (#405), but the server is what
+   * actually keeps the queue to site admins.
    */
   test("a member who opens the site-wide queue is shown nothing", async ({
     page,
@@ -190,10 +190,10 @@ test.describe("site-wide image queue", () => {
       await other.close();
     }
 
+    // Not found since #405, rather than the queue page with a load error; the
+    // server refusing the query is still what keeps the picture back.
     await page.goto(apexUrl("/admin/moderation/images"));
-    await expect(
-      page.getByText("Failed to load moderation queue", { exact: false }),
-    ).toBeVisible();
+    await expect(page.getByText("Page Not Found")).toBeVisible();
     await expect(page.locator(`img[src*="${row.image_id}"]`)).toHaveCount(0);
   });
 });

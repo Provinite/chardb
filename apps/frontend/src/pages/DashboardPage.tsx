@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { canUseSiteAdmin } from "../lib/siteAdminAccess";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -249,7 +250,7 @@ export const DashboardPage: React.FC = () => {
           </Button>
         </DashboardCard>
 
-        {user?.canCreateInviteCode && (
+        {user && canUseSiteAdmin(user) && (
           <DashboardCard>
             <CardTitle>Site Administration</CardTitle>
             <CardDescription>

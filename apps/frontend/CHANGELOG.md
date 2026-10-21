@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Site administration pages show not found to anyone their resolvers would refuse**, instead of rendering for every signed-in user; the `/admin` index and dashboard link show only pages the viewer can open (#405).
 - **The Patreon callback page states its result instead of spinning**, and its return-to-settings timer no longer fires after you navigate away (#236).
 - **An unrecognised linking provider shows a plain tile** rather than crashing the profile pages, for when the backend ships a provider before the frontend (#236).
 

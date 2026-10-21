@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Site admin access specs** (`tests/navigation/site-admin-access.e2e.ts`): a member gets not found on every `/admin` page, a community creator sees only community management, and a site admin opens all of them (#405).
 - **Site-wide image queue specs** (`tests/moderation/global-image-queue.e2e.ts`): an avatar uploaded at the apex is approved by a site admin from Site Administration and then shown to its owner, and a member opening the queue sees nothing (#404).
 - **User avatar specs** (`tests/settings/user-avatar.e2e.ts`): uploading from a community host records the chosen crop and that community as the reviewer, an unapproved avatar is withheld from visitors until it is approved, and removing one clears the column (#345).
 

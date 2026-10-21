@@ -37,6 +37,13 @@ import { SiteAdminPage } from "../pages/SiteAdminPage";
 import { SiteInviteCodesPage } from "../pages/SiteInviteCodesPage";
 import { CommunityManagementPage } from "../pages/CommunityManagementPage";
 import { ImageModerationPage } from "../pages/ImageModerationPage";
+import { SiteAdminRoute } from "../components/SiteAdminRoute";
+import {
+  canManageCommunities,
+  canUseSiteAdmin,
+  canUseSiteInviteCodes,
+  isSiteAdmin,
+} from "../lib/siteAdminAccess";
 import { NotificationsPage } from "../pages/NotificationsPage";
 import { TradesPage } from "../pages/TradesPage";
 import { JoinCommunityPage } from "../pages/JoinCommunityPage";
@@ -287,41 +294,41 @@ export const ApexRoutes: React.FC = () => (
     <Route
       path="/admin"
       element={
-        <ProtectedRoute>
+        <SiteAdminRoute allow={canUseSiteAdmin}>
           <SiteAdminPage />
-        </ProtectedRoute>
+        </SiteAdminRoute>
       }
     />
     <Route
       path="/admin/site-invite-codes"
       element={
-        <ProtectedRoute>
+        <SiteAdminRoute allow={canUseSiteInviteCodes}>
           <SiteInviteCodesPage />
-        </ProtectedRoute>
+        </SiteAdminRoute>
       }
     />
     <Route
       path="/admin/deviantart-backfill"
       element={
-        <ProtectedRoute>
+        <SiteAdminRoute allow={isSiteAdmin}>
           <DeviantArtBackfillPage />
-        </ProtectedRoute>
+        </SiteAdminRoute>
       }
     />
     <Route
       path="/admin/communities"
       element={
-        <ProtectedRoute>
+        <SiteAdminRoute allow={canManageCommunities}>
           <CommunityManagementPage />
-        </ProtectedRoute>
+        </SiteAdminRoute>
       }
     />
     <Route
       path="/admin/moderation/images"
       element={
-        <ProtectedRoute>
+        <SiteAdminRoute allow={isSiteAdmin}>
           <ImageModerationPage siteWide />
-        </ProtectedRoute>
+        </SiteAdminRoute>
       }
     />
 
