@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { REST } from "@discordjs/rest";
+import { DiscordAPIError, REST } from "@discordjs/rest";
 import {
   Routes,
   type APIMessage,
@@ -20,6 +20,27 @@ export class HalloweenDiscordClient {
 
   constructor(config: HalloweenConfig) {
     this.rest = new REST({ version: "10" }).setToken(config.botToken);
+  }
+
+  /**
+   * The server a channel is in, or null for one that is gone, that the bot
+   * cannot see, or that is in no server at all.
+   */
+  async channelGuildId(channelId: string): Promise<string | null> {
+    try {
+      const channel = (await this.rest.get(Routes.channel(channelId))) as {
+        guild_id?: string;
+      };
+      return channel.guild_id ?? null;
+    } catch (error) {
+      if (
+        error instanceof DiscordAPIError &&
+        (error.status === 404 || error.status === 403)
+      ) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async createChannelMessage(

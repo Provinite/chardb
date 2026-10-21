@@ -37,6 +37,7 @@ describe("Halloween management (e2e)", () => {
   let communityId: string;
   let managerToken: string;
   let granterToken: string;
+  const discord = mockDiscord();
 
   beforeAll(async () => {
     testApp = new TestApp();
@@ -51,9 +52,7 @@ describe("Halloween management (e2e)", () => {
         ],
       },
       (builder) =>
-        builder
-          .overrideProvider(HalloweenDiscordClient)
-          .useValue(mockDiscord()),
+        builder.overrideProvider(HalloweenDiscordClient).useValue(discord),
     );
     db = testApp.getDb();
   });
@@ -128,6 +127,44 @@ describe("Halloween management (e2e)", () => {
       expect(res.body.data.updateHalloweenSettings).toMatchObject({
         knocksPerDay: 5,
         winChannel: null,
+      });
+    });
+
+    // The bot posts every win there; a channel in someone else's server would
+    // have this community's wins announced to them.
+    describe("the win channel", () => {
+      beforeEach(() => discord.channelGuildId.mockClear());
+
+      it("must be in this community's Discord server", async () => {
+        discord.channelGuildId.mockResolvedValueOnce("100000000000000999");
+        const res = await update(settingsInput);
+        expect(res.body.errors?.[0].message).toBe(
+          "The win channel must be a channel in this community's Discord server that the bot can see",
+        );
+        expect(discord.channelGuildId).toHaveBeenCalledWith(
+          settingsInput.winChannel,
+        );
+        expect(await db.halloweenGuildSettings.count()).toBe(0);
+      });
+
+      it("must be one the bot can see", async () => {
+        discord.channelGuildId.mockResolvedValueOnce(null);
+        const res = await update(settingsInput);
+        expect(res.body.errors?.[0].message).toBe(
+          "The win channel must be a channel in this community's Discord server that the bot can see",
+        );
+      });
+
+      it("is checked only when it changes", async () => {
+        await update(settingsInput);
+        await update({ ...settingsInput, knocksPerDay: 5 });
+        expect(discord.channelGuildId).toHaveBeenCalledTimes(1);
+      });
+
+      it("is not needed", async () => {
+        const res = await update({ ...settingsInput, winChannel: null });
+        expect(res.body.errors).toBeUndefined();
+        expect(discord.channelGuildId).not.toHaveBeenCalled();
       });
     });
 

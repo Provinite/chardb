@@ -26,6 +26,7 @@ import {
 import { PrizeAwardService } from "../services/prize-award.service";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { HalloweenDashboardService } from "./halloween-dashboard.service";
+import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import type {
   CreateHalloweenPrizeInput,
   HalloweenSettingsInput,
@@ -73,6 +74,7 @@ export class HalloweenAdminService {
     private readonly dashboard: HalloweenDashboardService,
     private readonly prizeAward: PrizeAwardService,
     private readonly guildSettings: GuildSettingsService,
+    private readonly discord: HalloweenDiscordClient,
   ) {}
 
   /** Creates the guild's settings the first time, replaces them after. */
@@ -101,6 +103,17 @@ export class HalloweenAdminService {
     const before = await this.db.halloweenGuildSettings.findUnique({
       where: { guildId },
     });
+    // Every win is posted there, so it must be this server's: a channel id
+    // from another server the bot is in would announce this community's wins
+    // to strangers. Asked of Discord only when it changes.
+    if (next.winChannel && next.winChannel !== before?.winChannel) {
+      const channelGuild = await this.discord.channelGuildId(next.winChannel);
+      if (channelGuild !== guildId) {
+        throw new BadRequestException(
+          "The win channel must be a channel in this community's Discord server that the bot can see",
+        );
+      }
+    }
     const saved = await this.db.halloweenGuildSettings.upsert({
       where: { guildId },
       create: next,

@@ -3,6 +3,7 @@ import type { HalloweenUi } from "../discord/ui";
 import { ConfigService } from "@nestjs/config";
 import { HalloweenLinks } from "../halloween-links";
 import type { DatabaseService } from "../../database/database.service";
+import { GUILD_ID } from "./fixtures";
 
 export const AUTHOR = {
   name: "Daphne",
@@ -38,10 +39,15 @@ export function linksFor(slug: string): HalloweenLinks {
   );
 }
 
-export type DiscordMock = { createChannelMessage: jest.Mock };
+export type DiscordMock = {
+  createChannelMessage: jest.Mock;
+  channelGuildId: jest.Mock;
+};
 
+/** The bot's Discord calls; every channel is in the fixtures' guild. */
 export function mockDiscord(): DiscordMock & HalloweenDiscordClient {
   return {
     createChannelMessage: jest.fn().mockResolvedValue({ id: "message" }),
+    channelGuildId: jest.fn().mockResolvedValue(GUILD_ID),
   } as unknown as DiscordMock & HalloweenDiscordClient;
 }
