@@ -37,9 +37,11 @@ export class AdminKnockCommand implements HalloweenCommandHandler {
         message: "You must provide a target user for the adminknock command",
         sourceError: new Error(
           option
-            ? `Got a non-user option in the first slot for command ${this.name}`
-            : `No interaction options provided for command ${this.name}`,
+            ? "Got a non-user option in the first slot for /adminknock"
+            : "No options provided for /adminknock",
         ),
+        // The admin's mistake, not the bot's.
+        logAsError: false,
       });
     }
 

@@ -383,6 +383,8 @@ describe("Halloween services (e2e)", () => {
         .save({ guildId: GUILD, userId: ALICE, deviantArtName: "has space" })
         .catch((e: unknown) => e)) as ValidationError;
       expect(error).toBeInstanceOf(ValidationError);
+      // The player's typo: refused, not a fault to page staff about.
+      expect(error.logAsError).toBe(false);
       expect(error.validationErrors).toEqual([
         {
           field: "deviantArtName",

@@ -53,9 +53,11 @@ export function requireAdministrator(
     throw new HalloweenDiscordError({
       thrownFrom,
       message,
-      sourceError: new Error(
-        `Invalid permissions when attempting to process command ${interaction.data.name}`,
-      ),
+      // The command's name is on every line logged about it.
+      sourceError: new Error("Not an administrator"),
+      // A player trying an admin command: refused, not a fault to page
+      // staff about.
+      logAsError: false,
     });
   }
 }

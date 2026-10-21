@@ -51,6 +51,8 @@ export class DeviantArtUserService {
             field: "deviantArtName",
           },
         ],
+        // The player's typo, not the bot's fault.
+        logAsError: false,
       });
     }
 

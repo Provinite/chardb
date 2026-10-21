@@ -299,11 +299,13 @@ export class ValidationError extends DiscordReportableError {
     message: string;
     validationErrors: ValidationFieldError[];
     sourceError?: Error;
+    /** False for what a player typed; true (the default) for the bot's faults. */
+    logAsError?: boolean;
   }) {
     super("Validation failed", {
       thrownFrom: options.thrownFrom,
       sourceError: options.sourceError,
-      logAsError: true,
+      logAsError: options.logAsError ?? true,
     });
     this.displayMessage = options.message;
     this.validationErrors = options.validationErrors;

@@ -76,6 +76,20 @@ describe("/deviantart", () => {
     });
   });
 
+  it("refuses an empty name without paging staff", async () => {
+    const error = (await run([
+      {
+        type: ApplicationCommandOptionType.String,
+        name: "da_username",
+        value: "",
+      },
+    ]).catch((e: unknown) => e)) as HalloweenDiscordError;
+    expect(error.message).toBe(
+      "Invalid DeviantArt name provided. Must not be empty.",
+    );
+    expect(error.logAsError).toBe(false);
+  });
+
   it("logs the saved name", async () => {
     const log = jest.spyOn(Logger.prototype, "log").mockImplementation();
     await command.handle(
@@ -177,10 +191,16 @@ describe("/testwin", () => {
     ));
   };
 
+  // A player trying an admin command is refused, not a fault to page staff
+  // about.
   it("is for administrators only", async () => {
-    await expect(run("0")).rejects.toThrow(
+    const error = (await run("0").catch(
+      (e: unknown) => e,
+    )) as HalloweenDiscordError;
+    expect(error.message).toBe(
       "You are missing the required permissions to use this command",
     );
+    expect(error.logAsError).toBe(false);
   });
 
   it("posts a test message to the win channel", async () => {

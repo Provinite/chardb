@@ -28,6 +28,7 @@ import {
   BusyError,
   EventEndedError,
   EventNotStartedError,
+  HalloweenDiscordError,
   OutOfPrizesError,
   TooManyKnocksError,
 } from "../errors";
@@ -776,15 +777,30 @@ describe("/adminknock", () => {
 
   beforeEach(() => knock.knock.mockClear());
 
+  // A player trying an admin command is refused, not a fault to page staff
+  // about.
   it("is for administrators only", async () => {
-    await expect(
-      command.handle(
+    const error = (await command
+      .handle(
         buildInteraction({
           name: "adminknock",
           options: target(OTHER_USER_ID),
         }),
-      ),
-    ).rejects.toThrow("You lack the required permissions for that command.");
+      )
+      .catch((e: unknown) => e)) as HalloweenDiscordError;
+    expect(error.message).toBe(
+      "You lack the required permissions for that command.",
+    );
+    expect(error.logAsError).toBe(false);
+  });
+
+  it("refuses a missing target without paging staff", async () => {
+    const error = (await command
+      .handle(
+        buildInteraction({ name: "adminknock", permissions: ADMINISTRATOR }),
+      )
+      .catch((e: unknown) => e)) as HalloweenDiscordError;
+    expect(error.logAsError).toBe(false);
   });
 
   it("requires a target user", async () => {

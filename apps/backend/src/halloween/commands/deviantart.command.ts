@@ -56,9 +56,9 @@ export class DeviantArtCommand implements HalloweenCommandHandler {
       throw new HalloweenDiscordError({
         thrownFrom: "DeviantArtCommand",
         message: "Invalid DeviantArt name provided. Must not be empty.",
-        sourceError: new Error(
-          `Got an empty value for the option in the first slot for command ${this.name}`,
-        ),
+        sourceError: new Error("Got an empty DeviantArt name"),
+        // The player's mistake, not the bot's.
+        logAsError: false,
       });
     }
 
