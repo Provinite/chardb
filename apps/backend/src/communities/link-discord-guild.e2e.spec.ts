@@ -25,6 +25,7 @@ describe("linkDiscordGuild (e2e)", () => {
   let token: string;
   let communityId: string;
   let otherCommunityId: string;
+  let getGuildInfo: jest.Mock;
 
   beforeAll(async () => {
     testApp = new TestApp();
@@ -33,7 +34,7 @@ describe("linkDiscordGuild (e2e)", () => {
       (builder) =>
         builder.overrideProvider(DiscordService).useValue({
           verifyGuildAccess: () => Promise.resolve(true),
-          getGuildInfo: () => Promise.resolve({ name: "Cloverse" }),
+          getGuildInfo: () => getGuildInfo(),
         }),
     );
     db = testApp.getDb();
@@ -44,6 +45,7 @@ describe("linkDiscordGuild (e2e)", () => {
   });
 
   beforeEach(async () => {
+    getGuildInfo = jest.fn().mockResolvedValue({ name: "Cloverse" });
     await testApp.clearDatabase();
     communityId = (await testApp.createTestCommunity("Mine")).id;
     otherCommunityId = (await testApp.createTestCommunity("Theirs")).id;
@@ -91,6 +93,22 @@ describe("linkDiscordGuild (e2e)", () => {
       where: { id: communityId },
     });
     expect(mine.discordGuildId).toBeNull();
+  });
+
+  // Another community links the server between the check and the save: the
+  // database refuses it, and the admin is told why rather than given a 500.
+  it("says why when another community links the server at the same moment", async () => {
+    getGuildInfo.mockImplementation(async () => {
+      await db.community.update({
+        where: { id: otherCommunityId },
+        data: { discordGuildId: GUILD },
+      });
+      return { name: "Cloverse" };
+    });
+    const res = await link();
+    expect(res.body.errors?.[0].message).toBe(
+      "That Discord server is already linked to another community",
+    );
   });
 
   it("keeps one server to one community in the database itself", async () => {

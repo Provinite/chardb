@@ -40,6 +40,7 @@ import {
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { CommunityPermission } from "../auth/CommunityPermission";
+import { Prisma } from "@chardb/database";
 
 @Resolver(() => Community)
 export class CommunitiesResolver {
@@ -222,11 +223,13 @@ export class CommunitiesResolver {
   ): Promise<Community> {
     // One community per server; the database refuses a second one too, but
     // without saying why.
-    const claimed = await this.communitiesService.findByDiscordGuildId(guildId);
-    if (claimed && claimed.id !== communityId) {
-      throw new ConflictException(
+    const taken = () =>
+      new ConflictException(
         "That Discord server is already linked to another community",
       );
+    const claimed = await this.communitiesService.findByDiscordGuildId(guildId);
+    if (claimed && claimed.id !== communityId) {
+      throw taken();
     }
 
     // Verify bot has access to the guild
@@ -245,13 +248,23 @@ export class CommunitiesResolver {
       );
     }
 
-    // Update community with guild info
-    const prismaResult = await this.communitiesService.update(communityId, {
-      discordGuildId: guildId,
-      discordGuildName: guildInfo.name,
-    });
-
-    return mapPrismaCommunityToGraphQL(prismaResult);
+    // Update community with guild info. Another community can link the server
+    // after the check above; the unique index then refuses this.
+    try {
+      const prismaResult = await this.communitiesService.update(communityId, {
+        discordGuildId: guildId,
+        discordGuildName: guildInfo.name,
+      });
+      return mapPrismaCommunityToGraphQL(prismaResult);
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw taken();
+      }
+      throw error;
+    }
   }
 
   @ResolveCommunityFrom({
