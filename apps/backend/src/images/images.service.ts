@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
-import { Prisma, Visibility, ModerationStatus } from "@chardb/database";
+import { Visibility, ModerationStatus } from "@chardb/database";
 import { notDeleted } from "../common/utils/prisma-filters";
 import * as sharp from "sharp";
 import { v4 as uuid } from "uuid";
@@ -71,15 +71,6 @@ export interface UpdateImageInput {
    * the thumbnail from the original.
    */
   thumbnailCrop?: ThumbnailCrop | null;
-}
-
-export interface ImageFilters {
-  limit?: number;
-  offset?: number;
-  uploaderId?: string;
-  isNsfw?: boolean;
-  search?: string;
-  artistId?: string;
 }
 
 @Injectable()
@@ -275,6 +266,12 @@ export class ImagesService {
 
     const { image, displacedImageId } = await this.db.$transaction(
       async (tx) => {
+        // Held to the end of the transaction, so two uploads at once take
+        // turns: the second reads the first's avatar as the one it displaces
+        // and deletes it, rather than both displacing the same old one and
+        // leaving the first new one referenced by nothing.
+        await tx.$queryRaw`SELECT 1 FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
+
         const current = await tx.user.findUnique({
           where: { id: userId },
           select: { avatarImageId: true },
@@ -371,70 +368,6 @@ export class ImagesService {
     };
   }
 
-  // No viewer argument: image visibility is decided by moderation status
-  // alone (see getModerationVisibilityFilter), never by who is asking. The
-  // parameter this used to take was read by nothing and had been passed at
-  // every call site for long enough to look like it meant something.
-  async findAll(filters: ImageFilters = {}) {
-    const {
-      limit = 20,
-      offset = 0,
-      uploaderId,
-      isNsfw,
-      search,
-      artistId,
-    } = filters;
-
-    // Get moderation visibility filter
-    const moderationFilter = this.getModerationVisibilityFilter();
-
-    const where: Prisma.ImageWhereInput = {
-      AND: [
-        // Moderation status filter
-        moderationFilter,
-        // Other filters
-        uploaderId ? { uploaderId } : {},
-        artistId ? { artistId } : {},
-        isNsfw !== undefined ? { isNsfw } : {},
-
-        // Search filter
-        search
-          ? {
-              OR: [
-                { altText: { contains: search, mode: "insensitive" } },
-                { originalFilename: { contains: search, mode: "insensitive" } },
-                { artistName: { contains: search, mode: "insensitive" } },
-              ],
-            }
-          : {},
-      ],
-    };
-
-    const [images, total] = await Promise.all([
-      this.db.image.findMany({
-        where,
-        include: {
-          uploader: true,
-          tags_rel: {
-            include: {
-              tag: true,
-            },
-          },
-        },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        skip: offset,
-      }),
-      this.db.image.count({ where }),
-    ]);
-
-    return {
-      images,
-      total,
-      hasMore: offset + limit < total,
-    };
-  }
-
   async findOne(id: string) {
     const image = await this.db.image.findUnique({
       where: { id },
@@ -458,18 +391,6 @@ export class ImagesService {
     }
 
     return image;
-  }
-
-  /**
-   * Build Prisma filter for moderation visibility in general image lists.
-   * Lists should ONLY show APPROVED images - pending/rejected images are
-   * viewed through dedicated interfaces (moderation queue, my pending uploads).
-   */
-  private getModerationVisibilityFilter(): Prisma.ImageWhereInput {
-    // All image lists only show approved images
-    // Users see their pending uploads via dedicated "my pending uploads" query
-    // Moderators see pending images via the moderation queue
-    return { moderationStatus: ModerationStatus.APPROVED };
   }
 
   /**

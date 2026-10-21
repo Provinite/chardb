@@ -574,12 +574,13 @@ model Image {
   /// A profile picture, uploaded through `POST /images/avatar` (#410).
   ///
   /// Avatars are not moderated and have no Media row: they are created
-  /// APPROVED, belong to no gallery, character or community, and are never
-  /// listed. This flag is what tells one apart from every other image, so an
-  /// avatar whose user moved on can be found by a sweep rather than by
-  /// counting the references every other kind of image might have. Never set
-  /// on an image some Media row shows, including avatars chosen from a post
-  /// before #410.
+  /// APPROVED and belong to no gallery, character or community. Every listing
+  /// in the app reaches images through Media, so an avatar is never listed --
+  /// keep it that way; an image-level listing would need to filter on this.
+  /// The flag is also how an avatar whose user moved on can be found (#412)
+  /// rather than by counting the references every other kind of image might
+  /// have. Never set on an image some Media row shows, including avatars
+  /// chosen from a post before #410.
   isAvatarUpload Boolean @default(false) @map("is_avatar_upload")
 
   /// Deferral. An image nobody can rule on yet -- the art is mid-reupload, the

@@ -156,6 +156,24 @@ describe("POST /images/avatar (e2e)", () => {
     ).resolves.not.toBeNull();
   });
 
+  /**
+   * A double-submit, or two tabs. Each upload has to see the other's avatar
+   * as the one it displaces; if both read the same old avatar, the first new
+   * one is left referenced by nothing and is never deleted.
+   */
+  it("leaves one avatar image after simultaneous uploads", async () => {
+    const responses = await Promise.all([upload(), upload(), upload()]);
+    expect(responses.map((response) => response.status)).toEqual([
+      201, 201, 201,
+    ]);
+
+    const avatars = await testApp.getDb().image.findMany({
+      where: { uploaderId: userId, isAvatarUpload: true },
+      select: { id: true },
+    });
+    expect(avatars).toEqual([{ id: await avatarOf(userId) }]);
+  });
+
   it("refuses an unauthenticated upload", async () => {
     const response = await upload(undefined, null);
 
