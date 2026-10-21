@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`globalMediaModerationQueue`** (site admins only): every pending media in `mediaModerationQueue`'s shape; `globalPendingImageCount` now counts only images the queue can list (#404).
 - **The Halloween trick-or-treat Discord bot now runs in the backend**, at `POST /discord/halloween/interactions`, with every command and reply carried over from the standalone bot; a chardb item or character prize is now checked and granted inside the knock, so a win always commits with its prize, and each winner draws from exactly the stock the winners before them left (#399).
 - **Halloween commands answer in the interaction's own response, with no deferred reply**; a win commits before Discord shows it, a reply that never arrives is logged as `halloween.interaction.reply_not_sent`, and a knock that can't get its locks in time answers "busy" with nothing saved (#399).
 - **Every Halloween bot interaction is logged as structured `halloween.*` events carrying the interaction id** (the "Reference ID" players see), with a trace span per command (#399).

@@ -3086,6 +3086,8 @@ export type Query = {
   getFollowing: FollowListResult;
   /** Get all pending images across all communities (admin only) */
   globalImageModerationQueue: ImageModerationQueueConnection;
+  /** Get pending media across the whole site for moderation (site admins only; use pendingModerationImage for actual image URLs) */
+  globalMediaModerationQueue: MediaConnection;
   /** Get count of all pending images across all communities (admin only) */
   globalPendingImageCount: Scalars['Int']['output'];
   /** The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems. */
@@ -3486,6 +3488,12 @@ export type QueryGetFollowingArgs = {
 
 export type QueryGlobalImageModerationQueueArgs = {
   filters?: InputMaybe<ImageModerationQueueFiltersInput>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryGlobalMediaModerationQueueArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -5795,6 +5803,8 @@ export type ImageModerationQueueQueryVariables = Exact<{
 
 export type ImageModerationQueueQuery = { __typename?: 'Query', imageModerationQueue: { __typename?: 'ImageModerationQueueConnection', total: number, hasMore: boolean, items: Array<{ __typename?: 'ImageModerationQueueItem', characterId: string | null, characterName: string | null, communityId: string | null, communityName: string | null, mediaTitle: string | null, image: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } }> } };
 
+export type ModerationQueueMediaFieldsFragment = { __typename?: 'Media', id: string, title: string, characterId: string | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, deferredAt: string | null, deferralCount: number, deferralNote: string | null, deferredBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null };
+
 export type MediaModerationQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -5802,7 +5812,15 @@ export type MediaModerationQueueQueryVariables = Exact<{
 }>;
 
 
-export type MediaModerationQueueQuery = { __typename?: 'Query', mediaModerationQueue: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, characterId: string | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, deferredAt: string | null, deferralCount: number, deferralNote: string | null, deferredBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null, awardRecipients: Array<{ __typename?: 'MediaAwardRecipient', userId: string, relations: Array<MediaAwardRelation>, isMember: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> | null }> } };
+export type MediaModerationQueueQuery = { __typename?: 'Query', mediaModerationQueue: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, characterId: string | null, awardRecipients: Array<{ __typename?: 'MediaAwardRecipient', userId: string, relations: Array<MediaAwardRelation>, isMember: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null } }> | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, deferredAt: string | null, deferralCount: number, deferralNote: string | null, deferredBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null }> } };
+
+export type GlobalMediaModerationQueueQueryVariables = Exact<{
+  first?: InputMaybe<Scalars['Int']['input']>;
+  offset?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GlobalMediaModerationQueueQuery = { __typename?: 'Query', globalMediaModerationQueue: { __typename?: 'MediaConnection', total: number, hasMore: boolean, media: Array<{ __typename?: 'Media', id: string, title: string, characterId: string | null, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, name: string } } | null } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, image: { __typename?: 'Image', id: string, moderationStatus: ModerationStatus } | null, pendingModerationImage: { __typename?: 'Image', id: string, originalFilename: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, width: number, height: number, isNsfw: boolean, moderationStatus: ModerationStatus, createdAt: string, deferredAt: string | null, deferralCount: number, deferralNote: string | null, deferredBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, uploader: { __typename?: 'User', id: string, username: string, displayName: string | null } } | null }> } };
 
 export type GlobalImageModerationQueueQueryVariables = Exact<{
   filters?: InputMaybe<ImageModerationQueueFiltersInput>;
@@ -7076,6 +7094,59 @@ export const HalloweenPickerImageFragmentDoc = gql`
   mediumUrl
   originalUrl
   moderationStatus
+}
+    `;
+export const ModerationQueueMediaFieldsFragmentDoc = gql`
+    fragment ModerationQueueMediaFields on Media {
+  id
+  title
+  characterId
+  character {
+    id
+    name
+    species {
+      id
+      name
+      community {
+        id
+        name
+      }
+    }
+  }
+  owner {
+    id
+    username
+    displayName
+  }
+  image {
+    id
+    moderationStatus
+  }
+  pendingModerationImage {
+    id
+    originalFilename
+    originalUrl
+    thumbnailUrl
+    altText
+    width
+    height
+    isNsfw
+    moderationStatus
+    createdAt
+    deferredAt
+    deferralCount
+    deferralNote
+    deferredBy {
+      id
+      username
+      displayName
+    }
+    uploader {
+      id
+      username
+      displayName
+    }
+  }
 }
     `;
 export const ItemTypeFieldsFragmentDoc = gql`
@@ -12506,55 +12577,7 @@ export const MediaModerationQueueDocument = gql`
     query MediaModerationQueue($communityId: ID!, $first: Int, $offset: Int) {
   mediaModerationQueue(communityId: $communityId, first: $first, offset: $offset) {
     media {
-      id
-      title
-      characterId
-      character {
-        id
-        name
-        species {
-          id
-          name
-          community {
-            id
-            name
-          }
-        }
-      }
-      owner {
-        id
-        username
-        displayName
-      }
-      image {
-        id
-        moderationStatus
-      }
-      pendingModerationImage {
-        id
-        originalFilename
-        originalUrl
-        thumbnailUrl
-        altText
-        width
-        height
-        isNsfw
-        moderationStatus
-        createdAt
-        deferredAt
-        deferralCount
-        deferralNote
-        deferredBy {
-          id
-          username
-          displayName
-        }
-        uploader {
-          id
-          username
-          displayName
-        }
-      }
+      ...ModerationQueueMediaFields
       awardRecipients {
         userId
         relations
@@ -12570,7 +12593,7 @@ export const MediaModerationQueueDocument = gql`
     hasMore
   }
 }
-    `;
+    ${ModerationQueueMediaFieldsFragmentDoc}`;
 
 /**
  * __useMediaModerationQueueQuery__
@@ -12606,6 +12629,51 @@ export type MediaModerationQueueQueryHookResult = ReturnType<typeof useMediaMode
 export type MediaModerationQueueLazyQueryHookResult = ReturnType<typeof useMediaModerationQueueLazyQuery>;
 export type MediaModerationQueueSuspenseQueryHookResult = ReturnType<typeof useMediaModerationQueueSuspenseQuery>;
 export type MediaModerationQueueQueryResult = Apollo.QueryResult<MediaModerationQueueQuery, MediaModerationQueueQueryVariables>;
+export const GlobalMediaModerationQueueDocument = gql`
+    query GlobalMediaModerationQueue($first: Int, $offset: Int) {
+  globalMediaModerationQueue(first: $first, offset: $offset) {
+    media {
+      ...ModerationQueueMediaFields
+    }
+    total
+    hasMore
+  }
+}
+    ${ModerationQueueMediaFieldsFragmentDoc}`;
+
+/**
+ * __useGlobalMediaModerationQueueQuery__
+ *
+ * To run a query within a React component, call `useGlobalMediaModerationQueueQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGlobalMediaModerationQueueQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGlobalMediaModerationQueueQuery({
+ *   variables: {
+ *      first: // value for 'first'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGlobalMediaModerationQueueQuery(baseOptions?: Apollo.QueryHookOptions<GlobalMediaModerationQueueQuery, GlobalMediaModerationQueueQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GlobalMediaModerationQueueQuery, GlobalMediaModerationQueueQueryVariables>(GlobalMediaModerationQueueDocument, options);
+      }
+export function useGlobalMediaModerationQueueLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GlobalMediaModerationQueueQuery, GlobalMediaModerationQueueQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GlobalMediaModerationQueueQuery, GlobalMediaModerationQueueQueryVariables>(GlobalMediaModerationQueueDocument, options);
+        }
+export function useGlobalMediaModerationQueueSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GlobalMediaModerationQueueQuery, GlobalMediaModerationQueueQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GlobalMediaModerationQueueQuery, GlobalMediaModerationQueueQueryVariables>(GlobalMediaModerationQueueDocument, options);
+        }
+export type GlobalMediaModerationQueueQueryHookResult = ReturnType<typeof useGlobalMediaModerationQueueQuery>;
+export type GlobalMediaModerationQueueLazyQueryHookResult = ReturnType<typeof useGlobalMediaModerationQueueLazyQuery>;
+export type GlobalMediaModerationQueueSuspenseQueryHookResult = ReturnType<typeof useGlobalMediaModerationQueueSuspenseQuery>;
+export type GlobalMediaModerationQueueQueryResult = Apollo.QueryResult<GlobalMediaModerationQueueQuery, GlobalMediaModerationQueueQueryVariables>;
 export const GlobalImageModerationQueueDocument = gql`
     query GlobalImageModerationQueue($filters: ImageModerationQueueFiltersInput, $first: Int, $offset: Int) {
   globalImageModerationQueue(filters: $filters, first: $first, offset: $offset) {

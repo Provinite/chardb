@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Site-wide image queue specs** (`tests/moderation/global-image-queue.e2e.ts`): an avatar uploaded at the apex is approved by a site admin from Site Administration and then shown to its owner, and a member opening the queue sees nothing (#404).
 - **User avatar specs** (`tests/settings/user-avatar.e2e.ts`): uploading from a community host records the chosen crop and that community as the reviewer, an unapproved avatar is withheld from visitors until it is approved, and removing one clears the column (#345).
 
 - **Email verification specs** (`tests/settings/email-verification.e2e.ts`) and the `email-verification` preset: signup ending at "check your email" rather than the dashboard, an unconfirmed sign-in refused and offered a resend, the link confirming the account so it can then sign in, and expired and spent links refused (#372).

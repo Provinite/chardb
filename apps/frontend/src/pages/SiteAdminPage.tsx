@@ -8,7 +8,9 @@ import {
   Database,
   Activity,
   RefreshCw,
+  Image,
 } from "lucide-react";
+import { useGlobalPendingImageCountQuery } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -89,6 +91,18 @@ const CardDescription = styled.p`
   margin: 0;
 `;
 
+const PendingBadge = styled.span`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing.lg};
+  right: ${({ theme }) => theme.spacing.lg};
+  padding: 0.25rem 0.75rem;
+  background: ${({ theme }) => theme.colors.warning}20;
+  color: ${({ theme }) => theme.colors.warning};
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 999px;
+`;
+
 const StatsCard = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   border-radius: 12px;
@@ -128,6 +142,11 @@ const StatValue = styled.div`
 export function SiteAdminPage() {
   usePageMeta({ title: "Site Admin" });
 
+  const { data: pendingData } = useGlobalPendingImageCountQuery({
+    fetchPolicy: "network-only",
+  });
+  const pendingImages = pendingData?.globalPendingImageCount;
+
   return (
     <Container>
       <Header>
@@ -136,6 +155,20 @@ export function SiteAdminPage() {
       </Header>
 
       <Grid>
+        <AdminCard to="/admin/moderation/images">
+          <CardIcon>
+            <Image size={24} />
+          </CardIcon>
+          <CardTitle>Image Moderation</CardTitle>
+          <CardDescription>
+            Every pending image on the site, including avatars and uploads that
+            belong to no community
+          </CardDescription>
+          {pendingImages !== undefined && (
+            <PendingBadge>{pendingImages} pending</PendingBadge>
+          )}
+        </AdminCard>
+
         <AdminCard to="/admin/site-invite-codes">
           <CardIcon>
             <Shield size={24} />
