@@ -261,10 +261,14 @@ turns the notification into a Discord message. The alarms:
 
 | Alarm | Goes off when | What to do |
 |---|---|---|
-| `chardb-prod-halloween-needs-staff` | A chardb prize wasn't delivered, a command's reply never reached Discord, or a win wasn't announced in the win channel | Grant the prize by hand, tell the player, or fix the win channel |
-| `chardb-prod-halloween-errors` | A Halloween command failed, or work after its reply did | A bug: read the error |
+| `chardb-prod-halloween-needs-staff` | A command's reply never reached Discord, or a win wasn't announced in the win channel | Tell the player, or post the win by hand |
+| `chardb-prod-halloween-errors` | A Halloween command failed, work after its reply did, or a win was shown without its prize's picture | A bug: read the error |
 
-Each posts again, in green, when it clears. For the log lines behind a
+Each posts again, in green, when it clears. What each one says in Discord, going
+off and clearing, is in `infra/modules/alerts-discord/lambda/alerts.json`, keyed
+by the alarm's name without `chardb-prod-`; an alarm not listed there posts its
+name, description and CloudWatch's reason. Every part of the message is cut to
+Discord's limits, which otherwise refuse the whole post. For the log lines behind a
 Halloween alarm, open **CloudWatch → Logs Insights → Queries →
 `chardb-prod/halloween-needs-attention`**; each line carries its
 `interactionId`.
