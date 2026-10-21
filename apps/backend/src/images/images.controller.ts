@@ -27,7 +27,6 @@ interface UploadImageBody {
   itemTypeId?: string;
   galleryId?: string;
   communityId?: string;
-  isAvatarUpload?: string;
   description?: string;
   altText?: string;
   isNsfw?: string;
@@ -42,6 +41,15 @@ interface UploadImageBody {
   thumbnailCropHeight?: string;
 }
 
+/** The four crop fields, which the avatar endpoint takes on their own. */
+type ThumbnailCropFields = Pick<
+  UploadImageBody,
+  | "thumbnailCropX"
+  | "thumbnailCropY"
+  | "thumbnailCropWidth"
+  | "thumbnailCropHeight"
+>;
+
 /** Only the part of the request this controller reads. */
 interface AuthenticatedRequest {
   user: { id: string };
@@ -54,7 +62,9 @@ interface AuthenticatedRequest {
  * the centre crop, because "the crop I chose was ignored" looks like the
  * feature being broken, not like a malformed request.
  */
-function parseThumbnailCrop(body: UploadImageBody): ThumbnailCrop | undefined {
+function parseThumbnailCrop(
+  body: ThumbnailCropFields,
+): ThumbnailCrop | undefined {
   const raw = [
     body.thumbnailCropX,
     body.thumbnailCropY,
@@ -111,9 +121,6 @@ export class ImagesController {
       // character to answer that. The frontend sends the community whose host
       // the form was open on; the service checks the uploader belongs to it.
       communityId: body.communityId,
-      // A profile picture rather than a post. Kept out of every listing; see
-      // `Media.isAvatarUpload`. Only the avatar control sends it.
-      isAvatarUpload: body.isAvatarUpload === "true",
       description: body.description,
       altText: body.altText,
       isNsfw: body.isNsfw === "true",
@@ -126,5 +133,27 @@ export class ImagesController {
     };
 
     return this.imagesService.upload(req.user.id, uploadInput);
+  }
+
+  /**
+   * Upload a profile picture and make it the caller's avatar (#410). Not
+   * moderated and not a post; see `ImagesService.uploadAvatar`.
+   */
+  @Post("avatar")
+  @UseInterceptors(FileInterceptor("file"))
+  @AllowAnyAuthenticated()
+  async uploadAvatar(
+    @UploadedFile() file: Express.Multer.File,
+    @Body() body: ThumbnailCropFields,
+    @Request() req: AuthenticatedRequest,
+  ) {
+    if (!file) {
+      throw new BadRequestException("No file provided");
+    }
+
+    return this.imagesService.uploadAvatar(req.user.id, {
+      file,
+      thumbnailCrop: parseThumbnailCrop(body),
+    });
   }
 }

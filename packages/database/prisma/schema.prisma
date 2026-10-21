@@ -571,6 +571,17 @@ model Image {
   /// `20260907220000_moderation_queue_indexes`.
   moderationStatus ModerationStatus @default(PENDING) @map("moderation_status")
 
+  /// A profile picture, uploaded through `POST /images/avatar` (#410).
+  ///
+  /// Avatars are not moderated and have no Media row: they are created
+  /// APPROVED, belong to no gallery, character or community, and are never
+  /// listed. This flag is what tells one apart from every other image, so an
+  /// avatar whose user moved on can be found by a sweep rather than by
+  /// counting the references every other kind of image might have. Never set
+  /// on an image some Media row shows, including avatars chosen from a post
+  /// before #410.
+  isAvatarUpload Boolean @default(false) @map("is_avatar_upload")
+
   /// Deferral. An image nobody can rule on yet -- the art is mid-reupload, the
   /// call needs a second opinion -- is sent to the back of the queue instead of
   /// sitting at the front of it. `deferredAt` is the sort key, not the arrival
@@ -750,25 +761,6 @@ model Media {
   characterId String?    @map("character_id")
   galleryId   String?    @map("gallery_id")
   visibility  Visibility @default(PUBLIC)
-
-  /// This row exists to carry an avatar through moderation, and for nothing
-  /// else.
-  ///
-  /// An avatar is uploaded through the same endpoint as any other picture and
-  /// so gets a Media row like any other picture -- which is what puts it in
-  /// front of a community's moderators, since every queue reaches an image
-  /// through media. But it is not a post. Left in the listings it appears in
-  /// its owner's library as something they never meant to publish, and one
-  /// more accumulates every time they change their avatar.
-  ///
-  /// So the row stays and the listings skip it. Deleting it instead would take
-  /// the picture out of the moderation queue with it; hiding it costs one
-  /// boolean and keeps the queue honest.
-  ///
-  /// The moderation queues deliberately do NOT filter on this. Nothing else
-  /// should read it either: it says how the row got here, not who may see the
-  /// picture.
-  isAvatarUpload Boolean @default(false) @map("is_avatar_upload")
 
   /// Which community reviews this upload when no character says.
   ///

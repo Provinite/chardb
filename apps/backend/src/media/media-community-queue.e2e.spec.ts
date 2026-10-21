@@ -13,9 +13,9 @@ import { ModerationStatus, Visibility } from "@chardb/database";
  *
  * Everything here used to resolve its community through
  * `character -> species -> community` and through nothing else, so a gallery
- * picture or a user avatar belonged to no community, appeared in no
- * community's queue, and sat PENDING -- which means URL-masked, which means
- * invisible -- until a site admin happened to work through the global queue.
+ * picture belonged to no community, appeared in no community's queue, and sat
+ * PENDING -- which means URL-masked, which means invisible -- until a site
+ * admin happened to work through the global queue.
  * `Media.communityId` is the second route, and these are the assertions that
  * it is actually read.
  *
@@ -223,68 +223,6 @@ describe("community moderation queue, characterless uploads (e2e)", () => {
 
       expect(count).toBe(queue.total);
       expect(count).toBe(2);
-    });
-  });
-
-  /**
-   * An avatar upload is not a post.
-   *
-   * The two halves have to hold together: hidden from every listing, and still
-   * visible to the moderators the row exists for. Getting the second one wrong
-   * would put avatars back where they started -- reviewable by nobody.
-   */
-  describe("avatar uploads", () => {
-    const createAvatarUpload = async () => {
-      const imageId = await createPendingImage();
-      const media = await testApp.getDb().media.create({
-        data: {
-          title: "Someone's avatar",
-          ownerId: uploaderId,
-          imageId,
-          communityId,
-          isAvatarUpload: true,
-          visibility: Visibility.PUBLIC,
-        },
-      });
-      return media.id;
-    };
-
-    it("is kept out of the owner's own media listing", async () => {
-      const avatarId = await createAvatarUpload();
-      const postId = await createMedia({ title: "Real artwork", communityId });
-
-      const listing = await mediaService.findAll(
-        { ownerId: uploaderId },
-        uploaderId,
-      );
-
-      const ids = listing.media.map((row) => row.id);
-      expect(ids).toContain(postId);
-      expect(ids).not.toContain(avatarId);
-      expect(listing.total).toBe(1);
-    });
-
-    it("is still in the community moderation queue", async () => {
-      const avatarId = await createAvatarUpload();
-
-      const queue = await mediaService.findPendingForModeration(communityId);
-
-      expect(queue.media.map((row) => row.id)).toContain(avatarId);
-    });
-
-    /**
-     * The row above is deliberately PUBLIC, so this is the flag doing the work
-     * and not the visibility filter. The real upload is PRIVATE as well, but
-     * two filters that both happen to hide a row make it impossible to tell
-     * which one is holding.
-     */
-    it("is hidden from a visitor even when it is public", async () => {
-      const avatarId = await createAvatarUpload();
-
-      const anonymous = await mediaService.findAll({ ownerId: uploaderId });
-
-      expect(anonymous.media.map((row) => row.id)).not.toContain(avatarId);
-      expect(anonymous.total).toBe(0);
     });
   });
 

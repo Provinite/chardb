@@ -49,12 +49,12 @@ export interface UploadImageInput {
    * `Media.communityId`.
    */
   communityId?: string;
-  /**
-   * This upload is a profile picture rather than a post. Its Media row exists
-   * so moderators can see it and is kept out of every listing -- see
-   * `Media.isAvatarUpload`.
-   */
-  isAvatarUpload?: boolean;
+}
+
+export interface UploadAvatarInput {
+  file: Express.Multer.File;
+  /** Avatar framing chosen before upload; centre crop when absent. */
+  thumbnailCrop?: ThumbnailCrop;
 }
 
 export interface UpdateImageInput {
@@ -125,7 +125,6 @@ export class ImagesService {
       description,
       visibility,
       communityId,
-      isAvatarUpload = false,
     } = input;
 
     // Validate file
@@ -159,56 +158,15 @@ export class ImagesService {
       }
     }
 
-    // Generate unique filename
-    const fileExtension = extname(file.originalname);
-    const filename = `${uuid()}${fileExtension}`;
-
-    // Generate all image variants from original buffer. An out-of-bounds crop
-    // is rejected here, before anything reaches S3.
-    const { thumbnail, medium, width, height } = await this.processImage(
-      file.buffer,
-      thumbnailCrop,
-    );
-
-    // Generate imageId upfront for S3 key generation
-    const imageId = uuid();
-
-    // Determine mime types for each variant based on format
-    const thumbnailMimeType = this.getThumbnailMimeType(file.mimetype);
-    const mediumMimeType = this.getMediumMimeType(file.mimetype);
-
-    // Upload original, medium, and thumbnail to S3 using imageId
-    const [originalUploadResult, mediumUploadResult, thumbnailUploadResult] =
-      await Promise.all([
-        // Upload original unprocessed buffer
-        this.s3Service.uploadImage({
-          buffer: file.buffer,
-          filename: file.originalname,
-          mimeType: file.mimetype,
-          imageId,
-          sizeVariant: "original",
-        }),
-        // Upload medium (web-optimized display size)
-        this.s3Service.uploadImage({
-          buffer: medium,
-          filename: file.originalname,
-          mimeType: mediumMimeType,
-          imageId,
-          sizeVariant: "medium",
-        }),
-        // Upload thumbnail
-        this.s3Service.uploadImage({
-          buffer: thumbnail,
-          filename: file.originalname,
-          mimeType: thumbnailMimeType,
-          imageId,
-          sizeVariant: "thumbnail",
-        }),
-      ]);
-
-    const originalUrl = originalUploadResult.url;
-    const mediumUrl = mediumUploadResult.url;
-    const thumbnailUrl = thumbnailUploadResult.url;
+    const {
+      imageId,
+      filename,
+      originalUrl,
+      mediumUrl,
+      thumbnailUrl,
+      width,
+      height,
+    } = await this.storeImageFiles(file, thumbnailCrop);
 
     // Use transaction to create both image and media records
     const result = await this.db.$transaction(async (tx) => {
@@ -255,7 +213,6 @@ export class ImagesService {
           characterId: characterId || null,
           galleryId: galleryId || null,
           communityId: reviewingCommunityId,
-          isAvatarUpload,
           visibility: visibility
             ? (visibility.toUpperCase() as Visibility)
             : isNsfw
@@ -286,6 +243,132 @@ export class ImagesService {
     });
 
     return result;
+  }
+
+  /**
+   * Upload a profile picture and make it the uploader's avatar (#410).
+   *
+   * Avatars are not moderated and are not posts: the image is created
+   * APPROVED with no Media row, so it reaches no queue and no listing.
+   * Uploading and setting are one call so that there is never an uploaded
+   * avatar nobody uses -- with no media, nothing else would ever reference
+   * it, and so nothing would ever delete it.
+   *
+   * The avatar this replaces is deleted afterwards if nothing else holds it.
+   * An avatar set before #410 can still be a post in its owner's library, and
+   * `cleanupOrphanedImage` leaves that one alone.
+   */
+  async uploadAvatar(userId: string, input: UploadAvatarInput): Promise<Image> {
+    const { file, thumbnailCrop } = input;
+
+    this.validateFile(file);
+
+    const {
+      imageId,
+      filename,
+      originalUrl,
+      mediumUrl,
+      thumbnailUrl,
+      width,
+      height,
+    } = await this.storeImageFiles(file, thumbnailCrop);
+
+    const { image, displacedImageId } = await this.db.$transaction(
+      async (tx) => {
+        const current = await tx.user.findUnique({
+          where: { id: userId },
+          select: { avatarImageId: true },
+        });
+
+        const image = await tx.image.create({
+          data: {
+            id: imageId,
+            filename,
+            originalFilename: file.originalname,
+            originalUrl,
+            mediumUrl,
+            thumbnailUrl,
+            uploaderId: userId,
+            width,
+            height,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            isAvatarUpload: true,
+            moderationStatus: ModerationStatus.APPROVED,
+            ...cropToColumns(thumbnailCrop ?? null),
+          },
+        });
+
+        await tx.user.update({
+          where: { id: userId },
+          data: { avatarImageId: image.id },
+        });
+
+        return { image, displacedImageId: current?.avatarImageId ?? null };
+      },
+    );
+
+    // After the transaction, so the reference being released is gone and the
+    // count `cleanupOrphanedImage` takes sees the truth.
+    if (displacedImageId) {
+      await this.cleanupOrphanedImage(displacedImageId);
+    }
+
+    return image;
+  }
+
+  /**
+   * Render every variant of an uploaded file and put all three in S3, under
+   * an image id generated here for the row the caller is about to create.
+   *
+   * An out-of-bounds crop is rejected before anything reaches S3.
+   */
+  private async storeImageFiles(
+    file: Express.Multer.File,
+    thumbnailCrop: ThumbnailCrop | undefined,
+  ) {
+    const filename = `${uuid()}${extname(file.originalname)}`;
+
+    const { thumbnail, medium, width, height } = await this.processImage(
+      file.buffer,
+      thumbnailCrop,
+    );
+
+    const imageId = uuid();
+
+    const [original, mediumUpload, thumbnailUpload] = await Promise.all([
+      this.s3Service.uploadImage({
+        buffer: file.buffer,
+        filename: file.originalname,
+        mimeType: file.mimetype,
+        imageId,
+        sizeVariant: "original",
+      }),
+      this.s3Service.uploadImage({
+        buffer: medium,
+        filename: file.originalname,
+        mimeType: this.getMediumMimeType(file.mimetype),
+        imageId,
+        sizeVariant: "medium",
+      }),
+      this.s3Service.uploadImage({
+        buffer: thumbnail,
+        filename: file.originalname,
+        mimeType: this.getThumbnailMimeType(file.mimetype),
+        imageId,
+        sizeVariant: "thumbnail",
+      }),
+    ]);
+
+    return {
+      imageId,
+      filename,
+      originalUrl: original.url,
+      mediumUrl: mediumUpload.url,
+      thumbnailUrl: thumbnailUpload.url,
+      width,
+      height,
+    };
   }
 
   // No viewer argument: image visibility is decided by moderation status

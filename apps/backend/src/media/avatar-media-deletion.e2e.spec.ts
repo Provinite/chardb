@@ -8,15 +8,13 @@ import { ModerationStatus, Visibility } from "@chardb/database";
 /**
  * Deleting the media row behind an avatar.
  *
- * Uploading an avatar creates a Media row like any other upload, and that row
- * is visible to its owner in their own media library -- so deleting it is a
- * thing someone can do, by hand, without realising it is the picture on their
- * profile.
+ * Avatars uploaded since #410 have no Media row, but one chosen before it
+ * could be any picture of yours, including a post in your own media library
+ * -- so deleting that post is a thing someone can do, by hand, without
+ * realising it is the picture on their profile.
  *
- * `cleanupOrphanedImage` already counted `user.avatarImageId` among the
- * references that keep an image alive, but nothing could set an avatar until
- * now, so that branch has never been reachable. These are the assertions that
- * it works.
+ * `cleanupOrphanedImage` counts `user.avatarImageId` among the references
+ * that keep an image alive. These are the assertions that it works.
  */
 describe("deleting the media behind an avatar (e2e)", () => {
   let testApp: TestApp;

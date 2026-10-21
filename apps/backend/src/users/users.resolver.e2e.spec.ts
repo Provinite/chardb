@@ -5,17 +5,15 @@ import { AuthModule } from "../auth/auth.module";
 import { ModerationStatus } from "@chardb/database";
 
 /**
- * Who may become an avatar, asserted at the API.
+ * Avatars at the API, since #410.
  *
- * Two gates guard the column, at two different moments, and this file exists
- * because only one of them is visible in the UI. The write refuses an image
- * that is not yours; the read refuses to serve one moderation has not cleared.
- * Neither is enforced by hiding a control, so both have to hold against a
- * client that calls the mutation directly.
- *
- * The read gate needs its own cases because it is the one that keeps holding
- * after the write: an image approved when it was chosen can be rejected the
- * next day, and nothing goes back to clear `avatarImageId`.
+ * An avatar is set only by uploading one (`POST /images/avatar`, see
+ * `avatar-upload.e2e.spec.ts`); `updateProfile` can only take it away. What
+ * keeps an unmoderated picture from appearing anywhere but a profile is that
+ * nothing else can point at one, and what keeps a moderated picture that is
+ * pending or rejected from appearing as an avatar is that `avatarImage`
+ * serves only avatar uploads and approved images. Both have to hold against a
+ * client that calls the API directly.
  */
 const UPDATE_PROFILE = `
   mutation UpdateProfile($input: UpdateUserInput!) {
@@ -24,19 +22,6 @@ const UPDATE_PROFILE = `
       avatarImage {
         id
       }
-      avatarImageModerationStatus
-    }
-  }
-`;
-
-const ME = `
-  query Me {
-    me {
-      id
-      avatarImage {
-        id
-      }
-      avatarImageModerationStatus
     }
   }
 `;
@@ -57,12 +42,11 @@ describe("UsersResolver avatars (e2e)", () => {
   let ownerId: string;
   let ownerUsername: string;
   let ownerToken: string;
-  let strangerId: string;
 
-  /** An image belonging to `uploaderId`, at whatever moderation status. */
+  /** An image the owner uploaded. */
   const createImage = async (
-    uploaderId: string,
     moderationStatus: ModerationStatus,
+    isAvatarUpload: boolean,
   ) => {
     const image = await testApp.getDb().image.create({
       data: {
@@ -70,15 +54,26 @@ describe("UsersResolver avatars (e2e)", () => {
         originalFilename: "avatar.png",
         originalUrl: "https://cdn.test/avatar/original.png",
         thumbnailUrl: "https://cdn.test/avatar/thumbnail.png",
-        uploaderId,
+        uploaderId: ownerId,
         width: 600,
         height: 900,
         fileSize: 4321,
         mimeType: "image/png",
         moderationStatus,
+        isAvatarUpload,
       },
     });
     return image.id;
+  };
+
+  /** What `POST /images/avatar` leaves behind. */
+  const createAvatar = async () => {
+    const imageId = await createImage(ModerationStatus.APPROVED, true);
+    await testApp.getDb().user.update({
+      where: { id: ownerId },
+      data: { avatarImageId: imageId },
+    });
+    return imageId;
   };
 
   beforeAll(async () => {
@@ -95,9 +90,6 @@ describe("UsersResolver avatars (e2e)", () => {
     ownerId = owner.id;
     ownerUsername = owner.username;
     ownerToken = await testApp.generateTestToken(ownerId);
-
-    const stranger = await testApp.createTestUser();
-    strangerId = stranger.id;
   });
 
   afterAll(async () => {
@@ -105,50 +97,13 @@ describe("UsersResolver avatars (e2e)", () => {
   });
 
   describe("setting one", () => {
-    it("accepts an approved image the caller uploaded", async () => {
-      const imageId = await createImage(ownerId, ModerationStatus.APPROVED);
-
-      const response = await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: imageId } },
-        ownerToken,
-      );
-
-      expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.updateProfile.avatarImage).toEqual({
-        id: imageId,
-      });
-    });
-
     /**
-     * The case the upload path depends on. A picture is PENDING the instant it
-     * is uploaded, so refusing PENDING here would mean the avatar uploader
-     * could never set the thing it had just uploaded -- the reference is
-     * stored and the read gate below withholds the picture until it clears.
+     * Even an image that is already an avatar upload of yours. The upload is
+     * the only way in, so that an image chosen here can never be one that
+     * moderation is still looking at, or one that skipped it.
      */
-    it("accepts a pending image, and withholds it until approval", async () => {
-      const imageId = await createImage(ownerId, ModerationStatus.PENDING);
-
-      const response = await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: imageId } },
-        ownerToken,
-      );
-
-      expect(response.body.errors).toBeUndefined();
-      expect(response.body.data.updateProfile).toMatchObject({
-        avatarImage: null,
-        avatarImageModerationStatus: "PENDING",
-      });
-
-      const stored = await testApp
-        .getDb()
-        .user.findUnique({ where: { id: ownerId } });
-      expect(stored?.avatarImageId).toBe(imageId);
-    });
-
-    it("refuses an image somebody else uploaded", async () => {
-      const imageId = await createImage(strangerId, ModerationStatus.APPROVED);
+    it("refuses any image id", async () => {
+      const imageId = await createImage(ModerationStatus.APPROVED, true);
 
       const response = await testApp.authenticatedGraphqlRequest(
         UPDATE_PROFILE,
@@ -157,146 +112,16 @@ describe("UsersResolver avatars (e2e)", () => {
       );
 
       expect(response.body.errors).toBeDefined();
-
       const stored = await testApp
         .getDb()
         .user.findUnique({ where: { id: ownerId } });
       expect(stored?.avatarImageId).toBeNull();
-    });
-
-    it("refuses an image that does not exist", async () => {
-      const response = await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: "3f1d2c4b-0000-4000-8000-000000000000" } },
-        ownerToken,
-      );
-
-      expect(response.body.errors).toBeDefined();
-    });
-
-    it("refuses an image moderation has rejected", async () => {
-      const imageId = await createImage(ownerId, ModerationStatus.REJECTED);
-
-      const response = await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: imageId } },
-        ownerToken,
-      );
-
-      expect(response.body.errors).toBeDefined();
-
-      const stored = await testApp
-        .getDb()
-        .user.findUnique({ where: { id: ownerId } });
-      expect(stored?.avatarImageId).toBeNull();
-    });
-  });
-
-  /**
-   * Changing an avatar has to take the old picture with it when nothing else
-   * wants it.
-   *
-   * The reachable way to get here is two steps: upload an avatar, then delete
-   * that upload from your media library. The delete keeps the image alive
-   * because `cleanupOrphanedImage` counts avatar references -- correctly, it
-   * is still on your profile -- and at that point the image's only reason to
-   * exist is the column about to be overwritten. Nothing used to look again.
-   */
-  describe("orphaning the previous one", () => {
-    it("deletes an image nothing else references", async () => {
-      // An image with no media at all: what remains after the upload's media
-      // row has been deleted while the picture stayed on the profile.
-      const oldId = await createImage(ownerId, ModerationStatus.APPROVED);
-      const newId = await createImage(ownerId, ModerationStatus.APPROVED);
-      await testApp.getDb().user.update({
-        where: { id: ownerId },
-        data: { avatarImageId: oldId },
-      });
-
-      await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: newId } },
-        ownerToken,
-      );
-
-      await expect(
-        testApp.getDb().image.findUnique({ where: { id: oldId } }),
-      ).resolves.toBeNull();
-      await expect(
-        testApp.getDb().image.findUnique({ where: { id: newId } }),
-      ).resolves.not.toBeNull();
-    });
-
-    it("deletes it when the avatar is removed rather than replaced", async () => {
-      const oldId = await createImage(ownerId, ModerationStatus.APPROVED);
-      await testApp.getDb().user.update({
-        where: { id: ownerId },
-        data: { avatarImageId: oldId },
-      });
-
-      await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: null } },
-        ownerToken,
-      );
-
-      await expect(
-        testApp.getDb().image.findUnique({ where: { id: oldId } }),
-      ).resolves.toBeNull();
-    });
-
-    /**
-     * The other half, and the one that would be a data-loss bug rather than a
-     * leak: a picture that is still a post in your library is not rubbish just
-     * because it stopped being your avatar.
-     */
-    it("keeps an image that still has media", async () => {
-      const oldId = await createImage(ownerId, ModerationStatus.APPROVED);
-      await testApp.getDb().media.create({
-        data: { title: "Real artwork", ownerId, imageId: oldId },
-      });
-      await testApp.getDb().user.update({
-        where: { id: ownerId },
-        data: { avatarImageId: oldId },
-      });
-
-      await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: null } },
-        ownerToken,
-      );
-
-      await expect(
-        testApp.getDb().image.findUnique({ where: { id: oldId } }),
-      ).resolves.not.toBeNull();
-    });
-
-    it("keeps it when the same image is set again", async () => {
-      const imageId = await createImage(ownerId, ModerationStatus.APPROVED);
-      await testApp.getDb().user.update({
-        where: { id: ownerId },
-        data: { avatarImageId: imageId },
-      });
-
-      await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: imageId } },
-        ownerToken,
-      );
-
-      await expect(
-        testApp.getDb().image.findUnique({ where: { id: imageId } }),
-      ).resolves.not.toBeNull();
     });
   });
 
   describe("clearing one", () => {
     it("removes the avatar on an explicit null", async () => {
-      const imageId = await createImage(ownerId, ModerationStatus.APPROVED);
-      await testApp.getDb().user.update({
-        where: { id: ownerId },
-        data: { avatarImageId: imageId },
-      });
+      await createAvatar();
 
       const response = await testApp.authenticatedGraphqlRequest(
         UPDATE_PROFILE,
@@ -314,17 +139,12 @@ describe("UsersResolver avatars (e2e)", () => {
     });
 
     /**
-     * The other half of that contract, and the one that would go unnoticed:
-     * every other field on this input treats "not sent" as "leave alone", and
+     * Every other field on this input treats "not sent" as "leave alone", and
      * an avatar that quietly cleared itself whenever somebody edited their bio
      * would look like the save having eaten it.
      */
     it("leaves the avatar alone when the field is not sent", async () => {
-      const imageId = await createImage(ownerId, ModerationStatus.APPROVED);
-      await testApp.getDb().user.update({
-        where: { id: ownerId },
-        data: { avatarImageId: imageId },
-      });
+      const imageId = await createAvatar();
 
       const response = await testApp.authenticatedGraphqlRequest(
         UPDATE_PROFILE,
@@ -337,42 +157,46 @@ describe("UsersResolver avatars (e2e)", () => {
         id: imageId,
       });
     });
+
+    it("deletes the removed avatar's image", async () => {
+      const imageId = await createAvatar();
+
+      await testApp.authenticatedGraphqlRequest(
+        UPDATE_PROFILE,
+        { input: { avatarImageId: null } },
+        ownerToken,
+      );
+
+      await expect(
+        testApp.getDb().image.findUnique({ where: { id: imageId } }),
+      ).resolves.toBeNull();
+    });
+
+    /**
+     * An avatar set before #410 can still be a post in its owner's library,
+     * and is not rubbish just because it stopped being their avatar.
+     */
+    it("keeps a removed avatar's image that some media still shows", async () => {
+      const imageId = await createAvatar();
+      await testApp.getDb().media.create({
+        data: { title: "Real artwork", ownerId, imageId },
+      });
+
+      await testApp.authenticatedGraphqlRequest(
+        UPDATE_PROFILE,
+        { input: { avatarImageId: null } },
+        ownerToken,
+      );
+
+      await expect(
+        testApp.getDb().image.findUnique({ where: { id: imageId } }),
+      ).resolves.not.toBeNull();
+    });
   });
 
   describe("serving one", () => {
-    it("withholds an avatar rejected after it was chosen", async () => {
-      const imageId = await createImage(ownerId, ModerationStatus.APPROVED);
-      await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: imageId } },
-        ownerToken,
-      );
-
-      // What `rejectImage` does, without pulling the moderation module in.
-      await testApp.getDb().image.update({
-        where: { id: imageId },
-        data: { moderationStatus: ModerationStatus.REJECTED },
-      });
-
-      const response = await testApp.authenticatedGraphqlRequest(
-        ME,
-        {},
-        ownerToken,
-      );
-
-      expect(response.body.data.me).toMatchObject({
-        avatarImage: null,
-        avatarImageModerationStatus: "REJECTED",
-      });
-    });
-
-    it("serves an approved avatar to a visitor", async () => {
-      const imageId = await createImage(ownerId, ModerationStatus.APPROVED);
-      await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: imageId } },
-        ownerToken,
-      );
+    it("serves an avatar upload to a visitor straight away", async () => {
+      const imageId = await createAvatar();
 
       const response = await testApp.graphqlRequest(PUBLIC_USER, {
         username: ownerUsername,
@@ -381,35 +205,44 @@ describe("UsersResolver avatars (e2e)", () => {
       expect(response.body.data.user.avatarImage).toEqual({ id: imageId });
     });
 
-    it("withholds a pending avatar from a visitor", async () => {
-      const imageId = await createImage(ownerId, ModerationStatus.PENDING);
-      await testApp.authenticatedGraphqlRequest(
-        UPDATE_PROFILE,
-        { input: { avatarImageId: imageId } },
-        ownerToken,
-      );
+    /**
+     * An avatar chosen before #410 could be any approved image of yours, and
+     * those stay where they are.
+     */
+    it("serves an approved image that is not an avatar upload", async () => {
+      const imageId = await createImage(ModerationStatus.APPROVED, false);
+      await testApp.getDb().user.update({
+        where: { id: ownerId },
+        data: { avatarImageId: imageId },
+      });
 
       const response = await testApp.graphqlRequest(PUBLIC_USER, {
         username: ownerUsername,
       });
 
-      expect(response.body.data.user.avatarImage).toBeNull();
+      expect(response.body.data.user.avatarImage).toEqual({ id: imageId });
     });
 
     /**
-     * `avatarImageModerationStatus` is owner-only (`@AllowSelf`), and that is
-     * deliberately NOT asserted here.
-     *
-     * This harness does not enforce field-resolver guards on `User` at all:
-     * ask it for a stranger's `email` -- guarded the same way since long
-     * before avatars, and masked to "" in production -- and it hands back the
-     * real address. So an assertion here would pass or fail for reasons that
-     * have nothing to do with this field, and a green one would be the
-     * dangerous outcome. The gate is real; it is checked against a running
-     * server, where a stranger reading this field gets null.
-     *
-     * Worth fixing in the harness, but not from here: it would change what
-     * every `*.e2e.spec.ts` in the app is testing.
+     * The gate that keeps moderation meaning something for everything that
+     * is not an avatar: a picture a moderator has not cleared, or has
+     * rejected, never reaches anyone as a profile picture.
      */
+    it.each([ModerationStatus.PENDING, ModerationStatus.REJECTED])(
+      "withholds a %s image that is not an avatar upload",
+      async (status) => {
+        const imageId = await createImage(status, false);
+        await testApp.getDb().user.update({
+          where: { id: ownerId },
+          data: { avatarImageId: imageId },
+        });
+
+        const response = await testApp.graphqlRequest(PUBLIC_USER, {
+          username: ownerUsername,
+        });
+
+        expect(response.body.data.user.avatarImage).toBeNull();
+      },
+    );
   });
 });
