@@ -52,8 +52,10 @@ resource "aws_ssm_parameter" "webhook_url" {
 }
 
 data "archive_file" "lambda" {
-  type        = "zip"
-  source_file = "${path.module}/lambda/index.mjs"
+  type = "zip"
+  # The handler and alerts.json, each alarm's own message.
+  source_dir  = "${path.module}/lambda"
+  excludes    = ["index.test.mjs"]
   output_path = "${path.module}/.build/alerts-discord.zip"
 }
 
