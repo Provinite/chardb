@@ -5,23 +5,12 @@ import { withClient } from "../../src/db/sql.js";
 const test = presetTest("community-basic");
 
 /**
- * Setting a user avatar (#345).
+ * Setting a user avatar (#345), since #410.
  *
- * `User.avatarImageId` was wired for reading only, so every avatar in the app
- * fell through to initials permanently. What is worth asserting is not that a
- * picture appears -- it does not, not straight away -- but the three things
- * that were easy to get wrong:
- *
- *   - the chosen crop reaches the row, so an avatar is framed rather than
- *     centred, and
- *   - the upload records which community should review it, which is the whole
- *     reason the profile editor is served from a community host at all, and
- *   - an unapproved avatar is withheld from visitors while the owner is told
- *     why, rather than silently showing initials as if the save had failed.
- *
- * The last one is the security-shaped assertion: an avatar is the one image
- * that does not reach a viewer through `Media.image`, where everything else
- * masks unapproved URLs.
+ * Avatars are not moderated and are not posts. What is worth asserting is
+ * that an upload is the whole job -- no Media row, nothing waiting on a
+ * moderator, shown to visitors straight away -- and that the chosen crop
+ * reaches the row, so an avatar is framed rather than centred.
  */
 test.describe("choosing an avatar", () => {
   test.use({ persona: "member" });
@@ -29,12 +18,8 @@ test.describe("choosing an avatar", () => {
   /**
    * Every test here starts from a member with no avatar.
    *
-   * Tests in a file share a world by default, and these all leave one set --
-   * which made them lie to each other. "Waiting on a moderator" is on the page
-   * from the *previous* test's upload, so the next test's wait for it returned
-   * immediately, and the spec went on to read and approve the old image while
-   * the new upload was still in flight. It passed or failed on timing, which
-   * is to say on what had run before it.
+   * Tests in a file share a world by default, and these all leave one set,
+   * so a later test's waits would be satisfied by an earlier test's upload.
    */
   test.beforeEach(async ({ world }) => {
     await world.reset();
@@ -51,28 +36,26 @@ test.describe("choosing an avatar", () => {
 
   interface AvatarRow {
     image_id: string;
-    community_id: string | null;
+    is_avatar_upload: boolean;
     moderation_status: string;
-    thumbnail_crop_x: number | null;
-    thumbnail_crop_y: number | null;
+    media_count: string;
     thumbnail_crop_width: number | null;
     thumbnail_crop_height: number | null;
   }
 
-  /** The image a username's avatar points at, with its media's community. */
+  /** The image a username's avatar points at, and how many media hold it. */
   async function avatarRow(username: string): Promise<AvatarRow> {
     return withClient(CFG.databaseUrl, async (client) => {
       const { rows } = await client.query<AvatarRow>(
-        `SELECT i.id            AS image_id,
-                m.community_id,
+        `SELECT i.id AS image_id,
+                i.is_avatar_upload,
                 i.moderation_status,
-                i.thumbnail_crop_x,
-                i.thumbnail_crop_y,
+                (SELECT count(*) FROM media m WHERE m.image_id = i.id)
+                  AS media_count,
                 i.thumbnail_crop_width,
                 i.thumbnail_crop_height
            FROM users u
            JOIN images i ON i.id = u.avatar_image_id
-           LEFT JOIN media m ON m.image_id = i.id
           WHERE u.username = $1`,
         [username],
       );
@@ -81,17 +64,9 @@ test.describe("choosing an avatar", () => {
     });
   }
 
-  async function approveImage(imageId: string): Promise<void> {
-    await withClient(CFG.databaseUrl, async (client) => {
-      await client.query(
-        `UPDATE images SET moderation_status = 'APPROVED' WHERE id = $1`,
-        [imageId],
-      );
-    });
-  }
-
   /**
-   * Upload an avatar from `origin`, framing it through the cropper.
+   * Upload an avatar from `origin`, framing it through the cropper, and wait
+   * for it to be showing.
    *
    * Zoom rather than drag: it moves the rect by a definite amount through a
    * control with a stable id, where a synthetic drag over a canvas is the kind
@@ -100,7 +75,7 @@ test.describe("choosing an avatar", () => {
   async function uploadAvatarFrom(
     page: import("@playwright/test").Page,
     origin: string,
-  ): Promise<void> {
+  ): Promise<AvatarRow> {
     await page.goto(`${origin}/profile/edit`);
 
     await page.getByRole("button", { name: "Upload a picture" }).click();
@@ -113,19 +88,18 @@ test.describe("choosing an avatar", () => {
     await expect(page.getByText("Frame your avatar")).toBeVisible();
     await page.locator("#thumbnail-crop-zoom").fill("2");
     await page.getByRole("button", { name: "Use this crop" }).click();
+
+    // "Remove" appears only once there is an avatar to remove.
+    await expect(page.getByRole("button", { name: "Remove" })).toBeVisible({
+      timeout: 30_000,
+    });
+    return avatarRow("member");
   }
 
-  test("records the crop and the reviewing community", async ({
+  test("stores an unmoderated avatar with the chosen crop and no media", async ({
     page,
-    world,
   }) => {
-    await uploadAvatarFrom(page, world.community.url);
-
-    await expect(
-      page.getByText("Waiting on a moderator", { exact: false }),
-    ).toBeVisible({ timeout: 30_000 });
-
-    const row = await avatarRow("member");
+    const row = await uploadAvatarFrom(page, apexUrl());
 
     // A square, inside the 200x100 image, and tighter than the whole height --
     // which is what zooming past 1 has to mean.
@@ -133,51 +107,57 @@ test.describe("choosing an avatar", () => {
     expect(row.thumbnail_crop_width!).toBeGreaterThan(0);
     expect(row.thumbnail_crop_width!).toBeLessThan(100);
 
-    // The point of serving this page from a community host: the upload knows
-    // whose queue it belongs in. Uploaded at the apex this would be null, and
-    // only a site admin could ever clear it.
-    expect(row.community_id).toBe(world.community.id);
-    expect(row.moderation_status).toBe("PENDING");
-  });
-
-  /**
-   * The gate that matters. Between upload and approval the avatar exists, is
-   * referenced by the profile, and must still not be served to anyone.
-   */
-  test("withholds an unapproved avatar from visitors", async ({
-    page,
-    world,
-  }) => {
-    await uploadAvatarFrom(page, world.community.url);
+    expect(row.is_avatar_upload).toBe(true);
+    expect(row.moderation_status).toBe("APPROVED");
+    expect(Number(row.media_count)).toBe(0);
     await expect(
       page.getByText("Waiting on a moderator", { exact: false }),
-    ).toBeVisible({ timeout: 30_000 });
+    ).toHaveCount(0);
+  });
 
-    const row = await avatarRow("member");
+  /** From a community host it is the same upload: no community reviews it. */
+  test("is shown to visitors straight away", async ({ page, world }) => {
+    const row = await uploadAvatarFrom(page, world.community.url);
 
     await page.goto(apexUrl("/user/member"));
-    // Initials, not a picture: the fallback for someone who has never set one.
-    await expect(page.locator(`img[src*="${row.image_id}"]`)).toHaveCount(0);
-
-    await approveImage(row.image_id);
-
-    await page.reload();
     await expect(
       page.locator(`img[src*="${row.image_id}"]`).first(),
     ).toBeVisible();
   });
 
-  test("removes an avatar again", async ({ page, world }) => {
-    await uploadAvatarFrom(page, world.community.url);
-    await expect(
-      page.getByText("Waiting on a moderator", { exact: false }),
-    ).toBeVisible({ timeout: 30_000 });
+  /** The avatar it replaces is deleted, row and all. */
+  test("replaces the previous avatar", async ({ page }) => {
+    const first = await uploadAvatarFrom(page, apexUrl());
+
+    // A fresh file input: the hidden one is cleared after each pick.
+    await page.getByRole("button", { name: "Upload a picture" }).click();
+    await page.locator('input[type="file"]').setInputFiles({
+      name: "avatar.png",
+      mimeType: "image/png",
+      buffer: PNG,
+    });
+    await page.getByRole("button", { name: "Use this crop" }).click();
+    await expect
+      .poll(async () => (await avatarRow("member")).image_id, {
+        timeout: 30_000,
+      })
+      .not.toBe(first.image_id);
+
+    const remaining = await withClient(CFG.databaseUrl, async (client) => {
+      const { rows } = await client.query<{ count: string }>(
+        `SELECT count(*) FROM images WHERE id = $1`,
+        [first.image_id],
+      );
+      return Number(rows[0].count);
+    });
+    expect(remaining).toBe(0);
+  });
+
+  test("removes an avatar again", async ({ page }) => {
+    await uploadAvatarFrom(page, apexUrl());
 
     await page.getByRole("button", { name: "Remove" }).click();
-
-    await expect(
-      page.getByText("Waiting on a moderator", { exact: false }),
-    ).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Remove" })).toHaveCount(0);
 
     const cleared = await withClient(CFG.databaseUrl, async (client) => {
       const { rows } = await client.query<{ avatar_image_id: string | null }>(
@@ -187,5 +167,16 @@ test.describe("choosing an avatar", () => {
       return rows[0].avatar_image_id;
     });
     expect(cleared).toBeNull();
+  });
+
+  test("offers no picker of existing media", async ({ page }) => {
+    await page.goto(apexUrl("/profile/edit"));
+
+    await expect(
+      page.getByRole("button", { name: "Upload a picture" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Choose from your media" }),
+    ).toHaveCount(0);
   });
 });

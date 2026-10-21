@@ -2,17 +2,21 @@ import type { Browser, Page } from "@playwright/test";
 import { presetTest, expect } from "../../src/fixtures.js";
 import { apexUrl, CFG } from "../../src/config.js";
 import { withClient } from "../../src/db/sql.js";
+import type { Actor } from "../../src/world/types.js";
 
 const test = presetTest("community-basic");
 
 /**
  * The site-wide image queue (#404).
  *
- * An avatar uploaded at the apex names no community, so no community's
- * moderators are shown it. The user was told it was waiting on a moderator
- * while the only queue it reached had no page -- so it waited forever. This
- * is the whole round trip: upload at the apex, approve as a site admin from
- * the site admin page, and the owner then sees their avatar.
+ * A picture uploaded with no character and no community is shown to no
+ * community's moderators, and until the site-wide queue had a page nobody
+ * could approve it. This is the whole round trip: upload, approve as a site
+ * admin from the site admin page, and the owner then sees their picture.
+ *
+ * It used to be told with an avatar uploaded at the apex. Avatars have not
+ * been moderated since #410, so a plain upload is now the case that reaches
+ * this queue.
  */
 test.describe("site-wide image queue", () => {
   test.use({ persona: "member" });
@@ -21,7 +25,7 @@ test.describe("site-wide image queue", () => {
     await world.reset();
   });
 
-  /** A 200x100 PNG; the same one the avatar settings spec uploads. */
+  /** A 200x100 PNG. */
   const PNG = Buffer.from(
     "iVBORw0KGgoAAAANSUhEUgAAAMgAAABkCAIAAABM5OhcAAAACXBIWXMAAAPoAAAD6AG1e1JrAAAAzUlEQVR42u3SMQ0AAAgEsZeDCPwHWZhgYGhSBZfLVMO5SICxMBbGAmNhLIwFxsJYGAuMhbEwFhgLY2EsMBbGwlhgLIyFscBYGAtjgbEwFsYCY2EsjAXGwlgYC4yFsTAWGAtjYSwwFsbCWGAsjIWxwFgYC2OBsTAWxgJjYSyMBcbCWBgLjIWxMBYYC2NhLDAWxsJYYCyMhbHAWBgLY4GxMBbGAmNhLIwFxsJYGAuMhbEwFhgLY2EsjKUCxsJYGAuMhbEwFhgLY2EsMBa/x1one5LWE0ewPwAAAABJRU5ErkJggg==",
     "base64",
@@ -36,21 +40,27 @@ test.describe("site-wide image queue", () => {
     return { page, close: () => context.close() };
   }
 
-  interface AvatarRow {
+  interface UploadRow {
+    media_id: string;
     image_id: string;
     community_id: string | null;
     moderation_status: string;
   }
 
-  async function avatarRow(username: string): Promise<AvatarRow> {
+  /** The media a username uploaded under `title`, with its image. */
+  async function uploadRow(
+    username: string,
+    title: string,
+  ): Promise<UploadRow> {
     return withClient(CFG.databaseUrl, async (client) => {
-      const { rows } = await client.query<AvatarRow>(
-        `SELECT i.id AS image_id, m.community_id, i.moderation_status
-           FROM users u
-           JOIN images i ON i.id = u.avatar_image_id
-           LEFT JOIN media m ON m.image_id = i.id
-          WHERE u.username = $1`,
-        [username],
+      const { rows } = await client.query<UploadRow>(
+        `SELECT m.id AS media_id, i.id AS image_id, m.community_id,
+                i.moderation_status
+           FROM media m
+           JOIN users u ON u.id = m.owner_id
+           JOIN images i ON i.id = m.image_id
+          WHERE u.username = $1 AND m.title = $2`,
+        [username, title],
       );
       expect(rows).toHaveLength(1);
       return rows[0];
@@ -69,39 +79,52 @@ test.describe("site-wide image queue", () => {
     });
   }
 
-  /** Upload an avatar from the apex, where there is no community to name. */
-  async function uploadAvatarAtApex(page: Page): Promise<AvatarRow> {
-    await page.goto(apexUrl("/profile/edit"));
-
-    await page.getByRole("button", { name: "Upload a picture" }).click();
-    await page.locator('input[type="file"]').setInputFiles({
-      name: "avatar.png",
-      mimeType: "image/png",
-      buffer: PNG,
+  /**
+   * Upload a picture with no character and no community, which is what lands
+   * in this queue and nowhere else.
+   *
+   * Through the API: no form in the app sends one since #410 -- the upload
+   * page requires a character and item-type pictures are uploaded from a
+   * community host -- but the endpoint still accepts it.
+   */
+  async function uploadWithoutCommunity(
+    actor: Actor,
+    username: string,
+    title: string,
+  ): Promise<UploadRow> {
+    const body = new FormData();
+    body.append(
+      "file",
+      new Blob([new Uint8Array(PNG)], { type: "image/png" }),
+      "picture.png",
+    );
+    body.append("title", title);
+    const response = await actor.rest("/images/upload", {
+      method: "POST",
+      body,
     });
-    await expect(page.getByText("Frame your avatar")).toBeVisible();
-    await page.getByRole("button", { name: "Use this crop" }).click();
+    expect(response.status).toBe(201);
 
-    await expect(
-      page.getByText("Waiting on a moderator", { exact: false }),
-    ).toBeVisible({ timeout: 30_000 });
-
-    const row = await avatarRow("member");
+    const row = await uploadRow(username, title);
     // The precondition for the bug: no community will ever be shown this.
     expect(row.community_id).toBeNull();
     expect(row.moderation_status).toBe("PENDING");
     return row;
   }
 
-  test("an avatar uploaded at the apex is approved by a site admin and then shown", async ({
+  test("a picture with no community is approved by a site admin and then shown", async ({
     page,
     browser,
     world,
   }) => {
-    const row = await uploadAvatarAtApex(page);
+    const row = await uploadWithoutCommunity(
+      world.as("member"),
+      "member",
+      "Apex picture",
+    );
 
-    // Withheld until approved, from the owner's public profile as from anyone.
-    await page.goto(apexUrl("/user/member"));
+    // Masked until approved, even to its owner.
+    await page.goto(apexUrl(`/media/${row.media_id}`));
     await expect(page.locator(`img[src*="${row.image_id}"]`)).toHaveCount(0);
 
     const admin = await pageAs(browser, world.storageState("siteadmin"));
@@ -142,18 +165,12 @@ test.describe("site-wide image queue", () => {
       await admin.close();
     }
 
-    expect((await avatarRow("member")).moderation_status).toBe("APPROVED");
+    expect((await uploadRow("member", "Apex picture")).moderation_status).toBe(
+      "APPROVED",
+    );
 
-    // Back as the owner: the wait is over and the picture is theirs.
-    await page.goto(apexUrl("/profile/edit"));
-    await expect(
-      page.getByText("Waiting on a moderator", { exact: false }),
-    ).toHaveCount(0);
-    await expect(
-      page.locator(`img[src*="${row.image_id}"]`).first(),
-    ).toBeVisible();
-
-    await page.goto(apexUrl("/user/member"));
+    // Back as the owner: the picture is shown.
+    await page.goto(apexUrl(`/media/${row.media_id}`));
     await expect(
       page.locator(`img[src*="${row.image_id}"]`).first(),
     ).toBeVisible();
@@ -166,32 +183,14 @@ test.describe("site-wide image queue", () => {
    */
   test("a member who opens the site-wide queue is shown nothing", async ({
     page,
-    browser,
     world,
   }) => {
-    const other = await pageAs(browser, world.storageState("othermember"));
-    let row: AvatarRow;
-    try {
-      await other.page.goto(apexUrl("/profile/edit"));
-      await other.page
-        .getByRole("button", { name: "Upload a picture" })
-        .click();
-      await other.page.locator('input[type="file"]').setInputFiles({
-        name: "avatar.png",
-        mimeType: "image/png",
-        buffer: PNG,
-      });
-      await other.page.getByRole("button", { name: "Use this crop" }).click();
-      await expect(
-        other.page.getByText("Waiting on a moderator", { exact: false }),
-      ).toBeVisible({ timeout: 30_000 });
-      row = await avatarRow("othermember");
-    } finally {
-      await other.close();
-    }
+    const row = await uploadWithoutCommunity(
+      world.as("othermember"),
+      "othermember",
+      "Someone else's",
+    );
 
-    // Not found since #405, rather than the queue page with a load error; the
-    // server refusing the query is still what keeps the picture back.
     await page.goto(apexUrl("/admin/moderation/images"));
     await expect(page.getByText("Page Not Found")).toBeVisible();
     await expect(page.locator(`img[src*="${row.image_id}"]`)).toHaveCount(0);

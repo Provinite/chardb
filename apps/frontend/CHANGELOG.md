@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **An uploaded avatar shows straight away**, with no "Waiting on a moderator" note, and "Choose from your media" is gone: avatars come only from an upload (#410).
 - **The upload page's character box uses the shared `CharacterTypeahead`** from `@chardb/ui`, showing each character's species (#399).
 
 ### Fixed
