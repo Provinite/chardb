@@ -4,11 +4,14 @@ import { RefreshCw, AlertCircle, CheckCircle } from "lucide-react";
 import { Button, Heading3, HelpText, SmallText, Caption } from "@chardb/ui";
 import {
   useMediaModerationQueueQuery,
+  useGlobalMediaModerationQueueQuery,
   useApproveImageMutation,
   useRejectImageMutation,
   useDeferImageMutation,
   useGetCurrenciesQuery,
   ModerationRejectionReason,
+  type MediaModerationQueueQuery,
+  type ModerationQueueMediaFieldsFragment,
 } from "../../generated/graphql";
 import { formatAmount } from "../../lib/currencyDisplay";
 import { ImageModerationCard, type ApproveAward } from "./ImageModerationCard";
@@ -118,8 +121,21 @@ const SuccessToast = styled.div<{ $visible: boolean }>`
 
 const PAGE_SIZE = 12;
 
+/** A queue row from either query; only the community one has recipients. */
+type QueueMedia = ModerationQueueMediaFieldsFragment &
+  Partial<
+    Pick<
+      MediaModerationQueueQuery["mediaModerationQueue"]["media"][number],
+      "awardRecipients"
+    >
+  >;
+
 interface ImageModerationQueueProps {
-  communityId: string;
+  /**
+   * The community whose queue this is. Omitted for the site-wide queue site
+   * admins work through, where uploads with no community end up (#404).
+   */
+  communityId?: string;
 }
 
 export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
@@ -133,26 +149,40 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
   // null awardRecipients from the server anyway, so the widget never renders
   // and this list is simply unused.
   const { data: currencyData } = useGetCurrenciesQuery({
-    variables: { communityId },
+    variables: { communityId: communityId ?? "" },
     skip: !communityId,
   });
   const currencies = currencyData?.currencies ?? [];
 
-  const { data, loading, error, refetch } = useMediaModerationQueueQuery({
+  // Exactly one of these runs. The site-wide queue carries no award
+  // recipients, so its cards never show the award widget.
+  const communityQueue = useMediaModerationQueueQuery({
     variables: {
-      communityId,
+      communityId: communityId ?? "",
       first: PAGE_SIZE,
       offset,
     },
+    skip: !communityId,
     fetchPolicy: "network-only",
   });
+  const globalQueue = useGlobalMediaModerationQueueQuery({
+    variables: { first: PAGE_SIZE, offset },
+    skip: !!communityId,
+    fetchPolicy: "network-only",
+  });
+
+  const { loading, error } = communityId ? communityQueue : globalQueue;
+  const refetch = () =>
+    communityId ? communityQueue.refetch() : globalQueue.refetch();
 
   const [approveImage] = useApproveImageMutation();
   const [rejectImage] = useRejectImageMutation();
   const [deferImage] = useDeferImageMutation();
 
-  const queue = data?.mediaModerationQueue;
-  const items = queue?.media || [];
+  const queue = communityId
+    ? communityQueue.data?.mediaModerationQueue
+    : globalQueue.data?.globalMediaModerationQueue;
+  const items: QueueMedia[] = queue?.media || [];
   const total = queue?.total || 0;
   const hasMore = queue?.hasMore || false;
 
@@ -341,7 +371,7 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
                     communityName:
                       mediaItem.character?.species?.community?.name ?? null,
                     mediaTitle: mediaItem.title,
-                    awardRecipients: mediaItem.awardRecipients,
+                    awardRecipients: mediaItem.awardRecipients ?? null,
                   }}
                   currencies={currencies}
                   onApprove={handleApprove}

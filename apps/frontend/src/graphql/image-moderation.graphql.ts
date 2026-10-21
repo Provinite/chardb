@@ -43,6 +43,64 @@ export const IMAGE_MODERATION_QUEUE = gql`
   }
 `;
 
+/**
+ * What a queue card needs from a media, shared by the community queue and the
+ * site-wide one so the two cannot drift apart.
+ */
+export const MODERATION_QUEUE_MEDIA_FRAGMENT = gql`
+  fragment ModerationQueueMediaFields on Media {
+    id
+    title
+    characterId
+    character {
+      id
+      name
+      species {
+        id
+        name
+        community {
+          id
+          name
+        }
+      }
+    }
+    owner {
+      id
+      username
+      displayName
+    }
+    image {
+      id
+      moderationStatus
+    }
+    pendingModerationImage {
+      id
+      originalFilename
+      originalUrl
+      thumbnailUrl
+      altText
+      width
+      height
+      isNsfw
+      moderationStatus
+      createdAt
+      deferredAt
+      deferralCount
+      deferralNote
+      deferredBy {
+        id
+        username
+        displayName
+      }
+      uploader {
+        id
+        username
+        displayName
+      }
+    }
+  }
+`;
+
 export const MEDIA_MODERATION_QUEUE = gql`
   query MediaModerationQueue($communityId: ID!, $first: Int, $offset: Int) {
     mediaModerationQueue(
@@ -51,55 +109,7 @@ export const MEDIA_MODERATION_QUEUE = gql`
       offset: $offset
     ) {
       media {
-        id
-        title
-        characterId
-        character {
-          id
-          name
-          species {
-            id
-            name
-            community {
-              id
-              name
-            }
-          }
-        }
-        owner {
-          id
-          username
-          displayName
-        }
-        image {
-          id
-          moderationStatus
-        }
-        pendingModerationImage {
-          id
-          originalFilename
-          originalUrl
-          thumbnailUrl
-          altText
-          width
-          height
-          isNsfw
-          moderationStatus
-          createdAt
-          deferredAt
-          deferralCount
-          deferralNote
-          deferredBy {
-            id
-            username
-            displayName
-          }
-          uploader {
-            id
-            username
-            displayName
-          }
-        }
+        ...ModerationQueueMediaFields
         # Null unless the viewer holds canGrantItems in this community, which
         # is what gates the award widget. The server decides, not the client.
         awardRecipients {
@@ -117,6 +127,25 @@ export const MEDIA_MODERATION_QUEUE = gql`
       hasMore
     }
   }
+  ${MODERATION_QUEUE_MEDIA_FRAGMENT}
+`;
+
+/**
+ * Every pending media on the site, for site admins (#404). No award
+ * recipients: awards are minted from a community's currency, and this queue
+ * is where uploads with no community end up.
+ */
+export const GLOBAL_MEDIA_MODERATION_QUEUE = gql`
+  query GlobalMediaModerationQueue($first: Int, $offset: Int) {
+    globalMediaModerationQueue(first: $first, offset: $offset) {
+      media {
+        ...ModerationQueueMediaFields
+      }
+      total
+      hasMore
+    }
+  }
+  ${MODERATION_QUEUE_MEDIA_FRAGMENT}
 `;
 
 export const GLOBAL_IMAGE_MODERATION_QUEUE = gql`

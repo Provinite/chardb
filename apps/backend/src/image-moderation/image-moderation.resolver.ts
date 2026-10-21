@@ -105,6 +105,32 @@ export class ImageModerationResolver {
   }
 
   /**
+   * Every pending media on the site, in the same shape as
+   * `mediaModerationQueue` so one queue component serves both (#404).
+   *
+   * Site admins only. An upload made at the apex names no community, so this
+   * is the only queue it reaches.
+   */
+  @AllowGlobalAdmin()
+  @UseGuards(JwtAuthGuard)
+  @Query(() => MediaConnection, {
+    description:
+      "Get pending media across the whole site for moderation (site admins only; use pendingModerationImage for actual image URLs)",
+  })
+  async globalMediaModerationQueue(
+    @Args("first", { nullable: true, defaultValue: 20, type: () => Int })
+    first: number,
+    @Args("offset", { nullable: true, defaultValue: 0, type: () => Int })
+    offset: number,
+  ): Promise<MediaConnection> {
+    const result = await this.mediaService.findAllPendingForModeration(
+      first,
+      offset,
+    );
+    return mapPrismaMediaConnectionToGraphQL(result);
+  }
+
+  /**
    * Get all pending images (global admin only)
    */
   @AllowGlobalAdmin()

@@ -36,6 +36,7 @@ import { FeedPage } from "../pages/FeedPage";
 import { SiteAdminPage } from "../pages/SiteAdminPage";
 import { SiteInviteCodesPage } from "../pages/SiteInviteCodesPage";
 import { CommunityManagementPage } from "../pages/CommunityManagementPage";
+import { ImageModerationPage } from "../pages/ImageModerationPage";
 import { NotificationsPage } from "../pages/NotificationsPage";
 import { TradesPage } from "../pages/TradesPage";
 import { JoinCommunityPage } from "../pages/JoinCommunityPage";
@@ -312,6 +313,14 @@ export const ApexRoutes: React.FC = () => (
       element={
         <ProtectedRoute>
           <CommunityManagementPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/admin/moderation/images"
+      element={
+        <ProtectedRoute>
+          <ImageModerationPage siteWide />
         </ProtectedRoute>
       }
     />
