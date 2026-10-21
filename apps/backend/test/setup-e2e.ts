@@ -20,14 +20,16 @@ import { OptionalJwtAuthGuard } from "../src/auth/guards/optional-jwt-auth.guard
 import "../src/image-moderation/dto/image-moderation.dto";
 
 // This suite must talk to the throwaway test database, never the development
-// one. Outside the primary checkout, scripts/with-instance.mjs puts this
-// worktree's *dev* DATABASE_URL in the environment, and a value already in
-// process.env beats .env.test -- so point it at the test database explicitly.
-// On the primary checkout TEST_DATABASE_URL is unset and .env.test still wins,
-// exactly as before.
-if (process.env.TEST_DATABASE_URL) {
-  process.env.DATABASE_URL = process.env.TEST_DATABASE_URL;
-}
+// one, and a value already in process.env beats .env.test -- so point it at
+// the test database explicitly, every time. Something always has put the dev
+// URL there first: outside the primary checkout scripts/with-instance.mjs
+// does, and on the primary checkout importing @prisma/client loads
+// apps/backend/.env. Trusting .env.test to win there let clearDatabase() wipe
+// chardb_dev. The fallback is the same slot-0 URL global-setup-e2e.ts pushes
+// the schema to.
+process.env.DATABASE_URL =
+  process.env.TEST_DATABASE_URL ??
+  "postgresql://test_user:test_password@localhost:5440/chardb_test";
 
 // NestJS app startup + DB operations can take well over 5s
 jest.setTimeout(60000);

@@ -62,12 +62,22 @@ const HeaderText = styled.div`
   gap: 0.25rem;
 `;
 
-export const ImageModerationPage: React.FC = () => {
+interface ImageModerationPageProps {
+  /**
+   * The site-wide queue for site admins, served at the apex, rather than the
+   * host community's queue (#404).
+   */
+  siteWide?: boolean;
+}
+
+export const ImageModerationPage: React.FC<ImageModerationPageProps> = ({
+  siteWide = false,
+}) => {
   usePageMeta({ title: "Image Moderation" });
 
   const communityId = useCommunityId();
 
-  if (!communityId) {
+  if (!siteWide && !communityId) {
     return (
       <Container>
         <Heading2>Invalid Community</Heading2>
@@ -97,14 +107,18 @@ export const ImageModerationPage: React.FC = () => {
             <HeaderText>
               <Heading2>Image Moderation</Heading2>
               <SmallText style={{ margin: 0, color: "muted" }}>
-                Review and approve or reject uploaded images
+                {siteWide
+                  ? "Every pending image on the site, including uploads that belong to no community"
+                  : "Review and approve or reject uploaded images"}
               </SmallText>
             </HeaderText>
           </HeaderInfo>
         </HeaderContent>
       </Header>
 
-      <ImageModerationQueue communityId={communityId} />
+      <ImageModerationQueue
+        communityId={siteWide ? undefined : (communityId ?? undefined)}
+      />
     </Container>
   );
 };

@@ -36,6 +36,7 @@ import { FeedPage } from "../pages/FeedPage";
 import { SiteAdminPage } from "../pages/SiteAdminPage";
 import { SiteInviteCodesPage } from "../pages/SiteInviteCodesPage";
 import { CommunityManagementPage } from "../pages/CommunityManagementPage";
+import { ImageModerationPage } from "../pages/ImageModerationPage";
 import { SiteAdminRoute } from "../components/SiteAdminRoute";
 import {
   canManageCommunities,
@@ -319,6 +320,14 @@ export const ApexRoutes: React.FC = () => (
       element={
         <SiteAdminRoute allow={canManageCommunities}>
           <CommunityManagementPage />
+        </SiteAdminRoute>
+      }
+    />
+    <Route
+      path="/admin/moderation/images"
+      element={
+        <SiteAdminRoute allow={isSiteAdmin}>
+          <ImageModerationPage siteWide />
         </SiteAdminRoute>
       }
     />

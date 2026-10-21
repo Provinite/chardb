@@ -4,6 +4,8 @@ import { MediaModule } from "./media.module";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
 import { CommunityResolverService } from "../auth/services/community-resolver.service";
+import { ImageModerationModule } from "../image-moderation/image-moderation.module";
+import { ImageModerationService } from "../image-moderation/image-moderation.service";
 import { ModerationStatus, Visibility } from "@chardb/database";
 
 /**
@@ -25,6 +27,7 @@ import { ModerationStatus, Visibility } from "@chardb/database";
 describe("community moderation queue, characterless uploads (e2e)", () => {
   let testApp: TestApp;
   let mediaService: MediaService;
+  let imageModerationService: ImageModerationService;
   let communityResolver: CommunityResolverService;
 
   let uploaderId: string;
@@ -72,9 +75,12 @@ describe("community moderation queue, characterless uploads (e2e)", () => {
   beforeAll(async () => {
     testApp = new TestApp();
     await testApp.setup({
-      imports: [DatabaseModule, AuthModule, MediaModule],
+      imports: [DatabaseModule, AuthModule, MediaModule, ImageModerationModule],
     });
     mediaService = testApp.getModuleRef().get(MediaService);
+    imageModerationService = testApp
+      .getModuleRef()
+      .get(ImageModerationService, { strict: false });
     communityResolver = testApp
       .getModuleRef()
       .get(CommunityResolverService, { strict: false });
@@ -157,6 +163,66 @@ describe("community moderation queue, characterless uploads (e2e)", () => {
 
       expect(count).toBe(queue.total);
       expect(count).toBe(1);
+    });
+  });
+
+  /**
+   * The site-wide queue (#404). An upload made at the apex names no community,
+   * so this is the only queue it can ever reach -- and until there was a page
+   * reading it, nobody could approve one.
+   */
+  describe("findAllPendingForModeration", () => {
+    it("includes an upload that names no community at all", async () => {
+      const mediaId = await createMedia({ title: "Apex upload" });
+
+      const queue = await mediaService.findAllPendingForModeration();
+
+      expect(queue.media.map((row) => row.id)).toContain(mediaId);
+    });
+
+    it("includes uploads from every community", async () => {
+      const ours = await createMedia({ title: "An avatar", communityId });
+      const theirs = await createMedia({
+        title: "Not yours",
+        communityId: otherCommunityId,
+      });
+
+      const queue = await mediaService.findAllPendingForModeration();
+
+      expect(queue.media.map((row) => row.id)).toEqual(
+        expect.arrayContaining([ours, theirs]),
+      );
+      expect(queue.total).toBe(2);
+    });
+
+    it("excludes an image that is no longer pending", async () => {
+      const mediaId = await createMedia({ title: "Apex upload" });
+      await testApp.getDb().image.updateMany({
+        where: { media: { some: { id: mediaId } } },
+        data: { moderationStatus: ModerationStatus.APPROVED },
+      });
+
+      const queue = await mediaService.findAllPendingForModeration();
+
+      expect(queue.media).toHaveLength(0);
+      expect(queue.total).toBe(0);
+    });
+
+    /**
+     * The site admin page shows this count beside a link to the queue. A
+     * pending image with no media -- a prize or item-type picture -- can never
+     * be listed there, so counting it promises work nobody can find.
+     */
+    it("is counted exactly by the global pending count", async () => {
+      await createMedia({ title: "Apex upload" });
+      await createMedia({ title: "An avatar", communityId });
+      await createPendingImage();
+
+      const queue = await mediaService.findAllPendingForModeration();
+      const count = await imageModerationService.getGlobalPendingCount();
+
+      expect(count).toBe(queue.total);
+      expect(count).toBe(2);
     });
   });
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Site-wide image moderation queue** at `/admin/moderation/images`, linked from Site Administration with its pending count, so avatars uploaded outside a community can be approved (#404).
 - **Halloween event page** at `/admin/halloween`, where a site admin has turned the event on from Community Management: settings and prize pool (add, edit, remove, searching chardb item types and characters) for `canManageItems`, and the win feed with "mark delivered" and a confirmed undo for `canGrantItems`, and which chardb prizes wait for their winner to link Discord or join (#399).
 - **The Halloween bot's candy images and author icons** ship in `public/halloween`, published with the frontend, instead of the old bot's hand-filled bucket (#399).
 - **Link Patreon Account** in Connected Accounts on `/profile/edit`, with its `/auth/patreon/callback` landing page (#236).

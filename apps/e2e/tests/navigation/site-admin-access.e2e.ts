@@ -12,16 +12,19 @@ const test = presetTest("community-basic");
  * it holds canCreateCommunity without being a site admin, and community
  * management is the only page it has for that.
  */
+const ADMIN_PATHS = [
+  "/admin",
+  "/admin/site-invite-codes",
+  "/admin/communities",
+  "/admin/deviantart-backfill",
+  "/admin/moderation/images",
+];
+
 test.describe("site admin access", () => {
   test.describe("as a member", () => {
     test.use({ persona: "member" });
 
-    for (const path of [
-      "/admin",
-      "/admin/site-invite-codes",
-      "/admin/communities",
-      "/admin/deviantart-backfill",
-    ]) {
+    for (const path of ADMIN_PATHS) {
       test(`${path} is not found`, async ({ page }) => {
         await page.goto(apexUrl(path));
         await expect(page.getByText("Page Not Found")).toBeVisible();
@@ -46,12 +49,20 @@ test.describe("site admin access", () => {
       await expect(
         page.getByRole("link", { name: /Site Invite Codes/ }),
       ).toHaveCount(0);
+      await expect(
+        page.getByRole("link", { name: /Image Moderation/ }),
+      ).toHaveCount(0);
 
       await page.goto(apexUrl("/admin/communities"));
       await expect(page.getByText("Page Not Found")).toHaveCount(0);
 
-      await page.goto(apexUrl("/admin/deviantart-backfill"));
-      await expect(page.getByText("Page Not Found")).toBeVisible();
+      for (const path of [
+        "/admin/deviantart-backfill",
+        "/admin/moderation/images",
+      ]) {
+        await page.goto(apexUrl(path));
+        await expect(page.getByText("Page Not Found")).toBeVisible();
+      }
     });
   });
 
@@ -59,12 +70,7 @@ test.describe("site admin access", () => {
     test.use({ persona: "siteadmin" });
 
     test("opens every page", async ({ page }) => {
-      for (const path of [
-        "/admin",
-        "/admin/site-invite-codes",
-        "/admin/communities",
-        "/admin/deviantart-backfill",
-      ]) {
+      for (const path of ADMIN_PATHS) {
         await page.goto(apexUrl(path));
         await expect(page.getByText("Page Not Found")).toHaveCount(0);
       }

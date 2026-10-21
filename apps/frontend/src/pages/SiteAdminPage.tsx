@@ -8,6 +8,7 @@ import {
   Database,
   Activity,
   RefreshCw,
+  Image,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -15,6 +16,7 @@ import {
   canUseSiteInviteCodes,
   isSiteAdmin,
 } from "../lib/siteAdminAccess";
+import { useGlobalPendingImageCountQuery } from "../generated/graphql";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -95,6 +97,18 @@ const CardDescription = styled.p`
   margin: 0;
 `;
 
+const PendingBadge = styled.span`
+  position: absolute;
+  top: ${({ theme }) => theme.spacing.lg};
+  right: ${({ theme }) => theme.spacing.lg};
+  padding: 0.25rem 0.75rem;
+  background: ${({ theme }) => theme.colors.warning}20;
+  color: ${({ theme }) => theme.colors.warning};
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 999px;
+`;
+
 const StatsCard = styled.div`
   background: ${({ theme }) => theme.colors.surface};
   border-radius: 12px;
@@ -139,6 +153,14 @@ export function SiteAdminPage() {
   const { user } = useAuth();
   const allowed = (allow: typeof isSiteAdmin) => !!user && allow(user);
 
+  // Site admins only on the server, so not asked for on behalf of anyone
+  // else this page lets in -- it would only come back forbidden.
+  const { data: pendingData } = useGlobalPendingImageCountQuery({
+    fetchPolicy: "network-only",
+    skip: !allowed(isSiteAdmin),
+  });
+  const pendingImages = pendingData?.globalPendingImageCount;
+
   return (
     <Container>
       <Header>
@@ -147,6 +169,22 @@ export function SiteAdminPage() {
       </Header>
 
       <Grid>
+        {allowed(isSiteAdmin) && (
+          <AdminCard to="/admin/moderation/images">
+            <CardIcon>
+              <Image size={24} />
+            </CardIcon>
+            <CardTitle>Image Moderation</CardTitle>
+            <CardDescription>
+              Every pending image on the site, including avatars and uploads
+              that belong to no community
+            </CardDescription>
+            {pendingImages !== undefined && (
+              <PendingBadge>{pendingImages} pending</PendingBadge>
+            )}
+          </AdminCard>
+        )}
+
         {allowed(canUseSiteInviteCodes) && (
           <AdminCard to="/admin/site-invite-codes">
             <CardIcon>

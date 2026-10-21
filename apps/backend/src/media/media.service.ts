@@ -591,10 +591,33 @@ export class MediaService {
     first: number = 20,
     offset: number = 0,
   ) {
+    return this.findPendingWhere(
+      mediaBelongingToCommunity(communityId),
+      first,
+      offset,
+    );
+  }
+
+  /**
+   * Every pending media on the site, for site admins (#404).
+   *
+   * A separate method rather than a nullable `communityId` on the one above,
+   * so that a missing community can never quietly widen a community queue to
+   * the whole site. This is the only queue an upload made at the apex reaches.
+   */
+  async findAllPendingForModeration(first: number = 20, offset: number = 0) {
+    return this.findPendingWhere({}, first, offset);
+  }
+
+  private async findPendingWhere(
+    scope: Prisma.MediaWhereInput,
+    first: number,
+    offset: number,
+  ) {
     const where: Prisma.MediaWhereInput = {
       imageId: { not: null },
       image: { moderationStatus: ModerationStatus.PENDING },
-      ...mediaBelongingToCommunity(communityId),
+      ...scope,
     };
 
     const [items, total] = await Promise.all([
