@@ -514,6 +514,44 @@ describe("CommunityHalloweenAdminPage", () => {
     ).toBeInTheDocument();
   });
 
+  // A win marked delivered no longer needs delivery: the list asks the server
+  // again, so the row leaves it and the next page starts in the right place.
+  it("takes a win marked delivered out of the needs-delivery list", async () => {
+    const asked = vi.fn(() => ({
+      data: {
+        halloweenWins: {
+          __typename: "HalloweenWinPage",
+          total: 0,
+          hasMore: false,
+          wins: [],
+        },
+      },
+    }));
+    renderPage([
+      dashboardMock(),
+      allWins,
+      winsMock(HalloweenWinFilter.NeedsDelivery, [adoptWin]),
+      markDeliveredMock,
+      dashboardMock(0),
+      {
+        request: winsMock(HalloweenWinFilter.NeedsDelivery, []).request,
+        result: asked,
+      },
+    ]);
+    await screen.findByTestId("halloween-win-1");
+    await userEvent.click(
+      screen.getByRole("button", { name: /Needs delivery \(1\)/ }),
+    );
+    const row = await screen.findByTestId("halloween-win-1");
+    await userEvent.click(
+      within(row).getByRole("button", { name: /Mark delivered/ }),
+    );
+    await vi.waitFor(() => expect(asked).toHaveBeenCalled());
+    await vi.waitFor(() =>
+      expect(screen.queryByTestId("halloween-win-1")).not.toBeInTheDocument(),
+    );
+  });
+
   it("keeps the delivery buttons out of the status column", async () => {
     renderPage();
     const row = await screen.findByTestId("halloween-win-1");

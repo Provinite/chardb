@@ -17,6 +17,7 @@ import {
 import { useOffsetPaging } from "../hooks/useOffsetPaging";
 import {
   HalloweenDashboardDocument,
+  HalloweenWinsDocument,
   HalloweenPrizeDelivery,
   HalloweenWinFilter,
   useHalloweenDashboardQuery,
@@ -279,10 +280,15 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
     skip,
     fetchPolicy: "cache-and-network",
   });
-  // The dashboard is refetched for its "to deliver" count; the win itself
-  // updates in place through the cache.
+  // The dashboard is refetched for its "to deliver" count. Under All the win
+  // updates in place through the cache; under a delivery filter it no longer
+  // belongs, so the list is asked for again, or the next page's offset would
+  // skip wins.
   const [setDelivered] = useSetHalloweenPrizeDeliveredMutation({
-    refetchQueries: [HalloweenDashboardDocument],
+    refetchQueries:
+      filter === HalloweenWinFilter.All
+        ? [HalloweenDashboardDocument]
+        : [HalloweenDashboardDocument, HalloweenWinsDocument],
   });
   const [removePrize, { loading: removingPrize }] =
     useRemoveHalloweenPrizeMutation({
