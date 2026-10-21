@@ -33,6 +33,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Removed
 
 - **`User.avatarImageModerationStatus`** and the `isAvatarUpload` field of `POST /images/upload`, since avatars are no longer moderated (#410).
+- **`ImagesService.findAll`**, an image-level listing nothing called, which would have listed avatars (#410).
 - **The SQS prize consumer** (`src/queue-consumer`), with `AWS_SQS_ENABLED`, `AWS_SQS_QUEUE_URL` and the `@ssut/nestjs-sqs` and `@aws-sdk/client-sqs` dependencies; the Halloween bot grants prizes itself (#399).
 
 ### Fixed

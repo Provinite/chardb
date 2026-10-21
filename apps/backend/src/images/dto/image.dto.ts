@@ -4,12 +4,10 @@ import {
   IsOptional,
   IsBoolean,
   IsInt,
-  IsNumber,
   IsArray,
   IsUUID,
   MaxLength,
   Min,
-  Max,
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
@@ -132,54 +130,9 @@ export class UpdateImageInput {
 }
 
 @InputType()
-export class ImageFiltersInput {
-  @Field(() => Int, { defaultValue: 20 })
-  @IsOptional()
-  @IsNumber()
-  @Min(1)
-  @Max(100)
-  limit?: number;
-
-  @Field(() => Int, { defaultValue: 0 })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  offset?: number;
-
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  uploaderId?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsBoolean()
-  isNsfw?: boolean;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  search?: string;
-
-  @Field(() => ID, { nullable: true })
-  @IsOptional()
-  @IsUUID()
-  artistId?: string;
-}
-
-@InputType()
 export class ManageImageTagsInput {
   @Field(() => [String])
   @IsArray()
   @IsString({ each: true })
   tagNames: string[];
-}
-
-// Export for service use
-export interface ImageFilters {
-  limit?: number;
-  offset?: number;
-  uploaderId?: string;
-  isNsfw?: boolean;
 }
