@@ -15,16 +15,20 @@ UPDATE "images" SET "is_avatar_upload" = true
    AND NOT EXISTS (SELECT 1 FROM "media" m
                     WHERE m."image_id" = "images"."id" AND m."is_avatar_upload" = false);
 
--- A rejected avatar is never served -- `UsersResolver.resolveAvatarImage`
--- still shows only APPROVED images -- but nothing on the page says why any
--- more, and nothing will ever review it again. Take it off the profile so the
--- owner sees their initials and can upload another.
-UPDATE "users" SET "avatar_image_id" = NULL
- WHERE "avatar_image_id" IN (SELECT "id" FROM "images" WHERE "moderation_status" = 'REJECTED');
-
 -- Nothing will ever review an avatar again; one still waiting is approved.
 UPDATE "images" SET "moderation_status" = 'APPROVED'
  WHERE "is_avatar_upload" = true AND "moderation_status" = 'PENDING';
+
+-- From here on, an avatar that is set is an avatar that is shown. Whatever is
+-- still not APPROVED -- a rejected avatar, or a post chosen as one while it
+-- was pending -- is never served (`UsersResolver.resolveAvatarImage` shows
+-- only APPROVED images), and the settings page no longer says why or offers
+-- to remove it. Take it off the profile so the owner sees their initials and
+-- can upload another. Nothing can make a set avatar unapproved afterwards:
+-- avatars are created APPROVED, `updateProfile` can only remove one, and
+-- `rejectImage` only rejects PENDING images.
+UPDATE "users" SET "avatar_image_id" = NULL
+ WHERE "avatar_image_id" IN (SELECT "id" FROM "images" WHERE "moderation_status" <> 'APPROVED');
 
 -- The rows that carried avatars through moderation. Their images stay; the
 -- ones this leaves unreferenced are #412's.

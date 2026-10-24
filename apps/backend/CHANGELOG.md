@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Avatars are uploaded through `POST /images/avatar`, unmoderated and without a Media row**, which also sets the avatar and deletes the one it replaces; migration `20261022120000_avatars_without_moderation` moves `is_avatar_upload` to `images`, approves pending avatars, clears rejected ones and deletes avatar media (#410).
+- **Avatars are uploaded through `POST /images/avatar`, unmoderated and without a Media row**, which also sets the avatar and deletes the one it replaces; migration `20261022120000_avatars_without_moderation` moves `is_avatar_upload` to `images`, approves pending avatar uploads, clears any avatar still not approved and deletes avatar media (#410).
 - **Breaking: `updateProfile` only removes an avatar**; any `avatarImageId` other than `null` is refused (#410).
 - **Breaking for local setups: three `HALLOWEEN_DISCORD_*` variables are required at boot**, the Halloween bot's own Discord application credentials, along with `FRONTEND_URL`, which its images are served from; see `.env.example` (#399).
 - **Breaking for local setups: every linking provider's client id and secret are required at boot.** A missing `DISCORD_`/`DEVIANTART_`/`TOYHOUSE_`/`PATREON_` `CLIENT_ID` or `CLIENT_SECRET` now stops the backend from starting, naming the variable (#236).
