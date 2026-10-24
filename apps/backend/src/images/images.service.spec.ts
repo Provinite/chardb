@@ -245,56 +245,8 @@ describe("ImagesService", () => {
   // left all three S3 objects behind, and nothing in the app ever called it.
   // Deleting the media is the supported path, and `cleanupOrphanedImage`
   // covers it.
-
-  describe("findAll", () => {
-    it("should return paginated images with proper filtering", async () => {
-      const mockImages = [
-        { id: "img1", originalFilename: "Image 1" },
-        { id: "img2", originalFilename: "Image 2" },
-      ];
-
-      db.image.findMany.mockResolvedValue(mockImages);
-      db.image.count.mockResolvedValue(2);
-
-      const result = await service.findAll({ limit: 10, offset: 0 });
-
-      expect(result).toEqual({
-        images: mockImages,
-        total: 2,
-        hasMore: false,
-      });
-
-      expect(db.image.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            AND: expect.arrayContaining([{ moderationStatus: "APPROVED" }]),
-          }),
-          include: expect.objectContaining({
-            uploader: true,
-          }),
-          orderBy: { createdAt: "desc" },
-          take: 10,
-          skip: 0,
-        }),
-      );
-    });
-
-    it("should filter by uploader when specified", async () => {
-      const uploaderId = "user1";
-      const filters = { uploaderId, limit: 10, offset: 0 };
-
-      db.image.findMany.mockResolvedValue([]);
-      db.image.count.mockResolvedValue(0);
-
-      await service.findAll(filters);
-
-      expect(db.image.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            AND: expect.arrayContaining([{ uploaderId }]),
-          }),
-        }),
-      );
-    });
-  });
+  //
+  // `findAll` went the same way in #411: an image-level listing nothing
+  // called, and the one place an avatar -- APPROVED and with no Media row --
+  // would have been listed. Listings reach images through Media.
 });

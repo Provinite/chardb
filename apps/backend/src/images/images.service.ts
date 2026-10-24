@@ -7,7 +7,7 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
-import { Prisma, Visibility, ModerationStatus } from "@chardb/database";
+import { Visibility, ModerationStatus } from "@chardb/database";
 import { notDeleted } from "../common/utils/prisma-filters";
 import * as sharp from "sharp";
 import { v4 as uuid } from "uuid";
@@ -49,12 +49,12 @@ export interface UploadImageInput {
    * `Media.communityId`.
    */
   communityId?: string;
-  /**
-   * This upload is a profile picture rather than a post. Its Media row exists
-   * so moderators can see it and is kept out of every listing -- see
-   * `Media.isAvatarUpload`.
-   */
-  isAvatarUpload?: boolean;
+}
+
+export interface UploadAvatarInput {
+  file: Express.Multer.File;
+  /** Avatar framing chosen before upload; centre crop when absent. */
+  thumbnailCrop?: ThumbnailCrop;
 }
 
 export interface UpdateImageInput {
@@ -71,15 +71,6 @@ export interface UpdateImageInput {
    * the thumbnail from the original.
    */
   thumbnailCrop?: ThumbnailCrop | null;
-}
-
-export interface ImageFilters {
-  limit?: number;
-  offset?: number;
-  uploaderId?: string;
-  isNsfw?: boolean;
-  search?: string;
-  artistId?: string;
 }
 
 @Injectable()
@@ -125,7 +116,6 @@ export class ImagesService {
       description,
       visibility,
       communityId,
-      isAvatarUpload = false,
     } = input;
 
     // Validate file
@@ -159,56 +149,15 @@ export class ImagesService {
       }
     }
 
-    // Generate unique filename
-    const fileExtension = extname(file.originalname);
-    const filename = `${uuid()}${fileExtension}`;
-
-    // Generate all image variants from original buffer. An out-of-bounds crop
-    // is rejected here, before anything reaches S3.
-    const { thumbnail, medium, width, height } = await this.processImage(
-      file.buffer,
-      thumbnailCrop,
-    );
-
-    // Generate imageId upfront for S3 key generation
-    const imageId = uuid();
-
-    // Determine mime types for each variant based on format
-    const thumbnailMimeType = this.getThumbnailMimeType(file.mimetype);
-    const mediumMimeType = this.getMediumMimeType(file.mimetype);
-
-    // Upload original, medium, and thumbnail to S3 using imageId
-    const [originalUploadResult, mediumUploadResult, thumbnailUploadResult] =
-      await Promise.all([
-        // Upload original unprocessed buffer
-        this.s3Service.uploadImage({
-          buffer: file.buffer,
-          filename: file.originalname,
-          mimeType: file.mimetype,
-          imageId,
-          sizeVariant: "original",
-        }),
-        // Upload medium (web-optimized display size)
-        this.s3Service.uploadImage({
-          buffer: medium,
-          filename: file.originalname,
-          mimeType: mediumMimeType,
-          imageId,
-          sizeVariant: "medium",
-        }),
-        // Upload thumbnail
-        this.s3Service.uploadImage({
-          buffer: thumbnail,
-          filename: file.originalname,
-          mimeType: thumbnailMimeType,
-          imageId,
-          sizeVariant: "thumbnail",
-        }),
-      ]);
-
-    const originalUrl = originalUploadResult.url;
-    const mediumUrl = mediumUploadResult.url;
-    const thumbnailUrl = thumbnailUploadResult.url;
+    const {
+      imageId,
+      filename,
+      originalUrl,
+      mediumUrl,
+      thumbnailUrl,
+      width,
+      height,
+    } = await this.storeImageFiles(file, thumbnailCrop);
 
     // Use transaction to create both image and media records
     const result = await this.db.$transaction(async (tx) => {
@@ -255,7 +204,6 @@ export class ImagesService {
           characterId: characterId || null,
           galleryId: galleryId || null,
           communityId: reviewingCommunityId,
-          isAvatarUpload,
           visibility: visibility
             ? (visibility.toUpperCase() as Visibility)
             : isNsfw
@@ -288,67 +236,135 @@ export class ImagesService {
     return result;
   }
 
-  // No viewer argument: image visibility is decided by moderation status
-  // alone (see getModerationVisibilityFilter), never by who is asking. The
-  // parameter this used to take was read by nothing and had been passed at
-  // every call site for long enough to look like it meant something.
-  async findAll(filters: ImageFilters = {}) {
+  /**
+   * Upload a profile picture and make it the uploader's avatar (#410).
+   *
+   * Avatars are not moderated and are not posts: the image is created
+   * APPROVED with no Media row, so it reaches no queue and no listing.
+   * Uploading and setting are one call so that there is never an uploaded
+   * avatar nobody uses -- with no media, nothing else would ever reference
+   * it, and so nothing would ever delete it.
+   *
+   * The avatar this replaces is deleted afterwards if nothing else holds it.
+   * An avatar set before #410 can still be a post in its owner's library, and
+   * `cleanupOrphanedImage` leaves that one alone.
+   */
+  async uploadAvatar(userId: string, input: UploadAvatarInput): Promise<Image> {
+    const { file, thumbnailCrop } = input;
+
+    this.validateFile(file);
+
     const {
-      limit = 20,
-      offset = 0,
-      uploaderId,
-      isNsfw,
-      search,
-      artistId,
-    } = filters;
+      imageId,
+      filename,
+      originalUrl,
+      mediumUrl,
+      thumbnailUrl,
+      width,
+      height,
+    } = await this.storeImageFiles(file, thumbnailCrop);
 
-    // Get moderation visibility filter
-    const moderationFilter = this.getModerationVisibilityFilter();
+    const { image, displacedImageId } = await this.db.$transaction(
+      async (tx) => {
+        // Held to the end of the transaction, so two uploads at once take
+        // turns: the second reads the first's avatar as the one it displaces
+        // and deletes it, rather than both displacing the same old one and
+        // leaving the first new one referenced by nothing.
+        const [current] = await tx.$queryRaw<
+          { avatar_image_id: string | null }[]
+        >`SELECT "avatar_image_id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
 
-    const where: Prisma.ImageWhereInput = {
-      AND: [
-        // Moderation status filter
-        moderationFilter,
-        // Other filters
-        uploaderId ? { uploaderId } : {},
-        artistId ? { artistId } : {},
-        isNsfw !== undefined ? { isNsfw } : {},
-
-        // Search filter
-        search
-          ? {
-              OR: [
-                { altText: { contains: search, mode: "insensitive" } },
-                { originalFilename: { contains: search, mode: "insensitive" } },
-                { artistName: { contains: search, mode: "insensitive" } },
-              ],
-            }
-          : {},
-      ],
-    };
-
-    const [images, total] = await Promise.all([
-      this.db.image.findMany({
-        where,
-        include: {
-          uploader: true,
-          tags_rel: {
-            include: {
-              tag: true,
-            },
+        const image = await tx.image.create({
+          data: {
+            id: imageId,
+            filename,
+            originalFilename: file.originalname,
+            originalUrl,
+            mediumUrl,
+            thumbnailUrl,
+            uploaderId: userId,
+            width,
+            height,
+            fileSize: file.size,
+            mimeType: file.mimetype,
+            isAvatarUpload: true,
+            moderationStatus: ModerationStatus.APPROVED,
+            ...cropToColumns(thumbnailCrop ?? null),
           },
-        },
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        skip: offset,
+        });
+
+        await tx.user.update({
+          where: { id: userId },
+          data: { avatarImageId: image.id },
+        });
+
+        return {
+          image,
+          displacedImageId: current?.avatar_image_id ?? null,
+        };
+      },
+    );
+
+    // After the transaction, so the reference being released is gone and the
+    // count `cleanupOrphanedImage` takes sees the truth.
+    if (displacedImageId) {
+      await this.discardIfOrphaned(displacedImageId);
+    }
+
+    return image;
+  }
+
+  /**
+   * Render every variant of an uploaded file and put all three in S3, under
+   * an image id generated here for the row the caller is about to create.
+   *
+   * An out-of-bounds crop is rejected before anything reaches S3.
+   */
+  private async storeImageFiles(
+    file: Express.Multer.File,
+    thumbnailCrop: ThumbnailCrop | undefined,
+  ) {
+    const filename = `${uuid()}${extname(file.originalname)}`;
+
+    const { thumbnail, medium, width, height } = await this.processImage(
+      file.buffer,
+      thumbnailCrop,
+    );
+
+    const imageId = uuid();
+
+    const [original, mediumUpload, thumbnailUpload] = await Promise.all([
+      this.s3Service.uploadImage({
+        buffer: file.buffer,
+        filename: file.originalname,
+        mimeType: file.mimetype,
+        imageId,
+        sizeVariant: "original",
       }),
-      this.db.image.count({ where }),
+      this.s3Service.uploadImage({
+        buffer: medium,
+        filename: file.originalname,
+        mimeType: this.getMediumMimeType(file.mimetype),
+        imageId,
+        sizeVariant: "medium",
+      }),
+      this.s3Service.uploadImage({
+        buffer: thumbnail,
+        filename: file.originalname,
+        mimeType: this.getThumbnailMimeType(file.mimetype),
+        imageId,
+        sizeVariant: "thumbnail",
+      }),
     ]);
 
     return {
-      images,
-      total,
-      hasMore: offset + limit < total,
+      imageId,
+      filename,
+      originalUrl: original.url,
+      mediumUrl: mediumUpload.url,
+      thumbnailUrl: thumbnailUpload.url,
+      width,
+      height,
     };
   }
 
@@ -375,18 +391,6 @@ export class ImagesService {
     }
 
     return image;
-  }
-
-  /**
-   * Build Prisma filter for moderation visibility in general image lists.
-   * Lists should ONLY show APPROVED images - pending/rejected images are
-   * viewed through dedicated interfaces (moderation queue, my pending uploads).
-   */
-  private getModerationVisibilityFilter(): Prisma.ImageWhereInput {
-    // All image lists only show approved images
-    // Users see their pending uploads via dedicated "my pending uploads" query
-    // Moderators see pending images via the moderation queue
-    return { moderationStatus: ModerationStatus.APPROVED };
   }
 
   /**
@@ -970,6 +974,24 @@ export class ImagesService {
    * @param imageId The ID of the image to check
    * @returns Promise<boolean> True if image was orphaned and deleted, false otherwise
    */
+  /**
+   * `cleanupOrphanedImage` for a caller whose own work is already committed:
+   * a failure is logged, never thrown. Replacing or removing an avatar has
+   * happened by the time its old picture is tidied up, and reporting that as
+   * failed would send someone to do it again.
+   */
+  async discardIfOrphaned(imageId: string): Promise<void> {
+    try {
+      await this.cleanupOrphanedImage(imageId);
+    } catch (error: unknown) {
+      new Logger("ImagesService").warn({
+        message: "Could not delete an image that may no longer be referenced",
+        imageId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   async cleanupOrphanedImage(imageId: string): Promise<boolean> {
     const logger = new Logger("ImagesService");
     logger.log(

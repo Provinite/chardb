@@ -11,7 +11,6 @@ import { ModerationStatus } from "@prisma/client";
 import { ImagesService } from "../images/images.service";
 import {
   notDeleted,
-  notAvatarUpload,
   mediaBelongingToCommunity,
 } from "../common/utils/prisma-filters";
 import { MediaAwardRelation } from "./entities/media-award-recipient.entity";
@@ -138,10 +137,6 @@ export class MediaService {
     const offset = filters?.offset || 0;
 
     const where: Prisma.MediaWhereInput = {
-      // Avatar uploads are not posts; see `notAvatarUpload`. This is the one
-      // filter here that applies to the owner as well, because the row is not
-      // something they chose to create.
-      ...notAvatarUpload,
       AND: [
         // Visibility. Public to everyone; anything else only to its owner.
         //
@@ -564,7 +559,7 @@ export class MediaService {
    */
   async getCharacterMediaCount(characterId: string): Promise<number> {
     return this.db.media.count({
-      where: { characterId: characterId, ...notAvatarUpload },
+      where: { characterId: characterId },
     });
   }
 
@@ -575,7 +570,7 @@ export class MediaService {
    */
   async getGalleryMediaCount(galleryId: string): Promise<number> {
     return this.db.media.count({
-      where: { galleryId: galleryId, ...notAvatarUpload },
+      where: { galleryId: galleryId },
     });
   }
 

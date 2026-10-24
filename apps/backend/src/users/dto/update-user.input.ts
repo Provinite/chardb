@@ -39,7 +39,7 @@ export class UpdateUserInput {
   @Field(() => ID, {
     nullable: true,
     description:
-      "An image you uploaded, to show as your avatar. It must be approved in moderation first. Explicit null removes your avatar; omitting the field leaves it alone.",
+      "Explicit null removes your avatar; omitting the field leaves it alone. Any other value is refused: an avatar is set by uploading one to POST /images/avatar.",
   })
   @IsOptional()
   @IsUUID()

@@ -125,7 +125,6 @@ export const createMockUser = (
   createdAt: "2023-01-01T00:00:00Z",
   updatedAt: "2023-01-01T00:00:00Z",
   avatarImage: null,
-  avatarImageModerationStatus: null,
   communityMemberships: { totalCount: 0, hasNextPage: false, nodes: [] },
   ...overrides,
 });
@@ -147,7 +146,6 @@ export const createMockUpdatedProfile = (
   website: null,
   dateOfBirth: null,
   isVerified: false,
-  avatarImageModerationStatus: null,
   createdAt: "2023-01-01T00:00:00Z",
   updatedAt: "2023-01-01T00:00:00Z",
   avatarImage: null,

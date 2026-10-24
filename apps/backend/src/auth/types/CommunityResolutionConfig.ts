@@ -14,7 +14,7 @@ export interface CommunityResolutionConfig {
    * media reaches a community through its character where it has one and
    * through `Media.communityId` where it does not, and resolving from the
    * character alone silently denies everything with no character -- a gallery
-   * upload, a user avatar -- rather than resolving it the other way.
+   * upload, for one -- rather than resolving it the other way.
    */
   mediaId?: string;
   /** Path to species ID in arguments */

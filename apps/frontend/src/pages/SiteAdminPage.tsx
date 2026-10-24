@@ -176,8 +176,8 @@ export function SiteAdminPage() {
             </CardIcon>
             <CardTitle>Image Moderation</CardTitle>
             <CardDescription>
-              Every pending image on the site, including avatars and uploads
-              that belong to no community
+              Every pending image on the site, including uploads that belong to
+              no community
             </CardDescription>
             {pendingImages !== undefined && (
               <PendingBadge>{pendingImages} pending</PendingBadge>

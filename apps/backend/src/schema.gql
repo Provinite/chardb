@@ -5164,7 +5164,7 @@ input UpdateTraitOrdersInput {
 
 input UpdateUserInput {
   """
-  An image you uploaded, to show as your avatar. It must be approved in moderation first. Explicit null removes your avatar; omitting the field leaves it alone.
+  Explicit null removes your avatar; omitting the field leaves it alone. Any other value is refused: an avatar is set by uploading one to POST /images/avatar.
   """
   avatarImageId: ID
   bio: String
@@ -5191,11 +5191,6 @@ type UseItemResult {
 
 type User {
   avatarImage: Image
-
-  """
-  Moderation status of the image set as your avatar, whether or not it is showing. Null when no avatar is set. Visible only to the account it belongs to.
-  """
-  avatarImageModerationStatus: ModerationStatus
   bio: String
   canCreateCommunity: Boolean!
   canCreateInviteCode: Boolean!

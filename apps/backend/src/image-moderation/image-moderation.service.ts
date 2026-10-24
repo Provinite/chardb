@@ -181,9 +181,9 @@ export class ImageModerationService {
    * The character path wins because it is the live answer: a character moved
    * into another community's species takes its media with it, while the
    * column was written once at upload and cannot follow. The column exists for
-   * media that has no character at all -- a gallery upload, a user avatar --
-   * which before it resolved to null and so could only ever be moderated by a
-   * site admin.
+   * media that has no character at all -- a gallery upload, for one -- which
+   * before it resolved to null and so could only ever be moderated by a site
+   * admin.
    *
    * `findFirst` because one image can hang off several media. Which one
    * answers is arbitrary and always has been; the queue shows one of them, and
