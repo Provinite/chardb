@@ -270,12 +270,9 @@ export class ImagesService {
         // turns: the second reads the first's avatar as the one it displaces
         // and deletes it, rather than both displacing the same old one and
         // leaving the first new one referenced by nothing.
-        await tx.$queryRaw`SELECT 1 FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
-
-        const current = await tx.user.findUnique({
-          where: { id: userId },
-          select: { avatarImageId: true },
-        });
+        const [current] = await tx.$queryRaw<
+          { avatar_image_id: string | null }[]
+        >`SELECT "avatar_image_id" FROM "users" WHERE "id" = ${userId} FOR UPDATE`;
 
         const image = await tx.image.create({
           data: {
@@ -301,14 +298,17 @@ export class ImagesService {
           data: { avatarImageId: image.id },
         });
 
-        return { image, displacedImageId: current?.avatarImageId ?? null };
+        return {
+          image,
+          displacedImageId: current?.avatar_image_id ?? null,
+        };
       },
     );
 
     // After the transaction, so the reference being released is gone and the
     // count `cleanupOrphanedImage` takes sees the truth.
     if (displacedImageId) {
-      await this.cleanupOrphanedImage(displacedImageId);
+      await this.discardIfOrphaned(displacedImageId);
     }
 
     return image;
@@ -974,6 +974,24 @@ export class ImagesService {
    * @param imageId The ID of the image to check
    * @returns Promise<boolean> True if image was orphaned and deleted, false otherwise
    */
+  /**
+   * `cleanupOrphanedImage` for a caller whose own work is already committed:
+   * a failure is logged, never thrown. Replacing or removing an avatar has
+   * happened by the time its old picture is tidied up, and reporting that as
+   * failed would send someone to do it again.
+   */
+  async discardIfOrphaned(imageId: string): Promise<void> {
+    try {
+      await this.cleanupOrphanedImage(imageId);
+    } catch (error: unknown) {
+      new Logger("ImagesService").warn({
+        message: "Could not delete an image that may no longer be referenced",
+        imageId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   async cleanupOrphanedImage(imageId: string): Promise<boolean> {
     const logger = new Logger("ImagesService");
     logger.log(

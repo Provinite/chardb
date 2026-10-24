@@ -3,6 +3,7 @@ import { UsersModule } from "./users.module";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
 import { ModerationStatus } from "@chardb/database";
+import { ImagesService } from "../images/images.service";
 
 /**
  * Avatars at the API, since #410.
@@ -170,6 +171,28 @@ describe("UsersResolver avatars (e2e)", () => {
       await expect(
         testApp.getDb().image.findUnique({ where: { id: imageId } }),
       ).resolves.toBeNull();
+    });
+
+    /** The removal is what was asked for; tidying up after it is not. */
+    it("removes the avatar when deleting its image fails", async () => {
+      await createAvatar();
+      const images = testApp
+        .getModuleRef()
+        .get(ImagesService, { strict: false });
+      const cleanup = jest
+        .spyOn(images, "cleanupOrphanedImage")
+        .mockRejectedValueOnce(new Error("database hiccup"));
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        UPDATE_PROFILE,
+        { input: { avatarImageId: null } },
+        ownerToken,
+      );
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.updateProfile.avatarImage).toBeNull();
+      expect(cleanup).toHaveBeenCalledTimes(1);
+      cleanup.mockRestore();
     });
 
     /**

@@ -5,6 +5,7 @@ import { AuthModule } from "../auth/auth.module";
 import { UsersModule } from "../users/users.module";
 import { ImagesModule } from "./images.module";
 import { S3Service } from "./s3.service";
+import { ImagesService } from "./images.service";
 import { ModerationStatus } from "@chardb/database";
 
 /**
@@ -172,6 +173,26 @@ describe("POST /images/avatar (e2e)", () => {
       select: { id: true },
     });
     expect(avatars).toEqual([{ id: await avatarOf(userId) }]);
+  });
+
+  /**
+   * Deleting the old avatar happens after the new one is committed. If that
+   * fails, the upload still worked; answering with an error would send the
+   * user to upload again and replace the avatar they just set.
+   */
+  it("succeeds when deleting the replaced avatar fails", async () => {
+    await upload();
+    const images = testApp.getModuleRef().get(ImagesService, { strict: false });
+    const cleanup = jest
+      .spyOn(images, "cleanupOrphanedImage")
+      .mockRejectedValueOnce(new Error("database hiccup"));
+
+    const second = await upload();
+
+    expect(second.status).toBe(201);
+    await expect(avatarOf(userId)).resolves.toBe(second.body.id);
+    expect(cleanup).toHaveBeenCalledTimes(1);
+    cleanup.mockRestore();
   });
 
   it("refuses an unauthenticated upload", async () => {

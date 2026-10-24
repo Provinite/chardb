@@ -132,11 +132,8 @@ export class UsersService {
       updateData.dateOfBirth = input.dateOfBirth;
     if (input.privacySettings !== undefined)
       updateData.privacySettings = input.privacySettings;
-    // The picture this is replacing, read before the write so it can be swept
-    // up after. Only when the avatar is actually part of this update -- every
-    // other field leaves it alone.
-    let displacedImageId: string | null = null;
-    if (input.avatarImageId !== undefined) {
+    const removingAvatar = input.avatarImageId !== undefined;
+    if (removingAvatar) {
       // Removal only. An avatar is set by uploading one, through
       // `ImagesService.uploadAvatar` (#410): avatars skip moderation, so the
       // only images that may become one are images uploaded to be one.
@@ -145,27 +142,39 @@ export class UsersService {
           "An avatar is set by uploading one; this can only remove it",
         );
       }
-
-      const current = await this.db.user.findUnique({
-        where: { id },
-        select: { avatarImageId: true },
-      });
-      displacedImageId = current?.avatarImageId ?? null;
-
       updateData.avatarImage = { disconnect: true };
     }
 
-    const updated = await this.db.user.update({
-      where: { id },
-      data: updateData,
-    });
+    const { updated, displacedImageId } = await this.db.$transaction(
+      async (tx) => {
+        // The picture this removes, read under the same row lock
+        // `uploadAvatar` takes, so a removal and an upload at once take turns
+        // rather than each sweeping up a picture the other has already moved
+        // on from. Only when the avatar is part of this update -- every other
+        // field leaves it alone.
+        const [current] = removingAvatar
+          ? await tx.$queryRaw<{ avatar_image_id: string | null }[]>`
+              SELECT "avatar_image_id" FROM "users" WHERE "id" = ${id} FOR UPDATE`
+          : [];
+
+        const updated = await tx.user.update({
+          where: { id },
+          data: updateData,
+        });
+
+        return {
+          updated,
+          displacedImageId: current?.avatar_image_id ?? null,
+        };
+      },
+    );
 
     // After the write, so the reference being released is already gone and the
     // count below sees the truth. `cleanupOrphanedImage` decides for itself:
     // an avatar set before #410 can still be a post in somebody's library, and
     // is not rubbish just because it stopped being an avatar.
     if (displacedImageId) {
-      await this.imagesService.cleanupOrphanedImage(displacedImageId);
+      await this.imagesService.discardIfOrphaned(displacedImageId);
     }
 
     return updated;
