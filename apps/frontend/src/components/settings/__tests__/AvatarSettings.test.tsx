@@ -2,7 +2,7 @@
  * The avatar control since #410: an avatar is uploaded, never chosen from
  * your posts, and is never waiting on a moderator.
  */
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, afterEach, onTestFinished } from "vitest";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MockedProvider } from "@apollo/client/testing";
 import { ThemeProvider } from "styled-components";
@@ -100,10 +100,16 @@ describe("AvatarSettings", () => {
       "fetch",
       vi.fn(async () => new Response(JSON.stringify({ id: "image-1" }))),
     );
-    vi.stubGlobal("URL", {
-      ...URL,
-      createObjectURL: () => "blob:preview",
-      revokeObjectURL: () => {},
+    // Just the two statics jsdom lacks, so `new URL(...)` keeps working.
+    const objectUrls = {
+      create: URL.createObjectURL,
+      revoke: URL.revokeObjectURL,
+    };
+    URL.createObjectURL = vi.fn(() => "blob:preview");
+    URL.revokeObjectURL = vi.fn();
+    onTestFinished(() => {
+      URL.createObjectURL = objectUrls.create;
+      URL.revokeObjectURL = objectUrls.revoke;
     });
     apollo.refetchQueries.mockRejectedValue(new Error("network down"));
 
