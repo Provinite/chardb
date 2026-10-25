@@ -725,7 +725,11 @@ export const EditCharacterPage: React.FC = () => {
             image={
               character.mainMedia?.image
                 ? {
+                    mediaId: character.mainMedia.id,
                     url:
+                      character.mainMedia.image.mediumUrl ||
+                      character.mainMedia.image.originalUrl,
+                    thumbnailUrl:
                       character.mainMedia.image.thumbnailUrl ||
                       character.mainMedia.image.originalUrl,
                     altText:

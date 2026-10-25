@@ -8,13 +8,30 @@ import userEvent from "@testing-library/user-event";
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
-import { GetMyCharactersForImageUploadDocument } from "../../generated/graphql";
+import {
+  GetMyCharactersForImageUploadDocument,
+  ModerationStatus,
+} from "../../generated/graphql";
 import { MyCharacterTypeahead } from "../MyCharacterTypeahead";
 
-const character = (id: string, name: string) => ({
+const character = (
+  id: string,
+  name: string,
+  image: {
+    thumbnailUrl: string;
+    moderationStatus: ModerationStatus;
+  } | null = null,
+) => ({
   __typename: "Character" as const,
   id,
   name,
+  mainMedia: image
+    ? {
+        __typename: "Media" as const,
+        id: `media-${id}`,
+        image: { __typename: "Image" as const, id: `image-${id}`, ...image },
+      }
+    : null,
   species: {
     __typename: "Species" as const,
     id: "sp-1",
@@ -65,6 +82,33 @@ describe("MyCharacterTypeahead", () => {
     await userEvent.click(screen.getByRole("combobox", { name: "Character" }));
     const option = await screen.findByRole("option", { name: /Pumpkin Wisp/ });
     expect(option).toHaveTextContent("Lanternkin");
+  });
+
+  it("shows each character's thumbnail once it is approved", async () => {
+    renderBox([
+      mine({ limit: 50 }, [
+        character("ch-1", "Pumpkin Wisp", {
+          thumbnailUrl: "https://img/wisp.png",
+          moderationStatus: ModerationStatus.Approved,
+        }),
+        character("ch-2", "Moth Ghost", {
+          thumbnailUrl: "https://img/placeholder.svg",
+          moderationStatus: ModerationStatus.Pending,
+        }),
+      ]),
+    ]);
+    await userEvent.click(screen.getByRole("combobox", { name: "Character" }));
+
+    const wisp = await screen.findByRole("option", { name: /Pumpkin Wisp/ });
+    expect(wisp.querySelector("img")).toHaveAttribute(
+      "src",
+      "https://img/wisp.png",
+    );
+
+    // A pending image's URL is the moderation placeholder; the initial reads
+    // better at this size.
+    const moth = screen.getByRole("option", { name: /Moth Ghost/ });
+    expect(moth.querySelector("img")).toBeNull();
   });
 
   it("searches my characters and picks one", async () => {

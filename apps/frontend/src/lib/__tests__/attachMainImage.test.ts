@@ -79,6 +79,39 @@ describe("attachMainImage", () => {
     expect(body.get("sensitiveContentDescription")).toBe("Spiders");
   });
 
+  it("sends the chosen thumbnail framing with the upload", async () => {
+    fetchMock.mockResolvedValue(okResponse({ id: "media-1" }));
+
+    await attachMainImage({
+      characterId: "char-1",
+      image: image({
+        thumbnailCrop: { x: 10, y: 20, width: 300, height: 300 },
+      }),
+      visibility: Visibility.Public,
+      setMainMedia: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const body = fetchMock.mock.calls[0][1]?.body as FormData;
+    expect(body.get("thumbnailCropX")).toBe("10");
+    expect(body.get("thumbnailCropY")).toBe("20");
+    expect(body.get("thumbnailCropWidth")).toBe("300");
+    expect(body.get("thumbnailCropHeight")).toBe("300");
+  });
+
+  it("sends no framing when none was chosen", async () => {
+    fetchMock.mockResolvedValue(okResponse({ id: "media-1" }));
+
+    await attachMainImage({
+      characterId: "char-1",
+      image: image(),
+      visibility: Visibility.Public,
+      setMainMedia: vi.fn().mockResolvedValue(undefined),
+    });
+
+    const body = fetchMock.mock.calls[0][1]?.body as FormData;
+    expect(body.has("thumbnailCropX")).toBe(false);
+  });
+
   it("reports the upload step when the upload is refused", async () => {
     fetchMock.mockResolvedValue(
       new Response(JSON.stringify({ message: "Too large" }), { status: 413 }),

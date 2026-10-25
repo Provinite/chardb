@@ -273,6 +273,7 @@ export const GET_CHARACTER = gql`
         image {
           id
           originalUrl
+          mediumUrl
           thumbnailUrl
           altText
           isNsfw
@@ -396,6 +397,15 @@ export const GET_MY_CHARACTERS_FOR_IMAGE_UPLOAD = gql`
       characters {
         id
         name
+        # The icon beside each option (#418).
+        mainMedia {
+          id
+          image {
+            id
+            thumbnailUrl
+            moderationStatus
+          }
+        }
         species {
           id
           name
@@ -630,6 +640,7 @@ export const SET_CHARACTER_MAIN_MEDIA = gql`
         image {
           id
           originalUrl
+          mediumUrl
           thumbnailUrl
           altText
           isNsfw
