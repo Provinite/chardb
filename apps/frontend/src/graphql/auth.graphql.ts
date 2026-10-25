@@ -107,6 +107,7 @@ export const ME_QUERY = gql`
             canEditOwnCharacterRegistry
             canEditCharacterRegistry
             canCreateOrphanedCharacter
+            canUploadOwnCharacterImages
             canCreateInviteCode
             canListInviteCodes
             canCreateRole
