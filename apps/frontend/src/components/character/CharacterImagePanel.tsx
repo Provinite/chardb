@@ -142,14 +142,6 @@ interface CharacterImagePickerProps {
   disabledReason?: string;
 }
 
-type FlagKey = "nsfwNudity" | "nsfwGore" | "nsfwSensitive";
-
-const FLAGS: { key: FlagKey; label: string }[] = [
-  { key: "nsfwNudity", label: "Nudity" },
-  { key: "nsfwGore", label: "Gore" },
-  { key: "nsfwSensitive", label: "Sensitive Content" },
-];
-
 /**
  * Picks the image a new character starts with. Nothing is uploaded here: the
  * file is held until the character exists, then attached by the page.
@@ -173,8 +165,6 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
     onChange({
       file: first.file,
       preview: first.preview,
-      nsfwNudity: false,
-      nsfwGore: false,
       nsfwSensitive: false,
       sensitiveContentDescription: "",
     });
@@ -201,18 +191,16 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
 
           <FlagGroup>
             <FlagLegend>NSFW Settings</FlagLegend>
-            {FLAGS.map(({ key, label }) => (
-              <FlagLabel key={key}>
-                <input
-                  type="checkbox"
-                  checked={value[key]}
-                  onChange={(e) =>
-                    onChange({ ...value, [key]: e.target.checked })
-                  }
-                />
-                {label}
-              </FlagLabel>
-            ))}
+            <FlagLabel>
+              <input
+                type="checkbox"
+                checked={value.nsfwSensitive}
+                onChange={(e) =>
+                  onChange({ ...value, nsfwSensitive: e.target.checked })
+                }
+              />
+              Sensitive Content
+            </FlagLabel>
           </FlagGroup>
 
           {value.nsfwSensitive && (

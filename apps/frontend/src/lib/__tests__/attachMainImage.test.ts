@@ -10,8 +10,6 @@ const image = (
   overrides: Partial<PendingCharacterImage> = {},
 ): PendingCharacterImage => ({
   file: new File(["x"], "portrait.png", { type: "image/png" }),
-  nsfwNudity: false,
-  nsfwGore: false,
   nsfwSensitive: false,
   sensitiveContentDescription: "",
   ...overrides,
@@ -63,7 +61,7 @@ describe("attachMainImage", () => {
     expect(body.get("file")).toBeInstanceOf(Blob);
   });
 
-  it("flags the upload as mature when any category is ticked", async () => {
+  it("flags the upload as mature when sensitive content is ticked", async () => {
     fetchMock.mockResolvedValue(okResponse({ id: "media-1" }));
 
     await attachMainImage({
@@ -78,7 +76,6 @@ describe("attachMainImage", () => {
 
     const body = fetchMock.mock.calls[0][1]?.body as FormData;
     expect(body.get("isNsfw")).toBe("true");
-    expect(body.get("nsfwSensitive")).toBe("true");
     expect(body.get("sensitiveContentDescription")).toBe("Spiders");
   });
 

@@ -32,8 +32,6 @@ const picked = (
 ): PickedCharacterImage => ({
   file: new File(["x"], "portrait.png", { type: "image/png" }),
   preview: "blob:picked",
-  nsfwNudity: false,
-  nsfwGore: false,
   nsfwSensitive: false,
   sensitiveContentDescription: "",
   ...overrides,
@@ -54,8 +52,6 @@ describe("CharacterImagePicker", () => {
     expect(onChange).toHaveBeenCalledWith({
       file,
       preview: "blob:preview",
-      nsfwNudity: false,
-      nsfwGore: false,
       nsfwSensitive: false,
       sensitiveContentDescription: "",
     });
@@ -84,22 +80,31 @@ describe("CharacterImagePicker", () => {
 
     expect(screen.queryByText(/not accepted at this time/i)).toBeNull();
 
-    await userEvent.click(screen.getByRole("checkbox", { name: "Gore" }));
+    await userEvent.click(
+      screen.getByRole("checkbox", { name: "Sensitive Content" }),
+    );
     expect(onChange).toHaveBeenCalledWith(
-      expect.objectContaining({ nsfwGore: true }),
+      expect.objectContaining({ nsfwSensitive: true }),
     );
 
     rerender(
       <MemoryRouter>
         <ThemeProvider theme={lightTheme}>
           <CharacterImagePicker
-            value={picked({ nsfwGore: true })}
+            value={picked({ nsfwSensitive: true })}
             onChange={onChange}
           />
         </ThemeProvider>
       </MemoryRouter>,
     );
     expect(screen.getByText(/not accepted at this time/i)).toBeVisible();
+  });
+
+  it("offers no flags the backend does not store", () => {
+    wrap(<CharacterImagePicker value={picked()} onChange={vi.fn()} />);
+
+    expect(screen.queryByRole("checkbox", { name: "Nudity" })).toBeNull();
+    expect(screen.queryByRole("checkbox", { name: "Gore" })).toBeNull();
   });
 
   it("asks for a description once sensitive content is ticked", () => {
@@ -135,7 +140,7 @@ describe("isPickedImageBlocked", () => {
   it("blocks only a flagged image", () => {
     expect(isPickedImageBlocked(null)).toBe(false);
     expect(isPickedImageBlocked(picked())).toBe(false);
-    expect(isPickedImageBlocked(picked({ nsfwNudity: true }))).toBe(true);
+    expect(isPickedImageBlocked(picked({ nsfwSensitive: true }))).toBe(true);
   });
 });
 

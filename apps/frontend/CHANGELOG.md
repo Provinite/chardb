@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Image upload on the character create form**, pinned beside the form and attached as the new character's main image; the edit form shows the current main image the same way (#406).
 
+### Changed
+
+- **The upload form drops its Nudity and Gore checkboxes**, which the server never stored; Sensitive Content and its description remain (#406).
+
 ### Fixed
 
 - **Members without `canCreateOrphanedCharacter` can create characters again**; the form sent `assignToSelf: false` for them, which the server refused as an orphan.

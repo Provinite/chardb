@@ -5,14 +5,11 @@ import type { Visibility } from "../generated/graphql";
 /**
  * The image picked on the create form, held until the character exists.
  *
- * The category flags mirror the upload page's. Only `isNsfw` (any of them)
- * and the description are stored by the backend today; the flags are sent
- * anyway so both forms send the same request.
+ * Sensitive content is the one flag offered, because it is what the backend
+ * stores: it becomes `isNsfw`, with the description beside it.
  */
 export interface PendingCharacterImage {
   file: File;
-  nsfwNudity: boolean;
-  nsfwGore: boolean;
   nsfwSensitive: boolean;
   sensitiveContentDescription: string;
 }
@@ -22,7 +19,7 @@ export interface PendingCharacterImage {
  * refused site-wide for now, the same rule the upload page enforces.
  */
 export const isPickedImageBlocked = (value: PendingCharacterImage | null) =>
-  Boolean(value && (value.nsfwNudity || value.nsfwGore || value.nsfwSensitive));
+  Boolean(value?.nsfwSensitive);
 
 export type AttachMainImageResult =
   | { ok: true; mediaId: string }
@@ -59,18 +56,12 @@ export async function attachMainImage({
   body.append("characterId", characterId);
   body.append("visibility", visibility);
 
-  const isNsfw = image.nsfwNudity || image.nsfwGore || image.nsfwSensitive;
-  body.append("isNsfw", String(isNsfw));
-  if (image.nsfwNudity) body.append("nsfwNudity", "true");
-  if (image.nsfwGore) body.append("nsfwGore", "true");
-  if (image.nsfwSensitive) {
-    body.append("nsfwSensitive", "true");
-    if (image.sensitiveContentDescription) {
-      body.append(
-        "sensitiveContentDescription",
-        image.sensitiveContentDescription,
-      );
-    }
+  body.append("isNsfw", String(image.nsfwSensitive));
+  if (image.nsfwSensitive && image.sensitiveContentDescription) {
+    body.append(
+      "sensitiveContentDescription",
+      image.sensitiveContentDescription,
+    );
   }
 
   let mediaId: string;
