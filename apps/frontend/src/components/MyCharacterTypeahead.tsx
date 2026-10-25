@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { CharacterTypeahead, type SearchSelectOption } from "@chardb/ui";
-import { useGetMyCharactersForImageUploadQuery } from "../generated/graphql";
+import {
+  ModerationStatus,
+  useGetMyCharactersForImageUploadQuery,
+} from "../generated/graphql";
 
 const LIMIT = 50;
 
@@ -30,11 +33,20 @@ export const MyCharacterTypeahead: React.FC<MyCharacterTypeaheadProps> = ({
   });
 
   const options = (data?.myCharactersForImageUpload.characters ?? []).map(
-    (character) => ({
-      id: character.id,
-      name: character.name,
-      subtitle: character.species?.name ?? null,
-    }),
+    (character) => {
+      const image = character.mainMedia?.image;
+      return {
+        id: character.id,
+        name: character.name,
+        // Only once approved: before that the URL is the moderation
+        // placeholder, and the initial reads better at this size.
+        image:
+          image?.moderationStatus === ModerationStatus.Approved
+            ? image.thumbnailUrl
+            : null,
+        subtitle: character.species?.name ?? null,
+      };
+    },
   );
 
   return (

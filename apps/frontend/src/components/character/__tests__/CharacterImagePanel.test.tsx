@@ -120,6 +120,40 @@ describe("CharacterImagePicker", () => {
     ).toBeVisible();
   });
 
+  it("offers to frame the thumbnail, centred until one is chosen", async () => {
+    wrap(<CharacterImagePicker value={picked()} onChange={vi.fn()} />);
+
+    expect(screen.getByText("Thumbnail: centre of the image")).toBeVisible();
+    await userEvent.click(screen.getByRole("button", { name: "Choose crop" }));
+    expect(await screen.findByText("Frame the thumbnail")).toBeVisible();
+  });
+
+  it("opens the cropper outside the pinned column", async () => {
+    // The column is `position: sticky`, which is a stacking context: a modal
+    // inside it is painted under the form beside it, whatever its z-index.
+    wrap(<CharacterImagePicker value={picked()} onChange={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Choose crop" }));
+    const title = await screen.findByText("Frame the thumbnail");
+    expect(screen.getByTestId("character-image-picker")).not.toContainElement(
+      title,
+    );
+  });
+
+  it("says when the thumbnail has been framed", () => {
+    wrap(
+      <CharacterImagePicker
+        value={picked({
+          thumbnailCrop: { x: 0, y: 0, width: 10, height: 10 },
+        })}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByText("Thumbnail: your crop")).toBeVisible();
+    expect(screen.getByRole("button", { name: "Change crop" })).toBeVisible();
+  });
+
   it("explains why it cannot take an image instead of offering one", () => {
     const { container } = wrap(
       <CharacterImagePicker
@@ -145,10 +179,17 @@ describe("isPickedImageBlocked", () => {
 });
 
 describe("CharacterMainImagePreview", () => {
-  it("shows the current main image", () => {
+  const main = {
+    mediaId: "media-1",
+    url: "https://img/main.png",
+    thumbnailUrl: "https://img/thumb.png",
+    altText: "Moth in a hat",
+  };
+
+  it("shows the current main image and its thumbnail", () => {
     wrap(
       <CharacterMainImagePreview
-        image={{ url: "https://img/main.png", altText: "Moth in a hat" }}
+        image={main}
         uploadHref="/image/upload?character=char-1"
       />,
     );
@@ -157,6 +198,22 @@ describe("CharacterMainImagePreview", () => {
       "src",
       "https://img/main.png",
     );
+    expect(
+      screen.getByRole("img", { name: "Thumbnail of Moth in a hat" }),
+    ).toHaveAttribute("src", "https://img/thumb.png");
+  });
+
+  it("links to the image's page to adjust its framing", () => {
+    wrap(
+      <CharacterMainImagePreview
+        image={main}
+        uploadHref="/image/upload?character=char-1"
+      />,
+    );
+
+    expect(
+      screen.getByRole("link", { name: /adjust framing/i }),
+    ).toHaveAttribute("href", "/media/media-1");
   });
 
   it("says when there is none and links to the upload page", () => {

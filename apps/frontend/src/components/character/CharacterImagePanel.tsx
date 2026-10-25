@@ -1,9 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Image as ImageIcon } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { ImageUpload, type ImageFile } from "../ImageUpload";
+import { ThumbnailCropper, type ThumbnailCropRect } from "../ThumbnailCropper";
 import {
   isPickedImageBlocked,
   type PendingCharacterImage,
@@ -146,6 +148,68 @@ export const CharacterFormLayout: React.FC<CharacterFormLayoutProps> = ({
   </Layout>
 );
 
+const ThumbnailRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const ThumbnailSquare = styled.div`
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  background-color: ${({ theme }) => theme.colors.background};
+  background-repeat: no-repeat;
+`;
+
+const ThumbnailImage = styled.img`
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+`;
+
+const ThumbnailText = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.xs};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme }) => theme.colors.text.secondary};
+`;
+
+/**
+ * Paint `src` as the server will thumbnail it: the crop rect scaled to fill
+ * the square, or a centred cover when there is none. CSS rather than a canvas
+ * so the preview follows the crop without re-encoding anything.
+ */
+const thumbnailBackground = (
+  src: string,
+  crop: ThumbnailCropRect | undefined,
+  natural: { width: number; height: number } | null,
+): React.CSSProperties => {
+  if (!crop || !natural) {
+    return {
+      backgroundImage: `url(${src})`,
+      backgroundSize: "cover",
+      backgroundPosition: "center",
+    };
+  }
+
+  const offset = (start: number, size: number, total: number) =>
+    total === size ? 0 : (start / (total - size)) * 100;
+
+  return {
+    backgroundImage: `url(${src})`,
+    backgroundSize: `${(natural.width / crop.width) * 100}% ${(natural.height / crop.height) * 100}%`,
+    backgroundPosition: `${offset(crop.x, crop.width, natural.width)}% ${offset(crop.y, crop.height, natural.height)}%`,
+  };
+};
+
 interface CharacterImagePickerProps {
   value: PickedCharacterImage | null;
   onChange: (value: PickedCharacterImage | null) => void;
@@ -163,6 +227,13 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
   disabledReason,
 }) => {
   const preview = value?.preview;
+  const [cropping, setCropping] = useState(false);
+  // The picked file's size as the browser paints it, which is the space the
+  // crop rect is measured in. Read off the preview once it loads.
+  const [natural, setNatural] = useState<{
+    width: number;
+    height: number;
+  } | null>(null);
 
   // The object URL lives as long as this pick does.
   useEffect(() => {
@@ -190,7 +261,16 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
 
       {value ? (
         <>
-          <Preview src={value.preview} alt={value.file.name} />
+          <Preview
+            src={value.preview}
+            alt={value.file.name}
+            onLoad={(e) =>
+              setNatural({
+                width: e.currentTarget.naturalWidth,
+                height: e.currentTarget.naturalHeight,
+              })
+            }
+          />
           <Button
             type="button"
             variant="ghost"
@@ -199,6 +279,60 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
           >
             Remove image
           </Button>
+
+          {/* The thumbnail is the character's icon in cards and pickers, so
+              this is where its face gets framed (#418). */}
+          <ThumbnailRow>
+            <ThumbnailSquare
+              role="img"
+              aria-label="Thumbnail preview"
+              style={thumbnailBackground(
+                value.preview,
+                value.thumbnailCrop,
+                natural,
+              )}
+            />
+            <ThumbnailText>
+              {value.thumbnailCrop
+                ? "Thumbnail: your crop"
+                : "Thumbnail: centre of the image"}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setCropping(true)}
+              >
+                {value.thumbnailCrop ? "Change crop" : "Choose crop"}
+              </Button>
+            </ThumbnailText>
+          </ThumbnailRow>
+
+          {/* Portalled out of the column: `position: sticky` makes it a
+              stacking context, so a modal left inside is painted under the
+              form beside it whatever its z-index. */}
+          {cropping &&
+            createPortal(
+              <ThumbnailCropper
+                isOpen
+                title="Frame the thumbnail"
+                imageSrc={value.preview}
+                initialCrop={value.thumbnailCrop}
+                onCancel={() => setCropping(false)}
+                onConfirm={(crop) => {
+                  onChange({ ...value, thumbnailCrop: crop });
+                  setCropping(false);
+                }}
+                onReset={
+                  value.thumbnailCrop
+                    ? () => {
+                        onChange({ ...value, thumbnailCrop: undefined });
+                        setCropping(false);
+                      }
+                    : undefined
+                }
+              />,
+              document.body,
+            )}
 
           <FlagGroup>
             <FlagLegend>NSFW Settings</FlagLegend>
@@ -256,7 +390,14 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
 };
 
 interface CharacterMainImagePreviewProps {
-  image: { url: string; altText: string } | null;
+  image: {
+    mediaId: string;
+    /** The full image, at display size. */
+    url: string;
+    /** The square thumbnail: the character's icon in cards and pickers. */
+    thumbnailUrl: string;
+    altText: string;
+  } | null;
   uploadHref: string;
 }
 
@@ -270,7 +411,21 @@ export const CharacterMainImagePreview: React.FC<
       Main Image
     </PanelTitle>
     {image ? (
-      <Preview src={image.url} alt={image.altText} />
+      <>
+        <Preview src={image.url} alt={image.altText} />
+        <ThumbnailRow>
+          <ThumbnailImage
+            src={image.thumbnailUrl}
+            alt={`Thumbnail of ${image.altText}`}
+          />
+          <ThumbnailText>
+            The thumbnail stands for the character in cards and pickers.
+            {/* Reframing lives on the image's own page, which owns the rules
+                for who may do it. */}
+            <PanelLink to={`/media/${image.mediaId}`}>Adjust framing</PanelLink>
+          </ThumbnailText>
+        </ThumbnailRow>
+      </>
     ) : (
       <Placeholder>No main image yet</Placeholder>
     )}

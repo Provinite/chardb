@@ -1,6 +1,7 @@
 import { API_BASE_URL } from "./communityHost";
 import { getAccessToken } from "./accessToken";
 import type { Visibility } from "../generated/graphql";
+import type { ThumbnailCropRect } from "../components/ThumbnailCropper";
 
 /**
  * The image picked on the create form, held until the character exists.
@@ -12,6 +13,11 @@ export interface PendingCharacterImage {
   file: File;
   nsfwSensitive: boolean;
   sensitiveContentDescription: string;
+  /**
+   * The thumbnail framing, which is also the character's icon wherever it is
+   * shown small (#418). Absent means the automatic centre crop.
+   */
+  thumbnailCrop?: ThumbnailCropRect;
 }
 
 /**
@@ -62,6 +68,15 @@ export async function attachMainImage({
       "sensitiveContentDescription",
       image.sensitiveContentDescription,
     );
+  }
+
+  // All four or none, as the upload page sends them.
+  const crop = image.thumbnailCrop;
+  if (crop) {
+    body.append("thumbnailCropX", String(crop.x));
+    body.append("thumbnailCropY", String(crop.y));
+    body.append("thumbnailCropWidth", String(crop.width));
+    body.append("thumbnailCropHeight", String(crop.height));
   }
 
   let mediaId: string;
