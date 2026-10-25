@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **A "Creating a Character" walkthrough** (`docs/docs/character-creation.html`), seven steps with seven screenshots: the form, picking its picture first, filling in the rest, creating it, a picture that fails to attach, and changing it later; Uploading Images and MYO Slots now point to it (#406).
+
 ## [v14.0.0] - 2026-10-25
 
 ### Added
