@@ -10,9 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Image upload on the character create form**, pinned beside the form and attached as the new character's main image; the edit form shows the current main image the same way (#406).
+- **Frame a new character's thumbnail on the create form**; the edit form shows the thumbnail with a link to re-frame it, and the upload page's character picker shows each character's thumbnail (#418).
 
 ### Changed
 
+- **The character page shows its main image whole** instead of the square thumbnail (#418).
 - **The upload form drops its Nudity and Gore checkboxes**, which the server never stored; Sensitive Content and its description remain (#406).
 
 ### Fixed

@@ -149,6 +149,23 @@
         border-top: 1px solid #e0e0e0;
       }
 
+      .screenshot-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        align-items: start;
+      }
+
+      .screenshot-row .screenshot {
+        margin-bottom: 0;
+      }
+
+      @media (max-width: 768px) {
+        .screenshot-row {
+          grid-template-columns: 1fr;
+        }
+      }
+
       .screenshot.narrow {
         max-width: 340px;
         margin-left: auto;
@@ -328,9 +345,11 @@
         <div class="screenshot narrow">
           <img
             src="character-create-image-picked.png"
-            alt="The Image panel showing the chosen picture, a Remove image button, and a Sensitive Content checkbox under NSFW Settings"
+            alt="The Image panel showing the chosen picture, a Remove image button, a small square thumbnail preview reading Thumbnail: your crop with a Change crop button, and a Sensitive Content checkbox under NSFW Settings"
           />
-          <div class="screenshot-caption">A picture chosen, ready to go</div>
+          <div class="screenshot-caption">
+            A picture chosen, with its thumbnail framed on the face
+          </div>
         </div>
       </div>
 
@@ -338,6 +357,48 @@
       <div class="step">
         <div class="step-header">
           <div class="step-number">3</div>
+          <h2 class="step-title">Framing Its Thumbnail</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The picture's square <strong>thumbnail</strong> is what stands for
+            the character wherever it is shown small: character cards, and the
+            character picker on the upload page. Character art is often
+            full-body, and the middle of a full-body drawing is a torso, so it
+            is worth saying where the face is.
+          </p>
+          <p>
+            Under the picture, a small square shows the thumbnail as it will be.
+            Before you choose it reads
+            <strong>&ldquo;Thumbnail: centre of the image&rdquo;</strong>.
+            <strong>Choose crop</strong> opens the cropper: drag the picture
+            under the square and use the zoom slider to tighten in, then
+            <strong>Use this crop</strong>. The line changes to
+            <strong>&ldquo;Thumbnail: your crop&rdquo;</strong>, and the button
+            becomes <strong>Change crop</strong>.
+          </p>
+          <p>
+            Only the thumbnail is framed. The picture itself is never cut down,
+            and the character's page shows it whole. See
+            <a href="thumbnail-framing.html">Thumbnail Framing</a> for more on
+            how thumbnails work.
+          </p>
+        </div>
+        <div class="screenshot narrow" style="max-width: 520px">
+          <img
+            src="character-create-thumbnail-cropper.png"
+            alt="The Frame the thumbnail dialog: a square frame over the character's face, a zoom slider, and Cancel and Use this crop buttons"
+          />
+          <div class="screenshot-caption">
+            Framing the thumbnail on the face
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
           <h2 class="step-title">Filling in the Rest</h2>
         </div>
         <div class="step-content">
@@ -383,10 +444,10 @@
         </div>
       </div>
 
-      <!-- Step 4 -->
+      <!-- Step 5 -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">4</div>
+          <div class="step-number">5</div>
           <h2 class="step-title">Creating It</h2>
         </div>
         <div class="step-content">
@@ -415,18 +476,54 @@
         <div class="screenshot">
           <img
             src="character-create-approved.png"
-            alt="The same character's page after approval, with the picture shown as its main image"
+            alt="The same character's page after approval, with the whole picture shown as its main image"
           />
           <div class="screenshot-caption">
-            Once approved, it is the main image
+            Once approved, the whole picture heads the character's page
           </div>
         </div>
       </div>
 
-      <!-- Step 5 -->
+      <!-- Step 6 -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">5</div>
+          <div class="step-number">6</div>
+          <h2 class="step-title">Where the Thumbnail Shows</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Once the picture is approved, the thumbnail you framed stands for
+            the character in lists of characters, such as
+            <strong>My Characters</strong>, and in the character picker on the
+            upload page.
+          </p>
+          <p>
+            Until then those places show the character's initial or a
+            <em>pending moderation</em> placeholder instead.
+          </p>
+        </div>
+        <div class="screenshot-row">
+          <div class="screenshot">
+            <img
+              src="character-card-thumbnail.png"
+              alt="A character card for Lumen showing the framed thumbnail of the character's face"
+            />
+            <div class="screenshot-caption">A character card</div>
+          </div>
+          <div class="screenshot">
+            <img
+              src="character-typeahead-thumbnail.png"
+              alt="The character picker on the upload page, listing Lumen with its thumbnail beside two characters shown by their initials"
+            />
+            <div class="screenshot-caption">The character picker</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
           <h2 class="step-title">If the Picture Does Not Attach</h2>
         </div>
         <div class="step-content">
@@ -453,18 +550,23 @@
         </div>
       </div>
 
-      <!-- Step 6 -->
+      <!-- Step 8 -->
       <div class="step">
         <div class="step-header">
-          <div class="step-number">6</div>
+          <div class="step-number">8</div>
           <h2 class="step-title">Changing the Picture Later</h2>
         </div>
         <div class="step-content">
           <p>
             <strong>Edit Character</strong> shows the current main image in the
-            same column, so you can see the character while you edit it.
-            <strong>Upload a new image</strong> opens the upload page for this
-            character.
+            same column, with its thumbnail beneath, so you can see the
+            character while you edit it. <strong>Upload a new image</strong>
+            opens the upload page for this character.
+          </p>
+          <p>
+            <strong>Adjust framing</strong> opens the picture's own page, where
+            its thumbnail can be re-framed. Only whoever uploaded the picture
+            can do that, and only once it has been approved.
           </p>
           <p>
             A new upload does not replace the main image on its own. To make a
@@ -475,7 +577,7 @@
         <div class="screenshot">
           <img
             src="character-edit-main-image.png"
-            alt="The Edit Character page with a Main Image panel on the left showing the character's picture and an Upload a new image link"
+            alt="The Edit Character page with a Main Image panel on the left showing the character's picture, its thumbnail with an Adjust framing link, and an Upload a new image link"
           />
           <div class="screenshot-caption">
             The edit form, with the main image beside it
