@@ -316,6 +316,13 @@ const TagsHelp = styled.p`
   margin: 0.25rem 0 0 0;
 `;
 
+/** The retry link in the failed-attach toast, which otherwise reads as text. */
+const ToastLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  text-decoration: underline;
+`;
+
 export const CreateCharacterPageEnhanced: React.FC = () => {
   usePageMeta({ title: "Create Character" });
 
@@ -529,9 +536,9 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
         toast.error(
           <span>
             The character was created, but its image could not be attached.{" "}
-            <Link to={`/image/upload?character=${characterId}`}>
+            <ToastLink to={`/image/upload?character=${characterId}`}>
               Upload it again
-            </Link>
+            </ToastLink>
           </span>,
           { duration: 15000 },
         );

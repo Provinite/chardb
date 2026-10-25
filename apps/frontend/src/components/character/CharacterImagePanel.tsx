@@ -75,6 +75,17 @@ const Placeholder = styled.div`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
+const PanelLink = styled(Link)`
+  color: ${({ theme }) => theme.colors.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+`;
+
 const Note = styled.p`
   margin: 0;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
@@ -263,6 +274,6 @@ export const CharacterMainImagePreview: React.FC<
     ) : (
       <Placeholder>No main image yet</Placeholder>
     )}
-    <Link to={uploadHref}>Upload a new image</Link>
+    <PanelLink to={uploadHref}>Upload a new image</PanelLink>
   </Panel>
 );
