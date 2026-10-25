@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v14.0.0] - 2026-10-25
+
 ### Added
 
 - **Prod and dev infra carry the Halloween bot's config** as three `halloween-discord-*` SSM parameters set by hand; prod needs the two-step apply in `DEPLOYMENT_GUIDE.md` (#399).
