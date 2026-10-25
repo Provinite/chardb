@@ -128,6 +128,18 @@ describe("CharacterImagePicker", () => {
     expect(await screen.findByText("Frame the thumbnail")).toBeVisible();
   });
 
+  it("opens the cropper outside the pinned column", async () => {
+    // The column is `position: sticky`, which is a stacking context: a modal
+    // inside it is painted under the form beside it, whatever its z-index.
+    wrap(<CharacterImagePicker value={picked()} onChange={vi.fn()} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "Choose crop" }));
+    const title = await screen.findByText("Frame the thumbnail");
+    expect(screen.getByTestId("character-image-picker")).not.toContainElement(
+      title,
+    );
+  });
+
   it("says when the thumbnail has been framed", () => {
     wrap(
       <CharacterImagePicker

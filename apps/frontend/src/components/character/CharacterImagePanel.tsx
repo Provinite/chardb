@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Image as ImageIcon } from "lucide-react";
@@ -306,27 +307,32 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
             </ThumbnailText>
           </ThumbnailRow>
 
-          {cropping && (
-            <ThumbnailCropper
-              isOpen
-              title="Frame the thumbnail"
-              imageSrc={value.preview}
-              initialCrop={value.thumbnailCrop}
-              onCancel={() => setCropping(false)}
-              onConfirm={(crop) => {
-                onChange({ ...value, thumbnailCrop: crop });
-                setCropping(false);
-              }}
-              onReset={
-                value.thumbnailCrop
-                  ? () => {
-                      onChange({ ...value, thumbnailCrop: undefined });
-                      setCropping(false);
-                    }
-                  : undefined
-              }
-            />
-          )}
+          {/* Portalled out of the column: `position: sticky` makes it a
+              stacking context, so a modal left inside is painted under the
+              form beside it whatever its z-index. */}
+          {cropping &&
+            createPortal(
+              <ThumbnailCropper
+                isOpen
+                title="Frame the thumbnail"
+                imageSrc={value.preview}
+                initialCrop={value.thumbnailCrop}
+                onCancel={() => setCropping(false)}
+                onConfirm={(crop) => {
+                  onChange({ ...value, thumbnailCrop: crop });
+                  setCropping(false);
+                }}
+                onReset={
+                  value.thumbnailCrop
+                    ? () => {
+                        onChange({ ...value, thumbnailCrop: undefined });
+                        setCropping(false);
+                      }
+                    : undefined
+                }
+              />,
+              document.body,
+            )}
 
           <FlagGroup>
             <FlagLegend>NSFW Settings</FlagLegend>
