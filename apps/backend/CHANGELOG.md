@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v14.0.0] - 2026-10-25
+
 ### Added
 
 - **`globalMediaModerationQueue`** (site admins only): every pending media in `mediaModerationQueue`'s shape; `globalPendingImageCount` now counts only images the queue can list (#404).

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v14.0.0] - 2026-10-25
+
 ### Added
 
 - **Site-wide image moderation queue** at `/admin/moderation/images`, linked from Site Administration with its pending count, so avatars uploaded outside a community can be approved (#404).
