@@ -663,8 +663,12 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
                     providerAccountId: characterTarget.providerAccountId,
                   }
                 : undefined,
-            // Set assignToSelf to false when user selects "Leave Unassigned" (characterTarget is null)
-            assignToSelf: characterTarget !== null,
+            // A null target means "Leave Unassigned" only where the ownership
+            // picker is shown. Without canCreateOrphanedCharacter there is no
+            // picker, the target is never set, and the character is theirs.
+            assignToSelf: canCreateOrphanedCharacter
+              ? characterTarget !== null
+              : true,
           },
         },
       });
