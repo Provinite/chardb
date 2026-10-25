@@ -1,0 +1,492 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Creating a Character - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Make a character in CharDB: start with its picture, pick its species, fill in the rest, and change the picture later."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/character-creation.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Creating a Character" />
+    <meta
+      property="og:description"
+      content="Make a character in CharDB: start with its picture, pick its species, fill in the rest, and change the picture later."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/character-creation.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/character-create-pinned.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The CharDB create form, with the character's picture pinned in a column beside the species and traits sections."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        margin-bottom: 1.5rem;
+      }
+
+      .screenshot:last-child {
+        margin-bottom: 0;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .screenshot.narrow {
+        max-width: 340px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Creating a Character</h1>
+        <p>From a picture to a profile</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A character in CharDB belongs to a species in a community. You make
+            one from the community it belongs to, on a single form: its picture,
+            its name, its species and rarity, its traits, and how it is shown
+            and offered to others.
+          </p>
+          <p>
+            The picture comes first. It is hard to describe a character you
+            cannot see, so the form keeps the picture in view while you fill in
+            everything else.
+          </p>
+
+          <div class="feature-list">
+            <div class="feature-item">
+              <div class="icon">&#x1F5BC;&#xFE0F;</div>
+              <h4>Picture first</h4>
+              <p>Pick it before anything else and keep it in view</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x2B50;</div>
+              <h4>Main image</h4>
+              <p>It becomes the character's headline picture</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x1F6E1;&#xFE0F;</div>
+              <h4>Moderated</h4>
+              <p>It goes through review like any other upload</p>
+            </div>
+            <div class="feature-item">
+              <div class="icon">&#x21A9;&#xFE0F;</div>
+              <h4>Never lost</h4>
+              <p>If the picture fails, the character is still made</p>
+            </div>
+          </div>
+
+          <div class="highlight-box">
+            <strong>Spending an MYO ticket?</strong> It is the same form, with
+            the species fixed by the ticket. See
+            <a href="myo-slots.html">MYO Slots</a> for what changes.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Finding the Form</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Open the community the character belongs to and choose
+            <strong>Create Character</strong> in the top bar. The form opens
+            with the picture in its own column on the left and everything else
+            on the right.
+          </p>
+          <p>
+            On a narrow screen, such as a phone, the picture moves above the
+            form instead of beside it.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-create-form.png"
+            alt="The Create New Character page: an Image panel with a drop zone on the left, and the Basic Information and Choose Species sections on the right"
+          />
+          <div class="screenshot-caption">
+            The create form, before anything is filled in
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Picking the Picture</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Click the drop zone or drag a file onto it. JPEG, PNG, WebP and GIF
+            files up to 10&nbsp;MB are accepted. The picture shows straight
+            away; <strong>Remove image</strong> takes it off so you can choose
+            another.
+          </p>
+          <p>
+            Nothing is uploaded yet. The picture waits on the form until you
+            create the character, and is uploaded then.
+          </p>
+          <p>
+            <strong>Sensitive Content</strong> marks the picture as sensitive
+            and asks for a short description. Sensitive uploads are not accepted
+            at the moment, so ticking it stops the form from submitting until
+            you untick it or remove the picture.
+          </p>
+          <div class="highlight-box">
+            <strong>No picture option?</strong> Some communities do not let
+            every role upload character images. Once you pick a species in one
+            of those, the picture panel says so instead of offering a drop zone,
+            and any picture you had chosen is removed.
+          </div>
+        </div>
+        <div class="screenshot narrow">
+          <img
+            src="character-create-image-picked.png"
+            alt="The Image panel showing the chosen picture, a Remove image button, and a Sensitive Content checkbox under NSFW Settings"
+          />
+          <div class="screenshot-caption">A picture chosen, ready to go</div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Filling in the Rest</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The rest of the form runs top to bottom. On a wide screen the
+            picture stays pinned beside it as you scroll, so the character is in
+            view while you choose its traits.
+          </p>
+          <ul>
+            <li>
+              <strong>Basic Information</strong> &ndash; the name, and any
+              custom fields you want to add.
+            </li>
+            <li>
+              <strong>Species and variant</strong> &ndash; required. You can
+              only choose species you are allowed to make characters in.
+            </li>
+            <li>
+              <strong>Ownership</strong> &ndash; only shown to staff who may
+              make characters for someone else or leave them unowned. Everyone
+              else's characters are their own.
+            </li>
+            <li>
+              <strong>Traits</strong> &ndash; whatever the species asks for.
+              Some rarities allow more than one set; see
+              <a href="character-forms.html">Character Forms</a>.
+            </li>
+            <li>
+              <strong>Details, settings and tags</strong> &ndash; the write-up,
+              who can see the character, whether it is open to trades or offers,
+              and tags to help people find it.
+            </li>
+          </ul>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-create-pinned.png"
+            alt="The create form scrolled down to the species, variant and traits sections, with the picture still pinned in the left column"
+          />
+          <div class="screenshot-caption">
+            Scrolled down to the traits, with the picture still in view
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Creating It</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Create Character</strong> makes the character, uploads the
+            picture to it, and sets the picture as its main image, then takes
+            you to the new character.
+          </p>
+          <p>
+            The picture goes to the community's moderators like any other
+            upload. Until one approves it, the character shows a
+            <em>pending moderation</em> placeholder where the picture will be.
+            The picture has the same visibility as the character, so a private
+            character's picture is private too.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-create-result.png"
+            alt="The new character's page straight after creation, with an Image Pending Moderation placeholder where the main image goes"
+          />
+          <div class="screenshot-caption">
+            Straight after creating: the picture is waiting on a moderator
+          </div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-create-approved.png"
+            alt="The same character's page after approval, with the picture shown as its main image"
+          />
+          <div class="screenshot-caption">
+            Once approved, it is the main image
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">If the Picture Does Not Attach</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The character is made first and the picture second, so a problem
+            with the picture never costs you the character. If the upload fails,
+            the character is still created and you still land on it.
+          </p>
+          <p>
+            A message says the picture could not be attached, with an
+            <strong>Upload it again</strong> link. That opens the upload page
+            with the character already chosen; see
+            <a href="image-uploads.html">Uploading Images</a>.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-create-image-failed.png"
+            alt="Two notices on the new character's page: Character created successfully, and The character was created, but its image could not be attached, with an Upload it again link"
+          />
+          <div class="screenshot-caption">
+            The character is made; the picture can be uploaded again
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">Changing the Picture Later</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Edit Character</strong> shows the current main image in the
+            same column, so you can see the character while you edit it.
+            <strong>Upload a new image</strong> opens the upload page for this
+            character.
+          </p>
+          <p>
+            A new upload does not replace the main image on its own. To make a
+            different picture the main one, use <strong>Set as Main</strong> on
+            it in the gallery on the character's page.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="character-edit-main-image.png"
+            alt="The Edit Character page with a Main Image panel on the left showing the character's picture and an Upload a new image link"
+          />
+          <div class="screenshot-caption">
+            The edit form, with the main image beside it
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Creating a Character &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>
