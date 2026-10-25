@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { usePageMeta } from "../lib/pageMeta";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -23,6 +23,7 @@ import {
   useCreateCharacterMutation,
   useCreateCharacterFromMyoTicketMutation,
   useGetMyoTicketQuery,
+  useSetCharacterMainMediaMutation,
   SpeciesDetailsFragment,
   type RedeemMyoTicketInput,
   SpeciesVariantDetailsFragment,
@@ -46,6 +47,12 @@ import {
   AVAILABILITY_KINDS,
   TRADE_CHARACTERS_NOTE,
 } from "../lib/characterAvailability";
+import {
+  CharacterFormLayout,
+  CharacterImagePicker,
+  type PickedCharacterImage,
+} from "../components/character/CharacterImagePanel";
+import { attachMainImage, isPickedImageBlocked } from "../lib/attachMainImage";
 
 /**
  * Enhanced Character Creation Page with Species and Trait Integration
@@ -117,7 +124,7 @@ const formatTicketDate = (iso: string) =>
   });
 
 const Container = styled.div`
-  max-width: 900px;
+  max-width: 1280px;
   margin: 0 auto;
   padding: 2rem;
 `;
@@ -444,12 +451,40 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     );
   }, [user, selectedSpecies, isMyo]);
 
+  // The image the character starts with (#406). Held until the character
+  // exists, because moderation routes an upload by its character.
+  const [pickedImage, setPickedImage] = useState<PickedCharacterImage | null>(
+    null,
+  );
+
+  // Whether the member may upload images to their own characters in the
+  // chosen species' community. Not a security boundary -- the upload endpoint
+  // checks again -- but finding out after the create is a worse way to learn.
+  const imageDisabledReason = useMemo(() => {
+    if (!user || !selectedSpecies || user.isAdmin) return undefined;
+    const canUpload = user.communityMemberships?.nodes.some(
+      (membership) =>
+        membership.role.communityId === selectedSpecies.communityId &&
+        membership.role.canUploadOwnCharacterImages,
+    );
+    return canUpload
+      ? undefined
+      : "Your role in this community cannot upload character images.";
+  }, [user, selectedSpecies]);
+
+  // Picking a species the member cannot upload in drops the image rather than
+  // carrying it to a submit that would refuse it.
+  useEffect(() => {
+    if (imageDisabledReason) setPickedImage(null);
+  }, [imageDisabledReason]);
+
   // Form handling
   const {
     register,
     handleSubmit,
     watch,
     setValue,
+    getValues,
     formState: { errors },
   } = useForm<CharacterForm>({
     resolver: zodResolver(characterSchema),
@@ -467,13 +502,52 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
 
   const isSellable = watch("isSellable");
 
+  const [setMainMediaMutation] = useSetCharacterMainMediaMutation();
+
+  /**
+   * Attach the picked image, if any, then go to the new character.
+   *
+   * The character is made by now, so a failed attach never stops the
+   * navigation: the member lands on their character and is told where to
+   * upload the image again.
+   */
+  const finishCreate = async (characterId: string) => {
+    if (pickedImage) {
+      const result = await attachMainImage({
+        characterId,
+        image: pickedImage,
+        visibility: getValues("visibility"),
+        setMainMedia: (id, mediaId) =>
+          setMainMediaMutation({ variables: { id, input: { mediaId } } }),
+      });
+
+      if (!result.ok) {
+        console.error("Attaching the character image failed", {
+          step: result.step,
+          error: result.error,
+        });
+        toast.error(
+          <span>
+            The character was created, but its image could not be attached.{" "}
+            <Link to={`/image/upload?character=${characterId}`}>
+              Upload it again
+            </Link>
+          </span>,
+          { duration: 15000 },
+        );
+      }
+    }
+
+    navigate(`/character/${characterId}`);
+  };
+
   // GraphQL mutation
   const [createCharacterMutation] = useCreateCharacterMutation({
-    onCompleted: (data) => {
+    onCompleted: async (data) => {
       toast.success(
         `Character "${data.createCharacter.name}" created successfully!`,
       );
-      navigate(`/character/${data.createCharacter.id}`);
+      await finishCreate(data.createCharacter.id);
     },
     onError: (error) => {
       toast.error(`Failed to create character: ${error.message}`);
@@ -491,11 +565,11 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
       cache.evict({ fieldName: "myCharacters" });
       cache.gc();
     },
-    onCompleted: (data) => {
+    onCompleted: async (data) => {
       toast.success(
         `"${data.createCharacterFromMyoTicket.name}" made. Its traits are with staff for review.`,
       );
-      navigate(`/character/${data.createCharacterFromMyoTicket.id}`);
+      await finishCreate(data.createCharacterFromMyoTicket.id);
     },
     onError: (error) => {
       toast.error(error.message);
@@ -615,311 +689,326 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
         {isMyo ? "Make Your Own Character" : "Create New Character"}
       </Title>
 
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        {/* Basic Information */}
-        <Section>
-          <SectionTitle>
-            <User size={20} />
-            Basic Information
-          </SectionTitle>
-          <SectionDescription>
-            Start with the essential details about your character.
-          </SectionDescription>
-
-          <FormGroup>
-            <Label htmlFor="name">Character Name</Label>
-            <Input
-              {...register("name")}
-              id="name"
-              type="text"
-              placeholder="Enter your character's name..."
-              aria-invalid={!!errors.name}
-            />
-            {errors.name && <ErrorMessage>{errors.name.message}</ErrorMessage>}
-          </FormGroup>
-
-          <CustomFieldsEditor
-            register={register}
-            setValue={setValue}
-            watch={watch}
+      <CharacterFormLayout
+        aside={
+          <CharacterImagePicker
+            value={pickedImage}
+            onChange={setPickedImage}
+            disabledReason={imageDisabledReason}
           />
-        </Section>
-
-        {/* Species Selection, or the ticket that already decided it */}
-        <Section>
-          {isMyo ? (
-            grant ? (
-              <MyoTicketPanel
-                itemTypeName={ticket?.itemType?.name ?? "ticket"}
-                species={grant.species}
-                variants={grant.variants}
-                selectedVariantId={selectedVariant?.id}
-                onVariantChange={setSelectedVariant}
-                error={
-                  !selectedVariant ? "Pick which variant to make" : undefined
-                }
-              />
-            ) : (
-              // Every reason to be here -- spent, someone else's, never an MYO
-              // ticket at all -- is the same to a reader: this link does not
-              // work. The redemption would refuse it too; saying so now beats
-              // saying so after they have written a character.
-              <p data-testid="myo-ticket-unusable">
-                {ticketLoading
-                  ? "Checking your ticket…"
-                  : "That ticket cannot be used. It may already have been spent, or it may not be a ticket that makes characters."}
-              </p>
-            )
-          ) : (
-            <>
-              <SpeciesSelector
-                selectedSpecies={selectedSpecies}
-                selectedVariant={selectedVariant}
-                onSpeciesChange={(species) => {
-                  setSelectedSpecies(species);
-                  if (!species) {
-                    setRegistryId("");
-                  }
-                }}
-                onVariantChange={setSelectedVariant}
-                error={
-                  !selectedSpecies
-                    ? "Species selection is required. Non-species character creation coming soon to all users!"
-                    : undefined
-                }
-                userCommunityMemberships={user?.communityMemberships?.nodes}
-              />
-
-              {/* Staff's to assign, so it is absent under a ticket. An
-                  approved MYO gets the next number in its species instead. */}
-              {selectedSpecies && (
-                <FormGroup style={{ marginTop: "1rem" }}>
-                  <Label htmlFor="registryId">
-                    Official Identifier (Optional)
-                  </Label>
-                  <Input
-                    id="registryId"
-                    value={registryId}
-                    onChange={(e) => setRegistryId(e.target.value)}
-                    placeholder="e.g., Strawberry Bliss, TH-042"
-                    maxLength={100}
-                  />
-                  <span
-                    style={{
-                      fontSize: "0.875rem",
-                      color: "#666",
-                      marginTop: "0.25rem",
-                    }}
-                  >
-                    An optional official identifier for this character within
-                    the species.
-                  </span>
-                </FormGroup>
-              )}
-            </>
-          )}
-        </Section>
-
-        {/* Character Ownership */}
-        {canCreateOrphanedCharacter && (
+        }
+      >
+        <Form onSubmit={handleSubmit(onSubmit)}>
+          {/* Basic Information */}
           <Section>
             <SectionTitle>
-              <Users size={20} />
-              Character Ownership
+              <User size={20} />
+              Basic Information
             </SectionTitle>
             <SectionDescription>
-              Choose whether this character will be owned by you or created as
-              an orphaned character with pending ownership.
+              Start with the essential details about your character.
             </SectionDescription>
 
-            <GrantTargetSelector
-              value={characterTarget}
-              onChange={setCharacterTarget}
-              onUserSearch={setUserSearch}
-              users={membersData?.community?.members || []}
-              usersLoading={membersLoading}
-              allowPendingOwner={true}
-              discordGuildId={selectedSpecies?.community?.discordGuildId}
-              discordGuildName={selectedSpecies?.community?.discordGuildName}
-              userLabel="Owned By..."
-              pendingOwnerLabel="Orphaned with Pending Owner"
-              communityId={selectedSpecies?.communityId || ""}
-              onValidationChange={setIsGrantTargetValid}
-              currentUser={currentUser}
-              defaultToSelf={true}
-              includeSelf={false}
-              searchQuery={userSearch}
-            />
-          </Section>
-        )}
-
-        {/* Trait Configuration */}
-        {selectedSpecies && (
-          <Section>
-            <CharacterFormsEditor
-              speciesId={selectedSpecies.id}
-              speciesVariant={selectedVariant}
-              maxForms={selectedVariant?.maxForms ?? 1}
-              forms={forms}
-              onChange={setForms}
-              onUnnamedChange={setUnnamedForms}
-            />
-          </Section>
-        )}
-
-        {/* Character Details */}
-        <Section>
-          <SectionTitle>
-            <FileText size={20} />
-            Character Details
-          </SectionTitle>
-          <SectionDescription>
-            Provide details about your character using markdown formatting for
-            rich text.
-          </SectionDescription>
-
-          <FormGroup>
-            <Label htmlFor="details">Character Details</Label>
-            <CharacterDetailsEditor
-              value={watch("details") || ""}
-              onChange={(value) =>
-                setValue("details", value, { shouldValidate: true })
-              }
-              error={errors.details?.message}
-              maxLength={15000}
-            />
-          </FormGroup>
-        </Section>
-
-        {/* Settings */}
-        <Section>
-          <SectionTitle>
-            <Settings size={20} />
-            Character Settings
-          </SectionTitle>
-          <SectionDescription>
-            Configure visibility, trading options, and other settings for your
-            character.
-          </SectionDescription>
-
-          <FormGroup>
-            <Label htmlFor="visibility">Visibility</Label>
-            <Select {...register("visibility")} id="visibility">
-              <option value={Visibility.Public}>
-                Public - Anyone can view
-              </option>
-              <option value={Visibility.Unlisted}>
-                Unlisted - Only via direct link
-              </option>
-              <option value={Visibility.Private}>
-                Private - Only you can view
-              </option>
-            </Select>
-          </FormGroup>
-
-          <Label as="span">Open to</Label>
-          <CheckboxRow>
-            {AVAILABILITY_KINDS.map((kind) => (
-              <CheckboxGroup key={kind.field}>
-                <Checkbox
-                  {...register(kind.field)}
-                  type="checkbox"
-                  id={kind.field}
-                />
-                {kind.label}
-              </CheckboxGroup>
-            ))}
-          </CheckboxRow>
-          {/* Only against the one box that lets somebody else start something.
-              The rest are notices, and nobody should learn the difference by
-              being sent an offer they did not know they had invited. */}
-          <FieldNote>{TRADE_CHARACTERS_NOTE}</FieldNote>
-
-          {isSellable && (
             <FormGroup>
-              <Label htmlFor="price">Price</Label>
+              <Label htmlFor="name">Character Name</Label>
               <Input
-                {...register("price")}
-                id="price"
+                {...register("name")}
+                id="name"
                 type="text"
-                placeholder="0.00"
-                onInput={(e) => {
-                  const target = e.target as HTMLInputElement;
-                  let value = target.value.replace(/[^0-9.]/g, "");
-                  const parts = value.split(".");
-                  if (parts.length > 2) {
-                    value = parts[0] + "." + parts.slice(1).join("");
-                  }
-                  if (parts[1] && parts[1].length > 2) {
-                    value = parts[0] + "." + parts[1].slice(0, 2);
-                  }
-                  const cleaned = value.replace(/^0+(?=\d)/, "");
-                  if (cleaned !== target.value) {
-                    target.value = cleaned;
-                  }
-                }}
+                placeholder="Enter your character's name..."
+                aria-invalid={!!errors.name}
               />
-              {errors.price && (
-                <ErrorMessage>{errors.price.message}</ErrorMessage>
+              {errors.name && (
+                <ErrorMessage>{errors.name.message}</ErrorMessage>
               )}
             </FormGroup>
-          )}
-        </Section>
 
-        {/* Tags */}
-        <Section>
-          <SectionTitle>
-            <TagIcon size={20} />
-            Tags
-          </SectionTitle>
-
-          <FormGroup>
-            <Label htmlFor="tags">Tags</Label>
-            <TagInput
-              value={tags}
-              onChange={setTags}
-              onSearch={searchTags}
-              suggestions={suggestions}
-              loading={tagsLoading}
-              placeholder="Start typing to search tags..."
-              maxTags={20}
+            <CustomFieldsEditor
+              register={register}
+              setValue={setValue}
+              watch={watch}
             />
-            <TagsHelp>
-              Start typing to find existing tags or create new ones. Tags help
-              others discover your character.
-            </TagsHelp>
-          </FormGroup>
-        </Section>
+          </Section>
 
-        <ButtonRow>
-          <CancelButton type="button" onClick={handleBackClick}>
-            Cancel
-          </CancelButton>
-          <Button
-            type="submit"
-            data-testid="submit-character"
-            disabled={
-              isSubmitting ||
-              !selectedSpecies ||
-              // Under a ticket the variant is not optional: it is the one
-              // thing the ticket left to the member, and the server refuses a
-              // redemption without it.
-              (isMyo && (!grant || !selectedVariant)) ||
-              // A nameless form would render as a blank tab on the character.
-              unnamedForms > 0 ||
-              (characterTarget?.type === "pending" && !isGrantTargetValid)
-            }
-          >
-            {isSubmitting
-              ? isMyo
-                ? "Redeeming…"
-                : "Creating..."
-              : isMyo
-                ? `Redeem ${ticket?.itemType?.name ?? "ticket"} and make character`
-                : "Create Character"}
-          </Button>
-        </ButtonRow>
-      </Form>
+          {/* Species Selection, or the ticket that already decided it */}
+          <Section>
+            {isMyo ? (
+              grant ? (
+                <MyoTicketPanel
+                  itemTypeName={ticket?.itemType?.name ?? "ticket"}
+                  species={grant.species}
+                  variants={grant.variants}
+                  selectedVariantId={selectedVariant?.id}
+                  onVariantChange={setSelectedVariant}
+                  error={
+                    !selectedVariant ? "Pick which variant to make" : undefined
+                  }
+                />
+              ) : (
+                // Every reason to be here -- spent, someone else's, never an MYO
+                // ticket at all -- is the same to a reader: this link does not
+                // work. The redemption would refuse it too; saying so now beats
+                // saying so after they have written a character.
+                <p data-testid="myo-ticket-unusable">
+                  {ticketLoading
+                    ? "Checking your ticket…"
+                    : "That ticket cannot be used. It may already have been spent, or it may not be a ticket that makes characters."}
+                </p>
+              )
+            ) : (
+              <>
+                <SpeciesSelector
+                  selectedSpecies={selectedSpecies}
+                  selectedVariant={selectedVariant}
+                  onSpeciesChange={(species) => {
+                    setSelectedSpecies(species);
+                    if (!species) {
+                      setRegistryId("");
+                    }
+                  }}
+                  onVariantChange={setSelectedVariant}
+                  error={
+                    !selectedSpecies
+                      ? "Species selection is required. Non-species character creation coming soon to all users!"
+                      : undefined
+                  }
+                  userCommunityMemberships={user?.communityMemberships?.nodes}
+                />
+
+                {/* Staff's to assign, so it is absent under a ticket. An
+                  approved MYO gets the next number in its species instead. */}
+                {selectedSpecies && (
+                  <FormGroup style={{ marginTop: "1rem" }}>
+                    <Label htmlFor="registryId">
+                      Official Identifier (Optional)
+                    </Label>
+                    <Input
+                      id="registryId"
+                      value={registryId}
+                      onChange={(e) => setRegistryId(e.target.value)}
+                      placeholder="e.g., Strawberry Bliss, TH-042"
+                      maxLength={100}
+                    />
+                    <span
+                      style={{
+                        fontSize: "0.875rem",
+                        color: "#666",
+                        marginTop: "0.25rem",
+                      }}
+                    >
+                      An optional official identifier for this character within
+                      the species.
+                    </span>
+                  </FormGroup>
+                )}
+              </>
+            )}
+          </Section>
+
+          {/* Character Ownership */}
+          {canCreateOrphanedCharacter && (
+            <Section>
+              <SectionTitle>
+                <Users size={20} />
+                Character Ownership
+              </SectionTitle>
+              <SectionDescription>
+                Choose whether this character will be owned by you or created as
+                an orphaned character with pending ownership.
+              </SectionDescription>
+
+              <GrantTargetSelector
+                value={characterTarget}
+                onChange={setCharacterTarget}
+                onUserSearch={setUserSearch}
+                users={membersData?.community?.members || []}
+                usersLoading={membersLoading}
+                allowPendingOwner={true}
+                discordGuildId={selectedSpecies?.community?.discordGuildId}
+                discordGuildName={selectedSpecies?.community?.discordGuildName}
+                userLabel="Owned By..."
+                pendingOwnerLabel="Orphaned with Pending Owner"
+                communityId={selectedSpecies?.communityId || ""}
+                onValidationChange={setIsGrantTargetValid}
+                currentUser={currentUser}
+                defaultToSelf={true}
+                includeSelf={false}
+                searchQuery={userSearch}
+              />
+            </Section>
+          )}
+
+          {/* Trait Configuration */}
+          {selectedSpecies && (
+            <Section>
+              <CharacterFormsEditor
+                speciesId={selectedSpecies.id}
+                speciesVariant={selectedVariant}
+                maxForms={selectedVariant?.maxForms ?? 1}
+                forms={forms}
+                onChange={setForms}
+                onUnnamedChange={setUnnamedForms}
+              />
+            </Section>
+          )}
+
+          {/* Character Details */}
+          <Section>
+            <SectionTitle>
+              <FileText size={20} />
+              Character Details
+            </SectionTitle>
+            <SectionDescription>
+              Provide details about your character using markdown formatting for
+              rich text.
+            </SectionDescription>
+
+            <FormGroup>
+              <Label htmlFor="details">Character Details</Label>
+              <CharacterDetailsEditor
+                value={watch("details") || ""}
+                onChange={(value) =>
+                  setValue("details", value, { shouldValidate: true })
+                }
+                error={errors.details?.message}
+                maxLength={15000}
+              />
+            </FormGroup>
+          </Section>
+
+          {/* Settings */}
+          <Section>
+            <SectionTitle>
+              <Settings size={20} />
+              Character Settings
+            </SectionTitle>
+            <SectionDescription>
+              Configure visibility, trading options, and other settings for your
+              character.
+            </SectionDescription>
+
+            <FormGroup>
+              <Label htmlFor="visibility">Visibility</Label>
+              <Select {...register("visibility")} id="visibility">
+                <option value={Visibility.Public}>
+                  Public - Anyone can view
+                </option>
+                <option value={Visibility.Unlisted}>
+                  Unlisted - Only via direct link
+                </option>
+                <option value={Visibility.Private}>
+                  Private - Only you can view
+                </option>
+              </Select>
+            </FormGroup>
+
+            <Label as="span">Open to</Label>
+            <CheckboxRow>
+              {AVAILABILITY_KINDS.map((kind) => (
+                <CheckboxGroup key={kind.field}>
+                  <Checkbox
+                    {...register(kind.field)}
+                    type="checkbox"
+                    id={kind.field}
+                  />
+                  {kind.label}
+                </CheckboxGroup>
+              ))}
+            </CheckboxRow>
+            {/* Only against the one box that lets somebody else start something.
+              The rest are notices, and nobody should learn the difference by
+              being sent an offer they did not know they had invited. */}
+            <FieldNote>{TRADE_CHARACTERS_NOTE}</FieldNote>
+
+            {isSellable && (
+              <FormGroup>
+                <Label htmlFor="price">Price</Label>
+                <Input
+                  {...register("price")}
+                  id="price"
+                  type="text"
+                  placeholder="0.00"
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    let value = target.value.replace(/[^0-9.]/g, "");
+                    const parts = value.split(".");
+                    if (parts.length > 2) {
+                      value = parts[0] + "." + parts.slice(1).join("");
+                    }
+                    if (parts[1] && parts[1].length > 2) {
+                      value = parts[0] + "." + parts[1].slice(0, 2);
+                    }
+                    const cleaned = value.replace(/^0+(?=\d)/, "");
+                    if (cleaned !== target.value) {
+                      target.value = cleaned;
+                    }
+                  }}
+                />
+                {errors.price && (
+                  <ErrorMessage>{errors.price.message}</ErrorMessage>
+                )}
+              </FormGroup>
+            )}
+          </Section>
+
+          {/* Tags */}
+          <Section>
+            <SectionTitle>
+              <TagIcon size={20} />
+              Tags
+            </SectionTitle>
+
+            <FormGroup>
+              <Label htmlFor="tags">Tags</Label>
+              <TagInput
+                value={tags}
+                onChange={setTags}
+                onSearch={searchTags}
+                suggestions={suggestions}
+                loading={tagsLoading}
+                placeholder="Start typing to search tags..."
+                maxTags={20}
+              />
+              <TagsHelp>
+                Start typing to find existing tags or create new ones. Tags help
+                others discover your character.
+              </TagsHelp>
+            </FormGroup>
+          </Section>
+
+          <ButtonRow>
+            <CancelButton type="button" onClick={handleBackClick}>
+              Cancel
+            </CancelButton>
+            <Button
+              type="submit"
+              data-testid="submit-character"
+              disabled={
+                isSubmitting ||
+                !selectedSpecies ||
+                // Under a ticket the variant is not optional: it is the one
+                // thing the ticket left to the member, and the server refuses a
+                // redemption without it.
+                (isMyo && (!grant || !selectedVariant)) ||
+                // A nameless form would render as a blank tab on the character.
+                unnamedForms > 0 ||
+                (characterTarget?.type === "pending" && !isGrantTargetValid) ||
+                // Flagged images are refused at upload; better to stop here
+                // than to make the character and then fail to attach it.
+                isPickedImageBlocked(pickedImage)
+              }
+            >
+              {isSubmitting
+                ? isMyo
+                  ? "Redeeming…"
+                  : "Creating..."
+                : isMyo
+                  ? `Redeem ${ticket?.itemType?.name ?? "ticket"} and make character`
+                  : "Create Character"}
+            </Button>
+          </ButtonRow>
+        </Form>
+      </CharacterFormLayout>
 
       {/* Names the ticket and when it reached them. "Are you sure?" about an
           unnamed thing is a question nobody can answer, and the date is the

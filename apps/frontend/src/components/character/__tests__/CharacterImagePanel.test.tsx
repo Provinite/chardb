@@ -10,9 +10,9 @@ import { lightTheme } from "@chardb/ui";
 import {
   CharacterImagePicker,
   CharacterMainImagePreview,
-  isPickedImageBlocked,
   type PickedCharacterImage,
 } from "../CharacterImagePanel";
+import { isPickedImageBlocked } from "../../../lib/attachMainImage";
 
 beforeAll(() => {
   // jsdom has no object URLs.
@@ -70,7 +70,9 @@ describe("CharacterImagePicker", () => {
       "blob:picked",
     );
 
-    await userEvent.click(screen.getByRole("button", { name: /remove image/i }));
+    await userEvent.click(
+      screen.getByRole("button", { name: /remove image/i }),
+    );
     expect(onChange).toHaveBeenCalledWith(null);
   });
 

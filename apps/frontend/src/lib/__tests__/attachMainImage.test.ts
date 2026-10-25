@@ -1,6 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { setAccessToken } from "../accessToken";
-import { attachMainImage, type PendingCharacterImage } from "../attachMainImage";
+import { Visibility } from "../../generated/graphql";
+import {
+  attachMainImage,
+  type PendingCharacterImage,
+} from "../attachMainImage";
 
 const image = (
   overrides: Partial<PendingCharacterImage> = {},
@@ -40,7 +44,7 @@ describe("attachMainImage", () => {
     const result = await attachMainImage({
       characterId: "char-1",
       image: image(),
-      visibility: "PUBLIC",
+      visibility: Visibility.Public,
       setMainMedia,
     });
 
@@ -68,7 +72,7 @@ describe("attachMainImage", () => {
         nsfwSensitive: true,
         sensitiveContentDescription: "Spiders",
       }),
-      visibility: "PUBLIC",
+      visibility: Visibility.Public,
       setMainMedia: vi.fn().mockResolvedValue(undefined),
     });
 
@@ -87,7 +91,7 @@ describe("attachMainImage", () => {
     const result = await attachMainImage({
       characterId: "char-1",
       image: image(),
-      visibility: "PUBLIC",
+      visibility: Visibility.Public,
       setMainMedia,
     });
 
@@ -101,7 +105,7 @@ describe("attachMainImage", () => {
     const result = await attachMainImage({
       characterId: "char-1",
       image: image(),
-      visibility: "PUBLIC",
+      visibility: Visibility.Public,
       setMainMedia: vi.fn(),
     });
 
@@ -114,7 +118,7 @@ describe("attachMainImage", () => {
     const result = await attachMainImage({
       characterId: "char-1",
       image: image(),
-      visibility: "PUBLIC",
+      visibility: Visibility.Public,
       setMainMedia: vi.fn().mockRejectedValue(new Error("Forbidden")),
     });
 

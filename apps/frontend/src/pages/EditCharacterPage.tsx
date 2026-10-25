@@ -37,6 +37,10 @@ import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { CharacterFormsEditor } from "../components/character/CharacterFormsEditor";
 import { VariantChangePanel } from "../components/character/VariantChangePanel";
 import {
+  CharacterFormLayout,
+  CharacterMainImagePreview,
+} from "../components/character/CharacterImagePanel";
+import {
   draftsFromForms,
   draftsToChange,
   type CharacterFormDraft,
@@ -84,7 +88,7 @@ const characterSchema = z.object({
 type CharacterForm = z.infer<typeof characterSchema>;
 
 const Container = styled.div`
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.md};
 `;
@@ -715,349 +719,374 @@ export const EditCharacterPage: React.FC = () => {
 
       <Title>Edit Character</Title>
 
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        {!canEditProfile && (
-          <InfoBox>
-            You don't have permission to edit profile fields for this character.
-            Profile editing is disabled.
-          </InfoBox>
-        )}
-
-        <FormSection>
-          <SectionTitle>Basic Information</SectionTitle>
-
-          <FormRow>
-            <FormGroup>
-              <Label>Name *</Label>
-              <Input
-                {...register("name")}
-                placeholder="Character name"
-                hasError={!!errors.name}
-                disabled={!canEditProfile}
-              />
-              {errors.name && (
-                <ErrorMessage>{errors.name.message}</ErrorMessage>
-              )}
-            </FormGroup>
-          </FormRow>
-
-          <CustomFieldsEditor
-            register={register}
-            setValue={setValue}
-            watch={watch}
-            disabled={!canEditProfile}
-          />
-        </FormSection>
-
-        <FormSection>
-          <SectionTitle>Character Details</SectionTitle>
-
-          <FormGroup>
-            <Label>Character Details</Label>
-            <CharacterDetailsEditor
-              value={watch("details") || ""}
-              onChange={(value) =>
-                setValue("details", value, { shouldValidate: true })
-              }
-              error={errors.details?.message}
-              maxLength={15000}
-              disabled={!canEditProfile}
-            />
-          </FormGroup>
-        </FormSection>
-
-        <FormSection>
-          <SectionTitle>Settings & Trading</SectionTitle>
-
-          <FormRow>
-            <FormGroup>
-              <Label>Visibility</Label>
-              <Select
-                {...register("visibility")}
-                hasError={!!errors.visibility}
-                disabled={!canEditProfile}
-              >
-                <option value="PUBLIC">Public - Anyone can view</option>
-                <option value="UNLISTED">
-                  Unlisted - Only with direct link
-                </option>
-                <option value="PRIVATE">Private - Only you can view</option>
-              </Select>
-              {errors.visibility && (
-                <ErrorMessage>{errors.visibility.message}</ErrorMessage>
-              )}
-            </FormGroup>
-
-            <FormGroup>
-              <Label>Open to</Label>
-              <CheckboxGroup>
-                {AVAILABILITY_KINDS.map((kind) => (
-                  <CheckboxLabel key={kind.field}>
-                    <Checkbox
-                      {...register(kind.field)}
-                      disabled={!canEditProfile}
-                    />
-                    {kind.label}
-                  </CheckboxLabel>
-                ))}
-              </CheckboxGroup>
-              {/* Against the one box that lets somebody else start something.
-                  The rest are notices, and nobody should learn the difference
-                  by being sent an offer they did not know they invited. */}
-              <FieldNote>{TRADE_CHARACTERS_NOTE}</FieldNote>
-            </FormGroup>
-          </FormRow>
-
-          {isSellable && (
-            <FormGroup>
-              <Label>Price (USD)</Label>
-              <Input
-                {...register("price")}
-                placeholder="0.00"
-                type="number"
-                step="0.01"
-                min="0"
-                pattern="^[0-9]*\.?[0-9]*$"
-                hasError={!!errors.price}
-                disabled={!canEditProfile}
-                onInput={(e) => {
-                  const target = e.target as HTMLInputElement;
-                  const value = target.value;
-                  // Remove any invalid characters, keeping only digits and decimal point
-                  const cleaned = value.replace(/[^0-9.]/g, "");
-                  // Ensure only one decimal point
-                  const parts = cleaned.split(".");
-                  if (parts.length > 2) {
-                    target.value = parts[0] + "." + parts.slice(1).join("");
-                  } else {
-                    target.value = cleaned;
+      <CharacterFormLayout
+        aside={
+          <CharacterMainImagePreview
+            image={
+              character.mainMedia?.image
+                ? {
+                    url:
+                      character.mainMedia.image.thumbnailUrl ||
+                      character.mainMedia.image.originalUrl,
+                    altText:
+                      character.mainMedia.image.altText ||
+                      `${character.name} main image`,
                   }
-                }}
-              />
-              {errors.price && (
-                <ErrorMessage>{errors.price.message}</ErrorMessage>
-              )}
-            </FormGroup>
-          )}
-        </FormSection>
-
-        <FormSection>
-          <SectionTitle>Tags</SectionTitle>
-
-          <FormGroup>
-            <Label>Tags</Label>
-            <TagInput
-              value={tags}
-              onChange={setTags}
-              onSearch={searchTags}
-              suggestions={suggestions}
-              loading={tagsLoading}
-              placeholder="Start typing to search tags..."
-              maxTags={20}
-              disabled={!canEditProfile}
-            />
-            <TagsHelp>
-              Start typing to find existing tags or create new ones. Tags help
-              others discover your character.
-            </TagsHelp>
-            {errors.tags && <ErrorMessage>{errors.tags.message}</ErrorMessage>}
-          </FormGroup>
-        </FormSection>
-
-        {/* Species Selection Section */}
-        <FormSection>
-          <SectionTitle>Species</SectionTitle>
-
-          {character.speciesId ? (
-            // Character already has a species - show it as read-only
-            <>
-              <InfoBox>
-                Species assignment is permanent and cannot be changed once set.
-              </InfoBox>
-              <CurrentSpeciesDisplay>
-                <p>
-                  <strong>Current Species:</strong>{" "}
-                  {character.species?.name || "Unknown"}
-                </p>
-                {character.speciesVariant && (
-                  <p style={{ marginTop: "0.5rem" }}>
-                    <strong>Variant:</strong> {character.speciesVariant.name}
-                  </p>
-                )}
-              </CurrentSpeciesDisplay>
-            </>
-          ) : (
-            // Character doesn't have a species yet - allow selection
-            <>
-              <WarningBox>
-                <AlertTriangle size={20} />
-                <div>
-                  <strong>Important:</strong> Once you assign a species to this
-                  character, it cannot be changed. Choose carefully!
-                </div>
-              </WarningBox>
-              <SpeciesSelector
-                selectedSpecies={selectedSpecies}
-                selectedVariant={selectedVariant}
-                onSpeciesChange={setSelectedSpecies}
-                onVariantChange={setSelectedVariant}
-                disabled={!canEditProfile}
-              />
-            </>
-          )}
-        </FormSection>
-
-        {/* Character Ownership Section - show for all characters with species and permission */}
-        {character.speciesId && permissions.canCreateOrphanedCharacter && (
-          <FormSection>
-            <SectionTitle>Character Ownership</SectionTitle>
+                : null
+            }
+            uploadHref={`/image/upload?character=${character.id}`}
+          />
+        }
+      >
+        <Form onSubmit={handleSubmit(onSubmit)}>
+          {!canEditProfile && (
             <InfoBox>
-              Manage this character's ownership. You can:
-              <br />• Leave it unassigned (orphaned, no pending owner)
-              <br />• Assign it to a registered user in this community
-              <br />• Set a pending owner for someone who hasn't registered yet
-              (Discord/DeviantArt)
+              You don't have permission to edit profile fields for this
+              character. Profile editing is disabled.
             </InfoBox>
+          )}
 
-            <GrantTargetSelector
-              value={characterTarget}
-              onChange={setCharacterTarget}
-              onUserSearch={setUserSearch}
-              users={membersData?.community?.members || []}
-              usersLoading={membersLoading}
-              allowPendingOwner={true}
-              discordGuildId={character.species?.community?.discordGuildId}
-              discordGuildName={character.species?.community?.discordGuildName}
-              unassignedLabel="Leave Unassigned"
-              userLabel="Assign to Registered User"
-              pendingOwnerLabel="Set Pending Owner"
-              communityId={character.species?.community?.id || ""}
-              onValidationChange={setIsGrantTargetValid}
-              currentUser={
-                character.owner
-                  ? {
-                      id: character.owner.id,
-                      username: character.owner.username,
-                      displayName: character.owner.displayName || undefined,
-                      avatarImage: character.owner.avatarImage || null,
-                    }
-                  : undefined
-              }
-              includeSelf={true}
+          <FormSection>
+            <SectionTitle>Basic Information</SectionTitle>
+
+            <FormRow>
+              <FormGroup>
+                <Label>Name *</Label>
+                <Input
+                  {...register("name")}
+                  placeholder="Character name"
+                  hasError={!!errors.name}
+                  disabled={!canEditProfile}
+                />
+                {errors.name && (
+                  <ErrorMessage>{errors.name.message}</ErrorMessage>
+                )}
+              </FormGroup>
+            </FormRow>
+
+            <CustomFieldsEditor
+              register={register}
+              setValue={setValue}
+              watch={watch}
+              disabled={!canEditProfile}
             />
           </FormSection>
-        )}
 
-        {/* Registry Section - only show if character has a species */}
-        {character.speciesId && (
           <FormSection>
-            <SectionTitle>Species Details</SectionTitle>
-            <InfoBox>
-              These fields are managed by species administrators. They include
-              the official identifier and character traits.
-            </InfoBox>
-            {!canEditRegistry && (
-              <WarningBox>
-                <AlertTriangle size={20} />
-                <div>
-                  You don't have permission to edit species details for this
-                  character.
-                </div>
-              </WarningBox>
-            )}
+            <SectionTitle>Character Details</SectionTitle>
 
-            {/* Rarity lives here, not in the Species section above: this is
+            <FormGroup>
+              <Label>Character Details</Label>
+              <CharacterDetailsEditor
+                value={watch("details") || ""}
+                onChange={(value) =>
+                  setValue("details", value, { shouldValidate: true })
+                }
+                error={errors.details?.message}
+                maxLength={15000}
+                disabled={!canEditProfile}
+              />
+            </FormGroup>
+          </FormSection>
+
+          <FormSection>
+            <SectionTitle>Settings & Trading</SectionTitle>
+
+            <FormRow>
+              <FormGroup>
+                <Label>Visibility</Label>
+                <Select
+                  {...register("visibility")}
+                  hasError={!!errors.visibility}
+                  disabled={!canEditProfile}
+                >
+                  <option value="PUBLIC">Public - Anyone can view</option>
+                  <option value="UNLISTED">
+                    Unlisted - Only with direct link
+                  </option>
+                  <option value="PRIVATE">Private - Only you can view</option>
+                </Select>
+                {errors.visibility && (
+                  <ErrorMessage>{errors.visibility.message}</ErrorMessage>
+                )}
+              </FormGroup>
+
+              <FormGroup>
+                <Label>Open to</Label>
+                <CheckboxGroup>
+                  {AVAILABILITY_KINDS.map((kind) => (
+                    <CheckboxLabel key={kind.field}>
+                      <Checkbox
+                        {...register(kind.field)}
+                        disabled={!canEditProfile}
+                      />
+                      {kind.label}
+                    </CheckboxLabel>
+                  ))}
+                </CheckboxGroup>
+                {/* Against the one box that lets somebody else start something.
+                  The rest are notices, and nobody should learn the difference
+                  by being sent an offer they did not know they invited. */}
+                <FieldNote>{TRADE_CHARACTERS_NOTE}</FieldNote>
+              </FormGroup>
+            </FormRow>
+
+            {isSellable && (
+              <FormGroup>
+                <Label>Price (USD)</Label>
+                <Input
+                  {...register("price")}
+                  placeholder="0.00"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  pattern="^[0-9]*\.?[0-9]*$"
+                  hasError={!!errors.price}
+                  disabled={!canEditProfile}
+                  onInput={(e) => {
+                    const target = e.target as HTMLInputElement;
+                    const value = target.value;
+                    // Remove any invalid characters, keeping only digits and decimal point
+                    const cleaned = value.replace(/[^0-9.]/g, "");
+                    // Ensure only one decimal point
+                    const parts = cleaned.split(".");
+                    if (parts.length > 2) {
+                      target.value = parts[0] + "." + parts.slice(1).join("");
+                    } else {
+                      target.value = cleaned;
+                    }
+                  }}
+                />
+                {errors.price && (
+                  <ErrorMessage>{errors.price.message}</ErrorMessage>
+                )}
+              </FormGroup>
+            )}
+          </FormSection>
+
+          <FormSection>
+            <SectionTitle>Tags</SectionTitle>
+
+            <FormGroup>
+              <Label>Tags</Label>
+              <TagInput
+                value={tags}
+                onChange={setTags}
+                onSearch={searchTags}
+                suggestions={suggestions}
+                loading={tagsLoading}
+                placeholder="Start typing to search tags..."
+                maxTags={20}
+                disabled={!canEditProfile}
+              />
+              <TagsHelp>
+                Start typing to find existing tags or create new ones. Tags help
+                others discover your character.
+              </TagsHelp>
+              {errors.tags && (
+                <ErrorMessage>{errors.tags.message}</ErrorMessage>
+              )}
+            </FormGroup>
+          </FormSection>
+
+          {/* Species Selection Section */}
+          <FormSection>
+            <SectionTitle>Species</SectionTitle>
+
+            {character.speciesId ? (
+              // Character already has a species - show it as read-only
+              <>
+                <InfoBox>
+                  Species assignment is permanent and cannot be changed once
+                  set.
+                </InfoBox>
+                <CurrentSpeciesDisplay>
+                  <p>
+                    <strong>Current Species:</strong>{" "}
+                    {character.species?.name || "Unknown"}
+                  </p>
+                  {character.speciesVariant && (
+                    <p style={{ marginTop: "0.5rem" }}>
+                      <strong>Variant:</strong> {character.speciesVariant.name}
+                    </p>
+                  )}
+                </CurrentSpeciesDisplay>
+              </>
+            ) : (
+              // Character doesn't have a species yet - allow selection
+              <>
+                <WarningBox>
+                  <AlertTriangle size={20} />
+                  <div>
+                    <strong>Important:</strong> Once you assign a species to
+                    this character, it cannot be changed. Choose carefully!
+                  </div>
+                </WarningBox>
+                <SpeciesSelector
+                  selectedSpecies={selectedSpecies}
+                  selectedVariant={selectedVariant}
+                  onSpeciesChange={setSelectedSpecies}
+                  onVariantChange={setSelectedVariant}
+                  disabled={!canEditProfile}
+                />
+              </>
+            )}
+          </FormSection>
+
+          {/* Character Ownership Section - show for all characters with species and permission */}
+          {character.speciesId && permissions.canCreateOrphanedCharacter && (
+            <FormSection>
+              <SectionTitle>Character Ownership</SectionTitle>
+              <InfoBox>
+                Manage this character's ownership. You can:
+                <br />• Leave it unassigned (orphaned, no pending owner)
+                <br />• Assign it to a registered user in this community
+                <br />• Set a pending owner for someone who hasn't registered
+                yet (Discord/DeviantArt)
+              </InfoBox>
+
+              <GrantTargetSelector
+                value={characterTarget}
+                onChange={setCharacterTarget}
+                onUserSearch={setUserSearch}
+                users={membersData?.community?.members || []}
+                usersLoading={membersLoading}
+                allowPendingOwner={true}
+                discordGuildId={character.species?.community?.discordGuildId}
+                discordGuildName={
+                  character.species?.community?.discordGuildName
+                }
+                unassignedLabel="Leave Unassigned"
+                userLabel="Assign to Registered User"
+                pendingOwnerLabel="Set Pending Owner"
+                communityId={character.species?.community?.id || ""}
+                onValidationChange={setIsGrantTargetValid}
+                currentUser={
+                  character.owner
+                    ? {
+                        id: character.owner.id,
+                        username: character.owner.username,
+                        displayName: character.owner.displayName || undefined,
+                        avatarImage: character.owner.avatarImage || null,
+                      }
+                    : undefined
+                }
+                includeSelf={true}
+              />
+            </FormSection>
+          )}
+
+          {/* Registry Section - only show if character has a species */}
+          {character.speciesId && (
+            <FormSection>
+              <SectionTitle>Species Details</SectionTitle>
+              <InfoBox>
+                These fields are managed by species administrators. They include
+                the official identifier and character traits.
+              </InfoBox>
+              {!canEditRegistry && (
+                <WarningBox>
+                  <AlertTriangle size={20} />
+                  <div>
+                    You don't have permission to edit species details for this
+                    character.
+                  </div>
+                </WarningBox>
+              )}
+
+              {/* Rarity lives here, not in the Species section above: this is
                 the section whose Save button writes registry fields, and the
                 trait re-routing a rarity change forces belongs beside the
                 traits it re-routes. */}
-            <VariantChangePanel
-              speciesId={character.speciesId}
-              currentVariantId={character.speciesVariantId ?? null}
-              selectedVariantId={selectedVariant?.id ?? null}
-              onVariantChange={setSelectedVariant}
-              forms={forms}
-              onFormsChange={setForms}
-              reason={variantChangeReason}
-              onReasonChange={setVariantChangeReason}
-              onUnresolvedChange={setUnresolvedTraits}
-              disabled={!canEditRegistry || isSubmittingRegistry}
-            />
-
-            <FormGroup>
-              <Label>Official Identifier</Label>
-              <Input
-                value={registryId}
-                onChange={(e) => setRegistryId(e.target.value)}
-                placeholder="e.g., Strawberry Bliss, TH-042"
+              <VariantChangePanel
+                speciesId={character.speciesId}
+                currentVariantId={character.speciesVariantId ?? null}
+                selectedVariantId={selectedVariant?.id ?? null}
+                onVariantChange={setSelectedVariant}
+                forms={forms}
+                onFormsChange={setForms}
+                reason={variantChangeReason}
+                onReasonChange={setVariantChangeReason}
+                onUnresolvedChange={setUnresolvedTraits}
                 disabled={!canEditRegistry || isSubmittingRegistry}
-                maxLength={100}
               />
-              <TagsHelp>
-                Official identifier for this character within the species.
-              </TagsHelp>
-            </FormGroup>
 
-            {/* The limit comes from the variant staff has *selected*, not the
+              <FormGroup>
+                <Label>Official Identifier</Label>
+                <Input
+                  value={registryId}
+                  onChange={(e) => setRegistryId(e.target.value)}
+                  placeholder="e.g., Strawberry Bliss, TH-042"
+                  disabled={!canEditRegistry || isSubmittingRegistry}
+                  maxLength={100}
+                />
+                <TagsHelp>
+                  Official identifier for this character within the species.
+                </TagsHelp>
+              </FormGroup>
+
+              {/* The limit comes from the variant staff has *selected*, not the
                 one the character has: picking a rarity that allows two forms
                 should let them add the second before saving, and picking one
                 that allows fewer should stop them adding more first. */}
-            <CharacterFormsEditor
-              speciesId={character.speciesId}
-              speciesVariant={
-                (selectedVariant ??
-                  character.speciesVariant) as SpeciesVariantDetailsFragment | null
-              }
-              maxForms={
-                selectedVariant?.maxForms ??
-                character.speciesVariant?.maxForms ??
-                1
-              }
-              forms={forms}
-              onChange={setForms}
-              onUnnamedChange={setUnnamedForms}
-              disabled={!canEditRegistry || isSubmittingRegistry}
-            />
-            <TraitActions>
-              <Button
-                type="button"
-                variant="primary"
-                onClick={handleSaveRegistry}
-                data-testid="save-species-details"
-                disabled={
-                  !canEditRegistry ||
-                  isSubmittingRegistry ||
-                  // A stranded trait value would be refused by the server
-                  // anyway; blocking here means staff find out before typing
-                  // the rest of the form.
-                  unresolvedTraits > 0 ||
-                  // A nameless form would render as a blank tab.
-                  unnamedForms > 0
+              <CharacterFormsEditor
+                speciesId={character.speciesId}
+                speciesVariant={
+                  (selectedVariant ??
+                    character.speciesVariant) as SpeciesVariantDetailsFragment | null
                 }
-              >
-                {isSubmittingRegistry ? "Saving..." : "Save Species Details"}
-              </Button>
-            </TraitActions>
-          </FormSection>
-        )}
+                maxForms={
+                  selectedVariant?.maxForms ??
+                  character.speciesVariant?.maxForms ??
+                  1
+                }
+                forms={forms}
+                onChange={setForms}
+                onUnnamedChange={setUnnamedForms}
+                disabled={!canEditRegistry || isSubmittingRegistry}
+              />
+              <TraitActions>
+                <Button
+                  type="button"
+                  variant="primary"
+                  onClick={handleSaveRegistry}
+                  data-testid="save-species-details"
+                  disabled={
+                    !canEditRegistry ||
+                    isSubmittingRegistry ||
+                    // A stranded trait value would be refused by the server
+                    // anyway; blocking here means staff find out before typing
+                    // the rest of the form.
+                    unresolvedTraits > 0 ||
+                    // A nameless form would render as a blank tab.
+                    unnamedForms > 0
+                  }
+                >
+                  {isSubmittingRegistry ? "Saving..." : "Save Species Details"}
+                </Button>
+              </TraitActions>
+            </FormSection>
+          )}
 
-        <Actions>
-          <Button
-            type="button"
-            variant="ghost"
-            onClick={handleBack}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            disabled={!canEditProfile || isSubmitting || !isGrantTargetValid}
-          >
-            {isSubmitting ? "Saving..." : "Save Changes"}
-          </Button>
-        </Actions>
-      </Form>
+          <Actions>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={handleBack}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="primary"
+              disabled={!canEditProfile || isSubmitting || !isGrantTargetValid}
+            >
+              {isSubmitting ? "Saving..." : "Save Changes"}
+            </Button>
+          </Actions>
+        </Form>
+      </CharacterFormLayout>
     </Container>
   );
 };

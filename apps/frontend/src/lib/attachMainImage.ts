@@ -1,5 +1,6 @@
 import { API_BASE_URL } from "./communityHost";
 import { getAccessToken } from "./accessToken";
+import type { Visibility } from "../generated/graphql";
 
 /**
  * The image picked on the create form, held until the character exists.
@@ -16,6 +17,13 @@ export interface PendingCharacterImage {
   sensitiveContentDescription: string;
 }
 
+/**
+ * Whether a picked image stops the form from submitting. NSFW uploads are
+ * refused site-wide for now, the same rule the upload page enforces.
+ */
+export const isPickedImageBlocked = (value: PendingCharacterImage | null) =>
+  Boolean(value && (value.nsfwNudity || value.nsfwGore || value.nsfwSensitive));
+
 export type AttachMainImageResult =
   | { ok: true; mediaId: string }
   | { ok: false; step: "upload" | "setMain"; error: Error };
@@ -23,7 +31,8 @@ export type AttachMainImageResult =
 interface AttachMainImageArgs {
   characterId: string;
   image: PendingCharacterImage;
-  visibility: "PUBLIC" | "UNLISTED" | "PRIVATE";
+  /** The character's, so a private character's image is private too. */
+  visibility: Visibility;
   setMainMedia: (characterId: string, mediaId: string) => Promise<unknown>;
 }
 

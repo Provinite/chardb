@@ -4,7 +4,10 @@ import styled from "styled-components";
 import { Image as ImageIcon } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { ImageUpload, type ImageFile } from "../ImageUpload";
-import type { PendingCharacterImage } from "../../lib/attachMainImage";
+import {
+  isPickedImageBlocked,
+  type PendingCharacterImage,
+} from "../../lib/attachMainImage";
 
 /**
  * The image column on the character create and edit forms (#406).
@@ -15,15 +18,6 @@ import type { PendingCharacterImage } from "../../lib/attachMainImage";
 
 /** A picked image plus the object URL it is previewed from. */
 export type PickedCharacterImage = PendingCharacterImage & { preview: string };
-
-/**
- * Whether the picked image stops the form from submitting. NSFW uploads are
- * refused site-wide for now, the same rule the upload page enforces.
- */
-export const isPickedImageBlocked = (value: PickedCharacterImage | null) =>
-  Boolean(
-    value && (value.nsfwNudity || value.nsfwGore || value.nsfwSensitive),
-  );
 
 const Layout = styled.div`
   display: grid;
@@ -187,7 +181,7 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
   };
 
   return (
-    <Panel>
+    <Panel data-testid="character-image-picker">
       <PanelTitle>
         <ImageIcon size={20} />
         Image
