@@ -290,10 +290,10 @@
         <div class="screenshot">
           <img
             src="character-folders-root.png"
-            alt="The My Characters page with four folder tiles named Commissions, Fursonas, Retired and To sell, each with a count, above a grid of character cards"
+            alt="The My Characters page with four folder-shaped tiles named Commissions, Fursonas, Retired and To sell, each with a character count, To sell grey and marked Private, above a section headed Not in a folder"
           />
           <div class="screenshot-caption">
-            The top level: your folders, then everything not yet filed
+            The top level: your folders, then the characters not in any of them
           </div>
         </div>
       </div>
@@ -309,15 +309,23 @@
             <strong>Drag a card onto a folder.</strong> Pick a character up and
             drop it on a folder tile. The tile lights up while the card is over
             it. Dragging <em>moves</em> the character: it leaves the folder you
-            are looking at and lands in the one you dropped it on.
+            are looking at and lands in the one you dropped it on. Any other
+            folders it is in keep it.
           </p>
           <p>
-            <strong>Tick several, then move them together.</strong> Every card
+            <strong>Tick several, then file them together.</strong> Every card
             has a checkbox in its top-left corner. Tick a few and a bar appears
-            with <strong>Move to folder</strong>. This is the one to use when
-            you are clearing a hundred characters rather than filing the one you
-            happened to be looking at. <strong>Also add to</strong> beside it
-            adds them to a second folder without taking them out of the first.
+            with <strong>Add to folder&hellip;</strong>. This is the one to use
+            when you are clearing a hundred characters rather than filing the
+            one you happened to be looking at.
+          </p>
+          <p>
+            Adding never takes a character out of anything. When you are inside
+            a folder, the picker offers <strong>Also remove from</strong> that
+            folder by name; tick it and the button changes from
+            <strong>Add</strong> to <strong>Move</strong>. To take characters
+            out without filing them anywhere, use the bar's own
+            <strong>Remove from</strong> button, which also names the folder.
           </p>
           <p>
             <strong>From the character's own page.</strong> Every character has
@@ -329,27 +337,29 @@
           <div class="highlight-box">
             <strong>You do not have to make the folder first.</strong> The box
             you pick a folder from is also the box you name a new one in. Type a
-            name that does not exist yet and it is created as the characters go
-            into it.
+            name that does not exist yet, choose where it goes &mdash; the top
+            level or inside any folder &mdash; and it is created as the
+            characters go into it.
           </div>
         </div>
         <div class="screenshot">
           <img
             src="character-folders-bulk.png"
-            alt="Two character cards with their checkboxes ticked, and a bar above the grid reading 2 selected with buttons for Move to folder, Also add to, and Clear"
+            alt="Inside the Fursonas folder, two character cards with their checkboxes ticked, and a bar above the grid reading 2 selected with buttons for Add to folder, Remove from Fursonas, and Clear"
           />
           <div class="screenshot-caption">
             Ticking cards brings up the bar &mdash; the one for clearing a big
-            pile
+            pile. Inside a folder, it names the folder it removes from
           </div>
         </div>
         <div class="screenshot">
           <img
             src="character-folders-picker.png"
-            alt="A dialog titled Move to folder listing No folder, Commissions with 2024 and 2025 indented under it, Fursonas, Retired and To sell, each with a count"
+            alt="A dialog titled Add to folder with Adopts typed in and the note No folder called Adopts yet; below it, Make Adopts inside lists Top level, selected, above the folder tree; the Also remove from Fursonas box is ticked and the button reads Create Adopts and move"
           />
           <div class="screenshot-caption">
-            Pick an existing folder, or type a name that does not exist yet
+            Pick an existing folder, or type a name that does not exist yet.
+            Ticking &ldquo;Also remove from&rdquo; turns the add into a move
           </div>
         </div>
       </div>
@@ -380,17 +390,19 @@
             parent counts once.
           </p>
           <p>
-            To move a folder somewhere else, open it and use
-            <strong>Move</strong>. <strong>Reorder folders</strong> at the top
-            right turns dragging into reordering for as long as it is on; the
-            rest of the time dragging a folder onto another puts it inside.
-            Folders you have never dragged sort alphabetically.
+            A folder's own actions &mdash; <strong>Rename</strong>,
+            <strong>Make private</strong>, <strong>Move</strong> and
+            <strong>Delete</strong> &mdash; sit beside its name when you open
+            it. <strong>Reorder folders</strong>, beside the Folders heading,
+            turns dragging into reordering for as long as it is on; the rest of
+            the time dragging a folder onto another puts it inside. Folders you
+            have never dragged sort alphabetically.
           </p>
         </div>
         <div class="screenshot">
           <img
             src="character-folders-nested.png"
-            alt="The Commissions folder open, showing a breadcrumb reading All characters then Commissions, two folder tiles named 2024 and 2025, and the text Nothing filed here yet"
+            alt="The Commissions folder open, with a Characters breadcrumb above the folder name, Rename, Make private, Move and Delete beside it, two folder tiles named 2024 and 2025, and the text Nothing filed here yet"
           />
           <div class="screenshot-caption">
             Inside Commissions: its two sub-folders, and nothing filed directly
@@ -417,9 +429,11 @@
           <p>
             <strong>Make a folder private</strong> from inside it and it
             disappears for everybody else &mdash; along with every folder nested
-            under it, whether or not those are private themselves. Nothing filed
-            in a private folder is hidden by it: the characters keep their own
-            visibility, and only the filing is yours alone.
+            under it, whether or not those are private themselves. You still see
+            it, grey and marked <strong>Private</strong>, so it never passes for
+            one visitors can see. Nothing filed in a private folder is hidden by
+            it: the characters keep their own visibility, and only the filing is
+            yours alone.
           </p>
           <p>
             Two things stay yours in any case. Sub-folders you have marked
@@ -440,7 +454,7 @@
         <div class="screenshot">
           <img
             src="character-folders-edit-on-character.png"
-            alt="A character page with a Folders section showing a Fursonas chip, and a dialog titled Folders for this character listing every folder with checkboxes, Fursonas ticked"
+            alt="A character page with a Folders section showing purple Fursonas and Retired chips and a grey To sell chip marked Private, and a dialog titled Folders for this character listing every folder with checkboxes, the three it is in ticked and highlighted"
           />
           <div class="screenshot-caption">
             A character's own page: where it is filed, and the box to change it
@@ -488,16 +502,19 @@
         <div class="step-content">
           <p>
             <strong>Deleting a folder never deletes characters.</strong>
-            Whatever was in it goes back to the top level. Folders nested inside
-            it are deleted with it, and their characters come back too.
+            A character that was only in that folder goes back to
+            <strong>Not in a folder</strong>; one that is in other folders too
+            stays in them. Folders nested inside it are deleted with it, under
+            the same rule.
           </p>
           <p>
             <strong
               >A character that leaves your hands leaves your folders.</strong
             >
             However it went &mdash; a trade, a direct transfer, a claim &mdash;
-            it stops being counted and stops being listed, and it appears in the
-            new owner's top level for them to file as they like.
+            it stops being counted and stops being listed, and it appears under
+            the new owner's <strong>Not in a folder</strong> for them to file as
+            they like.
           </p>
         </div>
       </div>

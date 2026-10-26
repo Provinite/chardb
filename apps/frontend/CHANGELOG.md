@@ -19,6 +19,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Character cards drop their Edit shortcut**; edit from the character's page. Copy ID (site admins) moves onto the card's picture (#420).
 - **The character page shows its main image whole** instead of the square thumbnail (#418).
 - **The upload form drops its Nudity and Gore checkboxes**, which the server never stored; Sensitive Content and its description remain (#406).
+- **Character folder bulk bar** replaces "Move to folder" and "Also add to" with one "Add to folder…", whose picker offers "Also remove from" the open folder by name; the root no longer offers "No folder", which failed (#422).
+- **Character folders redesigned**: folder-shaped tiles with a character count, private folders grey and labelled Private (also on a character page's folder chips and its folder editor), each folder's actions beside its name, and the owner's root headed "Not in a folder" (#422).
+- **A folder made from the folder picker asks where it goes**, top level or inside any folder, instead of landing in the open one (#422).
 
 ### Fixed
 

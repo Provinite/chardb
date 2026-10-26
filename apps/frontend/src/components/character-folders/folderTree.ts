@@ -85,3 +85,7 @@ export function flattenTree(
   walk(null, 0);
   return rows;
 }
+
+/** "1 character", "3 characters". */
+export const countCharacters = (count: number): string =>
+  `${count} ${count === 1 ? "character" : "characters"}`;
