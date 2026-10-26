@@ -158,7 +158,7 @@ You never write user creation, password hashing, token minting, storageState, sn
 
 **Selectors** — role/text/href first, matching the convention in `apps/frontend/src/__tests__/README.md`. The app carries exactly two `data-testid` attributes, both on containers where no accessible role exists:
 
-- `character-admin-actions` — the admin strip on `CharacterPage`
+- `character-actions` — the action strip on `CharacterPage`
 - `trait-review-card` (+ `data-character-id`) — a review row
 
 Prefer `page.locator('a[href="/character/<uuid>"]')` over a test id where possible: it asserts *identity*, not mere presence.
@@ -167,7 +167,16 @@ Add a test id only when the element has no role **and** no unambiguous text, put
 
 **Waiting** — navigate, then assert on expected content. `expect(locator).toBeVisible()` auto-retries, which inherently waits past `App.tsx`'s full-page loading spinner. Never `waitForTimeout`.
 
-**`window.confirm`** — both `CharacterPage` and `TraitReviewQueue` use it. Register the handler **before** the click:
+**Menus** — staff actions sit in a `Menu` from `@chardb/ui`, whose open list is portalled to the end of the body. `openMenuItem(scope, menuTestId, name)` clicks the trigger inside `scope` and returns the item, looked up page-wide:
+
+```ts
+await (await openMenuItem(card, "trait-review-staff-menu", "Delete")).click();
+await page.getByTestId("delete-character-dialog").getByTestId("confirm-accept").click();
+```
+
+To assert a viewer has no staff actions, assert the menu's trigger is absent; an unopened menu renders no items, so asserting on an item proves nothing.
+
+**`window.confirm`** — a few pages still use it. Register the handler **before** the click:
 
 ```ts
 acceptNextDialog(page, (msg) => expect(msg).toContain(character.name));

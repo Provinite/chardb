@@ -3,7 +3,7 @@ import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useNavigate, Link } from "react-router-dom";
 import { Search, Plus, Trash2, Edit, Palette, Database } from "lucide-react";
-import { Button, Modal, Input, ErrorMessage } from "@chardb/ui";
+import { Button, Modal, Input, ErrorMessage, Menu, MenuItem } from "@chardb/ui";
 import {
   useSpeciesByCommunityQuery,
   useCreateSpeciesMutation,
@@ -14,6 +14,9 @@ import {
   useCommunityId,
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 
 /**
  * Species Management Dashboard
@@ -341,6 +344,19 @@ export const SpeciesManagementPage: React.FC = () => {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Every member reaches this page, so the controls follow the permission the
+  // server checks (#221). updateSpecies and removeSpecies also allow a global
+  // admin; createSpecies does not.
+  const { user } = useAuth();
+  const { permissions } = useUserCommunityRole(communityId ?? undefined);
+  const canCreate = permissions.canCreateSpecies;
+  const canEdit = permissions.canEditSpecies || (user?.isAdmin ?? false);
 
   // GraphQL operations - Always use community-scoped query
   const {
@@ -421,18 +437,17 @@ export const SpeciesManagementPage: React.FC = () => {
     });
   };
 
-  const handleDeleteSpecies = async (species: (typeof filteredSpecies)[0]) => {
-    if (
-      !window.confirm(
-        `Are you sure you want to delete "${species.name}"? This action cannot be undone and will also delete all associated variants, traits, and character data.`,
-      )
-    ) {
-      return;
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    try {
+      await deleteSpeciesMutation({
+        variables: { id: deleteTarget.id },
+      });
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
     }
-
-    await deleteSpeciesMutation({
-      variables: { id: species.id },
-    });
   };
 
   const handleEditSpecies = (species: (typeof filteredSpecies)[0]) => {
@@ -521,12 +536,14 @@ export const SpeciesManagementPage: React.FC = () => {
           />
         </SearchContainer>
 
-        <Button
-          onClick={() => setIsCreateModalOpen(true)}
-          icon={<Plus size={16} />}
-        >
-          Create Species
-        </Button>
+        {canCreate && (
+          <Button
+            onClick={() => setIsCreateModalOpen(true)}
+            icon={<Plus size={16} />}
+          >
+            Create Species
+          </Button>
+        )}
       </Controls>
 
       {filteredSpecies.length === 0 && !speciesLoading ? (
@@ -563,50 +580,77 @@ export const SpeciesManagementPage: React.FC = () => {
                   </p>
                 </CardMeta>
 
-                <Actions
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                  }}
-                >
-                  <ActionButton
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleManageTraits(species)}
-                    icon={<Database size={14} />}
+                {canEdit && (
+                  <Actions
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }}
                   >
-                    Traits
-                  </ActionButton>
-                  <ActionButton
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleManageVariants(species)}
-                    icon={<Palette size={14} />}
-                  >
-                    Variants
-                  </ActionButton>
-                  <ActionButton
-                    variant="secondary"
-                    size="sm"
-                    onClick={() => handleEditSpecies(species)}
-                    icon={<Edit size={14} />}
-                  >
-                    Edit
-                  </ActionButton>
-                  <ActionButton
-                    variant="outline"
-                    size="sm"
-                    onClick={() => handleDeleteSpecies(species)}
-                    icon={<Trash2 size={14} />}
-                  >
-                    Delete
-                  </ActionButton>
-                </Actions>
+                    <ActionButton
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleManageTraits(species)}
+                      icon={<Database size={14} />}
+                    >
+                      Traits
+                    </ActionButton>
+                    <ActionButton
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleManageVariants(species)}
+                      icon={<Palette size={14} />}
+                    >
+                      Variants
+                    </ActionButton>
+                    <ActionButton
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => handleEditSpecies(species)}
+                      icon={<Edit size={14} />}
+                    >
+                      Edit
+                    </ActionButton>
+                    <Menu
+                      label={`More actions for ${species.name}`}
+                      testId="species-card-menu"
+                    >
+                      <MenuItem
+                        danger
+                        icon={<Trash2 size={14} />}
+                        onSelect={() =>
+                          setDeleteTarget({
+                            id: species.id,
+                            name: species.name,
+                          })
+                        }
+                      >
+                        Delete
+                      </MenuItem>
+                    </Menu>
+                  </Actions>
+                )}
               </Card>
             </ClickableCard>
           ))}
         </Grid>
       )}
+
+      <ConfirmDialog
+        open={deleteTarget !== null}
+        title={deleteTarget ? `Delete "${deleteTarget.name}"?` : "Delete?"}
+        confirmLabel="Delete"
+        busyLabel="Deleting…"
+        busy={deleting}
+        destructive
+        confirmPhrase={deleteTarget?.name}
+        onCancel={() => setDeleteTarget(null)}
+        onConfirm={() => void handleConfirmDelete()}
+        testId="delete-species-dialog"
+      >
+        Its variants and traits are deleted with it, along with the trait values
+        on its characters. This cannot be undone.
+      </ConfirmDialog>
 
       <CreateSpeciesModal
         isOpen={isCreateModalOpen}

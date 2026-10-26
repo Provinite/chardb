@@ -9,9 +9,14 @@
  * The community comes from the hostname now, not the path (#339), so the host
  * context is what gets stubbed here -- both the id and the record, since the
  * page reads the whole thing rather than re-querying it by id.
+ *
+ * It also covers who is offered the management controls (#221, #430): the
+ * page is reachable by every member, so the buttons follow the permission the
+ * server will check.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { MockedProvider, MockedResponse } from "@apollo/client/testing";
 import { ThemeProvider } from "styled-components";
@@ -38,6 +43,32 @@ vi.mock("../../contexts/CommunityHostContext", async () => {
         : null,
   };
 });
+
+const access = vi.hoisted(() => ({
+  isAdmin: false,
+  canCreateSpecies: false,
+  canEditSpecies: false,
+}));
+
+vi.mock("../../contexts/AuthContext", async () => {
+  const actual = await vi.importActual<
+    typeof import("../../contexts/AuthContext")
+  >("../../contexts/AuthContext");
+  return {
+    ...actual,
+    useAuth: () => ({ user: { id: "u-1", isAdmin: access.isAdmin } }),
+  };
+});
+
+vi.mock("../../hooks/useUserCommunityRole", () => ({
+  useUserCommunityRole: () => ({
+    loading: false,
+    permissions: {
+      canCreateSpecies: access.canCreateSpecies,
+      canEditSpecies: access.canEditSpecies,
+    },
+  }),
+}));
 
 vi.mock("react-hot-toast", () => {
   const stub = {
@@ -123,6 +154,9 @@ const renderPage = () =>
 describe("SpeciesManagementPage", () => {
   beforeEach(() => {
     hostCommunityId.current = COMMUNITY_ID;
+    access.isAdmin = false;
+    access.canCreateSpecies = false;
+    access.canEditSpecies = false;
   });
 
   it("runs both queries and renders the community's species", async () => {
@@ -145,5 +179,76 @@ describe("SpeciesManagementPage", () => {
 
     const link = await screen.findByRole("link", { name: /Test Species/ });
     expect(link).toHaveAttribute("href", `/species/${species.id}`);
+  });
+
+  describe("management controls", () => {
+    const manageButtons = ["Traits", "Variants", "Edit"];
+
+    it("offers a plain member none of them", async () => {
+      renderPage();
+      await screen.findByText("Test Species");
+
+      for (const name of [...manageButtons, "Delete", "Create Species"]) {
+        expect(screen.queryByRole("button", { name })).not.toBeInTheDocument();
+      }
+      expect(
+        screen.queryByRole("button", { name: /More actions/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("offers Create Species with canCreateSpecies alone", async () => {
+      access.canCreateSpecies = true;
+      renderPage();
+      await screen.findByText("Test Species");
+
+      expect(
+        screen.getByRole("button", { name: "Create Species" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Edit" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("puts Delete behind the card's menu for canEditSpecies", async () => {
+      access.canEditSpecies = true;
+      const user = userEvent.setup();
+      renderPage();
+      await screen.findByText("Test Species");
+
+      for (const name of manageButtons) {
+        expect(screen.getByRole("button", { name })).toBeInTheDocument();
+      }
+      expect(
+        screen.queryByRole("button", { name: "Delete" }),
+      ).not.toBeInTheDocument();
+
+      await user.click(
+        screen.getByRole("button", { name: "More actions for Test Species" }),
+      );
+      await user.click(screen.getByRole("menuitem", { name: "Delete" }));
+
+      // Hard delete with no way back: the name has to be typed.
+      const dialog = screen.getByRole("dialog");
+      expect(dialog).toHaveTextContent('Delete "Test Species"?');
+      expect(screen.getByLabelText(/Type Test Species/)).toBeInTheDocument();
+    });
+
+    it("offers a site admin the edit controls without a community role", async () => {
+      // updateSpecies and removeSpecies allow a global admin; createSpecies
+      // does not, so Create still follows the community role.
+      access.isAdmin = true;
+      renderPage();
+      await screen.findByText("Test Species");
+
+      for (const name of manageButtons) {
+        expect(screen.getByRole("button", { name })).toBeInTheDocument();
+      }
+      expect(
+        screen.getByRole("button", { name: "More actions for Test Species" }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Create Species" }),
+      ).not.toBeInTheDocument();
+    });
   });
 });

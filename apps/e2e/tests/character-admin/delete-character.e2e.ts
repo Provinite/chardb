@@ -1,4 +1,4 @@
-import { presetTest, expect, acceptNextDialog } from "../../src/fixtures.js";
+import { presetTest, expect, openMenuItem } from "../../src/fixtures.js";
 import { linkToPath } from "../../src/config.js";
 
 const test = presetTest("community-basic");
@@ -22,13 +22,12 @@ test("deleting a character removes it everywhere", async ({ page, world }) => {
   const character = world.characters.plain;
   await page.goto(character.url);
 
-  acceptNextDialog(page, (message) => {
-    expect(message).toContain(character.name);
-  });
-  await page
-    .getByTestId("character-admin-actions")
-    .getByRole("button", { name: "Delete Character" })
-    .click();
+  await (
+    await openMenuItem(page, "character-staff-menu", "Delete Character")
+  ).click();
+  const dialog = page.getByTestId("delete-character-dialog");
+  await expect(dialog).toContainText(character.name);
+  await dialog.getByTestId("confirm-accept").click();
 
   // handleDelete navigates to /characters on success.
   await expect(page).toHaveURL(/\/characters$/);
@@ -56,11 +55,14 @@ test("cancelling the confirm leaves the character alone", async ({
   const character = world.characters.plain;
   await page.goto(character.url);
 
-  page.once("dialog", (dialog) => dialog.dismiss());
+  await (
+    await openMenuItem(page, "character-staff-menu", "Delete Character")
+  ).click();
   await page
-    .getByTestId("character-admin-actions")
-    .getByRole("button", { name: "Delete Character" })
+    .getByTestId("delete-character-dialog")
+    .getByTestId("confirm-cancel")
     .click();
+  await expect(page.getByTestId("delete-character-dialog")).toHaveCount(0);
 
   await expect(page).toHaveURL(new RegExp(`/character/${character.id}$`));
   await expect(

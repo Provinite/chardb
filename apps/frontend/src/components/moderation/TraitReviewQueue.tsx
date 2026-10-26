@@ -14,6 +14,18 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useUserCommunityRole } from "../../hooks/useUserCommunityRole";
 import { TraitReviewCard } from "./TraitReviewCard";
+import {
+  DeleteCharacterDialog,
+  RemoveFromSpeciesDialog,
+} from "../character/CharacterDisposalDialogs";
+
+/** A disposal action waiting on its confirm dialog. */
+interface PendingDisposal {
+  kind: "delete" | "kick";
+  characterId: string;
+  characterName: string;
+  speciesName?: string;
+}
 
 const Container = styled.div`
   display: flex;
@@ -177,13 +189,13 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
     }
   };
 
+  const [pending, setPending] = useState<PendingDisposal | null>(null);
+  // Busy only while *this* disposal runs. actionInProgress is shared with
+  // every card's approve, revert and defer, any of which may be in flight.
+  const disposing =
+    pending !== null && actionInProgress === pending.characterId;
+
   const handleDelete = async (characterId: string, characterName: string) => {
-    if (
-      !window.confirm(
-        `Delete "${characterName}"? This soft-deletes the character and removes it from the queue.`,
-      )
-    )
-      return;
     setActionInProgress(characterId);
     try {
       await deleteCharacter({ variables: { id: characterId } });
@@ -194,6 +206,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
       toast.error(`Failed to delete: ${message}`);
     } finally {
       setActionInProgress(null);
+      setPending(null);
     }
   };
 
@@ -203,12 +216,6 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
     speciesName: string | undefined,
   ) => {
     const speciesLabel = speciesName ? `"${speciesName}"` : "its species";
-    if (
-      !window.confirm(
-        `Remove "${characterName}" from ${speciesLabel}? Trait values will be saved as custom fields.`,
-      )
-    )
-      return;
     setActionInProgress(characterId);
     try {
       await kickFromSpecies({ variables: { id: characterId } });
@@ -219,6 +226,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
       toast.error(`Failed to remove from species: ${message}`);
     } finally {
       setActionInProgress(null);
+      setPending(null);
     }
   };
 
@@ -301,8 +309,27 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
                 onApprove={handleApprove}
                 onRevert={handleRevert}
                 onDefer={handleDefer}
-                onDelete={canDelete ? handleDelete : undefined}
-                onKickFromSpecies={canKick ? handleKickFromSpecies : undefined}
+                onDelete={
+                  canDelete
+                    ? (characterId, characterName) =>
+                        setPending({
+                          kind: "delete",
+                          characterId,
+                          characterName,
+                        })
+                    : undefined
+                }
+                onKickFromSpecies={
+                  canKick
+                    ? (characterId, characterName, speciesName) =>
+                        setPending({
+                          kind: "kick",
+                          characterId,
+                          characterName,
+                          speciesName,
+                        })
+                    : undefined
+                }
                 actionInProgress={
                   actionInProgress === item.review.id ||
                   actionInProgress === item.characterId
@@ -336,6 +363,32 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
           )}
         </>
       )}
+
+      <DeleteCharacterDialog
+        open={pending?.kind === "delete"}
+        characterName={pending?.characterName ?? ""}
+        busy={disposing}
+        onCancel={() => setPending(null)}
+        onConfirm={() => {
+          if (pending)
+            void handleDelete(pending.characterId, pending.characterName);
+        }}
+      />
+      <RemoveFromSpeciesDialog
+        open={pending?.kind === "kick"}
+        characterName={pending?.characterName ?? ""}
+        speciesName={pending?.speciesName}
+        busy={disposing}
+        onCancel={() => setPending(null)}
+        onConfirm={() => {
+          if (pending)
+            void handleKickFromSpecies(
+              pending.characterId,
+              pending.characterName,
+              pending.speciesName,
+            );
+        }}
+      />
     </Container>
   );
 };

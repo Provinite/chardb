@@ -2,7 +2,8 @@ import React, { useMemo, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 
-import { Avatar, Button } from "@chardb/ui";
+import { Avatar, Button, Menu, MenuGroup, MenuItem } from "@chardb/ui";
+import { Trash2, Unlink } from "lucide-react";
 import {
   useGetCharacterQuery,
   TraitReviewSource,
@@ -22,6 +23,10 @@ import { setKinds } from "../lib/characterAvailability";
 import { isRedemptionReview } from "../lib/traitReviews";
 import { CharacterAvailability } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
+import {
+  DeleteCharacterDialog,
+  RemoveFromSpeciesDialog,
+} from "../components/character/CharacterDisposalDialogs";
 import { CommentList } from "../components/CommentList";
 import { CharacterMediaGallery } from "../components/CharacterMediaGallery";
 import { Tag } from "../components/Tag";
@@ -100,16 +105,6 @@ const CharacterHeader = styled.div`
   }
 `;
 
-const AdminActionsLabel = styled.span`
-  font-size: ${({ theme }) => theme.typography.fontSize.xs};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  color: ${({ theme }) => theme.colors.text.muted};
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-right: ${({ theme }) => theme.spacing.xs};
-  white-space: nowrap;
-`;
-
 const CharacterActions = styled.div`
   display: flex;
   align-items: center;
@@ -118,18 +113,6 @@ const CharacterActions = styled.div`
   margin-top: ${({ theme }) => theme.spacing.md};
   border-top: 1px solid ${({ theme }) => theme.colors.border};
   flex-wrap: wrap;
-`;
-
-const RemoveFromSpeciesButton = styled(Button)`
-  color: ${({ theme }) => theme.colors.warning};
-  border-color: ${({ theme }) => theme.colors.warning};
-  background: transparent;
-
-  &:hover:not(:disabled) {
-    background-color: ${({ theme }) => theme.colors.warning};
-    border-color: ${({ theme }) => theme.colors.warning};
-    color: #fff;
-  }
 `;
 
 const CharacterBasics = styled.div`
@@ -464,6 +447,7 @@ export const CharacterPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [actionError, setActionError] = useState<string | null>(null);
+  const [confirming, setConfirming] = useState<"delete" | "kick" | null>(null);
 
   const { data, loading, error } = useGetCharacterQuery({
     variables: { id: id! },
@@ -577,17 +561,12 @@ export const CharacterPage: React.FC = () => {
 
   const handleDelete = async () => {
     if (!id) return;
-    if (
-      !window.confirm(
-        `Delete "${character?.name}"? This action soft-deletes the character and cannot be undone without admin intervention.`,
-      )
-    )
-      return;
     setActionError(null);
     try {
       await deleteCharacter({ variables: { id } });
       navigate("/characters");
     } catch (e) {
+      setConfirming(null);
       setActionError(
         e instanceof Error ? e.message : "Failed to delete character",
       );
@@ -596,17 +575,12 @@ export const CharacterPage: React.FC = () => {
 
   const handleKickFromSpecies = async () => {
     if (!id) return;
-    if (
-      !window.confirm(
-        `Remove "${character?.name}" from its species? Trait values will be flattened to custom fields and the character will no longer be part of "${character?.species?.name}".`,
-      )
-    )
-      return;
     setActionError(null);
     try {
       await kickFromSpecies({ variables: { id } });
       navigate(0); // reload page to reflect updated character state
     } catch (e) {
+      setConfirming(null);
       setActionError(
         e instanceof Error
           ? e.message
@@ -660,6 +634,18 @@ export const CharacterPage: React.FC = () => {
       </Container>
     );
   }
+
+  // Editing is the owner's as much as staff's, so it stays a button. The two
+  // disposal actions are staff-only and one-way, so they sit a deliberate
+  // step away in the menu (#430).
+  const canEdit = canUserEditCharacter(character, user, permissions);
+  const canKick =
+    Boolean(character.speciesId) &&
+    !pendingRedemption &&
+    (permissions.canEditCharacterRegistry || (user?.isAdmin ?? false));
+  const canDelete =
+    !pendingRedemption &&
+    (permissions.canDeleteCharacter || (user?.isAdmin ?? false));
 
   return (
     <Container>
@@ -780,43 +766,57 @@ export const CharacterPage: React.FC = () => {
             )}
           </InfoGrid>
 
-          {(canUserEditCharacter(character, user, permissions) ||
-            permissions.canDeleteCharacter ||
-            (user?.isAdmin ?? false)) && (
-            <CharacterActions data-testid="character-admin-actions">
-              <AdminActionsLabel>Admin</AdminActionsLabel>
-              {canUserEditCharacter(character, user, permissions) && (
+          {(canEdit || canKick || canDelete) && (
+            <CharacterActions data-testid="character-actions">
+              {canEdit && (
                 <Button variant="outline" size="sm" onClick={handleEditClick}>
                   Edit Character
                 </Button>
               )}
-              {character.speciesId &&
-                !pendingRedemption &&
-                (permissions.canEditCharacterRegistry ||
-                  (user?.isAdmin ?? false)) && (
-                  <RemoveFromSpeciesButton
-                    variant="outline"
-                    size="sm"
-                    onClick={handleKickFromSpecies}
-                    disabled={kicking}
-                  >
-                    {kicking ? "Removing..." : "Remove from Species"}
-                  </RemoveFromSpeciesButton>
-                )}
-              {!pendingRedemption &&
-                (permissions.canDeleteCharacter ||
-                  (user?.isAdmin ?? false)) && (
-                  <Button
-                    variant="danger"
-                    size="sm"
-                    onClick={handleDelete}
-                    disabled={deleting}
-                  >
-                    {deleting ? "Deleting..." : "Delete Character"}
-                  </Button>
-                )}
+              {(canKick || canDelete) && (
+                <Menu
+                  label="More actions"
+                  testId="character-staff-menu"
+                  disabled={kicking || deleting}
+                >
+                  <MenuGroup label="Staff actions">
+                    {canKick && (
+                      <MenuItem
+                        icon={<Unlink size={14} />}
+                        onSelect={() => setConfirming("kick")}
+                      >
+                        Remove from Species
+                      </MenuItem>
+                    )}
+                    {canDelete && (
+                      <MenuItem
+                        danger
+                        icon={<Trash2 size={14} />}
+                        onSelect={() => setConfirming("delete")}
+                      >
+                        Delete Character
+                      </MenuItem>
+                    )}
+                  </MenuGroup>
+                </Menu>
+              )}
             </CharacterActions>
           )}
+          <DeleteCharacterDialog
+            open={confirming === "delete"}
+            characterName={character.name}
+            busy={deleting}
+            onCancel={() => setConfirming(null)}
+            onConfirm={() => void handleDelete()}
+          />
+          <RemoveFromSpeciesDialog
+            open={confirming === "kick"}
+            characterName={character.name}
+            speciesName={character.species?.name}
+            busy={kicking}
+            onCancel={() => setConfirming(null)}
+            onConfirm={() => void handleKickFromSpecies()}
+          />
           {actionError && (
             <div
               style={{

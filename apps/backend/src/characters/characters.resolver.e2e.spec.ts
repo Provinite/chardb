@@ -73,6 +73,25 @@ describe("CharactersResolver (e2e)", () => {
       expect(response.body.errors[0].extensions.code).toBe("FORBIDDEN");
     });
 
+    it("stores the name trimmed, and refuses one that is only spaces", async () => {
+      // Names are typed back to confirm destructive actions (#430); a stored
+      // stray space would make them unconfirmable.
+      const trimmed = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        { input: { name: "  Test Dragon \t", speciesId: testSpeciesId } },
+        testToken,
+      );
+      expect(trimmed.body.errors).toBeUndefined();
+      expect(trimmed.body.data.createCharacter.name).toBe("Test Dragon");
+
+      const blank = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        { input: { name: "   ", speciesId: testSpeciesId } },
+        testToken,
+      );
+      expect(blank.body.errors).toBeDefined();
+    });
+
     it("should validate required fields", async () => {
       // Empty name triggers @MinLength(1) class-validator error (HTTP 200 with errors)
       const input = {

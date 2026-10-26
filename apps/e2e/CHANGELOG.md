@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Staff-action specs open the ⋯ menu** through a new `openMenuItem` fixture and confirm in the shared dialogs; a new spec checks Remove from Species stays disabled until the name is typed (#430).
+
 ### Added
 
 - **Site admin access specs** (`tests/navigation/site-admin-access.e2e.ts`): a member gets not found on every `/admin` page, a community creator sees only community management, and a site admin opens all of them (#405).

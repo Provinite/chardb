@@ -1,25 +1,40 @@
-import { presetTest, expect } from "../../src/fixtures.js";
+import { presetTest, expect, openMenuItem } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
 
 const test = presetTest("community-basic");
 
-const strip = (page: Page) => page.getByTestId("character-admin-actions");
+const strip = (page: Page) => page.getByTestId("character-actions");
+const staffMenu = (page: Page) => page.getByTestId("character-staff-menu");
 
 test.describe("moderator with canDeleteCharacter", () => {
   test.use({ persona: "moderator" });
 
-  test("sees the full admin strip", async ({ page, world }) => {
+  test("sees Edit on the page and the staff actions behind the menu", async ({
+    page,
+    world,
+  }) => {
     await page.goto(world.characters.plain.url);
 
-    await expect(strip(page)).toBeVisible();
     await expect(
       strip(page).getByRole("button", { name: "Edit Character" }),
     ).toBeVisible();
+    // Not on the page itself: one deliberate step away (#430).
     await expect(
-      strip(page).getByRole("button", { name: "Remove from Species" }),
+      page.getByRole("button", { name: "Delete Character" }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: "Remove from Species" }),
+    ).toHaveCount(0);
+
+    await expect(
+      await openMenuItem(page, "character-staff-menu", "Remove from Species"),
+    ).toBeVisible();
+    const group = page.getByRole("group", { name: "Staff actions" });
+    await expect(
+      group.getByRole("menuitem", { name: "Remove from Species" }),
     ).toBeVisible();
     await expect(
-      strip(page).getByRole("button", { name: "Delete Character" }),
+      group.getByRole("menuitem", { name: "Delete Character" }),
     ).toBeVisible();
   });
 });
@@ -27,7 +42,10 @@ test.describe("moderator with canDeleteCharacter", () => {
 test.describe("plain member", () => {
   test.use({ persona: "member" });
 
-  test("sees no strip on someone else's character", async ({ page, world }) => {
+  test("sees no actions on someone else's character", async ({
+    page,
+    world,
+  }) => {
     // Owned by `othermember`. This distinction matters -- see the next test.
     await page.goto(world.characters.plain.url);
 
@@ -41,30 +59,25 @@ test.describe("plain member", () => {
   });
 
   test("sees only Edit on their own character", async ({ page, world }) => {
-    // Pins a genuine subtlety: the strip renders when
-    // canUserEditCharacter(...) || canDeleteCharacter || isAdmin, and the Member
-    // role has canEditOwnCharacter -- so an owner DOES see the strip. What they
-    // must never see is Delete or Remove from Species. Written explicitly so
-    // nobody "simplifies" the hidden-strip test onto an owned character.
+    // Pins a genuine subtlety: the Member role has canEditOwnCharacter, so an
+    // owner DOES see the action strip. What they must never see is the staff
+    // menu. Written explicitly so nobody "simplifies" the hidden-strip test
+    // onto an owned character.
     await page.goto(world.characters.pending.url);
 
-    await expect(strip(page)).toBeVisible();
     await expect(
       strip(page).getByRole("button", { name: "Edit Character" }),
     ).toBeVisible();
-    await expect(
-      strip(page).getByRole("button", { name: "Delete Character" }),
-    ).toHaveCount(0);
-    await expect(
-      strip(page).getByRole("button", { name: "Remove from Species" }),
-    ).toHaveCount(0);
+    await expect(staffMenu(page)).toHaveCount(0);
+    // The strip used to be labelled "Admin", over the owner's own button.
+    await expect(strip(page)).not.toContainText("Admin");
   });
 });
 
 test.describe("anonymous visitor", () => {
   test.use({ persona: "anon" });
 
-  test("sees no strip at all", async ({ page, world }) => {
+  test("sees no actions at all", async ({ page, world }) => {
     await page.goto(world.characters.plain.url);
     await expect(
       page.getByRole("heading", {

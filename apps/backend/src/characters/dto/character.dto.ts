@@ -22,6 +22,7 @@ import {
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
+import { Trim } from "../../common/transforms/trim";
 import { Visibility, TraitReviewSource } from "@chardb/database";
 import {
   NewCharacterFormInput,
@@ -39,6 +40,7 @@ registerEnumType(Visibility, {
 @InputType()
 export class CreateCharacterInput {
   @Field()
+  @Trim()
   @IsString()
   @MinLength(1)
   @MaxLength(100)
@@ -209,6 +211,7 @@ export class PendingOwnerUpdate {
 @InputType({ description: "Input for updating character profile fields" })
 export class UpdateCharacterProfileInput {
   @Field({ nullable: true })
+  @Trim()
   @IsOptional()
   @IsString()
   @MinLength(1)

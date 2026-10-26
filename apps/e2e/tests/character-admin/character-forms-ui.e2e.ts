@@ -1,4 +1,4 @@
-import { presetTest, expect, acceptNextDialog } from "../../src/fixtures.js";
+import { presetTest, expect, openMenuItem } from "../../src/fixtures.js";
 import type { CommunityItemsWorld } from "../../src/world/presets/community-items.js";
 import type { World } from "../../src/world/types.js";
 import type { Browser, Page } from "@playwright/test";
@@ -309,11 +309,14 @@ test.describe("staff editing a character's forms", () => {
     await giveTwoForms(world);
 
     await page.goto(world.characters.pinefall.url);
-    acceptNextDialog(page);
-    await page
-      .getByTestId("character-admin-actions")
-      .getByRole("button", { name: "Remove from Species" })
-      .click();
+    await (
+      await openMenuItem(page, "character-staff-menu", "Remove from Species")
+    ).click();
+    const dialog = page.getByTestId("remove-from-species-dialog");
+    await dialog
+      .getByTestId("confirm-phrase")
+      .fill(world.characters.pinefall.name);
+    await dialog.getByTestId("confirm-accept").click();
 
     const fields = page.getByRole("heading", { level: 3, name: "Fields" });
     await expect(fields).toBeVisible();

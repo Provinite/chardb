@@ -4,6 +4,7 @@ import styled, { css } from "styled-components";
 import { useParams, Link } from "react-router-dom";
 import { Package, ArrowLeft, Lock, Trash2 } from "lucide-react";
 import { toast } from "react-hot-toast";
+import { Menu, MenuGroup, MenuItem } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import { useCommunityId } from "../contexts/CommunityHostContext";
@@ -689,14 +690,20 @@ export const ItemProvenancePage: React.FC = () => {
 
         {permissions.canGrantItems && !destroyed && (
           <Actions>
-            <Button
-              $danger
-              type="button"
-              data-testid="revoke-item"
-              onClick={() => setRevokeOpen(true)}
-            >
-              <Trash2 size={14} /> Revoke
-            </Button>
+            {/* Staff-only on a page every member reads, so it is a step away
+                rather than a red button in the header (#430). */}
+            <Menu label="More actions" testId="item-staff-menu">
+              <MenuGroup label="Staff actions">
+                <MenuItem
+                  danger
+                  icon={<Trash2 size={14} />}
+                  testId="revoke-item"
+                  onSelect={() => setRevokeOpen(true)}
+                >
+                  Revoke
+                </MenuItem>
+              </MenuGroup>
+            </Menu>
           </Actions>
         )}
       </Header>
