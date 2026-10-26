@@ -218,14 +218,6 @@ export type CharacterFolder = {
   sortOrder: Scalars['Int']['output'];
 };
 
-/** Which of its owner's folders one character is filed in, as far as the viewer may see. */
-export type CharacterFolderMembership = {
-  __typename?: 'CharacterFolderMembership';
-  characterId: Scalars['ID']['output'];
-  /** In the workspace's sibling order. Empty when unfiled. */
-  folderIds: Array<Scalars['ID']['output']>;
-};
-
 /** One appearance of a character, with its own trait set */
 export type CharacterForm = {
   __typename?: 'CharacterForm';
@@ -3012,8 +3004,6 @@ export type Query = {
   __typename?: 'Query';
   activityFeed: Array<ActivityItem>;
   character: Character;
-  /** Where each of these characters is filed in one person's workspace, answered for every id given and in the same order. Private folders and everything nested under them are left out for anyone but the owner. */
-  characterFolderMemberships: Array<CharacterFolderMembership>;
   /** Where this character's current owner filed it. Empty for an orphaned character. */
   characterFolders: Array<CharacterFolder>;
   characterGalleries: GalleryConnection;
@@ -3235,12 +3225,6 @@ export type QueryActivityFeedArgs = {
 
 export type QueryCharacterArgs = {
   id: Scalars['ID']['input'];
-};
-
-
-export type QueryCharacterFolderMembershipsArgs = {
-  characterIds: Array<Scalars['ID']['input']>;
-  userId: Scalars['ID']['input'];
 };
 
 
@@ -5081,14 +5065,6 @@ export type GetCharacterFoldersQueryVariables = Exact<{
 
 
 export type GetCharacterFoldersQuery = { __typename?: 'Query', characterFolders: Array<{ __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number }> };
-
-export type GetCharacterFolderMembershipsQueryVariables = Exact<{
-  userId: Scalars['ID']['input'];
-  characterIds: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
-}>;
-
-
-export type GetCharacterFolderMembershipsQuery = { __typename?: 'Query', characterFolderMemberships: Array<{ __typename?: 'CharacterFolderMembership', characterId: string, folderIds: Array<string> }> };
 
 export type CreateCharacterFolderMutationVariables = Exact<{
   input: CreateCharacterFolderInput;
@@ -8082,48 +8058,6 @@ export type GetCharacterFoldersQueryHookResult = ReturnType<typeof useGetCharact
 export type GetCharacterFoldersLazyQueryHookResult = ReturnType<typeof useGetCharacterFoldersLazyQuery>;
 export type GetCharacterFoldersSuspenseQueryHookResult = ReturnType<typeof useGetCharacterFoldersSuspenseQuery>;
 export type GetCharacterFoldersQueryResult = Apollo.QueryResult<GetCharacterFoldersQuery, GetCharacterFoldersQueryVariables>;
-export const GetCharacterFolderMembershipsDocument = gql`
-    query GetCharacterFolderMemberships($userId: ID!, $characterIds: [ID!]!) {
-  characterFolderMemberships(userId: $userId, characterIds: $characterIds) {
-    characterId
-    folderIds
-  }
-}
-    `;
-
-/**
- * __useGetCharacterFolderMembershipsQuery__
- *
- * To run a query within a React component, call `useGetCharacterFolderMembershipsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetCharacterFolderMembershipsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetCharacterFolderMembershipsQuery({
- *   variables: {
- *      userId: // value for 'userId'
- *      characterIds: // value for 'characterIds'
- *   },
- * });
- */
-export function useGetCharacterFolderMembershipsQuery(baseOptions: Apollo.QueryHookOptions<GetCharacterFolderMembershipsQuery, GetCharacterFolderMembershipsQueryVariables> & ({ variables: GetCharacterFolderMembershipsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetCharacterFolderMembershipsQuery, GetCharacterFolderMembershipsQueryVariables>(GetCharacterFolderMembershipsDocument, options);
-      }
-export function useGetCharacterFolderMembershipsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetCharacterFolderMembershipsQuery, GetCharacterFolderMembershipsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetCharacterFolderMembershipsQuery, GetCharacterFolderMembershipsQueryVariables>(GetCharacterFolderMembershipsDocument, options);
-        }
-export function useGetCharacterFolderMembershipsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetCharacterFolderMembershipsQuery, GetCharacterFolderMembershipsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetCharacterFolderMembershipsQuery, GetCharacterFolderMembershipsQueryVariables>(GetCharacterFolderMembershipsDocument, options);
-        }
-export type GetCharacterFolderMembershipsQueryHookResult = ReturnType<typeof useGetCharacterFolderMembershipsQuery>;
-export type GetCharacterFolderMembershipsLazyQueryHookResult = ReturnType<typeof useGetCharacterFolderMembershipsLazyQuery>;
-export type GetCharacterFolderMembershipsSuspenseQueryHookResult = ReturnType<typeof useGetCharacterFolderMembershipsSuspenseQuery>;
-export type GetCharacterFolderMembershipsQueryResult = Apollo.QueryResult<GetCharacterFolderMembershipsQuery, GetCharacterFolderMembershipsQueryVariables>;
 export const CreateCharacterFolderDocument = gql`
     mutation CreateCharacterFolder($input: CreateCharacterFolderInput!) {
   createCharacterFolder(input: $input) {

@@ -270,50 +270,6 @@ test.describe("filing from the workspace", () => {
     await expect(page.getByTestId("folder-header")).toContainText("Private");
   });
 
-  test("a card names the other folders it is in, not the one you are in", async ({
-    page,
-    world,
-  }) => {
-    const fursonas = await makeFolder(world, "Fursonas");
-    const retired = await makeFolder(world, "Retired");
-    await file(world, fursonas, [characters[0], characters[1]]);
-    await file(world, retired, [characters[0]]);
-
-    await page.goto(`/my/characters?folder=${fursonas}`);
-
-    const chips = characterCard(page, characters[0]).getByTestId(
-      "folder-chips",
-    );
-    await expect(chips).toHaveText("Retired");
-    // In nothing but the folder on screen: nothing to say.
-    await expect(
-      characterCard(page, characters[1]).getByTestId("folder-chips"),
-    ).toHaveCount(0);
-  });
-
-  test("more than three other folders fold into one chip that lists them on hover", async ({
-    page,
-    world,
-  }) => {
-    const here = await makeFolder(world, "Here");
-    await file(world, here, [characters[0]]);
-    for (const name of ["Alder", "Bracken", "Cedar", "Dogwood"]) {
-      await file(world, await makeFolder(world, name), [characters[0]]);
-    }
-
-    await page.goto(`/my/characters?folder=${here}`);
-
-    const chips = characterCard(page, characters[0]).getByTestId(
-      "folder-chips",
-    );
-    await expect(chips).toHaveText("4 folders");
-    await chips.getByText("4 folders").hover();
-    const tooltip = page.getByRole("tooltip");
-    for (const name of ["Alder", "Bracken", "Cedar", "Dogwood"]) {
-      await expect(tooltip).toContainText(name);
-    }
-  });
-
   test("a new folder made from the picker goes where you choose", async ({
     page,
     world,

@@ -45,19 +45,6 @@ export const GET_CHARACTER_FOLDERS = gql`
   }
 `;
 
-/**
- * Folder ids per character for the cards on screen. Ids rather than folders:
- * the browser already holds the workspace and looks them up there.
- */
-export const GET_CHARACTER_FOLDER_MEMBERSHIPS = gql`
-  query GetCharacterFolderMemberships($userId: ID!, $characterIds: [ID!]!) {
-    characterFolderMemberships(userId: $userId, characterIds: $characterIds) {
-      characterId
-      folderIds
-    }
-  }
-`;
-
 export const CREATE_CHARACTER_FOLDER = gql`
   ${CHARACTER_FOLDER_FIELDS_FRAGMENT}
   mutation CreateCharacterFolder($input: CreateCharacterFolderInput!) {

@@ -39,13 +39,6 @@ export const MAX_BULK_CHARACTERS = 200;
 /** How many folders one character may be in. */
 export const MAX_FOLDERS_PER_CHARACTER = 50;
 
-/**
- * How many characters one membership lookup may ask about. The browser asks
- * about every card it has loaded, and Load More keeps appending, so this is
- * well past a page -- twenty-odd Load Mores.
- */
-export const MAX_MEMBERSHIP_BATCH = 500;
-
 @InputType()
 export class CreateCharacterFolderInput {
   @Field({ description: "Folder name, as it should be displayed." })

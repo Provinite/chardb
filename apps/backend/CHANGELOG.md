@@ -7,10 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-
-- **`characterFolderMemberships` query** returns the folders each of up to 500 characters is filed in, in one round trip, hiding private subtrees from visitors (#422).
-
 ## [v14.0.0] - 2026-10-25
 
 ### Added

@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Character folder bulk bar** replaces "Move to folder" and "Also add to" with one "Add to folder…", whose picker offers "Also remove from" the open folder by name; the root no longer offers "No folder", which failed (#422).
 - **Character folders redesigned**: folder-shaped tiles with a character count, private folders grey and labelled Private, each folder's actions beside its name, and the owner's root headed "Not in a folder" (#422).
-- **Character cards in the folder browser show their other folders** as chips, folding into one "N folders" chip with a tooltip past three; a folder made from the picker now asks where it goes (#422).
+- **A folder made from the folder picker asks where it goes**, top level or inside any folder, instead of landing in the open one (#422).
 
 ## [v14.0.0] - 2026-10-25
 
