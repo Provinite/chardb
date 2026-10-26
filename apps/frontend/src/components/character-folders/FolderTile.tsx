@@ -1,10 +1,10 @@
 import React from "react";
-import styled, { css } from "styled-components";
-import { Folder as FolderGlyph, FolderLock } from "lucide-react";
+import styled, { css, DefaultTheme } from "styled-components";
+import { Folder as FolderGlyph, FolderLock, Lock } from "lucide-react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Folder } from "./folderTree";
+import { countCharacters, Folder } from "./folderTree";
 
 /**
  * Drag ids are prefixed rather than bare, because a tile is a drop target and
@@ -35,35 +35,118 @@ export const FolderIcon: React.FC<{ isPrivate: boolean; size?: number }> = ({
     <FolderGlyph size={size} aria-hidden />
   );
 
-const Tile = styled.div<{ $over: boolean; $dragging: boolean }>`
+/**
+ * Public folders take the brand colour and private ones slate, hatched, so the
+ * two read apart at a glance across a row of tiles -- the lock glyph alone was
+ * a few pixels wide and nobody saw it.
+ */
+const folderTint = (isPrivate: boolean, theme: DefaultTheme) => {
+  // Theme colours are six-digit hex, so a two-digit suffix is an alpha --
+  // the same trick the shared Button uses, and unlike color-mix() it works in
+  // every browser the app supports.
+  const ink = isPrivate ? theme.colors.text.secondary : theme.colors.primary;
+  return css`
+    --folder-ink: ${ink};
+    --folder-fill: ${ink}${isPrivate ? "0f" : "17"};
+    --folder-edge: ${ink}4d;
+    --folder-hatch: ${ink}12;
+  `;
+};
+
+/**
+ * A folder drawn as one: a tab on top of a body. Characters are bordered cards
+ * too, and with both as plain boxes nothing said which of them held the other.
+ */
+const Tile = styled.div<{
+  $over: boolean;
+  $dragging: boolean;
+  $private: boolean;
+}>`
+  ${({ $private, theme }) => folderTint($private, theme)}
+  position: relative;
   display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  min-height: 96px;
+  margin-top: 10px;
   padding: ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  background: ${({ theme }) => theme.colors.background};
+  border: 1px solid var(--folder-edge);
+  border-radius: 0 ${({ theme }) => theme.borderRadius.lg}
+    ${({ theme }) => theme.borderRadius.lg}
+    ${({ theme }) => theme.borderRadius.lg};
+  /* The tint laid over the page colour rather than left translucent, so the
+     tab can sit over the body's top edge and hide it. */
+  --folder-solid:
+    linear-gradient(var(--folder-fill), var(--folder-fill)),
+    ${({ theme }) => theme.colors.background};
+  background: var(--folder-solid);
+  ${({ $private, theme }) =>
+    $private &&
+    css`
+      background:
+        repeating-linear-gradient(
+          -45deg,
+          transparent 0 8px,
+          var(--folder-hatch) 8px 9px
+        ),
+        linear-gradient(var(--folder-fill), var(--folder-fill)),
+        ${theme.colors.background};
+    `}
   cursor: pointer;
   transition:
     border-color 0.15s,
-    background 0.15s;
+    box-shadow 0.15s;
   opacity: ${({ $dragging }) => ($dragging ? 0.4 : 1)};
 
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.primary};
+  &::before {
+    content: "";
+    position: absolute;
+    top: -11px;
+    left: -1px;
+    width: 40%;
+    max-width: 96px;
+    height: 12px;
+    border: 1px solid var(--folder-edge);
+    border-bottom: none;
+    border-radius: ${({ theme }) => theme.borderRadius.md}
+      ${({ theme }) => theme.borderRadius.md} 0 0;
+    background: var(--folder-solid);
+  }
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--folder-ink);
+    outline: none;
+  }
+
+  &:hover::before,
+  &:focus-visible::before {
+    border-color: var(--folder-ink);
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--folder-ink);
   }
 
   ${({ $over, theme }) =>
     $over &&
     css`
       border-color: ${theme.colors.primary};
-      background: ${theme.colors.surface};
       box-shadow: 0 0 0 2px ${theme.colors.primary};
+      background: ${theme.colors.primary}2e;
     `}
 `;
 
+const TopRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--folder-ink);
+`;
+
 const Name = styled.span`
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
   overflow: hidden;
   text-overflow: ellipsis;
@@ -71,9 +154,22 @@ const Name = styled.span`
 `;
 
 const Count = styled.span`
-  margin-left: auto;
-  color: ${({ theme }) => theme.colors.text.muted};
+  color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
+`;
+
+/** The word, not just the glyph: privacy decides what visitors can see. */
+export const PrivatePill = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px ${({ theme }) => theme.spacing.sm};
+  border-radius: ${({ theme }) => theme.borderRadius.full};
+  background: ${({ theme }) => theme.colors.text.secondary};
+  color: ${({ theme }) => theme.colors.background};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  line-height: 1.4;
 `;
 
 const MenuButton = styled.button`
@@ -140,6 +236,7 @@ export const FolderTile: React.FC<FolderTileProps> = ({
       ref={setRef}
       $over={droppable.isOver}
       $dragging={sortable.isDragging}
+      $private={folder.isPrivate}
       style={{
         transform: CSS.Transform.toString(sortable.transform),
         transition: sortable.transition,
@@ -159,9 +256,17 @@ export const FolderTile: React.FC<FolderTileProps> = ({
         }
       }}
     >
-      <FolderIcon isPrivate={folder.isPrivate} />
       <Name>{folder.name}</Name>
-      <Count>{folder.characterCount}</Count>
+      <Count>{countCharacters(folder.characterCount)}</Count>
+      <TopRow style={{ order: -1 }}>
+        <FolderIcon isPrivate={folder.isPrivate} size={22} />
+        {folder.isPrivate && (
+          <PrivatePill>
+            <Lock size={11} aria-hidden />
+            Private
+          </PrivatePill>
+        )}
+      </TopRow>
       {editable && onMenu && !reordering && (
         <MenuButton
           type="button"

@@ -178,7 +178,7 @@ test.describe("filing from the workspace", () => {
     await picker.getByRole("button", { name: "Add", exact: true }).click();
 
     await expect(characterCard(page, characters[0])).toBeVisible();
-    await page.getByRole("button", { name: "All characters" }).click();
+    await page.getByRole("button", { name: "Characters", exact: true }).click();
     await expect(folderTile(page, "Retired")).toContainText("1");
   });
 
@@ -202,7 +202,7 @@ test.describe("filing from the workspace", () => {
     await picker.getByRole("button", { name: "Move", exact: true }).click();
 
     await expect(characterCard(page, characters[0])).toHaveCount(0);
-    await page.getByRole("button", { name: "All characters" }).click();
+    await page.getByRole("button", { name: "Characters", exact: true }).click();
     await expect(folderTile(page, "Retired")).toContainText("1");
     await expect(folderTile(page, "Fursonas")).toContainText("0");
   });
@@ -221,6 +221,70 @@ test.describe("filing from the workspace", () => {
     await expect(characterCard(page, characters[0])).toHaveCount(0);
   });
 
+  test("the owner's root says it holds only what is in no folder", async ({
+    page,
+    world,
+  }) => {
+    const folder = await makeFolder(world, "Fursonas");
+    await file(world, folder, [characters[0]]);
+
+    await page.goto("/my/characters");
+
+    // Two of three are here. Headed "Characters" this read as the whole
+    // collection, and the profile's View All (3) landed on it showing 2.
+    await expect(
+      page.getByRole("heading", { name: "Not in a folder" }),
+    ).toBeVisible();
+    await expect(folderTile(page, "Fursonas")).toContainText("1 character");
+  });
+
+  test("a folder page is headed by its name and carries its own actions", async ({
+    page,
+    world,
+  }) => {
+    const folder = await makeFolder(world, "Fursonas");
+
+    await page.goto(`/my/characters?folder=${folder}`);
+
+    const header = page.getByTestId("folder-header");
+    await expect(
+      header.getByRole("heading", { level: 2, name: "Fursonas" }),
+    ).toBeVisible();
+    for (const action of ["Rename", "Make private", "Move", "Delete"]) {
+      await expect(
+        header.getByRole("button", { name: action, exact: true }),
+      ).toBeVisible();
+    }
+  });
+
+  test("a private folder says so in words, on its tile and its page", async ({
+    page,
+    world,
+  }) => {
+    const folder = await makeFolder(world, "To sell", { isPrivate: true });
+
+    await page.goto("/my/characters");
+    await expect(folderTile(page, "To sell")).toContainText("Private");
+
+    await page.goto(`/my/characters?folder=${folder}`);
+    await expect(page.getByTestId("folder-header")).toContainText("Private");
+  });
+
+  test("the picker marks the folder you chose", async ({ page, world }) => {
+    await makeFolder(world, "Retired");
+    await page.goto("/my/characters");
+
+    await page.getByRole("checkbox", { name: "Select Birchling" }).check();
+    await page.getByRole("button", { name: /^Add to folder/ }).click();
+
+    const row = page
+      .getByTestId("folder-picker")
+      .getByRole("button", { name: /Retired/ });
+    await expect(row).toHaveAttribute("aria-pressed", "false");
+    await row.click();
+    await expect(row).toHaveAttribute("aria-pressed", "true");
+  });
+
   test("opening a folder shows what is in it and a way back", async ({
     page,
     world,
@@ -235,7 +299,7 @@ test.describe("filing from the workspace", () => {
     await expect(characterCard(page, characters[0])).toBeVisible();
     await expect(characterCard(page, characters[1])).toHaveCount(0);
 
-    await page.getByRole("button", { name: "All characters" }).click();
+    await page.getByRole("button", { name: "Characters", exact: true }).click();
     await expect(characterCard(page, characters[1])).toBeVisible();
   });
 
@@ -329,6 +393,9 @@ test.describe("what a visitor sees", () => {
     await page.goto(`/user/${world.users.member.username}/characters`);
 
     await expect(folderTile(page, "Fursonas")).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "All characters" }),
+    ).toBeVisible();
 
     // A visitor's root is a listing rather than a pile to work down, so it
     // shows everything -- including the characters that are filed.

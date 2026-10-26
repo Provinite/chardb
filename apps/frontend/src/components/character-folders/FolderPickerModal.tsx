@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from "react";
 import styled from "styled-components";
+import { Check } from "lucide-react";
 import { Button, Modal } from "@chardb/ui";
 import { flattenTree, Folder } from "./folderTree";
 import { FolderIcon } from "./FolderTile";
@@ -27,14 +28,14 @@ const List = styled.div`
   border-radius: ${({ theme }) => theme.borderRadius.md};
 `;
 
-const Row = styled.button<{ $depth: number; $selected: boolean }>`
+const Row = styled.button<{ $depth: number }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   width: 100%;
   border: none;
-  background: ${({ theme, $selected }) =>
-    $selected ? theme.colors.surface : "transparent"};
+  border-left: 3px solid transparent;
+  background: transparent;
   color: ${({ theme }) => theme.colors.text.primary};
   text-align: left;
   cursor: pointer;
@@ -47,9 +48,25 @@ const Row = styled.button<{ $depth: number; $selected: boolean }>`
     background: ${({ theme }) => theme.colors.surface};
   }
 
+  &[aria-pressed="true"] {
+    border-left-color: ${({ theme }) => theme.colors.primary};
+    background: ${({ theme }) => theme.colors.primary}24;
+    font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
+  }
+
   &:disabled {
     color: ${({ theme }) => theme.colors.text.muted};
     cursor: not-allowed;
+  }
+`;
+
+const Glyph = styled.span<{ $private: boolean }>`
+  display: inline-flex;
+  color: ${({ theme, $private }) =>
+    $private ? theme.colors.text.secondary : theme.colors.primary};
+
+  button:disabled & {
+    color: inherit;
   }
 `;
 
@@ -57,6 +74,11 @@ const Count = styled.span`
   margin-left: auto;
   color: ${({ theme }) => theme.colors.text.muted};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
+`;
+
+const Chosen = styled(Check)`
+  margin-left: auto;
+  color: ${({ theme }) => theme.colors.primary};
 `;
 
 const Empty = styled.p`
@@ -212,10 +234,11 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
             <Row
               type="button"
               $depth={0}
-              $selected={selected === null}
+              aria-pressed={selected === null}
               onClick={() => setSelected(null)}
             >
               No folder
+              {selected === null && <Chosen size={16} aria-hidden />}
             </Row>
           )}
 
@@ -224,13 +247,23 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
               key={folder.id}
               type="button"
               $depth={search ? 0 : depth}
-              $selected={selected === folder.id}
+              aria-pressed={selected === folder.id}
               disabled={disabledIds?.has(folder.id)}
               onClick={() => setSelected(folder.id)}
             >
-              <FolderIcon isPrivate={folder.isPrivate} />
+              <Glyph $private={folder.isPrivate}>
+                <FolderIcon isPrivate={folder.isPrivate} />
+              </Glyph>
               {folder.name}
-              <Count>{folder.characterCount}</Count>
+              {selected === folder.id ? (
+                <Chosen size={16} aria-hidden />
+              ) : (
+                <Count>
+                  {folder.id === removeFrom?.id
+                    ? "Current folder"
+                    : folder.characterCount}
+                </Count>
+              )}
             </Row>
           ))}
 

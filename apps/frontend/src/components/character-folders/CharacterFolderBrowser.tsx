@@ -32,12 +32,15 @@ import { CharacterCard } from "../CharacterCard";
 import { Pager } from "../pagination/Pager";
 import { ConfirmDialog } from "../ConfirmDialog";
 import { FolderPickerModal } from "./FolderPickerModal";
+import { FolderInput, Globe, Lock, Pencil, Trash2 } from "lucide-react";
 import {
   DraggableCharacter,
   DRAG_CHARACTER_PREFIX,
   DRAG_FOLDER_PREFIX,
   DROP_PREFIX,
+  FolderIcon,
   FolderTile,
+  PrivatePill,
   ROOT_DROP_ID,
 } from "./FolderTile";
 import { childrenOf, Folder, pathTo, subtreeIds } from "./folderTree";
@@ -66,21 +69,16 @@ const Crumbs = styled.nav`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
-const Crumb = styled.button<{ $current?: boolean }>`
+const Crumb = styled.button`
   border: none;
   background: transparent;
   padding: ${({ theme }) => theme.spacing.xs};
   border-radius: ${({ theme }) => theme.borderRadius.sm};
-  cursor: ${({ $current }) => ($current ? "default" : "pointer")};
-  color: ${({ theme, $current }) =>
-    $current ? theme.colors.text.primary : theme.colors.primary};
+  cursor: pointer;
+  color: ${({ theme }) => theme.colors.primary};
   font-size: inherit;
-  font-weight: ${({ theme, $current }) =>
-    $current
-      ? theme.typography.fontWeight.semibold
-      : theme.typography.fontWeight.normal};
 
-  &:hover:not(:disabled) {
+  &:hover {
     text-decoration: underline;
   }
 `;
@@ -89,19 +87,23 @@ const Spacer = styled.span`
   margin-left: auto;
 `;
 
+const Section = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
 const SectionLabel = styled.h3`
   margin: 0;
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.lg};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const TileGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: ${({ theme }) => theme.spacing.sm};
+  gap: ${({ theme }) => theme.spacing.md};
 `;
 
 const CardGrid = styled.div`
@@ -134,6 +136,7 @@ const Checkbox = styled.input`
   width: 20px;
   height: 20px;
   cursor: pointer;
+  accent-color: ${({ theme }) => theme.colors.primary};
 `;
 
 const Empty = styled.p`
@@ -467,148 +470,197 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
       onDragEnd={(event) => void handleDragEnd(event)}
     >
       <Container>
-        <Bar>
-          <Crumbs aria-label="Folder path">
-            <Crumb
-              type="button"
-              $current={here.length === 0}
-              disabled={here.length === 0}
-              onClick={() => navigate(null)}
-            >
-              All characters
-            </Crumb>
-            {here.map((folder, index) => (
-              <React.Fragment key={folder.id}>
-                <span aria-hidden>›</span>
-                <Crumb
-                  type="button"
-                  $current={index === here.length - 1}
-                  disabled={index === here.length - 1}
-                  onClick={() => navigate(folder.id)}
-                >
-                  {folder.name}
-                </Crumb>
-              </React.Fragment>
-            ))}
-          </Crumbs>
-
-          {editable && (
-            <>
-              <Spacer />
-              {subfolders.length > 1 && (
-                <Button
-                  variant={reordering ? "primary" : "ghost"}
-                  size="sm"
-                  onClick={() => setReordering((on) => !on)}
-                >
-                  {reordering ? "Done reordering" : "Reorder folders"}
-                </Button>
-              )}
-              {newName === null ? (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setNewName("")}
-                >
-                  New folder
-                </Button>
-              ) : (
-                <NameForm
-                  onSubmit={(event) => {
-                    event.preventDefault();
-                    void submitNewFolder();
-                  }}
-                >
-                  <NameField
-                    autoFocus
-                    value={newName}
-                    aria-label="New folder name"
-                    placeholder="Folder name"
-                    onChange={(event) => setNewName(event.target.value)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Escape") setNewName(null);
-                    }}
-                  />
-                  <Button variant="primary" size="sm" type="submit">
-                    Create
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setNewName(null)}
-                  >
-                    Cancel
-                  </Button>
-                </NameForm>
-              )}
-            </>
-          )}
-        </Bar>
-
-        {editable && selected.size > 0 && (
-          <SelectionBar>
-            <span>{selected.size} selected</span>
-            <Spacer />
-            {/* One way in. A character can be in several folders, so "move"
-                only ever means "add, and take out of the open one" -- and
-                that second half is a choice made in the picker, where it can
-                name the folder, rather than a second button that can't. */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setPicker({ kind: "file-characters" })}
-            >
-              Add to folder&hellip;
-            </Button>
-            {openFolder && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => void runMove([...selected], null, true)}
-              >
-                Remove from &ldquo;{openFolder.name}&rdquo;
-              </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSelected(new Set())}
-            >
-              Clear
-            </Button>
-          </SelectionBar>
-        )}
-
-        {subfolders.length > 0 && (
+        {openFolder && (
           <div>
-            <SectionLabel>Folders</SectionLabel>
-            <SortableContext
-              items={subfolders.map(
-                (folder) => `${DRAG_FOLDER_PREFIX}${folder.id}`,
-              )}
-              strategy={rectSortingStrategy}
-            >
-              <TileGrid style={{ marginTop: "0.5rem" }}>
-                {subfolders.map((folder) => (
-                  <FolderTile
-                    key={folder.id}
-                    folder={folder}
-                    editable={editable}
-                    reordering={reordering}
-                    onOpen={() => navigate(folder.id)}
-                  />
-                ))}
-              </TileGrid>
-            </SortableContext>
+            {/* The way back up. Only inside a folder: at the root it would be
+                a single crumb naming the page you are already on. */}
+            <Crumbs aria-label="Folder path">
+              <Crumb type="button" onClick={() => navigate(null)}>
+                Characters
+              </Crumb>
+              {here.slice(0, -1).map((folder) => (
+                <React.Fragment key={folder.id}>
+                  <span aria-hidden>›</span>
+                  <Crumb type="button" onClick={() => navigate(folder.id)}>
+                    {folder.name}
+                  </Crumb>
+                </React.Fragment>
+              ))}
+            </Crumbs>
+            <FolderHeader
+              folder={openFolder}
+              editable={editable}
+              onRename={async (name) => {
+                try {
+                  await updateFolder({
+                    variables: { input: { id: openFolder.id, name } },
+                  });
+                  await refetchFolders();
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Could not rename that",
+                  );
+                }
+              }}
+              onTogglePrivate={async () => {
+                try {
+                  await updateFolder({
+                    variables: {
+                      input: {
+                        id: openFolder.id,
+                        isPrivate: !openFolder.isPrivate,
+                      },
+                    },
+                  });
+                  await refetchFolders();
+                } catch (error) {
+                  toast.error(
+                    error instanceof Error
+                      ? error.message
+                      : "Could not change that",
+                  );
+                }
+              }}
+              onMove={() =>
+                setPicker({ kind: "move-folder", folder: openFolder })
+              }
+              onDelete={() => setDeleting(openFolder)}
+            />
           </div>
         )}
 
-        <div>
-          <SectionLabel>
-            {folderId ? "Characters in this folder" : "Characters"}
-          </SectionLabel>
+        {(editable || subfolders.length > 0) && (
+          <Section>
+            <Bar>
+              <SectionLabel>Folders</SectionLabel>
+              {editable && (
+                <>
+                  <Spacer />
+                  {subfolders.length > 1 && (
+                    <Button
+                      variant={reordering ? "primary" : "ghost"}
+                      size="sm"
+                      onClick={() => setReordering((on) => !on)}
+                    >
+                      {reordering ? "Done reordering" : "Reorder folders"}
+                    </Button>
+                  )}
+                  {newName === null ? (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setNewName("")}
+                    >
+                      New folder
+                    </Button>
+                  ) : (
+                    <NameForm
+                      onSubmit={(event) => {
+                        event.preventDefault();
+                        void submitNewFolder();
+                      }}
+                    >
+                      <NameField
+                        autoFocus
+                        value={newName}
+                        aria-label="New folder name"
+                        placeholder="Folder name"
+                        onChange={(event) => setNewName(event.target.value)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Escape") setNewName(null);
+                        }}
+                      />
+                      <Button variant="primary" size="sm" type="submit">
+                        Create
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setNewName(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </NameForm>
+                  )}
+                </>
+              )}
+            </Bar>
+            {subfolders.length > 0 ? (
+              <SortableContext
+                items={subfolders.map(
+                  (folder) => `${DRAG_FOLDER_PREFIX}${folder.id}`,
+                )}
+                strategy={rectSortingStrategy}
+              >
+                <TileGrid>
+                  {subfolders.map((folder) => (
+                    <FolderTile
+                      key={folder.id}
+                      folder={folder}
+                      editable={editable}
+                      reordering={reordering}
+                      onOpen={() => navigate(folder.id)}
+                    />
+                  ))}
+                </TileGrid>
+              </SortableContext>
+            ) : (
+              <Empty>
+                {openFolder
+                  ? "No folders inside this one."
+                  : "Make a folder to start sorting your characters."}
+              </Empty>
+            )}
+          </Section>
+        )}
+
+        <Section>
+          <Bar>
+            <SectionLabel>
+              {openFolder
+                ? "Characters"
+                : editable
+                  ? "Not in a folder"
+                  : "All characters"}
+            </SectionLabel>
+          </Bar>
+          {editable && selected.size > 0 && (
+            <SelectionBar>
+              <span>{selected.size} selected</span>
+              <Spacer />
+              {/* One way in. A character can be in several folders, so "move"
+                only ever means "add, and take out of the open one" -- and
+                that second half is a choice made in the picker, where it can
+                name the folder, rather than a second button that can't. */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setPicker({ kind: "file-characters" })}
+              >
+                Add to folder&hellip;
+              </Button>
+              {openFolder && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => void runMove([...selected], null, true)}
+                >
+                  Remove from &ldquo;{openFolder.name}&rdquo;
+                </Button>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelected(new Set())}
+              >
+                Clear
+              </Button>
+            </SelectionBar>
+          )}
           {characters.length === 0 ? (
-            <Empty style={{ marginTop: "0.5rem" }}>
+            <Empty>
               {folderId
                 ? "Nothing filed here yet."
                 : editable
@@ -624,7 +676,7 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
               onLoadMore={loadMore}
               noun="characters"
             >
-              <CardGrid style={{ marginTop: "0.5rem" }}>
+              <CardGrid>
                 {characters.map((character) => (
                   <CardShell key={character.id}>
                     {editable && (
@@ -650,7 +702,7 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
               </CardGrid>
             </Pager>
           )}
-        </div>
+        </Section>
       </Container>
 
       <FolderPickerModal
@@ -714,76 +766,49 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
           })();
         }}
       >
-        The characters in it are not deleted &mdash; they go back to All
-        characters. Any folders inside it are deleted with it.
+        The characters in it are not deleted. Any folders inside it are deleted
+        with it.
       </ConfirmDialog>
-
-      {/* Kept mounted so `updateFolder` has a caller; renaming is reached from
-          the folder page itself rather than from a tile. */}
-      <RenameControls
-        folder={here[here.length - 1] ?? null}
-        editable={editable}
-        onRename={async (name) => {
-          const current = here[here.length - 1];
-          if (!current) return;
-          try {
-            await updateFolder({
-              variables: { input: { id: current.id, name } },
-            });
-            await refetchFolders();
-          } catch (error) {
-            toast.error(
-              error instanceof Error ? error.message : "Could not rename that",
-            );
-          }
-        }}
-        onTogglePrivate={async () => {
-          const current = here[here.length - 1];
-          if (!current) return;
-          try {
-            await updateFolder({
-              variables: {
-                input: { id: current.id, isPrivate: !current.isPrivate },
-              },
-            });
-            await refetchFolders();
-          } catch (error) {
-            toast.error(
-              error instanceof Error ? error.message : "Could not change that",
-            );
-          }
-        }}
-        onMove={() => {
-          const current = here[here.length - 1];
-          if (current) setPicker({ kind: "move-folder", folder: current });
-        }}
-        onDelete={() => {
-          const current = here[here.length - 1];
-          if (current) setDeleting(current);
-        }}
-      />
     </DndContext>
   );
 };
 
-const RenameRow = styled.div`
+const HeaderRow = styled.div<{ $private: boolean }>`
   display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding-top: ${({ theme }) => theme.spacing.md};
-  border-top: 1px solid ${({ theme }) => theme.colors.border};
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.md};
+  margin-top: ${({ theme }) => theme.spacing.sm};
+  color: ${({ theme, $private }) =>
+    $private ? theme.colors.text.secondary : theme.colors.primary};
+`;
+
+const Title = styled.h2`
+  margin: 0;
+  font-size: ${({ theme }) => theme.typography.fontSize.xxl};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
+  color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const Actions = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  gap: ${({ theme }) => theme.spacing.xs};
+  margin-left: auto;
 `;
 
 /**
- * What you can do to the folder you are standing in.
+ * The folder you are standing in: its name as the heading, whether visitors
+ * can see it, and what you can do to it.
  *
- * On the folder's own page rather than on its tile: a tile is a navigation
- * target, and hanging rename, privacy, move and delete off every one of them
- * puts four destructive-ish actions on a surface whose main job is to be
- * clicked.
+ * The actions sit beside the name rather than on each tile -- a tile is a
+ * navigation target, and hanging rename, privacy, move and delete off every
+ * one of them puts four destructive-ish actions on a surface whose main job
+ * is to be clicked -- and not below the grid, where a full folder pushed
+ * them a long scroll from the thing they act on.
  */
-const RenameControls: React.FC<{
-  folder: Folder | null;
+const FolderHeader: React.FC<{
+  folder: Folder;
   editable: boolean;
   onRename: (name: string) => Promise<void>;
   onTogglePrivate: () => Promise<void>;
@@ -792,15 +817,48 @@ const RenameControls: React.FC<{
 }> = ({ folder, editable, onRename, onTogglePrivate, onMove, onDelete }) => {
   const [draft, setDraft] = useState<string | null>(null);
 
-  if (!folder || !editable) return null;
-
   return (
-    <RenameRow>
+    <HeaderRow data-testid="folder-header" $private={folder.isPrivate}>
+      <FolderIcon isPrivate={folder.isPrivate} size={30} />
       {draft === null ? (
-        <>
+        <Title>{folder.name}</Title>
+      ) : (
+        <NameForm
+          onSubmit={(event) => {
+            event.preventDefault();
+            void onRename(draft).then(() => setDraft(null));
+          }}
+        >
+          <NameField
+            autoFocus
+            value={draft}
+            aria-label="Folder name"
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Escape") setDraft(null);
+            }}
+          />
+          <Button variant="primary" size="sm" type="submit">
+            Save
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
+            Cancel
+          </Button>
+        </NameForm>
+      )}
+      {folder.isPrivate && (
+        <PrivatePill>
+          <Lock size={12} aria-hidden />
+          Private
+        </PrivatePill>
+      )}
+
+      {editable && draft === null && (
+        <Actions>
           <Button
             variant="ghost"
             size="sm"
+            icon={<Pencil size={14} aria-hidden />}
             onClick={() => setDraft(folder.name)}
           >
             Rename
@@ -808,40 +866,35 @@ const RenameControls: React.FC<{
           <Button
             variant="ghost"
             size="sm"
+            icon={
+              folder.isPrivate ? (
+                <Globe size={14} aria-hidden />
+              ) : (
+                <Lock size={14} aria-hidden />
+              )
+            }
             onClick={() => void onTogglePrivate()}
           >
             {folder.isPrivate ? "Make public" : "Make private"}
           </Button>
-          <Button variant="ghost" size="sm" onClick={onMove}>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<FolderInput size={14} aria-hidden />}
+            onClick={onMove}
+          >
             Move
           </Button>
-          <Button variant="ghost" size="sm" onClick={onDelete}>
+          <Button
+            variant="ghost"
+            size="sm"
+            icon={<Trash2 size={14} aria-hidden />}
+            onClick={onDelete}
+          >
             Delete
           </Button>
-        </>
-      ) : (
-        <>
-          <input
-            autoFocus
-            value={draft}
-            aria-label="Folder name"
-            onChange={(event) => setDraft(event.target.value)}
-          />
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={async () => {
-              await onRename(draft);
-              setDraft(null);
-            }}
-          >
-            Save
-          </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
-            Cancel
-          </Button>
-        </>
+        </Actions>
       )}
-    </RenameRow>
+    </HeaderRow>
   );
 };
