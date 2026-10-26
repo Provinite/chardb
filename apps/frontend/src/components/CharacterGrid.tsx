@@ -12,13 +12,11 @@ const Grid = styled.div`
 interface CharacterGridProps {
   characters: CharacterCardItem[];
   showOwner?: boolean;
-  showEditButton?: boolean;
 }
 
 export const CharacterGrid: React.FC<CharacterGridProps> = ({
   characters,
   showOwner = true,
-  showEditButton = false,
 }) => {
   return (
     <Grid>
@@ -27,7 +25,6 @@ export const CharacterGrid: React.FC<CharacterGridProps> = ({
           key={character.id}
           character={character}
           showOwner={showOwner}
-          showEditButton={showEditButton}
         />
       ))}
     </Grid>

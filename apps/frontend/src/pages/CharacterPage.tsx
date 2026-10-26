@@ -147,7 +147,6 @@ const MainImageSection = styled.div`
 
 const MainImageContainer = styled.div`
   position: relative;
-  aspect-ratio: 1;
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow: hidden;
   background: ${({ theme }) => theme.colors.surface};
@@ -155,15 +154,21 @@ const MainImageContainer = styled.div`
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 `;
 
+/**
+ * The whole image, at its own shape (#418). The square crop is the
+ * thumbnail's job, in cards and pickers; here the character is shown in full.
+ */
 const MainImageElement = styled.img`
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
 `;
 
 const MainImagePlaceholder = styled.div`
   width: 100%;
-  height: 100%;
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -685,7 +690,7 @@ export const CharacterPage: React.FC = () => {
             {character.mainMedia?.image ? (
               <MainImageElement
                 src={
-                  character.mainMedia.image.thumbnailUrl ||
+                  character.mainMedia.image.mediumUrl ||
                   character.mainMedia.image.originalUrl
                 }
                 alt={

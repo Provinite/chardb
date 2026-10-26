@@ -7,11 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Image upload on the character create form**, pinned beside the form and attached as the new character's main image; the edit form shows the current main image the same way (#406).
+- **Frame a new character's thumbnail on the create form**; the edit form shows the thumbnail with a link to re-frame it, and the upload page's character picker shows each character's thumbnail (#418).
+
 ### Changed
 
+- **Character cards are horizontal**: a square thumbnail on the left, the card's full height, so the thumbnail's framing shows untrimmed; names and other lines are cut to one line (#420).
+- **Character cards drop their Edit shortcut**; edit from the character's page. Copy ID (site admins) moves onto the card's picture (#420).
+- **The character page shows its main image whole** instead of the square thumbnail (#418).
+- **The upload form drops its Nudity and Gore checkboxes**, which the server never stored; Sensitive Content and its description remain (#406).
 - **Character folder bulk bar** replaces "Move to folder" and "Also add to" with one "Add to folder…", whose picker offers "Also remove from" the open folder by name; the root no longer offers "No folder", which failed (#422).
 - **Character folders redesigned**: folder-shaped tiles with a character count, private folders grey and labelled Private, each folder's actions beside its name, and the owner's root headed "Not in a folder" (#422).
 - **A folder made from the folder picker asks where it goes**, top level or inside any folder, instead of landing in the open one (#422).
+
+### Fixed
+
+- **Members without `canCreateOrphanedCharacter` can create characters again**; the form sent `assignToSelf: false` for them, which the server refused as an orphan.
 
 ## [v14.0.0] - 2026-10-25
 

@@ -359,9 +359,7 @@ interface UploadFormData {
   authorizedViewers: "full-size" | "watermarked" | "no-access";
   publicViewers: "full-size" | "watermarked" | "no-access";
   watermark: "url-fileside" | "url-only" | "none";
-  // NSFW categories
-  nsfwNudity: boolean;
-  nsfwGore: boolean;
+  // NSFW. The backend stores only whether an image is sensitive and how.
   nsfwSensitive: boolean;
   sensitiveContentDescription: string;
   // Artist credits
@@ -432,9 +430,6 @@ export const UploadImagePage: React.FC = () => {
     authorizedViewers: "full-size",
     publicViewers: "watermarked",
     watermark: "url-fileside",
-    // NSFW categories
-    nsfwNudity: false,
-    nsfwGore: false,
     nsfwSensitive: false,
     sensitiveContentDescription: "",
     // Artist credits
@@ -521,20 +516,12 @@ export const UploadImagePage: React.FC = () => {
         // ever disagree with it.
         if (hostCommunityId && !formData.characterId)
           formDataToSend.append("communityId", hostCommunityId);
-        // Handle NSFW flags
-        const hasNsfwContent =
-          formData.nsfwNudity || formData.nsfwGore || formData.nsfwSensitive;
-        formDataToSend.append("isNsfw", hasNsfwContent.toString());
-        if (formData.nsfwNudity) formDataToSend.append("nsfwNudity", "true");
-        if (formData.nsfwGore) formDataToSend.append("nsfwGore", "true");
-        if (formData.nsfwSensitive) {
-          formDataToSend.append("nsfwSensitive", "true");
-          if (formData.sensitiveContentDescription) {
-            formDataToSend.append(
-              "sensitiveContentDescription",
-              formData.sensitiveContentDescription,
-            );
-          }
+        formDataToSend.append("isNsfw", formData.nsfwSensitive.toString());
+        if (formData.nsfwSensitive && formData.sensitiveContentDescription) {
+          formDataToSend.append(
+            "sensitiveContentDescription",
+            formData.sensitiveContentDescription,
+          );
         }
 
         // Handle privacy settings
@@ -602,8 +589,6 @@ export const UploadImagePage: React.FC = () => {
         title: "",
         description: "",
         altText: "",
-        nsfwNudity: false,
-        nsfwGore: false,
         nsfwSensitive: false,
         sensitiveContentDescription: "",
         artistLink: "",
@@ -834,26 +819,6 @@ export const UploadImagePage: React.FC = () => {
                   <Label>
                     <Checkbox
                       type="checkbox"
-                      checked={formData.nsfwNudity}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("nsfwNudity", e.target.checked)
-                      }
-                    />
-                    Nudity
-                  </Label>
-                  <Label>
-                    <Checkbox
-                      type="checkbox"
-                      checked={formData.nsfwGore}
-                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                        handleInputChange("nsfwGore", e.target.checked)
-                      }
-                    />
-                    Gore
-                  </Label>
-                  <Label>
-                    <Checkbox
-                      type="checkbox"
                       checked={formData.nsfwSensitive}
                       onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                         handleInputChange("nsfwSensitive", e.target.checked)
@@ -879,9 +844,7 @@ export const UploadImagePage: React.FC = () => {
                     />
                   </div>
                 )}
-                {(formData.nsfwNudity ||
-                  formData.nsfwGore ||
-                  formData.nsfwSensitive) && (
+                {formData.nsfwSensitive && (
                   <ErrorMessage>
                     NSFW image uploads are not accepted at this time.
                   </ErrorMessage>
@@ -895,8 +858,6 @@ export const UploadImagePage: React.FC = () => {
                     uploading ||
                     files.length === 0 ||
                     !formData.characterId ||
-                    formData.nsfwNudity ||
-                    formData.nsfwGore ||
                     formData.nsfwSensitive
                   }
                   variant="primary"

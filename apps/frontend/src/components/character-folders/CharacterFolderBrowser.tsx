@@ -692,11 +692,7 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
                       characterId={character.id}
                       disabled={!editable || reordering}
                     >
-                      <CharacterCard
-                        character={character}
-                        showOwner={false}
-                        showEditButton={editable}
-                      />
+                      <CharacterCard character={character} showOwner={false} />
                     </DraggableCharacter>
                   </CardShell>
                 ))}
