@@ -4,6 +4,8 @@
  * what screen readers and the e2e suite both rely on.
  */
 import { describe, it, expect, vi } from "vitest";
+import { Profiler } from "react";
+import { act } from "@testing-library/react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "styled-components";
@@ -170,6 +172,53 @@ describe("Menu", () => {
     const top = parseFloat(screen.getByRole("menu").style.top);
     expect(top + 120).toBeLessThanOrEqual(bottom - 32);
     height.mockRestore();
+  });
+
+  it("keeps the list on-screen when the button is near the left edge", async () => {
+    const user = userEvent.setup();
+    renderMenu({});
+    vi.spyOn(trigger(), "getBoundingClientRect").mockReturnValue({
+      top: 100,
+      bottom: 132,
+      left: 10,
+      right: 42,
+      width: 32,
+      height: 32,
+      x: 10,
+      y: 100,
+      toJSON: () => ({}),
+    });
+    const width = vi
+      .spyOn(HTMLElement.prototype, "offsetWidth", "get")
+      .mockReturnValue(192);
+
+    await user.click(trigger());
+
+    expect(parseFloat(screen.getByRole("menu").style.left)).toBeGreaterThan(0);
+    width.mockRestore();
+  });
+
+  it("does not re-render its items when a scroll leaves it in place", async () => {
+    const user = userEvent.setup();
+    let renders = 0;
+    render(
+      <ThemeProvider theme={lightTheme}>
+        <Profiler id="menu" onRender={() => (renders += 1)}>
+          <Menu label="More actions">
+            <MenuItem onSelect={vi.fn()}>Counted</MenuItem>
+          </Menu>
+        </Profiler>
+      </ThemeProvider>,
+    );
+
+    await user.click(trigger());
+    const before = renders;
+    act(() => {
+      window.dispatchEvent(new Event("scroll"));
+      window.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(renders).toBe(before);
   });
 
   it("does not run a disabled item", async () => {

@@ -5,6 +5,7 @@ import React, {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
@@ -167,7 +168,8 @@ export const Menu: React.FC<MenuProps> = ({
   disabled = false,
 }) => {
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, right: 0 });
+  const [position, setPosition] = useState({ top: 0, left: 0 });
+  const positionRef = useRef(position);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listId = useId();
@@ -182,20 +184,30 @@ export const Menu: React.FC<MenuProps> = ({
     if (returnFocus) triggerRef.current?.focus();
   }, []);
 
-  // Opens upward when it would run off the bottom of the viewport -- a button
-  // at the foot of the screen is common, and a list below the fold cannot be
-  // reached.
+  // Right-aligned to the button, but kept on-screen at both sides: a button
+  // near the left edge would otherwise push the list off it. Opens upward
+  // when it would run off the bottom of the viewport -- a button at the foot
+  // of the screen is common, and a list below the fold cannot be reached.
   const place = useCallback(() => {
     if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
     const height = listRef.current?.offsetHeight ?? 0;
+    const width = listRef.current?.offsetWidth ?? 0;
     const below = rect.bottom + GAP_PX;
     const above = rect.top - GAP_PX - height;
     const fitsBelow = below + height <= window.innerHeight - GAP_PX;
-    setPosition({
-      top: fitsBelow || above < GAP_PX ? below : above,
-      right: Math.max(window.innerWidth - rect.right, GAP_PX),
-    });
+    const top = fitsBelow || above < GAP_PX ? below : above;
+    const left = Math.max(
+      GAP_PX,
+      Math.min(rect.right - width, window.innerWidth - width - GAP_PX),
+    );
+    // Scroll fires this many times a second; an unchanged position must not
+    // re-render the list. Compared against a ref, not inside the updater:
+    // React can still render once for an updater that returns the old state.
+    const prev = positionRef.current;
+    if (prev.top === top && prev.left === left) return;
+    positionRef.current = { top, left };
+    setPosition(positionRef.current);
   }, []);
 
   // Before paint, so the list never flashes in the wrong place.
@@ -232,6 +244,8 @@ export const Menu: React.FC<MenuProps> = ({
       window.removeEventListener("resize", place);
     };
   }, [open, close, place]);
+
+  const context = useMemo(() => ({ close: () => close(true) }), [close]);
 
   const onListKeyDown = (e: React.KeyboardEvent) => {
     const all = items();
@@ -292,13 +306,13 @@ export const Menu: React.FC<MenuProps> = ({
       </Trigger>
       {open &&
         createPortal(
-          <MenuContext.Provider value={{ close: () => close(true) }}>
+          <MenuContext.Provider value={context}>
             <List
               ref={listRef}
               id={listId}
               role="menu"
               aria-label={label}
-              style={{ top: position.top, right: position.right }}
+              style={{ top: position.top, left: position.left }}
               onKeyDown={onListKeyDown}
             >
               {children}

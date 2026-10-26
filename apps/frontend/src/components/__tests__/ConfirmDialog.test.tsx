@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from "vitest";
-import { useState } from "react";
+import { useLayoutEffect, useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "styled-components";
@@ -50,6 +50,79 @@ describe("ConfirmDialog with a confirmPhrase", () => {
 
     await user.click(confirm);
     expect(onConfirm).toHaveBeenCalledTimes(1);
+  });
+
+  it("never commits a reopened dialog with confirm enabled by old text", async () => {
+    // The dialog stays mounted while closed (a failed delete closes it), so
+    // its text must not survive into the first frame of the next opening.
+    // A layout effect beside it reads the DOM in that same commit.
+    const user = userEvent.setup();
+    const seen: boolean[] = [];
+    const Probe = ({ open }: { open: boolean }) => {
+      useLayoutEffect(() => {
+        if (!open) return;
+        const button = document.querySelector<HTMLButtonElement>(
+          '[data-testid="confirm-accept"]',
+        );
+        if (button) seen.push(button.disabled);
+      }, [open]);
+      return null;
+    };
+    const Harness = () => {
+      const [open, setOpen] = useState(true);
+      return (
+        <ThemeProvider theme={lightTheme}>
+          <button type="button" onClick={() => setOpen(true)}>
+            reopen
+          </button>
+          <ConfirmDialog
+            open={open}
+            title="Delete?"
+            confirmLabel="Remove"
+            confirmPhrase="Pinefall"
+            onConfirm={() => setOpen(false)}
+            onCancel={() => setOpen(false)}
+          >
+            body
+          </ConfirmDialog>
+          <Probe open={open} />
+        </ThemeProvider>
+      );
+    };
+    render(<Harness />);
+
+    await user.type(screen.getByLabelText(/Type Pinefall/), "Pinefall");
+    await user.click(screen.getByRole("button", { name: "Remove" }));
+    seen.length = 0;
+    await user.click(screen.getByRole("button", { name: "reopen" }));
+
+    expect(seen).toEqual([true]);
+  });
+
+  it("ignores surrounding and repeated whitespace on both sides", async () => {
+    const user = userEvent.setup();
+    const Harness = () => (
+      <ThemeProvider theme={lightTheme}>
+        <ConfirmDialog
+          open
+          title="Delete?"
+          confirmLabel="Remove"
+          confirmPhrase=" Ember  Wisp "
+          onConfirm={vi.fn()}
+          onCancel={vi.fn()}
+        >
+          body
+        </ConfirmDialog>
+      </ThemeProvider>
+    );
+    render(<Harness />);
+
+    // The label shows the normalised name, which is what gets typed.
+    await user.type(
+      screen.getByLabelText(/Type Ember Wisp to confirm/),
+      "Ember Wisp ",
+    );
+    expect(screen.getByRole("button", { name: "Remove" })).toBeEnabled();
   });
 
   it("starts empty again each time it opens", async () => {

@@ -23,7 +23,10 @@ import { setKinds } from "../lib/characterAvailability";
 import { isRedemptionReview } from "../lib/traitReviews";
 import { CharacterAvailability } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
-import { ConfirmDialog } from "../components/ConfirmDialog";
+import {
+  DeleteCharacterDialog,
+  RemoveFromSpeciesDialog,
+} from "../components/character/CharacterDisposalDialogs";
 import { CommentList } from "../components/CommentList";
 import { CharacterMediaGallery } from "../components/CharacterMediaGallery";
 import { Tag } from "../components/Tag";
@@ -799,37 +802,21 @@ export const CharacterPage: React.FC = () => {
               )}
             </CharacterActions>
           )}
-          <ConfirmDialog
+          <DeleteCharacterDialog
             open={confirming === "delete"}
-            title={`Delete "${character.name}"?`}
-            confirmLabel="Delete"
-            busyLabel="Deleting…"
+            characterName={character.name}
             busy={deleting}
-            destructive
             onCancel={() => setConfirming(null)}
             onConfirm={() => void handleDelete()}
-            testId="delete-character-dialog"
-          >
-            It disappears from every list and its page stops loading. Undoing it
-            takes a site admin.
-          </ConfirmDialog>
-          <ConfirmDialog
+          />
+          <RemoveFromSpeciesDialog
             open={confirming === "kick"}
-            title={`Remove "${character.name}" from ${
-              character.species?.name ?? "its species"
-            }?`}
-            confirmLabel="Remove"
-            busyLabel="Removing…"
+            characterName={character.name}
+            speciesName={character.species?.name}
             busy={kicking}
-            destructive
-            confirmPhrase={character.name}
             onCancel={() => setConfirming(null)}
             onConfirm={() => void handleKickFromSpecies()}
-            testId="remove-from-species-dialog"
-          >
-            Its trait values become plain custom fields, and it leaves the
-            species and the community. There is no undo.
-          </ConfirmDialog>
+          />
           {actionError && (
             <div
               style={{

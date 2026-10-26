@@ -122,14 +122,6 @@ export function presetTest<K extends PresetName>(preset: K) {
 export { expect };
 
 /**
- * Accepts the next window.confirm.
- *
- * MUST be registered before the click that triggers it: Playwright
- * auto-DISMISSES unhandled dialogs, so a missing handler makes the app's
- * `if (!window.confirm(...)) return;` early-return and the test fails as a
- * silent no-op that reads like "the button is broken".
- */
-/**
  * Opens a `Menu` from `@chardb/ui` and returns one of its items.
  *
  * The trigger is found inside `scope` (a card, a strip), but the open list is
@@ -146,6 +138,14 @@ export async function openMenuItem(
   return page.getByRole("menuitem", { name, exact: true });
 }
 
+/**
+ * Accepts the next window.confirm.
+ *
+ * MUST be registered before the click that triggers it: Playwright
+ * auto-DISMISSES unhandled dialogs, so a missing handler makes the app's
+ * `if (!window.confirm(...)) return;` early-return and the test fails as a
+ * silent no-op that reads like "the button is broken".
+ */
 export function acceptNextDialog(
   page: Page,
   assert?: (message: string) => void,

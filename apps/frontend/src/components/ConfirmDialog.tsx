@@ -102,6 +102,12 @@ interface ConfirmDialogProps {
  * three are safe, so being generous with them costs nothing; there is no
  * equivalent shortcut to confirm, and there should not be.
  */
+/**
+ * Trims and collapses runs of whitespace, so a stray or doubled space on
+ * either side never blocks a match. Case still counts.
+ */
+const normalise = (text: string) => text.trim().replace(/\s+/g, " ");
+
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
   title,
@@ -119,7 +125,18 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   const phraseRef = useRef<HTMLInputElement>(null);
   const phraseId = useId();
   const [typed, setTyped] = useState("");
-  const phraseMatches = confirmPhrase === undefined || typed === confirmPhrase;
+  const phrase =
+    confirmPhrase === undefined ? undefined : normalise(confirmPhrase);
+  const phraseMatches = phrase === undefined || normalise(typed) === phrase;
+
+  // Cleared during render rather than in an effect, so no committed frame of
+  // a reopened dialog carries the last opening's text -- with it, confirm
+  // would be enabled until the effect caught up.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) setTyped("");
+  }
 
   // Not while the action is running: cancelling then would dismiss the dialog
   // without stopping the request, which reads as "it did not happen".
@@ -138,7 +155,6 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
 
   useEffect(() => {
     if (!open) return;
-    setTyped("");
     if (confirmPhrase !== undefined) phraseRef.current?.focus();
     else if (destructive) cancelRef.current?.focus();
   }, [open, destructive, confirmPhrase]);
@@ -160,7 +176,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <Body>{children}</Body>
         {confirmPhrase !== undefined && (
           <PhraseLabel htmlFor={phraseId}>
-            Type <strong>{confirmPhrase}</strong> to confirm
+            Type <strong>{phrase}</strong> to confirm
             <PhraseInput
               ref={phraseRef}
               id={phraseId}
