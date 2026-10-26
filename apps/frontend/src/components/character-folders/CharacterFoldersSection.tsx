@@ -10,7 +10,7 @@ import {
 import { HostAwareLink } from "../HostAwareLink";
 import { apexUrl } from "../../lib/communityHost";
 import { flattenTree, Folder } from "./folderTree";
-import { FolderIcon } from "./FolderTile";
+import { FolderGlyph, FolderIcon, PrivateTag } from "./FolderTile";
 
 const Section = styled.section`
   margin-top: ${({ theme }) => theme.spacing.lg};
@@ -35,20 +35,38 @@ const Chips = styled.div`
   gap: ${({ theme }) => theme.spacing.sm};
 `;
 
-const Chip = styled(HostAwareLink)`
+/**
+ * A folder as a link, tinted the way its tile is in the browser: purple when
+ * public, slate and hatched when private.
+ */
+const Chip = styled(HostAwareLink)<{ $private: boolean }>`
+  --chip-ink: ${({ theme, $private }) =>
+    $private ? theme.colors.text.secondary : theme.colors.primary};
   display: inline-flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.xs};
-  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.sm}`};
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.md}`};
+  border: 1px solid
+    ${({ theme, $private }) =>
+      `${$private ? theme.colors.text.secondary : theme.colors.primary}4d`};
   border-radius: ${({ theme }) => theme.borderRadius.full};
-  background: ${({ theme }) => theme.colors.surface};
+  background: ${({ theme, $private }) =>
+    $private
+      ? `repeating-linear-gradient(-45deg, transparent 0 6px, ${theme.colors.text.secondary}12 6px 7px), ${theme.colors.text.secondary}0f`
+      : `${theme.colors.primary}17`};
   color: ${({ theme }) => theme.colors.text.primary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
   text-decoration: none;
 
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.primary};
+  &:hover,
+  &:focus-visible {
+    border-color: var(--chip-ink);
+    outline: none;
+  }
+
+  &:focus-visible {
+    box-shadow: 0 0 0 2px var(--chip-ink);
   }
 `;
 
@@ -58,19 +76,34 @@ const Muted = styled.p`
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
 `;
 
-const Row = styled.label<{ $depth: number }>`
+/** Styled to match the folder picker's rows, ticked rows standing out. */
+const Row = styled.label<{ $depth: number; $checked: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.sm};
   padding-left: ${({ theme, $depth }) =>
     `calc(${theme.spacing.sm} + ${$depth} * ${theme.spacing.lg})`};
+  border-left: 3px solid
+    ${({ theme, $checked }) =>
+      $checked ? theme.colors.primary : "transparent"};
+  background: ${({ theme, $checked }) =>
+    $checked ? `${theme.colors.primary}24` : "transparent"};
   cursor: pointer;
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme, $checked }) =>
+    $checked
+      ? theme.typography.fontWeight.semibold
+      : theme.typography.fontWeight.normal};
   color: ${({ theme }) => theme.colors.text.primary};
 
   &:hover {
-    background: ${({ theme }) => theme.colors.surface};
+    background: ${({ theme, $checked }) =>
+      $checked ? `${theme.colors.primary}2e` : theme.colors.surface};
+  }
+
+  input {
+    accent-color: ${({ theme }) => theme.colors.primary};
   }
 `;
 
@@ -145,7 +178,7 @@ export const CharacterFoldersSection: React.FC<
   };
 
   return (
-    <Section>
+    <Section data-testid="character-folders">
       <Heading>
         <h3>Folders</h3>
         {editable && (
@@ -166,14 +199,18 @@ export const CharacterFoldersSection: React.FC<
             // and find nothing.
             <Chip
               key={folder.id}
+              $private={folder.isPrivate}
               to={apexUrl(
                 ownerUsername
                   ? `/user/${ownerUsername}/characters?folder=${folder.id}`
                   : `/my/characters?folder=${folder.id}`,
               )}
             >
-              <FolderIcon isPrivate={folder.isPrivate} />
+              <FolderGlyph $private={folder.isPrivate}>
+                <FolderIcon isPrivate={folder.isPrivate} />
+              </FolderGlyph>
               {folder.name}
+              {folder.isPrivate && <PrivateTag />}
             </Chip>
           ))}
         </Chips>
@@ -190,9 +227,13 @@ export const CharacterFoldersSection: React.FC<
             back.
           </Muted>
         ) : (
-          <List>
+          <List data-testid="character-folders-editor">
             {flattenTree(all).map(({ folder, depth }) => (
-              <Row key={folder.id} $depth={depth}>
+              <Row
+                key={folder.id}
+                $depth={depth}
+                $checked={chosen.has(folder.id)}
+              >
                 <input
                   type="checkbox"
                   checked={chosen.has(folder.id)}
@@ -208,8 +249,11 @@ export const CharacterFoldersSection: React.FC<
                     })
                   }
                 />
-                <FolderIcon isPrivate={folder.isPrivate} />
+                <FolderGlyph $private={folder.isPrivate}>
+                  <FolderIcon isPrivate={folder.isPrivate} />
+                </FolderGlyph>
                 {folder.name}
+                {folder.isPrivate && <PrivateTag />}
               </Row>
             ))}
           </List>

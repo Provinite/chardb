@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { Check, Layers } from "lucide-react";
 import { Button, Modal } from "@chardb/ui";
 import { flattenTree, Folder } from "./folderTree";
-import { FolderIcon } from "./FolderTile";
+import { FolderGlyph as Glyph, FolderIcon, PrivateTag } from "./FolderTile";
 
 const Field = styled.input`
   width: 100%;
@@ -57,16 +57,6 @@ const Row = styled.button<{ $depth: number }>`
   &:disabled {
     color: ${({ theme }) => theme.colors.text.muted};
     cursor: not-allowed;
-  }
-`;
-
-const Glyph = styled.span<{ $private: boolean }>`
-  display: inline-flex;
-  color: ${({ theme, $private }) =>
-    $private ? theme.colors.text.secondary : theme.colors.primary};
-
-  button:disabled & {
-    color: inherit;
   }
 `;
 
@@ -311,6 +301,7 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
                 <FolderIcon isPrivate={folder.isPrivate} />
               </Glyph>
               {folder.name}
+              {folder.isPrivate && <PrivateTag />}
               {selected === folder.id ? (
                 <Chosen size={16} aria-hidden />
               ) : (
@@ -369,6 +360,7 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
                     <FolderIcon isPrivate={folder.isPrivate} />
                   </Glyph>
                   {folder.name}
+                  {folder.isPrivate && <PrivateTag />}
                   {parent === folder.id && <Chosen size={16} aria-hidden />}
                 </Row>
               ))}

@@ -1,6 +1,6 @@
 import React from "react";
 import styled, { css, DefaultTheme } from "styled-components";
-import { Folder as FolderGlyph, FolderLock, Lock } from "lucide-react";
+import { Folder as FolderClosed, FolderLock, Lock } from "lucide-react";
 import { useDraggable, useDroppable } from "@dnd-kit/core";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
@@ -18,8 +18,11 @@ export const DRAG_CHARACTER_PREFIX = "drag-character:";
 export const ROOT_DROP_ID = "drop-folder:root";
 
 /**
- * The glyph in front of a folder's name, and the only thing that says a folder
- * is private wherever one is listed.
+ * The glyph in front of a folder's name.
+ *
+ * Decorative: everywhere a private folder is listed, `PrivatePill` or
+ * `PrivateTag` says so in words, and a label here as well would have a
+ * screen reader announce it twice.
  *
  * Lucide rather than an emoji: the rest of the app's iconography is lucide,
  * and an emoji renders at whatever size and weight the platform's font decides
@@ -30,9 +33,9 @@ export const FolderIcon: React.FC<{ isPrivate: boolean; size?: number }> = ({
   size = 16,
 }) =>
   isPrivate ? (
-    <FolderLock size={size} aria-label="Private folder" />
+    <FolderLock size={size} aria-hidden />
   ) : (
-    <FolderGlyph size={size} aria-hidden />
+    <FolderClosed size={size} aria-hidden />
   );
 
 /**
@@ -156,6 +159,42 @@ const Name = styled.span`
 const Count = styled.span`
   color: ${({ theme }) => theme.colors.text.secondary};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
+`;
+
+/**
+ * A folder glyph in its folder's colour -- purple when public, slate when
+ * private -- for lists and chips, where a whole tinted tile would be too much.
+ */
+export const FolderGlyph = styled.span<{ $private: boolean }>`
+  display: inline-flex;
+  flex-shrink: 0;
+  color: ${({ theme, $private }) =>
+    $private ? theme.colors.text.secondary : theme.colors.primary};
+
+  button:disabled & {
+    color: inherit;
+  }
+`;
+
+/**
+ * "Private" with a lock, inline after a folder's name. The lighter sibling of
+ * `PrivatePill`, for places already inside a pill or a list row.
+ */
+export const PrivateTag: React.FC = () => (
+  <PrivateTagText>
+    <Lock size={11} aria-hidden />
+    Private
+  </PrivateTagText>
+);
+
+const PrivateTagText = styled.span`
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: ${({ theme }) => theme.spacing.xs};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
 `;
 
 /** The word, not just the glyph: privacy decides what visitors can see. */

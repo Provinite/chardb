@@ -294,6 +294,32 @@ test.describe("filing from the workspace", () => {
     await expect(folderTile(page, "Adopts")).toContainText("1 character");
   });
 
+  test("a character page says in words which of its folders are private", async ({
+    page,
+    world,
+  }) => {
+    const toSell = await makeFolder(world, "To sell", { isPrivate: true });
+    const fursonas = await makeFolder(world, "Fursonas");
+    await file(world, toSell, [characters[0]]);
+    await file(world, fursonas, [characters[0]]);
+
+    await page.goto(`/my/characters?folder=${fursonas}`);
+    await characterCard(page, characters[0]).click();
+
+    const section = page.getByTestId("character-folders");
+    await expect(section.getByRole("link", { name: /To sell/ })).toContainText(
+      "Private",
+    );
+    await expect(
+      section.getByRole("link", { name: /Fursonas/ }),
+    ).not.toContainText("Private");
+
+    await section.getByRole("button", { name: "Edit" }).click();
+    await expect(
+      page.getByTestId("character-folders-editor").getByText("Private"),
+    ).toBeVisible();
+  });
+
   test("the picker marks the folder you chose", async ({ page, world }) => {
     await makeFolder(world, "Retired");
     await page.goto("/my/characters");
