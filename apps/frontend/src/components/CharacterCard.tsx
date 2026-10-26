@@ -83,6 +83,7 @@ const Card = styled(HostAwareLink)`
 
 /** Square off the card's inner height, which its border makes a little short. */
 const ImageSection = styled.div`
+  position: relative;
   flex: none;
   height: 100%;
   aspect-ratio: 1 / 1;
@@ -196,12 +197,15 @@ const VisibilityBadge = styled.span.withConfig({
         : props.theme.colors.error};
 `;
 
-const ButtonGroup = styled.div`
+/**
+ * On the icon's bottom-left corner, clear of the selection checkbox at its
+ * top-left and of the text column, which a corner of the card would cover
+ * now that cards are horizontal (#420).
+ */
+const CopyIdSlot = styled.div`
   position: absolute;
-  top: ${({ theme }) => theme.spacing.md};
-  right: ${({ theme }) => theme.spacing.md};
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.xs};
+  bottom: ${({ theme }) => theme.spacing.sm};
+  left: ${({ theme }) => theme.spacing.sm};
   opacity: 0;
   transition: all 0.2s ease-in-out;
   z-index: 10;
@@ -211,39 +215,14 @@ const ButtonGroup = styled.div`
   }
 `;
 
-/** Same treatment as `Card`, for the same reason. */
-const EditButton = styled(HostAwareLink)`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.primary};
-  text-decoration: none;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  transition: all 0.2s;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.background};
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
-    outline-offset: 2px;
-  }
-`;
-
 interface CharacterCardProps {
   character: CharacterCardItem;
   showOwner?: boolean;
-  showEditButton?: boolean;
 }
 
 export const CharacterCard: React.FC<CharacterCardProps> = ({
   character,
   showOwner = true,
-  showEditButton = false,
 }) => {
   const href = characterUrl(character.id, character.species?.community?.slug);
 
@@ -254,11 +233,10 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       data-testid="character-card"
       data-character-id={character.id}
     >
-      <ButtonGroup>
-        <CopyIdButton id={character.id} />
-        {showEditButton && <EditButton to={`${href}/edit`}>Edit</EditButton>}
-      </ButtonGroup>
       <ImageSection data-testid="character-card-icon">
+        <CopyIdSlot>
+          <CopyIdButton id={character.id} />
+        </CopyIdSlot>
         {character.mainMedia?.image ? (
           <MainImage
             src={

@@ -19,6 +19,22 @@ test.describe("character card layout", () => {
     await world.reset();
   });
 
+  test("cards carry no Edit shortcut, even on your own list", async ({
+    page,
+    world,
+  }) => {
+    // It sat over the name line once cards went horizontal, and the
+    // character page's own Edit Character is one click away.
+    await page.goto(`${world.community.url}/my-characters`);
+    const card = page.getByTestId("character-card").first();
+    await expect(card).toBeVisible();
+    await card.hover();
+
+    await expect(
+      page.getByTestId("character-card").getByRole("link", { name: "Edit" }),
+    ).toHaveCount(0);
+  });
+
   test("the icon is a square the full height of the card", async ({
     page,
     world,

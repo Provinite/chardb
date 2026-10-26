@@ -467,7 +467,6 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
               <CharacterGrid
                 characters={data?.characters.characters || []}
                 showOwner={true}
-                showEditButton={false}
               />
             </Pager>
           )}
