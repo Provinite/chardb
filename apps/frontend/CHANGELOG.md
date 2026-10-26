@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Character cards are horizontal**: a square thumbnail on the left, the card's full height, so the thumbnail's framing shows untrimmed; names and other lines are cut to one line (#420).
+- **Character cards drop their Edit shortcut**; edit from the character's page. Copy ID (site admins) moves onto the card's picture (#420).
 - **The character page shows its main image whole** instead of the square thumbnail (#418).
 - **The upload form drops its Nudity and Gore checkboxes**, which the server never stored; Sensitive Content and its description remain (#406).
 

@@ -36,6 +36,20 @@ export type CharacterCardItem = Pick<
 };
 
 /**
+ * Every card is this tall, and its icon is this square (#420).
+ *
+ * The icon is the main image's thumbnail, which is square and framed by
+ * whoever uploaded it; a box of any other shape trims that framing again. A
+ * fixed height is what keeps the box square whatever the text beside it holds,
+ * so the text is held to one line per row rather than allowed to grow the
+ * card.
+ */
+const CARD_HEIGHT = "160px";
+
+/** Two fit beside the icon with room for the "+N" count; three did not. */
+const VISIBLE_TAGS = 2;
+
+/**
  * The card renders at the apex (My Characters, Liked, a profile, the feed) and
  * on a community host (the roster), and the character it names lives on
  * whichever host its species' community owns -- so the destination is absolute
@@ -44,7 +58,8 @@ export type CharacterCardItem = Pick<
  * genuinely crosses costs a page load.
  */
 const Card = styled(HostAwareLink)`
-  display: block;
+  display: flex;
+  height: ${CARD_HEIGHT};
   text-decoration: none;
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
@@ -66,9 +81,12 @@ const Card = styled(HostAwareLink)`
   }
 `;
 
+/** Square off the card's inner height, which its border makes a little short. */
 const ImageSection = styled.div`
-  width: 100%;
-  aspect-ratio: 16/9;
+  position: relative;
+  flex: none;
+  height: 100%;
+  aspect-ratio: 1 / 1;
   background: ${({ theme }) => theme.colors.surface};
   display: flex;
   align-items: center;
@@ -90,38 +108,63 @@ const ImagePlaceholder = styled.div`
 `;
 
 const Content = styled.div`
-  padding: ${({ theme }) => theme.spacing.lg};
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.md};
+`;
+
+/** One line, cut with an ellipsis: see `CARD_HEIGHT`. */
+const oneLine = `
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const Name = styled.h3`
-  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  ${oneLine}
+  font-size: ${({ theme }) => theme.typography.fontSize.lg};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
+  margin: 0;
 `;
 
 const Species = styled.p`
+  ${oneLine}
   color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0 0 ${({ theme }) => theme.spacing.md} 0;
+  margin: 0;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
+/** Tags past the card's width are cut rather than wrapped onto a new row. */
+const TagRow = styled.div`
+  overflow: hidden;
+
+  & > * {
+    flex-wrap: nowrap;
+  }
+`;
+
 const Meta = styled.div`
+  margin-top: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const OwnerInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
+  ${oneLine}
+  min-width: 0;
 `;
 
 const MetaContainer = styled.div`
   display: flex;
+  flex-shrink: 0;
   gap: ${({ theme }) => theme.spacing.sm};
   align-items: center;
 `;
@@ -154,12 +197,15 @@ const VisibilityBadge = styled.span.withConfig({
         : props.theme.colors.error};
 `;
 
-const ButtonGroup = styled.div`
+/**
+ * On the icon's bottom-left corner, clear of the selection checkbox at its
+ * top-left and of the text column, which a corner of the card would cover
+ * now that cards are horizontal (#420).
+ */
+const CopyIdSlot = styled.div`
   position: absolute;
-  top: ${({ theme }) => theme.spacing.md};
-  right: ${({ theme }) => theme.spacing.md};
-  display: flex;
-  gap: ${({ theme }) => theme.spacing.xs};
+  bottom: ${({ theme }) => theme.spacing.sm};
+  left: ${({ theme }) => theme.spacing.sm};
   opacity: 0;
   transition: all 0.2s ease-in-out;
   z-index: 10;
@@ -169,39 +215,14 @@ const ButtonGroup = styled.div`
   }
 `;
 
-/** Same treatment as `Card`, for the same reason. */
-const EditButton = styled(HostAwareLink)`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.primary};
-  text-decoration: none;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  transition: all 0.2s;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.background};
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
-    outline-offset: 2px;
-  }
-`;
-
 interface CharacterCardProps {
   character: CharacterCardItem;
   showOwner?: boolean;
-  showEditButton?: boolean;
 }
 
 export const CharacterCard: React.FC<CharacterCardProps> = ({
   character,
   showOwner = true,
-  showEditButton = false,
 }) => {
   const href = characterUrl(character.id, character.species?.community?.slug);
 
@@ -212,11 +233,10 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       data-testid="character-card"
       data-character-id={character.id}
     >
-      <ButtonGroup>
-        <CopyIdButton id={character.id} />
-        {showEditButton && <EditButton to={`${href}/edit`}>Edit</EditButton>}
-      </ButtonGroup>
-      <ImageSection>
+      <ImageSection data-testid="character-card-icon">
+        <CopyIdSlot>
+          <CopyIdButton id={character.id} />
+        </CopyIdSlot>
         {character.mainMedia?.image ? (
           <MainImage
             src={
@@ -234,22 +254,24 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       </ImageSection>
 
       <Content>
-        <Name>{character.name}</Name>
+        <Name title={character.name}>{character.name}</Name>
         {character.species?.name && <Species>{character.species.name}</Species>}
 
         {character.tags && character.tags.length > 0 && (
-          <TagsContainer size="sm" style={{ marginBottom: "0.75rem" }}>
-            {character.tags.slice(0, 3).map((tag, index) => (
-              <Tag key={index} size="sm">
-                {tag}
-              </Tag>
-            ))}
-            {character.tags.length > 3 && (
-              <Tag size="sm" variant="primary">
-                +{character.tags.length - 3}
-              </Tag>
-            )}
-          </TagsContainer>
+          <TagRow>
+            <TagsContainer size="sm">
+              {character.tags.slice(0, VISIBLE_TAGS).map((tag, index) => (
+                <Tag key={index} size="sm">
+                  {tag}
+                </Tag>
+              ))}
+              {character.tags.length > VISIBLE_TAGS && (
+                <Tag size="sm" variant="primary">
+                  +{character.tags.length - VISIBLE_TAGS}
+                </Tag>
+              )}
+            </TagsContainer>
+          </TagRow>
         )}
 
         <Meta>
