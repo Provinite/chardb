@@ -255,10 +255,9 @@ test.describe("the review queue's actions", () => {
     // "Refuse", not "Revert": there is nothing to revert to, and what the
     // button does is hand the ticket back.
     await expect(page.getByRole("button", { name: "Refuse" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Delete" })).toHaveCount(0);
-    await expect(
-      page.getByRole("button", { name: "Remove from Species" }),
-    ).toHaveCount(0);
+    // Delete and Remove from Species live in the staff menu; with neither
+    // valid here, there is no menu at all.
+    await expect(page.getByTestId("trait-review-staff-menu")).toHaveCount(0);
   });
 
   test("an edit-kit review offers Approve and Refuse only", async ({
@@ -287,9 +286,6 @@ test.describe("the review queue's actions", () => {
     await page.goto(`${world.community.url}/moderation/traits`);
 
     await expect(page.getByRole("button", { name: "Refuse" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Delete" })).toHaveCount(0);
-    await expect(
-      page.getByRole("button", { name: "Remove from Species" }),
-    ).toHaveCount(0);
+    await expect(page.getByTestId("trait-review-staff-menu")).toHaveCount(0);
   });
 });

@@ -1,4 +1,4 @@
-import { presetTest, expect, acceptNextDialog } from "../../src/fixtures.js";
+import { presetTest, expect, openMenuItem } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
 import {
   SeedCreateCharacterDocument,
@@ -23,7 +23,9 @@ const cardFor = (page: Page, characterId: string) =>
     `[data-testid="trait-review-card"][data-character-id="${characterId}"]`,
   );
 
-test("shows the pending review with the inline admin actions", async ({
+const STAFF_MENU = "trait-review-staff-menu";
+
+test("shows the review outcomes inline and the staff actions in a menu", async ({
   page,
   world,
 }) => {
@@ -32,12 +34,18 @@ test("shows the pending review with the inline admin actions", async ({
   await expect(cards(page)).toHaveCount(1);
   const card = cardFor(page, world.characters.pending.id);
   await expect(card.getByRole("button", { name: "Approve" })).toBeVisible();
+  // Not beside Approve, where one slip deletes the character (#430).
   await expect(
     card.getByRole("button", { name: "Remove from Species" }),
-  ).toBeVisible();
+  ).toHaveCount(0);
   await expect(
     card.getByRole("button", { name: "Delete", exact: true }),
+  ).toHaveCount(0);
+
+  await expect(
+    await openMenuItem(card, STAFF_MENU, "Remove from Species"),
   ).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Delete" })).toBeVisible();
 
   // Revert is hidden for CREATION- and IMPORT-sourced reviews, and the seeded
   // review is CREATION. Asserting its absence pins that branch.
@@ -52,12 +60,12 @@ test("inline Delete clears the row and soft-deletes the character", async ({
   await page.goto(`${world.community.url}/moderation/traits`);
   await expect(cards(page)).toHaveCount(1);
 
-  acceptNextDialog(page, (message) =>
-    expect(message).toContain(character.name),
-  );
-  await cardFor(page, character.id)
-    .getByRole("button", { name: "Delete", exact: true })
-    .click();
+  await (
+    await openMenuItem(cardFor(page, character.id), STAFF_MENU, "Delete")
+  ).click();
+  const dialog = page.getByTestId("delete-character-dialog");
+  await expect(dialog).toContainText(character.name);
+  await dialog.getByTestId("confirm-accept").click();
 
   await expect(page.getByText(`"${character.name}" deleted`)).toBeVisible();
   await expect(cards(page)).toHaveCount(0);
@@ -76,10 +84,16 @@ test("inline Remove from Species clears the row and flattens traits", async ({
   await page.goto(`${world.community.url}/moderation/traits`);
   await expect(cards(page)).toHaveCount(1);
 
-  acceptNextDialog(page);
-  await cardFor(page, character.id)
-    .getByRole("button", { name: "Remove from Species" })
-    .click();
+  await (
+    await openMenuItem(
+      cardFor(page, character.id),
+      STAFF_MENU,
+      "Remove from Species",
+    )
+  ).click();
+  const dialog = page.getByTestId("remove-from-species-dialog");
+  await dialog.getByTestId("confirm-phrase").fill(character.name);
+  await dialog.getByTestId("confirm-accept").click();
 
   await expect(
     page.getByText(new RegExp(`"${character.name}" removed from`)),
@@ -255,11 +269,9 @@ test.describe("a moderator without canDeleteCharacter", () => {
     await page.goto(`${world.community.url}/moderation/traits`);
     const card = cardFor(page, world.characters.pending.id);
     await expect(
-      card.getByRole("button", { name: "Remove from Species" }),
+      await openMenuItem(card, STAFF_MENU, "Remove from Species"),
     ).toBeVisible();
-    await expect(
-      card.getByRole("button", { name: "Delete", exact: true }),
-    ).toBeVisible();
+    await expect(page.getByRole("menuitem", { name: "Delete" })).toBeVisible();
   });
 });
 

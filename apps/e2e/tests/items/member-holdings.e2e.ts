@@ -158,8 +158,8 @@ test.describe("staff have no actions here", () => {
     await expect(page).toHaveURL(
       urlStartingWith(`${world.community.url}/items/`),
     );
-    // The revoke control lives here, next to the history.
-    await expect(page.getByTestId("revoke-item")).toBeVisible();
+    // The revoke control lives here, next to the history, in the staff menu.
+    await expect(page.getByTestId("item-staff-menu")).toBeVisible();
   });
 });
 

@@ -12,7 +12,7 @@ import {
   Unlink,
   Undo2,
 } from "lucide-react";
-import { Button, Caption } from "@chardb/ui";
+import { Button, Caption, Menu, MenuItem } from "@chardb/ui";
 import { TraitReviewSource } from "../../generated/graphql";
 import { FormDiffDisplay } from "./FormDiffDisplay";
 import { RevertTraitReviewModal } from "./RevertTraitReviewModal";
@@ -30,12 +30,14 @@ interface TraitReviewCardProps {
   onRevert: (reviewId: string, reason: string) => Promise<void>;
   onDefer: (reviewId: string, note: string | undefined) => Promise<void>;
   onEditAndApprove?: (reviewId: string) => void;
-  onDelete?: (characterId: string, characterName: string) => Promise<void>;
+  /** Asks to confirm; the queue owns the dialog. */
+  onDelete?: (characterId: string, characterName: string) => void;
+  /** Asks to confirm; the queue owns the dialog. */
   onKickFromSpecies?: (
     characterId: string,
     characterName: string,
     speciesName: string | undefined,
-  ) => Promise<void>;
+  ) => void;
   actionInProgress: boolean;
 }
 
@@ -160,6 +162,11 @@ const Actions = styled.div`
   display: flex;
   gap: 0.5rem;
   flex-wrap: wrap;
+`;
+
+/** Pushes the staff menu to the far end, away from Approve. */
+const StaffMenuSlot = styled.div`
+  margin-left: auto;
 `;
 
 function formatTimeAgo(dateString: string): string {
@@ -324,34 +331,44 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                 review, and the item's return is guarded on that review still
                 being pending. So they do not skip the refund, they close the
                 only door to it. The server refuses them too -- this is about
-                not offering a button whose press is a refusal. */}
-            {onKickFromSpecies && !redemption && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  onKickFromSpecies(
-                    item.characterId,
-                    item.characterName,
-                    item.speciesName ?? undefined,
-                  )
-                }
-                disabled={actionInProgress}
-                icon={<Unlink size={14} />}
-              >
-                Remove from Species
-              </Button>
-            )}
-            {onDelete && !redemption && (
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => onDelete(item.characterId, item.characterName)}
-                disabled={actionInProgress}
-                icon={<Trash2 size={14} />}
-              >
-                Delete
-              </Button>
+                not offering a button whose press is a refusal.
+
+                They live in a menu rather than beside Approve, where one slip
+                disposes of the character (#430). */}
+            {!redemption && (onKickFromSpecies || onDelete) && (
+              <StaffMenuSlot>
+                <Menu
+                  label={`More actions for ${item.characterName}`}
+                  testId="trait-review-staff-menu"
+                  disabled={actionInProgress}
+                >
+                  {onKickFromSpecies && (
+                    <MenuItem
+                      icon={<Unlink size={14} />}
+                      onSelect={() =>
+                        onKickFromSpecies(
+                          item.characterId,
+                          item.characterName,
+                          item.speciesName ?? undefined,
+                        )
+                      }
+                    >
+                      Remove from Species
+                    </MenuItem>
+                  )}
+                  {onDelete && (
+                    <MenuItem
+                      danger
+                      icon={<Trash2 size={14} />}
+                      onSelect={() =>
+                        onDelete(item.characterId, item.characterName)
+                      }
+                    >
+                      Delete
+                    </MenuItem>
+                  )}
+                </Menu>
+              </StaffMenuSlot>
             )}
           </Actions>
         </CardBody>

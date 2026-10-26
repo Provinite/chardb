@@ -1,4 +1,4 @@
-import { presetTest, expect } from "../../src/fixtures.js";
+import { presetTest, expect, openMenuItem } from "../../src/fixtures.js";
 import { communityUrl } from "../../src/config.js";
 import type { Page } from "@playwright/test";
 import {
@@ -322,7 +322,7 @@ test.describe("revoking from the item page", () => {
   }) => {
     await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
-    await page.getByTestId("revoke-item").click();
+    await (await openMenuItem(page, "item-staff-menu", "Revoke")).click();
     await page
       .getByLabel("Reason (shown to members)")
       .fill("Issued in error during the payout");
@@ -351,7 +351,7 @@ test.describe("revoking from the item page", () => {
     // item's history afterwards.
     await page.goto(itemUrl(world.community.url, world.grantedItems.ids[1]));
 
-    await page.getByTestId("revoke-item").click();
+    await (await openMenuItem(page, "item-staff-menu", "Revoke")).click();
     await expect(page.getByTestId("confirm-revoke")).toBeDisabled();
 
     await page.getByLabel("Reason (shown to members)").fill("Returned");
@@ -366,6 +366,6 @@ test.describe("a member without item permissions", () => {
     await page.goto(itemUrl(world.community.url, world.grantedItems.ids[0]));
 
     await expect(page.getByTestId("item-status")).toBeVisible();
-    await expect(page.getByTestId("revoke-item")).toHaveCount(0);
+    await expect(page.getByTestId("item-staff-menu")).toHaveCount(0);
   });
 });

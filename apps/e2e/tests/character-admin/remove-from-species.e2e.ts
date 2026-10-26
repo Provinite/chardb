@@ -1,4 +1,4 @@
-import { presetTest, expect, acceptNextDialog } from "../../src/fixtures.js";
+import { presetTest, expect, openMenuItem } from "../../src/fixtures.js";
 
 const test = presetTest("community-basic");
 test.use({ persona: "moderator" });
@@ -17,12 +17,14 @@ test.beforeEach(async ({ world }) => {
 
 const removeFromSpecies = async (
   page: import("@playwright/test").Page,
+  characterName: string,
 ): Promise<void> => {
-  acceptNextDialog(page);
-  await page
-    .getByTestId("character-admin-actions")
-    .getByRole("button", { name: "Remove from Species" })
-    .click();
+  await (
+    await openMenuItem(page, "character-staff-menu", "Remove from Species")
+  ).click();
+  const dialog = page.getByTestId("remove-from-species-dialog");
+  await dialog.getByTestId("confirm-phrase").fill(characterName);
+  await dialog.getByTestId("confirm-accept").click();
   // handleKickFromSpecies calls navigate(0), a full reload. Asserting on
   // content waits through it.
   await expect(
@@ -43,7 +45,7 @@ test("preserves trait values as custom fields", async ({ page, world }) => {
     page.getByRole("heading", { level: 3, name: "Fields" }),
   ).toHaveCount(0);
 
-  await removeFromSpecies(page);
+  await removeFromSpecies(page, character.name);
 
   // flattenTraitValues keys the custom field by TRAIT NAME and stores the
   // ENUM's DISPLAY NAME, not its id -- this is what proves the flatten
@@ -67,7 +69,30 @@ test("cancels the pending trait review", async ({ page, world }) => {
   await page.goto(character.url);
   await expect(page.getByText("Traits Pending Review")).toBeVisible();
 
-  await removeFromSpecies(page);
+  await removeFromSpecies(page, character.name);
 
   await expect(page.getByText("Traits Pending Review")).toHaveCount(0);
+});
+
+test("will not remove until the character's name is typed", async ({
+  page,
+  world,
+}) => {
+  // There is no restore, so a click-through habit must not be enough.
+  const character = world.characters.pending;
+  await page.goto(character.url);
+
+  await (
+    await openMenuItem(page, "character-staff-menu", "Remove from Species")
+  ).click();
+  const dialog = page.getByTestId("remove-from-species-dialog");
+  await expect(dialog.getByTestId("confirm-accept")).toBeDisabled();
+
+  await dialog.getByTestId("confirm-phrase").fill("not the name");
+  await expect(dialog.getByTestId("confirm-accept")).toBeDisabled();
+
+  await dialog.getByTestId("confirm-cancel").click();
+  await expect(
+    page.getByRole("heading", { level: 3, name: "Character Traits" }),
+  ).toBeVisible();
 });

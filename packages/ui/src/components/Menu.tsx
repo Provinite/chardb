@@ -174,8 +174,7 @@ export const Menu: React.FC<MenuProps> = ({
 
   const items = () =>
     Array.from(
-      listRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ??
-        [],
+      listRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [],
     );
 
   const close = useCallback((returnFocus: boolean) => {
@@ -183,18 +182,31 @@ export const Menu: React.FC<MenuProps> = ({
     if (returnFocus) triggerRef.current?.focus();
   }, []);
 
-  // Before paint, so the list never flashes at the top-left corner.
-  useLayoutEffect(() => {
-    if (!open || !triggerRef.current) return;
+  // Opens upward when it would run off the bottom of the viewport -- a button
+  // at the foot of the screen is common, and a list below the fold cannot be
+  // reached.
+  const place = useCallback(() => {
+    if (!triggerRef.current) return;
     const rect = triggerRef.current.getBoundingClientRect();
+    const height = listRef.current?.offsetHeight ?? 0;
+    const below = rect.bottom + GAP_PX;
+    const above = rect.top - GAP_PX - height;
+    const fitsBelow = below + height <= window.innerHeight - GAP_PX;
     setPosition({
-      top: rect.bottom + GAP_PX,
+      top: fitsBelow || above < GAP_PX ? below : above,
       right: Math.max(window.innerWidth - rect.right, GAP_PX),
     });
-  }, [open]);
+  }, []);
 
+  // Before paint, so the list never flashes in the wrong place.
+  useLayoutEffect(() => {
+    if (open) place();
+  }, [open, place]);
+
+  // preventScroll: the list is fixed, and scrolling the page to reach it
+  // would only move the button away.
   useEffect(() => {
-    if (open) items()[0]?.focus();
+    if (open) items()[0]?.focus({ preventScroll: true });
   }, [open]);
 
   useEffect(() => {
@@ -208,23 +220,24 @@ export const Menu: React.FC<MenuProps> = ({
         close(false);
       }
     };
-    // The list is fixed to where the button was; once the page moves under
-    // it, it points at nothing.
-    const onMove = () => close(false);
+    // The list is fixed, so it follows the button when the page moves.
+    // Closing instead loses it to scrolls nobody made: scroll anchoring fires
+    // one when an image above the button finishes loading.
     document.addEventListener("mousedown", onPointerDown);
-    window.addEventListener("scroll", onMove, true);
-    window.addEventListener("resize", onMove);
+    window.addEventListener("scroll", place, true);
+    window.addEventListener("resize", place);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
-      window.removeEventListener("scroll", onMove, true);
-      window.removeEventListener("resize", onMove);
+      window.removeEventListener("scroll", place, true);
+      window.removeEventListener("resize", place);
     };
-  }, [open, close]);
+  }, [open, close, place]);
 
   const onListKeyDown = (e: React.KeyboardEvent) => {
     const all = items();
     const index = all.indexOf(document.activeElement as HTMLElement);
-    const focusAt = (i: number) => all[(i + all.length) % all.length]?.focus();
+    const focusAt = (i: number) =>
+      all[(i + all.length) % all.length]?.focus({ preventScroll: true });
 
     switch (e.key) {
       case "ArrowDown":

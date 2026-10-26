@@ -14,6 +14,15 @@ import {
 import { useAuth } from "../../contexts/AuthContext";
 import { useUserCommunityRole } from "../../hooks/useUserCommunityRole";
 import { TraitReviewCard } from "./TraitReviewCard";
+import { ConfirmDialog } from "../ConfirmDialog";
+
+/** A disposal action waiting on its confirm dialog. */
+interface PendingDisposal {
+  kind: "delete" | "kick";
+  characterId: string;
+  characterName: string;
+  speciesName?: string;
+}
 
 const Container = styled.div`
   display: flex;
@@ -177,13 +186,9 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
     }
   };
 
+  const [pending, setPending] = useState<PendingDisposal | null>(null);
+
   const handleDelete = async (characterId: string, characterName: string) => {
-    if (
-      !window.confirm(
-        `Delete "${characterName}"? This soft-deletes the character and removes it from the queue.`,
-      )
-    )
-      return;
     setActionInProgress(characterId);
     try {
       await deleteCharacter({ variables: { id: characterId } });
@@ -194,6 +199,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
       toast.error(`Failed to delete: ${message}`);
     } finally {
       setActionInProgress(null);
+      setPending(null);
     }
   };
 
@@ -203,12 +209,6 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
     speciesName: string | undefined,
   ) => {
     const speciesLabel = speciesName ? `"${speciesName}"` : "its species";
-    if (
-      !window.confirm(
-        `Remove "${characterName}" from ${speciesLabel}? Trait values will be saved as custom fields.`,
-      )
-    )
-      return;
     setActionInProgress(characterId);
     try {
       await kickFromSpecies({ variables: { id: characterId } });
@@ -219,6 +219,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
       toast.error(`Failed to remove from species: ${message}`);
     } finally {
       setActionInProgress(null);
+      setPending(null);
     }
   };
 
@@ -301,8 +302,27 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
                 onApprove={handleApprove}
                 onRevert={handleRevert}
                 onDefer={handleDefer}
-                onDelete={canDelete ? handleDelete : undefined}
-                onKickFromSpecies={canKick ? handleKickFromSpecies : undefined}
+                onDelete={
+                  canDelete
+                    ? (characterId, characterName) =>
+                        setPending({
+                          kind: "delete",
+                          characterId,
+                          characterName,
+                        })
+                    : undefined
+                }
+                onKickFromSpecies={
+                  canKick
+                    ? (characterId, characterName, speciesName) =>
+                        setPending({
+                          kind: "kick",
+                          characterId,
+                          characterName,
+                          speciesName,
+                        })
+                    : undefined
+                }
                 actionInProgress={
                   actionInProgress === item.review.id ||
                   actionInProgress === item.characterId
@@ -336,6 +356,48 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
           )}
         </>
       )}
+
+      <ConfirmDialog
+        open={pending?.kind === "delete"}
+        title={`Delete "${pending?.characterName}"?`}
+        confirmLabel="Delete"
+        busyLabel="Deleting…"
+        busy={actionInProgress !== null}
+        destructive
+        onCancel={() => setPending(null)}
+        onConfirm={() => {
+          if (pending)
+            void handleDelete(pending.characterId, pending.characterName);
+        }}
+        testId="delete-character-dialog"
+      >
+        It leaves the queue and every list, and its page stops loading. Undoing
+        it takes a site admin.
+      </ConfirmDialog>
+      <ConfirmDialog
+        open={pending?.kind === "kick"}
+        title={`Remove "${pending?.characterName}" from ${
+          pending?.speciesName ?? "its species"
+        }?`}
+        confirmLabel="Remove"
+        busyLabel="Removing…"
+        busy={actionInProgress !== null}
+        destructive
+        confirmPhrase={pending?.characterName}
+        onCancel={() => setPending(null)}
+        onConfirm={() => {
+          if (pending)
+            void handleKickFromSpecies(
+              pending.characterId,
+              pending.characterName,
+              pending.speciesName,
+            );
+        }}
+        testId="remove-from-species-dialog"
+      >
+        Its trait values become plain custom fields, and it leaves the species
+        and the community. There is no undo.
+      </ConfirmDialog>
     </Container>
   );
 };

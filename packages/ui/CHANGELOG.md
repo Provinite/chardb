@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`Menu`**, with `MenuGroup` and `MenuItem`: a "⋯" button that opens a keyboard-navigable list of actions in labelled groups (#430).
 - **`SearchSelect`**, with `CharacterTypeahead` and `ItemTypeTypeahead` on top: a search box that picks one option; the caller fetches the options, so it works with any query.
 - **`Avatar`**: a user's picture as a circle, or their initials when there is
   none, falling back to initials when the image fails to load.

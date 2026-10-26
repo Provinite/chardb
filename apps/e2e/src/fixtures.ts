@@ -1,4 +1,9 @@
-import { test as base, expect, type Page } from "@playwright/test";
+import {
+  test as base,
+  expect,
+  type Locator,
+  type Page,
+} from "@playwright/test";
 import { seedPreset } from "./world/seed.js";
 import type {
   AnyPresetHandle,
@@ -124,6 +129,23 @@ export { expect };
  * `if (!window.confirm(...)) return;` early-return and the test fails as a
  * silent no-op that reads like "the button is broken".
  */
+/**
+ * Opens a `Menu` from `@chardb/ui` and returns one of its items.
+ *
+ * The trigger is found inside `scope` (a card, a strip), but the open list is
+ * portalled to the end of the body, so the item is looked up page-wide. Only
+ * one menu is open at a time, so that is unambiguous.
+ */
+export async function openMenuItem(
+  scope: Page | Locator,
+  menuTestId: string,
+  name: string,
+): Promise<Locator> {
+  await scope.getByTestId(menuTestId).click();
+  const page = "page" in scope ? scope.page() : scope;
+  return page.getByRole("menuitem", { name, exact: true });
+}
+
 export function acceptNextDialog(
   page: Page,
   assert?: (message: string) => void,

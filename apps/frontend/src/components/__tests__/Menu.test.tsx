@@ -144,6 +144,34 @@ describe("Menu", () => {
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
   });
 
+  it("opens upward when there is no room below the button", async () => {
+    // jsdom has no layout, so place the button at the bottom of the viewport
+    // and give the list a height by hand.
+    const user = userEvent.setup();
+    renderMenu({});
+    const bottom = window.innerHeight - 10;
+    vi.spyOn(trigger(), "getBoundingClientRect").mockReturnValue({
+      top: bottom - 32,
+      bottom,
+      left: 100,
+      right: 132,
+      width: 32,
+      height: 32,
+      x: 100,
+      y: bottom - 32,
+      toJSON: () => ({}),
+    });
+    const height = vi
+      .spyOn(HTMLElement.prototype, "offsetHeight", "get")
+      .mockReturnValue(120);
+
+    await user.click(trigger());
+
+    const top = parseFloat(screen.getByRole("menu").style.top);
+    expect(top + 120).toBeLessThanOrEqual(bottom - 32);
+    height.mockRestore();
+  });
+
   it("does not run a disabled item", async () => {
     const user = userEvent.setup();
     const onDelete = vi.fn();
