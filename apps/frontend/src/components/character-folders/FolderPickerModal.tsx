@@ -66,6 +66,16 @@ const Empty = styled.p`
   margin: 0;
 `;
 
+const Option = styled.label`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  margin-top: ${({ theme }) => theme.spacing.md};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  cursor: pointer;
+`;
+
 const Actions = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -89,7 +99,17 @@ export interface FolderPickerModalProps {
   allowRoot?: boolean;
   /** Already-chosen folder, so re-opening the picker remembers. */
   initialFolderId?: string | null;
-  onSubmit: (folderId: string | null) => void | Promise<void>;
+  /**
+   * The folder the characters are being filed from, when there is one. Offers
+   * to take them out of it as well, which turns the add into a move -- named,
+   * because a character can be in other folders too and "move" alone does not
+   * say which one it leaves.
+   */
+  removeFrom?: Folder | null;
+  onSubmit: (
+    folderId: string | null,
+    removing: boolean,
+  ) => void | Promise<void>;
   /** Create a folder at the root and return its id. */
   onCreate: (name: string) => Promise<string | null>;
 }
@@ -111,12 +131,22 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
   disabledIds,
   allowRoot = false,
   initialFolderId = null,
+  removeFrom = null,
   onSubmit,
   onCreate,
 }) => {
   const [search, setSearch] = useState("");
   const [selected, setSelected] = useState<string | null>(initialFolderId);
+  const [removingChecked, setRemovingChecked] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  const removing = removeFrom !== null && removingChecked;
+  const actionLabel = removing ? "Move" : confirmLabel;
+
+  const reset = (): void => {
+    setSearch("");
+    setRemovingChecked(false);
+  };
 
   const rows = useMemo(() => {
     const all = flattenTree(folders);
@@ -132,7 +162,7 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
   const canCreate = typed.length > 0 && !exists;
 
   const close = (): void => {
-    setSearch("");
+    reset();
     setSelected(initialFolderId);
     onClose();
   };
@@ -140,8 +170,8 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
   const submit = async (folderId: string | null): Promise<void> => {
     setBusy(true);
     try {
-      await onSubmit(folderId);
-      setSearch("");
+      await onSubmit(folderId, removing);
+      reset();
       onClose();
     } finally {
       setBusy(false);
@@ -153,8 +183,8 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
     try {
       const created = await onCreate(typed);
       if (created) {
-        await onSubmit(created);
-        setSearch("");
+        await onSubmit(created, removing);
+        reset();
         onClose();
       }
     } finally {
@@ -209,13 +239,24 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
           )}
         </List>
 
+        {removeFrom && (
+          <Option>
+            <input
+              type="checkbox"
+              checked={removingChecked}
+              onChange={(event) => setRemovingChecked(event.target.checked)}
+            />
+            Also remove from &ldquo;{removeFrom.name}&rdquo;
+          </Option>
+        )}
+
         <Actions>
           <Button variant="ghost" onClick={close} disabled={busy}>
             Cancel
           </Button>
           {canCreate ? (
             <Button variant="primary" onClick={createThenSubmit} loading={busy}>
-              Create &ldquo;{typed}&rdquo; and {confirmLabel.toLowerCase()}
+              Create &ldquo;{typed}&rdquo; and {actionLabel.toLowerCase()}
             </Button>
           ) : (
             <Button
@@ -224,7 +265,7 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
               loading={busy}
               disabled={selected === null && !allowRoot}
             >
-              {confirmLabel}
+              {actionLabel}
             </Button>
           )}
         </Actions>

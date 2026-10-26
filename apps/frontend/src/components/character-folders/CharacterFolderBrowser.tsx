@@ -169,8 +169,7 @@ const NameField = styled.input`
 `;
 
 type PickerMode =
-  | { kind: "move-characters" }
-  | { kind: "add-characters" }
+  | { kind: "file-characters" }
   | { kind: "move-folder"; folder: Folder };
 
 export interface CharacterFolderBrowserProps {
@@ -311,6 +310,7 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
   );
 
   const here = useMemo(() => pathTo(folders, folderId), [folders, folderId]);
+  const openFolder = here[here.length - 1] ?? null;
   const subfolders = useMemo(
     () => childrenOf(folders, folderId),
     [folders, folderId],
@@ -549,27 +549,24 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
           <SelectionBar>
             <span>{selected.size} selected</span>
             <Spacer />
+            {/* One way in. A character can be in several folders, so "move"
+                only ever means "add, and take out of the open one" -- and
+                that second half is a choice made in the picker, where it can
+                name the folder, rather than a second button that can't. */}
             <Button
               variant="outline"
               size="sm"
-              onClick={() => setPicker({ kind: "move-characters" })}
+              onClick={() => setPicker({ kind: "file-characters" })}
             >
-              Move to folder
+              Add to folder&hellip;
             </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setPicker({ kind: "add-characters" })}
-            >
-              Also add to
-            </Button>
-            {folderId && (
+            {openFolder && (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => void runMove([...selected], null, true)}
               >
-                Remove from this folder
+                Remove from &ldquo;{openFolder.name}&rdquo;
               </Button>
             )}
             <Button
@@ -663,19 +660,22 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
         title={
           picker?.kind === "move-folder"
             ? `Move "${picker.folder.name}"`
-            : picker?.kind === "add-characters"
-              ? "Also add to folder"
-              : "Move to folder"
+            : "Add to folder"
         }
-        confirmLabel={picker?.kind === "add-characters" ? "Add" : "Move"}
-        allowRoot={picker?.kind !== "add-characters"}
+        confirmLabel={picker?.kind === "move-folder" ? "Move" : "Add"}
+        // Characters at the root are already in no folder, and inside a
+        // folder taking them out is the remove-from option instead.
+        allowRoot={picker?.kind === "move-folder"}
+        removeFrom={picker?.kind === "file-characters" ? openFolder : null}
         disabledIds={
           picker?.kind === "move-folder"
             ? subtreeIds(folders, picker.folder.id)
-            : undefined
+            : openFolder
+              ? new Set([openFolder.id])
+              : undefined
         }
         onCreate={createHere}
-        onSubmit={async (destination) => {
+        onSubmit={async (destination, removing) => {
           if (picker?.kind === "move-folder") {
             await moveFolder({
               variables: {
@@ -685,11 +685,7 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
             await refreshAll();
             return;
           }
-          await runMove(
-            [...selected],
-            destination,
-            picker?.kind === "move-characters",
-          );
+          await runMove([...selected], destination, removing);
         }}
       />
 

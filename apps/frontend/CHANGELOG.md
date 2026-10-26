@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Character folder bulk bar** replaces "Move to folder" and "Also add to" with one "Add to folder…", whose picker offers "Also remove from" the open folder by name; the root no longer offers "No folder", which failed (#422).
+
 ## [v14.0.0] - 2026-10-25
 
 ### Added

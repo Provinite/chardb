@@ -122,13 +122,13 @@ test.describe("filing from the workspace", () => {
 
     await page.getByRole("checkbox", { name: "Select Birchling" }).check();
     await page.getByRole("checkbox", { name: "Select Cindermoth" }).check();
-    await page.getByRole("button", { name: "Move to folder" }).click();
+    await page.getByRole("button", { name: /^Add to folder/ }).click();
 
     // Scoped to the picker: the tile behind it is also a button called
     // "Retired", and an unscoped match resolves to both.
     const picker = page.getByTestId("folder-picker");
     await picker.getByRole("button", { name: /Retired/ }).click();
-    await picker.getByRole("button", { name: "Move", exact: true }).click();
+    await picker.getByRole("button", { name: "Add", exact: true }).click();
 
     // Gone from the root: filed is the opposite of unfiled, and the root is
     // the unfiled pile.
@@ -137,6 +137,88 @@ test.describe("filing from the workspace", () => {
     await expect(characterCard(page, characters[2])).toBeVisible();
 
     await expect(folderTile(page, "Retired")).toContainText("2");
+  });
+
+  test("the root offers no way to file into no folder, and nothing to take out of", async ({
+    page,
+    world,
+  }) => {
+    await makeFolder(world, "Retired");
+    await page.goto("/my/characters");
+
+    await page.getByRole("checkbox", { name: "Select Birchling" }).check();
+    await page.getByRole("button", { name: /^Add to folder/ }).click();
+
+    // The root is the unfiled pile, so "No folder" is where these already
+    // are, and there is no open folder to remove them from.
+    const picker = page.getByTestId("folder-picker");
+    await expect(picker.getByRole("button", { name: "No folder" })).toHaveCount(
+      0,
+    );
+    await expect(picker.getByRole("checkbox")).toHaveCount(0);
+  });
+
+  test("adding from inside a folder leaves the characters where they were", async ({
+    page,
+    world,
+  }) => {
+    const fursonas = await makeFolder(world, "Fursonas");
+    await makeFolder(world, "Retired");
+    await file(world, fursonas, [characters[0]]);
+
+    await page.goto(`/my/characters?folder=${fursonas}`);
+    await page.getByRole("checkbox", { name: "Select Birchling" }).check();
+    await page.getByRole("button", { name: /^Add to folder/ }).click();
+
+    const picker = page.getByTestId("folder-picker");
+    await expect(
+      picker.getByRole("checkbox", { name: "Also remove from “Fursonas”" }),
+    ).not.toBeChecked();
+    await picker.getByRole("button", { name: /Retired/ }).click();
+    await picker.getByRole("button", { name: "Add", exact: true }).click();
+
+    await expect(characterCard(page, characters[0])).toBeVisible();
+    await page.getByRole("button", { name: "All characters" }).click();
+    await expect(folderTile(page, "Retired")).toContainText("1");
+  });
+
+  test("ticking also-remove moves the characters out of the open folder", async ({
+    page,
+    world,
+  }) => {
+    const fursonas = await makeFolder(world, "Fursonas");
+    await makeFolder(world, "Retired");
+    await file(world, fursonas, [characters[0]]);
+
+    await page.goto(`/my/characters?folder=${fursonas}`);
+    await page.getByRole("checkbox", { name: "Select Birchling" }).check();
+    await page.getByRole("button", { name: /^Add to folder/ }).click();
+
+    const picker = page.getByTestId("folder-picker");
+    await picker
+      .getByRole("checkbox", { name: "Also remove from “Fursonas”" })
+      .check();
+    await picker.getByRole("button", { name: /Retired/ }).click();
+    await picker.getByRole("button", { name: "Move", exact: true }).click();
+
+    await expect(characterCard(page, characters[0])).toHaveCount(0);
+    await page.getByRole("button", { name: "All characters" }).click();
+    await expect(folderTile(page, "Retired")).toContainText("1");
+    await expect(folderTile(page, "Fursonas")).toContainText("0");
+  });
+
+  test("the bar names the open folder it removes from", async ({
+    page,
+    world,
+  }) => {
+    const fursonas = await makeFolder(world, "Fursonas");
+    await file(world, fursonas, [characters[0]]);
+
+    await page.goto(`/my/characters?folder=${fursonas}`);
+    await page.getByRole("checkbox", { name: "Select Birchling" }).check();
+    await page.getByRole("button", { name: "Remove from “Fursonas”" }).click();
+
+    await expect(characterCard(page, characters[0])).toHaveCount(0);
   });
 
   test("opening a folder shows what is in it and a way back", async ({
