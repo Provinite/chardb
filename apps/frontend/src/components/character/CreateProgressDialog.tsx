@@ -226,8 +226,7 @@ const ActionButton = styled.button<{ $primary?: boolean }>`
 `;
 
 const STEP_LABEL: Record<StepKey, (isMyo: boolean) => string> = {
-  create: (isMyo) =>
-    isMyo ? "Redeeming ticket" : "Creating character",
+  create: (isMyo) => (isMyo ? "Redeeming ticket" : "Creating character"),
   upload: () => "Uploading image",
   setMain: () => "Setting as profile image",
 };
