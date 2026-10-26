@@ -53,6 +53,7 @@ import {
   type PickedCharacterImage,
 } from "../components/character/CharacterImagePanel";
 import { attachMainImage, isPickedImageBlocked } from "../lib/attachMainImage";
+import { ownershipInput } from "../lib/characterOwnership";
 
 /**
  * Enhanced Character Creation Page with Species and Trait Integration
@@ -662,20 +663,11 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
             speciesVariantId: selectedVariant?.id || undefined,
             registryId: registryId.trim() || undefined,
             forms: draftsToNewForms(forms),
-            // Add pending owner based on characterTarget
-            pendingOwner:
-              characterTarget?.type === "pending"
-                ? {
-                    provider: characterTarget.provider,
-                    providerAccountId: characterTarget.providerAccountId,
-                  }
-                : undefined,
-            // A null target means "Leave Unassigned" only where the ownership
-            // picker is shown. Without canCreateOrphanedCharacter there is no
-            // picker, the target is never set, and the character is theirs.
-            assignToSelf: canCreateOrphanedCharacter
-              ? characterTarget !== null
-              : true,
+            ...ownershipInput(
+              canCreateOrphanedCharacter,
+              characterTarget,
+              user?.id,
+            ),
           },
         },
       });
@@ -1003,7 +995,11 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
                 (isMyo && (!grant || !selectedVariant)) ||
                 // A nameless form would render as a blank tab on the character.
                 unnamedForms > 0 ||
-                (characterTarget?.type === "pending" && !isGrantTargetValid) ||
+                // Only while the picker is shown: a pending owner it held
+                // before hiding is not sent, so it cannot block either.
+                (canCreateOrphanedCharacter &&
+                  characterTarget?.type === "pending" &&
+                  !isGrantTargetValid) ||
                 // Flagged images are refused at upload; better to stop here
                 // than to make the character and then fail to attach it.
                 isPickedImageBlocked(pickedImage)

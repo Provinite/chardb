@@ -113,6 +113,28 @@ export class CharactersResolver {
       );
     }
 
+    // One owner at most: a member, a pending external account, or nobody.
+    if (input.ownerId && (input.pendingOwner || input.assignToSelf === false)) {
+      throw new BadRequestException(
+        "An owner cannot be combined with a pending owner or an unassigned character",
+      );
+    }
+
+    // Creating for another member (#424) needs the same permission as leaving
+    // a character unowned: either way, the creator does not end up owning it.
+    if (input.ownerId && input.ownerId !== user.id) {
+      const hasPermission =
+        await this.charactersService.userHasOrphanedCharacterPermission(
+          user.id,
+          input.speciesId,
+        );
+      if (!hasPermission) {
+        throw new ForbiddenException(
+          "You do not have permission to create characters for other members",
+        );
+      }
+    }
+
     // If creating orphaned character (with pending ownership or leave unassigned), require canCreateOrphanedCharacter permission
     if (input.pendingOwner || input.assignToSelf === false) {
       // Check permissions

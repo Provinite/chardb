@@ -549,6 +549,8 @@ export type CreateCharacterInput = {
   isTradeable?: Scalars['Boolean']['input'];
   isTradeableForArt?: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
+  /** Create the character owned by this member of the species' community rather than by its creator. Requires canCreateOrphanedCharacter, and cannot be combined with pendingOwner or assignToSelf: false. */
+  ownerId?: InputMaybe<Scalars['ID']['input']>;
   /** Create character with pending ownership for an external account */
   pendingOwner?: InputMaybe<PendingOwnerInput>;
   price?: InputMaybe<Scalars['Float']['input']>;
