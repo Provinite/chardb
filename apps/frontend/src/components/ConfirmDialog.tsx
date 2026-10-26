@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
 
@@ -33,6 +33,26 @@ const Body = styled.div`
   line-height: 1.5;
 `;
 
+const PhraseLabel = styled.label`
+  display: block;
+  margin-top: 1rem;
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: 0.875rem;
+`;
+
+const PhraseInput = styled.input`
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: 6px;
+  background: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text.primary};
+  font-size: 0.9375rem;
+`;
+
 const Actions = styled.div`
   display: flex;
   justify-content: flex-end;
@@ -61,6 +81,12 @@ interface ConfirmDialogProps {
    * the thing it was trying to prevent.
    */
   destructive?: boolean;
+  /**
+   * Text the reader must type, exactly, before confirm enables -- usually the
+   * name of the thing. For the few actions with no way back at all, where a
+   * click-through habit is the risk; focus starts in the box instead.
+   */
+  confirmPhrase?: string;
   testId?: string;
 }
 
@@ -86,9 +112,14 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   busyLabel,
   busy = false,
   destructive = false,
+  confirmPhrase,
   testId,
 }) => {
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const phraseRef = useRef<HTMLInputElement>(null);
+  const phraseId = useId();
+  const [typed, setTyped] = useState("");
+  const phraseMatches = confirmPhrase === undefined || typed === confirmPhrase;
 
   // Not while the action is running: cancelling then would dismiss the dialog
   // without stopping the request, which reads as "it did not happen".
@@ -106,8 +137,11 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   }, [open, dismiss]);
 
   useEffect(() => {
-    if (open && destructive) cancelRef.current?.focus();
-  }, [open, destructive]);
+    if (!open) return;
+    setTyped("");
+    if (confirmPhrase !== undefined) phraseRef.current?.focus();
+    else if (destructive) cancelRef.current?.focus();
+  }, [open, destructive, confirmPhrase]);
 
   if (!open) return null;
 
@@ -124,6 +158,21 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
       >
         <Title>{title}</Title>
         <Body>{children}</Body>
+        {confirmPhrase !== undefined && (
+          <PhraseLabel htmlFor={phraseId}>
+            Type <strong>{confirmPhrase}</strong> to confirm
+            <PhraseInput
+              ref={phraseRef}
+              id={phraseId}
+              value={typed}
+              onChange={(e) => setTyped(e.target.value)}
+              autoComplete="off"
+              spellCheck={false}
+              disabled={busy}
+              data-testid="confirm-phrase"
+            />
+          </PhraseLabel>
+        )}
         <Actions>
           <Button
             ref={cancelRef}
@@ -137,7 +186,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <Button
             variant={destructive ? "danger" : "primary"}
             onClick={onConfirm}
-            disabled={busy}
+            disabled={busy || !phraseMatches}
             data-testid="confirm-accept"
           >
             {busy && busyLabel ? busyLabel : confirmLabel}

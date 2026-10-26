@@ -1,0 +1,339 @@
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useId,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
+import styled from "styled-components";
+
+/**
+ * Menu - a "⋯" button that opens a short list of actions.
+ *
+ * For actions that should be one deliberate step away rather than a button on
+ * the page: staff actions on a member-facing page, or anything that does not
+ * fit an action bar at phone width. Items can sit in labelled groups, so a
+ * "Staff actions" heading says whose controls they are.
+ *
+ * The list renders into `document.body`, so a card with `overflow: hidden`
+ * cannot clip it. React events still bubble through the portal to the
+ * component tree, so a wrapper that stops propagation still sees them.
+ *
+ * Follows the WAI-ARIA menu button pattern: opening focuses the first item,
+ * arrow keys move (and wrap), Home/End jump, Enter selects, Escape closes and
+ * returns focus to the button. Tab closes too, from the button rather than
+ * from the end of the document, where the portal puts the list.
+ *
+ * @example
+ * ```tsx
+ * <Menu label="More actions">
+ *   <MenuGroup label="Staff actions">
+ *     <MenuItem onSelect={kick}>Remove from Species</MenuItem>
+ *     <MenuItem danger onSelect={remove}>Delete Character</MenuItem>
+ *   </MenuGroup>
+ * </Menu>
+ * ```
+ */
+
+export interface MenuProps {
+  /** The button's accessible name, such as "More actions". */
+  label: string;
+  /** What the button shows. Defaults to "⋯". */
+  trigger?: React.ReactNode;
+  children: React.ReactNode;
+  testId?: string;
+  disabled?: boolean;
+}
+
+export interface MenuGroupProps {
+  /** Shown as the group's heading, and its accessible name. */
+  label: string;
+  children: React.ReactNode;
+}
+
+export interface MenuItemProps {
+  onSelect: () => void;
+  children: React.ReactNode;
+  /** Coloured as destructive. */
+  danger?: boolean;
+  disabled?: boolean;
+  icon?: React.ReactNode;
+  testId?: string;
+}
+
+const MenuContext = createContext<{ close: () => void } | null>(null);
+
+const Trigger = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0 ${({ theme }) => theme.spacing.sm};
+  background: transparent;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-family: ${({ theme }) => theme.typography.fontFamily};
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover:not(:disabled),
+  &[aria-expanded="true"] {
+    background-color: ${({ theme }) => theme.colors.surface};
+    color: ${({ theme }) => theme.colors.text.primary};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.primary};
+    outline-offset: 2px;
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const List = styled.div`
+  position: fixed;
+  z-index: 1000;
+  min-width: 12rem;
+  max-width: calc(100vw - 16px);
+  padding: ${({ theme }) => theme.spacing.xs} 0;
+  background-color: ${({ theme }) => theme.colors.background};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.borderRadius.md};
+  box-shadow: ${({ theme }) => theme.shadows.lg};
+`;
+
+const Group = styled.div`
+  & + &,
+  [role="menuitem"] + & {
+    margin-top: ${({ theme }) => theme.spacing.xs};
+    padding-top: ${({ theme }) => theme.spacing.xs};
+    border-top: 1px solid ${({ theme }) => theme.colors.border};
+  }
+`;
+
+const GroupLabel = styled.div`
+  padding: ${({ theme }) => `${theme.spacing.xs} ${theme.spacing.md}`};
+  font-size: ${({ theme }) => theme.typography.fontSize.xs};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme }) => theme.colors.text.muted};
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+`;
+
+const Item = styled.button<{ $danger?: boolean }>`
+  display: flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
+  width: 100%;
+  padding: ${({ theme }) => `${theme.spacing.sm} ${theme.spacing.md}`};
+  background: transparent;
+  border: none;
+  text-align: left;
+  font-family: ${({ theme }) => theme.typography.fontFamily};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  color: ${({ theme, $danger }) =>
+    $danger ? theme.colors.danger : theme.colors.text.primary};
+  cursor: pointer;
+
+  &:hover,
+  &:focus {
+    outline: none;
+    background-color: ${({ theme }) => theme.colors.surface};
+  }
+
+  &[aria-disabled="true"] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+`;
+
+const GAP_PX = 4;
+
+export const Menu: React.FC<MenuProps> = ({
+  label,
+  trigger = "⋯",
+  children,
+  testId,
+  disabled = false,
+}) => {
+  const [open, setOpen] = useState(false);
+  const [position, setPosition] = useState({ top: 0, right: 0 });
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const listId = useId();
+
+  const items = () =>
+    Array.from(
+      listRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ??
+        [],
+    );
+
+  const close = useCallback((returnFocus: boolean) => {
+    setOpen(false);
+    if (returnFocus) triggerRef.current?.focus();
+  }, []);
+
+  // Before paint, so the list never flashes at the top-left corner.
+  useLayoutEffect(() => {
+    if (!open || !triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    setPosition({
+      top: rect.bottom + GAP_PX,
+      right: Math.max(window.innerWidth - rect.right, GAP_PX),
+    });
+  }, [open]);
+
+  useEffect(() => {
+    if (open) items()[0]?.focus();
+  }, [open]);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (
+        !listRef.current?.contains(target) &&
+        !triggerRef.current?.contains(target)
+      ) {
+        close(false);
+      }
+    };
+    // The list is fixed to where the button was; once the page moves under
+    // it, it points at nothing.
+    const onMove = () => close(false);
+    document.addEventListener("mousedown", onPointerDown);
+    window.addEventListener("scroll", onMove, true);
+    window.addEventListener("resize", onMove);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      window.removeEventListener("scroll", onMove, true);
+      window.removeEventListener("resize", onMove);
+    };
+  }, [open, close]);
+
+  const onListKeyDown = (e: React.KeyboardEvent) => {
+    const all = items();
+    const index = all.indexOf(document.activeElement as HTMLElement);
+    const focusAt = (i: number) => all[(i + all.length) % all.length]?.focus();
+
+    switch (e.key) {
+      case "ArrowDown":
+        e.preventDefault();
+        focusAt(index + 1);
+        break;
+      case "ArrowUp":
+        e.preventDefault();
+        focusAt(index - 1);
+        break;
+      case "Home":
+        e.preventDefault();
+        focusAt(0);
+        break;
+      case "End":
+        e.preventDefault();
+        focusAt(all.length - 1);
+        break;
+      case "Escape":
+        e.preventDefault();
+        close(true);
+        break;
+      case "Tab":
+        e.preventDefault();
+        close(true);
+        break;
+    }
+  };
+
+  const onTriggerKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown" && !open) {
+      e.preventDefault();
+      setOpen(true);
+    }
+  };
+
+  return (
+    <>
+      <Trigger
+        ref={triggerRef}
+        type="button"
+        aria-label={label}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={open ? listId : undefined}
+        disabled={disabled}
+        data-testid={testId}
+        onClick={() => setOpen((o) => !o)}
+        onKeyDown={onTriggerKeyDown}
+      >
+        {trigger}
+      </Trigger>
+      {open &&
+        createPortal(
+          <MenuContext.Provider value={{ close: () => close(true) }}>
+            <List
+              ref={listRef}
+              id={listId}
+              role="menu"
+              aria-label={label}
+              style={{ top: position.top, right: position.right }}
+              onKeyDown={onListKeyDown}
+            >
+              {children}
+            </List>
+          </MenuContext.Provider>,
+          document.body,
+        )}
+    </>
+  );
+};
+
+export const MenuGroup: React.FC<MenuGroupProps> = ({ label, children }) => {
+  const labelId = useId();
+  return (
+    <Group role="group" aria-labelledby={labelId}>
+      <GroupLabel id={labelId} role="presentation">
+        {label}
+      </GroupLabel>
+      {children}
+    </Group>
+  );
+};
+
+export const MenuItem: React.FC<MenuItemProps> = ({
+  onSelect,
+  children,
+  danger = false,
+  disabled = false,
+  icon,
+  testId,
+}) => {
+  const menu = useContext(MenuContext);
+  return (
+    <Item
+      type="button"
+      role="menuitem"
+      tabIndex={-1}
+      $danger={danger}
+      aria-disabled={disabled || undefined}
+      data-testid={testId}
+      onClick={() => {
+        if (disabled) return;
+        menu?.close();
+        onSelect();
+      }}
+    >
+      {icon}
+      {children}
+    </Item>
+  );
+};
