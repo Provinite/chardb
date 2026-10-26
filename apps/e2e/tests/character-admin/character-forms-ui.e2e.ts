@@ -460,6 +460,10 @@ test.describe("a member's routes to a second form", () => {
     await page.getByTestId("submit-character").click();
     await page.getByTestId("confirm-accept").click();
 
+    await page
+      .getByTestId("create-progress-dialog")
+      .getByRole("link", { name: "View character" })
+      .click();
     await expect(page).toHaveURL(/\/character\/[0-9a-f-]{36}$/);
     await expect(
       page.getByTestId("character-forms").getByRole("tab"),

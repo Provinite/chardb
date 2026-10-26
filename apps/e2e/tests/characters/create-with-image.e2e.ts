@@ -52,9 +52,19 @@ test.describe("creating a character with an image", () => {
     await page.getByText(world.species.name, { exact: true }).first().click();
     await page.getByTestId("submit-character").click();
 
-    await expect(page).toHaveURL(/\/character\/[0-9a-f-]+$/, {
+    // Each step ticks off in the progress dialog (#424), which then offers
+    // the character rather than taking anyone there.
+    const progress = page.getByTestId("create-progress-dialog");
+    await expect(progress).toContainText("Pictured is ready", {
       timeout: 30_000,
     });
+    await expect(progress.getByRole("listitem")).toHaveCount(3);
+    for (const step of await progress.getByRole("listitem").all()) {
+      await expect(step).toHaveAttribute("data-status", "done");
+    }
+
+    await progress.getByRole("link", { name: "View character" }).click();
+    await expect(page).toHaveURL(/\/character\/[0-9a-f-]+$/);
     await expect(
       page.getByRole("img", { name: "Pictured main image" }),
     ).toBeVisible();
@@ -86,9 +96,10 @@ test.describe("creating a character with an image", () => {
     await page.locator("#name").fill("Framed");
     await page.getByText(world.species.name, { exact: true }).first().click();
     await page.getByTestId("submit-character").click();
-    await expect(page).toHaveURL(/\/character\/[0-9a-f-]+$/, {
-      timeout: 30_000,
-    });
+    await expect(page.getByTestId("create-progress-dialog")).toContainText(
+      "is ready",
+      { timeout: 30_000 },
+    );
 
     const row = await withClient(CFG.databaseUrl, async (client) => {
       const { rows } = await client.query<{
@@ -141,17 +152,63 @@ test.describe("creating a character with an image", () => {
     await page.getByText(world.species.name, { exact: true }).first().click();
     await page.getByTestId("submit-character").click();
 
-    await expect(page).toHaveURL(/\/character\/([0-9a-f-]+)$/, {
+    const progress = page.getByTestId("create-progress-dialog");
+    await expect(progress).toContainText("Unpictured was created", {
       timeout: 30_000,
     });
-    const characterId = page.url().split("/").pop();
+    await expect(progress).toContainText("couldn't be uploaded");
 
-    await expect(page.getByText(/image could not be attached/i)).toBeVisible();
+    const goTo = progress.getByRole("link", { name: "Go to character" });
+    const characterId = (await goTo.getAttribute("href"))!.split("/").pop();
     await expect(
-      page.getByRole("link", { name: /upload it again/i }),
+      progress.getByRole("link", { name: "Upload again" }),
     ).toHaveAttribute("href", `/image/upload?character=${characterId}`);
+
+    await goTo.click();
     await expect(
       page.getByRole("heading", { name: "Unpictured" }),
     ).toBeVisible();
+  });
+
+  test("a failed set-as-main points at the uploaded image, not a re-upload", async ({
+    page,
+    world,
+  }) => {
+    // The upload lands; only making it the main image fails. Telling the
+    // member to upload again would leave a second copy (#424).
+    await page.route("**/graphql", async (route) => {
+      if (route.request().postData()?.includes("SetCharacterMainMedia")) {
+        await route.fulfill({
+          status: 200,
+          contentType: "application/json",
+          body: JSON.stringify({
+            data: null,
+            errors: [{ message: "Something went wrong" }],
+          }),
+        });
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto(`${world.community.url}/character/create`);
+    await page
+      .getByTestId("character-image-picker")
+      .locator('input[type="file"]')
+      .setInputFiles({ name: "pixel.png", mimeType: "image/png", buffer: PNG });
+    await page.locator("#name").fill("Half Done");
+    await page.getByText(world.species.name, { exact: true }).first().click();
+    await page.getByTestId("submit-character").click();
+
+    const progress = page.getByTestId("create-progress-dialog");
+    await expect(progress).toContainText("Half Done was created", {
+      timeout: 30_000,
+    });
+    await expect(
+      progress.getByRole("link", { name: "Open the image" }),
+    ).toHaveAttribute("href", /^\/media\/[0-9a-f-]+$/);
+    await expect(
+      progress.getByRole("link", { name: "Upload again" }),
+    ).toHaveCount(0);
   });
 });

@@ -47,9 +47,10 @@ test.describe("creating a character for another member", () => {
     await page.getByText(owner.username, { exact: true }).first().click();
 
     await page.getByTestId("submit-character").click();
-    await expect(page).toHaveURL(/\/character\/[0-9a-f-]+$/, {
-      timeout: 30_000,
-    });
+    await expect(page.getByTestId("create-progress-dialog")).toContainText(
+      "is ready",
+      { timeout: 30_000 },
+    );
 
     const ownerId = await withClient(CFG.databaseUrl, async (client) => {
       const { rows } = await client.query<{ owner_id: string | null }>(

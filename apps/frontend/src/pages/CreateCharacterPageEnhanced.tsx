@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { usePageMeta } from "../lib/pageMeta";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -52,7 +52,12 @@ import {
   CharacterImagePicker,
   type PickedCharacterImage,
 } from "../components/character/CharacterImagePanel";
-import { attachMainImage, isPickedImageBlocked } from "../lib/attachMainImage";
+import {
+  isPickedImageBlocked,
+  runCreateWithImage,
+  type CreateProgress,
+} from "../lib/createWithImage";
+import { CreateProgressDialog } from "../components/character/CreateProgressDialog";
 import { ownershipInput } from "../lib/characterOwnership";
 import { imageBlockedReason } from "../lib/characterImagePermission";
 
@@ -318,13 +323,6 @@ const TagsHelp = styled.p`
   margin: 0.25rem 0 0 0;
 `;
 
-/** The retry link in the failed-attach toast, which otherwise reads as text. */
-const ToastLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primary};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  text-decoration: underline;
-`;
-
 export const CreateCharacterPageEnhanced: React.FC = () => {
   usePageMeta({ title: "Create Character" });
 
@@ -493,7 +491,7 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     handleSubmit,
     watch,
     setValue,
-    getValues,
+    reset,
     formState: { errors },
   } = useForm<CharacterForm>({
     resolver: zodResolver(characterSchema),
@@ -512,170 +510,145 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
   const isSellable = watch("isSellable");
 
   const [setMainMediaMutation] = useSetCharacterMainMediaMutation();
-
-  /**
-   * Attach the picked image, if any, then go to the new character.
-   *
-   * The character is made by now, so a failed attach never stops the
-   * navigation: the member lands on their character and is told where to
-   * upload the image again.
-   */
-  const finishCreate = async (characterId: string) => {
-    if (pickedImage) {
-      const result = await attachMainImage({
-        characterId,
-        image: pickedImage,
-        visibility: getValues("visibility"),
-        setMainMedia: (id, mediaId) =>
-          setMainMediaMutation({ variables: { id, input: { mediaId } } }),
-      });
-
-      if (!result.ok) {
-        console.error("Attaching the character image failed", {
-          step: result.step,
-          error: result.error,
-        });
-        toast.error(
-          <span>
-            The character was created, but its image could not be attached.{" "}
-            <ToastLink to={`/image/upload?character=${characterId}`}>
-              Upload it again
-            </ToastLink>
-          </span>,
-          { duration: 15000 },
-        );
-      }
-    }
-
-    navigate(`/character/${characterId}`);
-  };
-
-  // GraphQL mutation
-  const [createCharacterMutation] = useCreateCharacterMutation({
-    onCompleted: async (data) => {
-      toast.success(
-        `Character "${data.createCharacter.name}" created successfully!`,
-      );
-      await finishCreate(data.createCharacter.id);
-    },
-    onError: (error) => {
-      toast.error(`Failed to create character: ${error.message}`);
-      setIsSubmitting(false);
-    },
-  });
-
+  const [createCharacterMutation] = useCreateCharacterMutation();
   const [redeemTicketMutation] = useCreateCharacterFromMyoTicketMutation({
     // The inventory and its wallet are both stale the moment this lands: the
-    // ticket is gone. Evicting rather than refetching, since we navigate away
-    // from here and the next reader of those lists should be the one to pay
-    // for the query.
+    // ticket is gone. Evicting rather than refetching: the next reader of
+    // those lists should be the one to pay for the query.
     update: (cache) => {
       cache.evict({ fieldName: "memberHoldings" });
       cache.evict({ fieldName: "myCharacters" });
       cache.gc();
     },
-    onCompleted: async (data) => {
-      toast.success(
-        `"${data.createCharacterFromMyoTicket.name}" made. Its traits are with staff for review.`,
-      );
-      await finishCreate(data.createCharacterFromMyoTicket.id);
-    },
-    onError: (error) => {
-      toast.error(error.message);
-      setIsSubmitting(false);
-    },
   });
+
+  /** The creation under way, shown in its dialog; null before Create. */
+  const [progress, setProgress] = useState<CreateProgress | null>(null);
+  /** The name as submitted, for the dialog's title. */
+  const [submittedName, setSubmittedName] = useState("");
+
+  /**
+   * Make the character, then attach the picked image, step by step in the
+   * progress dialog (#424). The dialog says how it ended and offers what can
+   * be done next; nothing here navigates on its own.
+   */
+  const runCreate = async (
+    name: string,
+    visibility: Visibility,
+    create: () => Promise<string>,
+  ) => {
+    setSubmittedName(name);
+    setIsSubmitting(true);
+    const result = await runCreateWithImage({
+      create,
+      image: pickedImage,
+      visibility,
+      setMainMedia: (id, mediaId) =>
+        setMainMediaMutation({ variables: { id, input: { mediaId } } }),
+      onChange: setProgress,
+    });
+    if (result.outcome === "failed") {
+      console.error("Character creation did not finish", {
+        step: result.failedStep,
+      });
+    }
+    setIsSubmitting(false);
+  };
+
+  /** "Create another": a clean form for the next character. */
+  const resetForNext = () => {
+    // Species, variant and ownership stay: the next character is most often
+    // another of the same, for the same owner.
+    reset();
+    setTags([]);
+    setPickedImage(null);
+    setForms([newFormDraft("Base")]);
+    setRegistryId("");
+    setProgress(null);
+    window.scrollTo({ top: 0 });
+  };
 
   // Form submission
   const onSubmit = async (data: CharacterForm) => {
-    setIsSubmitting(true);
-
-    try {
-      // Filter out empty keys from custom fields
-      let cleanedCustomFields = data.customFields;
-      if (data.customFields) {
-        try {
-          const parsed = JSON.parse(data.customFields);
-          const filtered = Object.entries(parsed).reduce(
-            (acc, [key, value]) => {
-              // Remove temporary keys and empty keys
-              if (key && !key.startsWith("__empty_") && key.trim()) {
-                acc[key] = value;
-              }
-              return acc;
-            },
-            {} as Record<string, unknown>,
-          );
-          cleanedCustomFields =
-            Object.keys(filtered).length > 0
-              ? JSON.stringify(filtered)
-              : undefined;
-        } catch {
-          cleanedCustomFields = undefined;
-        }
+    // Filter out empty keys from custom fields
+    let cleanedCustomFields = data.customFields;
+    if (data.customFields) {
+      try {
+        const parsed = JSON.parse(data.customFields);
+        const filtered = Object.entries(parsed).reduce(
+          (acc, [key, value]) => {
+            // Remove temporary keys and empty keys
+            if (key && !key.startsWith("__empty_") && key.trim()) {
+              acc[key] = value;
+            }
+            return acc;
+          },
+          {} as Record<string, unknown>,
+        );
+        cleanedCustomFields =
+          Object.keys(filtered).length > 0
+            ? JSON.stringify(filtered)
+            : undefined;
+      } catch {
+        cleanedCustomFields = undefined;
       }
+    }
 
-      // A ticket redemption is a different mutation, not this one with a flag.
-      // It carries no registryId, no ownership target and no species: the
-      // ticket decides those, and a field that cannot be sent is a stronger
-      // guarantee than one validated away.
-      if (isMyo && ticketId) {
-        if (!selectedVariant) {
-          toast.error("Pick which variant to make");
-          setIsSubmitting(false);
-          return;
-        }
-
-        // Held rather than sent. Redeeming destroys the ticket, so the
-        // confirm below stands between the form and the irreversible part --
-        // and the values are captured here so the dialog cannot end up
-        // redeeming against a form the member kept editing behind it.
-        setPendingRedeem({
-          itemId: ticketId,
-          speciesVariantId: selectedVariant.id,
-          name: data.name,
-          details: data.details || undefined,
-          customFields: cleanedCustomFields,
-          visibility: data.visibility,
-          tags: tags.length > 0 ? tags : undefined,
-          forms: draftsToNewForms(forms),
-        });
-        setConfirmingRedeem(true);
-        setIsSubmitting(false);
+    // A ticket redemption is a different mutation, not this one with a flag.
+    // It carries no registryId, no ownership target and no species: the
+    // ticket decides those, and a field that cannot be sent is a stronger
+    // guarantee than one validated away.
+    if (isMyo && ticketId) {
+      if (!selectedVariant) {
+        toast.error("Pick which variant to make");
         return;
       }
 
-      await createCharacterMutation({
-        variables: {
-          input: {
-            name: data.name,
-            details: data.details || undefined,
-            customFields: cleanedCustomFields,
-            visibility: data.visibility,
-            isSellable: data.isSellable,
-            isTradeable: data.isTradeable,
-            isSellableForCoin: data.isSellableForCoin,
-            isTradeableForArt: data.isTradeableForArt,
-            isOpenToOffers: data.isOpenToOffers,
-            isFreebie: data.isFreebie,
-            price: data.price ? parseFloat(data.price) : undefined,
-            tags: tags.length > 0 ? tags : undefined,
-            speciesId: selectedSpecies?.id || undefined,
-            speciesVariantId: selectedVariant?.id || undefined,
-            registryId: registryId.trim() || undefined,
-            forms: draftsToNewForms(forms),
-            ...ownershipInput(
-              canCreateOrphanedCharacter,
-              characterTarget,
-              user?.id,
-            ),
-          },
-        },
+      // Held rather than sent. Redeeming destroys the ticket, so the
+      // confirm below stands between the form and the irreversible part --
+      // and the values are captured here so the dialog cannot end up
+      // redeeming against a form the member kept editing behind it.
+      setPendingRedeem({
+        itemId: ticketId,
+        speciesVariantId: selectedVariant.id,
+        name: data.name,
+        details: data.details || undefined,
+        customFields: cleanedCustomFields,
+        visibility: data.visibility,
+        tags: tags.length > 0 ? tags : undefined,
+        forms: draftsToNewForms(forms),
       });
-    } catch (error) {
-      console.error("Character creation failed:", error);
-      setIsSubmitting(false);
+      setConfirmingRedeem(true);
+      return;
     }
+
+    const input = {
+      name: data.name,
+      details: data.details || undefined,
+      customFields: cleanedCustomFields,
+      visibility: data.visibility,
+      isSellable: data.isSellable,
+      isTradeable: data.isTradeable,
+      isSellableForCoin: data.isSellableForCoin,
+      isTradeableForArt: data.isTradeableForArt,
+      isOpenToOffers: data.isOpenToOffers,
+      isFreebie: data.isFreebie,
+      price: data.price ? parseFloat(data.price) : undefined,
+      tags: tags.length > 0 ? tags : undefined,
+      speciesId: selectedSpecies?.id || undefined,
+      speciesVariantId: selectedVariant?.id || undefined,
+      registryId: registryId.trim() || undefined,
+      forms: draftsToNewForms(forms),
+      ...ownershipInput(canCreateOrphanedCharacter, characterTarget, user?.id),
+    };
+
+    await runCreate(data.name, data.visibility, async () => {
+      const { data: created } = await createCharacterMutation({
+        variables: { input },
+      });
+      if (!created) throw new Error("No character came back");
+      return created.createCharacter.id;
+    });
   };
 
   const handleBackClick = () => {
@@ -1038,8 +1011,20 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
         }}
         onConfirm={() => {
           if (!pendingRedeem) return;
-          setIsSubmitting(true);
-          void redeemTicketMutation({ variables: { input: pendingRedeem } });
+          // The confirm gives way to the progress dialog, which takes it from
+          // here with the values captured when the confirm opened.
+          setConfirmingRedeem(false);
+          void runCreate(
+            pendingRedeem.name,
+            pendingRedeem.visibility ?? Visibility.Public,
+            async () => {
+              const { data: redeemed } = await redeemTicketMutation({
+                variables: { input: pendingRedeem },
+              });
+              if (!redeemed) throw new Error("No character came back");
+              return redeemed.createCharacterFromMyoTicket.id;
+            },
+          );
         }}
       >
         Redeeming your <strong>{ticket?.itemType?.name}</strong>
@@ -1049,6 +1034,14 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
         to make <strong>{watch("name")}</strong>. This cannot be undone. The
         character is yours straight away; its traits go to staff for review.
       </ConfirmDialog>
+
+      <CreateProgressDialog
+        progress={progress}
+        characterName={submittedName}
+        isMyo={isMyo}
+        onCreateAnother={resetForNext}
+        onBackToForm={() => setProgress(null)}
+      />
     </Container>
   );
 };

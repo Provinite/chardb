@@ -12,7 +12,7 @@ import {
   CharacterMainImagePreview,
   type PickedCharacterImage,
 } from "../CharacterImagePanel";
-import { isPickedImageBlocked } from "../../../lib/attachMainImage";
+import { isPickedImageBlocked } from "../../../lib/createWithImage";
 
 beforeAll(() => {
   // jsdom has no object URLs.

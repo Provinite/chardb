@@ -9,7 +9,7 @@ import { ThumbnailCropper, type ThumbnailCropRect } from "../ThumbnailCropper";
 import {
   isPickedImageBlocked,
   type PendingCharacterImage,
-} from "../../lib/attachMainImage";
+} from "../../lib/createWithImage";
 
 /**
  * The image column on the character create and edit forms (#406).
