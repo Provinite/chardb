@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v14.1.0] - 2026-10-26
+
 ### Added
 
 - **Image upload on the character create form**, pinned beside the form and attached as the new character's main image; the edit form shows the current main image the same way (#406).
