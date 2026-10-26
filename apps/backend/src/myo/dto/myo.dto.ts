@@ -1,6 +1,7 @@
 import { Field, InputType, ID } from "@nestjs/graphql";
 import { Visibility } from "@chardb/database";
 import { Type } from "class-transformer";
+import { Trim } from "../../common/transforms/trim";
 import {
   IsString,
   IsArray,
@@ -44,6 +45,7 @@ export class RedeemMyoTicketInput {
   speciesVariantId: string;
 
   @Field()
+  @Trim()
   @IsString()
   @MinLength(1)
   @MaxLength(100)

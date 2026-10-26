@@ -7,11 +7,13 @@ import {
   IsBoolean,
   IsUUID,
 } from "class-validator";
+import { Trim } from "../../common/transforms/trim";
 
 @InputType()
 export class CreateSpeciesInput {
   /** Name of the species (must be unique) */
   @Field({ description: "Name of the species" })
+  @Trim()
   @IsString()
   @IsNotEmpty()
   @Length(1, 100)
@@ -40,6 +42,7 @@ export class CreateSpeciesInput {
 export class UpdateSpeciesInput {
   /** Name of the species (must be unique) */
   @Field({ nullable: true, description: "Name of the species" })
+  @Trim()
   @IsOptional()
   @IsString()
   @IsNotEmpty()
