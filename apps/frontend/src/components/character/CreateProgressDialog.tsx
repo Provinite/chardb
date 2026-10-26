@@ -283,6 +283,9 @@ export const CreateProgressDialog: React.FC<CreateProgressDialogProps> = ({
   if (outcome === "done") {
     tone = "success";
     title = `${name} is ready`;
+    // A ticket's character is the member's at once, but its traits are not
+    // settled until staff have looked.
+    if (isMyo) detail = "Its traits are with staff for review.";
   } else if (outcome === "failed" && failedStep === "create") {
     tone = "error";
     title = `${name} wasn't created`;

@@ -101,6 +101,8 @@ describe("CreateProgressDialog", () => {
     );
 
     expect(step(/redeeming your ticket/i)).toBeVisible();
+    // What the ticket's toast used to say, and still worth saying.
+    expect(screen.getByText(/traits are with staff for review/i)).toBeVisible();
     expect(
       screen.getByRole("link", { name: "Back to inventory" }),
     ).toHaveAttribute("href", "/inventory");

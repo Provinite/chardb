@@ -418,8 +418,10 @@
             </li>
             <li>
               <strong>Ownership</strong> &ndash; only shown to staff who may
-              make characters for someone else or leave them unowned. Everyone
-              else's characters are their own.
+              make characters for someone else. <strong>Owned By...</strong>
+              gives the character to a member of the community; it can also be
+              left unowned, or held for someone's Discord or DeviantArt account
+              until they join. Everyone else's characters are their own.
             </li>
             <li>
               <strong>Traits</strong> &ndash; whatever the species asks for.
@@ -452,9 +454,17 @@
         </div>
         <div class="step-content">
           <p>
-            <strong>Create Character</strong> makes the character, uploads the
-            picture to it, and sets the picture as its main image, then takes
-            you to the new character.
+            <strong>Create Character</strong> opens a dialog that ticks off each
+            step as it happens: making the character, uploading the picture, and
+            setting it as the main image. A large picture can take a moment to
+            upload, so the bar shows how far it has got. The dialog stays in
+            front of the form until everything has finished.
+          </p>
+          <p>
+            When it is done, <strong>View character</strong> takes you to it,
+            and <strong>Create another</strong> clears the form for the next
+            one, keeping the species you chose. After spending an MYO ticket,
+            the second button is <strong>Back to inventory</strong> instead.
           </p>
           <p>
             The picture goes to the community's moderators like any other
@@ -464,7 +474,23 @@
             character's picture is private too.
           </p>
         </div>
-        <div class="screenshot">
+        <div class="screenshot-row">
+          <div class="screenshot">
+            <img
+              src="character-create-progress-running.png"
+              alt="The progress dialog reading Creating Sorrel, with Creating the character ticked, Uploading the image at 40% with a bar, and Setting it as the main image still to come"
+            />
+            <div class="screenshot-caption">Partway through the upload</div>
+          </div>
+          <div class="screenshot">
+            <img
+              src="character-create-progress-done.png"
+              alt="The progress dialog reading Sorrel is ready, with all three steps ticked and View character and Create another buttons"
+            />
+            <div class="screenshot-caption">All done</div>
+          </div>
+        </div>
+        <div class="screenshot" style="margin-top: 1.5rem">
           <img
             src="character-create-result.png"
             alt="The new character's page straight after creation, with an Image Pending Moderation placeholder where the main image goes"
@@ -529,20 +555,33 @@
         <div class="step-content">
           <p>
             The character is made first and the picture second, so a problem
-            with the picture never costs you the character. If the upload fails,
-            the character is still created and you still land on it.
+            with the picture never costs you the character. The dialog marks the
+            step that failed and says the character was still created.
           </p>
+          <ul>
+            <li>
+              If the <strong>upload</strong> failed,
+              <strong>Upload again</strong>
+              opens the upload page with the character already chosen; see
+              <a href="image-uploads.html">Uploading Images</a>.
+            </li>
+            <li>
+              If the picture uploaded but could not be made the main image,
+              <strong>Open the image</strong> takes you to it, where
+              <strong>Set as Main</strong> finishes the job. Uploading it again
+              would only leave a second copy.
+            </li>
+          </ul>
           <p>
-            A message says the picture could not be attached, with an
-            <strong>Upload it again</strong> link. That opens the upload page
-            with the character already chosen; see
-            <a href="image-uploads.html">Uploading Images</a>.
+            If the character itself could not be made, nothing was created, and
+            <strong>Back to form</strong> returns you to the form just as you
+            left it.
           </p>
         </div>
-        <div class="screenshot">
+        <div class="screenshot narrow" style="max-width: 520px">
           <img
             src="character-create-image-failed.png"
-            alt="Two notices on the new character's page: Character created successfully, and The character was created, but its image could not be attached, with an Upload it again link"
+            alt="The progress dialog reading Thistle was created, Its image couldn't be uploaded, with Creating the character ticked, Uploading the image crossed, and Go to character and Upload again buttons"
           />
           <div class="screenshot-caption">
             The character is made; the picture can be uploaded again

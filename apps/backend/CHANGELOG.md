@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`CreateCharacterInput.ownerId`**: create a character owned by another member of the species' community, recorded as an ownership change; needs `canCreateOrphanedCharacter` (#424).
+
 ## [v14.0.0] - 2026-10-25
 
 ### Added
