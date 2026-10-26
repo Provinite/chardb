@@ -43,8 +43,23 @@ export type CharacterCardItem = Pick<
  * roster linking to its own community stays client-side, and only a link that
  * genuinely crosses costs a page load.
  */
+/**
+ * Every card is this tall, and its icon is this square (#420).
+ *
+ * The icon is the main image's thumbnail, which is square and framed by
+ * whoever uploaded it; a box of any other shape trims that framing again. A
+ * fixed height is what keeps the box square whatever the text beside it holds,
+ * so the text is held to one line per row rather than allowed to grow the
+ * card.
+ */
+const CARD_HEIGHT = "160px";
+
+/** Two fit beside the icon with room for the "+N" count; three did not. */
+const VISIBLE_TAGS = 2;
+
 const Card = styled(HostAwareLink)`
-  display: block;
+  display: flex;
+  height: ${CARD_HEIGHT};
   text-decoration: none;
   background: ${({ theme }) => theme.colors.background};
   border-radius: 12px;
@@ -66,9 +81,11 @@ const Card = styled(HostAwareLink)`
   }
 `;
 
+/** Square off the card's inner height, which its border makes a little short. */
 const ImageSection = styled.div`
-  width: 100%;
-  aspect-ratio: 16/9;
+  flex: none;
+  height: 100%;
+  aspect-ratio: 1 / 1;
   background: ${({ theme }) => theme.colors.surface};
   display: flex;
   align-items: center;
@@ -90,38 +107,63 @@ const ImagePlaceholder = styled.div`
 `;
 
 const Content = styled.div`
-  padding: ${({ theme }) => theme.spacing.lg};
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.xs};
+  padding: ${({ theme }) => theme.spacing.md};
+`;
+
+/** One line, cut with an ellipsis: see `CARD_HEIGHT`. */
+const oneLine = `
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const Name = styled.h3`
-  font-size: ${({ theme }) => theme.typography.fontSize.xl};
+  ${oneLine}
+  font-size: ${({ theme }) => theme.typography.fontSize.lg};
   font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0 0 ${({ theme }) => theme.spacing.sm} 0;
+  margin: 0;
 `;
 
 const Species = styled.p`
+  ${oneLine}
   color: ${({ theme }) => theme.colors.text.secondary};
-  margin: 0 0 ${({ theme }) => theme.spacing.md} 0;
+  margin: 0;
   font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
 `;
 
+/** Tags past the card's width are cut rather than wrapped onto a new row. */
+const TagRow = styled.div`
+  overflow: hidden;
+
+  & > * {
+    flex-wrap: nowrap;
+  }
+`;
+
 const Meta = styled.div`
+  margin-top: auto;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.xs};
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const OwnerInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
+  ${oneLine}
+  min-width: 0;
 `;
 
 const MetaContainer = styled.div`
   display: flex;
+  flex-shrink: 0;
   gap: ${({ theme }) => theme.spacing.sm};
   align-items: center;
 `;
@@ -216,7 +258,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
         <CopyIdButton id={character.id} />
         {showEditButton && <EditButton to={`${href}/edit`}>Edit</EditButton>}
       </ButtonGroup>
-      <ImageSection>
+      <ImageSection data-testid="character-card-icon">
         {character.mainMedia?.image ? (
           <MainImage
             src={
@@ -234,22 +276,24 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       </ImageSection>
 
       <Content>
-        <Name>{character.name}</Name>
+        <Name title={character.name}>{character.name}</Name>
         {character.species?.name && <Species>{character.species.name}</Species>}
 
         {character.tags && character.tags.length > 0 && (
-          <TagsContainer size="sm" style={{ marginBottom: "0.75rem" }}>
-            {character.tags.slice(0, 3).map((tag, index) => (
-              <Tag key={index} size="sm">
-                {tag}
-              </Tag>
-            ))}
-            {character.tags.length > 3 && (
-              <Tag size="sm" variant="primary">
-                +{character.tags.length - 3}
-              </Tag>
-            )}
-          </TagsContainer>
+          <TagRow>
+            <TagsContainer size="sm">
+              {character.tags.slice(0, VISIBLE_TAGS).map((tag, index) => (
+                <Tag key={index} size="sm">
+                  {tag}
+                </Tag>
+              ))}
+              {character.tags.length > VISIBLE_TAGS && (
+                <Tag size="sm" variant="primary">
+                  +{character.tags.length - VISIBLE_TAGS}
+                </Tag>
+              )}
+            </TagsContainer>
+          </TagRow>
         )}
 
         <Meta>
