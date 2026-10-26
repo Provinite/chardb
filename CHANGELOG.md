@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v14.1.0] - 2026-10-26
+
 ### Added
 
 - **"Creating a Character" walks through the progress dialog**, with three screenshots, and covers Owned By...; MYO Slots says where redeeming leaves you (#424).
