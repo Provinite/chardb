@@ -54,6 +54,7 @@ import {
 } from "../components/character/CharacterImagePanel";
 import { attachMainImage, isPickedImageBlocked } from "../lib/attachMainImage";
 import { ownershipInput } from "../lib/characterOwnership";
+import { imageBlockedReason } from "../lib/characterImagePermission";
 
 /**
  * Enhanced Character Creation Page with Species and Trait Integration
@@ -465,26 +466,26 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     null,
   );
 
-  // Whether the member may upload images to their own characters in the
-  // chosen species' community. Not a security boundary -- the upload endpoint
-  // checks again -- but finding out after the create is a worse way to learn.
+  // Whether the image can go on the character as it will be owned (#424).
+  // A ticket's character is always the member's own.
   const imageDisabledReason = useMemo(() => {
     if (!user || !selectedSpecies || user.isAdmin) return undefined;
-    const canUpload = user.communityMemberships?.nodes.some(
-      (membership) =>
-        membership.role.communityId === selectedSpecies.communityId &&
-        membership.role.canUploadOwnCharacterImages,
-    );
-    return canUpload
-      ? undefined
-      : "Your role in this community cannot upload character images.";
-  }, [user, selectedSpecies]);
-
-  // Picking a species the member cannot upload in drops the image rather than
-  // carrying it to a submit that would refuse it.
-  useEffect(() => {
-    if (imageDisabledReason) setPickedImage(null);
-  }, [imageDisabledReason]);
+    const role =
+      user.communityMemberships?.nodes.find(
+        (membership) =>
+          membership.role.communityId === selectedSpecies.communityId,
+      )?.role ?? null;
+    const ownership = isMyo
+      ? { assignToSelf: true }
+      : ownershipInput(canCreateOrphanedCharacter, characterTarget, user.id);
+    return imageBlockedReason(role, ownership);
+  }, [
+    user,
+    selectedSpecies,
+    isMyo,
+    canCreateOrphanedCharacter,
+    characterTarget,
+  ]);
 
   // Form handling
   const {
@@ -1002,7 +1003,10 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
                   !isGrantTargetValid) ||
                 // Flagged images are refused at upload; better to stop here
                 // than to make the character and then fail to attach it.
-                isPickedImageBlocked(pickedImage)
+                isPickedImageBlocked(pickedImage) ||
+                // An image held for a character it cannot go on, as things
+                // stand. Change the owner back, or remove the image.
+                Boolean(pickedImage && imageDisabledReason)
               }
             >
               {isSubmitting
