@@ -153,6 +153,15 @@ export class CreateCharacterInput {
   @IsBoolean()
   assignToSelf?: boolean;
 
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "Create the character owned by this member of the species' community rather than by its creator. Requires canCreateOrphanedCharacter, and cannot be combined with pendingOwner or assignToSelf: false.",
+  })
+  @IsOptional()
+  @IsUUID()
+  ownerId?: string;
+
   @Field(() => TraitReviewSource, {
     nullable: true,
     description: "Source for the trait review. Defaults to CREATION.",

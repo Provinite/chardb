@@ -113,19 +113,22 @@ export class CharactersService {
       tags?: string[];
       pendingOwner?: PendingOwnerInput; // Pending ownership info
       assignToSelf?: boolean; // Whether to assign ownership to the creator
+      ownerId?: string; // Another member to own it; the resolver checks permission
       traitReviewSource?: TraitReviewSource; // Source for auto-created trait review
     },
   ) {
-    const { characterData, tags, assignToSelf = true } = input;
+    const { characterData, tags, assignToSelf = true, ownerId } = input;
     const pendingOwner = input.pendingOwner;
     const forms = input.forms?.length ? input.forms : [DEFAULT_FORM];
 
     // Determine the actual owner:
+    // - If ownerId is provided, that member owns it
     // - If pendingOwner is provided, character is orphaned (ownerId = null)
     // - If assignToSelf is false, character is orphaned (ownerId = null)
     // - Otherwise, owner is the current user (userId)
     // - Can be reassigned if external account is already claimed
-    const actualOwnerId = pendingOwner || !assignToSelf ? null : userId;
+    const actualOwnerId =
+      ownerId ?? (pendingOwner || !assignToSelf ? null : userId);
 
     // Extract speciesId early for validation and Discord resolution
     const speciesId = characterData.species?.connect?.id;
@@ -134,6 +137,9 @@ export class CharactersService {
     if (speciesId) {
       await this.assertCanCreateForSpecies(userId, speciesId);
       await this.forms.validateForms(speciesId, forms, speciesVariantId);
+      if (ownerId && ownerId !== userId) {
+        await this.assertOwnerInSpeciesCommunity(ownerId, speciesId);
+      }
     } else if (forms.length > 1) {
       // Without a species there is no trait list for a second form to differ
       // in, so a character that has one is a character with two empty sets.
@@ -199,6 +205,18 @@ export class CharactersService {
           ...characterData,
         },
       });
+
+      // Made for someone else: record it the way a transfer is recorded, so
+      // the character's history says how its owner came to hold it.
+      if (actualOwnerId && actualOwnerId !== userId) {
+        await tx.characterOwnershipChange.create({
+          data: {
+            characterId: created.id,
+            fromUserId: null,
+            toUserId: actualOwnerId,
+          },
+        });
+      }
 
       const written = await this.forms.writeForms(tx, created.id, forms);
 
@@ -1878,6 +1896,31 @@ export class CharactersService {
   /**
    * Check if a user has permission to create orphaned characters in a species' community
    */
+  /**
+   * A character made for someone else (#424) can only go to a member of its
+   * species' community: the picker searches that community's members, and a
+   * character owned from outside it could not be edited or traded by its
+   * owner there.
+   */
+  private async assertOwnerInSpeciesCommunity(
+    ownerId: string,
+    speciesId: string,
+  ): Promise<void> {
+    const membership = await this.db.communityMember.findFirst({
+      where: {
+        userId: ownerId,
+        role: { community: { species: { some: { id: speciesId } } } },
+      },
+      select: { id: true },
+    });
+
+    if (!membership) {
+      throw new BadRequestException(
+        "The owner must be a member of the species' community",
+      );
+    }
+  }
+
   async userHasOrphanedCharacterPermission(
     userId: string,
     speciesId: string,

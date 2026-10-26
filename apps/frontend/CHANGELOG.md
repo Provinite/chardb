@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Image upload on the character create form**, pinned beside the form and attached as the new character's main image; the edit form shows the current main image the same way (#406).
 - **Frame a new character's thumbnail on the create form**; the edit form shows the thumbnail with a link to re-frame it, and the upload page's character picker shows each character's thumbnail (#418).
+- **Creating a character opens a progress dialog** that ticks off creating, uploading (with a percentage) and setting the profile image, then offers View character and Create another; failures say which step broke and offer the right next step (#424).
 
 ### Changed
 
@@ -22,6 +23,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Members without `canCreateOrphanedCharacter` can create characters again**; the form sent `assignToSelf: false` for them, which the server refused as an orphan.
+- **"Owned By..." on the create form gives the character to the member chosen**; it used to go to its creator (#424).
+- **The create form's image check follows the ownership choice**, and a pending owner left in a hidden picker is no longer sent or allowed to block the submit (#424).
 
 ## [v14.0.0] - 2026-10-25
 

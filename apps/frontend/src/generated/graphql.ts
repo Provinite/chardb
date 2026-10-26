@@ -549,6 +549,8 @@ export type CreateCharacterInput = {
   isTradeable?: Scalars['Boolean']['input'];
   isTradeableForArt?: Scalars['Boolean']['input'];
   name: Scalars['String']['input'];
+  /** Create the character owned by this member of the species' community rather than by its creator. Requires canCreateOrphanedCharacter, and cannot be combined with pendingOwner or assignToSelf: false. */
+  ownerId?: InputMaybe<Scalars['ID']['input']>;
   /** Create character with pending ownership for an external account */
   pendingOwner?: InputMaybe<PendingOwnerInput>;
   price?: InputMaybe<Scalars['Float']['input']>;
@@ -5040,7 +5042,7 @@ export type ResetPasswordMutation = { __typename?: 'Mutation', resetPassword: bo
 export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null, communityMemberships: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canEditSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canUploadOwnCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string } } }> } } };
+export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null, communityMemberships: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canEditSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string } } }> } } };
 
 export type CharacterFolderFieldsFragment = { __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number };
 
@@ -7888,6 +7890,7 @@ export const MeDocument = gql`
           canEditCharacterRegistry
           canCreateOrphanedCharacter
           canUploadOwnCharacterImages
+          canUploadCharacterImages
           canCreateInviteCode
           canListInviteCodes
           canCreateRole

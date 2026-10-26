@@ -15,9 +15,9 @@ import {
   ThumbnailCropper,
   ThumbnailCropRect,
 } from "../components/ThumbnailCropper";
-import { API_BASE_URL, characterUrl } from "../lib/communityHost";
+import { characterUrl } from "../lib/communityHost";
 import { useCommunityId } from "../contexts/CommunityHostContext";
-import { getAccessToken } from "../lib/accessToken";
+import { ImageUploadError, uploadImage } from "../lib/uploadImage";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -376,17 +376,6 @@ interface UploadedImage {
   altText?: string;
 }
 
-interface UploadImageResponse {
-  id: string;
-  title: string;
-  image: {
-    originalUrl: string;
-    thumbnailUrl: string;
-    originalFilename: string;
-    altText: string | null;
-  };
-}
-
 const ThumbnailRow = styled.div`
   display: flex;
   align-items: center;
@@ -497,75 +486,35 @@ export const UploadImagePage: React.FC = () => {
     setError("");
 
     try {
-      const uploadPromises = uploadFiles.map(async (imageFile) => {
-        const formDataToSend = new FormData();
-        formDataToSend.append("file", imageFile.file);
-
-        if (formData.title) formDataToSend.append("title", formData.title);
-        if (formData.description)
-          formDataToSend.append("description", formData.description);
-        if (formData.altText)
-          formDataToSend.append("altText", formData.altText);
-        if (formData.galleryId)
-          formDataToSend.append("galleryId", formData.galleryId);
-        if (formData.characterId)
-          formDataToSend.append("characterId", formData.characterId);
-        // Sent only when there is no character, which is the only case it is
-        // read in: a character already names the community that reviews its
-        // media, and does it live, so a second answer frozen here could only
-        // ever disagree with it.
-        if (hostCommunityId && !formData.characterId)
-          formDataToSend.append("communityId", hostCommunityId);
-        formDataToSend.append("isNsfw", formData.nsfwSensitive.toString());
-        if (formData.nsfwSensitive && formData.sensitiveContentDescription) {
-          formDataToSend.append(
-            "sensitiveContentDescription",
-            formData.sensitiveContentDescription,
-          );
-        }
-
-        // Handle privacy settings
-        formDataToSend.append("authorizedViewers", formData.authorizedViewers);
-        formDataToSend.append("publicViewers", formData.publicViewers);
-        formDataToSend.append("watermark", formData.watermark);
-
-        // Handle artist credits
-        if (formData.artistLink) {
-          formDataToSend.append("artistType", formData.artistType);
-          formDataToSend.append("artistLink", formData.artistLink);
-          if (formData.artistLabel)
-            formDataToSend.append("artistLabel", formData.artistLabel);
-        }
-        formDataToSend.append("visibility", formData.visibility);
-
-        // Thumbnail framing, if one was chosen. Sent as four fields because
-        // multipart has no nesting; the backend takes all four or none, and
-        // sending nothing leaves it on the automatic centre crop.
-        const crop = crops[imageFile.id];
-        if (crop) {
-          formDataToSend.append("thumbnailCropX", String(crop.x));
-          formDataToSend.append("thumbnailCropY", String(crop.y));
-          formDataToSend.append("thumbnailCropWidth", String(crop.width));
-          formDataToSend.append("thumbnailCropHeight", String(crop.height));
-        }
-
-        const response = await fetch(`${API_BASE_URL}/images/upload`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${getAccessToken()}`,
+      const uploadPromises = uploadFiles.map((imageFile) =>
+        uploadImage({
+          file: imageFile.file,
+          title: formData.title,
+          description: formData.description,
+          altText: formData.altText,
+          galleryId: formData.galleryId,
+          characterId: formData.characterId,
+          // Sent only when there is no character, which is the only case it
+          // is read in: a character already names the community that reviews
+          // its media, and does it live, so a second answer frozen here could
+          // only ever disagree with it.
+          communityId:
+            hostCommunityId && !formData.characterId
+              ? hostCommunityId
+              : undefined,
+          visibility: formData.visibility,
+          isNsfw: formData.nsfwSensitive,
+          sensitiveContentDescription: formData.nsfwSensitive
+            ? formData.sensitiveContentDescription
+            : undefined,
+          artist: {
+            type: formData.artistType,
+            link: formData.artistLink,
+            label: formData.artistLabel,
           },
-          body: formDataToSend,
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          throw new Error(
-            errorData.message || `Upload failed: ${response.statusText}`,
-          );
-        }
-
-        return response.json() as Promise<UploadImageResponse>;
-      });
+          thumbnailCrop: crops[imageFile.id],
+        }),
+      );
 
       const uploadResults = await Promise.all(uploadPromises);
 
@@ -595,7 +544,11 @@ export const UploadImagePage: React.FC = () => {
         artistLabel: "",
       }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Upload failed");
+      setError(
+        err instanceof ImageUploadError && err.serverMessage
+          ? err.serverMessage
+          : "Upload failed",
+      );
     } finally {
       setUploading(false);
     }

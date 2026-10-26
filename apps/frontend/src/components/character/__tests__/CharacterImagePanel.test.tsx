@@ -12,7 +12,7 @@ import {
   CharacterMainImagePreview,
   type PickedCharacterImage,
 } from "../CharacterImagePanel";
-import { isPickedImageBlocked } from "../../../lib/attachMainImage";
+import { isPickedImageBlocked } from "../../../lib/createWithImage";
 
 beforeAll(() => {
   // jsdom has no object URLs.
@@ -152,6 +152,25 @@ describe("CharacterImagePicker", () => {
 
     expect(screen.getByText("Thumbnail: your crop")).toBeVisible();
     expect(screen.getByRole("button", { name: "Change crop" })).toBeVisible();
+  });
+
+  it("keeps a picked image and says why it cannot be attached as things stand", () => {
+    // The reason follows the ownership choice, which can be changed back;
+    // dropping the image on every change would make the member pick it again.
+    wrap(
+      <CharacterImagePicker
+        value={picked()}
+        onChange={vi.fn()}
+        disabledReason="Your role here cannot add images to unowned characters."
+      />,
+    );
+
+    expect(screen.getByRole("img", { name: "portrait.png" })).toBeVisible();
+    expect(
+      screen.getByText(
+        "Your role here cannot add images to unowned characters.",
+      ),
+    ).toBeVisible();
   });
 
   it("explains why it cannot take an image instead of offering one", () => {

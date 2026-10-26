@@ -536,7 +536,10 @@ test.describe("spending an MYO ticket, through the page", () => {
     await expect(dialog).toContainText(world.itemTypes.myoTicket.name);
     await page.getByTestId("confirm-accept").click();
 
-    // Lands on the character it made.
+    // The progress dialog says it is made, and offers the character (#424).
+    const progress = page.getByTestId("create-progress-dialog");
+    await expect(progress).toContainText("is ready");
+    await progress.getByRole("link", { name: "View character" }).click();
     await expect(page).toHaveURL(/\/character\/[0-9a-f-]{36}$/);
 
     const { item } = await world
