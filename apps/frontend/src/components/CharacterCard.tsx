@@ -36,14 +36,6 @@ export type CharacterCardItem = Pick<
 };
 
 /**
- * The card renders at the apex (My Characters, Liked, a profile, the feed) and
- * on a community host (the roster), and the character it names lives on
- * whichever host its species' community owns -- so the destination is absolute
- * and may or may not be this origin. `HostAwareLink` decides per click: a
- * roster linking to its own community stays client-side, and only a link that
- * genuinely crosses costs a page load.
- */
-/**
  * Every card is this tall, and its icon is this square (#420).
  *
  * The icon is the main image's thumbnail, which is square and framed by
@@ -57,6 +49,14 @@ const CARD_HEIGHT = "160px";
 /** Two fit beside the icon with room for the "+N" count; three did not. */
 const VISIBLE_TAGS = 2;
 
+/**
+ * The card renders at the apex (My Characters, Liked, a profile, the feed) and
+ * on a community host (the roster), and the character it names lives on
+ * whichever host its species' community owns -- so the destination is absolute
+ * and may or may not be this origin. `HostAwareLink` decides per click: a
+ * roster linking to its own community stays client-side, and only a link that
+ * genuinely crosses costs a page load.
+ */
 const Card = styled(HostAwareLink)`
   display: flex;
   height: ${CARD_HEIGHT};
