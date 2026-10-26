@@ -9,7 +9,7 @@ import { ThumbnailCropper, type ThumbnailCropRect } from "../ThumbnailCropper";
 import {
   isPickedImageBlocked,
   type PendingCharacterImage,
-} from "../../lib/attachMainImage";
+} from "../../lib/createWithImage";
 
 /**
  * The image column on the character create and edit forms (#406).
@@ -362,6 +362,8 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
               }
             />
           )}
+
+          {disabledReason && <Refusal>{disabledReason}</Refusal>}
 
           {isPickedImageBlocked(value) && (
             <Refusal>NSFW image uploads are not accepted at this time.</Refusal>

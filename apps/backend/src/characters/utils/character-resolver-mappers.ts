@@ -99,12 +99,14 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     providerAccountId: string;
   };
   assignToSelf?: boolean;
+  ownerId?: string;
   traitReviewSource?: TraitReviewSource;
 } {
   const {
     tags,
     pendingOwner,
     assignToSelf,
+    ownerId,
     traitReviewSource,
     ...characterData
   } = input;
@@ -141,6 +143,7 @@ export function mapCreateCharacterInputToService(input: CreateCharacterInput): {
     tags,
     pendingOwner,
     assignToSelf,
+    ownerId,
     traitReviewSource,
   };
 }

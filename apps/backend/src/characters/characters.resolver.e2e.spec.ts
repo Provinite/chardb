@@ -1,4 +1,3 @@
-import { INestApplication } from "@nestjs/common";
 import { TestApp, CHARACTER_QUERIES } from "../../test/setup-e2e";
 import { CharactersModule } from "./characters.module";
 import { DatabaseModule } from "../database/database.module";
@@ -7,7 +6,6 @@ import { Visibility } from "@chardb/database";
 
 describe("CharactersResolver (e2e)", () => {
   let testApp: TestApp;
-  let app: INestApplication;
   let testUserId: string;
   let testToken: string;
   let testSpeciesId: string;
@@ -17,7 +15,6 @@ describe("CharactersResolver (e2e)", () => {
     await testApp.setup({
       imports: [DatabaseModule, AuthModule, CharactersModule],
     });
-    app = testApp.getApp();
   });
 
   beforeEach(async () => {
@@ -91,6 +88,124 @@ describe("CharactersResolver (e2e)", () => {
 
       expect(response.status).toBe(200);
       expect(response.body.errors).toBeDefined();
+    });
+  });
+
+  /**
+   * Staff creating a character owned by another member (#424). The form's
+   * "Owned By..." picker used to send nothing about the member chosen, so the
+   * character went to its creator.
+   */
+  describe("createCharacter with an owner", () => {
+    let roleId: string;
+    let memberId: string;
+
+    beforeEach(async () => {
+      const db = testApp.getDb();
+      const membership = await db.communityMember.findFirstOrThrow({
+        where: { userId: testUserId },
+      });
+      roleId = membership.roleId;
+
+      const member = await testApp.createTestUser();
+      memberId = member.id;
+      await testApp.createTestCommunityMember(memberId, roleId);
+    });
+
+    const grantCreatingForOthers = () =>
+      testApp.getDb().role.update({
+        where: { id: roleId },
+        data: { canCreateOrphanedCharacter: true },
+      });
+
+    it("gives the character to the member named, and records the change", async () => {
+      await grantCreatingForOthers();
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        {
+          input: {
+            name: "Made For Another",
+            speciesId: testSpeciesId,
+            ownerId: memberId,
+          },
+        },
+        testToken,
+      );
+
+      expect(response.body.errors).toBeUndefined();
+      const created = response.body.data.createCharacter;
+      expect(created.owner.id).toBe(memberId);
+
+      const changes = await testApp.getDb().characterOwnershipChange.findMany({
+        where: { characterId: created.id },
+      });
+      expect(changes).toEqual([
+        expect.objectContaining({ fromUserId: null, toUserId: memberId }),
+      ]);
+    });
+
+    it("refuses without the permission to create for others", async () => {
+      const response = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        {
+          input: {
+            name: "Not Allowed",
+            speciesId: testSpeciesId,
+            ownerId: memberId,
+          },
+        },
+        testToken,
+      );
+
+      expect(response.body.errors?.[0].message).toMatch(
+        /permission to create characters for other members/i,
+      );
+    });
+
+    it("refuses an owner from outside the community", async () => {
+      await grantCreatingForOthers();
+      const outsider = await testApp.createTestUser();
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        {
+          input: {
+            name: "Outsider's",
+            speciesId: testSpeciesId,
+            ownerId: outsider.id,
+          },
+        },
+        testToken,
+      );
+
+      expect(response.body.errors?.[0].message).toMatch(
+        /owner must be a member of the species' community/i,
+      );
+    });
+
+    it("refuses an owner alongside a pending owner", async () => {
+      await grantCreatingForOthers();
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        {
+          input: {
+            name: "Two Owners",
+            speciesId: testSpeciesId,
+            ownerId: memberId,
+            pendingOwner: {
+              provider: "DISCORD",
+              providerAccountId: "123456789012345678",
+            },
+          },
+        },
+        testToken,
+      );
+
+      expect(response.body.errors?.[0].message).toMatch(
+        /an owner cannot be combined with a pending owner/i,
+      );
     });
   });
 
