@@ -227,9 +227,9 @@ const ActionButton = styled.button<{ $primary?: boolean }>`
 
 const STEP_LABEL: Record<StepKey, (isMyo: boolean) => string> = {
   create: (isMyo) =>
-    isMyo ? "Redeeming your ticket" : "Creating the character",
-  upload: () => "Uploading the image",
-  setMain: () => "Setting it as the main image",
+    isMyo ? "Redeeming ticket" : "Creating character",
+  upload: () => "Uploading image",
+  setMain: () => "Setting as profile image",
 };
 
 const StatusGlyph: React.FC<{ status: Step["status"] }> = ({ status }) => (
@@ -296,7 +296,7 @@ export const CreateProgressDialog: React.FC<CreateProgressDialogProps> = ({
     detail =
       failedStep === "upload"
         ? "Its image couldn't be uploaded."
-        : "Its image was uploaded but couldn't be made the main image.";
+        : "Its image uploaded, but couldn't be set as its profile image.";
   }
 
   return createPortal(

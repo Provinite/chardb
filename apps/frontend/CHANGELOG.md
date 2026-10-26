@@ -11,7 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Image upload on the character create form**, pinned beside the form and attached as the new character's main image; the edit form shows the current main image the same way (#406).
 - **Frame a new character's thumbnail on the create form**; the edit form shows the thumbnail with a link to re-frame it, and the upload page's character picker shows each character's thumbnail (#418).
-- **Creating a character opens a progress dialog** that ticks off creating, uploading (with a percentage) and setting the main image, then offers View character and Create another; failures say which step broke and offer the right next step (#424).
+- **Creating a character opens a progress dialog** that ticks off creating, uploading (with a percentage) and setting the profile image, then offers View character and Create another; failures say which step broke and offer the right next step (#424).
 
 ### Changed
 

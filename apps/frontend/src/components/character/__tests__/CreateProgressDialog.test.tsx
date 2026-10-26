@@ -53,16 +53,16 @@ describe("CreateProgressDialog", () => {
     });
 
     const dialog = screen.getByRole("dialog", { name: /creating lumen/i });
-    expect(step(/creating the character/i)).toHaveAttribute(
+    expect(step(/^creating character:/i)).toHaveAttribute(
       "data-status",
       "done",
     );
-    expect(step(/uploading the image/i)).toHaveAttribute(
+    expect(step(/^uploading image:/i)).toHaveAttribute(
       "data-status",
       "running",
     );
     expect(within(dialog).getByText("40%")).toBeVisible();
-    expect(step(/setting it as the main image/i)).toHaveAttribute(
+    expect(step(/^setting as profile image:/i)).toHaveAttribute(
       "data-status",
       "todo",
     );
@@ -100,7 +100,7 @@ describe("CreateProgressDialog", () => {
       { isMyo: true },
     );
 
-    expect(step(/redeeming your ticket/i)).toBeVisible();
+    expect(step(/^redeeming ticket:/i)).toBeVisible();
     // What the ticket's toast used to say, and still worth saying.
     expect(screen.getByText(/traits are with staff for review/i)).toBeVisible();
     expect(
