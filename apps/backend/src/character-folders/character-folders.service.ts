@@ -9,11 +9,13 @@ import { DatabaseService } from "../database/database.service";
 import { notDeleted } from "../common/utils/prisma-filters";
 import { RemovalResponse } from "../shared/entities/removal-response.entity";
 import { CharacterFolder } from "./entities/character-folder.entity";
+import { CharacterFolderMembership } from "./entities/character-folder-membership.entity";
 import {
   CreateCharacterFolderInput,
   MAX_FOLDER_DEPTH,
   MAX_FOLDERS_PER_CHARACTER,
   MAX_FOLDERS_PER_OWNER,
+  MAX_MEMBERSHIP_BATCH,
   MoveCharacterFolderInput,
   MoveCharactersToFolderInput,
   SetCharacterFoldersInput,
@@ -106,6 +108,66 @@ export class CharacterFoldersService {
     return visible
       .sort(compareFolders)
       .map((folder) => this.toGraphql(folder, counts.get(folder.id) ?? 0));
+  }
+
+  /**
+   * Where each of a page of characters is filed, in one round trip.
+   *
+   * The browser already holds the workspace, so this answers with ids for it
+   * to look up rather than whole folders. One answer per character asked
+   * about, in the order asked, so a card that is filed nowhere gets an empty
+   * list rather than going missing.
+   */
+  async membershipsFor(
+    ownerId: string,
+    characterIds: readonly string[],
+    viewerId: string | undefined,
+  ): Promise<CharacterFolderMembership[]> {
+    if (characterIds.length > MAX_MEMBERSHIP_BATCH) {
+      throw new BadRequestException(
+        `Ask about at most ${MAX_MEMBERSHIP_BATCH} characters at once`,
+      );
+    }
+
+    const ids = [...new Set(characterIds)];
+    const isOwner = viewerId !== undefined && viewerId === ownerId;
+
+    const folders = await this.loadWorkspace(ownerId);
+    const byId = indexById(folders);
+
+    const entries = await this.db.characterFolderEntry.findMany({
+      where: {
+        characterId: { in: ids },
+        folder: { ownerId },
+        // The transfer rule again: filed by someone who no longer owns it
+        // means filed nowhere.
+        character: { ...notDeleted, ownerId },
+      },
+      select: { folderId: true, characterId: true },
+    });
+
+    const filed = new Map<string, Set<string>>();
+    for (const entry of entries) {
+      const set = filed.get(entry.characterId) ?? new Set<string>();
+      set.add(entry.folderId);
+      filed.set(entry.characterId, set);
+    }
+
+    const ordered = [...folders]
+      .filter((folder) => isOwner || isVisibleToVisitor(folder, byId))
+      .sort(compareFolders);
+
+    return characterIds.map((characterId) => {
+      const set = filed.get(characterId);
+      return {
+        characterId,
+        folderIds: set
+          ? ordered
+              .filter((folder) => set.has(folder.id))
+              .map((folder) => folder.id)
+          : [],
+      };
+    });
   }
 
   /**

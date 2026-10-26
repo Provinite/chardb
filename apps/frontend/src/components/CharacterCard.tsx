@@ -196,12 +196,15 @@ interface CharacterCardProps {
   character: CharacterCardItem;
   showOwner?: boolean;
   showEditButton?: boolean;
+  /** Shown under the species, for what only the surrounding page knows. */
+  extra?: React.ReactNode;
 }
 
 export const CharacterCard: React.FC<CharacterCardProps> = ({
   character,
   showOwner = true,
   showEditButton = false,
+  extra,
 }) => {
   const href = characterUrl(character.id, character.species?.community?.slug);
 
@@ -236,6 +239,7 @@ export const CharacterCard: React.FC<CharacterCardProps> = ({
       <Content>
         <Name>{character.name}</Name>
         {character.species?.name && <Species>{character.species.name}</Species>}
+        {extra}
 
         {character.tags && character.tags.length > 0 && (
           <TagsContainer size="sm" style={{ marginBottom: "0.75rem" }}>

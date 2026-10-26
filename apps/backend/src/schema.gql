@@ -247,6 +247,16 @@ type CharacterFolder {
   sortOrder: Int!
 }
 
+"""
+Which of its owner's folders one character is filed in, as far as the viewer may see.
+"""
+type CharacterFolderMembership {
+  characterId: ID!
+
+  """In the workspace's sibling order. Empty when unfiled."""
+  folderIds: [ID!]!
+}
+
 """One appearance of a character, with its own trait set"""
 type CharacterForm {
   characterId: ID!
@@ -3205,6 +3215,11 @@ type PendingOwnership {
 type Query {
   activityFeed(input: ActivityFeedInput): [ActivityItem!]!
   character(id: ID!): Character!
+
+  """
+  Where each of these characters is filed in one person's workspace, answered for every id given and in the same order. Private folders and everything nested under them are left out for anyone but the owner.
+  """
+  characterFolderMemberships(characterIds: [ID!]!, userId: ID!): [CharacterFolderMembership!]!
 
   """
   Where this character's current owner filed it. Empty for an orphaned character.

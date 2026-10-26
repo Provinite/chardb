@@ -9,6 +9,7 @@ import {
 import { RemovalResponse } from "../shared/entities/removal-response.entity";
 import { CharacterFoldersService } from "./character-folders.service";
 import { CharacterFolder } from "./entities/character-folder.entity";
+import { CharacterFolderMembership } from "./entities/character-folder-membership.entity";
 import {
   CreateCharacterFolderInput,
   MoveCharacterFolderInput,
@@ -74,6 +75,22 @@ export class CharacterFoldersResolver {
     @CurrentUser() user?: CurrentUserType,
   ): Promise<CharacterFolder[]> {
     return this.folders.foldersForCharacter(characterId, user?.id);
+  }
+
+  @AllowUnauthenticated()
+  @Query(() => [CharacterFolderMembership], {
+    description:
+      "Where each of these characters is filed in one person's workspace, " +
+      "answered for every id given and in the same order. Private folders " +
+      "and everything nested under them are left out for anyone but the " +
+      "owner.",
+  })
+  async characterFolderMemberships(
+    @Args("userId", { type: () => ID }) userId: string,
+    @Args("characterIds", { type: () => [ID] }) characterIds: string[],
+    @CurrentUser() user?: CurrentUserType,
+  ): Promise<CharacterFolderMembership[]> {
+    return this.folders.membershipsFor(userId, characterIds, user?.id);
   }
 
   @AllowAnyAuthenticated()

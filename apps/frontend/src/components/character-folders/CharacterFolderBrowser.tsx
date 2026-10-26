@@ -20,6 +20,7 @@ import {
   useCreateCharacterFolderMutation,
   useDeleteCharacterFolderMutation,
   useGetMyCharacterFoldersQuery,
+  useGetCharacterFolderMembershipsQuery,
   useGetUserCharacterFoldersQuery,
   useMoveCharacterFolderMutation,
   useMoveCharactersToFolderMutation,
@@ -31,6 +32,7 @@ import { LoadingSpinner } from "../LoadingSpinner";
 import { CharacterCard } from "../CharacterCard";
 import { Pager } from "../pagination/Pager";
 import { ConfirmDialog } from "../ConfirmDialog";
+import { FolderChips } from "./FolderChips";
 import { FolderPickerModal } from "./FolderPickerModal";
 import { FolderInput, Globe, Lock, Pencil, Trash2 } from "lucide-react";
 import {
@@ -46,6 +48,9 @@ import {
 import { childrenOf, Folder, pathTo, subtreeIds } from "./folderTree";
 
 const PAGE_SIZE = 24;
+
+/** The server's cap on one membership lookup. Cards past it go chipless. */
+const MEMBERSHIP_BATCH = 500;
 
 const Container = styled.div`
   display: flex;
@@ -266,7 +271,10 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
     notifyOnNetworkStatusChange: true,
   });
 
-  const characters = characterData?.userCharacters?.characters ?? [];
+  const characters = useMemo(
+    () => characterData?.userCharacters?.characters ?? [],
+    [characterData],
+  );
   const total = characterData?.userCharacters?.total ?? 0;
 
   const { loadMore, loadingMore } = useOffsetPaging({
@@ -324,9 +332,43 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
     setSearchParams(next ? { folder: next } : {}, { replace: false });
   };
 
+  // Where each card on screen is filed, for its chips. Asked by id in one
+  // batch rather than per card.
+  const characterIds = useMemo(
+    () =>
+      characters.slice(0, MEMBERSHIP_BATCH).map((character) => character.id),
+    [characters],
+  );
+  const { data: membershipData, refetch: refetchMemberships } =
+    useGetCharacterFolderMembershipsQuery({
+      variables: { userId: ownerId, characterIds },
+      skip: characterIds.length === 0,
+    });
+
+  const chipsFor = useMemo(() => {
+    const byId = new Map(folders.map((folder) => [folder.id, folder]));
+    const map = new Map<string, Folder[]>();
+    for (const membership of membershipData?.characterFolderMemberships ?? []) {
+      map.set(
+        membership.characterId,
+        membership.folderIds
+          // The open folder is the heading; naming it on every card says
+          // nothing.
+          .filter((id) => id !== folderId)
+          .map((id) => byId.get(id))
+          .filter((folder): folder is Folder => folder !== undefined),
+      );
+    }
+    return map;
+  }, [membershipData, folders, folderId]);
+
   const refreshAll = useCallback(async () => {
-    await Promise.all([refetchFolders(), refetchCharacters()]);
-  }, [refetchFolders, refetchCharacters]);
+    await Promise.all([
+      refetchFolders(),
+      refetchCharacters(),
+      refetchMemberships(),
+    ]);
+  }, [refetchFolders, refetchCharacters, refetchMemberships]);
 
   const runMove = useCallback(
     async (
@@ -412,15 +454,13 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
     }
   };
 
-  /**
-   * Make a folder here -- inside whichever folder is open, not always at the
-   * root. Somebody who has navigated into Commissions and pressed New folder
-   * means one inside Commissions.
-   */
-  const createHere = async (name: string): Promise<string | null> => {
+  const createIn = async (
+    name: string,
+    parentId: string | null,
+  ): Promise<string | null> => {
     try {
       const result = await createFolder({
-        variables: { input: { name, parentId: folderId } },
+        variables: { input: { name, parentId } },
       });
       await refetchFolders();
       return result.data?.createCharacterFolder.id ?? null;
@@ -438,7 +478,10 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
       setNewName(null);
       return;
     }
-    const created = await createHere(name);
+    // New folder makes one here -- inside whichever folder is open. Somebody
+    // who has navigated into Commissions and pressed New folder means one
+    // inside Commissions. The picker asks instead; see its `onCreate`.
+    const created = await createIn(name, folderId);
     if (created) setNewName(null);
   };
 
@@ -695,6 +738,11 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
                         character={character}
                         showOwner={false}
                         showEditButton={editable}
+                        extra={
+                          <FolderChips
+                            folders={chipsFor.get(character.id) ?? []}
+                          />
+                        }
                       />
                     </DraggableCharacter>
                   </CardShell>
@@ -726,7 +774,12 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
               ? new Set([openFolder.id])
               : undefined
         }
-        onCreate={createHere}
+        disabledParentIds={
+          picker?.kind === "move-folder"
+            ? subtreeIds(folders, picker.folder.id)
+            : undefined
+        }
+        onCreate={createIn}
         onSubmit={async (destination, removing) => {
           if (picker?.kind === "move-folder") {
             await moveFolder({
