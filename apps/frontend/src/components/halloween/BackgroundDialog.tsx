@@ -21,6 +21,8 @@ import {
 import { BackgroundEffectLayers } from "./BackgroundEffectLayers";
 
 const ICON_SIZE = 18;
+/** How far the dim and tint strength sliders move a notch. */
+const SLIDER_STEP = 0.01;
 
 /**
  * The owner's choice of what goes behind their candies. A choice is shown on
@@ -260,7 +262,7 @@ const DialogBody: React.FC<Omit<BackgroundDialogProps, "open">> = ({
           aria-label="Dim"
           min={0}
           max={BACKGROUND_DIM_MAX}
-          step={0.05}
+          step={SLIDER_STEP}
           value={muting.dim}
           onChange={(e) =>
             setMuting((m) => ({ ...m, dim: Number(e.target.value) }))
@@ -274,7 +276,7 @@ const DialogBody: React.FC<Omit<BackgroundDialogProps, "open">> = ({
           aria-label="Tint strength"
           min={0}
           max={1}
-          step={0.05}
+          step={SLIDER_STEP}
           disabled={muting.tint === null}
           value={muting.tintStrength}
           onChange={(e) =>

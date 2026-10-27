@@ -1103,6 +1103,17 @@ describe("CommunityCandyBoardPage", () => {
         ).toHaveValue("0.5");
       });
 
+      it("moves its sliders a hundredth at a time", async () => {
+        renderBoard([boardQuery(board([]))]);
+        const dialog = await openDialog();
+        for (const name of ["Dim", "Tint strength"]) {
+          expect(within(dialog).getByRole("slider", { name })).toHaveAttribute(
+            "step",
+            "0.01",
+          );
+        }
+      });
+
       it("previews a dim and a tint, and saves them with the background", async () => {
         const saved = vi.fn(() => ({
           data: {
