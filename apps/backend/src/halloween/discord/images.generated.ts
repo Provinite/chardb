@@ -117,3 +117,31 @@ export const CANDY_SLUGS: readonly string[] = [
 
 /** How many `icon/N.png` author icons there are, numbered 0 to N-1. */
 export const AUTHOR_ICON_COUNT = 11;
+
+/**
+ * The slugs of the candy board backgrounds a board may choose. A slug is the
+ * board's saved choice, so a background file is never renamed.
+ */
+export const BACKGROUND_SLUGS: readonly string[] = [
+  "daphne-luther-hug",
+  "luther-daphne-meadow",
+  "luther-lantern-alley",
+  "luther-sunset-forest",
+  "tile-argyle",
+  "tile-barnwood",
+  "tile-bear-faces",
+  "tile-citrus",
+  "tile-clouds",
+  "tile-corkboard",
+  "tile-cupcakes",
+  "tile-dark-roses",
+  "tile-graph-paper",
+  "tile-green-triangles",
+  "tile-luther-pillowing",
+  "tile-paper-squares",
+  "tile-peach-plaid",
+  "tile-sprinkles",
+  "tile-stardust",
+  "tile-teal-daisies",
+  "tile-winter-stars",
+];
