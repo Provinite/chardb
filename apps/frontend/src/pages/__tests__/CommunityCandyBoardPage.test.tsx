@@ -3,7 +3,13 @@
  * their candies on it.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor, within } from "@testing-library/react";
+import {
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+  within,
+} from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
@@ -11,6 +17,19 @@ import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
 
 const COMMUNITY_ID = "11111111-1111-4111-8111-111111111111";
+
+// jsdom has no PointerEvent, and without one a fired pointer event carries no
+// coordinates, so no drag would ever look like it moved.
+if (!("PointerEvent" in window)) {
+  class PointerEventStub extends MouseEvent {
+    readonly pointerId: number;
+    constructor(type: string, init: PointerEventInit = {}) {
+      super(type, init);
+      this.pointerId = init.pointerId ?? 0;
+    }
+  }
+  Object.assign(window, { PointerEvent: PointerEventStub });
+}
 
 const host = vi.hoisted(() => ({ halloweenEnabled: true }));
 const auth = vi.hoisted(() => ({
@@ -191,6 +210,40 @@ describe("CommunityCandyBoardPage", () => {
         timeout: 2000,
       });
       expect(await screen.findByText("Saved")).toBeInTheDocument();
+    });
+
+    it("still places a tapped candy after one was dragged off the tray", async () => {
+      renderPage("owner", [boardQuery("owner", board("owner", []))]);
+
+      const dragged = await screen.findByRole("button", {
+        name: "Place candy corn (2 left)",
+      });
+      // A drag that ends somewhere with no click after it, as a browser's
+      // can when the pointer is let go away from where it went down.
+      fireEvent.pointerDown(dragged, { clientX: 0, clientY: 0, pointerId: 1 });
+      fireEvent.pointerMove(dragged, { clientX: 50, clientY: 50, pointerId: 1 });
+      fireEvent.pointerUp(dragged, { clientX: 50, clientY: 50, pointerId: 1 });
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Place luther head (1 left)" }),
+      );
+
+      const pile = screen.getByRole("region", { name: "Candy board" });
+      expect(
+        within(pile).getAllByRole("img").map((i) => i.getAttribute("alt")),
+      ).toEqual(["luther head"]);
+    });
+
+    it("turns a candy picked with the pointer from the keyboard", async () => {
+      renderPage("owner", [boardQuery("owner", board("owner", [2]))]);
+
+      const pile = await screen.findByRole("region", { name: "Candy board" });
+      await userEvent.click(within(pile).getByRole("img"));
+      await userEvent.keyboard("]");
+
+      expect(within(pile).getByRole("img").style.transform).toBe(
+        "translate(-50%, -50%) rotate(15deg)",
+      );
     });
 
     it("puts the selected candy back in the tray", async () => {

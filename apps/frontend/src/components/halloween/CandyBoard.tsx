@@ -224,9 +224,12 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 
   const setDragging = (dragging: boolean) => onDraggingChange?.(dragging);
 
-  const startMove = (e: React.PointerEvent, p: Placement) => {
+  const startMove = (e: React.PointerEvent<HTMLImageElement>, p: Placement) => {
     if (!onChange) return;
+    // Stops the browser's own image drag, and with it the focus a press
+    // would give; focusing by hand keeps the keyboard shortcuts on this one.
     e.preventDefault();
+    e.currentTarget.focus();
     setSelected(p.knockEventId);
     const point = boardPoint(e.clientX, e.clientY);
     drag.current = {
@@ -283,8 +286,13 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
       // A tap: the click that follows sticks it in the middle.
       return;
     }
-    // A drag ends in a click too; that one must not place a second candy.
+    // A drag can end in a click too, which must not place a second candy. It
+    // comes straight after this pointerup or not at all, so the guard lasts
+    // only until then: left up, it would swallow the next real tap.
     draggedFromTray.current = true;
+    setTimeout(() => {
+      draggedFromTray.current = false;
+    }, 0);
     const rect = boardRef.current?.getBoundingClientRect();
     const over =
       rect &&

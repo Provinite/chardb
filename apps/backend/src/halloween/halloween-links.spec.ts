@@ -49,6 +49,15 @@ describe("HalloweenLinks", () => {
     ).toBeNull();
   });
 
+  it("links to the player's own candy board on the guild's community host", async () => {
+    expect(
+      await links({
+        FRONTEND_URL: "https://chardb.cc",
+        ROOT_DOMAIN: "chardb.cc",
+      }).candyBoard(GUILD_ID),
+    ).toBe("https://cloverse.chardb.cc/halloween/board");
+  });
+
   // Items and characters live on the community's own host: the apex has no
   // item pages at all.
   describe("chardbLink", () => {
