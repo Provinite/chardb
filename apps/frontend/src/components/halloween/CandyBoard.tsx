@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled, { css } from "styled-components";
 import {
   ArrowDown,
@@ -403,6 +403,19 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 }) => {
   const boardRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number | null>(null);
+  // The board, its toolbar and its tray; a press anywhere else on the page
+  // lets go of the selected candy.
+  const editorRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (selected === null) return;
+    const pressed = (e: PointerEvent) => {
+      if (e.target instanceof Node && !editorRef.current?.contains(e.target)) {
+        setSelected(null);
+      }
+    };
+    document.addEventListener("pointerdown", pressed);
+    return () => document.removeEventListener("pointerdown", pressed);
+  }, [selected]);
   /**
    * What each kind of candy's picture is like, once loaded: its shape, so the
    * selection outline fits it, and its alpha mask, so a press can pass
@@ -756,7 +769,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   const groups = trayGroups(candies, placements);
 
   return (
-    <>
+    <div ref={editorRef}>
       <Board
         ref={boardRef}
         role="region"
@@ -971,6 +984,6 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
           style={{ left: trayDrag.at.x, top: trayDrag.at.y }}
         />
       )}
-    </>
+    </div>
   );
 };

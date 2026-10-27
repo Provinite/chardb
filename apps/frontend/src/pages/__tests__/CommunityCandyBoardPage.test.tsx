@@ -709,6 +709,21 @@ describe("CommunityCandyBoardPage", () => {
         });
         expect(screen.getByLabelText("Rotate")).toBeDisabled();
       });
+
+      it("lets go of the selection on a press outside the board and its controls", async () => {
+        renderBoard([boardQuery(board([2, 1]))]);
+        clickCentre(sized(await pile()));
+
+        fireEvent.pointerDown(screen.getByLabelText("Rotate"), {
+          pointerId: 1,
+        });
+        expect(screen.getByLabelText("Rotate")).toBeEnabled();
+
+        fireEvent.pointerDown(screen.getByRole("heading", { level: 1 }), {
+          pointerId: 1,
+        });
+        expect(screen.getByLabelText("Rotate")).toBeDisabled();
+      });
     });
 
     it("marks the sliders with icons, named Rotate and Scale", async () => {
