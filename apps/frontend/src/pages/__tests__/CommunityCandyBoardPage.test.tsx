@@ -221,7 +221,11 @@ describe("CommunityCandyBoardPage", () => {
       // A drag that ends somewhere with no click after it, as a browser's
       // can when the pointer is let go away from where it went down.
       fireEvent.pointerDown(dragged, { clientX: 0, clientY: 0, pointerId: 1 });
-      fireEvent.pointerMove(dragged, { clientX: 50, clientY: 50, pointerId: 1 });
+      fireEvent.pointerMove(dragged, {
+        clientX: 50,
+        clientY: 50,
+        pointerId: 1,
+      });
       fireEvent.pointerUp(dragged, { clientX: 50, clientY: 50, pointerId: 1 });
 
       await userEvent.click(
@@ -230,7 +234,9 @@ describe("CommunityCandyBoardPage", () => {
 
       const pile = screen.getByRole("region", { name: "Candy board" });
       expect(
-        within(pile).getAllByRole("img").map((i) => i.getAttribute("alt")),
+        within(pile)
+          .getAllByRole("img")
+          .map((i) => i.getAttribute("alt")),
       ).toEqual(["luther head"]);
     });
 
