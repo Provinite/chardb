@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import styled from "styled-components";
-import { Candy as CandyIcon, Link2 } from "lucide-react";
+import {
+  Candy as CandyIcon,
+  Eraser,
+  Image as ImageIcon,
+  Link2,
+} from "lucide-react";
 import { toast } from "react-hot-toast";
 import { usePageMeta } from "../lib/pageMeta";
 import {
@@ -10,7 +15,8 @@ import {
 } from "../contexts/CommunityHostContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CandyBoard } from "../components/halloween/CandyBoard";
-import { BackgroundPicker } from "../components/halloween/BackgroundPicker";
+import { BackgroundDialog } from "../components/halloween/BackgroundDialog";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import {
   useCandyBoardSync,
   type SaveStatus,
@@ -91,8 +97,13 @@ const Button = styled.button`
   font: inherit;
   cursor: pointer;
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: ${({ theme }) => theme.colors.primary};
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
@@ -208,12 +219,14 @@ const BoardView: React.FC<{
     dragging,
   });
 
-  // Shown as soon as it is picked, and saved on its own: a background is one
+  // Shown as soon as it is used, and saved on its own: a background is one
   // value, nothing like the stream of candy changes the sync hook queues.
   const [background, setBackground] = useState(board.background ?? null);
   useEffect(() => setBackground(board.background ?? null), [board.background]);
   const [saveBackground] = useSetHalloweenCandyBoardBackgroundMutation();
-  const pickBackground = async (slug: string | null) => {
+  const [choosingBackground, setChoosingBackground] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const useBackground = async (slug: string | null) => {
     const saved = board.background ?? null;
     setBackground(slug);
     if (!communityId) return;
@@ -278,6 +291,18 @@ const BoardView: React.FC<{
                 Retry
               </Button>
             )}
+            <Button type="button" onClick={() => setChoosingBackground(true)}>
+              <ImageIcon size={16} aria-hidden />
+              Background
+            </Button>
+            <Button
+              type="button"
+              disabled={placements.length === 0}
+              onClick={() => setClearing(true)}
+            >
+              <Eraser size={16} aria-hidden />
+              Clear board
+            </Button>
             <Button type="button" onClick={copyLink}>
               <Link2 size={16} aria-hidden />
               Copy link
@@ -295,7 +320,27 @@ const BoardView: React.FC<{
       />
 
       {isOwner && (
-        <BackgroundPicker value={background} onChange={pickBackground} />
+        <>
+          <BackgroundDialog
+            open={choosingBackground}
+            value={background}
+            onClose={() => setChoosingBackground(false)}
+            onUse={useBackground}
+          />
+          <ConfirmDialog
+            open={clearing}
+            destructive
+            title="Clear the board?"
+            confirmLabel="Clear"
+            onCancel={() => setClearing(false)}
+            onConfirm={() => {
+              for (const { knockEventId } of placements) {
+                act({ remove: { knockEventId } });
+              }
+              setClearing(false);
+            }}
+          />
+        </>
       )}
     </Container>
   );

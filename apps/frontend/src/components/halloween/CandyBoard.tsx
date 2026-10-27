@@ -5,6 +5,9 @@ import {
   ArrowDownToLine,
   ArrowUp,
   ArrowUpToLine,
+  RotateCw,
+  Scaling,
+  X,
   type LucideIcon,
 } from "lucide-react";
 import { Tooltip } from "../Tooltip";
@@ -210,19 +213,23 @@ const Toolbar = styled.div`
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
+  gap: ${({ theme }) => theme.spacing.lg};
   margin-top: ${({ theme }) => theme.spacing.md};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
+  padding: ${({ theme }) => theme.spacing.md} ${({ theme }) => theme.spacing.lg};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   background: ${({ theme }) => theme.colors.surface};
   color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-size: ${({ theme }) => theme.typography.fontSize.md};
 
   label {
     display: flex;
     align-items: center;
     gap: ${({ theme }) => theme.spacing.sm};
+  }
+
+  input[type="range"] {
+    width: 160px;
   }
 
   label:has(input:disabled) {
@@ -251,15 +258,21 @@ const ToolButton = styled.button`
 
 const LayerButtons = styled.div`
   display: flex;
-  gap: ${({ theme }) => theme.spacing.xs};
+  gap: ${({ theme }) => theme.spacing.sm};
 `;
 
+/** Square, and big enough to hit without aiming. */
 const IconButton = styled(ToolButton)`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: ${({ theme }) => theme.spacing.xs};
+  width: 40px;
+  height: 40px;
+  padding: 0;
 `;
+
+/** The icons in the toolbar's buttons. */
+const ICON_SIZE = 22;
 
 /** The four ways to move the selected candy through the pile, top first. */
 const LAYER_MOVES: {
@@ -828,38 +841,44 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
           is picked; with none picked, there is nothing for it to act on. */}
       {onAction && (
         <Toolbar aria-label="Selected candy">
-          <label>
-            Rotate
-            <input
-              type="range"
-              min={-180}
-              max={180}
-              step={1}
-              disabled={!selectedPlacement}
-              value={selectedPlacement?.rotation ?? 0}
-              onChange={(e) =>
-                actOnSelected((knockEventId) => ({
-                  edit: { knockEventId, rotation: Number(e.target.value) },
-                }))
-              }
-            />
-          </label>
-          <label>
-            Scale
-            <input
-              type="range"
-              min={SCALE_MIN}
-              max={SCALE_MAX}
-              step={0.05}
-              disabled={!selectedPlacement}
-              value={selectedPlacement?.scale ?? 1}
-              onChange={(e) =>
-                actOnSelected((knockEventId) => ({
-                  edit: { knockEventId, scale: Number(e.target.value) },
-                }))
-              }
-            />
-          </label>
+          <Tooltip label="Rotate">
+            <label>
+              <RotateCw size={ICON_SIZE} aria-hidden />
+              <input
+                type="range"
+                aria-label="Rotate"
+                min={-180}
+                max={180}
+                step={1}
+                disabled={!selectedPlacement}
+                value={selectedPlacement?.rotation ?? 0}
+                onChange={(e) =>
+                  actOnSelected((knockEventId) => ({
+                    edit: { knockEventId, rotation: Number(e.target.value) },
+                  }))
+                }
+              />
+            </label>
+          </Tooltip>
+          <Tooltip label="Scale">
+            <label>
+              <Scaling size={ICON_SIZE} aria-hidden />
+              <input
+                type="range"
+                aria-label="Scale"
+                min={SCALE_MIN}
+                max={SCALE_MAX}
+                step={0.05}
+                disabled={!selectedPlacement}
+                value={selectedPlacement?.scale ?? 1}
+                onChange={(e) =>
+                  actOnSelected((knockEventId) => ({
+                    edit: { knockEventId, scale: Number(e.target.value) },
+                  }))
+                }
+              />
+            </label>
+          </Tooltip>
           <LayerButtons role="group" aria-label="Layer">
             {LAYER_MOVES.map(({ label, Icon, upward, action }) => {
               // Nothing above the top candy to pass, nothing below the bottom.
@@ -872,22 +891,28 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                     disabled={!selectedPlacement || stuck}
                     onClick={() => actOnSelected(action)}
                   >
-                    <Icon size={18} aria-hidden />
+                    <Icon size={ICON_SIZE} aria-hidden />
                   </IconButton>
                 </Tooltip>
               );
             })}
           </LayerButtons>
-          <ToolButton
-            type="button"
-            disabled={!selectedPlacement}
-            onClick={() => {
-              actOnSelected((knockEventId) => ({ remove: { knockEventId } }));
-              setSelected(null);
-            }}
-          >
-            Back to tray
-          </ToolButton>
+          {/* Back to the tray, as Delete or Backspace on the candy does. */}
+          <Tooltip label="Remove sticker (Delete)">
+            <IconButton
+              type="button"
+              aria-label="Remove sticker"
+              disabled={!selectedPlacement}
+              onClick={() => {
+                actOnSelected((knockEventId) => ({
+                  remove: { knockEventId },
+                }));
+                setSelected(null);
+              }}
+            >
+              <X size={ICON_SIZE} aria-hidden />
+            </IconButton>
+          </Tooltip>
         </Toolbar>
       )}
 

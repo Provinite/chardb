@@ -520,7 +520,7 @@ describe("CommunityCandyBoardPage", () => {
         screen.getByLabelText("Rotate"),
         screen.getByLabelText("Scale"),
         ...LAYER_BUTTONS.map((name) => screen.getByRole("button", { name })),
-        screen.getByRole("button", { name: "Back to tray" }),
+        screen.getByRole("button", { name: "Remove sticker" }),
       ];
       for (const control of controls) expect(control).toBeDisabled();
 
@@ -679,12 +679,21 @@ describe("CommunityCandyBoardPage", () => {
       });
     });
 
-    it("labels the selected candy's sliders Rotate and Scale", async () => {
+    it("marks the sliders with icons, named Rotate and Scale", async () => {
       renderBoard([boardQuery(board([2]))]);
 
       await userEvent.click(within(await pile()).getByRole("img"));
-      expect(screen.getByLabelText("Rotate")).toHaveAttribute("type", "range");
-      expect(screen.getByLabelText("Scale")).toHaveAttribute("type", "range");
+      const toolbar = screen.getByLabelText("Selected candy");
+      for (const name of ["Rotate", "Scale"]) {
+        expect(
+          within(toolbar).getByRole("slider", { name }),
+        ).toBeInTheDocument();
+        expect(within(toolbar).queryByText(name)).toBeNull();
+      }
+      await userEvent.hover(
+        within(toolbar).getByRole("slider", { name: "Rotate" }),
+      );
+      expect(await screen.findByRole("tooltip")).toHaveTextContent("Rotate");
     });
 
     it("shows corner handles and a rotate handle only on the selected candy", async () => {
@@ -804,19 +813,31 @@ describe("CommunityCandyBoardPage", () => {
       await waitFor(() => expect(sent).toHaveBeenCalled());
     });
 
-    it("puts the selected candy back in the tray", async () => {
+    it("removes the selected sticker back to the tray", async () => {
       renderBoard([boardQuery(board([2]))]);
 
       const region = await pile();
       await userEvent.click(within(region).getByRole("img"));
       await userEvent.click(
-        screen.getByRole("button", { name: "Back to tray" }),
+        screen.getByRole("button", { name: "Remove sticker" }),
       );
 
       expect(within(region).queryAllByRole("img")).toHaveLength(0);
       expect(
         screen.getByRole("button", { name: "Place luther head (1 left)" }),
       ).toBeInTheDocument();
+    });
+
+    it("names the remove button and its key in a tooltip", async () => {
+      renderBoard([boardQuery(board([2]))]);
+
+      await userEvent.click(within(await pile()).getByRole("img"));
+      const remove = screen.getByRole("button", { name: "Remove sticker" });
+      expect(remove.textContent).toBe("");
+      await userEvent.hover(remove);
+      expect(await screen.findByRole("tooltip")).toHaveTextContent(
+        "Remove sticker (Delete)",
+      );
     });
 
     it("offers a link to share", async () => {
@@ -855,27 +876,52 @@ describe("CommunityCandyBoardPage", () => {
         "/halloween/backgrounds/tiles/tile-corkboard.webp",
       );
       expect(
-        screen.queryByRole("radiogroup", { name: "Background" }),
+        screen.queryByRole("button", { name: "Background" }),
       ).not.toBeInTheDocument();
     });
 
-    it("is offered to the owner, with the night sky chosen at first", async () => {
-      renderBoard([boardQuery(board([]))]);
-      const picker = await screen.findByRole("radiogroup", {
-        name: "Background",
+    /** Opens the background dialog, as the owner. */
+    const openDialog = async () => {
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Background" }),
+      );
+      return screen.findByRole("dialog", { name: "Background" });
+    };
+    const preview = (dialog: HTMLElement) =>
+      within(dialog).getByRole("img", { name: "Background preview" });
+
+    it("offers every background as a picture alone, the saved one chosen", async () => {
+      renderBoard([boardQuery(board([], { background: "tile-corkboard" }))]);
+      const dialog = await openDialog();
+
+      const corkboard = within(dialog).getByRole("radio", {
+        name: "corkboard",
       });
+      expect(corkboard).toBeChecked();
+      expect(corkboard.textContent).toBe("");
       expect(
-        within(picker).getByRole("radio", { name: "night sky" }),
-      ).toBeChecked();
-      expect(
-        within(picker).getByRole("radio", { name: "corkboard" }),
+        within(dialog).getByRole("radio", { name: "night sky" }),
       ).not.toBeChecked();
       expect(
-        within(picker).getByRole("radio", { name: "daphne luther hug" }),
+        within(dialog).getByRole("radio", { name: "daphne luther hug" }),
       ).toBeInTheDocument();
     });
 
-    it("changes when the owner picks one, and is saved", async () => {
+    it("previews a choice without its candies, and leaves the board alone until used", async () => {
+      renderBoard([boardQuery(board([2]))]);
+      const dialog = await openDialog();
+
+      await userEvent.click(
+        within(dialog).getByRole("radio", { name: "corkboard" }),
+      );
+      expect(preview(dialog).style.backgroundImage).toContain(
+        "tile-corkboard.webp",
+      );
+      expect(within(preview(dialog)).queryAllByRole("img")).toHaveLength(0);
+      expect((await surface()).style.backgroundImage).toBe("");
+    });
+
+    it("saves the choice when used, and closes", async () => {
       const saved = vi.fn(() => ({
         data: {
           setHalloweenCandyBoardBackground: board([], {
@@ -890,28 +936,40 @@ describe("CommunityCandyBoardPage", () => {
           result: saved,
         },
       ]);
+      const dialog = await openDialog();
 
       await userEvent.click(
-        await screen.findByRole("radio", { name: "corkboard" }),
+        within(dialog).getByRole("radio", { name: "corkboard" }),
+      );
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Use background" }),
       );
 
       expect((await surface()).style.backgroundImage).toContain(
-        "/halloween/backgrounds/tiles/tile-corkboard.webp",
+        "tile-corkboard.webp",
       );
-      expect(screen.getByRole("radio", { name: "corkboard" })).toBeChecked();
       await waitFor(() => expect(saved).toHaveBeenCalled());
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("dialog", { name: "Background" }),
+        ).not.toBeInTheDocument(),
+      );
     });
 
-    it("goes back to the night sky", async () => {
-      renderBoard([
-        boardQuery(board([], { background: "tile-corkboard" })),
-        setBackground(null, { board: board([]) }),
-      ]);
+    it("changes nothing when cancelled", async () => {
+      renderBoard([boardQuery(board([], { background: "tile-corkboard" }))]);
+      const dialog = await openDialog();
 
       await userEvent.click(
-        await screen.findByRole("radio", { name: "night sky" }),
+        within(dialog).getByRole("radio", { name: "night sky" }),
       );
-      expect((await surface()).style.backgroundImage).toBe("");
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Cancel" }),
+      );
+
+      expect((await surface()).style.backgroundImage).toContain(
+        "tile-corkboard.webp",
+      );
     });
 
     it("goes back to what was saved if the choice is refused", async () => {
@@ -921,16 +979,67 @@ describe("CommunityCandyBoardPage", () => {
           graphQLError: "There is no such background",
         }),
       ]);
+      const dialog = await openDialog();
 
       await userEvent.click(
-        await screen.findByRole("radio", { name: "clouds" }),
+        within(dialog).getByRole("radio", { name: "clouds" }),
+      );
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Use background" }),
       );
       await waitFor(() =>
         expect(toast.error).toHaveBeenCalledWith("There is no such background"),
       );
       expect((await surface()).style.backgroundImage).toContain(
-        "/halloween/backgrounds/tiles/tile-corkboard.webp",
+        "tile-corkboard.webp",
       );
+    });
+  });
+
+  describe("clearing the board", () => {
+    it("puts every candy back in the tray once confirmed", async () => {
+      const saved = vi.fn(() => ({
+        data: { applyHalloweenCandyBoardActions: board([]) },
+      }));
+      renderBoard([
+        boardQuery(board([2, 1])),
+        {
+          ...applyMock(
+            [{ remove: { knockEventId: 2 } }, { remove: { knockEventId: 1 } }],
+            { board: board([]) },
+          ),
+          result: saved,
+        },
+      ]);
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Clear board" }),
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Clear" }));
+
+      expect(await placedNames()).toEqual([]);
+      expect(
+        screen.getByRole("button", { name: "Place candy corn (2 left)" }),
+      ).toBeInTheDocument();
+      await waitFor(() => expect(saved).toHaveBeenCalled(), { timeout: 2000 });
+    });
+
+    it("leaves the board as it is when cancelled", async () => {
+      renderBoard([boardQuery(board([2, 1]))]);
+
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Clear board" }),
+      );
+      await userEvent.click(screen.getByRole("button", { name: "Cancel" }));
+
+      expect(await placedNames()).toEqual(["luther head", "candy corn"]);
+    });
+
+    it("is not offered with nothing on the board, nor to anyone else", async () => {
+      renderBoard([boardQuery(board([]))]);
+      expect(
+        await screen.findByRole("button", { name: "Clear board" }),
+      ).toBeDisabled();
     });
   });
 
