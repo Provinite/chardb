@@ -17,10 +17,8 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CandyBoard } from "../components/halloween/CandyBoard";
 import { BackgroundDialog } from "../components/halloween/BackgroundDialog";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import {
-  useCandyBoardSync,
-  type SaveStatus,
-} from "../components/halloween/useCandyBoardSync";
+import { useCandyBoardSync } from "../components/halloween/useCandyBoardSync";
+import { SaveStatusIndicator } from "../components/halloween/SaveStatusIndicator";
 import {
   useHalloweenCandyBoardQuery,
   useMyHalloweenCandyBoardQuery,
@@ -71,20 +69,6 @@ const Actions = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
-const Status = styled.span<{ $status: SaveStatus }>`
-  display: inline-flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  color: ${({ theme, $status }) =>
-    $status === "saved"
-      ? theme.colors.success
-      : $status === "failed"
-        ? theme.colors.error
-        : theme.colors.warning};
-`;
-
 const Button = styled.button`
   display: inline-flex;
   align-items: center;
@@ -115,13 +99,6 @@ const Message = styled.p`
     font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   }
 `;
-
-const STATUS_TEXT: Record<SaveStatus, string> = {
-  saved: "Saved",
-  unsaved: "Unsaved changes",
-  saving: "Saving…",
-  failed: "Not saved",
-};
 
 const NotRunning: React.FC = () => (
   <Container>
@@ -283,9 +260,7 @@ const BoardView: React.FC<{
         </div>
         {isOwner && (
           <Actions>
-            <Status role="status" $status={status}>
-              {STATUS_TEXT[status]}
-            </Status>
+            <SaveStatusIndicator status={status} />
             {status === "failed" && (
               <Button type="button" onClick={retry}>
                 Retry

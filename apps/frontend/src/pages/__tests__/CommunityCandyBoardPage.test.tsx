@@ -322,6 +322,28 @@ describe("CommunityCandyBoardPage", () => {
       );
     });
 
+    it("marks each save state with its own icon", async () => {
+      renderBoard([
+        boardQuery(board([2])),
+        applyMock([ADD_CORN], { board: board([2, 1]) }),
+      ]);
+      const icon = () =>
+        screen
+          .getByRole("status")
+          .querySelector("[data-save-icon]")
+          ?.getAttribute("data-save-icon");
+
+      await screen.findByRole("region", { name: "Your candies" });
+      expect(icon()).toBe("saved");
+
+      await userEvent.click(
+        screen.getByRole("button", { name: "Place candy corn (2 left)" }),
+      );
+      expect(icon()).toBe("unsaved");
+      await waitFor(() => expect(icon()).toBe("saving"), { timeout: 2000 });
+      await waitFor(() => expect(icon()).toBe("saved"), { timeout: 2000 });
+    });
+
     it("keeps a change that could not reach the server, and retries it", async () => {
       renderBoard([
         boardQuery(board([2])),
