@@ -2,14 +2,17 @@ import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { AllowUnauthenticated } from "../../auth/decorators/AllowUnauthenticated";
 import { AllowAnyAuthenticated } from "../../auth/decorators/AllowAnyAuthenticated";
 import { CurrentUser } from "../../auth/decorators/CurrentUser";
-import type { AuthenticatedCurrentUserType } from "../../auth/types/current-user.type";
+import type {
+  AuthenticatedCurrentUserType,
+  CurrentUserType,
+} from "../../auth/types/current-user.type";
 import { CandyBoardService } from "./candy-board.service";
 import {
   HalloweenCandyBoard,
-  HalloweenCandyPlacementInput,
+  HalloweenCandyBoardActionInput,
 } from "./candy-board.types";
 
-/** Candy boards: anyone can look at one, and its owner arranges it. */
+/** Candy boards: anyone with the link can look at one; its owner arranges it. */
 @Resolver()
 export class CandyBoardResolver {
   constructor(private readonly boards: CandyBoardService) {}
@@ -18,27 +21,42 @@ export class CandyBoardResolver {
   @Query(() => HalloweenCandyBoard, {
     nullable: true,
     description:
-      "A player's Halloween candy board, by their chardb username. Null when " +
-      "they have no Discord linked, since candies belong to Discord players.",
+      "A Halloween candy board, by the id in its link. Null if there is no " +
+      "such board in this community.",
   })
   async halloweenCandyBoard(
     @Args("communityId", { type: () => ID }) communityId: string,
-    @Args("username") username: string,
+    @Args("id", { type: () => ID }) id: string,
+    @CurrentUser() user?: CurrentUserType,
   ): Promise<HalloweenCandyBoard | null> {
-    return this.boards.getBoard(communityId, username);
+    return this.boards.getBoard(communityId, id, user?.id ?? null);
+  }
+
+  @AllowAnyAuthenticated()
+  @Query(() => HalloweenCandyBoard, {
+    nullable: true,
+    description:
+      "Your Halloween candy board here, made the first time you ask. Null " +
+      "without Discord linked, since candies belong to Discord players.",
+  })
+  async myHalloweenCandyBoard(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<HalloweenCandyBoard | null> {
+    return this.boards.getMyBoard(communityId, user.id);
   }
 
   @AllowAnyAuthenticated()
   @Mutation(() => HalloweenCandyBoard, {
     description:
-      "Replace where your candies sit on your board. Needs Discord linked.",
+      "Apply changes to your board, in order, all or none. Needs Discord linked.",
   })
-  async saveHalloweenCandyBoard(
+  async applyHalloweenCandyBoardActions(
     @Args("communityId", { type: () => ID }) communityId: string,
-    @Args("placements", { type: () => [HalloweenCandyPlacementInput] })
-    placements: HalloweenCandyPlacementInput[],
+    @Args("actions", { type: () => [HalloweenCandyBoardActionInput] })
+    actions: HalloweenCandyBoardActionInput[],
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyBoard> {
-    return this.boards.saveBoard(communityId, user.id, placements);
+    return this.boards.applyActions(communityId, user.id, actions);
   }
 }

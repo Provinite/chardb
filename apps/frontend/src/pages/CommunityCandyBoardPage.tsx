@@ -1,33 +1,31 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { Candy as CandyIcon, Link2 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { usePageMeta } from "../lib/pageMeta";
-import { useAuth } from "../contexts/AuthContext";
 import {
   useCommunityId,
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CandyBoard } from "../components/halloween/CandyBoard";
-import type { Placement } from "../components/halloween/candyBoard";
+import {
+  useCandyBoardSync,
+  type SaveStatus,
+} from "../components/halloween/useCandyBoardSync";
 import {
   useHalloweenCandyBoardQuery,
-  useSaveHalloweenCandyBoardMutation,
+  useMyHalloweenCandyBoardQuery,
+  type HalloweenCandyBoardFieldsFragment,
 } from "../generated/graphql";
 
 /**
  * A player's Halloween candy board. Every lost `/knock` in Discord gives a
- * candy; this is where they stick them. Anyone with the link can look, so a
- * board can be shown off; only its owner can arrange it, and every change is
- * saved on its own a moment after it is made.
+ * candy; this is where they stick them. A board's address is a random id, so
+ * anyone given the link can look but nobody can find boards by username;
+ * only its owner can arrange it, and every change is saved on its own.
  */
-
-/** How long after the last change a board is saved. */
-const SAVE_DELAY_MS = 600;
-
-type SaveState = "idle" | "saving" | "saved" | "failed";
 
 const Container = styled.div`
   max-width: 960px;
@@ -65,12 +63,21 @@ const Actions = styled.div`
   gap: ${({ theme }) => theme.spacing.md};
 `;
 
-const Status = styled.span`
-  color: ${({ theme }) => theme.colors.text.muted};
+const Status = styled.span<{ $status: SaveStatus }>`
+  display: inline-flex;
+  align-items: center;
+  gap: ${({ theme }) => theme.spacing.sm};
   font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
+  color: ${({ theme, $status }) =>
+    $status === "saved"
+      ? theme.colors.success
+      : $status === "failed"
+        ? theme.colors.error
+        : theme.colors.warning};
 `;
 
-const ShareButton = styled.button`
+const Button = styled.button`
   display: inline-flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -96,111 +103,69 @@ const Message = styled.p`
   }
 `;
 
-const STATUS_TEXT: Record<SaveState, string | null> = {
-  idle: null,
-  saving: "Saving...",
+const STATUS_TEXT: Record<SaveStatus, string> = {
   saved: "Saved",
+  unsaved: "Unsaved changes",
+  saving: "Saving…",
   failed: "Not saved",
 };
 
-/** `/halloween/board`: your own board, under your username. */
+const NotRunning: React.FC = () => (
+  <Container>
+    <Message>Halloween isn't running in this community.</Message>
+  </Container>
+);
+
+/**
+ * `/halloween/board`: your own board, which is made the first time you come
+ * here so it has a link to share before anything is on it.
+ */
 export const MyCandyBoardRedirect: React.FC = () => {
-  const { user } = useAuth();
-  if (!user) return null;
-  return <Navigate to={`/halloween/board/${user.username}`} replace />;
-};
-
-export const CommunityCandyBoardPage: React.FC = () => {
-  const { username = "" } = useParams<{ username: string }>();
-  const { user } = useAuth();
   const communityId = useCommunityId();
-  const community = useHostCommunity();
-  const enabled = Boolean(community?.halloweenEnabled);
-  const isOwner = user?.username === username;
-
-  const { data, loading, error } = useHalloweenCandyBoardQuery({
-    variables: { communityId: communityId as string, username },
-    skip: !communityId || !enabled || !username,
-    fetchPolicy: "cache-and-network",
-  });
-  const [saveBoard] = useSaveHalloweenCandyBoardMutation();
-
-  const board = data?.halloweenCandyBoard ?? null;
-  const ownerName =
-    board?.owner.displayName || board?.owner.username || username;
-
-  usePageMeta({
-    title: isOwner ? "Your candy board" : `${ownerName}'s candy board`,
-    description: `${ownerName}'s Halloween candies`,
+  const enabled = Boolean(useHostCommunity()?.halloweenEnabled);
+  const { data, loading, error } = useMyHalloweenCandyBoardQuery({
+    variables: { communityId: communityId as string },
+    skip: !communityId || !enabled,
+    fetchPolicy: "network-only",
   });
 
-  // The page keeps its own copy once loaded, so a save coming back cannot
-  // undo an edit made while it was in flight.
-  const [placements, setPlacements] = useState<Placement[] | null>(null);
-  const [dragging, setDragging] = useState(false);
-  const [saveState, setSaveState] = useState<SaveState>("idle");
-  const dirty = useRef(false);
-  const loadedFor = useRef<string | null>(null);
-
-  useEffect(() => {
-    if (!board || loadedFor.current === board.owner.username) return;
-    loadedFor.current = board.owner.username;
-    dirty.current = false;
-    setPlacements(
-      board.placements.map(({ knockEventId, x, y, rotation, scale }) => ({
-        knockEventId,
-        x,
-        y,
-        rotation,
-        scale,
-      })),
-    );
-  }, [board]);
-
-  useEffect(() => {
-    if (!dirty.current || dragging || !placements || !communityId) return;
-    const timer = setTimeout(async () => {
-      dirty.current = false;
-      setSaveState("saving");
-      try {
-        await saveBoard({ variables: { communityId, placements } });
-        setSaveState(dirty.current ? "idle" : "saved");
-      } catch (e) {
-        setSaveState("failed");
-        toast.error(
-          e instanceof Error ? e.message : "Your board could not be saved",
-        );
-      }
-    }, SAVE_DELAY_MS);
-    return () => clearTimeout(timer);
-  }, [placements, dragging, communityId, saveBoard]);
-
-  const edit = (next: Placement[]) => {
-    dirty.current = true;
-    setSaveState("idle");
-    setPlacements(next);
-  };
-
-  const copyLink = async () => {
-    const url = `${window.location.origin}/halloween/board/${username}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copied");
-    } catch {
-      toast.error("Could not copy the link");
-    }
-  };
-
-  if (!enabled) {
+  if (!enabled) return <NotRunning />;
+  if (loading || (!data && !error)) return <LoadingSpinner />;
+  if (error) {
     return (
       <Container>
-        <Message>Halloween isn't running in this community.</Message>
+        <Message>{error.message}</Message>
       </Container>
     );
   }
-  if (loading && !data) {
-    return <LoadingSpinner />;
+  const board = data?.myHalloweenCandyBoard;
+  if (!board) {
+    return (
+      <Container>
+        <Message>
+          Link your Discord account to collect candies here.{" "}
+          <Link to="/profile/edit">Link Discord</Link>
+        </Message>
+      </Container>
+    );
   }
+  return <Navigate to={`/halloween/board/${board.id}`} replace />;
+};
+
+export const CommunityCandyBoardPage: React.FC = () => {
+  const { boardId = "" } = useParams<{ boardId: string }>();
+  const communityId = useCommunityId();
+  const enabled = Boolean(useHostCommunity()?.halloweenEnabled);
+
+  const { data, loading, error } = useHalloweenCandyBoardQuery({
+    variables: { communityId: communityId as string, id: boardId },
+    skip: !communityId || !enabled || !boardId,
+    fetchPolicy: "cache-and-network",
+  });
+  const board = data?.halloweenCandyBoard ?? null;
+
+  if (!enabled) return <NotRunning />;
+  if (loading && !data) return <LoadingSpinner />;
   if (error) {
     return (
       <Container>
@@ -211,17 +176,48 @@ export const CommunityCandyBoardPage: React.FC = () => {
   if (!board) {
     return (
       <Container>
-        {isOwner ? (
-          <Message>
-            Link your Discord account to collect candies here.{" "}
-            <Link to="/profile/edit">Link Discord</Link>
-          </Message>
-        ) : (
-          <Message>{username} doesn't have a candy board yet.</Message>
-        )}
+        <Message>There's no candy board here.</Message>
       </Container>
     );
   }
+  return <BoardView board={board} communityId={communityId} />;
+};
+
+const BoardView: React.FC<{
+  board: HalloweenCandyBoardFieldsFragment;
+  communityId: string | null;
+}> = ({ board, communityId }) => {
+  const [dragging, setDragging] = useState(false);
+  const { placements, act, status, retry } = useCandyBoardSync({
+    communityId,
+    serverPlacements: board.placements,
+    dragging,
+  });
+
+  const isOwner = board.viewerIsOwner;
+  const ownerName = board.owner?.displayName || board.owner?.username;
+  const title = isOwner
+    ? "Your candy board"
+    : ownerName
+      ? `${ownerName}'s candy board`
+      : "A candy board";
+
+  usePageMeta({
+    title,
+    description: ownerName
+      ? `${ownerName}'s Halloween candies`
+      : "Halloween candies",
+  });
+
+  const copyLink = async () => {
+    const url = `${window.location.origin}/halloween/board/${board.id}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success("Link copied");
+    } catch {
+      toast.error("Could not copy the link");
+    }
+  };
 
   const count = board.candies.length;
 
@@ -231,7 +227,7 @@ export const CommunityCandyBoardPage: React.FC = () => {
         <div>
           <Title>
             <CandyIcon size={28} aria-hidden />
-            {isOwner ? "Your candy board" : `${ownerName}'s candy board`}
+            {title}
           </Title>
           <Meta>
             {count} {count === 1 ? "candy" : "candies"} collected
@@ -239,21 +235,26 @@ export const CommunityCandyBoardPage: React.FC = () => {
         </div>
         {isOwner && (
           <Actions>
-            {STATUS_TEXT[saveState] && (
-              <Status role="status">{STATUS_TEXT[saveState]}</Status>
+            <Status role="status" $status={status}>
+              {STATUS_TEXT[status]}
+            </Status>
+            {status === "failed" && (
+              <Button type="button" onClick={retry}>
+                Retry
+              </Button>
             )}
-            <ShareButton type="button" onClick={copyLink}>
+            <Button type="button" onClick={copyLink}>
               <Link2 size={16} aria-hidden />
               Copy link
-            </ShareButton>
+            </Button>
           </Actions>
         )}
       </Header>
 
       <CandyBoard
         candies={board.candies}
-        placements={placements ?? []}
-        onChange={isOwner ? edit : undefined}
+        placements={placements}
+        onAction={isOwner ? act : undefined}
         onDraggingChange={setDragging}
       />
     </Container>

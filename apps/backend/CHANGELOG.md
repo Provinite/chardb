@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Lost knocks record their candy**, and `halloweenCandyBoard` / `saveHalloweenCandyBoard` read and arrange a player's candy board; the loss reply links to it.
+- **Lost knocks record their candy**, and players arrange them on a candy board: `myHalloweenCandyBoard`, `halloweenCandyBoard` by its UUID, and `applyHalloweenCandyBoardActions` (add, edit, raise, remove).
 
 ### Changed
 

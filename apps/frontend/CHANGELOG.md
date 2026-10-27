@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Halloween candy boards** (`/halloween/board`): players stick, move, turn and resize the candies their lost knocks gave them, and share a read-only link to their board.
+- **Halloween candy boards** (`/halloween/board`): players stick, move, turn and resize the candies their lost knocks gave them, see whether their board is saved, and share a read-only link to it.
 
 ### Changed
 

@@ -1,11 +1,14 @@
 /**
  * The candy board's state, kept apart from the page so it can be tested
  * without a pointer. A board is a list of placements, bottom of the pile
- * first; every edit returns a new list, which is what gets saved.
+ * first. Every change is an action, applied here at once so the page shows
+ * it, and queued to be sent: the server applies the same actions to its own
+ * copy, so a stale page can only touch the candies it changes.
  *
  * The limits mirror the backend's (candy-board.schema.ts), which refuses a
- * save outside them.
+ * change outside them.
  */
+import { HalloweenCandyBoardActionType as T } from "../../generated/graphql";
 
 export interface Placement {
   knockEventId: number;
@@ -22,6 +25,14 @@ export interface Point {
   x: number;
   y: number;
 }
+
+type Changes = Partial<Omit<Placement, "knockEventId">>;
+
+/** One change to a board, as `applyHalloweenCandyBoardActions` takes it. */
+export type BoardAction =
+  | ({ type: T.Add } & Placement)
+  | ({ type: T.Edit; knockEventId: number } & Changes)
+  | { type: T.Raise | T.Remove; knockEventId: number };
 
 export const SCALE_MIN = 0.25;
 export const SCALE_MAX = 4;
@@ -85,49 +96,76 @@ export function trayGroups(
   return [...groups].map(([slug, knockEventIds]) => ({ slug, knockEventIds }));
 }
 
-export function placeFromTray(
+/**
+ * The board after one action. An action that cannot apply -- adding a candy
+ * already placed, changing one that is not -- leaves it as it was; the server
+ * is what refuses those.
+ */
+export function applyAction(
   placements: Placement[],
-  knockEventId: number,
-  point: Point,
+  action: BoardAction,
 ): Placement[] {
-  return [
-    ...placements,
-    clampPlacement({ knockEventId, ...point, rotation: 0, scale: 1 }),
-  ];
-}
-
-export function updatePlacement(
-  placements: Placement[],
-  knockEventId: number,
-  changes: Partial<Omit<Placement, "knockEventId">>,
-): Placement[] {
-  return placements.map((p) =>
-    p.knockEventId === knockEventId ? clampPlacement({ ...p, ...changes }) : p,
+  const index = placements.findIndex(
+    (p) => p.knockEventId === action.knockEventId,
   );
+  switch (action.type) {
+    case T.Add: {
+      if (index !== -1) return placements;
+      const { type: _type, ...placement } = action;
+      return [...placements, clampPlacement(placement)];
+    }
+    case T.Edit: {
+      if (index === -1) return placements;
+      const { type: _type, knockEventId: _id, ...changes } = action;
+      return placements.map((p, i) =>
+        i === index ? clampPlacement({ ...p, ...changes }) : p,
+      );
+    }
+    case T.Raise: {
+      if (index === -1) return placements;
+      return [...placements.filter((_, i) => i !== index), placements[index]];
+    }
+    case T.Remove:
+      return placements.filter((_, i) => i !== index);
+  }
 }
 
-export function moveTo(
-  placements: Placement[],
-  knockEventId: number,
-  point: Point,
-): Placement[] {
-  return updatePlacement(placements, knockEventId, point);
-}
+/**
+ * Adds an action to the changes waiting to be sent, folding it into what is
+ * already waiting where it can: a candy dragged or resized many times before
+ * a save goes as one change, and one put back before it was ever saved goes
+ * as nothing.
+ */
+export function enqueue(
+  queue: BoardAction[],
+  action: BoardAction,
+): BoardAction[] {
+  const id = action.knockEventId;
+  const lastIndex = queue.map((a) => a.knockEventId).lastIndexOf(id);
+  const last = lastIndex === -1 ? null : queue[lastIndex];
 
-export function bringToFront(
-  placements: Placement[],
-  knockEventId: number,
-): Placement[] {
-  const candy = placements.find((p) => p.knockEventId === knockEventId);
-  if (!candy) return placements;
-  return [...placements.filter((p) => p !== candy), candy];
-}
+  if (action.type === T.Edit) {
+    if (last && (last.type === T.Add || last.type === T.Edit)) {
+      const { type: _type, knockEventId: _id, ...changes } = action;
+      return queue.map((a, i) =>
+        i === lastIndex ? ({ ...a, ...changes } as BoardAction) : a,
+      );
+    }
+    return [...queue, action];
+  }
 
-export function removeFromBoard(
-  placements: Placement[],
-  knockEventId: number,
-): Placement[] {
-  return placements.filter((p) => p.knockEventId !== knockEventId);
+  if (action.type === T.Remove) {
+    const addIndex = queue.findIndex(
+      (a) => a.knockEventId === id && a.type === T.Add,
+    );
+    if (addIndex !== -1) {
+      // Never saved: drop the add and every later change to it.
+      return queue.filter((a, i) => i < addIndex || a.knockEventId !== id);
+    }
+    return [...queue.filter((a) => a.knockEventId !== id), action];
+  }
+
+  return [...queue, action];
 }
 
 export const candyImageUrl = (slug: string) => `/halloween/candy/${slug}.png`;

@@ -1,27 +1,25 @@
 import React, { useRef, useState } from "react";
 import styled, { css } from "styled-components";
+import { HalloweenCandyBoardActionType as T } from "../../generated/graphql";
 import {
   BOARD_ASPECT,
   CANDY_SIZE,
   SCALE_MAX,
   SCALE_MIN,
-  bringToFront,
   candyImageUrl,
   candyName,
-  moveTo,
-  placeFromTray,
   pointOnBoard,
-  removeFromBoard,
   trayGroups,
-  updatePlacement,
+  type BoardAction,
   type Placement,
   type Point,
 } from "./candyBoard";
 
 /**
- * A candy board, and when `onChange` is given, the tools to arrange it: tap a
- * candy in the tray to stick it in the middle or drag it onto the board, drag
- * candies around, and turn, resize, raise or remove the selected one.
+ * A candy board, and when `onAction` is given, the tools to arrange it: tap a
+ * candy in the tray to stick it in the middle or, with a mouse, drag it onto
+ * the board; drag candies around; and turn, resize, raise or remove the
+ * selected one.
  *
  * The board is night-time art rather than page chrome, so it keeps its own
  * colours in both themes.
@@ -33,12 +31,12 @@ export interface BoardCandy {
 }
 
 const CENTRE: Point = { x: 0.5, y: 0.5 };
-/** How far a pointer moves before a tap on the tray becomes a drag. */
+/** How far a pointer moves before a press on the tray becomes a drag. */
 const DRAG_THRESHOLD_PX = 5;
 const NUDGE = 0.01;
 const BIG_NUDGE = 0.05;
 
-const Board = styled.div<{ $editable: boolean }>`
+const Board = styled.div`
   position: relative;
   width: 100%;
   aspect-ratio: ${BOARD_ASPECT};
@@ -49,7 +47,6 @@ const Board = styled.div<{ $editable: boolean }>`
     radial-gradient(circle at 82% 16%, #fde68a 0 3.5%, #fde68a00 4%),
     linear-gradient(180deg, #1e1b4b 0%, #3b0764 70%, #431407 100%);
   box-shadow: ${({ theme }) => theme.shadows.lg};
-  touch-action: ${({ $editable }) => ($editable ? "none" : "auto")};
   user-select: none;
 `;
 
@@ -63,6 +60,9 @@ const Candy = styled.img<{ $selected: boolean; $editable: boolean }>`
     $editable &&
     css`
       cursor: grab;
+      /* Only a candy itself takes touches for dragging: anywhere else on
+         the board, a swipe still scrolls the page. */
+      touch-action: none;
       &:active {
         cursor: grabbing;
       }
@@ -145,7 +145,6 @@ const TrayItem = styled.button`
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   background: ${({ theme }) => theme.colors.surface};
   cursor: grab;
-  touch-action: none;
 
   &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
@@ -187,7 +186,7 @@ interface CandyBoardProps {
   candies: BoardCandy[];
   placements: Placement[];
   /** Absent for someone else's board, which is only looked at. */
-  onChange?: (placements: Placement[]) => void;
+  onAction?: (action: BoardAction) => void;
   /** Called while a candy is being dragged, so saving can wait for the drop. */
   onDraggingChange?: (dragging: boolean) => void;
 }
@@ -195,24 +194,30 @@ interface CandyBoardProps {
 export const CandyBoard: React.FC<CandyBoardProps> = ({
   candies,
   placements,
-  onChange,
+  onAction,
   onDraggingChange,
 }) => {
   const boardRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number | null>(null);
-  /** A candy on the board being dragged: where on it the pointer grabbed. */
-  const drag = useRef<{ id: number; offset: Point } | null>(null);
-  /** A candy being dragged out of the tray. */
+  /**
+   * A candy on the board being dragged: by which pointer, and where on the
+   * candy it grabbed. Other pointers -- a second finger -- are ignored.
+   */
+  const drag = useRef<{ id: number; pointerId: number; offset: Point } | null>(
+    null,
+  );
+  /** A candy being dragged out of the tray, with a mouse or pen. */
   const [trayDrag, setTrayDrag] = useState<{
     id: number;
     slug: string;
+    pointerId: number;
     start: Point;
     at: Point;
     moved: boolean;
   } | null>(null);
   const draggedFromTray = useRef(false);
 
-  const editable = Boolean(onChange);
+  const editable = Boolean(onAction);
   const slugs = new Map(candies.map((c) => [c.knockEventId, c.slug]));
   const selectedPlacement = placements.find((p) => p.knockEventId === selected);
 
@@ -225,7 +230,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   const setDragging = (dragging: boolean) => onDraggingChange?.(dragging);
 
   const startMove = (e: React.PointerEvent<HTMLImageElement>, p: Placement) => {
-    if (!onChange) return;
+    if (!onAction || drag.current) return;
     // Stops the browser's own image drag, and with it the focus a press
     // would give; focusing by hand keeps the keyboard shortcuts on this one.
     e.preventDefault();
@@ -234,6 +239,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     const point = boardPoint(e.clientX, e.clientY);
     drag.current = {
       id: p.knockEventId,
+      pointerId: e.pointerId,
       offset: point ? { x: point.x - p.x, y: point.y - p.y } : { x: 0, y: 0 },
     };
     e.currentTarget.setPointerCapture?.(e.pointerId);
@@ -241,35 +247,54 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   };
 
   const move = (e: React.PointerEvent) => {
-    if (!onChange || !drag.current) return;
+    if (!onAction || drag.current?.pointerId !== e.pointerId) return;
     const point = boardPoint(e.clientX, e.clientY);
     if (!point) return;
     const { id, offset } = drag.current;
-    onChange(
-      moveTo(placements, id, { x: point.x - offset.x, y: point.y - offset.y }),
-    );
+    onAction({
+      type: T.Edit,
+      knockEventId: id,
+      x: point.x - offset.x,
+      y: point.y - offset.y,
+    });
   };
 
-  const endMove = () => {
-    if (!drag.current) return;
+  const endMove = (e: React.PointerEvent) => {
+    if (drag.current?.pointerId !== e.pointerId) return;
     drag.current = null;
     setDragging(false);
   };
 
   const place = (id: number, point: Point) => {
-    if (!onChange) return;
-    onChange(placeFromTray(placements, id, point));
+    if (!onAction) return;
+    onAction({
+      type: T.Add,
+      knockEventId: id,
+      ...point,
+      rotation: 0,
+      scale: 1,
+    });
     setSelected(id);
   };
 
   const startTrayDrag = (e: React.PointerEvent, id: number, slug: string) => {
+    // On a touch screen a tray candy is only tapped: a swipe across the tray
+    // has to scroll the page.
+    if (e.pointerType === "touch" || trayDrag) return;
     const at = { x: e.clientX, y: e.clientY };
-    setTrayDrag({ id, slug, start: at, at, moved: false });
+    setTrayDrag({
+      id,
+      slug,
+      pointerId: e.pointerId,
+      start: at,
+      at,
+      moved: false,
+    });
     e.currentTarget.setPointerCapture?.(e.pointerId);
   };
 
   const moveTrayDrag = (e: React.PointerEvent) => {
-    if (!trayDrag) return;
+    if (trayDrag?.pointerId !== e.pointerId) return;
     const at = { x: e.clientX, y: e.clientY };
     const moved =
       trayDrag.moved ||
@@ -279,7 +304,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   };
 
   const endTrayDrag = (e: React.PointerEvent) => {
-    if (!trayDrag) return;
+    if (trayDrag?.pointerId !== e.pointerId) return;
     const { id, moved } = trayDrag;
     setTrayDrag(null);
     if (!moved) {
@@ -305,36 +330,30 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   };
 
   const onCandyKey = (e: React.KeyboardEvent, p: Placement) => {
-    if (!onChange) return;
+    if (!onAction) return;
     const step = e.shiftKey ? BIG_NUDGE : NUDGE;
-    const keys: Record<string, () => Placement[]> = {
-      ArrowLeft: () =>
-        moveTo(placements, p.knockEventId, { ...p, x: p.x - step }),
-      ArrowRight: () =>
-        moveTo(placements, p.knockEventId, { ...p, x: p.x + step }),
-      ArrowUp: () =>
-        moveTo(placements, p.knockEventId, { ...p, y: p.y - step }),
-      ArrowDown: () =>
-        moveTo(placements, p.knockEventId, { ...p, y: p.y + step }),
-      "[": () =>
-        updatePlacement(placements, p.knockEventId, {
-          rotation: p.rotation - 15,
-        }),
-      "]": () =>
-        updatePlacement(placements, p.knockEventId, {
-          rotation: p.rotation + 15,
-        }),
-      "-": () =>
-        updatePlacement(placements, p.knockEventId, { scale: p.scale - 0.1 }),
-      "=": () =>
-        updatePlacement(placements, p.knockEventId, { scale: p.scale + 0.1 }),
-      Delete: () => removeFromBoard(placements, p.knockEventId),
-      Backspace: () => removeFromBoard(placements, p.knockEventId),
+    const id = p.knockEventId;
+    const edit = (changes: Partial<Placement>): BoardAction => ({
+      type: T.Edit,
+      knockEventId: id,
+      ...changes,
+    });
+    const keys: Record<string, () => BoardAction> = {
+      ArrowLeft: () => edit({ x: p.x - step }),
+      ArrowRight: () => edit({ x: p.x + step }),
+      ArrowUp: () => edit({ y: p.y - step }),
+      ArrowDown: () => edit({ y: p.y + step }),
+      "[": () => edit({ rotation: p.rotation - 15 }),
+      "]": () => edit({ rotation: p.rotation + 15 }),
+      "-": () => edit({ scale: p.scale - 0.1 }),
+      "=": () => edit({ scale: p.scale + 0.1 }),
+      Delete: () => ({ type: T.Remove, knockEventId: id }),
+      Backspace: () => ({ type: T.Remove, knockEventId: id }),
     };
-    const edit = keys[e.key];
-    if (!edit) return;
+    const action = keys[e.key];
+    if (!action) return;
     e.preventDefault();
-    onChange(edit());
+    onAction(action());
   };
 
   const groups = trayGroups(candies, placements);
@@ -345,7 +364,6 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         ref={boardRef}
         role="region"
         aria-label="Candy board"
-        $editable={editable}
         onPointerMove={move}
         onPointerUp={endMove}
         onPointerCancel={endMove}
@@ -379,7 +397,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         })}
       </Board>
 
-      {onChange && selectedPlacement && (
+      {onAction && selectedPlacement && (
         <Toolbar aria-label="Selected candy">
           <label>
             Turn
@@ -390,11 +408,11 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
               step={1}
               value={selectedPlacement.rotation}
               onChange={(e) =>
-                onChange(
-                  updatePlacement(placements, selectedPlacement.knockEventId, {
-                    rotation: Number(e.target.value),
-                  }),
-                )
+                onAction({
+                  type: T.Edit,
+                  knockEventId: selectedPlacement.knockEventId,
+                  rotation: Number(e.target.value),
+                })
               }
             />
           </label>
@@ -407,18 +425,21 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
               step={0.05}
               value={selectedPlacement.scale}
               onChange={(e) =>
-                onChange(
-                  updatePlacement(placements, selectedPlacement.knockEventId, {
-                    scale: Number(e.target.value),
-                  }),
-                )
+                onAction({
+                  type: T.Edit,
+                  knockEventId: selectedPlacement.knockEventId,
+                  scale: Number(e.target.value),
+                })
               }
             />
           </label>
           <ToolButton
             type="button"
             onClick={() =>
-              onChange(bringToFront(placements, selectedPlacement.knockEventId))
+              onAction({
+                type: T.Raise,
+                knockEventId: selectedPlacement.knockEventId,
+              })
             }
           >
             Bring to front
@@ -426,9 +447,10 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
           <ToolButton
             type="button"
             onClick={() => {
-              onChange(
-                removeFromBoard(placements, selectedPlacement.knockEventId),
-              );
+              onAction({
+                type: T.Remove,
+                knockEventId: selectedPlacement.knockEventId,
+              });
               setSelected(null);
             }}
           >
@@ -437,7 +459,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         </Toolbar>
       )}
 
-      {onChange && (
+      {onAction && (
         <section aria-label="Your candies">
           <TrayTitle>Your candies</TrayTitle>
           <TrayHint>

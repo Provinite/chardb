@@ -1526,10 +1526,40 @@ A player's Halloween candy board: every candy they have, and where they have stu
 type HalloweenCandyBoard {
   """Oldest first"""
   candies: [HalloweenCandy!]!
-  owner: User!
+
+  """What a link to the board names"""
+  id: ID!
+
+  """
+  The chardb account the board's Discord player is linked to. Null once they unlink.
+  """
+  owner: User
 
   """Bottom of the pile first. A candy not here is not on the board."""
   placements: [HalloweenCandyPlacement!]!
+
+  """Whether whoever is asking owns the board"""
+  viewerIsOwner: Boolean!
+}
+
+"""
+One change to your board. ADD needs x and y, and takes rotation 0 and scale 1 unless given; EDIT changes only the fields given; RAISE and REMOVE take none.
+"""
+input HalloweenCandyBoardActionInput {
+  knockEventId: Int!
+  rotation: Float
+  scale: Float
+  type: HalloweenCandyBoardActionType!
+  x: Float
+  y: Float
+}
+
+"""What one change to a Halloween candy board does"""
+enum HalloweenCandyBoardActionType {
+  ADD
+  EDIT
+  RAISE
+  REMOVE
 }
 
 """Where a candy sits on a board"""
@@ -1546,14 +1576,6 @@ type HalloweenCandyPlacement {
   x: Float!
 
   """The candy's centre, as a fraction of the board's height, 0-1"""
-  y: Float!
-}
-
-input HalloweenCandyPlacementInput {
-  knockEventId: Int!
-  rotation: Float!
-  scale: Float!
-  x: Float!
   y: Float!
 }
 
@@ -2462,6 +2484,11 @@ type Mutation {
     input: ManageMediaTagsInput!
   ): Media!
 
+  """
+  Apply changes to your board, in order, all or none. Needs Discord linked.
+  """
+  applyHalloweenCandyBoardActions(actions: [HalloweenCandyBoardActionInput!]!, communityId: ID!): HalloweenCandyBoard!
+
   """Approve an image (moderator action)"""
   approveImage(input: ApproveImageInput!): ImageModerationAction!
 
@@ -2841,9 +2868,6 @@ type Mutation {
   Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this).
   """
   runDeviantartUuidBackfill(jobId: String!): Boolean!
-
-  """Replace where your candies sit on your board. Needs Discord linked."""
-  saveHalloweenCandyBoard(communityId: ID!, placements: [HalloweenCandyPlacementInput!]!): HalloweenCandyBoard!
 
   """
   Replace the set of folders one character is in. Returns where it ends up.
@@ -3553,9 +3577,9 @@ type Query {
   globalPendingImageCount: Int!
 
   """
-  A player's Halloween candy board, by their chardb username. Null when they have no Discord linked, since candies belong to Discord players.
+  A Halloween candy board, by the id in its link. Null if there is no such board in this community.
   """
-  halloweenCandyBoard(communityId: ID!, username: String!): HalloweenCandyBoard
+  halloweenCandyBoard(communityId: ID!, id: ID!): HalloweenCandyBoard
 
   """
   The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems.
@@ -3693,6 +3717,11 @@ type Query {
   """Get all external accounts linked to the current user"""
   myExternalAccounts: [ExternalAccount!]!
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
+
+  """
+  Your Halloween candy board here, made the first time you ask. Null without Discord linked, since candies belong to Discord players.
+  """
+  myHalloweenCandyBoard(communityId: ID!): HalloweenCandyBoard
 
   """Retrieves media owned by the current authenticated user"""
   myMedia(

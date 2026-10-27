@@ -212,6 +212,8 @@ export const HALLOWEEN_PRIZE_CHARACTERS_QUERY = gql`
 
 export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
   fragment HalloweenCandyBoardFields on HalloweenCandyBoard {
+    id
+    viewerIsOwner
     owner {
       id
       username
@@ -233,22 +235,30 @@ export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
 `;
 
 export const HALLOWEEN_CANDY_BOARD_QUERY = gql`
-  query HalloweenCandyBoard($communityId: ID!, $username: String!) {
-    halloweenCandyBoard(communityId: $communityId, username: $username) {
+  query HalloweenCandyBoard($communityId: ID!, $id: ID!) {
+    halloweenCandyBoard(communityId: $communityId, id: $id) {
       ...HalloweenCandyBoardFields
     }
   }
   ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
 `;
 
-export const SAVE_HALLOWEEN_CANDY_BOARD_MUTATION = gql`
-  mutation SaveHalloweenCandyBoard(
+export const MY_HALLOWEEN_CANDY_BOARD_QUERY = gql`
+  query MyHalloweenCandyBoard($communityId: ID!) {
+    myHalloweenCandyBoard(communityId: $communityId) {
+      id
+    }
+  }
+`;
+
+export const APPLY_HALLOWEEN_CANDY_BOARD_ACTIONS_MUTATION = gql`
+  mutation ApplyHalloweenCandyBoardActions(
     $communityId: ID!
-    $placements: [HalloweenCandyPlacementInput!]!
+    $actions: [HalloweenCandyBoardActionInput!]!
   ) {
-    saveHalloweenCandyBoard(
+    applyHalloweenCandyBoardActions(
       communityId: $communityId
-      placements: $placements
+      actions: $actions
     ) {
       ...HalloweenCandyBoardFields
     }

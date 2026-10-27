@@ -1,16 +1,16 @@
 /**
- * The candy board's state: where candies sit, and which are still in the tray.
+ * The candy board's state: where candies sit, which are still in the tray,
+ * and the changes waiting to be saved.
  */
 import { describe, it, expect } from "vitest";
+import { HalloweenCandyBoardActionType as T } from "../../../generated/graphql";
 import {
-  bringToFront,
+  applyAction,
   clampPlacement,
-  moveTo,
-  placeFromTray,
+  enqueue,
   pointOnBoard,
-  removeFromBoard,
   trayGroups,
-  updatePlacement,
+  type BoardAction,
   type Placement,
 } from "../candyBoard";
 
@@ -21,6 +21,11 @@ const at = (knockEventId: number, overrides: Partial<Placement> = {}) => ({
   rotation: 0,
   scale: 1,
   ...overrides,
+});
+
+const add = (knockEventId: number, overrides: Partial<Placement> = {}) => ({
+  type: T.Add,
+  ...at(knockEventId, overrides),
 });
 
 describe("clampPlacement", () => {
@@ -71,36 +76,99 @@ describe("trayGroups", () => {
   });
 });
 
-describe("editing", () => {
-  it("places a candy from the tray on top of the pile", () => {
-    expect(placeFromTray([at(1)], 2, { x: 0.1, y: 0.9 })).toEqual([
+describe("applyAction", () => {
+  it("adds a candy on top of the pile, within limits", () => {
+    expect(applyAction([at(1)], add(2, { x: 1.5 }))).toEqual([
       at(1),
-      at(2, { x: 0.1, y: 0.9 }),
+      at(2, { x: 1 }),
     ]);
   });
 
-  it("moves a candy without changing the stacking", () => {
-    expect(moveTo([at(1), at(2)], 1, { x: 0, y: 0 })).toEqual([
-      at(1, { x: 0, y: 0 }),
-      at(2),
-    ]);
+  it("does not add a candy twice", () => {
+    expect(applyAction([at(1)], add(1, { x: 0 }))).toEqual([at(1)]);
   });
 
-  it("brings a candy to the top of the pile", () => {
-    expect(bringToFront([at(1), at(2), at(3)], 1)).toEqual([
-      at(2),
-      at(3),
-      at(1),
-    ]);
+  it("edits only the fields given, within limits", () => {
+    expect(
+      applyAction([at(1), at(2)], {
+        type: T.Edit,
+        knockEventId: 1,
+        rotation: 200,
+        scale: 10,
+      }),
+    ).toEqual([at(1, { rotation: -160, scale: 4 }), at(2)]);
   });
 
-  it("changes a candy's rotation or size within limits", () => {
-    expect(updatePlacement([at(1)], 1, { rotation: 200, scale: 10 })).toEqual([
-      at(1, { rotation: -160, scale: 4 }),
-    ]);
+  it("raises a candy to the top of the pile", () => {
+    expect(
+      applyAction([at(1), at(2), at(3)], { type: T.Raise, knockEventId: 1 }),
+    ).toEqual([at(2), at(3), at(1)]);
   });
 
   it("puts a candy back in the tray", () => {
-    expect(removeFromBoard([at(1), at(2)], 1)).toEqual([at(2)]);
+    expect(
+      applyAction([at(1), at(2)], { type: T.Remove, knockEventId: 1 }),
+    ).toEqual([at(2)]);
+  });
+
+  it("ignores a change to a candy not on the board", () => {
+    const actions: BoardAction[] = [
+      { type: T.Edit, knockEventId: 9, x: 0 },
+      { type: T.Raise, knockEventId: 9 },
+      { type: T.Remove, knockEventId: 9 },
+    ];
+    for (const action of actions) {
+      expect(applyAction([at(1)], action)).toEqual([at(1)]);
+    }
+  });
+});
+
+describe("enqueue", () => {
+  const edit = (
+    knockEventId: number,
+    changes: Partial<Omit<Placement, "knockEventId">>,
+  ): BoardAction => ({ type: T.Edit, knockEventId, ...changes });
+
+  it("folds an edit into the waiting add of the same candy", () => {
+    expect(enqueue([add(1)], edit(1, { x: 0.1 }))).toEqual([
+      add(1, { x: 0.1 }),
+    ]);
+  });
+
+  it("folds an edit into the waiting edit of the same candy", () => {
+    expect(
+      enqueue([edit(1, { x: 0.1 }), edit(2, { y: 0 })], edit(1, { scale: 2 })),
+    ).toEqual([edit(1, { x: 0.1, scale: 2 }), edit(2, { y: 0 })]);
+  });
+
+  it("keeps an edit after a raise of the same candy separate", () => {
+    const raise: BoardAction = { type: T.Raise, knockEventId: 1 };
+    expect(enqueue([raise], edit(1, { x: 0 }))).toEqual([
+      raise,
+      edit(1, { x: 0 }),
+    ]);
+  });
+
+  it("drops an add and everything after it when the candy goes back unsaved", () => {
+    expect(
+      enqueue(
+        [
+          add(1),
+          edit(2, { x: 0 }),
+          edit(1, { y: 0 }),
+          { type: T.Raise, knockEventId: 1 },
+        ],
+        { type: T.Remove, knockEventId: 1 },
+      ),
+    ).toEqual([edit(2, { x: 0 })]);
+  });
+
+  it("replaces waiting edits and raises with the remove of a saved candy", () => {
+    expect(
+      enqueue([edit(1, { x: 0 }), { type: T.Raise, knockEventId: 1 }], {
+        type: T.Remove,
+        knockEventId: 1,
+      }),
+    ).toEqual([{ type: T.Remove, knockEventId: 1 }]);
   });
 });

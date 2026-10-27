@@ -1,5 +1,13 @@
-import { Field, Float, InputType, Int, ObjectType } from "@nestjs/graphql";
-import { IsInt, IsNumber } from "class-validator";
+import {
+  Field,
+  Float,
+  ID,
+  InputType,
+  Int,
+  ObjectType,
+  registerEnumType,
+} from "@nestjs/graphql";
+import { IsEnum, IsInt, IsNumber, IsOptional } from "class-validator";
 import { User } from "../../users/entities/user.entity";
 
 @ObjectType({ description: "A candy a player got from a lost knock" })
@@ -39,27 +47,57 @@ export class HalloweenCandyPlacement {
   scale: number;
 }
 
-@InputType()
-export class HalloweenCandyPlacementInput {
+/** What one change to a board does. */
+export enum HalloweenCandyBoardActionType {
+  /** Stick a candy from the tray on the board, on top of the pile. */
+  ADD = "ADD",
+  /** Change where a candy on the board sits, its turn or its size. */
+  EDIT = "EDIT",
+  /** Move a candy on the board to the top of the pile. */
+  RAISE = "RAISE",
+  /** Put a candy on the board back in the tray. */
+  REMOVE = "REMOVE",
+}
+
+registerEnumType(HalloweenCandyBoardActionType, {
+  name: "HalloweenCandyBoardActionType",
+  description: "What one change to a Halloween candy board does",
+});
+
+@InputType({
+  description:
+    "One change to your board. ADD needs x and y, and takes rotation 0 and " +
+    "scale 1 unless given; EDIT changes only the fields given; RAISE and " +
+    "REMOVE take none.",
+})
+export class HalloweenCandyBoardActionInput {
+  @Field(() => HalloweenCandyBoardActionType)
+  @IsEnum(HalloweenCandyBoardActionType)
+  type: HalloweenCandyBoardActionType;
+
   @Field(() => Int)
   @IsInt()
   knockEventId: number;
 
-  @Field(() => Float)
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
   @IsNumber()
-  x: number;
+  x?: number | null;
 
-  @Field(() => Float)
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
   @IsNumber()
-  y: number;
+  y?: number | null;
 
-  @Field(() => Float)
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
   @IsNumber()
-  rotation: number;
+  rotation?: number | null;
 
-  @Field(() => Float)
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
   @IsNumber()
-  scale: number;
+  scale?: number | null;
 }
 
 @ObjectType({
@@ -67,8 +105,18 @@ export class HalloweenCandyPlacementInput {
     "A player's Halloween candy board: every candy they have, and where they have stuck the ones on the board",
 })
 export class HalloweenCandyBoard {
-  @Field(() => User)
-  owner: User;
+  @Field(() => ID, { description: "What a link to the board names" })
+  id: string;
+
+  @Field(() => User, {
+    nullable: true,
+    description:
+      "The chardb account the board's Discord player is linked to. Null once they unlink.",
+  })
+  owner: User | null;
+
+  @Field({ description: "Whether whoever is asking owns the board" })
+  viewerIsOwner: boolean;
 
   @Field(() => [HalloweenCandy], { description: "Oldest first" })
   candies: HalloweenCandy[];

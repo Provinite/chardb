@@ -1242,10 +1242,33 @@ export type HalloweenCandyBoard = {
   __typename?: 'HalloweenCandyBoard';
   /** Oldest first */
   candies: Array<HalloweenCandy>;
-  owner: User;
+  /** What a link to the board names */
+  id: Scalars['ID']['output'];
+  /** The chardb account the board's Discord player is linked to. Null once they unlink. */
+  owner: Maybe<User>;
   /** Bottom of the pile first. A candy not here is not on the board. */
   placements: Array<HalloweenCandyPlacement>;
+  /** Whether whoever is asking owns the board */
+  viewerIsOwner: Scalars['Boolean']['output'];
 };
+
+/** One change to your board. ADD needs x and y, and takes rotation 0 and scale 1 unless given; EDIT changes only the fields given; RAISE and REMOVE take none. */
+export type HalloweenCandyBoardActionInput = {
+  knockEventId: Scalars['Int']['input'];
+  rotation?: InputMaybe<Scalars['Float']['input']>;
+  scale?: InputMaybe<Scalars['Float']['input']>;
+  type: HalloweenCandyBoardActionType;
+  x?: InputMaybe<Scalars['Float']['input']>;
+  y?: InputMaybe<Scalars['Float']['input']>;
+};
+
+/** What one change to a Halloween candy board does */
+export enum HalloweenCandyBoardActionType {
+  Add = 'ADD',
+  Edit = 'EDIT',
+  Raise = 'RAISE',
+  Remove = 'REMOVE'
+}
 
 /** Where a candy sits on a board */
 export type HalloweenCandyPlacement = {
@@ -1259,14 +1282,6 @@ export type HalloweenCandyPlacement = {
   x: Scalars['Float']['output'];
   /** The candy's centre, as a fraction of the board's height, 0-1 */
   y: Scalars['Float']['output'];
-};
-
-export type HalloweenCandyPlacementInput = {
-  knockEventId: Scalars['Int']['input'];
-  rotation: Scalars['Float']['input'];
-  scale: Scalars['Float']['input'];
-  x: Scalars['Float']['input'];
-  y: Scalars['Float']['input'];
 };
 
 /** The Halloween event as staff see it */
@@ -1993,6 +2008,8 @@ export type Mutation = {
   addCharacterTags: Character;
   /** Adds tags to a media item */
   addMediaTags: Media;
+  /** Apply changes to your board, in order, all or none. Needs Discord linked. */
+  applyHalloweenCandyBoardActions: HalloweenCandyBoard;
   /** Approve an image (moderator action) */
   approveImage: ImageModerationAction;
   /** Approve a trait review (moderator action) */
@@ -2142,8 +2159,6 @@ export type Mutation = {
   revokeItems: Scalars['Int']['output'];
   /** Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this). */
   runDeviantartUuidBackfill: Scalars['Boolean']['output'];
-  /** Replace where your candies sit on your board. Needs Discord linked. */
-  saveHalloweenCandyBoard: HalloweenCandyBoard;
   /** Replace the set of folders one character is in. Returns where it ends up. */
   setCharacterFolders: Array<CharacterFolder>;
   /** Sets or clears the main media for a character */
@@ -2240,6 +2255,12 @@ export type MutationAddCharacterTagsArgs = {
 export type MutationAddMediaTagsArgs = {
   id: Scalars['ID']['input'];
   input: ManageMediaTagsInput;
+};
+
+
+export type MutationApplyHalloweenCandyBoardActionsArgs = {
+  actions: Array<HalloweenCandyBoardActionInput>;
+  communityId: Scalars['ID']['input'];
 };
 
 
@@ -2646,12 +2667,6 @@ export type MutationRevokeItemsArgs = {
 
 export type MutationRunDeviantartUuidBackfillArgs = {
   jobId: Scalars['String']['input'];
-};
-
-
-export type MutationSaveHalloweenCandyBoardArgs = {
-  communityId: Scalars['ID']['input'];
-  placements: Array<HalloweenCandyPlacementInput>;
 };
 
 
@@ -3142,7 +3157,7 @@ export type Query = {
   globalMediaModerationQueue: MediaConnection;
   /** Get count of all pending images across all communities (admin only) */
   globalPendingImageCount: Scalars['Int']['output'];
-  /** A player's Halloween candy board, by their chardb username. Null when they have no Discord linked, since candies belong to Discord players. */
+  /** A Halloween candy board, by the id in its link. Null if there is no such board in this community. */
   halloweenCandyBoard: Maybe<HalloweenCandyBoard>;
   /** The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems. */
   halloweenDashboard: HalloweenDashboard;
@@ -3197,6 +3212,8 @@ export type Query = {
   /** Get all external accounts linked to the current user */
   myExternalAccounts: Array<ExternalAccount>;
   myGalleries: GalleryConnection;
+  /** Your Halloween candy board here, made the first time you ask. Null without Discord linked, since candies belong to Discord players. */
+  myHalloweenCandyBoard: Maybe<HalloweenCandyBoard>;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
   /** The viewer's own purchase lines, newest first, searchable and paged. A line is what a buyer counts and acts on, so it is the level a history filters at. */
@@ -3555,7 +3572,7 @@ export type QueryGlobalMediaModerationQueueArgs = {
 
 export type QueryHalloweenCandyBoardArgs = {
   communityId: Scalars['ID']['input'];
-  username: Scalars['String']['input'];
+  id: Scalars['ID']['input'];
 };
 
 
@@ -3710,6 +3727,11 @@ export type QueryMyEditableCharactersArgs = {
 
 export type QueryMyGalleriesArgs = {
   filters?: InputMaybe<GalleryFiltersInput>;
+};
+
+
+export type QueryMyHalloweenCandyBoardArgs = {
+  communityId: Scalars['ID']['input'];
 };
 
 
@@ -5851,23 +5873,30 @@ export type HalloweenPrizeCharactersQueryVariables = Exact<{
 
 export type HalloweenPrizeCharactersQuery = { __typename?: 'Query', halloweenPrizeCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null, mainMedia: { __typename?: 'Media', id: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus } | null } | null }> };
 
-export type HalloweenCandyBoardFieldsFragment = { __typename?: 'HalloweenCandyBoard', owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> };
+export type HalloweenCandyBoardFieldsFragment = { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> };
 
 export type HalloweenCandyBoardQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
-  username: Scalars['String']['input'];
+  id: Scalars['ID']['input'];
 }>;
 
 
-export type HalloweenCandyBoardQuery = { __typename?: 'Query', halloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } | null };
+export type HalloweenCandyBoardQuery = { __typename?: 'Query', halloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } | null };
 
-export type SaveHalloweenCandyBoardMutationVariables = Exact<{
+export type MyHalloweenCandyBoardQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
-  placements: Array<HalloweenCandyPlacementInput> | HalloweenCandyPlacementInput;
 }>;
 
 
-export type SaveHalloweenCandyBoardMutation = { __typename?: 'Mutation', saveHalloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } };
+export type MyHalloweenCandyBoardQuery = { __typename?: 'Query', myHalloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', id: string } | null };
+
+export type ApplyHalloweenCandyBoardActionsMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  actions: Array<HalloweenCandyBoardActionInput> | HalloweenCandyBoardActionInput;
+}>;
+
+
+export type ApplyHalloweenCandyBoardActionsMutation = { __typename?: 'Mutation', applyHalloweenCandyBoardActions: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } };
 
 export type ImageModerationQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -7167,6 +7196,8 @@ export const HalloweenPickerImageFragmentDoc = gql`
     `;
 export const HalloweenCandyBoardFieldsFragmentDoc = gql`
     fragment HalloweenCandyBoardFields on HalloweenCandyBoard {
+  id
+  viewerIsOwner
   owner {
     id
     username
@@ -12602,8 +12633,8 @@ export type HalloweenPrizeCharactersLazyQueryHookResult = ReturnType<typeof useH
 export type HalloweenPrizeCharactersSuspenseQueryHookResult = ReturnType<typeof useHalloweenPrizeCharactersSuspenseQuery>;
 export type HalloweenPrizeCharactersQueryResult = Apollo.QueryResult<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>;
 export const HalloweenCandyBoardDocument = gql`
-    query HalloweenCandyBoard($communityId: ID!, $username: String!) {
-  halloweenCandyBoard(communityId: $communityId, username: $username) {
+    query HalloweenCandyBoard($communityId: ID!, $id: ID!) {
+  halloweenCandyBoard(communityId: $communityId, id: $id) {
     ...HalloweenCandyBoardFields
   }
 }
@@ -12622,7 +12653,7 @@ export const HalloweenCandyBoardDocument = gql`
  * const { data, loading, error } = useHalloweenCandyBoardQuery({
  *   variables: {
  *      communityId: // value for 'communityId'
- *      username: // value for 'username'
+ *      id: // value for 'id'
  *   },
  * });
  */
@@ -12642,40 +12673,80 @@ export type HalloweenCandyBoardQueryHookResult = ReturnType<typeof useHalloweenC
 export type HalloweenCandyBoardLazyQueryHookResult = ReturnType<typeof useHalloweenCandyBoardLazyQuery>;
 export type HalloweenCandyBoardSuspenseQueryHookResult = ReturnType<typeof useHalloweenCandyBoardSuspenseQuery>;
 export type HalloweenCandyBoardQueryResult = Apollo.QueryResult<HalloweenCandyBoardQuery, HalloweenCandyBoardQueryVariables>;
-export const SaveHalloweenCandyBoardDocument = gql`
-    mutation SaveHalloweenCandyBoard($communityId: ID!, $placements: [HalloweenCandyPlacementInput!]!) {
-  saveHalloweenCandyBoard(communityId: $communityId, placements: $placements) {
+export const MyHalloweenCandyBoardDocument = gql`
+    query MyHalloweenCandyBoard($communityId: ID!) {
+  myHalloweenCandyBoard(communityId: $communityId) {
+    id
+  }
+}
+    `;
+
+/**
+ * __useMyHalloweenCandyBoardQuery__
+ *
+ * To run a query within a React component, call `useMyHalloweenCandyBoardQuery` and pass it any options that fit your needs.
+ * When your component renders, `useMyHalloweenCandyBoardQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useMyHalloweenCandyBoardQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useMyHalloweenCandyBoardQuery(baseOptions: Apollo.QueryHookOptions<MyHalloweenCandyBoardQuery, MyHalloweenCandyBoardQueryVariables> & ({ variables: MyHalloweenCandyBoardQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<MyHalloweenCandyBoardQuery, MyHalloweenCandyBoardQueryVariables>(MyHalloweenCandyBoardDocument, options);
+      }
+export function useMyHalloweenCandyBoardLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<MyHalloweenCandyBoardQuery, MyHalloweenCandyBoardQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<MyHalloweenCandyBoardQuery, MyHalloweenCandyBoardQueryVariables>(MyHalloweenCandyBoardDocument, options);
+        }
+export function useMyHalloweenCandyBoardSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<MyHalloweenCandyBoardQuery, MyHalloweenCandyBoardQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<MyHalloweenCandyBoardQuery, MyHalloweenCandyBoardQueryVariables>(MyHalloweenCandyBoardDocument, options);
+        }
+export type MyHalloweenCandyBoardQueryHookResult = ReturnType<typeof useMyHalloweenCandyBoardQuery>;
+export type MyHalloweenCandyBoardLazyQueryHookResult = ReturnType<typeof useMyHalloweenCandyBoardLazyQuery>;
+export type MyHalloweenCandyBoardSuspenseQueryHookResult = ReturnType<typeof useMyHalloweenCandyBoardSuspenseQuery>;
+export type MyHalloweenCandyBoardQueryResult = Apollo.QueryResult<MyHalloweenCandyBoardQuery, MyHalloweenCandyBoardQueryVariables>;
+export const ApplyHalloweenCandyBoardActionsDocument = gql`
+    mutation ApplyHalloweenCandyBoardActions($communityId: ID!, $actions: [HalloweenCandyBoardActionInput!]!) {
+  applyHalloweenCandyBoardActions(communityId: $communityId, actions: $actions) {
     ...HalloweenCandyBoardFields
   }
 }
     ${HalloweenCandyBoardFieldsFragmentDoc}`;
-export type SaveHalloweenCandyBoardMutationFn = Apollo.MutationFunction<SaveHalloweenCandyBoardMutation, SaveHalloweenCandyBoardMutationVariables>;
+export type ApplyHalloweenCandyBoardActionsMutationFn = Apollo.MutationFunction<ApplyHalloweenCandyBoardActionsMutation, ApplyHalloweenCandyBoardActionsMutationVariables>;
 
 /**
- * __useSaveHalloweenCandyBoardMutation__
+ * __useApplyHalloweenCandyBoardActionsMutation__
  *
- * To run a mutation, you first call `useSaveHalloweenCandyBoardMutation` within a React component and pass it any options that fit your needs.
- * When your component renders, `useSaveHalloweenCandyBoardMutation` returns a tuple that includes:
+ * To run a mutation, you first call `useApplyHalloweenCandyBoardActionsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useApplyHalloweenCandyBoardActionsMutation` returns a tuple that includes:
  * - A mutate function that you can call at any time to execute the mutation
  * - An object with fields that represent the current status of the mutation's execution
  *
  * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
  *
  * @example
- * const [saveHalloweenCandyBoardMutation, { data, loading, error }] = useSaveHalloweenCandyBoardMutation({
+ * const [applyHalloweenCandyBoardActionsMutation, { data, loading, error }] = useApplyHalloweenCandyBoardActionsMutation({
  *   variables: {
  *      communityId: // value for 'communityId'
- *      placements: // value for 'placements'
+ *      actions: // value for 'actions'
  *   },
  * });
  */
-export function useSaveHalloweenCandyBoardMutation(baseOptions?: Apollo.MutationHookOptions<SaveHalloweenCandyBoardMutation, SaveHalloweenCandyBoardMutationVariables>) {
+export function useApplyHalloweenCandyBoardActionsMutation(baseOptions?: Apollo.MutationHookOptions<ApplyHalloweenCandyBoardActionsMutation, ApplyHalloweenCandyBoardActionsMutationVariables>) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useMutation<SaveHalloweenCandyBoardMutation, SaveHalloweenCandyBoardMutationVariables>(SaveHalloweenCandyBoardDocument, options);
+        return Apollo.useMutation<ApplyHalloweenCandyBoardActionsMutation, ApplyHalloweenCandyBoardActionsMutationVariables>(ApplyHalloweenCandyBoardActionsDocument, options);
       }
-export type SaveHalloweenCandyBoardMutationHookResult = ReturnType<typeof useSaveHalloweenCandyBoardMutation>;
-export type SaveHalloweenCandyBoardMutationResult = Apollo.MutationResult<SaveHalloweenCandyBoardMutation>;
-export type SaveHalloweenCandyBoardMutationOptions = Apollo.BaseMutationOptions<SaveHalloweenCandyBoardMutation, SaveHalloweenCandyBoardMutationVariables>;
+export type ApplyHalloweenCandyBoardActionsMutationHookResult = ReturnType<typeof useApplyHalloweenCandyBoardActionsMutation>;
+export type ApplyHalloweenCandyBoardActionsMutationResult = Apollo.MutationResult<ApplyHalloweenCandyBoardActionsMutation>;
+export type ApplyHalloweenCandyBoardActionsMutationOptions = Apollo.BaseMutationOptions<ApplyHalloweenCandyBoardActionsMutation, ApplyHalloweenCandyBoardActionsMutationVariables>;
 export const ImageModerationQueueDocument = gql`
     query ImageModerationQueue($communityId: ID!, $filters: ImageModerationQueueFiltersInput, $first: Int, $offset: Int) {
   imageModerationQueue(

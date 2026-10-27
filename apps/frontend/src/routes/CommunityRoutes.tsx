@@ -118,7 +118,7 @@ export const CommunityRoutes: React.FC = () => (
       }
     />
     <Route
-      path="/halloween/board/:username"
+      path="/halloween/board/:boardId"
       element={<CommunityCandyBoardPage />}
     />
 
