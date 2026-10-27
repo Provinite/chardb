@@ -2030,7 +2030,7 @@ export type Mutation = {
   addCharacterTags: Character;
   /** Adds tags to a media item */
   addMediaTags: Media;
-  /** Apply changes to your board, in order, all or none. Needs Discord linked. */
+  /** Apply changes to your board, in order, and get it back as it now is. A change that cannot apply -- a candy not yours, not on the board, already on it, or placed off it -- is skipped, and the rest still apply. At most 100 changes at once. Needs Discord linked. */
   applyHalloweenCandyBoardActions: HalloweenCandyBoard;
   /** Approve an image (moderator action) */
   approveImage: ImageModerationAction;
@@ -3179,7 +3179,7 @@ export type Query = {
   globalMediaModerationQueue: MediaConnection;
   /** Get count of all pending images across all communities (admin only) */
   globalPendingImageCount: Scalars['Int']['output'];
-  /** A Halloween candy board, by the id in its link. Null if there is no such board in this community. */
+  /** A Halloween candy board, by the id in its link. Null if there is no such board in this community's Discord server, or the community has none linked. An error if the community does not exist or has the Halloween event turned off. */
   halloweenCandyBoard: Maybe<HalloweenCandyBoard>;
   /** The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems. */
   halloweenDashboard: HalloweenDashboard;
