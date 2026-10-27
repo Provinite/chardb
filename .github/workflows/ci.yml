@@ -195,9 +195,9 @@ jobs:
           fi
           echo "Generated GraphQL types are up to date."
 
-      # The Halloween bot picks a candy image by number, so it needs to know how
-      # many there are. The count is generated from the images; an image added
-      # or removed without regenerating, or a gap in the numbering, fails here.
+      # The Halloween bot picks a candy image by slug, so it needs the list of
+      # them. The list is generated from the images; an image added or removed
+      # without regenerating, or one misnamed, fails here.
       - name: Check Halloween image counts are up to date
         run: |
           yarn halloween:images
@@ -285,6 +285,61 @@ jobs:
       # Vitest sees CI=true and runs once instead of entering watch mode.
       - name: Run unit tests
         run: yarn workspace ${{ matrix.workspace }} run test
+
+  api-e2e:
+    name: API e2e (backend)
+    runs-on: ubuntu-latest
+    # The backend's *.e2e.spec.ts: each builds a Nest app around the modules it
+    # tests and drives it over HTTP against a real Postgres. The unit job's
+    # Jest config skips them, and the browser job runs only apps/e2e, so until
+    # this job nothing ran them at all.
+
+    env:
+      # @chardb/database's build runs prisma generate, which resolves
+      # env("DATABASE_URL") without ever connecting. The specs themselves use
+      # TEST_DATABASE_URL, from apps/backend/.env.test.
+      DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Set up Node
+        uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: yarn
+
+      - name: Restore node_modules
+        id: node-modules-cache
+        uses: actions/cache@v6
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            .yarn/install-state.gz
+          key: node-modules-${{ runner.os }}-${{ hashFiles('yarn.lock') }}
+
+      - name: Install dependencies
+        if: steps.node-modules-cache.outputs.cache-hit != 'true'
+        run: yarn install --immutable
+
+      - name: Build workspace packages
+        run: |
+          yarn workspaces foreach -A --parallel \
+            --include '@chardb/database' \
+            --include '@chardb/shared' \
+            --include '@chardb/ui' \
+            run build
+
+      # Its global setup starts docker/compose.test.yml and pushes the schema,
+      # exactly as it does locally.
+      - name: Run API e2e specs
+        run: yarn workspace @chardb/backend test:e2e
 
   e2e:
     name: Browser E2E (shard ${{ matrix.shard }})
@@ -593,7 +648,7 @@ jobs:
   # ---------------------------------------------------------------------------
   deploy-backend:
     name: Deploy backend to staging
-    needs: [lint, verify, test, e2e]
+    needs: [lint, verify, test, api-e2e, e2e]
     if: >-
       github.ref == 'refs/heads/main' &&
       (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
