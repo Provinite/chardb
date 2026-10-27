@@ -8,6 +8,7 @@ import {
   ATTR_SERVICE_VERSION,
 } from "@opentelemetry/semantic-conventions";
 import { WinstonInstrumentation } from "@opentelemetry/instrumentation-winston";
+import { PrismaInstrumentation } from "@prisma/instrumentation";
 import { SeverityNumber } from "@opentelemetry/api-logs";
 
 // Honour the standard OTEL_SDK_DISABLED switch before constructing anything.
@@ -104,6 +105,9 @@ if (tracingDisabled) {
         enabled: true,
         logSeverity: SeverityNumber.INFO,
       }),
+      // Prisma's engine talks to Postgres itself, so the pg instrumentation
+      // never sees its queries; this is what puts them in the trace
+      new PrismaInstrumentation(),
     ],
   });
 

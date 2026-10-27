@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Prisma operations and SQL queries appear as spans in traces**, nested under the resolver that issued them (#97).
+
 ### Changed
 
 - **The viewer is authenticated once per request** instead of once per resolved field (#97).

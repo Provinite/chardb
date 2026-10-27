@@ -52,5 +52,9 @@
   },
   "dependencies": {
     "@anthropic-ai/claude-code": "1.0.17"
+  },
+  "resolutions": {
+    "@opentelemetry/api": "1.9.0",
+    "@prisma/instrumentation/@opentelemetry/instrumentation": "0.202.0"
   }
 }
