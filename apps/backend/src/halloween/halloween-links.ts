@@ -34,15 +34,6 @@ export class HalloweenLinks {
   }
 
   /**
-   * The player's own candy board on the community this guild is linked to,
-   * or null when there is none to link to. The page finds whose it is from
-   * whoever is signed in, so one link serves every player.
-   */
-  async candyBoard(guildId: string): Promise<string | null> {
-    return this.communityUrl(guildId, "/halloween/board");
-  }
-
-  /**
    * A markdown link to what the prize hands over on chardb, or undefined for
    * a prize staff hand over themselves, or with nowhere to link to.
    */

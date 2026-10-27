@@ -303,16 +303,7 @@ export class KnockCommand implements HalloweenCommandHandler {
       0,
       settings.knocksPerDay - (knockCount + 1),
     );
-    const [bankedGifties, boardUrl] = await Promise.all([
-      this.gifties.pendingCount(guildId, userId),
-      // The knock is already committed; a lookup failing costs the link only.
-      this.links.candyBoard(guildId).catch(() => null),
-    ]);
-    const description =
-      "You knocked and knocked but no one was home. Tricks this time." +
-      (boardUrl && knockEvent.candySlug
-        ? `\n\n[Stick your candy on your candy board](${boardUrl})`
-        : "");
+    const bankedGifties = await this.gifties.pendingCount(guildId, userId);
 
     const fields: APIEmbedField[] = [];
     if (gifty) {
@@ -336,7 +327,8 @@ export class KnockCommand implements HalloweenCommandHandler {
         embeds: [
           {
             title: "No one was home",
-            description,
+            description:
+              "You knocked and knocked but no one was home. Tricks this time.",
             fields,
             author: this.ui.author(),
             timestamp: this.ui.timestamp(),

@@ -459,8 +459,7 @@ describe("/knock", () => {
           {
             title: "No one was home",
             description:
-              "You knocked and knocked but no one was home. Tricks this time.\n\n" +
-              "[Stick your candy on your candy board](https://cloverse.chardb.cc/halloween/board)",
+              "You knocked and knocked but no one was home. Tricks this time.",
             fields: [
               { name: "Remaining Knocks", value: "1", inline: true },
               { name: "Banked Gifties", value: "2", inline: true },
