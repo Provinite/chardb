@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Halloween candy boards** (`/halloween/board`): players stick, move, turn and resize the candies their lost knocks gave them, and share a read-only link to their board.
+
 ### Changed
 
 - **Staff actions move into a "⋯" menu** on the character page, trait review cards and item pages, each behind a confirm dialog; Remove from Species asks for the character's name to be typed (#430).

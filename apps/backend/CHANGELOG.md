@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Lost knocks record their candy**, and `halloweenCandyBoard` / `saveHalloweenCandyBoard` read and arrange a player's candy board; the loss reply links to it.
+
 ### Changed
 
 - **Halloween candy images are named by slug** (`candy/candy-corn.png`): 107 unique candies, with the 23 duplicate files removed and Luther and Daphne's two paintings framed as stickers.
