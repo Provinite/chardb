@@ -7,8 +7,8 @@ import type {
 import { HalloweenConfig } from "../halloween.config";
 import { HalloweenRandom } from "../random";
 import { HalloweenClock } from "../clock";
-// Counted from apps/frontend/public/halloween by scripts/halloween-images.mjs.
-import { AUTHOR_ICON_COUNT, CANDY_IMAGE_COUNT } from "./images.generated";
+// Listed from apps/frontend/public/halloween by scripts/halloween-images.mjs.
+import { AUTHOR_ICON_COUNT, CANDY_SLUGS } from "./images.generated";
 
 /**
  * Prefix of every embed title. The bot's yearly re-arm was a find-and-replace
@@ -49,7 +49,8 @@ export class HalloweenUi {
   }
 
   candyImageUrl(): string {
-    return `${this.config.imageBaseUrl}candy/${this.random.int(CANDY_IMAGE_COUNT)}.png`;
+    const slug = CANDY_SLUGS[this.random.int(CANDY_SLUGS.length)];
+    return `${this.config.imageBaseUrl}candy/${slug}.png`;
   }
 
   errorFooter(interaction: Pick<APIInteraction, "id">): APIEmbedFooter {

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Halloween candy images are named by slug** (`candy/candy-corn.png`): 107 unique candies, with the 23 duplicate files removed and Luther and Daphne's two paintings framed as stickers.
 - **Character and species names are trimmed on create, update and MYO redemption**, and a name of only spaces is refused (#430).
 
 ## [v14.1.0] - 2026-10-26
