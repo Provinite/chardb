@@ -37,7 +37,7 @@ process.env.DATABASE_URL =
 // database did, and image specs write into the dev LocalStack -- or, in CI,
 // where none is running, fail every S3 call.
 process.env.AWS_ENDPOINT_URL = `http://localhost:${process.env.E2E_LOCALSTACK_PORT ?? "4567"}`;
-process.env.AWS_S3_BUCKET = "chardb-images";
+process.env.S3_IMAGES_BUCKET = "chardb-images";
 
 // NestJS app startup + DB operations can take well over 5s
 jest.setTimeout(60000);
