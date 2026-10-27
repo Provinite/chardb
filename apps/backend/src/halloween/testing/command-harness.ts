@@ -10,7 +10,7 @@ export const AUTHOR = {
   icon_url: "https://images.test/halloween/icon/0.png",
 };
 export const TIMESTAMP = "2025-10-17T15:30:00.000Z";
-export const CANDY = "https://images.test/halloween/candy/7.png";
+export const CANDY = "https://images.test/halloween/candy/candy-corn.png";
 
 /** Deterministic stand-ins for the embed pieces that are random or timed. */
 export function stubUi(now = new Date(TIMESTAMP)): HalloweenUi {

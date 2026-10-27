@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`yarn halloween:images` lists candy slugs instead of counting numbered files**, and fails on a candy that is not a PNG or duplicates another.
+
 - **Character Deletion, Trait Review and Item Ledger show the staff ⋯ menu**, with six retaken screenshots and two new ones of the delete and remove-from-species confirmations (#430).
 
 ## [v14.1.0] - 2026-10-26
