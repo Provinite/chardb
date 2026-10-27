@@ -66,12 +66,17 @@ import {
   HalloweenCandyBoardDocument,
   MyHalloweenCandyBoardDocument,
   SetHalloweenCandyBoardBackgroundDocument,
+  SetHalloweenCandyBoardLightingDocument,
   type HalloweenCandyBoardAction,
 } from "../../generated/graphql";
 import {
   CommunityCandyBoardPage,
   MyCandyBoardRedirect,
 } from "../CommunityCandyBoardPage";
+import {
+  DEFAULT_LIGHTING,
+  shadowFilter,
+} from "../../components/halloween/candyLighting";
 
 const candy = (knockEventId: number, slug: string) => ({
   __typename: "HalloweenCandy" as const,
@@ -95,9 +100,14 @@ const board = (
     viewerIsOwner = true,
     owner = "owner" as string | null,
     background = null as string | null,
+    lighting = null as { x: number; y: number; height: number } | null,
   } = {},
 ) => ({
   __typename: "HalloweenCandyBoard" as const,
+  lighting: lighting && {
+    __typename: "HalloweenCandyLighting" as const,
+    ...lighting,
+  },
   id: BOARD_ID,
   viewerIsOwner,
   background,
@@ -1015,6 +1025,102 @@ describe("CommunityCandyBoardPage", () => {
       expect((await surface()).style.backgroundImage).toContain(
         "tile-corkboard.webp",
       );
+    });
+  });
+
+  describe("the lighting", () => {
+    const setLighting = (
+      lighting: { x: number; y: number; height: number } | null,
+      result: ReturnType<typeof board>,
+    ): MockedResponse => ({
+      request: {
+        query: SetHalloweenCandyBoardLightingDocument,
+        variables: { communityId: COMMUNITY_ID, lighting },
+      },
+      result: { data: { setHalloweenCandyBoardLighting: result } },
+    });
+
+    const lutherShadow = async () =>
+      within(await pile()).getByRole("img", { name: "luther head" }).style
+        .filter;
+
+    const openLighting = async () => {
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Lighting" }),
+      );
+      return screen.findByRole("dialog", { name: "Lighting" });
+    };
+
+    it("casts each candy's shadow from the board's light, for anyone looking", async () => {
+      const light = { x: -0.6, y: 0, height: 0.4 };
+      renderBoard([
+        boardQuery(board([2], { viewerIsOwner: false, lighting: light })),
+      ]);
+      expect(await lutherShadow()).toBe(shadowFilter(light, 0));
+      expect(
+        screen.queryByRole("button", { name: "Lighting" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("uses the default light when the board has none", async () => {
+      renderBoard([boardQuery(board([2]))]);
+      expect(await lutherShadow()).toBe(shadowFilter(null, 0));
+    });
+
+    it("moves the light with the keyboard, shows it at once, and saves it", async () => {
+      const moved = { ...DEFAULT_LIGHTING, x: -0.1 };
+      const saved = vi.fn(() => ({
+        data: {
+          setHalloweenCandyBoardLighting: board([2], { lighting: moved }),
+        },
+      }));
+      renderBoard([
+        boardQuery(board([2])),
+        {
+          ...setLighting(moved, board([2], { lighting: moved })),
+          result: saved,
+        },
+      ]);
+      const dialog = await openLighting();
+
+      (
+        await within(dialog).findByRole("group", { name: "Light position" })
+      ).focus();
+      await userEvent.keyboard("{ArrowLeft}");
+
+      expect(await lutherShadow()).toBe(shadowFilter(moved, 0));
+      await waitFor(() => expect(saved).toHaveBeenCalled(), { timeout: 2000 });
+    });
+
+    it("raises and lowers the light with its height slider", async () => {
+      renderBoard([boardQuery(board([2]))]);
+      const dialog = await openLighting();
+
+      fireEvent.change(
+        await within(dialog).findByRole("slider", { name: "Light height" }),
+        { target: { value: "0.3" } },
+      );
+      expect(await lutherShadow()).toBe(
+        shadowFilter({ ...DEFAULT_LIGHTING, height: 0.3 }, 0),
+      );
+    });
+
+    it("goes back to the default light", async () => {
+      const light = { x: 0.5, y: 0.5, height: 0.5 };
+      const saved = vi.fn(() => ({
+        data: { setHalloweenCandyBoardLighting: board([2]) },
+      }));
+      renderBoard([
+        boardQuery(board([2], { lighting: light })),
+        { ...setLighting(null, board([2])), result: saved },
+      ]);
+      const dialog = await openLighting();
+
+      await userEvent.click(
+        await within(dialog).findByRole("button", { name: "Default light" }),
+      );
+      expect(await lutherShadow()).toBe(shadowFilter(null, 0));
+      await waitFor(() => expect(saved).toHaveBeenCalled(), { timeout: 2000 });
     });
   });
 

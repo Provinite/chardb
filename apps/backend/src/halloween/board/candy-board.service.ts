@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import {
   ExternalAccountProvider,
+  Prisma,
   type HalloweenCandyBoard as BoardRow,
 } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
@@ -18,7 +19,9 @@ import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { BACKGROUND_SLUGS } from "../discord/images.generated";
 import { addedCandies, applyCandyBoardActions } from "./candy-board.actions";
 import {
+  candyLightingSchema,
   candyPlacementsSchema,
+  type CandyLighting,
   type CandyPlacement,
 } from "./candy-board.schema";
 import { StoredCandyBoardInvalidError } from "./candy-board.errors";
@@ -43,6 +46,16 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 function storedPlacements(board: BoardRow): CandyPlacement[] {
   const parsed = candyPlacementsSchema.safeParse(board.placements);
+  if (!parsed.success) {
+    throw new StoredCandyBoardInvalidError(board.id, parsed.error.message);
+  }
+  return parsed.data;
+}
+
+/** A board's light, checked on the way out as on the way in. */
+function storedLighting(board: BoardRow): CandyLighting | null {
+  if (board.lighting === null) return null;
+  const parsed = candyLightingSchema.safeParse(board.lighting);
   if (!parsed.success) {
     throw new StoredCandyBoardInvalidError(board.id, parsed.error.message);
   }
@@ -187,6 +200,37 @@ export class CandyBoardService {
    * Sets the picture or tile behind the signed-in player's candies, or with
    * null goes back to the board's own night sky.
    */
+  /**
+   * Puts the light that casts the signed-in player's candies' shadows, or
+   * with null goes back to the board's default light.
+   */
+  async setLighting(
+    communityId: string,
+    userId: string,
+    lighting: CandyLighting | null,
+  ): Promise<HalloweenCandyBoard> {
+    if (lighting !== null && !candyLightingSchema.safeParse(lighting).success) {
+      throw new BadRequestException(
+        "The light must be over the board, at a height from 0.1 to 1",
+      );
+    }
+    const guildId = await this.requireGuild(communityId);
+    const discordUserId = await this.discordIdOf(userId);
+    if (!discordUserId) {
+      throw new ForbiddenException(
+        "Link your Discord account to have a candy board",
+      );
+    }
+    // Prisma takes a JSON column's null as `Prisma.DbNull`, not null.
+    const value = lighting ?? Prisma.DbNull;
+    const board = await this.db.halloweenCandyBoard.upsert({
+      where: { guildId_userId: { guildId, userId: discordUserId } },
+      create: { guildId, userId: discordUserId, lighting: value },
+      update: { lighting: value },
+    });
+    return this.toBoard(board, true);
+  }
+
   async setBackground(
     communityId: string,
     userId: string,
@@ -265,6 +309,7 @@ export class CandyBoardService {
       owner: account ? mapPrismaUserToGraphQL(account.user) : null,
       viewerIsOwner,
       background: board.background,
+      lighting: storedLighting(board),
       candies,
       // A candy whose knock is gone is dropped rather than drawn as nothing.
       placements: storedPlacements(board).filter((p) =>

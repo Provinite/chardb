@@ -215,6 +215,11 @@ export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
     id
     viewerIsOwner
     background
+    lighting {
+      x
+      y
+      height
+    }
     owner {
       id
       username
@@ -260,6 +265,21 @@ export const APPLY_HALLOWEEN_CANDY_BOARD_ACTIONS_MUTATION = gql`
     applyHalloweenCandyBoardActions(
       communityId: $communityId
       actions: $actions
+    ) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const SET_HALLOWEEN_CANDY_BOARD_LIGHTING_MUTATION = gql`
+  mutation SetHalloweenCandyBoardLighting(
+    $communityId: ID!
+    $lighting: HalloweenCandyLightingInput
+  ) {
+    setHalloweenCandyBoardLighting(
+      communityId: $communityId
+      lighting: $lighting
     ) {
       ...HalloweenCandyBoardFields
     }

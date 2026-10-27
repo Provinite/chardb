@@ -140,6 +140,40 @@ export class HalloweenCandyBoardAction {
 
 @ObjectType({
   description:
+    "Where the light over a board is, which casts the candies' shadows: " +
+    "they fall away from it, longer the further to the side and lower it is",
+})
+export class HalloweenCandyLighting {
+  @Field(() => Float, {
+    description:
+      "Across the board: a point in a unit circle centred on it, -1 to 1",
+  })
+  x: number;
+
+  @Field(() => Float, {
+    description:
+      "Up and down the board, downward positive: a point in a unit circle centred on it, -1 to 1",
+  })
+  y: number;
+
+  @Field(() => Float, { description: "How high it hangs, 0.1 to 1" })
+  height: number;
+}
+
+@InputType({ description: "Where to put the light over your board" })
+export class HalloweenCandyLightingInput {
+  @Field(() => Float)
+  x: number;
+
+  @Field(() => Float)
+  y: number;
+
+  @Field(() => Float)
+  height: number;
+}
+
+@ObjectType({
+  description:
     "A player's Halloween candy board: every candy they have, and where they have stuck the ones on the board",
 })
 export class HalloweenCandyBoard {
@@ -165,6 +199,12 @@ export class HalloweenCandyBoard {
       "for the board's own night sky.",
   })
   background: string | null;
+
+  @Field(() => HalloweenCandyLighting, {
+    nullable: true,
+    description: "Null for the board's default light",
+  })
+  lighting: HalloweenCandyLighting | null;
 
   @Field(() => [HalloweenCandy], { description: "Oldest first" })
   candies: HalloweenCandy[];

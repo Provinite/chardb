@@ -1257,6 +1257,8 @@ export type HalloweenCandyBoard = {
   candies: Array<HalloweenCandy>;
   /** What a link to the board names */
   id: Scalars['ID']['output'];
+  /** Null for the board's default light */
+  lighting: Maybe<HalloweenCandyLighting>;
   /** The chardb account the board's Discord player is linked to. Null once they unlink. */
   owner: Maybe<User>;
   /** Bottom of the pile first. A candy not here is not on the board. */
@@ -1287,6 +1289,24 @@ export type HalloweenCandyEditInput = {
   scale?: InputMaybe<Scalars['Float']['input']>;
   x?: InputMaybe<Scalars['Float']['input']>;
   y?: InputMaybe<Scalars['Float']['input']>;
+};
+
+/** Where the light over a board is, which casts the candies' shadows: they fall away from it, longer the further to the side and lower it is */
+export type HalloweenCandyLighting = {
+  __typename?: 'HalloweenCandyLighting';
+  /** How high it hangs, 0.1 to 1 */
+  height: Scalars['Float']['output'];
+  /** Across the board: a point in a unit circle centred on it, -1 to 1 */
+  x: Scalars['Float']['output'];
+  /** Up and down the board, downward positive: a point in a unit circle centred on it, -1 to 1 */
+  y: Scalars['Float']['output'];
+};
+
+/** Where to put the light over your board */
+export type HalloweenCandyLightingInput = {
+  height: Scalars['Float']['input'];
+  x: Scalars['Float']['input'];
+  y: Scalars['Float']['input'];
 };
 
 /** Where a candy sits on a board */
@@ -2191,6 +2211,8 @@ export type Mutation = {
   setCommunityHalloweenEnabled: Community;
   /** Set the picture or tile behind your candies, by its slug; null goes back to the board's own night sky. Needs Discord linked. */
   setHalloweenCandyBoardBackground: HalloweenCandyBoard;
+  /** Put the light that casts your candies' shadows; null goes back to the board's default light. Needs Discord linked. */
+  setHalloweenCandyBoardLighting: HalloweenCandyBoard;
   /** Mark a prize staff hand over themselves as delivered, or clear the mark. Chardb item and character prizes deliver themselves. */
   setHalloweenPrizeDelivered: HalloweenWin;
   /** Set which characters a ticket of this type can make. Replaces the grant wholesale; an empty variant list clears it. Needs the same permission as editing the item type, because it hands out the right to create characters. */
@@ -2716,6 +2738,12 @@ export type MutationSetCommunityHalloweenEnabledArgs = {
 export type MutationSetHalloweenCandyBoardBackgroundArgs = {
   communityId: Scalars['ID']['input'];
   slug?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationSetHalloweenCandyBoardLightingArgs = {
+  communityId: Scalars['ID']['input'];
+  lighting?: InputMaybe<HalloweenCandyLightingInput>;
 };
 
 
@@ -5905,7 +5933,7 @@ export type HalloweenPrizeCharactersQueryVariables = Exact<{
 
 export type HalloweenPrizeCharactersQuery = { __typename?: 'Query', halloweenPrizeCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null, mainMedia: { __typename?: 'Media', id: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus } | null } | null }> };
 
-export type HalloweenCandyBoardFieldsFragment = { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> };
+export type HalloweenCandyBoardFieldsFragment = { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> };
 
 export type HalloweenCandyBoardQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5913,7 +5941,7 @@ export type HalloweenCandyBoardQueryVariables = Exact<{
 }>;
 
 
-export type HalloweenCandyBoardQuery = { __typename?: 'Query', halloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } | null };
+export type HalloweenCandyBoardQuery = { __typename?: 'Query', halloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } | null };
 
 export type MyHalloweenCandyBoardQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5928,7 +5956,15 @@ export type ApplyHalloweenCandyBoardActionsMutationVariables = Exact<{
 }>;
 
 
-export type ApplyHalloweenCandyBoardActionsMutation = { __typename?: 'Mutation', applyHalloweenCandyBoardActions: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } };
+export type ApplyHalloweenCandyBoardActionsMutation = { __typename?: 'Mutation', applyHalloweenCandyBoardActions: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } };
+
+export type SetHalloweenCandyBoardLightingMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  lighting?: InputMaybe<HalloweenCandyLightingInput>;
+}>;
+
+
+export type SetHalloweenCandyBoardLightingMutation = { __typename?: 'Mutation', setHalloweenCandyBoardLighting: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } };
 
 export type SetHalloweenCandyBoardBackgroundMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5936,7 +5972,7 @@ export type SetHalloweenCandyBoardBackgroundMutationVariables = Exact<{
 }>;
 
 
-export type SetHalloweenCandyBoardBackgroundMutation = { __typename?: 'Mutation', setHalloweenCandyBoardBackground: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } };
+export type SetHalloweenCandyBoardBackgroundMutation = { __typename?: 'Mutation', setHalloweenCandyBoardBackground: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } };
 
 export type ImageModerationQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -7239,6 +7275,11 @@ export const HalloweenCandyBoardFieldsFragmentDoc = gql`
   id
   viewerIsOwner
   background
+  lighting {
+    x
+    y
+    height
+  }
   owner {
     id
     username
@@ -12788,6 +12829,40 @@ export function useApplyHalloweenCandyBoardActionsMutation(baseOptions?: Apollo.
 export type ApplyHalloweenCandyBoardActionsMutationHookResult = ReturnType<typeof useApplyHalloweenCandyBoardActionsMutation>;
 export type ApplyHalloweenCandyBoardActionsMutationResult = Apollo.MutationResult<ApplyHalloweenCandyBoardActionsMutation>;
 export type ApplyHalloweenCandyBoardActionsMutationOptions = Apollo.BaseMutationOptions<ApplyHalloweenCandyBoardActionsMutation, ApplyHalloweenCandyBoardActionsMutationVariables>;
+export const SetHalloweenCandyBoardLightingDocument = gql`
+    mutation SetHalloweenCandyBoardLighting($communityId: ID!, $lighting: HalloweenCandyLightingInput) {
+  setHalloweenCandyBoardLighting(communityId: $communityId, lighting: $lighting) {
+    ...HalloweenCandyBoardFields
+  }
+}
+    ${HalloweenCandyBoardFieldsFragmentDoc}`;
+export type SetHalloweenCandyBoardLightingMutationFn = Apollo.MutationFunction<SetHalloweenCandyBoardLightingMutation, SetHalloweenCandyBoardLightingMutationVariables>;
+
+/**
+ * __useSetHalloweenCandyBoardLightingMutation__
+ *
+ * To run a mutation, you first call `useSetHalloweenCandyBoardLightingMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetHalloweenCandyBoardLightingMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setHalloweenCandyBoardLightingMutation, { data, loading, error }] = useSetHalloweenCandyBoardLightingMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      lighting: // value for 'lighting'
+ *   },
+ * });
+ */
+export function useSetHalloweenCandyBoardLightingMutation(baseOptions?: Apollo.MutationHookOptions<SetHalloweenCandyBoardLightingMutation, SetHalloweenCandyBoardLightingMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetHalloweenCandyBoardLightingMutation, SetHalloweenCandyBoardLightingMutationVariables>(SetHalloweenCandyBoardLightingDocument, options);
+      }
+export type SetHalloweenCandyBoardLightingMutationHookResult = ReturnType<typeof useSetHalloweenCandyBoardLightingMutation>;
+export type SetHalloweenCandyBoardLightingMutationResult = Apollo.MutationResult<SetHalloweenCandyBoardLightingMutation>;
+export type SetHalloweenCandyBoardLightingMutationOptions = Apollo.BaseMutationOptions<SetHalloweenCandyBoardLightingMutation, SetHalloweenCandyBoardLightingMutationVariables>;
 export const SetHalloweenCandyBoardBackgroundDocument = gql`
     mutation SetHalloweenCandyBoardBackground($communityId: ID!, $slug: String) {
   setHalloweenCandyBoardBackground(communityId: $communityId, slug: $slug) {

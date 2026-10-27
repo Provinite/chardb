@@ -19,6 +19,15 @@ const BOARD_FIELDS = `
   candies { knockEventId slug receivedAt }
   placements { knockEventId x y rotation scale }
   background
+  lighting { x y height }
+`;
+
+const SET_LIGHTING = `
+  mutation SetLighting($communityId: ID!, $lighting: HalloweenCandyLightingInput) {
+    setHalloweenCandyBoardLighting(communityId: $communityId, lighting: $lighting) {
+      ${BOARD_FIELDS}
+    }
+  }
 `;
 
 const SET_BACKGROUND = `
@@ -546,6 +555,63 @@ describe("Halloween candy board (e2e)", () => {
       });
       expect(res.body.errors).toBeDefined();
       expect(res.body.data).toBeNull();
+    });
+  });
+
+  describe("lighting the board", () => {
+    const setLighting = (
+      lighting: { x: number; y: number; height: number } | null,
+      token = playerToken,
+    ) =>
+      testApp.authenticatedGraphqlRequest(
+        SET_LIGHTING,
+        { communityId, lighting },
+        token,
+      );
+
+    it("starts with the default light", async () => {
+      expect((await myBoard()).body.data.myHalloweenCandyBoard.lighting).toBe(
+        null,
+      );
+    });
+
+    it("sets where the light is and how high, and shows it to anyone", async () => {
+      const light = { x: -0.6, y: -0.3, height: 0.4 };
+      const set = await setLighting(light);
+      expect(set.body.errors).toBeUndefined();
+      const { id, lighting } = set.body.data.setHalloweenCandyBoardLighting;
+      expect(lighting).toEqual(light);
+
+      const seen = await testApp.graphqlRequest(BOARD, { communityId, id });
+      expect(seen.body.data.halloweenCandyBoard.lighting).toEqual(light);
+    });
+
+    it("goes back to the default light", async () => {
+      await setLighting({ x: 0.5, y: 0.5, height: 0.5 });
+      const res = await setLighting(null);
+      expect(res.body.data.setHalloweenCandyBoardLighting.lighting).toBe(null);
+    });
+
+    it.each([
+      ["outside the circle", { x: 0.9, y: 0.9, height: 0.5 }],
+      ["past the edge", { x: 1.2, y: 0, height: 0.5 }],
+      ["too low", { x: 0, y: 0, height: 0.05 }],
+      ["too high", { x: 0, y: 0, height: 1.5 }],
+    ])("refuses a light %s", async (_what, lighting) => {
+      const res = await setLighting(lighting);
+      expect(res.body.errors?.[0].message).toBe(
+        "The light must be over the board, at a height from 0.1 to 1",
+      );
+      expect((await myBoard()).body.data.myHalloweenCandyBoard.lighting).toBe(
+        null,
+      );
+    });
+
+    it("needs Discord linked", async () => {
+      const res = await setLighting({ x: 0, y: 0, height: 0.5 }, unlinkedToken);
+      expect(res.body.errors?.[0].message).toBe(
+        "Link your Discord account to have a candy board",
+      );
     });
   });
 

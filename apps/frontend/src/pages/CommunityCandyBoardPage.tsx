@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import {
@@ -19,10 +19,13 @@ import { BackgroundDialog } from "../components/halloween/BackgroundDialog";
 import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useCandyBoardSync } from "../components/halloween/useCandyBoardSync";
 import { SaveStatusIndicator } from "../components/halloween/SaveStatusIndicator";
+import { LightingControl } from "../components/halloween/LightingControl";
+import type { Lighting } from "../components/halloween/candyLighting";
 import {
   useHalloweenCandyBoardQuery,
   useMyHalloweenCandyBoardQuery,
   useSetHalloweenCandyBoardBackgroundMutation,
+  useSetHalloweenCandyBoardLightingMutation,
   type HalloweenCandyBoardFieldsFragment,
 } from "../generated/graphql";
 
@@ -99,6 +102,15 @@ const Message = styled.p`
     font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
   }
 `;
+
+/** How long after the light last moves it is saved. */
+const LIGHTING_SAVE_DELAY_MS = 300;
+
+/** A board's light as the API sends it, as the controls hold it. */
+const stripLighting = (
+  lighting: HalloweenCandyBoardFieldsFragment["lighting"],
+): Lighting | null =>
+  lighting ? { x: lighting.x, y: lighting.y, height: lighting.height } : null;
 
 const NotRunning: React.FC = () => (
   <Container>
@@ -201,6 +213,37 @@ const BoardView: React.FC<{
   const [background, setBackground] = useState(board.background ?? null);
   useEffect(() => setBackground(board.background ?? null), [board.background]);
   const [saveBackground] = useSetHalloweenCandyBoardBackgroundMutation();
+  // The light follows the control as it moves, and is saved once it rests.
+  const savedLighting = stripLighting(board.lighting);
+  const [lighting, setLighting] = useState<Lighting | null>(savedLighting);
+  const lightingSave = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    if (!lightingSave.current) setLighting(stripLighting(board.lighting));
+  }, [board.lighting]);
+  useEffect(
+    () => () => {
+      if (lightingSave.current) clearTimeout(lightingSave.current);
+    },
+    [],
+  );
+  const [saveLighting] = useSetHalloweenCandyBoardLightingMutation();
+  const changeLighting = (next: Lighting | null) => {
+    setLighting(next);
+    if (lightingSave.current) clearTimeout(lightingSave.current);
+    lightingSave.current = setTimeout(async () => {
+      lightingSave.current = null;
+      if (!communityId) return;
+      try {
+        await saveLighting({ variables: { communityId, lighting: next } });
+      } catch (error) {
+        setLighting(savedLighting);
+        toast.error(
+          error instanceof Error ? error.message : "Could not move the light",
+        );
+      }
+    }, LIGHTING_SAVE_DELAY_MS);
+  };
+
   const [choosingBackground, setChoosingBackground] = useState(false);
   const [clearing, setClearing] = useState(false);
   const useBackground = async (slug: string | null) => {
@@ -266,6 +309,7 @@ const BoardView: React.FC<{
                 Retry
               </Button>
             )}
+            <LightingControl value={lighting} onChange={changeLighting} />
             <Button type="button" onClick={() => setChoosingBackground(true)}>
               <ImageIcon size={16} aria-hidden />
               Background
@@ -292,6 +336,7 @@ const BoardView: React.FC<{
         onAction={isOwner ? act : undefined}
         onDraggingChange={setDragging}
         background={background}
+        lighting={lighting}
       />
 
       {isOwner && (

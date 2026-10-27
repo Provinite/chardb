@@ -10,6 +10,7 @@ import { CandyBoardService } from "./candy-board.service";
 import {
   HalloweenCandyBoard,
   HalloweenCandyBoardAction,
+  HalloweenCandyLightingInput,
 } from "./candy-board.types";
 
 /** Candy boards: anyone with the link can look at one; its owner arranges it. */
@@ -63,6 +64,24 @@ export class CandyBoardResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyBoard> {
     return this.boards.applyActions(communityId, user.id, actions);
+  }
+
+  @AllowAnyAuthenticated()
+  @Mutation(() => HalloweenCandyBoard, {
+    description:
+      "Put the light that casts your candies' shadows; null goes back to " +
+      "the board's default light. Needs Discord linked.",
+  })
+  async setHalloweenCandyBoardLighting(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("lighting", {
+      type: () => HalloweenCandyLightingInput,
+      nullable: true,
+    })
+    lighting: HalloweenCandyLightingInput | null,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<HalloweenCandyBoard> {
+    return this.boards.setLighting(communityId, user.id, lighting ?? null);
   }
 
   @AllowAnyAuthenticated()

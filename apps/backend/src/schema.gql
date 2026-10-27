@@ -1550,6 +1550,9 @@ type HalloweenCandyBoard {
   """What a link to the board names"""
   id: ID!
 
+  """Null for the board's default light"""
+  lighting: HalloweenCandyLighting
+
   """
   The chardb account the board's Discord player is linked to. Null once they unlink.
   """
@@ -1592,6 +1595,29 @@ input HalloweenCandyEditInput {
   scale: Float
   x: Float
   y: Float
+}
+
+"""
+Where the light over a board is, which casts the candies' shadows: they fall away from it, longer the further to the side and lower it is
+"""
+type HalloweenCandyLighting {
+  """How high it hangs, 0.1 to 1"""
+  height: Float!
+
+  """Across the board: a point in a unit circle centred on it, -1 to 1"""
+  x: Float!
+
+  """
+  Up and down the board, downward positive: a point in a unit circle centred on it, -1 to 1
+  """
+  y: Float!
+}
+
+"""Where to put the light over your board"""
+input HalloweenCandyLightingInput {
+  height: Float!
+  x: Float!
+  y: Float!
 }
 
 """Where a candy sits on a board"""
@@ -2929,6 +2955,11 @@ type Mutation {
   Set the picture or tile behind your candies, by its slug; null goes back to the board's own night sky. Needs Discord linked.
   """
   setHalloweenCandyBoardBackground(communityId: ID!, slug: String): HalloweenCandyBoard!
+
+  """
+  Put the light that casts your candies' shadows; null goes back to the board's default light. Needs Discord linked.
+  """
+  setHalloweenCandyBoardLighting(communityId: ID!, lighting: HalloweenCandyLightingInput): HalloweenCandyBoard!
 
   """
   Mark a prize staff hand over themselves as delivered, or clear the mark. Chardb item and character prizes deliver themselves.

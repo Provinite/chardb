@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Tooltip } from "../Tooltip";
 import { NIGHT_SKY, backgroundStyle, findBackground } from "./boardBackgrounds";
+import { shadowFilter, type Lighting } from "./candyLighting";
 import {
   candiesAt,
   maskFromImage,
@@ -62,6 +63,9 @@ const Board = styled.div`
   width: 100%;
   aspect-ratio: ${BOARD_ASPECT};
   user-select: none;
+  /* What the candies' shadows are measured against (cqw), so a board looks
+     the same at any width. */
+  container-type: inline-size;
 `;
 
 /** The night sky the candies are stuck on, cut off at its edges. */
@@ -104,7 +108,6 @@ const Candy = styled.img<{ $editable: boolean }>`
   display: block;
   width: 100%;
   height: auto;
-  filter: drop-shadow(0 4px 6px #00000066);
   -webkit-user-drag: none;
   /* The board picks the cursor, from what is under the pointer: over a
      candy's see-through corner it is not over that candy. */
@@ -386,6 +389,8 @@ interface CandyBoardProps {
   onDraggingChange?: (dragging: boolean) => void;
   /** The picture or tile behind the candies; none for the night sky. */
   background?: string | null;
+  /** The light that casts the candies' shadows; none for the default. */
+  lighting?: Lighting | null;
 }
 
 export const CandyBoard: React.FC<CandyBoardProps> = ({
@@ -394,6 +399,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   onAction,
   onDraggingChange,
   background,
+  lighting,
 }) => {
   const boardRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number | null>(null);
@@ -782,6 +788,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                   draggable={false}
                   $editable={editable}
                   data-knock-event-id={p.knockEventId}
+                  style={{ filter: shadowFilter(lighting, p.rotation) }}
                   ref={(image) => {
                     if (image) candyImages.current.set(p.knockEventId, image);
                     else candyImages.current.delete(p.knockEventId);

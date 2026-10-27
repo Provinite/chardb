@@ -1,5 +1,8 @@
 import type { AnyNotificationPayload } from "./notifications/notification-payloads";
-import type { CandyPlacement } from "./halloween/board/candy-board.schema";
+import type {
+  CandyLighting,
+  CandyPlacement,
+} from "./halloween/board/candy-board.schema";
 
 declare global {
   namespace PrismaJson {
@@ -19,6 +22,13 @@ declare global {
      * which the service also validates against.
      */
     type HalloweenCandyPlacementsJson = CandyPlacement[];
+
+    /**
+     * Where the light over a Halloween candy board is, which casts the
+     * candies' shadows. Inferred from the zod schema in
+     * candy-board.schema.ts, which the service validates against.
+     */
+    type HalloweenCandyLightingJson = CandyLighting;
 
     /**
      * Type for character trait values stored as JSONB

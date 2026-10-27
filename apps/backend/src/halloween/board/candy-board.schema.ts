@@ -27,3 +27,23 @@ export const candyPlacementSchema = z.object({
 export const candyPlacementsSchema = z.array(candyPlacementSchema);
 
 export type CandyPlacement = z.infer<typeof candyPlacementSchema>;
+
+export const LIGHT_HEIGHT_MIN = 0.1;
+export const LIGHT_HEIGHT_MAX = 1;
+
+/**
+ * Where the light over a board is. `x` and `y` place it over the board, as a
+ * point in a unit circle centred on it (y down, as on screen); `height` is
+ * how high it hangs. Shadows fall away from it, longer the further to the
+ * side and the lower it is.
+ */
+export const candyLightingSchema = z
+  .object({
+    x: z.number().min(-1).max(1),
+    y: z.number().min(-1).max(1),
+    height: z.number().min(LIGHT_HEIGHT_MIN).max(LIGHT_HEIGHT_MAX),
+  })
+  // A hair of slack for a point a pointer put on the rim.
+  .refine(({ x, y }) => Math.hypot(x, y) <= 1 + 1e-9);
+
+export type CandyLighting = z.infer<typeof candyLightingSchema>;

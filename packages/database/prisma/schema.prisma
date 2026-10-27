@@ -2446,6 +2446,10 @@ model HalloweenCandyBoard {
   /// (`backgrounds/full/<slug>.webp` or `backgrounds/tiles/<slug>.webp`).
   /// Null for the board's own night sky.
   background String?  @db.VarChar(60)
+  /// Where the light that casts the candies' shadows is. Null for the
+  /// board's default light.
+  /// [HalloweenCandyLightingJson]
+  lighting   Json?
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique([guildId, userId])
