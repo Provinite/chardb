@@ -111,14 +111,13 @@ export class EmailVerificationService {
 
     try {
       await this.mintAndSend(user);
-    } catch (error) {
-      this.logger.error(
-        {
-          message: "Failed to send a requested verification email",
-          userId: user.id,
-        },
-        error instanceof Error ? error.stack : undefined,
-      );
+    } catch {
+      // EmailService has already logged the failure with its cause; this
+      // records only that a requested resend was the one that failed.
+      this.logger.warn({
+        message: "Requested verification email not sent",
+        userId: user.id,
+      });
     }
   }
 
