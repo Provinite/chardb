@@ -4,6 +4,7 @@ import styled from "styled-components";
 import {
   ArrowLeftRight,
   BarChart3,
+  Candy,
   Users,
   User,
   Mail,
@@ -458,6 +459,16 @@ export const CommunityNavigationSidebar: React.FC<
               label="Shop"
               isNested
             />
+
+            {/* Candy Board - every member's, while Halloween is on here */}
+            {community?.halloweenEnabled && (
+              <CommunityNavigationItem
+                to={`${communityBasePath}/halloween/board`}
+                icon={Candy}
+                label="Candy Board"
+                isNested
+              />
+            )}
 
             {/* Invite Codes - requires invite permissions */}
             {hasInvitePermissions && (

@@ -209,3 +209,49 @@ export const HALLOWEEN_PRIZE_CHARACTERS_QUERY = gql`
   }
   ${HALLOWEEN_PICKER_IMAGE_FRAGMENT}
 `;
+
+export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
+  fragment HalloweenCandyBoardFields on HalloweenCandyBoard {
+    owner {
+      id
+      username
+      displayName
+    }
+    candies {
+      knockEventId
+      slug
+      receivedAt
+    }
+    placements {
+      knockEventId
+      x
+      y
+      rotation
+      scale
+    }
+  }
+`;
+
+export const HALLOWEEN_CANDY_BOARD_QUERY = gql`
+  query HalloweenCandyBoard($communityId: ID!, $username: String!) {
+    halloweenCandyBoard(communityId: $communityId, username: $username) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const SAVE_HALLOWEEN_CANDY_BOARD_MUTATION = gql`
+  mutation SaveHalloweenCandyBoard(
+    $communityId: ID!
+    $placements: [HalloweenCandyPlacementInput!]!
+  ) {
+    saveHalloweenCandyBoard(
+      communityId: $communityId
+      placements: $placements
+    ) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;

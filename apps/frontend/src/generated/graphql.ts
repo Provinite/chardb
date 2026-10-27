@@ -1227,6 +1227,48 @@ export type GrantItemInput = {
   userId?: InputMaybe<Scalars['ID']['input']>;
 };
 
+/** A candy a player got from a lost knock */
+export type HalloweenCandy = {
+  __typename?: 'HalloweenCandy';
+  /** The knock that gave it; its id */
+  knockEventId: Scalars['Int']['output'];
+  receivedAt: Scalars['DateTime']['output'];
+  /** Which candy it is: its image is /halloween/candy/<slug>.png on the frontend */
+  slug: Scalars['String']['output'];
+};
+
+/** A player's Halloween candy board: every candy they have, and where they have stuck the ones on the board */
+export type HalloweenCandyBoard = {
+  __typename?: 'HalloweenCandyBoard';
+  /** Oldest first */
+  candies: Array<HalloweenCandy>;
+  owner: User;
+  /** Bottom of the pile first. A candy not here is not on the board. */
+  placements: Array<HalloweenCandyPlacement>;
+};
+
+/** Where a candy sits on a board */
+export type HalloweenCandyPlacement = {
+  __typename?: 'HalloweenCandyPlacement';
+  knockEventId: Scalars['Int']['output'];
+  /** Degrees clockwise, -180 to 180 */
+  rotation: Scalars['Float']['output'];
+  /** Size multiplier, 0.25 to 4 */
+  scale: Scalars['Float']['output'];
+  /** The candy's centre, as a fraction of the board's width, 0-1 */
+  x: Scalars['Float']['output'];
+  /** The candy's centre, as a fraction of the board's height, 0-1 */
+  y: Scalars['Float']['output'];
+};
+
+export type HalloweenCandyPlacementInput = {
+  knockEventId: Scalars['Int']['input'];
+  rotation: Scalars['Float']['input'];
+  scale: Scalars['Float']['input'];
+  x: Scalars['Float']['input'];
+  y: Scalars['Float']['input'];
+};
+
 /** The Halloween event as staff see it */
 export type HalloweenDashboard = {
   __typename?: 'HalloweenDashboard';
@@ -2100,6 +2142,8 @@ export type Mutation = {
   revokeItems: Scalars['Int']['output'];
   /** Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this). */
   runDeviantartUuidBackfill: Scalars['Boolean']['output'];
+  /** Replace where your candies sit on your board. Needs Discord linked. */
+  saveHalloweenCandyBoard: HalloweenCandyBoard;
   /** Replace the set of folders one character is in. Returns where it ends up. */
   setCharacterFolders: Array<CharacterFolder>;
   /** Sets or clears the main media for a character */
@@ -2605,6 +2649,12 @@ export type MutationRunDeviantartUuidBackfillArgs = {
 };
 
 
+export type MutationSaveHalloweenCandyBoardArgs = {
+  communityId: Scalars['ID']['input'];
+  placements: Array<HalloweenCandyPlacementInput>;
+};
+
+
 export type MutationSetCharacterFoldersArgs = {
   input: SetCharacterFoldersInput;
 };
@@ -3092,6 +3142,8 @@ export type Query = {
   globalMediaModerationQueue: MediaConnection;
   /** Get count of all pending images across all communities (admin only) */
   globalPendingImageCount: Scalars['Int']['output'];
+  /** A player's Halloween candy board, by their chardb username. Null when they have no Discord linked, since candies belong to Discord players. */
+  halloweenCandyBoard: Maybe<HalloweenCandyBoard>;
   /** The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems. */
   halloweenDashboard: HalloweenDashboard;
   /** Characters of the community a new Halloween prize could hand over, by name: no owner, no pending owner, and not a prize already (25 per search) */
@@ -3498,6 +3550,12 @@ export type QueryGlobalImageModerationQueueArgs = {
 export type QueryGlobalMediaModerationQueueArgs = {
   first?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryHalloweenCandyBoardArgs = {
+  communityId: Scalars['ID']['input'];
+  username: Scalars['String']['input'];
 };
 
 
@@ -5793,6 +5851,24 @@ export type HalloweenPrizeCharactersQueryVariables = Exact<{
 
 export type HalloweenPrizeCharactersQuery = { __typename?: 'Query', halloweenPrizeCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null, mainMedia: { __typename?: 'Media', id: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus } | null } | null }> };
 
+export type HalloweenCandyBoardFieldsFragment = { __typename?: 'HalloweenCandyBoard', owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> };
+
+export type HalloweenCandyBoardQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  username: Scalars['String']['input'];
+}>;
+
+
+export type HalloweenCandyBoardQuery = { __typename?: 'Query', halloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } | null };
+
+export type SaveHalloweenCandyBoardMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  placements: Array<HalloweenCandyPlacementInput> | HalloweenCandyPlacementInput;
+}>;
+
+
+export type SaveHalloweenCandyBoardMutation = { __typename?: 'Mutation', saveHalloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', owner: { __typename?: 'User', id: string, username: string, displayName: string | null }, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } };
+
 export type ImageModerationQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
   filters?: InputMaybe<ImageModerationQueueFiltersInput>;
@@ -7087,6 +7163,27 @@ export const HalloweenPickerImageFragmentDoc = gql`
   mediumUrl
   originalUrl
   moderationStatus
+}
+    `;
+export const HalloweenCandyBoardFieldsFragmentDoc = gql`
+    fragment HalloweenCandyBoardFields on HalloweenCandyBoard {
+  owner {
+    id
+    username
+    displayName
+  }
+  candies {
+    knockEventId
+    slug
+    receivedAt
+  }
+  placements {
+    knockEventId
+    x
+    y
+    rotation
+    scale
+  }
 }
     `;
 export const ModerationQueueMediaFieldsFragmentDoc = gql`
@@ -12504,6 +12601,81 @@ export type HalloweenPrizeCharactersQueryHookResult = ReturnType<typeof useHallo
 export type HalloweenPrizeCharactersLazyQueryHookResult = ReturnType<typeof useHalloweenPrizeCharactersLazyQuery>;
 export type HalloweenPrizeCharactersSuspenseQueryHookResult = ReturnType<typeof useHalloweenPrizeCharactersSuspenseQuery>;
 export type HalloweenPrizeCharactersQueryResult = Apollo.QueryResult<HalloweenPrizeCharactersQuery, HalloweenPrizeCharactersQueryVariables>;
+export const HalloweenCandyBoardDocument = gql`
+    query HalloweenCandyBoard($communityId: ID!, $username: String!) {
+  halloweenCandyBoard(communityId: $communityId, username: $username) {
+    ...HalloweenCandyBoardFields
+  }
+}
+    ${HalloweenCandyBoardFieldsFragmentDoc}`;
+
+/**
+ * __useHalloweenCandyBoardQuery__
+ *
+ * To run a query within a React component, call `useHalloweenCandyBoardQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHalloweenCandyBoardQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHalloweenCandyBoardQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      username: // value for 'username'
+ *   },
+ * });
+ */
+export function useHalloweenCandyBoardQuery(baseOptions: Apollo.QueryHookOptions<HalloweenCandyBoardQuery, HalloweenCandyBoardQueryVariables> & ({ variables: HalloweenCandyBoardQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HalloweenCandyBoardQuery, HalloweenCandyBoardQueryVariables>(HalloweenCandyBoardDocument, options);
+      }
+export function useHalloweenCandyBoardLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenCandyBoardQuery, HalloweenCandyBoardQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HalloweenCandyBoardQuery, HalloweenCandyBoardQueryVariables>(HalloweenCandyBoardDocument, options);
+        }
+export function useHalloweenCandyBoardSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenCandyBoardQuery, HalloweenCandyBoardQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HalloweenCandyBoardQuery, HalloweenCandyBoardQueryVariables>(HalloweenCandyBoardDocument, options);
+        }
+export type HalloweenCandyBoardQueryHookResult = ReturnType<typeof useHalloweenCandyBoardQuery>;
+export type HalloweenCandyBoardLazyQueryHookResult = ReturnType<typeof useHalloweenCandyBoardLazyQuery>;
+export type HalloweenCandyBoardSuspenseQueryHookResult = ReturnType<typeof useHalloweenCandyBoardSuspenseQuery>;
+export type HalloweenCandyBoardQueryResult = Apollo.QueryResult<HalloweenCandyBoardQuery, HalloweenCandyBoardQueryVariables>;
+export const SaveHalloweenCandyBoardDocument = gql`
+    mutation SaveHalloweenCandyBoard($communityId: ID!, $placements: [HalloweenCandyPlacementInput!]!) {
+  saveHalloweenCandyBoard(communityId: $communityId, placements: $placements) {
+    ...HalloweenCandyBoardFields
+  }
+}
+    ${HalloweenCandyBoardFieldsFragmentDoc}`;
+export type SaveHalloweenCandyBoardMutationFn = Apollo.MutationFunction<SaveHalloweenCandyBoardMutation, SaveHalloweenCandyBoardMutationVariables>;
+
+/**
+ * __useSaveHalloweenCandyBoardMutation__
+ *
+ * To run a mutation, you first call `useSaveHalloweenCandyBoardMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSaveHalloweenCandyBoardMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [saveHalloweenCandyBoardMutation, { data, loading, error }] = useSaveHalloweenCandyBoardMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      placements: // value for 'placements'
+ *   },
+ * });
+ */
+export function useSaveHalloweenCandyBoardMutation(baseOptions?: Apollo.MutationHookOptions<SaveHalloweenCandyBoardMutation, SaveHalloweenCandyBoardMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SaveHalloweenCandyBoardMutation, SaveHalloweenCandyBoardMutationVariables>(SaveHalloweenCandyBoardDocument, options);
+      }
+export type SaveHalloweenCandyBoardMutationHookResult = ReturnType<typeof useSaveHalloweenCandyBoardMutation>;
+export type SaveHalloweenCandyBoardMutationResult = Apollo.MutationResult<SaveHalloweenCandyBoardMutation>;
+export type SaveHalloweenCandyBoardMutationOptions = Apollo.BaseMutationOptions<SaveHalloweenCandyBoardMutation, SaveHalloweenCandyBoardMutationVariables>;
 export const ImageModerationQueueDocument = gql`
     query ImageModerationQueue($communityId: ID!, $filters: ImageModerationQueueFiltersInput, $first: Int, $offset: Int) {
   imageModerationQueue(
