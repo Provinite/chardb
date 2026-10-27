@@ -215,6 +215,11 @@ export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
     id
     viewerIsOwner
     background
+    backgroundEffects {
+      dim
+      tint
+      tintStrength
+    }
     lighting {
       x
       y
@@ -289,8 +294,16 @@ export const SET_HALLOWEEN_CANDY_BOARD_LIGHTING_MUTATION = gql`
 `;
 
 export const SET_HALLOWEEN_CANDY_BOARD_BACKGROUND_MUTATION = gql`
-  mutation SetHalloweenCandyBoardBackground($communityId: ID!, $slug: String) {
-    setHalloweenCandyBoardBackground(communityId: $communityId, slug: $slug) {
+  mutation SetHalloweenCandyBoardBackground(
+    $communityId: ID!
+    $slug: String
+    $effects: HalloweenCandyBackgroundEffectsInput
+  ) {
+    setHalloweenCandyBoardBackground(
+      communityId: $communityId
+      slug: $slug
+      effects: $effects
+    ) {
       ...HalloweenCandyBoardFields
     }
   }

@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 import { Tooltip } from "../Tooltip";
 import { NIGHT_SKY, backgroundStyle, findBackground } from "./boardBackgrounds";
+import type { BackgroundEffects } from "./backgroundEffects";
+import { BackgroundEffectLayers } from "./BackgroundEffectLayers";
 import { shadowFilter, type Lighting } from "./candyLighting";
 import {
   candiesAt,
@@ -77,6 +79,8 @@ const Surface = styled.div`
   /* The night sky, unless a chosen picture or tile is set over it inline. */
   background: ${NIGHT_SKY};
   box-shadow: ${({ theme }) => theme.shadows.lg};
+  /* So a tint blends with the background alone. */
+  isolation: isolate;
 `;
 
 /** Places, sizes and rotates one candy's picture. */
@@ -389,6 +393,8 @@ interface CandyBoardProps {
   onDraggingChange?: (dragging: boolean) => void;
   /** The picture or tile behind the candies; none for the night sky. */
   background?: string | null;
+  /** How the background is dimmed and tinted; none for neither. */
+  backgroundEffects?: BackgroundEffects | null;
   /** The light that casts the candies' shadows; none for the default. */
   lighting?: Lighting | null;
 }
@@ -399,6 +405,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   onAction,
   onDraggingChange,
   background,
+  backgroundEffects,
   lighting,
 }) => {
   const boardRef = useRef<HTMLDivElement>(null);
@@ -790,6 +797,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         }}
       >
         <Surface style={backgroundStyle(findBackground(background))}>
+          <BackgroundEffectLayers effects={backgroundEffects ?? null} />
           {placements.map((p) => {
             const slug = slugs.get(p.knockEventId);
             if (!slug) return null;

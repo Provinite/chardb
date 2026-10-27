@@ -10,6 +10,7 @@ import { CandyBoardService } from "./candy-board.service";
 import {
   HalloweenCandyBoard,
   HalloweenCandyBoardAction,
+  HalloweenCandyBackgroundEffectsInput,
   HalloweenCandyLightingInput,
 } from "./candy-board.types";
 
@@ -87,14 +88,25 @@ export class CandyBoardResolver {
   @AllowAnyAuthenticated()
   @Mutation(() => HalloweenCandyBoard, {
     description:
-      "Set the picture or tile behind your candies, by its slug; null goes " +
-      "back to the board's own night sky. Needs Discord linked.",
+      "Set the picture or tile behind your candies, by its slug, and how it " +
+      "is dimmed and tinted; a null slug goes back to the board's own night " +
+      "sky, and null effects to neither. Needs Discord linked.",
   })
   async setHalloweenCandyBoardBackground(
     @Args("communityId", { type: () => ID }) communityId: string,
     @Args("slug", { type: () => String, nullable: true }) slug: string | null,
+    @Args("effects", {
+      type: () => HalloweenCandyBackgroundEffectsInput,
+      nullable: true,
+    })
+    effects: HalloweenCandyBackgroundEffectsInput | null,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyBoard> {
-    return this.boards.setBackground(communityId, user.id, slug ?? null);
+    return this.boards.setBackground(
+      communityId,
+      user.id,
+      slug ?? null,
+      effects ?? null,
+    );
   }
 }

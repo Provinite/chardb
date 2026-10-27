@@ -183,6 +183,39 @@ export class HalloweenCandyLightingInput {
 
 @ObjectType({
   description:
+    "How a board's background is muted behind its candies: dimmed, and tinted toward a colour",
+})
+export class HalloweenCandyBackgroundEffects {
+  @Field(() => Float, {
+    description: "How much darker it is, 0 (not at all) to 0.8",
+  })
+  dim: number;
+
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "The #rrggbb colour it is recoloured toward, keeping its light and dark; null for none",
+  })
+  tint: string | null;
+
+  @Field(() => Float, { description: "How far toward the tint, 0 to 1" })
+  tintStrength: number;
+}
+
+@InputType({ description: "How to dim and tint your board's background" })
+export class HalloweenCandyBackgroundEffectsInput {
+  @Field(() => Float)
+  dim: number;
+
+  @Field(() => String, { nullable: true })
+  tint: string | null;
+
+  @Field(() => Float)
+  tintStrength: number;
+}
+
+@ObjectType({
+  description:
     "A player's Halloween candy board: every candy they have, and where they have stuck the ones on the board",
 })
 export class HalloweenCandyBoard {
@@ -208,6 +241,12 @@ export class HalloweenCandyBoard {
       "for the board's own night sky.",
   })
   background: string | null;
+
+  @Field(() => HalloweenCandyBackgroundEffects, {
+    nullable: true,
+    description: "Null for a background neither dimmed nor tinted",
+  })
+  backgroundEffects: HalloweenCandyBackgroundEffects | null;
 
   @Field(() => HalloweenCandyLighting, {
     nullable: true,

@@ -76,7 +76,9 @@ import {
 import {
   DEFAULT_LIGHTING,
   shadowFilter,
+  type Lighting,
 } from "../../components/halloween/candyLighting";
+import type { BackgroundEffects } from "../../components/halloween/backgroundEffects";
 
 const candy = (knockEventId: number, slug: string) => ({
   __typename: "HalloweenCandy" as const,
@@ -100,10 +102,15 @@ const board = (
     viewerIsOwner = true,
     owner = "owner" as string | null,
     background = null as string | null,
-    lighting = null as { x: number; y: number; height: number } | null,
+    lighting = null as Lighting | null,
+    backgroundEffects = null as BackgroundEffects | null,
   } = {},
 ) => ({
   __typename: "HalloweenCandyBoard" as const,
+  backgroundEffects: backgroundEffects && {
+    __typename: "HalloweenCandyBackgroundEffects" as const,
+    ...backgroundEffects,
+  },
   lighting: lighting && {
     __typename: "HalloweenCandyLighting" as const,
     ...lighting,
@@ -899,10 +906,11 @@ describe("CommunityCandyBoardPage", () => {
     const setBackground = (
       slug: string | null,
       outcome: { board: ReturnType<typeof board> } | { graphQLError: string },
+      effects: BackgroundEffects | null = null,
     ): MockedResponse => ({
       request: {
         query: SetHalloweenCandyBoardBackgroundDocument,
-        variables: { communityId: COMMUNITY_ID, slug },
+        variables: { communityId: COMMUNITY_ID, slug, effects },
       },
       result:
         "board" in outcome
@@ -1040,6 +1048,135 @@ describe("CommunityCandyBoardPage", () => {
       expect((await surface()).style.backgroundImage).toContain(
         "tile-corkboard.webp",
       );
+    });
+
+    describe("dimmed and tinted", () => {
+      const purple = { dim: 0.4, tint: "#7c3aed", tintStrength: 0.5 };
+      const tintOf = (el: HTMLElement) =>
+        el.querySelector<HTMLElement>('[data-testid="background-tint"]');
+      const dimOf = (el: HTMLElement) =>
+        el.querySelector<HTMLElement>('[data-testid="background-dim"]');
+
+      it("is drawn for anyone looking, under the candies", async () => {
+        renderBoard([
+          boardQuery(
+            board([2], {
+              viewerIsOwner: false,
+              background: "tile-corkboard",
+              backgroundEffects: purple,
+            }),
+          ),
+        ]);
+        const s = await surface();
+        const tint = tintOf(s);
+        const dim = dimOf(s);
+        expect(tint?.style.backgroundColor).toBe("rgb(124, 58, 237)");
+        expect(tint?.style.opacity).toBe("0.5");
+        expect(tint?.style.mixBlendMode).toBe("color");
+        expect(dim?.style.opacity).toBe("0.4");
+        // Drawn before the candies, so they lie over it.
+        const candy = within(s).getByRole("img", { name: "luther head" });
+        expect(
+          dim!.compareDocumentPosition(candy) &
+            Node.DOCUMENT_POSITION_FOLLOWING,
+        ).toBeTruthy();
+      });
+
+      it("opens on the board's dim and tint", async () => {
+        renderBoard([
+          boardQuery(
+            board([], {
+              background: "tile-corkboard",
+              backgroundEffects: purple,
+            }),
+          ),
+        ]);
+        const dialog = await openDialog();
+        expect(within(dialog).getByRole("slider", { name: "Dim" })).toHaveValue(
+          "0.4",
+        );
+        expect(
+          within(dialog).getByRole("radio", { name: "Witch purple" }),
+        ).toBeChecked();
+        expect(
+          within(dialog).getByRole("slider", { name: "Tint strength" }),
+        ).toHaveValue("0.5");
+      });
+
+      it("previews a dim and a tint, and saves them with the background", async () => {
+        const saved = vi.fn(() => ({
+          data: {
+            setHalloweenCandyBoardBackground: board([], {
+              background: "tile-corkboard",
+              backgroundEffects: purple,
+            }),
+          },
+        }));
+        renderBoard([
+          boardQuery(board([], { background: "tile-corkboard" })),
+          {
+            ...setBackground("tile-corkboard", { board: board([]) }, purple),
+            result: saved,
+          },
+        ]);
+        const dialog = await openDialog();
+
+        fireEvent.change(within(dialog).getByRole("slider", { name: "Dim" }), {
+          target: { value: "0.4" },
+        });
+        await userEvent.click(
+          within(dialog).getByRole("radio", { name: "Witch purple" }),
+        );
+        fireEvent.change(
+          within(dialog).getByRole("slider", { name: "Tint strength" }),
+          { target: { value: "0.5" } },
+        );
+        expect(tintOf(preview(dialog))?.style.opacity).toBe("0.5");
+        expect(dimOf(preview(dialog))?.style.opacity).toBe("0.4");
+        expect(tintOf(await surface())).toBe(null);
+
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Use background" }),
+        );
+        await waitFor(() => expect(saved).toHaveBeenCalled());
+        expect(tintOf(await surface())?.style.opacity).toBe("0.5");
+      });
+
+      it("starts a first tint part way, and lets it go with No tint", async () => {
+        renderBoard([boardQuery(board([]))]);
+        const dialog = await openDialog();
+        const strength = within(dialog).getByRole("slider", {
+          name: "Tint strength",
+        });
+        expect(strength).toBeDisabled();
+
+        await userEvent.click(
+          within(dialog).getByRole("radio", { name: "Pumpkin" }),
+        );
+        expect(strength).toBeEnabled();
+        expect(strength).toHaveValue("0.6");
+
+        await userEvent.click(
+          within(dialog).getByRole("radio", { name: "No tint" }),
+        );
+        expect(strength).toBeDisabled();
+        expect(tintOf(preview(dialog))).toBe(null);
+      });
+
+      it("tints any colour from the custom picker", async () => {
+        renderBoard([boardQuery(board([]))]);
+        const dialog = await openDialog();
+
+        fireEvent.change(within(dialog).getByLabelText("Custom tint"), {
+          target: { value: "#123456" },
+        });
+        expect(tintOf(preview(dialog))?.style.backgroundColor).toBe(
+          "rgb(18, 52, 86)",
+        );
+        expect(
+          within(dialog).getByRole("radio", { name: "No tint" }),
+        ).not.toBeChecked();
+      });
     });
   });
 

@@ -21,6 +21,7 @@ import { useCandyBoardSync } from "../components/halloween/useCandyBoardSync";
 import { SaveStatusIndicator } from "../components/halloween/SaveStatusIndicator";
 import { LightingControl } from "../components/halloween/LightingControl";
 import type { Lighting } from "../components/halloween/candyLighting";
+import type { BackgroundEffects } from "../components/halloween/backgroundEffects";
 import {
   useHalloweenCandyBoardQuery,
   useMyHalloweenCandyBoardQuery,
@@ -116,6 +117,18 @@ const stripLighting = (
         y: lighting.y,
         height: lighting.height,
         intensity: lighting.intensity,
+      }
+    : null;
+
+/** How a board's background is muted as the API sends it, as the dialog holds it. */
+const stripEffects = (
+  effects: HalloweenCandyBoardFieldsFragment["backgroundEffects"],
+): BackgroundEffects | null =>
+  effects
+    ? {
+        dim: effects.dim,
+        tint: effects.tint ?? null,
+        tintStrength: effects.tintStrength,
       }
     : null;
 
@@ -219,6 +232,13 @@ const BoardView: React.FC<{
   // value, nothing like the stream of candy changes the sync hook queues.
   const [background, setBackground] = useState(board.background ?? null);
   useEffect(() => setBackground(board.background ?? null), [board.background]);
+  const savedEffects = stripEffects(board.backgroundEffects);
+  const [backgroundEffects, setBackgroundEffects] =
+    useState<BackgroundEffects | null>(savedEffects);
+  useEffect(
+    () => setBackgroundEffects(stripEffects(board.backgroundEffects)),
+    [board.backgroundEffects],
+  );
   const [saveBackground] = useSetHalloweenCandyBoardBackgroundMutation();
   // The light follows the control as it moves, and is saved once it rests.
   const savedLighting = stripLighting(board.lighting);
@@ -253,14 +273,19 @@ const BoardView: React.FC<{
 
   const [choosingBackground, setChoosingBackground] = useState(false);
   const [clearing, setClearing] = useState(false);
-  const useBackground = async (slug: string | null) => {
+  const useBackground = async (
+    slug: string | null,
+    effects: BackgroundEffects | null,
+  ) => {
     const saved = board.background ?? null;
     setBackground(slug);
+    setBackgroundEffects(effects);
     if (!communityId) return;
     try {
-      await saveBackground({ variables: { communityId, slug } });
+      await saveBackground({ variables: { communityId, slug, effects } });
     } catch (error) {
       setBackground(saved);
+      setBackgroundEffects(savedEffects);
       toast.error(
         error instanceof Error
           ? error.message
@@ -343,6 +368,7 @@ const BoardView: React.FC<{
         onAction={isOwner ? act : undefined}
         onDraggingChange={setDragging}
         background={background}
+        backgroundEffects={backgroundEffects}
         lighting={lighting}
       />
 
@@ -351,6 +377,7 @@ const BoardView: React.FC<{
           <BackgroundDialog
             open={choosingBackground}
             value={background}
+            effects={backgroundEffects}
             onClose={() => setChoosingBackground(false)}
             onUse={useBackground}
           />

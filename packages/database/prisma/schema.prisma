@@ -2446,6 +2446,9 @@ model HalloweenCandyBoard {
   /// (`backgrounds/full/<slug>.webp` or `backgrounds/tiles/<slug>.webp`).
   /// Null for the board's own night sky.
   background String?  @db.VarChar(60)
+  /// How the background is dimmed and tinted. Null for neither.
+  /// [HalloweenCandyBackgroundEffectsJson]
+  backgroundEffects Json? @map("background_effects")
   /// Where the light that casts the candies' shadows is. Null for the
   /// board's default light.
   /// [HalloweenCandyLightingJson]

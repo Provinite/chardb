@@ -11,6 +11,7 @@ CREATE TABLE "halloween_candy_boards" (
     "user_id" VARCHAR(30) NOT NULL,
     "placements" JSONB NOT NULL DEFAULT '[]',
     "background" VARCHAR(60),
+    "background_effects" JSONB,
     "lighting" JSONB,
     "updated_at" TIMESTAMPTZ NOT NULL,
 

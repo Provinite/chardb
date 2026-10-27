@@ -1,5 +1,6 @@
 import type { AnyNotificationPayload } from "./notifications/notification-payloads";
 import type {
+  CandyBackgroundEffects,
   CandyLighting,
   CandyPlacement,
 } from "./halloween/board/candy-board.schema";
@@ -29,6 +30,12 @@ declare global {
      * candy-board.schema.ts, which the service validates against.
      */
     type HalloweenCandyLightingJson = CandyLighting;
+
+    /**
+     * How a Halloween candy board's background is dimmed and tinted. Inferred
+     * from the zod schema in candy-board.schema.ts.
+     */
+    type HalloweenCandyBackgroundEffectsJson = CandyBackgroundEffects;
 
     /**
      * Type for character trait values stored as JSONB

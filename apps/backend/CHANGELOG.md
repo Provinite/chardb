@@ -18,7 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Prisma operations and SQL queries appear as spans in traces**, nested under the resolver that issued them (#97).
-- **Lost knocks record their candy**, and players arrange them on a candy board: `myHalloweenCandyBoard`, `halloweenCandyBoard` by its UUID, and `applyHalloweenCandyBoardActions`, whose actions are a `@oneOf` input (add, edit, raise, lower, forward, backward, remove), at most 100 a save, skipping any that cannot apply; `setHalloweenCandyBoardBackground` and `setHalloweenCandyBoardLighting` set what is behind the candies and where their light comes from.
+- **Lost knocks record their candy**, and players arrange them on a candy board: `myHalloweenCandyBoard`, `halloweenCandyBoard` by its UUID, and `applyHalloweenCandyBoardActions`, whose actions are a `@oneOf` input (add, edit, raise, lower, forward, backward, remove), at most 100 a save, skipping any that cannot apply; `setHalloweenCandyBoardBackground` and `setHalloweenCandyBoardLighting` set what is behind the candies, how it is dimmed and tinted, and where their light comes from.
 
 ### Changed
 

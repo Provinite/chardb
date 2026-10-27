@@ -49,3 +49,24 @@ export const candyLightingSchema = z
   .refine(({ x, y }) => Math.hypot(x, y) <= 1 + 1e-9);
 
 export type CandyLighting = z.infer<typeof candyLightingSchema>;
+
+export const BACKGROUND_DIM_MAX = 0.8;
+
+/**
+ * What mutes a board's background, for a picture too busy behind its
+ * candies: `dim` darkens it, from 0 (not at all) to 0.8; `tint` recolours it
+ * toward one `#rrggbb` colour, keeping its light and dark, by `tintStrength`
+ * from 0 to 1. No tint is null.
+ */
+export const candyBackgroundEffectsSchema = z.object({
+  dim: z.number().min(0).max(BACKGROUND_DIM_MAX),
+  tint: z
+    .string()
+    .regex(/^#[0-9a-f]{6}$/i)
+    .nullable(),
+  tintStrength: z.number().min(0).max(1),
+});
+
+export type CandyBackgroundEffects = z.infer<
+  typeof candyBackgroundEffectsSchema
+>;

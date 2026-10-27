@@ -19,8 +19,10 @@ import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { BACKGROUND_SLUGS } from "../discord/images.generated";
 import { addedCandies, applyCandyBoardActions } from "./candy-board.actions";
 import {
+  candyBackgroundEffectsSchema,
   candyLightingSchema,
   candyPlacementsSchema,
+  type CandyBackgroundEffects,
   type CandyLighting,
   type CandyPlacement,
 } from "./candy-board.schema";
@@ -46,6 +48,20 @@ const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
  */
 function storedPlacements(board: BoardRow): CandyPlacement[] {
   const parsed = candyPlacementsSchema.safeParse(board.placements);
+  if (!parsed.success) {
+    throw new StoredCandyBoardInvalidError(board.id, parsed.error.message);
+  }
+  return parsed.data;
+}
+
+/** How a board's background is muted, checked on the way out as on the way in. */
+function storedBackgroundEffects(
+  board: BoardRow,
+): CandyBackgroundEffects | null {
+  if (board.backgroundEffects === null) return null;
+  const parsed = candyBackgroundEffectsSchema.safeParse(
+    board.backgroundEffects,
+  );
   if (!parsed.success) {
     throw new StoredCandyBoardInvalidError(board.id, parsed.error.message);
   }
@@ -231,13 +247,26 @@ export class CandyBoardService {
     return this.toBoard(board, true);
   }
 
+  /**
+   * Puts the picture or tile behind the signed-in player's candies, and how
+   * it is dimmed and tinted; null effects for neither.
+   */
   async setBackground(
     communityId: string,
     userId: string,
     slug: string | null,
+    effects: CandyBackgroundEffects | null = null,
   ): Promise<HalloweenCandyBoard> {
     if (slug !== null && !BACKGROUND_SLUGS.includes(slug)) {
       throw new BadRequestException("There is no such background");
+    }
+    if (
+      effects !== null &&
+      !candyBackgroundEffectsSchema.safeParse(effects).success
+    ) {
+      throw new BadRequestException(
+        "The background can be dimmed by up to 0.8, and tinted a #rrggbb colour at a strength from 0 to 1",
+      );
     }
     const guildId = await this.requireGuild(communityId);
     const discordUserId = await this.discordIdOf(userId);
@@ -248,8 +277,13 @@ export class CandyBoardService {
     }
     const board = await this.db.halloweenCandyBoard.upsert({
       where: { guildId_userId: { guildId, userId: discordUserId } },
-      create: { guildId, userId: discordUserId, background: slug },
-      update: { background: slug },
+      create: {
+        guildId,
+        userId: discordUserId,
+        background: slug,
+        backgroundEffects: effects ?? Prisma.DbNull,
+      },
+      update: { background: slug, backgroundEffects: effects ?? Prisma.DbNull },
     });
     return this.toBoard(board, true);
   }
@@ -309,6 +343,7 @@ export class CandyBoardService {
       owner: account ? mapPrismaUserToGraphQL(account.user) : null,
       viewerIsOwner,
       background: board.background,
+      backgroundEffects: storedBackgroundEffects(board),
       lighting: storedLighting(board),
       candies,
       // A candy whose knock is gone is dropped rather than drawn as nothing.

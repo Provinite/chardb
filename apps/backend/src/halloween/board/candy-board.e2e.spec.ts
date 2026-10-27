@@ -19,6 +19,7 @@ const BOARD_FIELDS = `
   candies { knockEventId slug receivedAt }
   placements { knockEventId x y rotation scale }
   background
+  backgroundEffects { dim tint tintStrength }
   lighting { x y height intensity }
 `;
 
@@ -31,8 +32,16 @@ const SET_LIGHTING = `
 `;
 
 const SET_BACKGROUND = `
-  mutation SetBackground($communityId: ID!, $slug: String) {
-    setHalloweenCandyBoardBackground(communityId: $communityId, slug: $slug) {
+  mutation SetBackground(
+    $communityId: ID!
+    $slug: String
+    $effects: HalloweenCandyBackgroundEffectsInput
+  ) {
+    setHalloweenCandyBoardBackground(
+      communityId: $communityId
+      slug: $slug
+      effects: $effects
+    ) {
       ${BOARD_FIELDS}
     }
   }
@@ -626,12 +635,81 @@ describe("Halloween candy board (e2e)", () => {
   });
 
   describe("choosing a background", () => {
-    const setBackground = (slug: string | null, token = playerToken) =>
+    type Effects = { dim: number; tint: string | null; tintStrength: number };
+    const setBackground = (
+      slug: string | null,
+      token = playerToken,
+      effects: Effects | null = null,
+    ) =>
       testApp.authenticatedGraphqlRequest(
         SET_BACKGROUND,
-        { communityId, slug },
+        { communityId, slug, effects },
         token,
       );
+
+    describe("dimming and tinting it", () => {
+      const REFUSED =
+        "The background can be dimmed by up to 0.8, and tinted a #rrggbb colour at a strength from 0 to 1";
+
+      it("starts with neither", async () => {
+        expect(
+          (await myBoard()).body.data.myHalloweenCandyBoard.backgroundEffects,
+        ).toBe(null);
+      });
+
+      it("saves them with the background, and shows them to anyone", async () => {
+        const effects = { dim: 0.4, tint: "#7c3aed", tintStrength: 0.6 };
+        const set = await setBackground("tile-corkboard", playerToken, effects);
+        expect(set.body.errors).toBeUndefined();
+        const board = set.body.data.setHalloweenCandyBoardBackground;
+        expect(board.background).toBe("tile-corkboard");
+        expect(board.backgroundEffects).toEqual(effects);
+
+        const seen = await testApp.graphqlRequest(BOARD, {
+          communityId,
+          id: board.id,
+        });
+        expect(seen.body.data.halloweenCandyBoard.backgroundEffects).toEqual(
+          effects,
+        );
+      });
+
+      it("dims without a tint", async () => {
+        const effects = { dim: 0.5, tint: null, tintStrength: 0 };
+        const res = await setBackground(null, playerToken, effects);
+        expect(
+          res.body.data.setHalloweenCandyBoardBackground.backgroundEffects,
+        ).toEqual(effects);
+      });
+
+      it("drops them when a background is set without any", async () => {
+        await setBackground("tile-corkboard", playerToken, {
+          dim: 0.4,
+          tint: null,
+          tintStrength: 0,
+        });
+        const res = await setBackground("tile-corkboard");
+        expect(
+          res.body.data.setHalloweenCandyBoardBackground.backgroundEffects,
+        ).toBe(null);
+      });
+
+      it.each([
+        ["dimmed too far", { dim: 0.9, tint: null, tintStrength: 0 }],
+        ["brightened", { dim: -0.1, tint: null, tintStrength: 0 }],
+        ["tinted a name", { dim: 0, tint: "purple", tintStrength: 0.5 }],
+        ["tinted a short colour", { dim: 0, tint: "#fff", tintStrength: 0.5 }],
+        ["tinted too strongly", { dim: 0, tint: "#7c3aed", tintStrength: 1.5 }],
+        ["tinted below none", { dim: 0, tint: "#7c3aed", tintStrength: -1 }],
+      ])("refuses a background %s", async (_what, effects) => {
+        const res = await setBackground("tile-corkboard", playerToken, effects);
+        expect(res.body.errors?.[0].message).toBe(REFUSED);
+        const { background, backgroundEffects } = (await myBoard()).body.data
+          .myHalloweenCandyBoard;
+        expect(background).toBe(null);
+        expect(backgroundEffects).toBe(null);
+      });
+    });
 
     it("starts with none, the board's own night sky", async () => {
       expect((await myBoard()).body.data.myHalloweenCandyBoard.background).toBe(
