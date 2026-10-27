@@ -214,6 +214,7 @@ export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
   fragment HalloweenCandyBoardFields on HalloweenCandyBoard {
     id
     viewerIsOwner
+    background
     owner {
       id
       username
@@ -260,6 +261,15 @@ export const APPLY_HALLOWEEN_CANDY_BOARD_ACTIONS_MUTATION = gql`
       communityId: $communityId
       actions: $actions
     ) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const SET_HALLOWEEN_CANDY_BOARD_BACKGROUND_MUTATION = gql`
+  mutation SetHalloweenCandyBoardBackground($communityId: ID!, $slug: String) {
+    setHalloweenCandyBoardBackground(communityId: $communityId, slug: $slug) {
       ...HalloweenCandyBoardFields
     }
   }

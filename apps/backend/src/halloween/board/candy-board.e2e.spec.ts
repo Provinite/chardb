@@ -18,6 +18,15 @@ const BOARD_FIELDS = `
   owner { username }
   candies { knockEventId slug receivedAt }
   placements { knockEventId x y rotation scale }
+  background
+`;
+
+const SET_BACKGROUND = `
+  mutation SetBackground($communityId: ID!, $slug: String) {
+    setHalloweenCandyBoardBackground(communityId: $communityId, slug: $slug) {
+      ${BOARD_FIELDS}
+    }
+  }
 `;
 
 const BOARD = `
@@ -537,6 +546,66 @@ describe("Halloween candy board (e2e)", () => {
       });
       expect(res.body.errors).toBeDefined();
       expect(res.body.data).toBeNull();
+    });
+  });
+
+  describe("choosing a background", () => {
+    const setBackground = (slug: string | null, token = playerToken) =>
+      testApp.authenticatedGraphqlRequest(
+        SET_BACKGROUND,
+        { communityId, slug },
+        token,
+      );
+
+    it("starts with none, the board's own night sky", async () => {
+      expect((await myBoard()).body.data.myHalloweenCandyBoard.background).toBe(
+        null,
+      );
+    });
+
+    it("sets a full picture or a tile, and shows it to anyone", async () => {
+      const set = await setBackground("tile-corkboard");
+      expect(set.body.errors).toBeUndefined();
+      const { id, background } = set.body.data.setHalloweenCandyBoardBackground;
+      expect(background).toBe("tile-corkboard");
+
+      await setBackground("daphne-luther-hug");
+      const seen = await testApp.graphqlRequest(BOARD, { communityId, id });
+      expect(seen.body.data.halloweenCandyBoard.background).toBe(
+        "daphne-luther-hug",
+      );
+    });
+
+    it("goes back to the night sky", async () => {
+      await setBackground("tile-corkboard");
+      const res = await setBackground(null);
+      expect(res.body.data.setHalloweenCandyBoardBackground.background).toBe(
+        null,
+      );
+    });
+
+    it("leaves the candies where they are", async () => {
+      const a = await knock();
+      await apply([add(a.id)]);
+      const res = await setBackground("tile-corkboard");
+      expect(res.body.data.setHalloweenCandyBoardBackground.placements).toEqual(
+        [at(a.id)],
+      );
+    });
+
+    it("refuses a background there is no such picture for", async () => {
+      const res = await setBackground("tile-nonsense");
+      expect(res.body.errors?.[0].message).toBe("There is no such background");
+      expect((await myBoard()).body.data.myHalloweenCandyBoard.background).toBe(
+        null,
+      );
+    });
+
+    it("needs Discord linked", async () => {
+      const res = await setBackground("tile-corkboard", unlinkedToken);
+      expect(res.body.errors?.[0].message).toBe(
+        "Link your Discord account to have a candy board",
+      );
     });
   });
 });

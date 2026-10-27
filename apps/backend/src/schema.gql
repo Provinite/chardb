@@ -1539,6 +1539,11 @@ input HalloweenCandyAddInput {
 A player's Halloween candy board: every candy they have, and where they have stuck the ones on the board
 """
 type HalloweenCandyBoard {
+  """
+  The picture or tile behind the candies, by its slug: a full picture is /halloween/backgrounds/full/<slug>.webp on the frontend, a tile (its slug starts tile-) /halloween/backgrounds/tiles/<slug>.webp. Null for the board's own night sky.
+  """
+  background: String
+
   """Oldest first"""
   candies: [HalloweenCandy!]!
 
@@ -2919,6 +2924,11 @@ type Mutation {
   Turn the Halloween event's pages on or off for a community (site admins)
   """
   setCommunityHalloweenEnabled(communityId: ID!, enabled: Boolean!): Community!
+
+  """
+  Set the picture or tile behind your candies, by its slug; null goes back to the board's own night sky. Needs Discord linked.
+  """
+  setHalloweenCandyBoardBackground(communityId: ID!, slug: String): HalloweenCandyBoard!
 
   """
   Mark a prize staff hand over themselves as delivered, or clear the mark. Chardb item and character prizes deliver themselves.

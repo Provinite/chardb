@@ -65,6 +65,7 @@ import {
   ApplyHalloweenCandyBoardActionsDocument,
   HalloweenCandyBoardDocument,
   MyHalloweenCandyBoardDocument,
+  SetHalloweenCandyBoardBackgroundDocument,
   type HalloweenCandyBoardAction,
 } from "../../generated/graphql";
 import {
@@ -90,11 +91,16 @@ const placement = (knockEventId: number) => ({
 
 const board = (
   placed: number[],
-  { viewerIsOwner = true, owner = "owner" as string | null } = {},
+  {
+    viewerIsOwner = true,
+    owner = "owner" as string | null,
+    background = null as string | null,
+  } = {},
 ) => ({
   __typename: "HalloweenCandyBoard" as const,
   id: BOARD_ID,
   viewerIsOwner,
+  background,
   owner: owner
     ? {
         __typename: "User" as const,
@@ -818,6 +824,113 @@ describe("CommunityCandyBoardPage", () => {
       expect(
         await screen.findByRole("button", { name: "Copy link" }),
       ).toBeInTheDocument();
+    });
+  });
+
+  describe("the background", () => {
+    const setBackground = (
+      slug: string | null,
+      outcome: { board: ReturnType<typeof board> } | { graphQLError: string },
+    ): MockedResponse => ({
+      request: {
+        query: SetHalloweenCandyBoardBackgroundDocument,
+        variables: { communityId: COMMUNITY_ID, slug },
+      },
+      result:
+        "board" in outcome
+          ? { data: { setHalloweenCandyBoardBackground: outcome.board } }
+          : { errors: [new GraphQLError(outcome.graphQLError)] },
+    });
+
+    /** The board's own surface, which the background is drawn on. */
+    const surface = async () => (await pile()).firstElementChild as HTMLElement;
+
+    it("is drawn for anyone looking", async () => {
+      renderBoard([
+        boardQuery(
+          board([], { viewerIsOwner: false, background: "tile-corkboard" }),
+        ),
+      ]);
+      expect((await surface()).style.backgroundImage).toContain(
+        "/halloween/backgrounds/tiles/tile-corkboard.webp",
+      );
+      expect(
+        screen.queryByRole("radiogroup", { name: "Background" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("is offered to the owner, with the night sky chosen at first", async () => {
+      renderBoard([boardQuery(board([]))]);
+      const picker = await screen.findByRole("radiogroup", {
+        name: "Background",
+      });
+      expect(
+        within(picker).getByRole("radio", { name: "night sky" }),
+      ).toBeChecked();
+      expect(
+        within(picker).getByRole("radio", { name: "corkboard" }),
+      ).not.toBeChecked();
+      expect(
+        within(picker).getByRole("radio", { name: "daphne luther hug" }),
+      ).toBeInTheDocument();
+    });
+
+    it("changes when the owner picks one, and is saved", async () => {
+      const saved = vi.fn(() => ({
+        data: {
+          setHalloweenCandyBoardBackground: board([], {
+            background: "tile-corkboard",
+          }),
+        },
+      }));
+      renderBoard([
+        boardQuery(board([])),
+        {
+          ...setBackground("tile-corkboard", { board: board([]) }),
+          result: saved,
+        },
+      ]);
+
+      await userEvent.click(
+        await screen.findByRole("radio", { name: "corkboard" }),
+      );
+
+      expect((await surface()).style.backgroundImage).toContain(
+        "/halloween/backgrounds/tiles/tile-corkboard.webp",
+      );
+      expect(screen.getByRole("radio", { name: "corkboard" })).toBeChecked();
+      await waitFor(() => expect(saved).toHaveBeenCalled());
+    });
+
+    it("goes back to the night sky", async () => {
+      renderBoard([
+        boardQuery(board([], { background: "tile-corkboard" })),
+        setBackground(null, { board: board([]) }),
+      ]);
+
+      await userEvent.click(
+        await screen.findByRole("radio", { name: "night sky" }),
+      );
+      expect((await surface()).style.backgroundImage).toBe("");
+    });
+
+    it("goes back to what was saved if the choice is refused", async () => {
+      renderBoard([
+        boardQuery(board([], { background: "tile-corkboard" })),
+        setBackground("tile-clouds", {
+          graphQLError: "There is no such background",
+        }),
+      ]);
+
+      await userEvent.click(
+        await screen.findByRole("radio", { name: "clouds" }),
+      );
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith("There is no such background"),
+      );
+      expect((await surface()).style.backgroundImage).toContain(
+        "/halloween/backgrounds/tiles/tile-corkboard.webp",
+      );
     });
   });
 

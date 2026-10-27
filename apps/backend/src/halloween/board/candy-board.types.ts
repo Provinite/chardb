@@ -156,6 +156,16 @@ export class HalloweenCandyBoard {
   @Field({ description: "Whether whoever is asking owns the board" })
   viewerIsOwner: boolean;
 
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "The picture or tile behind the candies, by its slug: a full picture " +
+      "is /halloween/backgrounds/full/<slug>.webp on the frontend, a tile " +
+      "(its slug starts tile-) /halloween/backgrounds/tiles/<slug>.webp. Null " +
+      "for the board's own night sky.",
+  })
+  background: string | null;
+
   @Field(() => [HalloweenCandy], { description: "Oldest first" })
   candies: HalloweenCandy[];
 

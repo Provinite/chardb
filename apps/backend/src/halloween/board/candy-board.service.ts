@@ -15,6 +15,7 @@ import {
 } from "../../users/utils/user-resolver-mappers";
 import { HalloweenDashboardService } from "../dashboard/halloween-dashboard.service";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
+import { BACKGROUND_SLUGS } from "../discord/images.generated";
 import { addedCandies, applyCandyBoardActions } from "./candy-board.actions";
 import {
   candyPlacementsSchema,
@@ -182,6 +183,33 @@ export class CandyBoardService {
     return this.toBoard(board, true);
   }
 
+  /**
+   * Sets the picture or tile behind the signed-in player's candies, or with
+   * null goes back to the board's own night sky.
+   */
+  async setBackground(
+    communityId: string,
+    userId: string,
+    slug: string | null,
+  ): Promise<HalloweenCandyBoard> {
+    if (slug !== null && !BACKGROUND_SLUGS.includes(slug)) {
+      throw new BadRequestException("There is no such background");
+    }
+    const guildId = await this.requireGuild(communityId);
+    const discordUserId = await this.discordIdOf(userId);
+    if (!discordUserId) {
+      throw new ForbiddenException(
+        "Link your Discord account to have a candy board",
+      );
+    }
+    const board = await this.db.halloweenCandyBoard.upsert({
+      where: { guildId_userId: { guildId, userId: discordUserId } },
+      create: { guildId, userId: discordUserId, background: slug },
+      update: { background: slug },
+    });
+    return this.toBoard(board, true);
+  }
+
   private async requireGuild(communityId: string): Promise<string> {
     const guildId = await this.dashboard.guildFor(communityId);
     if (!guildId) {
@@ -236,6 +264,7 @@ export class CandyBoardService {
       id: board.id,
       owner: account ? mapPrismaUserToGraphQL(account.user) : null,
       viewerIsOwner,
+      background: board.background,
       candies,
       // A candy whose knock is gone is dropped rather than drawn as nothing.
       placements: storedPlacements(board).filter((p) =>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import styled from "styled-components";
 import { Candy as CandyIcon, Link2 } from "lucide-react";
@@ -10,6 +10,7 @@ import {
 } from "../contexts/CommunityHostContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CandyBoard } from "../components/halloween/CandyBoard";
+import { BackgroundPicker } from "../components/halloween/BackgroundPicker";
 import {
   useCandyBoardSync,
   type SaveStatus,
@@ -17,6 +18,7 @@ import {
 import {
   useHalloweenCandyBoardQuery,
   useMyHalloweenCandyBoardQuery,
+  useSetHalloweenCandyBoardBackgroundMutation,
   type HalloweenCandyBoardFieldsFragment,
 } from "../generated/graphql";
 
@@ -206,6 +208,27 @@ const BoardView: React.FC<{
     dragging,
   });
 
+  // Shown as soon as it is picked, and saved on its own: a background is one
+  // value, nothing like the stream of candy changes the sync hook queues.
+  const [background, setBackground] = useState(board.background ?? null);
+  useEffect(() => setBackground(board.background ?? null), [board.background]);
+  const [saveBackground] = useSetHalloweenCandyBoardBackgroundMutation();
+  const pickBackground = async (slug: string | null) => {
+    const saved = board.background ?? null;
+    setBackground(slug);
+    if (!communityId) return;
+    try {
+      await saveBackground({ variables: { communityId, slug } });
+    } catch (error) {
+      setBackground(saved);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Could not change the background",
+      );
+    }
+  };
+
   const isOwner = board.viewerIsOwner;
   const ownerName = board.owner?.displayName || board.owner?.username;
   const title = isOwner
@@ -268,7 +291,12 @@ const BoardView: React.FC<{
         placements={placements}
         onAction={isOwner ? act : undefined}
         onDraggingChange={setDragging}
+        background={background}
       />
+
+      {isOwner && (
+        <BackgroundPicker value={background} onChange={pickBackground} />
+      )}
     </Container>
   );
 };

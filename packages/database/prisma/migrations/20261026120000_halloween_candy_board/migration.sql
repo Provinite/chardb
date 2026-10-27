@@ -10,6 +10,7 @@ CREATE TABLE "halloween_candy_boards" (
     "guild_id" VARCHAR(30) NOT NULL,
     "user_id" VARCHAR(30) NOT NULL,
     "placements" JSONB NOT NULL DEFAULT '[]',
+    "background" VARCHAR(60),
     "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "halloween_candy_boards_pkey" PRIMARY KEY ("id")

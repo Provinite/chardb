@@ -64,4 +64,18 @@ export class CandyBoardResolver {
   ): Promise<HalloweenCandyBoard> {
     return this.boards.applyActions(communityId, user.id, actions);
   }
+
+  @AllowAnyAuthenticated()
+  @Mutation(() => HalloweenCandyBoard, {
+    description:
+      "Set the picture or tile behind your candies, by its slug; null goes " +
+      "back to the board's own night sky. Needs Discord linked.",
+  })
+  async setHalloweenCandyBoardBackground(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("slug", { type: () => String, nullable: true }) slug: string | null,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<HalloweenCandyBoard> {
+    return this.boards.setBackground(communityId, user.id, slug ?? null);
+  }
 }

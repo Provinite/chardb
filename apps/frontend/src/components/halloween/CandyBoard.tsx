@@ -8,6 +8,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Tooltip } from "../Tooltip";
+import { NIGHT_SKY, backgroundStyle, findBackground } from "./boardBackgrounds";
 import {
   candiesAt,
   maskFromImage,
@@ -66,10 +67,8 @@ const Surface = styled.div`
   inset: 0;
   overflow: hidden;
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  background:
-    radial-gradient(ellipse at 50% 120%, #f9731655 0%, #f9731600 55%),
-    radial-gradient(circle at 82% 16%, #fde68a 0 3.5%, #fde68a00 4%),
-    linear-gradient(180deg, #1e1b4b 0%, #3b0764 70%, #431407 100%);
+  /* The night sky, unless a chosen picture or tile is set over it inline. */
+  background: ${NIGHT_SKY};
   box-shadow: ${({ theme }) => theme.shadows.lg};
 `;
 
@@ -372,6 +371,8 @@ interface CandyBoardProps {
   onAction?: (action: BoardAction) => void;
   /** Called while a candy is being dragged, so saving can wait for the drop. */
   onDraggingChange?: (dragging: boolean) => void;
+  /** The picture or tile behind the candies; none for the night sky. */
+  background?: string | null;
 }
 
 export const CandyBoard: React.FC<CandyBoardProps> = ({
@@ -379,6 +380,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   placements,
   onAction,
   onDraggingChange,
+  background,
 }) => {
   const boardRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number | null>(null);
@@ -755,7 +757,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                 : undefined,
         }}
       >
-        <Surface>
+        <Surface style={backgroundStyle(findBackground(background))}>
           {placements.map((p) => {
             const slug = slugs.get(p.knockEventId);
             if (!slug) return null;

@@ -2442,6 +2442,10 @@ model HalloweenCandyBoard {
   userId     String   @map("user_id") @db.VarChar(30)
   /// [HalloweenCandyPlacementsJson]
   placements Json     @default("[]")
+  /// The picture or tile behind the candies, by its slug
+  /// (`backgrounds/full/<slug>.webp` or `backgrounds/tiles/<slug>.webp`).
+  /// Null for the board's own night sky.
+  background String?  @db.VarChar(60)
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique([guildId, userId])
