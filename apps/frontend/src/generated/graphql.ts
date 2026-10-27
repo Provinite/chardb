@@ -1237,6 +1237,17 @@ export type HalloweenCandy = {
   slug: Scalars['String']['output'];
 };
 
+/** Stick a candy from the tray on the board, on top of the pile. Ranges as on HalloweenCandyPlacement. */
+export type HalloweenCandyAddInput = {
+  knockEventId: Scalars['Int']['input'];
+  /** 0 unless given */
+  rotation?: InputMaybe<Scalars['Float']['input']>;
+  /** 1 unless given */
+  scale?: InputMaybe<Scalars['Float']['input']>;
+  x: Scalars['Float']['input'];
+  y: Scalars['Float']['input'];
+};
+
 /** A player's Halloween candy board: every candy they have, and where they have stuck the ones on the board */
 export type HalloweenCandyBoard = {
   __typename?: 'HalloweenCandyBoard';
@@ -1252,23 +1263,23 @@ export type HalloweenCandyBoard = {
   viewerIsOwner: Scalars['Boolean']['output'];
 };
 
-/** One change to your board. ADD needs x and y, and takes rotation 0 and scale 1 unless given; EDIT changes only the fields given; RAISE and REMOVE take none. */
-export type HalloweenCandyBoardActionInput = {
+/** One change to your board: exactly one of these */
+export type HalloweenCandyBoardAction =
+  { add: HalloweenCandyAddInput; edit?: never; raise?: never; remove?: never; }
+  |  { add?: never; edit: HalloweenCandyEditInput; raise?: never; remove?: never; }
+  |  /** Move a candy on the board to the top of the pile */
+  { add?: never; edit?: never; raise: HalloweenCandyRefInput; remove?: never; }
+  |  /** Put a candy on the board back in the tray */
+  { add?: never; edit?: never; raise?: never; remove: HalloweenCandyRefInput; };
+
+/** Change where a candy on the board sits, its turn or its size. Only the fields given change, and at least one must be. */
+export type HalloweenCandyEditInput = {
   knockEventId: Scalars['Int']['input'];
   rotation?: InputMaybe<Scalars['Float']['input']>;
   scale?: InputMaybe<Scalars['Float']['input']>;
-  type: HalloweenCandyBoardActionType;
   x?: InputMaybe<Scalars['Float']['input']>;
   y?: InputMaybe<Scalars['Float']['input']>;
 };
-
-/** What one change to a Halloween candy board does */
-export enum HalloweenCandyBoardActionType {
-  Add = 'ADD',
-  Edit = 'EDIT',
-  Raise = 'RAISE',
-  Remove = 'REMOVE'
-}
 
 /** Where a candy sits on a board */
 export type HalloweenCandyPlacement = {
@@ -1282,6 +1293,11 @@ export type HalloweenCandyPlacement = {
   x: Scalars['Float']['output'];
   /** The candy's centre, as a fraction of the board's height, 0-1 */
   y: Scalars['Float']['output'];
+};
+
+/** A candy, by the knock that gave it */
+export type HalloweenCandyRefInput = {
+  knockEventId: Scalars['Int']['input'];
 };
 
 /** The Halloween event as staff see it */
@@ -2259,7 +2275,7 @@ export type MutationAddMediaTagsArgs = {
 
 
 export type MutationApplyHalloweenCandyBoardActionsArgs = {
-  actions: Array<HalloweenCandyBoardActionInput>;
+  actions: Array<HalloweenCandyBoardAction>;
   communityId: Scalars['ID']['input'];
 };
 
@@ -5892,7 +5908,7 @@ export type MyHalloweenCandyBoardQuery = { __typename?: 'Query', myHalloweenCand
 
 export type ApplyHalloweenCandyBoardActionsMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
-  actions: Array<HalloweenCandyBoardActionInput> | HalloweenCandyBoardActionInput;
+  actions: Array<HalloweenCandyBoardAction> | HalloweenCandyBoardAction;
 }>;
 
 
@@ -12714,7 +12730,7 @@ export type MyHalloweenCandyBoardLazyQueryHookResult = ReturnType<typeof useMyHa
 export type MyHalloweenCandyBoardSuspenseQueryHookResult = ReturnType<typeof useMyHalloweenCandyBoardSuspenseQuery>;
 export type MyHalloweenCandyBoardQueryResult = Apollo.QueryResult<MyHalloweenCandyBoardQuery, MyHalloweenCandyBoardQueryVariables>;
 export const ApplyHalloweenCandyBoardActionsDocument = gql`
-    mutation ApplyHalloweenCandyBoardActions($communityId: ID!, $actions: [HalloweenCandyBoardActionInput!]!) {
+    mutation ApplyHalloweenCandyBoardActions($communityId: ID!, $actions: [HalloweenCandyBoardAction!]!) {
   applyHalloweenCandyBoardActions(communityId: $communityId, actions: $actions) {
     ...HalloweenCandyBoardFields
   }

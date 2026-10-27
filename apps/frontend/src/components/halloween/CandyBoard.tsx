@@ -1,6 +1,5 @@
 import React, { useRef, useState } from "react";
 import styled, { css } from "styled-components";
-import { HalloweenCandyBoardActionType as T } from "../../generated/graphql";
 import {
   BOARD_ASPECT,
   CANDY_SIZE,
@@ -252,10 +251,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     if (!point) return;
     const { id, offset } = drag.current;
     onAction({
-      type: T.Edit,
-      knockEventId: id,
-      x: point.x - offset.x,
-      y: point.y - offset.y,
+      edit: { knockEventId: id, x: point.x - offset.x, y: point.y - offset.y },
     });
   };
 
@@ -267,13 +263,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 
   const place = (id: number, point: Point) => {
     if (!onAction) return;
-    onAction({
-      type: T.Add,
-      knockEventId: id,
-      ...point,
-      rotation: 0,
-      scale: 1,
-    });
+    onAction({ add: { knockEventId: id, ...point, rotation: 0, scale: 1 } });
     setSelected(id);
   };
 
@@ -333,11 +323,9 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     if (!onAction) return;
     const step = e.shiftKey ? BIG_NUDGE : NUDGE;
     const id = p.knockEventId;
-    const edit = (changes: Partial<Placement>): BoardAction => ({
-      type: T.Edit,
-      knockEventId: id,
-      ...changes,
-    });
+    const edit = (
+      changes: Partial<Omit<Placement, "knockEventId">>,
+    ): BoardAction => ({ edit: { knockEventId: id, ...changes } });
     const keys: Record<string, () => BoardAction> = {
       ArrowLeft: () => edit({ x: p.x - step }),
       ArrowRight: () => edit({ x: p.x + step }),
@@ -347,8 +335,8 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
       "]": () => edit({ rotation: p.rotation + 15 }),
       "-": () => edit({ scale: p.scale - 0.1 }),
       "=": () => edit({ scale: p.scale + 0.1 }),
-      Delete: () => ({ type: T.Remove, knockEventId: id }),
-      Backspace: () => ({ type: T.Remove, knockEventId: id }),
+      Delete: () => ({ remove: { knockEventId: id } }),
+      Backspace: () => ({ remove: { knockEventId: id } }),
     };
     const action = keys[e.key];
     if (!action) return;
@@ -409,9 +397,10 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
               value={selectedPlacement.rotation}
               onChange={(e) =>
                 onAction({
-                  type: T.Edit,
-                  knockEventId: selectedPlacement.knockEventId,
-                  rotation: Number(e.target.value),
+                  edit: {
+                    knockEventId: selectedPlacement.knockEventId,
+                    rotation: Number(e.target.value),
+                  },
                 })
               }
             />
@@ -426,9 +415,10 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
               value={selectedPlacement.scale}
               onChange={(e) =>
                 onAction({
-                  type: T.Edit,
-                  knockEventId: selectedPlacement.knockEventId,
-                  scale: Number(e.target.value),
+                  edit: {
+                    knockEventId: selectedPlacement.knockEventId,
+                    scale: Number(e.target.value),
+                  },
                 })
               }
             />
@@ -437,8 +427,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
             type="button"
             onClick={() =>
               onAction({
-                type: T.Raise,
-                knockEventId: selectedPlacement.knockEventId,
+                raise: { knockEventId: selectedPlacement.knockEventId },
               })
             }
           >
@@ -448,8 +437,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
             type="button"
             onClick={() => {
               onAction({
-                type: T.Remove,
-                knockEventId: selectedPlacement.knockEventId,
+                remove: { knockEventId: selectedPlacement.knockEventId },
               });
               setSelected(null);
             }}

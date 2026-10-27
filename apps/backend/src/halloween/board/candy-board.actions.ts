@@ -3,10 +3,7 @@ import {
   candyPlacementsSchema,
   type CandyPlacement,
 } from "./candy-board.schema";
-import {
-  HalloweenCandyBoardActionType,
-  type HalloweenCandyBoardActionInput,
-} from "./candy-board.types";
+import type { HalloweenCandyBoardAction } from "./candy-board.types";
 
 /**
  * Applies a batch of actions to a board's placements, in order, and returns
@@ -14,11 +11,13 @@ import {
  * to check, since that needs the database.
  *
  * Actions name only the candies they change, so two tabs editing different
- * candies cannot undo each other, as replacing the whole list would.
+ * candies cannot undo each other, as replacing the whole list would. Each is
+ * a `@oneOf` input, so the schema has already made sure exactly one of its
+ * fields is set.
  */
 export function applyCandyBoardActions(
   placements: CandyPlacement[],
-  actions: HalloweenCandyBoardActionInput[],
+  actions: HalloweenCandyBoardAction[],
 ): CandyPlacement[] {
   let next = [...placements];
   const indexOf = (knockEventId: number) => {
@@ -29,47 +28,38 @@ export function applyCandyBoardActions(
     return index;
   };
 
-  for (const action of actions) {
-    const { knockEventId } = action;
-    switch (action.type) {
-      case HalloweenCandyBoardActionType.ADD: {
-        if (next.some((p) => p.knockEventId === knockEventId)) {
-          throw new BadRequestException("That candy is already on the board");
-        }
-        if (action.x == null || action.y == null) {
-          throw new BadRequestException("A candy needs a place on the board");
-        }
-        next.push({
-          knockEventId,
-          x: action.x,
-          y: action.y,
-          rotation: action.rotation ?? 0,
-          scale: action.scale ?? 1,
-        });
-        break;
+  for (const { add, edit, raise, remove } of actions) {
+    if (add) {
+      if (next.some((p) => p.knockEventId === add.knockEventId)) {
+        throw new BadRequestException("That candy is already on the board");
       }
-      case HalloweenCandyBoardActionType.EDIT: {
-        const index = indexOf(knockEventId);
-        const p = next[index];
-        next[index] = {
-          ...p,
-          x: action.x ?? p.x,
-          y: action.y ?? p.y,
-          rotation: action.rotation ?? p.rotation,
-          scale: action.scale ?? p.scale,
-        };
-        break;
+      next.push({
+        knockEventId: add.knockEventId,
+        x: add.x,
+        y: add.y,
+        rotation: add.rotation ?? 0,
+        scale: add.scale ?? 1,
+      });
+    } else if (edit) {
+      const { knockEventId, ...changes } = edit;
+      const index = indexOf(knockEventId);
+      if (Object.values(changes).every((v) => v == null)) {
+        throw new BadRequestException("An edit needs something to change");
       }
-      case HalloweenCandyBoardActionType.RAISE: {
-        const [raised] = next.splice(indexOf(knockEventId), 1);
-        next.push(raised);
-        break;
-      }
-      case HalloweenCandyBoardActionType.REMOVE: {
-        const index = indexOf(knockEventId);
-        next = next.filter((_, i) => i !== index);
-        break;
-      }
+      const p = next[index];
+      next[index] = {
+        ...p,
+        x: changes.x ?? p.x,
+        y: changes.y ?? p.y,
+        rotation: changes.rotation ?? p.rotation,
+        scale: changes.scale ?? p.scale,
+      };
+    } else if (raise) {
+      const [raised] = next.splice(indexOf(raise.knockEventId), 1);
+      next.push(raised);
+    } else if (remove) {
+      const index = indexOf(remove.knockEventId);
+      next = next.filter((_, i) => i !== index);
     }
   }
 
@@ -81,3 +71,7 @@ export function applyCandyBoardActions(
   }
   return parsed.data;
 }
+
+/** The knocks a batch puts on the board, which must all be the player's. */
+export const addedCandies = (actions: HalloweenCandyBoardAction[]): number[] =>
+  actions.flatMap((a) => (a.add ? [a.add.knockEventId] : []));

@@ -15,15 +15,31 @@ import {
 } from "../../users/utils/user-resolver-mappers";
 import { HalloweenDashboardService } from "../dashboard/halloween-dashboard.service";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
-import { applyCandyBoardActions } from "./candy-board.actions";
+import { addedCandies, applyCandyBoardActions } from "./candy-board.actions";
 import {
-  HalloweenCandyBoardActionType,
-  type HalloweenCandy,
-  type HalloweenCandyBoard,
-  type HalloweenCandyBoardActionInput,
+  candyPlacementsSchema,
+  type CandyPlacement,
+} from "./candy-board.schema";
+import { StoredCandyBoardInvalidError } from "./candy-board.errors";
+import type {
+  HalloweenCandy,
+  HalloweenCandyBoard,
+  HalloweenCandyBoardAction,
 } from "./candy-board.types";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/**
+ * A board's placements, checked on the way out as on the way in: Prisma's
+ * type for the column is only what this code promises it wrote.
+ */
+function storedPlacements(board: BoardRow): CandyPlacement[] {
+  const parsed = candyPlacementsSchema.safeParse(board.placements);
+  if (!parsed.success) {
+    throw new StoredCandyBoardInvalidError(board.id, parsed.error.message);
+  }
+  return parsed.data;
+}
 
 /**
  * Candy boards. A board belongs to a Discord player in a guild, as knocks do;
@@ -90,7 +106,7 @@ export class CandyBoardService {
   async applyActions(
     communityId: string,
     userId: string,
-    actions: HalloweenCandyBoardActionInput[],
+    actions: HalloweenCandyBoardAction[],
   ): Promise<HalloweenCandyBoard> {
     const guildId = await this.requireGuild(communityId);
     const discordUserId = await this.discordIdOf(userId);
@@ -100,9 +116,7 @@ export class CandyBoardService {
       );
     }
 
-    const added = actions
-      .filter((a) => a.type === HalloweenCandyBoardActionType.ADD)
-      .map((a) => a.knockEventId);
+    const added = addedCandies(actions);
     const owned = added.length
       ? await this.db.halloweenKnockEvent.count({
           where: {
@@ -133,7 +147,7 @@ export class CandyBoardService {
       return tx.halloweenCandyBoard.update({
         where: { id },
         data: {
-          placements: applyCandyBoardActions(locked.placements, actions),
+          placements: applyCandyBoardActions(storedPlacements(locked), actions),
         },
       });
     });
@@ -206,7 +220,9 @@ export class CandyBoardService {
       viewerIsOwner,
       candies,
       // A candy whose knock is gone is dropped rather than drawn as nothing.
-      placements: board.placements.filter((p) => held.has(p.knockEventId)),
+      placements: storedPlacements(board).filter((p) =>
+        held.has(p.knockEventId),
+      ),
     };
   }
 }

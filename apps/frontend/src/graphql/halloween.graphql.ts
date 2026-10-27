@@ -254,7 +254,7 @@ export const MY_HALLOWEEN_CANDY_BOARD_QUERY = gql`
 export const APPLY_HALLOWEEN_CANDY_BOARD_ACTIONS_MUTATION = gql`
   mutation ApplyHalloweenCandyBoardActions(
     $communityId: ID!
-    $actions: [HalloweenCandyBoardActionInput!]!
+    $actions: [HalloweenCandyBoardAction!]!
   ) {
     applyHalloweenCandyBoardActions(
       communityId: $communityId

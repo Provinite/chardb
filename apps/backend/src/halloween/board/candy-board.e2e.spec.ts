@@ -33,7 +33,7 @@ const MY_BOARD = `
 `;
 
 const APPLY = `
-  mutation Apply($communityId: ID!, $actions: [HalloweenCandyBoardActionInput!]!) {
+  mutation Apply($communityId: ID!, $actions: [HalloweenCandyBoardAction!]!) {
     applyHalloweenCandyBoardActions(communityId: $communityId, actions: $actions) {
       ${BOARD_FIELDS}
     }
@@ -137,8 +137,7 @@ describe("Halloween candy board (e2e)", () => {
   });
 
   const add = (knockEventId: number, overrides = {}) => ({
-    type: "ADD",
-    ...at(knockEventId, overrides),
+    add: at(knockEventId, overrides),
   });
 
   const myBoard = async (token = playerToken) => {
@@ -279,6 +278,15 @@ describe("Halloween candy board (e2e)", () => {
       });
     });
 
+    it("refuses to show a stored board that is not in the expected shape", async () => {
+      const { id } = (await myBoard()).body.data.myHalloweenCandyBoard;
+      await db.$executeRaw`UPDATE halloween_candy_boards SET placements = '[{"knockEventId":"x"}]'::jsonb WHERE id = ${id}::uuid`;
+      const res = await testApp.graphqlRequest(BOARD, { communityId, id });
+      expect(res.body.errors?.[0].message).toBe(
+        "A stored candy board is not in the expected shape",
+      );
+    });
+
     it("is nothing for an id that is no board, or not a uuid at all", async () => {
       for (const id of ["00000000-0000-4000-8000-000000000000", "nope"]) {
         const res = await testApp.graphqlRequest(BOARD, { communityId, id });
@@ -329,7 +337,7 @@ describe("Halloween candy board (e2e)", () => {
 
     it("adds at no turn and normal size unless told otherwise", async () => {
       const a = await knock();
-      await apply([{ type: "ADD", knockEventId: a.id, x: 0.1, y: 0.2 }]);
+      await apply([{ add: { knockEventId: a.id, x: 0.1, y: 0.2 } }]);
       expect(await placementsNow()).toEqual([
         { knockEventId: a.id, x: 0.1, y: 0.2, rotation: 0, scale: 1 },
       ]);
@@ -338,7 +346,7 @@ describe("Halloween candy board (e2e)", () => {
     it("edits only what it names", async () => {
       const a = await knock();
       await apply([add(a.id)]);
-      await apply([{ type: "EDIT", knockEventId: a.id, scale: 2 }]);
+      await apply([{ edit: { knockEventId: a.id, scale: 2 } }]);
       expect(await placementsNow()).toEqual([at(a.id, { scale: 2 })]);
     });
 
@@ -346,7 +354,7 @@ describe("Halloween candy board (e2e)", () => {
       const a = await knock();
       const b = await knock();
       await apply([add(a.id), add(b.id)]);
-      await apply([{ type: "RAISE", knockEventId: a.id }]);
+      await apply([{ raise: { knockEventId: a.id } }]);
       expect(await placementsNow()).toEqual([at(b.id), at(a.id)]);
     });
 
@@ -354,7 +362,7 @@ describe("Halloween candy board (e2e)", () => {
       const a = await knock();
       const b = await knock();
       await apply([add(a.id), add(b.id)]);
-      await apply([{ type: "REMOVE", knockEventId: a.id }]);
+      await apply([{ remove: { knockEventId: a.id } }]);
       expect(await placementsNow()).toEqual([at(b.id)]);
     });
 
@@ -410,23 +418,44 @@ describe("Halloween candy board (e2e)", () => {
       );
     });
 
-    it.each(["EDIT", "RAISE", "REMOVE"])(
-      "refuses to %s a candy not on the board",
-      async (type) => {
-        const a = await knock();
-        const res = await apply([{ type, knockEventId: a.id, x: 0.5 }]);
-        expect(res.body.errors?.[0].message).toBe(
-          "That candy is not on the board",
-        );
-      },
-    );
+    it.each([
+      ["edit", { x: 0.5 }],
+      ["raise", {}],
+      ["remove", {}],
+    ])("refuses to %s a candy not on the board", async (kind, fields) => {
+      const a = await knock();
+      const res = await apply([{ [kind]: { knockEventId: a.id, ...fields } }]);
+      expect(res.body.errors?.[0].message).toBe(
+        "That candy is not on the board",
+      );
+    });
 
+    it("refuses an edit that changes nothing", async () => {
+      const a = await knock();
+      await apply([add(a.id)]);
+      const res = await apply([{ edit: { knockEventId: a.id } }]);
+      expect(res.body.errors?.[0].message).toBe(
+        "An edit needs something to change",
+      );
+    });
+
+    // Both are the schema's to refuse, before any of the board is touched.
     it("refuses an add without a position", async () => {
       const a = await knock();
-      const res = await apply([{ type: "ADD", knockEventId: a.id }]);
-      expect(res.body.errors?.[0].message).toBe(
-        "A candy needs a place on the board",
+      const res = await apply([{ add: { knockEventId: a.id } }]);
+      expect(res.body.errors?.[0].message).toMatch(/"x".*Float!/);
+      expect(await placementsNow()).toEqual([]);
+    });
+
+    it("refuses an action that is two things at once", async () => {
+      const a = await knock();
+      const res = await apply([
+        { add: at(a.id), remove: { knockEventId: a.id } },
+      ]);
+      expect(res.body.errors?.[0].message).toMatch(
+        /Exactly one key must be specified for OneOf type/,
       );
+      expect(await placementsNow()).toEqual([]);
     });
 
     it.each([
@@ -449,7 +478,7 @@ describe("Halloween candy board (e2e)", () => {
       // The other player's actions land on their own board, where this
       // candy is not.
       const res = await apply(
-        [{ type: "REMOVE", knockEventId: mine.id }],
+        [{ remove: { knockEventId: mine.id } }],
         otherToken,
       );
       expect(res.body.errors?.[0].message).toBe(

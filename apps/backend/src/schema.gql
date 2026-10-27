@@ -1521,6 +1521,21 @@ type HalloweenCandy {
 }
 
 """
+Stick a candy from the tray on the board, on top of the pile. Ranges as on HalloweenCandyPlacement.
+"""
+input HalloweenCandyAddInput {
+  knockEventId: Int!
+
+  """0 unless given"""
+  rotation: Float
+
+  """1 unless given"""
+  scale: Float
+  x: Float!
+  y: Float!
+}
+
+"""
 A player's Halloween candy board: every candy they have, and where they have stuck the ones on the board
 """
 type HalloweenCandyBoard {
@@ -1542,24 +1557,27 @@ type HalloweenCandyBoard {
   viewerIsOwner: Boolean!
 }
 
+"""One change to your board: exactly one of these"""
+input HalloweenCandyBoardAction @oneOf {
+  add: HalloweenCandyAddInput
+  edit: HalloweenCandyEditInput
+
+  """Move a candy on the board to the top of the pile"""
+  raise: HalloweenCandyRefInput
+
+  """Put a candy on the board back in the tray"""
+  remove: HalloweenCandyRefInput
+}
+
 """
-One change to your board. ADD needs x and y, and takes rotation 0 and scale 1 unless given; EDIT changes only the fields given; RAISE and REMOVE take none.
+Change where a candy on the board sits, its turn or its size. Only the fields given change, and at least one must be.
 """
-input HalloweenCandyBoardActionInput {
+input HalloweenCandyEditInput {
   knockEventId: Int!
   rotation: Float
   scale: Float
-  type: HalloweenCandyBoardActionType!
   x: Float
   y: Float
-}
-
-"""What one change to a Halloween candy board does"""
-enum HalloweenCandyBoardActionType {
-  ADD
-  EDIT
-  RAISE
-  REMOVE
 }
 
 """Where a candy sits on a board"""
@@ -1577,6 +1595,11 @@ type HalloweenCandyPlacement {
 
   """The candy's centre, as a fraction of the board's height, 0-1"""
   y: Float!
+}
+
+"""A candy, by the knock that gave it"""
+input HalloweenCandyRefInput {
+  knockEventId: Int!
 }
 
 """The Halloween event as staff see it"""
@@ -2487,7 +2510,7 @@ type Mutation {
   """
   Apply changes to your board, in order, all or none. Needs Discord linked.
   """
-  applyHalloweenCandyBoardActions(actions: [HalloweenCandyBoardActionInput!]!, communityId: ID!): HalloweenCandyBoard!
+  applyHalloweenCandyBoardActions(actions: [HalloweenCandyBoardAction!]!, communityId: ID!): HalloweenCandyBoard!
 
   """Approve an image (moderator action)"""
   approveImage(input: ApproveImageInput!): ImageModerationAction!

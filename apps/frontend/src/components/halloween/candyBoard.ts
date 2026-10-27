@@ -5,34 +5,23 @@
  * it, and queued to be sent: the server applies the same actions to its own
  * copy, so a stale page can only touch the candies it changes.
  *
- * The limits mirror the backend's (candy-board.schema.ts), which refuses a
- * change outside them.
+ * Both types are the schema's own, as codegen makes them. The limits mirror
+ * the backend's (candy-board.schema.ts), which refuses a change outside them.
  */
-import { HalloweenCandyBoardActionType as T } from "../../generated/graphql";
+import type {
+  HalloweenCandyBoardAction,
+  HalloweenCandyPlacement,
+} from "../../generated/graphql";
 
-export interface Placement {
-  knockEventId: number;
-  /** The candy's centre, as a fraction of the board's width, 0-1. */
-  x: number;
-  /** The candy's centre, as a fraction of the board's height, 0-1. */
-  y: number;
-  /** Degrees clockwise, -180 to 180. */
-  rotation: number;
-  scale: number;
-}
+export type Placement = Omit<HalloweenCandyPlacement, "__typename">;
+
+/** One change to a board: exactly one of add, edit, raise or remove. */
+export type BoardAction = HalloweenCandyBoardAction;
 
 export interface Point {
   x: number;
   y: number;
 }
-
-type Changes = Partial<Omit<Placement, "knockEventId">>;
-
-/** One change to a board, as `applyHalloweenCandyBoardActions` takes it. */
-export type BoardAction =
-  | ({ type: T.Add } & Placement)
-  | ({ type: T.Edit; knockEventId: number } & Changes)
-  | { type: T.Raise | T.Remove; knockEventId: number };
 
 export const SCALE_MIN = 0.25;
 export const SCALE_MAX = 4;
@@ -96,6 +85,26 @@ export function trayGroups(
   return [...groups].map(([slug, knockEventIds]) => ({ slug, knockEventIds }));
 }
 
+/** The candy an action is about. */
+export function candyOf(action: BoardAction): number {
+  if (action.add) return action.add.knockEventId;
+  if (action.edit) return action.edit.knockEventId;
+  if (action.raise) return action.raise.knockEventId;
+  return action.remove.knockEventId;
+}
+
+type Changes = Partial<Omit<Placement, "knockEventId">>;
+
+/** An edit's fields that are set; an unset field means "leave it". */
+function changesOf(edit: NonNullable<BoardAction["edit"]>): Changes {
+  const changes: Changes = {};
+  if (edit.x != null) changes.x = edit.x;
+  if (edit.y != null) changes.y = edit.y;
+  if (edit.rotation != null) changes.rotation = edit.rotation;
+  if (edit.scale != null) changes.scale = edit.scale;
+  return changes;
+}
+
 /**
  * The board after one action. An action that cannot apply -- adding a candy
  * already placed, changing one that is not -- leaves it as it was; the server
@@ -105,29 +114,33 @@ export function applyAction(
   placements: Placement[],
   action: BoardAction,
 ): Placement[] {
-  const index = placements.findIndex(
-    (p) => p.knockEventId === action.knockEventId,
-  );
-  switch (action.type) {
-    case T.Add: {
-      if (index !== -1) return placements;
-      const { type: _type, ...placement } = action;
-      return [...placements, clampPlacement(placement)];
-    }
-    case T.Edit: {
-      if (index === -1) return placements;
-      const { type: _type, knockEventId: _id, ...changes } = action;
-      return placements.map((p, i) =>
-        i === index ? clampPlacement({ ...p, ...changes }) : p,
-      );
-    }
-    case T.Raise: {
-      if (index === -1) return placements;
-      return [...placements.filter((_, i) => i !== index), placements[index]];
-    }
-    case T.Remove:
-      return placements.filter((_, i) => i !== index);
+  const id = candyOf(action);
+  const index = placements.findIndex((p) => p.knockEventId === id);
+  if (action.add) {
+    if (index !== -1) return placements;
+    const { knockEventId, x, y, rotation, scale } = action.add;
+    return [
+      ...placements,
+      clampPlacement({
+        knockEventId,
+        x,
+        y,
+        rotation: rotation ?? 0,
+        scale: scale ?? 1,
+      }),
+    ];
   }
+  if (index === -1) return placements;
+  if (action.edit) {
+    const changes = changesOf(action.edit);
+    return placements.map((p, i) =>
+      i === index ? clampPlacement({ ...p, ...changes }) : p,
+    );
+  }
+  if (action.raise) {
+    return [...placements.filter((_, i) => i !== index), placements[index]];
+  }
+  return placements.filter((_, i) => i !== index);
 }
 
 /**
@@ -140,29 +153,34 @@ export function enqueue(
   queue: BoardAction[],
   action: BoardAction,
 ): BoardAction[] {
-  const id = action.knockEventId;
-  const lastIndex = queue.map((a) => a.knockEventId).lastIndexOf(id);
+  const id = candyOf(action);
+  const lastIndex = queue.map(candyOf).lastIndexOf(id);
   const last = lastIndex === -1 ? null : queue[lastIndex];
 
-  if (action.type === T.Edit) {
-    if (last && (last.type === T.Add || last.type === T.Edit)) {
-      const { type: _type, knockEventId: _id, ...changes } = action;
+  if (action.edit) {
+    const changes = changesOf(action.edit);
+    // The server refuses an edit that changes nothing.
+    if (Object.keys(changes).length === 0) return queue;
+    if (last?.add) {
       return queue.map((a, i) =>
-        i === lastIndex ? ({ ...a, ...changes } as BoardAction) : a,
+        i === lastIndex && a.add ? { add: { ...a.add, ...changes } } : a,
+      );
+    }
+    if (last?.edit) {
+      return queue.map((a, i) =>
+        i === lastIndex && a.edit ? { edit: { ...a.edit, ...changes } } : a,
       );
     }
     return [...queue, action];
   }
 
-  if (action.type === T.Remove) {
-    const addIndex = queue.findIndex(
-      (a) => a.knockEventId === id && a.type === T.Add,
-    );
+  if (action.remove) {
+    const addIndex = queue.findIndex((a) => a.add?.knockEventId === id);
     if (addIndex !== -1) {
       // Never saved: drop the add and every later change to it.
-      return queue.filter((a, i) => i < addIndex || a.knockEventId !== id);
+      return queue.filter((a, i) => i < addIndex || candyOf(a) !== id);
     }
-    return [...queue.filter((a) => a.knockEventId !== id), action];
+    return [...queue.filter((a) => candyOf(a) !== id), action];
   }
 
   return [...queue, action];

@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Lost knocks record their candy**, and players arrange them on a candy board: `myHalloweenCandyBoard`, `halloweenCandyBoard` by its UUID, and `applyHalloweenCandyBoardActions` (add, edit, raise, remove).
+- **Lost knocks record their candy**, and players arrange them on a candy board: `myHalloweenCandyBoard`, `halloweenCandyBoard` by its UUID, and `applyHalloweenCandyBoardActions`, whose actions are a `@oneOf` input (add, edit, raise, remove).
 
 ### Changed
+
+- **`@nestjs/graphql` is 13.4.5**, for `@oneOf` input types.
 
 - **Halloween candy images are named by slug** (`candy/candy-corn.png`): 107 unique candies, with the 23 duplicate files removed and Luther and Daphne's two paintings framed as stickers.
 - **Character and species names are trimmed on create, update and MYO redemption**, and a name of only spaces is refused (#430).

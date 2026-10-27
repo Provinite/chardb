@@ -62,9 +62,9 @@ vi.mock("react-hot-toast", () => ({
 
 import {
   ApplyHalloweenCandyBoardActionsDocument,
-  HalloweenCandyBoardActionType as T,
   HalloweenCandyBoardDocument,
   MyHalloweenCandyBoardDocument,
+  type HalloweenCandyBoardAction,
 } from "../../generated/graphql";
 import {
   CommunityCandyBoardPage,
@@ -120,17 +120,12 @@ const boardQuery = (
   result: { data: { halloweenCandyBoard: result } },
 });
 
-const ADD_CORN = {
-  type: T.Add,
-  knockEventId: 1,
-  x: 0.5,
-  y: 0.5,
-  rotation: 0,
-  scale: 1,
+const ADD_CORN: HalloweenCandyBoardAction = {
+  add: { knockEventId: 1, x: 0.5, y: 0.5, rotation: 0, scale: 1 },
 };
 
 const applyMock = (
-  actions: object[],
+  actions: HalloweenCandyBoardAction[],
   outcome:
     | { board: ReturnType<typeof board> }
     | { networkError: Error }

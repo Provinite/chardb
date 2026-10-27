@@ -9,7 +9,7 @@ import type {
 import { CandyBoardService } from "./candy-board.service";
 import {
   HalloweenCandyBoard,
-  HalloweenCandyBoardActionInput,
+  HalloweenCandyBoardAction,
 } from "./candy-board.types";
 
 /** Candy boards: anyone with the link can look at one; its owner arranges it. */
@@ -53,8 +53,8 @@ export class CandyBoardResolver {
   })
   async applyHalloweenCandyBoardActions(
     @Args("communityId", { type: () => ID }) communityId: string,
-    @Args("actions", { type: () => [HalloweenCandyBoardActionInput] })
-    actions: HalloweenCandyBoardActionInput[],
+    @Args("actions", { type: () => [HalloweenCandyBoardAction] })
+    actions: HalloweenCandyBoardAction[],
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyBoard> {
     return this.boards.applyActions(communityId, user.id, actions);

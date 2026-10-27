@@ -1,13 +1,4 @@
-import {
-  Field,
-  Float,
-  ID,
-  InputType,
-  Int,
-  ObjectType,
-  registerEnumType,
-} from "@nestjs/graphql";
-import { IsEnum, IsInt, IsNumber, IsOptional } from "class-validator";
+import { Field, Float, ID, InputType, Int, ObjectType } from "@nestjs/graphql";
 import { User } from "../../users/entities/user.entity";
 
 @ObjectType({ description: "A candy a player got from a lost knock" })
@@ -47,57 +38,84 @@ export class HalloweenCandyPlacement {
   scale: number;
 }
 
-/** What one change to a board does. */
-export enum HalloweenCandyBoardActionType {
-  /** Stick a candy from the tray on the board, on top of the pile. */
-  ADD = "ADD",
-  /** Change where a candy on the board sits, its turn or its size. */
-  EDIT = "EDIT",
-  /** Move a candy on the board to the top of the pile. */
-  RAISE = "RAISE",
-  /** Put a candy on the board back in the tray. */
-  REMOVE = "REMOVE",
-}
+// The action inputs carry no class-validator decorators: they arrive as a
+// bare `[HalloweenCandyBoardAction!]!` argument, which Nest's ValidationPipe
+// never looks inside (see SetItemTypeUsePayoutInput). Their shape is the
+// schema's to enforce, and their ranges the zod schema's, on the board the
+// actions produce.
 
-registerEnumType(HalloweenCandyBoardActionType, {
-  name: "HalloweenCandyBoardActionType",
-  description: "What one change to a Halloween candy board does",
-});
+@InputType({ description: "A candy, by the knock that gave it" })
+export class HalloweenCandyRefInput {
+  @Field(() => Int)
+  knockEventId: number;
+}
 
 @InputType({
   description:
-    "One change to your board. ADD needs x and y, and takes rotation 0 and " +
-    "scale 1 unless given; EDIT changes only the fields given; RAISE and " +
-    "REMOVE take none.",
+    "Stick a candy from the tray on the board, on top of the pile. Ranges " +
+    "as on HalloweenCandyPlacement.",
 })
-export class HalloweenCandyBoardActionInput {
-  @Field(() => HalloweenCandyBoardActionType)
-  @IsEnum(HalloweenCandyBoardActionType)
-  type: HalloweenCandyBoardActionType;
-
+export class HalloweenCandyAddInput {
   @Field(() => Int)
-  @IsInt()
+  knockEventId: number;
+
+  @Field(() => Float)
+  x: number;
+
+  @Field(() => Float)
+  y: number;
+
+  @Field(() => Float, { nullable: true, description: "0 unless given" })
+  rotation?: number | null;
+
+  @Field(() => Float, { nullable: true, description: "1 unless given" })
+  scale?: number | null;
+}
+
+@InputType({
+  description:
+    "Change where a candy on the board sits, its turn or its size. Only the " +
+    "fields given change, and at least one must be.",
+})
+export class HalloweenCandyEditInput {
+  @Field(() => Int)
   knockEventId: number;
 
   @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @IsNumber()
   x?: number | null;
 
   @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @IsNumber()
   y?: number | null;
 
   @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @IsNumber()
   rotation?: number | null;
 
   @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @IsNumber()
   scale?: number | null;
+}
+
+@InputType({
+  isOneOf: true,
+  description: "One change to your board: exactly one of these",
+})
+export class HalloweenCandyBoardAction {
+  @Field(() => HalloweenCandyAddInput, { nullable: true })
+  add?: HalloweenCandyAddInput;
+
+  @Field(() => HalloweenCandyEditInput, { nullable: true })
+  edit?: HalloweenCandyEditInput;
+
+  @Field(() => HalloweenCandyRefInput, {
+    nullable: true,
+    description: "Move a candy on the board to the top of the pile",
+  })
+  raise?: HalloweenCandyRefInput;
+
+  @Field(() => HalloweenCandyRefInput, {
+    nullable: true,
+    description: "Put a candy on the board back in the tray",
+  })
+  remove?: HalloweenCandyRefInput;
 }
 
 @ObjectType({
