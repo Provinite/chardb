@@ -42,7 +42,7 @@ const MAX_WINS_PAGE = 100;
 /** A prize nothing delivers but staff. */
 const staffPrize = {
   is: { itemTypeId: null, characterId: null },
-} satisfies Prisma.HalloweenPrizeNullableRelationFilter;
+} satisfies Prisma.HalloweenPrizeNullableScalarRelationFilter;
 
 function winsWhere(
   guildId: string,

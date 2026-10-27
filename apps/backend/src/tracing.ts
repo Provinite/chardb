@@ -8,6 +8,7 @@ import {
   ATTR_SERVICE_VERSION,
 } from "@opentelemetry/semantic-conventions";
 import { WinstonInstrumentation } from "@opentelemetry/instrumentation-winston";
+import { PrismaInstrumentation } from "@prisma/instrumentation";
 import { SeverityNumber } from "@opentelemetry/api-logs";
 
 // Honour the standard OTEL_SDK_DISABLED switch before constructing anything.
@@ -103,6 +104,18 @@ if (tracingDisabled) {
       new WinstonInstrumentation({
         enabled: true,
         logSeverity: SeverityNumber.INFO,
+      }),
+      // Prisma's engine talks to Postgres itself, so the pg instrumentation
+      // never sees its queries; this is what puts them in the trace
+      // An ignored span takes its children with it, so only leaves are cut:
+      // operations and SQL stay, serialization and pool checkouts go
+      new PrismaInstrumentation({
+        ignoreSpanTypes: [
+          "prisma:client:serialize",
+          "prisma:engine:connection",
+          "prisma:engine:serialize",
+          "prisma:engine:response_json_serialization",
+        ],
       }),
     ],
   });

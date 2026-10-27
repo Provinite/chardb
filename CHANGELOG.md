@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Prisma 6.19** replaces Prisma 5.22; no schema migration was needed (#97).
 - **`yarn halloween:images` lists candy slugs instead of counting numbered files**, and fails on a candy that is not a PNG or duplicates another.
 
 - **Character Deletion, Trait Review and Item Ledger show the staff ⋯ menu**, with six retaken screenshots and two new ones of the delete and remove-from-species confirmations (#430).
