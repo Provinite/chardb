@@ -25,6 +25,11 @@ const STATES: Record<
   failed: { text: "Not saved", Icon: AlertCircle },
 };
 
+const LONGEST = Object.values(STATES).reduce(
+  (longest, { text }) => (text.length > longest.length ? text : longest),
+  "",
+);
+
 const popIn = keyframes`
   from {
     opacity: 0;
@@ -54,6 +59,26 @@ const Indicator = styled.span<{ $status: SaveStatus }>`
       : $status === "failed"
         ? theme.colors.error
         : theme.colors.warning};
+`;
+
+/**
+ * As wide as the longest state's words, whichever is showing, so the header
+ * does not reflow -- or wrap -- each time the state changes. The longest is
+ * laid in the same grid cell, unseen, as generated content: it holds the
+ * width without becoming part of the page's text.
+ */
+const Words = styled.span`
+  display: inline-grid;
+
+  > *,
+  &::after {
+    grid-area: 1 / 1;
+  }
+
+  &::after {
+    content: "${LONGEST}";
+    visibility: hidden;
+  }
 `;
 
 const IconSlot = styled.span<{ $spin: boolean }>`
@@ -92,7 +117,9 @@ export const SaveStatusIndicator: React.FC<{ status: SaveStatus }> = ({
           fill={status === "unsaved" ? "currentColor" : "none"}
         />
       </IconSlot>
-      {text}
+      <Words>
+        <span>{text}</span>
+      </Words>
     </Indicator>
   );
 };
