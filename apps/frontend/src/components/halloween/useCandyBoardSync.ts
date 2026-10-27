@@ -57,9 +57,13 @@ export function useCandyBoardSync({
   /** Bumped to wake the sender after a change or a retry. */
   const [wake, setWake] = useState(0);
   const queue = useRef<BoardAction[]>([]);
-  const inFlight = useRef(false);
+  /** The batch on its way, if one is. */
+  const inFlight = useRef<Promise<unknown> | null>(null);
   const server = useRef<Placement[]>(strip(serverPlacements ?? []));
   const [apply] = useApplyHalloweenCandyBoardActionsMutation();
+  /** For the unmount cleanup, which sees only the first render's values. */
+  const latest = useRef({ communityId, apply });
+  latest.current = { communityId, apply };
 
   const idle = () =>
     queue.current.length === 0 && !inFlight.current && !dragging;
@@ -92,13 +96,14 @@ export function useCandyBoardSync({
     const timer = setTimeout(async () => {
       const batch = queue.current;
       queue.current = [];
-      inFlight.current = true;
       setStatus("saving");
       try {
-        const result = await apply({
+        const request = apply({
           variables: { communityId, actions: batch },
         });
-        inFlight.current = false;
+        inFlight.current = request;
+        const result = await request;
+        inFlight.current = null;
         const saved = result.data?.applyHalloweenCandyBoardActions.placements;
         if (saved) server.current = strip(saved);
         if (queue.current.length === 0) {
@@ -109,7 +114,7 @@ export function useCandyBoardSync({
           setWake((n) => n + 1);
         }
       } catch (error) {
-        inFlight.current = false;
+        inFlight.current = null;
         if (error instanceof ApolloError && error.graphQLErrors.length > 0) {
           // The server said no; what it has is the truth.
           queue.current = [];
@@ -129,6 +134,27 @@ export function useCandyBoardSync({
     setStatus("unsaved");
     setWake((n) => n + 1);
   }, []);
+
+  // Leaving the page within the app -- a sidebar link -- unmounts this before
+  // the send delay is up, or mid-drag. The app keeps running then, so what is
+  // waiting is sent now, after any batch already on its way so the two arrive
+  // in order. (Closing the tab is the beforeunload warning's job: nothing
+  // started then is sure to finish.)
+  useEffect(
+    () => () => {
+      const pending = queue.current;
+      const { communityId: id, apply: send } = latest.current;
+      if (!id || pending.length === 0) return;
+      queue.current = [];
+      void (inFlight.current ?? Promise.resolve())
+        .catch(() => undefined)
+        .then(() => send({ variables: { communityId: id, actions: pending } }))
+        .catch(() => {
+          toast.error("Your last candy board change could not be saved");
+        });
+    },
+    [],
+  );
 
   useEffect(() => {
     if (status === "saved") return;

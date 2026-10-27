@@ -1562,6 +1562,9 @@ input HalloweenCandyBoardAction @oneOf {
   add: HalloweenCandyAddInput
   edit: HalloweenCandyEditInput
 
+  """Move a candy on the board to the bottom of the pile"""
+  lower: HalloweenCandyRefInput
+
   """Move a candy on the board to the top of the pile"""
   raise: HalloweenCandyRefInput
 

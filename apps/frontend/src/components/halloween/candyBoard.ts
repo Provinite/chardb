@@ -90,6 +90,7 @@ export function candyOf(action: BoardAction): number {
   if (action.add) return action.add.knockEventId;
   if (action.edit) return action.edit.knockEventId;
   if (action.raise) return action.raise.knockEventId;
+  if (action.lower) return action.lower.knockEventId;
   return action.remove.knockEventId;
 }
 
@@ -139,6 +140,9 @@ export function applyAction(
   }
   if (action.raise) {
     return [...placements.filter((_, i) => i !== index), placements[index]];
+  }
+  if (action.lower) {
+    return [placements[index], ...placements.filter((_, i) => i !== index)];
   }
   return placements.filter((_, i) => i !== index);
 }

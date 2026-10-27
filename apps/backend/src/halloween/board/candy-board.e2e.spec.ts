@@ -358,6 +358,14 @@ describe("Halloween candy board (e2e)", () => {
       expect(await placementsNow()).toEqual([at(b.id), at(a.id)]);
     });
 
+    it("lowers a candy to the bottom of the pile", async () => {
+      const a = await knock();
+      const b = await knock();
+      await apply([add(a.id), add(b.id)]);
+      await apply([{ lower: { knockEventId: b.id } }]);
+      expect(await placementsNow()).toEqual([at(b.id), at(a.id)]);
+    });
+
     it("puts a candy back in the tray", async () => {
       const a = await knock();
       const b = await knock();
@@ -421,6 +429,7 @@ describe("Halloween candy board (e2e)", () => {
     it.each([
       ["edit", { x: 0.5 }],
       ["raise", {}],
+      ["lower", {}],
       ["remove", {}],
     ])("refuses to %s a candy not on the board", async (kind, fields) => {
       const a = await knock();

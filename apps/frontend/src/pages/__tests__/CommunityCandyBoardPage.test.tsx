@@ -163,6 +163,23 @@ const renderBoard = (mocks: MockedResponse[]) =>
   renderAt(`/halloween/board/${BOARD_ID}`, mocks);
 
 const pile = () => screen.findByRole("region", { name: "Candy board" });
+
+/** jsdom lays nothing out: gives the board a 400 x 300 box at the origin. */
+const sized = (region: HTMLElement) => {
+  region.getBoundingClientRect = () =>
+    ({
+      left: 0,
+      top: 0,
+      width: 400,
+      height: 300,
+      right: 400,
+      bottom: 300,
+    }) as DOMRect;
+  return region;
+};
+
+/** What positions, sizes and rotates a candy on the board. */
+const frameOf = (img: HTMLElement) => img.parentElement as HTMLElement;
 const placedNames = async () =>
   within(await pile())
     .queryAllByRole("img")
@@ -409,16 +426,7 @@ describe("CommunityCandyBoardPage", () => {
     it("moves a candy only with the pointer that grabbed it", async () => {
       renderBoard([boardQuery(board([2]))]);
 
-      const region = await pile();
-      region.getBoundingClientRect = () =>
-        ({
-          left: 0,
-          top: 0,
-          width: 400,
-          height: 300,
-          right: 400,
-          bottom: 300,
-        }) as DOMRect;
+      const region = sized(await pile());
       const luther = within(region).getByRole("img");
       fireEvent.pointerDown(luther, {
         clientX: 200,
@@ -426,25 +434,180 @@ describe("CommunityCandyBoardPage", () => {
         pointerId: 1,
       });
       fireEvent.pointerMove(region, { clientX: 0, clientY: 0, pointerId: 2 });
-      expect(luther.style.left).toBe("50%");
+      expect(frameOf(luther).style.left).toBe("50%");
       fireEvent.pointerMove(region, {
         clientX: 100,
         clientY: 150,
         pointerId: 1,
       });
-      expect(luther.style.left).toBe("25%");
+      expect(frameOf(luther).style.left).toBe("25%");
     });
 
-    it("turns a candy picked with the pointer from the keyboard", async () => {
+    it("rotates a candy picked with the pointer from the keyboard", async () => {
       renderBoard([boardQuery(board([2]))]);
 
       const region = await pile();
       await userEvent.click(within(region).getByRole("img"));
       await userEvent.keyboard("]");
 
-      expect(within(region).getByRole("img").style.transform).toBe(
+      expect(frameOf(within(region).getByRole("img")).style.transform).toBe(
         "translate(-50%, -50%) rotate(15deg)",
       );
+    });
+
+    it("keeps the controls in view but disabled until a candy is selected", async () => {
+      renderBoard([boardQuery(board([2, 1]))]);
+
+      await pile();
+      const controls = [
+        screen.getByLabelText("Rotate"),
+        screen.getByLabelText("Scale"),
+        screen.getByRole("button", { name: "Bring to front" }),
+        screen.getByRole("button", { name: "Send to back" }),
+        screen.getByRole("button", { name: "Back to tray" }),
+      ];
+      for (const control of controls) expect(control).toBeDisabled();
+
+      await userEvent.click(within(await pile()).getAllByRole("img")[0]);
+      for (const control of controls) expect(control).toBeEnabled();
+    });
+
+    it("sends the selected candy to the back of the pile", async () => {
+      renderBoard([boardQuery(board([2, 1]))]);
+
+      const region = await pile();
+      const corn = within(region).getAllByRole("img")[1];
+      await userEvent.click(corn);
+      await userEvent.click(
+        screen.getByRole("button", { name: "Send to back" }),
+      );
+
+      expect(await placedNames()).toEqual(["candy corn", "luther head"]);
+    });
+
+    it("labels the selected candy's sliders Rotate and Scale", async () => {
+      renderBoard([boardQuery(board([2]))]);
+
+      await userEvent.click(within(await pile()).getByRole("img"));
+      expect(screen.getByLabelText("Rotate")).toHaveAttribute("type", "range");
+      expect(screen.getByLabelText("Scale")).toHaveAttribute("type", "range");
+    });
+
+    it("shows corner handles and a rotate handle only on the selected candy", async () => {
+      renderBoard([boardQuery(board([2]))]);
+
+      const region = await pile();
+      expect(within(region).queryByLabelText(/^Scale from/)).toBeNull();
+      await userEvent.click(within(region).getByRole("img"));
+      expect(within(region).getAllByLabelText(/^Scale from/)).toHaveLength(4);
+      expect(within(region).getByLabelText("Rotate candy")).toBeInTheDocument();
+    });
+
+    it("draws the handles above every candy, not only the selected one", async () => {
+      renderBoard([boardQuery(board([2, 1]))]);
+
+      const region = await pile();
+      // Luther is under the candy corn; its handles must not be.
+      const [luther, corn] = within(region).getAllByRole("img");
+      await userEvent.click(luther);
+      const handle = within(region).getByLabelText("Rotate candy");
+      expect(
+        frameOf(corn).compareDocumentPosition(handle) &
+          Node.DOCUMENT_POSITION_FOLLOWING,
+      ).toBeTruthy();
+      expect(frameOf(luther).contains(handle)).toBe(false);
+    });
+
+    it("scales a candy by dragging a corner away from its centre", async () => {
+      renderBoard([boardQuery(board([2]))]);
+
+      // The candy's centre is (200, 150) on a 400 x 300 board.
+      const region = sized(await pile());
+      const luther = within(region).getByRole("img");
+      await userEvent.click(luther);
+      const corner = within(region).getByLabelText(
+        "Scale from bottom-right corner",
+      );
+      fireEvent.pointerDown(corner, {
+        clientX: 230,
+        clientY: 190,
+        pointerId: 1,
+      });
+      fireEvent.pointerMove(region, {
+        clientX: 260,
+        clientY: 230,
+        pointerId: 1,
+      });
+      fireEvent.pointerUp(region, { clientX: 260, clientY: 230, pointerId: 1 });
+
+      // Twice as far from the centre: twice the scale, 12% wide becomes 24%.
+      expect(frameOf(luther).style.width).toBe("24%");
+      expect(frameOf(luther).style.left).toBe("50%");
+    });
+
+    it("never scales a candy past what the board allows", async () => {
+      renderBoard([boardQuery(board([2]))]);
+
+      const region = sized(await pile());
+      const luther = within(region).getByRole("img");
+      await userEvent.click(luther);
+      const corner = within(region).getByLabelText(
+        "Scale from top-left corner",
+      );
+      fireEvent.pointerDown(corner, {
+        clientX: 190,
+        clientY: 140,
+        pointerId: 1,
+      });
+      fireEvent.pointerMove(region, { clientX: 0, clientY: 0, pointerId: 1 });
+      fireEvent.pointerUp(region, { clientX: 0, clientY: 0, pointerId: 1 });
+
+      // At most 4x: 48% wide.
+      expect(frameOf(luther).style.width).toBe("48%");
+    });
+
+    it("rotates a candy by dragging its rotate handle around the centre", async () => {
+      renderBoard([boardQuery(board([2]))]);
+
+      const region = sized(await pile());
+      const luther = within(region).getByRole("img");
+      await userEvent.click(luther);
+      const handle = within(region).getByLabelText("Rotate candy");
+      // Straight above the centre is no rotation; straight right is 90.
+      fireEvent.pointerDown(handle, {
+        clientX: 200,
+        clientY: 100,
+        pointerId: 1,
+      });
+      fireEvent.pointerMove(region, {
+        clientX: 260,
+        clientY: 150,
+        pointerId: 1,
+      });
+      fireEvent.pointerUp(region, { clientX: 260, clientY: 150, pointerId: 1 });
+
+      expect(frameOf(luther).style.transform).toBe(
+        "translate(-50%, -50%) rotate(90deg)",
+      );
+    });
+
+    it("sends changes still waiting when you leave the board", async () => {
+      const sent = vi.fn(() => ({
+        data: { applyHalloweenCandyBoardActions: board([2, 1]) },
+      }));
+      const { unmount } = renderBoard([
+        boardQuery(board([2])),
+        { ...applyMock([ADD_CORN], { board: board([2, 1]) }), result: sent },
+      ]);
+
+      await userEvent.click(
+        await screen.findByRole("button", {
+          name: "Place candy corn (2 left)",
+        }),
+      );
+      unmount();
+
+      await waitFor(() => expect(sent).toHaveBeenCalled());
     });
 
     it("puts the selected candy back in the tray", async () => {

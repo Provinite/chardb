@@ -120,12 +120,23 @@ describe("applyAction", () => {
     ]);
   });
 
+  it("lowers a candy to the bottom of the pile", () => {
+    expect(
+      applyAction([at(1), at(2), at(3)], { lower: { knockEventId: 3 } }),
+    ).toEqual([at(3), at(1), at(2)]);
+  });
+
   it("puts a candy back in the tray", () => {
     expect(applyAction([at(1), at(2)], remove(1))).toEqual([at(2)]);
   });
 
   it("ignores a change to a candy not on the board", () => {
-    for (const action of [edit(9, { x: 0 }), raise(9), remove(9)]) {
+    for (const action of [
+      edit(9, { x: 0 }),
+      raise(9),
+      { lower: { knockEventId: 9 } },
+      remove(9),
+    ]) {
       expect(applyAction([at(1)], action)).toEqual([at(1)]);
     }
   });

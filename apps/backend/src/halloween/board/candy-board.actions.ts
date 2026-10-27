@@ -28,7 +28,7 @@ export function applyCandyBoardActions(
     return index;
   };
 
-  for (const { add, edit, raise, remove } of actions) {
+  for (const { add, edit, raise, lower, remove } of actions) {
     if (add) {
       if (next.some((p) => p.knockEventId === add.knockEventId)) {
         throw new BadRequestException("That candy is already on the board");
@@ -57,6 +57,9 @@ export function applyCandyBoardActions(
     } else if (raise) {
       const [raised] = next.splice(indexOf(raise.knockEventId), 1);
       next.push(raised);
+    } else if (lower) {
+      const [lowered] = next.splice(indexOf(lower.knockEventId), 1);
+      next.unshift(lowered);
     } else if (remove) {
       const index = indexOf(remove.knockEventId);
       next = next.filter((_, i) => i !== index);
