@@ -7,8 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Prisma operations and SQL queries appear as spans in traces**, nested under the resolver that issued them (#97).
+
 ### Changed
 
+- **The viewer is authenticated once per request** instead of once per resolved field (#97).
 - **Halloween candy images are named by slug** (`candy/candy-corn.png`): 107 unique candies, with the 23 duplicate files removed and Luther and Daphne's two paintings framed as stickers.
 - **Character and species names are trimmed on create, update and MYO redemption**, and a name of only spaces is refused (#430).
 

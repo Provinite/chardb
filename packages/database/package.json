@@ -17,9 +17,9 @@
     "db:seed-personas": "node ../../scripts/with-instance.mjs dotenv -e .env -e ../../apps/backend/.env -- tsx src/seed-personas.ts"
   },
   "dependencies": {
-    "@prisma/client": "^5.0.0",
+    "@prisma/client": "^6.19.3",
     "bcrypt": "^5.1.0",
-    "prisma": "^5.0.0",
+    "prisma": "^6.19.3",
     "prisma-json-types-generator": "^3.6.0"
   },
   "devDependencies": {
