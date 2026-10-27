@@ -15,9 +15,46 @@ import { GlobalPermission } from "./GlobalPermission";
  * - Community permission checks
  * - Identity checks (self)
  */
+export type CommunityPermissions = Awaited<
+  ReturnType<PermissionService["getCommunityPermissions"]>
+>;
+
 @Injectable()
 export class PermissionService {
+  /** Per request: `${userId}:${communityId}` to that member's permissions. */
+  private readonly byRequest = new WeakMap<
+    object,
+    Map<string, Promise<CommunityPermissions>>
+  >();
+
   constructor(private communityMembersService: CommunityMembersService) {}
+
+  /**
+   * {@link getCommunityPermissions}, read once per request for each member and
+   * community. Guards and fields run once per row of a list, and the rows of
+   * one list nearly always share a community, so this turns a query per row
+   * into one. A subscription has no request and reads every time.
+   */
+  getCommunityPermissionsForRequest(
+    req: object | undefined,
+    userId: string,
+    communityId: string,
+  ): Promise<CommunityPermissions> {
+    if (!req) return this.getCommunityPermissions(userId, communityId);
+
+    let cache = this.byRequest.get(req);
+    if (!cache) {
+      cache = new Map();
+      this.byRequest.set(req, cache);
+    }
+    const key = `${userId}:${communityId}`;
+    let permissions = cache.get(key);
+    if (!permissions) {
+      permissions = this.getCommunityPermissions(userId, communityId);
+      cache.set(key, permissions);
+    }
+    return permissions;
+  }
 
   /**
    * Get all community permissions for a user in a specific community.

@@ -7,8 +7,10 @@ import {
   Int,
   ResolveField,
   Parent,
+  Context,
 } from "@nestjs/graphql";
 import { NotFoundException } from "@nestjs/common";
+import type { Request } from "express";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
@@ -274,6 +276,7 @@ export class CurrencyTransactionFieldsResolver {
   async resolveStaffNote(
     @Parent() transaction: CurrencyTransaction,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @Context("req") req?: Request,
   ): Promise<string | null> {
     const currency = await this.database.currency.findUnique({
       where: { id: transaction.currencyId },
@@ -281,20 +284,19 @@ export class CurrencyTransactionFieldsResolver {
     });
     if (!currency) return null;
 
-    const [canManage, canGrant] = await Promise.all([
-      this.permissionService.hasCommunityPermission(
+    const permissions =
+      await this.permissionService.getCommunityPermissionsForRequest(
+        req,
         user.id,
         currency.communityId,
-        CommunityPermission.CanManageItems,
-      ),
-      this.permissionService.hasCommunityPermission(
-        user.id,
-        currency.communityId,
-        CommunityPermission.CanGrantItems,
-      ),
-    ]);
+      );
 
-    if (!canManage && !canGrant) return null;
+    if (
+      !permissions[CommunityPermission.CanManageItems] &&
+      !permissions[CommunityPermission.CanGrantItems]
+    ) {
+      return null;
+    }
 
     const row = await this.database.currencyTransaction.findUnique({
       where: { id: transaction.id },
