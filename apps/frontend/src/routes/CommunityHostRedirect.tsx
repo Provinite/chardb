@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { AppLoader } from "../components/AppLoader";
+import { LoadingSpinner } from "../components/LoadingSpinner";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { CharacterPage } from "../pages/CharacterPage";
 import {
@@ -41,11 +41,21 @@ export const CommunityHostRedirect: React.FC = () => {
   }, [slug, rest, location.search, location.hash]);
 
   if (loading) {
-    return <AppLoader />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   // A community id that resolves to nothing is a dead link, not a redirect.
-  return slug ? <AppLoader /> : <NotFoundPage />;
+  return slug ? (
+    <div className="flex items-center justify-center min-h-screen">
+      <LoadingSpinner size="lg" />
+    </div>
+  ) : (
+    <NotFoundPage />
+  );
 };
 
 /**
@@ -83,7 +93,11 @@ export const CharacterHostGuard: React.FC = () => {
   }, [slug, id, location.search, location.hash]);
 
   if (loading || slug) {
-    return <AppLoader />;
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <LoadingSpinner size="lg" />
+      </div>
+    );
   }
 
   return <CharacterPage />;
