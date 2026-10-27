@@ -22,7 +22,9 @@ export class CandyBoardResolver {
     nullable: true,
     description:
       "A Halloween candy board, by the id in its link. Null if there is no " +
-      "such board in this community.",
+      "such board in this community's Discord server, or the community has " +
+      "none linked. An error if the community does not exist or has the " +
+      "Halloween event turned off.",
   })
   async halloweenCandyBoard(
     @Args("communityId", { type: () => ID }) communityId: string,
@@ -49,7 +51,10 @@ export class CandyBoardResolver {
   @AllowAnyAuthenticated()
   @Mutation(() => HalloweenCandyBoard, {
     description:
-      "Apply changes to your board, in order, all or none. Needs Discord linked.",
+      "Apply changes to your board, in order, and get it back as it now is. " +
+      "A change that cannot apply -- a candy not yours, not on the board, " +
+      "already on it, or placed off it -- is skipped, and the rest still " +
+      "apply. At most 100 changes at once. Needs Discord linked.",
   })
   async applyHalloweenCandyBoardActions(
     @Args("communityId", { type: () => ID }) communityId: string,

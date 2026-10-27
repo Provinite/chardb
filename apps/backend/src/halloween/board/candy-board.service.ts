@@ -27,6 +27,13 @@ import type {
   HalloweenCandyBoardAction,
 } from "./candy-board.types";
 
+/**
+ * The most actions one save takes. The page merges what it queues, so a
+ * batch is a handful; this keeps a request from holding the board's lock for
+ * long. The page splits anything larger into several saves.
+ */
+export const MAX_ACTIONS = 100;
+
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 /**
@@ -100,14 +107,21 @@ export class CandyBoardService {
   }
 
   /**
-   * Applies the signed-in player's actions to their board, all or none. The
-   * board's row is locked while they apply, so two batches at once both land.
+   * Applies the signed-in player's actions to their board, skipping any that
+   * cannot apply (see `applyCandyBoardActions`), and returns the board as it
+   * now is. The board's row is locked while they apply, so two batches at
+   * once both land.
    */
   async applyActions(
     communityId: string,
     userId: string,
     actions: HalloweenCandyBoardAction[],
   ): Promise<HalloweenCandyBoard> {
+    if (actions.length > MAX_ACTIONS) {
+      throw new BadRequestException(
+        "Too many changes to save at once: at most 100",
+      );
+    }
     const guildId = await this.requireGuild(communityId);
     const discordUserId = await this.discordIdOf(userId);
     if (!discordUserId) {
@@ -117,21 +131,21 @@ export class CandyBoardService {
     }
 
     const added = addedCandies(actions);
-    const owned = added.length
-      ? await this.db.halloweenKnockEvent.count({
-          where: {
-            id: { in: [...new Set(added)] },
-            guildId,
-            userId: discordUserId,
-            candySlug: { not: null },
-          },
-        })
-      : 0;
-    if (owned !== new Set(added).size) {
-      throw new ForbiddenException(
-        "Only your own candies can go on your board",
-      );
-    }
+    const owned = new Set(
+      added.length
+        ? (
+            await this.db.halloweenKnockEvent.findMany({
+              where: {
+                id: { in: [...new Set(added)] },
+                guildId,
+                userId: discordUserId,
+                candySlug: { not: null },
+              },
+              select: { id: true },
+            })
+          ).map((k) => k.id)
+        : [],
+    );
 
     const board = await this.db.$transaction(async (tx) => {
       const { id } = await tx.halloweenCandyBoard.upsert({
@@ -147,7 +161,11 @@ export class CandyBoardService {
       return tx.halloweenCandyBoard.update({
         where: { id },
         data: {
-          placements: applyCandyBoardActions(storedPlacements(locked), actions),
+          placements: applyCandyBoardActions(
+            storedPlacements(locked),
+            actions,
+            (knockEventId) => owned.has(knockEventId),
+          ),
         },
       });
     });

@@ -341,12 +341,15 @@ describe("CommunityCandyBoardPage", () => {
       );
     });
 
-    it("undoes a change the server refused, and says why", async () => {
+    it("fetches the board afresh when a save is refused, and says why", async () => {
       renderBoard([
         boardQuery(board([2])),
         applyMock([ADD_CORN], {
-          graphQLError: "Only your own candies can go on your board",
+          graphQLError: "Too many changes to save at once: at most 100",
         }),
+        // Changed meanwhile, elsewhere: neither what loaded nor what this
+        // page tried to save.
+        boardQuery(board([3])),
       ]);
 
       await userEvent.click(
@@ -357,12 +360,47 @@ describe("CommunityCandyBoardPage", () => {
       await waitFor(
         () =>
           expect(toast.error).toHaveBeenCalledWith(
-            "Only your own candies can go on your board",
+            "Too many changes to save at once: at most 100",
           ),
         { timeout: 2000 },
       );
-      expect(await placedNames()).toEqual(["luther head"]);
+      await waitFor(async () =>
+        expect(await placedNames()).toEqual(["candy corn"]),
+      );
       expect(screen.getByRole("status")).toHaveTextContent("Saved");
+    });
+
+    it("saves a candy dragged past the edge where the board shows it", async () => {
+      const saved = vi.fn(() => ({
+        data: { applyHalloweenCandyBoardActions: board([2]) },
+      }));
+      renderBoard([
+        boardQuery(board([2])),
+        {
+          ...applyMock([{ edit: { knockEventId: 2, x: 0, y: 0.5 } }], {
+            board: board([2]),
+          }),
+          result: saved,
+        },
+      ]);
+
+      const region = sized(await pile());
+      // Grabbed 20px right of its centre, then pulled past the left edge:
+      // its centre would be off the board, so it stops at the edge.
+      fireEvent.pointerDown(region, {
+        clientX: 220,
+        clientY: 150,
+        pointerId: 1,
+      });
+      fireEvent.pointerMove(region, {
+        clientX: -50,
+        clientY: 150,
+        pointerId: 1,
+      });
+      fireEvent.pointerUp(region, { clientX: -50, clientY: 150, pointerId: 1 });
+
+      expect(frameOf(within(region).getByRole("img")).style.left).toBe("0%");
+      await waitFor(() => expect(saved).toHaveBeenCalled(), { timeout: 2000 });
     });
 
     it("warns before leaving with changes not yet saved", async () => {

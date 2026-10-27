@@ -157,7 +157,7 @@ export const CommunityCandyBoardPage: React.FC = () => {
   const communityId = useCommunityId();
   const enabled = Boolean(useHostCommunity()?.halloweenEnabled);
 
-  const { data, loading, error } = useHalloweenCandyBoardQuery({
+  const { data, loading, error, refetch } = useHalloweenCandyBoardQuery({
     variables: { communityId: communityId as string, id: boardId },
     skip: !communityId || !enabled || !boardId,
     fetchPolicy: "cache-and-network",
@@ -180,17 +180,29 @@ export const CommunityCandyBoardPage: React.FC = () => {
       </Container>
     );
   }
-  return <BoardView board={board} communityId={communityId} />;
+  return (
+    <BoardView
+      board={board}
+      communityId={communityId}
+      refetchPlacements={async () =>
+        (await refetch()).data.halloweenCandyBoard?.placements
+      }
+    />
+  );
 };
 
 const BoardView: React.FC<{
   board: HalloweenCandyBoardFieldsFragment;
   communityId: string | null;
-}> = ({ board, communityId }) => {
+  refetchPlacements: () => Promise<
+    HalloweenCandyBoardFieldsFragment["placements"] | undefined
+  >;
+}> = ({ board, communityId, refetchPlacements }) => {
   const [dragging, setDragging] = useState(false);
   const { placements, act, status, retry } = useCandyBoardSync({
     communityId,
     serverPlacements: board.placements,
+    refetchPlacements,
     dragging,
   });
 

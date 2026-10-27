@@ -404,59 +404,104 @@ describe("Halloween candy board (e2e)", () => {
       expect(placed.sort()).toEqual(candies.map((c) => c.id).sort());
     });
 
-    it("applies a batch whole or not at all", async () => {
-      const a = await knock();
-      const theirs = await knock({ userId: OTHER_PLAYER });
-      const res = await apply([add(a.id), add(theirs.id)]);
-      expect(res.body.errors?.[0].message).toBe(
-        "Only your own candies can go on your board",
+    /** What a save sent back: the board's placements as they now are. */
+    const returned = (res: {
+      body: { data: Record<string, { placements: unknown }> };
+    }) => res.body.data.applyHalloweenCandyBoardActions.placements;
+
+    // A change that cannot apply is skipped and the rest of the batch lands;
+    // the board sent back is how it now is, so the page needs telling nothing
+    // else.
+    describe("skipping what cannot apply", () => {
+      it.each([
+        ["another player's knock", { userId: OTHER_PLAYER }],
+        ["a win's knock", { candySlug: null }],
+        ["another guild's knock", { guildId: OTHER_GUILD }],
+      ])("skips adding %s, and adds the rest", async (_what, data) => {
+        const mine = await knock();
+        const k = await knock(data);
+        const res = await apply([add(k.id), add(mine.id)]);
+        expect(res.body.errors).toBeUndefined();
+        expect(returned(res)).toEqual([at(mine.id)]);
+        expect(await placementsNow()).toEqual([at(mine.id)]);
+      });
+
+      it("skips adding a candy already on the board", async () => {
+        const a = await knock();
+        await apply([add(a.id)]);
+        // As a retry of a save that landed but whose answer was lost.
+        const res = await apply([add(a.id, { x: 0.9 })]);
+        expect(res.body.errors).toBeUndefined();
+        expect(returned(res)).toEqual([at(a.id)]);
+      });
+
+      it.each([
+        ["edit", { x: 0.5 }],
+        ["raise", {}],
+        ["lower", {}],
+        ["forward", {}],
+        ["backward", {}],
+        ["remove", {}],
+      ])("skips a %s of a candy not on the board", async (kind, fields) => {
+        const a = await knock();
+        const b = await knock();
+        const res = await apply([
+          { [kind]: { knockEventId: a.id, ...fields } },
+          add(b.id),
+        ]);
+        expect(res.body.errors).toBeUndefined();
+        expect(returned(res)).toEqual([at(b.id)]);
+      });
+
+      it("skips an edit that changes nothing", async () => {
+        const a = await knock();
+        await apply([add(a.id)]);
+        const res = await apply([{ edit: { knockEventId: a.id } }]);
+        expect(res.body.errors).toBeUndefined();
+        expect(returned(res)).toEqual([at(a.id)]);
+      });
+
+      it.each([
+        ["x", { x: 1.01 }],
+        ["y", { y: -0.01 }],
+        ["rotation", { rotation: 181 }],
+        ["scale", { scale: 0.1 }],
+        ["scale", { scale: 5 }],
+      ])(
+        "skips a candy placed with %s out of range",
+        async (_field, overrides) => {
+          const a = await knock();
+          const res = await apply([add(a.id, overrides)]);
+          expect(res.body.errors).toBeUndefined();
+          expect(returned(res)).toEqual([]);
+        },
       );
-      expect(await placementsNow()).toEqual([]);
+
+      it("cannot reach another player's board", async () => {
+        const mine = await knock();
+        await apply([add(mine.id)]);
+        // The other player's actions land on their own board, where this
+        // candy is not.
+        const res = await apply(
+          [{ remove: { knockEventId: mine.id } }],
+          otherToken,
+        );
+        expect(returned(res)).toEqual([]);
+        expect(await placementsNow()).toEqual([at(mine.id)]);
+      });
     });
 
-    it.each([
-      ["another player's", { userId: OTHER_PLAYER }],
-      ["a win's", { candySlug: null }],
-      ["another guild's", { guildId: OTHER_GUILD }],
-    ])("refuses to add %s knock", async (_what, data) => {
-      const k = await knock(data);
-      const res = await apply([add(k.id)]);
-      expect(res.body.errors?.[0].message).toBe(
-        "Only your own candies can go on your board",
-      );
-    });
-
-    it("refuses to add a candy already on the board", async () => {
+    it("refuses more than 100 changes in one save", async () => {
       const a = await knock();
       await apply([add(a.id)]);
-      const res = await apply([add(a.id)]);
+      const many = Array.from({ length: 101 }, () => ({
+        raise: { knockEventId: a.id },
+      }));
+      const res = await apply(many);
       expect(res.body.errors?.[0].message).toBe(
-        "That candy is already on the board",
+        "Too many changes to save at once: at most 100",
       );
-    });
-
-    it.each([
-      ["edit", { x: 0.5 }],
-      ["raise", {}],
-      ["lower", {}],
-      ["forward", {}],
-      ["backward", {}],
-      ["remove", {}],
-    ])("refuses to %s a candy not on the board", async (kind, fields) => {
-      const a = await knock();
-      const res = await apply([{ [kind]: { knockEventId: a.id, ...fields } }]);
-      expect(res.body.errors?.[0].message).toBe(
-        "That candy is not on the board",
-      );
-    });
-
-    it("refuses an edit that changes nothing", async () => {
-      const a = await knock();
-      await apply([add(a.id)]);
-      const res = await apply([{ edit: { knockEventId: a.id } }]);
-      expect(res.body.errors?.[0].message).toBe(
-        "An edit needs something to change",
-      );
+      expect((await apply(many.slice(0, 100))).body.errors).toBeUndefined();
     });
 
     // Both are the schema's to refuse, before any of the board is touched.
@@ -476,35 +521,6 @@ describe("Halloween candy board (e2e)", () => {
         /Exactly one key must be specified for OneOf type/,
       );
       expect(await placementsNow()).toEqual([]);
-    });
-
-    it.each([
-      ["x", { x: 1.01 }],
-      ["y", { y: -0.01 }],
-      ["rotation", { rotation: 181 }],
-      ["scale", { scale: 0.1 }],
-      ["scale", { scale: 5 }],
-    ])("refuses %s out of range", async (_field, overrides) => {
-      const a = await knock();
-      const res = await apply([add(a.id, overrides)]);
-      expect(res.body.errors?.[0].message).toBe(
-        "A candy is placed off the board or at an impossible size",
-      );
-    });
-
-    it("cannot reach another player's board", async () => {
-      const mine = await knock();
-      await apply([add(mine.id)]);
-      // The other player's actions land on their own board, where this
-      // candy is not.
-      const res = await apply(
-        [{ remove: { knockEventId: mine.id } }],
-        otherToken,
-      );
-      expect(res.body.errors?.[0].message).toBe(
-        "That candy is not on the board",
-      );
-      expect(await placementsNow()).toEqual([at(mine.id)]);
     });
 
     it("needs Discord linked", async () => {

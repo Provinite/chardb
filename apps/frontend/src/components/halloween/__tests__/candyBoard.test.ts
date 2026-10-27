@@ -5,7 +5,9 @@
 import { describe, it, expect } from "vitest";
 import {
   applyAction,
+  clampAction,
   clampPlacement,
+  nextBatch,
   enqueue,
   pointOnBoard,
   trayGroups,
@@ -159,6 +161,44 @@ describe("applyAction", () => {
     ]) {
       expect(applyAction([at(1)], action)).toEqual([at(1)]);
     }
+  });
+});
+
+describe("clampAction", () => {
+  it("keeps an edit's values on the board and possible, as the board shows them", () => {
+    expect(
+      clampAction([at(1, { x: 0.02 })], {
+        edit: { knockEventId: 1, x: -0.05, rotation: 200, scale: 9 },
+      }),
+    ).toEqual({ edit: { knockEventId: 1, x: 0, rotation: -160, scale: 4 } });
+  });
+
+  it("leaves out what an edit does not change", () => {
+    expect(clampAction([at(1)], { edit: { knockEventId: 1, y: 2 } })).toEqual({
+      edit: { knockEventId: 1, y: 1 },
+    });
+  });
+
+  it("keeps an add on the board", () => {
+    expect(
+      clampAction([], {
+        add: { knockEventId: 1, x: 1.5, y: 0.5, rotation: 0, scale: 1 },
+      }),
+    ).toEqual(add(1, { x: 1 }));
+  });
+
+  it("passes anything else through", () => {
+    expect(clampAction([at(1)], raise(1))).toEqual(raise(1));
+    expect(clampAction([], edit(9, { x: 2 }))).toEqual(edit(9, { x: 2 }));
+  });
+});
+
+describe("nextBatch", () => {
+  it("takes at most the most a save takes, in order", () => {
+    const queue = Array.from({ length: 101 }, (_, i) => raise(i));
+    const [batch, rest] = nextBatch(queue);
+    expect(batch).toEqual(queue.slice(0, 100));
+    expect(rest).toEqual([raise(100)]);
   });
 });
 

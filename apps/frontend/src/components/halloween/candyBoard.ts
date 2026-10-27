@@ -159,6 +159,54 @@ export function applyAction(
 }
 
 /**
+ * An action with its values kept on the board and possible, measured against
+ * the candy as it stands -- exactly what `applyAction` will show. Sent raw, a
+ * drag past the edge would leave the page showing the candy at the edge and
+ * the server, which skips such a change, keeping it where it was.
+ */
+export function clampAction(
+  placements: Placement[],
+  action: BoardAction,
+): BoardAction {
+  if (action.add) {
+    const { knockEventId, x, y, rotation, scale } = action.add;
+    return {
+      add: clampPlacement({
+        knockEventId,
+        x,
+        y,
+        rotation: rotation ?? 0,
+        scale: scale ?? 1,
+      }),
+    };
+  }
+  if (!action.edit) return action;
+  const current = placements.find(
+    (p) => p.knockEventId === action.edit.knockEventId,
+  );
+  if (!current) return action;
+  const changes = changesOf(action.edit);
+  const clamped = clampPlacement({ ...current, ...changes });
+  const edit: NonNullable<BoardAction["edit"]> = {
+    knockEventId: current.knockEventId,
+  };
+  for (const key of Object.keys(changes) as (keyof Changes)[]) {
+    edit[key] = clamped[key];
+  }
+  return { edit };
+}
+
+/** The most changes one save takes; the server refuses more. */
+export const MAX_BATCH = 100;
+
+/** The changes for the next save, and what waits for the one after. */
+export function nextBatch(
+  queue: BoardAction[],
+): [batch: BoardAction[], rest: BoardAction[]] {
+  return [queue.slice(0, MAX_BATCH), queue.slice(MAX_BATCH)];
+}
+
+/**
  * Adds an action to the changes waiting to be sent, folding it into what is
  * already waiting where it can: a candy dragged or resized many times before
  * a save goes as one change, and one put back before it was ever saved goes
