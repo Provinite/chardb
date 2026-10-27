@@ -2,6 +2,7 @@ import { Module, forwardRef } from "@nestjs/common";
 import { MediaService } from "./media.service";
 import { MediaResolver } from "./media.resolver";
 import { DatabaseModule } from "../database/database.module";
+import { DataLoadersModule } from "../dataloaders/dataloaders.module";
 import { TagsModule } from "../tags/tags.module";
 import { UsersModule } from "../users/users.module";
 import { CharactersModule } from "../characters/characters.module";
@@ -11,6 +12,7 @@ import { ImagesModule } from "../images/images.module";
 @Module({
   imports: [
     DatabaseModule,
+    DataLoadersModule,
     TagsModule,
     UsersModule,
     forwardRef(() => CharactersModule),

@@ -7,7 +7,9 @@ import {
   ResolveField,
   Parent,
   Int,
+  Context,
 } from "@nestjs/graphql";
+import type { Request } from "express";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
@@ -23,6 +25,7 @@ import { UsersService } from "../users/users.service";
 import { CharactersService } from "../characters/characters.service";
 import { GalleriesService } from "../galleries/galleries.service";
 import { ImagesService } from "../images/images.service";
+import { LoadersService } from "../dataloaders/loaders.service";
 import { ModerationStatus } from "@prisma/client";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { CommunityPermission } from "../auth/CommunityPermission";
@@ -74,6 +77,7 @@ export class MediaResolver {
     private readonly charactersService: CharactersService,
     private readonly galleriesService: GalleriesService,
     private readonly imagesService: ImagesService,
+    private readonly loaders: LoadersService,
   ) {}
 
   @AllowUnauthenticated()
@@ -530,8 +534,11 @@ export class MediaResolver {
     nullable: true,
     description: "Tag relationships for this media",
   })
-  async tags_rel(@Parent() media: MediaEntity): Promise<MediaTag[]> {
-    const mediaTags = await this.mediaService.findMediaTags(media.id);
+  async tags_rel(
+    @Parent() media: MediaEntity,
+    @Context("req") req?: Request,
+  ): Promise<MediaTag[]> {
+    const mediaTags = await this.loaders.forRequest(req).tagsByMedia.load(media.id);
 
     return mediaTags.map((mediaTag) => ({
       tag: {

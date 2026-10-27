@@ -119,16 +119,6 @@ export class SocialService {
     };
   }
 
-  async getLikesCount(
-    entityType: LikeableType,
-    entityId: string,
-  ): Promise<number> {
-    const countWhere = this.buildLikeCountWhereClause(entityType, entityId);
-    return this.databaseService.like.count({
-      where: countWhere,
-    });
-  }
-
   async getUserHasLiked(
     entityType: LikeableType,
     entityId: string,

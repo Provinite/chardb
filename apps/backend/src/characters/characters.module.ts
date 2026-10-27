@@ -1,5 +1,6 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { DatabaseModule } from "../database/database.module";
+import { DataLoadersModule } from "../dataloaders/dataloaders.module";
 import { ImagesModule } from "../images/images.module";
 import { TagsModule } from "../tags/tags.module";
 import { UsersModule } from "../users/users.module";
@@ -21,6 +22,7 @@ import { CharacterTraitValueResolver } from "./character-trait-value.resolver";
 @Module({
   imports: [
     DatabaseModule,
+    DataLoadersModule,
     ImagesModule,
     TagsModule,
     UsersModule,

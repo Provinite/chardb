@@ -213,24 +213,6 @@ describe("SocialService", () => {
     });
   });
 
-  describe("getLikesCount", () => {
-    it("should return the correct likes count", async () => {
-      db.like.count.mockResolvedValue(10);
-
-      const result = await service.getLikesCount(
-        LikeableType.CHARACTER,
-        "character-1",
-      );
-
-      expect(result).toBe(10);
-      expect(db.like.count).toHaveBeenCalledWith({
-        where: {
-          characterId: "character-1",
-        },
-      });
-    });
-  });
-
   describe("getUserHasLiked", () => {
     it("should return true when user has liked the entity", async () => {
       db.like.findUnique.mockResolvedValue(mockLike);

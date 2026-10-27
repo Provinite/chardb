@@ -3159,6 +3159,7 @@ __metadata:
     class-transformer: "npm:^0.5.0"
     class-validator: "npm:^0.14.0"
     cookie-parser: "npm:^1.4.7"
+    dataloader: "npm:2.2.3"
     eslint: "npm:^8.42.0"
     eslint-config-prettier: "npm:^9.0.0"
     eslint-plugin-prettier: "npm:^5.0.0"
@@ -12216,7 +12217,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"dataloader@npm:^2.2.3":
+"dataloader@npm:2.2.3, dataloader@npm:^2.2.3":
   version: 2.2.3
   resolution: "dataloader@npm:2.2.3"
   checksum: 10c0/9b9a056fbc863ca86da87d59e053e871e263b4966aa4d55e40d61a65e96815fae5530ca220629064ca5f8e3000c0c4ec93292e170c38ff393fb34256b4d7c1aa

@@ -7,7 +7,9 @@ import {
   ResolveField,
   Parent,
   Int,
+  Context,
 } from "@nestjs/graphql";
+import type { Request } from "express";
 import { NotFoundException } from "@nestjs/common";
 import { CurrentUser, CurrentUserType } from "../auth/decorators/CurrentUser";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
@@ -16,7 +18,6 @@ import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { GalleriesService } from "./galleries.service";
-import { MediaService } from "../media/media.service";
 import {
   Gallery,
   GalleryConnection,
@@ -41,6 +42,7 @@ import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 import { mapPrismaCharacterToGraphQL } from "../characters/utils/character-resolver-mappers";
 import { UsersService } from "../users/users.service";
 import { CharactersService } from "../characters/characters.service";
+import { LoadersService } from "../dataloaders/loaders.service";
 
 @Resolver(() => Gallery)
 export class GalleriesResolver {
@@ -48,7 +50,7 @@ export class GalleriesResolver {
     private readonly galleriesService: GalleriesService,
     private readonly usersService: UsersService,
     private readonly charactersService: CharactersService,
-    private readonly mediaService: MediaService,
+    private readonly loaders: LoadersService,
   ) {}
 
   @AllowAnyAuthenticated()
@@ -228,8 +230,11 @@ export class GalleriesResolver {
 
   @AllowUnauthenticated()
   @ResolveField("likesCount", () => Int)
-  async resolveLikesCount(@Parent() gallery: Gallery): Promise<number> {
-    return this.galleriesService.getGalleryLikesCount(gallery.id);
+  async resolveLikesCount(
+    @Parent() gallery: Gallery,
+    @Context("req") req?: Request,
+  ): Promise<number> {
+    return this.loaders.forRequest(req).likeCountByGallery.load(gallery.id);
   }
 
   // Unauthenticated, like `likesCount` above it and `Media.userHasLiked`.
@@ -250,8 +255,13 @@ export class GalleriesResolver {
   /** Gallery count field resolver */
   @AllowUnauthenticated()
   @ResolveField("_count", () => GalleryCount)
-  async resolveCountField(@Parent() gallery: Gallery): Promise<GalleryCount> {
-    const mediaCount = await this.mediaService.getGalleryMediaCount(gallery.id);
+  async resolveCountField(
+    @Parent() gallery: Gallery,
+    @Context("req") req?: Request,
+  ): Promise<GalleryCount> {
+    const mediaCount = await this.loaders
+      .forRequest(req)
+      .mediaCountByGallery.load(gallery.id);
     return { media: mediaCount };
   }
 }
