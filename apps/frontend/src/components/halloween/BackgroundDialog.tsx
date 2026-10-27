@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 import { Modal } from "@mantine/core";
 import { Blend, Moon, Palette } from "lucide-react";
@@ -189,36 +189,63 @@ export const BackgroundDialog: React.FC<BackgroundDialogProps> = ({
   effects,
   onClose,
   onUse,
+}) => (
+  <Modal opened={open} onClose={onClose} title="Background" size="lg" centered>
+    {/* Mounted afresh each opening, so it starts from what the board has. */}
+    <DialogBody
+      value={value}
+      effects={effects}
+      onClose={onClose}
+      onUse={onUse}
+    />
+  </Modal>
+);
+
+// The icons naming each row, the same every render.
+const DIM_ICON = (
+  <Tooltip label="Dim">
+    <Moon size={ICON_SIZE} aria-hidden />
+  </Tooltip>
+);
+const TINT_ICON = (
+  <Tooltip label="Tint">
+    <Palette size={ICON_SIZE} aria-hidden />
+  </Tooltip>
+);
+const STRENGTH_ICON = (
+  <Tooltip label="Tint strength">
+    <Blend size={ICON_SIZE} aria-hidden />
+  </Tooltip>
+);
+
+/**
+ * The dialog's contents. Its state lives here, under the Modal, and the
+ * swatches are memoised, so dragging a slider re-renders only the preview
+ * and the slider: an input event can come several times a frame.
+ */
+const DialogBody: React.FC<Omit<BackgroundDialogProps, "open">> = ({
+  value,
+  effects,
+  onClose,
+  onUse,
 }) => {
   const [chosen, setChosen] = useState(value);
   const [muting, setMuting] = useState(effects ?? NO_EFFECTS);
-  // Each opening starts from what the board has, not a choice left behind.
-  useEffect(() => {
-    if (open) {
-      setChosen(value);
-      setMuting(effects ?? NO_EFFECTS);
-    }
-  }, [open, value, effects]);
 
-  const tintWith = (tint: string | null) =>
-    setMuting((m) => ({
-      ...m,
-      tint,
-      // A first tint starts part way, rather than at none.
-      tintStrength:
-        tint && m.tintStrength === 0 ? DEFAULT_TINT_STRENGTH : m.tintStrength,
-    }));
-  const custom =
-    muting.tint && !PALETTE_COLOURS.includes(muting.tint) ? muting.tint : null;
+  const tintWith = useCallback(
+    (tint: string | null) =>
+      setMuting((m) => ({
+        ...m,
+        tint,
+        // A first tint starts part way, rather than at none.
+        tintStrength:
+          tint && m.tintStrength === 0 ? DEFAULT_TINT_STRENGTH : m.tintStrength,
+      })),
+    [],
+  );
 
   return (
-    <Modal
-      opened={open}
-      onClose={onClose}
-      title="Background"
-      size="lg"
-      centered
-    >
+    <>
       <Preview
         role="img"
         aria-label="Background preview"
@@ -227,9 +254,7 @@ export const BackgroundDialog: React.FC<BackgroundDialogProps> = ({
         <BackgroundEffectLayers effects={muting} />
       </Preview>
       <Effects>
-        <Tooltip label="Dim">
-          <Moon size={ICON_SIZE} aria-hidden />
-        </Tooltip>
+        {DIM_ICON}
         <input
           type="range"
           aria-label="Dim"
@@ -241,47 +266,9 @@ export const BackgroundDialog: React.FC<BackgroundDialogProps> = ({
             setMuting((m) => ({ ...m, dim: Number(e.target.value) }))
           }
         />
-        <Tooltip label="Tint">
-          <Palette size={ICON_SIZE} aria-hidden />
-        </Tooltip>
-        <Tints role="radiogroup" aria-label="Tint">
-          <Tooltip label="No tint">
-            <NoTint
-              type="button"
-              role="radio"
-              aria-label="No tint"
-              aria-checked={muting.tint === null}
-              $chosen={muting.tint === null}
-              onClick={() => tintWith(null)}
-            />
-          </Tooltip>
-          {TINT_PALETTE.map(({ colour, name }) => (
-            <Tooltip key={colour} label={name}>
-              <TintSwatch
-                type="button"
-                role="radio"
-                aria-label={name}
-                aria-checked={muting.tint === colour}
-                $chosen={muting.tint === colour}
-                style={{ background: colour }}
-                onClick={() => tintWith(colour)}
-              />
-            </Tooltip>
-          ))}
-          <Tooltip label="Custom tint">
-            <CustomTint $chosen={custom !== null} $colour={custom}>
-              <input
-                type="color"
-                aria-label="Custom tint"
-                value={custom ?? "#888888"}
-                onChange={(e) => tintWith(e.target.value)}
-              />
-            </CustomTint>
-          </Tooltip>
-        </Tints>
-        <Tooltip label="Tint strength">
-          <Blend size={ICON_SIZE} aria-hidden />
-        </Tooltip>
+        {TINT_ICON}
+        <TintChoices tint={muting.tint} onTint={tintWith} />
+        {STRENGTH_ICON}
         <input
           type="range"
           aria-label="Tint strength"
@@ -295,22 +282,7 @@ export const BackgroundDialog: React.FC<BackgroundDialogProps> = ({
           }
         />
       </Effects>
-      <Options role="radiogroup" aria-label="Backgrounds">
-        {CHOICES.map(({ slug, name }) => (
-          <Option
-            key={slug ?? "night-sky"}
-            type="button"
-            role="radio"
-            aria-checked={chosen === slug}
-            aria-label={name}
-            title={name}
-            $chosen={chosen === slug}
-            onClick={() => setChosen(slug)}
-          >
-            <Swatch style={backgroundStyle(findBackground(slug))} aria-hidden />
-          </Option>
-        ))}
-      </Options>
+      <BackgroundChoices chosen={chosen} onChoose={setChosen} />
       <Buttons>
         <DialogButton type="button" onClick={onClose}>
           Cancel
@@ -326,6 +298,74 @@ export const BackgroundDialog: React.FC<BackgroundDialogProps> = ({
           Use background
         </DialogButton>
       </Buttons>
-    </Modal>
+    </>
   );
 };
+
+const TintChoices = React.memo<{
+  tint: string | null;
+  onTint: (tint: string | null) => void;
+}>(({ tint, onTint }) => {
+  const custom = tint && !PALETTE_COLOURS.includes(tint) ? tint : null;
+  return (
+    <Tints role="radiogroup" aria-label="Tint">
+      <Tooltip label="No tint">
+        <NoTint
+          type="button"
+          role="radio"
+          aria-label="No tint"
+          aria-checked={tint === null}
+          $chosen={tint === null}
+          onClick={() => onTint(null)}
+        />
+      </Tooltip>
+      {TINT_PALETTE.map(({ colour, name }) => (
+        <Tooltip key={colour} label={name}>
+          <TintSwatch
+            type="button"
+            role="radio"
+            aria-label={name}
+            aria-checked={tint === colour}
+            $chosen={tint === colour}
+            style={{ background: colour }}
+            onClick={() => onTint(colour)}
+          />
+        </Tooltip>
+      ))}
+      <Tooltip label="Custom tint">
+        <CustomTint $chosen={custom !== null} $colour={custom}>
+          <input
+            type="color"
+            aria-label="Custom tint"
+            value={custom ?? "#888888"}
+            onChange={(e) => onTint(e.target.value)}
+          />
+        </CustomTint>
+      </Tooltip>
+    </Tints>
+  );
+});
+TintChoices.displayName = "TintChoices";
+
+const BackgroundChoices = React.memo<{
+  chosen: string | null;
+  onChoose: (slug: string | null) => void;
+}>(({ chosen, onChoose }) => (
+  <Options role="radiogroup" aria-label="Backgrounds">
+    {CHOICES.map(({ slug, name }) => (
+      <Option
+        key={slug ?? "night-sky"}
+        type="button"
+        role="radio"
+        aria-checked={chosen === slug}
+        aria-label={name}
+        title={name}
+        $chosen={chosen === slug}
+        onClick={() => onChoose(slug)}
+      >
+        <Swatch style={backgroundStyle(findBackground(slug))} aria-hidden />
+      </Option>
+    ))}
+  </Options>
+));
+BackgroundChoices.displayName = "BackgroundChoices";
