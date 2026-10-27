@@ -13,23 +13,39 @@ import * as request from "supertest";
 import * as jwt from "jsonwebtoken";
 import * as cookieParser from "cookie-parser";
 import type { Request, Response } from "express";
+import { readFileSync } from "fs";
+import * as path from "path";
+import { parseEnv } from "util";
 import { DatabaseService } from "../src/database/database.service";
 import { CustomThrottlerGuard } from "../src/middleware/custom-throttler.guard";
 import { OptionalJwtAuthGuard } from "../src/auth/guards/optional-jwt-auth.guard";
 // Ensure ModerationStatus and other enums are registered for GraphQL schema generation
 import "../src/image-moderation/dto/image-moderation.dto";
 
-// This suite must talk to the throwaway test database, never the development
-// one, and a value already in process.env beats .env.test -- so point it at
-// the test database explicitly, every time. Something always has put the dev
-// URL there first: outside the primary checkout scripts/with-instance.mjs
-// does, and on the primary checkout importing @prisma/client loads
-// apps/backend/.env. Trusting .env.test to win there let clearDatabase() wipe
-// chardb_dev. The fallback is the same slot-0 URL global-setup-e2e.ts pushes
-// the schema to.
+// This suite must run against the test stack, never the development one, and
+// ConfigModule lets a value already in process.env beat .env.test. Something
+// always has put dev values there first: outside the primary checkout
+// scripts/with-instance.mjs does, and on the primary checkout importing
+// @prisma/client loads apps/backend/.env -- the dev database URL, LocalStack,
+// SMTP relay and bot tokens. Trusting .env.test to win there once let
+// clearDatabase() wipe chardb_dev. So every value .env.test names is written
+// over process.env here, before any module reads one.
+Object.assign(
+  process.env,
+  parseEnv(readFileSync(path.resolve(__dirname, "../.env.test"), "utf8")),
+);
+
+// .env.test holds slot 0's test ports. Another checkout's instance gets its
+// own (scripts/instance.mjs), which take their place. The database fallback is
+// the same slot-0 URL global-setup-e2e.ts pushes the schema to.
 process.env.DATABASE_URL =
   process.env.TEST_DATABASE_URL ??
   "postgresql://test_user:test_password@localhost:5440/chardb_test";
+if (process.env.E2E_LOCALSTACK_PORT) {
+  const localstack = `localhost:${process.env.E2E_LOCALSTACK_PORT}`;
+  process.env.AWS_ENDPOINT_URL = `http://${localstack}`;
+  process.env.CLOUDFRONT_IMAGES_DOMAIN = `${localstack}/${process.env.S3_IMAGES_BUCKET}`;
+}
 
 // NestJS app startup + DB operations can take well over 5s
 jest.setTimeout(60000);
