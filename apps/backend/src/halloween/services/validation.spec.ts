@@ -217,13 +217,19 @@ describe("validateKnockEventForCreate", () => {
         guildId: "1",
         userId: "2",
         prizeId: null,
+        candySlug: null,
       }),
     ).toBe(true);
   });
 
   it("requires a numeric user id", () => {
     expect(
-      validateKnockEventForCreate({ guildId: "1", userId: "x", prizeId: null }),
+      validateKnockEventForCreate({
+        guildId: "1",
+        userId: "x",
+        prizeId: null,
+        candySlug: null,
+      }),
     ).toEqual([
       { field: "userId", error: "UserID should be a numeric string" },
     ]);
@@ -231,7 +237,12 @@ describe("validateKnockEventForCreate", () => {
 
   it("requires ids", () => {
     expect(
-      validateKnockEventForCreate({ guildId: "", userId: "", prizeId: null }),
+      validateKnockEventForCreate({
+        guildId: "",
+        userId: "",
+        prizeId: null,
+        candySlug: null,
+      }),
     ).toEqual([
       { field: "userId", error: "UserID is required" },
       { field: "guildId", error: "GuildID is required" },

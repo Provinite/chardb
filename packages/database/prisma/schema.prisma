@@ -2382,6 +2382,9 @@ model HalloweenKnockEvent {
   time      DateTime @default(now()) @db.Timestamptz
   /// A win whose prize has not been chosen yet.
   isPending Boolean  @default(false) @map("is_pending")
+  /// The candy a loss showed, by its image's slug (`candy/<slug>.png`). Null
+  /// on a win, and on a loss from before candies were recorded.
+  candySlug String?  @map("candy_slug") @db.VarChar(40)
 
   /// When staff marked a prize with no chardb item or character as handed
   /// over, and who. Chardb prizes deliver themselves and never set these.
@@ -2425,4 +2428,18 @@ model HalloweenDeviantArtUser {
 
   @@id([userId, guildId])
   @@map("halloween_deviantart_users")
+}
+
+/// Where a player has stuck their candies. Only the placements are stored:
+/// which candies they have comes from their lost knocks, and a candy not on
+/// the board is in their tray. Created on the first save.
+model HalloweenCandyBoard {
+  guildId    String   @map("guild_id") @db.VarChar(30)
+  userId     String   @map("user_id") @db.VarChar(30)
+  /// [HalloweenCandyPlacementsJson]
+  placements Json     @default("[]")
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@id([guildId, userId])
+  @@map("halloween_candy_boards")
 }
