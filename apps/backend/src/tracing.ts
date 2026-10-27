@@ -107,7 +107,16 @@ if (tracingDisabled) {
       }),
       // Prisma's engine talks to Postgres itself, so the pg instrumentation
       // never sees its queries; this is what puts them in the trace
-      new PrismaInstrumentation(),
+      // An ignored span takes its children with it, so only leaves are cut:
+      // operations and SQL stay, serialization and pool checkouts go
+      new PrismaInstrumentation({
+        ignoreSpanTypes: [
+          "prisma:client:serialize",
+          "prisma:engine:connection",
+          "prisma:engine:serialize",
+          "prisma:engine:response_json_serialization",
+        ],
+      }),
     ],
   });
 
