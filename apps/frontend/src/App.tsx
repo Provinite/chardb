@@ -3,7 +3,7 @@ import { useAuth } from "./contexts/AuthContext";
 import { useCommunityHost } from "./contexts/CommunityHostContext";
 import { apexUrl } from "./lib/communityHost";
 import { Layout } from "./components/Layout";
-import { LoadingSpinner } from "./components/LoadingSpinner";
+import { AppLoader } from "./components/AppLoader";
 import { ScrollToTop } from "./components/ScrollToTop";
 import { ApexRoutes } from "./routes/ApexRoutes";
 import { CommunityRoutes } from "./routes/CommunityRoutes";
@@ -41,11 +41,7 @@ function App() {
   }, [isUnknownHost]);
 
   if (isUnknownHost) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return <AppLoader fullscreen />;
   }
 
   // The lookup failed rather than answering. Say that, and nothing else: this
@@ -56,11 +52,7 @@ function App() {
   }
 
   if (authLoading || hostLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
+    return <AppLoader fullscreen />;
   }
 
   return (

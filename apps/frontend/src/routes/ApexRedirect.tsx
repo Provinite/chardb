@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { LoadingSpinner } from "../components/LoadingSpinner";
+import { AppLoader } from "../components/AppLoader";
 import { apexUrl } from "../lib/communityHost";
 
 /**
@@ -23,9 +23,5 @@ export const ApexRedirect: React.FC = () => {
     );
   }, [location.pathname, location.search, location.hash]);
 
-  return (
-    <div className="flex items-center justify-center min-h-screen">
-      <LoadingSpinner size="lg" />
-    </div>
-  );
+  return <AppLoader />;
 };
