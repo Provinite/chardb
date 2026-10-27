@@ -366,6 +366,15 @@ describe("Halloween candy board (e2e)", () => {
       expect(await placementsNow()).toEqual([at(b.id), at(a.id)]);
     });
 
+    it("moves a candy forward and backward one place at a time", async () => {
+      const [a, b, c] = await Promise.all([knock(), knock(), knock()]);
+      await apply([add(a.id), add(b.id), add(c.id)]);
+      await apply([{ forward: { knockEventId: a.id } }]);
+      expect(await placementsNow()).toEqual([at(b.id), at(a.id), at(c.id)]);
+      await apply([{ backward: { knockEventId: c.id } }]);
+      expect(await placementsNow()).toEqual([at(b.id), at(c.id), at(a.id)]);
+    });
+
     it("puts a candy back in the tray", async () => {
       const a = await knock();
       const b = await knock();
@@ -430,6 +439,8 @@ describe("Halloween candy board (e2e)", () => {
       ["edit", { x: 0.5 }],
       ["raise", {}],
       ["lower", {}],
+      ["forward", {}],
+      ["backward", {}],
       ["remove", {}],
     ])("refuses to %s a candy not on the board", async (kind, fields) => {
       const a = await knock();

@@ -16,6 +16,7 @@ import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
 import { GraphQLError } from "graphql";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
+import { MantineProvider } from "@mantine/core";
 
 const COMMUNITY_ID = "11111111-1111-4111-8111-111111111111";
 const BOARD_ID = "22222222-2222-4222-8222-222222222222";
@@ -145,17 +146,22 @@ const applyMock = (
 const renderAt = (path: string, mocks: MockedResponse[]) =>
   render(
     <ThemeProvider theme={lightTheme}>
-      <MockedProvider mocks={mocks}>
-        <MemoryRouter initialEntries={[path]}>
-          <Routes>
-            <Route path="/halloween/board" element={<MyCandyBoardRedirect />} />
-            <Route
-              path="/halloween/board/:boardId"
-              element={<CommunityCandyBoardPage />}
-            />
-          </Routes>
-        </MemoryRouter>
-      </MockedProvider>
+      <MantineProvider>
+        <MockedProvider mocks={mocks}>
+          <MemoryRouter initialEntries={[path]}>
+            <Routes>
+              <Route
+                path="/halloween/board"
+                element={<MyCandyBoardRedirect />}
+              />
+              <Route
+                path="/halloween/board/:boardId"
+                element={<CommunityCandyBoardPage />}
+              />
+            </Routes>
+          </MemoryRouter>
+        </MockedProvider>
+      </MantineProvider>
     </ThemeProvider>,
   );
 
@@ -455,34 +461,83 @@ describe("CommunityCandyBoardPage", () => {
       );
     });
 
+    const LAYER_BUTTONS = [
+      "Bring to front",
+      "Bring forward",
+      "Send backward",
+      "Send to back",
+    ];
+
     it("keeps the controls in view but disabled until a candy is selected", async () => {
-      renderBoard([boardQuery(board([2, 1]))]);
+      renderBoard([boardQuery(board([2, 1, 3]))]);
 
       await pile();
       const controls = [
         screen.getByLabelText("Rotate"),
         screen.getByLabelText("Scale"),
-        screen.getByRole("button", { name: "Bring to front" }),
-        screen.getByRole("button", { name: "Send to back" }),
+        ...LAYER_BUTTONS.map((name) => screen.getByRole("button", { name })),
         screen.getByRole("button", { name: "Back to tray" }),
       ];
       for (const control of controls) expect(control).toBeDisabled();
 
-      await userEvent.click(within(await pile()).getAllByRole("img")[0]);
+      // The middle of three: every control has something to do.
+      await userEvent.click(within(await pile()).getAllByRole("img")[1]);
       for (const control of controls) expect(control).toBeEnabled();
     });
 
-    it("sends the selected candy to the back of the pile", async () => {
+    it("disables the layer buttons that would not move the candy", async () => {
       renderBoard([boardQuery(board([2, 1]))]);
 
-      const region = await pile();
-      const corn = within(region).getAllByRole("img")[1];
-      await userEvent.click(corn);
-      await userEvent.click(
-        screen.getByRole("button", { name: "Send to back" }),
-      );
+      const [bottom, top] = within(await pile()).getAllByRole("img");
+      const button = (name: string) => screen.getByRole("button", { name });
 
-      expect(await placedNames()).toEqual(["candy corn", "luther head"]);
+      await userEvent.click(top);
+      expect(button("Bring to front")).toBeDisabled();
+      expect(button("Bring forward")).toBeDisabled();
+      expect(button("Send backward")).toBeEnabled();
+      expect(button("Send to back")).toBeEnabled();
+
+      await userEvent.click(bottom);
+      expect(button("Bring to front")).toBeEnabled();
+      expect(button("Bring forward")).toBeEnabled();
+      expect(button("Send backward")).toBeDisabled();
+      expect(button("Send to back")).toBeDisabled();
+    });
+
+    it.each([
+      ["Bring to front", 0, ["candy corn", "banana", "luther head"]],
+      ["Bring forward", 0, ["candy corn", "luther head", "banana"]],
+      ["Send backward", 2, ["luther head", "banana", "candy corn"]],
+      ["Send to back", 2, ["banana", "luther head", "candy corn"]],
+    ])(
+      "%s moves the selected candy in the pile",
+      async (name, index, order) => {
+        // Three different candies, so every order can be told apart.
+        const three = board([2, 1, 4]);
+        renderBoard([
+          boardQuery({
+            ...three,
+            candies: [...three.candies, candy(4, "banana")],
+          }),
+        ]);
+
+        await userEvent.click(within(await pile()).getAllByRole("img")[index]);
+        await userEvent.click(screen.getByRole("button", { name }));
+
+        expect(await placedNames()).toEqual(order);
+      },
+    );
+
+    it("names each layer button in a tooltip", async () => {
+      renderBoard([boardQuery(board([2, 1]))]);
+
+      await userEvent.click(within(await pile()).getAllByRole("img")[0]);
+      await userEvent.hover(
+        screen.getByRole("button", { name: "Bring forward" }),
+      );
+      expect(await screen.findByRole("tooltip")).toHaveTextContent(
+        "Bring forward",
+      );
     });
 
     it("labels the selected candy's sliders Rotate and Scale", async () => {

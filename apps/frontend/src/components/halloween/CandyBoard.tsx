@@ -1,6 +1,14 @@
 import React, { useRef, useState } from "react";
 import styled, { css } from "styled-components";
 import {
+  ArrowDown,
+  ArrowDownToLine,
+  ArrowUp,
+  ArrowUpToLine,
+  type LucideIcon,
+} from "lucide-react";
+import { Tooltip } from "../Tooltip";
+import {
   BOARD_ASPECT,
   CANDY_SIZE,
   SCALE_MAX,
@@ -237,6 +245,52 @@ const ToolButton = styled.button`
     cursor: not-allowed;
   }
 `;
+
+const LayerButtons = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.spacing.xs};
+`;
+
+const IconButton = styled(ToolButton)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: ${({ theme }) => theme.spacing.xs};
+`;
+
+/** The four ways to move the selected candy through the pile, top first. */
+const LAYER_MOVES: {
+  label: string;
+  Icon: LucideIcon;
+  /** Whether it moves the candy up the pile, so the top one cannot. */
+  upward: boolean;
+  action: (knockEventId: number) => BoardAction;
+}[] = [
+  {
+    label: "Bring to front",
+    Icon: ArrowUpToLine,
+    upward: true,
+    action: (knockEventId) => ({ raise: { knockEventId } }),
+  },
+  {
+    label: "Bring forward",
+    Icon: ArrowUp,
+    upward: true,
+    action: (knockEventId) => ({ forward: { knockEventId } }),
+  },
+  {
+    label: "Send backward",
+    Icon: ArrowDown,
+    upward: false,
+    action: (knockEventId) => ({ backward: { knockEventId } }),
+  },
+  {
+    label: "Send to back",
+    Icon: ArrowDownToLine,
+    upward: false,
+    action: (knockEventId) => ({ lower: { knockEventId } }),
+  },
+];
 
 const TrayTitle = styled.h2`
   font-size: ${({ theme }) => theme.typography.fontSize.lg};
@@ -567,6 +621,12 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     onAction(action());
   };
 
+  const selectedIndex = selectedPlacement
+    ? placements.indexOf(selectedPlacement)
+    : -1;
+  const atTop = selectedIndex === placements.length - 1;
+  const atBottom = selectedIndex === 0;
+
   /** An action on the selected candy, if one is selected. */
   const actOnSelected = (make: (knockEventId: number) => BoardAction) => {
     if (onAction && selectedPlacement) {
@@ -681,24 +741,24 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
               }
             />
           </label>
-          <ToolButton
-            type="button"
-            disabled={!selectedPlacement}
-            onClick={() =>
-              actOnSelected((knockEventId) => ({ raise: { knockEventId } }))
-            }
-          >
-            Bring to front
-          </ToolButton>
-          <ToolButton
-            type="button"
-            disabled={!selectedPlacement}
-            onClick={() =>
-              actOnSelected((knockEventId) => ({ lower: { knockEventId } }))
-            }
-          >
-            Send to back
-          </ToolButton>
+          <LayerButtons role="group" aria-label="Layer">
+            {LAYER_MOVES.map(({ label, Icon, upward, action }) => {
+              // Nothing above the top candy to pass, nothing below the bottom.
+              const stuck = upward ? atTop : atBottom;
+              return (
+                <Tooltip key={label} label={label}>
+                  <IconButton
+                    type="button"
+                    aria-label={label}
+                    disabled={!selectedPlacement || stuck}
+                    onClick={() => actOnSelected(action)}
+                  >
+                    <Icon size={18} aria-hidden />
+                  </IconButton>
+                </Tooltip>
+              );
+            })}
+          </LayerButtons>
           <ToolButton
             type="button"
             disabled={!selectedPlacement}

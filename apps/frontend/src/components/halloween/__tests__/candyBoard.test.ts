@@ -126,6 +126,26 @@ describe("applyAction", () => {
     ).toEqual([at(3), at(1), at(2)]);
   });
 
+  it("moves a candy forward or backward one place", () => {
+    const pile = [at(1), at(2), at(3)];
+    expect(applyAction(pile, { forward: { knockEventId: 1 } })).toEqual([
+      at(2),
+      at(1),
+      at(3),
+    ]);
+    expect(applyAction(pile, { backward: { knockEventId: 3 } })).toEqual([
+      at(1),
+      at(3),
+      at(2),
+    ]);
+  });
+
+  it("leaves the top candy where it is going forward, and the bottom one going backward", () => {
+    const pile = [at(1), at(2)];
+    expect(applyAction(pile, { forward: { knockEventId: 2 } })).toEqual(pile);
+    expect(applyAction(pile, { backward: { knockEventId: 1 } })).toEqual(pile);
+  });
+
   it("puts a candy back in the tray", () => {
     expect(applyAction([at(1), at(2)], remove(1))).toEqual([at(2)]);
   });

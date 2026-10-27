@@ -1560,7 +1560,13 @@ type HalloweenCandyBoard {
 """One change to your board: exactly one of these"""
 input HalloweenCandyBoardAction @oneOf {
   add: HalloweenCandyAddInput
+
+  """Move a candy one place down the pile; the bottom one stays where it is"""
+  backward: HalloweenCandyRefInput
   edit: HalloweenCandyEditInput
+
+  """Move a candy one place up the pile; the top one stays where it is"""
+  forward: HalloweenCandyRefInput
 
   """Move a candy on the board to the bottom of the pile"""
   lower: HalloweenCandyRefInput

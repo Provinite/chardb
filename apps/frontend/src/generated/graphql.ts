@@ -1265,14 +1265,18 @@ export type HalloweenCandyBoard = {
 
 /** One change to your board: exactly one of these */
 export type HalloweenCandyBoardAction =
-  { add: HalloweenCandyAddInput; edit?: never; lower?: never; raise?: never; remove?: never; }
-  |  { add?: never; edit: HalloweenCandyEditInput; lower?: never; raise?: never; remove?: never; }
+  { add: HalloweenCandyAddInput; backward?: never; edit?: never; forward?: never; lower?: never; raise?: never; remove?: never; }
+  |  /** Move a candy one place down the pile; the bottom one stays where it is */
+  { add?: never; backward: HalloweenCandyRefInput; edit?: never; forward?: never; lower?: never; raise?: never; remove?: never; }
+  |  { add?: never; backward?: never; edit: HalloweenCandyEditInput; forward?: never; lower?: never; raise?: never; remove?: never; }
+  |  /** Move a candy one place up the pile; the top one stays where it is */
+  { add?: never; backward?: never; edit?: never; forward: HalloweenCandyRefInput; lower?: never; raise?: never; remove?: never; }
   |  /** Move a candy on the board to the bottom of the pile */
-  { add?: never; edit?: never; lower: HalloweenCandyRefInput; raise?: never; remove?: never; }
+  { add?: never; backward?: never; edit?: never; forward?: never; lower: HalloweenCandyRefInput; raise?: never; remove?: never; }
   |  /** Move a candy on the board to the top of the pile */
-  { add?: never; edit?: never; lower?: never; raise: HalloweenCandyRefInput; remove?: never; }
+  { add?: never; backward?: never; edit?: never; forward?: never; lower?: never; raise: HalloweenCandyRefInput; remove?: never; }
   |  /** Put a candy on the board back in the tray */
-  { add?: never; edit?: never; lower?: never; raise?: never; remove: HalloweenCandyRefInput; };
+  { add?: never; backward?: never; edit?: never; forward?: never; lower?: never; raise?: never; remove: HalloweenCandyRefInput; };
 
 /** Change where a candy on the board sits, its turn or its size. Only the fields given change, and at least one must be. */
 export type HalloweenCandyEditInput = {

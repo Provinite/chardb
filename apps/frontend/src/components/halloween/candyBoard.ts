@@ -91,6 +91,8 @@ export function candyOf(action: BoardAction): number {
   if (action.edit) return action.edit.knockEventId;
   if (action.raise) return action.raise.knockEventId;
   if (action.lower) return action.lower.knockEventId;
+  if (action.forward) return action.forward.knockEventId;
+  if (action.backward) return action.backward.knockEventId;
   return action.remove.knockEventId;
 }
 
@@ -143,6 +145,15 @@ export function applyAction(
   }
   if (action.lower) {
     return [placements[index], ...placements.filter((_, i) => i !== index)];
+  }
+  if (action.forward || action.backward) {
+    // Swapped with the neighbour one place up or down; at the end of the
+    // pile there is none, and it stays put.
+    const other = index + (action.forward ? 1 : -1);
+    if (other < 0 || other >= placements.length) return placements;
+    const next = [...placements];
+    [next[index], next[other]] = [next[other], next[index]];
+    return next;
   }
   return placements.filter((_, i) => i !== index);
 }

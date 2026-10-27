@@ -119,6 +119,20 @@ export class HalloweenCandyBoardAction {
 
   @Field(() => HalloweenCandyRefInput, {
     nullable: true,
+    description:
+      "Move a candy one place up the pile; the top one stays where it is",
+  })
+  forward?: HalloweenCandyRefInput;
+
+  @Field(() => HalloweenCandyRefInput, {
+    nullable: true,
+    description:
+      "Move a candy one place down the pile; the bottom one stays where it is",
+  })
+  backward?: HalloweenCandyRefInput;
+
+  @Field(() => HalloweenCandyRefInput, {
+    nullable: true,
     description: "Put a candy on the board back in the tray",
   })
   remove?: HalloweenCandyRefInput;

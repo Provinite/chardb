@@ -28,7 +28,23 @@ export function applyCandyBoardActions(
     return index;
   };
 
-  for (const { add, edit, raise, lower, remove } of actions) {
+  /** Swaps a candy with its neighbour `step` places up the pile, if any. */
+  const shift = (knockEventId: number, step: 1 | -1) => {
+    const index = indexOf(knockEventId);
+    const other = index + step;
+    if (other < 0 || other >= next.length) return;
+    [next[index], next[other]] = [next[other], next[index]];
+  };
+
+  for (const {
+    add,
+    edit,
+    raise,
+    lower,
+    forward,
+    backward,
+    remove,
+  } of actions) {
     if (add) {
       if (next.some((p) => p.knockEventId === add.knockEventId)) {
         throw new BadRequestException("That candy is already on the board");
@@ -60,6 +76,10 @@ export function applyCandyBoardActions(
     } else if (lower) {
       const [lowered] = next.splice(indexOf(lower.knockEventId), 1);
       next.unshift(lowered);
+    } else if (forward) {
+      shift(forward.knockEventId, 1);
+    } else if (backward) {
+      shift(backward.knockEventId, -1);
     } else if (remove) {
       const index = indexOf(remove.knockEventId);
       next = next.filter((_, i) => i !== index);
