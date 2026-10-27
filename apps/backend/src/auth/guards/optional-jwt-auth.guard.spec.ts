@@ -13,7 +13,7 @@ interface FakeRequest {
 }
 
 /** The context a field resolver's guard sees: [root, args, context, info]. */
-const graphqlContextFor = (req: FakeRequest): ExecutionContext => {
+const graphqlContextFor = (req: FakeRequest | undefined): ExecutionContext => {
   const args = [{}, {}, { req }, {}];
   return {
     getType: () => "graphql",
@@ -87,6 +87,20 @@ describe("OptionalJwtAuthGuard", () => {
 
     expect(handleRequest).toHaveBeenCalledTimes(1);
     expect(req.user).toBeNull();
+  });
+
+  /** graphql-ws builds the context from connectionParams, so there is no req. */
+  it("treats a subscription as anonymous", async () => {
+    const unhandled = jest.fn();
+    process.on("unhandledRejection", unhandled);
+
+    await expect(guard.canActivate(graphqlContextFor(undefined))).resolves.toBe(
+      true,
+    );
+    await new Promise((resolve) => setImmediate(resolve));
+
+    process.off("unhandledRejection", unhandled);
+    expect(unhandled).not.toHaveBeenCalled();
   });
 
   it("authenticates each request separately", async () => {

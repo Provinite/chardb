@@ -13,13 +13,17 @@ const authentications = new WeakMap<Request, Promise<boolean>>();
 
 @Injectable()
 export class OptionalJwtAuthGuard extends AuthGuard("jwt") {
-  getRequest(context: ExecutionContext): Request {
+  getRequest(context: ExecutionContext): Request | undefined {
     const ctx = GqlExecutionContext.create(context);
-    return ctx.getContext<{ req: Request }>().req;
+    return ctx.getContext<{ req?: Request }>().req;
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = this.getRequest(context);
+    // graphql-ws builds the context from connectionParams, so a subscription
+    // has no req; it goes on as anonymous
+    if (!req) return true;
+
     let authentication = authentications.get(req);
     if (!authentication) {
       authentication = super.canActivate(context) as Promise<boolean>;
