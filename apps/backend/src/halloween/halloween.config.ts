@@ -20,7 +20,7 @@ export class HalloweenConfig {
   readonly botToken: string;
   /**
    * Where the embed author icons (`icon/0.png`..) and candy images
-   * (`candy/0.png`..) live: the frontend's `public/halloween`, published
+   * (`candy/candy-corn.png`..) live: the frontend's `public/halloween`, published
    * with the frontend. Always ends in `/`.
    */
   readonly imageBaseUrl: string;
