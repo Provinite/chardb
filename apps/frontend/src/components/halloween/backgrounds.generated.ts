@@ -22,7 +22,7 @@ export const BOARD_BACKGROUNDS: readonly BoardBackground[] = [
   { slug: "tile-corkboard", kind: "tile", width: 500, height: 500 },
   { slug: "tile-cupcakes", kind: "tile", width: 200, height: 200 },
   { slug: "tile-dark-roses", kind: "tile", width: 1200, height: 1200 },
-  { slug: "tile-graph-paper", kind: "tile", width: 828, height: 1101 },
+  { slug: "tile-graph-paper", kind: "tile", width: 270, height: 270 },
   { slug: "tile-green-triangles", kind: "tile", width: 1200, height: 1200 },
   { slug: "tile-luther-pillowing", kind: "tile", width: 500, height: 500 },
   { slug: "tile-sprinkles", kind: "tile", width: 300, height: 500 },
