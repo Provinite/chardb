@@ -540,6 +540,101 @@ describe("CommunityCandyBoardPage", () => {
       );
     });
 
+    describe("picking a candy out of a pile", () => {
+      /** A click at the board's centre, where both test candies sit. */
+      const clickCentre = (region: HTMLElement) => {
+        fireEvent.pointerDown(region, {
+          clientX: 200,
+          clientY: 150,
+          pointerId: 1,
+        });
+        fireEvent.pointerUp(region, {
+          clientX: 200,
+          clientY: 150,
+          pointerId: 1,
+        });
+      };
+      const forward = () =>
+        screen.getByRole("button", { name: "Bring forward" });
+
+      it("picks the top candy, then the one under it, then the top again", async () => {
+        renderBoard([boardQuery(board([2, 1]))]);
+        const region = sized(await pile());
+
+        // The candy corn is on top: nothing to bring it forward past.
+        clickCentre(region);
+        expect(forward()).toBeDisabled();
+        clickCentre(region);
+        expect(forward()).toBeEnabled();
+        clickCentre(region);
+        expect(forward()).toBeDisabled();
+      });
+
+      it("keeps the selected candy when it is dragged, and moves it", async () => {
+        renderBoard([boardQuery(board([2, 1]))]);
+        const region = sized(await pile());
+        clickCentre(region);
+        clickCentre(region); // Luther, underneath.
+        const luther = within(region).getAllByRole("img")[0];
+
+        fireEvent.pointerDown(region, {
+          clientX: 200,
+          clientY: 150,
+          pointerId: 1,
+        });
+        fireEvent.pointerMove(region, {
+          clientX: 100,
+          clientY: 150,
+          pointerId: 1,
+        });
+        fireEvent.pointerUp(region, {
+          clientX: 100,
+          clientY: 150,
+          pointerId: 1,
+        });
+
+        expect(frameOf(luther).style.left).toBe("25%");
+        expect(forward()).toBeEnabled();
+      });
+
+      it("saves nothing for a click that does not move the candy", async () => {
+        renderBoard([boardQuery(board([2, 1]))]);
+        const region = sized(await pile());
+
+        fireEvent.pointerDown(region, {
+          clientX: 200,
+          clientY: 150,
+          pointerId: 1,
+        });
+        fireEvent.pointerMove(region, {
+          clientX: 202,
+          clientY: 151,
+          pointerId: 1,
+        });
+        fireEvent.pointerUp(region, {
+          clientX: 202,
+          clientY: 151,
+          pointerId: 1,
+        });
+
+        expect(screen.getByRole("status")).toHaveTextContent("Saved");
+      });
+
+      it("lets go of the selection on a press where there is no candy", async () => {
+        renderBoard([boardQuery(board([2, 1]))]);
+        const region = sized(await pile());
+        clickCentre(region);
+        expect(screen.getByLabelText("Rotate")).toBeEnabled();
+
+        fireEvent.pointerDown(region, {
+          clientX: 10,
+          clientY: 10,
+          pointerId: 1,
+        });
+        expect(screen.getByLabelText("Rotate")).toBeDisabled();
+      });
+    });
+
     it("labels the selected candy's sliders Rotate and Scale", async () => {
       renderBoard([boardQuery(board([2]))]);
 

@@ -9,6 +9,12 @@ import {
 } from "lucide-react";
 import { Tooltip } from "../Tooltip";
 import {
+  candiesAt,
+  maskFromImage,
+  nextSelection,
+  type AlphaMask,
+} from "./candyHitTest";
+import {
   BOARD_ASPECT,
   CANDY_SIZE,
   SCALE_MAX,
@@ -98,16 +104,14 @@ const Candy = styled.img<{ $editable: boolean }>`
   height: auto;
   filter: drop-shadow(0 4px 6px #00000066);
   -webkit-user-drag: none;
+  /* The board picks the cursor, from what is under the pointer: over a
+     candy's see-through corner it is not over that candy. */
   ${({ $editable }) =>
     $editable &&
     css`
-      cursor: grab;
-      /* Only a candy and its handles take touches for dragging: anywhere
-         else on the board, a swipe still scrolls the page. */
+      /* Only a candy's box and its handles take touches for dragging:
+         anywhere else on the board, a swipe still scrolls the page. */
       touch-action: none;
-      &:active {
-        cursor: grabbing;
-      }
     `}
   &:focus-visible {
     outline: 2px solid #fde68a;
@@ -377,19 +381,39 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   onDraggingChange,
 }) => {
   const boardRef = useRef<HTMLDivElement>(null);
-  const surfaceRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number | null>(null);
   /**
-   * Width over height of each candy's picture, once loaded, so the selection
-   * outline is the picture's shape: the pictures are not all square.
+   * What each kind of candy's picture is like, once loaded: its shape, so the
+   * selection outline fits it, and its alpha mask, so a press can pass
+   * through its see-through parts.
    */
-  const [aspects, setAspects] = useState<Record<string, number>>({});
+  const [pictures, setPictures] = useState<
+    Record<string, { aspect: number; mask: AlphaMask | null }>
+  >({});
+  /** Each placed candy's picture, to focus the one a press selects. */
+  const candyImages = useRef(new Map<number, HTMLImageElement>());
+  /** Whether the pointer is over a candy, for the cursor. */
+  const [overCandy, setOverCandy] = useState(false);
   /**
    * A candy on the board being moved, scaled or rotated, and by which
    * pointer. Other pointers -- a second finger -- are ignored.
    */
   const drag = useRef<
-    | { mode: "move"; id: number; pointerId: number; offset: Point }
+    | {
+        mode: "move";
+        id: number;
+        pointerId: number;
+        offset: Point;
+        /** Where the press began, in client pixels. */
+        start: Point;
+        /** Past the drag threshold: until then it may still be a click. */
+        moved: boolean;
+        /**
+         * The candies under a press on the already-selected candy, top
+         * first: released without moving, it picks the next one down.
+         */
+        cycle: number[] | null;
+      }
     | {
         mode: "scale";
         id: number;
@@ -425,19 +449,67 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 
   const setDragging = (dragging: boolean) => onDraggingChange?.(dragging);
 
-  const startMove = (e: React.PointerEvent<HTMLImageElement>, p: Placement) => {
+  /**
+   * The candies under a pointer, top first. When the board is not laid out
+   * -- no size to measure against -- the candy the event came from stands in.
+   */
+  const candiesUnder = (e: React.PointerEvent): number[] => {
+    const rect = boardRef.current?.getBoundingClientRect();
+    if (!rect || rect.width === 0 || rect.height === 0) {
+      const id = (e.target as HTMLElement).dataset?.knockEventId;
+      return id ? [Number(id)] : [];
+    }
+    const pile = placements.map((placement) => {
+      const picture = pictures[slugs.get(placement.knockEventId) ?? ""];
+      return {
+        placement,
+        aspect: picture?.aspect ?? 1,
+        mask: picture?.mask ?? null,
+      };
+    });
+    return candiesAt(
+      { x: e.clientX - rect.left, y: e.clientY - rect.top },
+      rect,
+      pile,
+    );
+  };
+
+  const select = (id: number | null) => {
+    setSelected(id);
+    // Focused by hand: a press on the board does not focus the picture, and
+    // the keyboard shortcuts act on the focused one.
+    if (id !== null) candyImages.current.get(id)?.focus();
+  };
+
+  /**
+   * A press on the board picks a candy -- the one on top under the pointer,
+   * see-through parts aside -- and starts dragging it. A press on the
+   * selected candy keeps it, so it can be dragged; let go without moving,
+   * and the next candy down under the pointer is picked instead.
+   */
+  const press = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!onAction || drag.current) return;
-    // Stops the browser's own image drag, and with it the focus a press
-    // would give; focusing by hand keeps the keyboard shortcuts on this one.
+    const under = candiesUnder(e);
+    if (under.length === 0) {
+      setSelected(null);
+      return;
+    }
+    const pressedSelected = selected !== null && under.includes(selected);
+    const id = pressedSelected ? selected : under[0];
+    const p = placements.find((placement) => placement.knockEventId === id);
+    if (!p) return;
+    // Stops the browser's own image drag.
     e.preventDefault();
-    e.currentTarget.focus();
-    setSelected(p.knockEventId);
+    select(id);
     const point = boardPoint(e.clientX, e.clientY);
     drag.current = {
       mode: "move",
-      id: p.knockEventId,
+      id,
       pointerId: e.pointerId,
       offset: point ? { x: point.x - p.x, y: point.y - p.y } : { x: 0, y: 0 },
+      start: { x: e.clientX, y: e.clientY },
+      moved: false,
+      cycle: pressedSelected ? under : null,
     };
     e.currentTarget.setPointerCapture?.(e.pointerId);
     setDragging(true);
@@ -488,9 +560,26 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 
   const move = (e: React.PointerEvent) => {
     const current = drag.current;
-    if (!onAction || current?.pointerId !== e.pointerId) return;
+    if (!current) {
+      // Not dragging: the cursor says whether a press here would take hold.
+      if (onAction) {
+        const over = candiesUnder(e).length > 0;
+        if (over !== overCandy) setOverCandy(over);
+      }
+      return;
+    }
+    if (!onAction || current.pointerId !== e.pointerId) return;
     const knockEventId = current.id;
     if (current.mode === "move") {
+      if (!current.moved) {
+        const travelled = Math.hypot(
+          e.clientX - current.start.x,
+          e.clientY - current.start.y,
+        );
+        // A click's wobble moves nothing, and so saves nothing.
+        if (travelled <= DRAG_THRESHOLD_PX) return;
+        current.moved = true;
+      }
       const point = boardPoint(e.clientX, e.clientY);
       if (!point) return;
       onAction({
@@ -533,9 +622,18 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   };
 
   const endMove = (e: React.PointerEvent) => {
-    if (drag.current?.pointerId !== e.pointerId) return;
+    const current = drag.current;
+    if (current?.pointerId !== e.pointerId) return;
     drag.current = null;
     setDragging(false);
+    if (
+      e.type === "pointerup" &&
+      current.mode === "move" &&
+      !current.moved &&
+      current.cycle
+    ) {
+      select(nextSelection(current.cycle, current.id));
+    }
   };
 
   const place = (id: number, point: Point) => {
@@ -642,14 +740,22 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         ref={boardRef}
         role="region"
         aria-label="Candy board"
+        onPointerDown={press}
         onPointerMove={move}
         onPointerUp={endMove}
         onPointerCancel={endMove}
-        onPointerDown={(e) => {
-          if (e.target === surfaceRef.current) setSelected(null);
+        onPointerLeave={() => setOverCandy(false)}
+        style={{
+          cursor: !editable
+            ? undefined
+            : drag.current?.mode === "move"
+              ? "grabbing"
+              : overCandy
+                ? "grab"
+                : undefined,
         }}
       >
-        <Surface ref={surfaceRef}>
+        <Surface>
           {placements.map((p) => {
             const slug = slugs.get(p.knockEventId);
             if (!slug) return null;
@@ -660,19 +766,29 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                   alt={candyName(slug)}
                   draggable={false}
                   $editable={editable}
+                  data-knock-event-id={p.knockEventId}
+                  ref={(image) => {
+                    if (image) candyImages.current.set(p.knockEventId, image);
+                    else candyImages.current.delete(p.knockEventId);
+                  }}
                   tabIndex={editable ? 0 : undefined}
-                  onPointerDown={(e) => startMove(e, p)}
                   onFocus={() => editable && setSelected(p.knockEventId)}
                   onKeyDown={(e) => onCandyKey(e, p)}
                   onLoad={(e) => {
-                    const { naturalWidth, naturalHeight } = e.currentTarget;
-                    if (naturalWidth && naturalHeight) {
-                      setAspects((known) =>
-                        known[slug]
-                          ? known
-                          : { ...known, [slug]: naturalWidth / naturalHeight },
-                      );
-                    }
+                    const image = e.currentTarget;
+                    const { naturalWidth, naturalHeight } = image;
+                    if (!naturalWidth || !naturalHeight) return;
+                    setPictures((known) =>
+                      known[slug]
+                        ? known
+                        : {
+                            ...known,
+                            [slug]: {
+                              aspect: naturalWidth / naturalHeight,
+                              mask: editable ? maskFromImage(image) : null,
+                            },
+                          },
+                    );
                   }}
                 />
               </CandyFrame>
@@ -684,7 +800,8 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
             style={{
               ...placementStyle(selectedPlacement),
               aspectRatio:
-                aspects[slugs.get(selectedPlacement.knockEventId) ?? ""] ?? 1,
+                pictures[slugs.get(selectedPlacement.knockEventId) ?? ""]
+                  ?.aspect ?? 1,
             }}
           >
             {CORNERS.map((corner) => (
