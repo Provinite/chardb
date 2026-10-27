@@ -132,18 +132,18 @@ describe("CharactersService", () => {
   describe("findOne", () => {
     it("should find a public character", async () => {
       const character = makeCharacter();
-      db.character.findFirst.mockResolvedValue(character);
+      db.character.findUnique.mockResolvedValue(character);
 
       const result = await service.findOne("char1");
 
-      expect(db.character.findFirst).toHaveBeenCalledWith({
+      expect(db.character.findUnique).toHaveBeenCalledWith({
         where: { id: "char1", deletedAt: null },
       });
       expect(result).toEqual(character);
     });
 
     it("should throw NotFoundException for a non-existent character", async () => {
-      db.character.findFirst.mockResolvedValue(null);
+      db.character.findUnique.mockResolvedValue(null);
 
       await expect(service.findOne("nonexistent")).rejects.toThrow(
         NotFoundException,
@@ -151,21 +151,21 @@ describe("CharactersService", () => {
     });
 
     it("should throw NotFoundException for a soft-deleted character", async () => {
-      db.character.findFirst.mockResolvedValue(null);
+      db.character.findUnique.mockResolvedValue(null);
 
       await expect(service.findOne("char1")).rejects.toThrow(NotFoundException);
     });
 
     it("should throw ForbiddenException for private character accessed by non-owner", async () => {
       const character = makeCharacter({ visibility: Visibility.PRIVATE });
-      db.character.findFirst.mockResolvedValue(character);
+      db.character.findUnique.mockResolvedValue(character);
 
       await expect(service.findOne("char1", "user2")).rejects.toThrow();
     });
 
     it("should allow owner to access private character", async () => {
       const character = makeCharacter({ visibility: Visibility.PRIVATE });
-      db.character.findFirst.mockResolvedValue(character);
+      db.character.findUnique.mockResolvedValue(character);
 
       const result = await service.findOne("char1", "user1");
       expect(result).toEqual(character);
@@ -401,7 +401,7 @@ describe("CharactersService", () => {
      */
     it("leaves the character's existing form alone when none is submitted", async () => {
       const character = makeCharacter({ speciesId: null });
-      db.character.findFirst.mockResolvedValue(character);
+      db.character.findUnique.mockResolvedValue(character);
       db.species.findUnique.mockResolvedValue({
         id: "species1",
         communityId: "community1",
@@ -423,7 +423,7 @@ describe("CharactersService", () => {
 
     it("writes the forms it is given", async () => {
       const character = makeCharacter({ speciesId: null });
-      db.character.findFirst.mockResolvedValue(character);
+      db.character.findUnique.mockResolvedValue(character);
       db.species.findUnique.mockResolvedValue({
         id: "species1",
         communityId: "community1",
