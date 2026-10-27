@@ -41,8 +41,10 @@ const open = async () => {
   return screen.findByRole("dialog", { name: "Lighting" });
 };
 
+const centre: Lighting = { x: 0, y: 0, height: 0.5, intensity: 0.5 };
+
 describe("LightingControl", () => {
-  it("opens to the light's pad and height", async () => {
+  it("opens to the light's pad, height and intensity", async () => {
     renderControl();
     await open();
     expect(
@@ -51,37 +53,70 @@ describe("LightingControl", () => {
     expect(screen.getByRole("slider", { name: "Light height" })).toHaveValue(
       String(DEFAULT_LIGHTING.height),
     );
+    expect(screen.getByRole("slider", { name: "Light intensity" })).toHaveValue(
+      String(DEFAULT_LIGHTING.intensity),
+    );
+  });
+
+  it("stands the height slider upright and lays intensity across", async () => {
+    renderControl();
+    await open();
+    expect(
+      screen.getByRole("slider", { name: "Light height" }),
+    ).toHaveAttribute("aria-orientation", "vertical");
+    expect(
+      screen.getByRole("slider", { name: "Light intensity" }),
+    ).not.toHaveAttribute("aria-orientation", "vertical");
   });
 
   it("moves the light with the arrow keys, further with Shift", async () => {
-    const onChange = renderControl({ x: 0, y: 0, height: 0.5 });
+    const onChange = renderControl(centre);
     await open();
     screen.getByRole("group", { name: "Light position" }).focus();
 
     await userEvent.keyboard("{ArrowRight}");
-    expect(onChange).toHaveBeenLastCalledWith({ x: 0.1, y: 0, height: 0.5 });
+    expect(onChange).toHaveBeenLastCalledWith({ ...centre, x: 0.1 });
     await userEvent.keyboard("{Shift>}{ArrowUp}{/Shift}");
-    expect(onChange).toHaveBeenLastCalledWith({ x: 0, y: -0.25, height: 0.5 });
+    expect(onChange).toHaveBeenLastCalledWith({ ...centre, y: -0.25 });
   });
 
   it("puts the light under the pointer, kept over the board", async () => {
-    const onChange = renderControl({ x: 0, y: 0, height: 0.5 });
+    const onChange = renderControl(centre);
     await open();
     const pad = screen.getByRole("group", { name: "Light position" });
     pad.getBoundingClientRect = () => new DOMRect(0, 0, 100, 100);
 
     fireEvent.pointerDown(pad, { pointerId: 1, clientX: 75, clientY: 50 });
-    expect(onChange).toHaveBeenLastCalledWith({ x: 0.5, y: 0, height: 0.5 });
+    expect(onChange).toHaveBeenLastCalledWith({ ...centre, x: 0.5 });
     fireEvent.pointerMove(pad, { pointerId: 1, clientX: 200, clientY: 50 });
-    expect(onChange).toHaveBeenLastCalledWith({ x: 1, y: 0, height: 0.5 });
+    expect(onChange).toHaveBeenLastCalledWith({ ...centre, x: 1 });
   });
 
-  it("goes back to the default light", async () => {
-    const onChange = renderControl({ x: 0.5, y: 0.5, height: 0.5 });
+  it("sets how strong the light is", async () => {
+    const onChange = renderControl(centre);
     await open();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Default light" }),
+    fireEvent.change(screen.getByRole("slider", { name: "Light intensity" }), {
+      target: { value: "0.9" },
+    });
+    expect(onChange).toHaveBeenLastCalledWith({ ...centre, intensity: 0.9 });
+  });
+
+  it("goes back to the default light from an icon button named in a tooltip", async () => {
+    const onChange = renderControl({
+      x: 0.5,
+      y: 0.5,
+      height: 0.5,
+      intensity: 1,
+    });
+    await open();
+    const reset = screen.getByRole("button", { name: "Default light" });
+    expect(reset).not.toHaveTextContent(/\S/);
+
+    await userEvent.hover(reset);
+    expect(await screen.findByRole("tooltip")).toHaveTextContent(
+      "Default light",
     );
+    await userEvent.click(reset);
     expect(onChange).toHaveBeenLastCalledWith(null);
   });
 });

@@ -1052,7 +1052,7 @@ describe("CommunityCandyBoardPage", () => {
     };
 
     it("casts each candy's shadow from the board's light, for anyone looking", async () => {
-      const light = { x: -0.6, y: 0, height: 0.4 };
+      const light = { x: -0.6, y: 0, height: 0.4, intensity: 0.9 };
       renderBoard([
         boardQuery(board([2], { viewerIsOwner: false, lighting: light })),
       ]);
@@ -1105,8 +1105,21 @@ describe("CommunityCandyBoardPage", () => {
       );
     });
 
+    it("darkens the shadows with its intensity slider", async () => {
+      renderBoard([boardQuery(board([2]))]);
+      const dialog = await openLighting();
+
+      fireEvent.change(
+        await within(dialog).findByRole("slider", { name: "Light intensity" }),
+        { target: { value: "1" } },
+      );
+      expect(await lutherShadow()).toBe(
+        shadowFilter({ ...DEFAULT_LIGHTING, intensity: 1 }, 0),
+      );
+    });
+
     it("goes back to the default light", async () => {
-      const light = { x: 0.5, y: 0.5, height: 0.5 };
+      const light = { x: 0.5, y: 0.5, height: 0.5, intensity: 0.5 };
       const saved = vi.fn(() => ({
         data: { setHalloweenCandyBoardLighting: board([2]) },
       }));

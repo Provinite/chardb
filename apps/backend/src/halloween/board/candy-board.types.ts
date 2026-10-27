@@ -158,6 +158,12 @@ export class HalloweenCandyLighting {
 
   @Field(() => Float, { description: "How high it hangs, 0.1 to 1" })
   height: number;
+
+  @Field(() => Float, {
+    description:
+      "How dark and sharp the shadows are, 0 to 1; it does not change their length",
+  })
+  intensity: number;
 }
 
 @InputType({ description: "Where to put the light over your board" })
@@ -170,6 +176,9 @@ export class HalloweenCandyLightingInput {
 
   @Field(() => Float)
   height: number;
+
+  @Field(() => Float)
+  intensity: number;
 }
 
 @ObjectType({

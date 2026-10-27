@@ -110,7 +110,14 @@ const LIGHTING_SAVE_DELAY_MS = 300;
 const stripLighting = (
   lighting: HalloweenCandyBoardFieldsFragment["lighting"],
 ): Lighting | null =>
-  lighting ? { x: lighting.x, y: lighting.y, height: lighting.height } : null;
+  lighting
+    ? {
+        x: lighting.x,
+        y: lighting.y,
+        height: lighting.height,
+        intensity: lighting.intensity,
+      }
+    : null;
 
 const NotRunning: React.FC = () => (
   <Container>

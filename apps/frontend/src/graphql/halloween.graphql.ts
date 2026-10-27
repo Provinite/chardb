@@ -219,6 +219,7 @@ export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
       x
       y
       height
+      intensity
     }
     owner {
       id
