@@ -478,9 +478,7 @@ export class CharactersResolver {
     @Parent() character: CharacterEntity,
     @Context("req") req?: Request,
   ): Promise<number> {
-    return this.loaders
-      .forRequest(req)
-      .likeCountByCharacter.load(character.id);
+    return this.loaders.forRequest(req).likeCountByCharacter.load(character.id);
   }
 
   // Unauthenticated for the same reason as Gallery.userHasLiked (#173): the

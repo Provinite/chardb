@@ -538,7 +538,9 @@ export class MediaResolver {
     @Parent() media: MediaEntity,
     @Context("req") req?: Request,
   ): Promise<MediaTag[]> {
-    const mediaTags = await this.loaders.forRequest(req).tagsByMedia.load(media.id);
+    const mediaTags = await this.loaders
+      .forRequest(req)
+      .tagsByMedia.load(media.id);
 
     return mediaTags.map((mediaTag) => ({
       tag: {

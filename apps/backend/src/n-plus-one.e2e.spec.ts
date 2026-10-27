@@ -133,7 +133,9 @@ describe("list query cost (#97)", () => {
       await db.like.create({
         data: { userId: ownerId, characterId: character.id },
       });
-      await db.like.create({ data: { userId: ownerId, galleryId: gallery.id } });
+      await db.like.create({
+        data: { userId: ownerId, galleryId: gallery.id },
+      });
     }
   }
 
@@ -150,7 +152,9 @@ describe("list query cost (#97)", () => {
           characterId: character.id,
         },
       });
-      await db.like.create({ data: { userId: ownerId, commentId: comment.id } });
+      await db.like.create({
+        data: { userId: ownerId, commentId: comment.id },
+      });
     }
     return { characterId: character.id };
   }
