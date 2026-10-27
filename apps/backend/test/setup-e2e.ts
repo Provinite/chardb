@@ -43,14 +43,11 @@ export class TestApp {
   /**
    * @param override Replaces providers before compiling -- for a client that
    *   would otherwise call a real third-party API.
-   * @param graphql Merged into the GraphQL module config -- e.g. the app's
-   *   `fieldResolverEnhancers`, so guards run on fields as they do in prod.
    */
   async setup(
     moduleMetadata: Pick<ModuleMetadata, "imports" | "providers">,
     override: (builder: TestingModuleBuilder) => TestingModuleBuilder = (b) =>
       b,
-    graphql: Partial<ApolloDriverConfig> = {},
   ) {
     const builder = Test.createTestingModule({
       imports: [
@@ -76,7 +73,6 @@ export class TestApp {
             req,
             res,
           }),
-          ...graphql,
         }),
         JwtModule.register({
           secret: "test-jwt-secret-key-for-testing-only",
