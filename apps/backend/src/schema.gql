@@ -1508,6 +1508,55 @@ input GrantItemInput {
   userId: ID
 }
 
+"""A candy a player got from a lost knock"""
+type HalloweenCandy {
+  """The knock that gave it; its id"""
+  knockEventId: Int!
+  receivedAt: DateTime!
+
+  """
+  Which candy it is: its image is /halloween/candy/<slug>.png on the frontend
+  """
+  slug: String!
+}
+
+"""
+A player's Halloween candy board: every candy they have, and where they have stuck the ones on the board
+"""
+type HalloweenCandyBoard {
+  """Oldest first"""
+  candies: [HalloweenCandy!]!
+  owner: User!
+
+  """Bottom of the pile first. A candy not here is not on the board."""
+  placements: [HalloweenCandyPlacement!]!
+}
+
+"""Where a candy sits on a board"""
+type HalloweenCandyPlacement {
+  knockEventId: Int!
+
+  """Degrees clockwise, -180 to 180"""
+  rotation: Float!
+
+  """Size multiplier, 0.25 to 4"""
+  scale: Float!
+
+  """The candy's centre, as a fraction of the board's width, 0-1"""
+  x: Float!
+
+  """The candy's centre, as a fraction of the board's height, 0-1"""
+  y: Float!
+}
+
+input HalloweenCandyPlacementInput {
+  knockEventId: Int!
+  rotation: Float!
+  scale: Float!
+  x: Float!
+  y: Float!
+}
+
 """The Halloween event as staff see it"""
 type HalloweenDashboard {
   communityId: ID!
@@ -2793,6 +2842,9 @@ type Mutation {
   """
   runDeviantartUuidBackfill(jobId: String!): Boolean!
 
+  """Replace where your candies sit on your board. Needs Discord linked."""
+  saveHalloweenCandyBoard(communityId: ID!, placements: [HalloweenCandyPlacementInput!]!): HalloweenCandyBoard!
+
   """
   Replace the set of folders one character is in. Returns where it ends up.
   """
@@ -3499,6 +3551,11 @@ type Query {
 
   """Get count of all pending images across all communities (admin only)"""
   globalPendingImageCount: Int!
+
+  """
+  A player's Halloween candy board, by their chardb username. Null when they have no Discord linked, since candies belong to Discord players.
+  """
+  halloweenCandyBoard(communityId: ID!, username: String!): HalloweenCandyBoard
 
   """
   The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems.
