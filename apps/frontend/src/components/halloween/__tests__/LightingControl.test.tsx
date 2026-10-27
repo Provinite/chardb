@@ -24,7 +24,7 @@ if (!("PointerEvent" in window)) {
   Object.assign(window, { PointerEvent: PointerEventStub });
 }
 
-const renderControl =(value: Lighting | null = null) => {
+const renderControl = (value: Lighting | null = null) => {
   const onChange = vi.fn();
   render(
     <ThemeProvider theme={lightTheme}>
@@ -79,7 +79,9 @@ describe("LightingControl", () => {
   it("goes back to the default light", async () => {
     const onChange = renderControl({ x: 0.5, y: 0.5, height: 0.5 });
     await open();
-    await userEvent.click(screen.getByRole("button", { name: "Default light" }));
+    await userEvent.click(
+      screen.getByRole("button", { name: "Default light" }),
+    );
     expect(onChange).toHaveBeenLastCalledWith(null);
   });
 });
