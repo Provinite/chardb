@@ -142,6 +142,14 @@ describe("EmailVerificationService", () => {
       // would report a signup that in fact happened as a failure.
       await expect(service.sendForNewUser(member.id)).resolves.toBeUndefined();
     });
+
+    it("answers a resend the same way when the mail cannot be delivered", async () => {
+      mockEmail.sendEmailVerification.mockRejectedValue(new Error("smtp down"));
+
+      // An address with no account resolves quietly. Throwing only for one
+      // that has an account would say which addresses are registered.
+      await expect(service.resend(member.email)).resolves.toBeUndefined();
+    });
   });
 
   describe("redeeming", () => {
