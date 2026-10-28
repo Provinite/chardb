@@ -19,6 +19,8 @@ import {
 } from "./backgroundEffects";
 import { BackgroundEffectLayers } from "./BackgroundEffectLayers";
 import { TintChoices } from "./TintChoices";
+import { LightLayers } from "./LightLayers";
+import type { Lighting } from "./candyLighting";
 
 const ICON_SIZE = 18;
 /** How far the saturation, dim and tint strength sliders move a notch. */
@@ -120,6 +122,8 @@ interface BackgroundDialogProps {
   value: string | null;
   /** How the board's background is dimmed and tinted now; null for neither. */
   effects: BackgroundEffects | null;
+  /** The board's light, which the preview is shown under. */
+  lighting: Lighting | null;
   onClose: () => void;
   /**
    * The background to use, null for the night sky, and how it is dimmed and
@@ -130,19 +134,17 @@ interface BackgroundDialogProps {
 
 export const BackgroundDialog: React.FC<BackgroundDialogProps> = ({
   open,
-  value,
-  effects,
-  onClose,
-  onUse,
+  ...body
 }) => (
-  <Modal opened={open} onClose={onClose} title="Background" size="lg" centered>
+  <Modal
+    opened={open}
+    onClose={body.onClose}
+    title="Background"
+    size="lg"
+    centered
+  >
     {/* Mounted afresh each opening, so it starts from what the board has. */}
-    <DialogBody
-      value={value}
-      effects={effects}
-      onClose={onClose}
-      onUse={onUse}
-    />
+    <DialogBody {...body} />
   </Modal>
 );
 
@@ -176,6 +178,7 @@ const STRENGTH_ICON = (
 const DialogBody: React.FC<Omit<BackgroundDialogProps, "open">> = ({
   value,
   effects,
+  lighting,
   onClose,
   onUse,
 }) => {
@@ -202,6 +205,7 @@ const DialogBody: React.FC<Omit<BackgroundDialogProps, "open">> = ({
         style={backgroundStyle(findBackground(chosen))}
       >
         <BackgroundEffectLayers effects={muting} />
+        <LightLayers lighting={lighting} />
       </Preview>
       <Effects>
         {SATURATION_ICON}

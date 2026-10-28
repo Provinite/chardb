@@ -381,6 +381,7 @@ const BoardView: React.FC<{
             open={choosingBackground}
             value={background}
             effects={backgroundEffects}
+            lighting={lighting}
             onClose={() => setChoosingBackground(false)}
             onUse={useBackground}
           />

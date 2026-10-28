@@ -1317,6 +1317,24 @@ describe("CommunityCandyBoardPage", () => {
       ).toBeTruthy();
     });
 
+    it("previews a background under the board's light, as the board shows it", async () => {
+      const light = {
+        ...DEFAULT_LIGHTING,
+        colour: "#f97316",
+        colourStrength: 0.35,
+      };
+      renderBoard([boardQuery(board([], { lighting: light }))]);
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Background" }),
+      );
+      const dialog = await screen.findByRole("dialog", { name: "Background" });
+      const wash = within(dialog)
+        .getByRole("img", { name: "Background preview" })
+        .querySelector<HTMLElement>('[data-testid="light-wash"]');
+      expect(wash?.style.backgroundColor).toBe("rgb(249, 115, 22)");
+      expect(wash?.style.opacity).toBe("0.35");
+    });
+
     it("leaves the board alone under a white light", async () => {
       renderBoard([boardQuery(board([2]))]);
       expect((await pile()).querySelector('[data-testid="light-wash"]')).toBe(
