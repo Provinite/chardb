@@ -700,15 +700,8 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         e.clientX - current.centre.x,
         e.clientY - current.centre.y,
       );
-      // Clamped here, not left to the board: the server refuses a scale
-      // outside these, and would refuse the whole save with it.
-      const scale = Math.min(
-        SCALE_MAX,
-        Math.max(
-          SCALE_MIN,
-          (current.startScale * distance) / current.startDistance,
-        ),
-      );
+      // Kept within the sizes the board allows by the sync, as every edit is.
+      const scale = (current.startScale * distance) / current.startDistance;
       onAction({ edit: { sticker, scale } });
     } else {
       // The handle sits straight above the centre, so pointing up is 0deg.

@@ -13,6 +13,8 @@ import { ConfirmDialog } from "../components/ConfirmDialog";
 import { Tooltip } from "../components/Tooltip";
 import { CandyBoard } from "../components/halloween/CandyBoard";
 import { formatBoardName } from "../components/halloween/boardName";
+import { copyBoardLink } from "../components/halloween/copyBoardLink";
+import { CANDY_BOARD_LIMIT } from "@chardb/shared";
 import {
   MyHalloweenCandyBoardsDocument,
   useCreateHalloweenCandyBoardMutation,
@@ -26,9 +28,6 @@ import {
  * opened, shared or deleted from here; every board can use all of their
  * candies, so a new one starts with the whole collection in its tray.
  */
-
-/** How many boards a player can have; the server refuses more. */
-const MAX_BOARDS = 10;
 
 const Container = styled.div`
   max-width: 1120px;
@@ -268,17 +267,7 @@ export const CommunityCandyBoardsPage: React.FC = () => {
     }
   };
 
-  const copyLink = async (board: Board) => {
-    const url = `${window.location.origin}/halloween/board/${board.id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copied");
-    } catch {
-      toast.error("Could not copy the link");
-    }
-  };
-
-  const atLimit = boards.length >= MAX_BOARDS;
+  const atLimit = boards.length >= CANDY_BOARD_LIMIT;
   const collection = boards[0]?.candies.length;
 
   return (
@@ -308,8 +297,8 @@ export const CommunityCandyBoardsPage: React.FC = () => {
             </Button>
             {atLimit && (
               <Hint>
-                {MAX_BOARDS} boards is the most you can have. Delete one to make
-                another.
+                {CANDY_BOARD_LIMIT} boards is the most you can have. Delete one
+                to make another.
               </Hint>
             )}
           </NewBoard>
@@ -360,7 +349,7 @@ export const CommunityCandyBoardsPage: React.FC = () => {
                     <IconButton
                       type="button"
                       aria-label={`Copy link to ${title}`}
-                      onClick={() => copyLink(board)}
+                      onClick={() => copyBoardLink(board.id)}
                     >
                       <Link2 size={18} aria-hidden />
                     </IconButton>

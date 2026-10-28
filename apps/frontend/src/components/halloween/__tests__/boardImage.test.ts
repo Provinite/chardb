@@ -2,11 +2,12 @@
  * A candy board drawn as a picture to keep: what it is called, and that it
  * is drawn as the board shows it -- layer by layer, in the same order.
  */
-import { describe, it, expect } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import {
   BOARD_IMAGE_HEIGHT,
   BOARD_IMAGE_WIDTH,
   boardImageFileName,
+  downloadBoardImage,
   drawBoard,
   type BoardScene,
   type LoadImage,
@@ -266,5 +267,44 @@ describe("drawBoard", () => {
   it("lays no light over a board under the default light", async () => {
     const ops = await draw(scene());
     expect(ops.slice(lastCandyAt(ops) + 1)).toEqual([]);
+  });
+});
+
+describe("downloadBoardImage", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+    vi.useRealTimers();
+  });
+
+  it("saves the picture, named for the board, and lets it go only once saving has begun", async () => {
+    vi.useFakeTimers();
+    const { ctx } = recorder();
+    vi.spyOn(HTMLCanvasElement.prototype, "getContext").mockReturnValue(
+      ctx as unknown as CanvasRenderingContext2D,
+    );
+    vi.spyOn(HTMLCanvasElement.prototype, "toBlob").mockImplementation(
+      (done: BlobCallback) => done(new Blob(["png"])),
+    );
+    const created = vi.fn(() => "blob:board");
+    const revoked = vi.fn();
+    Object.assign(URL, { createObjectURL: created, revokeObjectURL: revoked });
+    const saved: string[] = [];
+    vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(function (
+      this: HTMLAnchorElement,
+    ) {
+      saved.push(this.download);
+    });
+
+    await downloadBoardImage(
+      scene({ name: { first: "Clover", joiner: null, last: "Coin" } }),
+      loader(),
+    );
+
+    expect(saved).toEqual(["clover-coin.png"]);
+    // Some browsers start the download after the click returns: let go now,
+    // and the download can come to nothing.
+    expect(revoked).not.toHaveBeenCalled();
+    vi.runAllTimers();
+    expect(revoked).toHaveBeenCalledWith("blob:board");
   });
 });

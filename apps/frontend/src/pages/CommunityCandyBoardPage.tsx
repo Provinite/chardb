@@ -29,6 +29,7 @@ import type { BackgroundEffects } from "../components/halloween/backgroundEffect
 import { NameDialog } from "../components/halloween/NameDialog";
 import { stickerRef } from "../components/halloween/candyBoard";
 import { downloadBoardImage } from "../components/halloween/boardImage";
+import { copyBoardLink } from "../components/halloween/copyBoardLink";
 import {
   formatBoardName,
   type BoardName,
@@ -159,7 +160,6 @@ const stripLighting = (
       }
     : null;
 
-/** How a board's background is muted as the API sends it, as the dialog holds it. */
 /** A board's name as the API sends it, as the dialog holds it. */
 const stripName = (
   name: HalloweenCandyBoardFieldsFragment["name"],
@@ -168,6 +168,7 @@ const stripName = (
     ? { first: name.first, joiner: name.joiner ?? null, last: name.last }
     : null;
 
+/** How a board's background is muted as the API sends it, as the dialog holds it. */
 const stripEffects = (
   effects: HalloweenCandyBoardFieldsFragment["backgroundEffects"],
 ): BackgroundEffects | null =>
@@ -215,7 +216,10 @@ export const CommunityCandyBoardPage: React.FC = () => {
     );
   }
   return (
+    // A board of its own for each board: going straight to another sends what
+    // is still waiting for this one, rather than to the next.
     <BoardView
+      key={board.id}
       board={board}
       communityId={communityId}
       refetchPlacements={async () =>
@@ -343,16 +347,6 @@ const BoardView: React.FC<{
       : "Halloween candies",
   });
 
-  const copyLink = async () => {
-    const url = `${window.location.origin}/halloween/board/${board.id}`;
-    try {
-      await navigator.clipboard.writeText(url);
-      toast.success("Link copied");
-    } catch {
-      toast.error("Could not copy the link");
-    }
-  };
-
   /** A picture of the board as it is shown, changes not yet saved and all. */
   const download = async () => {
     setDownloading(true);
@@ -421,7 +415,7 @@ const BoardView: React.FC<{
                 <Eraser size={16} aria-hidden />
                 Clear board
               </Button>
-              <Button type="button" onClick={copyLink}>
+              <Button type="button" onClick={() => copyBoardLink(board.id)}>
                 <Link2 size={16} aria-hidden />
                 Copy link
               </Button>

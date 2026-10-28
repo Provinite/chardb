@@ -17,6 +17,7 @@ import {
 } from "../../users/utils/user-resolver-mappers";
 import { HalloweenDashboardService } from "../dashboard/halloween-dashboard.service";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
+import { CANDY_BOARD_LIMIT } from "@chardb/shared";
 import { BACKGROUND_SLUGS } from "../discord/images.generated";
 import { addedCandies, applyCandyBoardActions } from "./candy-board.actions";
 import {
@@ -28,7 +29,10 @@ import {
   type CandyLighting,
   type CandyPlacement,
 } from "./candy-board.schema";
-import { StoredCandyBoardInvalidError } from "./candy-board.errors";
+import {
+  StoredCandyBoardInvalidError,
+  orBoardGone,
+} from "./candy-board.errors";
 import {
   boardNameSchema,
   storedBoardNameSchema,
@@ -46,9 +50,6 @@ import type {
  * long. The page splits anything larger into several saves.
  */
 export const MAX_ACTIONS = 100;
-
-/** How many boards a player can have in one community. */
-export const MAX_BOARDS = 10;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -143,7 +144,7 @@ export class CandyBoardService {
     communityId: string,
     userId: string,
   ): Promise<HalloweenCandyBoard[] | null> {
-    const guildId = await this.requireGuild(communityId);
+    const guildId = await this.dashboard.linkedGuildFor(communityId);
     const discordUserId = await this.discordIdOf(userId);
     if (!discordUserId) {
       return null;
@@ -157,20 +158,23 @@ export class CandyBoardService {
     return boards.map((board) => this.present(board, true, owner));
   }
 
-  /** A new, empty board for the signed-in player; at most MAX_BOARDS each. */
+  /**
+   * A new, empty board for the signed-in player; at most CANDY_BOARD_LIMIT
+   * each.
+   */
   async createBoard(
     communityId: string,
     userId: string,
   ): Promise<HalloweenCandyBoard> {
-    const guildId = await this.requireGuild(communityId);
+    const guildId = await this.dashboard.linkedGuildFor(communityId);
     const discordUserId = await this.requireDiscord(userId);
     const board = await this.db.$transaction(async (tx) => {
       const count = await tx.halloweenCandyBoard.count({
         where: { guildId, userId: discordUserId },
       });
-      if (count >= MAX_BOARDS) {
+      if (count >= CANDY_BOARD_LIMIT) {
         throw new BadRequestException(
-          `You can have at most ${MAX_BOARDS} candy boards`,
+          `You can have at most ${CANDY_BOARD_LIMIT} candy boards`,
         );
       }
       return tx.halloweenCandyBoard.create({
@@ -194,7 +198,10 @@ export class CandyBoardService {
     id: string,
   ): Promise<boolean> {
     const board = await this.myBoard(communityId, userId, id);
-    await this.db.halloweenCandyBoard.delete({ where: { id: board.id } });
+    await orBoardGone(
+      board.id,
+      this.db.halloweenCandyBoard.delete({ where: { id: board.id } }),
+    );
     this.logger.log({
       event: HalloweenLogEvent.CandyBoardDeleted,
       message: "Candy board deleted",
@@ -245,25 +252,28 @@ export class CandyBoardService {
         : [],
     );
 
-    const board = await this.db.$transaction(async (tx) => {
-      await tx.$queryRaw`SELECT 1 FROM "halloween_candy_boards" WHERE "id" = ${id}::uuid FOR UPDATE`;
-      const locked = await tx.halloweenCandyBoard.findUniqueOrThrow({
-        where: { id },
-      });
-      return tx.halloweenCandyBoard.update({
-        where: { id },
-        data: {
-          placements: applyCandyBoardActions(
-            storedPlacements(locked),
-            actions,
-            (sticker) =>
-              isNameplate(sticker)
-                ? locked.name !== null
-                : owned.has(sticker.candy),
-          ),
-        },
-      });
-    });
+    const board = await orBoardGone(
+      id,
+      this.db.$transaction(async (tx) => {
+        await tx.$queryRaw`SELECT 1 FROM "halloween_candy_boards" WHERE "id" = ${id}::uuid FOR UPDATE`;
+        const locked = await tx.halloweenCandyBoard.findUniqueOrThrow({
+          where: { id },
+        });
+        return tx.halloweenCandyBoard.update({
+          where: { id },
+          data: {
+            placements: applyCandyBoardActions(
+              storedPlacements(locked),
+              actions,
+              (sticker) =>
+                isNameplate(sticker)
+                  ? locked.name !== null
+                  : owned.has(sticker.candy),
+            ),
+          },
+        });
+      }),
+    );
 
     this.logger.log({
       event: HalloweenLogEvent.CandyBoardSaved,
@@ -293,10 +303,13 @@ export class CandyBoardService {
       );
     }
     await this.myBoard(communityId, userId, id);
-    const board = await this.db.halloweenCandyBoard.update({
-      where: { id },
-      data: { name: name ?? Prisma.DbNull },
-    });
+    const board = await orBoardGone(
+      id,
+      this.db.halloweenCandyBoard.update({
+        where: { id },
+        data: { name: name ?? Prisma.DbNull },
+      }),
+    );
     return this.toBoard(board, true);
   }
 
@@ -316,11 +329,14 @@ export class CandyBoardService {
       );
     }
     await this.myBoard(communityId, userId, id);
-    const board = await this.db.halloweenCandyBoard.update({
-      where: { id },
-      // Prisma takes a JSON column's null as `Prisma.DbNull`, not null.
-      data: { lighting: lighting ?? Prisma.DbNull },
-    });
+    const board = await orBoardGone(
+      id,
+      this.db.halloweenCandyBoard.update({
+        where: { id },
+        // Prisma takes a JSON column's null as `Prisma.DbNull`, not null.
+        data: { lighting: lighting ?? Prisma.DbNull },
+      }),
+    );
     return this.toBoard(board, true);
   }
 
@@ -348,10 +364,13 @@ export class CandyBoardService {
       );
     }
     await this.myBoard(communityId, userId, id);
-    const board = await this.db.halloweenCandyBoard.update({
-      where: { id },
-      data: { background: slug, backgroundEffects: effects ?? Prisma.DbNull },
-    });
+    const board = await orBoardGone(
+      id,
+      this.db.halloweenCandyBoard.update({
+        where: { id },
+        data: { background: slug, backgroundEffects: effects ?? Prisma.DbNull },
+      }),
+    );
     return this.toBoard(board, true);
   }
 
@@ -364,7 +383,7 @@ export class CandyBoardService {
     userId: string,
     id: string,
   ): Promise<BoardRow> {
-    const guildId = await this.requireGuild(communityId);
+    const guildId = await this.dashboard.linkedGuildFor(communityId);
     const discordUserId = await this.requireDiscord(userId);
     const board = UUID.test(id)
       ? await this.db.halloweenCandyBoard.findFirst({
@@ -385,16 +404,6 @@ export class CandyBoardService {
       );
     }
     return discordUserId;
-  }
-
-  private async requireGuild(communityId: string): Promise<string> {
-    const guildId = await this.dashboard.guildFor(communityId);
-    if (!guildId) {
-      throw new BadRequestException(
-        "This community has no Discord server linked",
-      );
-    }
-    return guildId;
   }
 
   private async discordIdOf(userId: string): Promise<string | null> {

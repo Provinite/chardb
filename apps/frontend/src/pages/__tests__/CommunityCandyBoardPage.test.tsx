@@ -11,7 +11,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
 import { GraphQLError } from "graphql";
 import { ThemeProvider } from "styled-components";
@@ -185,12 +185,18 @@ const applyMock = (
       : { result: { errors: [new GraphQLError(outcome.graphQLError)] } }),
 });
 
-const renderAt = (path: string, mocks: MockedResponse[]) =>
+const renderAt = (
+  path: string,
+  mocks: MockedResponse[],
+  /** Beside the page, in its router: a way to another page, say. */
+  extra?: React.ReactNode,
+) =>
   render(
     <ThemeProvider theme={lightTheme}>
       <MantineProvider>
         <MockedProvider mocks={mocks}>
           <MemoryRouter initialEntries={[path]}>
+            {extra}
             <Routes>
               <Route
                 path="/halloween/board/:boardId"
@@ -883,6 +889,52 @@ describe("CommunityCandyBoardPage", () => {
       unmount();
 
       await waitFor(() => expect(sent).toHaveBeenCalled());
+    });
+
+    it("keeps a change to one board off another opened straight after", async () => {
+      const OTHER = "44444444-4444-4444-8444-444444444444";
+      const sent = vi.fn(() => ({
+        data: { applyHalloweenCandyBoardActions: board([2, 1]) },
+      }));
+      const otherQuery: MockedResponse = {
+        request: {
+          query: HalloweenCandyBoardDocument,
+          variables: { communityId: COMMUNITY_ID, id: OTHER },
+        },
+        result: { data: { halloweenCandyBoard: { ...board([]), id: OTHER } } },
+      };
+      renderAt(
+        `/halloween/board/${OTHER}`,
+        [
+          otherQuery,
+          boardQuery(board([2])),
+          { ...applyMock([ADD_CORN], { board: board([2, 1]) }), result: sent },
+          // Fetched again on coming back, too slowly to be what shows it.
+          { ...otherQuery, delay: 60_000 },
+        ],
+        <>
+          <Link to={`/halloween/board/${BOARD_ID}`}>This board</Link>
+          <Link to={`/halloween/board/${OTHER}`}>Another board</Link>
+        </>,
+      );
+      // The other board is seen first, so it is ready at once to come back to.
+      await pile();
+      await userEvent.click(screen.getByRole("link", { name: "This board" }));
+
+      await userEvent.click(
+        await screen.findByRole("button", {
+          name: "Place candy corn (2 left)",
+        }),
+      );
+      // Before the change is sent.
+      await userEvent.click(
+        screen.getByRole("link", { name: "Another board" }),
+      );
+
+      // Sent to the board it was made on...
+      await waitFor(() => expect(sent).toHaveBeenCalled());
+      // ...and nowhere on the board opened after it.
+      await waitFor(async () => expect(await placedNames()).toEqual([]));
     });
 
     it("removes the selected sticker back to the tray", async () => {

@@ -211,14 +211,20 @@ const loadImage: LoadImage = (src) =>
     image.src = src;
   });
 
+/** How long the picture is kept once its download has been started. */
+const RELEASE_AFTER_MS = 60_000;
+
 /** Draws the board and saves it as a PNG, named for it. */
-export async function downloadBoardImage(scene: BoardScene): Promise<void> {
+export async function downloadBoardImage(
+  scene: BoardScene,
+  load: LoadImage = loadImage,
+): Promise<void> {
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("This browser cannot draw the picture");
-  await drawBoard(ctx, scene, loadImage);
+  await drawBoard(ctx, scene, load);
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, "image/png"),
   );
@@ -228,5 +234,7 @@ export async function downloadBoardImage(scene: BoardScene): Promise<void> {
   link.href = url;
   link.download = boardImageFileName(scene.name);
   link.click();
-  URL.revokeObjectURL(url);
+  // Firefox and older Safari start the download after the click returns: let
+  // go of the picture straight away, and the download can come to nothing.
+  setTimeout(() => URL.revokeObjectURL(url), RELEASE_AFTER_MS);
 }
