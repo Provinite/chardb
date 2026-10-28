@@ -64,8 +64,11 @@ interface ConfirmDialogProps {
   open: boolean;
   /** A question naming the specific thing, not "Are you sure?". */
   title: string;
-  /** What it will do, in the units the reader cares about. */
-  children: React.ReactNode;
+  /**
+   * What it will do, in the units the reader cares about. Left out when the
+   * title already says all of it.
+   */
+  children?: React.ReactNode;
   onConfirm: () => void;
   onCancel: () => void;
   /** Defaults to "Confirm". Say the verb: "Refund", "Delete". */
@@ -173,7 +176,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         onClick={(e) => e.stopPropagation()}
       >
         <Title>{title}</Title>
-        <Body>{children}</Body>
+        {children && <Body>{children}</Body>}
         {confirmPhrase !== undefined && (
           <PhraseLabel htmlFor={phraseId}>
             Type <strong>{phrase}</strong> to confirm

@@ -125,7 +125,7 @@ export class HalloweenDashboardService {
     const guildId = await this.guildFor(communityId);
     if (!guildId) {
       throw new BadRequestException(
-        "Link a Discord server to this community first",
+        "This community has no Discord server linked",
       );
     }
     return guildId;

@@ -7,15 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **`resendVerificationEmail` no longer reveals registered addresses when mail cannot be sent**: a delivery failure is logged instead of returned as an error.
+
+### Fixed
+
+- **API e2e specs use the test stack's LocalStack and bucket**, not the dev stack's.
+
 ### Added
 
 - **Prisma operations and SQL queries appear as spans in traces**, nested under the resolver that issued them (#97).
+- **Lost knocks record their candy**, and players arrange them on candy boards, up to ten each: `myHalloweenCandyBoards`, `createHalloweenCandyBoard`, `deleteHalloweenCandyBoard`, `halloweenCandyBoard` by its UUID, and `applyHalloweenCandyBoardActions`, whose actions are a `@oneOf` input (add, edit, raise, lower, forward, backward, remove), at most 100 a save, skipping any that cannot apply; `setHalloweenCandyBoardBackground` and `setHalloweenCandyBoardLighting` set what is behind the candies, how it is desaturated, dimmed and tinted, and where their light comes from; `setHalloweenCandyBoardName` names a board from the word lists in `@chardb/shared`, and a placement's `sticker` is a candy or, on a named board, its nameplate.
 
 ### Changed
 
 - **A list's like counts, media counts, tags and trait enum values load in one query per field**, and permission checks run once per request instead of once per row (#97).
 - **A list's character lookups batch into one query**, along with the species and community lookups under them; a 6-gallery list went from 21 queries to 6 (#97).
 - **The viewer is authenticated once per request** instead of once per resolved field (#97).
+- **`@nestjs/graphql` is 13.4.5**, for `@oneOf` input types.
 - **Halloween candy images are named by slug** (`candy/candy-corn.png`): 107 unique candies, with the 23 duplicate files removed and Luther and Daphne's two paintings framed as stickers.
 - **Character and species names are trimmed on create, update and MYO redemption**, and a name of only spaces is refused (#430).
 

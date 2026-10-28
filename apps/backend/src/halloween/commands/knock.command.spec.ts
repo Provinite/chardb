@@ -44,6 +44,7 @@ import {
 import {
   AUTHOR,
   CANDY,
+  CANDY_SLUG,
   TIMESTAMP,
   linksFor,
   mockDiscord,
@@ -85,6 +86,7 @@ const knockEvent = (
   guildId: GUILD_ID,
   userId: USER_ID,
   prizeId: null,
+  candySlug: null,
   deliveredAt: null,
   deliveredById: null,
   time: new Date(TIMESTAMP),
@@ -407,12 +409,13 @@ describe("/knock", () => {
       );
     });
 
-    it("logs how long a lost knock took", async () => {
+    it("logs how long a lost knock took, and its candy", async () => {
       await knock(interaction);
       expect(log).toHaveBeenCalledWith(
         expect.objectContaining({
           event: HalloweenLogEvent.KnockLost,
           transactionMs: expect.any(Number),
+          candySlug: CANDY_SLUG,
         }),
       );
     });
@@ -437,12 +440,17 @@ describe("/knock", () => {
   });
 
   describe("a losing knock", () => {
-    it("records the knock and says no one was home", async () => {
+    it("records the knock and its candy, and says no one was home", async () => {
       knocks.countSinceLastReset.mockResolvedValue(1);
       gifties.pendingCount.mockResolvedValue(2);
       await knock();
       expect(knocks.save).toHaveBeenCalledWith(
-        { guildId: GUILD_ID, userId: USER_ID, prizeId: null },
+        {
+          guildId: GUILD_ID,
+          userId: USER_ID,
+          prizeId: null,
+          candySlug: CANDY_SLUG,
+        },
         tx,
       );
       expect(reply).toEqual({
@@ -536,8 +544,9 @@ describe("/knock", () => {
       expect(prizes.lockInStock).toHaveBeenCalledWith(GUILD_ID, tx);
       expect(prizes.decrement).toHaveBeenCalledWith("myo", GUILD_ID, tx);
       expect(knocks.save).toHaveBeenCalledTimes(1);
+      // A win gives no candy.
       expect(knocks.save).toHaveBeenCalledWith(
-        { guildId: GUILD_ID, userId: USER_ID, prizeId: "myo" },
+        { guildId: GUILD_ID, userId: USER_ID, prizeId: "myo", candySlug: null },
         tx,
       );
     });

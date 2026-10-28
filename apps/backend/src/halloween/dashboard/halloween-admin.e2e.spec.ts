@@ -199,7 +199,7 @@ describe("Halloween management (e2e)", () => {
       });
       const res = await update(settingsInput);
       expect(res.body.errors?.[0].message).toBe(
-        "Link a Discord server to this community first",
+        "This community has no Discord server linked",
       );
     });
 

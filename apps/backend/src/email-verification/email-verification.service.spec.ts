@@ -135,12 +135,29 @@ describe("EmailVerificationService", () => {
       expect(mockEmail.sendEmailVerification).not.toHaveBeenCalled();
     });
 
+    // Each of these checks the send was attempted: otherwise a change that
+    // returned before sending would pass them without the failure ever
+    // happening.
     it("does not fail a signup when the mail cannot be delivered", async () => {
-      mockEmail.sendEmailVerification.mockRejectedValue(new Error("smtp down"));
+      mockEmail.sendEmailVerification.mockRejectedValueOnce(
+        new Error("smtp down"),
+      );
 
       // The account row is already committed by the time this runs. Throwing
       // would report a signup that in fact happened as a failure.
       await expect(service.sendForNewUser(member.id)).resolves.toBeUndefined();
+      expect(mockEmail.sendEmailVerification).toHaveBeenCalledTimes(1);
+    });
+
+    it("answers a resend the same way when the mail cannot be delivered", async () => {
+      mockEmail.sendEmailVerification.mockRejectedValueOnce(
+        new Error("smtp down"),
+      );
+
+      // An address with no account resolves quietly. Throwing only for one
+      // that has an account would say which addresses are registered.
+      await expect(service.resend(member.email)).resolves.toBeUndefined();
+      expect(mockEmail.sendEmailVerification).toHaveBeenCalledTimes(1);
     });
   });
 

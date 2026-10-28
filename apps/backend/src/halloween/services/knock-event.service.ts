@@ -9,13 +9,15 @@ import { GuildSettingsService } from "./guild-settings.service";
 import { ValidationError, type ValidationFieldError } from "../errors";
 
 /**
- * A knock as it happened: lost, or won with its prize. The bot saved a win as
- * pending until a second Lambda picked the prize; nothing here does.
+ * A knock as it happened: lost with its candy, or won with its prize. The bot
+ * saved a win as pending until a second Lambda picked the prize; nothing here
+ * does.
  */
 export interface KnockEventInput {
   guildId: string;
   userId: string;
   prizeId: string | null;
+  candySlug: string | null;
 }
 
 export function validateKnockEventForCreate({

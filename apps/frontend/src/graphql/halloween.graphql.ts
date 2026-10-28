@@ -209,3 +209,155 @@ export const HALLOWEEN_PRIZE_CHARACTERS_QUERY = gql`
   }
   ${HALLOWEEN_PICKER_IMAGE_FRAGMENT}
 `;
+
+export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
+  fragment HalloweenCandyBoardFields on HalloweenCandyBoard {
+    id
+    viewerIsOwner
+    background
+    backgroundEffects {
+      dim
+      tint
+      tintStrength
+      saturation
+    }
+    lighting {
+      x
+      y
+      height
+      intensity
+      colour
+      colourStrength
+      spotlight
+      cone
+    }
+    name {
+      first
+      joiner
+      last
+    }
+    owner {
+      id
+      username
+      displayName
+    }
+    candies {
+      knockEventId
+      slug
+      receivedAt
+    }
+    placements {
+      sticker {
+        candy
+        nameplate
+      }
+      x
+      y
+      rotation
+      scale
+    }
+  }
+`;
+
+export const HALLOWEEN_CANDY_BOARD_QUERY = gql`
+  query HalloweenCandyBoard($communityId: ID!, $id: ID!) {
+    halloweenCandyBoard(communityId: $communityId, id: $id) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const MY_HALLOWEEN_CANDY_BOARDS_QUERY = gql`
+  query MyHalloweenCandyBoards($communityId: ID!) {
+    myHalloweenCandyBoards(communityId: $communityId) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const CREATE_HALLOWEEN_CANDY_BOARD_MUTATION = gql`
+  mutation CreateHalloweenCandyBoard($communityId: ID!) {
+    createHalloweenCandyBoard(communityId: $communityId) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const DELETE_HALLOWEEN_CANDY_BOARD_MUTATION = gql`
+  mutation DeleteHalloweenCandyBoard($communityId: ID!, $id: ID!) {
+    deleteHalloweenCandyBoard(communityId: $communityId, id: $id)
+  }
+`;
+
+export const APPLY_HALLOWEEN_CANDY_BOARD_ACTIONS_MUTATION = gql`
+  mutation ApplyHalloweenCandyBoardActions(
+    $communityId: ID!
+    $id: ID!
+    $actions: [HalloweenCandyBoardAction!]!
+  ) {
+    applyHalloweenCandyBoardActions(
+      communityId: $communityId
+      id: $id
+      actions: $actions
+    ) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const SET_HALLOWEEN_CANDY_BOARD_NAME_MUTATION = gql`
+  mutation SetHalloweenCandyBoardName(
+    $communityId: ID!
+    $id: ID!
+    $name: HalloweenCandyBoardNameInput
+  ) {
+    setHalloweenCandyBoardName(
+      communityId: $communityId
+      id: $id
+      name: $name
+    ) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const SET_HALLOWEEN_CANDY_BOARD_LIGHTING_MUTATION = gql`
+  mutation SetHalloweenCandyBoardLighting(
+    $communityId: ID!
+    $id: ID!
+    $lighting: HalloweenCandyLightingInput
+  ) {
+    setHalloweenCandyBoardLighting(
+      communityId: $communityId
+      id: $id
+      lighting: $lighting
+    ) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const SET_HALLOWEEN_CANDY_BOARD_BACKGROUND_MUTATION = gql`
+  mutation SetHalloweenCandyBoardBackground(
+    $communityId: ID!
+    $id: ID!
+    $slug: String
+    $effects: HalloweenCandyBackgroundEffectsInput
+  ) {
+    setHalloweenCandyBoardBackground(
+      communityId: $communityId
+      id: $id
+      slug: $slug
+      effects: $effects
+    ) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;

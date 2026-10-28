@@ -95,6 +95,9 @@ export class EmailVerificationService {
    * (an unverified account cannot get one), so this is an unauthenticated
    * endpoint, and any answer that varied by outcome would be an oracle for
    * which addresses are registered. Same convention as `forgotPassword`.
+   *
+   * That includes a delivery failure: it is logged, not thrown, since an
+   * error here and silence for an unknown address would be that oracle.
    */
   async resend(email: string): Promise<void> {
     const normalizedEmail = email.toLowerCase();
@@ -106,7 +109,16 @@ export class EmailVerificationService {
 
     if (!user || user.isVerified) return;
 
-    await this.mintAndSend(user);
+    try {
+      await this.mintAndSend(user);
+    } catch {
+      // EmailService has already logged the failure with its cause; this
+      // records only that a requested resend was the one that failed.
+      this.logger.warn({
+        message: "Requested verification email not sent",
+        userId: user.id,
+      });
+    }
   }
 
   /**
