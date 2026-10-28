@@ -1,146 +1,15 @@
 import { z } from "zod";
+import {
+  BOARD_NAME_FIRST_WORDS,
+  BOARD_NAME_JOINERS,
+  BOARD_NAME_LAST_WORDS,
+} from "@chardb/shared";
 
 /**
  * What a candy board can be called: a first word, an optional joiner and a
- * last word, each picked from its list -- "Moonlit von Pumpkin", "Spooky
- * Cauldron". Words are as shown: first and last in title case, joiners in
- * lowercase. A few words are in both lists.
+ * last word, each from its list in @chardb/shared, which the frontend offers
+ * them from.
  */
-
-export const BOARD_NAME_FIRST_WORDS = [
-  // Halloween, and sweets.
-  "Spooky",
-  "Moonlit",
-  "Haunted",
-  "Wobbly",
-  "Sugary",
-  "Crooked",
-  "Midnight",
-  "Gloomy",
-  "Sticky",
-  "Velvet",
-  "Pumpkin",
-  "Candlelit",
-  "Whispering",
-  "Creaky",
-  "Ghostly",
-  "Gummy",
-  "Bat",
-  "Cobweb",
-  "Lantern",
-  "Jolly",
-  "Peculiar",
-  "Sleepy",
-  "Starry",
-  "Witchy",
-  "Caramel",
-  // Harvest and nature.
-  "Golden",
-  "Rustling",
-  "Mossy",
-  "Frosty",
-  "Misty",
-  "Thorny",
-  "Acorn",
-  "Amber",
-  "Maple",
-  "Orchard",
-  "Bramble",
-  "Twilight",
-  "Wild",
-  "Dewy",
-  "Cinnamon",
-  // The senses.
-  "Hazy",
-  "Crisp",
-  "Rough",
-  "Tacky",
-  "Fuzzy",
-  "Smoky",
-  "Spiced",
-  "Toasty",
-  "Crunchy",
-  "Prickly",
-  // Clovercoin's own.
-  "Clover",
-] as const;
-
-export const BOARD_NAME_JOINERS = [
-  "of",
-  "von",
-  "con",
-  "de",
-  "du",
-  "del",
-  "la",
-  "and",
-  "'n'",
-  "y",
-  "upon",
-  "from",
-  "in the",
-  "under the",
-  "beyond the",
-  "à la",
-] as const;
-
-export const BOARD_NAME_LAST_WORDS = [
-  // Halloween, and sweets.
-  "Pumpkin",
-  "Cauldron",
-  "Lantern",
-  "Hollow",
-  "Manor",
-  "Gumdrop",
-  "Goblin",
-  "Cobweb",
-  "Crypt",
-  "Toffee",
-  "Graveyard",
-  "Bat",
-  "Moon",
-  "Broomstick",
-  "Scarecrow",
-  "Hootenanny",
-  "Shenanigans",
-  "Marshmallow",
-  "Bonbon",
-  "Spectre",
-  "Wonderland",
-  "Treasury",
-  "Stash",
-  "Hoard",
-  "Delight",
-  // Harvest and nature.
-  "Harvest",
-  "Orchard",
-  "Haystack",
-  "Bramble",
-  "Acorn",
-  "Toadstool",
-  "Meadow",
-  "Thicket",
-  "Bonfire",
-  "Gourd",
-  "Cornfield",
-  "Squash",
-  "Thistle",
-  "Burrow",
-  "Cider",
-  "Twilight",
-  // The senses, and the rest.
-  "Scent",
-  "Whisper",
-  "Hush",
-  "Crunch",
-  "Glimmer",
-  "Pantry",
-  "Mischief",
-  "Lullaby",
-  "Nook",
-  // Clovercoin's own.
-  "Coin",
-] as const;
 
 /**
  * The board's nameplate, a banner with its name on it, is placed as a candy

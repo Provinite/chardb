@@ -288,16 +288,6 @@ export const APPLY_HALLOWEEN_CANDY_BOARD_ACTIONS_MUTATION = gql`
   ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
 `;
 
-export const HALLOWEEN_CANDY_BOARD_NAME_WORDS_QUERY = gql`
-  query HalloweenCandyBoardNameWords {
-    halloweenCandyBoardNameWords {
-      first
-      joiners
-      last
-    }
-  }
-`;
-
 export const SET_HALLOWEEN_CANDY_BOARD_NAME_MUTATION = gql`
   mutation SetHalloweenCandyBoardName(
     $communityId: ID!

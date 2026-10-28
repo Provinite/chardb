@@ -2,8 +2,8 @@ import {
   BOARD_NAME_FIRST_WORDS,
   BOARD_NAME_JOINERS,
   BOARD_NAME_LAST_WORDS,
-  boardNameSchema,
-} from "./board-names";
+} from "@chardb/shared";
+import { boardNameSchema } from "./board-names";
 
 describe("board name words", () => {
   it.each([

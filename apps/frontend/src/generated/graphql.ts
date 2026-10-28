@@ -1315,22 +1315,11 @@ export type HalloweenCandyBoardName = {
   last: Scalars['String']['output'];
 };
 
-/** A name for your board, its words from halloweenCandyBoardNameWords */
+/** A name for your board, its words from the word lists in @chardb/shared */
 export type HalloweenCandyBoardNameInput = {
   first: Scalars['String']['input'];
   joiner?: InputMaybe<Scalars['String']['input']>;
   last: Scalars['String']['input'];
-};
-
-/** The words a board's name is picked from */
-export type HalloweenCandyBoardNameWords = {
-  __typename?: 'HalloweenCandyBoardNameWords';
-  /** In title case */
-  first: Array<Scalars['String']['output']>;
-  /** In lowercase */
-  joiners: Array<Scalars['String']['output']>;
-  /** In title case */
-  last: Array<Scalars['String']['output']>;
 };
 
 /** Change where a candy on the board sits, its turn or its size. Only the fields given change, and at least one must be. */
@@ -2280,7 +2269,7 @@ export type Mutation = {
   setHalloweenCandyBoardBackground: HalloweenCandyBoard;
   /** Put the light that casts your candies' shadows; null goes back to the board's default light. Needs Discord linked. */
   setHalloweenCandyBoardLighting: HalloweenCandyBoard;
-  /** Name your board from halloweenCandyBoardNameWords; null leaves it unnamed. Needs Discord linked. */
+  /** Name your board from the word lists in @chardb/shared; null leaves it unnamed. Needs Discord linked. */
   setHalloweenCandyBoardName: HalloweenCandyBoard;
   /** Mark a prize staff hand over themselves as delivered, or clear the mark. Chardb item and character prizes deliver themselves. */
   setHalloweenPrizeDelivered: HalloweenWin;
@@ -3295,8 +3284,6 @@ export type Query = {
   globalPendingImageCount: Scalars['Int']['output'];
   /** A Halloween candy board, by the id in its link. Null if there is no such board in this community's Discord server, or the community has none linked. An error if the community does not exist or has the Halloween event turned off. */
   halloweenCandyBoard: Maybe<HalloweenCandyBoard>;
-  /** The words a candy board's name is picked from */
-  halloweenCandyBoardNameWords: HalloweenCandyBoardNameWords;
   /** The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems. */
   halloweenDashboard: HalloweenDashboard;
   /** Characters of the community a new Halloween prize could hand over, by name: no owner, no pending owner, and not a prize already (25 per search) */
@@ -6035,11 +6022,6 @@ export type ApplyHalloweenCandyBoardActionsMutationVariables = Exact<{
 
 
 export type ApplyHalloweenCandyBoardActionsMutation = { __typename?: 'Mutation', applyHalloweenCandyBoardActions: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', knockEventId: number, x: number, y: number, rotation: number, scale: number }> } };
-
-export type HalloweenCandyBoardNameWordsQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type HalloweenCandyBoardNameWordsQuery = { __typename?: 'Query', halloweenCandyBoardNameWords: { __typename?: 'HalloweenCandyBoardNameWords', first: Array<string>, joiners: Array<string>, last: Array<string> } };
 
 export type SetHalloweenCandyBoardNameMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -12937,47 +12919,6 @@ export function useApplyHalloweenCandyBoardActionsMutation(baseOptions?: Apollo.
 export type ApplyHalloweenCandyBoardActionsMutationHookResult = ReturnType<typeof useApplyHalloweenCandyBoardActionsMutation>;
 export type ApplyHalloweenCandyBoardActionsMutationResult = Apollo.MutationResult<ApplyHalloweenCandyBoardActionsMutation>;
 export type ApplyHalloweenCandyBoardActionsMutationOptions = Apollo.BaseMutationOptions<ApplyHalloweenCandyBoardActionsMutation, ApplyHalloweenCandyBoardActionsMutationVariables>;
-export const HalloweenCandyBoardNameWordsDocument = gql`
-    query HalloweenCandyBoardNameWords {
-  halloweenCandyBoardNameWords {
-    first
-    joiners
-    last
-  }
-}
-    `;
-
-/**
- * __useHalloweenCandyBoardNameWordsQuery__
- *
- * To run a query within a React component, call `useHalloweenCandyBoardNameWordsQuery` and pass it any options that fit your needs.
- * When your component renders, `useHalloweenCandyBoardNameWordsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useHalloweenCandyBoardNameWordsQuery({
- *   variables: {
- *   },
- * });
- */
-export function useHalloweenCandyBoardNameWordsQuery(baseOptions?: Apollo.QueryHookOptions<HalloweenCandyBoardNameWordsQuery, HalloweenCandyBoardNameWordsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<HalloweenCandyBoardNameWordsQuery, HalloweenCandyBoardNameWordsQueryVariables>(HalloweenCandyBoardNameWordsDocument, options);
-      }
-export function useHalloweenCandyBoardNameWordsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenCandyBoardNameWordsQuery, HalloweenCandyBoardNameWordsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<HalloweenCandyBoardNameWordsQuery, HalloweenCandyBoardNameWordsQueryVariables>(HalloweenCandyBoardNameWordsDocument, options);
-        }
-export function useHalloweenCandyBoardNameWordsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenCandyBoardNameWordsQuery, HalloweenCandyBoardNameWordsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<HalloweenCandyBoardNameWordsQuery, HalloweenCandyBoardNameWordsQueryVariables>(HalloweenCandyBoardNameWordsDocument, options);
-        }
-export type HalloweenCandyBoardNameWordsQueryHookResult = ReturnType<typeof useHalloweenCandyBoardNameWordsQuery>;
-export type HalloweenCandyBoardNameWordsLazyQueryHookResult = ReturnType<typeof useHalloweenCandyBoardNameWordsLazyQuery>;
-export type HalloweenCandyBoardNameWordsSuspenseQueryHookResult = ReturnType<typeof useHalloweenCandyBoardNameWordsSuspenseQuery>;
-export type HalloweenCandyBoardNameWordsQueryResult = Apollo.QueryResult<HalloweenCandyBoardNameWordsQuery, HalloweenCandyBoardNameWordsQueryVariables>;
 export const SetHalloweenCandyBoardNameDocument = gql`
     mutation SetHalloweenCandyBoardName($communityId: ID!, $name: HalloweenCandyBoardNameInput) {
   setHalloweenCandyBoardName(communityId: $communityId, name: $name) {

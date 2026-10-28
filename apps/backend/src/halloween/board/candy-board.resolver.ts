@@ -12,14 +12,8 @@ import {
   HalloweenCandyBoardAction,
   HalloweenCandyBackgroundEffectsInput,
   HalloweenCandyBoardNameInput,
-  HalloweenCandyBoardNameWords,
   HalloweenCandyLightingInput,
 } from "./candy-board.types";
-import {
-  BOARD_NAME_FIRST_WORDS,
-  BOARD_NAME_JOINERS,
-  BOARD_NAME_LAST_WORDS,
-} from "./board-names";
 
 /** Candy boards: anyone with the link can look at one; its owner arranges it. */
 @Resolver()
@@ -74,23 +68,11 @@ export class CandyBoardResolver {
     return this.boards.applyActions(communityId, user.id, actions);
   }
 
-  @AllowUnauthenticated()
-  @Query(() => HalloweenCandyBoardNameWords, {
-    description: "The words a candy board's name is picked from",
-  })
-  halloweenCandyBoardNameWords(): HalloweenCandyBoardNameWords {
-    return {
-      first: [...BOARD_NAME_FIRST_WORDS],
-      joiners: [...BOARD_NAME_JOINERS],
-      last: [...BOARD_NAME_LAST_WORDS],
-    };
-  }
-
   @AllowAnyAuthenticated()
   @Mutation(() => HalloweenCandyBoard, {
     description:
-      "Name your board from halloweenCandyBoardNameWords; null leaves it " +
-      "unnamed. Needs Discord linked.",
+      "Name your board from the word lists in @chardb/shared; null leaves " +
+      "it unnamed. Needs Discord linked.",
   })
   async setHalloweenCandyBoardName(
     @Args("communityId", { type: () => ID }) communityId: string,

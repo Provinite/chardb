@@ -235,7 +235,7 @@ export class HalloweenCandyBoardName {
 
 @InputType({
   description:
-    "A name for your board, its words from halloweenCandyBoardNameWords",
+    "A name for your board, its words from the word lists in @chardb/shared",
 })
 export class HalloweenCandyBoardNameInput {
   @Field()
@@ -246,18 +246,6 @@ export class HalloweenCandyBoardNameInput {
 
   @Field()
   last: string;
-}
-
-@ObjectType({ description: "The words a board's name is picked from" })
-export class HalloweenCandyBoardNameWords {
-  @Field(() => [String], { description: "In title case" })
-  first: string[];
-
-  @Field(() => [String], { description: "In lowercase" })
-  joiners: string[];
-
-  @Field(() => [String], { description: "In title case" })
-  last: string[];
 }
 
 @ObjectType({

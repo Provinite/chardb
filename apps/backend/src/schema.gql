@@ -1628,23 +1628,11 @@ type HalloweenCandyBoardName {
   last: String!
 }
 
-"""A name for your board, its words from halloweenCandyBoardNameWords"""
+"""A name for your board, its words from the word lists in @chardb/shared"""
 input HalloweenCandyBoardNameInput {
   first: String!
   joiner: String
   last: String!
-}
-
-"""The words a board's name is picked from"""
-type HalloweenCandyBoardNameWords {
-  """In title case"""
-  first: [String!]!
-
-  """In lowercase"""
-  joiners: [String!]!
-
-  """In title case"""
-  last: [String!]!
 }
 
 """
@@ -3054,7 +3042,7 @@ type Mutation {
   setHalloweenCandyBoardLighting(communityId: ID!, lighting: HalloweenCandyLightingInput): HalloweenCandyBoard!
 
   """
-  Name your board from halloweenCandyBoardNameWords; null leaves it unnamed. Needs Discord linked.
+  Name your board from the word lists in @chardb/shared; null leaves it unnamed. Needs Discord linked.
   """
   setHalloweenCandyBoardName(communityId: ID!, name: HalloweenCandyBoardNameInput): HalloweenCandyBoard!
 
@@ -3750,9 +3738,6 @@ type Query {
   A Halloween candy board, by the id in its link. Null if there is no such board in this community's Discord server, or the community has none linked. An error if the community does not exist or has the Halloween event turned off.
   """
   halloweenCandyBoard(communityId: ID!, id: ID!): HalloweenCandyBoard
-
-  """The words a candy board's name is picked from"""
-  halloweenCandyBoardNameWords: HalloweenCandyBoardNameWords!
 
   """
   The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems.

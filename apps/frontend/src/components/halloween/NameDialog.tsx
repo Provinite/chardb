@@ -2,12 +2,11 @@ import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { Modal } from "@mantine/core";
 import { Dices } from "lucide-react";
-import { useHalloweenCandyBoardNameWordsQuery } from "../../generated/graphql";
 import {
+  BOARD_NAME_WORDS,
   formatBoardName,
   shuffledName,
   type BoardName,
-  type BoardNameWords,
 } from "./boardName";
 
 /**
@@ -51,13 +50,8 @@ const ShuffleButton = styled.button`
   font-weight: 600;
   cursor: pointer;
 
-  &:hover:not(:disabled) {
+  &:hover {
     border-color: ${({ theme }) => theme.colors.primary};
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: wait;
   }
 `;
 
@@ -141,10 +135,6 @@ const DialogButton = styled.button<{ $primary?: boolean; $danger?: boolean }>`
   }
 `;
 
-const Loading = styled.p`
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
 interface NameDialogProps {
   open: boolean;
   /** The board's name now; null for none. */
@@ -172,15 +162,13 @@ const DialogBody: React.FC<Omit<NameDialogProps, "open">> = ({
   onClose,
   onUse,
 }) => {
-  const { data } = useHalloweenCandyBoardNameWordsQuery();
-  const words = data?.halloweenCandyBoardNameWords;
   const [first, setFirst] = useState(value?.first ?? null);
   const [joiner, setJoiner] = useState(value?.joiner ?? null);
   const [last, setLast] = useState(value?.last ?? null);
   const name = first && last ? { first, joiner, last } : null;
 
-  const shuffle = (w: BoardNameWords) => {
-    const next = shuffledName(w, Math.random, name);
+  const shuffle = () => {
+    const next = shuffledName(BOARD_NAME_WORDS, Math.random, name);
     setFirst(next.first);
     setJoiner(next.joiner);
     setLast(next.last);
@@ -201,40 +189,32 @@ const DialogBody: React.FC<Omit<NameDialogProps, "open">> = ({
               ? [first ?? "…", joiner, last ?? "…"].filter(Boolean).join(" ")
               : null}
         </Preview>
-        <ShuffleButton
-          type="button"
-          disabled={!words}
-          onClick={() => words && shuffle(words)}
-        >
+        <ShuffleButton type="button" onClick={shuffle}>
           <Dices size={18} aria-hidden />
           Shuffle
         </ShuffleButton>
       </Hero>
-      {words ? (
-        <Columns>
-          <WordColumn
-            title="First word"
-            words={words.first}
-            chosen={first}
-            onChoose={setFirst}
-          />
-          <WordColumn
-            title="Joiner"
-            words={words.joiners}
-            chosen={joiner}
-            onChoose={setJoiner}
-            noneLabel="No joiner"
-          />
-          <WordColumn
-            title="Last word"
-            words={words.last}
-            chosen={last}
-            onChoose={setLast}
-          />
-        </Columns>
-      ) : (
-        <Loading>Fetching words…</Loading>
-      )}
+      <Columns>
+        <WordColumn
+          title="First word"
+          words={BOARD_NAME_WORDS.first}
+          chosen={first}
+          onChoose={setFirst}
+        />
+        <WordColumn
+          title="Joiner"
+          words={BOARD_NAME_WORDS.joiners}
+          chosen={joiner}
+          onChoose={setJoiner}
+          noneLabel="No joiner"
+        />
+        <WordColumn
+          title="Last word"
+          words={BOARD_NAME_WORDS.last}
+          chosen={last}
+          onChoose={setLast}
+        />
+      </Columns>
       <Footer>
         {value && (
           <DialogButton type="button" $danger onClick={() => use(null)}>

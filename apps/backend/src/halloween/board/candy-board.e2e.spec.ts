@@ -32,12 +32,6 @@ const SET_NAME = `
   }
 `;
 
-const NAME_WORDS = `
-  query NameWords {
-    halloweenCandyBoardNameWords { first joiners last }
-  }
-`;
-
 const SET_LIGHTING = `
   mutation SetLighting($communityId: ID!, $lighting: HalloweenCandyLightingInput) {
     setHalloweenCandyBoardLighting(communityId: $communityId, lighting: $lighting) {
@@ -834,16 +828,6 @@ describe("Halloween candy board (e2e)", () => {
         { communityId, name },
         token,
       );
-
-    it("offers its words to anyone", async () => {
-      const res = await testApp.graphqlRequest(NAME_WORDS, {});
-      const words = res.body.data.halloweenCandyBoardNameWords;
-      expect(words.first).toHaveLength(51);
-      expect(words.last).toHaveLength(51);
-      expect(words.first).toContain("Clover");
-      expect(words.joiners).toContain("von");
-      expect(words.last).toContain("Coin");
-    });
 
     it("starts unnamed", async () => {
       expect((await myBoard()).body.data.myHalloweenCandyBoard.name).toBe(null);

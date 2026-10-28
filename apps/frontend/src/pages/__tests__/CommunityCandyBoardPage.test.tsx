@@ -17,6 +17,7 @@ import { GraphQLError } from "graphql";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
 import { MantineProvider } from "@mantine/core";
+import { BOARD_NAME_FIRST_WORDS, BOARD_NAME_LAST_WORDS } from "@chardb/shared";
 
 const COMMUNITY_ID = "11111111-1111-4111-8111-111111111111";
 const BOARD_ID = "22222222-2222-4222-8222-222222222222";
@@ -68,7 +69,6 @@ import {
   SetHalloweenCandyBoardBackgroundDocument,
   SetHalloweenCandyBoardLightingDocument,
   SetHalloweenCandyBoardNameDocument,
-  HalloweenCandyBoardNameWordsDocument,
   type HalloweenCandyBoardAction,
 } from "../../generated/graphql";
 import {
@@ -1460,22 +1460,6 @@ describe("CommunityCandyBoardPage", () => {
   });
 
   describe("the board's name", () => {
-    const WORDS = {
-      first: ["Spooky", "Moonlit", "Golden"],
-      joiners: ["of", "von"],
-      last: ["Pumpkin", "Hoard", "Cauldron"],
-    };
-    const wordsQuery: MockedResponse = {
-      request: { query: HalloweenCandyBoardNameWordsDocument },
-      result: {
-        data: {
-          halloweenCandyBoardNameWords: {
-            __typename: "HalloweenCandyBoardNameWords",
-            ...WORDS,
-          },
-        },
-      },
-    };
     const setName = (
       name: BoardName | null,
       result: ReturnType<typeof board>,
@@ -1518,13 +1502,15 @@ describe("CommunityCandyBoardPage", () => {
     });
 
     it("offers each list of words to pick one from, the saved name picked", async () => {
-      renderBoard([boardQuery(board([], { name: moonlit })), wordsQuery]);
+      renderBoard([boardQuery(board([], { name: moonlit }))]);
       const dialog = await openNaming();
 
-      const first = await within(dialog).findByRole("radiogroup", {
+      const first = within(dialog).getByRole("radiogroup", {
         name: "First word",
       });
-      expect(within(first).getAllByRole("radio")).toHaveLength(3);
+      expect(within(first).getAllByRole("radio")).toHaveLength(
+        BOARD_NAME_FIRST_WORDS.length,
+      );
       expect(
         within(first).getByRole("radio", { name: "Moonlit" }),
       ).toBeChecked();
@@ -1550,7 +1536,6 @@ describe("CommunityCandyBoardPage", () => {
       }));
       renderBoard([
         boardQuery(board([])),
-        wordsQuery,
         { ...setName(name, board([], { name })), result: saved },
       ]);
       const dialog = await openNaming();
@@ -1558,7 +1543,7 @@ describe("CommunityCandyBoardPage", () => {
       expect(use).toBeDisabled();
 
       await userEvent.click(
-        await within(dialog).findByRole("radio", { name: "Golden" }),
+        within(dialog).getByRole("radio", { name: "Golden" }),
       );
       expect(use).toBeDisabled();
       await userEvent.click(
@@ -1576,16 +1561,25 @@ describe("CommunityCandyBoardPage", () => {
     });
 
     it("shuffles a name", async () => {
-      renderBoard([boardQuery(board([])), wordsQuery]);
+      renderBoard([boardQuery(board([]))]);
       const dialog = await openNaming();
-      await within(dialog).findByRole("radio", { name: "Golden" });
 
       await userEvent.click(
         within(dialog).getByRole("button", { name: "Shuffle" }),
       );
-      const preview = within(dialog).getByTestId("name-preview").textContent;
-      expect(preview).toMatch(
-        /^(Spooky|Moonlit|Golden)( (of|von))? (Pumpkin|Hoard|Cauldron)$/,
+      const checked = (group: string) =>
+        within(
+          within(dialog).getByRole("radiogroup", { name: group }),
+        ).getByRole("radio", { checked: true }).textContent;
+      const first = checked("First word");
+      const joiner = checked("Joiner");
+      const last = checked("Last word");
+      expect(BOARD_NAME_FIRST_WORDS).toContain(first);
+      expect(BOARD_NAME_LAST_WORDS).toContain(last);
+      expect(within(dialog).getByTestId("name-preview")).toHaveTextContent(
+        [first, joiner === "No joiner" ? null : joiner, last]
+          .filter(Boolean)
+          .join(" "),
       );
       expect(
         within(dialog).getByRole("button", { name: "Use name" }),
@@ -1598,12 +1592,11 @@ describe("CommunityCandyBoardPage", () => {
       }));
       renderBoard([
         boardQuery(board([], { name: moonlit })),
-        wordsQuery,
         { ...setName(null, board([])), result: saved },
       ]);
       const dialog = await openNaming();
       await userEvent.click(
-        await within(dialog).findByRole("button", { name: "Remove name" }),
+        within(dialog).getByRole("button", { name: "Remove name" }),
       );
       await waitFor(() => expect(saved).toHaveBeenCalled());
       expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
