@@ -1378,6 +1378,7 @@ export type HalloweenCandyLightingInput = {
 /** Where a candy sits on a board */
 export type HalloweenCandyPlacement = {
   __typename?: 'HalloweenCandyPlacement';
+  /** The candy's knock; 0 for the board's nameplate, a banner with its name, which is placed as a candy is */
   knockEventId: Scalars['Int']['output'];
   /** Degrees clockwise, -180 to 180 */
   rotation: Scalars['Float']['output'];
