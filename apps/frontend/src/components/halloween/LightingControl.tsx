@@ -28,8 +28,8 @@ import {
  * handed up at once, so the board's shadows follow the dot as it moves.
  */
 
-const PAD_SIZE = 140;
-const ICON_SIZE = 18;
+const PAD_SIZE = 190;
+const ICON_SIZE = 20;
 /** How far an arrow key moves the light, as a share of the circle's radius. */
 const STEP = 0.1;
 const BIG_STEP = 0.25;
