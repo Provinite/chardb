@@ -48,6 +48,8 @@ const centre: Lighting = {
   intensity: 0.5,
   colour: null,
   colourStrength: 0,
+  spotlight: 0,
+  cone: 0.5,
 };
 
 describe("LightingControl", () => {
@@ -154,6 +156,31 @@ describe("LightingControl", () => {
       colour: "#123456",
       colourStrength: 0.3,
     });
+  });
+
+  it("narrows the light to a spotlight, its cone waiting until then", async () => {
+    const onChange = renderControl(centre);
+    await open();
+    const spotlight = screen.getByRole("slider", { name: "Spotlight" });
+    const cone = screen.getByRole("slider", { name: "Spotlight cone" });
+    expect(spotlight).toHaveValue("0");
+    expect(cone).toBeDisabled();
+    for (const slider of [spotlight, cone]) {
+      expect(slider).toHaveAttribute("step", "0.01");
+    }
+
+    fireEvent.change(spotlight, { target: { value: "0.6" } });
+    expect(onChange).toHaveBeenLastCalledWith({ ...centre, spotlight: 0.6 });
+  });
+
+  it("widens and narrows a spotlight's cone", async () => {
+    const spot = { ...centre, spotlight: 0.6 };
+    const onChange = renderControl(spot);
+    await open();
+    const cone = screen.getByRole("slider", { name: "Spotlight cone" });
+    expect(cone).toBeEnabled();
+    fireEvent.change(cone, { target: { value: "0.2" } });
+    expect(onChange).toHaveBeenLastCalledWith({ ...spot, cone: 0.2 });
   });
 
   it("goes back to white light", async () => {

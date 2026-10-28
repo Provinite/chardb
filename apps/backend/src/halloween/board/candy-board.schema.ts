@@ -38,7 +38,9 @@ export const LIGHT_HEIGHT_MAX = 1;
  * side and the lower it is. `intensity`, 0 to 1, makes them darker and
  * sharper without changing their length. `colour`, a `#rrggbb` or null for
  * white, colours everything under it -- candies, background and shadows --
- * by `colourStrength`, 0 to 1.
+ * by `colourStrength`, 0 to 1. `spotlight`, 0 to 1, darkens the board
+ * outside the pool of light under it; `cone`, 0 to 1, is how wide the beam
+ * is, so how wide that pool.
  */
 export const candyLightingSchema = z
   .object({
@@ -51,6 +53,8 @@ export const candyLightingSchema = z
       .regex(/^#[0-9a-f]{6}$/i)
       .nullable(),
     colourStrength: z.number().min(0).max(1),
+    spotlight: z.number().min(0).max(1),
+    cone: z.number().min(0).max(1),
   })
   // A hair of slack for a point a pointer put on the rim.
   .refine(({ x, y }) => Math.hypot(x, y) <= 1 + 1e-9);

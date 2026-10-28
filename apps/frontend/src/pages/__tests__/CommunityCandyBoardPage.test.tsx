@@ -76,6 +76,7 @@ import {
 import {
   DEFAULT_LIGHTING,
   shadowFilter,
+  spotlightLayer,
   type Lighting,
 } from "../../components/halloween/candyLighting";
 import type { BackgroundEffects } from "../../components/halloween/backgroundEffects";
@@ -1333,6 +1334,19 @@ describe("CommunityCandyBoardPage", () => {
         .querySelector<HTMLElement>('[data-testid="light-wash"]');
       expect(wash?.style.backgroundColor).toBe("rgb(249, 115, 22)");
       expect(wash?.style.opacity).toBe("0.35");
+    });
+
+    it("darkens the board outside a spotlight's pool, for anyone looking", async () => {
+      const light = { ...DEFAULT_LIGHTING, spotlight: 0.6, cone: 0.3 };
+      renderBoard([
+        boardQuery(board([2], { viewerIsOwner: false, lighting: light })),
+      ]);
+      const spot = (await pile()).querySelector<HTMLElement>(
+        '[data-testid="light-spotlight"]',
+      );
+      expect(spot?.style.backgroundImage).toBe(
+        spotlightLayer(light)?.backgroundImage,
+      );
     });
 
     it("leaves the board alone under a white light", async () => {

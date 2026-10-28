@@ -174,6 +174,18 @@ export class HalloweenCandyLighting {
 
   @Field(() => Float, { description: "How strongly it colours, 0 to 1" })
   colourStrength: number;
+
+  @Field(() => Float, {
+    description:
+      "How dark the board is outside the pool of light under it, 0 (lit evenly) to 1",
+  })
+  spotlight: number;
+
+  @Field(() => Float, {
+    description:
+      "How wide the beam is, 0 to 1; the pool it lights is wider the higher the light",
+  })
+  cone: number;
 }
 
 @InputType({ description: "Where to put the light over your board" })
@@ -195,6 +207,12 @@ export class HalloweenCandyLightingInput {
 
   @Field(() => Float)
   colourStrength: number;
+
+  @Field(() => Float)
+  spotlight: number;
+
+  @Field(() => Float)
+  cone: number;
 }
 
 @ObjectType({

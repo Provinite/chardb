@@ -1,5 +1,5 @@
 import React, { type CSSProperties } from "react";
-import { lightWash, type Lighting } from "./candyLighting";
+import { lightWash, spotlightLayer, type Lighting } from "./candyLighting";
 
 const layer: CSSProperties = {
   position: "absolute",
@@ -8,15 +8,33 @@ const layer: CSSProperties = {
 };
 
 /**
- * What the board's light lays over everything under it: its colour. Drawn
- * last on a surface -- the board, or the background dialog's preview, so a
- * background is chosen as it will look -- and under the selection's handles.
+ * What the board's light lays over everything under it: its colour, then a
+ * spotlight's darkness outside its pool. Drawn last on a surface -- the
+ * board, or the background dialog's preview, so a background is chosen as it
+ * will look -- and under the selection's handles. The surface must be the
+ * board's shape, for the spotlight's pool to be round.
  */
 export const LightLayers: React.FC<{ lighting: Lighting | null }> = ({
   lighting,
 }) => {
   const wash = lightWash(lighting);
-  return wash ? (
-    <div data-testid="light-wash" aria-hidden style={{ ...layer, ...wash }} />
-  ) : null;
+  const spotlight = spotlightLayer(lighting);
+  return (
+    <>
+      {wash && (
+        <div
+          data-testid="light-wash"
+          aria-hidden
+          style={{ ...layer, ...wash }}
+        />
+      )}
+      {spotlight && (
+        <div
+          data-testid="light-spotlight"
+          aria-hidden
+          style={{ ...layer, ...spotlight }}
+        />
+      )}
+    </>
+  );
 };

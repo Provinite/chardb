@@ -16,6 +16,7 @@
  */
 import type { CSSProperties } from "react";
 import type { HalloweenCandyLighting } from "../../generated/graphql";
+import { BOARD_ASPECT } from "./candyBoard";
 
 export type Lighting = Omit<HalloweenCandyLighting, "__typename">;
 
@@ -30,6 +31,8 @@ export const DEFAULT_LIGHTING: Lighting = {
   intensity: 0.5,
   colour: null,
   colourStrength: 0,
+  spotlight: 0,
+  cone: 0.5,
 };
 
 /** How long a shadow is, in cqw, for a light one radius out at height 1. */
@@ -49,7 +52,7 @@ const between = (min: number, max: number, n: number) =>
   Math.min(max, Math.max(min, n));
 
 export function clampLighting(lighting: Lighting): Lighting {
-  const { x, y, height, intensity, colourStrength } = lighting;
+  const { x, y, height, intensity, colourStrength, spotlight, cone } = lighting;
   const reach = Math.hypot(x, y);
   const inside = reach > 1 ? 1 / reach : 1;
   return {
@@ -59,6 +62,68 @@ export function clampLighting(lighting: Lighting): Lighting {
     height: between(LIGHT_HEIGHT_MIN, LIGHT_HEIGHT_MAX, height),
     intensity: between(0, 1, intensity),
     colourStrength: between(0, 1, colourStrength),
+    spotlight: between(0, 1, spotlight),
+    cone: between(0, 1, cone),
+  };
+}
+
+/**
+ * The narrowest and widest beam's pool, in hundredths of the board's width,
+ * under a light at height 1.
+ */
+const CONE_RADIUS_MIN = 15;
+const CONE_RADIUS_MAX = 100;
+/** How dark the board gets outside the pool at full spotlight. */
+const SPOTLIGHT_DARKNESS_MAX = 0.85;
+
+export interface Spotlight {
+  /** The pool's centre, in percent of the board's width and height. */
+  x: number;
+  y: number;
+  /** Fully lit out to here, in hundredths of the board's width... */
+  lit: number;
+  /** ...then darkening to here, and dark past it. */
+  radius: number;
+  darkness: number;
+}
+
+/**
+ * The pool of light a spotlight throws, under the light: as wide as its
+ * cone, wider the higher it hangs, with its edge softened over the outer
+ * third. Null for a board lit evenly.
+ */
+export function spotlightOf(
+  lighting: Lighting | null | undefined,
+): Spotlight | null {
+  if (!lighting || lighting.spotlight <= 0) return null;
+  const { x, y, height, spotlight, cone } = clampLighting(lighting);
+  const radius =
+    (CONE_RADIUS_MIN + (CONE_RADIUS_MAX - CONE_RADIUS_MIN) * cone) *
+    (0.5 + 0.5 * height);
+  return {
+    x: 50 + x * 50,
+    y: 50 + y * 50,
+    lit: (radius * 2) / 3,
+    radius,
+    darkness: SPOTLIGHT_DARKNESS_MAX * spotlight,
+  };
+}
+
+/**
+ * The spotlight as a layer over a board-shaped surface; null for none. The
+ * pool is an ellipse sized in percent of the surface's width and height,
+ * which on a surface of the board's shape is a circle at any size.
+ */
+export function spotlightLayer(
+  lighting: Lighting | null | undefined,
+): CSSProperties | null {
+  const pool = spotlightOf(lighting);
+  if (!pool) return null;
+  const across = round(pool.radius);
+  const down = round(pool.radius * BOARD_ASPECT);
+  const litShare = round((pool.lit / pool.radius) * 100);
+  return {
+    backgroundImage: `radial-gradient(${across}% ${down}% at ${round(pool.x)}% ${round(pool.y)}%, rgba(0, 0, 0, 0) ${litShare}%, rgba(0, 0, 0, ${round(pool.darkness)}) 100%)`,
   };
 }
 

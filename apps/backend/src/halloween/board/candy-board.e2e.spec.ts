@@ -20,7 +20,7 @@ const BOARD_FIELDS = `
   placements { knockEventId x y rotation scale }
   background
   backgroundEffects { dim tint tintStrength saturation }
-  lighting { x y height intensity colour colourStrength }
+  lighting { x y height intensity colour colourStrength spotlight cone }
 `;
 
 const SET_LIGHTING = `
@@ -569,7 +569,7 @@ describe("Halloween candy board (e2e)", () => {
 
   describe("lighting the board", () => {
     const REFUSED =
-      "The light must be over the board, at a height from 0.1 to 1, with an intensity from 0 to 1, coloured #rrggbb at a strength from 0 to 1";
+      "The light must be over the board, at a height from 0.1 to 1, with an intensity from 0 to 1, coloured #rrggbb at a strength from 0 to 1, and a spotlight and cone from 0 to 1";
     type Light = {
       x: number;
       y: number;
@@ -577,6 +577,8 @@ describe("Halloween candy board (e2e)", () => {
       intensity: number;
       colour: string | null;
       colourStrength: number;
+      spotlight: number;
+      cone: number;
     };
     /** A white light over the middle, with whatever differs. */
     const light = (changes: Partial<Light> = {}): Light => ({
@@ -586,6 +588,8 @@ describe("Halloween candy board (e2e)", () => {
       intensity: 0.5,
       colour: null,
       colourStrength: 0,
+      spotlight: 0,
+      cone: 0.5,
       ...changes,
     });
     const setLighting = (lighting: Light | null, token = playerToken) =>
@@ -609,6 +613,8 @@ describe("Halloween candy board (e2e)", () => {
         intensity: 0.8,
         colour: "#f97316",
         colourStrength: 0.35,
+        spotlight: 0.7,
+        cone: 0.25,
       });
       const set = await setLighting(lit);
       expect(set.body.errors).toBeUndefined();
@@ -638,6 +644,10 @@ describe("Halloween candy board (e2e)", () => {
         light({ colour: "#f97316", colourStrength: 2 }),
       ],
       ["coloured below none", light({ colour: "#f97316", colourStrength: -1 })],
+      ["spotlit past full", light({ spotlight: 1.2 })],
+      ["spotlit below none", light({ spotlight: -0.2 })],
+      ["with too wide a cone", light({ cone: 1.5 })],
+      ["with a cone below none", light({ cone: -0.5 })],
     ])("refuses a light %s", async (_what, lighting) => {
       const res = await setLighting(lighting);
       expect(res.body.errors?.[0].message).toBe(REFUSED);

@@ -4,7 +4,9 @@ import { Popover } from "@mantine/core";
 import {
   ArrowUpFromLine,
   Blend,
+  Cone,
   Contrast,
+  Flashlight,
   Palette,
   RotateCcw,
   Sun,
@@ -205,6 +207,8 @@ export const LightingControl: React.FC<LightingControlProps> = ({
       height: round(next.height),
       intensity: round(next.intensity),
       colourStrength: round(next.colourStrength),
+      spotlight: round(next.spotlight),
+      cone: round(next.cone),
     });
   };
   // The latest move, so the memoised swatches get one unchanging callback
@@ -362,6 +366,35 @@ export const LightingControl: React.FC<LightingControlProps> = ({
                 onChange={(e) =>
                   move({ colourStrength: Number(e.target.value) })
                 }
+              />
+            </IntensitySlider>
+          </Tooltip>
+          <Tooltip label="Spotlight">
+            <IntensitySlider>
+              <Flashlight size={ICON_SIZE} aria-hidden />
+              <input
+                type="range"
+                aria-label="Spotlight"
+                min={0}
+                max={1}
+                step={0.01}
+                value={light.spotlight}
+                onChange={(e) => move({ spotlight: Number(e.target.value) })}
+              />
+            </IntensitySlider>
+          </Tooltip>
+          <Tooltip label="Cone">
+            <IntensitySlider>
+              <Cone size={ICON_SIZE} aria-hidden />
+              <input
+                type="range"
+                aria-label="Spotlight cone"
+                min={0}
+                max={1}
+                step={0.01}
+                disabled={light.spotlight === 0}
+                value={light.cone}
+                onChange={(e) => move({ cone: Number(e.target.value) })}
               />
             </IntensitySlider>
           </Tooltip>

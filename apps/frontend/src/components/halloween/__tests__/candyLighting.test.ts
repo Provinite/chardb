@@ -9,6 +9,8 @@ import {
   shadowOf,
   lightWash,
   shadowFilter,
+  spotlightLayer,
+  spotlightOf,
   type Lighting,
 } from "../candyLighting";
 
@@ -22,6 +24,54 @@ const at = (x: number, y: number, height: number): Lighting => ({
   intensity: 0.5,
   colour: null,
   colourStrength: 0,
+  spotlight: 0,
+  cone: 0.5,
+});
+
+describe("spotlightOf", () => {
+  it("lights the board evenly with no spotlight", () => {
+    expect(spotlightOf(null)).toBe(null);
+    expect(spotlightOf(DEFAULT_LIGHTING)).toBe(null);
+  });
+
+  it("centres the pool of light under the light", () => {
+    const pool = spotlightOf({ ...at(-0.5, 0.5, 0.5), spotlight: 0.8 });
+    expect(pool?.x).toBe(25);
+    expect(pool?.y).toBe(75);
+  });
+
+  it("darkens outside the pool as far as the spotlight is strong", () => {
+    const weak = spotlightOf({ ...at(0, 0, 0.5), spotlight: 0.2 });
+    const strong = spotlightOf({ ...at(0, 0, 0.5), spotlight: 1 });
+    expect(strong!.darkness).toBeGreaterThan(weak!.darkness);
+    expect(strong!.darkness).toBeLessThan(1);
+  });
+
+  it("widens the pool with a wider cone, and with a higher light", () => {
+    const pool = (cone: number, height: number) =>
+      spotlightOf({ ...at(0, 0, height), spotlight: 1, cone })!.radius;
+    expect(pool(0.8, 0.5)).toBeGreaterThan(pool(0.2, 0.5));
+    expect(pool(0.5, 0.9)).toBeGreaterThan(pool(0.5, 0.2));
+  });
+
+  it("softens the pool's edge over its outer third", () => {
+    const pool = spotlightOf({ ...at(0, 0, 0.5), spotlight: 1 })!;
+    expect(pool.lit).toBeCloseTo((pool.radius * 2) / 3, 6);
+  });
+
+  it("draws as a circle on the board, sized in its width and height", () => {
+    const light = { ...at(0, 0, 0.5), spotlight: 0.5 };
+    const { radius } = spotlightOf(light)!;
+    const gradient = String(spotlightLayer(light)?.backgroundImage);
+    const [, across, down] =
+      /^radial-gradient\(([\d.]+)% ([\d.]+)% at 50% 50%, rgba\(0, 0, 0, 0\) 66\.667%, rgba\(0, 0, 0, [\d.]+\) 100%\)$/.exec(
+        gradient,
+      ) ?? [];
+    close(Number(across), radius);
+    // The board is 4:3, so a circle is a third more of its height.
+    close(Number(down), (radius * 4) / 3);
+    expect(spotlightLayer(DEFAULT_LIGHTING)).toBe(null);
+  });
 });
 
 describe("lightWash", () => {
@@ -126,19 +176,27 @@ describe("clampLighting", () => {
       ...at(3, 4, 2),
       intensity: 3,
       colourStrength: 3,
+      spotlight: 3,
+      cone: 3,
     });
     close(Math.hypot(l.x, l.y), 1);
     close(l.x / l.y, 3 / 4);
     expect(l.height).toBe(1);
     expect(l.intensity).toBe(1);
     expect(l.colourStrength).toBe(1);
+    expect(l.spotlight).toBe(1);
+    expect(l.cone).toBe(1);
     const low = clampLighting({
       ...at(0, 0, 0),
       intensity: -1,
       colourStrength: -1,
+      spotlight: -1,
+      cone: -1,
     });
     expect(low.height).toBe(0.1);
     expect(low.intensity).toBe(0);
     expect(low.colourStrength).toBe(0);
+    expect(low.spotlight).toBe(0);
+    expect(low.cone).toBe(0);
   });
 });

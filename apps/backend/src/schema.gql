@@ -1639,6 +1639,11 @@ type HalloweenCandyLighting {
   """How strongly it colours, 0 to 1"""
   colourStrength: Float!
 
+  """
+  How wide the beam is, 0 to 1; the pool it lights is wider the higher the light
+  """
+  cone: Float!
+
   """How high it hangs, 0.1 to 1"""
   height: Float!
 
@@ -1646,6 +1651,11 @@ type HalloweenCandyLighting {
   How dark and sharp the shadows are, 0 to 1; it does not change their length
   """
   intensity: Float!
+
+  """
+  How dark the board is outside the pool of light under it, 0 (lit evenly) to 1
+  """
+  spotlight: Float!
 
   """Across the board: a point in a unit circle centred on it, -1 to 1"""
   x: Float!
@@ -1660,8 +1670,10 @@ type HalloweenCandyLighting {
 input HalloweenCandyLightingInput {
   colour: String
   colourStrength: Float!
+  cone: Float!
   height: Float!
   intensity: Float!
+  spotlight: Float!
   x: Float!
   y: Float!
 }
