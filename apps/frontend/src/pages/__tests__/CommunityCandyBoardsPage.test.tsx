@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { MemoryRouter, Route, Routes } from "react-router-dom";
+import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
 import { GraphQLError } from "graphql";
 import { ThemeProvider } from "styled-components";
@@ -116,7 +116,12 @@ const renderPage = (mocks: MockedResponse[]) =>
               />
               <Route
                 path="/halloween/board/:boardId"
-                element={<p>Opened a board</p>}
+                element={
+                  <>
+                    <p>Opened a board</p>
+                    <Link to="/halloween/board">Your boards</Link>
+                  </>
+                }
               />
             </Routes>
           </MemoryRouter>
@@ -180,12 +185,37 @@ describe("CommunityCandyBoardsPage", () => {
         },
         result: made,
       },
+      boardsQuery([board(SECOND), board(FIRST)]),
     ]);
     await userEvent.click(
       await screen.findByRole("button", { name: "New board" }),
     );
     expect(await screen.findByText("Opened a board")).toBeInTheDocument();
     expect(made).toHaveBeenCalled();
+  });
+
+  it("lists a board just made at once, back on the list", async () => {
+    renderPage([
+      boardsQuery([board(FIRST)]),
+      {
+        request: {
+          query: CreateHalloweenCandyBoardDocument,
+          variables: { communityId: COMMUNITY_ID },
+        },
+        result: { data: { createHalloweenCandyBoard: board(SECOND) } },
+      },
+      // Fetched again once it is made...
+      boardsQuery([board(SECOND), board(FIRST)]),
+      // ...and on coming back, too slowly to be what shows it then.
+      { ...boardsQuery([board(SECOND), board(FIRST)]), delay: 60_000 },
+    ]);
+    await userEvent.click(
+      await screen.findByRole("button", { name: "New board" }),
+    );
+    await userEvent.click(
+      await screen.findByRole("link", { name: "Your boards" }),
+    );
+    expect(screen.getAllByRole("article")).toHaveLength(2);
   });
 
   it("says why a board could not be made", async () => {

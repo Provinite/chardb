@@ -14,6 +14,7 @@ import { Tooltip } from "../components/Tooltip";
 import { CandyBoard } from "../components/halloween/CandyBoard";
 import { formatBoardName } from "../components/halloween/boardName";
 import {
+  MyHalloweenCandyBoardsDocument,
   useCreateHalloweenCandyBoardMutation,
   useDeleteHalloweenCandyBoardMutation,
   useMyHalloweenCandyBoardsQuery,
@@ -241,7 +242,14 @@ export const CommunityCandyBoardsPage: React.FC = () => {
   const makeBoard = async () => {
     if (!communityId) return;
     try {
-      const result = await create({ variables: { communityId } });
+      const result = await create({
+        variables: { communityId },
+        // The list fetched again, so coming back to it shows the new board.
+        refetchQueries: [
+          { query: MyHalloweenCandyBoardsDocument, variables: { communityId } },
+        ],
+        awaitRefetchQueries: true,
+      });
       const id = result.data?.createHalloweenCandyBoard.id;
       if (id) navigate(`/halloween/board/${id}`);
     } catch (e) {
