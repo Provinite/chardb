@@ -66,15 +66,7 @@ const Columns = styled.div`
   }
 `;
 
-const ColumnTitle = styled.h3`
-  margin: 0 0 ${({ theme }) => theme.spacing.sm};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
+/** Justified: each row's words stretch to fill it, as justified text does. */
 const Words = styled.div`
   display: flex;
   flex-wrap: wrap;
@@ -86,6 +78,7 @@ const Words = styled.div`
 `;
 
 const Word = styled.button<{ $chosen: boolean; $none?: boolean }>`
+  flex: 1 1 auto;
   padding: 6px 12px;
   border: 1px solid
     ${({ theme, $chosen }) =>
@@ -257,7 +250,6 @@ const WordColumn: React.FC<{
 
   return (
     <section>
-      <ColumnTitle>{title}</ColumnTitle>
       <Words ref={list} role="radiogroup" aria-label={title}>
         {noneLabel && (
           <Word
