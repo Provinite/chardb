@@ -7,6 +7,7 @@ import {
   CurrencyTransaction,
   CurrencyTransactionConnection,
 } from "../entities/currency-transaction.entity";
+import type { CurrencyTransactionFilters } from "../dto/currency.dto";
 
 export function mapPrismaCurrencyToGraphQL(row: PrismaCurrency): Currency {
   return {
@@ -53,16 +54,18 @@ export function mapPrismaCurrencyTransactionToGraphQL(
   };
 }
 
-export function mapPrismaCurrencyTransactionConnectionToGraphQL(result: {
-  transactions: PrismaCurrencyTransaction[];
-  total: number;
-  hasMore: boolean;
-}): CurrencyTransactionConnection {
+export function mapPrismaCurrencyTransactionConnectionToGraphQL(
+  result: {
+    transactions: PrismaCurrencyTransaction[];
+    hasMore: boolean;
+  },
+  filters: CurrencyTransactionFilters,
+): CurrencyTransactionConnection {
   return {
     transactions: result.transactions.map(
       mapPrismaCurrencyTransactionToGraphQL,
     ),
-    total: result.total,
     hasMore: result.hasMore,
+    filters,
   };
 }

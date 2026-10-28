@@ -935,6 +935,7 @@ export type CurrencyTransaction = {
 export type CurrencyTransactionConnection = {
   __typename?: 'CurrencyTransactionConnection';
   hasMore: Scalars['Boolean']['output'];
+  /** How many ledger rows match the filter, across every page. */
   total: Scalars['Int']['output'];
   transactions: Array<CurrencyTransaction>;
 };
@@ -5657,7 +5658,7 @@ export type GetCurrencyTransactionsQueryVariables = Exact<{
 }>;
 
 
-export type GetCurrencyTransactionsQuery = { __typename?: 'Query', currencyTransactions: { __typename?: 'CurrencyTransactionConnection', total: number, hasMore: boolean, transactions: Array<{ __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, source: CurrencyTransactionSource, sourceId: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
+export type GetCurrencyTransactionsQuery = { __typename?: 'Query', currencyTransactions: { __typename?: 'CurrencyTransactionConnection', hasMore: boolean, transactions: Array<{ __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, source: CurrencyTransactionSource, sourceId: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
 
 export type GetCurrencyHoldersQueryVariables = Exact<{
   currencyId: Scalars['ID']['input'];
@@ -10692,7 +10693,6 @@ export const GetCurrencyTransactionsDocument = gql`
     transactions {
       ...CurrencyTransactionFields
     }
-    total
     hasMore
   }
 }

@@ -368,7 +368,6 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
     () => collapseTransferLegs(data?.currencyTransactions?.transactions ?? []),
     [data],
   );
-  const total = data?.currencyTransactions?.total ?? 0;
   const hasMore = data?.currencyTransactions?.hasMore ?? false;
 
   const toggleKind = (kind: CurrencyTransactionKind) => {
@@ -556,7 +555,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
                 // and the new one is about to replace it.
                 disabled={stale}
               >
-                {loading ? "Loading…" : `Load more (${total} total)`}
+                {loading ? "Loading…" : "Load more"}
               </Button>
             </Footer>
           )}

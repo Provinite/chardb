@@ -6,6 +6,7 @@ import { CurrenciesService } from "./currencies.service";
 import { CurrencyLedgerService } from "./currency-ledger.service";
 import {
   CurrenciesResolver,
+  CurrencyTransactionConnectionResolver,
   CurrencyTransactionFieldsResolver,
   CurrencyBalanceFieldsResolver,
 } from "./currencies.resolver";
@@ -19,6 +20,7 @@ import {
     CurrenciesService,
     CurrencyLedgerService,
     CurrenciesResolver,
+    CurrencyTransactionConnectionResolver,
     CurrencyTransactionFieldsResolver,
     CurrencyBalanceFieldsResolver,
   ],

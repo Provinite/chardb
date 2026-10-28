@@ -711,7 +711,32 @@ export class CurrencyLedgerService {
     const limit = filters.limit ?? 25;
     const offset = filters.offset ?? 0;
 
-    const where: Prisma.CurrencyTransactionWhereInput = {
+    // One row past the page answers "is there more" without counting every
+    // match. The total is `countTransactions`, for callers that ask (#444).
+    const rows = await this.db.currencyTransaction.findMany({
+      where: this.transactionsWhere(filters),
+      orderBy: { createdAt: "desc" },
+      take: limit + 1,
+      skip: offset,
+    });
+
+    return {
+      transactions: rows.slice(0, limit),
+      hasMore: rows.length > limit,
+    };
+  }
+
+  /** How many rows match, by the same filter `findTransactions` pages. */
+  async countTransactions(filters: CurrencyTransactionFilters) {
+    return this.db.currencyTransaction.count({
+      where: this.transactionsWhere(filters),
+    });
+  }
+
+  private transactionsWhere(
+    filters: CurrencyTransactionFilters,
+  ): Prisma.CurrencyTransactionWhereInput {
+    return {
       currency: { communityId: filters.communityId },
       ...(filters.currencyId ? { currencyId: filters.currencyId } : {}),
       ...(filters.kinds?.length ? { kind: { in: filters.kinds } } : {}),
@@ -740,22 +765,6 @@ export class CurrencyLedgerService {
             ],
           }
         : {}),
-    };
-
-    const [transactions, total] = await Promise.all([
-      this.db.currencyTransaction.findMany({
-        where,
-        orderBy: { createdAt: "desc" },
-        take: limit,
-        skip: offset,
-      }),
-      this.db.currencyTransaction.count({ where }),
-    ]);
-
-    return {
-      transactions,
-      total,
-      hasMore: offset + transactions.length < total,
     };
   }
 

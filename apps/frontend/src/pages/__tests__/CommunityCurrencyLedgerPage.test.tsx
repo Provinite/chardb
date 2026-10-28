@@ -107,7 +107,6 @@ const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
                   ...mint,
                   id: `ct-${i}`,
                 })),
-                total: count,
                 hasMore: shown < count,
               },
             },
@@ -133,6 +132,18 @@ const searchBox = () =>
   screen.getByRole("textbox", { name: "Search the currency ledger" });
 
 const searches = (sent: Filters[]) => sent.map((f) => f.search);
+
+describe("CommunityCurrencyLedgerPage footer", () => {
+  it("offers Load more without a total", async () => {
+    // The total cost a count over the whole ledger on every request (#444).
+    renderLedger([]);
+    await screen.findByTestId("currency-ledger-list");
+
+    expect(
+      screen.getByRole("button", { name: "Load more" }),
+    ).toBeInTheDocument();
+  });
+});
 
 describe("CommunityCurrencyLedgerPage search", () => {
   it("queries once after Load more, without refetching the old search", async () => {
