@@ -2,9 +2,8 @@
  * The board's nameplate: a banner sticker with the board's name on it.
  */
 import { describe, it, expect } from "vitest";
-import { CANDY_SIZE } from "../candyBoard";
+import { CANDY_SIZE, NAMEPLATE } from "../candyBoard";
 import {
-  NAMEPLATE_ID,
   NAMEPLATE_SIZE,
   nameplateSvg,
   nameplateUrl,
@@ -46,9 +45,8 @@ describe("nameplateUrl", () => {
 
 describe("stickerSize", () => {
   it("makes the nameplate wider than a candy", () => {
-    expect(NAMEPLATE_ID).toBe(0);
-    expect(stickerSize(NAMEPLATE_ID)).toBe(NAMEPLATE_SIZE);
-    expect(stickerSize(7)).toBe(CANDY_SIZE);
+    expect(stickerSize(NAMEPLATE)).toBe(NAMEPLATE_SIZE);
+    expect(stickerSize({ candy: 7, nameplate: null })).toBe(CANDY_SIZE);
     expect(NAMEPLATE_SIZE).toBeGreaterThan(CANDY_SIZE);
   });
 });

@@ -10,10 +10,53 @@
  */
 import type {
   HalloweenCandyBoardAction,
-  HalloweenCandyPlacement,
+  HalloweenStickerInput,
 } from "../../generated/graphql";
 
-export type Placement = Omit<HalloweenCandyPlacement, "__typename">;
+/**
+ * What a placement is: a candy, by the knock that gave it, or the board's
+ * nameplate. The API sends both fields, one of them null; an action names
+ * exactly one.
+ */
+export interface StickerFields {
+  candy?: number | null;
+  nameplate?: boolean | null;
+}
+
+/** A sticker as an action names it: exactly one field. */
+export type Sticker = HalloweenStickerInput;
+
+export const NAMEPLATE: Sticker = { nameplate: true };
+
+export const candySticker = (knockEventId: number): Sticker => ({
+  candy: knockEventId,
+});
+
+/** What the page knows a sticker by: "candy:12", or "nameplate". */
+export type StickerKey = string;
+
+export const stickerKey = (sticker: StickerFields): StickerKey =>
+  sticker.candy != null ? `candy:${sticker.candy}` : "nameplate";
+
+export const NAMEPLATE_KEY = stickerKey(NAMEPLATE);
+
+/** The sticker a key stands for, as an action names it. */
+export const stickerFromKey = (key: StickerKey): Sticker =>
+  key === NAMEPLATE_KEY
+    ? NAMEPLATE
+    : candySticker(Number(key.slice("candy:".length)));
+
+/** A sticker as the API sent it, as an action names it. */
+export const stickerRef = (sticker: StickerFields): Sticker =>
+  sticker.candy != null ? candySticker(sticker.candy) : NAMEPLATE;
+
+export interface Placement {
+  sticker: StickerFields;
+  x: number;
+  y: number;
+  rotation: number;
+  scale: number;
+}
 
 /** One change to a board: exactly one of add, edit, raise or remove. */
 export type BoardAction = HalloweenCandyBoardAction;
@@ -41,7 +84,7 @@ const wrapRotation = (degrees: number) => {
   return wrapped === 0 ? 180 : wrapped - 180;
 };
 
-export function clampPlacement(p: Placement): Placement {
+export function clampPlacement<P extends Omit<Placement, "sticker">>(p: P): P {
   return {
     ...p,
     x: clamp(p.x, 0, 1),
@@ -74,7 +117,7 @@ export function trayGroups(
   candies: { knockEventId: number; slug: string }[],
   placements: Placement[],
 ): TrayGroup[] {
-  const placed = new Set(placements.map((p) => p.knockEventId));
+  const placed = new Set(placements.map((p) => p.sticker.candy));
   const groups = new Map<string, number[]>();
   for (const candy of candies) {
     if (placed.has(candy.knockEventId)) continue;
@@ -88,18 +131,24 @@ export function trayGroups(
     .map(([slug, knockEventIds]) => ({ slug, knockEventIds }));
 }
 
-/** The candy an action is about. */
-export function candyOf(action: BoardAction): number {
-  if (action.add) return action.add.knockEventId;
-  if (action.edit) return action.edit.knockEventId;
-  if (action.raise) return action.raise.knockEventId;
-  if (action.lower) return action.lower.knockEventId;
-  if (action.forward) return action.forward.knockEventId;
-  if (action.backward) return action.backward.knockEventId;
-  return action.remove.knockEventId;
+/** The sticker an action is about. */
+export function stickerOf(action: BoardAction): Sticker {
+  if (action.add) return action.add.sticker;
+  if (action.edit) return action.edit.sticker;
+  return (
+    action.raise ??
+    action.lower ??
+    action.forward ??
+    action.backward ??
+    action.remove
+  );
 }
 
-type Changes = Partial<Omit<Placement, "knockEventId">>;
+/** What the page knows the sticker an action is about by. */
+export const keyOf = (action: BoardAction): StickerKey =>
+  stickerKey(stickerOf(action));
+
+type Changes = Partial<Omit<Placement, "sticker">>;
 
 /** An edit's fields that are set; an unset field means "leave it". */
 function changesOf(edit: NonNullable<BoardAction["edit"]>): Changes {
@@ -120,15 +169,15 @@ export function applyAction(
   placements: Placement[],
   action: BoardAction,
 ): Placement[] {
-  const id = candyOf(action);
-  const index = placements.findIndex((p) => p.knockEventId === id);
+  const key = keyOf(action);
+  const index = placements.findIndex((p) => stickerKey(p.sticker) === key);
   if (action.add) {
     if (index !== -1) return placements;
-    const { knockEventId, x, y, rotation, scale } = action.add;
+    const { sticker, x, y, rotation, scale } = action.add;
     return [
       ...placements,
       clampPlacement({
-        knockEventId,
+        sticker,
         x,
         y,
         rotation: rotation ?? 0,
@@ -172,10 +221,10 @@ export function clampAction(
   action: BoardAction,
 ): BoardAction {
   if (action.add) {
-    const { knockEventId, x, y, rotation, scale } = action.add;
+    const { sticker, x, y, rotation, scale } = action.add;
     return {
       add: clampPlacement({
-        knockEventId,
+        sticker,
         x,
         y,
         rotation: rotation ?? 0,
@@ -184,14 +233,13 @@ export function clampAction(
     };
   }
   if (!action.edit) return action;
-  const current = placements.find(
-    (p) => p.knockEventId === action.edit.knockEventId,
-  );
+  const key = stickerKey(action.edit.sticker);
+  const current = placements.find((p) => stickerKey(p.sticker) === key);
   if (!current) return action;
   const changes = changesOf(action.edit);
   const clamped = clampPlacement({ ...current, ...changes });
   const edit: NonNullable<BoardAction["edit"]> = {
-    knockEventId: current.knockEventId,
+    sticker: action.edit.sticker,
   };
   for (const key of Object.keys(changes) as (keyof Changes)[]) {
     edit[key] = clamped[key];
@@ -219,8 +267,8 @@ export function enqueue(
   queue: BoardAction[],
   action: BoardAction,
 ): BoardAction[] {
-  const id = candyOf(action);
-  const lastIndex = queue.map(candyOf).lastIndexOf(id);
+  const key = keyOf(action);
+  const lastIndex = queue.map(keyOf).lastIndexOf(key);
   const last = lastIndex === -1 ? null : queue[lastIndex];
 
   if (action.edit) {
@@ -241,12 +289,14 @@ export function enqueue(
   }
 
   if (action.remove) {
-    const addIndex = queue.findIndex((a) => a.add?.knockEventId === id);
+    const addIndex = queue.findIndex(
+      (a) => a.add && stickerKey(a.add.sticker) === key,
+    );
     if (addIndex !== -1) {
       // Never saved: drop the add and every later change to it.
-      return queue.filter((a, i) => i < addIndex || candyOf(a) !== id);
+      return queue.filter((a, i) => i < addIndex || keyOf(a) !== key);
     }
-    return [...queue.filter((a) => candyOf(a) !== id), action];
+    return [...queue.filter((a) => keyOf(a) !== key), action];
   }
 
   return [...queue, action];

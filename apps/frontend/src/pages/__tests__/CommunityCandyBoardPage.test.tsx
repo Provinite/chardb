@@ -92,9 +92,16 @@ const candy = (knockEventId: number, slug: string) => ({
   receivedAt: "2026-10-20T00:00:00.000Z",
 });
 
-const placement = (knockEventId: number) => ({
+/** A candy by its knock's id, or the board's nameplate. */
+type Ref = number | "nameplate";
+
+const placement = (ref: Ref) => ({
   __typename: "HalloweenCandyPlacement" as const,
-  knockEventId,
+  sticker: {
+    __typename: "HalloweenSticker" as const,
+    candy: ref === "nameplate" ? null : ref,
+    nameplate: ref === "nameplate" ? true : null,
+  },
   x: 0.5,
   y: 0.5,
   rotation: 0,
@@ -102,7 +109,7 @@ const placement = (knockEventId: number) => ({
 });
 
 const board = (
-  placed: number[],
+  placed: Ref[],
   {
     viewerIsOwner = true,
     owner = "owner" as string | null,
@@ -152,7 +159,7 @@ const boardQuery = (
 });
 
 const ADD_CORN: HalloweenCandyBoardAction = {
-  add: { knockEventId: 1, x: 0.5, y: 0.5, rotation: 0, scale: 1 },
+  add: { sticker: { candy: 1 }, x: 0.5, y: 0.5, rotation: 0, scale: 1 },
 };
 
 const applyMock = (
@@ -429,7 +436,7 @@ describe("CommunityCandyBoardPage", () => {
       renderBoard([
         boardQuery(board([2])),
         {
-          ...applyMock([{ edit: { knockEventId: 2, x: 0, y: 0.5 } }], {
+          ...applyMock([{ edit: { sticker: { candy: 2 }, x: 0, y: 0.5 } }], {
             board: board([2]),
           }),
           result: saved,
@@ -1605,9 +1612,15 @@ describe("CommunityCandyBoardPage", () => {
     });
 
     describe("its nameplate", () => {
-      const NAMEPLATE = 0;
+      const NAMEPLATE = "nameplate";
       const ADD_NAMEPLATE: HalloweenCandyBoardAction = {
-        add: { knockEventId: NAMEPLATE, x: 0.5, y: 0.5, rotation: 0, scale: 1 },
+        add: {
+          sticker: { nameplate: true },
+          x: 0.5,
+          y: 0.5,
+          rotation: 0,
+          scale: 1,
+        },
       };
 
       it("waits first in the tray of a named board, and sticks on like a candy", async () => {
@@ -1669,10 +1682,9 @@ describe("CommunityCandyBoardPage", () => {
       renderBoard([
         boardQuery(board([2, 1])),
         {
-          ...applyMock(
-            [{ remove: { knockEventId: 2 } }, { remove: { knockEventId: 1 } }],
-            { board: board([]) },
-          ),
+          ...applyMock([{ remove: { candy: 2 } }, { remove: { candy: 1 } }], {
+            board: board([]),
+          }),
           result: saved,
         },
       ]);

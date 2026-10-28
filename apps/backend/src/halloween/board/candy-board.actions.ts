@@ -1,8 +1,24 @@
 import {
   candyPlacementSchema,
+  sameSticker,
   type CandyPlacement,
+  type Sticker,
 } from "./candy-board.schema";
-import type { HalloweenCandyBoardAction } from "./candy-board.types";
+import type {
+  HalloweenCandyBoardAction,
+  HalloweenStickerInput,
+} from "./candy-board.types";
+
+/**
+ * A sticker as an action names it, or null for one that names nothing: the
+ * schema makes sure exactly one field is set, but not that `nameplate` is
+ * true.
+ */
+export function stickerOf(input: HalloweenStickerInput): Sticker | null {
+  if (input.candy != null) return { candy: input.candy };
+  if (input.nameplate === true) return { nameplate: true };
+  return null;
+}
 
 /**
  * Applies a batch of actions to a board's placements, in order, and returns
@@ -10,56 +26,55 @@ import type { HalloweenCandyBoardAction } from "./candy-board.types";
  * exactly one of its fields is set.
  *
  * An action that cannot apply is skipped and the rest still land: adding a
- * candy already on the board or not the player's, changing one that is not
- * on it, an edit that changes nothing, or one that would leave a candy off
- * the board or at an impossible size. The board the caller sends back is the
- * truth either way, so nothing needs to say which were skipped. Most often it
- * is a second tab that got there first, and failing the whole batch for that
- * would throw away everything else in it.
+ * sticker already on the board or not the player's, changing one that is
+ * not on it, an edit that changes nothing, or one that would leave a sticker
+ * off the board or at an impossible size. The board the caller sends back is
+ * the truth either way, so nothing needs to say which were skipped. Most
+ * often it is a second tab that got there first, and failing the whole batch
+ * for that would throw away everything else in it.
  *
- * Pure: `canAdd` says which candies are the player's, which takes the
- * database to know.
+ * Pure: `canAdd` says which stickers may go on, which takes the database to
+ * know.
  */
 export function applyCandyBoardActions(
   placements: CandyPlacement[],
   actions: HalloweenCandyBoardAction[],
-  canAdd: (knockEventId: number) => boolean,
+  canAdd: (sticker: Sticker) => boolean,
 ): CandyPlacement[] {
   const next = [...placements];
-  const indexOf = (knockEventId: number) =>
-    next.findIndex((p) => p.knockEventId === knockEventId);
+  const indexOf = (sticker: Sticker) =>
+    next.findIndex((p) => sameSticker(p.sticker, sticker));
   const valid = (p: CandyPlacement) =>
     candyPlacementSchema.safeParse(p).success;
 
-  /** Moves the candy at `from` to `to`, shifting the ones between. */
+  /** Moves the sticker at `from` to `to`, shifting the ones between. */
   const restack = (from: number, to: number) => {
-    const [candy] = next.splice(from, 1);
-    next.splice(to, 0, candy);
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
   };
 
   for (const action of actions) {
     const { add, edit, raise, lower, forward, backward, remove } = action;
     if (add) {
+      const sticker = stickerOf(add.sticker);
+      if (!sticker) continue;
       const placement = {
-        knockEventId: add.knockEventId,
+        sticker,
         x: add.x,
         y: add.y,
         rotation: add.rotation ?? 0,
         scale: add.scale ?? 1,
       };
-      if (
-        indexOf(add.knockEventId) === -1 &&
-        canAdd(add.knockEventId) &&
-        valid(placement)
-      ) {
+      if (indexOf(sticker) === -1 && canAdd(sticker) && valid(placement)) {
         next.push(placement);
       }
       continue;
     }
 
-    const id = (edit ?? raise ?? lower ?? forward ?? backward ?? remove)
-      ?.knockEventId;
-    const index = id === undefined ? -1 : indexOf(id);
+    const named =
+      edit?.sticker ?? raise ?? lower ?? forward ?? backward ?? remove;
+    const sticker = named ? stickerOf(named) : null;
+    const index = sticker ? indexOf(sticker) : -1;
     if (index === -1) continue;
 
     if (edit) {
@@ -82,7 +97,7 @@ export function applyCandyBoardActions(
     } else if (lower) {
       restack(index, 0);
     } else if (forward) {
-      // The top candy has nothing above to pass, nor the bottom below.
+      // The top sticker has nothing above to pass, nor the bottom below.
       if (index < next.length - 1) restack(index, index + 1);
     } else if (backward) {
       if (index > 0) restack(index, index - 1);
@@ -94,6 +109,8 @@ export function applyCandyBoardActions(
   return next;
 }
 
-/** The knocks a batch puts on the board, whose ownership needs checking. */
+/** The candies a batch puts on the board, whose ownership needs checking. */
 export const addedCandies = (actions: HalloweenCandyBoardAction[]): number[] =>
-  actions.flatMap((a) => (a.add ? [a.add.knockEventId] : []));
+  actions.flatMap((a) =>
+    a.add?.sticker.candy != null ? [a.add.sticker.candy] : [],
+  );

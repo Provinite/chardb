@@ -24,6 +24,7 @@ import { LightingControl } from "../components/halloween/LightingControl";
 import type { Lighting } from "../components/halloween/candyLighting";
 import type { BackgroundEffects } from "../components/halloween/backgroundEffects";
 import { NameDialog } from "../components/halloween/NameDialog";
+import { stickerRef } from "../components/halloween/candyBoard";
 import {
   formatBoardName,
   type BoardName,
@@ -437,8 +438,8 @@ const BoardView: React.FC<{
             confirmLabel="Clear"
             onCancel={() => setClearing(false)}
             onConfirm={() => {
-              for (const { knockEventId } of placements) {
-                act({ remove: { knockEventId } });
+              for (const { sticker } of placements) {
+                act({ remove: stickerRef(sticker) });
               }
               setClearing(false);
             }}

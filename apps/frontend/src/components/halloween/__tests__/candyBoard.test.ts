@@ -4,19 +4,30 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  NAMEPLATE,
+  NAMEPLATE_KEY,
   applyAction,
+  candySticker,
   clampAction,
   clampPlacement,
   nextBatch,
   enqueue,
   pointOnBoard,
+  stickerFromKey,
+  stickerKey,
+  stickerRef,
   trayGroups,
   type BoardAction,
   type Placement,
 } from "../candyBoard";
 
-const at = (knockEventId: number, overrides: Partial<Placement> = {}) => ({
-  knockEventId,
+/** A candy by its knock's id, or the nameplate. */
+type Ref = number | "nameplate";
+const sticker = (ref: Ref) =>
+  ref === "nameplate" ? NAMEPLATE : candySticker(ref);
+
+const at = (ref: Ref, overrides: Partial<Omit<Placement, "sticker">> = {}) => ({
+  sticker: sticker(ref),
   x: 0.5,
   y: 0.5,
   rotation: 0,
@@ -25,21 +36,37 @@ const at = (knockEventId: number, overrides: Partial<Placement> = {}) => ({
 });
 
 const add = (
-  knockEventId: number,
-  overrides: Partial<Placement> = {},
-): BoardAction => ({ add: at(knockEventId, overrides) });
+  ref: Ref,
+  overrides: Partial<Omit<Placement, "sticker">> = {},
+): BoardAction => ({ add: at(ref, overrides) });
 
 const edit = (
-  knockEventId: number,
-  changes: Partial<Omit<Placement, "knockEventId">>,
-): BoardAction => ({ edit: { knockEventId, ...changes } });
+  ref: Ref,
+  changes: Partial<Omit<Placement, "sticker">>,
+): BoardAction => ({ edit: { sticker: sticker(ref), ...changes } });
 
-const raise = (knockEventId: number): BoardAction => ({
-  raise: { knockEventId },
-});
+const raise = (ref: Ref): BoardAction => ({ raise: sticker(ref) });
 
-const remove = (knockEventId: number): BoardAction => ({
-  remove: { knockEventId },
+const remove = (ref: Ref): BoardAction => ({ remove: sticker(ref) });
+
+describe("stickers", () => {
+  it("knows a candy by its knock, and the nameplate as itself", () => {
+    expect(stickerKey(sticker(12))).toBe("candy:12");
+    expect(stickerKey(NAMEPLATE)).toBe(NAMEPLATE_KEY);
+    expect(stickerKey(sticker(12))).not.toBe(NAMEPLATE_KEY);
+  });
+
+  it("goes from its key back to the sticker an action names", () => {
+    expect(stickerFromKey(stickerKey(sticker(12)))).toEqual({ candy: 12 });
+    expect(stickerFromKey(NAMEPLATE_KEY)).toEqual({ nameplate: true });
+  });
+
+  it("names a sticker the API sent with its one field, as an action must", () => {
+    expect(stickerRef({ candy: 12, nameplate: null })).toEqual({ candy: 12 });
+    expect(stickerRef({ candy: null, nameplate: true })).toEqual({
+      nameplate: true,
+    });
+  });
 });
 
 describe("clampPlacement", () => {
@@ -111,7 +138,7 @@ describe("applyAction", () => {
 
   it("adds at no turn and normal size unless told otherwise", () => {
     expect(
-      applyAction([], { add: { knockEventId: 1, x: 0.1, y: 0.2 } }),
+      applyAction([], { add: { sticker: sticker(1), x: 0.1, y: 0.2 } }),
     ).toEqual([at(1, { x: 0.1, y: 0.2 })]);
   });
 
@@ -134,19 +161,21 @@ describe("applyAction", () => {
   });
 
   it("lowers a candy to the bottom of the pile", () => {
-    expect(
-      applyAction([at(1), at(2), at(3)], { lower: { knockEventId: 3 } }),
-    ).toEqual([at(3), at(1), at(2)]);
+    expect(applyAction([at(1), at(2), at(3)], { lower: sticker(3) })).toEqual([
+      at(3),
+      at(1),
+      at(2),
+    ]);
   });
 
   it("moves a candy forward or backward one place", () => {
     const pile = [at(1), at(2), at(3)];
-    expect(applyAction(pile, { forward: { knockEventId: 1 } })).toEqual([
+    expect(applyAction(pile, { forward: sticker(1) })).toEqual([
       at(2),
       at(1),
       at(3),
     ]);
-    expect(applyAction(pile, { backward: { knockEventId: 3 } })).toEqual([
+    expect(applyAction(pile, { backward: sticker(3) })).toEqual([
       at(1),
       at(3),
       at(2),
@@ -155,8 +184,8 @@ describe("applyAction", () => {
 
   it("leaves the top candy where it is going forward, and the bottom one going backward", () => {
     const pile = [at(1), at(2)];
-    expect(applyAction(pile, { forward: { knockEventId: 2 } })).toEqual(pile);
-    expect(applyAction(pile, { backward: { knockEventId: 1 } })).toEqual(pile);
+    expect(applyAction(pile, { forward: sticker(2) })).toEqual(pile);
+    expect(applyAction(pile, { backward: sticker(1) })).toEqual(pile);
   });
 
   it("puts a candy back in the tray", () => {
@@ -167,8 +196,9 @@ describe("applyAction", () => {
     for (const action of [
       edit(9, { x: 0 }),
       raise(9),
-      { lower: { knockEventId: 9 } },
+      { lower: sticker(9) },
       remove(9),
+      raise("nameplate"),
     ]) {
       expect(applyAction([at(1)], action)).toEqual([at(1)]);
     }
@@ -179,21 +209,23 @@ describe("clampAction", () => {
   it("keeps an edit's values on the board and possible, as the board shows them", () => {
     expect(
       clampAction([at(1, { x: 0.02 })], {
-        edit: { knockEventId: 1, x: -0.05, rotation: 200, scale: 9 },
+        edit: { sticker: sticker(1), x: -0.05, rotation: 200, scale: 9 },
       }),
-    ).toEqual({ edit: { knockEventId: 1, x: 0, rotation: -160, scale: 4 } });
+    ).toEqual({
+      edit: { sticker: sticker(1), x: 0, rotation: -160, scale: 4 },
+    });
   });
 
   it("leaves out what an edit does not change", () => {
-    expect(clampAction([at(1)], { edit: { knockEventId: 1, y: 2 } })).toEqual({
-      edit: { knockEventId: 1, y: 1 },
-    });
+    expect(
+      clampAction([at(1)], { edit: { sticker: sticker(1), y: 2 } }),
+    ).toEqual({ edit: { sticker: sticker(1), y: 1 } });
   });
 
   it("keeps an add on the board", () => {
     expect(
       clampAction([], {
-        add: { knockEventId: 1, x: 1.5, y: 0.5, rotation: 0, scale: 1 },
+        add: { sticker: sticker(1), x: 1.5, y: 0.5, rotation: 0, scale: 1 },
       }),
     ).toEqual(add(1, { x: 1 }));
   });

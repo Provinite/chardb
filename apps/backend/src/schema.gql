@@ -1521,16 +1521,15 @@ type HalloweenCandy {
 }
 
 """
-Stick a candy from the tray on the board, on top of the pile. Ranges as on HalloweenCandyPlacement.
+Stick a candy from the tray, or the nameplate, on the board, on top of the pile. Ranges as on HalloweenCandyPlacement.
 """
 input HalloweenCandyAddInput {
-  knockEventId: Int!
-
   """0 unless given"""
   rotation: Float
 
   """1 unless given"""
   scale: Float
+  sticker: HalloweenStickerInput!
   x: Float!
   y: Float!
 }
@@ -1602,21 +1601,23 @@ type HalloweenCandyBoard {
 input HalloweenCandyBoardAction @oneOf {
   add: HalloweenCandyAddInput
 
-  """Move a candy one place down the pile; the bottom one stays where it is"""
-  backward: HalloweenCandyRefInput
+  """
+  Move a sticker one place down the pile; the bottom one stays where it is
+  """
+  backward: HalloweenStickerInput
   edit: HalloweenCandyEditInput
 
-  """Move a candy one place up the pile; the top one stays where it is"""
-  forward: HalloweenCandyRefInput
+  """Move a sticker one place up the pile; the top one stays where it is"""
+  forward: HalloweenStickerInput
 
-  """Move a candy on the board to the bottom of the pile"""
-  lower: HalloweenCandyRefInput
+  """Move a sticker on the board to the bottom of the pile"""
+  lower: HalloweenStickerInput
 
-  """Move a candy on the board to the top of the pile"""
-  raise: HalloweenCandyRefInput
+  """Move a sticker on the board to the top of the pile"""
+  raise: HalloweenStickerInput
 
-  """Put a candy on the board back in the tray"""
-  remove: HalloweenCandyRefInput
+  """Take a sticker off the board, back to the tray"""
+  remove: HalloweenStickerInput
 }
 
 """
@@ -1636,12 +1637,12 @@ input HalloweenCandyBoardNameInput {
 }
 
 """
-Change where a candy on the board sits, its turn or its size. Only the fields given change, and at least one must be.
+Change where a sticker on the board sits, its turn or its size. Only the fields given change, and at least one must be.
 """
 input HalloweenCandyEditInput {
-  knockEventId: Int!
   rotation: Float
   scale: Float
+  sticker: HalloweenStickerInput!
   x: Float
   y: Float
 }
@@ -1697,29 +1698,20 @@ input HalloweenCandyLightingInput {
   y: Float!
 }
 
-"""Where a candy sits on a board"""
+"""Where a sticker sits on a board"""
 type HalloweenCandyPlacement {
-  """
-  The candy's knock; 0 for the board's nameplate, a banner with its name, which is placed as a candy is
-  """
-  knockEventId: Int!
-
   """Degrees clockwise, -180 to 180"""
   rotation: Float!
 
   """Size multiplier, 0.25 to 4"""
   scale: Float!
+  sticker: HalloweenSticker!
 
   """The candy's centre, as a fraction of the board's width, 0-1"""
   x: Float!
 
   """The candy's centre, as a fraction of the board's height, 0-1"""
   y: Float!
-}
-
-"""A candy, by the knock that gave it"""
-input HalloweenCandyRefInput {
-  knockEventId: Int!
 }
 
 """The Halloween event as staff see it"""
@@ -1805,6 +1797,25 @@ input HalloweenSettingsInput {
 
   """Chance of a knock winning, 0-1"""
   winRate: Float!
+}
+
+"""
+What a placement on a board is: a candy, or the board's nameplate -- a banner with its name. Exactly one field is set.
+"""
+type HalloweenSticker {
+  """A candy, by the knock that gave it"""
+  candy: Int
+
+  """The board's nameplate, of which it has one"""
+  nameplate: Boolean
+}
+
+"""
+A sticker on your board: exactly one of a candy, by the knock that gave it, or the nameplate (true)
+"""
+input HalloweenStickerInput @oneOf {
+  candy: Int
+  nameplate: Boolean
 }
 
 """One winning knock"""

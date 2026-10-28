@@ -1,20 +1,18 @@
 /**
  * A board's nameplate: a ribbon banner with the board's name on it, stuck on
- * the board as a candy is. It is placed under id 0, which no knock has (the
- * backend's NAMEPLATE_ID), and drawn as an SVG picture made here, so it goes
- * through everything a candy's picture does -- shadows, the light, focus,
- * the keyboard. Its whole box counts as it for a press: it is solid enough.
+ * the board as a candy is. It is drawn as an SVG picture made here, so it
+ * goes through everything a candy's picture does -- shadows, the light,
+ * focus, the keyboard. Its whole box counts as it for a press: it is solid
+ * enough.
  */
-import { CANDY_SIZE } from "./candyBoard";
-
-export const NAMEPLATE_ID = 0;
+import { CANDY_SIZE, type StickerFields } from "./candyBoard";
 
 /** The nameplate at scale 1 is this fraction of the board's width across. */
 export const NAMEPLATE_SIZE = 0.4;
 
 /** How wide a sticker is at scale 1, as a fraction of the board's width. */
-export const stickerSize = (knockEventId: number) =>
-  knockEventId === NAMEPLATE_ID ? NAMEPLATE_SIZE : CANDY_SIZE;
+export const stickerSize = (sticker: StickerFields) =>
+  sticker.nameplate ? NAMEPLATE_SIZE : CANDY_SIZE;
 
 // The banner's measures, in the picture's own units.
 const FONT_SIZE = 52;

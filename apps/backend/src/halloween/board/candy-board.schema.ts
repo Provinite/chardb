@@ -8,12 +8,29 @@ export const CANDY_SCALE_MIN = 0.25;
 export const CANDY_SCALE_MAX = 4;
 
 /**
- * One candy on a board. `x` and `y` are the candy's centre as a fraction of
- * the board's width and height, so a board looks the same at any size.
+ * What a placement on a board is: a candy, by the knock that gave it, or the
+ * board's nameplate -- a banner with its name, of which a board has one.
+ */
+export const stickerSchema = z.union([
+  z.object({ candy: z.number().int().positive() }).strict(),
+  z.object({ nameplate: z.literal(true) }).strict(),
+]);
+
+export type Sticker = z.infer<typeof stickerSchema>;
+
+export const isNameplate = (sticker: Sticker): sticker is { nameplate: true } =>
+  "nameplate" in sticker;
+
+export const sameSticker = (a: Sticker, b: Sticker) =>
+  isNameplate(a) ? isNameplate(b) : !isNameplate(b) && a.candy === b.candy;
+
+/**
+ * One sticker on a board. `x` and `y` are its centre as a fraction of the
+ * board's width and height, so a board looks the same at any size.
  * `rotation` is in degrees, clockwise.
  */
 export const candyPlacementSchema = z.object({
-  knockEventId: z.number().int(),
+  sticker: stickerSchema,
   x: z.number().min(0).max(1),
   y: z.number().min(0).max(1),
   rotation: z.number().min(-180).max(180),

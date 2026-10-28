@@ -22,13 +22,13 @@ import {
   candyBackgroundEffectsSchema,
   candyLightingSchema,
   candyPlacementsSchema,
+  isNameplate,
   type CandyBackgroundEffects,
   type CandyLighting,
   type CandyPlacement,
 } from "./candy-board.schema";
 import { StoredCandyBoardInvalidError } from "./candy-board.errors";
 import {
-  NAMEPLATE_ID,
   boardNameSchema,
   storedBoardNameSchema,
   type BoardName,
@@ -210,10 +210,10 @@ export class CandyBoardService {
           placements: applyCandyBoardActions(
             storedPlacements(locked),
             actions,
-            (knockEventId) =>
-              knockEventId === NAMEPLATE_ID
+            (sticker) =>
+              isNameplate(sticker)
                 ? locked.name !== null
-                : owned.has(knockEventId),
+                : owned.has(sticker.candy),
           ),
         },
       });
@@ -395,9 +395,9 @@ export class CandyBoardService {
       // A candy whose knock is gone is dropped rather than drawn as nothing;
       // the nameplate waits, where it was, while the board has no name.
       placements: storedPlacements(board).filter((p) =>
-        p.knockEventId === NAMEPLATE_ID
+        isNameplate(p.sticker)
           ? board.name !== null
-          : held.has(p.knockEventId),
+          : held.has(p.sticker.candy),
       ),
     };
   }

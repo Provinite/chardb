@@ -17,7 +17,7 @@ const BOARD_FIELDS = `
   viewerIsOwner
   owner { username }
   candies { knockEventId slug receivedAt }
-  placements { knockEventId x y rotation scale }
+  placements { sticker { candy nameplate } x y rotation scale }
   background
   backgroundEffects { dim tint tintStrength saturation }
   lighting { x y height intensity colour colourStrength spotlight cone }
@@ -163,17 +163,25 @@ describe("Halloween candy board (e2e)", () => {
       },
     });
 
-  const at = (knockEventId: number, overrides = {}) => ({
-    knockEventId,
-    x: 0.5,
-    y: 0.25,
-    rotation: -15,
-    scale: 1.5,
+  /** A sticker: a candy, by its knock's id, or the board's nameplate. */
+  type Ref = number | "nameplate";
+  /** A sticker as an action names it: exactly one field. */
+  const sticker = (ref: Ref) =>
+    ref === "nameplate" ? { nameplate: true } : { candy: ref };
+  const PLACED = { x: 0.5, y: 0.25, rotation: -15, scale: 1.5 };
+
+  /** A placement as the board gives it back, its sticker's other field null. */
+  const at = (ref: Ref, overrides = {}) => ({
+    sticker:
+      ref === "nameplate"
+        ? { candy: null, nameplate: true }
+        : { candy: ref, nameplate: null },
+    ...PLACED,
     ...overrides,
   });
 
-  const add = (knockEventId: number, overrides = {}) => ({
-    add: at(knockEventId, overrides),
+  const add = (ref: Ref, overrides = {}) => ({
+    add: { sticker: sticker(ref), ...PLACED, ...overrides },
   });
 
   const myBoard = async (token = playerToken) => {
@@ -373,16 +381,16 @@ describe("Halloween candy board (e2e)", () => {
 
     it("adds at no turn and normal size unless told otherwise", async () => {
       const a = await knock();
-      await apply([{ add: { knockEventId: a.id, x: 0.1, y: 0.2 } }]);
+      await apply([{ add: { sticker: sticker(a.id), x: 0.1, y: 0.2 } }]);
       expect(await placementsNow()).toEqual([
-        { knockEventId: a.id, x: 0.1, y: 0.2, rotation: 0, scale: 1 },
+        at(a.id, { x: 0.1, y: 0.2, rotation: 0, scale: 1 }),
       ]);
     });
 
     it("edits only what it names", async () => {
       const a = await knock();
       await apply([add(a.id)]);
-      await apply([{ edit: { knockEventId: a.id, scale: 2 } }]);
+      await apply([{ edit: { sticker: sticker(a.id), scale: 2 } }]);
       expect(await placementsNow()).toEqual([at(a.id, { scale: 2 })]);
     });
 
@@ -390,7 +398,7 @@ describe("Halloween candy board (e2e)", () => {
       const a = await knock();
       const b = await knock();
       await apply([add(a.id), add(b.id)]);
-      await apply([{ raise: { knockEventId: a.id } }]);
+      await apply([{ raise: sticker(a.id) }]);
       expect(await placementsNow()).toEqual([at(b.id), at(a.id)]);
     });
 
@@ -398,16 +406,16 @@ describe("Halloween candy board (e2e)", () => {
       const a = await knock();
       const b = await knock();
       await apply([add(a.id), add(b.id)]);
-      await apply([{ lower: { knockEventId: b.id } }]);
+      await apply([{ lower: sticker(b.id) }]);
       expect(await placementsNow()).toEqual([at(b.id), at(a.id)]);
     });
 
     it("moves a candy forward and backward one place at a time", async () => {
       const [a, b, c] = await Promise.all([knock(), knock(), knock()]);
       await apply([add(a.id), add(b.id), add(c.id)]);
-      await apply([{ forward: { knockEventId: a.id } }]);
+      await apply([{ forward: sticker(a.id) }]);
       expect(await placementsNow()).toEqual([at(b.id), at(a.id), at(c.id)]);
-      await apply([{ backward: { knockEventId: c.id } }]);
+      await apply([{ backward: sticker(c.id) }]);
       expect(await placementsNow()).toEqual([at(b.id), at(c.id), at(a.id)]);
     });
 
@@ -415,7 +423,7 @@ describe("Halloween candy board (e2e)", () => {
       const a = await knock();
       const b = await knock();
       await apply([add(a.id), add(b.id)]);
-      await apply([{ remove: { knockEventId: a.id } }]);
+      await apply([{ remove: sticker(a.id) }]);
       expect(await placementsNow()).toEqual([at(b.id)]);
     });
 
@@ -435,7 +443,7 @@ describe("Halloween candy board (e2e)", () => {
       await myBoard();
       await Promise.all(candies.map((c) => apply([add(c.id)])));
       const placed = (await placementsNow()).map(
-        (p: { knockEventId: number }) => p.knockEventId,
+        (p: { sticker: { candy: number } }) => p.sticker.candy,
       );
       expect(placed.sort()).toEqual(candies.map((c) => c.id).sort());
     });
@@ -471,28 +479,44 @@ describe("Halloween candy board (e2e)", () => {
         expect(returned(res)).toEqual([at(a.id)]);
       });
 
-      it.each([
-        ["edit", { x: 0.5 }],
-        ["raise", {}],
-        ["lower", {}],
-        ["forward", {}],
-        ["backward", {}],
-        ["remove", {}],
-      ])("skips a %s of a candy not on the board", async (kind, fields) => {
-        const a = await knock();
-        const b = await knock();
+      it.each(["edit", "raise", "lower", "forward", "backward", "remove"])(
+        "skips a %s of a candy not on the board",
+        async (kind) => {
+          const a = await knock();
+          const b = await knock();
+          const res = await apply([
+            kind === "edit"
+              ? { edit: { sticker: sticker(a.id), x: 0.5 } }
+              : { [kind]: sticker(a.id) },
+            add(b.id),
+          ]);
+          expect(res.body.errors).toBeUndefined();
+          expect(returned(res)).toEqual([at(b.id)]);
+        },
+      );
+
+      it("skips adding a nameplate that is false", async () => {
         const res = await apply([
-          { [kind]: { knockEventId: a.id, ...fields } },
-          add(b.id),
+          { add: { sticker: { nameplate: false }, ...PLACED } },
         ]);
         expect(res.body.errors).toBeUndefined();
-        expect(returned(res)).toEqual([at(b.id)]);
+        expect(returned(res)).toEqual([]);
+      });
+
+      it("refuses a sticker that is a candy and the nameplate at once", async () => {
+        const a = await knock();
+        const res = await apply([
+          { add: { sticker: { candy: a.id, nameplate: true }, ...PLACED } },
+        ]);
+        expect(res.body.errors?.[0].message).toMatch(
+          /Exactly one key must be specified for OneOf type/,
+        );
       });
 
       it("skips an edit that changes nothing", async () => {
         const a = await knock();
         await apply([add(a.id)]);
-        const res = await apply([{ edit: { knockEventId: a.id } }]);
+        const res = await apply([{ edit: { sticker: sticker(a.id) } }]);
         expect(res.body.errors).toBeUndefined();
         expect(returned(res)).toEqual([at(a.id)]);
       });
@@ -518,10 +542,7 @@ describe("Halloween candy board (e2e)", () => {
         await apply([add(mine.id)]);
         // The other player's actions land on their own board, where this
         // candy is not.
-        const res = await apply(
-          [{ remove: { knockEventId: mine.id } }],
-          otherToken,
-        );
+        const res = await apply([{ remove: sticker(mine.id) }], otherToken);
         expect(returned(res)).toEqual([]);
         expect(await placementsNow()).toEqual([at(mine.id)]);
       });
@@ -531,7 +552,7 @@ describe("Halloween candy board (e2e)", () => {
       const a = await knock();
       await apply([add(a.id)]);
       const many = Array.from({ length: 101 }, () => ({
-        raise: { knockEventId: a.id },
+        raise: sticker(a.id),
       }));
       const res = await apply(many);
       expect(res.body.errors?.[0].message).toBe(
@@ -543,16 +564,14 @@ describe("Halloween candy board (e2e)", () => {
     // Both are the schema's to refuse, before any of the board is touched.
     it("refuses an add without a position", async () => {
       const a = await knock();
-      const res = await apply([{ add: { knockEventId: a.id } }]);
+      const res = await apply([{ add: { sticker: sticker(a.id) } }]);
       expect(res.body.errors?.[0].message).toMatch(/"x".*Float!/);
       expect(await placementsNow()).toEqual([]);
     });
 
     it("refuses an action that is two things at once", async () => {
       const a = await knock();
-      const res = await apply([
-        { add: at(a.id), remove: { knockEventId: a.id } },
-      ]);
+      const res = await apply([{ ...add(a.id), remove: sticker(a.id) }]);
       expect(res.body.errors?.[0].message).toMatch(
         /Exactly one key must be specified for OneOf type/,
       );
@@ -890,8 +909,7 @@ describe("Halloween candy board (e2e)", () => {
     });
 
     describe("its nameplate", () => {
-      /** The nameplate's place on the board: id 0, which no knock has. */
-      const NAMEPLATE = 0;
+      const NAMEPLATE = "nameplate";
       const spooky = { first: "Spooky", joiner: null, last: "Cauldron" };
 
       it("goes on a named board, alongside its candies", async () => {
@@ -907,11 +925,11 @@ describe("Halloween candy board (e2e)", () => {
       it("moves, turns and comes off as a candy does", async () => {
         await setName(spooky);
         await apply([add(NAMEPLATE)]);
-        await apply([{ edit: { knockEventId: NAMEPLATE, rotation: 10 } }]);
+        await apply([{ edit: { sticker: sticker(NAMEPLATE), rotation: 10 } }]);
         expect(await placementsNow()).toEqual([
           at(NAMEPLATE, { rotation: 10 }),
         ]);
-        await apply([{ remove: { knockEventId: NAMEPLATE } }]);
+        await apply([{ remove: sticker(NAMEPLATE) }]);
         expect(await placementsNow()).toEqual([]);
       });
 

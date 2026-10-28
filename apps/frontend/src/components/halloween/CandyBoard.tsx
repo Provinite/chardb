@@ -20,7 +20,7 @@ import type { BackgroundEffects } from "./backgroundEffects";
 import { BackgroundEffectLayers } from "./BackgroundEffectLayers";
 import { shadowFilter, type Lighting } from "./candyLighting";
 import { LightLayers } from "./LightLayers";
-import { NAMEPLATE_ID, nameplateUrl, stickerSize } from "./nameplate";
+import { nameplateUrl, stickerSize } from "./nameplate";
 import { formatBoardName, type BoardName } from "./boardName";
 import {
   candiesAt,
@@ -30,15 +30,22 @@ import {
 } from "./candyHitTest";
 import {
   BOARD_ASPECT,
+  NAMEPLATE,
+  NAMEPLATE_KEY,
   SCALE_MAX,
   SCALE_MIN,
   candyImageUrl,
   candyName,
+  candySticker,
   pointOnBoard,
+  stickerFromKey,
+  stickerKey,
   trayGroups,
   type BoardAction,
   type Placement,
   type Point,
+  type Sticker,
+  type StickerKey,
 } from "./candyBoard";
 
 /**
@@ -138,7 +145,7 @@ const Candy = styled.img<{ $editable: boolean }>`
 const placementStyle = (p: Placement): React.CSSProperties => ({
   left: `${p.x * 100}%`,
   top: `${p.y * 100}%`,
-  width: `${stickerSize(p.knockEventId) * p.scale * 100}%`,
+  width: `${stickerSize(p.sticker) * p.scale * 100}%`,
   transform: `translate(-50%, -50%) rotate(${p.rotation}deg)`,
 });
 
@@ -293,31 +300,31 @@ const LAYER_MOVES: {
   Icon: LucideIcon;
   /** Whether it moves the candy up the pile, so the top one cannot. */
   upward: boolean;
-  action: (knockEventId: number) => BoardAction;
+  action: (sticker: Sticker) => BoardAction;
 }[] = [
   {
     label: "Bring to front",
     Icon: ArrowUpToLine,
     upward: true,
-    action: (knockEventId) => ({ raise: { knockEventId } }),
+    action: (sticker) => ({ raise: sticker }),
   },
   {
     label: "Bring forward",
     Icon: ArrowUp,
     upward: true,
-    action: (knockEventId) => ({ forward: { knockEventId } }),
+    action: (sticker) => ({ forward: sticker }),
   },
   {
     label: "Send backward",
     Icon: ArrowDown,
     upward: false,
-    action: (knockEventId) => ({ backward: { knockEventId } }),
+    action: (sticker) => ({ backward: sticker }),
   },
   {
     label: "Send to back",
     Icon: ArrowDownToLine,
     upward: false,
-    action: (knockEventId) => ({ lower: { knockEventId } }),
+    action: (sticker) => ({ lower: sticker }),
   },
 ];
 
@@ -413,7 +420,7 @@ interface CandyBoardProps {
 }
 
 /** What a placed sticker is drawn with: a candy, or the nameplate. */
-interface Sticker {
+interface StickerPicture {
   /** What its picture's shape is remembered by. */
   key: string;
   src: string;
@@ -433,7 +440,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   name,
 }) => {
   const boardRef = useRef<HTMLDivElement>(null);
-  const [selected, setSelected] = useState<number | null>(null);
+  const [selected, setSelected] = useState<StickerKey | null>(null);
   // The board, its toolbar and its tray; a press anywhere else on the page
   // lets go of the selected candy.
   const editorRef = useRef<HTMLDivElement>(null);
@@ -456,7 +463,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     Record<string, { aspect: number; mask: AlphaMask | null }>
   >({});
   /** Each placed candy's picture, to focus the one a press selects. */
-  const candyImages = useRef(new Map<number, HTMLImageElement>());
+  const candyImages = useRef(new Map<StickerKey, HTMLImageElement>());
   /** Whether the pointer is over a candy, for the cursor. */
   const [overCandy, setOverCandy] = useState(false);
   /**
@@ -466,7 +473,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   const drag = useRef<
     | {
         mode: "move";
-        id: number;
+        id: StickerKey;
         pointerId: number;
         offset: Point;
         /** Where the press began, in client pixels. */
@@ -477,23 +484,23 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
          * The candies under a press on the already-selected candy, top
          * first: released without moving, it picks the next one down.
          */
-        cycle: number[] | null;
+        cycle: StickerKey[] | null;
       }
     | {
         mode: "scale";
-        id: number;
+        id: StickerKey;
         pointerId: number;
         /** The candy's centre, in client pixels. */
         centre: Point;
         startDistance: number;
         startScale: number;
       }
-    | { mode: "rotate"; id: number; pointerId: number; centre: Point }
+    | { mode: "rotate"; id: StickerKey; pointerId: number; centre: Point }
     | null
   >(null);
   /** A candy being dragged out of the tray, with a mouse or pen. */
   const [trayDrag, setTrayDrag] = useState<{
-    id: number;
+    sticker: Sticker;
     src: string;
     pointerId: number;
     start: Point;
@@ -510,8 +517,8 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     [nameText],
   );
   /** A placed sticker's picture; null for one with nothing to draw. */
-  const stickerOf = (knockEventId: number): Sticker | null => {
-    if (knockEventId === NAMEPLATE_ID) {
+  const pictureOf = (p: Placement): StickerPicture | null => {
+    if (p.sticker.nameplate) {
       return nameText && nameplateSrc
         ? {
             key: `nameplate:${nameText}`,
@@ -521,7 +528,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
           }
         : null;
     }
-    const slug = slugs.get(knockEventId);
+    const slug = p.sticker.candy != null ? slugs.get(p.sticker.candy) : null;
     return slug
       ? {
           key: slug,
@@ -531,10 +538,10 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         }
       : null;
   };
-  const selectedPlacement = placements.find((p) => p.knockEventId === selected);
-  const nameplatePlaced = placements.some(
-    (p) => p.knockEventId === NAMEPLATE_ID,
-  );
+  const placementOf = (key: StickerKey | null) =>
+    placements.find((p) => stickerKey(p.sticker) === key);
+  const selectedPlacement = placementOf(selected);
+  const nameplatePlaced = placementOf(NAMEPLATE_KEY) !== undefined;
 
   const boardPoint = (clientX: number, clientY: number): Point | null => {
     const rect = boardRef.current?.getBoundingClientRect();
@@ -548,16 +555,16 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
    * The candies under a pointer, top first. When the board is not laid out
    * -- no size to measure against -- the candy the event came from stands in.
    */
-  const candiesUnder = (e: React.PointerEvent): number[] => {
+  const candiesUnder = (e: React.PointerEvent): StickerKey[] => {
     const rect = boardRef.current?.getBoundingClientRect();
     if (!rect || rect.width === 0 || rect.height === 0) {
-      const id = (e.target as HTMLElement).dataset?.knockEventId;
-      return id ? [Number(id)] : [];
+      const key = (e.target as HTMLElement).dataset?.sticker;
+      return key ? [key] : [];
     }
     const pile = placements.flatMap((placement) => {
-      const sticker = stickerOf(placement.knockEventId);
-      if (!sticker) return [];
-      const picture = pictures[sticker.key];
+      const shown = pictureOf(placement);
+      if (!shown) return [];
+      const picture = pictures[shown.key];
       return [
         {
           placement,
@@ -573,7 +580,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     );
   };
 
-  const select = (id: number | null) => {
+  const select = (id: StickerKey | null) => {
     setSelected(id);
     // Focused by hand: a press on the board does not focus the picture, and
     // the keyboard shortcuts act on the focused one.
@@ -595,7 +602,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     }
     const pressedSelected = selected !== null && under.includes(selected);
     const id = pressedSelected ? selected : under[0];
-    const p = placements.find((placement) => placement.knockEventId === id);
+    const p = placementOf(id);
     if (!p) return;
     // Stops the browser's own image drag.
     e.preventDefault();
@@ -634,7 +641,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     e.stopPropagation();
     const centre = centreOf(p);
     if (!centre) return;
-    const id = p.knockEventId;
+    const id = stickerKey(p.sticker);
     const pointerId = e.pointerId;
     if (mode === "scale") {
       const startDistance = Math.hypot(
@@ -668,7 +675,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
       return;
     }
     if (!onAction || current.pointerId !== e.pointerId) return;
-    const knockEventId = current.id;
+    const sticker = stickerFromKey(current.id);
     if (current.mode === "move") {
       if (!current.moved) {
         const travelled = Math.hypot(
@@ -683,7 +690,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
       if (!point) return;
       onAction({
         edit: {
-          knockEventId,
+          sticker,
           x: point.x - current.offset.x,
           y: point.y - current.offset.y,
         },
@@ -702,7 +709,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
           (current.startScale * distance) / current.startDistance,
         ),
       );
-      onAction({ edit: { knockEventId, scale } });
+      onAction({ edit: { sticker, scale } });
     } else {
       // The handle sits straight above the centre, so pointing up is 0deg.
       const degrees =
@@ -716,7 +723,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
       const snapped = e.shiftKey ? Math.round(degrees / 15) * 15 : degrees;
       // Into (-180, 180], as the server takes it.
       const rotation = snapped > 180 ? snapped - 360 : snapped;
-      onAction({ edit: { knockEventId, rotation: Math.round(rotation) } });
+      onAction({ edit: { sticker, rotation: Math.round(rotation) } });
     }
   };
 
@@ -735,19 +742,23 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     }
   };
 
-  const place = (id: number, point: Point) => {
+  const place = (sticker: Sticker, point: Point) => {
     if (!onAction) return;
-    onAction({ add: { knockEventId: id, ...point, rotation: 0, scale: 1 } });
-    setSelected(id);
+    onAction({ add: { sticker, ...point, rotation: 0, scale: 1 } });
+    setSelected(stickerKey(sticker));
   };
 
-  const startTrayDrag = (e: React.PointerEvent, id: number, src: string) => {
+  const startTrayDrag = (
+    e: React.PointerEvent,
+    sticker: Sticker,
+    src: string,
+  ) => {
     // On a touch screen a tray candy is only tapped: a swipe across the tray
     // has to scroll the page.
     if (e.pointerType === "touch" || trayDrag) return;
     const at = { x: e.clientX, y: e.clientY };
     setTrayDrag({
-      id,
+      sticker,
       src,
       pointerId: e.pointerId,
       start: at,
@@ -769,7 +780,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 
   const endTrayDrag = (e: React.PointerEvent) => {
     if (trayDrag?.pointerId !== e.pointerId) return;
-    const { id, moved } = trayDrag;
+    const { sticker, moved } = trayDrag;
     setTrayDrag(null);
     if (!moved) {
       // A tap: the click that follows sticks it in the middle.
@@ -790,16 +801,16 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
       e.clientY >= rect.top &&
       e.clientY <= rect.bottom;
     const point = over ? boardPoint(e.clientX, e.clientY) : null;
-    if (point) place(id, point);
+    if (point) place(sticker, point);
   };
 
   const onCandyKey = (e: React.KeyboardEvent, p: Placement) => {
     if (!onAction) return;
     const step = e.shiftKey ? BIG_NUDGE : NUDGE;
-    const id = p.knockEventId;
+    const sticker = stickerFromKey(stickerKey(p.sticker));
     const edit = (
-      changes: Partial<Omit<Placement, "knockEventId">>,
-    ): BoardAction => ({ edit: { knockEventId: id, ...changes } });
+      changes: Partial<Omit<Placement, "sticker">>,
+    ): BoardAction => ({ edit: { sticker, ...changes } });
     const keys: Record<string, () => BoardAction> = {
       ArrowLeft: () => edit({ x: p.x - step }),
       ArrowRight: () => edit({ x: p.x + step }),
@@ -809,8 +820,8 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
       "]": () => edit({ rotation: p.rotation + 15 }),
       "-": () => edit({ scale: p.scale - 0.1 }),
       "=": () => edit({ scale: p.scale + 0.1 }),
-      Delete: () => ({ remove: { knockEventId: id } }),
-      Backspace: () => ({ remove: { knockEventId: id } }),
+      Delete: () => ({ remove: sticker }),
+      Backspace: () => ({ remove: sticker }),
     };
     const action = keys[e.key];
     if (!action) return;
@@ -824,10 +835,10 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   const atTop = selectedIndex === placements.length - 1;
   const atBottom = selectedIndex === 0;
 
-  /** An action on the selected candy, if one is selected. */
-  const actOnSelected = (make: (knockEventId: number) => BoardAction) => {
-    if (onAction && selectedPlacement) {
-      onAction(make(selectedPlacement.knockEventId));
+  /** An action on the selected sticker, if one is selected. */
+  const actOnSelected = (make: (sticker: Sticker) => BoardAction) => {
+    if (onAction && selected !== null && selectedPlacement) {
+      onAction(make(stickerFromKey(selected)));
     }
   };
 
@@ -857,23 +868,24 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         <Surface style={backgroundStyle(backgroundOf(background))}>
           <BackgroundEffectLayers effects={backgroundEffects ?? null} />
           {placements.map((p) => {
-            const sticker = stickerOf(p.knockEventId);
+            const sticker = pictureOf(p);
             if (!sticker) return null;
+            const key = stickerKey(p.sticker);
             return (
-              <CandyFrame key={p.knockEventId} style={placementStyle(p)}>
+              <CandyFrame key={key} style={placementStyle(p)}>
                 <Candy
                   src={sticker.src}
                   alt={sticker.alt}
                   draggable={false}
                   $editable={editable}
-                  data-knock-event-id={p.knockEventId}
+                  data-sticker={key}
                   style={{ filter: shadowFilter(lighting, p.rotation) }}
                   ref={(image) => {
-                    if (image) candyImages.current.set(p.knockEventId, image);
-                    else candyImages.current.delete(p.knockEventId);
+                    if (image) candyImages.current.set(key, image);
+                    else candyImages.current.delete(key);
                   }}
                   tabIndex={editable ? 0 : undefined}
-                  onFocus={() => editable && setSelected(p.knockEventId)}
+                  onFocus={() => editable && setSelected(key)}
                   onKeyDown={(e) => onCandyKey(e, p)}
                   onLoad={(e) => {
                     const image = e.currentTarget;
@@ -905,8 +917,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
             style={{
               ...placementStyle(selectedPlacement),
               aspectRatio:
-                pictures[stickerOf(selectedPlacement.knockEventId)?.key ?? ""]
-                  ?.aspect ?? 1,
+                pictures[pictureOf(selectedPlacement)?.key ?? ""]?.aspect ?? 1,
             }}
           >
             {CORNERS.map((corner) => (
@@ -943,8 +954,8 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                 disabled={!selectedPlacement}
                 value={selectedPlacement?.rotation ?? 0}
                 onChange={(e) =>
-                  actOnSelected((knockEventId) => ({
-                    edit: { knockEventId, rotation: Number(e.target.value) },
+                  actOnSelected((sticker) => ({
+                    edit: { sticker, rotation: Number(e.target.value) },
                   }))
                 }
               />
@@ -962,8 +973,8 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                 disabled={!selectedPlacement}
                 value={selectedPlacement?.scale ?? 1}
                 onChange={(e) =>
-                  actOnSelected((knockEventId) => ({
-                    edit: { knockEventId, scale: Number(e.target.value) },
+                  actOnSelected((sticker) => ({
+                    edit: { sticker, scale: Number(e.target.value) },
                   }))
                 }
               />
@@ -994,9 +1005,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
               aria-label="Remove sticker"
               disabled={!selectedPlacement}
               onClick={() => {
-                actOnSelected((knockEventId) => ({
-                  remove: { knockEventId },
-                }));
+                actOnSelected((sticker) => ({ remove: sticker }));
                 setSelected(null);
               }}
             >
@@ -1025,7 +1034,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                   aria-label="Place nameplate"
                   $wide
                   onPointerDown={(e) =>
-                    startTrayDrag(e, NAMEPLATE_ID, nameplateSrc)
+                    startTrayDrag(e, NAMEPLATE, nameplateSrc)
                   }
                   onPointerMove={moveTrayDrag}
                   onPointerUp={endTrayDrag}
@@ -1035,7 +1044,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                       draggedFromTray.current = false;
                       return;
                     }
-                    place(NAMEPLATE_ID, CENTRE);
+                    place(NAMEPLATE, CENTRE);
                   }}
                 >
                   <img src={nameplateSrc} alt="" draggable={false} />
@@ -1048,7 +1057,11 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                   type="button"
                   aria-label={`Place ${candyName(slug)} (${knockEventIds.length} left)`}
                   onPointerDown={(e) =>
-                    startTrayDrag(e, knockEventIds[0], candyImageUrl(slug))
+                    startTrayDrag(
+                      e,
+                      candySticker(knockEventIds[0]),
+                      candyImageUrl(slug),
+                    )
                   }
                   onPointerMove={moveTrayDrag}
                   onPointerUp={endTrayDrag}
@@ -1058,7 +1071,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                       draggedFromTray.current = false;
                       return;
                     }
-                    place(knockEventIds[0], CENTRE);
+                    place(candySticker(knockEventIds[0]), CENTRE);
                   }}
                 >
                   <img src={candyImageUrl(slug)} alt="" draggable={false} />

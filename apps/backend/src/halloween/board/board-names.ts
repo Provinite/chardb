@@ -11,13 +11,6 @@ import {
  * them from.
  */
 
-/**
- * The board's nameplate, a banner with its name on it, is placed as a candy
- * is, under this id: knock ids start at 1, so no candy has it. It can go on
- * a board that has a name, once, and is hidden while the board has none.
- */
-export const NAMEPLATE_ID = 0;
-
 /** A name to give a board: checked against the lists. */
 export const boardNameSchema = z.object({
   first: z.enum(BOARD_NAME_FIRST_WORDS),

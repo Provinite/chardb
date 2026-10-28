@@ -10,8 +10,13 @@ import {
   type AlphaMask,
   type HitCandy,
 } from "../candyHitTest";
-import { CANDY_SIZE, type Placement } from "../candyBoard";
-import { NAMEPLATE_ID } from "../nameplate";
+import {
+  CANDY_SIZE,
+  NAMEPLATE,
+  candySticker,
+  stickerKey,
+  type Placement,
+} from "../candyBoard";
 
 /** An RGBA image, as a canvas hands it back, from a per-pixel alpha function. */
 const imageData = (
@@ -34,8 +39,11 @@ const leftHalf: AlphaMask = alphaMask(
   4,
 );
 
-const at = (knockEventId: number, overrides: Partial<Placement> = {}) => ({
-  knockEventId,
+const at = (
+  ref: number | "nameplate",
+  overrides: Partial<Omit<Placement, "sticker">> = {},
+): Placement => ({
+  sticker: ref === "nameplate" ? NAMEPLATE : candySticker(ref),
   x: 0.5,
   y: 0.5,
   rotation: 0,
@@ -91,38 +99,38 @@ describe("alphaMask", () => {
 });
 
 describe("candiesAt", () => {
+  /** The stickers under a press on BOARD, by their keys, top first. */
+  const hitAt = (point: { x: number; y: number }, pile: HitCandy[]) =>
+    candiesAt(point, BOARD, pile);
+  const key = (ref: number | "nameplate") =>
+    stickerKey(ref === "nameplate" ? NAMEPLATE : candySticker(ref));
+
   it("finds a candy pressed inside its box when its picture is not read yet", () => {
-    expect(candiesAt(CENTRE, BOARD, [candy(at(1))])).toEqual([1]);
-    expect(
-      candiesAt({ x: 500 + HALF + 1, y: 375 }, BOARD, [candy(at(1))]),
-    ).toEqual([]);
+    expect(hitAt(CENTRE, [candy(at(1))])).toEqual([key(1)]);
+    expect(hitAt({ x: 500 + HALF + 1, y: 375 }, [candy(at(1))])).toEqual([]);
   });
 
   it("measures the nameplate by its own, wider size", () => {
     // Past a candy's box, but inside the nameplate's.
     const wide = { x: 500 + HALF * 2, y: 375 };
-    expect(candiesAt(wide, BOARD, [candy(at(1))])).toEqual([]);
-    expect(
-      candiesAt(wide, BOARD, [candy(at(NAMEPLATE_ID), { aspect: 4 })]),
-    ).toEqual([NAMEPLATE_ID]);
+    expect(hitAt(wide, [candy(at(1))])).toEqual([]);
+    expect(hitAt(wide, [candy(at("nameplate"), { aspect: 4 })])).toEqual([
+      key("nameplate"),
+    ]);
   });
 
   it("lists every candy under the press, top of the pile first", () => {
     expect(
-      candiesAt(CENTRE, BOARD, [
-        candy(at(1)),
-        candy(at(2, { x: 0.1 })),
-        candy(at(3)),
-      ]),
-    ).toEqual([3, 1]);
+      hitAt(CENTRE, [candy(at(1)), candy(at(2, { x: 0.1 })), candy(at(3))]),
+    ).toEqual([key(3), key(1)]);
   });
 
   it("lets a press through a candy's transparent pixels", () => {
     const left = { x: 500 - HALF / 2, y: 375 };
     const right = { x: 500 + HALF / 2, y: 375 };
     const pile = [candy(at(1)), candy(at(2), { mask: leftHalf })];
-    expect(candiesAt(left, BOARD, pile)).toEqual([2, 1]);
-    expect(candiesAt(right, BOARD, pile)).toEqual([1]);
+    expect(hitAt(left, pile)).toEqual([key(2), key(1)]);
+    expect(hitAt(right, pile)).toEqual([key(1)]);
   });
 
   it("counts a faint pixel as transparent", () => {
@@ -130,46 +138,42 @@ describe("candiesAt", () => {
       imageData(1, 1, () => 20),
       1,
     );
-    expect(candiesAt(CENTRE, BOARD, [candy(at(1), { mask: faint })])).toEqual(
-      [],
-    );
+    expect(hitAt(CENTRE, [candy(at(1), { mask: faint })])).toEqual([]);
   });
 
   it("follows a candy's rotation", () => {
     // Turned half way round, the opaque left half is on the right.
     const turned = [candy(at(1, { rotation: 180 }), { mask: leftHalf })];
-    expect(candiesAt({ x: 500 + HALF / 2, y: 375 }, BOARD, turned)).toEqual([
-      1,
-    ]);
-    expect(candiesAt({ x: 500 - HALF / 2, y: 375 }, BOARD, turned)).toEqual([]);
+    expect(hitAt({ x: 500 + HALF / 2, y: 375 }, turned)).toEqual([key(1)]);
+    expect(hitAt({ x: 500 - HALF / 2, y: 375 }, turned)).toEqual([]);
   });
 
   it("follows a candy's scale", () => {
     const big = [candy(at(1, { scale: 2 }))];
-    expect(candiesAt({ x: 500 + HALF * 1.5, y: 375 }, BOARD, big)).toEqual([1]);
+    expect(hitAt({ x: 500 + HALF * 1.5, y: 375 }, big)).toEqual([key(1)]);
   });
 
   it("follows the shape of the picture, not a square", () => {
     // Twice as wide as tall: 120 x 60, so 40px below the centre is off it.
     const wide = [candy(at(1), { aspect: 2 })];
-    expect(candiesAt({ x: 500, y: 375 + 40 }, BOARD, wide)).toEqual([]);
-    expect(candiesAt({ x: 500, y: 375 + 20 }, BOARD, wide)).toEqual([1]);
+    expect(hitAt({ x: 500, y: 375 + 40 }, wide)).toEqual([]);
+    expect(hitAt({ x: 500, y: 375 + 20 }, wide)).toEqual([key(1)]);
   });
 });
 
 describe("nextSelection", () => {
   it("picks the top candy under a fresh press", () => {
-    expect(nextSelection([3, 1], null)).toBe(3);
-    expect(nextSelection([3, 1], 7)).toBe(3);
+    expect(nextSelection(["c", "a"], null)).toBe("c");
+    expect(nextSelection(["c", "a"], "z")).toBe("c");
   });
 
   it("goes one down from the selected candy, and wraps to the top", () => {
-    expect(nextSelection([3, 2, 1], 3)).toBe(2);
-    expect(nextSelection([3, 2, 1], 2)).toBe(1);
-    expect(nextSelection([3, 2, 1], 1)).toBe(3);
+    expect(nextSelection(["c", "b", "a"], "c")).toBe("b");
+    expect(nextSelection(["c", "b", "a"], "b")).toBe("a");
+    expect(nextSelection(["c", "b", "a"], "a")).toBe("c");
   });
 
   it("is nothing when nothing is under the press", () => {
-    expect(nextSelection([], 3)).toBeNull();
+    expect(nextSelection([], "c")).toBeNull();
   });
 });

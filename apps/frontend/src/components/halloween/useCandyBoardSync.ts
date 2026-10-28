@@ -7,6 +7,7 @@ import {
   clampAction,
   enqueue,
   nextBatch,
+  stickerRef,
   type BoardAction,
   type Placement,
 } from "./candyBoard";
@@ -24,8 +25,8 @@ export type SaveStatus = "saved" | "unsaved" | "saving" | "failed";
 const SEND_DELAY_MS = 400;
 
 const strip = (placements: readonly Placement[]): Placement[] =>
-  placements.map(({ knockEventId, x, y, rotation, scale }) => ({
-    knockEventId,
+  placements.map(({ sticker, x, y, rotation, scale }) => ({
+    sticker: stickerRef(sticker),
     x,
     y,
     rotation,

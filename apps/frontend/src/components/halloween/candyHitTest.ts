@@ -11,7 +11,12 @@
  * board or a canvas. The pictures are served from the page's own origin,
  * which is what lets a canvas read them; nothing needs baking in advance.
  */
-import type { Placement, Point } from "./candyBoard";
+import {
+  stickerKey,
+  type Placement,
+  type Point,
+  type StickerKey,
+} from "./candyBoard";
 import { stickerSize } from "./nameplate";
 
 /** A picture's alpha channel, row by row, 0 (clear) to 255 (solid). */
@@ -88,7 +93,7 @@ function hits(
   board: { width: number; height: number },
   { placement: p, aspect, mask }: HitCandy,
 ): boolean {
-  const width = stickerSize(p.knockEventId) * p.scale * board.width;
+  const width = stickerSize(p.sticker) * p.scale * board.width;
   const height = width / aspect;
   // From the candy's centre, turned back by its rotation (clockwise on
   // screen, where y points down), into its own picture's axes.
@@ -107,7 +112,7 @@ function hits(
 }
 
 /**
- * Every candy a press lands on, by knock id, top of the pile first.
+ * Every sticker a press lands on, by its key, top of the pile first.
  * `candies` is the pile bottom first, as placements are kept; `point` is in
  * pixels from the board's top-left corner.
  */
@@ -115,25 +120,25 @@ export function candiesAt(
   point: Point,
   board: { width: number; height: number },
   candies: HitCandy[],
-): number[] {
-  const found: number[] = [];
+): StickerKey[] {
+  const found: StickerKey[] = [];
   for (let i = candies.length - 1; i >= 0; i--) {
     if (hits(point, board, candies[i])) {
-      found.push(candies[i].placement.knockEventId);
+      found.push(stickerKey(candies[i].placement.sticker));
     }
   }
   return found;
 }
 
 /**
- * Which candy a click selects, given the candies under it top first. A fresh
- * click takes the top one; a click on the selected candy goes one down, and
- * from the bottom back to the top, so a buried candy can still be reached.
+ * Which sticker a click selects, given the ones under it top first. A fresh
+ * click takes the top one; a click on the selected one goes one down, and
+ * from the bottom back to the top, so a buried one can still be reached.
  */
 export function nextSelection(
-  hitIds: number[],
-  current: number | null,
-): number | null {
+  hitIds: StickerKey[],
+  current: StickerKey | null,
+): StickerKey | null {
   if (hitIds.length === 0) return null;
   const index = current === null ? -1 : hitIds.indexOf(current);
   if (index === -1) return hitIds[0];

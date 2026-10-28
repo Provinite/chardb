@@ -247,7 +247,10 @@ export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
       receivedAt
     }
     placements {
-      knockEventId
+      sticker {
+        candy
+        nameplate
+      }
       x
       y
       rotation

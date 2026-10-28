@@ -16,13 +16,43 @@ export class HalloweenCandy {
   receivedAt: Date;
 }
 
-@ObjectType({ description: "Where a candy sits on a board" })
-export class HalloweenCandyPlacement {
+@ObjectType({
+  description:
+    "What a placement on a board is: a candy, or the board's nameplate -- a " +
+    "banner with its name. Exactly one field is set.",
+})
+export class HalloweenSticker {
   @Field(() => Int, {
-    description:
-      "The candy's knock; 0 for the board's nameplate, a banner with its name, which is placed as a candy is",
+    nullable: true,
+    description: "A candy, by the knock that gave it",
   })
-  knockEventId: number;
+  candy?: number | null;
+
+  @Field(() => Boolean, {
+    nullable: true,
+    description: "The board's nameplate, of which it has one",
+  })
+  nameplate?: boolean | null;
+}
+
+@InputType({
+  isOneOf: true,
+  description:
+    "A sticker on your board: exactly one of a candy, by the knock that " +
+    "gave it, or the nameplate (true)",
+})
+export class HalloweenStickerInput {
+  @Field(() => Int, { nullable: true })
+  candy?: number;
+
+  @Field(() => Boolean, { nullable: true })
+  nameplate?: boolean;
+}
+
+@ObjectType({ description: "Where a sticker sits on a board" })
+export class HalloweenCandyPlacement {
+  @Field(() => HalloweenSticker)
+  sticker: HalloweenSticker;
 
   @Field(() => Float, {
     description: "The candy's centre, as a fraction of the board's width, 0-1",
@@ -47,20 +77,14 @@ export class HalloweenCandyPlacement {
 // schema's to enforce, and their ranges the zod schema's, on the board the
 // actions produce.
 
-@InputType({ description: "A candy, by the knock that gave it" })
-export class HalloweenCandyRefInput {
-  @Field(() => Int)
-  knockEventId: number;
-}
-
 @InputType({
   description:
-    "Stick a candy from the tray on the board, on top of the pile. Ranges " +
-    "as on HalloweenCandyPlacement.",
+    "Stick a candy from the tray, or the nameplate, on the board, on top of " +
+    "the pile. Ranges as on HalloweenCandyPlacement.",
 })
 export class HalloweenCandyAddInput {
-  @Field(() => Int)
-  knockEventId: number;
+  @Field(() => HalloweenStickerInput)
+  sticker: HalloweenStickerInput;
 
   @Field(() => Float)
   x: number;
@@ -77,12 +101,12 @@ export class HalloweenCandyAddInput {
 
 @InputType({
   description:
-    "Change where a candy on the board sits, its turn or its size. Only the " +
-    "fields given change, and at least one must be.",
+    "Change where a sticker on the board sits, its turn or its size. Only " +
+    "the fields given change, and at least one must be.",
 })
 export class HalloweenCandyEditInput {
-  @Field(() => Int)
-  knockEventId: number;
+  @Field(() => HalloweenStickerInput)
+  sticker: HalloweenStickerInput;
 
   @Field(() => Float, { nullable: true })
   x?: number | null;
@@ -108,37 +132,37 @@ export class HalloweenCandyBoardAction {
   @Field(() => HalloweenCandyEditInput, { nullable: true })
   edit?: HalloweenCandyEditInput;
 
-  @Field(() => HalloweenCandyRefInput, {
+  @Field(() => HalloweenStickerInput, {
     nullable: true,
-    description: "Move a candy on the board to the top of the pile",
+    description: "Move a sticker on the board to the top of the pile",
   })
-  raise?: HalloweenCandyRefInput;
+  raise?: HalloweenStickerInput;
 
-  @Field(() => HalloweenCandyRefInput, {
+  @Field(() => HalloweenStickerInput, {
     nullable: true,
-    description: "Move a candy on the board to the bottom of the pile",
+    description: "Move a sticker on the board to the bottom of the pile",
   })
-  lower?: HalloweenCandyRefInput;
+  lower?: HalloweenStickerInput;
 
-  @Field(() => HalloweenCandyRefInput, {
+  @Field(() => HalloweenStickerInput, {
     nullable: true,
     description:
-      "Move a candy one place up the pile; the top one stays where it is",
+      "Move a sticker one place up the pile; the top one stays where it is",
   })
-  forward?: HalloweenCandyRefInput;
+  forward?: HalloweenStickerInput;
 
-  @Field(() => HalloweenCandyRefInput, {
+  @Field(() => HalloweenStickerInput, {
     nullable: true,
     description:
-      "Move a candy one place down the pile; the bottom one stays where it is",
+      "Move a sticker one place down the pile; the bottom one stays where it is",
   })
-  backward?: HalloweenCandyRefInput;
+  backward?: HalloweenStickerInput;
 
-  @Field(() => HalloweenCandyRefInput, {
+  @Field(() => HalloweenStickerInput, {
     nullable: true,
-    description: "Put a candy on the board back in the tray",
+    description: "Take a sticker off the board, back to the tray",
   })
-  remove?: HalloweenCandyRefInput;
+  remove?: HalloweenStickerInput;
 }
 
 @ObjectType({
