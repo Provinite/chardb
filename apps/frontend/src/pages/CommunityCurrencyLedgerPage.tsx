@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { useSearchParams, Link } from "react-router-dom";
+import { useDebouncedValue } from "@mantine/hooks";
 import { Coins, Search } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -124,7 +125,9 @@ const Chip = styled.button<{ $active: boolean }>`
     $active ? "#fff" : theme.colors.text.primary};
 `;
 
-const List = styled.div`
+const List = styled.div<{ $stale: boolean }>`
+  opacity: ${({ $stale }) => ($stale ? 0.6 : 1)};
+  transition: opacity 120ms ease;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 12px;
   overflow: hidden;
@@ -256,6 +259,8 @@ const Footer = styled.div`
 
 const PAGE_SIZE = 25;
 
+const SEARCH_DEBOUNCE_MS = 300;
+
 const KIND_ORDER: CurrencyTransactionKind[] = [
   CurrencyTransactionKind.Mint,
   CurrencyTransactionKind.Transfer,
@@ -326,7 +331,19 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
     skip: !communityId,
   });
 
-  const { data, loading, error } = useGetCurrencyTransactionsQuery({
+  // The search reaches the server once typing pauses, not once per letter
+  // (#444).
+  const [debouncedSearch] = useDebouncedValue(
+    search.trim(),
+    SEARCH_DEBOUNCE_MS,
+  );
+
+  const {
+    data: currentData,
+    previousData,
+    loading,
+    error,
+  } = useGetCurrencyTransactionsQuery({
     variables: {
       filters: {
         communityId: communityId as string,
@@ -334,11 +351,15 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
         offset: 0,
         kinds: kinds.length > 0 ? kinds : undefined,
         currencyId,
-        search: search.trim() || undefined,
+        search: debouncedSearch || undefined,
       },
     },
     skip: !communityId,
   });
+
+  // The last result stays up while a new filter loads, so the list dims rather
+  // than blinking to a spinner.
+  const data = currentData ?? previousData;
 
   const currencies = currencyData?.currencies ?? [];
   const rows = useMemo(
@@ -444,7 +465,11 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
         </Empty>
       ) : (
         <>
-          <List data-testid="currency-ledger-list">
+          <List
+            data-testid="currency-ledger-list"
+            $stale={loading}
+            aria-busy={loading}
+          >
             {rows.map((row) => {
               const tone =
                 row.kind === CurrencyTransactionKind.Transfer

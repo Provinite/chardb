@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
+import { useDebouncedValue } from "@mantine/hooks";
 import { Package, Search, Lock } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FilterChip, FilterChips } from "../components/FilterChip";
@@ -26,6 +27,8 @@ import { collapseByBatch, KIND_LABEL, kindTone } from "../lib/itemDisplay";
  */
 
 const PAGE_SIZE = 25;
+
+const SEARCH_DEBOUNCE_MS = 300;
 
 /** Order matters: this is the order the filter chips render in. */
 const KINDS: ReadonlyArray<{ kind: ItemTransactionKind; label: string }> = [
@@ -97,7 +100,9 @@ const SearchInput = styled.input`
   }
 `;
 
-const TableWrap = styled.div`
+const TableWrap = styled.div<{ $stale: boolean }>`
+  opacity: ${({ $stale }) => ($stale ? 0.6 : 1)};
+  transition: opacity 120ms ease;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow-x: auto;
@@ -436,24 +441,39 @@ export const CommunityItemLedgerPage: React.FC = () => {
 
   const community = useHostCommunity();
 
+  // The search reaches the server once typing pauses. Sent per keystroke, each
+  // letter was its own query and its own loading state (#444).
+  const [debouncedSearch] = useDebouncedValue(
+    search.trim(),
+    SEARCH_DEBOUNCE_MS,
+  );
+
   const filters = useMemo(
     () => ({
       communityId: communityId!,
       limit,
       offset: 0,
       kinds: activeKinds.length ? activeKinds : undefined,
-      search: search.trim() || undefined,
+      search: debouncedSearch || undefined,
     }),
-    [communityId, limit, activeKinds, search],
+    [communityId, limit, activeKinds, debouncedSearch],
   );
 
-  const { data, loading, error } = useGetItemTransactionsQuery({
+  const {
+    data: currentData,
+    previousData,
+    loading,
+    error,
+  } = useGetItemTransactionsQuery({
     variables: { filters },
     skip: !communityId,
-    // Keeps the previous page on screen while a filter change is in flight,
-    // instead of flashing the empty state between every keystroke.
     fetchPolicy: "cache-and-network",
   });
+
+  // A filter the cache has not seen yet has no data until it lands. Showing
+  // the last result meanwhile keeps the table, and the search box above it,
+  // on screen instead of swapping the page for a spinner.
+  const data = currentData ?? previousData;
 
   const toggleKind = (kind: ItemTransactionKind) => {
     setLimit(PAGE_SIZE);
@@ -531,7 +551,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
         </Empty>
       ) : (
         <>
-          <TableWrap>
+          <TableWrap $stale={loading} aria-busy={loading}>
             <Table>
               <thead>
                 <tr>

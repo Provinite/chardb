@@ -134,6 +134,65 @@ test.describe("filtering", () => {
   });
 });
 
+test.describe("typing a search (#444)", () => {
+  test.use({ persona: "quartermaster" });
+
+  /** The search term of every ledger query sent from here on. */
+  const recordSearches = (page: Page) => {
+    const searches: Array<string | undefined> = [];
+    page.on("request", (request) => {
+      const body: unknown = request.postDataJSON();
+      if (
+        typeof body === "object" &&
+        body !== null &&
+        "operationName" in body &&
+        body.operationName === "GetItemTransactions" &&
+        "variables" in body
+      ) {
+        const { variables } = body as {
+          variables: { filters: { search?: string } };
+        };
+        searches.push(variables.filters.search);
+      }
+    });
+    return searches;
+  };
+
+  test("keeps the search box and its focus while results load", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(world.community.ledgerUrl);
+    await expect(grantRow(page)).toHaveCount(1);
+
+    // Typed a key at a time, the way a person does. fill() would set the whole
+    // value in one event and never see the page swap out between letters.
+    const search = page.getByRole("searchbox", { name: "Search the ledger" });
+    await search.pressSequentially("Lanternfall", { delay: 50 });
+
+    await expect(search).toBeFocused();
+    await expect(search).toHaveValue("Lanternfall");
+    await expect(grantRow(page)).toHaveCount(1);
+  });
+
+  test("queries once when typing stops, not once per letter", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(world.community.ledgerUrl);
+    await expect(grantRow(page)).toHaveCount(1);
+
+    const searches = recordSearches(page);
+    await page
+      .getByRole("searchbox", { name: "Search the ledger" })
+      .pressSequentially("Lanternfall", { delay: 50 });
+
+    await expect.poll(() => searches).toContain("Lanternfall");
+    await expect(grantRow(page)).toHaveCount(1);
+    expect(searches).toEqual(["Lanternfall"]);
+  });
+});
+
 test.describe("as someone outside the community", () => {
   test.use({ persona: "outsider" });
 

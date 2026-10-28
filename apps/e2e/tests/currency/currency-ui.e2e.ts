@@ -308,6 +308,38 @@ test.describe("currency ledger page", () => {
 
       await expect(page.getByTestId("currency-ledger-empty")).toBeVisible();
     });
+
+    test("search queries once when typing stops, not once per letter (#444)", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(world.currencyUrls.ledger);
+      await expect(page.getByTestId("currency-ledger-list")).toBeVisible();
+
+      const searches: Array<string | undefined> = [];
+      page.on("request", (request) => {
+        const body: unknown = request.postDataJSON();
+        if (
+          typeof body === "object" &&
+          body !== null &&
+          "operationName" in body &&
+          body.operationName === "GetCurrencyTransactions" &&
+          "variables" in body
+        ) {
+          const { variables } = body as {
+            variables: { filters: { search?: string } };
+          };
+          searches.push(variables.filters.search);
+        }
+      });
+
+      const search = page.getByLabel(/search the currency ledger/i);
+      await search.pressSequentially("Tier 2 flat rate", { delay: 50 });
+
+      await expect(page.getByTestId("currency-ledger-empty")).toBeVisible();
+      await expect(search).toBeFocused();
+      expect(searches).toEqual(["Tier 2 flat rate"]);
+    });
   });
 
   test.describe("as staff", () => {
