@@ -87,7 +87,10 @@ describe("trayGroups", () => {
 
   it("keeps each group in its place as its candies are used", () => {
     const order = (placed: number[]) =>
-      trayGroups(candies, placed.map((id) => at(id))).map((g) => g.slug);
+      trayGroups(
+        candies,
+        placed.map((id) => at(id)),
+      ).map((g) => g.slug);
     expect(order([])).toEqual(["banana", "candy-corn", "luther-head"]);
     expect(order([1])).toEqual(["banana", "candy-corn", "luther-head"]);
     expect(order([1, 4])).toEqual(["candy-corn", "luther-head"]);
