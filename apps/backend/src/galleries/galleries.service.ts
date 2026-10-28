@@ -141,13 +141,6 @@ export class GalleriesService {
     return !!like;
   }
 
-  /** Get likes count for a gallery - used by field resolvers */
-  async getGalleryLikesCount(galleryId: string): Promise<number> {
-    return this.db.like.count({
-      where: { galleryId },
-    });
-  }
-
   async findOne(id: string, userId?: string) {
     const gallery = await this.db.gallery.findUnique({
       where: { id },

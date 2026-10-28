@@ -14,8 +14,6 @@ import { mockDatabaseService } from "../../test/setup";
 import { CharacterAvailability } from "./character-availability";
 
 const mockTagsService = {
-  getCharacterTags: jest.fn(),
-  getCharacterTagRelations: jest.fn(),
   findOrCreateTags: jest.fn(),
 };
 const mockPendingOwnershipService = {

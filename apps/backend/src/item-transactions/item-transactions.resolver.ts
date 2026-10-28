@@ -5,8 +5,10 @@ import {
   ID,
   ResolveField,
   Parent,
+  Context,
 } from "@nestjs/graphql";
 import { NotFoundException } from "@nestjs/common";
+import type { Request } from "express";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
@@ -101,21 +103,21 @@ export class ItemTransactionsResolver {
   async resolveStaffNote(
     @Parent() transaction: ItemTransaction,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @Context("req") req?: Request,
   ): Promise<string | null> {
-    const [canManage, canGrant] = await Promise.all([
-      this.permissionService.hasCommunityPermission(
+    const permissions =
+      await this.permissionService.getCommunityPermissionsForRequest(
+        req,
         user.id,
         transaction.communityId,
-        CommunityPermission.CanManageItems,
-      ),
-      this.permissionService.hasCommunityPermission(
-        user.id,
-        transaction.communityId,
-        CommunityPermission.CanGrantItems,
-      ),
-    ]);
+      );
 
-    if (!canManage && !canGrant) return null;
+    if (
+      !permissions[CommunityPermission.CanManageItems] &&
+      !permissions[CommunityPermission.CanGrantItems]
+    ) {
+      return null;
+    }
 
     const row = await this.database.itemTransaction.findUnique({
       where: { id: transaction.id },

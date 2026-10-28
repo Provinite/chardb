@@ -18,6 +18,7 @@ import {
   mockNotificationsService,
 } from "../../test/setup";
 import { NotificationsService } from "../notifications/notifications.service";
+import { LoadersService } from "../dataloaders/loaders.service";
 
 describe("SocialResolver", () => {
   let resolver: SocialResolver;
@@ -355,7 +356,6 @@ describe("GalleryLikesResolver", () => {
 
 describe("CommentLikesResolver", () => {
   let resolver: CommentLikesResolver;
-  let service: SocialService;
 
   const mockComment = {
     id: "comment-1",
@@ -391,6 +391,7 @@ describe("CommentLikesResolver", () => {
       providers: [
         CommentLikesResolver,
         SocialService,
+        LoadersService,
         {
           provide: DatabaseService,
           useValue: mockDatabaseService,
@@ -403,20 +404,28 @@ describe("CommentLikesResolver", () => {
     }).compile();
 
     resolver = module.get<CommentLikesResolver>(CommentLikesResolver);
-    service = module.get<SocialService>(SocialService);
   });
 
   describe("likesCount", () => {
     it("should return the likes count for a comment", async () => {
-      jest.spyOn(service, "getLikesCount").mockResolvedValue(15);
+      mockDatabaseService.like.groupBy.mockResolvedValue([
+        { commentId: "comment-1", _count: { _all: 15 } },
+      ]);
 
       const result = await resolver.likesCount(mockComment);
 
       expect(result).toBe(15);
-      expect(service.getLikesCount).toHaveBeenCalledWith(
-        LikeableType.COMMENT,
-        "comment-1",
+      expect(mockDatabaseService.like.groupBy).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { commentId: { in: ["comment-1"] } },
+        }),
       );
+    });
+
+    it("should count a comment nobody has liked as 0", async () => {
+      mockDatabaseService.like.groupBy.mockResolvedValue([]);
+
+      expect(await resolver.likesCount(mockComment)).toBe(0);
     });
   });
 });

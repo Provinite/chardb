@@ -7,8 +7,11 @@ import {
   ResolveField,
   Parent,
   Int,
+  Context,
 } from "@nestjs/graphql";
+import type { Request } from "express";
 import { SocialService } from "./social.service";
+import { LoadersService } from "../dataloaders/loaders.service";
 import {
   ToggleLikeInput,
   LikeResult,
@@ -244,7 +247,10 @@ export class GalleryLikesResolver {
 
 @Resolver(() => Comment)
 export class CommentLikesResolver {
-  constructor(private readonly socialService: SocialService) {}
+  constructor(
+    private readonly socialService: SocialService,
+    private readonly loaders: LoadersService,
+  ) {}
 
   /**
    * The one `likesCount` in this file that is actually live: no other module
@@ -260,8 +266,11 @@ export class CommentLikesResolver {
    */
   @AllowUnauthenticated()
   @ResolveField(() => Int)
-  async likesCount(@Parent() comment: Comment): Promise<number> {
-    return this.socialService.getLikesCount(LikeableType.COMMENT, comment.id);
+  async likesCount(
+    @Parent() comment: Comment,
+    @Context("req") req?: Request,
+  ): Promise<number> {
+    return this.loaders.forRequest(req).likeCountByComment.load(comment.id);
   }
 
   @AllowAnyAuthenticated()

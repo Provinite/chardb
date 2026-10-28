@@ -7,9 +7,12 @@ import {
   Int,
   ResolveField,
   Parent,
+  Context,
 } from "@nestjs/graphql";
 import { NotFoundException } from "@nestjs/common";
+import type { Request } from "express";
 import { TraitsService } from "./traits.service";
+import { LoadersService } from "../dataloaders/loaders.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
@@ -29,7 +32,6 @@ import { RemovalResponse } from "../shared/entities/removal-response.entity";
 import { SpeciesService } from "../species/species.service";
 import { mapPrismaSpeciesToGraphQL } from "../species/utils/species-resolver-mappers";
 import { EnumValue } from "../enum-values/entities/enum-value.entity";
-import { EnumValuesService } from "../enum-values/enum-values.service";
 import { mapPrismaEnumValueToGraphQL } from "../enum-values/utils/enum-value-resolver-mappers";
 import { TraitValueType } from "../shared/enums/trait-value-type.enum";
 import { CommunityColor } from "../community-colors/entities/community-color.entity";
@@ -40,8 +42,8 @@ export class TraitsResolver {
   constructor(
     private readonly traitsService: TraitsService,
     private readonly speciesService: SpeciesService,
-    private readonly enumValuesService: EnumValuesService,
     private readonly communityColorsService: CommunityColorsService,
+    private readonly loaders: LoadersService,
   ) {}
 
   @AllowGlobalAdmin()
@@ -183,17 +185,19 @@ export class TraitsResolver {
   @ResolveField("enumValues", () => [EnumValue], {
     description: "Enum values for this trait (only populated for ENUM traits)",
   })
-  async resolveEnumValues(@Parent() trait: Trait): Promise<EnumValue[]> {
+  async resolveEnumValues(
+    @Parent() trait: Trait,
+    @Context("req") req?: Request,
+  ): Promise<EnumValue[]> {
     // Only fetch enum values for ENUM traits
     if (trait.valueType !== TraitValueType.ENUM) {
       return [];
     }
 
-    const serviceResult = await this.enumValuesService.findByTrait(
-      trait.id,
-      100,
-    ); // Get up to 100 enum values
-    return serviceResult.nodes.map(mapPrismaEnumValueToGraphQL);
+    const enumValues = await this.loaders
+      .forRequest(req)
+      .enumValuesByTrait.load(trait.id);
+    return enumValues.map(mapPrismaEnumValueToGraphQL);
   }
 
   @AllowUnauthenticated()

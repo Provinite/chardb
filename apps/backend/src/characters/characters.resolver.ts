@@ -7,8 +7,10 @@ import {
   ResolveField,
   Parent,
   Int,
+  Context,
 } from "@nestjs/graphql";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import type { Request } from "express";
 import { TraitReviewSource } from "@prisma/client";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import {
@@ -25,7 +27,6 @@ import { CommunityPermission } from "../auth/CommunityPermission";
 import { AllowCharacterProfileEditor } from "../auth/decorators/AllowCharacterProfileEditor";
 import { AllowCharacterRegistryEditor } from "../auth/decorators/AllowCharacterRegistryEditor";
 import { CharactersService } from "./characters.service";
-import { TagsService } from "../tags/tags.service";
 import { UsersService } from "../users/users.service";
 import { MediaService } from "../media/media.service";
 import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
@@ -34,6 +35,7 @@ import { SpeciesVariantsService } from "../species-variants/species-variants.ser
 import { mapPrismaSpeciesVariantToGraphQL } from "../species-variants/utils/species-variant-resolver-mappers";
 import { SpeciesService } from "../species/species.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import { LoadersService } from "../dataloaders/loaders.service";
 import { PendingOwnership } from "../pending-ownership/entities/pending-ownership.entity";
 import { mapPrismaPendingOwnershipToGraphQL } from "../pending-ownership/utils/pending-ownership-mappers";
 import {
@@ -79,12 +81,12 @@ export class CharactersResolver {
     private readonly charactersService: CharactersService,
     private readonly characterFormsService: CharacterFormsService,
     private readonly imagesService: ImagesService,
-    private readonly tagsService: TagsService,
     private readonly usersService: UsersService,
     private readonly mediaService: MediaService,
     private readonly speciesVariantsService: SpeciesVariantsService,
     private readonly speciesService: SpeciesService,
     private readonly pendingOwnershipService: PendingOwnershipService,
+    private readonly loaders: LoadersService,
   ) {}
 
   @AllowAnyAuthenticated()
@@ -454,8 +456,12 @@ export class CharactersResolver {
   @ResolveField("tags", () => [String])
   async resolveTagsField(
     @Parent() character: CharacterEntity,
+    @Context("req") req?: Request,
   ): Promise<string[]> {
-    return this.tagsService.getCharacterTags(character.id);
+    const tags = await this.loaders
+      .forRequest(req)
+      .tagsByCharacter.load(character.id);
+    return tags.map((tag) => tag.displayName);
   }
 
   @AllowUnauthenticated()
@@ -470,9 +476,9 @@ export class CharactersResolver {
   @ResolveField("likesCount", () => Int)
   async resolveLikesCountField(
     @Parent() character: CharacterEntity,
+    @Context("req") req?: Request,
   ): Promise<number> {
-    const count = await this.charactersService.getLikesCount(character.id);
-    return count;
+    return this.loaders.forRequest(req).likeCountByCharacter.load(character.id);
   }
 
   // Unauthenticated for the same reason as Gallery.userHasLiked (#173): the
@@ -496,10 +502,11 @@ export class CharactersResolver {
   @ResolveField("_count", () => CharacterCount)
   async resolveCountField(
     @Parent() character: CharacterEntity,
+    @Context("req") req?: Request,
   ): Promise<CharacterCount> {
-    const mediaCount = await this.mediaService.getCharacterMediaCount(
-      character.id,
-    );
+    const mediaCount = await this.loaders
+      .forRequest(req)
+      .mediaCountByCharacter.load(character.id);
     return { media: mediaCount };
   }
 
@@ -560,8 +567,11 @@ export class CharactersResolver {
   @ResolveField("tags_rel", () => [CharacterTag])
   async resolveTagsRelField(
     @Parent() character: CharacterEntity,
+    @Context("req") req?: Request,
   ): Promise<CharacterTag[]> {
-    const tags = await this.tagsService.getCharacterTagRelations(character.id);
+    const tags = await this.loaders
+      .forRequest(req)
+      .tagsByCharacter.load(character.id);
     return tags.map((tag) => ({
       character,
       tag: {

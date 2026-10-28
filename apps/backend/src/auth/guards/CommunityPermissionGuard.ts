@@ -10,7 +10,8 @@ import {
   CommunityResolutionConfig,
   CommunityResolutionReference,
 } from "../types/CommunityResolutionConfig";
-import { GqlExecutionContext } from "@nestjs/graphql";
+import { GqlContextType, GqlExecutionContext } from "@nestjs/graphql";
+import type { Request } from "express";
 import { getNestedValue } from "../../common/utils/getNestedValue";
 
 @Injectable()
@@ -54,20 +55,28 @@ export class CommunityPermissionGuard implements CanActivate {
       return false;
     }
 
-    // Special case: CommunityPermission.Any means user just needs to be a member (have any role)
-    if (requiredPermissions === CommunityPermission.Any) {
-      const permissions = await this.permissionService.getCommunityPermissions(
+    const permissions =
+      await this.permissionService.getCommunityPermissionsForRequest(
+        this.getRequest(context),
         user.id,
         community.id,
       );
+
+    // Special case: CommunityPermission.Any means user just needs to be a member (have any role)
+    if (requiredPermissions === CommunityPermission.Any) {
       return permissions.hasMembership;
     }
 
-    return this.permissionService.hasCommunityPermission(
-      user.id,
-      community.id,
-      requiredPermissions,
-    );
+    return permissions[requiredPermissions] === true;
+  }
+
+  private getRequest(context: ExecutionContext): Request | undefined {
+    if (context.getType<GqlContextType>() === "graphql") {
+      return GqlExecutionContext.create(context).getContext<{
+        req?: Request;
+      }>().req;
+    }
+    return context.switchToHttp().getRequest<Request>();
   }
 
   private resolveEntityIds(

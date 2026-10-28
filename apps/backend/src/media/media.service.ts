@@ -515,20 +515,6 @@ export class MediaService {
   }
 
   /**
-   * Retrieves media tag relationships for a media item
-   * @param mediaId Media ID to get tags for
-   * @returns Array of media tag relationships with tag information
-   */
-  async findMediaTags(mediaId: string) {
-    return this.db.mediaTag.findMany({
-      where: { mediaId },
-      include: {
-        tag: true,
-      },
-    });
-  }
-
-  /**
    * Get the count of galleries this media appears in
    * @param mediaId Media ID to count galleries for
    * @returns Number of galleries containing this media (0 or 1, since media belongs to one gallery)
@@ -549,28 +535,6 @@ export class MediaService {
   async getMediaCharacterCount(mediaId: string): Promise<number> {
     return this.db.character.count({
       where: { mainMediaId: mediaId, ...notDeleted },
-    });
-  }
-
-  /**
-   * Get the count of media items for a specific character
-   * @param characterId Character ID to count media for
-   * @returns Number of media items for this character
-   */
-  async getCharacterMediaCount(characterId: string): Promise<number> {
-    return this.db.media.count({
-      where: { characterId: characterId },
-    });
-  }
-
-  /**
-   * Get the count of media items in a specific gallery
-   * @param galleryId Gallery ID to count media for
-   * @returns Number of media items in this gallery
-   */
-  async getGalleryMediaCount(galleryId: string): Promise<number> {
-    return this.db.media.count({
-      where: { galleryId: galleryId },
     });
   }
 

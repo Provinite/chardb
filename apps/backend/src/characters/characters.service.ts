@@ -1878,12 +1878,6 @@ export class CharactersService {
     }
   }
 
-  async getLikesCount(characterId: string) {
-    return this.db.like.count({
-      where: { characterId },
-    });
-  }
-
   async hasUserLiked(characterId: string, userId: string) {
     const like = await this.db.like.findUnique({
       where: {
