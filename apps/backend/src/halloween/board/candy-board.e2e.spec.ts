@@ -702,6 +702,7 @@ describe("Halloween candy board (e2e)", () => {
     it("needs a signed-in player", async () => {
       const res = await testApp.graphqlRequest(APPLY, {
         communityId,
+        id: boardId,
         actions: [],
       });
       expect(res.body.errors).toBeDefined();

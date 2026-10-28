@@ -159,19 +159,35 @@ export function spotlightGlow(
   lighting: Lighting | null | undefined,
 ): CSSProperties | null {
   const pool = spotlightOf(lighting);
-  if (!pool || !lighting || lighting.intensity <= 0) return null;
+  const glow = glowOf(lighting);
+  if (!pool || !glow) return null;
   const { square, ellipse, litShare } = poolSquare(pool);
-  // From white toward the light's colour as far as it colours, so the glow
-  // changes as smoothly as the colour does.
-  const strength = lighting.colour ? between(0, 1, lighting.colourStrength) : 0;
-  const rgb = channelsOf(lighting.colour ?? "#ffffff")
-    .map((c) => Math.round(255 + (c - 255) * strength))
-    .join(", ");
-  const alpha = round(GLOW_MAX * Math.min(1, lighting.intensity));
+  const rgb = glow.rgb.join(", ");
   return {
     ...square,
     mixBlendMode: "soft-light",
-    backgroundImage: `radial-gradient(${ellipse} at 50% 50%, rgba(${rgb}, ${alpha}) 0%, rgba(${rgb}, 0) ${litShare}%)`,
+    backgroundImage: `radial-gradient(${ellipse} at 50% 50%, rgba(${rgb}, ${glow.alpha}) 0%, rgba(${rgb}, 0) ${litShare}%)`,
+  };
+}
+
+/**
+ * A spotlight's glow at its brightest: its colour, from white toward the
+ * light's as far as the light colours -- so the glow changes as smoothly as
+ * the colour does -- and how strong. Null with no spotlight, or no intensity.
+ */
+export function glowOf(
+  lighting: Lighting | null | undefined,
+): { rgb: [number, number, number]; alpha: number } | null {
+  if (!spotlightOf(lighting) || !lighting || lighting.intensity <= 0) {
+    return null;
+  }
+  const strength = lighting.colour ? between(0, 1, lighting.colourStrength) : 0;
+  const [r, g, b] = channelsOf(lighting.colour ?? "#ffffff").map((c) =>
+    Math.round(255 + (c - 255) * strength),
+  );
+  return {
+    rgb: [r, g, b],
+    alpha: round(GLOW_MAX * Math.min(1, lighting.intensity)),
   };
 }
 

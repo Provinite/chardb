@@ -4,10 +4,12 @@ import styled from "styled-components";
 import {
   ArrowLeft,
   Candy as CandyIcon,
+  Download as DownloadIcon,
   Eraser,
   Tag,
   Image as ImageIcon,
   Link2,
+  Loader2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { usePageMeta } from "../lib/pageMeta";
@@ -26,6 +28,7 @@ import type { Lighting } from "../components/halloween/candyLighting";
 import type { BackgroundEffects } from "../components/halloween/backgroundEffects";
 import { NameDialog } from "../components/halloween/NameDialog";
 import { stickerRef } from "../components/halloween/candyBoard";
+import { downloadBoardImage } from "../components/halloween/boardImage";
 import {
   formatBoardName,
   type BoardName,
@@ -93,6 +96,16 @@ const Actions = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
+`;
+
+const Spinning = styled(Loader2)`
+  animation: candy-board-spin 1s linear infinite;
+
+  @keyframes candy-board-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
 `;
 
 const Button = styled.button`
@@ -275,6 +288,7 @@ const BoardView: React.FC<{
 
   const [choosingBackground, setChoosingBackground] = useState(false);
   const [clearing, setClearing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const useBackground = async (
     slug: string | null,
     effects: BackgroundEffects | null,
@@ -339,6 +353,27 @@ const BoardView: React.FC<{
     }
   };
 
+  /** A picture of the board as it is shown, changes not yet saved and all. */
+  const download = async () => {
+    setDownloading(true);
+    try {
+      await downloadBoardImage({
+        candies: board.candies,
+        placements,
+        background,
+        backgroundEffects,
+        lighting,
+        name,
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not make the picture",
+      );
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const count = board.candies.length;
 
   return (
@@ -360,37 +395,53 @@ const BoardView: React.FC<{
             {count} {count === 1 ? "candy" : "candies"} collected
           </Meta>
         </div>
-        {isOwner && (
-          <Actions>
-            <SaveStatusIndicator status={status} />
-            {status === "failed" && (
-              <Button type="button" onClick={retry}>
-                Retry
+        <Actions>
+          {isOwner && (
+            <>
+              <SaveStatusIndicator status={status} />
+              {status === "failed" && (
+                <Button type="button" onClick={retry}>
+                  Retry
+                </Button>
+              )}
+              <Button type="button" onClick={() => setNaming(true)}>
+                <Tag size={16} aria-hidden />
+                Name
               </Button>
+              <LightingControl value={lighting} onChange={changeLighting} />
+              <Button type="button" onClick={() => setChoosingBackground(true)}>
+                <ImageIcon size={16} aria-hidden />
+                Background
+              </Button>
+              <Button
+                type="button"
+                disabled={placements.length === 0}
+                onClick={() => setClearing(true)}
+              >
+                <Eraser size={16} aria-hidden />
+                Clear board
+              </Button>
+              <Button type="button" onClick={copyLink}>
+                <Link2 size={16} aria-hidden />
+                Copy link
+              </Button>
+            </>
+          )}
+          {/* Anyone can keep a picture of what they can see. */}
+          <Button
+            type="button"
+            disabled={downloading}
+            aria-busy={downloading}
+            onClick={download}
+          >
+            {downloading ? (
+              <Spinning size={16} aria-hidden />
+            ) : (
+              <DownloadIcon size={16} aria-hidden />
             )}
-            <Button type="button" onClick={() => setNaming(true)}>
-              <Tag size={16} aria-hidden />
-              Name
-            </Button>
-            <LightingControl value={lighting} onChange={changeLighting} />
-            <Button type="button" onClick={() => setChoosingBackground(true)}>
-              <ImageIcon size={16} aria-hidden />
-              Background
-            </Button>
-            <Button
-              type="button"
-              disabled={placements.length === 0}
-              onClick={() => setClearing(true)}
-            >
-              <Eraser size={16} aria-hidden />
-              Clear board
-            </Button>
-            <Button type="button" onClick={copyLink}>
-              <Link2 size={16} aria-hidden />
-              Copy link
-            </Button>
-          </Actions>
-        )}
+            Download
+          </Button>
+        </Actions>
       </Header>
 
       <CandyBoard

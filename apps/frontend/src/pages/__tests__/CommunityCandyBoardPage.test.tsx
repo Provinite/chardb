@@ -62,6 +62,15 @@ vi.mock("react-hot-toast", () => ({
   Toaster: () => null,
 }));
 
+// jsdom cannot draw: the picture's drawing is tested on its own.
+const download = vi.hoisted(() => vi.fn(async () => undefined));
+vi.mock("../../components/halloween/boardImage", async () => ({
+  ...(await vi.importActual<
+    typeof import("../../components/halloween/boardImage")
+  >("../../components/halloween/boardImage")),
+  downloadBoardImage: download,
+}));
+
 import {
   ApplyHalloweenCandyBoardActionsDocument,
   HalloweenCandyBoardDocument,
@@ -224,6 +233,47 @@ describe("CommunityCandyBoardPage", () => {
   beforeEach(() => {
     host.halloweenEnabled = true;
     toast.error.mockClear();
+  });
+
+  describe("downloading the board as a picture", () => {
+    it("draws the board as it is shown, for anyone looking", async () => {
+      const name = { first: "Clover", joiner: null, last: "Coin" };
+      renderBoard([
+        boardQuery(
+          board([2], {
+            viewerIsOwner: false,
+            background: "tile-corkboard",
+            name,
+          }),
+        ),
+      ]);
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Download" }),
+      );
+      await waitFor(() => expect(download).toHaveBeenCalledTimes(1));
+      expect(download).toHaveBeenCalledWith(
+        expect.objectContaining({
+          background: "tile-corkboard",
+          name,
+          placements: [expect.objectContaining({ sticker: { candy: 2 } })],
+        }),
+      );
+    });
+
+    it("says so when the picture cannot be made", async () => {
+      download.mockRejectedValueOnce(
+        new Error("This browser cannot draw the picture"),
+      );
+      renderBoard([boardQuery(board([2]))]);
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Download" }),
+      );
+      await waitFor(() =>
+        expect(toast.error).toHaveBeenCalledWith(
+          "This browser cannot draw the picture",
+        ),
+      );
+    });
   });
 
   describe("the way back to your boards", () => {
