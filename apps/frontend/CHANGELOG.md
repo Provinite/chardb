@@ -39,6 +39,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **Item and currency ledger search waits for typing to pause**; it queried on every letter, and the item ledger swapped the whole page for a spinner each time, dropping focus mid-word (#444).
+- **The item ledger footer counts only the events on screen**; "Showing 13 events across 25 of 40 item movements" now reads "Showing 13 events" (#444).
 - **Members without `canCreateOrphanedCharacter` can create characters again**; the form sent `assignToSelf: false` for them, which the server refused as an orphan.
 - **"Owned By..." on the create form gives the character to the member chosen**; it used to go to its creator (#424).
 - **The create form's image check follows the ownership choice**, and a pending owner left in a hidden picker is no longer sent or allowed to block the submit (#424).

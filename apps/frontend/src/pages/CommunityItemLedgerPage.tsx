@@ -489,7 +489,6 @@ export const CommunityItemLedgerPage: React.FC = () => {
 
   const rows = data?.itemTransactions?.transactions ?? [];
   const entries = collapseByBatch(rows);
-  const total = data?.itemTransactions?.total ?? 0;
   const hasMore = data?.itemTransactions?.hasMore ?? false;
 
   if (loading && !data) {
@@ -656,9 +655,10 @@ export const CommunityItemLedgerPage: React.FC = () => {
 
           <Footer>
             <Count>
-              Showing {entries.length} event{entries.length === 1 ? "" : "s"}{" "}
-              across {rows.length} of {total} item movement
-              {total === 1 ? "" : "s"}
+              {/* Lines on screen only. The rows behind them (one per item)
+                  and the server's total are storage detail, and naming all
+                  three made the footer unreadable. */}
+              {`Showing ${entries.length} event${entries.length === 1 ? "" : "s"}`}
             </Count>
             {hasMore && (
               <MoreButton

@@ -112,6 +112,18 @@ const searchBox = () =>
 
 const searches = (sent: Filters[]) => sent.map((f) => f.search);
 
+describe("CommunityItemLedgerPage footer", () => {
+  it("counts the events on screen and nothing else", async () => {
+    // Items per batch and the server's row total read as noise next to the
+    // lines a person can actually see.
+    renderLedger([]);
+    await screen.findByText("Trait Change Potion");
+
+    expect(screen.getByText("Showing 1 event")).toBeInTheDocument();
+    expect(screen.queryByText(/across \d+ of \d+/)).toBeNull();
+  });
+});
+
 describe("CommunityItemLedgerPage search", () => {
   it("keeps the search box and its focus through a search", async () => {
     const sent: Filters[] = [];
