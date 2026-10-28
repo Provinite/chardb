@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A list's character lookups batch into one query**, along with the species and community lookups under them; a 6-gallery list went from 21 queries to 6 (#97).
 - **The viewer is authenticated once per request** instead of once per resolved field (#97).
 - **`@nestjs/graphql` is 13.4.5**, for `@oneOf` input types.
 - **Halloween candy images are named by slug** (`candy/candy-corn.png`): 107 unique candies, with the 23 duplicate files removed and Luther and Daphne's two paintings framed as stickers.

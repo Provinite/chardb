@@ -637,7 +637,10 @@ export class CharactersService {
   }
 
   async findOne(id: string, userId?: string) {
-    const character = await this.db.character.findFirst({
+    // findUnique, not findFirst: Prisma batches concurrent findUnique calls
+    // into one query, so a list's character fields cost one query, not one
+    // each -- and so do the species and community lookups nested under them
+    const character = await this.db.character.findUnique({
       where: { id, ...notDeleted },
     });
 
