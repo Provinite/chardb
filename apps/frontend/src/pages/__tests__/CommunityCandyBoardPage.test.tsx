@@ -67,6 +67,8 @@ import {
   MyHalloweenCandyBoardDocument,
   SetHalloweenCandyBoardBackgroundDocument,
   SetHalloweenCandyBoardLightingDocument,
+  SetHalloweenCandyBoardNameDocument,
+  HalloweenCandyBoardNameWordsDocument,
   type HalloweenCandyBoardAction,
 } from "../../generated/graphql";
 import {
@@ -81,6 +83,7 @@ import {
   type Lighting,
 } from "../../components/halloween/candyLighting";
 import type { BackgroundEffects } from "../../components/halloween/backgroundEffects";
+import type { BoardName } from "../../components/halloween/boardName";
 
 const candy = (knockEventId: number, slug: string) => ({
   __typename: "HalloweenCandy" as const,
@@ -106,9 +109,11 @@ const board = (
     background = null as string | null,
     lighting = null as Lighting | null,
     backgroundEffects = null as BackgroundEffects | null,
+    name = null as BoardName | null,
   } = {},
 ) => ({
   __typename: "HalloweenCandyBoard" as const,
+  name: name && { __typename: "HalloweenCandyBoardName" as const, ...name },
   backgroundEffects: backgroundEffects && {
     __typename: "HalloweenCandyBackgroundEffects" as const,
     ...backgroundEffects,
@@ -1451,6 +1456,159 @@ describe("CommunityCandyBoardPage", () => {
       );
       expect(await lutherShadow()).toBe(shadowFilter(null, 0));
       await waitFor(() => expect(saved).toHaveBeenCalled(), { timeout: 2000 });
+    });
+  });
+
+  describe("the board's name", () => {
+    const WORDS = {
+      first: ["Spooky", "Moonlit", "Golden"],
+      joiners: ["of", "von"],
+      last: ["Pumpkin", "Hoard", "Cauldron"],
+    };
+    const wordsQuery: MockedResponse = {
+      request: { query: HalloweenCandyBoardNameWordsDocument },
+      result: {
+        data: {
+          halloweenCandyBoardNameWords: {
+            __typename: "HalloweenCandyBoardNameWords",
+            ...WORDS,
+          },
+        },
+      },
+    };
+    const setName = (
+      name: BoardName | null,
+      result: ReturnType<typeof board>,
+    ): MockedResponse => ({
+      request: {
+        query: SetHalloweenCandyBoardNameDocument,
+        variables: { communityId: COMMUNITY_ID, name },
+      },
+      result: { data: { setHalloweenCandyBoardName: result } },
+    });
+    const moonlit = { first: "Moonlit", joiner: "von", last: "Pumpkin" };
+
+    const openNaming = async () => {
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Name" }),
+      );
+      return screen.findByRole("dialog", { name: "Name your board" });
+    };
+
+    it("is the board's title, for anyone looking", async () => {
+      renderBoard([
+        boardQuery(
+          board([], { viewerIsOwner: false, owner: "moonbeam", name: moonlit }),
+        ),
+      ]);
+      expect(
+        await screen.findByRole("heading", { level: 1 }),
+      ).toHaveTextContent("Moonlit von Pumpkin");
+      expect(screen.getByText(/moonbeam's board/)).toBeInTheDocument();
+      expect(
+        screen.queryByRole("button", { name: "Name" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("leaves an unnamed board's title as it was", async () => {
+      renderBoard([boardQuery(board([]))]);
+      expect(
+        await screen.findByRole("heading", { level: 1 }),
+      ).toHaveTextContent("Your candy board");
+    });
+
+    it("offers each list of words to pick one from, the saved name picked", async () => {
+      renderBoard([boardQuery(board([], { name: moonlit })), wordsQuery]);
+      const dialog = await openNaming();
+
+      const first = await within(dialog).findByRole("radiogroup", {
+        name: "First word",
+      });
+      expect(within(first).getAllByRole("radio")).toHaveLength(3);
+      expect(
+        within(first).getByRole("radio", { name: "Moonlit" }),
+      ).toBeChecked();
+      const joiner = within(dialog).getByRole("radiogroup", { name: "Joiner" });
+      expect(within(joiner).getByRole("radio", { name: "von" })).toBeChecked();
+      expect(
+        within(joiner).getByRole("radio", { name: "No joiner" }),
+      ).not.toBeChecked();
+      expect(
+        within(
+          within(dialog).getByRole("radiogroup", { name: "Last word" }),
+        ).getByRole("radio", { name: "Pumpkin" }),
+      ).toBeChecked();
+      expect(within(dialog).getByTestId("name-preview")).toHaveTextContent(
+        "Moonlit von Pumpkin",
+      );
+    });
+
+    it("builds a name word by word, and saves it", async () => {
+      const name = { first: "Golden", joiner: null, last: "Hoard" };
+      const saved = vi.fn(() => ({
+        data: { setHalloweenCandyBoardName: board([], { name }) },
+      }));
+      renderBoard([
+        boardQuery(board([])),
+        wordsQuery,
+        { ...setName(name, board([], { name })), result: saved },
+      ]);
+      const dialog = await openNaming();
+      const use = within(dialog).getByRole("button", { name: "Use name" });
+      expect(use).toBeDisabled();
+
+      await userEvent.click(
+        await within(dialog).findByRole("radio", { name: "Golden" }),
+      );
+      expect(use).toBeDisabled();
+      await userEvent.click(
+        within(dialog).getByRole("radio", { name: "Hoard" }),
+      );
+      expect(within(dialog).getByTestId("name-preview")).toHaveTextContent(
+        "Golden Hoard",
+      );
+      await userEvent.click(use);
+
+      await waitFor(() => expect(saved).toHaveBeenCalled());
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        "Golden Hoard",
+      );
+    });
+
+    it("shuffles a name", async () => {
+      renderBoard([boardQuery(board([])), wordsQuery]);
+      const dialog = await openNaming();
+      await within(dialog).findByRole("radio", { name: "Golden" });
+
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Shuffle" }),
+      );
+      const preview = within(dialog).getByTestId("name-preview").textContent;
+      expect(preview).toMatch(
+        /^(Spooky|Moonlit|Golden)( (of|von))? (Pumpkin|Hoard|Cauldron)$/,
+      );
+      expect(
+        within(dialog).getByRole("button", { name: "Use name" }),
+      ).toBeEnabled();
+    });
+
+    it("takes a name away", async () => {
+      const saved = vi.fn(() => ({
+        data: { setHalloweenCandyBoardName: board([]) },
+      }));
+      renderBoard([
+        boardQuery(board([], { name: moonlit })),
+        wordsQuery,
+        { ...setName(null, board([])), result: saved },
+      ]);
+      const dialog = await openNaming();
+      await userEvent.click(
+        await within(dialog).findByRole("button", { name: "Remove name" }),
+      );
+      await waitFor(() => expect(saved).toHaveBeenCalled());
+      expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent(
+        "Your candy board",
+      );
     });
   });
 

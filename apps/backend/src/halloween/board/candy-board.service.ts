@@ -27,6 +27,11 @@ import {
   type CandyPlacement,
 } from "./candy-board.schema";
 import { StoredCandyBoardInvalidError } from "./candy-board.errors";
+import {
+  boardNameSchema,
+  storedBoardNameSchema,
+  type BoardName,
+} from "./board-names";
 import type {
   HalloweenCandy,
   HalloweenCandyBoard,
@@ -62,6 +67,16 @@ function storedBackgroundEffects(
   const parsed = candyBackgroundEffectsSchema.safeParse(
     board.backgroundEffects,
   );
+  if (!parsed.success) {
+    throw new StoredCandyBoardInvalidError(board.id, parsed.error.message);
+  }
+  return parsed.data;
+}
+
+/** A board's name, checked for shape on the way out. */
+function storedName(board: BoardRow): BoardName | null {
+  if (board.name === null) return null;
+  const parsed = storedBoardNameSchema.safeParse(board.name);
   if (!parsed.success) {
     throw new StoredCandyBoardInvalidError(board.id, parsed.error.message);
   }
@@ -213,9 +228,35 @@ export class CandyBoardService {
   }
 
   /**
-   * Sets the picture or tile behind the signed-in player's candies, or with
-   * null goes back to none chosen, which shows the default.
+   * Names the signed-in player's board from the word lists, or with null
+   * leaves it unnamed.
    */
+  async setName(
+    communityId: string,
+    userId: string,
+    name: BoardName | null,
+  ): Promise<HalloweenCandyBoard> {
+    if (name !== null && !boardNameSchema.safeParse(name).success) {
+      throw new BadRequestException(
+        "A board's name is a first and a last word, and any joiner, from their lists",
+      );
+    }
+    const guildId = await this.requireGuild(communityId);
+    const discordUserId = await this.discordIdOf(userId);
+    if (!discordUserId) {
+      throw new ForbiddenException(
+        "Link your Discord account to have a candy board",
+      );
+    }
+    const value = name ?? Prisma.DbNull;
+    const board = await this.db.halloweenCandyBoard.upsert({
+      where: { guildId_userId: { guildId, userId: discordUserId } },
+      create: { guildId, userId: discordUserId, name: value },
+      update: { name: value },
+    });
+    return this.toBoard(board, true);
+  }
+
   /**
    * Puts the light that casts the signed-in player's candies' shadows, or
    * with null goes back to the board's default light.
@@ -248,8 +289,8 @@ export class CandyBoardService {
   }
 
   /**
-   * Puts the picture or tile behind the signed-in player's candies, and how
-   * it is dimmed and tinted; null effects for neither.
+   * Puts the picture or tile behind the signed-in player's candies, null for
+   * none chosen, and how it is dimmed and tinted; null effects for neither.
    */
   async setBackground(
     communityId: string,
@@ -345,6 +386,7 @@ export class CandyBoardService {
       background: board.background,
       backgroundEffects: storedBackgroundEffects(board),
       lighting: storedLighting(board),
+      name: storedName(board),
       candies,
       // A candy whose knock is gone is dropped rather than drawn as nothing.
       placements: storedPlacements(board).filter((p) =>

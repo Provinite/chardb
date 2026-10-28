@@ -2453,6 +2453,9 @@ model HalloweenCandyBoard {
   /// board's default light.
   /// [HalloweenCandyLightingJson]
   lighting   Json?
+  /// What its owner calls it, picked from word lists. Null for no name.
+  /// [HalloweenCandyBoardNameJson]
+  name       Json?
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   @@unique([guildId, userId])

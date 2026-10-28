@@ -217,6 +217,48 @@ export class HalloweenCandyLightingInput {
 
 @ObjectType({
   description:
+    "What a board is called: a first word, any joiner and a last word, shown in that order with spaces",
+})
+export class HalloweenCandyBoardName {
+  @Field()
+  first: string;
+
+  @Field(() => String, { nullable: true })
+  joiner: string | null;
+
+  @Field()
+  last: string;
+}
+
+@InputType({
+  description:
+    "A name for your board, its words from halloweenCandyBoardNameWords",
+})
+export class HalloweenCandyBoardNameInput {
+  @Field()
+  first: string;
+
+  @Field(() => String, { nullable: true })
+  joiner: string | null;
+
+  @Field()
+  last: string;
+}
+
+@ObjectType({ description: "The words a board's name is picked from" })
+export class HalloweenCandyBoardNameWords {
+  @Field(() => [String], { description: "In title case" })
+  first: string[];
+
+  @Field(() => [String], { description: "In lowercase" })
+  joiners: string[];
+
+  @Field(() => [String], { description: "In title case" })
+  last: string[];
+}
+
+@ObjectType({
+  description:
     "How a board's background is muted behind its candies: dimmed, and tinted toward a colour",
 })
 export class HalloweenCandyBackgroundEffects {
@@ -295,6 +337,12 @@ export class HalloweenCandyBoard {
     description: "Null for the board's default light",
   })
   lighting: HalloweenCandyLighting | null;
+
+  @Field(() => HalloweenCandyBoardName, {
+    nullable: true,
+    description: "Null for a board not named",
+  })
+  name: HalloweenCandyBoardName | null;
 
   @Field(() => [HalloweenCandy], { description: "Oldest first" })
   candies: HalloweenCandy[];

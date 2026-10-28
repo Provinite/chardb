@@ -21,6 +21,21 @@ const BOARD_FIELDS = `
   background
   backgroundEffects { dim tint tintStrength saturation }
   lighting { x y height intensity colour colourStrength spotlight cone }
+  name { first joiner last }
+`;
+
+const SET_NAME = `
+  mutation SetName($communityId: ID!, $name: HalloweenCandyBoardNameInput) {
+    setHalloweenCandyBoardName(communityId: $communityId, name: $name) {
+      ${BOARD_FIELDS}
+    }
+  }
+`;
+
+const NAME_WORDS = `
+  query NameWords {
+    halloweenCandyBoardNameWords { first joiners last }
+  }
 `;
 
 const SET_LIGHTING = `
@@ -803,6 +818,88 @@ describe("Halloween candy board (e2e)", () => {
 
     it("needs Discord linked", async () => {
       const res = await setBackground("tile-corkboard", unlinkedToken);
+      expect(res.body.errors?.[0].message).toBe(
+        "Link your Discord account to have a candy board",
+      );
+    });
+  });
+
+  describe("naming the board", () => {
+    const REFUSED =
+      "A board's name is a first and a last word, and any joiner, from their lists";
+    type Name = { first: string; joiner: string | null; last: string };
+    const setName = (name: Name | null, token = playerToken) =>
+      testApp.authenticatedGraphqlRequest(
+        SET_NAME,
+        { communityId, name },
+        token,
+      );
+
+    it("offers its words to anyone", async () => {
+      const res = await testApp.graphqlRequest(NAME_WORDS, {});
+      const words = res.body.data.halloweenCandyBoardNameWords;
+      expect(words.first).toHaveLength(50);
+      expect(words.last).toHaveLength(50);
+      expect(words.first).toContain("Moonlit");
+      expect(words.joiners).toContain("von");
+      expect(words.last).toContain("Pumpkin");
+    });
+
+    it("starts unnamed", async () => {
+      expect((await myBoard()).body.data.myHalloweenCandyBoard.name).toBe(null);
+    });
+
+    it("names the board, and shows it to anyone", async () => {
+      const name = { first: "Moonlit", joiner: "von", last: "Pumpkin" };
+      const set = await setName(name);
+      expect(set.body.errors).toBeUndefined();
+      const { id, name: saved } = set.body.data.setHalloweenCandyBoardName;
+      expect(saved).toEqual(name);
+
+      const seen = await testApp.graphqlRequest(BOARD, { communityId, id });
+      expect(seen.body.data.halloweenCandyBoard.name).toEqual(name);
+    });
+
+    it("names it without a joiner", async () => {
+      const name = { first: "Spooky", joiner: null, last: "Cauldron" };
+      const res = await setName(name);
+      expect(res.body.data.setHalloweenCandyBoardName.name).toEqual(name);
+    });
+
+    it("unnames it", async () => {
+      await setName({ first: "Spooky", joiner: null, last: "Cauldron" });
+      const res = await setName(null);
+      expect(res.body.data.setHalloweenCandyBoardName.name).toBe(null);
+    });
+
+    it.each([
+      [
+        "a first word not on its list",
+        { first: "Nice", joiner: null, last: "Pumpkin" },
+      ],
+      [
+        "a last word not on its list",
+        { first: "Spooky", joiner: null, last: "Car" },
+      ],
+      [
+        "a joiner not on its list",
+        { first: "Spooky", joiner: "with", last: "Pumpkin" },
+      ],
+      [
+        "a word in the wrong place",
+        { first: "Cauldron", joiner: null, last: "Spooky" },
+      ],
+    ])("refuses %s", async (_what, name) => {
+      const res = await setName(name);
+      expect(res.body.errors?.[0].message).toBe(REFUSED);
+      expect((await myBoard()).body.data.myHalloweenCandyBoard.name).toBe(null);
+    });
+
+    it("needs Discord linked", async () => {
+      const res = await setName(
+        { first: "Spooky", joiner: null, last: "Cauldron" },
+        unlinkedToken,
+      );
       expect(res.body.errors?.[0].message).toBe(
         "Link your Discord account to have a candy board",
       );

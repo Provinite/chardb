@@ -13,6 +13,7 @@ CREATE TABLE "halloween_candy_boards" (
     "background" VARCHAR(60),
     "background_effects" JSONB,
     "lighting" JSONB,
+    "name" JSONB,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "halloween_candy_boards_pkey" PRIMARY KEY ("id")

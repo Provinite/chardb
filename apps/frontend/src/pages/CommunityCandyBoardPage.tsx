@@ -4,6 +4,7 @@ import styled from "styled-components";
 import {
   Candy as CandyIcon,
   Eraser,
+  Tag,
   Image as ImageIcon,
   Link2,
 } from "lucide-react";
@@ -22,11 +23,17 @@ import { SaveStatusIndicator } from "../components/halloween/SaveStatusIndicator
 import { LightingControl } from "../components/halloween/LightingControl";
 import type { Lighting } from "../components/halloween/candyLighting";
 import type { BackgroundEffects } from "../components/halloween/backgroundEffects";
+import { NameDialog } from "../components/halloween/NameDialog";
+import {
+  formatBoardName,
+  type BoardName,
+} from "../components/halloween/boardName";
 import {
   useHalloweenCandyBoardQuery,
   useMyHalloweenCandyBoardQuery,
   useSetHalloweenCandyBoardBackgroundMutation,
   useSetHalloweenCandyBoardLightingMutation,
+  useSetHalloweenCandyBoardNameMutation,
   type HalloweenCandyBoardFieldsFragment,
 } from "../generated/graphql";
 
@@ -125,6 +132,14 @@ const stripLighting = (
     : null;
 
 /** How a board's background is muted as the API sends it, as the dialog holds it. */
+/** A board's name as the API sends it, as the dialog holds it. */
+const stripName = (
+  name: HalloweenCandyBoardFieldsFragment["name"],
+): BoardName | null =>
+  name
+    ? { first: name.first, joiner: name.joiner ?? null, last: name.last }
+    : null;
+
 const stripEffects = (
   effects: HalloweenCandyBoardFieldsFragment["backgroundEffects"],
 ): BackgroundEffects | null =>
@@ -299,13 +314,29 @@ const BoardView: React.FC<{
     }
   };
 
+  // A name shows as soon as it is used, and goes back if refused.
+  const savedName = stripName(board.name);
+  const [name, setName] = useState<BoardName | null>(savedName);
+  useEffect(() => setName(stripName(board.name)), [board.name]);
+  const [saveName] = useSetHalloweenCandyBoardNameMutation();
+  const [naming, setNaming] = useState(false);
+  const useName = async (next: BoardName | null) => {
+    setName(next);
+    if (!communityId) return;
+    try {
+      await saveName({ variables: { communityId, name: next } });
+    } catch (error) {
+      setName(savedName);
+      toast.error(
+        error instanceof Error ? error.message : "Could not name the board",
+      );
+    }
+  };
+
   const isOwner = board.viewerIsOwner;
   const ownerName = board.owner?.displayName || board.owner?.username;
-  const title = isOwner
-    ? "Your candy board"
-    : ownerName
-      ? `${ownerName}'s candy board`
-      : "A candy board";
+  const whose = isOwner ? "Your" : ownerName ? `${ownerName}'s` : "A";
+  const title = name ? formatBoardName(name) : `${whose} candy board`;
 
   usePageMeta({
     title,
@@ -335,6 +366,7 @@ const BoardView: React.FC<{
             {title}
           </Title>
           <Meta>
+            {name && `${whose} board · `}
             {count} {count === 1 ? "candy" : "candies"} collected
           </Meta>
         </div>
@@ -346,6 +378,10 @@ const BoardView: React.FC<{
                 Retry
               </Button>
             )}
+            <Button type="button" onClick={() => setNaming(true)}>
+              <Tag size={16} aria-hidden />
+              Name
+            </Button>
             <LightingControl value={lighting} onChange={changeLighting} />
             <Button type="button" onClick={() => setChoosingBackground(true)}>
               <ImageIcon size={16} aria-hidden />
@@ -379,6 +415,12 @@ const BoardView: React.FC<{
 
       {isOwner && (
         <>
+          <NameDialog
+            open={naming}
+            value={name}
+            onClose={() => setNaming(false)}
+            onUse={useName}
+          />
           <BackgroundDialog
             open={choosingBackground}
             value={background}

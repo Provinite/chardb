@@ -231,6 +231,11 @@ export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
       spotlight
       cone
     }
+    name {
+      first
+      joiner
+      last
+    }
     owner {
       id
       username
@@ -277,6 +282,28 @@ export const APPLY_HALLOWEEN_CANDY_BOARD_ACTIONS_MUTATION = gql`
       communityId: $communityId
       actions: $actions
     ) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const HALLOWEEN_CANDY_BOARD_NAME_WORDS_QUERY = gql`
+  query HalloweenCandyBoardNameWords {
+    halloweenCandyBoardNameWords {
+      first
+      joiners
+      last
+    }
+  }
+`;
+
+export const SET_HALLOWEEN_CANDY_BOARD_NAME_MUTATION = gql`
+  mutation SetHalloweenCandyBoardName(
+    $communityId: ID!
+    $name: HalloweenCandyBoardNameInput
+  ) {
+    setHalloweenCandyBoardName(communityId: $communityId, name: $name) {
       ...HalloweenCandyBoardFields
     }
   }

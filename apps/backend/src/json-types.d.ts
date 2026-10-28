@@ -4,6 +4,7 @@ import type {
   CandyLighting,
   CandyPlacement,
 } from "./halloween/board/candy-board.schema";
+import type { BoardName } from "./halloween/board/board-names";
 
 declare global {
   namespace PrismaJson {
@@ -36,6 +37,12 @@ declare global {
      * from the zod schema in candy-board.schema.ts.
      */
     type HalloweenCandyBackgroundEffectsJson = CandyBackgroundEffects;
+
+    /**
+     * What a Halloween candy board is called. Inferred from the zod schema in
+     * board-names.ts.
+     */
+    type HalloweenCandyBoardNameJson = BoardName;
 
     /**
      * Type for character trait values stored as JSONB
