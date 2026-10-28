@@ -16,7 +16,6 @@
  */
 import type { CSSProperties } from "react";
 import type { HalloweenCandyLighting } from "../../generated/graphql";
-import { BOARD_ASPECT } from "./candyBoard";
 
 export type Lighting = Omit<HalloweenCandyLighting, "__typename">;
 
@@ -82,15 +81,21 @@ export interface Spotlight {
   y: number;
   /** Fully lit out to here, in hundredths of the board's width... */
   lit: number;
-  /** ...then darkening to here, and dark past it. */
+  /** ...then darkening to here, and dark past it, across the beam. */
   radius: number;
+  /** How many times longer the pool is along the beam than across it. */
+  stretch: number;
+  /** Which way the beam runs, in degrees clockwise from the board's right. */
+  angle: number;
   darkness: number;
 }
 
 /**
  * The pool of light a spotlight throws, under the light: as wide as its
  * cone, wider the higher it hangs, with its edge softened over the outer
- * third. Null for a board lit evenly.
+ * third. A beam from off to the side lands at a slant, so the pool is
+ * stretched along it -- by as far out as the light is over how high it
+ * hangs, as the shadows are long. Null for a board lit evenly.
  */
 export function spotlightOf(
   lighting: Lighting | null | undefined,
@@ -100,30 +105,43 @@ export function spotlightOf(
   const radius =
     (CONE_RADIUS_MIN + (CONE_RADIUS_MAX - CONE_RADIUS_MIN) * cone) *
     (0.5 + 0.5 * height);
+  const reach = Math.hypot(x, y);
   return {
     x: 50 + x * 50,
     y: 50 + y * 50,
     lit: (radius * 2) / 3,
     radius,
+    stretch: Math.hypot(1, reach / height),
+    angle: reach === 0 ? 0 : (Math.atan2(y, x) * 180) / Math.PI,
     darkness: SPOTLIGHT_DARKNESS_MAX * spotlight,
   };
 }
 
+/** How many board widths across the spotlight's square is: enough to cover
+ * the board from a pool anywhere on it, however it is turned. */
+const SPOTLIGHT_SQUARE = 3;
+
 /**
- * The spotlight as a layer over a board-shaped surface; null for none. The
- * pool is an ellipse sized in percent of the surface's width and height,
- * which on a surface of the board's shape is a circle at any size.
+ * The spotlight as a layer over a board-shaped surface, which must clip it;
+ * null for none. A gradient's ellipse cannot be turned, so the gradient is
+ * drawn on a square centred on the pool and the square is turned to the
+ * beam.
  */
 export function spotlightLayer(
   lighting: Lighting | null | undefined,
 ): CSSProperties | null {
   const pool = spotlightOf(lighting);
   if (!pool) return null;
-  const across = round(pool.radius);
-  const down = round(pool.radius * BOARD_ASPECT);
+  const across = pool.radius / SPOTLIGHT_SQUARE;
+  const along = across * pool.stretch;
   const litShare = round((pool.lit / pool.radius) * 100);
   return {
-    backgroundImage: `radial-gradient(${across}% ${down}% at ${round(pool.x)}% ${round(pool.y)}%, rgba(0, 0, 0, 0) ${litShare}%, rgba(0, 0, 0, ${round(pool.darkness)}) 100%)`,
+    left: `${round(pool.x)}%`,
+    top: `${round(pool.y)}%`,
+    width: `${SPOTLIGHT_SQUARE * 100}%`,
+    aspectRatio: "1",
+    transform: `translate(-50%, -50%) rotate(${pool.angle.toFixed(3)}deg)`,
+    backgroundImage: `radial-gradient(${round(along)}% ${round(across)}% at 50% 50%, rgba(0, 0, 0, 0) ${litShare}%, rgba(0, 0, 0, ${round(pool.darkness)}) 100%)`,
   };
 }
 

@@ -59,17 +59,45 @@ describe("spotlightOf", () => {
     expect(pool.lit).toBeCloseTo((pool.radius * 2) / 3, 6);
   });
 
-  it("draws as a circle on the board, sized in its width and height", () => {
-    const light = { ...at(0, 0, 0.5), spotlight: 0.5 };
-    const { radius } = spotlightOf(light)!;
-    const gradient = String(spotlightLayer(light)?.backgroundImage);
-    const [, across, down] =
+  it("keeps the pool round under a light overhead", () => {
+    close(spotlightOf({ ...at(0, 0, 0.5), spotlight: 1 })!.stretch, 1);
+  });
+
+  it("stretches the pool along the beam, the lower and further out the light the more", () => {
+    const stretch = (reach: number, height: number) =>
+      spotlightOf({ ...at(reach, 0, height), spotlight: 1 })!.stretch;
+    // As the shadows are long: as far out as it is over how high it hangs.
+    close(stretch(0.6, 0.3), Math.hypot(1, 0.6 / 0.3));
+    expect(stretch(0.6, 0.3)).toBeGreaterThan(stretch(0.6, 0.9));
+    expect(stretch(0.9, 0.5)).toBeGreaterThan(stretch(0.3, 0.5));
+  });
+
+  it("turns the pool's long side toward the light", () => {
+    const angle = (x: number, y: number) =>
+      spotlightOf({ ...at(x, y, 0.5), spotlight: 1 })!.angle;
+    close(angle(0.5, 0), 0);
+    close(angle(0, 0.5), 90);
+    close(angle(-0.5, -0.5), -135);
+  });
+
+  it("draws as an ellipse on a square turned to the beam, centred on the pool", () => {
+    const light = { ...at(0.4, -0.3, 0.4), spotlight: 0.5 };
+    const pool = spotlightOf(light)!;
+    const style = spotlightLayer(light)!;
+    expect(style.left).toBe(`${pool.x}%`);
+    expect(style.top).toBe(`${pool.y}%`);
+    expect(style.width).toBe("300%");
+    expect(style.aspectRatio).toBe("1");
+    expect(style.transform).toBe(
+      `translate(-50%, -50%) rotate(${pool.angle.toFixed(3)}deg)`,
+    );
+    const [, along, across] =
       /^radial-gradient\(([\d.]+)% ([\d.]+)% at 50% 50%, rgba\(0, 0, 0, 0\) 66\.667%, rgba\(0, 0, 0, [\d.]+\) 100%\)$/.exec(
-        gradient,
+        String(style.backgroundImage),
       ) ?? [];
-    close(Number(across), radius);
-    // The board is 4:3, so a circle is a third more of its height.
-    close(Number(down), (radius * 4) / 3);
+    // The square is three board widths across; drawn to a thousandth.
+    expect(Number(along)).toBeCloseTo((pool.radius * pool.stretch) / 3, 3);
+    expect(Number(across)).toBeCloseTo(pool.radius / 3, 3);
     expect(spotlightLayer(DEFAULT_LIGHTING)).toBe(null);
   });
 });

@@ -11,8 +11,8 @@ const layer: CSSProperties = {
  * What the board's light lays over everything under it: its colour, then a
  * spotlight's darkness outside its pool. Drawn last on a surface -- the
  * board, or the background dialog's preview, so a background is chosen as it
- * will look -- and under the selection's handles. The surface must be the
- * board's shape, for the spotlight's pool to be round.
+ * will look -- and under the selection's handles. The surface must clip
+ * what overflows it, as the spotlight's layer reaches well past its edges.
  */
 export const LightLayers: React.FC<{ lighting: Lighting | null }> = ({
   lighting,
@@ -32,7 +32,11 @@ export const LightLayers: React.FC<{ lighting: Lighting | null }> = ({
         <div
           data-testid="light-spotlight"
           aria-hidden
-          style={{ ...layer, ...spotlight }}
+          style={{
+            position: "absolute",
+            pointerEvents: "none",
+            ...spotlight,
+          }}
         />
       )}
     </>
