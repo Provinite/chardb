@@ -36,7 +36,9 @@ export const LIGHT_HEIGHT_MAX = 1;
  * point in a unit circle centred on it (y down, as on screen); `height` is
  * how high it hangs. Shadows fall away from it, longer the further to the
  * side and the lower it is. `intensity`, 0 to 1, makes them darker and
- * sharper without changing their length.
+ * sharper without changing their length. `colour`, a `#rrggbb` or null for
+ * white, colours everything under it -- candies, background and shadows --
+ * by `colourStrength`, 0 to 1.
  */
 export const candyLightingSchema = z
   .object({
@@ -44,6 +46,11 @@ export const candyLightingSchema = z
     y: z.number().min(-1).max(1),
     height: z.number().min(LIGHT_HEIGHT_MIN).max(LIGHT_HEIGHT_MAX),
     intensity: z.number().min(0).max(1),
+    colour: z
+      .string()
+      .regex(/^#[0-9a-f]{6}$/i)
+      .nullable(),
+    colourStrength: z.number().min(0).max(1),
   })
   // A hair of slack for a point a pointer put on the rim.
   .refine(({ x, y }) => Math.hypot(x, y) <= 1 + 1e-9);

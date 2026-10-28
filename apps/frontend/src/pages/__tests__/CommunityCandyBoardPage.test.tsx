@@ -1215,7 +1215,13 @@ describe("CommunityCandyBoardPage", () => {
     };
 
     it("casts each candy's shadow from the board's light, for anyone looking", async () => {
-      const light = { x: -0.6, y: 0, height: 0.4, intensity: 0.9 };
+      const light = {
+        ...DEFAULT_LIGHTING,
+        x: -0.6,
+        y: 0,
+        height: 0.4,
+        intensity: 0.9,
+      };
       renderBoard([
         boardQuery(board([2], { viewerIsOwner: false, lighting: light })),
       ]);
@@ -1223,6 +1229,42 @@ describe("CommunityCandyBoardPage", () => {
       expect(
         screen.queryByRole("button", { name: "Lighting" }),
       ).not.toBeInTheDocument();
+    });
+
+    it("colours the whole board with a coloured light, for anyone looking", async () => {
+      const light = {
+        ...DEFAULT_LIGHTING,
+        colour: "#f97316",
+        colourStrength: 0.35,
+      };
+      renderBoard([
+        boardQuery(
+          board([2], {
+            viewerIsOwner: false,
+            backgroundEffects: { dim: 0.2, tint: null, tintStrength: 0 },
+            lighting: light,
+          }),
+        ),
+      ]);
+      const region = await pile();
+      const wash = region.querySelector<HTMLElement>(
+        '[data-testid="light-wash"]',
+      );
+      expect(wash?.style.backgroundColor).toBe("rgb(249, 115, 22)");
+      expect(wash?.style.opacity).toBe("0.35");
+      expect(wash?.style.mixBlendMode).toBe("multiply");
+      // Over the candies and the background alike.
+      const candy = within(region).getByRole("img", { name: "luther head" });
+      expect(
+        wash!.compareDocumentPosition(candy) & Node.DOCUMENT_POSITION_PRECEDING,
+      ).toBeTruthy();
+    });
+
+    it("leaves the board alone under a white light", async () => {
+      renderBoard([boardQuery(board([2]))]);
+      expect((await pile()).querySelector('[data-testid="light-wash"]')).toBe(
+        null,
+      );
     });
 
     it("uses the default light when the board has none", async () => {
@@ -1282,7 +1324,7 @@ describe("CommunityCandyBoardPage", () => {
     });
 
     it("goes back to the default light", async () => {
-      const light = { x: 0.5, y: 0.5, height: 0.5, intensity: 0.5 };
+      const light = { ...DEFAULT_LIGHTING, x: 0.5, y: 0.5, height: 0.5 };
       const saved = vi.fn(() => ({
         data: { setHalloweenCandyBoardLighting: board([2]) },
       }));

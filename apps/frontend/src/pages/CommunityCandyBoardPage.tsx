@@ -117,6 +117,8 @@ const stripLighting = (
         y: lighting.y,
         height: lighting.height,
         intensity: lighting.intensity,
+        colour: lighting.colour ?? null,
+        colourStrength: lighting.colourStrength,
       }
     : null;
 

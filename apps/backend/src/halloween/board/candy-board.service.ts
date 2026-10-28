@@ -227,7 +227,7 @@ export class CandyBoardService {
   ): Promise<HalloweenCandyBoard> {
     if (lighting !== null && !candyLightingSchema.safeParse(lighting).success) {
       throw new BadRequestException(
-        "The light must be over the board, at a height from 0.1 to 1, with an intensity from 0 to 1",
+        "The light must be over the board, at a height from 0.1 to 1, with an intensity from 0 to 1, coloured #rrggbb at a strength from 0 to 1",
       );
     }
     const guildId = await this.requireGuild(communityId);

@@ -8,12 +8,13 @@
  * straight down. A longer shadow is softer and fainter. The light's
  * `intensity` darkens and sharpens every shadow without changing its length:
  * at 0.5 shadows are as above, at 1 twice as dark and half as soft, at 0 the
- * other way.
+ * other way. A coloured light colours the whole board under it.
  *
  * Lengths are in `cqw`, hundredths of the board's width -- the board is a
  * size container -- so a shared board looks the same on any screen. The
  * limits mirror the backend's (candy-board.schema.ts).
  */
+import type { CSSProperties } from "react";
 import type { HalloweenCandyLighting } from "../../generated/graphql";
 
 export type Lighting = Omit<HalloweenCandyLighting, "__typename">;
@@ -27,6 +28,8 @@ export const DEFAULT_LIGHTING: Lighting = {
   y: -0.2,
   height: 0.9,
   intensity: 0.5,
+  colour: null,
+  colourStrength: 0,
 };
 
 /** How long a shadow is, in cqw, for a light one radius out at height 1. */
@@ -45,14 +48,33 @@ export interface Shadow {
 const between = (min: number, max: number, n: number) =>
   Math.min(max, Math.max(min, n));
 
-export function clampLighting({ x, y, height, intensity }: Lighting): Lighting {
+export function clampLighting(lighting: Lighting): Lighting {
+  const { x, y, height, intensity, colourStrength } = lighting;
   const reach = Math.hypot(x, y);
   const inside = reach > 1 ? 1 / reach : 1;
   return {
+    ...lighting,
     x: x * inside,
     y: y * inside,
     height: between(LIGHT_HEIGHT_MIN, LIGHT_HEIGHT_MAX, height),
     intensity: between(0, 1, intensity),
+    colourStrength: between(0, 1, colourStrength),
+  };
+}
+
+/**
+ * The light's colour, as a layer over the whole board -- candies,
+ * background and shadows -- multiplied in as coloured light is; null for a
+ * white light.
+ */
+export function lightWash(
+  lighting: Lighting | null | undefined,
+): CSSProperties | null {
+  if (!lighting?.colour || lighting.colourStrength <= 0) return null;
+  return {
+    backgroundColor: lighting.colour,
+    opacity: lighting.colourStrength,
+    mixBlendMode: "multiply",
   };
 }
 

@@ -20,7 +20,7 @@ const BOARD_FIELDS = `
   placements { knockEventId x y rotation scale }
   background
   backgroundEffects { dim tint tintStrength }
-  lighting { x y height intensity }
+  lighting { x y height intensity colour colourStrength }
 `;
 
 const SET_LIGHTING = `
@@ -569,16 +569,26 @@ describe("Halloween candy board (e2e)", () => {
 
   describe("lighting the board", () => {
     const REFUSED =
-      "The light must be over the board, at a height from 0.1 to 1, with an intensity from 0 to 1";
-    const setLighting = (
-      lighting: {
-        x: number;
-        y: number;
-        height: number;
-        intensity: number;
-      } | null,
-      token = playerToken,
-    ) =>
+      "The light must be over the board, at a height from 0.1 to 1, with an intensity from 0 to 1, coloured #rrggbb at a strength from 0 to 1";
+    type Light = {
+      x: number;
+      y: number;
+      height: number;
+      intensity: number;
+      colour: string | null;
+      colourStrength: number;
+    };
+    /** A white light over the middle, with whatever differs. */
+    const light = (changes: Partial<Light> = {}): Light => ({
+      x: 0,
+      y: 0,
+      height: 0.5,
+      intensity: 0.5,
+      colour: null,
+      colourStrength: 0,
+      ...changes,
+    });
+    const setLighting = (lighting: Light | null, token = playerToken) =>
       testApp.authenticatedGraphqlRequest(
         SET_LIGHTING,
         { communityId, lighting },
@@ -591,30 +601,43 @@ describe("Halloween candy board (e2e)", () => {
       );
     });
 
-    it("sets where the light is, how high and how strong, and shows it to anyone", async () => {
-      const light = { x: -0.6, y: -0.3, height: 0.4, intensity: 0.8 };
-      const set = await setLighting(light);
+    it("sets where the light is, how high, how strong and what colour, and shows it to anyone", async () => {
+      const lit = light({
+        x: -0.6,
+        y: -0.3,
+        height: 0.4,
+        intensity: 0.8,
+        colour: "#f97316",
+        colourStrength: 0.35,
+      });
+      const set = await setLighting(lit);
       expect(set.body.errors).toBeUndefined();
       const { id, lighting } = set.body.data.setHalloweenCandyBoardLighting;
-      expect(lighting).toEqual(light);
+      expect(lighting).toEqual(lit);
 
       const seen = await testApp.graphqlRequest(BOARD, { communityId, id });
-      expect(seen.body.data.halloweenCandyBoard.lighting).toEqual(light);
+      expect(seen.body.data.halloweenCandyBoard.lighting).toEqual(lit);
     });
 
     it("goes back to the default light", async () => {
-      await setLighting({ x: 0.5, y: 0.5, height: 0.5, intensity: 0.5 });
+      await setLighting(light({ x: 0.5, y: 0.5, colour: "#7c3aed" }));
       const res = await setLighting(null);
       expect(res.body.data.setHalloweenCandyBoardLighting.lighting).toBe(null);
     });
 
     it.each([
-      ["outside the circle", { x: 0.9, y: 0.9, height: 0.5, intensity: 0.5 }],
-      ["past the edge", { x: 1.2, y: 0, height: 0.5, intensity: 0.5 }],
-      ["too low", { x: 0, y: 0, height: 0.05, intensity: 0.5 }],
-      ["too high", { x: 0, y: 0, height: 1.5, intensity: 0.5 }],
-      ["too faint", { x: 0, y: 0, height: 0.5, intensity: -0.1 }],
-      ["too strong", { x: 0, y: 0, height: 0.5, intensity: 1.1 }],
+      ["outside the circle", light({ x: 0.9, y: 0.9 })],
+      ["past the edge", light({ x: 1.2 })],
+      ["too low", light({ height: 0.05 })],
+      ["too high", light({ height: 1.5 })],
+      ["too faint", light({ intensity: -0.1 })],
+      ["too strong", light({ intensity: 1.1 })],
+      ["coloured by name", light({ colour: "orange", colourStrength: 0.5 })],
+      [
+        "coloured too strongly",
+        light({ colour: "#f97316", colourStrength: 2 }),
+      ],
+      ["coloured below none", light({ colour: "#f97316", colourStrength: -1 })],
     ])("refuses a light %s", async (_what, lighting) => {
       const res = await setLighting(lighting);
       expect(res.body.errors?.[0].message).toBe(REFUSED);
@@ -624,10 +647,7 @@ describe("Halloween candy board (e2e)", () => {
     });
 
     it("needs Discord linked", async () => {
-      const res = await setLighting(
-        { x: 0, y: 0, height: 0.5, intensity: 0.5 },
-        unlinkedToken,
-      );
+      const res = await setLighting(light(), unlinkedToken);
       expect(res.body.errors?.[0].message).toBe(
         "Link your Discord account to have a candy board",
       );

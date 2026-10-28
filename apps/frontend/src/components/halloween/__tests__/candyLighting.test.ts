@@ -7,6 +7,7 @@ import {
   MAX_SHADOW_LENGTH,
   clampLighting,
   shadowOf,
+  lightWash,
   shadowFilter,
   type Lighting,
 } from "../candyLighting";
@@ -19,6 +20,26 @@ const at = (x: number, y: number, height: number): Lighting => ({
   y,
   height,
   intensity: 0.5,
+  colour: null,
+  colourStrength: 0,
+});
+
+describe("lightWash", () => {
+  it("washes nothing under a white light", () => {
+    expect(lightWash(null)).toBe(null);
+    expect(lightWash(DEFAULT_LIGHTING)).toBe(null);
+    expect(lightWash({ ...at(0, 0, 0.5), colour: "#f97316" })).toBe(null);
+  });
+
+  it("multiplies the board by the light's colour, as far as it is strong", () => {
+    expect(
+      lightWash({ ...at(0, 0, 0.5), colour: "#f97316", colourStrength: 0.4 }),
+    ).toEqual({
+      backgroundColor: "#f97316",
+      opacity: 0.4,
+      mixBlendMode: "multiply",
+    });
+  });
 });
 
 describe("shadowOf", () => {
@@ -101,13 +122,23 @@ describe("shadowFilter", () => {
 
 describe("clampLighting", () => {
   it("keeps the light inside the circle, and its height and intensity in range", () => {
-    const l = clampLighting({ x: 3, y: 4, height: 2, intensity: 3 });
+    const l = clampLighting({
+      ...at(3, 4, 2),
+      intensity: 3,
+      colourStrength: 3,
+    });
     close(Math.hypot(l.x, l.y), 1);
     close(l.x / l.y, 3 / 4);
     expect(l.height).toBe(1);
     expect(l.intensity).toBe(1);
-    const low = clampLighting({ x: 0, y: 0, height: 0, intensity: -1 });
+    expect(l.colourStrength).toBe(1);
+    const low = clampLighting({
+      ...at(0, 0, 0),
+      intensity: -1,
+      colourStrength: -1,
+    });
     expect(low.height).toBe(0.1);
     expect(low.intensity).toBe(0);
+    expect(low.colourStrength).toBe(0);
   });
 });

@@ -225,6 +225,8 @@ export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
       y
       height
       intensity
+      colour
+      colourStrength
     }
     owner {
       id

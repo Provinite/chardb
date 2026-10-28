@@ -1627,6 +1627,14 @@ input HalloweenCandyEditInput {
 Where the light over a board is, which casts the candies' shadows: they fall away from it, longer the further to the side and lower it is
 """
 type HalloweenCandyLighting {
+  """
+  The light's #rrggbb colour, which colours the candies, background and shadows under it; null for white
+  """
+  colour: String
+
+  """How strongly it colours, 0 to 1"""
+  colourStrength: Float!
+
   """How high it hangs, 0.1 to 1"""
   height: Float!
 
@@ -1646,6 +1654,8 @@ type HalloweenCandyLighting {
 
 """Where to put the light over your board"""
 input HalloweenCandyLightingInput {
+  colour: String
+  colourStrength: Float!
   height: Float!
   intensity: Float!
   x: Float!

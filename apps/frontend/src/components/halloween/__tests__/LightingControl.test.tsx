@@ -3,7 +3,7 @@
  * slider for how high.
  */
 import { describe, it, expect, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
@@ -41,7 +41,14 @@ const open = async () => {
   return screen.findByRole("dialog", { name: "Lighting" });
 };
 
-const centre: Lighting = { x: 0, y: 0, height: 0.5, intensity: 0.5 };
+const centre: Lighting = {
+  x: 0,
+  y: 0,
+  height: 0.5,
+  intensity: 0.5,
+  colour: null,
+  colourStrength: 0,
+};
 
 describe("LightingControl", () => {
   it("opens to the light's pad, height and intensity", async () => {
@@ -101,13 +108,71 @@ describe("LightingControl", () => {
     expect(onChange).toHaveBeenLastCalledWith({ ...centre, intensity: 0.9 });
   });
 
-  it("goes back to the default light from an icon button named in a tooltip", async () => {
-    const onChange = renderControl({
-      x: 0.5,
-      y: 0.5,
-      height: 0.5,
-      intensity: 1,
+  it("colours the light from the palette, starting part way", async () => {
+    const onChange = renderControl(centre);
+    await open();
+    const strength = screen.getByRole("slider", {
+      name: "Light colour strength",
     });
+    expect(
+      within(
+        screen.getByRole("radiogroup", { name: "Light colour" }),
+      ).getByRole("radio", { name: "White light" }),
+    ).toBeChecked();
+    expect(strength).toBeDisabled();
+
+    await userEvent.click(screen.getByRole("radio", { name: "Pumpkin" }));
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...centre,
+      colour: "#f97316",
+      colourStrength: 0.3,
+    });
+  });
+
+  it("sets how strongly a coloured light colours, a hundredth at a time", async () => {
+    const lit = { ...centre, colour: "#7c3aed", colourStrength: 0.3 };
+    const onChange = renderControl(lit);
+    await open();
+    const strength = screen.getByRole("slider", {
+      name: "Light colour strength",
+    });
+    expect(strength).toBeEnabled();
+    expect(strength).toHaveAttribute("step", "0.01");
+
+    fireEvent.change(strength, { target: { value: "0.42" } });
+    expect(onChange).toHaveBeenLastCalledWith({ ...lit, colourStrength: 0.42 });
+  });
+
+  it("colours the light any colour from the custom picker", async () => {
+    const onChange = renderControl(centre);
+    await open();
+    fireEvent.change(screen.getByLabelText("Custom light colour"), {
+      target: { value: "#123456" },
+    });
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...centre,
+      colour: "#123456",
+      colourStrength: 0.3,
+    });
+  });
+
+  it("goes back to white light", async () => {
+    const onChange = renderControl({
+      ...centre,
+      colour: "#7c3aed",
+      colourStrength: 0.5,
+    });
+    await open();
+    await userEvent.click(screen.getByRole("radio", { name: "White light" }));
+    expect(onChange).toHaveBeenLastCalledWith({
+      ...centre,
+      colour: null,
+      colourStrength: 0.5,
+    });
+  });
+
+  it("goes back to the default light from an icon button named in a tooltip", async () => {
+    const onChange = renderControl({ ...centre, x: 0.5, y: 0.5, intensity: 1 });
     await open();
     const reset = screen.getByRole("button", { name: "Default light" });
     expect(reset).not.toHaveTextContent(/\S/);

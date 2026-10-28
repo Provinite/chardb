@@ -1,8 +1,16 @@
-import React, { useRef } from "react";
+import React, { useCallback, useRef } from "react";
 import styled from "styled-components";
 import { Popover } from "@mantine/core";
-import { ArrowUpFromLine, Contrast, RotateCcw, Sun } from "lucide-react";
+import {
+  ArrowUpFromLine,
+  Blend,
+  Contrast,
+  Palette,
+  RotateCcw,
+  Sun,
+} from "lucide-react";
 import { Tooltip } from "../Tooltip";
+import { TintChoices } from "./TintChoices";
 import {
   DEFAULT_LIGHTING,
   LIGHT_HEIGHT_MAX,
@@ -161,6 +169,17 @@ const IntensitySlider = styled.label`
   }
 `;
 
+/** The swatches and their icon; as wide as the pad and height slider. */
+const ColourRow = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.spacing.sm};
+  max-width: ${PAD_SIZE + 60}px;
+`;
+
+/** How strongly a light colours when a colour is first picked. */
+const DEFAULT_COLOUR_STRENGTH = 0.3;
+
 const round = (n: number) => Math.round(n * 100) / 100;
 
 interface LightingControlProps {
@@ -180,12 +199,29 @@ export const LightingControl: React.FC<LightingControlProps> = ({
   const move = (changes: Partial<Lighting>) => {
     const next = clampLighting({ ...light, ...changes });
     onChange({
+      ...next,
       x: round(next.x),
       y: round(next.y),
       height: round(next.height),
       intensity: round(next.intensity),
+      colourStrength: round(next.colourStrength),
     });
   };
+  // The latest move, so the memoised swatches get one unchanging callback
+  // and are not redrawn while a slider moves.
+  const latestMove = useRef(move);
+  latestMove.current = move;
+  const latestLight = useRef(light);
+  latestLight.current = light;
+  const colourWith = useCallback((colour: string | null) => {
+    const firstColour = colour && latestLight.current.colourStrength === 0;
+    latestMove.current(
+      // A first colour starts part way, rather than at none.
+      firstColour
+        ? { colour, colourStrength: DEFAULT_COLOUR_STRENGTH }
+        : { colour },
+    );
+  }, []);
 
   /** The light under a pointer on the pad, in the unit circle. */
   const placeAt = (clientX: number, clientY: number) => {
@@ -297,6 +333,35 @@ export const LightingControl: React.FC<LightingControlProps> = ({
                 step={0.05}
                 value={light.intensity}
                 onChange={(e) => move({ intensity: Number(e.target.value) })}
+              />
+            </IntensitySlider>
+          </Tooltip>
+          <ColourRow>
+            <Tooltip label="Light colour">
+              <Palette size={ICON_SIZE} aria-hidden />
+            </Tooltip>
+            <TintChoices
+              tint={light.colour ?? null}
+              onTint={colourWith}
+              label="Light colour"
+              noneLabel="White light"
+              customLabel="Custom light colour"
+            />
+          </ColourRow>
+          <Tooltip label="Colour strength">
+            <IntensitySlider>
+              <Blend size={ICON_SIZE} aria-hidden />
+              <input
+                type="range"
+                aria-label="Light colour strength"
+                min={0}
+                max={1}
+                step={0.01}
+                disabled={!light.colour}
+                value={light.colourStrength}
+                onChange={(e) =>
+                  move({ colourStrength: Number(e.target.value) })
+                }
               />
             </IntensitySlider>
           </Tooltip>

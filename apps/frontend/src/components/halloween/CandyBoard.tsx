@@ -14,7 +14,7 @@ import { Tooltip } from "../Tooltip";
 import { NIGHT_SKY, backgroundStyle, findBackground } from "./boardBackgrounds";
 import type { BackgroundEffects } from "./backgroundEffects";
 import { BackgroundEffectLayers } from "./BackgroundEffectLayers";
-import { shadowFilter, type Lighting } from "./candyLighting";
+import { lightWash, shadowFilter, type Lighting } from "./candyLighting";
 import {
   candiesAt,
   maskFromImage,
@@ -81,6 +81,16 @@ const Surface = styled.div`
   box-shadow: ${({ theme }) => theme.shadows.lg};
   /* So a tint blends with the background alone. */
   isolation: isolate;
+`;
+
+/**
+ * A coloured light's colour over everything on the surface -- background,
+ * candies and their shadows -- but under the selection's handles.
+ */
+const LightWash = styled.div`
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
 `;
 
 /** Places, sizes and rotates one candy's picture. */
@@ -774,6 +784,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   };
 
   const groups = trayGroups(candies, placements);
+  const wash = lightWash(lighting);
 
   return (
     <div ref={editorRef}>
@@ -837,6 +848,9 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
               </CandyFrame>
             );
           })}
+          {wash && (
+            <LightWash data-testid="light-wash" aria-hidden style={wash} />
+          )}
         </Surface>
         {editable && selectedPlacement && (
           <SelectionFrame

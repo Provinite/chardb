@@ -164,6 +164,16 @@ export class HalloweenCandyLighting {
       "How dark and sharp the shadows are, 0 to 1; it does not change their length",
   })
   intensity: number;
+
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "The light's #rrggbb colour, which colours the candies, background and shadows under it; null for white",
+  })
+  colour: string | null;
+
+  @Field(() => Float, { description: "How strongly it colours, 0 to 1" })
+  colourStrength: number;
 }
 
 @InputType({ description: "Where to put the light over your board" })
@@ -179,6 +189,12 @@ export class HalloweenCandyLightingInput {
 
   @Field(() => Float)
   intensity: number;
+
+  @Field(() => String, { nullable: true })
+  colour: string | null;
+
+  @Field(() => Float)
+  colourStrength: number;
 }
 
 @ObjectType({
