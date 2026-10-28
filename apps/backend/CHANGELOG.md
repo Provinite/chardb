@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Item ledger search finds members by username or display name**, on any side of an event; it only read reasons and item names (#444).
 - **API e2e specs use the test stack's LocalStack and bucket**, not the dev stack's.
 
 ### Added

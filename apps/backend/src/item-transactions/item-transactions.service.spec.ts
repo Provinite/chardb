@@ -151,6 +151,32 @@ describe("ItemTransactionsService", () => {
       expect(JSON.stringify(where)).toContain("reason");
     });
 
+    it("searches the names of everyone a row names (#444)", async () => {
+      // The search box promises members. Staff look people up by name here,
+      // and a search that only read reasons found nobody.
+      await service.findAll({ communityId: "comm1", search: "neo" });
+
+      const { where } =
+        mockDatabaseService.itemTransaction.findMany.mock.calls[0][0];
+      const byName = {
+        OR: [
+          { username: { contains: "neo", mode: "insensitive" } },
+          { displayName: { contains: "neo", mode: "insensitive" } },
+        ],
+      };
+      // The only OR clause present: no userId was passed.
+      const searched = where.AND.find((clause: object) => "OR" in clause) as
+        | { OR: unknown[] }
+        | undefined;
+      expect(searched?.OR).toEqual(
+        expect.arrayContaining([
+          { fromUser: byName },
+          { toUser: byName },
+          { actorUser: byName },
+        ]),
+      );
+    });
+
     it("matches a user on any of the three roles a row can name", async () => {
       await service.findAll({ communityId: "comm1", userId: "user1" });
 

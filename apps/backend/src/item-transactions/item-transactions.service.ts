@@ -17,6 +17,14 @@ import {
  */
 export type DbClient = DatabaseService | Prisma.TransactionClient;
 
+/** A user whose username or display name contains the search, any case. */
+const userNameMatches = (search: string): Prisma.UserWhereInput => ({
+  OR: [
+    { username: { contains: search, mode: "insensitive" } },
+    { displayName: { contains: search, mode: "insensitive" } },
+  ],
+});
+
 @Injectable()
 export class ItemTransactionsService {
   constructor(private readonly db: DatabaseService) {}
@@ -150,6 +158,11 @@ export class ItemTransactionsService {
                     name: { contains: search, mode: "insensitive" },
                   },
                 },
+                // The people a row names. Staff look members up by name here,
+                // and the search box says it finds them (#444).
+                { fromUser: userNameMatches(search) },
+                { toUser: userNameMatches(search) },
+                { actorUser: userNameMatches(search) },
               ],
             }
           : {},
