@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
-import { useDebouncedValue } from "@mantine/hooks";
 import { Package, Search, Lock } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FilterChip, FilterChips } from "../components/FilterChip";
@@ -16,6 +15,7 @@ import {
   type ItemTransactionFieldsFragment,
 } from "../generated/graphql";
 import { collapseByBatch, KIND_LABEL, kindTone } from "../lib/itemDisplay";
+import { useLedgerSearch } from "../hooks/useLedgerSearch";
 
 /**
  * The item ledger: every movement of every item in one community.
@@ -27,8 +27,6 @@ import { collapseByBatch, KIND_LABEL, kindTone } from "../lib/itemDisplay";
  */
 
 const PAGE_SIZE = 25;
-
-const SEARCH_DEBOUNCE_MS = 300;
 
 /** Order matters: this is the order the filter chips render in. */
 const KINDS: ReadonlyArray<{ kind: ItemTransactionKind; label: string }> = [
@@ -435,24 +433,18 @@ export const CommunityItemLedgerPage: React.FC = () => {
   usePageMeta({ title: "Item Ledger" });
 
   const communityId = useCommunityId();
-  const [search, setSearch] = useState("");
   const [activeKinds, setActiveKinds] = useState<ItemTransactionKind[]>([]);
-  const [pages, setPages] = useState({ search: "", limit: PAGE_SIZE });
+  const {
+    search,
+    setSearch,
+    debouncedSearch,
+    limit,
+    typing,
+    loadMore,
+    resetPages,
+  } = useLedgerSearch(PAGE_SIZE);
 
   const community = useHostCommunity();
-
-  // The search reaches the server once typing pauses. Sent per keystroke, each
-  // letter was its own query and its own loading state (#444).
-  const [debouncedSearch] = useDebouncedValue(
-    search.trim(),
-    SEARCH_DEBOUNCE_MS,
-  );
-
-  // A new search starts from the first page. Derived rather than reset: a
-  // reset per keystroke sent the old search again at the first page's limit,
-  // and a reset during render still reaches Apollo, which starts its query in
-  // the render React throws away.
-  const limit = pages.search === debouncedSearch ? pages.limit : PAGE_SIZE;
 
   const filters = useMemo(
     () => ({
@@ -484,10 +476,10 @@ export const CommunityItemLedgerPage: React.FC = () => {
   // Out of date from the first keystroke, not only once the query is in
   // flight: the debounce window would otherwise show old results at full
   // strength under a search box that already says something else.
-  const stale = loading || search.trim() !== debouncedSearch;
+  const stale = loading || typing;
 
   const toggleKind = (kind: ItemTransactionKind) => {
-    setPages({ search: debouncedSearch, limit: PAGE_SIZE });
+    resetPages();
     setActiveKinds((current) =>
       current.includes(kind)
         ? current.filter((k) => k !== kind)
@@ -556,7 +548,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
                 verdict below can be trusted until the current one lands. */}
             {stale
               ? "Loading…"
-              : search || activeKinds.length
+              : debouncedSearch || activeKinds.length
                 ? "No events match those filters."
                 : "Nothing has moved yet. Granting an item will record the first event here."}
           </p>
@@ -671,13 +663,10 @@ export const CommunityItemLedgerPage: React.FC = () => {
             {hasMore && (
               <MoreButton
                 type="button"
-                disabled={loading}
-                onClick={() =>
-                  setPages({
-                    search: debouncedSearch,
-                    limit: limit + PAGE_SIZE,
-                  })
-                }
+                // Not while typing either: it would page the old search,
+                // and the new one is about to replace it.
+                disabled={stale}
+                onClick={loadMore}
               >
                 {loading ? "Loading…" : "Load more"}
               </MoreButton>

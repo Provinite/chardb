@@ -76,10 +76,15 @@ type Filters = { search?: string; limit: number };
 
 /**
  * Answers the ledger slowly enough to be caught mid-load and records the
- * filters each ledger query carried. "zzz" matches nothing; anything else
- * returns the one mint, with more to load when unfiltered.
+ * filters each ledger query carried. Unfiltered, it is 60 mints served a page
+ * at a time, so the page size shows in the rows on screen; "zzz" matches
+ * nothing, and any other search matches one.
+ *
+ * The currency query is cache-first, so a repeated filter is answered from the
+ * cache and never reaches here. Assertions on paging read the rows on screen
+ * rather than the requests for that reason.
  */
-const recordingLink = (sent: Filters[]) =>
+const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
   new ApolloLink(
     (operation) =>
       new Observable((observer) => {
@@ -90,15 +95,20 @@ const recordingLink = (sent: Filters[]) =>
         }
         const { filters } = operation.variables as { filters: Filters };
         sent.push(filters);
-        const empty = filters.search === "zzz";
+        const matching = emptyLedger || filters.search === "zzz" ? 0 : 60;
+        const count = filters.search ? Math.min(matching, 1) : matching;
+        const shown = Math.min(count, filters.limit);
         const timer = setTimeout(() => {
           observer.next({
             data: {
               currencyTransactions: {
                 __typename: "CurrencyTransactionConnection",
-                transactions: empty ? [] : [mint],
-                total: empty ? 0 : 60,
-                hasMore: !empty && !filters.search,
+                transactions: Array.from({ length: shown }, (_, i) => ({
+                  ...mint,
+                  id: `ct-${i}`,
+                })),
+                total: count,
+                hasMore: shown < count,
               },
             },
           });
@@ -108,9 +118,9 @@ const recordingLink = (sent: Filters[]) =>
       }),
   );
 
-const renderLedger = (sent: Filters[]) =>
+const renderLedger = (sent: Filters[], options?: { emptyLedger?: boolean }) =>
   render(
-    <MockedProvider link={recordingLink(sent)}>
+    <MockedProvider link={recordingLink(sent, options)}>
       <ThemeProvider theme={lightTheme}>
         <MemoryRouter>
           <CommunityCurrencyLedgerPage />
@@ -169,5 +179,69 @@ describe("CommunityCurrencyLedgerPage search", () => {
 
     expect(screen.queryByText(/No currency has moved/)).toBeNull();
     await screen.findByTestId("currency-ledger-list");
+  });
+
+  it("starts from the first page on returning to a search Load more was used on", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent);
+    await screen.findByTestId("currency-ledger-list");
+
+    await userEvent.click(screen.getByRole("button", { name: /Load more/ }));
+    await waitFor(() =>
+      expect(screen.getAllByTestId("currency-ledger-row")).toHaveLength(50),
+    );
+
+    await userEvent.type(searchBox(), "Lanternfall");
+    await waitFor(() =>
+      expect(screen.getAllByTestId("currency-ledger-row")).toHaveLength(1),
+    );
+    await userEvent.clear(searchBox());
+
+    await waitFor(() =>
+      expect(
+        screen.getAllByTestId("currency-ledger-row").length,
+      ).toBeGreaterThan(1),
+    );
+    expect(screen.getAllByTestId("currency-ledger-row")).toHaveLength(25);
+  });
+
+  it("disables Load more while typing, before the new search is sent", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent);
+    await screen.findByTestId("currency-ledger-list");
+
+    await userEvent.type(searchBox(), "Lan");
+
+    expect(screen.getByRole("button", { name: /Load more/ })).toBeDisabled();
+  });
+
+  it("keeps the empty state up while a search after an empty one loads", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent);
+    await screen.findByTestId("currency-ledger-list");
+
+    await userEvent.type(searchBox(), "zzz");
+    await screen.findByText("Nothing matches those filters.");
+
+    await userEvent.clear(searchBox());
+    await userEvent.type(searchBox(), "Lantern");
+    await waitFor(() => expect(searches(sent)).toContain("Lantern"));
+
+    // In flight now. The empty state dims in place rather than giving way to
+    // a bare spinner and back.
+    expect(screen.getByTestId("currency-ledger-empty")).toBeInTheDocument();
+  });
+
+  it("calls an empty ledger empty when the search is only spaces", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent, { emptyLedger: true });
+    await screen.findByText(/No currency has moved/);
+
+    await userEvent.type(searchBox(), " ");
+
+    // Past the debounce: a blank search is no search, so the verdict must not
+    // change to "no match".
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(screen.getByText(/No currency has moved/)).toBeInTheDocument();
   });
 });

@@ -2,7 +2,6 @@ import React, { useMemo, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { useSearchParams, Link } from "react-router-dom";
-import { useDebouncedValue } from "@mantine/hooks";
 import { Coins, Search } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -22,6 +21,7 @@ import {
   collapseTransferLegs,
   type CurrencyTone,
 } from "../lib/currencyDisplay";
+import { useLedgerSearch } from "../hooks/useLedgerSearch";
 
 /**
  * Every currency movement in a community, newest first.
@@ -259,8 +259,6 @@ const Footer = styled.div`
 
 const PAGE_SIZE = 25;
 
-const SEARCH_DEBOUNCE_MS = 300;
-
 const KIND_ORDER: CurrencyTransactionKind[] = [
   CurrencyTransactionKind.Mint,
   CurrencyTransactionKind.Transfer,
@@ -320,9 +318,16 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   const communityId = useCommunityId();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [search, setSearch] = useState("");
   const [kinds, setKinds] = useState<CurrencyTransactionKind[]>([]);
-  const [pages, setPages] = useState({ search: "", limit: PAGE_SIZE });
+  const {
+    search,
+    setSearch,
+    debouncedSearch,
+    limit,
+    typing,
+    loadMore,
+    resetPages,
+  } = useLedgerSearch(PAGE_SIZE);
 
   const currencyId = searchParams.get("currencyId") ?? undefined;
 
@@ -330,18 +335,6 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
     variables: { communityId: communityId as string, includeArchived: true },
     skip: !communityId,
   });
-
-  // The search reaches the server once typing pauses, not once per letter
-  // (#444).
-  const [debouncedSearch] = useDebouncedValue(
-    search.trim(),
-    SEARCH_DEBOUNCE_MS,
-  );
-
-  // A new search starts from the first page. Derived rather than reset per
-  // keystroke, which refetched the old search at the first page's limit before
-  // the debounced one arrived.
-  const limit = pages.search === debouncedSearch ? pages.limit : PAGE_SIZE;
 
   const {
     data: currentData,
@@ -368,7 +361,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
 
   // Out of date from the first keystroke, not only once the query is in
   // flight.
-  const stale = loading || search.trim() !== debouncedSearch;
+  const stale = loading || typing;
 
   const currencies = currencyData?.currencies ?? [];
   const rows = useMemo(
@@ -379,7 +372,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   const hasMore = data?.currencyTransactions?.hasMore ?? false;
 
   const toggleKind = (kind: CurrencyTransactionKind) => {
-    setPages({ search: debouncedSearch, limit: PAGE_SIZE });
+    resetPages();
     setKinds((current) =>
       current.includes(kind)
         ? current.filter((k) => k !== kind)
@@ -388,7 +381,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   };
 
   const chooseCurrency = (id: string) => {
-    setPages({ search: debouncedSearch, limit: PAGE_SIZE });
+    resetPages();
     const next = new URLSearchParams(searchParams);
     if (id) {
       next.set("currencyId", id);
@@ -459,7 +452,9 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
         </Chips>
       </Controls>
 
-      {loading && rows.length === 0 ? (
+      {/* Only the first load, with nothing to show yet. After that the last
+          result, empty or not, stays up dimmed while the next one loads. */}
+      {loading && !data ? (
         <LoadingSpinner />
       ) : error ? (
         <Empty>Could not load the ledger: {error.message}</Empty>
@@ -469,7 +464,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
               verdict below can be trusted until the current one lands. */}
           {stale
             ? "Loading…"
-            : kinds.length > 0 || search || currencyId
+            : kinds.length > 0 || debouncedSearch || currencyId
               ? "Nothing matches those filters."
               : "No currency has moved in this community yet."}
         </Empty>
@@ -556,13 +551,10 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
             <Footer>
               <Button
                 variant="secondary"
-                onClick={() =>
-                  setPages({
-                    search: debouncedSearch,
-                    limit: limit + PAGE_SIZE,
-                  })
-                }
-                disabled={loading}
+                onClick={loadMore}
+                // Not while typing either: it would page the old search,
+                // and the new one is about to replace it.
+                disabled={stale}
               >
                 {loading ? "Loading…" : `Load more (${total} total)`}
               </Button>

@@ -178,6 +178,10 @@ test.describe("typing a search (#444)", () => {
 
     await expect.poll(() => searches).toContain("Lanternfall");
     await expect(grantRow(page)).toHaveCount(1);
+    // Timing-sensitive: keys land 50ms apart against a 300ms debounce. If this
+    // flakes with a partial term ahead of the full one (["Lantern",
+    // "Lanternfall"]), the runner stalled over 300ms between two keys -- the
+    // debounce did its job. Loosen to "no more than two" before suspecting it.
     expect(searches).toEqual(["Lanternfall"]);
   });
 });

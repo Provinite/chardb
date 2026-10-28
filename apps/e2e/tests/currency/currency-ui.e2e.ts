@@ -324,6 +324,10 @@ test.describe("currency ledger page", () => {
 
       await expect(page.getByTestId("currency-ledger-empty")).toBeVisible();
       await expect(search).toBeFocused();
+      // Timing-sensitive: keys land 50ms apart against a 300ms debounce. A
+      // partial term ahead of the full one means the runner stalled over
+      // 300ms between two keys, not that the debounce broke. See the same
+      // note in item-ledger.e2e.ts.
       expect(searches).toEqual(["Tier 2 flat rate"]);
     });
   });

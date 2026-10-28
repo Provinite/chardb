@@ -7,7 +7,14 @@ import type { Page } from "@playwright/test";
 export const recordSearches = (page: Page, operationName: string) => {
   const searches: Array<string | undefined> = [];
   page.on("request", (request) => {
-    const body: unknown = request.postDataJSON();
+    // postDataJSON throws on a body that is not JSON, such as an upload. A
+    // throw inside this listener would fail whatever test attached it.
+    let body: unknown;
+    try {
+      body = request.postDataJSON();
+    } catch {
+      return;
+    }
     if (
       typeof body === "object" &&
       body !== null &&

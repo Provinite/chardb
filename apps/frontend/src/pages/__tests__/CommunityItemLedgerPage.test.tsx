@@ -72,13 +72,13 @@ type Filters = { search?: string; limit: number };
  * ("zzz") comes back empty; anything else returns the one seeded grant, with
  * more to load when unfiltered.
  */
-const recordingLink = (sent: Filters[]) =>
+const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
   new ApolloLink(
     (operation) =>
       new Observable((observer) => {
         const { filters } = operation.variables as { filters: Filters };
         sent.push(filters);
-        const empty = filters.search === "zzz";
+        const empty = emptyLedger || filters.search === "zzz";
         const timer = setTimeout(() => {
           observer.next({
             data: {
@@ -96,9 +96,9 @@ const recordingLink = (sent: Filters[]) =>
       }),
   );
 
-const renderLedger = (sent: Filters[]) =>
+const renderLedger = (sent: Filters[], options?: { emptyLedger?: boolean }) =>
   render(
-    <MockedProvider link={recordingLink(sent)}>
+    <MockedProvider link={recordingLink(sent, options)}>
       <ThemeProvider theme={lightTheme}>
         <MemoryRouter>
           <CommunityItemLedgerPage />
@@ -160,6 +160,45 @@ describe("CommunityItemLedgerPage search", () => {
       { ...sent[0], search: undefined, limit: 50 },
       { ...sent[0], search: "Lanternfall", limit: 25 },
     ]);
+  });
+
+  it("starts from the first page on returning to a search Load more was used on", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent);
+    await screen.findByText("Trait Change Potion");
+
+    await userEvent.click(screen.getByRole("button", { name: "Load more" }));
+    await waitFor(() => expect(sent).toHaveLength(2));
+
+    await userEvent.type(searchBox(), "Lanternfall");
+    await waitFor(() => expect(searches(sent)).toContain("Lanternfall"));
+    await userEvent.clear(searchBox());
+
+    await waitFor(() => expect(sent).toHaveLength(4));
+    expect(sent[3]).toMatchObject({ search: undefined, limit: 25 });
+  });
+
+  it("disables Load more while typing, before the new search is sent", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent);
+    await screen.findByText("Trait Change Potion");
+
+    await userEvent.type(searchBox(), "Lan");
+
+    expect(screen.getByRole("button", { name: "Load more" })).toBeDisabled();
+  });
+
+  it("calls an empty ledger empty when the search is only spaces", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent, { emptyLedger: true });
+    await screen.findByText(/Nothing has moved yet/);
+
+    await userEvent.type(searchBox(), " ");
+
+    // Past the debounce: a blank search is no search, so nothing re-queries
+    // and the verdict must not change to "no match".
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    expect(screen.getByText(/Nothing has moved yet/)).toBeInTheDocument();
   });
 
   it("marks the results stale while typing, before the query is sent", async () => {
