@@ -1,9 +1,9 @@
 /**
- * A board's nameplate: a ribbon banner with the board's name on it, stuck on
- * the board as a candy is. It is drawn as an SVG picture made here, so it
- * goes through everything a candy's picture does -- shadows, the light,
- * focus, the keyboard. Its whole box counts as it for a press: it is solid
- * enough.
+ * A board's nameplate: the trick-or-treat title ribbon with the board's name
+ * on it, stuck on the board as a candy is. It is drawn as an SVG picture made
+ * here, so it goes through everything a candy's picture does -- shadows, the
+ * light, focus, the keyboard. Its whole box counts as it for a press: it is
+ * solid enough. The ribbon goes in as a data address, from `loadRibbon`.
  */
 import { CANDY_SIZE, type StickerFields } from "./candyBoard";
 
@@ -14,21 +14,28 @@ export const NAMEPLATE_SIZE = 0.4;
 export const stickerSize = (sticker: StickerFields) =>
   sticker.nameplate ? NAMEPLATE_SIZE : CANDY_SIZE;
 
-// The banner's measures, in the picture's own units.
-const FONT_SIZE = 52;
-const FONT = `bold ${FONT_SIZE}px Georgia, 'Times New Roman', serif`;
-/** Between the name and the band's ends. */
-const PAD = 36;
-const BAND_HEIGHT = 84;
-/** How far each tail shows past the band, and how far below it it hangs. */
-const TAIL = 56;
-const DROP = 22;
-/** How far each tail tucks under the band. */
-const FOLD = 18;
-/** The white die-cut edge around it all, as on the candies. */
-const EDGE = 8;
+// The ribbon picture's measures, in its own pixels.
+const RIBBON_WIDTH = 748;
+const RIBBON_HEIGHT = 275;
+/**
+ * Between these the band runs flat, with the arch, folds and tails all
+ * outside it: the part stretched for a long name.
+ */
+const MIDDLE_FROM = 240;
+const MIDDLE_TO = 480;
+/** How far the middle reaches under each end. */
+const OVERLAP = 1;
+/** How wide a name fits on the ribbon as drawn. */
+const NAME_ROOM = 500;
+/** The middle of the band, top to bottom, where the name sits. */
+const BAND_MIDDLE = 90;
 
-/** A name's width in the banner's font, measured by the browser if it can. */
+const FONT_SIZE = 64;
+const FONT = `bold ${FONT_SIZE}px Georgia, 'Times New Roman', serif`;
+/** The ribbon's own ink. */
+const INK = "#3b1d0e";
+
+/** A name's width in the ribbon's font, measured by the browser if it can. */
 function measureName(text: string): number {
   try {
     const context = document.createElement("canvas").getContext("2d");
@@ -51,68 +58,59 @@ const escapeXml = (text: string) =>
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#39;");
 
-const points = (...xy: number[][]) => xy.map(([x, y]) => `${x},${y}`).join(" ");
+/**
+ * The part of the ribbon picture from `from` to `to`, drawn at `x`, `width`
+ * wide: stretched across if that is wider than the part is.
+ */
+const piece = (
+  ribbon: string,
+  from: number,
+  to: number,
+  x: number,
+  width: number,
+) =>
+  `<svg x="${x}" y="0" width="${width}" height="${RIBBON_HEIGHT}" viewBox="${from} 0 ${to - from} ${RIBBON_HEIGHT}" preserveAspectRatio="none">` +
+  `<image href="${ribbon}" width="${RIBBON_WIDTH}" height="${RIBBON_HEIGHT}"/>` +
+  `</svg>`;
 
-/** The banner for a name, as SVG markup. */
+/** The ribbon, as a data address, with a name on it, as SVG markup. */
 export function nameplateSvg(
   name: string,
+  ribbon: string,
   measure: (text: string) => number = measureName,
 ): string {
-  const bandWidth = Math.ceil(measure(name)) + 2 * PAD;
-  const width = 2 * EDGE + 2 * TAIL + bandWidth;
-  const height = 2 * EDGE + DROP + BAND_HEIGHT;
-  const left = EDGE + TAIL;
-  const right = left + bandWidth;
-  const bandBottom = EDGE + BAND_HEIGHT;
-  const tailTop = EDGE + DROP;
-  const tailBottom = tailTop + BAND_HEIGHT;
-  const tailMiddle = tailTop + BAND_HEIGHT / 2;
-
-  const leftTail = points(
-    [EDGE, tailTop],
-    [left + FOLD, tailTop],
-    [left + FOLD, tailBottom],
-    [EDGE, tailBottom],
-    [EDGE + TAIL * 0.4, tailMiddle],
-  );
-  const rightTail = points(
-    [width - EDGE, tailTop],
-    [right - FOLD, tailTop],
-    [right - FOLD, tailBottom],
-    [width - EDGE, tailBottom],
-    [width - EDGE - TAIL * 0.4, tailMiddle],
-  );
-  const leftFold = points(
-    [left, bandBottom],
-    [left + FOLD, tailBottom],
-    [left + FOLD, bandBottom],
-  );
-  const rightFold = points(
-    [right, bandBottom],
-    [right - FOLD, tailBottom],
-    [right - FOLD, bandBottom],
-  );
-  const band = `x="${left}" y="${EDGE}" width="${bandWidth}" height="${BAND_HEIGHT}"`;
-  const shapes = `<polygon points="${leftTail}"/><polygon points="${rightTail}"/><rect ${band}/>`;
+  const stretch = Math.max(0, Math.ceil(measure(name)) - NAME_ROOM);
+  const width = RIBBON_WIDTH + stretch;
+  const middleWidth = MIDDLE_TO - MIDDLE_FROM + stretch;
 
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
-    // The white edge: every shape again, behind, thickly outlined.
-    `<g fill="#ffffff" stroke="#ffffff" stroke-width="${2 * EDGE - 2}" stroke-linejoin="round">${shapes}</g>`,
-    `<polygon points="${leftTail}" fill="#9a3412"/>`,
-    `<polygon points="${rightTail}" fill="#9a3412"/>`,
-    `<polygon points="${leftFold}" fill="#7c2d12"/>`,
-    `<polygon points="${rightFold}" fill="#7c2d12"/>`,
-    `<rect ${band} fill="#ea580c"/>`,
-    `<rect x="${left + 8}" y="${EDGE + 8}" width="${bandWidth - 16}" height="${BAND_HEIGHT - 16}" fill="none" stroke="#fdba74" stroke-width="3"/>`,
-    `<text x="${width / 2}" y="${EDGE + BAND_HEIGHT / 2 + FONT_SIZE * 0.35}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="${FONT_SIZE}" fill="#fff7ed">${escapeXml(name)}</text>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${RIBBON_HEIGHT}" viewBox="0 0 ${width} ${RIBBON_HEIGHT}">`,
+    // The middle reaches a pixel under each end, which are drawn over it:
+    // pieces only meeting leave a seam the page behind shows through.
+    piece(
+      ribbon,
+      MIDDLE_FROM - OVERLAP,
+      MIDDLE_TO + OVERLAP,
+      MIDDLE_FROM - OVERLAP,
+      middleWidth + 2 * OVERLAP,
+    ),
+    piece(ribbon, 0, MIDDLE_FROM, 0, MIDDLE_FROM),
+    piece(
+      ribbon,
+      MIDDLE_TO,
+      RIBBON_WIDTH,
+      MIDDLE_FROM + middleWidth,
+      RIBBON_WIDTH - MIDDLE_TO,
+    ),
+    `<text x="${width / 2}" y="${BAND_MIDDLE + FONT_SIZE * 0.35}" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-weight="bold" font-size="${FONT_SIZE}" fill="${INK}">${escapeXml(name)}</text>`,
     `</svg>`,
   ].join("");
 }
 
-/** The banner for a name, as a picture's address. */
+/** The ribbon with a name on it, as a picture's address. */
 export const nameplateUrl = (
   name: string,
+  ribbon: string,
   measure?: (text: string) => number,
 ) =>
-  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(nameplateSvg(name, measure))}`;
+  `data:image/svg+xml;charset=utf-8,${encodeURIComponent(nameplateSvg(name, ribbon, measure))}`;

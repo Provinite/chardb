@@ -21,6 +21,7 @@ import { BackgroundEffectLayers } from "./BackgroundEffectLayers";
 import { shadowFilter, type Lighting } from "./candyLighting";
 import { LightLayers } from "./LightLayers";
 import { nameplateUrl, stickerSize } from "./nameplate";
+import { useRibbon } from "./ribbon";
 import { formatBoardName, type BoardName } from "./boardName";
 import {
   candiesAt,
@@ -512,9 +513,11 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   const editable = Boolean(onAction);
   const slugs = new Map(candies.map((c) => [c.knockEventId, c.slug]));
   const nameText = name ? formatBoardName(name) : null;
+  const ribbon = useRibbon();
+  // No nameplate, placed or in the tray, until its ribbon has loaded.
   const nameplateSrc = useMemo(
-    () => (nameText ? nameplateUrl(nameText) : null),
-    [nameText],
+    () => (nameText && ribbon ? nameplateUrl(nameText, ribbon) : null),
+    [nameText, ribbon],
   );
   /** A placed sticker's picture; null for one with nothing to draw. */
   const pictureOf = (p: Placement): StickerPicture | null => {

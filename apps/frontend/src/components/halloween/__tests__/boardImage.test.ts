@@ -15,6 +15,11 @@ import {
 import { DEFAULT_LIGHTING, shadowOf } from "../candyLighting";
 import { NAMEPLATE } from "../candyBoard";
 
+// The nameplate's ribbon is fetched: here it is to hand.
+vi.mock("../ribbon", () => ({
+  loadRibbon: async () => "data:image/png;base64,cmliYm9u",
+}));
+
 describe("boardImageFileName", () => {
   it("is the board's name, made a file name", () => {
     expect(

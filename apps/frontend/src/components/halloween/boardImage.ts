@@ -27,6 +27,7 @@ import {
 } from "./candyLighting";
 import { candyImageUrl, type Placement } from "./candyBoard";
 import { nameplateUrl, stickerSize } from "./nameplate";
+import { loadRibbon } from "./ribbon";
 import { formatBoardName, type BoardName } from "./boardName";
 
 /** The picture's size: 4:3, as the board is, and about twice a big screen's. */
@@ -112,9 +113,11 @@ async function drawStickers(
   load: LoadImage,
 ) {
   const slugs = new Map(scene.candies.map((c) => [c.knockEventId, c.slug]));
-  const nameplate = scene.name
-    ? nameplateUrl(formatBoardName(scene.name))
-    : null;
+  const ribbon = scene.name ? await loadRibbon() : null;
+  const nameplate =
+    scene.name && ribbon
+      ? nameplateUrl(formatBoardName(scene.name), ribbon)
+      : null;
   const srcOf = ({ sticker }: Placement) => {
     if (sticker.nameplate) return nameplate;
     const slug = sticker.candy != null ? slugs.get(sticker.candy) : null;

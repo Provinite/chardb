@@ -71,6 +71,12 @@ vi.mock("../../components/halloween/boardImage", async () => ({
   downloadBoardImage: download,
 }));
 
+// The nameplate's ribbon is fetched: here it is to hand.
+vi.mock("../../components/halloween/ribbon", () => ({
+  useRibbon: () => "data:image/png;base64,cmliYm9u",
+  loadRibbon: async () => "data:image/png;base64,cmliYm9u",
+}));
+
 import {
   ApplyHalloweenCandyBoardActionsDocument,
   HalloweenCandyBoardDocument,
