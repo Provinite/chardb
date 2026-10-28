@@ -85,7 +85,6 @@ const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
               itemTransactions: {
                 __typename: "ItemTransactionConnection",
                 transactions: empty ? [] : [grant],
-                total: empty ? 0 : 60,
                 hasMore: !empty && !filters.search,
               },
             },

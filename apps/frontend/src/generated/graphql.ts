@@ -6305,7 +6305,7 @@ export type GetItemTransactionsQueryVariables = Exact<{
 }>;
 
 
-export type GetItemTransactionsQuery = { __typename?: 'Query', itemTransactions: { __typename?: 'ItemTransactionConnection', total: number, hasMore: boolean, transactions: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
+export type GetItemTransactionsQuery = { __typename?: 'Query', itemTransactions: { __typename?: 'ItemTransactionConnection', hasMore: boolean, transactions: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
 
 export type GetItemProvenanceQueryVariables = Exact<{
   itemId: Scalars['ID']['input'];
@@ -14361,7 +14361,6 @@ export const GetItemTransactionsDocument = gql`
     transactions {
       ...ItemTransactionFields
     }
-    total
     hasMore
   }
 }
