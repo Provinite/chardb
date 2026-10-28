@@ -28,6 +28,8 @@ import { HalloweenDashboardService } from "./dashboard/halloween-dashboard.servi
 import { HalloweenDashboardResolver } from "./dashboard/halloween-dashboard.resolver";
 import { HalloweenAdminService } from "./dashboard/halloween-admin.service";
 import { HalloweenAdminResolver } from "./dashboard/halloween-admin.resolver";
+import { CandyBoardService } from "./board/candy-board.service";
+import { CandyBoardResolver } from "./board/candy-board.resolver";
 import { KnockCommand } from "./commands/knock.command";
 import { AdminKnockCommand } from "./commands/adminknock.command";
 import { GiftyCommand } from "./commands/gifty.command";
@@ -86,6 +88,8 @@ const COMMANDS = [
     HalloweenDashboardResolver,
     HalloweenAdminService,
     HalloweenAdminResolver,
+    CandyBoardService,
+    CandyBoardResolver,
     ...COMMANDS,
     {
       provide: HALLOWEEN_COMMANDS,

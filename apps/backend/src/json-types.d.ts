@@ -1,4 +1,10 @@
 import type { AnyNotificationPayload } from "./notifications/notification-payloads";
+import type {
+  CandyBackgroundEffects,
+  CandyLighting,
+  CandyPlacement,
+} from "./halloween/board/candy-board.schema";
+import type { BoardName } from "./halloween/board/board-names";
 
 declare global {
   namespace PrismaJson {
@@ -11,6 +17,32 @@ declare global {
      * what `parseNotificationPayload` does at the boundary.
      */
     type NotificationDataJson = AnyNotificationPayload;
+
+    /**
+     * Where a player's candies sit on their Halloween candy board, bottom of
+     * the pile first. Inferred from the zod schema in candy-board.schema.ts,
+     * which the service also validates against.
+     */
+    type HalloweenCandyPlacementsJson = CandyPlacement[];
+
+    /**
+     * Where the light over a Halloween candy board is, which casts the
+     * candies' shadows. Inferred from the zod schema in
+     * candy-board.schema.ts, which the service validates against.
+     */
+    type HalloweenCandyLightingJson = CandyLighting;
+
+    /**
+     * How a Halloween candy board's background is dimmed and tinted. Inferred
+     * from the zod schema in candy-board.schema.ts.
+     */
+    type HalloweenCandyBackgroundEffectsJson = CandyBackgroundEffects;
+
+    /**
+     * What a Halloween candy board is called. Inferred from the zod schema in
+     * board-names.ts.
+     */
+    type HalloweenCandyBoardNameJson = BoardName;
 
     /**
      * Type for character trait values stored as JSONB

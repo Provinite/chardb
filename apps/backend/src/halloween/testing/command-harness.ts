@@ -10,7 +10,8 @@ export const AUTHOR = {
   icon_url: "https://images.test/halloween/icon/0.png",
 };
 export const TIMESTAMP = "2025-10-17T15:30:00.000Z";
-export const CANDY = "https://images.test/halloween/candy/candy-corn.png";
+export const CANDY_SLUG = "candy-corn";
+export const CANDY = `https://images.test/halloween/candy/${CANDY_SLUG}.png`;
 
 /** Deterministic stand-ins for the embed pieces that are random or timed. */
 export function stubUi(now = new Date(TIMESTAMP)): HalloweenUi {
@@ -18,7 +19,9 @@ export function stubUi(now = new Date(TIMESTAMP)): HalloweenUi {
     author: () => AUTHOR,
     timestamp: () => TIMESTAMP,
     now: () => now,
-    candyImageUrl: () => CANDY,
+    candySlug: () => CANDY_SLUG,
+    candyImageUrl: (slug: string) =>
+      `https://images.test/halloween/candy/${slug}.png`,
     errorFooter: (i: { id: string }) => ({ text: `Reference ID: ${i.id}` }),
   } as unknown as HalloweenUi;
 }
