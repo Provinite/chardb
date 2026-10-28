@@ -22,23 +22,20 @@ const Hero = styled.div`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
   padding: ${({ theme }) => theme.spacing.xl} ${({ theme }) => theme.spacing.lg};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  background:
-    radial-gradient(ellipse at 50% 130%, #f9731655 0%, #f9731600 60%),
-    linear-gradient(160deg, #1e1b4b 0%, #3b0764 100%);
+  background: ${({ theme }) => theme.colors.surface};
   text-align: center;
 `;
 
-const Preview = styled.p<{ $empty: boolean }>`
+const Preview = styled.p<{ $partial: boolean }>`
   margin: 0;
   min-height: 1.3em;
   font-size: clamp(1.6rem, 4vw, 2.5rem);
-  font-weight: ${({ $empty }) => ($empty ? 500 : 800)};
-  font-style: ${({ $empty }) => ($empty ? "italic" : "normal")};
+  font-weight: 800;
   line-height: 1.3;
-  letter-spacing: 0.01em;
-  color: ${({ $empty }) => ($empty ? "#c4b5fd" : "#fde68a")};
-  text-shadow: ${({ $empty }) => ($empty ? "none" : "0 0 18px #f9731688")};
+  color: ${({ theme, $partial }) =>
+    $partial ? theme.colors.text.muted : theme.colors.text.primary};
 `;
 
 const ShuffleButton = styled.button`
@@ -46,16 +43,16 @@ const ShuffleButton = styled.button`
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
   padding: ${({ theme }) => theme.spacing.xs} ${({ theme }) => theme.spacing.md};
-  border: 1px solid #fde68a66;
+  border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 999px;
-  background: #ffffff14;
-  color: #fde68a;
+  background: ${({ theme }) => theme.colors.background};
+  color: ${({ theme }) => theme.colors.text.primary};
   font: inherit;
   font-weight: 600;
   cursor: pointer;
 
   &:hover:not(:disabled) {
-    background: #ffffff26;
+    border-color: ${({ theme }) => theme.colors.primary};
   }
 
   &:disabled {
@@ -197,12 +194,12 @@ const DialogBody: React.FC<Omit<NameDialogProps, "open">> = ({
   return (
     <>
       <Hero>
-        <Preview data-testid="name-preview" $empty={!name} aria-live="polite">
+        <Preview data-testid="name-preview" $partial={!name} aria-live="polite">
           {name
             ? formatBoardName(name)
             : [first, joiner, last].some(Boolean)
               ? [first ?? "…", joiner, last ?? "…"].filter(Boolean).join(" ")
-              : "Pick a first word and a last word"}
+              : null}
         </Preview>
         <ShuffleButton
           type="button"

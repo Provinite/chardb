@@ -11,7 +11,8 @@
  * board or a canvas. The pictures are served from the page's own origin,
  * which is what lets a canvas read them; nothing needs baking in advance.
  */
-import { CANDY_SIZE, type Placement, type Point } from "./candyBoard";
+import type { Placement, Point } from "./candyBoard";
+import { stickerSize } from "./nameplate";
 
 /** A picture's alpha channel, row by row, 0 (clear) to 255 (solid). */
 export interface AlphaMask {
@@ -87,7 +88,7 @@ function hits(
   board: { width: number; height: number },
   { placement: p, aspect, mask }: HitCandy,
 ): boolean {
-  const width = CANDY_SIZE * p.scale * board.width;
+  const width = stickerSize(p.knockEventId) * p.scale * board.width;
   const height = width / aspect;
   // From the candy's centre, turned back by its rotation (clockwise on
   // screen, where y points down), into its own picture's axes.

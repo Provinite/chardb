@@ -411,6 +411,7 @@ const BoardView: React.FC<{
         background={background}
         backgroundEffects={backgroundEffects}
         lighting={lighting}
+        name={name}
       />
 
       {isOwner && (

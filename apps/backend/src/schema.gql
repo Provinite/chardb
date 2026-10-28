@@ -1711,6 +1711,9 @@ input HalloweenCandyLightingInput {
 
 """Where a candy sits on a board"""
 type HalloweenCandyPlacement {
+  """
+  The candy's knock; 0 for the board's nameplate, a banner with its name, which is placed as a candy is
+  """
   knockEventId: Int!
 
   """Degrees clockwise, -180 to 180"""

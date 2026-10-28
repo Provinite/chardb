@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Halloween candy boards** (`/halloween/board`): players name their board from Halloween word lists, stick the candies their lost knocks gave them, move, rotate, scale and reorder them with handles or the toolbar, pick them out of a pile by clicking again or through see-through edges, choose a picture or tile behind them and desaturate, dim or tint it, place the light their shadows fall from and set its strength, colour and spotlight, clear the board, see whether it is saved, and share a read-only link to it.
+- **Halloween candy boards** (`/halloween/board`): players name their board from Halloween word lists and can stick its name on as a banner, stick the candies their lost knocks gave them, move, rotate, scale and reorder them with handles or the toolbar, pick them out of a pile by clicking again or through see-through edges, choose a picture or tile behind them and desaturate, dim or tint it, place the light their shadows fall from and set its strength, colour and spotlight, clear the board, see whether it is saved, and share a read-only link to it.
 
 ### Changed
 

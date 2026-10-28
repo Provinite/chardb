@@ -18,7 +18,10 @@ export class HalloweenCandy {
 
 @ObjectType({ description: "Where a candy sits on a board" })
 export class HalloweenCandyPlacement {
-  @Field(() => Int)
+  @Field(() => Int, {
+    description:
+      "The candy's knock; 0 for the board's nameplate, a banner with its name, which is placed as a candy is",
+  })
   knockEventId: number;
 
   @Field(() => Float, {

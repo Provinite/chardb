@@ -11,6 +11,7 @@ import {
   type HitCandy,
 } from "../candyHitTest";
 import { CANDY_SIZE, type Placement } from "../candyBoard";
+import { NAMEPLATE_ID } from "../nameplate";
 
 /** An RGBA image, as a canvas hands it back, from a per-pixel alpha function. */
 const imageData = (
@@ -95,6 +96,15 @@ describe("candiesAt", () => {
     expect(
       candiesAt({ x: 500 + HALF + 1, y: 375 }, BOARD, [candy(at(1))]),
     ).toEqual([]);
+  });
+
+  it("measures the nameplate by its own, wider size", () => {
+    // Past a candy's box, but inside the nameplate's.
+    const wide = { x: 500 + HALF * 2, y: 375 };
+    expect(candiesAt(wide, BOARD, [candy(at(1))])).toEqual([]);
+    expect(
+      candiesAt(wide, BOARD, [candy(at(NAMEPLATE_ID), { aspect: 4 })]),
+    ).toEqual([NAMEPLATE_ID]);
   });
 
   it("lists every candy under the press, top of the pile first", () => {

@@ -1610,6 +1610,62 @@ describe("CommunityCandyBoardPage", () => {
         "Your candy board",
       );
     });
+
+    describe("its nameplate", () => {
+      const NAMEPLATE = 0;
+      const ADD_NAMEPLATE: HalloweenCandyBoardAction = {
+        add: { knockEventId: NAMEPLATE, x: 0.5, y: 0.5, rotation: 0, scale: 1 },
+      };
+
+      it("waits first in the tray of a named board, and sticks on like a candy", async () => {
+        renderBoard([
+          boardQuery(board([], { name: moonlit })),
+          applyMock([ADD_NAMEPLATE], {
+            board: board([NAMEPLATE], { name: moonlit }),
+          }),
+        ]);
+        const tray = await screen.findByRole("region", {
+          name: "Your candies",
+        });
+        const items = within(tray).getAllByRole("button");
+        expect(items[0]).toHaveAccessibleName("Place nameplate");
+
+        await userEvent.click(items[0]);
+        expect(
+          within(await pile()).getByRole("img", {
+            name: "Nameplate: Moonlit von Pumpkin",
+          }),
+        ).toBeInTheDocument();
+        expect(
+          within(tray).queryByRole("button", { name: "Place nameplate" }),
+        ).not.toBeInTheDocument();
+      });
+
+      it("shows on the board for anyone looking", async () => {
+        renderBoard([
+          boardQuery(
+            board([NAMEPLATE, 2], { viewerIsOwner: false, name: moonlit }),
+          ),
+        ]);
+        const banner = within(await pile()).getByRole("img", {
+          name: "Nameplate: Moonlit von Pumpkin",
+        });
+        expect(banner.getAttribute("src")).toMatch(/^data:image\/svg\+xml/);
+      });
+
+      it("is not offered, nor drawn, while the board has no name", async () => {
+        renderBoard([boardQuery(board([NAMEPLATE]))]);
+        const tray = await screen.findByRole("region", {
+          name: "Your candies",
+        });
+        expect(
+          within(tray).queryByRole("button", { name: "Place nameplate" }),
+        ).not.toBeInTheDocument();
+        expect(
+          within(await pile()).queryByRole("img", { name: /^Nameplate/ }),
+        ).not.toBeInTheDocument();
+      });
+    });
   });
 
   describe("clearing the board", () => {

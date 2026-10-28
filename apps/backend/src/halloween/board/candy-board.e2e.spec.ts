@@ -838,11 +838,11 @@ describe("Halloween candy board (e2e)", () => {
     it("offers its words to anyone", async () => {
       const res = await testApp.graphqlRequest(NAME_WORDS, {});
       const words = res.body.data.halloweenCandyBoardNameWords;
-      expect(words.first).toHaveLength(50);
-      expect(words.last).toHaveLength(50);
-      expect(words.first).toContain("Moonlit");
+      expect(words.first).toHaveLength(51);
+      expect(words.last).toHaveLength(51);
+      expect(words.first).toContain("Clover");
       expect(words.joiners).toContain("von");
-      expect(words.last).toContain("Pumpkin");
+      expect(words.last).toContain("Coin");
     });
 
     it("starts unnamed", async () => {
@@ -903,6 +903,54 @@ describe("Halloween candy board (e2e)", () => {
       expect(res.body.errors?.[0].message).toBe(
         "Link your Discord account to have a candy board",
       );
+    });
+
+    describe("its nameplate", () => {
+      /** The nameplate's place on the board: id 0, which no knock has. */
+      const NAMEPLATE = 0;
+      const spooky = { first: "Spooky", joiner: null, last: "Cauldron" };
+
+      it("goes on a named board, alongside its candies", async () => {
+        const a = await knock();
+        await setName(spooky);
+        const res = await apply([add(a.id), add(NAMEPLATE, { y: 0.1 })]);
+        expect(res.body.errors).toBeUndefined();
+        expect(
+          res.body.data.applyHalloweenCandyBoardActions.placements,
+        ).toEqual([at(a.id), at(NAMEPLATE, { y: 0.1 })]);
+      });
+
+      it("moves, turns and comes off as a candy does", async () => {
+        await setName(spooky);
+        await apply([add(NAMEPLATE)]);
+        await apply([{ edit: { knockEventId: NAMEPLATE, rotation: 10 } }]);
+        expect(await placementsNow()).toEqual([
+          at(NAMEPLATE, { rotation: 10 }),
+        ]);
+        await apply([{ remove: { knockEventId: NAMEPLATE } }]);
+        expect(await placementsNow()).toEqual([]);
+      });
+
+      it("is skipped on a board with no name", async () => {
+        await apply([add(NAMEPLATE)]);
+        expect(await placementsNow()).toEqual([]);
+      });
+
+      it("goes once only", async () => {
+        await setName(spooky);
+        await apply([add(NAMEPLATE), add(NAMEPLATE, { x: 0.9 })]);
+        expect(await placementsNow()).toEqual([at(NAMEPLATE)]);
+      });
+
+      it("is hidden while the board has no name, and back where it was when named again", async () => {
+        await setName(spooky);
+        await apply([add(NAMEPLATE, { x: 0.3 })]);
+        await setName(null);
+        expect(await placementsNow()).toEqual([]);
+
+        await setName(spooky);
+        expect(await placementsNow()).toEqual([at(NAMEPLATE, { x: 0.3 })]);
+      });
     });
   });
 });

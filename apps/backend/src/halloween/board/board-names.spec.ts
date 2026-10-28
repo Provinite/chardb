@@ -9,8 +9,8 @@ describe("board name words", () => {
   it.each([
     ["first", BOARD_NAME_FIRST_WORDS],
     ["last", BOARD_NAME_LAST_WORDS],
-  ])("offers fifty %s words, each once, in title case", (_which, words) => {
-    expect(words).toHaveLength(50);
+  ])("offers fifty-one %s words, each once, in title case", (_which, words) => {
+    expect(words).toHaveLength(51);
     expect(new Set(words).size).toBe(words.length);
     for (const word of words) {
       expect(word).toMatch(/^[A-Z][a-z]+$/);

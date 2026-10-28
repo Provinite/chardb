@@ -28,6 +28,7 @@ import {
 } from "./candy-board.schema";
 import { StoredCandyBoardInvalidError } from "./candy-board.errors";
 import {
+  NAMEPLATE_ID,
   boardNameSchema,
   storedBoardNameSchema,
   type BoardName,
@@ -209,7 +210,10 @@ export class CandyBoardService {
           placements: applyCandyBoardActions(
             storedPlacements(locked),
             actions,
-            (knockEventId) => owned.has(knockEventId),
+            (knockEventId) =>
+              knockEventId === NAMEPLATE_ID
+                ? locked.name !== null
+                : owned.has(knockEventId),
           ),
         },
       });
@@ -388,9 +392,12 @@ export class CandyBoardService {
       lighting: storedLighting(board),
       name: storedName(board),
       candies,
-      // A candy whose knock is gone is dropped rather than drawn as nothing.
+      // A candy whose knock is gone is dropped rather than drawn as nothing;
+      // the nameplate waits, where it was, while the board has no name.
       placements: storedPlacements(board).filter((p) =>
-        held.has(p.knockEventId),
+        p.knockEventId === NAMEPLATE_ID
+          ? board.name !== null
+          : held.has(p.knockEventId),
       ),
     };
   }

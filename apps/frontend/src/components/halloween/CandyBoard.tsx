@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import styled, { css } from "styled-components";
 import {
   ArrowDown,
@@ -20,6 +20,8 @@ import type { BackgroundEffects } from "./backgroundEffects";
 import { BackgroundEffectLayers } from "./BackgroundEffectLayers";
 import { shadowFilter, type Lighting } from "./candyLighting";
 import { LightLayers } from "./LightLayers";
+import { NAMEPLATE_ID, nameplateUrl, stickerSize } from "./nameplate";
+import { formatBoardName, type BoardName } from "./boardName";
 import {
   candiesAt,
   maskFromImage,
@@ -28,7 +30,6 @@ import {
 } from "./candyHitTest";
 import {
   BOARD_ASPECT,
-  CANDY_SIZE,
   SCALE_MAX,
   SCALE_MIN,
   candyImageUrl,
@@ -137,7 +138,7 @@ const Candy = styled.img<{ $editable: boolean }>`
 const placementStyle = (p: Placement): React.CSSProperties => ({
   left: `${p.x * 100}%`,
   top: `${p.y * 100}%`,
-  width: `${CANDY_SIZE * p.scale * 100}%`,
+  width: `${stickerSize(p.knockEventId) * p.scale * 100}%`,
   transform: `translate(-50%, -50%) rotate(${p.rotation}deg)`,
 });
 
@@ -343,10 +344,15 @@ const Tray = styled.ul`
   padding: 0;
 `;
 
-const TrayItem = styled.button`
+/** The nameplate's place in the tray: two candies wide, as it is long. */
+const WideSlot = styled.li`
+  grid-column: span 2;
+`;
+
+const TrayItem = styled.button<{ $wide?: boolean }>`
   position: relative;
   width: 100%;
-  aspect-ratio: 1;
+  aspect-ratio: ${({ $wide }) => ($wide ? 2 : 1)};
   padding: ${({ theme }) => theme.spacing.sm};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
@@ -402,6 +408,18 @@ interface CandyBoardProps {
   backgroundEffects?: BackgroundEffects | null;
   /** The light that casts the candies' shadows; none for the default. */
   lighting?: Lighting | null;
+  /** The board's name, for its nameplate; none for a board not named. */
+  name?: BoardName | null;
+}
+
+/** What a placed sticker is drawn with: a candy, or the nameplate. */
+interface Sticker {
+  /** What its picture's shape is remembered by. */
+  key: string;
+  src: string;
+  alt: string;
+  /** Whether its see-through parts let a press through; the nameplate's do not. */
+  masked: boolean;
 }
 
 export const CandyBoard: React.FC<CandyBoardProps> = ({
@@ -412,6 +430,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   background,
   backgroundEffects,
   lighting,
+  name,
 }) => {
   const boardRef = useRef<HTMLDivElement>(null);
   const [selected, setSelected] = useState<number | null>(null);
@@ -475,7 +494,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   /** A candy being dragged out of the tray, with a mouse or pen. */
   const [trayDrag, setTrayDrag] = useState<{
     id: number;
-    slug: string;
+    src: string;
     pointerId: number;
     start: Point;
     at: Point;
@@ -485,7 +504,37 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 
   const editable = Boolean(onAction);
   const slugs = new Map(candies.map((c) => [c.knockEventId, c.slug]));
+  const nameText = name ? formatBoardName(name) : null;
+  const nameplateSrc = useMemo(
+    () => (nameText ? nameplateUrl(nameText) : null),
+    [nameText],
+  );
+  /** A placed sticker's picture; null for one with nothing to draw. */
+  const stickerOf = (knockEventId: number): Sticker | null => {
+    if (knockEventId === NAMEPLATE_ID) {
+      return nameText && nameplateSrc
+        ? {
+            key: `nameplate:${nameText}`,
+            src: nameplateSrc,
+            alt: `Nameplate: ${nameText}`,
+            masked: false,
+          }
+        : null;
+    }
+    const slug = slugs.get(knockEventId);
+    return slug
+      ? {
+          key: slug,
+          src: candyImageUrl(slug),
+          alt: candyName(slug),
+          masked: true,
+        }
+      : null;
+  };
   const selectedPlacement = placements.find((p) => p.knockEventId === selected);
+  const nameplatePlaced = placements.some(
+    (p) => p.knockEventId === NAMEPLATE_ID,
+  );
 
   const boardPoint = (clientX: number, clientY: number): Point | null => {
     const rect = boardRef.current?.getBoundingClientRect();
@@ -505,13 +554,17 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
       const id = (e.target as HTMLElement).dataset?.knockEventId;
       return id ? [Number(id)] : [];
     }
-    const pile = placements.map((placement) => {
-      const picture = pictures[slugs.get(placement.knockEventId) ?? ""];
-      return {
-        placement,
-        aspect: picture?.aspect ?? 1,
-        mask: picture?.mask ?? null,
-      };
+    const pile = placements.flatMap((placement) => {
+      const sticker = stickerOf(placement.knockEventId);
+      if (!sticker) return [];
+      const picture = pictures[sticker.key];
+      return [
+        {
+          placement,
+          aspect: picture?.aspect ?? 1,
+          mask: picture?.mask ?? null,
+        },
+      ];
     });
     return candiesAt(
       { x: e.clientX - rect.left, y: e.clientY - rect.top },
@@ -688,14 +741,14 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
     setSelected(id);
   };
 
-  const startTrayDrag = (e: React.PointerEvent, id: number, slug: string) => {
+  const startTrayDrag = (e: React.PointerEvent, id: number, src: string) => {
     // On a touch screen a tray candy is only tapped: a swipe across the tray
     // has to scroll the page.
     if (e.pointerType === "touch" || trayDrag) return;
     const at = { x: e.clientX, y: e.clientY };
     setTrayDrag({
       id,
-      slug,
+      src,
       pointerId: e.pointerId,
       start: at,
       at,
@@ -804,13 +857,13 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
         <Surface style={backgroundStyle(backgroundOf(background))}>
           <BackgroundEffectLayers effects={backgroundEffects ?? null} />
           {placements.map((p) => {
-            const slug = slugs.get(p.knockEventId);
-            if (!slug) return null;
+            const sticker = stickerOf(p.knockEventId);
+            if (!sticker) return null;
             return (
               <CandyFrame key={p.knockEventId} style={placementStyle(p)}>
                 <Candy
-                  src={candyImageUrl(slug)}
-                  alt={candyName(slug)}
+                  src={sticker.src}
+                  alt={sticker.alt}
                   draggable={false}
                   $editable={editable}
                   data-knock-event-id={p.knockEventId}
@@ -827,13 +880,16 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                     const { naturalWidth, naturalHeight } = image;
                     if (!naturalWidth || !naturalHeight) return;
                     setPictures((known) =>
-                      known[slug]
+                      known[sticker.key]
                         ? known
                         : {
                             ...known,
-                            [slug]: {
+                            [sticker.key]: {
                               aspect: naturalWidth / naturalHeight,
-                              mask: editable ? maskFromImage(image) : null,
+                              mask:
+                                editable && sticker.masked
+                                  ? maskFromImage(image)
+                                  : null,
                             },
                           },
                     );
@@ -849,7 +905,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
             style={{
               ...placementStyle(selectedPlacement),
               aspectRatio:
-                pictures[slugs.get(selectedPlacement.knockEventId) ?? ""]
+                pictures[stickerOf(selectedPlacement.knockEventId)?.key ?? ""]
                   ?.aspect ?? 1,
             }}
           >
@@ -961,13 +1017,38 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                 : "Tap a candy to stick it on the board, or drag it where you want it."}
           </TrayHint>
           <Tray>
+            {/* The nameplate, while the board has a name and it is not up. */}
+            {editable && nameplateSrc && !nameplatePlaced && (
+              <WideSlot>
+                <TrayItem
+                  type="button"
+                  aria-label="Place nameplate"
+                  $wide
+                  onPointerDown={(e) =>
+                    startTrayDrag(e, NAMEPLATE_ID, nameplateSrc)
+                  }
+                  onPointerMove={moveTrayDrag}
+                  onPointerUp={endTrayDrag}
+                  onPointerCancel={() => setTrayDrag(null)}
+                  onClick={() => {
+                    if (draggedFromTray.current) {
+                      draggedFromTray.current = false;
+                      return;
+                    }
+                    place(NAMEPLATE_ID, CENTRE);
+                  }}
+                >
+                  <img src={nameplateSrc} alt="" draggable={false} />
+                </TrayItem>
+              </WideSlot>
+            )}
             {groups.map(({ slug, knockEventIds }) => (
               <li key={slug}>
                 <TrayItem
                   type="button"
                   aria-label={`Place ${candyName(slug)} (${knockEventIds.length} left)`}
                   onPointerDown={(e) =>
-                    startTrayDrag(e, knockEventIds[0], slug)
+                    startTrayDrag(e, knockEventIds[0], candyImageUrl(slug))
                   }
                   onPointerMove={moveTrayDrag}
                   onPointerUp={endTrayDrag}
@@ -993,7 +1074,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
 
       {trayDrag?.moved && (
         <Ghost
-          src={candyImageUrl(trayDrag.slug)}
+          src={trayDrag.src}
           alt=""
           style={{ left: trayDrag.at.x, top: trayDrag.at.y }}
         />
