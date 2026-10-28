@@ -1,8 +1,9 @@
 /**
- * How a candy board's background is dimmed and tinted behind its candies.
+ * How a candy board's background is muted behind its candies.
  */
 import { describe, it, expect } from "vitest";
 import {
+  DEFAULT_SATURATION,
   NO_EFFECTS,
   TINT_PALETTE,
   effectLayers,
@@ -10,9 +11,26 @@ import {
 } from "../backgroundEffects";
 
 describe("effectLayers", () => {
-  it("draws nothing over a background left alone", () => {
-    expect(effectLayers(null)).toEqual({ tint: null, dim: null });
-    expect(effectLayers(NO_EFFECTS)).toEqual({ tint: null, dim: null });
+  it("mutes a background left alone a little, and nothing more", () => {
+    expect(DEFAULT_SATURATION).toBe(0.9);
+    const { saturate, tint, dim } = effectLayers(null);
+    expect(saturate?.opacity).toBeCloseTo(0.1, 6);
+    expect(tint).toBe(null);
+    expect(dim).toBe(null);
+    expect(effectLayers(NO_EFFECTS)).toEqual(effectLayers(null));
+  });
+
+  it("greys the background as far as its saturation is down", () => {
+    const { saturate } = effectLayers({ ...NO_EFFECTS, saturation: 0.25 });
+    expect(saturate).toEqual({
+      backgroundColor: "#808080",
+      opacity: 0.75,
+      mixBlendMode: "saturation",
+    });
+  });
+
+  it("draws no grey at full saturation", () => {
+    expect(effectLayers({ ...NO_EFFECTS, saturation: 1 }).saturate).toBe(null);
   });
 
   it("darkens with black, as far as it is dimmed", () => {
@@ -24,7 +42,7 @@ describe("effectLayers", () => {
 
   it("recolours with the tint, keeping the picture's light and dark", () => {
     expect(
-      effectLayers({ dim: 0, tint: "#7c3aed", tintStrength: 0.6 }).tint,
+      effectLayers({ ...NO_EFFECTS, tint: "#7c3aed", tintStrength: 0.6 }).tint,
     ).toEqual({
       backgroundColor: "#7c3aed",
       opacity: 0.6,
@@ -34,22 +52,27 @@ describe("effectLayers", () => {
 
   it("draws no tint at no strength", () => {
     expect(
-      effectLayers({ dim: 0, tint: "#7c3aed", tintStrength: 0 }).tint,
+      effectLayers({ ...NO_EFFECTS, tint: "#7c3aed", tintStrength: 0 }).tint,
     ).toBe(null);
   });
 });
 
 describe("savedEffects", () => {
-  it("saves nothing for a background left alone", () => {
+  it("saves nothing for a background left as it starts", () => {
     expect(savedEffects(NO_EFFECTS)).toBe(null);
-    expect(savedEffects({ dim: 0, tint: "#7c3aed", tintStrength: 0 })).toBe(
-      null,
-    );
+    expect(
+      savedEffects({ ...NO_EFFECTS, tint: "#7c3aed", tintStrength: 0 }),
+    ).toBe(null);
   });
 
-  it("saves a dim or a tint as it is", () => {
-    const effects = { dim: 0.3, tint: "#7c3aed", tintStrength: 0.5 };
-    expect(savedEffects(effects)).toEqual(effects);
+  it("saves a dim, a tint or a saturation as it is", () => {
+    for (const effects of [
+      { ...NO_EFFECTS, dim: 0.3 },
+      { ...NO_EFFECTS, tint: "#7c3aed", tintStrength: 0.5 },
+      { ...NO_EFFECTS, saturation: 1 },
+    ]) {
+      expect(savedEffects(effects)).toEqual(effects);
+    }
   });
 });
 

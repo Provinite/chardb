@@ -1542,6 +1542,9 @@ type HalloweenCandyBackgroundEffects {
   """How much darker it is, 0 (not at all) to 0.8"""
   dim: Float!
 
+  """How much of its colour it keeps, 0 (grey) to 1 (as drawn)"""
+  saturation: Float!
+
   """
   The #rrggbb colour it is recoloured toward, keeping its light and dark; null for none
   """
@@ -1554,6 +1557,7 @@ type HalloweenCandyBackgroundEffects {
 """How to dim and tint your board's background"""
 input HalloweenCandyBackgroundEffectsInput {
   dim: Float!
+  saturation: Float!
   tint: String
   tintStrength: Float!
 }

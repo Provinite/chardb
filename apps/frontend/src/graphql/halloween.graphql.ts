@@ -219,6 +219,7 @@ export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
       dim
       tint
       tintStrength
+      saturation
     }
     lighting {
       x

@@ -1,7 +1,7 @@
 import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 import { Modal } from "@mantine/core";
-import { Blend, Moon, Palette } from "lucide-react";
+import { Blend, Droplets, Moon, Palette } from "lucide-react";
 import { Tooltip } from "../Tooltip";
 import {
   BOARD_BACKGROUNDS,
@@ -21,7 +21,7 @@ import { BackgroundEffectLayers } from "./BackgroundEffectLayers";
 import { TintChoices } from "./TintChoices";
 
 const ICON_SIZE = 18;
-/** How far the dim and tint strength sliders move a notch. */
+/** How far the saturation, dim and tint strength sliders move a notch. */
 const SLIDER_STEP = 0.01;
 
 /**
@@ -147,6 +147,11 @@ export const BackgroundDialog: React.FC<BackgroundDialogProps> = ({
 );
 
 // The icons naming each row, the same every render.
+const SATURATION_ICON = (
+  <Tooltip label="Saturation">
+    <Droplets size={ICON_SIZE} aria-hidden />
+  </Tooltip>
+);
 const DIM_ICON = (
   <Tooltip label="Dim">
     <Moon size={ICON_SIZE} aria-hidden />
@@ -199,6 +204,18 @@ const DialogBody: React.FC<Omit<BackgroundDialogProps, "open">> = ({
         <BackgroundEffectLayers effects={muting} />
       </Preview>
       <Effects>
+        {SATURATION_ICON}
+        <input
+          type="range"
+          aria-label="Saturation"
+          min={0}
+          max={1}
+          step={SLIDER_STEP}
+          value={muting.saturation}
+          onChange={(e) =>
+            setMuting((m) => ({ ...m, saturation: Number(e.target.value) }))
+          }
+        />
         {DIM_ICON}
         <input
           type="range"

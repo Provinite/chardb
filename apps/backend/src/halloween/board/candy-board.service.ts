@@ -265,7 +265,7 @@ export class CandyBoardService {
       !candyBackgroundEffectsSchema.safeParse(effects).success
     ) {
       throw new BadRequestException(
-        "The background can be dimmed by up to 0.8, and tinted a #rrggbb colour at a strength from 0 to 1",
+        "The background can be dimmed by up to 0.8, tinted a #rrggbb colour at a strength from 0 to 1, and saturated from 0 to 1",
       );
     }
     const guildId = await this.requireGuild(communityId);

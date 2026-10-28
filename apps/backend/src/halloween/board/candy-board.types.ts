@@ -216,6 +216,11 @@ export class HalloweenCandyBackgroundEffects {
 
   @Field(() => Float, { description: "How far toward the tint, 0 to 1" })
   tintStrength: number;
+
+  @Field(() => Float, {
+    description: "How much of its colour it keeps, 0 (grey) to 1 (as drawn)",
+  })
+  saturation: number;
 }
 
 @InputType({ description: "How to dim and tint your board's background" })
@@ -228,6 +233,9 @@ export class HalloweenCandyBackgroundEffectsInput {
 
   @Field(() => Float)
   tintStrength: number;
+
+  @Field(() => Float)
+  saturation: number;
 }
 
 @ObjectType({

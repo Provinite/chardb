@@ -8,15 +8,22 @@ const layer: CSSProperties = {
 };
 
 /**
- * The tint, then the dim over it, laid over a background. Drawn before the
+ * The grey, the tint, then the dim over them, laid over a background. Drawn before the
  * candies, so they lie on top.
  */
 export const BackgroundEffectLayers: React.FC<{
   effects: BackgroundEffects | null;
 }> = ({ effects }) => {
-  const { tint, dim } = effectLayers(effects);
+  const { saturate, tint, dim } = effectLayers(effects);
   return (
     <>
+      {saturate && (
+        <div
+          data-testid="background-saturation"
+          aria-hidden
+          style={{ ...layer, ...saturate }}
+        />
+      )}
       {tint && (
         <div
           data-testid="background-tint"

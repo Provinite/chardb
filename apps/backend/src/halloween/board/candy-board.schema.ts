@@ -63,7 +63,8 @@ export const BACKGROUND_DIM_MAX = 0.8;
  * What mutes a board's background, for a picture too busy behind its
  * candies: `dim` darkens it, from 0 (not at all) to 0.8; `tint` recolours it
  * toward one `#rrggbb` colour, keeping its light and dark, by `tintStrength`
- * from 0 to 1. No tint is null.
+ * from 0 to 1. No tint is null. `saturation`, 0 (grey) to 1 (as drawn),
+ * mutes its colours.
  */
 export const candyBackgroundEffectsSchema = z.object({
   dim: z.number().min(0).max(BACKGROUND_DIM_MAX),
@@ -72,6 +73,7 @@ export const candyBackgroundEffectsSchema = z.object({
     .regex(/^#[0-9a-f]{6}$/i)
     .nullable(),
   tintStrength: z.number().min(0).max(1),
+  saturation: z.number().min(0).max(1),
 });
 
 export type CandyBackgroundEffects = z.infer<

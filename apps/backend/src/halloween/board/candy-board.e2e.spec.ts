@@ -19,7 +19,7 @@ const BOARD_FIELDS = `
   candies { knockEventId slug receivedAt }
   placements { knockEventId x y rotation scale }
   background
-  backgroundEffects { dim tint tintStrength }
+  backgroundEffects { dim tint tintStrength saturation }
   lighting { x y height intensity colour colourStrength }
 `;
 
@@ -655,7 +655,20 @@ describe("Halloween candy board (e2e)", () => {
   });
 
   describe("choosing a background", () => {
-    type Effects = { dim: number; tint: string | null; tintStrength: number };
+    type Effects = {
+      dim: number;
+      tint: string | null;
+      tintStrength: number;
+      saturation: number;
+    };
+    /** Untouched but for whatever differs. */
+    const muted = (changes: Partial<Effects> = {}): Effects => ({
+      dim: 0,
+      tint: null,
+      tintStrength: 0,
+      saturation: 0.9,
+      ...changes,
+    });
     const setBackground = (
       slug: string | null,
       token = playerToken,
@@ -669,7 +682,7 @@ describe("Halloween candy board (e2e)", () => {
 
     describe("dimming and tinting it", () => {
       const REFUSED =
-        "The background can be dimmed by up to 0.8, and tinted a #rrggbb colour at a strength from 0 to 1";
+        "The background can be dimmed by up to 0.8, tinted a #rrggbb colour at a strength from 0 to 1, and saturated from 0 to 1";
 
       it("starts with neither", async () => {
         expect(
@@ -678,7 +691,12 @@ describe("Halloween candy board (e2e)", () => {
       });
 
       it("saves them with the background, and shows them to anyone", async () => {
-        const effects = { dim: 0.4, tint: "#7c3aed", tintStrength: 0.6 };
+        const effects = muted({
+          dim: 0.4,
+          tint: "#7c3aed",
+          tintStrength: 0.6,
+          saturation: 0.3,
+        });
         const set = await setBackground("tile-corkboard", playerToken, effects);
         expect(set.body.errors).toBeUndefined();
         const board = set.body.data.setHalloweenCandyBoardBackground;
@@ -695,7 +713,7 @@ describe("Halloween candy board (e2e)", () => {
       });
 
       it("dims without a tint", async () => {
-        const effects = { dim: 0.5, tint: null, tintStrength: 0 };
+        const effects = muted({ dim: 0.5 });
         const res = await setBackground(null, playerToken, effects);
         expect(
           res.body.data.setHalloweenCandyBoardBackground.backgroundEffects,
@@ -703,11 +721,7 @@ describe("Halloween candy board (e2e)", () => {
       });
 
       it("drops them when a background is set without any", async () => {
-        await setBackground("tile-corkboard", playerToken, {
-          dim: 0.4,
-          tint: null,
-          tintStrength: 0,
-        });
+        await setBackground("tile-corkboard", playerToken, muted({ dim: 0.4 }));
         const res = await setBackground("tile-corkboard");
         expect(
           res.body.data.setHalloweenCandyBoardBackground.backgroundEffects,
@@ -715,12 +729,14 @@ describe("Halloween candy board (e2e)", () => {
       });
 
       it.each([
-        ["dimmed too far", { dim: 0.9, tint: null, tintStrength: 0 }],
-        ["brightened", { dim: -0.1, tint: null, tintStrength: 0 }],
-        ["tinted a name", { dim: 0, tint: "purple", tintStrength: 0.5 }],
-        ["tinted a short colour", { dim: 0, tint: "#fff", tintStrength: 0.5 }],
-        ["tinted too strongly", { dim: 0, tint: "#7c3aed", tintStrength: 1.5 }],
-        ["tinted below none", { dim: 0, tint: "#7c3aed", tintStrength: -1 }],
+        ["dimmed too far", muted({ dim: 0.9 })],
+        ["brightened", muted({ dim: -0.1 })],
+        ["tinted a name", muted({ tint: "purple", tintStrength: 0.5 })],
+        ["tinted a short colour", muted({ tint: "#fff", tintStrength: 0.5 })],
+        ["tinted too strongly", muted({ tint: "#7c3aed", tintStrength: 1.5 })],
+        ["tinted below none", muted({ tint: "#7c3aed", tintStrength: -1 })],
+        ["oversaturated", muted({ saturation: 1.5 })],
+        ["below grey", muted({ saturation: -0.1 })],
       ])("refuses a background %s", async (_what, effects) => {
         const res = await setBackground("tile-corkboard", playerToken, effects);
         expect(res.body.errors?.[0].message).toBe(REFUSED);

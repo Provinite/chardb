@@ -1051,7 +1051,12 @@ describe("CommunityCandyBoardPage", () => {
     });
 
     describe("dimmed and tinted", () => {
-      const purple = { dim: 0.4, tint: "#7c3aed", tintStrength: 0.5 };
+      const purple = {
+        dim: 0.4,
+        tint: "#7c3aed",
+        tintStrength: 0.5,
+        saturation: 0.9,
+      };
       const tintOf = (el: HTMLElement) =>
         el.querySelector<HTMLElement>('[data-testid="background-tint"]');
       const dimOf = (el: HTMLElement) =>
@@ -1103,10 +1108,57 @@ describe("CommunityCandyBoardPage", () => {
         ).toHaveValue("0.5");
       });
 
+      it("starts a little desaturated, on the board and in the preview", async () => {
+        renderBoard([boardQuery(board([2], { background: "tile-corkboard" }))]);
+        const grey = (el: HTMLElement) =>
+          el.querySelector<HTMLElement>(
+            '[data-testid="background-saturation"]',
+          );
+        expect(grey(await surface())?.style.opacity).toBe("0.1");
+
+        const dialog = await openDialog();
+        const saturation = within(dialog).getByRole("slider", {
+          name: "Saturation",
+        });
+        expect(saturation).toHaveValue("0.9");
+        fireEvent.change(saturation, { target: { value: "0.25" } });
+        expect(grey(preview(dialog))?.style.opacity).toBe("0.75");
+      });
+
+      it("saves a saturation with the background", async () => {
+        const grey = {
+          ...purple,
+          tint: null,
+          tintStrength: 0,
+          dim: 0,
+          saturation: 0.3,
+        };
+        const saved = vi.fn(() => ({
+          data: {
+            setHalloweenCandyBoardBackground: board([], {
+              backgroundEffects: grey,
+            }),
+          },
+        }));
+        renderBoard([
+          boardQuery(board([])),
+          { ...setBackground(null, { board: board([]) }, grey), result: saved },
+        ]);
+        const dialog = await openDialog();
+        fireEvent.change(
+          within(dialog).getByRole("slider", { name: "Saturation" }),
+          { target: { value: "0.3" } },
+        );
+        await userEvent.click(
+          within(dialog).getByRole("button", { name: "Use background" }),
+        );
+        await waitFor(() => expect(saved).toHaveBeenCalled());
+      });
+
       it("moves its sliders a hundredth at a time", async () => {
         renderBoard([boardQuery(board([]))]);
         const dialog = await openDialog();
-        for (const name of ["Dim", "Tint strength"]) {
+        for (const name of ["Dim", "Tint strength", "Saturation"]) {
           expect(within(dialog).getByRole("slider", { name })).toHaveAttribute(
             "step",
             "0.01",
@@ -1241,7 +1293,12 @@ describe("CommunityCandyBoardPage", () => {
         boardQuery(
           board([2], {
             viewerIsOwner: false,
-            backgroundEffects: { dim: 0.2, tint: null, tintStrength: 0 },
+            backgroundEffects: {
+              dim: 0.2,
+              tint: null,
+              tintStrength: 0,
+              saturation: 0.9,
+            },
             lighting: light,
           }),
         ),

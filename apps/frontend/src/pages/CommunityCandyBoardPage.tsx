@@ -131,6 +131,7 @@ const stripEffects = (
         dim: effects.dim,
         tint: effects.tint ?? null,
         tintStrength: effects.tintStrength,
+        saturation: effects.saturation,
       }
     : null;
 
