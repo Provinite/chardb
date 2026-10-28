@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Security
+
+- **`resendVerificationEmail` no longer reveals registered addresses when mail cannot be sent**: a delivery failure is logged instead of returned as an error.
+
+### Fixed
+
+- **API e2e specs use the test stack's LocalStack and bucket**, not the dev stack's.
+
 ### Added
 
 - **Prisma operations and SQL queries appear as spans in traces**, nested under the resolver that issued them (#97).

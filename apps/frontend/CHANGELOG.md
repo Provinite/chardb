@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Staff actions move into a "⋯" menu** on the character page, trait review cards and item pages, each behind a confirm dialog; Remove from Species asks for the character's name to be typed (#430).
 - **The species list shows its management buttons only to those who can use them**, with Delete in each card's menu behind a typed-name confirm (#221, #430).
 - **Typed-name confirmations ignore stray spaces**, leading, trailing or doubled, on either side (#430).
+- **The full-page loading state is the CharDB wordmark with a sweeping glint**, centred and shown only once a load passes 200ms.
 
 ## [v14.1.0] - 2026-10-26
 
