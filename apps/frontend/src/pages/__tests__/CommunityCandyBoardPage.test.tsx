@@ -76,6 +76,7 @@ import {
 import {
   DEFAULT_LIGHTING,
   shadowFilter,
+  spotlightGlow,
   spotlightLayer,
   type Lighting,
 } from "../../components/halloween/candyLighting";
@@ -1346,6 +1347,12 @@ describe("CommunityCandyBoardPage", () => {
       );
       expect(spot?.style.backgroundImage).toBe(
         spotlightLayer(light)?.backgroundImage,
+      );
+      const glow = (await pile()).querySelector<HTMLElement>(
+        '[data-testid="light-glow"]',
+      );
+      expect(glow?.style.backgroundImage).toBe(
+        spotlightGlow(light)?.backgroundImage,
       );
     });
 

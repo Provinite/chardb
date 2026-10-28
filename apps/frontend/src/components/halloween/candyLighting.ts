@@ -139,18 +139,67 @@ export function spotlightLayer(
 ): CSSProperties | null {
   const pool = spotlightOf(lighting);
   if (!pool) return null;
-  const across = pool.radius / SPOTLIGHT_SQUARE;
-  const along = across * pool.stretch;
-  const litShare = round((pool.lit / pool.radius) * 100);
+  const { square, ellipse, litShare } = poolSquare(pool);
   return {
-    left: `${round(pool.x)}%`,
-    top: `${round(pool.y)}%`,
-    width: `${SPOTLIGHT_SQUARE * 100}%`,
-    aspectRatio: "1",
-    transform: `translate(-50%, -50%) rotate(${pool.angle.toFixed(3)}deg)`,
-    backgroundImage: `radial-gradient(${round(along)}% ${round(across)}% at 50% 50%, rgba(0, 0, 0, 0) ${litShare}%, rgba(0, 0, 0, ${round(pool.darkness)}) 100%)`,
+    ...square,
+    backgroundImage: `radial-gradient(${ellipse} at 50% 50%, rgba(0, 0, 0, 0) ${litShare}%, rgba(0, 0, 0, ${round(pool.darkness)}) 100%)`,
   };
 }
+
+/** How bright a spotlight's pool glows at its middle, at full intensity. */
+const GLOW_MAX = 0.8;
+
+/**
+ * The light inside a spotlight's pool, as bright as the light is intense:
+ * brightest in the middle and gone by the pool's lit edge, in the light's
+ * colour or white. Softly blended, so it lifts what is there without washing
+ * it out. Null with no spotlight, or no intensity.
+ */
+export function spotlightGlow(
+  lighting: Lighting | null | undefined,
+): CSSProperties | null {
+  const pool = spotlightOf(lighting);
+  if (!pool || !lighting || lighting.intensity <= 0) return null;
+  const { square, ellipse, litShare } = poolSquare(pool);
+  const rgb =
+    lighting.colour && lighting.colourStrength > 0
+      ? rgbOf(lighting.colour)
+      : "255, 255, 255";
+  const alpha = round(GLOW_MAX * Math.min(1, lighting.intensity));
+  return {
+    ...square,
+    mixBlendMode: "soft-light",
+    backgroundImage: `radial-gradient(${ellipse} at 50% 50%, rgba(${rgb}, ${alpha}) 0%, rgba(${rgb}, 0) ${litShare}%)`,
+  };
+}
+
+/**
+ * Where a pool's square goes and how its ellipse is sized on it: centred on
+ * the pool, turned to the beam, its ellipse in percent of the square.
+ */
+function poolSquare(pool: Spotlight): {
+  square: CSSProperties;
+  ellipse: string;
+  litShare: number;
+} {
+  const across = pool.radius / SPOTLIGHT_SQUARE;
+  const along = across * pool.stretch;
+  return {
+    square: {
+      left: `${round(pool.x)}%`,
+      top: `${round(pool.y)}%`,
+      width: `${SPOTLIGHT_SQUARE * 100}%`,
+      aspectRatio: "1",
+      transform: `translate(-50%, -50%) rotate(${pool.angle.toFixed(3)}deg)`,
+    },
+    ellipse: `${round(along)}% ${round(across)}%`,
+    litShare: round((pool.lit / pool.radius) * 100),
+  };
+}
+
+/** "#f97316" -> "249, 115, 22". */
+const rgbOf = (hex: string) =>
+  [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ");
 
 /**
  * The light's colour, as a layer over the whole board -- candies,

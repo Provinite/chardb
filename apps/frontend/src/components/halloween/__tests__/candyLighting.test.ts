@@ -9,6 +9,7 @@ import {
   shadowOf,
   lightWash,
   shadowFilter,
+  spotlightGlow,
   spotlightLayer,
   spotlightOf,
   type Lighting,
@@ -106,6 +107,56 @@ describe("spotlightOf", () => {
     expect(Number(along)).toBeCloseTo((pool.radius * pool.stretch) / 3, 3);
     expect(Number(across)).toBeCloseTo(pool.radius / 3, 3);
     expect(spotlightLayer(DEFAULT_LIGHTING)).toBe(null);
+  });
+});
+
+describe("spotlightGlow", () => {
+  const spot = { ...at(0.3, -0.2, 0.5), spotlight: 0.7 };
+  const alpha = (style: ReturnType<typeof spotlightGlow>) =>
+    Number(
+      /rgba\(\d+, \d+, \d+, ([\d.]+)\) 0%/.exec(
+        String(style?.backgroundImage),
+      )?.[1],
+    );
+
+  it("brightens nothing with no spotlight, or no intensity", () => {
+    expect(spotlightGlow(null)).toBe(null);
+    expect(spotlightGlow(at(0.3, -0.2, 0.5))).toBe(null);
+    expect(spotlightGlow({ ...spot, intensity: 0 })).toBe(null);
+  });
+
+  it("brightens the pool more, the more intense the light", () => {
+    expect(alpha(spotlightGlow({ ...spot, intensity: 1 }))).toBeGreaterThan(
+      alpha(spotlightGlow({ ...spot, intensity: 0.5 })),
+    );
+  });
+
+  it("lies over the pool, turned and stretched as it is", () => {
+    const glow = spotlightGlow(spot)!;
+    const dark = spotlightLayer(spot)!;
+    for (const key of [
+      "left",
+      "top",
+      "width",
+      "aspectRatio",
+      "transform",
+    ] as const) {
+      expect(glow[key]).toBe(dark[key]);
+    }
+    expect(glow.mixBlendMode).toBe("soft-light");
+    // Brightest in the middle, gone by the pool's lit edge.
+    expect(String(glow.backgroundImage)).toMatch(
+      /^radial-gradient\([\d.]+% [\d.]+% at 50% 50%, rgba\(255, 255, 255, [\d.]+\) 0%, rgba\(255, 255, 255, 0\) 66\.667%\)$/,
+    );
+  });
+
+  it("glows the light's colour under a coloured light", () => {
+    const glow = spotlightGlow({
+      ...spot,
+      colour: "#f97316",
+      colourStrength: 0.4,
+    });
+    expect(String(glow?.backgroundImage)).toContain("rgba(249, 115, 22, ");
   });
 });
 
