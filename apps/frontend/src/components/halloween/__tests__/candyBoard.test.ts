@@ -78,11 +78,19 @@ describe("trayGroups", () => {
     { knockEventId: 4, slug: "banana" },
   ];
 
-  it("groups the candies not on the board by slug, in the order first got", () => {
+  it("groups the candies not on the board by slug, in order of their names", () => {
     expect(trayGroups(candies, [at(2)])).toEqual([
-      { slug: "candy-corn", knockEventIds: [1, 3] },
       { slug: "banana", knockEventIds: [4] },
+      { slug: "candy-corn", knockEventIds: [1, 3] },
     ]);
+  });
+
+  it("keeps each group in its place as its candies are used", () => {
+    const order = (placed: number[]) =>
+      trayGroups(candies, placed.map((id) => at(id))).map((g) => g.slug);
+    expect(order([])).toEqual(["banana", "candy-corn", "luther-head"]);
+    expect(order([1])).toEqual(["banana", "candy-corn", "luther-head"]);
+    expect(order([1, 4])).toEqual(["candy-corn", "luther-head"]);
   });
 
   it("is empty once everything is placed", () => {

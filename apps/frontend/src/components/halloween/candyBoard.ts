@@ -69,7 +69,7 @@ export interface TrayGroup {
   knockEventIds: number[];
 }
 
-/** The candies not on the board, one group per kind, in the order first got. */
+/** The candies not on the board, one group per kind, by the kind's name. */
 export function trayGroups(
   candies: { knockEventId: number; slug: string }[],
   placements: Placement[],
@@ -82,7 +82,10 @@ export function trayGroups(
     ids.push(candy.knockEventId);
     groups.set(candy.slug, ids);
   }
-  return [...groups].map(([slug, knockEventIds]) => ({ slug, knockEventIds }));
+  // By name, so a group keeps its place as its candies come and go.
+  return [...groups]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([slug, knockEventIds]) => ({ slug, knockEventIds }));
 }
 
 /** The candy an action is about. */
