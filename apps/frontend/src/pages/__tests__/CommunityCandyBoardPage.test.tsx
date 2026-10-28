@@ -957,11 +957,25 @@ describe("CommunityCandyBoardPage", () => {
       expect(corkboard).toBeChecked();
       expect(corkboard.textContent).toBe("");
       expect(
-        within(dialog).getByRole("radio", { name: "night sky" }),
+        within(dialog).getByRole("radio", { name: "graph paper" }),
       ).not.toBeChecked();
       expect(
         within(dialog).getByRole("radio", { name: "daphne luther hug" }),
       ).toBeInTheDocument();
+      expect(
+        within(dialog).queryByRole("radio", { name: "night sky" }),
+      ).not.toBeInTheDocument();
+    });
+
+    it("is graph paper on a board with none chosen, chosen in the dialog", async () => {
+      renderBoard([boardQuery(board([]))]);
+      expect((await surface()).style.backgroundImage).toContain(
+        "tile-graph-paper.webp",
+      );
+      const dialog = await openDialog();
+      expect(
+        within(dialog).getByRole("radio", { name: "graph paper" }),
+      ).toBeChecked();
     });
 
     it("previews a choice without its candies, and leaves the board alone until used", async () => {
@@ -975,7 +989,9 @@ describe("CommunityCandyBoardPage", () => {
         "tile-corkboard.webp",
       );
       expect(within(preview(dialog)).queryAllByRole("img")).toHaveLength(0);
-      expect((await surface()).style.backgroundImage).toBe("");
+      expect((await surface()).style.backgroundImage).toContain(
+        "tile-graph-paper.webp",
+      );
     });
 
     it("saves the choice when used, and closes", async () => {
@@ -1018,7 +1034,7 @@ describe("CommunityCandyBoardPage", () => {
       const dialog = await openDialog();
 
       await userEvent.click(
-        within(dialog).getByRole("radio", { name: "night sky" }),
+        within(dialog).getByRole("radio", { name: "clouds" }),
       );
       await userEvent.click(
         within(dialog).getByRole("button", { name: "Cancel" }),

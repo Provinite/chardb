@@ -5,10 +5,10 @@ import { Blend, Droplets, Moon, Palette } from "lucide-react";
 import { Tooltip } from "../Tooltip";
 import {
   BOARD_BACKGROUNDS,
-  NIGHT_SKY,
+  SURFACE_COLOUR,
   backgroundName,
+  backgroundOf,
   backgroundStyle,
-  findBackground,
 } from "./boardBackgrounds";
 import {
   BACKGROUND_DIM_MAX,
@@ -40,7 +40,7 @@ const Preview = styled.div`
   width: 100%;
   aspect-ratio: 4 / 3;
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  background: ${NIGHT_SKY};
+  background-color: ${SURFACE_COLOUR};
 `;
 
 const Effects = styled.div`
@@ -84,7 +84,7 @@ const Swatch = styled.span`
   width: 100%;
   aspect-ratio: 4 / 3;
   border-radius: ${({ theme }) => theme.borderRadius.sm};
-  background: ${NIGHT_SKY};
+  background-color: ${SURFACE_COLOUR};
 `;
 
 const Buttons = styled.div`
@@ -108,17 +108,14 @@ const DialogButton = styled.button<{ $primary?: boolean }>`
   cursor: pointer;
 `;
 
-const CHOICES = [
-  { slug: null, name: "night sky" },
-  ...BOARD_BACKGROUNDS.map(({ slug }) => ({
-    slug,
-    name: backgroundName(slug),
-  })),
-];
+const CHOICES = BOARD_BACKGROUNDS.map(({ slug }) => ({
+  slug,
+  name: backgroundName(slug),
+}));
 
 interface BackgroundDialogProps {
   open: boolean;
-  /** The board's background now; null for the night sky. */
+  /** The board's background now; null for none chosen, shown as the default. */
   value: string | null;
   /** How the board's background is dimmed and tinted now; null for neither. */
   effects: BackgroundEffects | null;
@@ -126,8 +123,8 @@ interface BackgroundDialogProps {
   lighting: Lighting | null;
   onClose: () => void;
   /**
-   * The background to use, null for the night sky, and how it is dimmed and
-   * tinted, null for neither.
+   * The background to use, null to leave none chosen, and how it is dimmed
+   * and tinted, null for neither.
    */
   onUse: (slug: string | null, effects: BackgroundEffects | null) => void;
 }
@@ -202,7 +199,7 @@ const DialogBody: React.FC<Omit<BackgroundDialogProps, "open">> = ({
       <Preview
         role="img"
         aria-label="Background preview"
-        style={backgroundStyle(findBackground(chosen))}
+        style={backgroundStyle(backgroundOf(chosen))}
       >
         <BackgroundEffectLayers effects={muting} />
         <LightLayers lighting={lighting} />
@@ -277,22 +274,26 @@ const DialogBody: React.FC<Omit<BackgroundDialogProps, "open">> = ({
 const BackgroundChoices = React.memo<{
   chosen: string | null;
   onChoose: (slug: string | null) => void;
-}>(({ chosen, onChoose }) => (
-  <Options role="radiogroup" aria-label="Backgrounds">
-    {CHOICES.map(({ slug, name }) => (
-      <Option
-        key={slug ?? "night-sky"}
-        type="button"
-        role="radio"
-        aria-checked={chosen === slug}
-        aria-label={name}
-        title={name}
-        $chosen={chosen === slug}
-        onClick={() => onChoose(slug)}
-      >
-        <Swatch style={backgroundStyle(findBackground(slug))} aria-hidden />
-      </Option>
-    ))}
-  </Options>
-));
+}>(({ chosen, onChoose }) => {
+  // None chosen shows, and is checked as, the default.
+  const shown = backgroundOf(chosen).slug;
+  return (
+    <Options role="radiogroup" aria-label="Backgrounds">
+      {CHOICES.map(({ slug, name }) => (
+        <Option
+          key={slug}
+          type="button"
+          role="radio"
+          aria-checked={shown === slug}
+          aria-label={name}
+          title={name}
+          $chosen={shown === slug}
+          onClick={() => onChoose(slug)}
+        >
+          <Swatch style={backgroundStyle(backgroundOf(slug))} aria-hidden />
+        </Option>
+      ))}
+    </Options>
+  );
+});
 BackgroundChoices.displayName = "BackgroundChoices";

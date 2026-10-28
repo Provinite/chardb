@@ -5,16 +5,30 @@
  */
 import { describe, it, expect } from "vitest";
 import {
+  DEFAULT_BACKGROUND,
   backgroundName,
+  backgroundOf,
   backgroundStyle,
   REFERENCE_BOARD_WIDTH,
 } from "../boardBackgrounds";
 
-describe("backgroundStyle", () => {
-  it("leaves the board's own night sky alone", () => {
-    expect(backgroundStyle(null)).toEqual({});
+describe("backgroundOf", () => {
+  it("is graph paper for a board with none chosen", () => {
+    expect(DEFAULT_BACKGROUND).toBe("tile-graph-paper");
+    expect(backgroundOf(null).slug).toBe("tile-graph-paper");
+    expect(backgroundOf(undefined).slug).toBe("tile-graph-paper");
   });
 
+  it("is graph paper for one there is no longer a picture for", () => {
+    expect(backgroundOf("tile-gone").slug).toBe("tile-graph-paper");
+  });
+
+  it("is the chosen one otherwise", () => {
+    expect(backgroundOf("tile-corkboard").slug).toBe("tile-corkboard");
+  });
+});
+
+describe("backgroundStyle", () => {
   it("fills the board with a full picture", () => {
     expect(
       backgroundStyle({

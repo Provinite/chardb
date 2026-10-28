@@ -11,7 +11,11 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Tooltip } from "../Tooltip";
-import { NIGHT_SKY, backgroundStyle, findBackground } from "./boardBackgrounds";
+import {
+  SURFACE_COLOUR,
+  backgroundOf,
+  backgroundStyle,
+} from "./boardBackgrounds";
 import type { BackgroundEffects } from "./backgroundEffects";
 import { BackgroundEffectLayers } from "./BackgroundEffectLayers";
 import { shadowFilter, type Lighting } from "./candyLighting";
@@ -71,14 +75,14 @@ const Board = styled.div`
   container-type: inline-size;
 `;
 
-/** The night sky the candies are stuck on, cut off at its edges. */
+/** The background the candies are stuck on, cut off at its edges. */
 const Surface = styled.div`
   position: absolute;
   inset: 0;
   overflow: hidden;
   border-radius: ${({ theme }) => theme.borderRadius.lg};
-  /* The night sky, unless a chosen picture or tile is set over it inline. */
-  background: ${NIGHT_SKY};
+  /* Under the background's picture, set inline, while it loads. */
+  background-color: ${SURFACE_COLOUR};
   box-shadow: ${({ theme }) => theme.shadows.lg};
   /* So a tint blends with the background alone. */
   isolation: isolate;
@@ -169,7 +173,7 @@ const ScaleHandle = styled.div<{ $corner: Corner }>`
 
 /**
  * A circular arrow: CSS has no rotate cursor of its own. Dark with a light
- * edge, so it shows on the night sky and off it.
+ * edge, so it shows on dark backgrounds and light ones.
  */
 const ROTATE_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(
   '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round">' +
@@ -392,7 +396,7 @@ interface CandyBoardProps {
   onAction?: (action: BoardAction) => void;
   /** Called while a candy is being dragged, so saving can wait for the drop. */
   onDraggingChange?: (dragging: boolean) => void;
-  /** The picture or tile behind the candies; none for the night sky. */
+  /** The picture or tile behind the candies; none for graph paper. */
   background?: string | null;
   /** How the background is dimmed and tinted; none for neither. */
   backgroundEffects?: BackgroundEffects | null;
@@ -797,7 +801,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                 : undefined,
         }}
       >
-        <Surface style={backgroundStyle(findBackground(background))}>
+        <Surface style={backgroundStyle(backgroundOf(background))}>
           <BackgroundEffectLayers effects={backgroundEffects ?? null} />
           {placements.map((p) => {
             const slug = slugs.get(p.knockEventId);

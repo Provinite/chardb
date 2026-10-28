@@ -757,7 +757,7 @@ describe("Halloween candy board (e2e)", () => {
       });
     });
 
-    it("starts with none, the board's own night sky", async () => {
+    it("starts with none chosen", async () => {
       expect((await myBoard()).body.data.myHalloweenCandyBoard.background).toBe(
         null,
       );
@@ -776,7 +776,7 @@ describe("Halloween candy board (e2e)", () => {
       );
     });
 
-    it("goes back to the night sky", async () => {
+    it("goes back to none chosen", async () => {
       await setBackground("tile-corkboard");
       const res = await setBackground(null);
       expect(res.body.data.setHalloweenCandyBoardBackground.background).toBe(

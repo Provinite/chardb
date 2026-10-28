@@ -1272,7 +1272,7 @@ export type HalloweenCandyBackgroundEffectsInput = {
 /** A player's Halloween candy board: every candy they have, and where they have stuck the ones on the board */
 export type HalloweenCandyBoard = {
   __typename?: 'HalloweenCandyBoard';
-  /** The picture or tile behind the candies, by its slug: a full picture is /halloween/backgrounds/full/<slug>.webp on the frontend, a tile (its slug starts tile-) /halloween/backgrounds/tiles/<slug>.webp. Null for the board's own night sky. */
+  /** The picture or tile behind the candies, by its slug: a full picture is /halloween/backgrounds/full/<slug>.webp on the frontend, a tile (its slug starts tile-) /halloween/backgrounds/tiles/<slug>.webp. Null for none chosen, which the frontend shows as graph paper. */
   background: Maybe<Scalars['String']['output']>;
   /** Null for a background neither dimmed nor tinted */
   backgroundEffects: Maybe<HalloweenCandyBackgroundEffects>;
@@ -2247,7 +2247,7 @@ export type Mutation = {
   setCharacterMainMedia: Character;
   /** Turn the Halloween event's pages on or off for a community (site admins) */
   setCommunityHalloweenEnabled: Community;
-  /** Set the picture or tile behind your candies, by its slug, and how it is dimmed and tinted; a null slug goes back to the board's own night sky, and null effects to neither. Needs Discord linked. */
+  /** Set the picture or tile behind your candies, by its slug, and how it is dimmed and tinted; a null slug goes back to none chosen, and null effects to neither. Needs Discord linked. */
   setHalloweenCandyBoardBackground: HalloweenCandyBoard;
   /** Put the light that casts your candies' shadows; null goes back to the board's default light. Needs Discord linked. */
   setHalloweenCandyBoardLighting: HalloweenCandyBoard;

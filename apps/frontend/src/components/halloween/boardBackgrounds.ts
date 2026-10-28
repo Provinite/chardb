@@ -1,7 +1,7 @@
 /**
- * What can go behind a candy board's candies: the board's own night sky, or
- * one of the pictures and tiles in public/halloween/backgrounds (listed by
- * `yarn halloween:images` into backgrounds.generated.ts).
+ * What can go behind a candy board's candies: one of the pictures and tiles
+ * in public/halloween/backgrounds (listed by `yarn halloween:images` into
+ * backgrounds.generated.ts), graph paper on a board with none chosen.
  *
  * A picture fills the board. A tile repeats, sized as a share of the board's
  * width rather than in pixels, so a shared board looks the same however wide
@@ -15,12 +15,11 @@ import {
 
 export { BOARD_BACKGROUNDS, type BoardBackground };
 
-/** The board's own background, when no picture or tile is chosen. */
-export const NIGHT_SKY = [
-  "radial-gradient(ellipse at 50% 120%, #f9731655 0%, #f9731600 55%)",
-  "radial-gradient(circle at 82% 16%, #fde68a 0 3.5%, #fde68a00 4%)",
-  "linear-gradient(180deg, #1e1b4b 0%, #3b0764 70%, #431407 100%)",
-].join(", ");
+/** What a board with no background chosen shows. */
+export const DEFAULT_BACKGROUND = "tile-graph-paper";
+
+/** Under a background while its picture loads: graph paper's paper. */
+export const SURFACE_COLOUR = "#ffffff";
 
 /**
  * The board width a tile's size is set against: a tile is shown at half its
@@ -29,20 +28,25 @@ export const NIGHT_SKY = [
  */
 export const REFERENCE_BOARD_WIDTH = 900;
 
-export function findBackground(
-  slug: string | null | undefined,
-): BoardBackground | null {
-  return BOARD_BACKGROUNDS.find((b) => b.slug === slug) ?? null;
+const DEFAULT: BoardBackground = (() => {
+  const found = BOARD_BACKGROUNDS.find((b) => b.slug === DEFAULT_BACKGROUND);
+  if (!found) throw new Error("The default candy board background is missing");
+  return found;
+})();
+
+/**
+ * A board's background: the one chosen, or graph paper with none chosen --
+ * or one chosen that there is no longer a picture for.
+ */
+export function backgroundOf(slug: string | null | undefined): BoardBackground {
+  return BOARD_BACKGROUNDS.find((b) => b.slug === slug) ?? DEFAULT;
 }
 
 export const backgroundUrl = ({ slug, kind }: BoardBackground) =>
   `/halloween/backgrounds/${kind === "full" ? "full" : "tiles"}/${slug}.webp`;
 
-/** How to draw a background on a surface; nothing for the night sky. */
-export function backgroundStyle(
-  background: BoardBackground | null,
-): CSSProperties {
-  if (!background) return {};
+/** How to draw a background on a surface. */
+export function backgroundStyle(background: BoardBackground): CSSProperties {
   const backgroundImage = `url(${backgroundUrl(background)})`;
   if (background.kind === "full") {
     return {

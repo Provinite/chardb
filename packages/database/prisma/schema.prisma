@@ -2444,7 +2444,7 @@ model HalloweenCandyBoard {
   placements Json     @default("[]")
   /// The picture or tile behind the candies, by its slug
   /// (`backgrounds/full/<slug>.webp` or `backgrounds/tiles/<slug>.webp`).
-  /// Null for the board's own night sky.
+  /// Null for none chosen, which the frontend shows as graph paper.
   background String?  @db.VarChar(60)
   /// How the background is dimmed and tinted. Null for neither.
   /// [HalloweenCandyBackgroundEffectsJson]

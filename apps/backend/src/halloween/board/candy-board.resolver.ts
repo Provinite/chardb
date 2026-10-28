@@ -89,8 +89,8 @@ export class CandyBoardResolver {
   @Mutation(() => HalloweenCandyBoard, {
     description:
       "Set the picture or tile behind your candies, by its slug, and how it " +
-      "is dimmed and tinted; a null slug goes back to the board's own night " +
-      "sky, and null effects to neither. Needs Discord linked.",
+      "is dimmed and tinted; a null slug goes back to none chosen, and null " +
+      "effects to neither. Needs Discord linked.",
   })
   async setHalloweenCandyBoardBackground(
     @Args("communityId", { type: () => ID }) communityId: string,

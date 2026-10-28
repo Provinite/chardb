@@ -280,7 +280,7 @@ export class HalloweenCandyBoard {
       "The picture or tile behind the candies, by its slug: a full picture " +
       "is /halloween/backgrounds/full/<slug>.webp on the frontend, a tile " +
       "(its slug starts tile-) /halloween/backgrounds/tiles/<slug>.webp. Null " +
-      "for the board's own night sky.",
+      "for none chosen, which the frontend shows as graph paper.",
   })
   background: string | null;
 

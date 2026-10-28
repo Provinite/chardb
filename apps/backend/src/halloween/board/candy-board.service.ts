@@ -214,7 +214,7 @@ export class CandyBoardService {
 
   /**
    * Sets the picture or tile behind the signed-in player's candies, or with
-   * null goes back to the board's own night sky.
+   * null goes back to none chosen, which shows the default.
    */
   /**
    * Puts the light that casts the signed-in player's candies' shadows, or
