@@ -50,6 +50,8 @@ export const HalloweenLogEvent = {
   DeviantArtSaved: "halloween.deviantart.saved",
   /** A player rearranged their candy board. */
   CandyBoardSaved: "halloween.candy_board.saved",
+  CandyBoardCreated: "halloween.candy_board.created",
+  CandyBoardDeleted: "halloween.candy_board.deleted",
   WinChannelTested: "halloween.win_channel.tested",
   /** A win that stands, but never reached the win channel. */
   WinChannelPostFailed: "halloween.win_channel.post_failed",

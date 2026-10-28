@@ -47,11 +47,14 @@ const strip = (placements: readonly Placement[]): Placement[] =>
  */
 export function useCandyBoardSync({
   communityId,
+  boardId,
   serverPlacements,
   refetchPlacements,
   dragging,
 }: {
   communityId: string | null;
+  /** The board the changes are to. */
+  boardId: string;
   /** The board as the server last gave it; undefined until loaded. */
   serverPlacements: readonly Placement[] | undefined;
   /** Fetches the board from the server again, past any cache. */
@@ -79,8 +82,8 @@ export function useCandyBoardSync({
   const inFlight = useRef<Promise<unknown> | null>(null);
   const [apply] = useApplyHalloweenCandyBoardActionsMutation();
   /** For the unmount cleanup, which sees only the first render's values. */
-  const latest = useRef({ communityId, apply });
-  latest.current = { communityId, apply };
+  const latest = useRef({ communityId, boardId, apply });
+  latest.current = { communityId, boardId, apply };
 
   /** The server's board, with whatever is still waiting laid over it. */
   const showServer = (server: readonly Placement[]) =>
@@ -119,7 +122,7 @@ export function useCandyBoardSync({
       setStatus("saving");
       try {
         const request = apply({
-          variables: { communityId, actions: batch },
+          variables: { communityId, id: boardId, actions: batch },
         });
         inFlight.current = request;
         const result = await request;
@@ -149,7 +152,7 @@ export function useCandyBoardSync({
     return () => clearTimeout(timer);
     // `showServer` and `refetchPlacements` only read refs and the network.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wake, dragging, status, communityId, apply]);
+  }, [wake, dragging, status, communityId, boardId, apply]);
 
   const retry = useCallback(() => {
     setStatus("unsaved");
@@ -163,8 +166,12 @@ export function useCandyBoardSync({
   // started then is sure to finish.)
   useEffect(
     () => () => {
-      const { communityId: id, apply: send } = latest.current;
-      if (!id || queue.current.length === 0) return;
+      const {
+        communityId: community,
+        boardId: id,
+        apply: send,
+      } = latest.current;
+      if (!community || queue.current.length === 0) return;
       let pending = queue.current;
       queue.current = [];
       let chain = (inFlight.current ?? Promise.resolve()).catch(
@@ -174,9 +181,9 @@ export function useCandyBoardSync({
         const [batch, rest] = nextBatch(pending);
         pending = rest;
         chain = chain.then(() =>
-          send({ variables: { communityId: id, actions: batch } }).then(
-            () => undefined,
-          ),
+          send({
+            variables: { communityId: community, id, actions: batch },
+          }).then(() => undefined),
         );
       }
       chain.catch(() => {

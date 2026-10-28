@@ -14,10 +14,11 @@ CREATE TABLE "halloween_candy_boards" (
     "background_effects" JSONB,
     "lighting" JSONB,
     "name" JSONB,
+    "created_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updated_at" TIMESTAMPTZ NOT NULL,
 
     CONSTRAINT "halloween_candy_boards_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "halloween_candy_boards_guild_id_user_id_key" ON "halloween_candy_boards"("guild_id", "user_id");
+CREATE INDEX "halloween_candy_boards_guild_id_user_id_idx" ON "halloween_candy_boards"("guild_id", "user_id");

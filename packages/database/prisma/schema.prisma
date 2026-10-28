@@ -2432,8 +2432,8 @@ model HalloweenDeviantArtUser {
 
 /// Where a player has stuck their candies. Only the placements are stored:
 /// which candies they have comes from their lost knocks, and a candy not on
-/// the board is in their tray. Created when its owner first opens it, or
-/// first arranges it.
+/// the board is in its tray. A player can have several boards, each drawing
+/// on their whole collection; each is made when its owner asks for it.
 model HalloweenCandyBoard {
   /// What a shared link names. Random, so a board cannot be found from its
   /// owner's username, nor tell anyone whose Discord is linked.
@@ -2456,8 +2456,9 @@ model HalloweenCandyBoard {
   /// What its owner calls it, picked from word lists. Null for no name.
   /// [HalloweenCandyBoardNameJson]
   name       Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@unique([guildId, userId])
+  @@index([guildId, userId])
   @@map("halloween_candy_boards")
 }

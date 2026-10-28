@@ -460,12 +460,12 @@ export const CommunityNavigationSidebar: React.FC<
               isNested
             />
 
-            {/* Candy Board - every member's, while Halloween is on here */}
+            {/* Candy Boards - every member's, while Halloween is on here */}
             {community?.halloweenEnabled && (
               <CommunityNavigationItem
                 to={`${communityBasePath}/halloween/board`}
                 icon={Candy}
-                label="Candy Board"
+                label="Candy Boards"
                 isNested
               />
             )}

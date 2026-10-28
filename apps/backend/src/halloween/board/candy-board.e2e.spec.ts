@@ -25,16 +25,16 @@ const BOARD_FIELDS = `
 `;
 
 const SET_NAME = `
-  mutation SetName($communityId: ID!, $name: HalloweenCandyBoardNameInput) {
-    setHalloweenCandyBoardName(communityId: $communityId, name: $name) {
+  mutation SetName($communityId: ID!, $id: ID!, $name: HalloweenCandyBoardNameInput) {
+    setHalloweenCandyBoardName(communityId: $communityId, id: $id, name: $name) {
       ${BOARD_FIELDS}
     }
   }
 `;
 
 const SET_LIGHTING = `
-  mutation SetLighting($communityId: ID!, $lighting: HalloweenCandyLightingInput) {
-    setHalloweenCandyBoardLighting(communityId: $communityId, lighting: $lighting) {
+  mutation SetLighting($communityId: ID!, $id: ID!, $lighting: HalloweenCandyLightingInput) {
+    setHalloweenCandyBoardLighting(communityId: $communityId, id: $id, lighting: $lighting) {
       ${BOARD_FIELDS}
     }
   }
@@ -43,11 +43,13 @@ const SET_LIGHTING = `
 const SET_BACKGROUND = `
   mutation SetBackground(
     $communityId: ID!
+    $id: ID!
     $slug: String
     $effects: HalloweenCandyBackgroundEffectsInput
   ) {
     setHalloweenCandyBoardBackground(
       communityId: $communityId
+      id: $id
       slug: $slug
       effects: $effects
     ) {
@@ -62,15 +64,27 @@ const BOARD = `
   }
 `;
 
-const MY_BOARD = `
-  query MyBoard($communityId: ID!) {
-    myHalloweenCandyBoard(communityId: $communityId) { ${BOARD_FIELDS} }
+const MY_BOARDS = `
+  query MyBoards($communityId: ID!) {
+    myHalloweenCandyBoards(communityId: $communityId) { ${BOARD_FIELDS} }
+  }
+`;
+
+const CREATE = `
+  mutation Create($communityId: ID!) {
+    createHalloweenCandyBoard(communityId: $communityId) { ${BOARD_FIELDS} }
+  }
+`;
+
+const DELETE = `
+  mutation Delete($communityId: ID!, $id: ID!) {
+    deleteHalloweenCandyBoard(communityId: $communityId, id: $id)
   }
 `;
 
 const APPLY = `
-  mutation Apply($communityId: ID!, $actions: [HalloweenCandyBoardAction!]!) {
-    applyHalloweenCandyBoardActions(communityId: $communityId, actions: $actions) {
+  mutation Apply($communityId: ID!, $id: ID!, $actions: [HalloweenCandyBoardAction!]!) {
+    applyHalloweenCandyBoardActions(communityId: $communityId, id: $id, actions: $actions) {
       ${BOARD_FIELDS}
     }
   }
@@ -84,6 +98,8 @@ describe("Halloween candy board (e2e)", () => {
   let playerUsername: string;
   let otherToken: string;
   let unlinkedToken: string;
+  /** The player's board, made fresh for each test. */
+  let boardId: string;
 
   beforeAll(async () => {
     testApp = new TestApp();
@@ -143,7 +159,15 @@ describe("Halloween candy board (e2e)", () => {
       unlinked.id,
       unlinked.username,
     );
+
+    boardId = (await create()).body.data.createHalloweenCandyBoard.id;
   });
+
+  const create = (token = playerToken) =>
+    testApp.authenticatedGraphqlRequest(CREATE, { communityId }, token);
+
+  const myBoards = (token = playerToken) =>
+    testApp.authenticatedGraphqlRequest(MY_BOARDS, { communityId }, token);
 
   const knock = (
     data: Partial<{
@@ -184,38 +208,117 @@ describe("Halloween candy board (e2e)", () => {
     add: { sticker: sticker(ref), ...PLACED, ...overrides },
   });
 
-  const myBoard = async (token = playerToken) => {
-    const res = await testApp.authenticatedGraphqlRequest(
-      MY_BOARD,
-      { communityId },
+  /** The player's board, as they see it. */
+  const myBoard = (token = playerToken, id = boardId) =>
+    testApp.authenticatedGraphqlRequest(BOARD, { communityId, id }, token);
+
+  const apply = (actions: object[], token = playerToken, id = boardId) =>
+    testApp.authenticatedGraphqlRequest(
+      APPLY,
+      { communityId, id, actions },
       token,
     );
-    return res;
-  };
-
-  const apply = (actions: object[], token = playerToken) =>
-    testApp.authenticatedGraphqlRequest(APPLY, { communityId, actions }, token);
 
   const placementsNow = async () =>
-    (await myBoard()).body.data.myHalloweenCandyBoard.placements;
+    (await myBoard()).body.data.halloweenCandyBoard.placements;
 
-  describe("your own board", () => {
-    it("is made the first time you ask, and is the same board after", async () => {
-      const first = await myBoard();
-      expect(first.body.errors).toBeUndefined();
-      const board = first.body.data.myHalloweenCandyBoard;
+  describe("your boards", () => {
+    it("makes a new board, empty and yours", async () => {
+      const res = await create();
+      expect(res.body.errors).toBeUndefined();
+      const board = res.body.data.createHalloweenCandyBoard;
       expect(board).toMatchObject({
         viewerIsOwner: true,
         owner: { username: playerUsername },
         candies: [],
         placements: [],
+        name: null,
       });
       expect(board.id).toMatch(
         /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/,
       );
+      expect(board.id).not.toBe(boardId);
+    });
 
-      const again = await myBoard();
-      expect(again.body.data.myHalloweenCandyBoard.id).toBe(board.id);
+    it("lists yours, the last changed first, and no one else's", async () => {
+      const second = (await create()).body.data.createHalloweenCandyBoard.id;
+      await create(otherToken);
+      // The first board, changed since the second was made.
+      await testApp.authenticatedGraphqlRequest(
+        SET_BACKGROUND,
+        { communityId, id: boardId, slug: "tile-corkboard" },
+        playerToken,
+      );
+
+      const res = await myBoards();
+      expect(res.body.errors).toBeUndefined();
+      expect(
+        res.body.data.myHalloweenCandyBoards.map((b: { id: string }) => b.id),
+      ).toEqual([boardId, second]);
+    });
+
+    it("lets every board use your whole collection", async () => {
+      const a = await knock();
+      const second = (await create()).body.data.createHalloweenCandyBoard.id;
+      await apply([add(a.id)]);
+      const res = await apply([add(a.id)], playerToken, second);
+      expect(res.body.data.applyHalloweenCandyBoardActions.placements).toEqual([
+        at(a.id),
+      ]);
+      expect(await placementsNow()).toEqual([at(a.id)]);
+    });
+
+    it("refuses an eleventh board", async () => {
+      for (let i = 1; i < 10; i++) await create();
+      const res = await create();
+      expect(res.body.errors?.[0].message).toBe(
+        "You can have at most 10 candy boards",
+      );
+      expect((await myBoards()).body.data.myHalloweenCandyBoards).toHaveLength(
+        10,
+      );
+    });
+
+    it("deletes a board for good", async () => {
+      const res = await testApp.authenticatedGraphqlRequest(
+        DELETE,
+        { communityId, id: boardId },
+        playerToken,
+      );
+      expect(res.body.errors).toBeUndefined();
+      expect(res.body.data.deleteHalloweenCandyBoard).toBe(true);
+      expect((await myBoards()).body.data.myHalloweenCandyBoards).toEqual([]);
+      const seen = await testApp.graphqlRequest(BOARD, {
+        communityId,
+        id: boardId,
+      });
+      expect(seen.body.data.halloweenCandyBoard).toBeNull();
+    });
+
+    it("refuses to delete, or change, a board that is not yours", async () => {
+      const deleted = await testApp.authenticatedGraphqlRequest(
+        DELETE,
+        { communityId, id: boardId },
+        otherToken,
+      );
+      expect(deleted.body.errors?.[0].message).toBe(
+        "There is no such candy board of yours",
+      );
+      const a = await knock();
+      const changed = await apply([add(a.id)], otherToken);
+      expect(changed.body.errors?.[0].message).toBe(
+        "There is no such candy board of yours",
+      );
+      expect(await placementsNow()).toEqual([]);
+    });
+
+    it("refuses a board that does not exist", async () => {
+      for (const id of ["00000000-0000-4000-8000-000000000000", "nope"]) {
+        const res = await apply([], playerToken, id);
+        expect(res.body.errors?.[0].message).toBe(
+          "There is no such candy board of yours",
+        );
+      }
     });
 
     it("has your candies, oldest first, and no one else's", async () => {
@@ -245,7 +348,7 @@ describe("Halloween candy board (e2e)", () => {
       await knock({ guildId: OTHER_GUILD });
 
       const res = await myBoard();
-      expect(res.body.data.myHalloweenCandyBoard.candies).toEqual([
+      expect(res.body.data.halloweenCandyBoard.candies).toEqual([
         {
           knockEventId: first.id,
           slug: "luther-head",
@@ -259,10 +362,13 @@ describe("Halloween candy board (e2e)", () => {
       ]);
     });
 
-    it("is nothing without Discord linked", async () => {
-      const res = await myBoard(unlinkedToken);
+    it("are nothing without Discord linked, and none can be made", async () => {
+      const res = await myBoards(unlinkedToken);
       expect(res.body.errors).toBeUndefined();
-      expect(res.body.data.myHalloweenCandyBoard).toBeNull();
+      expect(res.body.data.myHalloweenCandyBoards).toBeNull();
+      expect((await create(unlinkedToken)).body.errors?.[0].message).toBe(
+        "Link your Discord account to have a candy board",
+      );
     });
 
     it("says so when the community has no Discord server", async () => {
@@ -270,24 +376,26 @@ describe("Halloween candy board (e2e)", () => {
         where: { id: communityId },
         data: { discordGuildId: null },
       });
-      const res = await myBoard();
+      const res = await myBoards();
       expect(res.body.errors?.[0].message).toBe(
         "This community has no Discord server linked",
       );
     });
 
     it("needs a signed-in player", async () => {
-      const res = await testApp.graphqlRequest(MY_BOARD, { communityId });
+      const res = await testApp.graphqlRequest(MY_BOARDS, { communityId });
       expect(res.body.errors).toBeDefined();
-      expect(res.body.data?.myHalloweenCandyBoard ?? null).toBeNull();
-      expect(await db.halloweenCandyBoard.count()).toBe(0);
+      expect(res.body.data?.myHalloweenCandyBoards ?? null).toBeNull();
+      const made = await testApp.graphqlRequest(CREATE, { communityId });
+      expect(made.body.errors).toBeDefined();
+      expect(await db.halloweenCandyBoard.count()).toBe(1);
     });
   });
 
   describe("looking at a board by its id", () => {
     it("shows anyone the board, and that it is not theirs", async () => {
       const candy = await knock();
-      const { id } = (await myBoard()).body.data.myHalloweenCandyBoard;
+      const { id } = (await myBoard()).body.data.halloweenCandyBoard;
       await apply([add(candy.id)]);
 
       const res = await testApp.graphqlRequest(BOARD, { communityId, id });
@@ -301,7 +409,7 @@ describe("Halloween candy board (e2e)", () => {
     });
 
     it("knows its owner when they look", async () => {
-      const { id } = (await myBoard()).body.data.myHalloweenCandyBoard;
+      const { id } = (await myBoard()).body.data.halloweenCandyBoard;
       const res = await testApp.authenticatedGraphqlRequest(
         BOARD,
         { communityId, id },
@@ -311,7 +419,7 @@ describe("Halloween candy board (e2e)", () => {
     });
 
     it("still shows a board whose owner unlinked Discord, without a name", async () => {
-      const { id } = (await myBoard()).body.data.myHalloweenCandyBoard;
+      const { id } = (await myBoard()).body.data.halloweenCandyBoard;
       await db.externalAccount.deleteMany({
         where: { providerAccountId: PLAYER },
       });
@@ -323,7 +431,7 @@ describe("Halloween candy board (e2e)", () => {
     });
 
     it("refuses to show a stored board that is not in the expected shape", async () => {
-      const { id } = (await myBoard()).body.data.myHalloweenCandyBoard;
+      const { id } = (await myBoard()).body.data.halloweenCandyBoard;
       await db.$executeRaw`UPDATE halloween_candy_boards SET placements = '[{"knockEventId":"x"}]'::jsonb WHERE id = ${id}::uuid`;
       const res = await testApp.graphqlRequest(BOARD, { communityId, id });
       expect(res.body.errors?.[0].message).toBe(
@@ -340,7 +448,7 @@ describe("Halloween candy board (e2e)", () => {
     });
 
     it("is nothing on another community's host", async () => {
-      const { id } = (await myBoard()).body.data.myHalloweenCandyBoard;
+      const { id } = (await myBoard()).body.data.halloweenCandyBoard;
       const other = await testApp.createTestCommunity();
       await db.community.update({
         where: { id: other.id },
@@ -354,7 +462,7 @@ describe("Halloween candy board (e2e)", () => {
     });
 
     it("refuses while the event is off for the community", async () => {
-      const { id } = (await myBoard()).body.data.myHalloweenCandyBoard;
+      const { id } = (await myBoard()).body.data.halloweenCandyBoard;
       await db.community.update({
         where: { id: communityId },
         data: { halloweenEnabled: false },
@@ -540,9 +648,15 @@ describe("Halloween candy board (e2e)", () => {
       it("cannot reach another player's board", async () => {
         const mine = await knock();
         await apply([add(mine.id)]);
+        const theirs = (await create(otherToken)).body.data
+          .createHalloweenCandyBoard.id;
         // The other player's actions land on their own board, where this
         // candy is not.
-        const res = await apply([{ remove: sticker(mine.id) }], otherToken);
+        const res = await apply(
+          [{ remove: sticker(mine.id) }],
+          otherToken,
+          theirs,
+        );
         expect(returned(res)).toEqual([]);
         expect(await placementsNow()).toEqual([at(mine.id)]);
       });
@@ -623,12 +737,12 @@ describe("Halloween candy board (e2e)", () => {
     const setLighting = (lighting: Light | null, token = playerToken) =>
       testApp.authenticatedGraphqlRequest(
         SET_LIGHTING,
-        { communityId, lighting },
+        { communityId, id: boardId, lighting },
         token,
       );
 
     it("starts with the default light", async () => {
-      expect((await myBoard()).body.data.myHalloweenCandyBoard.lighting).toBe(
+      expect((await myBoard()).body.data.halloweenCandyBoard.lighting).toBe(
         null,
       );
     });
@@ -679,7 +793,7 @@ describe("Halloween candy board (e2e)", () => {
     ])("refuses a light %s", async (_what, lighting) => {
       const res = await setLighting(lighting);
       expect(res.body.errors?.[0].message).toBe(REFUSED);
-      expect((await myBoard()).body.data.myHalloweenCandyBoard.lighting).toBe(
+      expect((await myBoard()).body.data.halloweenCandyBoard.lighting).toBe(
         null,
       );
     });
@@ -714,7 +828,7 @@ describe("Halloween candy board (e2e)", () => {
     ) =>
       testApp.authenticatedGraphqlRequest(
         SET_BACKGROUND,
-        { communityId, slug, effects },
+        { communityId, id: boardId, slug, effects },
         token,
       );
 
@@ -724,7 +838,7 @@ describe("Halloween candy board (e2e)", () => {
 
       it("starts with neither", async () => {
         expect(
-          (await myBoard()).body.data.myHalloweenCandyBoard.backgroundEffects,
+          (await myBoard()).body.data.halloweenCandyBoard.backgroundEffects,
         ).toBe(null);
       });
 
@@ -779,14 +893,14 @@ describe("Halloween candy board (e2e)", () => {
         const res = await setBackground("tile-corkboard", playerToken, effects);
         expect(res.body.errors?.[0].message).toBe(REFUSED);
         const { background, backgroundEffects } = (await myBoard()).body.data
-          .myHalloweenCandyBoard;
+          .halloweenCandyBoard;
         expect(background).toBe(null);
         expect(backgroundEffects).toBe(null);
       });
     });
 
     it("starts with none chosen", async () => {
-      expect((await myBoard()).body.data.myHalloweenCandyBoard.background).toBe(
+      expect((await myBoard()).body.data.halloweenCandyBoard.background).toBe(
         null,
       );
     });
@@ -824,7 +938,7 @@ describe("Halloween candy board (e2e)", () => {
     it("refuses a background there is no such picture for", async () => {
       const res = await setBackground("tile-nonsense");
       expect(res.body.errors?.[0].message).toBe("There is no such background");
-      expect((await myBoard()).body.data.myHalloweenCandyBoard.background).toBe(
+      expect((await myBoard()).body.data.halloweenCandyBoard.background).toBe(
         null,
       );
     });
@@ -844,12 +958,12 @@ describe("Halloween candy board (e2e)", () => {
     const setName = (name: Name | null, token = playerToken) =>
       testApp.authenticatedGraphqlRequest(
         SET_NAME,
-        { communityId, name },
+        { communityId, id: boardId, name },
         token,
       );
 
     it("starts unnamed", async () => {
-      expect((await myBoard()).body.data.myHalloweenCandyBoard.name).toBe(null);
+      expect((await myBoard()).body.data.halloweenCandyBoard.name).toBe(null);
     });
 
     it("names the board, and shows it to anyone", async () => {
@@ -895,7 +1009,7 @@ describe("Halloween candy board (e2e)", () => {
     ])("refuses %s", async (_what, name) => {
       const res = await setName(name);
       expect(res.body.errors?.[0].message).toBe(REFUSED);
-      expect((await myBoard()).body.data.myHalloweenCandyBoard.name).toBe(null);
+      expect((await myBoard()).body.data.halloweenCandyBoard.name).toBe(null);
     });
 
     it("needs Discord linked", async () => {

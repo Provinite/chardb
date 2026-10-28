@@ -38,59 +38,89 @@ export class CandyBoardResolver {
   }
 
   @AllowAnyAuthenticated()
-  @Query(() => HalloweenCandyBoard, {
+  @Query(() => [HalloweenCandyBoard], {
     nullable: true,
     description:
-      "Your Halloween candy board here, made the first time you ask. Null " +
+      "Your Halloween candy boards here, the last changed first. Null " +
       "without Discord linked, since candies belong to Discord players.",
   })
-  async myHalloweenCandyBoard(
+  async myHalloweenCandyBoards(
     @Args("communityId", { type: () => ID }) communityId: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<HalloweenCandyBoard | null> {
-    return this.boards.getMyBoard(communityId, user.id);
+  ): Promise<HalloweenCandyBoard[] | null> {
+    return this.boards.getMyBoards(communityId, user.id);
   }
 
   @AllowAnyAuthenticated()
   @Mutation(() => HalloweenCandyBoard, {
     description:
-      "Apply changes to your board, in order, and get it back as it now is. " +
-      "A change that cannot apply -- a candy not yours, not on the board, " +
-      "already on it, or placed off it -- is skipped, and the rest still " +
-      "apply. At most 100 changes at once. Needs Discord linked.",
+      "Make a new, empty candy board, which can use all of your candies. At " +
+      "most 10 each. Needs Discord linked.",
+  })
+  async createHalloweenCandyBoard(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<HalloweenCandyBoard> {
+    return this.boards.createBoard(communityId, user.id);
+  }
+
+  @AllowAnyAuthenticated()
+  @Mutation(() => Boolean, {
+    description:
+      "Delete one of your candy boards, for good. Your candies are not on " +
+      "it to lose: they are yours, for every board.",
+  })
+  async deleteHalloweenCandyBoard(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("id", { type: () => ID }) id: string,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<boolean> {
+    return this.boards.deleteBoard(communityId, user.id, id);
+  }
+
+  @AllowAnyAuthenticated()
+  @Mutation(() => HalloweenCandyBoard, {
+    description:
+      "Apply changes to one of your boards, in order, and get it back as it " +
+      "now is. A change that cannot apply -- a candy not yours, not on the " +
+      "board, already on it, or placed off it -- is skipped, and the rest " +
+      "still apply. At most 100 changes at once. Needs Discord linked.",
   })
   async applyHalloweenCandyBoardActions(
     @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("id", { type: () => ID }) id: string,
     @Args("actions", { type: () => [HalloweenCandyBoardAction] })
     actions: HalloweenCandyBoardAction[],
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyBoard> {
-    return this.boards.applyActions(communityId, user.id, actions);
+    return this.boards.applyActions(communityId, user.id, id, actions);
   }
 
   @AllowAnyAuthenticated()
   @Mutation(() => HalloweenCandyBoard, {
     description:
-      "Name your board from the word lists in @chardb/shared; null leaves " +
-      "it unnamed. Needs Discord linked.",
+      "Name one of your boards from the word lists in @chardb/shared; null " +
+      "leaves it unnamed. Needs Discord linked.",
   })
   async setHalloweenCandyBoardName(
     @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("id", { type: () => ID }) id: string,
     @Args("name", { type: () => HalloweenCandyBoardNameInput, nullable: true })
     name: HalloweenCandyBoardNameInput | null,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyBoard> {
-    return this.boards.setName(communityId, user.id, name ?? null);
+    return this.boards.setName(communityId, user.id, id, name ?? null);
   }
 
   @AllowAnyAuthenticated()
   @Mutation(() => HalloweenCandyBoard, {
     description:
-      "Put the light that casts your candies' shadows; null goes back to " +
-      "the board's default light. Needs Discord linked.",
+      "Put the light that casts the shadows on one of your boards; null " +
+      "goes back to the board's default light. Needs Discord linked.",
   })
   async setHalloweenCandyBoardLighting(
     @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("id", { type: () => ID }) id: string,
     @Args("lighting", {
       type: () => HalloweenCandyLightingInput,
       nullable: true,
@@ -98,18 +128,19 @@ export class CandyBoardResolver {
     lighting: HalloweenCandyLightingInput | null,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyBoard> {
-    return this.boards.setLighting(communityId, user.id, lighting ?? null);
+    return this.boards.setLighting(communityId, user.id, id, lighting ?? null);
   }
 
   @AllowAnyAuthenticated()
   @Mutation(() => HalloweenCandyBoard, {
     description:
-      "Set the picture or tile behind your candies, by its slug, and how it " +
-      "is dimmed and tinted; a null slug goes back to none chosen, and null " +
-      "effects to neither. Needs Discord linked.",
+      "Set the picture or tile behind the candies on one of your boards, by " +
+      "its slug, and how it is dimmed and tinted; a null slug goes back to " +
+      "none chosen, and null effects to neither. Needs Discord linked.",
   })
   async setHalloweenCandyBoardBackground(
     @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("id", { type: () => ID }) id: string,
     @Args("slug", { type: () => String, nullable: true }) slug: string | null,
     @Args("effects", {
       type: () => HalloweenCandyBackgroundEffectsInput,
@@ -121,6 +152,7 @@ export class CandyBoardResolver {
     return this.boards.setBackground(
       communityId,
       user.id,
+      id,
       slug ?? null,
       effects ?? null,
     );

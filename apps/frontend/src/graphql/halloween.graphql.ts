@@ -268,21 +268,39 @@ export const HALLOWEEN_CANDY_BOARD_QUERY = gql`
   ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
 `;
 
-export const MY_HALLOWEEN_CANDY_BOARD_QUERY = gql`
-  query MyHalloweenCandyBoard($communityId: ID!) {
-    myHalloweenCandyBoard(communityId: $communityId) {
-      id
+export const MY_HALLOWEEN_CANDY_BOARDS_QUERY = gql`
+  query MyHalloweenCandyBoards($communityId: ID!) {
+    myHalloweenCandyBoards(communityId: $communityId) {
+      ...HalloweenCandyBoardFields
     }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const CREATE_HALLOWEEN_CANDY_BOARD_MUTATION = gql`
+  mutation CreateHalloweenCandyBoard($communityId: ID!) {
+    createHalloweenCandyBoard(communityId: $communityId) {
+      ...HalloweenCandyBoardFields
+    }
+  }
+  ${HALLOWEEN_CANDY_BOARD_FRAGMENT}
+`;
+
+export const DELETE_HALLOWEEN_CANDY_BOARD_MUTATION = gql`
+  mutation DeleteHalloweenCandyBoard($communityId: ID!, $id: ID!) {
+    deleteHalloweenCandyBoard(communityId: $communityId, id: $id)
   }
 `;
 
 export const APPLY_HALLOWEEN_CANDY_BOARD_ACTIONS_MUTATION = gql`
   mutation ApplyHalloweenCandyBoardActions(
     $communityId: ID!
+    $id: ID!
     $actions: [HalloweenCandyBoardAction!]!
   ) {
     applyHalloweenCandyBoardActions(
       communityId: $communityId
+      id: $id
       actions: $actions
     ) {
       ...HalloweenCandyBoardFields
@@ -294,9 +312,14 @@ export const APPLY_HALLOWEEN_CANDY_BOARD_ACTIONS_MUTATION = gql`
 export const SET_HALLOWEEN_CANDY_BOARD_NAME_MUTATION = gql`
   mutation SetHalloweenCandyBoardName(
     $communityId: ID!
+    $id: ID!
     $name: HalloweenCandyBoardNameInput
   ) {
-    setHalloweenCandyBoardName(communityId: $communityId, name: $name) {
+    setHalloweenCandyBoardName(
+      communityId: $communityId
+      id: $id
+      name: $name
+    ) {
       ...HalloweenCandyBoardFields
     }
   }
@@ -306,10 +329,12 @@ export const SET_HALLOWEEN_CANDY_BOARD_NAME_MUTATION = gql`
 export const SET_HALLOWEEN_CANDY_BOARD_LIGHTING_MUTATION = gql`
   mutation SetHalloweenCandyBoardLighting(
     $communityId: ID!
+    $id: ID!
     $lighting: HalloweenCandyLightingInput
   ) {
     setHalloweenCandyBoardLighting(
       communityId: $communityId
+      id: $id
       lighting: $lighting
     ) {
       ...HalloweenCandyBoardFields
@@ -321,11 +346,13 @@ export const SET_HALLOWEEN_CANDY_BOARD_LIGHTING_MUTATION = gql`
 export const SET_HALLOWEEN_CANDY_BOARD_BACKGROUND_MUTATION = gql`
   mutation SetHalloweenCandyBoardBackground(
     $communityId: ID!
+    $id: ID!
     $slug: String
     $effects: HalloweenCandyBackgroundEffectsInput
   ) {
     setHalloweenCandyBoardBackground(
       communityId: $communityId
+      id: $id
       slug: $slug
       effects: $effects
     ) {

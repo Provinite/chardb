@@ -2639,9 +2639,9 @@ type Mutation {
   ): Media!
 
   """
-  Apply changes to your board, in order, and get it back as it now is. A change that cannot apply -- a candy not yours, not on the board, already on it, or placed off it -- is skipped, and the rest still apply. At most 100 changes at once. Needs Discord linked.
+  Apply changes to one of your boards, in order, and get it back as it now is. A change that cannot apply -- a candy not yours, not on the board, already on it, or placed off it -- is skipped, and the rest still apply. At most 100 changes at once. Needs Discord linked.
   """
-  applyHalloweenCandyBoardActions(actions: [HalloweenCandyBoardAction!]!, communityId: ID!): HalloweenCandyBoard!
+  applyHalloweenCandyBoardActions(actions: [HalloweenCandyBoardAction!]!, communityId: ID!, id: ID!): HalloweenCandyBoard!
 
   """Approve an image (moderator action)"""
   approveImage(input: ApproveImageInput!): ImageModerationAction!
@@ -2738,6 +2738,11 @@ type Mutation {
   ): EnumValueSetting!
   createGallery(input: CreateGalleryInput!): Gallery!
 
+  """
+  Make a new, empty candy board, which can use all of your candies. At most 10 each. Needs Discord linked.
+  """
+  createHalloweenCandyBoard(communityId: ID!): HalloweenCandyBoard!
+
   """Add a prize to the Halloween event's pool"""
   createHalloweenPrize(communityId: ID!, input: CreateHalloweenPrizeInput!): HalloweenPrizeView!
 
@@ -2812,6 +2817,11 @@ type Mutation {
   deleteComment(id: ID!): Boolean!
   deleteCommunityColor(id: ID!): Boolean!
   deleteGallery(id: ID!): RemovalResponse!
+
+  """
+  Delete one of your candy boards, for good. Your candies are not on it to lose: they are yours, for every board.
+  """
+  deleteHalloweenCandyBoard(communityId: ID!, id: ID!): Boolean!
   deleteItemType(id: ID!): Boolean!
 
   """Deletes a media item and its associated content"""
@@ -3043,19 +3053,19 @@ type Mutation {
   setCommunityHalloweenEnabled(communityId: ID!, enabled: Boolean!): Community!
 
   """
-  Set the picture or tile behind your candies, by its slug, and how it is dimmed and tinted; a null slug goes back to none chosen, and null effects to neither. Needs Discord linked.
+  Set the picture or tile behind the candies on one of your boards, by its slug, and how it is dimmed and tinted; a null slug goes back to none chosen, and null effects to neither. Needs Discord linked.
   """
-  setHalloweenCandyBoardBackground(communityId: ID!, effects: HalloweenCandyBackgroundEffectsInput, slug: String): HalloweenCandyBoard!
+  setHalloweenCandyBoardBackground(communityId: ID!, effects: HalloweenCandyBackgroundEffectsInput, id: ID!, slug: String): HalloweenCandyBoard!
 
   """
-  Put the light that casts your candies' shadows; null goes back to the board's default light. Needs Discord linked.
+  Put the light that casts the shadows on one of your boards; null goes back to the board's default light. Needs Discord linked.
   """
-  setHalloweenCandyBoardLighting(communityId: ID!, lighting: HalloweenCandyLightingInput): HalloweenCandyBoard!
+  setHalloweenCandyBoardLighting(communityId: ID!, id: ID!, lighting: HalloweenCandyLightingInput): HalloweenCandyBoard!
 
   """
-  Name your board from the word lists in @chardb/shared; null leaves it unnamed. Needs Discord linked.
+  Name one of your boards from the word lists in @chardb/shared; null leaves it unnamed. Needs Discord linked.
   """
-  setHalloweenCandyBoardName(communityId: ID!, name: HalloweenCandyBoardNameInput): HalloweenCandyBoard!
+  setHalloweenCandyBoardName(communityId: ID!, id: ID!, name: HalloweenCandyBoardNameInput): HalloweenCandyBoard!
 
   """
   Mark a prize staff hand over themselves as delivered, or clear the mark. Chardb item and character prizes deliver themselves.
@@ -3888,9 +3898,9 @@ type Query {
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
 
   """
-  Your Halloween candy board here, made the first time you ask. Null without Discord linked, since candies belong to Discord players.
+  Your Halloween candy boards here, the last changed first. Null without Discord linked, since candies belong to Discord players.
   """
-  myHalloweenCandyBoard(communityId: ID!): HalloweenCandyBoard
+  myHalloweenCandyBoards(communityId: ID!): [HalloweenCandyBoard!]
 
   """Retrieves media owned by the current authenticated user"""
   myMedia(

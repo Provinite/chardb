@@ -3,6 +3,7 @@ import {
   ForbiddenException,
   Injectable,
   Logger,
+  NotFoundException,
 } from "@nestjs/common";
 import {
   ExternalAccountProvider,
@@ -45,6 +46,9 @@ import type {
  * long. The page splits anything larger into several saves.
  */
 export const MAX_ACTIONS = 100;
+
+/** How many boards a player can have in one community. */
+export const MAX_BOARDS = 10;
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -132,35 +136,85 @@ export class CandyBoardService {
   }
 
   /**
-   * The signed-in player's board, made the first time it is asked for so it
-   * has a link before anything is on it. Null without Discord linked.
+   * The signed-in player's boards here, the last changed first. Null
+   * without Discord linked.
    */
-  async getMyBoard(
+  async getMyBoards(
     communityId: string,
     userId: string,
-  ): Promise<HalloweenCandyBoard | null> {
+  ): Promise<HalloweenCandyBoard[] | null> {
     const guildId = await this.requireGuild(communityId);
     const discordUserId = await this.discordIdOf(userId);
     if (!discordUserId) {
       return null;
     }
-    const board = await this.db.halloweenCandyBoard.upsert({
-      where: { guildId_userId: { guildId, userId: discordUserId } },
-      create: { guildId, userId: discordUserId },
-      update: {},
+    const boards = await this.db.halloweenCandyBoard.findMany({
+      where: { guildId, userId: discordUserId },
+      orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     });
+    // One player's: their candies and name are fetched once for them all.
+    const owner = await this.ownerOf(guildId, discordUserId);
+    return boards.map((board) => this.present(board, true, owner));
+  }
+
+  /** A new, empty board for the signed-in player; at most MAX_BOARDS each. */
+  async createBoard(
+    communityId: string,
+    userId: string,
+  ): Promise<HalloweenCandyBoard> {
+    const guildId = await this.requireGuild(communityId);
+    const discordUserId = await this.requireDiscord(userId);
+    const board = await this.db.$transaction(async (tx) => {
+      const count = await tx.halloweenCandyBoard.count({
+        where: { guildId, userId: discordUserId },
+      });
+      if (count >= MAX_BOARDS) {
+        throw new BadRequestException(
+          `You can have at most ${MAX_BOARDS} candy boards`,
+        );
+      }
+      return tx.halloweenCandyBoard.create({
+        data: { guildId, userId: discordUserId },
+      });
+    });
+    this.logger.log({
+      event: HalloweenLogEvent.CandyBoardCreated,
+      message: "Candy board created",
+      guildId,
+      userId: discordUserId,
+      boardId: board.id,
+    } satisfies HalloweenLogLine);
     return this.toBoard(board, true);
   }
 
+  /** Deletes one of the signed-in player's boards, for good. */
+  async deleteBoard(
+    communityId: string,
+    userId: string,
+    id: string,
+  ): Promise<boolean> {
+    const board = await this.myBoard(communityId, userId, id);
+    await this.db.halloweenCandyBoard.delete({ where: { id: board.id } });
+    this.logger.log({
+      event: HalloweenLogEvent.CandyBoardDeleted,
+      message: "Candy board deleted",
+      guildId: board.guildId,
+      userId: board.userId,
+      boardId: board.id,
+    } satisfies HalloweenLogLine);
+    return true;
+  }
+
   /**
-   * Applies the signed-in player's actions to their board, skipping any that
-   * cannot apply (see `applyCandyBoardActions`), and returns the board as it
-   * now is. The board's row is locked while they apply, so two batches at
-   * once both land.
+   * Applies the signed-in player's actions to one of their boards, skipping
+   * any that cannot apply (see `applyCandyBoardActions`), and returns the
+   * board as it now is. The board's row is locked while they apply, so two
+   * batches at once both land.
    */
   async applyActions(
     communityId: string,
     userId: string,
+    id: string,
     actions: HalloweenCandyBoardAction[],
   ): Promise<HalloweenCandyBoard> {
     if (actions.length > MAX_ACTIONS) {
@@ -168,13 +222,11 @@ export class CandyBoardService {
         "Too many changes to save at once: at most 100",
       );
     }
-    const guildId = await this.requireGuild(communityId);
-    const discordUserId = await this.discordIdOf(userId);
-    if (!discordUserId) {
-      throw new ForbiddenException(
-        "Link your Discord account to have a candy board",
-      );
-    }
+    const { guildId, userId: discordUserId } = await this.myBoard(
+      communityId,
+      userId,
+      id,
+    );
 
     const added = addedCandies(actions);
     const owned = new Set(
@@ -194,12 +246,6 @@ export class CandyBoardService {
     );
 
     const board = await this.db.$transaction(async (tx) => {
-      const { id } = await tx.halloweenCandyBoard.upsert({
-        where: { guildId_userId: { guildId, userId: discordUserId } },
-        create: { guildId, userId: discordUserId },
-        update: {},
-        select: { id: true },
-      });
       await tx.$queryRaw`SELECT 1 FROM "halloween_candy_boards" WHERE "id" = ${id}::uuid FOR UPDATE`;
       const locked = await tx.halloweenCandyBoard.findUniqueOrThrow({
         where: { id },
@@ -232,12 +278,13 @@ export class CandyBoardService {
   }
 
   /**
-   * Names the signed-in player's board from the word lists, or with null
-   * leaves it unnamed.
+   * Names one of the signed-in player's boards from the word lists, or with
+   * null leaves it unnamed.
    */
   async setName(
     communityId: string,
     userId: string,
+    id: string,
     name: BoardName | null,
   ): Promise<HalloweenCandyBoard> {
     if (name !== null && !boardNameSchema.safeParse(name).success) {
@@ -245,29 +292,22 @@ export class CandyBoardService {
         "A board's name is a first and a last word, and any joiner, from their lists",
       );
     }
-    const guildId = await this.requireGuild(communityId);
-    const discordUserId = await this.discordIdOf(userId);
-    if (!discordUserId) {
-      throw new ForbiddenException(
-        "Link your Discord account to have a candy board",
-      );
-    }
-    const value = name ?? Prisma.DbNull;
-    const board = await this.db.halloweenCandyBoard.upsert({
-      where: { guildId_userId: { guildId, userId: discordUserId } },
-      create: { guildId, userId: discordUserId, name: value },
-      update: { name: value },
+    await this.myBoard(communityId, userId, id);
+    const board = await this.db.halloweenCandyBoard.update({
+      where: { id },
+      data: { name: name ?? Prisma.DbNull },
     });
     return this.toBoard(board, true);
   }
 
   /**
-   * Puts the light that casts the signed-in player's candies' shadows, or
-   * with null goes back to the board's default light.
+   * Puts the light that casts the shadows on one of the signed-in player's
+   * boards, or with null goes back to the board's default light.
    */
   async setLighting(
     communityId: string,
     userId: string,
+    id: string,
     lighting: CandyLighting | null,
   ): Promise<HalloweenCandyBoard> {
     if (lighting !== null && !candyLightingSchema.safeParse(lighting).success) {
@@ -275,30 +315,24 @@ export class CandyBoardService {
         "The light must be over the board, at a height from 0.1 to 1, with an intensity from 0 to 1, coloured #rrggbb at a strength from 0 to 1, and a spotlight and cone from 0 to 1",
       );
     }
-    const guildId = await this.requireGuild(communityId);
-    const discordUserId = await this.discordIdOf(userId);
-    if (!discordUserId) {
-      throw new ForbiddenException(
-        "Link your Discord account to have a candy board",
-      );
-    }
-    // Prisma takes a JSON column's null as `Prisma.DbNull`, not null.
-    const value = lighting ?? Prisma.DbNull;
-    const board = await this.db.halloweenCandyBoard.upsert({
-      where: { guildId_userId: { guildId, userId: discordUserId } },
-      create: { guildId, userId: discordUserId, lighting: value },
-      update: { lighting: value },
+    await this.myBoard(communityId, userId, id);
+    const board = await this.db.halloweenCandyBoard.update({
+      where: { id },
+      // Prisma takes a JSON column's null as `Prisma.DbNull`, not null.
+      data: { lighting: lighting ?? Prisma.DbNull },
     });
     return this.toBoard(board, true);
   }
 
   /**
-   * Puts the picture or tile behind the signed-in player's candies, null for
-   * none chosen, and how it is dimmed and tinted; null effects for neither.
+   * Puts the picture or tile behind the candies on one of the signed-in
+   * player's boards, null for none chosen, and how it is dimmed and tinted;
+   * null effects for neither.
    */
   async setBackground(
     communityId: string,
     userId: string,
+    id: string,
     slug: string | null,
     effects: CandyBackgroundEffects | null = null,
   ): Promise<HalloweenCandyBoard> {
@@ -313,24 +347,44 @@ export class CandyBoardService {
         "The background can be dimmed by up to 0.8, tinted a #rrggbb colour at a strength from 0 to 1, and saturated from 0 to 1",
       );
     }
+    await this.myBoard(communityId, userId, id);
+    const board = await this.db.halloweenCandyBoard.update({
+      where: { id },
+      data: { background: slug, backgroundEffects: effects ?? Prisma.DbNull },
+    });
+    return this.toBoard(board, true);
+  }
+
+  /**
+   * One of the signed-in player's boards, to change: refused without
+   * Discord linked, and for a board that is not theirs here or not at all.
+   */
+  private async myBoard(
+    communityId: string,
+    userId: string,
+    id: string,
+  ): Promise<BoardRow> {
     const guildId = await this.requireGuild(communityId);
+    const discordUserId = await this.requireDiscord(userId);
+    const board = UUID.test(id)
+      ? await this.db.halloweenCandyBoard.findFirst({
+          where: { id, guildId, userId: discordUserId },
+        })
+      : null;
+    if (!board) {
+      throw new NotFoundException("There is no such candy board of yours");
+    }
+    return board;
+  }
+
+  private async requireDiscord(userId: string): Promise<string> {
     const discordUserId = await this.discordIdOf(userId);
     if (!discordUserId) {
       throw new ForbiddenException(
         "Link your Discord account to have a candy board",
       );
     }
-    const board = await this.db.halloweenCandyBoard.upsert({
-      where: { guildId_userId: { guildId, userId: discordUserId } },
-      create: {
-        guildId,
-        userId: discordUserId,
-        background: slug,
-        backgroundEffects: effects ?? Prisma.DbNull,
-      },
-      update: { background: slug, backgroundEffects: effects ?? Prisma.DbNull },
-    });
-    return this.toBoard(board, true);
+    return discordUserId;
   }
 
   private async requireGuild(communityId: string): Promise<string> {
@@ -357,13 +411,18 @@ export class CandyBoardService {
     board: BoardRow,
     viewerIsOwner: boolean,
   ): Promise<HalloweenCandyBoard> {
+    return this.present(
+      board,
+      viewerIsOwner,
+      await this.ownerOf(board.guildId, board.userId),
+    );
+  }
+
+  /** A board's owner, as their boards show them: their candies, and who. */
+  private async ownerOf(guildId: string, discordUserId: string) {
     const [knocks, account] = await Promise.all([
       this.db.halloweenKnockEvent.findMany({
-        where: {
-          guildId: board.guildId,
-          userId: board.userId,
-          candySlug: { not: null },
-        },
+        where: { guildId, userId: discordUserId, candySlug: { not: null } },
         orderBy: [{ time: "asc" }, { id: "asc" }],
         select: { id: true, candySlug: true, time: true },
       }),
@@ -371,7 +430,7 @@ export class CandyBoardService {
         where: {
           provider_providerAccountId: {
             provider: ExternalAccountProvider.DISCORD,
-            providerAccountId: board.userId,
+            providerAccountId: discordUserId,
           },
         },
         select: { user: { select: userMapperSelect } },
@@ -382,10 +441,21 @@ export class CandyBoardService {
         ? [{ knockEventId: k.id, slug: k.candySlug, receivedAt: k.time }]
         : [],
     );
+    return {
+      candies,
+      user: account ? mapPrismaUserToGraphQL(account.user) : null,
+    };
+  }
+
+  private present(
+    board: BoardRow,
+    viewerIsOwner: boolean,
+    { candies, user }: Awaited<ReturnType<CandyBoardService["ownerOf"]>>,
+  ): HalloweenCandyBoard {
     const held = new Set(candies.map((c) => c.knockEventId));
     return {
       id: board.id,
-      owner: account ? mapPrismaUserToGraphQL(account.user) : null,
+      owner: user,
       viewerIsOwner,
       background: board.background,
       backgroundEffects: storedBackgroundEffects(board),

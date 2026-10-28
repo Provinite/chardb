@@ -65,16 +65,12 @@ vi.mock("react-hot-toast", () => ({
 import {
   ApplyHalloweenCandyBoardActionsDocument,
   HalloweenCandyBoardDocument,
-  MyHalloweenCandyBoardDocument,
   SetHalloweenCandyBoardBackgroundDocument,
   SetHalloweenCandyBoardLightingDocument,
   SetHalloweenCandyBoardNameDocument,
   type HalloweenCandyBoardAction,
 } from "../../generated/graphql";
-import {
-  CommunityCandyBoardPage,
-  MyCandyBoardRedirect,
-} from "../CommunityCandyBoardPage";
+import { CommunityCandyBoardPage } from "../CommunityCandyBoardPage";
 import {
   DEFAULT_LIGHTING,
   shadowFilter,
@@ -171,7 +167,7 @@ const applyMock = (
 ): MockedResponse => ({
   request: {
     query: ApplyHalloweenCandyBoardActionsDocument,
-    variables: { communityId: COMMUNITY_ID, actions },
+    variables: { communityId: COMMUNITY_ID, id: BOARD_ID, actions },
   },
   ...("board" in outcome
     ? { result: { data: { applyHalloweenCandyBoardActions: outcome.board } } }
@@ -187,10 +183,6 @@ const renderAt = (path: string, mocks: MockedResponse[]) =>
         <MockedProvider mocks={mocks}>
           <MemoryRouter initialEntries={[path]}>
             <Routes>
-              <Route
-                path="/halloween/board"
-                element={<MyCandyBoardRedirect />}
-              />
               <Route
                 path="/halloween/board/:boardId"
                 element={<CommunityCandyBoardPage />}
@@ -234,57 +226,19 @@ describe("CommunityCandyBoardPage", () => {
     toast.error.mockClear();
   });
 
-  describe("your own board's address", () => {
-    const myBoard = (result: MockedResponse["result"]): MockedResponse => ({
-      request: {
-        query: MyHalloweenCandyBoardDocument,
-        variables: { communityId: COMMUNITY_ID },
-      },
-      result,
+  describe("the way back to your boards", () => {
+    it("is offered to the board's owner", async () => {
+      renderBoard([boardQuery(board([2]))]);
+      expect(
+        await screen.findByRole("link", { name: "Your boards" }),
+      ).toHaveAttribute("href", "/halloween/board");
     });
 
-    it("takes you to your board", async () => {
-      renderAt("/halloween/board", [
-        myBoard({
-          data: {
-            myHalloweenCandyBoard: {
-              __typename: "HalloweenCandyBoard",
-              id: BOARD_ID,
-            },
-          },
-        }),
-        boardQuery(board([2])),
-      ]);
-      expect(await screen.findByText("Your candy board")).toBeInTheDocument();
-    });
-
-    it("asks you to link Discord when you have no board", async () => {
-      renderAt("/halloween/board", [
-        myBoard({ data: { myHalloweenCandyBoard: null } }),
-      ]);
+    it("is not offered to anyone else", async () => {
+      renderBoard([boardQuery(board([2], { viewerIsOwner: false }))]);
+      await pile();
       expect(
-        await screen.findByText(
-          "Link your Discord account to collect candies here.",
-        ),
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("link", { name: "Link Discord" }),
-      ).toHaveAttribute("href", "/profile/edit");
-    });
-
-    it("says when the community has no Discord server", async () => {
-      renderAt("/halloween/board", [
-        myBoard({
-          errors: [
-            new GraphQLError("This community has no Discord server linked"),
-          ],
-        }),
-      ]);
-      expect(
-        await screen.findByText("This community has no Discord server linked"),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole("link", { name: "Link Discord" }),
+        screen.queryByRole("link", { name: "Your boards" }),
       ).not.toBeInTheDocument();
     });
   });
@@ -924,7 +878,7 @@ describe("CommunityCandyBoardPage", () => {
     ): MockedResponse => ({
       request: {
         query: SetHalloweenCandyBoardBackgroundDocument,
-        variables: { communityId: COMMUNITY_ID, slug, effects },
+        variables: { communityId: COMMUNITY_ID, id: BOARD_ID, slug, effects },
       },
       result:
         "board" in outcome
@@ -1280,7 +1234,7 @@ describe("CommunityCandyBoardPage", () => {
     ): MockedResponse => ({
       request: {
         query: SetHalloweenCandyBoardLightingDocument,
-        variables: { communityId: COMMUNITY_ID, lighting },
+        variables: { communityId: COMMUNITY_ID, id: BOARD_ID, lighting },
       },
       result: { data: { setHalloweenCandyBoardLighting: result } },
     });
@@ -1473,7 +1427,7 @@ describe("CommunityCandyBoardPage", () => {
     ): MockedResponse => ({
       request: {
         query: SetHalloweenCandyBoardNameDocument,
-        variables: { communityId: COMMUNITY_ID, name },
+        variables: { communityId: COMMUNITY_ID, id: BOARD_ID, name },
       },
       result: { data: { setHalloweenCandyBoardName: result } },
     });

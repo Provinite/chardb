@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Link, Navigate, useParams } from "react-router-dom";
+import { Link, useParams } from "react-router-dom";
 import styled from "styled-components";
 import {
+  ArrowLeft,
   Candy as CandyIcon,
   Eraser,
   Tag,
@@ -31,7 +32,6 @@ import {
 } from "../components/halloween/boardName";
 import {
   useHalloweenCandyBoardQuery,
-  useMyHalloweenCandyBoardQuery,
   useSetHalloweenCandyBoardBackgroundMutation,
   useSetHalloweenCandyBoardLightingMutation,
   useSetHalloweenCandyBoardNameMutation,
@@ -68,6 +68,20 @@ const Title = styled.h1`
   font-size: 2rem;
   font-weight: 700;
   color: ${({ theme }) => theme.colors.text.primary};
+`;
+
+const BackLink = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  margin-bottom: ${({ theme }) => theme.spacing.xs};
+  color: ${({ theme }) => theme.colors.text.secondary};
+  font-size: ${({ theme }) => theme.typography.fontSize.sm};
+  text-decoration: none;
+
+  &:hover {
+    color: ${({ theme }) => theme.colors.primary};
+  }
 `;
 
 const Meta = styled.p`
@@ -159,42 +173,6 @@ const NotRunning: React.FC = () => (
   </Container>
 );
 
-/**
- * `/halloween/board`: your own board, which is made the first time you come
- * here so it has a link to share before anything is on it.
- */
-export const MyCandyBoardRedirect: React.FC = () => {
-  const communityId = useCommunityId();
-  const enabled = Boolean(useHostCommunity()?.halloweenEnabled);
-  const { data, loading, error } = useMyHalloweenCandyBoardQuery({
-    variables: { communityId: communityId as string },
-    skip: !communityId || !enabled,
-    fetchPolicy: "network-only",
-  });
-
-  if (!enabled) return <NotRunning />;
-  if (loading || (!data && !error)) return <LoadingSpinner />;
-  if (error) {
-    return (
-      <Container>
-        <Message>{error.message}</Message>
-      </Container>
-    );
-  }
-  const board = data?.myHalloweenCandyBoard;
-  if (!board) {
-    return (
-      <Container>
-        <Message>
-          Link your Discord account to collect candies here.{" "}
-          <Link to="/profile/edit">Link Discord</Link>
-        </Message>
-      </Container>
-    );
-  }
-  return <Navigate to={`/halloween/board/${board.id}`} replace />;
-};
-
 export const CommunityCandyBoardPage: React.FC = () => {
   const { boardId = "" } = useParams<{ boardId: string }>();
   const communityId = useCommunityId();
@@ -244,6 +222,7 @@ const BoardView: React.FC<{
   const [dragging, setDragging] = useState(false);
   const { placements, act, status, retry } = useCandyBoardSync({
     communityId,
+    boardId: board.id,
     serverPlacements: board.placements,
     refetchPlacements,
     dragging,
@@ -282,7 +261,9 @@ const BoardView: React.FC<{
       lightingSave.current = null;
       if (!communityId) return;
       try {
-        await saveLighting({ variables: { communityId, lighting: next } });
+        await saveLighting({
+          variables: { communityId, id: board.id, lighting: next },
+        });
       } catch (error) {
         setLighting(savedLighting);
         toast.error(
@@ -303,7 +284,9 @@ const BoardView: React.FC<{
     setBackgroundEffects(effects);
     if (!communityId) return;
     try {
-      await saveBackground({ variables: { communityId, slug, effects } });
+      await saveBackground({
+        variables: { communityId, id: board.id, slug, effects },
+      });
     } catch (error) {
       setBackground(saved);
       setBackgroundEffects(savedEffects);
@@ -325,7 +308,7 @@ const BoardView: React.FC<{
     setName(next);
     if (!communityId) return;
     try {
-      await saveName({ variables: { communityId, name: next } });
+      await saveName({ variables: { communityId, id: board.id, name: next } });
     } catch (error) {
       setName(savedName);
       toast.error(
@@ -362,6 +345,12 @@ const BoardView: React.FC<{
     <Container>
       <Header>
         <div>
+          {isOwner && (
+            <BackLink to="/halloween/board">
+              <ArrowLeft size={14} aria-hidden />
+              Your boards
+            </BackLink>
+          )}
           <Title>
             <CandyIcon size={28} aria-hidden />
             {title}
