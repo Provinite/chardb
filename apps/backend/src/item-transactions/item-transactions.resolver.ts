@@ -3,6 +3,7 @@ import {
   Query,
   Args,
   ID,
+  Int,
   ResolveField,
   Parent,
   Context,
@@ -67,7 +68,7 @@ export class ItemTransactionsResolver {
     @Args("filters") filters: ItemTransactionFiltersInput,
   ): Promise<ItemTransactionConnection> {
     const result = await this.itemTransactionsService.findAll(filters);
-    return mapPrismaItemTransactionConnectionToGraphQL(result);
+    return mapPrismaItemTransactionConnectionToGraphQL(result, filters);
   }
 
   @AllowCommunityPermission(CommunityPermission.Any)
@@ -177,5 +178,29 @@ export class ItemTransactionsResolver {
     if (!userId) return null;
     const user = await this.database.user.findUnique({ where: { id: userId } });
     return user ? mapPrismaUserToGraphQL(user) : null;
+  }
+}
+
+/**
+ * `total` on a ledger page, counted only when a query selects it.
+ *
+ * The count runs the page's whole filter over the community's ledger, which on
+ * a search is the expensive half of the request. The ledger page itself no
+ * longer asks for it (#444). Reached only through `itemTransactions`, which has
+ * already gated on membership.
+ */
+@Resolver(() => ItemTransactionConnection)
+export class ItemTransactionConnectionResolver {
+  constructor(
+    private readonly itemTransactionsService: ItemTransactionsService,
+  ) {}
+
+  @AllowAnyAuthenticated()
+  @ResolveField(() => Int, {
+    name: "total",
+    description: "How many ledger rows match the filter, across every page.",
+  })
+  resolveTotal(@Parent() connection: ItemTransactionConnection) {
+    return this.itemTransactionsService.count(connection.filters);
   }
 }

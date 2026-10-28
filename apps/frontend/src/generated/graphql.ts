@@ -1737,6 +1737,7 @@ export type ItemTransaction = {
 export type ItemTransactionConnection = {
   __typename?: 'ItemTransactionConnection';
   hasMore: Scalars['Boolean']['output'];
+  /** How many ledger rows match the filter, across every page. */
   total: Scalars['Int']['output'];
   transactions: Array<ItemTransaction>;
 };
