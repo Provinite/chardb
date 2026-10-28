@@ -1,5 +1,6 @@
 import { presetTest, expect } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
+import { recordSearches } from "../../src/graphqlRequests.js";
 
 const test = presetTest("community-items");
 
@@ -137,39 +138,27 @@ test.describe("filtering", () => {
 test.describe("typing a search (#444)", () => {
   test.use({ persona: "quartermaster" });
 
-  /** The search term of every ledger query sent from here on. */
-  const recordSearches = (page: Page) => {
-    const searches: Array<string | undefined> = [];
-    page.on("request", (request) => {
-      const body: unknown = request.postDataJSON();
-      if (
-        typeof body === "object" &&
-        body !== null &&
-        "operationName" in body &&
-        body.operationName === "GetItemTransactions" &&
-        "variables" in body
-      ) {
-        const { variables } = body as {
-          variables: { filters: { search?: string } };
-        };
-        searches.push(variables.filters.search);
-      }
-    });
-    return searches;
-  };
-
-  test("keeps the search box and its focus while results load", async ({
+  test("keeps the search box and its focus through a search", async ({
     page,
     world,
   }) => {
     await page.goto(world.community.ledgerUrl);
     await expect(grantRow(page)).toHaveCount(1);
 
+    const searches = recordSearches(page, "GetItemTransactions");
+
     // Typed a key at a time, the way a person does. fill() would set the whole
     // value in one event and never see the page swap out between letters.
     const search = page.getByRole("searchbox", { name: "Search the ledger" });
     await search.pressSequentially("Lanternfall", { delay: 50 });
 
+    // Asserted after the search has landed, not inside the debounce window,
+    // where a page that swapped out on load would still look fine.
+    await expect.poll(() => searches).toContain("Lanternfall");
+    await expect(page.getByTestId("ledger-table")).toHaveAttribute(
+      "aria-busy",
+      "false",
+    );
     await expect(search).toBeFocused();
     await expect(search).toHaveValue("Lanternfall");
     await expect(grantRow(page)).toHaveCount(1);
@@ -182,7 +171,7 @@ test.describe("typing a search (#444)", () => {
     await page.goto(world.community.ledgerUrl);
     await expect(grantRow(page)).toHaveCount(1);
 
-    const searches = recordSearches(page);
+    const searches = recordSearches(page, "GetItemTransactions");
     await page
       .getByRole("searchbox", { name: "Search the ledger" })
       .pressSequentially("Lanternfall", { delay: 50 });

@@ -322,7 +322,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
 
   const [search, setSearch] = useState("");
   const [kinds, setKinds] = useState<CurrencyTransactionKind[]>([]);
-  const [limit, setLimit] = useState(PAGE_SIZE);
+  const [pages, setPages] = useState({ search: "", limit: PAGE_SIZE });
 
   const currencyId = searchParams.get("currencyId") ?? undefined;
 
@@ -337,6 +337,11 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
     search.trim(),
     SEARCH_DEBOUNCE_MS,
   );
+
+  // A new search starts from the first page. Derived rather than reset per
+  // keystroke, which refetched the old search at the first page's limit before
+  // the debounced one arrived.
+  const limit = pages.search === debouncedSearch ? pages.limit : PAGE_SIZE;
 
   const {
     data: currentData,
@@ -361,6 +366,10 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   // than blinking to a spinner.
   const data = currentData ?? previousData;
 
+  // Out of date from the first keystroke, not only once the query is in
+  // flight.
+  const stale = loading || search.trim() !== debouncedSearch;
+
   const currencies = currencyData?.currencies ?? [];
   const rows = useMemo(
     () => collapseTransferLegs(data?.currencyTransactions?.transactions ?? []),
@@ -370,7 +379,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   const hasMore = data?.currencyTransactions?.hasMore ?? false;
 
   const toggleKind = (kind: CurrencyTransactionKind) => {
-    setLimit(PAGE_SIZE);
+    setPages({ search: debouncedSearch, limit: PAGE_SIZE });
     setKinds((current) =>
       current.includes(kind)
         ? current.filter((k) => k !== kind)
@@ -379,7 +388,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   };
 
   const chooseCurrency = (id: string) => {
-    setLimit(PAGE_SIZE);
+    setPages({ search: debouncedSearch, limit: PAGE_SIZE });
     const next = new URLSearchParams(searchParams);
     if (id) {
       next.set("currencyId", id);
@@ -418,10 +427,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
             aria-label="Search the currency ledger"
             placeholder="Search reasons and currency names…"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setLimit(PAGE_SIZE);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </SearchBox>
         {currencies.length > 1 && (
@@ -459,16 +465,20 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
         <Empty>Could not load the ledger: {error.message}</Empty>
       ) : rows.length === 0 ? (
         <Empty data-testid="currency-ledger-empty">
-          {kinds.length > 0 || search || currencyId
-            ? "Nothing matches those filters."
-            : "No currency has moved in this community yet."}
+          {/* The empty rows may belong to the previous filter, so neither
+              verdict below can be trusted until the current one lands. */}
+          {stale
+            ? "Loading…"
+            : kinds.length > 0 || search || currencyId
+              ? "Nothing matches those filters."
+              : "No currency has moved in this community yet."}
         </Empty>
       ) : (
         <>
           <List
             data-testid="currency-ledger-list"
-            $stale={loading}
-            aria-busy={loading}
+            $stale={stale}
+            aria-busy={stale}
           >
             {rows.map((row) => {
               const tone =
@@ -546,7 +556,12 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
             <Footer>
               <Button
                 variant="secondary"
-                onClick={() => setLimit((current) => current + PAGE_SIZE)}
+                onClick={() =>
+                  setPages({
+                    search: debouncedSearch,
+                    limit: limit + PAGE_SIZE,
+                  })
+                }
                 disabled={loading}
               >
                 {loading ? "Loading…" : `Load more (${total} total)`}

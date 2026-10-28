@@ -437,7 +437,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
   const communityId = useCommunityId();
   const [search, setSearch] = useState("");
   const [activeKinds, setActiveKinds] = useState<ItemTransactionKind[]>([]);
-  const [limit, setLimit] = useState(PAGE_SIZE);
+  const [pages, setPages] = useState({ search: "", limit: PAGE_SIZE });
 
   const community = useHostCommunity();
 
@@ -447,6 +447,12 @@ export const CommunityItemLedgerPage: React.FC = () => {
     search.trim(),
     SEARCH_DEBOUNCE_MS,
   );
+
+  // A new search starts from the first page. Derived rather than reset: a
+  // reset per keystroke sent the old search again at the first page's limit,
+  // and a reset during render still reaches Apollo, which starts its query in
+  // the render React throws away.
+  const limit = pages.search === debouncedSearch ? pages.limit : PAGE_SIZE;
 
   const filters = useMemo(
     () => ({
@@ -475,8 +481,13 @@ export const CommunityItemLedgerPage: React.FC = () => {
   // on screen instead of swapping the page for a spinner.
   const data = currentData ?? previousData;
 
+  // Out of date from the first keystroke, not only once the query is in
+  // flight: the debounce window would otherwise show old results at full
+  // strength under a search box that already says something else.
+  const stale = loading || search.trim() !== debouncedSearch;
+
   const toggleKind = (kind: ItemTransactionKind) => {
-    setLimit(PAGE_SIZE);
+    setPages({ search: debouncedSearch, limit: PAGE_SIZE });
     setActiveKinds((current) =>
       current.includes(kind)
         ? current.filter((k) => k !== kind)
@@ -514,10 +525,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
             aria-label="Search the ledger"
             placeholder="Search item, member, or reason…"
             value={search}
-            onChange={(e) => {
-              setLimit(PAGE_SIZE);
-              setSearch(e.target.value);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </SearchWrap>
         <FilterChips>
@@ -544,14 +552,22 @@ export const CommunityItemLedgerPage: React.FC = () => {
             style={{ opacity: 0.5, marginBottom: "0.75rem" }}
           />
           <p>
-            {search || activeKinds.length
-              ? "No events match those filters."
-              : "Nothing has moved yet. Granting an item will record the first event here."}
+            {/* The empty rows may belong to the previous filter, so neither
+                verdict below can be trusted until the current one lands. */}
+            {stale
+              ? "Loading…"
+              : search || activeKinds.length
+                ? "No events match those filters."
+                : "Nothing has moved yet. Granting an item will record the first event here."}
           </p>
         </Empty>
       ) : (
         <>
-          <TableWrap $stale={loading} aria-busy={loading}>
+          <TableWrap
+            data-testid="ledger-table"
+            $stale={stale}
+            aria-busy={stale}
+          >
             <Table>
               <thead>
                 <tr>
@@ -656,7 +672,12 @@ export const CommunityItemLedgerPage: React.FC = () => {
               <MoreButton
                 type="button"
                 disabled={loading}
-                onClick={() => setLimit((n) => n + PAGE_SIZE)}
+                onClick={() =>
+                  setPages({
+                    search: debouncedSearch,
+                    limit: limit + PAGE_SIZE,
+                  })
+                }
               >
                 {loading ? "Loading…" : "Load more"}
               </MoreButton>

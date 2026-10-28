@@ -64,26 +64,29 @@ const grant = {
   actorUser: user,
 };
 
+type Filters = { search?: string; limit: number };
+
 /**
- * Answers every ledger query with the one seeded grant, slowly enough that the
- * page is caught mid-load, and records the search each query carried.
+ * Answers every ledger query slowly enough that the page is caught mid-load,
+ * and records the filters each query carried. A search nothing matches
+ * ("zzz") comes back empty; anything else returns the one seeded grant, with
+ * more to load when unfiltered.
  */
-const recordingLink = (searches: Array<string | undefined>) =>
+const recordingLink = (sent: Filters[]) =>
   new ApolloLink(
     (operation) =>
       new Observable((observer) => {
-        const { filters } = operation.variables as {
-          filters: { search?: string };
-        };
-        searches.push(filters.search);
+        const { filters } = operation.variables as { filters: Filters };
+        sent.push(filters);
+        const empty = filters.search === "zzz";
         const timer = setTimeout(() => {
           observer.next({
             data: {
               itemTransactions: {
                 __typename: "ItemTransactionConnection",
-                transactions: [grant],
-                total: 1,
-                hasMore: false,
+                transactions: empty ? [] : [grant],
+                total: empty ? 0 : 60,
+                hasMore: !empty && !filters.search,
               },
             },
           });
@@ -93,9 +96,9 @@ const recordingLink = (searches: Array<string | undefined>) =>
       }),
   );
 
-const renderLedger = (searches: Array<string | undefined>) =>
+const renderLedger = (sent: Filters[]) =>
   render(
-    <MockedProvider link={recordingLink(searches)}>
+    <MockedProvider link={recordingLink(sent)}>
       <ThemeProvider theme={lightTheme}>
         <MemoryRouter>
           <CommunityItemLedgerPage />
@@ -104,35 +107,86 @@ const renderLedger = (searches: Array<string | undefined>) =>
     </MockedProvider>,
   );
 
+const searchBox = () =>
+  screen.getByRole("searchbox", { name: "Search the ledger" });
+
+const searches = (sent: Filters[]) => sent.map((f) => f.search);
+
 describe("CommunityItemLedgerPage search", () => {
-  it("keeps the search box and its focus while a search loads", async () => {
-    const searches: Array<string | undefined> = [];
-    renderLedger(searches);
+  it("keeps the search box and its focus through a search", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent);
     await screen.findByText("Trait Change Potion");
 
-    await userEvent.type(
-      screen.getByRole("searchbox", { name: "Search the ledger" }),
-      "Lanternfall",
-      { delay: 30 },
-    );
+    await userEvent.type(searchBox(), "Lanternfall", { delay: 30 });
 
-    const search = screen.getByRole("searchbox", { name: "Search the ledger" });
-    expect(search).toHaveFocus();
-    expect(search).toHaveValue("Lanternfall");
+    // Asserted after the search has landed, not inside the debounce window,
+    // where a page that swapped out on load would still look fine.
+    await waitFor(() => expect(searches(sent)).toContain("Lanternfall"));
+    await waitFor(() =>
+      expect(screen.getByTestId("ledger-table")).toHaveAttribute(
+        "aria-busy",
+        "false",
+      ),
+    );
+    expect(searchBox()).toHaveFocus();
+    expect(searchBox()).toHaveValue("Lanternfall");
   });
 
   it("queries once when typing stops, not once per letter", async () => {
-    const searches: Array<string | undefined> = [];
-    renderLedger(searches);
+    const sent: Filters[] = [];
+    renderLedger(sent);
     await screen.findByText("Trait Change Potion");
 
-    await userEvent.type(
-      screen.getByRole("searchbox", { name: "Search the ledger" }),
-      "Lanternfall",
-      { delay: 30 },
-    );
+    await userEvent.type(searchBox(), "Lanternfall", { delay: 30 });
 
-    await waitFor(() => expect(searches).toContain("Lanternfall"));
-    expect(searches).toEqual([undefined, "Lanternfall"]);
+    await waitFor(() => expect(searches(sent)).toContain("Lanternfall"));
+    expect(searches(sent)).toEqual([undefined, "Lanternfall"]);
+  });
+
+  it("queries once after Load more, without refetching the old search", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent);
+    await screen.findByText("Trait Change Potion");
+
+    await userEvent.click(screen.getByRole("button", { name: "Load more" }));
+    await waitFor(() => expect(sent).toHaveLength(2));
+
+    await userEvent.type(searchBox(), "Lanternfall", { delay: 30 });
+
+    await waitFor(() => expect(searches(sent)).toContain("Lanternfall"));
+    expect(sent).toEqual([
+      { ...sent[0], search: undefined, limit: 25 },
+      { ...sent[0], search: undefined, limit: 50 },
+      { ...sent[0], search: "Lanternfall", limit: 25 },
+    ]);
+  });
+
+  it("marks the results stale while typing, before the query is sent", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent);
+    await screen.findByText("Trait Change Potion");
+
+    await userEvent.type(searchBox(), "Lan");
+
+    expect(sent).toHaveLength(1);
+    expect(screen.getByTestId("ledger-table")).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
+  });
+
+  it("does not call the ledger empty while a cleared search reloads", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent);
+    await screen.findByText("Trait Change Potion");
+
+    await userEvent.type(searchBox(), "zzz");
+    await screen.findByText("No events match those filters.");
+
+    await userEvent.clear(searchBox());
+
+    expect(screen.queryByText(/Nothing has moved yet/)).toBeNull();
+    await screen.findByText("Trait Change Potion");
   });
 });

@@ -1,5 +1,6 @@
 import { presetTest, expect } from "../../src/fixtures.js";
 import { SeedMemberWalletDocument } from "../../src/generated/graphql.js";
+import { recordSearches } from "../../src/graphqlRequests.js";
 
 const test = presetTest("community-items");
 
@@ -316,22 +317,7 @@ test.describe("currency ledger page", () => {
       await page.goto(world.currencyUrls.ledger);
       await expect(page.getByTestId("currency-ledger-list")).toBeVisible();
 
-      const searches: Array<string | undefined> = [];
-      page.on("request", (request) => {
-        const body: unknown = request.postDataJSON();
-        if (
-          typeof body === "object" &&
-          body !== null &&
-          "operationName" in body &&
-          body.operationName === "GetCurrencyTransactions" &&
-          "variables" in body
-        ) {
-          const { variables } = body as {
-            variables: { filters: { search?: string } };
-          };
-          searches.push(variables.filters.search);
-        }
-      });
+      const searches = recordSearches(page, "GetCurrencyTransactions");
 
       const search = page.getByLabel(/search the currency ledger/i);
       await search.pressSequentially("Tier 2 flat rate", { delay: 50 });
