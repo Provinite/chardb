@@ -1,5 +1,6 @@
 import { presetTest, expect } from "../../src/fixtures.js";
 import { SeedMemberWalletDocument } from "../../src/generated/graphql.js";
+import { recordSearches } from "../../src/graphqlRequests.js";
 
 const test = presetTest("community-items");
 
@@ -307,6 +308,27 @@ test.describe("currency ledger page", () => {
         .fill("Tier 2 flat rate");
 
       await expect(page.getByTestId("currency-ledger-empty")).toBeVisible();
+    });
+
+    test("search queries once when typing stops, not once per letter (#444)", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(world.currencyUrls.ledger);
+      await expect(page.getByTestId("currency-ledger-list")).toBeVisible();
+
+      const searches = recordSearches(page, "GetCurrencyTransactions");
+
+      const search = page.getByLabel(/search the currency ledger/i);
+      await search.pressSequentially("Tier 2 flat rate", { delay: 50 });
+
+      await expect(page.getByTestId("currency-ledger-empty")).toBeVisible();
+      await expect(search).toBeFocused();
+      // Timing-sensitive: keys land 50ms apart against a 300ms debounce. A
+      // partial term ahead of the full one means the runner stalled over
+      // 300ms between two keys, not that the debounce broke. See the same
+      // note in item-ledger.e2e.ts.
+      expect(searches).toEqual(["Tier 2 flat rate"]);
     });
   });
 

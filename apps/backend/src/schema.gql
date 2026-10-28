@@ -1159,6 +1159,8 @@ type CurrencyTransaction {
 
 type CurrencyTransactionConnection {
   hasMore: Boolean!
+
+  """How many ledger rows match the filter, across every page."""
   total: Int!
   transactions: [CurrencyTransaction!]!
 }
@@ -2150,6 +2152,8 @@ type ItemTransaction {
 
 type ItemTransactionConnection {
   hasMore: Boolean!
+
+  """How many ledger rows match the filter, across every page."""
   total: Int!
   transactions: [ItemTransaction!]!
 }

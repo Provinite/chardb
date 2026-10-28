@@ -935,6 +935,7 @@ export type CurrencyTransaction = {
 export type CurrencyTransactionConnection = {
   __typename?: 'CurrencyTransactionConnection';
   hasMore: Scalars['Boolean']['output'];
+  /** How many ledger rows match the filter, across every page. */
   total: Scalars['Int']['output'];
   transactions: Array<CurrencyTransaction>;
 };
@@ -1737,6 +1738,7 @@ export type ItemTransaction = {
 export type ItemTransactionConnection = {
   __typename?: 'ItemTransactionConnection';
   hasMore: Scalars['Boolean']['output'];
+  /** How many ledger rows match the filter, across every page. */
   total: Scalars['Int']['output'];
   transactions: Array<ItemTransaction>;
 };
@@ -5656,7 +5658,7 @@ export type GetCurrencyTransactionsQueryVariables = Exact<{
 }>;
 
 
-export type GetCurrencyTransactionsQuery = { __typename?: 'Query', currencyTransactions: { __typename?: 'CurrencyTransactionConnection', total: number, hasMore: boolean, transactions: Array<{ __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, source: CurrencyTransactionSource, sourceId: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
+export type GetCurrencyTransactionsQuery = { __typename?: 'Query', currencyTransactions: { __typename?: 'CurrencyTransactionConnection', hasMore: boolean, transactions: Array<{ __typename?: 'CurrencyTransaction', id: string, currencyId: string, userId: string, kind: CurrencyTransactionKind, amount: number, balanceAfter: number, batchId: string, counterpartyId: string | null, actorUserId: string | null, actorLabel: string | null, reason: string | null, source: CurrencyTransactionSource, sourceId: string | null, staffNote: string | null, createdAt: string, currency: { __typename?: 'Currency', id: string, communityId: string, name: string, code: string, symbol: string | null, description: string | null, colorId: string | null, isTradeable: boolean, archivedAt: string | null, createdAt: string, updatedAt: string }, user: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, counterparty: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
 
 export type GetCurrencyHoldersQueryVariables = Exact<{
   currencyId: Scalars['ID']['input'];
@@ -6305,7 +6307,7 @@ export type GetItemTransactionsQueryVariables = Exact<{
 }>;
 
 
-export type GetItemTransactionsQuery = { __typename?: 'Query', itemTransactions: { __typename?: 'ItemTransactionConnection', total: number, hasMore: boolean, transactions: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
+export type GetItemTransactionsQuery = { __typename?: 'Query', itemTransactions: { __typename?: 'ItemTransactionConnection', hasMore: boolean, transactions: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
 
 export type GetItemProvenanceQueryVariables = Exact<{
   itemId: Scalars['ID']['input'];
@@ -10691,7 +10693,6 @@ export const GetCurrencyTransactionsDocument = gql`
     transactions {
       ...CurrencyTransactionFields
     }
-    total
     hasMore
   }
 }
@@ -14361,7 +14362,6 @@ export const GetItemTransactionsDocument = gql`
     transactions {
       ...ItemTransactionFields
     }
-    total
     hasMore
   }
 }

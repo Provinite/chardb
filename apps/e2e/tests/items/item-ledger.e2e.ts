@@ -1,5 +1,6 @@
 import { presetTest, expect } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
+import { recordSearches } from "../../src/graphqlRequests.js";
 
 const test = presetTest("community-items");
 
@@ -131,6 +132,57 @@ test.describe("filtering", () => {
     await expect(
       page.getByText("No events match those filters."),
     ).toBeVisible();
+  });
+});
+
+test.describe("typing a search (#444)", () => {
+  test.use({ persona: "quartermaster" });
+
+  test("keeps the search box and its focus through a search", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(world.community.ledgerUrl);
+    await expect(grantRow(page)).toHaveCount(1);
+
+    const searches = recordSearches(page, "GetItemTransactions");
+
+    // Typed a key at a time, the way a person does. fill() would set the whole
+    // value in one event and never see the page swap out between letters.
+    const search = page.getByRole("searchbox", { name: "Search the ledger" });
+    await search.pressSequentially("Lanternfall", { delay: 50 });
+
+    // Asserted after the search has landed, not inside the debounce window,
+    // where a page that swapped out on load would still look fine.
+    await expect.poll(() => searches).toContain("Lanternfall");
+    await expect(page.getByTestId("ledger-table")).toHaveAttribute(
+      "aria-busy",
+      "false",
+    );
+    await expect(search).toBeFocused();
+    await expect(search).toHaveValue("Lanternfall");
+    await expect(grantRow(page)).toHaveCount(1);
+  });
+
+  test("queries once when typing stops, not once per letter", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(world.community.ledgerUrl);
+    await expect(grantRow(page)).toHaveCount(1);
+
+    const searches = recordSearches(page, "GetItemTransactions");
+    await page
+      .getByRole("searchbox", { name: "Search the ledger" })
+      .pressSequentially("Lanternfall", { delay: 50 });
+
+    await expect.poll(() => searches).toContain("Lanternfall");
+    await expect(grantRow(page)).toHaveCount(1);
+    // Timing-sensitive: keys land 50ms apart against a 300ms debounce. If this
+    // flakes with a partial term ahead of the full one (["Lantern",
+    // "Lanternfall"]), the runner stalled over 300ms between two keys -- the
+    // debounce did its job. Loosen to "no more than two" before suspecting it.
+    expect(searches).toEqual(["Lanternfall"]);
   });
 });
 

@@ -21,6 +21,7 @@ import {
   collapseTransferLegs,
   type CurrencyTone,
 } from "../lib/currencyDisplay";
+import { useLedgerSearch } from "../hooks/useLedgerSearch";
 
 /**
  * Every currency movement in a community, newest first.
@@ -124,7 +125,9 @@ const Chip = styled.button<{ $active: boolean }>`
     $active ? "#fff" : theme.colors.text.primary};
 `;
 
-const List = styled.div`
+const List = styled.div<{ $stale: boolean }>`
+  opacity: ${({ $stale }) => ($stale ? 0.6 : 1)};
+  transition: opacity 120ms ease;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: 12px;
   overflow: hidden;
@@ -315,9 +318,16 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   const communityId = useCommunityId();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const [search, setSearch] = useState("");
   const [kinds, setKinds] = useState<CurrencyTransactionKind[]>([]);
-  const [limit, setLimit] = useState(PAGE_SIZE);
+  const {
+    search,
+    setSearch,
+    debouncedSearch,
+    limit,
+    typing,
+    loadMore,
+    resetPages,
+  } = useLedgerSearch(PAGE_SIZE);
 
   const currencyId = searchParams.get("currencyId") ?? undefined;
 
@@ -326,7 +336,12 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
     skip: !communityId,
   });
 
-  const { data, loading, error } = useGetCurrencyTransactionsQuery({
+  const {
+    data: currentData,
+    previousData,
+    loading,
+    error,
+  } = useGetCurrencyTransactionsQuery({
     variables: {
       filters: {
         communityId: communityId as string,
@@ -334,22 +349,29 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
         offset: 0,
         kinds: kinds.length > 0 ? kinds : undefined,
         currencyId,
-        search: search.trim() || undefined,
+        search: debouncedSearch || undefined,
       },
     },
     skip: !communityId,
   });
+
+  // The last result stays up while a new filter loads, so the list dims rather
+  // than blinking to a spinner.
+  const data = currentData ?? previousData;
+
+  // Out of date from the first keystroke, not only once the query is in
+  // flight.
+  const stale = loading || typing;
 
   const currencies = currencyData?.currencies ?? [];
   const rows = useMemo(
     () => collapseTransferLegs(data?.currencyTransactions?.transactions ?? []),
     [data],
   );
-  const total = data?.currencyTransactions?.total ?? 0;
   const hasMore = data?.currencyTransactions?.hasMore ?? false;
 
   const toggleKind = (kind: CurrencyTransactionKind) => {
-    setLimit(PAGE_SIZE);
+    resetPages();
     setKinds((current) =>
       current.includes(kind)
         ? current.filter((k) => k !== kind)
@@ -358,7 +380,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   };
 
   const chooseCurrency = (id: string) => {
-    setLimit(PAGE_SIZE);
+    resetPages();
     const next = new URLSearchParams(searchParams);
     if (id) {
       next.set("currencyId", id);
@@ -397,10 +419,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
             aria-label="Search the currency ledger"
             placeholder="Search reasons and currency names…"
             value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setLimit(PAGE_SIZE);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </SearchBox>
         {currencies.length > 1 && (
@@ -432,19 +451,29 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
         </Chips>
       </Controls>
 
-      {loading && rows.length === 0 ? (
+      {/* Only the first load, with nothing to show yet. After that the last
+          result, empty or not, stays up dimmed while the next one loads. */}
+      {loading && !data ? (
         <LoadingSpinner />
       ) : error ? (
         <Empty>Could not load the ledger: {error.message}</Empty>
       ) : rows.length === 0 ? (
         <Empty data-testid="currency-ledger-empty">
-          {kinds.length > 0 || search || currencyId
-            ? "Nothing matches those filters."
-            : "No currency has moved in this community yet."}
+          {/* The empty rows may belong to the previous filter, so neither
+              verdict below can be trusted until the current one lands. */}
+          {stale
+            ? "Loading…"
+            : kinds.length > 0 || debouncedSearch || currencyId
+              ? "Nothing matches those filters."
+              : "No currency has moved in this community yet."}
         </Empty>
       ) : (
         <>
-          <List data-testid="currency-ledger-list">
+          <List
+            data-testid="currency-ledger-list"
+            $stale={stale}
+            aria-busy={stale}
+          >
             {rows.map((row) => {
               const tone =
                 row.kind === CurrencyTransactionKind.Transfer
@@ -521,10 +550,12 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
             <Footer>
               <Button
                 variant="secondary"
-                onClick={() => setLimit((current) => current + PAGE_SIZE)}
-                disabled={loading}
+                onClick={loadMore}
+                // Not while typing either: it would page the old search,
+                // and the new one is about to replace it.
+                disabled={stale}
               >
-                {loading ? "Loading…" : `Load more (${total} total)`}
+                {loading ? "Loading…" : "Load more"}
               </Button>
             </Footer>
           )}

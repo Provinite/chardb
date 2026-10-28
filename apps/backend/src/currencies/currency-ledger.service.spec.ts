@@ -824,12 +824,14 @@ describe("CurrencyLedgerService", () => {
       });
     });
 
-    it("reports hasMore against the true total, not the page size", async () => {
+    it("tells whether there is more from one row past the page, without counting", async () => {
+      // Counting every match runs the whole filter over the community's
+      // ledger on each search, for a number the page no longer shows (#444).
       mockDatabaseService.currencyTransaction.findMany.mockResolvedValue([
         {},
         {},
+        {},
       ]);
-      mockDatabaseService.currencyTransaction.count.mockResolvedValue(40);
 
       const result = await service.findTransactions({
         communityId: "comm1",
@@ -837,8 +839,46 @@ describe("CurrencyLedgerService", () => {
         offset: 0,
       });
 
+      const { take } =
+        mockDatabaseService.currencyTransaction.findMany.mock.calls[0][0];
+      expect(take).toBe(3);
+      expect(result.transactions).toHaveLength(2);
       expect(result.hasMore).toBe(true);
-      expect(result.total).toBe(40);
+      expect(
+        mockDatabaseService.currencyTransaction.count,
+      ).not.toHaveBeenCalled();
+    });
+
+    it("reports no more when the page is the last one", async () => {
+      mockDatabaseService.currencyTransaction.findMany.mockResolvedValue([
+        {},
+        {},
+      ]);
+
+      const result = await service.findTransactions({
+        communityId: "comm1",
+        limit: 2,
+      });
+
+      expect(result.transactions).toHaveLength(2);
+      expect(result.hasMore).toBe(false);
+    });
+  });
+
+  describe("countTransactions", () => {
+    it("counts with the same filter the page uses", async () => {
+      mockDatabaseService.currencyTransaction.findMany.mockResolvedValue([]);
+      mockDatabaseService.currencyTransaction.count.mockResolvedValue(7);
+      const filters = { communityId: "comm1", search: "tier" };
+
+      await expect(service.countTransactions(filters)).resolves.toBe(7);
+      await service.findTransactions(filters);
+
+      const { where: counted } =
+        mockDatabaseService.currencyTransaction.count.mock.calls[0][0];
+      const { where: listed } =
+        mockDatabaseService.currencyTransaction.findMany.mock.calls[0][0];
+      expect(counted).toEqual(listed);
     });
   });
 

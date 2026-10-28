@@ -1,5 +1,6 @@
 import { ObjectType, Field, ID, Int, registerEnumType } from "@nestjs/graphql";
 import { ItemTransactionKind } from "@chardb/database";
+import type { ItemTransactionFilters } from "../dto/item-transaction.dto";
 
 registerEnumType(ItemTransactionKind, {
   name: "ItemTransactionKind",
@@ -93,9 +94,12 @@ export class ItemTransactionConnection {
   @Field(() => [ItemTransaction])
   transactions: ItemTransaction[];
 
-  @Field(() => Int)
-  total: number;
+  // `total` is a field resolver on ItemTransactionConnectionResolver, so the
+  // count runs only for a query that selects it.
 
   @Field()
   hasMore: boolean;
+
+  /** The filter this page came from, for resolving `total`. Not exposed. */
+  filters: ItemTransactionFilters;
 }

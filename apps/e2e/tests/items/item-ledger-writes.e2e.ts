@@ -104,6 +104,58 @@ test.describe("writes reach the ledger", () => {
   });
 });
 
+test.describe("staff look up a member from the ledger", () => {
+  test.use({ persona: "quartermaster" });
+
+  test("searching a member's name narrows to their events and leads to their inventory", async ({
+    page,
+    world,
+  }) => {
+    // A member with an event of their own, among the world's other events, so
+    // a search that ignored the name would leave those on screen too.
+    const other = world.users.othermember;
+    await world.as("quartermaster").gql(SeedGrantItemDocument, {
+      input: {
+        itemTypeId: world.itemTypes.potion.id,
+        userId: other.userId,
+        quantity: 2,
+        reason: "Hollowtide week three",
+      },
+    });
+
+    await page.goto(world.community.ledgerUrl);
+    const rows = page.getByTestId("ledger-row");
+    await expect(
+      rows.filter({ hasText: "Lanternfall prompt completion" }),
+    ).toHaveCount(1);
+
+    await page
+      .getByRole("searchbox", { name: "Search the ledger" })
+      .pressSequentially(other.username, { delay: 50 });
+
+    // The seeded grant to someone else drops out; every row left names them.
+    await expect(
+      rows.filter({ hasText: "Lanternfall prompt completion" }),
+    ).toHaveCount(0);
+    const theirs = rows.filter({ hasText: "Hollowtide week three" });
+    await expect(theirs).toHaveCount(1);
+    for (const row of await rows.all()) {
+      await expect(row).toContainText(other.username);
+    }
+
+    await theirs.getByRole("link", { name: other.username }).click();
+
+    await expect(page).toHaveURL(
+      new RegExp(`/members/${other.username}/inventory$`),
+    );
+    await expect(
+      page.locator(
+        `[data-testid="holding-group"][data-item-type-id="${world.itemTypes.potion.id}"]`,
+      ),
+    ).toContainText("×2");
+  });
+});
+
 test.describe("the inventory collapses what the ledger separates", () => {
   test.use({ persona: "member" });
 

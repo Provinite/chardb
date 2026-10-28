@@ -3,6 +3,7 @@ import {
   CurrencyTransactionKind,
   CurrencyTransactionSource,
 } from "@chardb/database";
+import type { CurrencyTransactionFilters } from "../dto/currency.dto";
 
 registerEnumType(CurrencyTransactionSource, {
   name: "CurrencyTransactionSource",
@@ -140,9 +141,12 @@ export class CurrencyTransactionConnection {
   @Field(() => [CurrencyTransaction])
   transactions: CurrencyTransaction[];
 
-  @Field(() => Int)
-  total: number;
+  // `total` is a field resolver on CurrencyTransactionConnectionResolver, so
+  // the count runs only for a query that selects it.
 
   @Field()
   hasMore: boolean;
+
+  /** The filter this page came from, for resolving `total`. Not exposed. */
+  filters: CurrencyTransactionFilters;
 }

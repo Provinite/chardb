@@ -146,7 +146,7 @@ export class CurrenciesResolver {
     @Args("filters") filters: CurrencyTransactionFiltersInput,
   ): Promise<CurrencyTransactionConnection> {
     const result = await this.ledger.findTransactions(filters);
-    return mapPrismaCurrencyTransactionConnectionToGraphQL(result);
+    return mapPrismaCurrencyTransactionConnectionToGraphQL(result, filters);
   }
 
   @AllowCommunityPermission(CommunityPermission.Any)
@@ -243,6 +243,28 @@ export class CurrenciesResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<string> {
     return this.ledger.transfer(input, user.id);
+  }
+}
+
+/**
+ * `total` on a currency ledger page, counted only when a query selects it.
+ *
+ * The count runs the page's whole filter over the community's ledger, which on
+ * a search is the expensive half of the request. The ledger page itself no
+ * longer asks for it (#444). Reached only through `currencyTransactions`,
+ * which has already gated on membership.
+ */
+@Resolver(() => CurrencyTransactionConnection)
+export class CurrencyTransactionConnectionResolver {
+  constructor(private readonly ledger: CurrencyLedgerService) {}
+
+  @AllowAnyAuthenticated()
+  @ResolveField(() => Int, {
+    name: "total",
+    description: "How many ledger rows match the filter, across every page.",
+  })
+  resolveTotal(@Parent() connection: CurrencyTransactionConnection) {
+    return this.ledger.countTransactions(connection.filters);
   }
 }
 

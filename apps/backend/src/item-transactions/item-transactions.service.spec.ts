@@ -151,6 +151,32 @@ describe("ItemTransactionsService", () => {
       expect(JSON.stringify(where)).toContain("reason");
     });
 
+    it("searches the names of everyone a row names (#444)", async () => {
+      // The search box promises members. Staff look people up by name here,
+      // and a search that only read reasons found nobody.
+      await service.findAll({ communityId: "comm1", search: "neo" });
+
+      const { where } =
+        mockDatabaseService.itemTransaction.findMany.mock.calls[0][0];
+      const byName = {
+        OR: [
+          { username: { contains: "neo", mode: "insensitive" } },
+          { displayName: { contains: "neo", mode: "insensitive" } },
+        ],
+      };
+      // The only OR clause present: no userId was passed.
+      const searched = where.AND.find((clause: object) => "OR" in clause) as
+        | { OR: unknown[] }
+        | undefined;
+      expect(searched?.OR).toEqual(
+        expect.arrayContaining([
+          { fromUser: byName },
+          { toUser: byName },
+          { actorUser: byName },
+        ]),
+      );
+    });
+
     it("matches a user on any of the three roles a row can name", async () => {
       await service.findAll({ communityId: "comm1", userId: "user1" });
 
@@ -172,9 +198,14 @@ describe("ItemTransactionsService", () => {
       expect(orderBy).toEqual([{ createdAt: "desc" }, { id: "desc" }]);
     });
 
-    it("reports hasMore from the total, not the page length", async () => {
-      mockDatabaseService.itemTransaction.findMany.mockResolvedValue([]);
-      mockDatabaseService.itemTransaction.count.mockResolvedValue(100);
+    it("tells whether there is more from one row past the page, without counting", async () => {
+      // Counting every match runs the whole filter over the community's
+      // ledger on each search, for a number the page no longer shows (#444).
+      const rows = Array.from({ length: 26 }, (_, i) => ({
+        id: `t${i}`,
+        batchId: null,
+      }));
+      mockDatabaseService.itemTransaction.findMany.mockResolvedValue(rows);
 
       const result = await service.findAll({
         communityId: "comm1",
@@ -182,8 +213,41 @@ describe("ItemTransactionsService", () => {
         offset: 0,
       });
 
-      expect(result.total).toBe(100);
+      const { take } =
+        mockDatabaseService.itemTransaction.findMany.mock.calls[0][0];
+      expect(take).toBe(26);
+      expect(result.transactions).toHaveLength(25);
       expect(result.hasMore).toBe(true);
+      expect(mockDatabaseService.itemTransaction.count).not.toHaveBeenCalled();
+    });
+
+    it("reports no more when the page is the last one", async () => {
+      const rows = Array.from({ length: 25 }, (_, i) => ({
+        id: `t${i}`,
+        batchId: null,
+      }));
+      mockDatabaseService.itemTransaction.findMany.mockResolvedValue(rows);
+
+      const result = await service.findAll({ communityId: "comm1", limit: 25 });
+
+      expect(result.transactions).toHaveLength(25);
+      expect(result.hasMore).toBe(false);
+    });
+  });
+
+  describe("count", () => {
+    it("counts with the same filter the page uses", async () => {
+      mockDatabaseService.itemTransaction.count.mockResolvedValue(7);
+      const filters = { communityId: "comm1", search: "neo" };
+
+      await expect(service.count(filters)).resolves.toBe(7);
+      await service.findAll(filters);
+
+      const { where: counted } =
+        mockDatabaseService.itemTransaction.count.mock.calls[0][0];
+      const { where: listed } =
+        mockDatabaseService.itemTransaction.findMany.mock.calls[0][0];
+      expect(counted).toEqual(listed);
     });
   });
 

@@ -269,7 +269,6 @@ export const GET_ITEM_TRANSACTIONS = gql`
       transactions {
         ...ItemTransactionFields
       }
-      total
       hasMore
     }
   }

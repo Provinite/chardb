@@ -5,6 +5,7 @@ import {
   ItemTransaction,
   ItemTransactionConnection,
 } from "../entities/item-transaction.entity";
+import type { ItemTransactionFilters } from "../dto/item-transaction.dto";
 
 /**
  * staffNote is intentionally dropped here. It never rides along on the mapped
@@ -31,14 +32,16 @@ export function mapPrismaItemTransactionToGraphQL(
   };
 }
 
-export function mapPrismaItemTransactionConnectionToGraphQL(result: {
-  transactions: WithBatchSize[];
-  total: number;
-  hasMore: boolean;
-}): ItemTransactionConnection {
+export function mapPrismaItemTransactionConnectionToGraphQL(
+  result: {
+    transactions: WithBatchSize[];
+    hasMore: boolean;
+  },
+  filters: ItemTransactionFilters,
+): ItemTransactionConnection {
   return {
     transactions: result.transactions.map(mapPrismaItemTransactionToGraphQL),
-    total: result.total,
     hasMore: result.hasMore,
+    filters,
   };
 }

@@ -105,7 +105,6 @@ export const GET_CURRENCY_TRANSACTIONS = gql`
       transactions {
         ...CurrencyTransactionFields
       }
-      total
       hasMore
     }
   }

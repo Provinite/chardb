@@ -15,6 +15,7 @@ import {
   type ItemTransactionFieldsFragment,
 } from "../generated/graphql";
 import { collapseByBatch, KIND_LABEL, kindTone } from "../lib/itemDisplay";
+import { useLedgerSearch } from "../hooks/useLedgerSearch";
 
 /**
  * The item ledger: every movement of every item in one community.
@@ -97,7 +98,9 @@ const SearchInput = styled.input`
   }
 `;
 
-const TableWrap = styled.div`
+const TableWrap = styled.div<{ $stale: boolean }>`
+  opacity: ${({ $stale }) => ($stale ? 0.6 : 1)};
+  transition: opacity 120ms ease;
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.lg};
   overflow-x: auto;
@@ -430,9 +433,16 @@ export const CommunityItemLedgerPage: React.FC = () => {
   usePageMeta({ title: "Item Ledger" });
 
   const communityId = useCommunityId();
-  const [search, setSearch] = useState("");
   const [activeKinds, setActiveKinds] = useState<ItemTransactionKind[]>([]);
-  const [limit, setLimit] = useState(PAGE_SIZE);
+  const {
+    search,
+    setSearch,
+    debouncedSearch,
+    limit,
+    typing,
+    loadMore,
+    resetPages,
+  } = useLedgerSearch(PAGE_SIZE);
 
   const community = useHostCommunity();
 
@@ -442,21 +452,34 @@ export const CommunityItemLedgerPage: React.FC = () => {
       limit,
       offset: 0,
       kinds: activeKinds.length ? activeKinds : undefined,
-      search: search.trim() || undefined,
+      search: debouncedSearch || undefined,
     }),
-    [communityId, limit, activeKinds, search],
+    [communityId, limit, activeKinds, debouncedSearch],
   );
 
-  const { data, loading, error } = useGetItemTransactionsQuery({
+  const {
+    data: currentData,
+    previousData,
+    loading,
+    error,
+  } = useGetItemTransactionsQuery({
     variables: { filters },
     skip: !communityId,
-    // Keeps the previous page on screen while a filter change is in flight,
-    // instead of flashing the empty state between every keystroke.
     fetchPolicy: "cache-and-network",
   });
 
+  // A filter the cache has not seen yet has no data until it lands. Showing
+  // the last result meanwhile keeps the table, and the search box above it,
+  // on screen instead of swapping the page for a spinner.
+  const data = currentData ?? previousData;
+
+  // Out of date from the first keystroke, not only once the query is in
+  // flight: the debounce window would otherwise show old results at full
+  // strength under a search box that already says something else.
+  const stale = loading || typing;
+
   const toggleKind = (kind: ItemTransactionKind) => {
-    setLimit(PAGE_SIZE);
+    resetPages();
     setActiveKinds((current) =>
       current.includes(kind)
         ? current.filter((k) => k !== kind)
@@ -466,7 +489,6 @@ export const CommunityItemLedgerPage: React.FC = () => {
 
   const rows = data?.itemTransactions?.transactions ?? [];
   const entries = collapseByBatch(rows);
-  const total = data?.itemTransactions?.total ?? 0;
   const hasMore = data?.itemTransactions?.hasMore ?? false;
 
   if (loading && !data) {
@@ -494,10 +516,7 @@ export const CommunityItemLedgerPage: React.FC = () => {
             aria-label="Search the ledger"
             placeholder="Search item, member, or reason…"
             value={search}
-            onChange={(e) => {
-              setLimit(PAGE_SIZE);
-              setSearch(e.target.value);
-            }}
+            onChange={(e) => setSearch(e.target.value)}
           />
         </SearchWrap>
         <FilterChips>
@@ -524,14 +543,22 @@ export const CommunityItemLedgerPage: React.FC = () => {
             style={{ opacity: 0.5, marginBottom: "0.75rem" }}
           />
           <p>
-            {search || activeKinds.length
-              ? "No events match those filters."
-              : "Nothing has moved yet. Granting an item will record the first event here."}
+            {/* The empty rows may belong to the previous filter, so neither
+                verdict below can be trusted until the current one lands. */}
+            {stale
+              ? "Loading…"
+              : debouncedSearch || activeKinds.length
+                ? "No events match those filters."
+                : "Nothing has moved yet. Granting an item will record the first event here."}
           </p>
         </Empty>
       ) : (
         <>
-          <TableWrap>
+          <TableWrap
+            data-testid="ledger-table"
+            $stale={stale}
+            aria-busy={stale}
+          >
             <Table>
               <thead>
                 <tr>
@@ -628,15 +655,18 @@ export const CommunityItemLedgerPage: React.FC = () => {
 
           <Footer>
             <Count>
-              Showing {entries.length} event{entries.length === 1 ? "" : "s"}{" "}
-              across {rows.length} of {total} item movement
-              {total === 1 ? "" : "s"}
+              {/* Lines on screen only. The rows behind them (one per item)
+                  and the server's total are storage detail, and naming all
+                  three made the footer unreadable. */}
+              {`Showing ${entries.length} event${entries.length === 1 ? "" : "s"}`}
             </Count>
             {hasMore && (
               <MoreButton
                 type="button"
-                disabled={loading}
-                onClick={() => setLimit((n) => n + PAGE_SIZE)}
+                // Not while typing either: it would page the old search,
+                // and the new one is about to replace it.
+                disabled={stale}
+                onClick={loadMore}
               >
                 {loading ? "Loading…" : "Load more"}
               </MoreButton>
