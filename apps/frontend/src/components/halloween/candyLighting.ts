@@ -161,10 +161,12 @@ export function spotlightGlow(
   const pool = spotlightOf(lighting);
   if (!pool || !lighting || lighting.intensity <= 0) return null;
   const { square, ellipse, litShare } = poolSquare(pool);
-  const rgb =
-    lighting.colour && lighting.colourStrength > 0
-      ? rgbOf(lighting.colour)
-      : "255, 255, 255";
+  // From white toward the light's colour as far as it colours, so the glow
+  // changes as smoothly as the colour does.
+  const strength = lighting.colour ? between(0, 1, lighting.colourStrength) : 0;
+  const rgb = channelsOf(lighting.colour ?? "#ffffff")
+    .map((c) => Math.round(255 + (c - 255) * strength))
+    .join(", ");
   const alpha = round(GLOW_MAX * Math.min(1, lighting.intensity));
   return {
     ...square,
@@ -197,9 +199,9 @@ function poolSquare(pool: Spotlight): {
   };
 }
 
-/** "#f97316" -> "249, 115, 22". */
-const rgbOf = (hex: string) =>
-  [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16)).join(", ");
+/** "#f97316" -> [249, 115, 22]. */
+const channelsOf = (hex: string) =>
+  [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
 
 /**
  * The light's colour, as a layer over the whole board -- candies,

@@ -150,13 +150,26 @@ describe("spotlightGlow", () => {
     );
   });
 
-  it("glows the light's colour under a coloured light", () => {
+  it("glows the light's colour under a fully coloured light", () => {
     const glow = spotlightGlow({
       ...spot,
       colour: "#f97316",
-      colourStrength: 0.4,
+      colourStrength: 1,
     });
     expect(String(glow?.backgroundImage)).toContain("rgba(249, 115, 22, ");
+  });
+
+  it("glows from white toward the light's colour as its colour strengthens", () => {
+    const glowAt = (colourStrength: number) =>
+      String(
+        spotlightGlow({ ...spot, colour: "#f97316", colourStrength })
+          ?.backgroundImage,
+      );
+    expect(glowAt(0)).toContain("rgba(255, 255, 255, ");
+    // Halfway from white (255, 255, 255) to pumpkin (249, 115, 22).
+    expect(glowAt(0.5)).toContain("rgba(252, 185, 139, ");
+    // No jump from none to a little.
+    expect(glowAt(0.01)).toContain("rgba(255, 254, 253, ");
   });
 });
 
