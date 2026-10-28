@@ -76,7 +76,10 @@ const CONE_RADIUS_MAX = 100;
 const SPOTLIGHT_DARKNESS_MAX = 0.85;
 
 export interface Spotlight {
-  /** The pool's centre, in percent of the board's width and height. */
+  /**
+   * The pool's centre, in percent of the board's width and height: across
+   * the board from the light, where its beam goes.
+   */
   x: number;
   y: number;
   /** Fully lit out to here, in hundredths of the board's width... */
@@ -85,17 +88,21 @@ export interface Spotlight {
   radius: number;
   /** How many times longer the pool is along the beam than across it. */
   stretch: number;
-  /** Which way the beam runs, in degrees clockwise from the board's right. */
+  /**
+   * Which way the beam runs, away from the light, in degrees clockwise from
+   * the board's right.
+   */
   angle: number;
   darkness: number;
 }
 
 /**
- * The pool of light a spotlight throws, under the light: as wide as its
- * cone, wider the higher it hangs, with its edge softened over the outer
- * third. A beam from off to the side lands at a slant, so the pool is
- * stretched along it -- by as far out as the light is over how high it
- * hangs, as the shadows are long. Null for a board lit evenly.
+ * The pool of light a spotlight throws: as wide as its cone, wider the
+ * higher it hangs, with its edge softened over the outer third. A light off
+ * to one side shines across the board, so its pool lands as far out on the
+ * other side -- the way its shadows fall -- and lands at a slant, stretched
+ * along the beam by as far out as the light is over how high it hangs, as
+ * the shadows are long. Null for a board lit evenly.
  */
 export function spotlightOf(
   lighting: Lighting | null | undefined,
@@ -107,12 +114,12 @@ export function spotlightOf(
     (0.5 + 0.5 * height);
   const reach = Math.hypot(x, y);
   return {
-    x: 50 + x * 50,
-    y: 50 + y * 50,
+    x: 50 - x * 50,
+    y: 50 - y * 50,
     lit: (radius * 2) / 3,
     radius,
     stretch: Math.hypot(1, reach / height),
-    angle: reach === 0 ? 0 : (Math.atan2(y, x) * 180) / Math.PI,
+    angle: reach === 0 ? 0 : (Math.atan2(-y, -x) * 180) / Math.PI,
     darkness: SPOTLIGHT_DARKNESS_MAX * spotlight,
   };
 }

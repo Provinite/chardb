@@ -18,6 +18,7 @@ import {
   LIGHT_HEIGHT_MAX,
   LIGHT_HEIGHT_MIN,
   clampLighting,
+  spotlightOf,
   type Lighting,
 } from "./candyLighting";
 
@@ -113,6 +114,26 @@ const LightDot = styled.span`
   pointer-events: none;
 `;
 
+/** Keeps the spotlight's outline inside the pad's circle. */
+const PoolClip = styled.span`
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  overflow: hidden;
+  pointer-events: none;
+`;
+
+/**
+ * Where a spotlight lands, across the pad from the light: the pad stands
+ * for the board, so the pool is drawn at its size there.
+ */
+const PoolOutline = styled.span`
+  position: absolute;
+  border: 2px dashed #fde68acc;
+  border-radius: 50%;
+  background: #fde68a22;
+`;
+
 const Reset = styled.button`
   position: absolute;
   top: -4px;
@@ -197,6 +218,7 @@ export const LightingControl: React.FC<LightingControlProps> = ({
   const pad = useRef<HTMLDivElement>(null);
   const dragging = useRef<number | null>(null);
   const light = value ?? DEFAULT_LIGHTING;
+  const pool = spotlightOf(light);
 
   const move = (changes: Partial<Lighting>) => {
     const next = clampLighting({ ...light, ...changes });
@@ -291,6 +313,20 @@ export const LightingControl: React.FC<LightingControlProps> = ({
                   dragging.current = null;
                 }}
               >
+                {pool && (
+                  <PoolClip>
+                    <PoolOutline
+                      data-testid="spotlight-pool"
+                      style={{
+                        left: `${round(pool.x)}%`,
+                        top: `${round(pool.y)}%`,
+                        width: `${pool.radius * pool.stretch * 2}%`,
+                        height: `${pool.radius * 2}%`,
+                        transform: `translate(-50%, -50%) rotate(${pool.angle}deg)`,
+                      }}
+                    />
+                  </PoolClip>
+                )}
                 <LightDot
                   style={{
                     left: `${50 + light.x * 50}%`,

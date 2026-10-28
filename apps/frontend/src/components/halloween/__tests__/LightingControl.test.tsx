@@ -173,6 +173,26 @@ describe("LightingControl", () => {
     expect(onChange).toHaveBeenLastCalledWith({ ...centre, spotlight: 0.6 });
   });
 
+  it("outlines on the pad where a spotlight lands, across from the light", async () => {
+    renderControl({ ...centre, x: -0.5, y: 0.2, spotlight: 0.6 });
+    await open();
+    const pool = screen
+      .getByRole("group", { name: "Light position" })
+      .querySelector<HTMLElement>('[data-testid="spotlight-pool"]');
+    expect(pool?.style.left).toBe("75%");
+    expect(pool?.style.top).toBe("40%");
+  });
+
+  it("outlines no pool with no spotlight", async () => {
+    renderControl(centre);
+    await open();
+    expect(
+      screen
+        .getByRole("group", { name: "Light position" })
+        .querySelector('[data-testid="spotlight-pool"]'),
+    ).toBe(null);
+  });
+
   it("widens and narrows a spotlight's cone", async () => {
     const spot = { ...centre, spotlight: 0.6 };
     const onChange = renderControl(spot);

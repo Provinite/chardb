@@ -34,10 +34,17 @@ describe("spotlightOf", () => {
     expect(spotlightOf(DEFAULT_LIGHTING)).toBe(null);
   });
 
-  it("centres the pool of light under the light", () => {
+  it("lands the pool across the board from the light, where its beam goes", () => {
     const pool = spotlightOf({ ...at(-0.5, 0.5, 0.5), spotlight: 0.8 });
-    expect(pool?.x).toBe(25);
-    expect(pool?.y).toBe(75);
+    expect(pool?.x).toBe(75);
+    expect(pool?.y).toBe(25);
+  });
+
+  it("casts shadows the way the beam goes, toward the pool", () => {
+    const light = { ...at(-0.5, 0, 0.5), spotlight: 1 };
+    const pool = spotlightOf(light)!;
+    expect(pool.x).toBeGreaterThan(50);
+    expect(shadowOf(light, 0).dx).toBeGreaterThan(0);
   });
 
   it("darkens outside the pool as far as the spotlight is strong", () => {
@@ -72,12 +79,12 @@ describe("spotlightOf", () => {
     expect(stretch(0.9, 0.5)).toBeGreaterThan(stretch(0.3, 0.5));
   });
 
-  it("turns the pool's long side toward the light", () => {
+  it("runs the pool's long side along the beam, away from the light", () => {
     const angle = (x: number, y: number) =>
       spotlightOf({ ...at(x, y, 0.5), spotlight: 1 })!.angle;
-    close(angle(0.5, 0), 0);
-    close(angle(0, 0.5), 90);
-    close(angle(-0.5, -0.5), -135);
+    close(angle(-0.5, 0), 0);
+    close(angle(0, -0.5), 90);
+    close(angle(0.5, 0.5), -135);
   });
 
   it("draws as an ellipse on a square turned to the beam, centred on the pool", () => {
