@@ -22,7 +22,10 @@ import { Color, HalloweenUi } from "../discord/ui";
 import { HalloweenRandom } from "../random";
 import { GuildSettingsService } from "../services/guild-settings.service";
 import { PrizeService } from "../services/prize.service";
-import { KnockEventService } from "../services/knock-event.service";
+import {
+  KnockEventService,
+  type KnockEventInput,
+} from "../services/knock-event.service";
 import { GiftyService } from "../services/gifty.service";
 import { DeviantArtUserService } from "../services/deviantart-user.service";
 import { PrizeAwardService } from "../services/prize-award.service";
@@ -165,7 +168,12 @@ export class KnockCommand implements HalloweenCommandHandler {
           ? { won: true, win: await this.win(interaction, allowance, tx) }
           : {
               won: false,
-              lost: await this.record(interaction, allowance, null, tx),
+              lost: await this.record(
+                interaction,
+                allowance,
+                { prizeId: null, candySlug: this.ui.candySlug() },
+                tx,
+              ),
             };
       },
     );
@@ -264,14 +272,14 @@ export class KnockCommand implements HalloweenCommandHandler {
   private async record(
     interaction: APIChatInputApplicationCommandGuildInteraction,
     { gifty, knockCount }: Omit<Spent, "knockEvent">,
-    prizeId: string | null,
+    outcome: Pick<KnockEventInput, "prizeId" | "candySlug">,
     tx: Prisma.TransactionClient,
   ): Promise<Spent> {
     const knockEvent = await this.knocks.save(
       {
         guildId: interaction.guild_id,
         userId: interaction.member.user.id,
-        prizeId,
+        ...outcome,
       },
       tx,
     );
@@ -325,7 +333,9 @@ export class KnockCommand implements HalloweenCommandHandler {
             author: this.ui.author(),
             timestamp: this.ui.timestamp(),
             color: Color.Primary,
-            image: { url: this.ui.candyImageUrl() },
+            ...(knockEvent.candySlug && {
+              image: { url: this.ui.candyImageUrl(knockEvent.candySlug) },
+            }),
             footer: { text: "Come back soon!" },
           },
         ],
@@ -339,6 +349,7 @@ export class KnockCommand implements HalloweenCommandHandler {
         guildId,
         userId,
         knockEventId: knockEvent.id,
+        candySlug: knockEvent.candySlug,
         knocksUsed: knockCount,
         knocksPerDay: settings.knocksPerDay,
         giftyId: gifty?.id ?? null,
@@ -376,7 +387,12 @@ export class KnockCommand implements HalloweenCommandHandler {
     await this.prizeAward.validate(pick, guildId, tx);
     const prize = await this.prizes.decrement(pick.id, guildId, tx);
     await this.prizeAward.grant(prize, userId, tx);
-    const spent = await this.record(interaction, allowance, prize.id, tx);
+    const spent = await this.record(
+      interaction,
+      allowance,
+      { prizeId: prize.id, candySlug: null },
+      tx,
+    );
     return { ...spent, prize, poolRequestedAt, poolLockedAt };
   }
 

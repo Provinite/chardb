@@ -18,10 +18,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Prisma operations and SQL queries appear as spans in traces**, nested under the resolver that issued them (#97).
+- **Lost knocks record their candy**, and players arrange them on candy boards, up to ten each: `myHalloweenCandyBoards`, `createHalloweenCandyBoard`, `deleteHalloweenCandyBoard`, `halloweenCandyBoard` by its UUID, and `applyHalloweenCandyBoardActions`, whose actions are a `@oneOf` input (add, edit, raise, lower, forward, backward, remove), at most 100 a save, skipping any that cannot apply; `setHalloweenCandyBoardBackground` and `setHalloweenCandyBoardLighting` set what is behind the candies, how it is desaturated, dimmed and tinted, and where their light comes from; `setHalloweenCandyBoardName` names a board from the word lists in `@chardb/shared`, and a placement's `sticker` is a candy or, on a named board, its nameplate.
 
 ### Changed
 
 - **The viewer is authenticated once per request** instead of once per resolved field (#97).
+- **`@nestjs/graphql` is 13.4.5**, for `@oneOf` input types.
 - **Halloween candy images are named by slug** (`candy/candy-corn.png`): 107 unique candies, with the 23 duplicate files removed and Luther and Daphne's two paintings framed as stickers.
 - **Character and species names are trimmed on create, update and MYO redemption**, and a name of only spaces is refused (#430).
 

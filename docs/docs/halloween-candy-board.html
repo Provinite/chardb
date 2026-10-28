@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Halloween Candy Board - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Stick the candies your Halloween knocks leave you on boards of your own, then light them, name them, share them and download them."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/halloween-candy-board.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Halloween Candy Board" />
+    <meta
+      property="og:description"
+      content="Stick the candies your Halloween knocks leave you on boards of your own, then light them, name them, share them and download them."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/halloween-candy-board.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/halloween-board-overview.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="A candy board named Clover upon Coin: its name on a parchment ribbon across the top, candy stickers around it on a tiled background."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul,
+      .step-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        max-width: 520px;
+        margin: 0 auto 1.5rem;
+      }
+
+      .screenshot.wide {
+        max-width: 100%;
+      }
+
+      .screenshot.narrow {
+        max-width: 300px;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #e0e0e0;
+        vertical-align: top;
+      }
+
+      th {
+        color: #333;
+        background: #f8f9fa;
+      }
+
+      code,
+      kbd {
+        background: #f3f3f8;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        font-size: 0.875em;
+      }
+
+      kbd {
+        border: 1px solid #d8d8e4;
+        font-family: inherit;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+
+      footer a {
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Halloween Candy Board</h1>
+        <p>Nobody home? Take a candy. Stick it on your board.</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            During the community's
+            <a href="halloween-event.html">Halloween event</a>, you knock on
+            doors in Discord with <code>/knock</code>. When nobody answers, you
+            get a candy instead.
+          </p>
+          <p>
+            Candy boards are where those candies go. Stick them on, pile them
+            up, pick a background, set the light, name your board, then share or
+            download it.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-board-overview.png"
+            alt="A candy board named Clover upon Coin. Name, Lighting, Background, Clear board, Copy link and Download buttons sit beside a Saved status, above a tiled background with a parchment ribbon reading Clover upon Coin and candy stickers around it."
+          />
+          <div class="screenshot-caption">A named board, ribbon and all</div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Your Boards</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            While the event runs, <strong>Candy Boards</strong> in the community
+            sidebar lists your boards, each with a preview.
+          </p>
+          <ul>
+            <li>
+              <strong>New board</strong> starts an empty one. Up to ten each.
+            </li>
+            <li>
+              Every board draws on your whole collection. Using a candy on one
+              board doesn't take it from another.
+            </li>
+            <li>Deleting a board loses only the board. Candies stay yours.</li>
+          </ul>
+          <p>
+            Candies come from Discord, so boards need Discord
+            <a href="account-linking.html">linked</a> to your CharDB account.
+          </p>
+          <div class="highlight-box">
+            <strong>Boards are unlisted.</strong> Each has a random address, so
+            only people you send it to can find it.
+          </div>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-board-list.png"
+            alt="Your candy boards: a New board button, and two cards, Clover upon Coin with 12 stickers and Untitled board with 1 sticker, each with a preview and copy-link and delete buttons."
+          />
+          <div class="screenshot-caption">Your boards, with previews</div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Sticking Candies On</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Under the board, <strong>Your candies</strong> holds whatever isn't
+            stuck on yet, one tile per kind with a count. Tap a tile to stick
+            that candy in the middle, or drag it to where you want it. Take a
+            candy off and it goes back in the tray.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-board-tray.png"
+            alt="Your candies: a grid of candy tiles, each with a purple count badge, under the hint Tap a candy to stick it on the board, or drag it where you want it."
+          />
+          <div class="screenshot-caption">One tile per kind</div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Arranging</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Click a sticker to pick it up. Drag it to move it, drag a corner to
+            resize it, and drag the handle above it to turn it (<kbd>Shift</kbd>
+            snaps to 15&deg;).
+          </p>
+          <p>
+            Stickers pile up. Clicking a see-through edge reaches what's
+            beneath, and clicking a picked-up sticker again picks the one under
+            it. Click off the board to let go.
+          </p>
+          <p>
+            The toolbar under the board has rotate and scale sliders, buttons to
+            move a sticker up or down the pile, and one to take it off.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-board-selected.png"
+            alt="A black cat cookie on the board, picked up: a dashed yellow outline with square handles on its corners and a round handle above it. Below the board, the toolbar's Rotate and Scale sliders, four layer buttons and a remove button."
+          />
+          <div class="screenshot-caption">
+            Picked up, with handles and toolbar
+          </div>
+        </div>
+        <div class="step-content">
+          <table>
+            <tr>
+              <th>Keys</th>
+              <th>On the picked-up sticker</th>
+            </tr>
+            <tr>
+              <td>
+                <kbd>&larr;</kbd> <kbd>&uarr;</kbd> <kbd>&rarr;</kbd>
+                <kbd>&darr;</kbd>
+              </td>
+              <td>Nudge; with <kbd>Shift</kbd>, further</td>
+            </tr>
+            <tr>
+              <td><kbd>[</kbd> <kbd>]</kbd></td>
+              <td>Turn 15&deg;</td>
+            </tr>
+            <tr>
+              <td><kbd>-</kbd> <kbd>=</kbd></td>
+              <td>Shrink, grow</td>
+            </tr>
+            <tr>
+              <td><kbd>Delete</kbd> <kbd>Backspace</kbd></td>
+              <td>Back to the tray</td>
+            </tr>
+          </table>
+          <div class="highlight-box">
+            <strong>Changes save as you go.</strong> If one can't get through, a
+            <strong>Retry</strong> button appears and nothing is lost.
+          </div>
+          <p>
+            <strong>Clear board</strong> takes everything off at once, after
+            asking.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Background</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            New boards start on graph paper. <strong>Background</strong>
+            offers pictures and repeating tiles, previewed under your board's
+            light.
+          </p>
+          <p>
+            If a picture is too loud for your candies, turn it down with
+            <strong>Saturation</strong> and <strong>Dim</strong>, or wash it in
+            one colour with <strong>Tint</strong>. Nothing changes until you
+            press <strong>Use background</strong>.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="halloween-board-background.png"
+            alt="The Background dialog: a large preview of a forest picture, Saturation, Dim, Tint and Tint strength controls, then a grid of picture and tile thumbnails, with Cancel and Use background buttons."
+          />
+          <div class="screenshot-caption">Previewing a picture</div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Light</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Every sticker casts a shadow. <strong>Lighting</strong> opens a
+            panel, and the board follows as you change it.
+          </p>
+          <ul>
+            <li>
+              Drag the sun around the circle to move the light. Shadows fall
+              away from it.
+            </li>
+            <li>
+              <strong>Height</strong> sets shadow length;
+              <strong>Intensity</strong>, how dark they are.
+            </li>
+            <li>
+              <strong>Colour</strong> washes the whole board in coloured light.
+            </li>
+            <li>
+              <strong>Spotlight</strong> darkens all but a pool of light, and
+              <strong>Cone</strong> sets its width. The pool lands opposite the
+              sun, outlined on the circle.
+            </li>
+          </ul>
+        </div>
+        <div class="screenshot narrow">
+          <img
+            src="halloween-board-lighting.png"
+            alt="The Lighting panel: a circle with a sun near its edge and a dashed outline of the spotlight's pool on the opposite side, an upright Height slider, Intensity slider, a row of colour swatches, and Colour strength, Spotlight and Cone sliders."
+          />
+          <div class="screenshot-caption">Spotlight on</div>
+        </div>
+      </div>
+
+      <!-- Step 6 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">6</div>
+          <h2 class="step-title">Name and Nameplate</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Name</strong> builds a name from Halloween words: a first
+            word, an optional joiner, a last word. Stuck?
+            <strong>Shuffle</strong>. The name becomes your board's title.
+          </p>
+          <p>
+            A named board gets a <strong>nameplate</strong> at the front of its
+            tray: your name on a ribbon, stuck on and moved like any candy. Long
+            names stretch the ribbon. Rename the board and the ribbon follows.
+            Remove the name and it comes off, returning to the same spot if you
+            name the board again.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-board-name.png"
+            alt="The Name your board dialog: Clover upon Coin in large type above a Shuffle button, three columns of word buttons with Clover, upon and Coin chosen, and Remove name, Cancel and Use name buttons."
+          />
+          <div class="screenshot-caption">Word by word</div>
+        </div>
+      </div>
+
+      <!-- Step 7 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">7</div>
+          <h2 class="step-title">Sharing and Downloading</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Copy link</strong> copies your board's address. Anyone with
+            it sees the board as you left it, signed in or not, but can't change
+            anything.
+          </p>
+          <p>
+            <strong>Download</strong> saves your board as a 2400 &times; 1800
+            PNG, light and all. Visitors can download it too.
+          </p>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Halloween Candy Board &bull; Feature Documentation</p>
+        <p>
+          Running the event?
+          <a href="halloween-event.html">Halloween Event</a> covers staff's
+          side.
+        </p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

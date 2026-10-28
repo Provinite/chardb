@@ -48,8 +48,12 @@ export class HalloweenUi {
     return this.clock.now();
   }
 
-  candyImageUrl(): string {
-    const slug = CANDY_SLUGS[this.random.int(CANDY_SLUGS.length)];
+  /** A random candy, as a loss gives one. */
+  candySlug(): string {
+    return CANDY_SLUGS[this.random.int(CANDY_SLUGS.length)];
+  }
+
+  candyImageUrl(slug: string): string {
     return `${this.config.imageBaseUrl}candy/${slug}.png`;
   }
 

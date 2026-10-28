@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **CI runs the backend's API e2e specs** (`*.e2e.spec.ts`), which nothing ran before, and deploys wait for them.
+- **A Halloween Candy Board walkthrough** in the product docs, with six screenshots, linked from the index and the Halloween Event page.
 
 ### Changed
 

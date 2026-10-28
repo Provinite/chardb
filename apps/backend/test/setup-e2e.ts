@@ -123,6 +123,7 @@ export class TestApp {
 
   async clearDatabase() {
     // Clear all tables in the correct order (respecting foreign keys)
+    await this.db.halloweenCandyBoard.deleteMany({});
     await this.db.halloweenGifty.deleteMany({});
     await this.db.halloweenKnockEvent.deleteMany({});
     await this.db.halloweenPrize.deleteMany({});

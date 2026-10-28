@@ -30,6 +30,8 @@ import { CommunityMemberProfilePage } from "../pages/CommunityMemberProfilePage"
 import { CommunitySettingsPage } from "../pages/CommunitySettingsPage";
 import { CommunityItemsAdminPage } from "../pages/CommunityItemsAdminPage";
 import { CommunityHalloweenAdminPage } from "../pages/CommunityHalloweenAdminPage";
+import { CommunityCandyBoardPage } from "../pages/CommunityCandyBoardPage";
+import { CommunityCandyBoardsPage } from "../pages/CommunityCandyBoardsPage";
 import { CommunityColorPalettePage } from "../pages/CommunityColorPalettePage";
 import { CommunityInventoryPage } from "../pages/CommunityInventoryPage";
 import { CommunityItemLedgerPage } from "../pages/CommunityItemLedgerPage";
@@ -101,6 +103,21 @@ export const CommunityRoutes: React.FC = () => (
           <CommunityMyCharactersPage />
         </ProtectedRoute>
       }
+    />
+
+    {/* --- Halloween candy boards. Anyone with the link can see a board, so
+        a player can share theirs; `/halloween/board` lists your own. */}
+    <Route
+      path="/halloween/board"
+      element={
+        <ProtectedRoute>
+          <CommunityCandyBoardsPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/halloween/board/:boardId"
+      element={<CommunityCandyBoardPage />}
     />
 
     {/* --- characters. A character reaches its community through its species,

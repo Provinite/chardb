@@ -55,12 +55,16 @@ describe("HalloweenUi", () => {
 
   // The slugs come from the images themselves (scripts/halloween-images.mjs);
   // mocked to three here, so a hard-coded list would show.
-  it("picks one of the candy images by slug", () => {
+  it("picks one of the candies", () => {
     jest.spyOn(random, "int").mockReturnValue(2);
-    expect(ui.candyImageUrl()).toBe(
+    expect(ui.candySlug()).toBe("luther-head");
+    expect(random.int).toHaveBeenCalledWith(3);
+  });
+
+  it("serves a candy's image by its slug", () => {
+    expect(ui.candyImageUrl("luther-head")).toBe(
       "https://images.test/halloween/candy/luther-head.png",
     );
-    expect(random.int).toHaveBeenCalledWith(3);
   });
 
   it("footers errors with the interaction id", () => {

@@ -2382,6 +2382,9 @@ model HalloweenKnockEvent {
   time      DateTime @default(now()) @db.Timestamptz
   /// A win whose prize has not been chosen yet.
   isPending Boolean  @default(false) @map("is_pending")
+  /// The candy a loss showed, by its image's slug (`candy/<slug>.png`). Null
+  /// on a win, and on a loss from before candies were recorded.
+  candySlug String?  @map("candy_slug") @db.VarChar(40)
 
   /// When staff marked a prize with no chardb item or character as handed
   /// over, and who. Chardb prizes deliver themselves and never set these.
@@ -2425,4 +2428,37 @@ model HalloweenDeviantArtUser {
 
   @@id([userId, guildId])
   @@map("halloween_deviantart_users")
+}
+
+/// Where a player has stuck their candies. Only the placements are stored:
+/// which candies they have comes from their lost knocks, and a candy not on
+/// the board is in its tray. A player can have several boards, each drawing
+/// on their whole collection; each is made when its owner asks for it.
+model HalloweenCandyBoard {
+  /// What a shared link names. Random, so a board cannot be found from its
+  /// owner's username, nor tell anyone whose Discord is linked.
+  id         String   @id @default(uuid()) @db.Uuid
+  guildId    String   @map("guild_id") @db.VarChar(30)
+  userId     String   @map("user_id") @db.VarChar(30)
+  /// [HalloweenCandyPlacementsJson]
+  placements Json     @default("[]")
+  /// The picture or tile behind the candies, by its slug
+  /// (`backgrounds/full/<slug>.webp` or `backgrounds/tiles/<slug>.webp`).
+  /// Null for none chosen, which the frontend shows as graph paper.
+  background String?  @db.VarChar(60)
+  /// How the background is dimmed and tinted. Null for neither.
+  /// [HalloweenCandyBackgroundEffectsJson]
+  backgroundEffects Json? @map("background_effects")
+  /// Where the light that casts the candies' shadows is. Null for the
+  /// board's default light.
+  /// [HalloweenCandyLightingJson]
+  lighting   Json?
+  /// What its owner calls it, picked from word lists. Null for no name.
+  /// [HalloweenCandyBoardNameJson]
+  name       Json?
+  createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@index([guildId, userId])
+  @@map("halloween_candy_boards")
 }

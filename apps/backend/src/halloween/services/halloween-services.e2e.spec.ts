@@ -202,18 +202,28 @@ describe("Halloween services (e2e)", () => {
         data: { guildId: GUILD, userId, time },
       });
 
-    it("saves a losing knock", async () => {
+    it("saves a losing knock with its candy", async () => {
       const knock = await knocks.save({
         guildId: GUILD,
         userId: ALICE,
         prizeId: null,
+        candySlug: "candy-corn",
       });
-      expect(knock).toMatchObject({ isPending: false, prizeId: null });
+      expect(knock).toMatchObject({
+        isPending: false,
+        prizeId: null,
+        candySlug: "candy-corn",
+      });
     });
 
     it("refuses an invalid knock", async () => {
       await expect(
-        knocks.save({ guildId: GUILD, userId: "nope", prizeId: null }),
+        knocks.save({
+          guildId: GUILD,
+          userId: "nope",
+          prizeId: null,
+          candySlug: null,
+        }),
       ).rejects.toBeInstanceOf(ValidationError);
     });
 
@@ -246,6 +256,7 @@ describe("Halloween services (e2e)", () => {
         guildId: GUILD,
         userId: ALICE,
         prizeId: "myo",
+        candySlug: null,
       });
       expect(knock).toMatchObject({ isPending: false, prizeId: "myo" });
     });
@@ -342,6 +353,7 @@ describe("Halloween services (e2e)", () => {
         guildId: GUILD,
         userId: BOB,
         prizeId: null,
+        candySlug: "candy-corn",
       });
       const spent = await gifties.fulfill(gifty, knock);
       expect(spent.knockEventId).toBe(knock.id);
