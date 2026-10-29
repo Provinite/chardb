@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **`externalMembers` counts in the database** and loads only each holder's newest rows, instead of every waiting row of everyone on the page (#445).
+- **`externalMembers` counts in the database** and loads one row per holder, their newest, instead of every waiting row of everyone on the page (#445).
 
 ## [v14.2.0] - 2026-10-28
 

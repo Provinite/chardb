@@ -290,6 +290,7 @@ const mockPrismaService = {
     groupBy: jest.fn(),
   },
   $transaction: jest.fn(),
+  $queryRaw: jest.fn(),
 };
 
 // Wire up $transaction to support both forms Prisma offers, because the

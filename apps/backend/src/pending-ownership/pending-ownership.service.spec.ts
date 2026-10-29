@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { ExternalAccountProvider } from "@chardb/database";
+import { ExternalAccountProvider, type Prisma } from "@chardb/database";
 import { PendingOwnershipService } from "./pending-ownership.service";
 import { DatabaseService } from "../database/database.service";
 import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
@@ -8,8 +8,24 @@ import { mockDatabaseService } from "../../test/setup";
 
 const NEO = "214000000000009071";
 const ART = "a-deviantart-uuid";
-const NEO_NEWEST = new Date("2025-11-22T19:00:00Z");
-const ART_NEWEST = new Date("2025-11-18T19:00:00Z");
+
+/** A row of the holders-and-counts query, as Postgres returns it. */
+const holderRow = (overrides: Record<string, unknown>) => ({
+  id: "po",
+  item_id: null,
+  character_id: null,
+  provider: "DISCORD",
+  provider_account_id: NEO,
+  display_identifier: null,
+  display_name: null,
+  created_at: new Date("2025-11-22T19:00:00Z"),
+  claimed_at: null,
+  claimed_by_user_id: null,
+  // count() comes back as a bigint.
+  item_count: BigInt(0),
+  character_count: BigInt(0),
+  ...overrides,
+});
 
 /**
  * External members: the people something waits on in a community without an
@@ -30,74 +46,59 @@ describe("PendingOwnershipService.findExternalMembers", () => {
     }).compile();
     service = module.get(PendingOwnershipService);
 
-    // Two groupings: the page of accounts, then the counts for that page.
-    mockDatabaseService.pendingOwnership.groupBy.mockImplementation(
-      (args: { _count?: unknown }) =>
-        Promise.resolve(
-          args._count
-            ? [
-                {
-                  provider: "DISCORD",
-                  providerAccountId: NEO,
-                  _count: { itemId: 2, characterId: 0 },
-                  _max: { createdAt: NEO_NEWEST },
-                },
-                {
-                  provider: "DEVIANTART",
-                  providerAccountId: ART,
-                  _count: { itemId: 0, characterId: 1 },
-                  _max: { createdAt: ART_NEWEST },
-                },
-              ]
-            : [
-                { provider: "DISCORD", providerAccountId: NEO },
-                { provider: "DEVIANTART", providerAccountId: ART },
-              ],
-        ),
-    );
-    // Only each account's newest rows: two for Neo, granted in one batch.
-    mockDatabaseService.pendingOwnership.findMany.mockResolvedValue([
-      {
+    mockDatabaseService.pendingOwnership.groupBy.mockResolvedValue([
+      { provider: "DISCORD", providerAccountId: NEO },
+      { provider: "DEVIANTART", providerAccountId: ART },
+    ]);
+    mockDatabaseService.$queryRaw.mockResolvedValue([
+      holderRow({
         id: "po3",
-        provider: "DISCORD",
-        providerAccountId: NEO,
-        displayIdentifier: "neo.baka",
-        displayName: "Neo the Baka",
-      },
-      {
+        display_identifier: "neo.baka",
+        display_name: "Neo the Baka",
+        item_id: "i2",
+        item_count: BigInt(2),
+      }),
+      holderRow({
         id: "po2",
         provider: "DEVIANTART",
-        providerAccountId: ART,
-        displayIdentifier: "someartist",
-        displayName: null,
-      },
-      {
-        id: "po4",
-        provider: "DISCORD",
-        providerAccountId: NEO,
-        displayIdentifier: "neo.baka",
-        displayName: "Neo the Baka",
-      },
+        provider_account_id: ART,
+        display_identifier: "someartist",
+        character_id: "c1",
+        character_count: BigInt(1),
+      }),
     ]);
   });
 
-  const countsCall = () =>
-    mockDatabaseService.pendingOwnership.groupBy.mock.calls.find(
-      ([args]: [{ _count?: unknown }]) => args._count,
-    )?.[0];
-
   const groupWhere = () =>
     mockDatabaseService.pendingOwnership.groupBy.mock.calls[0][0].where;
+  /** The one holders-and-counts query, as handed to $queryRaw. */
+  const rawQuery = () =>
+    mockDatabaseService.$queryRaw.mock.calls[0][0] as Prisma.Sql;
 
   it("lists one row per external account, with what waits on each", async () => {
     const result = await service.findExternalMembers("comm1", {});
 
     expect(
-      result.members.map((m) => [m.holder.id, m.itemCount, m.characterCount]),
+      result.members.map((m) => [
+        m.holder.id,
+        m.holder.displayIdentifier,
+        m.itemCount,
+        m.characterCount,
+      ]),
     ).toEqual([
-      ["po3", 2, 0],
-      ["po2", 0, 1],
+      ["po3", "neo.baka", 2, 0],
+      ["po2", "someartist", 0, 1],
     ]);
+  });
+
+  it("keeps the page's order, whatever order the holders come back in", async () => {
+    mockDatabaseService.$queryRaw.mockResolvedValue(
+      [...(await mockDatabaseService.$queryRaw())].reverse(),
+    );
+
+    const result = await service.findExternalMembers("comm1", {});
+
+    expect(result.members.map((m) => m.holder.id)).toEqual(["po3", "po2"]);
   });
 
   it("counts only what still waits on them in this community", async () => {
@@ -125,9 +126,16 @@ describe("PendingOwnershipService.findExternalMembers", () => {
         },
       ],
     });
+    // The same rule in the holders-and-counts query.
+    const { sql, values } = rawQuery();
+    expect(sql).toMatch(/claimed_at IS NULL/);
+    expect(sql).toMatch(/destroyed_at IS NULL/);
+    expect(sql).toMatch(/owner_id IS NULL/);
+    expect(sql).toMatch(/deleted_at IS NULL/);
+    expect(values).toContain("comm1");
   });
 
-  it("narrows to a provider and a search, by either name or the exact id", async () => {
+  it("narrows the page to a provider and a search, by either name or the exact id", async () => {
     await service.findExternalMembers("comm1", {
       provider: ExternalAccountProvider.DISCORD,
       search: "neo",
@@ -147,28 +155,37 @@ describe("PendingOwnershipService.findExternalMembers", () => {
     );
   });
 
-  it("counts everything waiting on someone a search finds, not only the matching rows", async () => {
-    // Older rows predate name lookups: a search by name matches the newer
-    // ones, but the person holds all of them.
+  it("finds holders and counts with no regard to the search", async () => {
+    // A search decides who is listed. Who they are and what they hold come
+    // from every row waiting on them: older rows predate name lookups, and
+    // matching only the searched-for rows would undercount them and could
+    // name them by a stale row.
     await service.findExternalMembers("comm1", { search: "neo" });
 
-    expect(JSON.stringify(countsCall()?.where)).not.toContain("neo");
+    const { sql, values } = rawQuery();
+    expect(values).not.toContain("neo");
+    expect(values.join(" ")).not.toMatch(/neo(?!\d)/);
+    expect(sql).not.toMatch(/ILIKE|display_name\s*=|display_identifier\s*=/i);
   });
 
-  it("counts in the database, loading only each person's newest rows (#445)", async () => {
-    // Someone holding thousands would otherwise load thousands of rows on
-    // every page view, just to print a number.
+  it("asks one query, keyed to the page's accounts, for holders and counts", async () => {
+    // Bounded by the page, not by how much anyone holds (#445).
     await service.findExternalMembers("comm1", {});
 
-    expect(countsCall()).toMatchObject({
-      by: ["provider", "providerAccountId"],
-      _count: { itemId: true, characterId: true },
-      _max: { createdAt: true },
-    });
-    const { where } =
-      mockDatabaseService.pendingOwnership.findMany.mock.calls[0][0];
-    expect(JSON.stringify(where)).toContain(NEO_NEWEST.toISOString());
-    expect(JSON.stringify(where)).toContain(ART_NEWEST.toISOString());
+    expect(mockDatabaseService.$queryRaw).toHaveBeenCalledTimes(1);
+    expect(
+      mockDatabaseService.pendingOwnership.findMany,
+    ).not.toHaveBeenCalled();
+    const { sql, values } = rawQuery();
+    expect(sql).toMatch(/DISTINCT ON/);
+    // Newest row wins; id settles a tie, so the name shown never wobbles.
+    expect(sql).toMatch(/ORDER BY[\s\S]*created_at DESC[\s\S]*id DESC/);
+    expect(values).toEqual(
+      expect.arrayContaining([
+        ["DISCORD", "DEVIANTART"],
+        [NEO, ART],
+      ]),
+    );
   });
 
   it("pages by one row past the page, newest first", async () => {
@@ -196,8 +213,6 @@ describe("PendingOwnershipService.findExternalMembers", () => {
     });
 
     expect(result).toEqual({ members: [], hasMore: false });
-    expect(
-      mockDatabaseService.pendingOwnership.findMany,
-    ).not.toHaveBeenCalled();
+    expect(mockDatabaseService.$queryRaw).not.toHaveBeenCalled();
   });
 });
