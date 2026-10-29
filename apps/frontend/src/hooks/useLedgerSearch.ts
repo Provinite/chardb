@@ -4,32 +4,18 @@ import { useDebouncedValue } from "@mantine/hooks";
 const SEARCH_DEBOUNCE_MS = 300;
 
 /**
- * A ledger's search box and its growing page, shared by the item and currency
- * ledgers (#444).
+ * A ledger's search box, shared by the item and currency ledgers (#444).
  *
- * Both ledgers page by raising `limit` and refetching from the top rather than
- * appending with `fetchMore`, which is why this is not `useOffsetPaging`.
- *
- * The search reaches the server once typing pauses. The page size belongs to
- * the search it was raised on: any other search starts from the first page.
+ * The search reaches the server once typing pauses. Paging is
+ * `useOffsetPaging`'s: a new search is a new query, so it starts from the
+ * first page on its own.
  */
-export function useLedgerSearch(pageSize: number) {
+export function useLedgerSearch() {
   const [search, setSearch] = useState("");
   const [debouncedSearch] = useDebouncedValue(
     search.trim(),
     SEARCH_DEBOUNCE_MS,
   );
-  const [pages, setPages] = useState({ search: "", limit: pageSize });
-
-  // Forget a raised page as soon as its search is gone, so returning to that
-  // search later starts from the first page too. Done during render, which
-  // React re-runs before committing; the limit below already reads as the
-  // first page in this render, so the render React throws away -- where
-  // Apollo starts its query -- never asks for the stale size.
-  if (pages.search !== debouncedSearch && pages.limit !== pageSize) {
-    setPages({ search: debouncedSearch, limit: pageSize });
-  }
-  const limit = pages.search === debouncedSearch ? pages.limit : pageSize;
 
   return {
     /** What is in the box, untrimmed. */
@@ -37,15 +23,40 @@ export function useLedgerSearch(pageSize: number) {
     setSearch,
     /** What the query searches for. Empty means no search. */
     debouncedSearch,
-    limit,
     /**
      * The box says something the query has not been sent yet. Results on
      * screen belong to the previous search.
      */
     typing: search.trim() !== debouncedSearch,
-    loadMore: () =>
-      setPages({ search: debouncedSearch, limit: limit + pageSize }),
-    /** Back to the first page, for a filter change other than the search. */
-    resetPages: () => setPages({ search: debouncedSearch, limit: pageSize }),
   };
+}
+
+/**
+ * Whether two ledger filters ask for the same list, whatever page of it.
+ *
+ * `fetchMore` writes into the query as it stands when the page lands, not as
+ * it stood when Load more was clicked. A page asked for under a filter
+ * changed since then belongs to another list and has to be dropped.
+ */
+export function sameList<T extends { limit?: number; offset?: number }>(
+  a: T,
+  b: T,
+): boolean {
+  const list = ({ limit: _limit, offset: _offset, ...rest }: T) =>
+    JSON.stringify(rest);
+  return list(a) === list(b);
+}
+
+/**
+ * The rows of `next` not already in `shown`, by id.
+ *
+ * Ledgers are newest first, so events recorded between two Load mores push
+ * rows down: the next page starts with rows already on screen.
+ */
+export function unseenRows<T extends { id: string }>(
+  shown: readonly T[],
+  next: readonly T[],
+): T[] {
+  const ids = new Set(shown.map((row) => row.id));
+  return next.filter((row) => !ids.has(row.id));
 }

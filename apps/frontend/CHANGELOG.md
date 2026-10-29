@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Item and currency ledger Load more fetches only the next page**: it refetched every row on screen with a larger limit, which slowed each click and was refused past 100 rows.
+
 ## [v14.2.0] - 2026-10-28
 
 ### Added

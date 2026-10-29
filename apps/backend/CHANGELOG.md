@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`externalMembers` counts in the database** and loads one row per holder, their newest, instead of every waiting row of everyone on the page (#445).
 - **Traces leave out a span per GraphQL field and per DataLoader load unless `DEBUG_TRACE_LEVEL=full`**: a 100-row ledger request went from about 448 to 289 CPU-ms.
 
+### Fixed
+
+- **`currencyTransactions` breaks timestamp ties by id**, so paging through a transfer's legs or a batch mint no longer repeats or skips a row.
+
 ## [v14.2.0] - 2026-10-28
 
 ### Security
