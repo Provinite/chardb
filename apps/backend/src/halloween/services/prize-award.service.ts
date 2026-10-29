@@ -135,13 +135,7 @@ export class PrizeAwardService {
             reason: `Halloween prize: ${prize.name}`,
           },
         },
-        {
-          discordIdVerified: true,
-          discordNames: {
-            username: names.displayIdentifier,
-            displayName: names.displayName,
-          },
-        },
+        { discordIdVerified: true, discordNames: names },
       );
     } else if (prize.characterId) {
       await this.pendingOwnership.createForCharacter(

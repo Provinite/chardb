@@ -217,7 +217,10 @@ describe("PrizeAwardService", () => {
         // names came with it, so staff can find the winner by them (#445).
         {
           discordIdVerified: true,
-          discordNames: { username: "neo.baka", displayName: "Neo the Baka" },
+          discordNames: {
+            displayIdentifier: "neo.baka",
+            displayName: "Neo the Baka",
+          },
         },
       );
     });

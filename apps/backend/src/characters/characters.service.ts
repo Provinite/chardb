@@ -10,6 +10,7 @@ import {
   PendingOwnershipService,
   type PendingOwnerNames,
 } from "../pending-ownership/pending-ownership.service";
+import { resolveDiscordOwner } from "../pending-ownership/utils/resolve-discord-owner";
 import { DiscordService } from "../discord/discord.service";
 import { DeviantArtService } from "../deviantart/deviantart.service";
 import { PermissionService } from "../auth/PermissionService";
@@ -1917,18 +1918,18 @@ export class CharactersService {
     identifier: string,
   ): Promise<{ accountId: string; names: PendingOwnerNames }> {
     if (provider === ExternalAccountProvider.DISCORD) {
-      const accountId = /^\d{17,19}$/.test(identifier)
-        ? identifier
-        : await this.resolveDiscordUsername(speciesId, identifier);
-      // Also the existence check for an id: Discord answers 404 for nobody.
-      const user = await this.discordService.getUserInfo(accountId);
-      return {
-        accountId,
-        names: {
-          displayIdentifier: user.username,
-          displayName: user.displayName,
-        },
-      };
+      const species = await this.db.species.findUnique({
+        where: { id: speciesId },
+        select: { communityId: true },
+      });
+      if (!species) {
+        throw new NotFoundException(`Species with ID ${speciesId} not found`);
+      }
+      return resolveDiscordOwner(
+        { db: this.db, discord: this.discordService },
+        species.communityId,
+        identifier,
+      );
     }
     if (provider === ExternalAccountProvider.DEVIANTART) {
       // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
@@ -1940,55 +1941,5 @@ export class CharactersService {
       };
     }
     return { accountId: identifier, names: {} };
-  }
-
-  /**
-   * Resolve a Discord username to a Discord user ID, through the server of the
-   * species' community.
-   * @throws BadRequestException if guild not connected
-   * @throws NotFoundException if the username is not in the server
-   */
-  private async resolveDiscordUsername(
-    speciesId: string,
-    identifier: string,
-  ): Promise<string> {
-    // It's a username - need to resolve it
-    // First get the species to find the community
-    const species = await this.db.species.findUnique({
-      where: { id: speciesId },
-      select: {
-        communityId: true,
-        community: {
-          select: {
-            discordGuildId: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    if (!species) {
-      throw new NotFoundException(`Species with ID ${speciesId} not found`);
-    }
-
-    if (!species.community.discordGuildId) {
-      throw new BadRequestException(
-        `Cannot use Discord username: Community "${species.community.name}" has no Discord server connected. Please use numeric Discord User ID or ask an admin to connect the Discord server.`,
-      );
-    }
-
-    // Resolve username to ID
-    const userId = await this.discordService.resolveUsernameToId(
-      species.community.discordGuildId,
-      identifier,
-    );
-
-    if (!userId) {
-      throw new NotFoundException(
-        `Discord user "${identifier}" not found in community's Discord server`,
-      );
-    }
-
-    return userId;
   }
 }

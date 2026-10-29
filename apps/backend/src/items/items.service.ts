@@ -10,6 +10,7 @@ import {
   PendingOwnershipService,
   type PendingOwnerNames,
 } from "../pending-ownership/pending-ownership.service";
+import { resolveDiscordOwner } from "../pending-ownership/utils/resolve-discord-owner";
 import { DiscordService } from "../discord/discord.service";
 import {
   Prisma,
@@ -80,7 +81,7 @@ export interface GrantOptions {
    */
   discordIdVerified?: boolean;
   /** The names the same interaction carried, stored with the pending owner. */
-  discordNames?: { username: string; displayName?: string | null };
+  discordNames?: PendingOwnerNames;
 }
 
 /** Who a grant's items go to, or the account they wait on. */
@@ -991,12 +992,10 @@ export class ItemsService {
         // add an HTTP call to the caller's transaction.
         if (options.discordIdVerified && isNumericId) {
           resolvedAccountId = pendingOwner.providerAccountId;
-          names = {
-            displayIdentifier: options.discordNames?.username,
-            displayName: options.discordNames?.displayName ?? undefined,
-          };
+          names = options.discordNames ?? {};
         } else {
-          const resolved = await this.resolveDiscordIdentifier(
+          const resolved = await resolveDiscordOwner(
+            { db: this.db, discord: this.discordService },
             itemType.communityId,
             pendingOwner.providerAccountId,
           );
@@ -1760,72 +1759,6 @@ export class ItemsService {
     }
 
     return items.length;
-  }
-
-  /**
-   * Resolve a Discord identifier (username or ID) to a Discord user ID, and
-   * the names it goes by now -- staff find a pending owner by those (#445).
-   * @param communityId The community ID to get the Discord guild from
-   * @param identifier The Discord username or user ID
-   * @throws NotFoundException if Discord does not know the user
-   * @throws BadRequestException if guild not connected
-   */
-  private async resolveDiscordIdentifier(
-    communityId: string,
-    identifier: string,
-  ): Promise<{ accountId: string; names: PendingOwnerNames }> {
-    const accountId = /^\d{17,19}$/.test(identifier)
-      ? identifier
-      : await this.resolveDiscordUsername(communityId, identifier);
-
-    // Also the existence check for an id: Discord answers 404 for nobody.
-    const user = await this.discordService.getUserInfo(accountId);
-    return {
-      accountId,
-      names: {
-        displayIdentifier: user.username,
-        displayName: user.displayName,
-      },
-    };
-  }
-
-  private async resolveDiscordUsername(
-    communityId: string,
-    identifier: string,
-  ): Promise<string> {
-    // It's a username - need to resolve it
-    // Get the community to find the Discord guild
-    const community = await this.db.community.findUnique({
-      where: { id: communityId },
-      select: {
-        discordGuildId: true,
-        name: true,
-      },
-    });
-
-    if (!community) {
-      throw new NotFoundException(`Community with ID ${communityId} not found`);
-    }
-
-    if (!community.discordGuildId) {
-      throw new BadRequestException(
-        `Cannot use Discord username: Community "${community.name}" has no Discord server connected. Please use numeric Discord User ID or ask an admin to connect the Discord server.`,
-      );
-    }
-
-    // Resolve username to ID
-    const userId = await this.discordService.resolveUsernameToId(
-      community.discordGuildId,
-      identifier,
-    );
-
-    if (!userId) {
-      throw new NotFoundException(
-        `Discord user "${identifier}" not found in community's Discord server`,
-      );
-    }
-
-    return userId;
   }
 
   /**

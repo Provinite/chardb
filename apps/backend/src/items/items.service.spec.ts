@@ -166,7 +166,10 @@ describe("ItemsService", () => {
         },
         {
           discordIdVerified: true,
-          discordNames: { username: "neo.baka", displayName: "Neo the Baka" },
+          discordNames: {
+            displayIdentifier: "neo.baka",
+            displayName: "Neo the Baka",
+          },
         },
       );
 

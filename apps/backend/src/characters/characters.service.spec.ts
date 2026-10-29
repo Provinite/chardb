@@ -145,6 +145,7 @@ describe("CharactersService", () => {
       jest.clearAllMocks();
       // An admin skips the species permission check.
       db.user.findUnique.mockResolvedValue({ isAdmin: true });
+      db.species.findUnique.mockResolvedValue({ communityId: "comm1" });
       db.$transaction.mockImplementation(
         (fn: (tx: typeof mockDatabaseService) => Promise<unknown>) => fn(db),
       );
@@ -175,9 +176,9 @@ describe("CharactersService", () => {
     });
 
     it("records Discord's own spelling for a grant by username", async () => {
-      db.species.findUnique.mockResolvedValue({
-        communityId: "comm1",
-        community: { discordGuildId: "guild1", name: "Cloverse" },
+      db.community.findUnique.mockResolvedValue({
+        discordGuildId: "guild1",
+        name: "Cloverse",
       });
       mockDiscordService.resolveUsernameToId.mockResolvedValue(DISCORD_ID);
 
