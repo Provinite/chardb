@@ -24,6 +24,7 @@ const mockPendingOwnershipService = {
 const mockDiscordService = {
   validateUserId: jest.fn(),
   resolveUsernameToId: jest.fn(),
+  getUserInfo: jest.fn(),
 };
 const mockDeviantArtService = { resolveUsername: jest.fn() };
 const mockPermissionService = {
@@ -125,6 +126,80 @@ describe("CharactersService", () => {
     mockCharacterFormsService.readForms.mockReset();
     mockCharacterFormsService.readForms.mockResolvedValue([form()]);
     mockCharacterFormsService.writeForms.mockClear();
+  });
+
+  describe("Discord names on a pending character (#445)", () => {
+    const DISCORD_ID = "214000000000009071";
+    const createFor = (providerAccountId: string) =>
+      service.create("admin1", {
+        characterData: {
+          name: "Prize",
+          species: { connect: { id: "species1" } },
+        },
+        pendingOwner: { provider: "DISCORD", providerAccountId },
+      });
+    const storedNames = () =>
+      mockPendingOwnershipService.createForCharacter.mock.calls[0][3];
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      // An admin skips the species permission check.
+      db.user.findUnique.mockResolvedValue({ isAdmin: true });
+      db.$transaction.mockImplementation(
+        (fn: (tx: typeof mockDatabaseService) => Promise<unknown>) => fn(db),
+      );
+      db.character.create.mockResolvedValue(makeCharacter());
+      db.character.findUnique.mockResolvedValue(makeCharacter());
+      mockCharacterFormsService.writeForms.mockResolvedValue([]);
+      mockPendingOwnershipService.createForCharacter.mockResolvedValue({
+        claimed: false,
+      });
+      mockDiscordService.getUserInfo.mockResolvedValue({
+        userId: DISCORD_ID,
+        username: "neo.baka",
+        displayName: "Neo the Baka",
+      });
+    });
+
+    it("records the username and display name for a grant by id", async () => {
+      await createFor(DISCORD_ID);
+
+      expect(mockDiscordService.getUserInfo).toHaveBeenCalledWith(DISCORD_ID);
+      expect(
+        mockPendingOwnershipService.createForCharacter.mock.calls[0][2],
+      ).toBe(DISCORD_ID);
+      expect(storedNames()).toEqual({
+        displayIdentifier: "neo.baka",
+        displayName: "Neo the Baka",
+      });
+    });
+
+    it("records Discord's own spelling for a grant by username", async () => {
+      db.species.findUnique.mockResolvedValue({
+        communityId: "comm1",
+        community: { discordGuildId: "guild1", name: "Cloverse" },
+      });
+      mockDiscordService.resolveUsernameToId.mockResolvedValue(DISCORD_ID);
+
+      await createFor("@Neo.Baka");
+
+      expect(
+        mockPendingOwnershipService.createForCharacter.mock.calls[0][2],
+      ).toBe(DISCORD_ID);
+      expect(storedNames()).toEqual({
+        displayIdentifier: "neo.baka",
+        displayName: "Neo the Baka",
+      });
+    });
+
+    it("refuses an id Discord does not know, before creating anything", async () => {
+      mockDiscordService.getUserInfo.mockRejectedValue(
+        new NotFoundException("Discord user not found"),
+      );
+
+      await expect(createFor(DISCORD_ID)).rejects.toThrow(NotFoundException);
+      expect(db.character.create).not.toHaveBeenCalled();
+    });
   });
 
   describe("findOne", () => {
