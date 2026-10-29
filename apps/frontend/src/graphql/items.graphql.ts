@@ -214,8 +214,22 @@ export const UPDATE_ITEM = gql`
 
 // Soft: destroyed items keep their provenance. Returns the count revoked.
 export const REVOKE_ITEMS = gql`
-  mutation RevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String) {
-    revokeItems(itemIds: $itemIds, reason: $reason, staffNote: $staffNote)
+  mutation RevokeItems(
+    $itemIds: [ID!]!
+    $reason: String!
+    $staffNote: String
+    $expectedOwnerId: ID
+    $expectedPendingProvider: ExternalAccountProvider
+    $expectedPendingAccountId: String
+  ) {
+    revokeItems(
+      itemIds: $itemIds
+      reason: $reason
+      staffNote: $staffNote
+      expectedOwnerId: $expectedOwnerId
+      expectedPendingProvider: $expectedPendingProvider
+      expectedPendingAccountId: $expectedPendingAccountId
+    )
   }
 `;
 

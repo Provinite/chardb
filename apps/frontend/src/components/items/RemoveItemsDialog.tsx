@@ -2,7 +2,10 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import toast from "react-hot-toast";
 import { ConfirmDialog } from "../ConfirmDialog";
-import { useRevokeItemsMutation } from "../../generated/graphql";
+import {
+  type ExternalAccountProvider,
+  useRevokeItemsMutation,
+} from "../../generated/graphql";
 
 /**
  * Staff removing some of one holder's items of one type: a member's, from
@@ -41,6 +44,20 @@ const Hint = styled.span`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
+/**
+ * Who the page says holds the items. The server refuses the removal unless
+ * they still do: the page may be stale, and a trade or a claim in between
+ * would otherwise destroy someone else's item.
+ */
+export type ExpectedHolder =
+  | { ownerId: string }
+  | {
+      pendingOwner: {
+        provider: ExternalAccountProvider;
+        providerAccountId: string;
+      };
+    };
+
 interface RemoveItemsDialogProps {
   open: boolean;
   itemTypeName: string;
@@ -48,6 +65,7 @@ interface RemoveItemsDialogProps {
   itemIds: string[];
   /** Who they are being taken from, as the page names them. */
   holderLabel: string;
+  expectedHolder: ExpectedHolder;
   onClose: () => void;
   /** After the items are gone, so the page can refetch. */
   onRemoved: () => void;
@@ -58,6 +76,7 @@ export const RemoveItemsDialog: React.FC<RemoveItemsDialogProps> = ({
   itemTypeName,
   itemIds,
   holderLabel,
+  expectedHolder,
   onClose,
   onRemoved,
 }) => {
@@ -65,6 +84,18 @@ export const RemoveItemsDialog: React.FC<RemoveItemsDialogProps> = ({
   const [reason, setReason] = useState("");
   const [staffNote, setStaffNote] = useState("");
   const [revokeItems, { loading }] = useRevokeItemsMutation();
+
+  // Each opening starts empty. A cancelled draft left in place would offer
+  // its public reason for whatever type is opened next.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setHowMany("1");
+      setReason("");
+      setStaffNote("");
+    }
+  }
 
   const count = Number(howMany);
   const countValid =
@@ -77,12 +108,16 @@ export const RemoveItemsDialog: React.FC<RemoveItemsDialogProps> = ({
           itemIds: itemIds.slice(0, count),
           reason: reason.trim(),
           staffNote: staffNote.trim() || undefined,
+          ...("ownerId" in expectedHolder
+            ? { expectedOwnerId: expectedHolder.ownerId }
+            : {
+                expectedPendingProvider: expectedHolder.pendingOwner.provider,
+                expectedPendingAccountId:
+                  expectedHolder.pendingOwner.providerAccountId,
+              }),
         },
       });
       toast.success(count === 1 ? "Removed 1 item" : `Removed ${count} items`);
-      setHowMany("1");
-      setReason("");
-      setStaffNote("");
       onRemoved();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not remove those");

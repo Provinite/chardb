@@ -8,7 +8,7 @@ import {
   ResolveField,
   Parent,
 } from "@nestjs/graphql";
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
@@ -466,12 +466,48 @@ export class ItemsResolver {
       description: "Staff-only detail. Never shown to members.",
     })
     staffNote?: string,
+    @Args("expectedOwnerId", {
+      type: () => ID,
+      nullable: true,
+      description:
+        "Refuse unless every item is still held by this member. For a page " +
+        "of someone's items that may have gone stale.",
+    })
+    expectedOwnerId?: string,
+    // Two scalars rather than one input object: an omitted object argument
+    // fails the global ValidationPipe, which would break every plain revoke.
+    @Args("expectedPendingProvider", {
+      type: () => ExternalAccountProvider,
+      nullable: true,
+      description:
+        "With expectedPendingAccountId: refuse unless every item is still " +
+        "unowned and waiting on this external account.",
+    })
+    expectedPendingProvider?: ExternalAccountProvider,
+    @Args("expectedPendingAccountId", { nullable: true })
+    expectedPendingAccountId?: string,
   ): Promise<number> {
-    return this.itemsService.revokeItems(itemIds, {
-      actorUserId: user.id,
-      reason,
-      staffNote,
-    });
+    if (
+      Boolean(expectedPendingProvider) !== Boolean(expectedPendingAccountId)
+    ) {
+      throw new BadRequestException(
+        "expectedPendingProvider and expectedPendingAccountId go together",
+      );
+    }
+    return this.itemsService.revokeItems(
+      itemIds,
+      { actorUserId: user.id, reason, staffNote },
+      {
+        expectedOwnerId: expectedOwnerId ?? undefined,
+        expectedPendingOwner:
+          expectedPendingProvider && expectedPendingAccountId
+            ? {
+                provider: expectedPendingProvider,
+                providerAccountId: expectedPendingAccountId,
+              }
+            : undefined,
+      },
+    );
   }
 
   // Only membership, not a permission: using your own item is not a staff act.

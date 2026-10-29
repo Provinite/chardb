@@ -2830,6 +2830,9 @@ export type MutationRevertTraitReviewArgs = {
 
 
 export type MutationRevokeItemsArgs = {
+  expectedOwnerId?: InputMaybe<Scalars['ID']['input']>;
+  expectedPendingAccountId?: InputMaybe<Scalars['String']['input']>;
+  expectedPendingProvider?: InputMaybe<ExternalAccountProvider>;
   itemIds: Array<Scalars['ID']['input']>;
   reason: Scalars['String']['input'];
   staffNote?: InputMaybe<Scalars['String']['input']>;
@@ -6389,6 +6392,9 @@ export type RevokeItemsMutationVariables = Exact<{
   itemIds: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
   reason: Scalars['String']['input'];
   staffNote?: InputMaybe<Scalars['String']['input']>;
+  expectedOwnerId?: InputMaybe<Scalars['ID']['input']>;
+  expectedPendingProvider?: InputMaybe<ExternalAccountProvider>;
+  expectedPendingAccountId?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -14528,8 +14534,15 @@ export type UpdateItemMutationHookResult = ReturnType<typeof useUpdateItemMutati
 export type UpdateItemMutationResult = Apollo.MutationResult<UpdateItemMutation>;
 export type UpdateItemMutationOptions = Apollo.BaseMutationOptions<UpdateItemMutation, UpdateItemMutationVariables>;
 export const RevokeItemsDocument = gql`
-    mutation RevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String) {
-  revokeItems(itemIds: $itemIds, reason: $reason, staffNote: $staffNote)
+    mutation RevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String, $expectedOwnerId: ID, $expectedPendingProvider: ExternalAccountProvider, $expectedPendingAccountId: String) {
+  revokeItems(
+    itemIds: $itemIds
+    reason: $reason
+    staffNote: $staffNote
+    expectedOwnerId: $expectedOwnerId
+    expectedPendingProvider: $expectedPendingProvider
+    expectedPendingAccountId: $expectedPendingAccountId
+  )
 }
     `;
 export type RevokeItemsMutationFn = Apollo.MutationFunction<RevokeItemsMutation, RevokeItemsMutationVariables>;
@@ -14550,6 +14563,9 @@ export type RevokeItemsMutationFn = Apollo.MutationFunction<RevokeItemsMutation,
  *      itemIds: // value for 'itemIds'
  *      reason: // value for 'reason'
  *      staffNote: // value for 'staffNote'
+ *      expectedOwnerId: // value for 'expectedOwnerId'
+ *      expectedPendingProvider: // value for 'expectedPendingProvider'
+ *      expectedPendingAccountId: // value for 'expectedPendingAccountId'
  *   },
  * });
  */
