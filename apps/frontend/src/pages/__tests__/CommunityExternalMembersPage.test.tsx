@@ -44,29 +44,35 @@ const neo = {
   },
 };
 
-/** Answers with Neo, and says there is more when browsing the first page. */
-const recordingLink = (sent: Vars[]) =>
+/**
+ * Answers with Neo, after `delayMs`, and says there is more when browsing the
+ * first page.
+ */
+const recordingLink = (sent: Vars[], delayMs = 0) =>
   new ApolloLink(
     (operation) =>
       new Observable((observer) => {
         const vars = operation.variables as Vars;
         sent.push(vars);
-        observer.next({
-          data: {
-            externalMembers: {
-              __typename: "ExternalMembersPage",
-              members: [neo],
-              hasMore: !vars.search && vars.offset === 0,
+        const timer = setTimeout(() => {
+          observer.next({
+            data: {
+              externalMembers: {
+                __typename: "ExternalMembersPage",
+                members: [neo],
+                hasMore: !vars.search && vars.offset === 0,
+              },
             },
-          },
-        });
-        observer.complete();
+          });
+          observer.complete();
+        }, delayMs);
+        return () => clearTimeout(timer);
       }),
   );
 
-const renderPage = (sent: Vars[]) =>
+const renderPage = (sent: Vars[], delayMs = 0) =>
   render(
-    <MockedProvider link={recordingLink(sent)}>
+    <MockedProvider link={recordingLink(sent, delayMs)}>
       <ThemeProvider theme={lightTheme}>
         <MantineProvider>
           <MemoryRouter>
@@ -120,6 +126,17 @@ describe("CommunityExternalMembersPage", () => {
     await userEvent.click(screen.getByRole("button", { name: "Next" }));
     await waitFor(() => expect(sent.at(-1)).toMatchObject({ offset: 25 }));
     expect(screen.getByRole("button", { name: "Previous" })).toBeEnabled();
+  });
+
+  it("says it is searching while the first results load", async () => {
+    // Not a blank area: the prompt is gone and nothing else has arrived.
+    const sent: Vars[] = [];
+    renderPage(sent, 500);
+
+    await userEvent.click(screen.getByRole("button", { name: "Browse all" }));
+
+    expect(await screen.findByText("Searching…")).toBeInTheDocument();
+    expect(await screen.findByTestId("external-member")).toBeInTheDocument();
   });
 
   it("narrows to one kind of account", async () => {

@@ -125,6 +125,16 @@ describe("PendingOwnershipService.findExternalMembers", () => {
     );
   });
 
+  it("counts everything waiting on someone a search finds, not only the matching rows", async () => {
+    // Older rows predate name lookups: a search by name matches the newer
+    // ones, but the person holds all of them.
+    await service.findExternalMembers("comm1", { search: "neo" });
+
+    const { where } =
+      mockDatabaseService.pendingOwnership.findMany.mock.calls[0][0];
+    expect(JSON.stringify(where)).not.toContain("neo");
+  });
+
   it("pages by one row past the page, newest first", async () => {
     mockDatabaseService.pendingOwnership.groupBy.mockResolvedValue([
       { provider: "DISCORD", providerAccountId: NEO },

@@ -3241,6 +3241,8 @@ export type PendingHoldingsReport = {
   __typename?: 'PendingHoldingsReport';
   /** By name. */
   characters: Array<PendingCharacter>;
+  /** Who claimed what was held for the account, once nothing is left waiting: they linked it and joined. Null while anything still waits. */
+  claimedBy: Maybe<User>;
   distinctTypes: Scalars['Int']['output'];
   /** Who they are waiting for. Its id and names are blank to viewers who may not see them, like any pending owner's. */
   holder: PendingOwnership;
@@ -6445,7 +6447,7 @@ export type GetPendingHoldingsQueryVariables = Exact<{
 }>;
 
 
-export type GetPendingHoldingsQuery = { __typename?: 'Query', pendingHoldings: { __typename?: 'PendingHoldingsReport', totalItems: number, distinctTypes: number, holder: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }>, characters: Array<{ __typename?: 'PendingCharacter', id: string, name: string }> } };
+export type GetPendingHoldingsQuery = { __typename?: 'Query', pendingHoldings: { __typename?: 'PendingHoldingsReport', totalItems: number, distinctTypes: number, holder: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }>, characters: Array<{ __typename?: 'PendingCharacter', id: string, name: string }>, claimedBy: { __typename?: 'User', id: string, username: string } | null } };
 
 export type GetExternalMembersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -14917,6 +14919,10 @@ export const GetPendingHoldingsDocument = gql`
     characters {
       id
       name
+    }
+    claimedBy {
+      id
+      username
     }
   }
 }

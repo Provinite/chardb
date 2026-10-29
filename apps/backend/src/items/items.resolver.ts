@@ -14,6 +14,8 @@ import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
+import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
+import { ExternalMembersArgs } from "../pending-ownership/dto/external-members.args";
 import { mapPrismaCurrencyToGraphQL } from "../currencies/utils/currency-resolver-mappers";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
@@ -329,8 +331,10 @@ export class ItemsResolver {
    * Staff only, unlike a member's inventory. Gated on the permission that
    * already decides who may see who a pending owner is: this page is about
    * exactly that person (#445). Removing anything from it still takes
-   * CanGrantItems, on the mutation.
+   * CanGrantItems, on the mutation. Site admins too, matching who can see a
+   * pending owner's fields.
    */
+  @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
   @ResolveCommunityFrom({ communityId: "communityId" })
   @Query(() => PendingHoldingsReport, {
@@ -355,6 +359,9 @@ export class ItemsResolver {
     return {
       ...report,
       holder: mapPrismaPendingOwnershipToGraphQL(report.holder),
+      claimedBy: report.claimedBy
+        ? mapPrismaUserToGraphQL(report.claimedBy)
+        : null,
       holdings: report.holdings.map((h) => ({
         count: h.count,
         itemType: mapPrismaItemTypeToGraphQL(h.itemType),
@@ -366,6 +373,7 @@ export class ItemsResolver {
   /**
    * Same gate as pendingHoldings: this lists who pending owners are.
    */
+  @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
   @ResolveCommunityFrom({ communityId: "communityId" })
   @Query(() => ExternalMembersPage, {
@@ -376,16 +384,12 @@ export class ItemsResolver {
       "search on either name or the exact account id.",
   })
   async externalMembers(
-    @Args("communityId", { type: () => ID }) communityId: string,
-    @Args("search", { nullable: true }) search?: string,
-    @Args("provider", { type: () => ExternalAccountProvider, nullable: true })
-    provider?: ExternalAccountProvider,
-    @Args("limit", { type: () => Int, defaultValue: 25 }) limit = 25,
-    @Args("offset", { type: () => Int, defaultValue: 0 }) offset = 0,
+    @Args()
+    { communityId, search, provider, limit, offset }: ExternalMembersArgs,
   ): Promise<ExternalMembersPage> {
     const page = await this.pendingOwnershipService.findExternalMembers(
       communityId,
-      { search, provider, limit: Math.min(limit, 100), offset },
+      { search, provider, limit, offset },
     );
     return {
       hasMore: page.hasMore,

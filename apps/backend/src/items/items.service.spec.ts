@@ -1288,4 +1288,31 @@ describe("ItemsService.findPendingHoldings", () => {
       service.findPendingHoldings("comm1", "DISCORD", DISCORD_ID),
     ).rejects.toThrow(NotFoundException);
   });
+
+  it("names who claimed it all, once nothing is left waiting", async () => {
+    // They linked and joined: the page should send staff to them.
+    mockDatabaseService.item.findMany.mockResolvedValue([]);
+    const claimant = { id: "u-neo", username: "neo" };
+    mockDatabaseService.pendingOwnership.findFirst
+      .mockResolvedValueOnce(holder)
+      .mockResolvedValueOnce({ ...holder, claimedByUser: claimant });
+
+    const report = await service.findPendingHoldings(
+      "comm1",
+      "DISCORD",
+      DISCORD_ID,
+    );
+
+    expect(report.claimedBy).toBe(claimant);
+  });
+
+  it("names nobody while anything still waits on them", async () => {
+    const report = await service.findPendingHoldings(
+      "comm1",
+      "DISCORD",
+      DISCORD_ID,
+    );
+
+    expect(report.claimedBy).toBeNull();
+  });
 });

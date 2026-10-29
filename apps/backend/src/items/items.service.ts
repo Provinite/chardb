@@ -1986,6 +1986,27 @@ export class ItemsService {
       );
     }
 
+    // Nothing left waiting because they linked and joined: who they are now,
+    // so the page can send staff to them instead.
+    const claimedBy =
+      items.length === 0 && characters.length === 0
+        ? ((
+            await this.db.pendingOwnership.findFirst({
+              where: {
+                provider,
+                providerAccountId,
+                claimedByUserId: { not: null },
+                OR: [
+                  { item: { itemType: { communityId } } },
+                  { character: { species: { communityId } } },
+                ],
+              },
+              orderBy: { claimedAt: "desc" },
+              include: { claimedByUser: true },
+            })
+          )?.claimedByUser ?? null)
+        : null;
+
     const holdings = groupHoldings(items);
     return {
       holder,
@@ -1993,6 +2014,7 @@ export class ItemsService {
       distinctTypes: holdings.length,
       holdings,
       characters,
+      claimedBy,
     };
   }
 }

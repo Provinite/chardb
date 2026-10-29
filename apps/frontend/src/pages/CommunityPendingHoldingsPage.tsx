@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { Package } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { usePageMeta } from "../lib/pageMeta";
@@ -187,6 +187,17 @@ export const CommunityPendingHoldingsPage: React.FC = () => {
           {error && <p>{error.message}</p>}
         </Empty>
       </Container>
+    );
+  }
+
+  // They linked and joined, so nothing waits here any more: their own
+  // inventory is the page this link was really after.
+  if (report.claimedBy) {
+    return (
+      <Navigate
+        replace
+        to={`/members/${encodeURIComponent(report.claimedBy.username)}/inventory`}
+      />
     );
   }
 

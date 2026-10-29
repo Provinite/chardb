@@ -229,8 +229,8 @@ export const CommunityExternalMembersPage: React.FC = () => {
         <Note role="alert">
           External members could not be loaded. {error.message}
         </Note>
-      ) : !page ? null : page.members.length === 0 ? (
-        <Note>{stale ? "Searching…" : "No one matches that."}</Note>
+      ) : !page || page.members.length === 0 ? (
+        <Note>{!page || stale ? "Searching…" : "No one matches that."}</Note>
       ) : (
         <>
           <List $stale={stale} aria-busy={stale}>

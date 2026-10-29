@@ -471,24 +471,29 @@ export class PendingOwnershipService {
     },
   ): Promise<{ members: ExternalMemberRow[]; hasMore: boolean }> {
     const term = search?.trim();
+    // What still waits on someone here: unclaimed, and live in this
+    // community -- an item nobody holds yet, or a character not deleted.
+    const waitingClauses: Prisma.PendingOwnershipWhereInput[] = [
+      { claimedAt: null },
+      {
+        OR: [
+          {
+            item: {
+              destroyedAt: null,
+              ownerId: null,
+              itemType: { communityId },
+            },
+          },
+          { character: { ...notDeleted, species: { communityId } } },
+        ],
+      },
+      ...(provider ? [{ provider }] : []),
+    ];
+    // Who to list: the search decides that, but not what they are counted as
+    // holding -- rows from before names were kept do not match a name.
     const where: Prisma.PendingOwnershipWhereInput = {
       AND: [
-        { claimedAt: null },
-        // Still live, and in this community: an item nobody holds yet, or a
-        // character that has not been deleted.
-        {
-          OR: [
-            {
-              item: {
-                destroyedAt: null,
-                ownerId: null,
-                itemType: { communityId },
-              },
-            },
-            { character: { ...notDeleted, species: { communityId } } },
-          ],
-        },
-        ...(provider ? [{ provider }] : []),
+        ...waitingClauses,
         ...(term
           ? [
               {
@@ -530,7 +535,7 @@ export class PendingOwnershipService {
     const rows = await this.prisma.pendingOwnership.findMany({
       where: {
         AND: [
-          where,
+          ...waitingClauses,
           {
             OR: page.map((g) => ({
               provider: g.provider,

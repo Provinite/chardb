@@ -95,6 +95,14 @@ export class PendingHoldingsReport {
 
   @Field(() => [PendingCharacter], { description: "By name." })
   characters: PendingCharacter[];
+
+  @Field(() => User, {
+    nullable: true,
+    description:
+      "Who claimed what was held for the account, once nothing is left " +
+      "waiting: they linked it and joined. Null while anything still waits.",
+  })
+  claimedBy: User | null;
 }
 
 @ObjectType({

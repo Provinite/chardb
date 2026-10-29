@@ -3496,6 +3496,11 @@ Live, unclaimed items and characters held for one external account in one commun
 type PendingHoldingsReport {
   """By name."""
   characters: [PendingCharacter!]!
+
+  """
+  Who claimed what was held for the account, once nothing is left waiting: they linked it and joined. Null while anything still waits.
+  """
+  claimedBy: User
   distinctTypes: Int!
 
   """
@@ -3827,7 +3832,15 @@ type Query {
   """
   Everyone something waits on in a community without an account here, one per external account, newest first. Narrowed by an optional search on either name or the exact account id.
   """
-  externalMembers(communityId: ID!, limit: Int! = 25, offset: Int! = 0, provider: ExternalAccountProvider, search: String): ExternalMembersPage!
+  externalMembers(
+    communityId: ID!
+    limit: Int! = 25
+    offset: Int! = 0
+    provider: ExternalAccountProvider
+
+    """Either name, anywhere in it, or the exact account id."""
+    search: String
+  ): ExternalMembersPage!
   followStatus(userId: ID!): FollowStatus!
   galleries(filters: GalleryFiltersInput): GalleryConnection!
   gallery(id: ID!): Gallery!

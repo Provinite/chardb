@@ -484,6 +484,10 @@ export const GET_PENDING_HOLDINGS = gql`
         id
         name
       }
+      claimedBy {
+        id
+        username
+      }
     }
   }
 `;
