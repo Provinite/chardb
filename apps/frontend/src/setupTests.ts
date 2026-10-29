@@ -1,4 +1,4 @@
-import "@testing-library/jest-dom";
+import "@testing-library/jest-dom/vitest";
 import { vi } from "vitest";
 
 // Mock localStorage
@@ -38,50 +38,67 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-// Mock IntersectionObserver
-global.IntersectionObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+// Mock IntersectionObserver. Implementations are `function`s, not arrows:
+// Vitest runs them as constructors under `new`, which an arrow cannot be.
+global.IntersectionObserver = vi.fn().mockImplementation(function () {
+  return {
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  };
+});
 
 // Mock ResizeObserver
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+global.ResizeObserver = vi.fn().mockImplementation(function () {
+  return {
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+  };
+});
 
 // Mock URL.createObjectURL
 global.URL.createObjectURL = vi.fn(() => "mocked-object-url");
 global.URL.revokeObjectURL = vi.fn();
 
 // Mock File and FileReader
-(global as any).File = class extends Blob {
-  name: string;
-  lastModified: number;
+Object.defineProperty(globalThis, "File", {
+  writable: true,
+  configurable: true,
+  value: class extends Blob {
+    name: string;
+    lastModified: number;
 
-  constructor(chunks: any[], filename: string, options?: any) {
-    super(chunks, options);
-    this.name = filename;
-    this.lastModified = Date.now();
-  }
-};
+    constructor(
+      chunks: BlobPart[],
+      filename: string,
+      options?: FilePropertyBag,
+    ) {
+      super(chunks, options);
+      this.name = filename;
+      this.lastModified = Date.now();
+    }
+  },
+});
 
-(global as any).FileReader = class extends EventTarget {
-  result: string | ArrayBuffer | null = null;
-  error: DOMException | null = null;
-  readyState: number = 0;
+Object.defineProperty(globalThis, "FileReader", {
+  writable: true,
+  configurable: true,
+  value: class extends EventTarget {
+    result: string | ArrayBuffer | null = null;
+    error: DOMException | null = null;
+    readyState: number = 0;
 
-  readAsDataURL = vi.fn();
-  readAsText = vi.fn();
-  readAsArrayBuffer = vi.fn();
-  abort = vi.fn();
+    readAsDataURL = vi.fn();
+    readAsText = vi.fn();
+    readAsArrayBuffer = vi.fn();
+    abort = vi.fn();
 
-  static EMPTY = 0;
-  static LOADING = 1;
-  static DONE = 2;
-};
+    static EMPTY = 0;
+    static LOADING = 1;
+    static DONE = 2;
+  },
+});
 
 // Global test timeout
 vi.setConfig({

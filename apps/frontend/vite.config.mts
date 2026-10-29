@@ -1,13 +1,19 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import path from "path";
+import { fileURLToPath } from "node:url";
 
-// https://vitejs.dev/config/
+// https://vite.dev/config/
 export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // Bundle `@chardb/shared` from source. Its dist is CommonJS, and its
+      // `require("zod")` resolves to zod's CommonJS build while the app's
+      // `import` resolves to the ESM one, shipping zod twice.
+      "@chardb/shared": fileURLToPath(
+        new URL("../../packages/shared/src/index.ts", import.meta.url),
+      ),
     },
   },
   server: {
@@ -34,24 +40,10 @@ export default defineConfig({
     port: Number(process.env.FRONTEND_PORT ?? 3000),
     strictPort: true,
   },
-  build: {
-    commonjsOptions: {
-      // `@chardb/shared` is the first workspace package the app imports RUNTIME
-      // values from rather than types alone -- the community slug rules, which
-      // the backend and the migration share. It is built as CommonJS, and
-      // rollup's default `include` is /node_modules/ only, so a linked
-      // workspace resolves outside it and gets treated as ESM. The build then
-      // fails with `"isValidCommunitySlug" is not exported by
-      // packages/shared/dist/index.js`, which names a real export.
-      include: [/node_modules/, /packages\/shared/],
-    },
-  },
   // Optimize dependency pre-bundling to reduce parallel requests
   optimizeDeps: {
     // Force include common dependencies to reduce discovery requests
     include: [
-      // Same reason as commonjsOptions above, for the dev server.
-      "@chardb/shared",
       "react",
       "react-dom",
       "@apollo/client",

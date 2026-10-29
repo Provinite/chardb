@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Vite 8 and Vitest 5** replace Vite 4 and Vitest 3 in the frontend and `da-import`; `da-import` tests now run only from `src/` (#463).
+
 ## [v14.2.0] - 2026-10-28
 
 ### Added

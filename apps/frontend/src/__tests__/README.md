@@ -17,7 +17,7 @@ We use **Vitest** as our test runner with **React Testing Library** for componen
 
 ## Configuration Files
 
-- `vitest.config.ts`: Vitest configuration
+- `vitest.config.mts`: Vitest configuration
 - `setupTests.ts`: Global test setup and mocks
 - `test-utils.tsx`: Custom render function with providers
 
