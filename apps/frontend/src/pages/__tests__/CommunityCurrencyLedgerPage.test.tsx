@@ -72,17 +72,13 @@ const mint = {
   actorUser: user,
 };
 
-type Filters = { search?: string; limit: number };
+type Filters = { search?: string; limit: number; offset: number };
 
 /**
  * Answers the ledger slowly enough to be caught mid-load and records the
  * filters each ledger query carried. Unfiltered, it is 60 mints served a page
- * at a time, so the page size shows in the rows on screen; "zzz" matches
- * nothing, and any other search matches one.
- *
- * The currency query is cache-first, so a repeated filter is answered from the
- * cache and never reaches here. Assertions on paging read the rows on screen
- * rather than the requests for that reason.
+ * at a time from the offset asked for, so the page size shows in the rows on
+ * screen; "zzz" matches nothing, and any other search matches one.
  */
 const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
   new ApolloLink(
@@ -97,17 +93,17 @@ const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
         sent.push(filters);
         const matching = emptyLedger || filters.search === "zzz" ? 0 : 60;
         const count = filters.search ? Math.min(matching, 1) : matching;
-        const shown = Math.min(count, filters.limit);
+        const end = Math.min(count, filters.offset + filters.limit);
         const timer = setTimeout(() => {
           observer.next({
             data: {
               currencyTransactions: {
                 __typename: "CurrencyTransactionConnection",
-                transactions: Array.from({ length: shown }, (_, i) => ({
-                  ...mint,
-                  id: `ct-${i}`,
-                })),
-                hasMore: shown < count,
+                transactions: Array.from(
+                  { length: Math.max(0, end - filters.offset) },
+                  (_, i) => ({ ...mint, id: `ct-${filters.offset + i}` }),
+                ),
+                hasMore: end < count,
               },
             },
           });
@@ -157,11 +153,36 @@ describe("CommunityCurrencyLedgerPage search", () => {
     await userEvent.type(searchBox(), "Lanternfall", { delay: 30 });
 
     await waitFor(() => expect(searches(sent)).toContain("Lanternfall"));
-    expect(sent.map(({ search, limit }) => ({ search, limit }))).toEqual([
-      { search: undefined, limit: 25 },
-      { search: undefined, limit: 50 },
-      { search: "Lanternfall", limit: 25 },
+    expect(
+      sent.map(({ search, limit, offset }) => ({ search, limit, offset })),
+    ).toEqual([
+      { search: undefined, limit: 25, offset: 0 },
+      { search: undefined, limit: 25, offset: 25 },
+      { search: "Lanternfall", limit: 25, offset: 0 },
     ]);
+  });
+
+  it("adds the next page below the first, and pages past 100", async () => {
+    // Asking again from the top with a larger limit was refused past 100.
+    const sent: Filters[] = [];
+    renderLedger(sent);
+    await screen.findByTestId("currency-ledger-list");
+
+    await userEvent.click(screen.getByRole("button", { name: /Load more/ }));
+    await waitFor(() =>
+      expect(screen.getAllByTestId("currency-ledger-row")).toHaveLength(50),
+    );
+    await userEvent.click(screen.getByRole("button", { name: /Load more/ }));
+    await waitFor(() =>
+      expect(screen.getAllByTestId("currency-ledger-row")).toHaveLength(60),
+    );
+
+    expect(sent.map((f) => [f.limit, f.offset])).toEqual([
+      [25, 0],
+      [25, 25],
+      [25, 50],
+    ]);
+    expect(screen.queryByRole("button", { name: /Load more/ })).toBeNull();
   });
 
   it("marks the list stale while typing, before the query is sent", async () => {

@@ -91,7 +91,7 @@ const pendingGrant: ItemTransactionFieldsFragment = {
   pendingOwner: discordOwner,
 };
 
-type Filters = { search?: string; limit: number };
+type Filters = { search?: string; limit: number; offset: number };
 
 /**
  * Answers every ledger query slowly enough that the page is caught mid-load,
@@ -103,11 +103,13 @@ type LedgerOptions = {
   emptyLedger?: boolean;
   /** What the ledger holds instead of the one member grant. */
   rows?: ItemTransactionFieldsFragment[];
+  /** What a page past the first holds. The first page's rows by default. */
+  nextPage?: ItemTransactionFieldsFragment[];
 };
 
 const recordingLink = (
   sent: Filters[],
-  { emptyLedger = false, rows = [grant] }: LedgerOptions = {},
+  { emptyLedger = false, rows = [grant], nextPage }: LedgerOptions = {},
 ) =>
   new ApolloLink(
     (operation) =>
@@ -115,12 +117,13 @@ const recordingLink = (
         const { filters } = operation.variables as { filters: Filters };
         sent.push(filters);
         const empty = emptyLedger || filters.search === "zzz";
+        const page = filters.offset > 0 ? (nextPage ?? rows) : rows;
         const timer = setTimeout(() => {
           observer.next({
             data: {
               itemTransactions: {
                 __typename: "ItemTransactionConnection",
-                transactions: empty ? [] : rows,
+                transactions: empty ? [] : page,
                 hasMore: !empty && !filters.search,
               },
             },
@@ -226,6 +229,42 @@ describe("CommunityItemLedgerPage footer", () => {
   });
 });
 
+/** A grant from before the first page, served past it. */
+const older: ItemTransactionFieldsFragment = {
+  ...grant,
+  id: "t-9",
+  batchId: "b-9",
+  itemId: "i-9",
+  reason: "An older grant",
+};
+
+describe("CommunityItemLedgerPage Load more", () => {
+  it("asks for the next page only, and adds it below what is on screen", async () => {
+    // Refetching from the top with a larger limit cost the server the whole
+    // list again on every click, and past 100 rows it refused.
+    const sent: Filters[] = [];
+    renderLedger(sent, { nextPage: [older] });
+    await screen.findByText("Trait Change Potion");
+
+    await userEvent.click(screen.getByRole("button", { name: "Load more" }));
+
+    await screen.findByText("An older grant");
+    expect(sent[1]).toMatchObject({ limit: 25, offset: 1 });
+    expect(screen.getAllByTestId("ledger-row")).toHaveLength(2);
+  });
+
+  it("shows a row once when new events push it onto the next page", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent, { nextPage: [grant, older] });
+    await screen.findByText("Trait Change Potion");
+
+    await userEvent.click(screen.getByRole("button", { name: "Load more" }));
+
+    await screen.findByText("An older grant");
+    expect(screen.getAllByTestId("ledger-row")).toHaveLength(2);
+  });
+});
+
 describe("CommunityItemLedgerPage search", () => {
   it("keeps the search box and its focus through a search", async () => {
     const sent: Filters[] = [];
@@ -270,26 +309,38 @@ describe("CommunityItemLedgerPage search", () => {
 
     await waitFor(() => expect(searches(sent)).toContain("Lanternfall"));
     expect(sent).toEqual([
-      { ...sent[0], search: undefined, limit: 25 },
-      { ...sent[0], search: undefined, limit: 50 },
-      { ...sent[0], search: "Lanternfall", limit: 25 },
+      { ...sent[0], search: undefined, limit: 25, offset: 0 },
+      { ...sent[0], search: undefined, limit: 25, offset: 1 },
+      { ...sent[0], search: "Lanternfall", limit: 25, offset: 0 },
     ]);
   });
 
   it("starts from the first page on returning to a search Load more was used on", async () => {
     const sent: Filters[] = [];
-    renderLedger(sent);
+    renderLedger(sent, { nextPage: [older] });
     await screen.findByText("Trait Change Potion");
 
     await userEvent.click(screen.getByRole("button", { name: "Load more" }));
-    await waitFor(() => expect(sent).toHaveLength(2));
+    await screen.findByText("An older grant");
 
     await userEvent.type(searchBox(), "Lanternfall");
     await waitFor(() => expect(searches(sent)).toContain("Lanternfall"));
+    await waitFor(() =>
+      expect(screen.getAllByTestId("ledger-row")).toHaveLength(1),
+    );
     await userEvent.clear(searchBox());
 
     await waitFor(() => expect(sent).toHaveLength(4));
-    expect(sent[3]).toMatchObject({ search: undefined, limit: 25 });
+    expect(sent[3]).toMatchObject({ search: undefined, limit: 25, offset: 0 });
+    // Not both pages from the cache in the meantime.
+    expect(screen.queryByText("An older grant")).toBeNull();
+    await waitFor(() =>
+      expect(screen.getByTestId("ledger-table")).toHaveAttribute(
+        "aria-busy",
+        "false",
+      ),
+    );
+    expect(screen.getAllByTestId("ledger-row")).toHaveLength(1);
   });
 
   it("disables Load more while typing, before the new search is sent", async () => {

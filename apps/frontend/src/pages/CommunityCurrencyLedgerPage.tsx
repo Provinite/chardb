@@ -21,7 +21,8 @@ import {
   collapseTransferLegs,
   type CurrencyTone,
 } from "../lib/currencyDisplay";
-import { useLedgerSearch } from "../hooks/useLedgerSearch";
+import { unseenRows, useLedgerSearch } from "../hooks/useLedgerSearch";
+import { useOffsetPaging } from "../hooks/useOffsetPaging";
 
 /**
  * Every currency movement in a community, newest first.
@@ -319,15 +320,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [kinds, setKinds] = useState<CurrencyTransactionKind[]>([]);
-  const {
-    search,
-    setSearch,
-    debouncedSearch,
-    limit,
-    typing,
-    loadMore,
-    resetPages,
-  } = useLedgerSearch(PAGE_SIZE);
+  const { search, setSearch, debouncedSearch, typing } = useLedgerSearch();
 
   const currencyId = searchParams.get("currencyId") ?? undefined;
 
@@ -336,23 +329,28 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
     skip: !communityId,
   });
 
+  const filters = {
+    communityId: communityId as string,
+    limit: PAGE_SIZE,
+    offset: 0,
+    kinds: kinds.length > 0 ? kinds : undefined,
+    currencyId,
+    search: debouncedSearch || undefined,
+  };
+
   const {
     data: currentData,
     previousData,
     loading,
     error,
+    fetchMore,
   } = useGetCurrencyTransactionsQuery({
-    variables: {
-      filters: {
-        communityId: communityId as string,
-        limit,
-        offset: 0,
-        kinds: kinds.length > 0 ? kinds : undefined,
-        currencyId,
-        search: debouncedSearch || undefined,
-      },
-    },
+    variables: { filters },
     skip: !communityId,
+    // Load more appends to the cached first page, so a filter's cache entry
+    // holds every page loaded under it. Coming back to that filter asks
+    // afresh: from the cache it would show all those pages, then drop to one.
+    fetchPolicy: "network-only",
   });
 
   // The last result stays up while a new filter loads, so the list dims rather
@@ -370,8 +368,33 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   );
   const hasMore = data?.currencyTransactions?.hasMore ?? false;
 
+  // One page per click, appended, as on the item ledger.
+  const { loadMore, loadingMore } = useOffsetPaging({
+    pageSize: PAGE_SIZE,
+    loaded: data?.currencyTransactions?.transactions.length ?? 0,
+    hasMore,
+    load: ({ limit, offset }) =>
+      fetchMore({
+        variables: { filters: { ...filters, limit, offset } },
+        updateQuery: (prev, { fetchMoreResult }) =>
+          fetchMoreResult
+            ? {
+                currencyTransactions: {
+                  ...fetchMoreResult.currencyTransactions,
+                  transactions: [
+                    ...prev.currencyTransactions.transactions,
+                    ...unseenRows(
+                      prev.currencyTransactions.transactions,
+                      fetchMoreResult.currencyTransactions.transactions,
+                    ),
+                  ],
+                },
+              }
+            : prev,
+      }),
+  });
+
   const toggleKind = (kind: CurrencyTransactionKind) => {
-    resetPages();
     setKinds((current) =>
       current.includes(kind)
         ? current.filter((k) => k !== kind)
@@ -380,7 +403,6 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
   };
 
   const chooseCurrency = (id: string) => {
-    resetPages();
     const next = new URLSearchParams(searchParams);
     if (id) {
       next.set("currencyId", id);
@@ -553,9 +575,9 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
                 onClick={loadMore}
                 // Not while typing either: it would page the old search,
                 // and the new one is about to replace it.
-                disabled={stale}
+                disabled={stale || loadingMore}
               >
-                {loading ? "Loading…" : "Load more"}
+                {loadingMore ? "Loading…" : "Load more"}
               </Button>
             </Footer>
           )}
