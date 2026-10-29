@@ -10,6 +10,7 @@ import {
 import { WinstonInstrumentation } from "@opentelemetry/instrumentation-winston";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 import { SeverityNumber } from "@opentelemetry/api-logs";
+import { traceDetailOptions } from "./tracing-detail";
 
 // Honour the standard OTEL_SDK_DISABLED switch before constructing anything.
 //
@@ -29,6 +30,14 @@ let sdk: NodeSDK | undefined;
 if (tracingDisabled) {
   console.log("🔍 OpenTelemetry disabled via OTEL_SDK_DISABLED=true");
 } else {
+  const detail = traceDetailOptions(process.env.DEBUG_TRACE_LEVEL);
+  if (detail.unrecognised !== undefined) {
+    console.warn(
+      "Unrecognised DEBUG_TRACE_LEVEL; using standard",
+      detail.unrecognised,
+    );
+  }
+
   // Initialize OpenTelemetry SDK with simplified configuration
   sdk = new NodeSDK({
     resource: resourceFromAttributes({
@@ -98,6 +107,16 @@ if (tracingDisabled) {
         "@opentelemetry/instrumentation-graphql": {
           enabled: true,
           allowValues: false,
+          // Operations stay. A span per resolved field is DEBUG_TRACE_LEVEL=full
+          // only: Nest gives every field a resolver, so
+          // ignoreTrivialResolveSpans would still trace every `id`.
+          ignoreResolveSpans: !detail.fieldSpans,
+        },
+
+        // A span per key queued. The SQL each batch runs is already a Prisma
+        // span, so these repeat it at a finer grain.
+        "@opentelemetry/instrumentation-dataloader": {
+          enabled: detail.dataloaderSpans,
         },
       }),
       // Winston instrumentation for automatic log correlation with traces
@@ -124,6 +143,7 @@ if (tracingDisabled) {
   try {
     sdk.start();
     console.log("🔍 OpenTelemetry tracing initialized successfully");
+    console.log("🔍 Trace detail level:", detail.level);
     console.log(
       `📊 Traces will be sent to: ${process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT || "http://localhost:4318"}`,
     );
