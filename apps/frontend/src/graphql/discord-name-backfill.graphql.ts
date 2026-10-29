@@ -6,6 +6,7 @@ const DISCORD_NAME_BACKFILL_STATUS_FIELDS = gql`
     total
     processed
     updated
+    notFound
     failed
     startedAt
     finishedAt

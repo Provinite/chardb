@@ -18,7 +18,14 @@ export class DiscordNameBackfillStatus {
   updated: number;
 
   @Field(() => Int, {
-    description: "Accounts Discord could not find, such as deleted ones.",
+    description: "Accounts Discord says do not exist, such as deleted ones.",
+  })
+  notFound: number;
+
+  @Field(() => Int, {
+    description:
+      "Accounts that could not be looked up because Discord was unreachable " +
+      "or rate limited. A rerun will try them again.",
   })
   failed: number;
 

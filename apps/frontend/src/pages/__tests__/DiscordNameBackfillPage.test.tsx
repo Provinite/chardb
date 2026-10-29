@@ -21,6 +21,7 @@ const status = (overrides: Partial<Record<string, unknown>> = {}) => ({
   total: 0,
   processed: 0,
   updated: 0,
+  notFound: 0,
   failed: 0,
   startedAt: null,
   finishedAt: null,
@@ -88,7 +89,8 @@ describe("DiscordNameBackfillPage", () => {
           total: 124,
           processed: 124,
           updated: 120,
-          failed: 4,
+          notFound: 3,
+          failed: 1,
           startedAt: "2026-10-28T12:00:00.000Z",
           finishedAt: "2026-10-28T12:01:00.000Z",
         }),
@@ -98,7 +100,9 @@ describe("DiscordNameBackfillPage", () => {
     const progress = await screen.findByTestId("backfill-progress");
     expect(progress).toHaveTextContent("124 of 124");
     expect(screen.getByTestId("backfill-named")).toHaveTextContent("120");
-    expect(screen.getByTestId("backfill-not-found")).toHaveTextContent("4");
+    // Gone from Discord, apart from Discord being unreachable (#445).
+    expect(screen.getByTestId("backfill-not-found")).toHaveTextContent("3");
+    expect(screen.getByTestId("backfill-failed")).toHaveTextContent("1");
     // Rerunnable, to pick up names people have changed since.
     expect(
       screen.getByRole("button", { name: "Look up Discord names" }),

@@ -131,13 +131,18 @@ export const DiscordNameBackfillPage: React.FC = () => {
             </Stat>
             <Stat data-testid="backfill-not-found">
               <div className="k">Not found</div>
+              <div className="v">{status.notFound}</div>
+            </Stat>
+            <Stat data-testid="backfill-failed">
+              <div className="k">Couldn't reach Discord</div>
               <div className="v">{status.failed}</div>
             </Stat>
           </Stats>
           {status.finishedAt && (
             <Muted>
-              Finished {new Date(status.finishedAt).toLocaleString()}. Accounts
-              Discord could not find keep whatever name they had.
+              Finished {new Date(status.finishedAt).toLocaleString()}.
+              {status.failed > 0 &&
+                " Run it again to retry the accounts Discord didn't answer for."}
             </Muted>
           )}
         </>

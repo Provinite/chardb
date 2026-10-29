@@ -3,7 +3,9 @@ import {
   Inject,
   Injectable,
   Logger,
+  NotFoundException,
   Optional,
+  ServiceUnavailableException,
 } from "@nestjs/common";
 import { ExternalAccountProvider } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
@@ -41,6 +43,7 @@ export class DiscordNameBackfillService {
     total: 0,
     processed: 0,
     updated: 0,
+    notFound: 0,
     failed: 0,
   };
 
@@ -68,6 +71,7 @@ export class DiscordNameBackfillService {
       total: 0,
       processed: 0,
       updated: 0,
+      notFound: 0,
       failed: 0,
       startedAt: new Date(),
     };
@@ -96,6 +100,7 @@ export class DiscordNameBackfillService {
         message: "Discord name backfill finished",
         processed: this.current.processed,
         updated: this.current.updated,
+        notFound: this.current.notFound,
         failed: this.current.failed,
       });
     }
@@ -113,14 +118,23 @@ export class DiscordNameBackfillService {
       );
       this.current.updated++;
     } catch (error) {
-      // Deleted accounts and bad ids. Whatever name the rows already have is
-      // left alone: a stale name beats none.
+      // Whatever name the rows already have is left alone: a stale name
+      // beats none.
+      if (error instanceof NotFoundException) {
+        // A deleted account or a bad id: expected, and a rerun will not help.
+        this.current.notFound++;
+        return;
+      }
+      // Discord unreachable or rate limited (DiscordService has logged it), or
+      // the write failed. Worth a rerun.
       this.current.failed++;
-      this.logger.warn({
-        message: "Discord name backfill could not look up an account",
-        providerAccountId,
-        error: error instanceof Error ? error.message : String(error),
-      });
+      if (!(error instanceof ServiceUnavailableException)) {
+        this.logger.warn({
+          message: "Discord name backfill could not record an account's names",
+          providerAccountId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     }
   }
 

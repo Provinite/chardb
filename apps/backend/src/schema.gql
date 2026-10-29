@@ -1285,9 +1285,14 @@ type DiscordGuildInfo {
 
 """Progress of the job that looks up Discord names for pending owners."""
 type DiscordNameBackfillStatus {
-  """Accounts Discord could not find, such as deleted ones."""
+  """
+  Accounts that could not be looked up because Discord was unreachable or rate limited. A rerun will try them again.
+  """
   failed: Int!
   finishedAt: DateTime
+
+  """Accounts Discord says do not exist, such as deleted ones."""
+  notFound: Int!
   processed: Int!
   running: Boolean!
   startedAt: DateTime

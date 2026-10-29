@@ -1031,9 +1031,11 @@ export type DiscordGuildInfo = {
 /** Progress of the job that looks up Discord names for pending owners. */
 export type DiscordNameBackfillStatus = {
   __typename?: 'DiscordNameBackfillStatus';
-  /** Accounts Discord could not find, such as deleted ones. */
+  /** Accounts that could not be looked up because Discord was unreachable or rate limited. A rerun will try them again. */
   failed: Scalars['Int']['output'];
   finishedAt: Maybe<Scalars['DateTime']['output']>;
+  /** Accounts Discord says do not exist, such as deleted ones. */
+  notFound: Scalars['Int']['output'];
   processed: Scalars['Int']['output'];
   running: Scalars['Boolean']['output'];
   startedAt: Maybe<Scalars['DateTime']['output']>;
@@ -5746,17 +5748,17 @@ export type DeviantartUuidBackfillProgressSubscriptionVariables = Exact<{
 
 export type DeviantartUuidBackfillProgressSubscription = { __typename?: 'Subscription', deviantartUuidBackfillProgress: { __typename?: 'DeviantartUuidBackfillProgress', jobId: string, total: number, processed: number, succeeded: number, failed: number, claimed: number, done: boolean, cancelled: boolean, currentRecord: { __typename?: 'DeviantartUuidBackfillRecordResult', pendingOwnershipId: string, characterId: string | null, itemId: string | null, oldValue: string, newValue: string | null, success: boolean, error: string | null, claimed: boolean, claimedByUserId: string | null } | null } };
 
-export type DiscordNameBackfillStatusFieldsFragment = { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, failed: number, startedAt: string | null, finishedAt: string | null };
+export type DiscordNameBackfillStatusFieldsFragment = { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, notFound: number, failed: number, startedAt: string | null, finishedAt: string | null };
 
 export type DiscordNameBackfillStatusQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type DiscordNameBackfillStatusQuery = { __typename?: 'Query', discordNameBackfillStatus: { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, failed: number, startedAt: string | null, finishedAt: string | null } };
+export type DiscordNameBackfillStatusQuery = { __typename?: 'Query', discordNameBackfillStatus: { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, notFound: number, failed: number, startedAt: string | null, finishedAt: string | null } };
 
 export type RunDiscordNameBackfillMutationVariables = Exact<{ [key: string]: never; }>;
 
 
-export type RunDiscordNameBackfillMutation = { __typename?: 'Mutation', runDiscordNameBackfill: { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, failed: number, startedAt: string | null, finishedAt: string | null } };
+export type RunDiscordNameBackfillMutation = { __typename?: 'Mutation', runDiscordNameBackfill: { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, notFound: number, failed: number, startedAt: string | null, finishedAt: string | null } };
 
 export type VerifyEmailMutationVariables = Exact<{
   input: VerifyEmailInput;
@@ -7332,6 +7334,7 @@ export const DiscordNameBackfillStatusFieldsFragmentDoc = gql`
   total
   processed
   updated
+  notFound
   failed
   startedAt
   finishedAt

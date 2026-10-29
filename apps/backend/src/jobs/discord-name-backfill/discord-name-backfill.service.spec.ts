@@ -1,5 +1,5 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { NotFoundException } from "@nestjs/common";
+import { NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { ExternalAccountProvider } from "@chardb/database";
 import {
   DISCORD_NAME_BACKFILL_PACE_MS,
@@ -76,7 +76,7 @@ describe("DiscordNameBackfillService", () => {
     );
   });
 
-  it("counts an account Discord no longer knows as failed, and carries on", async () => {
+  it("counts an account Discord no longer knows as not found, and carries on", async () => {
     const status = await service.run();
 
     expect(status).toMatchObject({
@@ -84,10 +84,22 @@ describe("DiscordNameBackfillService", () => {
       total: 2,
       processed: 2,
       updated: 1,
-      failed: 1,
+      notFound: 1,
+      failed: 0,
     });
     // Nothing written for it: a stale name beats no name at all.
     expect(mockPendingOwnership.recordNames).toHaveBeenCalledTimes(1);
+  });
+
+  it("counts Discord being unreachable apart from an account being gone", async () => {
+    // An outage is worth a rerun; a deleted account is not.
+    mockDiscordService.getUserInfo.mockRejectedValue(
+      new ServiceUnavailableException("Discord could not be reached"),
+    );
+
+    const status = await service.run();
+
+    expect(status).toMatchObject({ updated: 0, notFound: 0, failed: 2 });
   });
 
   it("refuses a second run while one is going", async () => {
