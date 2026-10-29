@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed
+
+- Unused Storybook 7 dependencies and scripts; the package had no Storybook config or stories (#463).
+
 ### Added
 
 - **`Menu`**, with `MenuGroup` and `MenuItem`: a "⋯" button that opens a keyboard-navigable list of actions in labelled groups (#430).

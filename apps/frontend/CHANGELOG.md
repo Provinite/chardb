@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Vite 8, `@vitejs/plugin-react` 6 and Vitest 5**: production builds take under a second, and the bundle is about 50 kB smaller now that `@chardb/shared` is bundled from source (#463).
+
 ### Fixed
 
 - **Item and currency ledger Load more fetches only the next page**: it refetched every row on screen with a larger limit, which slowed each click and was refused past 100 rows.
