@@ -239,6 +239,11 @@ export const CommunityPendingHoldingsPage: React.FC = () => {
         itemTypeName={removing?.itemTypeName ?? ""}
         itemIds={removing?.itemIds ?? []}
         holderLabel={who}
+        // From the URL rather than the holder fields, which the server blanks
+        // for viewers who may not see who holds what.
+        expectedHolder={{
+          pendingOwner: { provider, providerAccountId: accountId ?? "" },
+        }}
         onClose={() => setRemoving(null)}
         onRemoved={() => {
           setRemoving(null);

@@ -634,6 +634,7 @@ export const CommunityInventoryPage: React.FC = () => {
         itemTypeName={removing?.itemTypeName ?? ""}
         itemIds={removing?.itemIds ?? []}
         holderLabel={viewingSelf ? "your inventory" : (who ?? "this member")}
+        expectedHolder={{ ownerId: targetUserId ?? "" }}
         onClose={() => setRemoving(null)}
         onRemoved={() => {
           setRemoving(null);

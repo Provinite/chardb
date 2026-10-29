@@ -3049,6 +3049,16 @@ type Mutation {
   Revoke items, destroying them. Soft: a destroyed item keeps its provenance readable. A public reason is required -- it is written to the ledger and shown to anyone who can read it. Returns the count.
   """
   revokeItems(
+    """
+    Refuse unless every item is still held by this member. For a page of someone's items that may have gone stale.
+    """
+    expectedOwnerId: ID
+    expectedPendingAccountId: String
+
+    """
+    With expectedPendingAccountId: refuse unless every item is still unowned and waiting on this external account.
+    """
+    expectedPendingProvider: ExternalAccountProvider
     itemIds: [ID!]!
 
     """Member-facing. Shown on the items' public provenance."""

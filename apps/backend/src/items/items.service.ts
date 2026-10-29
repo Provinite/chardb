@@ -112,6 +112,15 @@ export interface DestroyItemsOptions {
    */
   expectedOwnerId?: string;
   /**
+   * Refuse unless the items are still unowned and waiting on this external
+   * account. The pending-owner counterpart of expectedOwnerId: someone who
+   * links and claims in between holds them now (#445).
+   */
+  expectedPendingOwner?: {
+    provider: ExternalAccountProvider;
+    providerAccountId: string;
+  };
+  /**
    * Why the item is gone. Defaults to REVOKE, which is staff taking it back.
    * A holder using one up is a USE, and the difference is the whole of what
    * the provenance page can tell a reader about what happened to it.
@@ -1634,11 +1643,20 @@ export class ItemsService {
     }));
   }
 
-  async revokeItems(itemIds: string[], actor: ItemActor) {
+  async revokeItems(
+    itemIds: string[],
+    actor: ItemActor,
+    expected: Pick<
+      DestroyItemsOptions,
+      "expectedOwnerId" | "expectedPendingOwner"
+    > = {},
+  ) {
     if (itemIds.length === 0) {
       throw new BadRequestException("No items given to revoke");
     }
-    return this.db.$transaction((tx) => this.destroyItems(tx, itemIds, actor));
+    return this.db.$transaction((tx) =>
+      this.destroyItems(tx, itemIds, actor, expected),
+    );
   }
 
   /**
@@ -1661,6 +1679,7 @@ export class ItemsService {
       source,
       sourceId,
       expectedOwnerId,
+      expectedPendingOwner,
       kind = ItemTransactionKind.REVOKE,
       batchId,
     } = options;
@@ -1702,6 +1721,12 @@ export class ItemsService {
         id: { in: itemIds },
         destroyedAt: null,
         ...(expectedOwnerId === undefined ? {} : { ownerId: expectedOwnerId }),
+        ...(expectedPendingOwner === undefined
+          ? {}
+          : {
+              ownerId: null,
+              pendingOwnership: { ...expectedPendingOwner, claimedAt: null },
+            }),
       },
       data: {
         destroyedAt: new Date(),

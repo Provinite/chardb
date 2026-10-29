@@ -538,6 +538,55 @@ describe("ItemsService", () => {
       );
     });
 
+    it("takes only from the member staff were looking at", async () => {
+      // A page of someone's items can be stale: a trade between loading it
+      // and confirming would otherwise destroy the new holder's item.
+      mockDatabaseService.item.findMany.mockResolvedValue(liveItems);
+      allMatched(["i1", "i2"]);
+
+      await service.revokeItems(["i1", "i2"], actor, {
+        expectedOwnerId: "user1",
+      });
+
+      const { where } = mockDatabaseService.item.updateMany.mock.calls[0][0];
+      expect(where).toMatchObject({ ownerId: "user1" });
+    });
+
+    it("takes only what still waits on the account staff were looking at", async () => {
+      // An external member who links and claims in between is somebody's
+      // inventory now, not the page staff confirmed on (#445).
+      mockDatabaseService.item.findMany.mockResolvedValue(
+        liveItems.map((i) => ({ ...i, ownerId: null })),
+      );
+      allMatched(["i1", "i2"]);
+
+      await service.revokeItems(["i1", "i2"], actor, {
+        expectedPendingOwner: {
+          provider: "DISCORD",
+          providerAccountId: "214000000000009071",
+        },
+      });
+
+      const { where } = mockDatabaseService.item.updateMany.mock.calls[0][0];
+      expect(where).toMatchObject({
+        ownerId: null,
+        pendingOwnership: {
+          provider: "DISCORD",
+          providerAccountId: "214000000000009071",
+          claimedAt: null,
+        },
+      });
+    });
+
+    it("refuses when the expected holder no longer has them all", async () => {
+      mockDatabaseService.item.findMany.mockResolvedValue(liveItems);
+      mockDatabaseService.item.updateMany.mockResolvedValue({ count: 1 });
+
+      await expect(
+        service.revokeItems(["i1", "i2"], actor, { expectedOwnerId: "user1" }),
+      ).rejects.toThrow(ConflictException);
+    });
+
     it("re-checks in the UPDATE rather than trusting the read", async () => {
       // The read said both were live; by the time the UPDATE ran, one was
       // not. Reading and then writing would have destroyed the other anyway
