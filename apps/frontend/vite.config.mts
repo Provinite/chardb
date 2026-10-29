@@ -8,6 +8,12 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // Bundle `@chardb/shared` from source. Its dist is CommonJS, and its
+      // `require("zod")` resolves to zod's CommonJS build while the app's
+      // `import` resolves to the ESM one, shipping zod twice.
+      "@chardb/shared": fileURLToPath(
+        new URL("../../packages/shared/src/index.ts", import.meta.url),
+      ),
     },
   },
   server: {
@@ -38,10 +44,6 @@ export default defineConfig({
   optimizeDeps: {
     // Force include common dependencies to reduce discovery requests
     include: [
-      // `@chardb/shared` is built as CommonJS, and a linked workspace package
-      // resolves outside node_modules, so the dev server would otherwise serve
-      // it unconverted and its named exports would not resolve.
-      "@chardb/shared",
       "react",
       "react-dom",
       "@apollo/client",
