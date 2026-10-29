@@ -518,7 +518,7 @@ jobs:
         uses: actions/cache@v6
         with:
           path: apps/frontend/dist
-          key: frontend-dist-${{ runner.os }}-${{ hashFiles('apps/frontend/src/**', 'apps/frontend/index.html', 'apps/frontend/package.json', 'apps/frontend/vite.config.ts', 'apps/frontend/.graphqlrc.yml', 'apps/backend/src/schema.gql', 'packages/*/src/**', 'yarn.lock') }}
+          key: frontend-dist-${{ runner.os }}-${{ hashFiles('apps/frontend/src/**', 'apps/frontend/index.html', 'apps/frontend/package.json', 'apps/frontend/vite.config.mts', 'apps/frontend/.graphqlrc.yml', 'apps/backend/src/schema.gql', 'packages/*/src/**', 'yarn.lock') }}
 
       # No `services:` block: the suite starts its own Postgres through
       # docker/compose.test.yml, exactly as it does locally. Keeping the two
