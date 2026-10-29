@@ -68,7 +68,7 @@ Frontend → Backend → OTEL Collector → Jaeger
 
 - ✅ HTTP request/response timing
 - ✅ Express middleware execution
-- ✅ GraphQL resolver performance
+- ✅ GraphQL operation timing (per-field timing with `DEBUG_TRACE_LEVEL=full`)
 - ✅ Database query timing
 - ✅ Custom CORS preflight tracking
 - ✅ Slow request detection (>1000ms warnings)
@@ -86,8 +86,17 @@ Frontend → Backend → OTEL Collector → Jaeger
 
 - **HTTP**: Request/response timing with headers
 - **Express**: Middleware execution timing
-- **GraphQL**: Resolver execution and query analysis
+- **GraphQL**: Parse, validate and execute timing per operation. A span per resolved field only with `DEBUG_TRACE_LEVEL=full`.
+- **Prisma**: Each operation and the SQL it ran
+- **DataLoader**: Only with `DEBUG_TRACE_LEVEL=full`
 - **NestJS Core**: Controller and guard timing
+
+### Trace Detail
+
+`DEBUG_TRACE_LEVEL` sets how much is recorded:
+
+- **`standard`** (default): requests, GraphQL operations, Prisma operations and SQL.
+- **`full`**: also a span per resolved GraphQL field and per DataLoader load and batch. For finding a slow field or which fields shared a batch. Costs about a third more CPU per list request, so turn it on for a debugging session rather than leaving it on in prod.
 
 ### Custom Spans
 
@@ -105,6 +114,7 @@ OTEL_EXPORTER_OTLP_PROTOCOL="http/protobuf"
 OTEL_TRACES_EXPORTER="otlp"
 OTEL_METRICS_EXPORTER="otlp"
 OTEL_LOG_LEVEL="info"
+# DEBUG_TRACE_LEVEL="full"   # field and DataLoader spans; unset is "standard"
 ```
 
 ## 🐛 Troubleshooting
