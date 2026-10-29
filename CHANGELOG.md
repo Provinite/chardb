@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v14.2.0] - 2026-10-28
+
 ### Added
 
 - **CI runs the backend's API e2e specs** (`*.e2e.spec.ts`), which nothing ran before, and deploys wait for them.
