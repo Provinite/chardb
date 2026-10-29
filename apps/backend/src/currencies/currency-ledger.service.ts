@@ -715,7 +715,9 @@ export class CurrencyLedgerService {
     // match. The total is `countTransactions`, for callers that ask (#444).
     const rows = await this.db.currencyTransaction.findMany({
       where: this.transactionsWhere(filters),
-      orderBy: { createdAt: "desc" },
+      // id breaks ties: a transfer's legs and a batch mint share a timestamp,
+      // and an unstable sort would let a row repeat or vanish across pages.
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: limit + 1,
       skip: offset,
     });

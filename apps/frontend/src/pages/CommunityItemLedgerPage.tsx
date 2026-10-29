@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
@@ -16,7 +16,12 @@ import {
   type ItemTransactionFieldsFragment,
 } from "../generated/graphql";
 import { collapseByBatch, KIND_LABEL, kindTone } from "../lib/itemDisplay";
-import { useLedgerSearch } from "../hooks/useLedgerSearch";
+import {
+  sameList,
+  unseenRows,
+  useLedgerSearch,
+} from "../hooks/useLedgerSearch";
+import { useOffsetPaging } from "../hooks/useOffsetPaging";
 import { pendingHolderPath, pendingLabel } from "../lib/pendingOwner";
 
 /**
@@ -471,27 +476,19 @@ export const CommunityItemLedgerPage: React.FC = () => {
 
   const communityId = useCommunityId();
   const [activeKinds, setActiveKinds] = useState<ItemTransactionKind[]>([]);
-  const {
-    search,
-    setSearch,
-    debouncedSearch,
-    limit,
-    typing,
-    loadMore,
-    resetPages,
-  } = useLedgerSearch(PAGE_SIZE);
+  const { search, setSearch, debouncedSearch, typing } = useLedgerSearch();
 
   const community = useHostCommunity();
 
   const filters = useMemo(
     () => ({
       communityId: communityId!,
-      limit,
+      limit: PAGE_SIZE,
       offset: 0,
       kinds: activeKinds.length ? activeKinds : undefined,
       search: debouncedSearch || undefined,
     }),
-    [communityId, limit, activeKinds, debouncedSearch],
+    [communityId, activeKinds, debouncedSearch],
   );
 
   const {
@@ -499,10 +496,14 @@ export const CommunityItemLedgerPage: React.FC = () => {
     previousData,
     loading,
     error,
+    fetchMore,
   } = useGetItemTransactionsQuery({
     variables: { filters },
     skip: !communityId,
-    fetchPolicy: "cache-and-network",
+    // Load more appends to the cached first page, so a filter's cache entry
+    // holds every page loaded under it. Coming back to that filter asks
+    // afresh: from the cache it would show all those pages, then drop to one.
+    fetchPolicy: "network-only",
   });
 
   // A filter the cache has not seen yet has no data until it lands. Showing
@@ -516,7 +517,6 @@ export const CommunityItemLedgerPage: React.FC = () => {
   const stale = loading || typing;
 
   const toggleKind = (kind: ItemTransactionKind) => {
-    resetPages();
     setActiveKinds((current) =>
       current.includes(kind)
         ? current.filter((k) => k !== kind)
@@ -527,6 +527,42 @@ export const CommunityItemLedgerPage: React.FC = () => {
   const rows = data?.itemTransactions?.transactions ?? [];
   const entries = collapseByBatch(rows);
   const hasMore = data?.itemTransactions?.hasMore ?? false;
+
+  // What the query asks for now, for a page that lands after a filter change.
+  const currentFilters = useRef(filters);
+  useEffect(() => {
+    currentFilters.current = filters;
+  }, [filters]);
+
+  // One page per click, appended. Asking again from the top with a larger
+  // limit had the server rebuild every row already on screen.
+  const { loadMore, loadingMore } = useOffsetPaging({
+    pageSize: PAGE_SIZE,
+    loaded: rows.length,
+    hasMore,
+    load: ({ limit, offset }) =>
+      fetchMore({
+        variables: { filters: { ...filters, limit, offset } },
+        updateQuery: (prev, { fetchMoreResult, variables }) =>
+          // `prev` is missing while a new filter's first page is in flight.
+          fetchMoreResult &&
+          prev?.itemTransactions &&
+          sameList(variables.filters, currentFilters.current)
+            ? {
+                itemTransactions: {
+                  ...fetchMoreResult.itemTransactions,
+                  transactions: [
+                    ...prev.itemTransactions.transactions,
+                    ...unseenRows(
+                      prev.itemTransactions.transactions,
+                      fetchMoreResult.itemTransactions.transactions,
+                    ),
+                  ],
+                },
+              }
+            : prev,
+      }),
+  });
 
   if (loading && !data) {
     return (
@@ -702,10 +738,10 @@ export const CommunityItemLedgerPage: React.FC = () => {
                 type="button"
                 // Not while typing either: it would page the old search,
                 // and the new one is about to replace it.
-                disabled={stale}
+                disabled={stale || loadingMore}
                 onClick={loadMore}
               >
-                {loading ? "Loading…" : "Load more"}
+                {loadingMore ? "Loading…" : "Load more"}
               </MoreButton>
             )}
           </Footer>

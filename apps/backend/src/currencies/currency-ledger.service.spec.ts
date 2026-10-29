@@ -816,6 +816,19 @@ describe("CurrencyLedgerService", () => {
       ]);
     });
 
+    it("settles rows written at the same moment by id, so pages never overlap", async () => {
+      // A transfer's legs and a batch mint share one createdAt. Without a
+      // tiebreaker, two page queries can split that group differently and
+      // repeat or skip a row at the boundary.
+      await service.findTransactions({ communityId: "comm1" });
+
+      expect(
+        mockDatabaseService.currencyTransaction.findMany.mock.calls.at(-1)?.[0],
+      ).toMatchObject({
+        orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+      });
+    });
+
     it("scopes to the community through the currency relation", async () => {
       await service.findTransactions({ communityId: "comm1" });
 
