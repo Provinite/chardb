@@ -1028,6 +1028,21 @@ export type DiscordGuildInfo = {
   name: Scalars['String']['output'];
 };
 
+/** Progress of the job that looks up Discord names for pending owners. */
+export type DiscordNameBackfillStatus = {
+  __typename?: 'DiscordNameBackfillStatus';
+  /** Accounts Discord could not find, such as deleted ones. */
+  failed: Scalars['Int']['output'];
+  finishedAt: Maybe<Scalars['DateTime']['output']>;
+  processed: Scalars['Int']['output'];
+  running: Scalars['Boolean']['output'];
+  startedAt: Maybe<Scalars['DateTime']['output']>;
+  /** Discord accounts to look up. */
+  total: Scalars['Int']['output'];
+  /** Accounts whose names were recorded. */
+  updated: Scalars['Int']['output'];
+};
+
 /** Resolved Discord user information */
 export type DiscordUserInfo = {
   __typename?: 'DiscordUserInfo';
@@ -2273,6 +2288,8 @@ export type Mutation = {
   revokeItems: Scalars['Int']['output'];
   /** Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this). */
   runDeviantartUuidBackfill: Scalars['Boolean']['output'];
+  /** Start looking up Discord names for unclaimed Discord pending owners. Returns at once; poll discordNameBackfillStatus for progress. */
+  runDiscordNameBackfill: DiscordNameBackfillStatus;
   /** Replace the set of folders one character is in. Returns where it ends up. */
   setCharacterFolders: Array<CharacterFolder>;
   /** Sets or clears the main media for a character */
@@ -3212,6 +3229,8 @@ export type PendingOwnership = {
   /** When this pending ownership was created */
   createdAt: Scalars['DateTime']['output'];
   displayIdentifier: Maybe<Scalars['String']['output']>;
+  /** The account's display name on the provider as last seen (Discord's global name) */
+  displayName: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   item: Maybe<Item>;
   /** Item ID if this is a pending item ownership */
@@ -3284,6 +3303,8 @@ export type Query = {
   currencyTransactions: CurrencyTransactionConnection;
   /** Get the Discord bot invite URL */
   discordBotInviteUrl: Scalars['String']['output'];
+  /** Progress of the most recent Discord name backfill. */
+  discordNameBackfillStatus: DiscordNameBackfillStatus;
   /** Get an enum value by ID */
   enumValueById: EnumValue;
   /** Get an enum value setting by ID */
@@ -5724,6 +5745,18 @@ export type DeviantartUuidBackfillProgressSubscriptionVariables = Exact<{
 
 export type DeviantartUuidBackfillProgressSubscription = { __typename?: 'Subscription', deviantartUuidBackfillProgress: { __typename?: 'DeviantartUuidBackfillProgress', jobId: string, total: number, processed: number, succeeded: number, failed: number, claimed: number, done: boolean, cancelled: boolean, currentRecord: { __typename?: 'DeviantartUuidBackfillRecordResult', pendingOwnershipId: string, characterId: string | null, itemId: string | null, oldValue: string, newValue: string | null, success: boolean, error: string | null, claimed: boolean, claimedByUserId: string | null } | null } };
 
+export type DiscordNameBackfillStatusFieldsFragment = { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, failed: number, startedAt: string | null, finishedAt: string | null };
+
+export type DiscordNameBackfillStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DiscordNameBackfillStatusQuery = { __typename?: 'Query', discordNameBackfillStatus: { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, failed: number, startedAt: string | null, finishedAt: string | null } };
+
+export type RunDiscordNameBackfillMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RunDiscordNameBackfillMutation = { __typename?: 'Mutation', runDiscordNameBackfill: { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, failed: number, startedAt: string | null, finishedAt: string | null } };
+
 export type VerifyEmailMutationVariables = Exact<{
   input: VerifyEmailInput;
 }>;
@@ -7292,6 +7325,17 @@ export const CurrencyTransactionFieldsFragmentDoc = gql`
 }
     ${CurrencyFieldsFragmentDoc}
 ${UserBasicFragmentDoc}`;
+export const DiscordNameBackfillStatusFieldsFragmentDoc = gql`
+    fragment DiscordNameBackfillStatusFields on DiscordNameBackfillStatus {
+  running
+  total
+  processed
+  updated
+  failed
+  startedAt
+  finishedAt
+}
+    `;
 export const EnumValueSettingDetailsFragmentDoc = gql`
     fragment EnumValueSettingDetails on EnumValueSetting {
   id
@@ -11051,6 +11095,77 @@ export function useDeviantartUuidBackfillProgressSubscription(baseOptions: Apoll
       }
 export type DeviantartUuidBackfillProgressSubscriptionHookResult = ReturnType<typeof useDeviantartUuidBackfillProgressSubscription>;
 export type DeviantartUuidBackfillProgressSubscriptionResult = Apollo.SubscriptionResult<DeviantartUuidBackfillProgressSubscription>;
+export const DiscordNameBackfillStatusDocument = gql`
+    query DiscordNameBackfillStatus {
+  discordNameBackfillStatus {
+    ...DiscordNameBackfillStatusFields
+  }
+}
+    ${DiscordNameBackfillStatusFieldsFragmentDoc}`;
+
+/**
+ * __useDiscordNameBackfillStatusQuery__
+ *
+ * To run a query within a React component, call `useDiscordNameBackfillStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDiscordNameBackfillStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDiscordNameBackfillStatusQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useDiscordNameBackfillStatusQuery(baseOptions?: Apollo.QueryHookOptions<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>(DiscordNameBackfillStatusDocument, options);
+      }
+export function useDiscordNameBackfillStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>(DiscordNameBackfillStatusDocument, options);
+        }
+export function useDiscordNameBackfillStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>(DiscordNameBackfillStatusDocument, options);
+        }
+export type DiscordNameBackfillStatusQueryHookResult = ReturnType<typeof useDiscordNameBackfillStatusQuery>;
+export type DiscordNameBackfillStatusLazyQueryHookResult = ReturnType<typeof useDiscordNameBackfillStatusLazyQuery>;
+export type DiscordNameBackfillStatusSuspenseQueryHookResult = ReturnType<typeof useDiscordNameBackfillStatusSuspenseQuery>;
+export type DiscordNameBackfillStatusQueryResult = Apollo.QueryResult<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>;
+export const RunDiscordNameBackfillDocument = gql`
+    mutation RunDiscordNameBackfill {
+  runDiscordNameBackfill {
+    ...DiscordNameBackfillStatusFields
+  }
+}
+    ${DiscordNameBackfillStatusFieldsFragmentDoc}`;
+export type RunDiscordNameBackfillMutationFn = Apollo.MutationFunction<RunDiscordNameBackfillMutation, RunDiscordNameBackfillMutationVariables>;
+
+/**
+ * __useRunDiscordNameBackfillMutation__
+ *
+ * To run a mutation, you first call `useRunDiscordNameBackfillMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRunDiscordNameBackfillMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [runDiscordNameBackfillMutation, { data, loading, error }] = useRunDiscordNameBackfillMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useRunDiscordNameBackfillMutation(baseOptions?: Apollo.MutationHookOptions<RunDiscordNameBackfillMutation, RunDiscordNameBackfillMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RunDiscordNameBackfillMutation, RunDiscordNameBackfillMutationVariables>(RunDiscordNameBackfillDocument, options);
+      }
+export type RunDiscordNameBackfillMutationHookResult = ReturnType<typeof useRunDiscordNameBackfillMutation>;
+export type RunDiscordNameBackfillMutationResult = Apollo.MutationResult<RunDiscordNameBackfillMutation>;
+export type RunDiscordNameBackfillMutationOptions = Apollo.BaseMutationOptions<RunDiscordNameBackfillMutation, RunDiscordNameBackfillMutationVariables>;
 export const VerifyEmailDocument = gql`
     mutation VerifyEmail($input: VerifyEmailInput!) {
   verifyEmail(input: $input)

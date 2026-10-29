@@ -1283,6 +1283,22 @@ type DiscordGuildInfo {
   name: String!
 }
 
+"""Progress of the job that looks up Discord names for pending owners."""
+type DiscordNameBackfillStatus {
+  """Accounts Discord could not find, such as deleted ones."""
+  failed: Int!
+  finishedAt: DateTime
+  processed: Int!
+  running: Boolean!
+  startedAt: DateTime
+
+  """Discord accounts to look up."""
+  total: Int!
+
+  """Accounts whose names were recorded."""
+  updated: Int!
+}
+
 """Resolved Discord user information"""
 type DiscordUserInfo {
   """URL to user avatar image"""
@@ -3038,6 +3054,11 @@ type Mutation {
   runDeviantartUuidBackfill(jobId: String!): Boolean!
 
   """
+  Start looking up Discord names for unclaimed Discord pending owners. Returns at once; poll discordNameBackfillStatus for progress.
+  """
+  runDiscordNameBackfill: DiscordNameBackfillStatus!
+
+  """
   Replace the set of folders one character is in. Returns where it ends up.
   """
   setCharacterFolders(input: SetCharacterFoldersInput!): [CharacterFolder!]!
@@ -3455,6 +3476,11 @@ type PendingOwnership {
   """When this pending ownership was created"""
   createdAt: DateTime!
   displayIdentifier: String
+
+  """
+  The account's display name on the provider as last seen (Discord's global name)
+  """
+  displayName: String
   id: ID!
   item: Item
 
@@ -3667,6 +3693,9 @@ type Query {
 
   """Get the Discord bot invite URL"""
   discordBotInviteUrl: String!
+
+  """Progress of the most recent Discord name backfill."""
+  discordNameBackfillStatus: DiscordNameBackfillStatus!
 
   """Get an enum value by ID"""
   enumValueById(

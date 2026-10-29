@@ -49,6 +49,7 @@ import { TradesPage } from "../pages/TradesPage";
 import { JoinCommunityPage } from "../pages/JoinCommunityPage";
 import { MyCommunitiesPage } from "../pages/MyCommunitiesPage";
 import { DeviantArtBackfillPage } from "../pages/DeviantArtBackfillPage";
+import { DiscordNameBackfillPage } from "../pages/DiscordNameBackfillPage";
 import { DeviantArtCallbackPage } from "../pages/DeviantArtCallbackPage";
 import { DiscordCallbackPage } from "../pages/DiscordCallbackPage";
 import { ToyhouseCallbackPage } from "../pages/ToyhouseCallbackPage";
@@ -312,6 +313,14 @@ export const ApexRoutes: React.FC = () => (
       element={
         <SiteAdminRoute allow={isSiteAdmin}>
           <DeviantArtBackfillPage />
+        </SiteAdminRoute>
+      }
+    />
+    <Route
+      path="/admin/discord-names"
+      element={
+        <SiteAdminRoute allow={isSiteAdmin}>
+          <DiscordNameBackfillPage />
         </SiteAdminRoute>
       }
     />
