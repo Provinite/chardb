@@ -27,6 +27,22 @@ export interface PendingOwnerNames {
   displayName?: string;
 }
 
+/** A row of the external members holders-and-counts query, as Postgres names it. */
+interface ExternalMemberSqlRow {
+  id: string;
+  item_id: string | null;
+  character_id: string | null;
+  provider: ExternalAccountProvider;
+  provider_account_id: string;
+  display_identifier: string | null;
+  display_name: string | null;
+  created_at: Date;
+  claimed_at: Date | null;
+  claimed_by_user_id: string | null;
+  item_count: bigint;
+  character_count: bigint;
+}
+
 /** One external member: who they are, and how much waits on them. */
 export interface ExternalMemberRow {
   /** Their most recent waiting row, which carries the latest names. */
@@ -530,36 +546,71 @@ export class PendingOwnershipService {
     const page = groups.slice(0, limit);
     if (!page.length) return { members: [], hasMore: false };
 
-    // Every waiting row of the accounts on this page, newest first: the first
-    // of each is the holder, carrying the names last recorded for them.
-    const rows = await this.prisma.pendingOwnership.findMany({
-      where: {
-        AND: [
-          ...waitingClauses,
-          {
-            OR: page.map((g) => ({
-              provider: g.provider,
-              providerAccountId: g.providerAccountId,
-            })),
-          },
-        ],
-      },
-      orderBy: { createdAt: "desc" },
-    });
+    // Who they are and what they hold, in one query bounded by the page: each
+    // account's newest waiting row, which carries the names last recorded for
+    // them, with counts over every row waiting on them -- not only those the
+    // search matched. Raw SQL for DISTINCT ON: Prisma's distinct would load
+    // every row and pick in memory, which is the cost this avoids (#445).
+    // Window counts are taken before DISTINCT ON keeps one row per account;
+    // id settles a tie on time, so the name shown never wobbles.
+    const rows = await this.prisma.$queryRaw<ExternalMemberSqlRow[]>(Prisma.sql`
+      SELECT DISTINCT ON (po.provider, po.provider_account_id)
+        po.id, po.item_id, po.character_id, po.provider,
+        po.provider_account_id, po.display_identifier, po.display_name,
+        po.created_at, po.claimed_at, po.claimed_by_user_id,
+        count(po.item_id) OVER account AS item_count,
+        count(po.character_id) OVER account AS character_count
+      FROM pending_ownership po
+      -- The page's providers are cast to the enum rather than the column to
+      -- text, so (provider, provider_account_id) is an index lookup.
+      JOIN unnest(
+        ${page.map((g) => g.provider)}::"ExternalAccountProvider"[],
+        ${page.map((g) => g.providerAccountId)}::text[]
+      ) AS on_page (provider, provider_account_id)
+        ON on_page.provider = po.provider
+       AND on_page.provider_account_id = po.provider_account_id
+      LEFT JOIN items i ON i.id = po.item_id
+      LEFT JOIN item_types it ON it.id = i.item_type_id
+      LEFT JOIN characters c ON c.id = po.character_id
+      LEFT JOIN species s ON s.id = c.species_id
+      WHERE po.claimed_at IS NULL
+        AND (
+          (i.id IS NOT NULL AND i.destroyed_at IS NULL AND i.owner_id IS NULL
+            AND it.community_id = ${communityId})
+          OR (c.id IS NOT NULL AND c.deleted_at IS NULL
+            AND s.community_id = ${communityId})
+        )
+      WINDOW account AS (PARTITION BY po.provider, po.provider_account_id)
+      ORDER BY po.provider, po.provider_account_id, po.created_at DESC, po.id DESC
+    `);
 
+    const key = (provider: string, providerAccountId: string) =>
+      `${provider}:${providerAccountId}`;
+    const byKey = new Map(
+      rows.map((r) => [key(r.provider, r.provider_account_id), r]),
+    );
+
+    // In the page's order. An account whose last waiting row went between
+    // the two queries has no row here and drops out of this page.
     const members = page.flatMap((g): ExternalMemberRow[] => {
-      const theirs = rows.filter(
-        (r) =>
-          r.provider === g.provider &&
-          r.providerAccountId === g.providerAccountId,
-      );
-      const holder = theirs[0];
-      if (!holder) return [];
+      const row = byKey.get(key(g.provider, g.providerAccountId));
+      if (!row) return [];
       return [
         {
-          holder,
-          itemCount: theirs.filter((r) => r.itemId).length,
-          characterCount: theirs.filter((r) => r.characterId).length,
+          holder: {
+            id: row.id,
+            itemId: row.item_id,
+            characterId: row.character_id,
+            provider: row.provider,
+            providerAccountId: row.provider_account_id,
+            displayIdentifier: row.display_identifier,
+            displayName: row.display_name,
+            createdAt: row.created_at,
+            claimedAt: row.claimed_at,
+            claimedByUserId: row.claimed_by_user_id,
+          },
+          itemCount: Number(row.item_count),
+          characterCount: Number(row.character_count),
         },
       ];
     });
