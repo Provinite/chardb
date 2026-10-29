@@ -27,6 +27,14 @@ export interface PendingOwnerNames {
   displayName?: string;
 }
 
+/** One external member: who they are, and how much waits on them. */
+export interface ExternalMemberRow {
+  /** Their most recent waiting row, which carries the latest names. */
+  holder: PendingOwnership;
+  itemCount: number;
+  characterCount: number;
+}
+
 @Injectable()
 export class PendingOwnershipService {
   constructor(
@@ -438,6 +446,125 @@ export class PendingOwnershipService {
         item: true,
       },
     });
+  }
+
+  /**
+   * External members: everyone something waits on in a community without an
+   * account here, one row per external account, newest first (#445).
+   *
+   * One query serves both the search and browsing the lot: an empty search
+   * is no filter. Each row carries counts, not the claims themselves --
+   * opening a member shows those.
+   */
+  async findExternalMembers(
+    communityId: string,
+    {
+      search,
+      provider,
+      limit = 25,
+      offset = 0,
+    }: {
+      search?: string;
+      provider?: ExternalAccountProvider;
+      limit?: number;
+      offset?: number;
+    },
+  ): Promise<{ members: ExternalMemberRow[]; hasMore: boolean }> {
+    const term = search?.trim();
+    // What still waits on someone here: unclaimed, and live in this
+    // community -- an item nobody holds yet, or a character not deleted.
+    const waitingClauses: Prisma.PendingOwnershipWhereInput[] = [
+      { claimedAt: null },
+      {
+        OR: [
+          {
+            item: {
+              destroyedAt: null,
+              ownerId: null,
+              itemType: { communityId },
+            },
+          },
+          { character: { ...notDeleted, species: { communityId } } },
+        ],
+      },
+      ...(provider ? [{ provider }] : []),
+    ];
+    // Who to list: the search decides that, but not what they are counted as
+    // holding -- rows from before names were kept do not match a name.
+    const where: Prisma.PendingOwnershipWhereInput = {
+      AND: [
+        ...waitingClauses,
+        ...(term
+          ? [
+              {
+                OR: [
+                  {
+                    displayIdentifier: {
+                      contains: term,
+                      mode: "insensitive" as const,
+                    },
+                  },
+                  {
+                    displayName: {
+                      contains: term,
+                      mode: "insensitive" as const,
+                    },
+                  },
+                  { providerAccountId: term },
+                ],
+              },
+            ]
+          : []),
+      ],
+    };
+
+    // One row past the page answers "is there more" without counting.
+    const groups = await this.prisma.pendingOwnership.groupBy({
+      by: ["provider", "providerAccountId"],
+      where,
+      _max: { createdAt: true },
+      orderBy: [{ _max: { createdAt: "desc" } }, { providerAccountId: "asc" }],
+      skip: offset,
+      take: limit + 1,
+    });
+    const page = groups.slice(0, limit);
+    if (!page.length) return { members: [], hasMore: false };
+
+    // Every waiting row of the accounts on this page, newest first: the first
+    // of each is the holder, carrying the names last recorded for them.
+    const rows = await this.prisma.pendingOwnership.findMany({
+      where: {
+        AND: [
+          ...waitingClauses,
+          {
+            OR: page.map((g) => ({
+              provider: g.provider,
+              providerAccountId: g.providerAccountId,
+            })),
+          },
+        ],
+      },
+      orderBy: { createdAt: "desc" },
+    });
+
+    const members = page.flatMap((g): ExternalMemberRow[] => {
+      const theirs = rows.filter(
+        (r) =>
+          r.provider === g.provider &&
+          r.providerAccountId === g.providerAccountId,
+      );
+      const holder = theirs[0];
+      if (!holder) return [];
+      return [
+        {
+          holder,
+          itemCount: theirs.filter((r) => r.itemId).length,
+          characterCount: theirs.filter((r) => r.characterId).length,
+        },
+      ];
+    });
+
+    return { members, hasMore: groups.length > limit };
   }
 
   /**

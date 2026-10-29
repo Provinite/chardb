@@ -37,10 +37,10 @@ export const pendingLabel = (p: PendingOwnerLike): string => {
   return `${provider} account`;
 };
 
-/** Their holdings page, or null for a viewer the id is hidden from. */
+/** Their pending inventory, or null for a viewer the id is hidden from. */
 export const pendingHolderPath = (p: PendingOwnerLike): string | null =>
   p.providerAccountId
-    ? `/holders/${p.provider.toLowerCase()}/${encodeURIComponent(
+    ? `/external-members/${p.provider.toLowerCase()}/${encodeURIComponent(
         p.providerAccountId,
       )}`
     : null;

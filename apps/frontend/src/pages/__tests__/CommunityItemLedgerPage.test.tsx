@@ -210,7 +210,7 @@ describe("CommunityItemLedgerPage pending holders (#445)", () => {
 
     expect(
       within(row).getByRole("link", { name: /Neo the Baka/ }),
-    ).toHaveAttribute("href", "/holders/discord/214000000000009071");
+    ).toHaveAttribute("href", "/external-members/discord/214000000000009071");
   });
 });
 

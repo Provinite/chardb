@@ -1,0 +1,467 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>External Members - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Find the people who hold items or characters in a CharDB community without an account, see what waits on them, and remove what they've spent."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/external-members.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="External Members" />
+    <meta
+      property="og:description"
+      content="Find the people who hold items or characters in a CharDB community without an account, see what waits on them, and remove what they've spent."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/external-members.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/external-members-inventory.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="An external member's pending inventory in CharDB, with items grouped by type and a character."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .dim {
+        color: #8b93c7;
+      }
+
+      .kinds {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      .kinds th {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid #e0e0e0;
+        color: #333;
+      }
+
+      .kinds td {
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #eee;
+        color: #555;
+        vertical-align: top;
+      }
+
+      .pill {
+        display: inline-block;
+        border-radius: 999px;
+        padding: 0.1rem 0.55rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+      }
+
+      .pill.granted {
+        color: #0e7c56;
+        background: #0e9f6e22;
+      }
+      .pill.revoked {
+        color: #b91c1c;
+        background: #dc262622;
+      }
+      .pill.traded {
+        color: #0e7490;
+        background: #0891b222;
+      }
+      .pill.claimed {
+        color: #a16207;
+        background: #d9770622;
+      }
+      .pill.used,
+      .pill.imported {
+        color: #52606d;
+        background: #64748b22;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>External Members</h1>
+        <p>Finding people who hold things here without an account</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Items and characters can be granted to a Discord or DeviantArt
+            account before its owner has an account here. Event prizes handed
+            out by the Discord bot work this way. Until that person links the
+            account and joins, what they won waits on the account.
+          </p>
+          <p>
+            <strong>External Members</strong>, under Administration, is where
+            staff find those people: by name, by ID, or by browsing. Opening one
+            shows everything waiting on them, and staff can remove items they
+            have already spent elsewhere.
+          </p>
+
+          <div class="highlight-box">
+            <strong>Who can use it:</strong> staff whose role can see pending
+            owners (the <em>create orphaned characters</em> permission).
+            Removing items also needs <em>grant items</em>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1: names -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Looking up Discord names</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Grants record the Discord username and display name of whoever they
+            go to. Older grants recorded only the numeric Discord ID, which
+            nobody can search for by name.
+          </p>
+          <p>
+            A site admin fixes that once from
+            <strong>Site Administration → Discord Names</strong>.
+            <strong>Look up Discord names</strong> asks Discord about every
+            account something waits on and records both names. Run it again
+            later to pick up names people have changed.
+          </p>
+          <p>
+            When it finishes it reports how many accounts were named, how many
+            Discord no longer knows, and how many it couldn't reach Discord for.
+            Those last ones are worth a second run.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="external-members-discord-names.png"
+            alt="Site admin Discord Names page with a Look up Discord names button"
+          />
+          <div class="screenshot-caption">
+            The Discord Names page, before a run.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: search -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Finding someone</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Start typing. Search matches the display name or username anywhere
+            in the name, or the account ID exactly — paste an ID straight from
+            Discord. <strong>Any account</strong> narrows it to Discord or
+            DeviantArt.
+          </p>
+          <p>
+            Each result is one person, with how many items and characters wait
+            on them.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="external-members-search.png"
+            alt="External Members search for moth, finding Moth Lantern with 6 items and 1 character"
+          />
+          <div class="screenshot-caption">Searching for <em>moth</em>.</div>
+        </div>
+      </div>
+
+      <!-- Step 3: browse -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Browsing everyone</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Browse all</strong> lists everyone, newest grant first, 25
+            to a page. Typing a search narrows the same list.
+          </p>
+          <p>
+            Someone listed only by a number, like
+            <em>Discord 214000000000010003</em>, has no names recorded yet. The
+            name lookup in step 1 fills them in.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="external-members-browse.png"
+            alt="Browse all listing three external members: two with names and one shown by Discord ID"
+          />
+          <div class="screenshot-caption">
+            Everyone, newest first. The middle row predates name lookups.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4: pending inventory -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">Their pending inventory</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Opening someone shows what waits on them: items grouped by type, and
+            characters. Their name on the item ledger links here too.
+          </p>
+          <p>
+            Everything here moves to them automatically once they link that
+            Discord or DeviantArt account and join the community.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="external-members-inventory.png"
+            alt="Moth Lantern's pending inventory: three item types with counts and Remove buttons, and one character"
+          />
+          <div class="screenshot-caption">
+            Six items in three types, and a character.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5: removing -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Removing what they've spent</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Remove…</strong> takes some or all of one item type. Say how
+            many, and give a reason — members see it on the ledger. A staff note
+            is optional and stays with staff. The oldest go first.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="external-members-remove.png"
+            alt="Remove dialog for both of Moth Lantern's Hollowtide Candies, with the reason Spent off-site in the 2025 event"
+          />
+          <div class="screenshot-caption">
+            Removing both Hollowtide Candies.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            Each removal is one entry on the item ledger, naming who it was
+            taken from.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-ledger-external-holder.png"
+            alt="Item ledger searched for moth: a revoke of two MYO Tickets from Moth Lantern above three grants to them from the Halloween bot"
+          />
+          <div class="screenshot-caption">
+            The ledger, searched for <em>moth</em>.
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB External Members &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

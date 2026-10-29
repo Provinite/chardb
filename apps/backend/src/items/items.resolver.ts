@@ -14,6 +14,8 @@ import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
+import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
+import { ExternalMembersArgs } from "../pending-ownership/dto/external-members.args";
 import { mapPrismaCurrencyToGraphQL } from "../currencies/utils/currency-resolver-mappers";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
@@ -36,6 +38,7 @@ import {
 import { Item as ItemEntity } from "./entities/item.entity";
 import { ItemEconomyReport } from "./entities/item-economy.entity";
 import {
+  ExternalMembersPage,
   MemberHoldingsReport,
   PendingHoldingsReport,
 } from "./entities/member-holdings.entity";
@@ -325,18 +328,21 @@ export class ItemsResolver {
   }
 
   /**
-   * Staff only, unlike a member's inventory: this page exists to find and
-   * remove what someone with no account here still holds (#445), and
-   * CanGrantItems is what removing takes. Who the holder is stays gated on
-   * the holder's own fields, as on every pending owner.
+   * Staff only, unlike a member's inventory. Gated on the permission that
+   * already decides who may see who a pending owner is: this page is about
+   * exactly that person (#445). Removing anything from it still takes
+   * CanGrantItems, on the mutation. Site admins too, matching who can see a
+   * pending owner's fields.
    */
-  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
   @ResolveCommunityFrom({ communityId: "communityId" })
   @Query(() => PendingHoldingsReport, {
     name: "pendingHoldings",
     description:
-      "Live, unclaimed items held for one external account in one " +
-      "community, grouped by item type. For staff who can grant items.",
+      "An external member's pending inventory: the live, unclaimed items " +
+      "and characters held for one external account in one community. For " +
+      "staff who may see pending owners.",
   })
   async pendingHoldings(
     @Args("communityId", { type: () => ID }) communityId: string,
@@ -353,10 +359,43 @@ export class ItemsResolver {
     return {
       ...report,
       holder: mapPrismaPendingOwnershipToGraphQL(report.holder),
+      claimedBy: report.claimedBy
+        ? mapPrismaUserToGraphQL(report.claimedBy)
+        : null,
       holdings: report.holdings.map((h) => ({
         count: h.count,
         itemType: mapPrismaItemTypeToGraphQL(h.itemType),
         items: h.items.map(mapPrismaItemToGraphQL),
+      })),
+    };
+  }
+
+  /**
+   * Same gate as pendingHoldings: this lists who pending owners are.
+   */
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => ExternalMembersPage, {
+    name: "externalMembers",
+    description:
+      "Everyone something waits on in a community without an account here, " +
+      "one per external account, newest first. Narrowed by an optional " +
+      "search on either name or the exact account id.",
+  })
+  async externalMembers(
+    @Args()
+    { communityId, search, provider, limit, offset }: ExternalMembersArgs,
+  ): Promise<ExternalMembersPage> {
+    const page = await this.pendingOwnershipService.findExternalMembers(
+      communityId,
+      { search, provider, limit, offset },
+    );
+    return {
+      hasMore: page.hasMore,
+      members: page.members.map((m) => ({
+        ...m,
+        holder: mapPrismaPendingOwnershipToGraphQL(m.holder),
       })),
     };
   }

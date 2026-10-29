@@ -241,9 +241,12 @@ const Party = styled.span`
 `;
 
 const PendingName = styled(Party)`
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
+  &,
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
 `;
 
 const Muted = styled.span`

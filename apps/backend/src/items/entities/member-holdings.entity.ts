@@ -1,4 +1,4 @@
-import { ObjectType, Field, Int } from "@nestjs/graphql";
+import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
 import { ItemType } from "./item-type.entity";
 import { Item } from "./item.entity";
 import { User } from "../../users/entities/user.entity";
@@ -55,13 +55,26 @@ export class MemberHoldingsReport {
   holdings: MemberHolding[];
 }
 
+@ObjectType({
+  description: "A character waiting on an external account to be claimed.",
+})
+export class PendingCharacter {
+  @Field(() => ID)
+  id: string;
+
+  @Field()
+  name: string;
+}
+
 /**
- * What waits on one external account in one community: someone with no
- * account here, such as an event winner known only by Discord (#445).
+ * An external member's pending inventory: everything that waits on one
+ * external account in one community -- someone with no account here, such as
+ * an event winner known only by Discord (#445).
  */
 @ObjectType({
   description:
-    "Live, unclaimed items held for one external account in one community.",
+    "Live, unclaimed items and characters held for one external account in " +
+    "one community.",
 })
 export class PendingHoldingsReport {
   @Field(() => PendingOwnership, {
@@ -79,4 +92,43 @@ export class PendingHoldingsReport {
 
   @Field(() => [MemberHolding], { description: "Largest holding first." })
   holdings: MemberHolding[];
+
+  @Field(() => [PendingCharacter], { description: "By name." })
+  characters: PendingCharacter[];
+
+  @Field(() => User, {
+    nullable: true,
+    description:
+      "Who claimed what was held for the account, once nothing is left " +
+      "waiting: they linked it and joined. Null while anything still waits.",
+  })
+  claimedBy: User | null;
+}
+
+@ObjectType({
+  description:
+    "Someone something waits on in a community without an account here.",
+})
+export class ExternalMember {
+  @Field(() => PendingOwnership, {
+    description:
+      "Their most recent waiting claim, carrying the names last recorded for " +
+      "them. Blank to viewers who may not see who holds what.",
+  })
+  holder: PendingOwnership;
+
+  @Field(() => Int, { description: "Live items waiting on them." })
+  itemCount: number;
+
+  @Field(() => Int, { description: "Characters waiting on them." })
+  characterCount: number;
+}
+
+@ObjectType()
+export class ExternalMembersPage {
+  @Field(() => [ExternalMember], { description: "Newest waiting claim first." })
+  members: ExternalMember[];
+
+  @Field()
+  hasMore: boolean;
 }
