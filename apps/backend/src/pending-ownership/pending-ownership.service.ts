@@ -441,6 +441,26 @@ export class PendingOwnershipService {
   }
 
   /**
+   * Record the names an account goes by now on everything still waiting on
+   * it, so staff can find it by them (#445). Claimed rows are history and keep
+   * the names they were claimed under.
+   */
+  async recordNames(
+    provider: ExternalAccountProvider,
+    providerAccountId: string,
+    names: PendingOwnerNames,
+  ): Promise<number> {
+    const { count } = await this.prisma.pendingOwnership.updateMany({
+      where: { provider, providerAccountId, claimedAt: null },
+      data: {
+        displayIdentifier: names.displayIdentifier ?? null,
+        displayName: names.displayName ?? null,
+      },
+    });
+    return count;
+  }
+
+  /**
    * Claim what was waiting on an account its user has just linked: the
    * grants from communities they belong to, and characters with no
    * community. The rest keeps waiting until they join (claimPendingInCommunity).

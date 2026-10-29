@@ -9,6 +9,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { ExternalAccount, ExternalAccountProvider } from "@chardb/database";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import { DiscordService } from "../discord/discord.service";
 
 export interface LinkAccountResult {
   externalAccount: ExternalAccount;
@@ -24,6 +25,7 @@ export class ExternalAccountsService {
     private database: DatabaseService,
     @Inject(forwardRef(() => PendingOwnershipService))
     private pendingOwnershipService: PendingOwnershipService,
+    private discordService: DiscordService,
   ) {}
 
   /**
@@ -133,6 +135,12 @@ export class ExternalAccountsService {
       providerAccountId,
     );
 
+    // Whatever is left waits until they join a community. Name it by who they
+    // are now, so staff can find it meanwhile (#445).
+    if (provider === ExternalAccountProvider.DISCORD) {
+      await this.recordDiscordNames(providerAccountId);
+    }
+
     const claimedCharacterIds = claimedItems
       .filter((item) => item.characterId)
       .map((item) => item.characterId!);
@@ -181,5 +189,26 @@ export class ExternalAccountsService {
     });
 
     return true;
+  }
+
+  /**
+   * Best effort: the link has already happened, and a name lookup that fails
+   * must not undo it. The name backfill job catches anything missed.
+   */
+  private async recordDiscordNames(providerAccountId: string): Promise<void> {
+    try {
+      const user = await this.discordService.getUserInfo(providerAccountId);
+      await this.pendingOwnershipService.recordNames(
+        ExternalAccountProvider.DISCORD,
+        providerAccountId,
+        { displayIdentifier: user.username, displayName: user.displayName },
+      );
+    } catch (error) {
+      this.logger.warn({
+        message: "Could not record Discord names for a newly linked account",
+        providerAccountId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 }

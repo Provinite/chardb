@@ -8,6 +8,7 @@ import {
 import { ExternalAccountProvider } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
 import { DiscordService } from "../../discord/discord.service";
+import { PendingOwnershipService } from "../../pending-ownership/pending-ownership.service";
 import { DiscordNameBackfillStatus } from "./discord-name-backfill-status.entity";
 
 /** Delay between Discord lookups. Overridable so tests need not wait. */
@@ -46,6 +47,7 @@ export class DiscordNameBackfillService {
   constructor(
     private readonly db: DatabaseService,
     private readonly discord: DiscordService,
+    private readonly pendingOwnership: PendingOwnershipService,
     @Optional() @Inject(DISCORD_NAME_BACKFILL_PACE_MS) paceMs?: number,
   ) {
     this.paceMs = paceMs ?? DEFAULT_PACE_MS;
@@ -104,17 +106,11 @@ export class DiscordNameBackfillService {
   private async backfillAccount(providerAccountId: string): Promise<void> {
     try {
       const user = await this.discord.getUserInfo(providerAccountId);
-      await this.db.pendingOwnership.updateMany({
-        where: {
-          provider: ExternalAccountProvider.DISCORD,
-          providerAccountId,
-          claimedAt: null,
-        },
-        data: {
-          displayIdentifier: user.username,
-          displayName: user.displayName ?? null,
-        },
-      });
+      await this.pendingOwnership.recordNames(
+        ExternalAccountProvider.DISCORD,
+        providerAccountId,
+        { displayIdentifier: user.username, displayName: user.displayName },
+      );
       this.current.updated++;
     } catch (error) {
       // Deleted accounts and bad ids. Whatever name the rows already have is

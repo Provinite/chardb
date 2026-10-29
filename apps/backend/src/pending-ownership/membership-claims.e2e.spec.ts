@@ -177,6 +177,19 @@ describe("Pending ownership and community membership (e2e)", () => {
       expect(await itemOwner()).toBeNull();
       expect(await characterOwner()).toBeNull();
     });
+
+    it("names what is left waiting, for staff to find meanwhile (#445)", async () => {
+      // Recorded with no names, as rows from before names were kept are.
+      await pending.createForCharacter(characterId, DISCORD, DISCORD_ID);
+      await link();
+
+      const waiting = await db.pendingOwnership.findUniqueOrThrow({
+        where: { characterId },
+      });
+      expect(waiting.claimedAt).toBeNull();
+      expect(waiting.displayIdentifier).toBe("neo.baka");
+      expect(waiting.displayName).toBe("Neo the Baka");
+    });
   });
 
   // How the Halloween bot grants a prize: inside the knock's own transaction,

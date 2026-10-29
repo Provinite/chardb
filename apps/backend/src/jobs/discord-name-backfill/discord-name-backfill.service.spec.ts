@@ -7,9 +7,11 @@ import {
 } from "./discord-name-backfill.service";
 import { DatabaseService } from "../../database/database.service";
 import { DiscordService } from "../../discord/discord.service";
+import { PendingOwnershipService } from "../../pending-ownership/pending-ownership.service";
 import { mockDatabaseService } from "../../../test/setup";
 
 const mockDiscordService = { getUserInfo: jest.fn() };
+const mockPendingOwnership = { recordNames: jest.fn() };
 
 const NEO = "214000000000009071";
 const GONE = "214000000000009072";
@@ -28,6 +30,7 @@ describe("DiscordNameBackfillService", () => {
         DiscordNameBackfillService,
         { provide: DatabaseService, useValue: mockDatabaseService },
         { provide: DiscordService, useValue: mockDiscordService },
+        { provide: PendingOwnershipService, useValue: mockPendingOwnership },
         // No pacing in tests.
         { provide: DISCORD_NAME_BACKFILL_PACE_MS, useValue: 0 },
       ],
@@ -38,9 +41,7 @@ describe("DiscordNameBackfillService", () => {
       { providerAccountId: NEO },
       { providerAccountId: GONE },
     ]);
-    mockDatabaseService.pendingOwnership.updateMany.mockResolvedValue({
-      count: 1,
-    });
+    mockPendingOwnership.recordNames.mockResolvedValue(1);
     mockDiscordService.getUserInfo.mockImplementation((id: string) =>
       id === NEO
         ? Promise.resolve({
@@ -68,16 +69,11 @@ describe("DiscordNameBackfillService", () => {
   it("records both names on every row the account holds", async () => {
     await service.run();
 
-    expect(
-      mockDatabaseService.pendingOwnership.updateMany,
-    ).toHaveBeenCalledWith({
-      where: {
-        provider: ExternalAccountProvider.DISCORD,
-        providerAccountId: NEO,
-        claimedAt: null,
-      },
-      data: { displayIdentifier: "neo.baka", displayName: "Neo the Baka" },
-    });
+    expect(mockPendingOwnership.recordNames).toHaveBeenCalledWith(
+      ExternalAccountProvider.DISCORD,
+      NEO,
+      { displayIdentifier: "neo.baka", displayName: "Neo the Baka" },
+    );
   });
 
   it("counts an account Discord no longer knows as failed, and carries on", async () => {
@@ -91,9 +87,7 @@ describe("DiscordNameBackfillService", () => {
       failed: 1,
     });
     // Nothing written for it: a stale name beats no name at all.
-    expect(
-      mockDatabaseService.pendingOwnership.updateMany,
-    ).toHaveBeenCalledTimes(1);
+    expect(mockPendingOwnership.recordNames).toHaveBeenCalledTimes(1);
   });
 
   it("refuses a second run while one is going", async () => {

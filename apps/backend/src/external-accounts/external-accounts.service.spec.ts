@@ -3,12 +3,15 @@ import { ConflictException, NotFoundException } from "@nestjs/common";
 import { ExternalAccountsService } from "./external-accounts.service";
 import { DatabaseService } from "../database/database.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import { DiscordService } from "../discord/discord.service";
 import { ExternalAccountProvider } from "@prisma/client";
 import { mockDatabaseService } from "../../test/setup";
 
 const mockPendingOwnershipService = {
   claimAllForAccount: jest.fn(),
+  recordNames: jest.fn(),
 };
+const mockDiscordService = { getUserInfo: jest.fn() };
 
 describe("ExternalAccountsService", () => {
   let service: ExternalAccountsService;
@@ -26,6 +29,7 @@ describe("ExternalAccountsService", () => {
           provide: PendingOwnershipService,
           useValue: mockPendingOwnershipService,
         },
+        { provide: DiscordService, useValue: mockDiscordService },
       ],
     }).compile();
 
@@ -109,6 +113,54 @@ describe("ExternalAccountsService", () => {
       const result = await service.findByProviderAndUserId(provider, userId);
 
       expect(result).toBeNull();
+    });
+  });
+
+  describe("Discord names on linking (#445)", () => {
+    const DISCORD_ID = "214000000000009071";
+    const link = (provider: ExternalAccountProvider, accountId: string) =>
+      service.linkExternalAccount("user1", provider, accountId, "Neo the Baka");
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      db.externalAccount.findUnique.mockResolvedValue(null);
+      db.externalAccount.create.mockResolvedValue({ id: "account1" });
+      mockPendingOwnershipService.claimAllForAccount.mockResolvedValue([]);
+      mockDiscordService.getUserInfo.mockResolvedValue({
+        userId: DISCORD_ID,
+        username: "neo.baka",
+        displayName: "Neo the Baka",
+      });
+    });
+
+    it("records both names on what still waits on the account", async () => {
+      // Linked before joining, the items stay pending until they do; staff
+      // should be able to find them meanwhile.
+      await link(ExternalAccountProvider.DISCORD, DISCORD_ID);
+
+      expect(mockPendingOwnershipService.recordNames).toHaveBeenCalledWith(
+        ExternalAccountProvider.DISCORD,
+        DISCORD_ID,
+        { displayIdentifier: "neo.baka", displayName: "Neo the Baka" },
+      );
+    });
+
+    it("links all the same when Discord cannot be reached", async () => {
+      mockDiscordService.getUserInfo.mockRejectedValue(
+        new Error("Discord is down"),
+      );
+
+      await expect(
+        link(ExternalAccountProvider.DISCORD, DISCORD_ID),
+      ).resolves.toMatchObject({ externalAccount: { id: "account1" } });
+      expect(mockPendingOwnershipService.recordNames).not.toHaveBeenCalled();
+    });
+
+    it("asks Discord nothing about another provider's account", async () => {
+      await link(ExternalAccountProvider.DEVIANTART, "da-uuid");
+
+      expect(mockDiscordService.getUserInfo).not.toHaveBeenCalled();
+      expect(mockPendingOwnershipService.recordNames).not.toHaveBeenCalled();
     });
   });
 
