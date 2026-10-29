@@ -160,33 +160,86 @@ describe("External members (e2e)", () => {
     expect(members[0].itemCount).toBe(4);
   });
 
-  it("counts characters apart from items, and keeps the page's order", async () => {
-    await seedNeo();
+  /** A character waiting on an account, in `onSpecies`. */
+  const waitingCharacter = async (
+    providerAccountId: string,
+    { provider = DEVIANTART, onSpecies = speciesId } = {},
+  ) => {
     const character = await db.character.create({
-      data: { name: "Pinefall", speciesId },
+      data: { name: "Pinefall", speciesId: onSpecies },
     });
-    await db.pendingOwnership.create({
-      data: {
-        characterId: character.id,
-        provider: DEVIANTART,
-        providerAccountId: ART,
-        displayIdentifier: "someartist",
-        createdAt: new Date("2025-11-25T19:00:00Z"),
-      },
+    return db.pendingOwnership.create({
+      data: { characterId: character.id, provider, providerAccountId },
+    });
+  };
+
+  /** The counts for one account, by provider and id. */
+  const countsFor = (
+    members: Awaited<
+      ReturnType<PendingOwnershipService["findExternalMembers"]>
+    >["members"],
+    provider: ExternalAccountProvider,
+    accountId: string,
+  ) => {
+    const member = members.find(
+      (m) =>
+        m.holder.provider === provider &&
+        m.holder.providerAccountId === accountId,
+    );
+    return member && [member.itemCount, member.characterCount];
+  };
+
+  it("counts characters apart from items", async () => {
+    await seedNeo();
+    await waitingCharacter(ART);
+
+    const { members } = await pending.findExternalMembers(communityId, {});
+
+    expect(countsFor(members, DISCORD, NEO)).toEqual([4, 0]);
+    expect(countsFor(members, DEVIANTART, ART)).toEqual([0, 1]);
+  });
+
+  it("leaves out an item someone here already owns", async () => {
+    await seedNeo();
+    const owned = await waitingItem(NEO, { names: neoNames });
+    const owner = await testApp.createTestUser({ username: "claimed-owner" });
+    await db.item.update({
+      where: { id: owned.itemId! },
+      data: { ownerId: owner.id },
     });
 
     const { members } = await pending.findExternalMembers(communityId, {});
 
-    // Newest waiting claim first: the artist's character is newer.
-    expect(
-      members.map((m) => [
-        m.holder.providerAccountId,
-        m.itemCount,
-        m.characterCount,
-      ]),
-    ).toEqual([
-      [ART, 0, 1],
-      [NEO, 4, 0],
-    ]);
+    expect(countsFor(members, DISCORD, NEO)).toEqual([4, 0]);
+  });
+
+  it("leaves out a deleted character and another community's", async () => {
+    await waitingCharacter(ART);
+    const deleted = await waitingCharacter(ART);
+    await db.character.update({
+      where: { id: deleted.characterId! },
+      data: { deletedAt: new Date() },
+    });
+    const elsewhere = await testApp.createTestCommunity("Theirs");
+    const theirSpecies = await testApp.createTestSpecies(elsewhere.id);
+    await waitingCharacter(ART, { onSpecies: theirSpecies.id });
+
+    const { members } = await pending.findExternalMembers(communityId, {});
+
+    expect(countsFor(members, DEVIANTART, ART)).toEqual([0, 1]);
+  });
+
+  it("keeps one id under two providers as two people", async () => {
+    // A Discord id and a DeviantArt id are different accounts even when
+    // they spell the same thing.
+    await waitingItem(NEO, { names: neoNames });
+    await waitingItem(NEO, { names: neoNames });
+    await waitingCharacter(NEO, { provider: DEVIANTART });
+
+    const { members } = await pending.findExternalMembers(communityId, {});
+
+    expect(members).toHaveLength(2);
+    expect(countsFor(members, DISCORD, NEO)).toEqual([2, 0]);
+    expect(countsFor(members, DEVIANTART, NEO)).toEqual([0, 1]);
   });
 });

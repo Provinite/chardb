@@ -561,11 +561,13 @@ export class PendingOwnershipService {
         count(po.item_id) OVER account AS item_count,
         count(po.character_id) OVER account AS character_count
       FROM pending_ownership po
+      -- The page's providers are cast to the enum rather than the column to
+      -- text, so (provider, provider_account_id) is an index lookup.
       JOIN unnest(
-        ${page.map((g) => g.provider)}::text[],
+        ${page.map((g) => g.provider)}::"ExternalAccountProvider"[],
         ${page.map((g) => g.providerAccountId)}::text[]
       ) AS on_page (provider, provider_account_id)
-        ON on_page.provider = po.provider::text
+        ON on_page.provider = po.provider
        AND on_page.provider_account_id = po.provider_account_id
       LEFT JOIN items i ON i.id = po.item_id
       LEFT JOIN item_types it ON it.id = i.item_type_id

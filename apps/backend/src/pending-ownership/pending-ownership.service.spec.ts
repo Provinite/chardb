@@ -188,6 +188,17 @@ describe("PendingOwnershipService.findExternalMembers", () => {
     );
   });
 
+  it("compares the provider column as it is stored, so its index applies", async () => {
+    // Casting the column to text left Postgres unable to seek on provider,
+    // the leading column of (provider, provider_account_id): each account on
+    // the page walked the whole index.
+    await service.findExternalMembers("comm1", {});
+
+    const { sql } = rawQuery();
+    expect(sql).not.toMatch(/po\.provider::text/);
+    expect(sql).toMatch(/::"ExternalAccountProvider"\[\]/);
+  });
+
   it("pages by one row past the page, newest first", async () => {
     const result = await service.findExternalMembers("comm1", {
       limit: 1,
