@@ -8,6 +8,8 @@ import { mockDatabaseService } from "../../test/setup";
 
 const NEO = "214000000000009071";
 const ART = "a-deviantart-uuid";
+const NEO_NEWEST = new Date("2025-11-22T19:00:00Z");
+const ART_NEWEST = new Date("2025-11-18T19:00:00Z");
 
 /**
  * External members: the people something waits on in a community without an
@@ -28,20 +30,39 @@ describe("PendingOwnershipService.findExternalMembers", () => {
     }).compile();
     service = module.get(PendingOwnershipService);
 
-    mockDatabaseService.pendingOwnership.groupBy.mockResolvedValue([
-      { provider: "DISCORD", providerAccountId: NEO },
-      { provider: "DEVIANTART", providerAccountId: ART },
-    ]);
+    // Two groupings: the page of accounts, then the counts for that page.
+    mockDatabaseService.pendingOwnership.groupBy.mockImplementation(
+      (args: { _count?: unknown }) =>
+        Promise.resolve(
+          args._count
+            ? [
+                {
+                  provider: "DISCORD",
+                  providerAccountId: NEO,
+                  _count: { itemId: 2, characterId: 0 },
+                  _max: { createdAt: NEO_NEWEST },
+                },
+                {
+                  provider: "DEVIANTART",
+                  providerAccountId: ART,
+                  _count: { itemId: 0, characterId: 1 },
+                  _max: { createdAt: ART_NEWEST },
+                },
+              ]
+            : [
+                { provider: "DISCORD", providerAccountId: NEO },
+                { provider: "DEVIANTART", providerAccountId: ART },
+              ],
+        ),
+    );
+    // Only each account's newest rows: two for Neo, granted in one batch.
     mockDatabaseService.pendingOwnership.findMany.mockResolvedValue([
-      // Newest first, as asked for: the first row of each is its holder.
       {
         id: "po3",
         provider: "DISCORD",
         providerAccountId: NEO,
         displayIdentifier: "neo.baka",
         displayName: "Neo the Baka",
-        itemId: "i2",
-        characterId: null,
       },
       {
         id: "po2",
@@ -49,20 +70,21 @@ describe("PendingOwnershipService.findExternalMembers", () => {
         providerAccountId: ART,
         displayIdentifier: "someartist",
         displayName: null,
-        itemId: null,
-        characterId: "c1",
       },
       {
-        id: "po1",
+        id: "po4",
         provider: "DISCORD",
         providerAccountId: NEO,
         displayIdentifier: "neo.baka",
         displayName: "Neo the Baka",
-        itemId: "i1",
-        characterId: null,
       },
     ]);
   });
+
+  const countsCall = () =>
+    mockDatabaseService.pendingOwnership.groupBy.mock.calls.find(
+      ([args]: [{ _count?: unknown }]) => args._count,
+    )?.[0];
 
   const groupWhere = () =>
     mockDatabaseService.pendingOwnership.groupBy.mock.calls[0][0].where;
@@ -130,17 +152,26 @@ describe("PendingOwnershipService.findExternalMembers", () => {
     // ones, but the person holds all of them.
     await service.findExternalMembers("comm1", { search: "neo" });
 
+    expect(JSON.stringify(countsCall()?.where)).not.toContain("neo");
+  });
+
+  it("counts in the database, loading only each person's newest rows (#445)", async () => {
+    // Someone holding thousands would otherwise load thousands of rows on
+    // every page view, just to print a number.
+    await service.findExternalMembers("comm1", {});
+
+    expect(countsCall()).toMatchObject({
+      by: ["provider", "providerAccountId"],
+      _count: { itemId: true, characterId: true },
+      _max: { createdAt: true },
+    });
     const { where } =
       mockDatabaseService.pendingOwnership.findMany.mock.calls[0][0];
-    expect(JSON.stringify(where)).not.toContain("neo");
+    expect(JSON.stringify(where)).toContain(NEO_NEWEST.toISOString());
+    expect(JSON.stringify(where)).toContain(ART_NEWEST.toISOString());
   });
 
   it("pages by one row past the page, newest first", async () => {
-    mockDatabaseService.pendingOwnership.groupBy.mockResolvedValue([
-      { provider: "DISCORD", providerAccountId: NEO },
-      { provider: "DEVIANTART", providerAccountId: ART },
-    ]);
-
     const result = await service.findExternalMembers("comm1", {
       limit: 1,
       offset: 25,

@@ -530,36 +530,60 @@ export class PendingOwnershipService {
     const page = groups.slice(0, limit);
     if (!page.length) return { members: [], hasMore: false };
 
-    // Every waiting row of the accounts on this page, newest first: the first
-    // of each is the holder, carrying the names last recorded for them.
-    const rows = await this.prisma.pendingOwnership.findMany({
+    const onPage = page.map((g) => ({
+      provider: g.provider,
+      providerAccountId: g.providerAccountId,
+    }));
+    const key = (r: { provider: string; providerAccountId: string }) =>
+      `${r.provider}:${r.providerAccountId}`;
+
+    // Counted by the database, over everything waiting on them -- not only
+    // what the search matched. Someone holding thousands would otherwise
+    // load thousands of rows on every page view (#445).
+    const counts = await this.prisma.pendingOwnership.groupBy({
+      by: ["provider", "providerAccountId"],
+      where: { AND: [...waitingClauses, { OR: onPage }] },
+      _count: { itemId: true, characterId: true },
+      _max: { createdAt: true },
+    });
+    const countsByKey = new Map(counts.map((c) => [key(c), c]));
+
+    // Each account's newest rows only, which carry the names last recorded
+    // for them. Usually one; a few when a whole batch shares the timestamp.
+    const newest = await this.prisma.pendingOwnership.findMany({
       where: {
         AND: [
           ...waitingClauses,
           {
-            OR: page.map((g) => ({
-              provider: g.provider,
-              providerAccountId: g.providerAccountId,
-            })),
+            OR: counts.flatMap((c) =>
+              c._max.createdAt
+                ? [
+                    {
+                      provider: c.provider,
+                      providerAccountId: c.providerAccountId,
+                      createdAt: c._max.createdAt,
+                    },
+                  ]
+                : [],
+            ),
           },
         ],
       },
-      orderBy: { createdAt: "desc" },
     });
+    const holderByKey = new Map<string, PendingOwnership>();
+    for (const row of newest) {
+      if (!holderByKey.has(key(row))) holderByKey.set(key(row), row);
+    }
 
     const members = page.flatMap((g): ExternalMemberRow[] => {
-      const theirs = rows.filter(
-        (r) =>
-          r.provider === g.provider &&
-          r.providerAccountId === g.providerAccountId,
-      );
-      const holder = theirs[0];
-      if (!holder) return [];
+      const holder = holderByKey.get(key(g));
+      const count = countsByKey.get(key(g));
+      if (!holder || !count) return [];
       return [
         {
           holder,
-          itemCount: theirs.filter((r) => r.itemId).length,
-          characterCount: theirs.filter((r) => r.characterId).length,
+          itemCount: count._count.itemId,
+          characterCount: count._count.characterId,
         },
       ];
     });
