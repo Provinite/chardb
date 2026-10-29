@@ -1283,6 +1283,27 @@ type DiscordGuildInfo {
   name: String!
 }
 
+"""Progress of the job that looks up Discord names for pending owners."""
+type DiscordNameBackfillStatus {
+  """
+  Accounts that could not be looked up because Discord was unreachable or rate limited. A rerun will try them again.
+  """
+  failed: Int!
+  finishedAt: DateTime
+
+  """Accounts Discord says do not exist, such as deleted ones."""
+  notFound: Int!
+  processed: Int!
+  running: Boolean!
+  startedAt: DateTime
+
+  """Discord accounts to look up."""
+  total: Int!
+
+  """Accounts whose names were recorded."""
+  updated: Int!
+}
+
 """Resolved Discord user information"""
 type DiscordUserInfo {
   """URL to user avatar image"""
@@ -2138,6 +2159,11 @@ type ItemTransaction {
   itemType: ItemType!
   itemTypeId: ID!
   kind: ItemTransactionKind!
+
+  """
+  The external account this row's item is held for, when no user here holds it. Kept after a claim, as history.
+  """
+  pendingOwner: PendingOwnership
 
   """Member-facing. Visible to anyone who can read the ledger."""
   reason: String
@@ -3038,6 +3064,11 @@ type Mutation {
   runDeviantartUuidBackfill(jobId: String!): Boolean!
 
   """
+  Start looking up Discord names for unclaimed Discord pending owners. Returns at once; poll discordNameBackfillStatus for progress.
+  """
+  runDiscordNameBackfill: DiscordNameBackfillStatus!
+
+  """
   Replace the set of folders one character is in. Returns where it ends up.
   """
   setCharacterFolders(input: SetCharacterFoldersInput!): [CharacterFolder!]!
@@ -3455,6 +3486,7 @@ type PendingOwnership {
   """When this pending ownership was created"""
   createdAt: DateTime!
   displayIdentifier: String
+  displayName: String
   id: ID!
   item: Item
 
@@ -3667,6 +3699,9 @@ type Query {
 
   """Get the Discord bot invite URL"""
   discordBotInviteUrl: String!
+
+  """Progress of the most recent Discord name backfill."""
+  discordNameBackfillStatus: DiscordNameBackfillStatus!
 
   """Get an enum value by ID"""
   enumValueById(

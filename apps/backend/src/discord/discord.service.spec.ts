@@ -1,6 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { ConfigService } from "@nestjs/config";
-import { NotFoundException } from "@nestjs/common";
+import { NotFoundException, ServiceUnavailableException } from "@nestjs/common";
+import { DiscordAPIError } from "@discordjs/rest";
 import { DiscordService } from "./discord.service";
 
 // Create mock classes
@@ -25,8 +26,20 @@ const mockApiInstance = {
 
 // Mock the @discordjs modules
 jest.mock("@discordjs/rest", () => ({
+  ...jest.requireActual<typeof import("@discordjs/rest")>("@discordjs/rest"),
   REST: jest.fn().mockImplementation(() => mockRestInstance),
 }));
+
+/** What Discord's client throws for an HTTP error. */
+const discordError = (status: number) =>
+  new DiscordAPIError(
+    { code: status === 404 ? 10013 : 0, message: "error" },
+    status === 404 ? 10013 : 0,
+    status,
+    "GET",
+    "/users/1",
+    {},
+  );
 
 jest.mock("@discordjs/core", () => ({
   API: jest.fn().mockImplementation(() => mockApiInstance),
@@ -34,7 +47,6 @@ jest.mock("@discordjs/core", () => ({
 
 describe("DiscordService", () => {
   let service: DiscordService;
-  let configService: ConfigService;
 
   const mockBotToken = "test-bot-token";
   const mockClientId = "test-client-id";
@@ -59,7 +71,6 @@ describe("DiscordService", () => {
     }).compile();
 
     service = module.get<DiscordService>(DiscordService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
@@ -314,12 +325,26 @@ describe("DiscordService", () => {
       });
     });
 
-    it("should throw NotFoundException when user not found", async () => {
-      mockApiUsersGet.mockRejectedValue(new Error("User not found"));
+    it("should throw NotFoundException when Discord has no such user", async () => {
+      mockApiUsersGet.mockRejectedValue(discordError(404));
 
       await expect(service.getUserInfo("invalid")).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it("says Discord could not be reached, not that the user is gone, when it fails otherwise (#445)", async () => {
+      // A rate limit or an outage says nothing about whether the user exists.
+      for (const failure of [
+        discordError(429),
+        discordError(503),
+        new Error("socket hang up"),
+      ]) {
+        mockApiUsersGet.mockRejectedValueOnce(failure);
+        await expect(service.getUserInfo("user123")).rejects.toThrow(
+          ServiceUnavailableException,
+        );
+      }
     });
   });
 });

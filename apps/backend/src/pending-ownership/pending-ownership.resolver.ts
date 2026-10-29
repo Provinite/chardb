@@ -14,7 +14,7 @@ import { CommunityPermissionGuard } from "../auth/guards/CommunityPermissionGuar
  * Resolver for permission-based field resolution on PendingOwnership.
  *
  * This resolver provides field-level permission checking for sensitive fields
- * (providerAccountId, displayIdentifier) that should only be visible to users
+ * (providerAccountId, displayIdentifier, displayName) that should only be visible to users
  * with the CanCreateOrphanedCharacter permission in the relevant community.
  *
  * Users without permission will see empty strings for these fields instead of an error.
@@ -58,5 +58,26 @@ export class PendingOwnershipResolver {
     @Parent() pending: PendingOwnership,
   ): Promise<string | null> {
     return pending.displayIdentifier;
+  }
+
+  /**
+   * Resolve the displayName field with the same permission check: it names the
+   * same person as displayIdentifier does (#445).
+   *
+   * Returns empty string if the user doesn't have CanCreateOrphanedCharacter permission.
+   */
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
+  @ResolveCommunityFrom({ pendingOwnershipId: "$root.id" })
+  @UseGuards(JwtAuthGuard, CommunityPermissionGuard)
+  @UseFilters(EmptyStringOnForbiddenFilter)
+  @ResolveField("displayName", () => String, {
+    nullable: true,
+    middleware: [sentinelValueMiddleware],
+  })
+  async resolveDisplayName(
+    @Parent() pending: PendingOwnership,
+  ): Promise<string | null> {
+    return pending.displayName;
   }
 }

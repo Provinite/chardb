@@ -253,6 +253,17 @@ export function SiteAdminPage() {
                 records
               </CardDescription>
             </AdminCard>
+
+            <AdminCard to="/admin/discord-names">
+              <CardIcon>
+                <RefreshCw size={24} />
+              </CardIcon>
+              <CardTitle>Discord Names</CardTitle>
+              <CardDescription>
+                Look up the Discord names of people holding items without an
+                account, so staff can search for them
+              </CardDescription>
+            </AdminCard>
           </>
         )}
       </Grid>

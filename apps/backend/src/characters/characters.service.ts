@@ -6,7 +6,11 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
-import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import {
+  PendingOwnershipService,
+  type PendingOwnerNames,
+} from "../pending-ownership/pending-ownership.service";
+import { resolveDiscordOwner } from "../pending-ownership/utils/resolve-discord-owner";
 import { DiscordService } from "../discord/discord.service";
 import { DeviantArtService } from "../deviantart/deviantart.service";
 import { PermissionService } from "../auth/PermissionService";
@@ -151,7 +155,7 @@ export class CharactersService {
     // PRE-VALIDATION: Resolve Discord identifier BEFORE creating character
     // This ensures atomicity - if Discord lookup fails, no character is created
     let resolvedAccountId: string | undefined;
-    let displayIdentifier: string | undefined;
+    let names: PendingOwnerNames = {};
 
     if (pendingOwner) {
       if (!speciesId) {
@@ -160,30 +164,21 @@ export class CharactersService {
         );
       }
 
-      // Resolve Discord username to ID if necessary
-      if (pendingOwner.provider === ExternalAccountProvider.DISCORD) {
-        // Check if the input is already a numeric ID
-        const isNumericId = /^\d{17,19}$/.test(pendingOwner.providerAccountId);
-
-        // If it's not an ID (i.e., it's a username), store it as displayIdentifier
-        if (!isNumericId) {
-          displayIdentifier = pendingOwner.providerAccountId;
-        }
-
-        // CRITICAL: This happens BEFORE character creation
-        // If this throws an error, no character will be created
-        resolvedAccountId = await this.resolveDiscordIdentifier(
+      // CRITICAL: This happens BEFORE character creation
+      // If this throws an error, no character will be created.
+      // Only Discord and DeviantArt owners are resolved here; any other
+      // provider creates no pending record, as before.
+      if (
+        pendingOwner.provider === ExternalAccountProvider.DISCORD ||
+        pendingOwner.provider === ExternalAccountProvider.DEVIANTART
+      ) {
+        const resolved = await this.resolvePendingOwner(
           speciesId,
+          pendingOwner.provider,
           pendingOwner.providerAccountId,
         );
-      } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
-        // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
-        // Resolve the username to a UUID so it matches external_accounts.
-        const resolved = await this.deviantArtService.resolveUsername(
-          pendingOwner.providerAccountId,
-        );
-        resolvedAccountId = resolved.uuid;
-        displayIdentifier = resolved.username;
+        resolvedAccountId = resolved.accountId;
+        names = resolved.names;
       }
 
       // Note: Auto-claim logic is now handled inside createForCharacter
@@ -257,7 +252,7 @@ export class CharactersService {
         character.id,
         pendingOwner.provider,
         resolvedAccountId,
-        displayIdentifier,
+        names,
       );
     }
 
@@ -800,31 +795,11 @@ export class CharactersService {
           );
         }
 
-        let resolvedAccountId = providerAccountId;
-        let displayIdentifier: string | undefined;
-
-        // Resolve Discord username to ID if necessary
-        if (provider === ExternalAccountProvider.DISCORD) {
-          // Check if the input is already a numeric ID
-          const isNumericId = /^\d{17,19}$/.test(providerAccountId);
-
-          // If it's not an ID (i.e., it's a username), store it as displayIdentifier
-          if (!isNumericId) {
-            displayIdentifier = providerAccountId;
-          }
-
-          resolvedAccountId = await this.resolveDiscordIdentifier(
-            updatedCharacter.speciesId,
-            providerAccountId,
-          );
-        } else if (provider === ExternalAccountProvider.DEVIANTART) {
-          // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
-          // Resolve the username to a UUID so it matches external_accounts.
-          const resolved =
-            await this.deviantArtService.resolveUsername(providerAccountId);
-          resolvedAccountId = resolved.uuid;
-          displayIdentifier = resolved.username;
-        }
+        const resolved = await this.resolvePendingOwner(
+          updatedCharacter.speciesId,
+          provider,
+          providerAccountId,
+        );
 
         // Remove old pending ownership if exists
         if (existingPending) {
@@ -836,8 +811,8 @@ export class CharactersService {
         const result = await this.pendingOwnershipService.createForCharacter(
           id,
           provider,
-          resolvedAccountId,
-          displayIdentifier,
+          resolved.accountId,
+          resolved.names,
         );
 
         // If the character was auto-claimed, update the ownerId that was set earlier
@@ -1195,27 +1170,11 @@ export class CharactersService {
           );
         }
 
-        let resolvedAccountId = providerAccountId;
-        let displayIdentifier: string | undefined;
-
-        // Resolve Discord username to ID if necessary
-        if (provider === ExternalAccountProvider.DISCORD) {
-          const isNumericId = /^\d{17,19}$/.test(providerAccountId);
-          if (!isNumericId) {
-            displayIdentifier = providerAccountId;
-          }
-          resolvedAccountId = await this.resolveDiscordIdentifier(
-            updatedCharacter.speciesId,
-            providerAccountId,
-          );
-        } else if (provider === ExternalAccountProvider.DEVIANTART) {
-          // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
-          // Resolve the username to a UUID so it matches external_accounts.
-          const resolved =
-            await this.deviantArtService.resolveUsername(providerAccountId);
-          resolvedAccountId = resolved.uuid;
-          displayIdentifier = resolved.username;
-        }
+        const resolved = await this.resolvePendingOwner(
+          updatedCharacter.speciesId,
+          provider,
+          providerAccountId,
+        );
 
         // Remove old pending ownership if exists
         if (existingPending) {
@@ -1226,8 +1185,8 @@ export class CharactersService {
         await this.pendingOwnershipService.createForCharacter(
           id,
           provider,
-          resolvedAccountId,
-          displayIdentifier,
+          resolved.accountId,
+          resolved.names,
         );
       }
     }
@@ -1947,65 +1906,40 @@ export class CharactersService {
   }
 
   /**
-   * Resolve a Discord identifier (username or ID) to a Discord user ID
+   * Resolve a pending owner to the account id their linked account will carry,
+   * and the names it goes by now -- staff find a pending owner by those
+   * (#445). The one place every character path resolves one.
    * @param speciesId The species ID to get the community from
-   * @param identifier The Discord username or user ID
-   * @returns The Discord user ID
-   * @throws BadRequestException if guild not connected or username not found
+   * @throws NotFoundException if the provider does not know the account
    */
-  private async resolveDiscordIdentifier(
+  private async resolvePendingOwner(
     speciesId: string,
+    provider: ExternalAccountProvider,
     identifier: string,
-  ): Promise<string> {
-    // Check if identifier is already a numeric ID (18-19 digits)
-    if (/^\d{17,19}$/.test(identifier)) {
-      // Validate the numeric ID exists in Discord
-      const isValid = await this.discordService.validateUserId(identifier);
-      if (!isValid) {
-        throw new NotFoundException(
-          `Discord user with ID "${identifier}" not found. Please verify the ID is correct.`,
-        );
+  ): Promise<{ accountId: string; names: PendingOwnerNames }> {
+    if (provider === ExternalAccountProvider.DISCORD) {
+      const species = await this.db.species.findUnique({
+        where: { id: speciesId },
+        select: { communityId: true },
+      });
+      if (!species) {
+        throw new NotFoundException(`Species with ID ${speciesId} not found`);
       }
-      return identifier;
-    }
-
-    // It's a username - need to resolve it
-    // First get the species to find the community
-    const species = await this.db.species.findUnique({
-      where: { id: speciesId },
-      select: {
-        communityId: true,
-        community: {
-          select: {
-            discordGuildId: true,
-            name: true,
-          },
-        },
-      },
-    });
-
-    if (!species) {
-      throw new NotFoundException(`Species with ID ${speciesId} not found`);
-    }
-
-    if (!species.community.discordGuildId) {
-      throw new BadRequestException(
-        `Cannot use Discord username: Community "${species.community.name}" has no Discord server connected. Please use numeric Discord User ID or ask an admin to connect the Discord server.`,
+      return resolveDiscordOwner(
+        { db: this.db, discord: this.discordService },
+        species.communityId,
+        identifier,
       );
     }
-
-    // Resolve username to ID
-    const userId = await this.discordService.resolveUsernameToId(
-      species.community.discordGuildId,
-      identifier,
-    );
-
-    if (!userId) {
-      throw new NotFoundException(
-        `Discord user "${identifier}" not found in community's Discord server`,
-      );
+    if (provider === ExternalAccountProvider.DEVIANTART) {
+      // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
+      // Resolve the username to a UUID so it matches external_accounts.
+      const resolved = await this.deviantArtService.resolveUsername(identifier);
+      return {
+        accountId: resolved.uuid,
+        names: { displayIdentifier: resolved.username },
+      };
     }
-
-    return userId;
+    return { accountId: identifier, names: {} };
   }
 }

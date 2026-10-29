@@ -41,6 +41,13 @@ export class PendingOwnership {
   })
   displayIdentifier: string | null;
 
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "The account's display name on the provider as last seen (Discord's global name)",
+  })
+  displayName: string | null;
+
   @Field({ description: "When this pending ownership was created" })
   createdAt: Date;
 

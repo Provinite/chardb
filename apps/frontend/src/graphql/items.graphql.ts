@@ -259,6 +259,14 @@ export const ITEM_TRANSACTION_FRAGMENT = gql`
     actorUser {
       ...UserBasic
     }
+    # Who an unclaimed grant waits on: someone with no account here.
+    pendingOwner {
+      id
+      provider
+      providerAccountId
+      displayIdentifier
+      displayName
+    }
   }
   ${USER_BASIC_FRAGMENT}
 `;

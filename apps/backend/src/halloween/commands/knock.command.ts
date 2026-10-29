@@ -371,7 +371,6 @@ export class KnockCommand implements HalloweenCommandHandler {
     tx: Prisma.TransactionClient,
   ): Promise<Win> {
     const guildId = interaction.guild_id;
-    const userId = interaction.member.user.id;
 
     const poolRequestedAt = Date.now();
     const pool = await this.prizes.lockInStock(guildId, tx);
@@ -386,7 +385,7 @@ export class KnockCommand implements HalloweenCommandHandler {
     // Before taking it, so a misconfigured prize is never used up.
     await this.prizeAward.validate(pick, guildId, tx);
     const prize = await this.prizes.decrement(pick.id, guildId, tx);
-    await this.prizeAward.grant(prize, userId, tx);
+    await this.prizeAward.grant(prize, interaction.member.user, tx);
     const spent = await this.record(
       interaction,
       allowance,

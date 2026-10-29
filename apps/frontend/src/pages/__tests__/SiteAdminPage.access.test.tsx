@@ -62,6 +62,7 @@ describe("SiteAdminPage cards", () => {
         "/admin/site-invite-codes",
         "/admin/communities",
         "/admin/deviantart-backfill",
+        "/admin/discord-names",
       ]),
     );
   });

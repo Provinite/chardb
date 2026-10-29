@@ -6,7 +6,11 @@ import {
 } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import { DatabaseService } from "../database/database.service";
-import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import {
+  PendingOwnershipService,
+  type PendingOwnerNames,
+} from "../pending-ownership/pending-ownership.service";
+import { resolveDiscordOwner } from "../pending-ownership/utils/resolve-discord-owner";
 import { DiscordService } from "../discord/discord.service";
 import {
   Prisma,
@@ -42,10 +46,9 @@ type UseEffectKind =
   | "edit kit grant"
   | "variant change grant";
 
-export interface PendingOwnerInput {
+export interface PendingOwnerInput extends PendingOwnerNames {
   provider: ExternalAccountProvider;
   providerAccountId: string;
-  displayIdentifier?: string;
 }
 
 /**
@@ -77,6 +80,8 @@ export interface GrantOptions {
    * interaction, so it is not looked up again.
    */
   discordIdVerified?: boolean;
+  /** The names the same interaction carried, stored with the pending owner. */
+  discordNames?: PendingOwnerNames;
 }
 
 /** Who a grant's items go to, or the account they wait on. */
@@ -976,31 +981,30 @@ export class ItemsService {
     // PRE-VALIDATION: Resolve external account and check if claimed BEFORE creating item
     if (pendingOwner) {
       let resolvedAccountId: string;
-      let displayIdentifier: string | undefined;
+      let names: PendingOwnerNames = {};
 
       // Resolve Discord username to ID if necessary
       if (pendingOwner.provider === ExternalAccountProvider.DISCORD) {
-        // Check if the input is already a numeric ID
         const isNumericId = /^\d{17,19}$/.test(pendingOwner.providerAccountId);
 
-        // If it's not an ID (i.e., it's a username), store it as displayIdentifier
-        if (!isNumericId) {
-          displayIdentifier = pendingOwner.providerAccountId;
+        // An id that came from Discord's own signed interaction exists, and
+        // the interaction carries the names; asking Discord again would only
+        // add an HTTP call to the caller's transaction.
+        if (options.discordIdVerified && isNumericId) {
+          resolvedAccountId = pendingOwner.providerAccountId;
+          names = options.discordNames ?? {};
+        } else {
+          const resolved = await resolveDiscordOwner(
+            { db: this.db, discord: this.discordService },
+            itemType.communityId,
+            pendingOwner.providerAccountId,
+          );
+          resolvedAccountId = resolved.accountId;
+          names = resolved.names;
         }
-
-        // An id that came from Discord's own signed interaction exists; asking
-        // Discord again would only add an HTTP call to the caller's
-        // transaction.
-        resolvedAccountId =
-          options.discordIdVerified && isNumericId
-            ? pendingOwner.providerAccountId
-            : await this.resolveDiscordIdentifier(
-                itemType.communityId,
-                pendingOwner.providerAccountId,
-              );
       } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
         // DeviantArt uses usernames, so always store as displayIdentifier
-        displayIdentifier = pendingOwner.providerAccountId;
+        names = { displayIdentifier: pendingOwner.providerAccountId };
         resolvedAccountId = pendingOwner.providerAccountId;
       } else {
         throw new BadRequestException(
@@ -1040,7 +1044,7 @@ export class ItemsService {
         pendingOwner = {
           ...pendingOwner,
           providerAccountId: resolvedAccountId,
-          displayIdentifier,
+          ...names,
         };
       }
     }
@@ -1124,7 +1128,10 @@ export class ItemsService {
           itemId,
           pendingOwner.provider,
           pendingOwner.providerAccountId, // Already resolved earlier
-          pendingOwner.displayIdentifier,
+          {
+            displayIdentifier: pendingOwner.displayIdentifier,
+            displayName: pendingOwner.displayName,
+          },
           tx,
         );
       }
@@ -1752,64 +1759,6 @@ export class ItemsService {
     }
 
     return items.length;
-  }
-
-  /**
-   * Resolve a Discord identifier (username or ID) to a Discord user ID
-   * @param communityId The community ID to get the Discord guild from
-   * @param identifier The Discord username or user ID
-   * @returns The Discord user ID
-   * @throws BadRequestException if guild not connected or username not found
-   */
-  private async resolveDiscordIdentifier(
-    communityId: string,
-    identifier: string,
-  ): Promise<string> {
-    // Check if identifier is already a numeric ID (18-19 digits)
-    if (/^\d{17,19}$/.test(identifier)) {
-      // Validate the numeric ID exists in Discord
-      const isValid = await this.discordService.validateUserId(identifier);
-      if (!isValid) {
-        throw new NotFoundException(
-          `Discord user with ID "${identifier}" not found. Please verify the ID is correct.`,
-        );
-      }
-      return identifier;
-    }
-
-    // It's a username - need to resolve it
-    // Get the community to find the Discord guild
-    const community = await this.db.community.findUnique({
-      where: { id: communityId },
-      select: {
-        discordGuildId: true,
-        name: true,
-      },
-    });
-
-    if (!community) {
-      throw new NotFoundException(`Community with ID ${communityId} not found`);
-    }
-
-    if (!community.discordGuildId) {
-      throw new BadRequestException(
-        `Cannot use Discord username: Community "${community.name}" has no Discord server connected. Please use numeric Discord User ID or ask an admin to connect the Discord server.`,
-      );
-    }
-
-    // Resolve username to ID
-    const userId = await this.discordService.resolveUsernameToId(
-      community.discordGuildId,
-      identifier,
-    );
-
-    if (!userId) {
-      throw new NotFoundException(
-        `Discord user "${identifier}" not found in community's Discord server`,
-      );
-    }
-
-    return userId;
   }
 
   /**

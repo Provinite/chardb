@@ -49,7 +49,11 @@ export class CommunityPermissionGuard implements CanActivate {
     }
 
     const resolvedIds = this.resolveEntityIds(context, communityResolution);
-    const community = await this.communityResolverService.resolve(resolvedIds);
+    // The request lets field resolvers on a list share their lookups.
+    const community = await this.communityResolverService.resolve(
+      resolvedIds,
+      this.getRequest(context),
+    );
 
     if (!community) {
       return false;

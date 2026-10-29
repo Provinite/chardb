@@ -163,6 +163,30 @@ export class ItemTransactionsService {
                 { fromUser: userNameMatches(search) },
                 { toUser: userNameMatches(search) },
                 { actorUser: userNameMatches(search) },
+                // Someone with no account here, waiting on a Discord or
+                // DeviantArt account: by either name, or by the exact id a
+                // bot log gives staff (#445).
+                {
+                  item: {
+                    pendingOwnership: {
+                      OR: [
+                        {
+                          displayIdentifier: {
+                            contains: search,
+                            mode: "insensitive",
+                          },
+                        },
+                        {
+                          displayName: {
+                            contains: search,
+                            mode: "insensitive",
+                          },
+                        },
+                        { providerAccountId: search },
+                      ],
+                    },
+                  },
+                },
               ],
             }
           : {},

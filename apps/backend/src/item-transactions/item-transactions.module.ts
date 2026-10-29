@@ -1,6 +1,7 @@
 import { Module, forwardRef } from "@nestjs/common";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
+import { DataLoadersModule } from "../dataloaders/dataloaders.module";
 import { ItemTransactionsService } from "./item-transactions.service";
 import {
   ItemTransactionConnectionResolver,
@@ -8,7 +9,7 @@ import {
 } from "./item-transactions.resolver";
 
 @Module({
-  imports: [DatabaseModule, forwardRef(() => AuthModule)],
+  imports: [DatabaseModule, DataLoadersModule, forwardRef(() => AuthModule)],
   providers: [
     ItemTransactionsService,
     ItemTransactionsResolver,

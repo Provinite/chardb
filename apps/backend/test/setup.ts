@@ -212,6 +212,10 @@ const mockPrismaService = {
     findMany: jest.fn(),
     count: jest.fn(),
   },
+  community: {
+    findUnique: jest.fn(),
+    findMany: jest.fn(),
+  },
   currency: {
     create: jest.fn(),
     findUnique: jest.fn(),
@@ -280,6 +284,7 @@ const mockPrismaService = {
     findUnique: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
+    updateMany: jest.fn(),
     count: jest.fn(),
   },
   $transaction: jest.fn(),

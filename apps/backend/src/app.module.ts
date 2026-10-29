@@ -57,6 +57,7 @@ import { MyoModule } from "./myo/myo.module";
 import { EditKitsModule } from "./edit-kits/edit-kits.module";
 import { VariantChangesModule } from "./variant-changes/variant-changes.module";
 import { DeviantartUuidBackfillModule } from "./jobs/deviantart-uuid-backfill/deviantart-uuid-backfill.module";
+import { DiscordNameBackfillModule } from "./jobs/discord-name-backfill/discord-name-backfill.module";
 import { Request, Response } from "express";
 
 @Module({
@@ -277,6 +278,7 @@ import { Request, Response } from "express";
     EditKitsModule,
     VariantChangesModule,
     DeviantartUuidBackfillModule,
+    DiscordNameBackfillModule,
   ],
 })
 export class AppModule {}

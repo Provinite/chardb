@@ -1,6 +1,11 @@
-import { Injectable, Logger, NotFoundException } from "@nestjs/common";
+import {
+  Injectable,
+  Logger,
+  NotFoundException,
+  ServiceUnavailableException,
+} from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { REST } from "@discordjs/rest";
+import { DiscordAPIError, REST } from "@discordjs/rest";
 import { API } from "@discordjs/core";
 import { DiscordUserInfo } from "./dto/discord-user-info.dto";
 
@@ -192,9 +197,22 @@ export class DiscordService {
         avatarUrl,
       };
     } catch (error) {
-      this.logger.error(`Failed to fetch Discord user ${userId}:`, error);
-      throw new NotFoundException(
-        `Discord user not found. The user ID may be invalid or the user may have deleted their account.`,
+      // Only a 404 means there is no such user. A rate limit or an outage says
+      // nothing about the user, and reporting it as "not found" would have a
+      // backfill blame hundreds of real accounts for Discord's bad minute.
+      if (error instanceof DiscordAPIError && error.status === 404) {
+        throw new NotFoundException(
+          `Discord user not found. The user ID may be invalid or the user may have deleted their account.`,
+        );
+      }
+      this.logger.error({
+        message: "Discord user lookup failed",
+        userId,
+        status: error instanceof DiscordAPIError ? error.status : undefined,
+        error: error instanceof Error ? error.message : String(error),
+      });
+      throw new ServiceUnavailableException(
+        "Discord could not be reached. Try again in a moment.",
       );
     }
   }

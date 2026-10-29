@@ -1028,6 +1028,23 @@ export type DiscordGuildInfo = {
   name: Scalars['String']['output'];
 };
 
+/** Progress of the job that looks up Discord names for pending owners. */
+export type DiscordNameBackfillStatus = {
+  __typename?: 'DiscordNameBackfillStatus';
+  /** Accounts that could not be looked up because Discord was unreachable or rate limited. A rerun will try them again. */
+  failed: Scalars['Int']['output'];
+  finishedAt: Maybe<Scalars['DateTime']['output']>;
+  /** Accounts Discord says do not exist, such as deleted ones. */
+  notFound: Scalars['Int']['output'];
+  processed: Scalars['Int']['output'];
+  running: Scalars['Boolean']['output'];
+  startedAt: Maybe<Scalars['DateTime']['output']>;
+  /** Discord accounts to look up. */
+  total: Scalars['Int']['output'];
+  /** Accounts whose names were recorded. */
+  updated: Scalars['Int']['output'];
+};
+
 /** Resolved Discord user information */
 export type DiscordUserInfo = {
   __typename?: 'DiscordUserInfo';
@@ -1727,6 +1744,8 @@ export type ItemTransaction = {
   itemType: ItemType;
   itemTypeId: Scalars['ID']['output'];
   kind: ItemTransactionKind;
+  /** The external account this row's item is held for, when no user here holds it. Kept after a claim, as history. */
+  pendingOwner: Maybe<PendingOwnership>;
   /** Member-facing. Visible to anyone who can read the ledger. */
   reason: Maybe<Scalars['String']['output']>;
   /** Staff-only note. Null unless the viewer holds canManageItems or canGrantItems in this community. */
@@ -2273,6 +2292,8 @@ export type Mutation = {
   revokeItems: Scalars['Int']['output'];
   /** Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this). */
   runDeviantartUuidBackfill: Scalars['Boolean']['output'];
+  /** Start looking up Discord names for unclaimed Discord pending owners. Returns at once; poll discordNameBackfillStatus for progress. */
+  runDiscordNameBackfill: DiscordNameBackfillStatus;
   /** Replace the set of folders one character is in. Returns where it ends up. */
   setCharacterFolders: Array<CharacterFolder>;
   /** Sets or clears the main media for a character */
@@ -3212,6 +3233,7 @@ export type PendingOwnership = {
   /** When this pending ownership was created */
   createdAt: Scalars['DateTime']['output'];
   displayIdentifier: Maybe<Scalars['String']['output']>;
+  displayName: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   item: Maybe<Item>;
   /** Item ID if this is a pending item ownership */
@@ -3284,6 +3306,8 @@ export type Query = {
   currencyTransactions: CurrencyTransactionConnection;
   /** Get the Discord bot invite URL */
   discordBotInviteUrl: Scalars['String']['output'];
+  /** Progress of the most recent Discord name backfill. */
+  discordNameBackfillStatus: DiscordNameBackfillStatus;
   /** Get an enum value by ID */
   enumValueById: EnumValue;
   /** Get an enum value setting by ID */
@@ -5724,6 +5748,18 @@ export type DeviantartUuidBackfillProgressSubscriptionVariables = Exact<{
 
 export type DeviantartUuidBackfillProgressSubscription = { __typename?: 'Subscription', deviantartUuidBackfillProgress: { __typename?: 'DeviantartUuidBackfillProgress', jobId: string, total: number, processed: number, succeeded: number, failed: number, claimed: number, done: boolean, cancelled: boolean, currentRecord: { __typename?: 'DeviantartUuidBackfillRecordResult', pendingOwnershipId: string, characterId: string | null, itemId: string | null, oldValue: string, newValue: string | null, success: boolean, error: string | null, claimed: boolean, claimedByUserId: string | null } | null } };
 
+export type DiscordNameBackfillStatusFieldsFragment = { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, notFound: number, failed: number, startedAt: string | null, finishedAt: string | null };
+
+export type DiscordNameBackfillStatusQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type DiscordNameBackfillStatusQuery = { __typename?: 'Query', discordNameBackfillStatus: { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, notFound: number, failed: number, startedAt: string | null, finishedAt: string | null } };
+
+export type RunDiscordNameBackfillMutationVariables = Exact<{ [key: string]: never; }>;
+
+
+export type RunDiscordNameBackfillMutation = { __typename?: 'Mutation', runDiscordNameBackfill: { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, notFound: number, failed: number, startedAt: string | null, finishedAt: string | null } };
+
 export type VerifyEmailMutationVariables = Exact<{
   input: VerifyEmailInput;
 }>;
@@ -6300,28 +6336,28 @@ export type RevokeItemsMutationVariables = Exact<{
 
 export type RevokeItemsMutation = { __typename?: 'Mutation', revokeItems: number };
 
-export type ItemTransactionFieldsFragment = { __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null };
+export type ItemTransactionFieldsFragment = { __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, pendingOwner: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null } | null };
 
 export type GetItemTransactionsQueryVariables = Exact<{
   filters: ItemTransactionFiltersInput;
 }>;
 
 
-export type GetItemTransactionsQuery = { __typename?: 'Query', itemTransactions: { __typename?: 'ItemTransactionConnection', hasMore: boolean, transactions: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } };
+export type GetItemTransactionsQuery = { __typename?: 'Query', itemTransactions: { __typename?: 'ItemTransactionConnection', hasMore: boolean, transactions: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, pendingOwner: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null } | null }> } };
 
 export type GetItemProvenanceQueryVariables = Exact<{
   itemId: Scalars['ID']['input'];
 }>;
 
 
-export type GetItemProvenanceQuery = { __typename?: 'Query', itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type GetItemProvenanceQuery = { __typename?: 'Query', itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, pendingOwner: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null } | null }> };
 
 export type GetItemWithProvenanceQueryVariables = Exact<{
   itemId: Scalars['ID']['input'];
 }>;
 
 
-export type GetItemWithProvenanceQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string } | null, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string }, fromVariants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }, itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> };
+export type GetItemWithProvenanceQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, itemTypeId: string, ownerId: string | null, destroyedAt: string | null, metadata: any | null, createdAt: string, updatedAt: string, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, communityId: string, category: string | null, isTradeable: boolean, isConsumable: boolean, colorId: string | null, metadata: any | null, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string } | null, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string }, fromVariants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }, itemProvenance: Array<{ __typename?: 'ItemTransaction', id: string, communityId: string, kind: ItemTransactionKind, batchId: string, batchSize: number, reason: string | null, staffNote: string | null, actorLabel: string | null, createdAt: string, itemId: string, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, fromUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, toUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, actorUser: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, pendingOwner: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null } | null }> };
 
 export type GetItemEconomyQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -7292,6 +7328,18 @@ export const CurrencyTransactionFieldsFragmentDoc = gql`
 }
     ${CurrencyFieldsFragmentDoc}
 ${UserBasicFragmentDoc}`;
+export const DiscordNameBackfillStatusFieldsFragmentDoc = gql`
+    fragment DiscordNameBackfillStatusFields on DiscordNameBackfillStatus {
+  running
+  total
+  processed
+  updated
+  notFound
+  failed
+  startedAt
+  finishedAt
+}
+    `;
 export const EnumValueSettingDetailsFragmentDoc = gql`
     fragment EnumValueSettingDetails on EnumValueSetting {
   id
@@ -7637,6 +7685,13 @@ export const ItemTransactionFieldsFragmentDoc = gql`
   }
   actorUser {
     ...UserBasic
+  }
+  pendingOwner {
+    id
+    provider
+    providerAccountId
+    displayIdentifier
+    displayName
   }
 }
     ${UserBasicFragmentDoc}`;
@@ -11051,6 +11106,77 @@ export function useDeviantartUuidBackfillProgressSubscription(baseOptions: Apoll
       }
 export type DeviantartUuidBackfillProgressSubscriptionHookResult = ReturnType<typeof useDeviantartUuidBackfillProgressSubscription>;
 export type DeviantartUuidBackfillProgressSubscriptionResult = Apollo.SubscriptionResult<DeviantartUuidBackfillProgressSubscription>;
+export const DiscordNameBackfillStatusDocument = gql`
+    query DiscordNameBackfillStatus {
+  discordNameBackfillStatus {
+    ...DiscordNameBackfillStatusFields
+  }
+}
+    ${DiscordNameBackfillStatusFieldsFragmentDoc}`;
+
+/**
+ * __useDiscordNameBackfillStatusQuery__
+ *
+ * To run a query within a React component, call `useDiscordNameBackfillStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useDiscordNameBackfillStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useDiscordNameBackfillStatusQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useDiscordNameBackfillStatusQuery(baseOptions?: Apollo.QueryHookOptions<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>(DiscordNameBackfillStatusDocument, options);
+      }
+export function useDiscordNameBackfillStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>(DiscordNameBackfillStatusDocument, options);
+        }
+export function useDiscordNameBackfillStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>(DiscordNameBackfillStatusDocument, options);
+        }
+export type DiscordNameBackfillStatusQueryHookResult = ReturnType<typeof useDiscordNameBackfillStatusQuery>;
+export type DiscordNameBackfillStatusLazyQueryHookResult = ReturnType<typeof useDiscordNameBackfillStatusLazyQuery>;
+export type DiscordNameBackfillStatusSuspenseQueryHookResult = ReturnType<typeof useDiscordNameBackfillStatusSuspenseQuery>;
+export type DiscordNameBackfillStatusQueryResult = Apollo.QueryResult<DiscordNameBackfillStatusQuery, DiscordNameBackfillStatusQueryVariables>;
+export const RunDiscordNameBackfillDocument = gql`
+    mutation RunDiscordNameBackfill {
+  runDiscordNameBackfill {
+    ...DiscordNameBackfillStatusFields
+  }
+}
+    ${DiscordNameBackfillStatusFieldsFragmentDoc}`;
+export type RunDiscordNameBackfillMutationFn = Apollo.MutationFunction<RunDiscordNameBackfillMutation, RunDiscordNameBackfillMutationVariables>;
+
+/**
+ * __useRunDiscordNameBackfillMutation__
+ *
+ * To run a mutation, you first call `useRunDiscordNameBackfillMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRunDiscordNameBackfillMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [runDiscordNameBackfillMutation, { data, loading, error }] = useRunDiscordNameBackfillMutation({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useRunDiscordNameBackfillMutation(baseOptions?: Apollo.MutationHookOptions<RunDiscordNameBackfillMutation, RunDiscordNameBackfillMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RunDiscordNameBackfillMutation, RunDiscordNameBackfillMutationVariables>(RunDiscordNameBackfillDocument, options);
+      }
+export type RunDiscordNameBackfillMutationHookResult = ReturnType<typeof useRunDiscordNameBackfillMutation>;
+export type RunDiscordNameBackfillMutationResult = Apollo.MutationResult<RunDiscordNameBackfillMutation>;
+export type RunDiscordNameBackfillMutationOptions = Apollo.BaseMutationOptions<RunDiscordNameBackfillMutation, RunDiscordNameBackfillMutationVariables>;
 export const VerifyEmailDocument = gql`
     mutation VerifyEmail($input: VerifyEmailInput!) {
   verifyEmail(input: $input)

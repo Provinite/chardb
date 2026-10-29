@@ -64,4 +64,18 @@ describe("Loaders", () => {
     expect(forTagsRel).toEqual([tag]);
     expect(mockDatabaseService.characterTag.findMany).toHaveBeenCalledTimes(1);
   });
+
+  it("finds a ledger page's pending owners in one query, null for an item nobody waits on (#445)", async () => {
+    const waiting = { id: "po1", itemId: "i1" };
+    mockDatabaseService.pendingOwnership.findMany.mockResolvedValue([waiting]);
+
+    const owners = await Promise.all(
+      ["i1", "i2"].map((id) => loaders.pendingOwnershipByItem.load(id)),
+    );
+
+    expect(owners).toEqual([waiting, null]);
+    expect(mockDatabaseService.pendingOwnership.findMany).toHaveBeenCalledTimes(
+      1,
+    );
+  });
 });
