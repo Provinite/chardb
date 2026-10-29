@@ -11,7 +11,12 @@ import { MockedProvider } from "@apollo/client/testing";
 import { ApolloLink, Observable } from "@apollo/client";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
-import { ItemTransactionKind } from "../../generated/graphql";
+import { MantineProvider } from "@mantine/core";
+import {
+  ExternalAccountProvider,
+  ItemTransactionKind,
+  type ItemTransactionFieldsFragment,
+} from "../../generated/graphql";
 import { CommunityItemLedgerPage } from "../CommunityItemLedgerPage";
 
 const COMMUNITY_ID = "11111111-1111-4111-8111-111111111111";
@@ -44,7 +49,7 @@ const grant = {
   id: "t-1",
   communityId: COMMUNITY_ID,
   kind: ItemTransactionKind.Grant,
-  batchId: null,
+  batchId: "b-1",
   batchSize: 1,
   reason: "Lanternfall prompt completion",
   staffNote: null,
@@ -62,6 +67,28 @@ const grant = {
   fromUser: null,
   toUser: user,
   actorUser: user,
+  pendingOwner: null,
+};
+
+const discordOwner: NonNullable<ItemTransactionFieldsFragment["pendingOwner"]> =
+  {
+    __typename: "PendingOwnership",
+    id: "po-1",
+    provider: ExternalAccountProvider.Discord,
+    providerAccountId: "214000000000009071",
+    displayIdentifier: "neo.baka",
+    displayName: "Neo the Baka",
+  };
+
+/** A grant still waiting on a Discord account, with the names it was given. */
+const pendingGrant: ItemTransactionFieldsFragment = {
+  ...grant,
+  id: "t-2",
+  batchId: "b-2",
+  itemId: "i-2",
+  toUser: null,
+  reason: "Hollowtide 2025 prize",
+  pendingOwner: discordOwner,
 };
 
 type Filters = { search?: string; limit: number };
@@ -72,7 +99,16 @@ type Filters = { search?: string; limit: number };
  * ("zzz") comes back empty; anything else returns the one seeded grant, with
  * more to load when unfiltered.
  */
-const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
+type LedgerOptions = {
+  emptyLedger?: boolean;
+  /** What the ledger holds instead of the one member grant. */
+  rows?: ItemTransactionFieldsFragment[];
+};
+
+const recordingLink = (
+  sent: Filters[],
+  { emptyLedger = false, rows = [grant] }: LedgerOptions = {},
+) =>
   new ApolloLink(
     (operation) =>
       new Observable((observer) => {
@@ -84,7 +120,7 @@ const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
             data: {
               itemTransactions: {
                 __typename: "ItemTransactionConnection",
-                transactions: empty ? [] : [grant],
+                transactions: empty ? [] : rows,
                 hasMore: !empty && !filters.search,
               },
             },
@@ -95,13 +131,15 @@ const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
       }),
   );
 
-const renderLedger = (sent: Filters[], options?: { emptyLedger?: boolean }) =>
+const renderLedger = (sent: Filters[], options?: LedgerOptions) =>
   render(
     <MockedProvider link={recordingLink(sent, options)}>
       <ThemeProvider theme={lightTheme}>
-        <MemoryRouter>
-          <CommunityItemLedgerPage />
-        </MemoryRouter>
+        <MantineProvider>
+          <MemoryRouter>
+            <CommunityItemLedgerPage />
+          </MemoryRouter>
+        </MantineProvider>
       </ThemeProvider>
     </MockedProvider>,
   );
@@ -110,6 +148,60 @@ const searchBox = () =>
   screen.getByRole("searchbox", { name: "Search the ledger" });
 
 const searches = (sent: Filters[]) => sent.map((f) => f.search);
+
+describe("CommunityItemLedgerPage pending holders (#445)", () => {
+  it("names the Discord account an unclaimed grant waits on", async () => {
+    renderLedger([], { rows: [pendingGrant] });
+    const row = await screen.findByTestId("ledger-row");
+
+    expect(row).toHaveTextContent("Neo the Baka (@neo.baka)");
+    expect(row).not.toHaveTextContent("pending claim");
+  });
+
+  it("falls back to the username, then the id", async () => {
+    const usernameOnly = {
+      ...pendingGrant,
+      pendingOwner: { ...discordOwner, displayName: null },
+    };
+    const idOnly = {
+      ...pendingGrant,
+      id: "t-3",
+      batchId: "b-3",
+      itemId: "i-3",
+      reason: "Older prize",
+      pendingOwner: {
+        ...discordOwner,
+        id: "po-2",
+        providerAccountId: "214000000000000001",
+        displayIdentifier: null,
+        displayName: null,
+      },
+    };
+    renderLedger([], { rows: [usernameOnly, idOnly] });
+    const rows = await screen.findAllByTestId("ledger-row");
+
+    expect(rows[0]).toHaveTextContent("@neo.baka");
+    expect(rows[1]).toHaveTextContent("Discord 214000000000000001");
+  });
+
+  it("says only which kind of account to a viewer who may not see who", async () => {
+    // The server blanks the id and names for viewers without permission.
+    const hidden = {
+      ...pendingGrant,
+      pendingOwner: {
+        ...discordOwner,
+        providerAccountId: "",
+        displayIdentifier: "",
+        displayName: "",
+      },
+    };
+    renderLedger([], { rows: [hidden] });
+    const row = await screen.findByTestId("ledger-row");
+
+    expect(row).toHaveTextContent("Discord account");
+    expect(row).not.toHaveTextContent("@");
+  });
+});
 
 describe("CommunityItemLedgerPage footer", () => {
   it("counts the events on screen and nothing else", async () => {

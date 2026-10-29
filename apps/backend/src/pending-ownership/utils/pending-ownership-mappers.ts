@@ -1,7 +1,5 @@
-import { Prisma } from "@chardb/database";
+import type { PendingOwnership as PrismaPendingOwnership } from "@chardb/database";
 import { PendingOwnership } from "../entities/pending-ownership.entity";
-
-type PrismaPendingOwnership = Prisma.PendingOwnershipGetPayload<{}>;
 
 /**
  * Maps Prisma PendingOwnership result to GraphQL PendingOwnership entity

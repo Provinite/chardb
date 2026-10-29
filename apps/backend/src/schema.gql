@@ -2155,6 +2155,11 @@ type ItemTransaction {
   itemTypeId: ID!
   kind: ItemTransactionKind!
 
+  """
+  The external account this row's item is held for, when no user here holds it. Kept after a claim, as history.
+  """
+  pendingOwner: PendingOwnership
+
   """Member-facing. Visible to anyone who can read the ledger."""
   reason: String
 
@@ -3476,10 +3481,6 @@ type PendingOwnership {
   """When this pending ownership was created"""
   createdAt: DateTime!
   displayIdentifier: String
-
-  """
-  The account's display name on the provider as last seen (Discord's global name)
-  """
   displayName: String
   id: ID!
   item: Item

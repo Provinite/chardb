@@ -5,11 +5,13 @@ import { Link } from "react-router-dom";
 import { Package, Search, Lock } from "lucide-react";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { FilterChip, FilterChips } from "../components/FilterChip";
+import { ProviderIcon } from "../components/ProviderIcon";
 import {
   useCommunityId,
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
 import {
+  ExternalAccountProvider,
   ItemTransactionKind,
   useGetItemTransactionsQuery,
   type ItemTransactionFieldsFragment,
@@ -238,6 +240,12 @@ const Party = styled.span`
   white-space: nowrap;
 `;
 
+const PendingName = styled(Party)`
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+`;
+
 const Muted = styled.span`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
@@ -348,6 +356,42 @@ const displayName = (
   user: { username: string; displayName?: string | null } | null | undefined,
 ) => user?.displayName || user?.username || null;
 
+const PROVIDER_NAME: Record<ExternalAccountProvider, string> = {
+  [ExternalAccountProvider.Discord]: "Discord",
+  [ExternalAccountProvider.Deviantart]: "DeviantArt",
+  [ExternalAccountProvider.Patreon]: "Patreon",
+  [ExternalAccountProvider.Toyhouse]: "Toyhouse",
+};
+
+/**
+ * Someone with no account here, by the names their account was last seen
+ * with. Older rows have only an id until the Discord name lookup runs (#445).
+ *
+ * The server blanks the id and names for viewers who may not see who holds
+ * what, so with nothing left this says only which kind of account it is.
+ */
+const pendingLabel = (
+  p: NonNullable<ItemTransactionFieldsFragment["pendingOwner"]>,
+) => {
+  const provider = PROVIDER_NAME[p.provider];
+  if (p.displayName && p.displayIdentifier) {
+    return `${p.displayName} (@${p.displayIdentifier})`;
+  }
+  if (p.displayIdentifier) return `@${p.displayIdentifier}`;
+  if (p.displayName) return p.displayName;
+  if (p.providerAccountId) return `${provider} ${p.providerAccountId}`;
+  return `${provider} account`;
+};
+
+const PendingParty: React.FC<{
+  owner: NonNullable<ItemTransactionFieldsFragment["pendingOwner"]>;
+}> = ({ owner }) => (
+  <PendingName>
+    <ProviderIcon provider={owner.provider} size={14} />
+    {pendingLabel(owner)}
+  </PendingName>
+);
+
 /**
  * Who it moved between, phrased per kind.
  *
@@ -374,19 +418,25 @@ const PartyCell: React.FC<{
       <Party>{label}</Party>
     );
 
+  // Nobody here holds it: the external account it waits on, when known.
+  const pending = row.pendingOwner ? (
+    <PendingParty owner={row.pendingOwner} />
+  ) : null;
+
   switch (row.kind) {
     case ItemTransactionKind.Grant:
       return (
         <>
           <Muted>—</Muted>
           <Arrow>→</Arrow>
-          {to ? who(to, row.toUser) : <Muted>pending claim</Muted>}
+          {to ? who(to, row.toUser) : (pending ?? <Muted>pending claim</Muted>)}
         </>
       );
     case ItemTransactionKind.Revoke:
+      // A revoke of an unclaimed item takes it from the account it waited on.
       return (
         <>
-          {from ? who(from, row.fromUser) : <Muted>—</Muted>}
+          {from ? who(from, row.fromUser) : (pending ?? <Muted>—</Muted>)}
           <Arrow>→</Arrow>
           <Muted>destroyed</Muted>
         </>
@@ -415,7 +465,7 @@ const PartyCell: React.FC<{
         <>
           <Muted>unrecorded</Muted>
           <Arrow>→</Arrow>
-          {to ? who(to, row.toUser) : <Muted>—</Muted>}
+          {to ? who(to, row.toUser) : (pending ?? <Muted>—</Muted>)}
         </>
       );
     default:

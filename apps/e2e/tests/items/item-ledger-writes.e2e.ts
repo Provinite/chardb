@@ -1,5 +1,7 @@
 import { presetTest, expect } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
+import { randomUUID } from "node:crypto";
+import { makePrisma } from "../../src/world/ctx.js";
 import {
   ItemTransactionKind,
   SeedGrantItemDocument,
@@ -153,6 +155,99 @@ test.describe("staff look up a member from the ledger", () => {
         `[data-testid="holding-group"][data-item-type-id="${world.itemTypes.potion.id}"]`,
       ),
     ).toContainText("×2");
+  });
+});
+
+test.describe("staff look up a Discord holder from the ledger (#445)", () => {
+  const DISCORD_ID = "214000000000009071";
+  const prizeRow = (page: Page) =>
+    page.getByTestId("ledger-row").filter({ hasText: "Hollowtide 2025 prize" });
+
+  // Written straight to the database: a grant to a Discord account asks
+  // Discord who it is, and the browser stack has no Discord to ask. This is
+  // the row such a grant leaves, names included.
+  test.beforeEach(async ({ world }) => {
+    const prisma = makePrisma();
+    try {
+      const item = await prisma.item.create({
+        data: { itemTypeId: world.itemTypes.potion.id, ownerId: null },
+      });
+      await prisma.pendingOwnership.create({
+        data: {
+          itemId: item.id,
+          provider: "DISCORD",
+          providerAccountId: DISCORD_ID,
+          displayIdentifier: "neo.baka",
+          displayName: "Neo the Baka",
+        },
+      });
+      await prisma.itemTransaction.create({
+        data: {
+          communityId: world.community.id,
+          itemTypeId: world.itemTypes.potion.id,
+          itemId: item.id,
+          kind: "GRANT",
+          batchId: randomUUID(),
+          actorLabel: "halloween-bot",
+          reason: "Hollowtide 2025 prize",
+        },
+      });
+    } finally {
+      await prisma.$disconnect();
+    }
+  });
+
+  test.describe("as staff who may see who holds what", () => {
+    // The stock Admin role: canCreateOrphanedCharacter, which gates the
+    // pending owner's id and names.
+    test.use({ persona: "commadmin" });
+
+    test("the row names the Discord account the item waits on", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(world.community.ledgerUrl);
+      await expect(prizeRow(page)).toContainText("Neo the Baka (@neo.baka)");
+    });
+  });
+
+  test.describe("as item staff who may not", () => {
+    test.use({ persona: "quartermaster" });
+
+    test("the row says only that a Discord account holds it", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(world.community.ledgerUrl);
+      await expect(prizeRow(page)).toContainText("Discord account");
+      await expect(prizeRow(page)).not.toContainText("neo.baka");
+      await expect(prizeRow(page)).not.toContainText("Neo the Baka");
+    });
+
+    // Searchable all the same: finding a row by a name you typed reveals
+    // nothing the row then shows.
+    for (const [by, term] of [
+      ["display name", "Neo the"],
+      ["username", "neo.ba"],
+      ["Discord id", DISCORD_ID],
+    ] as const) {
+      test(`search finds them by ${by}`, async ({ page, world }) => {
+        await page.goto(world.community.ledgerUrl);
+        const rows = page.getByTestId("ledger-row");
+        await expect(
+          rows.filter({ hasText: "Lanternfall prompt completion" }),
+        ).toHaveCount(1);
+
+        await page
+          .getByRole("searchbox", { name: "Search the ledger" })
+          .fill(term);
+
+        await expect(
+          rows.filter({ hasText: "Lanternfall prompt completion" }),
+        ).toHaveCount(0);
+        await expect(prizeRow(page)).toHaveCount(1);
+      });
+    }
   });
 });
 

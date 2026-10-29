@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **The item ledger names who an unclaimed item waits on**, as "Display Name (@username)" for staff who may see it and "Discord account" for everyone else; a Site Admin "Discord Names" page fills in names for older holders (#445).
 - **Halloween candy boards** (`/halloween/board`): players keep up to ten boards, each using their whole collection, listed with previews to open, share or delete; they name a board from Halloween word lists and can stick its name on, on the trick-or-treat title ribbon, stick the candies their lost knocks gave them, move, rotate, scale and reorder them with handles or the toolbar, pick them out of a pile by clicking again or through see-through edges, choose a picture or tile behind them and desaturate, dim or tint it, place the light their shadows fall from and set its strength, colour and spotlight, clear the board, see whether it is saved, share a read-only link to it, and download it as a 2400 × 1800 picture.
 
 ### Changed

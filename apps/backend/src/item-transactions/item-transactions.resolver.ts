@@ -34,6 +34,8 @@ import { User } from "../users/entities/user.entity";
 import { mapPrismaItemTypeToGraphQL } from "../items/utils/item-type-resolver-mappers";
 import { mapPrismaItemToGraphQL } from "../items/utils/item-resolver-mappers";
 import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
+import { PendingOwnership } from "../pending-ownership/entities/pending-ownership.entity";
+import { mapPrismaPendingOwnershipToGraphQL } from "../pending-ownership/utils/pending-ownership-mappers";
 
 /**
  * Reading the ledger requires community membership and nothing more.
@@ -172,6 +174,29 @@ export class ItemTransactionsResolver {
   @ResolveField(() => User, { name: "actorUser", nullable: true })
   resolveActorUser(@Parent() transaction: ItemTransaction) {
     return this.loadUser(transaction.actorUserId);
+  }
+
+  /**
+   * The external account the row's item waits on, if any: who an unclaimed
+   * grant went to when nobody here had an account to give it to (#445).
+   * Pending owners are already public on the item itself.
+   */
+  @AllowAnyAuthenticated()
+  @ResolveField(() => PendingOwnership, {
+    name: "pendingOwner",
+    nullable: true,
+    description:
+      "The external account this row's item is held for, when no user here " +
+      "holds it. Kept after a claim, as history.",
+  })
+  async resolvePendingOwner(
+    @Parent() transaction: ItemTransaction,
+  ): Promise<PendingOwnership | null> {
+    if (!transaction.itemId) return null;
+    const pending = await this.database.pendingOwnership.findUnique({
+      where: { itemId: transaction.itemId },
+    });
+    return pending ? mapPrismaPendingOwnershipToGraphQL(pending) : null;
   }
 
   private async loadUser(userId?: string | null): Promise<User | null> {

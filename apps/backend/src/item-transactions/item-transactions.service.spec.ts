@@ -177,6 +177,35 @@ describe("ItemTransactionsService", () => {
       );
     });
 
+    it("searches the pending owner by either Discord name, or by exact id (#445)", async () => {
+      // Someone with no account here is known by their Discord names; a bot
+      // log gives staff the id.
+      await service.findAll({ communityId: "comm1", search: "neo" });
+
+      const { where } =
+        mockDatabaseService.itemTransaction.findMany.mock.calls[0][0];
+      const searched = where.AND.find((clause: object) => "OR" in clause) as
+        | { OR: unknown[] }
+        | undefined;
+      expect(searched?.OR).toEqual(
+        expect.arrayContaining([
+          {
+            item: {
+              pendingOwnership: {
+                OR: [
+                  {
+                    displayIdentifier: { contains: "neo", mode: "insensitive" },
+                  },
+                  { displayName: { contains: "neo", mode: "insensitive" } },
+                  { providerAccountId: "neo" },
+                ],
+              },
+            },
+          },
+        ]),
+      );
+    });
+
     it("matches a user on any of the three roles a row can name", async () => {
       await service.findAll({ communityId: "comm1", userId: "user1" });
 
