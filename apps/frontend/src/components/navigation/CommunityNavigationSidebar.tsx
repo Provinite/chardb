@@ -25,6 +25,7 @@ import {
   ShoppingCart,
   Store,
   Receipt,
+  UserSearch,
 } from "lucide-react";
 import { spotlight } from "@mantine/spotlight";
 import { CommunityNavigationItem } from "./CommunityNavigationItem";
@@ -579,6 +580,18 @@ export const CommunityNavigationSidebar: React.FC<
                   to={`${communityBasePath}/admin/items`}
                   icon={Package}
                   label="Items"
+                  isNested
+                />
+              )}
+
+              {/* External Members - people something waits on here without
+                  an account. Seeing who they are is what this permission
+                  already governs (#445). */}
+              {permissions.canCreateOrphanedCharacter && (
+                <CommunityNavigationItem
+                  to={`${communityBasePath}/external-members`}
+                  icon={UserSearch}
+                  label="External Members"
                   isNested
                 />
               )}

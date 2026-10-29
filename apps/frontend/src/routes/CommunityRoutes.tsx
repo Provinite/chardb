@@ -35,6 +35,7 @@ import { CommunityCandyBoardsPage } from "../pages/CommunityCandyBoardsPage";
 import { CommunityColorPalettePage } from "../pages/CommunityColorPalettePage";
 import { CommunityInventoryPage } from "../pages/CommunityInventoryPage";
 import { CommunityPendingHoldingsPage } from "../pages/CommunityPendingHoldingsPage";
+import { CommunityExternalMembersPage } from "../pages/CommunityExternalMembersPage";
 import { CommunityItemLedgerPage } from "../pages/CommunityItemLedgerPage";
 import { CommunityCurrenciesAdminPage } from "../pages/CommunityCurrenciesAdminPage";
 import { CommunityCurrencyLedgerPage } from "../pages/CommunityCurrencyLedgerPage";
@@ -360,10 +361,19 @@ export const CommunityRoutes: React.FC = () => (
         </ProtectedRoute>
       }
     />
-    {/* Someone with no account here, by the external account their items
-        wait on (#445). Linked from the item ledger; staff only. */}
+    {/* External members: people something waits on here without an
+        account, found by search or browsed, and one's pending inventory
+        (#445). Staff only; the server decides. */}
     <Route
-      path="/holders/:provider/:accountId"
+      path="/external-members"
+      element={
+        <ProtectedRoute>
+          <CommunityExternalMembersPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/external-members/:provider/:accountId"
       element={
         <ProtectedRoute>
           <CommunityPendingHoldingsPage />

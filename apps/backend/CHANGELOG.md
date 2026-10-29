@@ -19,7 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`pendingHoldings` lists the live, unclaimed items held for one external account in a community**, for staff who can grant items (#445).
+- **`externalMembers` lists the external accounts something waits on in a community, searched or paged, and `pendingHoldings` shows one account's unclaimed items and characters**, both for staff who may see pending owners (#445).
 - **Pending owners keep their Discord username and display name**, recorded on item and character grants, Halloween prizes and Discord account links, and filled in for older ones by a site-admin `runDiscordNameBackfill` job; the item ledger search matches either name or the exact Discord ID (#445).
 - **Prisma operations and SQL queries appear as spans in traces**, nested under the resolver that issued them (#97).
 - **Lost knocks record their candy**, and players arrange them on candy boards, up to ten each: `myHalloweenCandyBoards`, `createHalloweenCandyBoard`, `deleteHalloweenCandyBoard`, `halloweenCandyBoard` by its UUID, and `applyHalloweenCandyBoardActions`, whose actions are a `@oneOf` input (add, edit, raise, lower, forward, backward, remove), at most 100 a save, skipping any that cannot apply; `setHalloweenCandyBoardBackground` and `setHalloweenCandyBoardLighting` set what is behind the candies, how it is desaturated, dimmed and tinted, and where their light comes from; `setHalloweenCandyBoardName` names a board from the word lists in `@chardb/shared`, and a placement's `sticker` is a candy or, on a named board, its nameplate.

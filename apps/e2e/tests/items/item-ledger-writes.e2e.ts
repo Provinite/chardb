@@ -229,7 +229,7 @@ test.describe("staff look up a Discord holder from the ledger (#445)", () => {
         .click();
 
       await expect(page).toHaveURL(
-        new RegExp(`/holders/discord/${DISCORD_ID}$`),
+        new RegExp(`/external-members/discord/${DISCORD_ID}$`),
       );
       await expect(
         page.getByRole("heading", { name: /Neo the Baka \(@neo\.baka\)/ }),
@@ -254,17 +254,70 @@ test.describe("staff look up a Discord holder from the ledger (#445)", () => {
           .filter({ hasText: "Spent off-site in the 2025 event" }),
       ).toContainText("Neo the Baka (@neo.baka)");
     });
+
+    test("finds them from External Members by searching their username", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(world.community.url);
+      await page.getByRole("link", { name: "External Members" }).click();
+      await expect(
+        page.getByRole("heading", { name: "External Members" }),
+      ).toBeVisible();
+      // A lookup: nobody is listed until asked.
+      await expect(page.getByTestId("external-member")).toHaveCount(0);
+
+      await page
+        .getByRole("searchbox", { name: "Search external members" })
+        .fill("neo.ba");
+      const neo = page
+        .getByTestId("external-member")
+        .filter({ hasText: "Neo the Baka (@neo.baka)" });
+      await expect(neo).toContainText("2 items");
+
+      await neo.getByRole("link").click();
+      await expect(page).toHaveURL(
+        new RegExp(`/external-members/discord/${DISCORD_ID}$`),
+      );
+      await expect(holderGroup(page, world.itemTypes.potion.id)).toContainText(
+        "×2",
+      );
+    });
+
+    test("browses everyone when no search is given", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(`${world.community.url}/external-members`);
+      await page.getByRole("button", { name: "Browse all" }).click();
+
+      await expect(
+        page
+          .getByTestId("external-member")
+          .filter({ hasText: "Neo the Baka (@neo.baka)" }),
+      ).toHaveCount(1);
+    });
   });
 
   test.describe("as a plain member", () => {
     test.use({ persona: "member" });
 
     test("cannot open a holder's page", async ({ page, world }) => {
-      await page.goto(`${world.community.url}/holders/discord/${DISCORD_ID}`);
+      await page.goto(
+        `${world.community.url}/external-members/discord/${DISCORD_ID}`,
+      );
       await expect(
         page.getByText("Those holdings could not be loaded."),
       ).toBeVisible();
       await expect(page.getByTestId("pending-holding-group")).toHaveCount(0);
+    });
+
+    test("is not offered External Members", async ({ page, world }) => {
+      await page.goto(world.community.url);
+      await expect(page.getByRole("link", { name: "Items" })).toHaveCount(0);
+      await expect(
+        page.getByRole("link", { name: "External Members" }),
+      ).toHaveCount(0);
     });
   });
 
@@ -279,6 +332,18 @@ test.describe("staff look up a Discord holder from the ledger (#445)", () => {
       await expect(prizeRow(page)).toContainText("Discord account");
       await expect(prizeRow(page)).not.toContainText("neo.baka");
       await expect(prizeRow(page)).not.toContainText("Neo the Baka");
+    });
+
+    test("is not offered External Members, which shows who they are", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(world.community.url);
+      // Item staff see Administration, just not this entry in it.
+      await expect(page.getByRole("link", { name: "Items" })).toBeVisible();
+      await expect(
+        page.getByRole("link", { name: "External Members" }),
+      ).toHaveCount(0);
     });
 
     // Searchable all the same: finding a row by a name you typed reveals

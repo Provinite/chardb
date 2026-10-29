@@ -20,12 +20,13 @@ import {
 } from "../lib/pendingOwner";
 
 /**
- * What still waits on someone with no account here -- an event winner known
- * only by Discord, say -- for staff to find and clean up (#445).
+ * An external member's pending inventory: the items and characters waiting
+ * on someone with no account here -- an event winner known only by Discord,
+ * say -- for staff to find and clean up (#445).
  *
- * Reached from the item ledger, where their name links here. Staff only: the
- * server answers for viewers who can grant items, which is what removing
- * takes.
+ * Reached from External Members and from their name on the item ledger.
+ * Staff only: the server answers for viewers who may see pending owners.
+ * Removing items takes CanGrantItems on top.
  */
 
 const Container = styled.div`
@@ -106,6 +107,25 @@ const Count = styled.span`
   color: ${({ theme }) => theme.colors.text.secondary};
 `;
 
+const BackLink = styled(Link)`
+  display: inline-block;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
+`;
+
+const Section = styled.section`
+  margin-bottom: 1.5rem;
+`;
+
+const SectionTitle = styled.h2`
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: ${({ theme }) => theme.colors.text.muted};
+  margin: 0 0 0.5rem 0;
+`;
+
 const Empty = styled.div`
   padding: 3rem 1rem;
   text-align: center;
@@ -161,8 +181,8 @@ export const CommunityPendingHoldingsPage: React.FC = () => {
       <Container>
         <Empty>
           <p>
-            Those holdings could not be loaded. Only staff who can grant items
-            can see them.
+            Those holdings could not be loaded. Only staff who can see pending
+            owners can open them.
           </p>
           {error && <p>{error.message}</p>}
         </Empty>
@@ -170,8 +190,12 @@ export const CommunityPendingHoldingsPage: React.FC = () => {
     );
   }
 
+  const nothingLeft =
+    report.holdings.length === 0 && report.characters.length === 0;
+
   return (
     <Container>
+      <BackLink to="/external-members">← External Members</BackLink>
       <Title>
         <ProviderIcon provider={report.holder.provider} size={28} />
         {who}
@@ -181,57 +205,77 @@ export const CommunityPendingHoldingsPage: React.FC = () => {
         {PROVIDER_NAME[report.holder.provider]} and join.
       </Subtitle>
 
-      {report.holdings.length === 0 ? (
+      {nothingLeft && (
         <Empty data-testid="pending-holdings-empty">
           <Package size={36} style={{ opacity: 0.5 }} />
           <p>Nothing is left waiting for them here.</p>
         </Empty>
-      ) : (
-        <Groups>
-          {report.holdings.map((h) => (
-            <Group
-              key={h.itemType.id}
-              data-testid="pending-holding-group"
-              data-item-type-id={h.itemType.id}
-            >
-              <Swatch $hex={h.itemType.color?.hexCode}>
-                {h.itemType.image ? (
-                  <img
-                    src={
-                      h.itemType.image.thumbnailUrl ||
-                      h.itemType.image.originalUrl
+      )}
+
+      {report.holdings.length > 0 && (
+        <Section>
+          <SectionTitle>Items</SectionTitle>
+          <Groups>
+            {report.holdings.map((h) => (
+              <Group
+                key={h.itemType.id}
+                data-testid="pending-holding-group"
+                data-item-type-id={h.itemType.id}
+              >
+                <Swatch $hex={h.itemType.color?.hexCode}>
+                  {h.itemType.image ? (
+                    <img
+                      src={
+                        h.itemType.image.thumbnailUrl ||
+                        h.itemType.image.originalUrl
+                      }
+                      alt={h.itemType.image.altText || h.itemType.name}
+                    />
+                  ) : (
+                    <Package size={18} />
+                  )}
+                </Swatch>
+                <Name>
+                  <Link to={`/item-types/${h.itemType.id}`}>
+                    {h.itemType.name}
+                  </Link>
+                  {h.itemType.category && <small>{h.itemType.category}</small>}
+                </Name>
+                <Count>×{h.count}</Count>
+                {permissions.canGrantItems && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    data-testid="remove-items"
+                    onClick={() =>
+                      setRemoving({
+                        itemTypeName: h.itemType.name,
+                        itemIds: h.items.map((i) => i.id),
+                      })
                     }
-                    alt={h.itemType.image.altText || h.itemType.name}
-                  />
-                ) : (
-                  <Package size={18} />
+                  >
+                    Remove…
+                  </Button>
                 )}
-              </Swatch>
-              <Name>
-                <Link to={`/item-types/${h.itemType.id}`}>
-                  {h.itemType.name}
-                </Link>
-                {h.itemType.category && <small>{h.itemType.category}</small>}
-              </Name>
-              <Count>×{h.count}</Count>
-              {permissions.canGrantItems && (
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  data-testid="remove-items"
-                  onClick={() =>
-                    setRemoving({
-                      itemTypeName: h.itemType.name,
-                      itemIds: h.items.map((i) => i.id),
-                    })
-                  }
-                >
-                  Remove…
-                </Button>
-              )}
-            </Group>
-          ))}
-        </Groups>
+              </Group>
+            ))}
+          </Groups>
+        </Section>
+      )}
+
+      {report.characters.length > 0 && (
+        <Section>
+          <SectionTitle>Characters</SectionTitle>
+          <Groups>
+            {report.characters.map((c) => (
+              <Group key={c.id} data-testid="pending-character">
+                <Name>
+                  <Link to={`/character/${c.id}`}>{c.name}</Link>
+                </Name>
+              </Group>
+            ))}
+          </Groups>
+        </Section>
       )}
 
       <RemoveItemsDialog

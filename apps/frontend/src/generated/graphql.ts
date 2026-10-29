@@ -1166,6 +1166,24 @@ export enum ExternalAccountProvider {
   Toyhouse = 'TOYHOUSE'
 }
 
+/** Someone something waits on in a community without an account here. */
+export type ExternalMember = {
+  __typename?: 'ExternalMember';
+  /** Characters waiting on them. */
+  characterCount: Scalars['Int']['output'];
+  /** Their most recent waiting claim, carrying the names last recorded for them. Blank to viewers who may not see who holds what. */
+  holder: PendingOwnership;
+  /** Live items waiting on them. */
+  itemCount: Scalars['Int']['output'];
+};
+
+export type ExternalMembersPage = {
+  __typename?: 'ExternalMembersPage';
+  hasMore: Scalars['Boolean']['output'];
+  /** Newest waiting claim first. */
+  members: Array<ExternalMember>;
+};
+
 export type FollowListResult = {
   __typename?: 'FollowListResult';
   followers: Array<User>;
@@ -3208,9 +3226,18 @@ export type OwnerIdUpdate = {
   set?: InputMaybe<Scalars['ID']['input']>;
 };
 
-/** Live, unclaimed items held for one external account in one community. */
+/** A character waiting on an external account to be claimed. */
+export type PendingCharacter = {
+  __typename?: 'PendingCharacter';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+};
+
+/** Live, unclaimed items and characters held for one external account in one community. */
 export type PendingHoldingsReport = {
   __typename?: 'PendingHoldingsReport';
+  /** By name. */
+  characters: Array<PendingCharacter>;
   distinctTypes: Scalars['Int']['output'];
   /** Who they are waiting for. Its id and names are blank to viewers who may not see them, like any pending owner's. */
   holder: PendingOwnership;
@@ -3333,6 +3360,8 @@ export type Query = {
   enumValues: EnumValueConnection;
   /** Get enum values by trait ID with pagination */
   enumValuesByTrait: EnumValueConnection;
+  /** Everyone something waits on in a community without an account here, one per external account, newest first. Narrowed by an optional search on either name or the exact account id. */
+  externalMembers: ExternalMembersPage;
   followStatus: FollowStatus;
   galleries: GalleryConnection;
   gallery: Gallery;
@@ -3413,7 +3442,7 @@ export type Query = {
   notificationPreferences: Array<NotificationPreference>;
   /** Your notifications, newest first. */
   notifications: NotificationConnection;
-  /** Live, unclaimed items held for one external account in one community, grouped by item type. For staff who can grant items. */
+  /** An external member's pending inventory: the live, unclaimed items and characters held for one external account in one community. For staff who may see pending owners. */
   pendingHoldings: PendingHoldingsReport;
   /** Get count of pending images for a community */
   pendingImageCount: Scalars['Int']['output'];
@@ -3714,6 +3743,15 @@ export type QueryEnumValuesByTraitArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   traitId: Scalars['ID']['input'];
+};
+
+
+export type QueryExternalMembersArgs = {
+  communityId: Scalars['ID']['input'];
+  limit?: Scalars['Int']['input'];
+  offset?: Scalars['Int']['input'];
+  provider?: InputMaybe<ExternalAccountProvider>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -6401,7 +6439,18 @@ export type GetPendingHoldingsQueryVariables = Exact<{
 }>;
 
 
-export type GetPendingHoldingsQuery = { __typename?: 'Query', pendingHoldings: { __typename?: 'PendingHoldingsReport', totalItems: number, distinctTypes: number, holder: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }> } };
+export type GetPendingHoldingsQuery = { __typename?: 'Query', pendingHoldings: { __typename?: 'PendingHoldingsReport', totalItems: number, distinctTypes: number, holder: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }>, characters: Array<{ __typename?: 'PendingCharacter', id: string, name: string }> } };
+
+export type GetExternalMembersQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  search?: InputMaybe<Scalars['String']['input']>;
+  provider?: InputMaybe<ExternalAccountProvider>;
+  limit: Scalars['Int']['input'];
+  offset: Scalars['Int']['input'];
+}>;
+
+
+export type GetExternalMembersQuery = { __typename?: 'Query', externalMembers: { __typename?: 'ExternalMembersPage', hasMore: boolean, members: Array<{ __typename?: 'ExternalMember', itemCount: number, characterCount: number, holder: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null } }> } };
 
 export type UseItemMutationVariables = Exact<{
   input: UseItemInput;
@@ -14849,6 +14898,10 @@ export const GetPendingHoldingsDocument = gql`
         createdAt
       }
     }
+    characters {
+      id
+      name
+    }
   }
 }
     `;
@@ -14887,6 +14940,67 @@ export type GetPendingHoldingsQueryHookResult = ReturnType<typeof useGetPendingH
 export type GetPendingHoldingsLazyQueryHookResult = ReturnType<typeof useGetPendingHoldingsLazyQuery>;
 export type GetPendingHoldingsSuspenseQueryHookResult = ReturnType<typeof useGetPendingHoldingsSuspenseQuery>;
 export type GetPendingHoldingsQueryResult = Apollo.QueryResult<GetPendingHoldingsQuery, GetPendingHoldingsQueryVariables>;
+export const GetExternalMembersDocument = gql`
+    query GetExternalMembers($communityId: ID!, $search: String, $provider: ExternalAccountProvider, $limit: Int!, $offset: Int!) {
+  externalMembers(
+    communityId: $communityId
+    search: $search
+    provider: $provider
+    limit: $limit
+    offset: $offset
+  ) {
+    hasMore
+    members {
+      itemCount
+      characterCount
+      holder {
+        id
+        provider
+        providerAccountId
+        displayIdentifier
+        displayName
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetExternalMembersQuery__
+ *
+ * To run a query within a React component, call `useGetExternalMembersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetExternalMembersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetExternalMembersQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      search: // value for 'search'
+ *      provider: // value for 'provider'
+ *      limit: // value for 'limit'
+ *      offset: // value for 'offset'
+ *   },
+ * });
+ */
+export function useGetExternalMembersQuery(baseOptions: Apollo.QueryHookOptions<GetExternalMembersQuery, GetExternalMembersQueryVariables> & ({ variables: GetExternalMembersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetExternalMembersQuery, GetExternalMembersQueryVariables>(GetExternalMembersDocument, options);
+      }
+export function useGetExternalMembersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetExternalMembersQuery, GetExternalMembersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetExternalMembersQuery, GetExternalMembersQueryVariables>(GetExternalMembersDocument, options);
+        }
+export function useGetExternalMembersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetExternalMembersQuery, GetExternalMembersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetExternalMembersQuery, GetExternalMembersQueryVariables>(GetExternalMembersDocument, options);
+        }
+export type GetExternalMembersQueryHookResult = ReturnType<typeof useGetExternalMembersQuery>;
+export type GetExternalMembersLazyQueryHookResult = ReturnType<typeof useGetExternalMembersLazyQuery>;
+export type GetExternalMembersSuspenseQueryHookResult = ReturnType<typeof useGetExternalMembersSuspenseQuery>;
+export type GetExternalMembersQueryResult = Apollo.QueryResult<GetExternalMembersQuery, GetExternalMembersQueryVariables>;
 export const UseItemDocument = gql`
     mutation UseItem($input: UseItemInput!) {
   useItem(input: $input) {

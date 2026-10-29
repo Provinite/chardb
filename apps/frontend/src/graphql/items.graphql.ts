@@ -466,6 +466,43 @@ export const GET_PENDING_HOLDINGS = gql`
           createdAt
         }
       }
+      characters {
+        id
+        name
+      }
+    }
+  }
+`;
+
+// External members: who something waits on here without an account, one per
+// external account. Searched, or browsed a page at a time (#445).
+export const GET_EXTERNAL_MEMBERS = gql`
+  query GetExternalMembers(
+    $communityId: ID!
+    $search: String
+    $provider: ExternalAccountProvider
+    $limit: Int!
+    $offset: Int!
+  ) {
+    externalMembers(
+      communityId: $communityId
+      search: $search
+      provider: $provider
+      limit: $limit
+      offset: $offset
+    ) {
+      hasMore
+      members {
+        itemCount
+        characterCount
+        holder {
+          id
+          provider
+          providerAccountId
+          displayIdentifier
+          displayName
+        }
+      }
     }
   }
 `;
