@@ -2,6 +2,7 @@ import { ObjectType, Field, Int } from "@nestjs/graphql";
 import { ItemType } from "./item-type.entity";
 import { Item } from "./item.entity";
 import { User } from "../../users/entities/user.entity";
+import { PendingOwnership } from "../../pending-ownership/entities/pending-ownership.entity";
 
 /**
  * What one member holds in one community.
@@ -49,6 +50,32 @@ export class MemberHoldingsReport {
       "-- and present so the page can say so rather than stay silent.",
   })
   pendingItems: number;
+
+  @Field(() => [MemberHolding], { description: "Largest holding first." })
+  holdings: MemberHolding[];
+}
+
+/**
+ * What waits on one external account in one community: someone with no
+ * account here, such as an event winner known only by Discord (#445).
+ */
+@ObjectType({
+  description:
+    "Live, unclaimed items held for one external account in one community.",
+})
+export class PendingHoldingsReport {
+  @Field(() => PendingOwnership, {
+    description:
+      "Who they are waiting for. Its id and names are blank to viewers who " +
+      "may not see them, like any pending owner's.",
+  })
+  holder: PendingOwnership;
+
+  @Field(() => Int)
+  totalItems: number;
+
+  @Field(() => Int)
+  distinctTypes: number;
 
   @Field(() => [MemberHolding], { description: "Largest holding first." })
   holdings: MemberHolding[];

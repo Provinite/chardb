@@ -1896,26 +1896,7 @@ export class ItemsService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const byType = new Map<
-      string,
-      { itemType: (typeof items)[number]["itemType"]; items: typeof items }
-    >();
-
-    for (const item of items) {
-      const group = byType.get(item.itemTypeId);
-      if (group) group.items.push(item);
-      else
-        byType.set(item.itemTypeId, { itemType: item.itemType, items: [item] });
-    }
-
-    const holdings = [...byType.values()]
-      .map((g) => ({
-        itemType: g.itemType,
-        count: g.items.length,
-        items: g.items,
-      }))
-      .sort((a, b) => b.count - a.count);
-
+    const holdings = groupHoldings(items);
     return {
       member,
       totalItems: items.length,
@@ -1924,4 +1905,72 @@ export class ItemsService {
       holdings,
     };
   }
+
+  /**
+   * What waits on one external account in one community: the holdings of
+   * someone with no account here, for staff to find and clean up (#445).
+   *
+   * @throws NotFoundException if nothing was ever held for the account here
+   */
+  async findPendingHoldings(
+    communityId: string,
+    provider: ExternalAccountProvider,
+    providerAccountId: string,
+  ) {
+    const [holder, items] = await Promise.all([
+      // Any row ever held for them here, removed or not, so a holder staff
+      // have emptied out still has a page that says who they are.
+      this.db.pendingOwnership.findFirst({
+        where: {
+          provider,
+          providerAccountId,
+          item: { itemType: { communityId } },
+        },
+      }),
+      this.db.item.findMany({
+        where: {
+          ownerId: null,
+          destroyedAt: null,
+          itemType: { communityId },
+          pendingOwnership: { provider, providerAccountId, claimedAt: null },
+        },
+        include: { itemType: true },
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
+
+    if (!holder) {
+      throw new NotFoundException(
+        "Nothing has been held for that account in this community",
+      );
+    }
+
+    const holdings = groupHoldings(items);
+    return {
+      holder,
+      totalItems: items.length,
+      distinctTypes: holdings.length,
+      holdings,
+    };
+  }
+}
+
+/** Items gathered by type, each type's oldest first, largest holding first. */
+function groupHoldings<T extends { itemTypeId: string; itemType: unknown }>(
+  items: T[],
+): Array<{ itemType: T["itemType"]; count: number; items: T[] }> {
+  const byType = new Map<string, { itemType: T["itemType"]; items: T[] }>();
+  for (const item of items) {
+    const group = byType.get(item.itemTypeId);
+    if (group) group.items.push(item);
+    else
+      byType.set(item.itemTypeId, { itemType: item.itemType, items: [item] });
+  }
+  return [...byType.values()]
+    .map((g) => ({
+      itemType: g.itemType,
+      count: g.items.length,
+      items: g.items,
+    }))
+    .sort((a, b) => b.count - a.count);
 }

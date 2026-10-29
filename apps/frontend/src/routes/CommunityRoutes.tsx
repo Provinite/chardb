@@ -34,6 +34,7 @@ import { CommunityCandyBoardPage } from "../pages/CommunityCandyBoardPage";
 import { CommunityCandyBoardsPage } from "../pages/CommunityCandyBoardsPage";
 import { CommunityColorPalettePage } from "../pages/CommunityColorPalettePage";
 import { CommunityInventoryPage } from "../pages/CommunityInventoryPage";
+import { CommunityPendingHoldingsPage } from "../pages/CommunityPendingHoldingsPage";
 import { CommunityItemLedgerPage } from "../pages/CommunityItemLedgerPage";
 import { CommunityCurrenciesAdminPage } from "../pages/CommunityCurrenciesAdminPage";
 import { CommunityCurrencyLedgerPage } from "../pages/CommunityCurrencyLedgerPage";
@@ -356,6 +357,16 @@ export const CommunityRoutes: React.FC = () => (
       element={
         <ProtectedRoute>
           <CommunityInventoryPage />
+        </ProtectedRoute>
+      }
+    />
+    {/* Someone with no account here, by the external account their items
+        wait on (#445). Linked from the item ledger; staff only. */}
+    <Route
+      path="/holders/:provider/:accountId"
+      element={
+        <ProtectedRoute>
+          <CommunityPendingHoldingsPage />
         </ProtectedRoute>
       }
     />

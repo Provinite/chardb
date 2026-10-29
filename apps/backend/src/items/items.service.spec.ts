@@ -1100,3 +1100,113 @@ describe("ItemsService.findMemberHoldings", () => {
     );
   });
 });
+
+/**
+ * What waits on one external account in one community: the holdings of
+ * someone with no account here, for staff to find and clean up (#445).
+ */
+describe("ItemsService.findPendingHoldings", () => {
+  let service: ItemsService;
+  const DISCORD_ID = "214000000000009071";
+  const holder = {
+    id: "po1",
+    provider: "DISCORD",
+    providerAccountId: DISCORD_ID,
+    displayIdentifier: "neo.baka",
+    displayName: "Neo the Baka",
+  };
+  const held = (id: string, typeId: string) => ({
+    id,
+    itemTypeId: typeId,
+    createdAt: new Date("2025-11-15"),
+    itemType: { id: typeId, name: typeId },
+  });
+
+  beforeEach(async () => {
+    jest.clearAllMocks();
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ItemsService,
+        { provide: DatabaseService, useValue: mockDatabaseService },
+        {
+          provide: NotificationsService,
+          useValue: mockNotificationsService,
+        },
+        {
+          provide: PendingOwnershipService,
+          useValue: mockPendingOwnershipService,
+        },
+        { provide: DiscordService, useValue: mockDiscordService },
+        { provide: ItemTransactionsService, useValue: mockItemTransactions },
+        { provide: CurrencyLedgerService, useValue: mockCurrencyLedger },
+      ],
+    }).compile();
+    service = module.get<ItemsService>(ItemsService);
+    mockDatabaseService.pendingOwnership.findFirst.mockResolvedValue(holder);
+    mockDatabaseService.item.findMany.mockResolvedValue([
+      held("i1", "gen4"),
+      held("i2", "gen4"),
+      held("i3", "cc50"),
+    ]);
+  });
+
+  it("groups what still waits on the account, largest holding first", async () => {
+    const report = await service.findPendingHoldings(
+      "comm1",
+      "DISCORD",
+      DISCORD_ID,
+    );
+
+    expect(report.holder).toBe(holder);
+    expect(report.totalItems).toBe(3);
+    expect(report.holdings.map((h) => [h.itemType.id, h.count])).toEqual([
+      ["gen4", 2],
+      ["cc50", 1],
+    ]);
+  });
+
+  it("lists only live, unclaimed items of this community held for the account", async () => {
+    await service.findPendingHoldings("comm1", "DISCORD", DISCORD_ID);
+
+    const { where } = mockDatabaseService.item.findMany.mock.calls[0][0];
+    expect(where).toEqual({
+      ownerId: null,
+      destroyedAt: null,
+      itemType: { communityId: "comm1" },
+      pendingOwnership: {
+        provider: "DISCORD",
+        providerAccountId: DISCORD_ID,
+        claimedAt: null,
+      },
+    });
+  });
+
+  it("still names a holder whose items have all been removed", async () => {
+    // Emptied out by staff: the page should say so, not 404.
+    mockDatabaseService.item.findMany.mockResolvedValue([]);
+
+    const report = await service.findPendingHoldings(
+      "comm1",
+      "DISCORD",
+      DISCORD_ID,
+    );
+
+    expect(report.holder).toBe(holder);
+    expect(report.totalItems).toBe(0);
+    const { where } =
+      mockDatabaseService.pendingOwnership.findFirst.mock.calls[0][0];
+    expect(where).toEqual({
+      provider: "DISCORD",
+      providerAccountId: DISCORD_ID,
+      item: { itemType: { communityId: "comm1" } },
+    });
+  });
+
+  it("refuses an account nothing was ever held for here", async () => {
+    mockDatabaseService.pendingOwnership.findFirst.mockResolvedValue(null);
+
+    await expect(
+      service.findPendingHoldings("comm1", "DISCORD", DISCORD_ID),
+    ).rejects.toThrow(NotFoundException);
+  });
+});

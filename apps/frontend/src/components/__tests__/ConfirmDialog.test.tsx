@@ -137,3 +137,36 @@ describe("ConfirmDialog with a confirmPhrase", () => {
     expect(screen.getByRole("button", { name: "Remove" })).toBeDisabled();
   });
 });
+
+describe("ConfirmDialog with confirmDisabled", () => {
+  it("holds confirm until the caller's own form is complete (#445)", () => {
+    // For a dialog that asks for something in its body, like a reason.
+    const { rerender } = render(
+      <ThemeProvider theme={lightTheme}>
+        <ConfirmDialog
+          open
+          title="Remove 2 MYO Tickets?"
+          confirmLabel="Remove"
+          confirmDisabled
+          onConfirm={vi.fn()}
+          onCancel={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    expect(screen.getByRole("button", { name: "Remove" })).toBeDisabled();
+
+    rerender(
+      <ThemeProvider theme={lightTheme}>
+        <ConfirmDialog
+          open
+          title="Remove 2 MYO Tickets?"
+          confirmLabel="Remove"
+          confirmDisabled={false}
+          onConfirm={vi.fn()}
+          onCancel={vi.fn()}
+        />
+      </ThemeProvider>,
+    );
+    expect(screen.getByRole("button", { name: "Remove" })).toBeEnabled();
+  });
+});

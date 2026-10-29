@@ -423,6 +423,53 @@ export const GET_MEMBER_HOLDINGS = gql`
   ${USER_BASIC_FRAGMENT}
 `;
 
+// What waits on someone with no account here, for staff to clean up (#445).
+export const GET_PENDING_HOLDINGS = gql`
+  query GetPendingHoldings(
+    $communityId: ID!
+    $provider: ExternalAccountProvider!
+    $providerAccountId: String!
+  ) {
+    pendingHoldings(
+      communityId: $communityId
+      provider: $provider
+      providerAccountId: $providerAccountId
+    ) {
+      totalItems
+      distinctTypes
+      holder {
+        id
+        provider
+        providerAccountId
+        displayIdentifier
+        displayName
+      }
+      holdings {
+        count
+        itemType {
+          id
+          name
+          category
+          color {
+            id
+            hexCode
+          }
+          image {
+            id
+            thumbnailUrl
+            originalUrl
+            altText
+          }
+        }
+        items {
+          id
+          createdAt
+        }
+      }
+    }
+  }
+`;
+
 export const USE_ITEM = gql`
   mutation UseItem($input: UseItemInput!) {
     useItem(input: $input) {

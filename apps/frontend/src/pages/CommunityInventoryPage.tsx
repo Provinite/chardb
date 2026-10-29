@@ -12,6 +12,8 @@ import {
 } from "../contexts/CommunityHostContext";
 import { toast } from "react-hot-toast";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { RemoveItemsDialog } from "../components/items/RemoveItemsDialog";
+import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import {
   useGetMemberHoldingsQuery,
   useGetUserProfileQuery,
@@ -304,6 +306,7 @@ export const CommunityInventoryPage: React.FC = () => {
     data,
     loading: holdingsLoading,
     error,
+    refetch,
   } = useGetMemberHoldingsQuery({
     variables: { communityId: communityId!, userId: targetUserId ?? "" },
     skip: !communityId || !targetUserId,
@@ -313,6 +316,14 @@ export const CommunityInventoryPage: React.FC = () => {
 
   const report = data?.memberHoldings;
   const holdings = report?.holdings ?? [];
+
+  // Staff take items back from here (#169): the same permission revoking
+  // needs, checked again by the server.
+  const { permissions } = useUserCommunityRole(communityId ?? undefined);
+  const [removing, setRemoving] = useState<{
+    itemTypeName: string;
+    itemIds: string[];
+  } | null>(null);
 
   /**
    * The use awaiting a yes.
@@ -506,6 +517,20 @@ export const CommunityInventoryPage: React.FC = () => {
                       <ChevronDown size={14} />
                     </Expand>
                   )}
+                  {permissions.canGrantItems && (
+                    <Button
+                      type="button"
+                      data-testid="remove-items"
+                      onClick={() =>
+                        setRemoving({
+                          itemTypeName: h.itemType.name,
+                          itemIds: h.items.map((i) => i.id),
+                        })
+                      }
+                    >
+                      Remove…
+                    </Button>
+                  )}
                 </GroupHead>
 
                 {open && (
@@ -616,6 +641,18 @@ export const CommunityInventoryPage: React.FC = () => {
           </>
         )}
       </ConfirmDialog>
+
+      <RemoveItemsDialog
+        open={removing !== null}
+        itemTypeName={removing?.itemTypeName ?? ""}
+        itemIds={removing?.itemIds ?? []}
+        holderLabel={viewingSelf ? "your inventory" : (who ?? "this member")}
+        onClose={() => setRemoving(null)}
+        onRemoved={() => {
+          setRemoving(null);
+          void refetch();
+        }}
+      />
     </Container>
   );
 };

@@ -3453,6 +3453,20 @@ input OwnerIdUpdate {
   set: ID
 }
 
+"""Live, unclaimed items held for one external account in one community."""
+type PendingHoldingsReport {
+  distinctTypes: Int!
+
+  """
+  Who they are waiting for. Its id and names are blank to viewers who may not see them, like any pending owner's.
+  """
+  holder: PendingOwnership!
+
+  """Largest holding first."""
+  holdings: [MemberHolding!]!
+  totalItems: Int!
+}
+
 input PendingOwnerInput {
   """
   The external account provider. PATREON is refused: it cannot be a pending owner.
@@ -3962,6 +3976,11 @@ type Query {
 
   """Your notifications, newest first."""
   notifications(after: String, first: Int = 20, unreadOnly: Boolean): NotificationConnection!
+
+  """
+  Live, unclaimed items held for one external account in one community, grouped by item type. For staff who can grant items.
+  """
+  pendingHoldings(communityId: ID!, provider: ExternalAccountProvider!, providerAccountId: String!): PendingHoldingsReport!
 
   """Get count of pending images for a community"""
   pendingImageCount(communityId: ID!): Int!

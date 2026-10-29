@@ -35,7 +35,11 @@ import {
 } from "./entities/item-type.entity";
 import { Item as ItemEntity } from "./entities/item.entity";
 import { ItemEconomyReport } from "./entities/item-economy.entity";
-import { MemberHoldingsReport } from "./entities/member-holdings.entity";
+import {
+  MemberHoldingsReport,
+  PendingHoldingsReport,
+} from "./entities/member-holdings.entity";
+import { ExternalAccountProvider } from "@chardb/database";
 import { Community } from "../communities/entities/community.entity";
 import { Image } from "../images/entities/image.entity";
 import { User } from "../users/entities/user.entity";
@@ -312,6 +316,43 @@ export class ItemsResolver {
     return {
       ...report,
       member: mapPrismaUserToGraphQL(report.member),
+      holdings: report.holdings.map((h) => ({
+        count: h.count,
+        itemType: mapPrismaItemTypeToGraphQL(h.itemType),
+        items: h.items.map(mapPrismaItemToGraphQL),
+      })),
+    };
+  }
+
+  /**
+   * Staff only, unlike a member's inventory: this page exists to find and
+   * remove what someone with no account here still holds (#445), and
+   * CanGrantItems is what removing takes. Who the holder is stays gated on
+   * the holder's own fields, as on every pending owner.
+   */
+  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => PendingHoldingsReport, {
+    name: "pendingHoldings",
+    description:
+      "Live, unclaimed items held for one external account in one " +
+      "community, grouped by item type. For staff who can grant items.",
+  })
+  async pendingHoldings(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("provider", { type: () => ExternalAccountProvider })
+    provider: ExternalAccountProvider,
+    @Args("providerAccountId") providerAccountId: string,
+  ): Promise<PendingHoldingsReport> {
+    const report = await this.itemsService.findPendingHoldings(
+      communityId,
+      provider,
+      providerAccountId,
+    );
+
+    return {
+      ...report,
+      holder: mapPrismaPendingOwnershipToGraphQL(report.holder),
       holdings: report.holdings.map((h) => ({
         count: h.count,
         itemType: mapPrismaItemTypeToGraphQL(h.itemType),

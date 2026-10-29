@@ -166,36 +166,45 @@ test.describe("staff look up a Discord holder from the ledger (#445)", () => {
   // Written straight to the database: a grant to a Discord account asks
   // Discord who it is, and the browser stack has no Discord to ask. This is
   // the row such a grant leaves, names included.
+  // Two in one grant, so a removal of one leaves something to count.
   test.beforeEach(async ({ world }) => {
     const prisma = makePrisma();
+    const batchId = randomUUID();
     try {
-      const item = await prisma.item.create({
-        data: { itemTypeId: world.itemTypes.potion.id, ownerId: null },
-      });
-      await prisma.pendingOwnership.create({
-        data: {
-          itemId: item.id,
-          provider: "DISCORD",
-          providerAccountId: DISCORD_ID,
-          displayIdentifier: "neo.baka",
-          displayName: "Neo the Baka",
-        },
-      });
-      await prisma.itemTransaction.create({
-        data: {
-          communityId: world.community.id,
-          itemTypeId: world.itemTypes.potion.id,
-          itemId: item.id,
-          kind: "GRANT",
-          batchId: randomUUID(),
-          actorLabel: "halloween-bot",
-          reason: "Hollowtide 2025 prize",
-        },
-      });
+      for (let i = 0; i < 2; i++) {
+        const item = await prisma.item.create({
+          data: { itemTypeId: world.itemTypes.potion.id, ownerId: null },
+        });
+        await prisma.pendingOwnership.create({
+          data: {
+            itemId: item.id,
+            provider: "DISCORD",
+            providerAccountId: DISCORD_ID,
+            displayIdentifier: "neo.baka",
+            displayName: "Neo the Baka",
+          },
+        });
+        await prisma.itemTransaction.create({
+          data: {
+            communityId: world.community.id,
+            itemTypeId: world.itemTypes.potion.id,
+            itemId: item.id,
+            kind: "GRANT",
+            batchId,
+            actorLabel: "halloween-bot",
+            reason: "Hollowtide 2025 prize",
+          },
+        });
+      }
     } finally {
       await prisma.$disconnect();
     }
   });
+
+  const holderGroup = (page: Page, itemTypeId: string) =>
+    page.locator(
+      `[data-testid="pending-holding-group"][data-item-type-id="${itemTypeId}"]`,
+    );
 
   test.describe("as staff who may see who holds what", () => {
     // The stock Admin role: canCreateOrphanedCharacter, which gates the
@@ -208,6 +217,54 @@ test.describe("staff look up a Discord holder from the ledger (#445)", () => {
     }) => {
       await page.goto(world.community.ledgerUrl);
       await expect(prizeRow(page)).toContainText("Neo the Baka (@neo.baka)");
+    });
+
+    test("follows the holder to what waits on them and removes one", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(world.community.ledgerUrl);
+      await prizeRow(page)
+        .getByRole("link", { name: /Neo the Baka/ })
+        .click();
+
+      await expect(page).toHaveURL(
+        new RegExp(`/holders/discord/${DISCORD_ID}$`),
+      );
+      await expect(
+        page.getByRole("heading", { name: /Neo the Baka \(@neo\.baka\)/ }),
+      ).toBeVisible();
+      const potion = holderGroup(page, world.itemTypes.potion.id);
+      await expect(potion).toContainText("×2");
+
+      await potion.getByTestId("remove-items").click();
+      const dialog = page.getByTestId("remove-items-dialog");
+      await dialog
+        .getByLabel(/Reason/)
+        .fill("Spent off-site in the 2025 event");
+      await dialog.getByRole("button", { name: "Remove 1" }).click();
+
+      await expect(potion).toContainText("×1");
+
+      // The removal is on the ledger, naming who it was taken from.
+      await page.goto(world.community.ledgerUrl);
+      await expect(
+        page
+          .getByTestId("ledger-row")
+          .filter({ hasText: "Spent off-site in the 2025 event" }),
+      ).toContainText("Neo the Baka (@neo.baka)");
+    });
+  });
+
+  test.describe("as a plain member", () => {
+    test.use({ persona: "member" });
+
+    test("cannot open a holder's page", async ({ page, world }) => {
+      await page.goto(`${world.community.url}/holders/discord/${DISCORD_ID}`);
+      await expect(
+        page.getByText("Those holdings could not be loaded."),
+      ).toBeVisible();
+      await expect(page.getByTestId("pending-holding-group")).toHaveCount(0);
     });
   });
 
@@ -248,6 +305,47 @@ test.describe("staff look up a Discord holder from the ledger (#445)", () => {
         await expect(prizeRow(page)).toHaveCount(1);
       });
     }
+  });
+});
+
+test.describe("staff remove items from a member's inventory (#169)", () => {
+  const potionGroup = (page: Page, itemTypeId: string) =>
+    page.locator(
+      `[data-testid="holding-group"][data-item-type-id="${itemTypeId}"]`,
+    );
+
+  test.describe("as item staff", () => {
+    test.use({ persona: "quartermaster" });
+
+    test("removes one of three, with a reason", async ({ page, world }) => {
+      await page.goto(
+        `${world.community.url}/members/${world.users.member.username}/inventory`,
+      );
+      const potion = potionGroup(page, world.itemTypes.potion.id);
+      await expect(potion).toContainText("×3");
+
+      await potion.getByTestId("remove-items").click();
+      const dialog = page.getByTestId("remove-items-dialog");
+      await dialog.getByLabel(/Reason/).fill("Used before on-site inventory");
+      await dialog.getByRole("button", { name: "Remove 1" }).click();
+
+      await expect(potion).toContainText("×2");
+    });
+  });
+
+  test.describe("as a plain member", () => {
+    test.use({ persona: "member" });
+
+    test("is offered no Remove on anyone's inventory", async ({
+      page,
+      world,
+    }) => {
+      await page.goto(
+        `${world.community.url}/members/${world.users.othermember.username}/inventory`,
+      );
+      await expect(page.getByTestId("holding-group").first()).toBeVisible();
+      await expect(page.getByTestId("remove-items")).toHaveCount(0);
+    });
   });
 });
 
