@@ -217,7 +217,7 @@ export const CommunityExternalMembersPage: React.FC = () => {
           ))}
         </Select>
         {!browsing && (
-          <Button variant="secondary" onClick={() => setBrowsing(true)}>
+          <Button variant="outline" onClick={() => setBrowsing(true)}>
             Browse all
           </Button>
         )}

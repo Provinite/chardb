@@ -329,8 +329,10 @@
           <p>
             Open <strong>Item Ledger</strong> under <strong>Community</strong>
             in the sidebar. It lists every item movement in that community,
-            newest first, with filter chips per event type and a search box that
-            matches item names, members and reasons.
+            newest first, with filter chips per event type and a search box.
+            Search matches item names, reasons, and anyone an entry names —
+            members by username or display name, and people without an account
+            by their Discord name or ID. Results update once you stop typing.
           </p>
           <p>
             Each row is one <em>event</em>, not one item. Granting three potions
@@ -354,6 +356,24 @@
           <div class="screenshot-caption">
             The ledger as a staff member sees it. Italic lines beneath a reason
             are private staff notes.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            An item granted to a Discord account before its owner joined names
+            that account, as <em>Display Name (@username)</em>. Staff who can
+            see pending owners can follow the name to everything waiting on that
+            person — see <a href="external-members.html">External Members</a>.
+            Everyone else sees <em>Discord account</em>.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-ledger-external-holder.png"
+            alt="Item ledger searched for moth: grants from the Halloween bot to Moth Lantern, and a revoke of two of them"
+          />
+          <div class="screenshot-caption">
+            Searching for someone without an account by their Discord name.
           </div>
         </div>
       </div>
@@ -663,6 +683,14 @@
             <em>(destroyed)</em>, and both halves of the story stay readable.
           </p>
 
+          <p>
+            To take several of one type at once, use <strong>Remove…</strong>
+            on a member's items (step 12) or on an
+            <a href="external-members.html">external member's</a> pending
+            inventory. It asks how many, plus the same reason and note, and
+            records one entry for the lot.
+          </p>
+
           <div class="highlight-box">
             <strong>There is no undo.</strong> Revoking is itself the
             correction, and it is recorded like any other event — if it was a
@@ -792,19 +820,9 @@
             its own history.
           </p>
           <p>
-            It is the same page whoever is looking — yourself, someone you are
-            about to trade with, or a member you are checking on. Inventories
-            are public within a community, so there is one view rather than
-            three that could disagree.
+            Inventories are public within a community: yours, someone you are
+            about to trade with, or a member you are checking on.
           </p>
-
-          <div class="highlight-box">
-            <strong>There are no staff actions on this page.</strong> Revoking
-            happens on an item's own page, where its history is in front of you.
-            You should not be able to take something away without first looking
-            at what it is and where it came from — so this page's job is to get
-            you there.
-          </div>
         </div>
         <div class="screenshot">
           <img
@@ -814,6 +832,22 @@
           <div class="screenshot-caption">
             Twenty-four Festival Tokens as one group. Each chip is one item and
             links to its own history.
+          </div>
+        </div>
+        <div class="step-content">
+          <p>
+            Staff with the <strong>grant items</strong> permission see
+            <strong>Remove…</strong> on each group, for taking several back at
+            once (step 8).
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="item-inventory-remove.png"
+            alt="A member's items as staff see them, with a Remove button beside the item group"
+          />
+          <div class="screenshot-caption">
+            A member's items, as staff see them.
           </div>
         </div>
       </div>
