@@ -4,7 +4,7 @@
  * one per letter.
  */
 import { describe, it, expect, vi } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { MockedProvider } from "@apollo/client/testing";
@@ -200,6 +200,17 @@ describe("CommunityItemLedgerPage pending holders (#445)", () => {
 
     expect(row).toHaveTextContent("Discord account");
     expect(row).not.toHaveTextContent("@");
+    // No page to send them to without the id.
+    expect(within(row).queryByRole("link", { name: /Discord/ })).toBeNull();
+  });
+
+  it("links the holder to what still waits on them", async () => {
+    renderLedger([], { rows: [pendingGrant] });
+    const row = await screen.findByTestId("ledger-row");
+
+    expect(
+      within(row).getByRole("link", { name: /Neo the Baka/ }),
+    ).toHaveAttribute("href", "/holders/discord/214000000000009071");
   });
 });
 

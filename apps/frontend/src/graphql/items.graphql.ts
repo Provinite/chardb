@@ -214,8 +214,22 @@ export const UPDATE_ITEM = gql`
 
 // Soft: destroyed items keep their provenance. Returns the count revoked.
 export const REVOKE_ITEMS = gql`
-  mutation RevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String) {
-    revokeItems(itemIds: $itemIds, reason: $reason, staffNote: $staffNote)
+  mutation RevokeItems(
+    $itemIds: [ID!]!
+    $reason: String!
+    $staffNote: String
+    $expectedOwnerId: ID
+    $expectedPendingProvider: ExternalAccountProvider
+    $expectedPendingAccountId: String
+  ) {
+    revokeItems(
+      itemIds: $itemIds
+      reason: $reason
+      staffNote: $staffNote
+      expectedOwnerId: $expectedOwnerId
+      expectedPendingProvider: $expectedPendingProvider
+      expectedPendingAccountId: $expectedPendingAccountId
+    )
   }
 `;
 
@@ -421,6 +435,53 @@ export const GET_MEMBER_HOLDINGS = gql`
     }
   }
   ${USER_BASIC_FRAGMENT}
+`;
+
+// What waits on someone with no account here, for staff to clean up (#445).
+export const GET_PENDING_HOLDINGS = gql`
+  query GetPendingHoldings(
+    $communityId: ID!
+    $provider: ExternalAccountProvider!
+    $providerAccountId: String!
+  ) {
+    pendingHoldings(
+      communityId: $communityId
+      provider: $provider
+      providerAccountId: $providerAccountId
+    ) {
+      totalItems
+      distinctTypes
+      holder {
+        id
+        provider
+        providerAccountId
+        displayIdentifier
+        displayName
+      }
+      holdings {
+        count
+        itemType {
+          id
+          name
+          category
+          color {
+            id
+            hexCode
+          }
+          image {
+            id
+            thumbnailUrl
+            originalUrl
+            altText
+          }
+        }
+        items {
+          id
+          createdAt
+        }
+      }
+    }
+  }
 `;
 
 export const USE_ITEM = gql`

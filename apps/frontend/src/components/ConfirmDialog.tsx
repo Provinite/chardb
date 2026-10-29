@@ -90,6 +90,11 @@ interface ConfirmDialogProps {
    * click-through habit is the risk; focus starts in the box instead.
    */
   confirmPhrase?: string;
+  /**
+   * Holds confirm while the caller's own fields in the body are incomplete,
+   * such as a required reason.
+   */
+  confirmDisabled?: boolean;
   testId?: string;
 }
 
@@ -122,6 +127,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   busy = false,
   destructive = false,
   confirmPhrase,
+  confirmDisabled = false,
   testId,
 }) => {
   const cancelRef = useRef<HTMLButtonElement>(null);
@@ -205,7 +211,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <Button
             variant={destructive ? "danger" : "primary"}
             onClick={onConfirm}
-            disabled={busy || !phraseMatches}
+            disabled={busy || !phraseMatches || confirmDisabled}
             data-testid="confirm-accept"
           >
             {busy && busyLabel ? busyLabel : confirmLabel}

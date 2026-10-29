@@ -282,6 +282,7 @@ const mockPrismaService = {
   pendingOwnership: {
     create: jest.fn(),
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
     findMany: jest.fn(),
     update: jest.fn(),
     updateMany: jest.fn(),

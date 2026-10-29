@@ -2812,6 +2812,9 @@ export type MutationRevertTraitReviewArgs = {
 
 
 export type MutationRevokeItemsArgs = {
+  expectedOwnerId?: InputMaybe<Scalars['ID']['input']>;
+  expectedPendingAccountId?: InputMaybe<Scalars['String']['input']>;
+  expectedPendingProvider?: InputMaybe<ExternalAccountProvider>;
   itemIds: Array<Scalars['ID']['input']>;
   reason: Scalars['String']['input'];
   staffNote?: InputMaybe<Scalars['String']['input']>;
@@ -3208,6 +3211,17 @@ export type OwnerIdUpdate = {
   set?: InputMaybe<Scalars['ID']['input']>;
 };
 
+/** Live, unclaimed items held for one external account in one community. */
+export type PendingHoldingsReport = {
+  __typename?: 'PendingHoldingsReport';
+  distinctTypes: Scalars['Int']['output'];
+  /** Who they are waiting for. Its id and names are blank to viewers who may not see them, like any pending owner's. */
+  holder: PendingOwnership;
+  /** Largest holding first. */
+  holdings: Array<MemberHolding>;
+  totalItems: Scalars['Int']['output'];
+};
+
 export type PendingOwnerInput = {
   /** The external account provider. PATREON is refused: it cannot be a pending owner. */
   provider: ExternalAccountProvider;
@@ -3402,6 +3416,8 @@ export type Query = {
   notificationPreferences: Array<NotificationPreference>;
   /** Your notifications, newest first. */
   notifications: NotificationConnection;
+  /** Live, unclaimed items held for one external account in one community, grouped by item type. For staff who can grant items. */
+  pendingHoldings: PendingHoldingsReport;
   /** Get count of pending images for a community */
   pendingImageCount: Scalars['Int']['output'];
   /** Get count of pending trait reviews for a community */
@@ -3932,6 +3948,13 @@ export type QueryNotificationsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   unreadOnly?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
+export type QueryPendingHoldingsArgs = {
+  communityId: Scalars['ID']['input'];
+  provider: ExternalAccountProvider;
+  providerAccountId: Scalars['String']['input'];
 };
 
 
@@ -6331,6 +6354,9 @@ export type RevokeItemsMutationVariables = Exact<{
   itemIds: Array<Scalars['ID']['input']> | Scalars['ID']['input'];
   reason: Scalars['String']['input'];
   staffNote?: InputMaybe<Scalars['String']['input']>;
+  expectedOwnerId?: InputMaybe<Scalars['ID']['input']>;
+  expectedPendingProvider?: InputMaybe<ExternalAccountProvider>;
+  expectedPendingAccountId?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -6373,6 +6399,15 @@ export type GetMemberHoldingsQueryVariables = Exact<{
 
 
 export type GetMemberHoldingsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', totalItems: number, distinctTypes: number, pendingItems: number, member: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, category: string | null, isTradeable: boolean, isConsumable: boolean, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string } } | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }> } };
+
+export type GetPendingHoldingsQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  provider: ExternalAccountProvider;
+  providerAccountId: Scalars['String']['input'];
+}>;
+
+
+export type GetPendingHoldingsQuery = { __typename?: 'Query', pendingHoldings: { __typename?: 'PendingHoldingsReport', totalItems: number, distinctTypes: number, holder: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }> } };
 
 export type UseItemMutationVariables = Exact<{
   input: UseItemInput;
@@ -14450,8 +14485,15 @@ export type UpdateItemMutationHookResult = ReturnType<typeof useUpdateItemMutati
 export type UpdateItemMutationResult = Apollo.MutationResult<UpdateItemMutation>;
 export type UpdateItemMutationOptions = Apollo.BaseMutationOptions<UpdateItemMutation, UpdateItemMutationVariables>;
 export const RevokeItemsDocument = gql`
-    mutation RevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String) {
-  revokeItems(itemIds: $itemIds, reason: $reason, staffNote: $staffNote)
+    mutation RevokeItems($itemIds: [ID!]!, $reason: String!, $staffNote: String, $expectedOwnerId: ID, $expectedPendingProvider: ExternalAccountProvider, $expectedPendingAccountId: String) {
+  revokeItems(
+    itemIds: $itemIds
+    reason: $reason
+    staffNote: $staffNote
+    expectedOwnerId: $expectedOwnerId
+    expectedPendingProvider: $expectedPendingProvider
+    expectedPendingAccountId: $expectedPendingAccountId
+  )
 }
     `;
 export type RevokeItemsMutationFn = Apollo.MutationFunction<RevokeItemsMutation, RevokeItemsMutationVariables>;
@@ -14472,6 +14514,9 @@ export type RevokeItemsMutationFn = Apollo.MutationFunction<RevokeItemsMutation,
  *      itemIds: // value for 'itemIds'
  *      reason: // value for 'reason'
  *      staffNote: // value for 'staffNote'
+ *      expectedOwnerId: // value for 'expectedOwnerId'
+ *      expectedPendingProvider: // value for 'expectedPendingProvider'
+ *      expectedPendingAccountId: // value for 'expectedPendingAccountId'
  *   },
  * });
  */
@@ -14782,6 +14827,82 @@ export type GetMemberHoldingsQueryHookResult = ReturnType<typeof useGetMemberHol
 export type GetMemberHoldingsLazyQueryHookResult = ReturnType<typeof useGetMemberHoldingsLazyQuery>;
 export type GetMemberHoldingsSuspenseQueryHookResult = ReturnType<typeof useGetMemberHoldingsSuspenseQuery>;
 export type GetMemberHoldingsQueryResult = Apollo.QueryResult<GetMemberHoldingsQuery, GetMemberHoldingsQueryVariables>;
+export const GetPendingHoldingsDocument = gql`
+    query GetPendingHoldings($communityId: ID!, $provider: ExternalAccountProvider!, $providerAccountId: String!) {
+  pendingHoldings(
+    communityId: $communityId
+    provider: $provider
+    providerAccountId: $providerAccountId
+  ) {
+    totalItems
+    distinctTypes
+    holder {
+      id
+      provider
+      providerAccountId
+      displayIdentifier
+      displayName
+    }
+    holdings {
+      count
+      itemType {
+        id
+        name
+        category
+        color {
+          id
+          hexCode
+        }
+        image {
+          id
+          thumbnailUrl
+          originalUrl
+          altText
+        }
+      }
+      items {
+        id
+        createdAt
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetPendingHoldingsQuery__
+ *
+ * To run a query within a React component, call `useGetPendingHoldingsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetPendingHoldingsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetPendingHoldingsQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      provider: // value for 'provider'
+ *      providerAccountId: // value for 'providerAccountId'
+ *   },
+ * });
+ */
+export function useGetPendingHoldingsQuery(baseOptions: Apollo.QueryHookOptions<GetPendingHoldingsQuery, GetPendingHoldingsQueryVariables> & ({ variables: GetPendingHoldingsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetPendingHoldingsQuery, GetPendingHoldingsQueryVariables>(GetPendingHoldingsDocument, options);
+      }
+export function useGetPendingHoldingsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetPendingHoldingsQuery, GetPendingHoldingsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetPendingHoldingsQuery, GetPendingHoldingsQueryVariables>(GetPendingHoldingsDocument, options);
+        }
+export function useGetPendingHoldingsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetPendingHoldingsQuery, GetPendingHoldingsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetPendingHoldingsQuery, GetPendingHoldingsQueryVariables>(GetPendingHoldingsDocument, options);
+        }
+export type GetPendingHoldingsQueryHookResult = ReturnType<typeof useGetPendingHoldingsQuery>;
+export type GetPendingHoldingsLazyQueryHookResult = ReturnType<typeof useGetPendingHoldingsLazyQuery>;
+export type GetPendingHoldingsSuspenseQueryHookResult = ReturnType<typeof useGetPendingHoldingsSuspenseQuery>;
+export type GetPendingHoldingsQueryResult = Apollo.QueryResult<GetPendingHoldingsQuery, GetPendingHoldingsQueryVariables>;
 export const UseItemDocument = gql`
     mutation UseItem($input: UseItemInput!) {
   useItem(input: $input) {

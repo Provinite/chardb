@@ -8,7 +8,7 @@ import {
   ResolveField,
   Parent,
 } from "@nestjs/graphql";
-import { NotFoundException } from "@nestjs/common";
+import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
@@ -35,7 +35,11 @@ import {
 } from "./entities/item-type.entity";
 import { Item as ItemEntity } from "./entities/item.entity";
 import { ItemEconomyReport } from "./entities/item-economy.entity";
-import { MemberHoldingsReport } from "./entities/member-holdings.entity";
+import {
+  MemberHoldingsReport,
+  PendingHoldingsReport,
+} from "./entities/member-holdings.entity";
+import { ExternalAccountProvider } from "@chardb/database";
 import { Community } from "../communities/entities/community.entity";
 import { Image } from "../images/entities/image.entity";
 import { User } from "../users/entities/user.entity";
@@ -320,6 +324,43 @@ export class ItemsResolver {
     };
   }
 
+  /**
+   * Staff only, unlike a member's inventory: this page exists to find and
+   * remove what someone with no account here still holds (#445), and
+   * CanGrantItems is what removing takes. Who the holder is stays gated on
+   * the holder's own fields, as on every pending owner.
+   */
+  @AllowCommunityPermission(CommunityPermission.CanGrantItems)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Query(() => PendingHoldingsReport, {
+    name: "pendingHoldings",
+    description:
+      "Live, unclaimed items held for one external account in one " +
+      "community, grouped by item type. For staff who can grant items.",
+  })
+  async pendingHoldings(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("provider", { type: () => ExternalAccountProvider })
+    provider: ExternalAccountProvider,
+    @Args("providerAccountId") providerAccountId: string,
+  ): Promise<PendingHoldingsReport> {
+    const report = await this.itemsService.findPendingHoldings(
+      communityId,
+      provider,
+      providerAccountId,
+    );
+
+    return {
+      ...report,
+      holder: mapPrismaPendingOwnershipToGraphQL(report.holder),
+      holdings: report.holdings.map((h) => ({
+        count: h.count,
+        itemType: mapPrismaItemTypeToGraphQL(h.itemType),
+        items: h.items.map(mapPrismaItemToGraphQL),
+      })),
+    };
+  }
+
   // ==================== Item Mutations ====================
 
   @AllowCommunityPermission(CommunityPermission.CanGrantItems)
@@ -390,12 +431,48 @@ export class ItemsResolver {
       description: "Staff-only detail. Never shown to members.",
     })
     staffNote?: string,
+    @Args("expectedOwnerId", {
+      type: () => ID,
+      nullable: true,
+      description:
+        "Refuse unless every item is still held by this member. For a page " +
+        "of someone's items that may have gone stale.",
+    })
+    expectedOwnerId?: string,
+    // Two scalars rather than one input object: an omitted object argument
+    // fails the global ValidationPipe, which would break every plain revoke.
+    @Args("expectedPendingProvider", {
+      type: () => ExternalAccountProvider,
+      nullable: true,
+      description:
+        "With expectedPendingAccountId: refuse unless every item is still " +
+        "unowned and waiting on this external account.",
+    })
+    expectedPendingProvider?: ExternalAccountProvider,
+    @Args("expectedPendingAccountId", { nullable: true })
+    expectedPendingAccountId?: string,
   ): Promise<number> {
-    return this.itemsService.revokeItems(itemIds, {
-      actorUserId: user.id,
-      reason,
-      staffNote,
-    });
+    if (
+      Boolean(expectedPendingProvider) !== Boolean(expectedPendingAccountId)
+    ) {
+      throw new BadRequestException(
+        "expectedPendingProvider and expectedPendingAccountId go together",
+      );
+    }
+    return this.itemsService.revokeItems(
+      itemIds,
+      { actorUserId: user.id, reason, staffNote },
+      {
+        expectedOwnerId: expectedOwnerId ?? undefined,
+        expectedPendingOwner:
+          expectedPendingProvider && expectedPendingAccountId
+            ? {
+                provider: expectedPendingProvider,
+                providerAccountId: expectedPendingAccountId,
+              }
+            : undefined,
+      },
+    );
   }
 
   // Only membership, not a permission: using your own item is not a staff act.

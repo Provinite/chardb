@@ -3049,6 +3049,16 @@ type Mutation {
   Revoke items, destroying them. Soft: a destroyed item keeps its provenance readable. A public reason is required -- it is written to the ledger and shown to anyone who can read it. Returns the count.
   """
   revokeItems(
+    """
+    Refuse unless every item is still held by this member. For a page of someone's items that may have gone stale.
+    """
+    expectedOwnerId: ID
+    expectedPendingAccountId: String
+
+    """
+    With expectedPendingAccountId: refuse unless every item is still unowned and waiting on this external account.
+    """
+    expectedPendingProvider: ExternalAccountProvider
     itemIds: [ID!]!
 
     """Member-facing. Shown on the items' public provenance."""
@@ -3451,6 +3461,20 @@ input OfferedTradeItemInput {
 input OwnerIdUpdate {
   """Set owner ID (null = orphan character)"""
   set: ID
+}
+
+"""Live, unclaimed items held for one external account in one community."""
+type PendingHoldingsReport {
+  distinctTypes: Int!
+
+  """
+  Who they are waiting for. Its id and names are blank to viewers who may not see them, like any pending owner's.
+  """
+  holder: PendingOwnership!
+
+  """Largest holding first."""
+  holdings: [MemberHolding!]!
+  totalItems: Int!
 }
 
 input PendingOwnerInput {
@@ -3962,6 +3986,11 @@ type Query {
 
   """Your notifications, newest first."""
   notifications(after: String, first: Int = 20, unreadOnly: Boolean): NotificationConnection!
+
+  """
+  Live, unclaimed items held for one external account in one community, grouped by item type. For staff who can grant items.
+  """
+  pendingHoldings(communityId: ID!, provider: ExternalAccountProvider!, providerAccountId: String!): PendingHoldingsReport!
 
   """Get count of pending images for a community"""
   pendingImageCount(communityId: ID!): Int!

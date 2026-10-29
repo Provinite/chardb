@@ -112,6 +112,15 @@ export interface DestroyItemsOptions {
    */
   expectedOwnerId?: string;
   /**
+   * Refuse unless the items are still unowned and waiting on this external
+   * account. The pending-owner counterpart of expectedOwnerId: someone who
+   * links and claims in between holds them now (#445).
+   */
+  expectedPendingOwner?: {
+    provider: ExternalAccountProvider;
+    providerAccountId: string;
+  };
+  /**
    * Why the item is gone. Defaults to REVOKE, which is staff taking it back.
    * A holder using one up is a USE, and the difference is the whole of what
    * the provenance page can tell a reader about what happened to it.
@@ -1634,11 +1643,20 @@ export class ItemsService {
     }));
   }
 
-  async revokeItems(itemIds: string[], actor: ItemActor) {
+  async revokeItems(
+    itemIds: string[],
+    actor: ItemActor,
+    expected: Pick<
+      DestroyItemsOptions,
+      "expectedOwnerId" | "expectedPendingOwner"
+    > = {},
+  ) {
     if (itemIds.length === 0) {
       throw new BadRequestException("No items given to revoke");
     }
-    return this.db.$transaction((tx) => this.destroyItems(tx, itemIds, actor));
+    return this.db.$transaction((tx) =>
+      this.destroyItems(tx, itemIds, actor, expected),
+    );
   }
 
   /**
@@ -1661,6 +1679,7 @@ export class ItemsService {
       source,
       sourceId,
       expectedOwnerId,
+      expectedPendingOwner,
       kind = ItemTransactionKind.REVOKE,
       batchId,
     } = options;
@@ -1702,6 +1721,12 @@ export class ItemsService {
         id: { in: itemIds },
         destroyedAt: null,
         ...(expectedOwnerId === undefined ? {} : { ownerId: expectedOwnerId }),
+        ...(expectedPendingOwner === undefined
+          ? {}
+          : {
+              ownerId: null,
+              pendingOwnership: { ...expectedPendingOwner, claimedAt: null },
+            }),
       },
       data: {
         destroyedAt: new Date(),
@@ -1896,26 +1921,7 @@ export class ItemsService {
       throw new NotFoundException(`User with ID ${userId} not found`);
     }
 
-    const byType = new Map<
-      string,
-      { itemType: (typeof items)[number]["itemType"]; items: typeof items }
-    >();
-
-    for (const item of items) {
-      const group = byType.get(item.itemTypeId);
-      if (group) group.items.push(item);
-      else
-        byType.set(item.itemTypeId, { itemType: item.itemType, items: [item] });
-    }
-
-    const holdings = [...byType.values()]
-      .map((g) => ({
-        itemType: g.itemType,
-        count: g.items.length,
-        items: g.items,
-      }))
-      .sort((a, b) => b.count - a.count);
-
+    const holdings = groupHoldings(items);
     return {
       member,
       totalItems: items.length,
@@ -1924,4 +1930,72 @@ export class ItemsService {
       holdings,
     };
   }
+
+  /**
+   * What waits on one external account in one community: the holdings of
+   * someone with no account here, for staff to find and clean up (#445).
+   *
+   * @throws NotFoundException if nothing was ever held for the account here
+   */
+  async findPendingHoldings(
+    communityId: string,
+    provider: ExternalAccountProvider,
+    providerAccountId: string,
+  ) {
+    const [holder, items] = await Promise.all([
+      // Any row ever held for them here, removed or not, so a holder staff
+      // have emptied out still has a page that says who they are.
+      this.db.pendingOwnership.findFirst({
+        where: {
+          provider,
+          providerAccountId,
+          item: { itemType: { communityId } },
+        },
+      }),
+      this.db.item.findMany({
+        where: {
+          ownerId: null,
+          destroyedAt: null,
+          itemType: { communityId },
+          pendingOwnership: { provider, providerAccountId, claimedAt: null },
+        },
+        include: { itemType: true },
+        orderBy: { createdAt: "asc" },
+      }),
+    ]);
+
+    if (!holder) {
+      throw new NotFoundException(
+        "Nothing has been held for that account in this community",
+      );
+    }
+
+    const holdings = groupHoldings(items);
+    return {
+      holder,
+      totalItems: items.length,
+      distinctTypes: holdings.length,
+      holdings,
+    };
+  }
+}
+
+/** Items gathered by type, each type's oldest first, largest holding first. */
+function groupHoldings<T extends { itemTypeId: string; itemType: unknown }>(
+  items: T[],
+): Array<{ itemType: T["itemType"]; count: number; items: T[] }> {
+  const byType = new Map<string, { itemType: T["itemType"]; items: T[] }>();
+  for (const item of items) {
+    const group = byType.get(item.itemTypeId);
+    if (group) group.items.push(item);
+    else
+      byType.set(item.itemTypeId, { itemType: item.itemType, items: [item] });
+  }
+  return [...byType.values()]
+    .map((g) => ({
+      itemType: g.itemType,
+      count: g.items.length,
+      items: g.items,
+    }))
+    .sort((a, b) => b.count - a.count);
 }

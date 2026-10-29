@@ -11,13 +11,13 @@ import {
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
 import {
-  ExternalAccountProvider,
   ItemTransactionKind,
   useGetItemTransactionsQuery,
   type ItemTransactionFieldsFragment,
 } from "../generated/graphql";
 import { collapseByBatch, KIND_LABEL, kindTone } from "../lib/itemDisplay";
 import { useLedgerSearch } from "../hooks/useLedgerSearch";
+import { pendingHolderPath, pendingLabel } from "../lib/pendingOwner";
 
 /**
  * The item ledger: every movement of every item in one community.
@@ -356,41 +356,25 @@ const displayName = (
   user: { username: string; displayName?: string | null } | null | undefined,
 ) => user?.displayName || user?.username || null;
 
-const PROVIDER_NAME: Record<ExternalAccountProvider, string> = {
-  [ExternalAccountProvider.Discord]: "Discord",
-  [ExternalAccountProvider.Deviantart]: "DeviantArt",
-  [ExternalAccountProvider.Patreon]: "Patreon",
-  [ExternalAccountProvider.Toyhouse]: "Toyhouse",
-};
-
 /**
- * Someone with no account here, by the names their account was last seen
- * with. Older rows have only an id until the Discord name lookup runs (#445).
- *
- * The server blanks the id and names for viewers who may not see who holds
- * what, so with nothing left this says only which kind of account it is.
+ * Someone with no account here (#445). Links to what still waits on them,
+ * like a member's name links to their inventory -- but only for a viewer the
+ * server showed the id to; without it there is no page to send them to.
  */
-const pendingLabel = (
-  p: NonNullable<ItemTransactionFieldsFragment["pendingOwner"]>,
-) => {
-  const provider = PROVIDER_NAME[p.provider];
-  if (p.displayName && p.displayIdentifier) {
-    return `${p.displayName} (@${p.displayIdentifier})`;
-  }
-  if (p.displayIdentifier) return `@${p.displayIdentifier}`;
-  if (p.displayName) return p.displayName;
-  if (p.providerAccountId) return `${provider} ${p.providerAccountId}`;
-  return `${provider} account`;
-};
-
 const PendingParty: React.FC<{
   owner: NonNullable<ItemTransactionFieldsFragment["pendingOwner"]>;
-}> = ({ owner }) => (
-  <PendingName>
-    <ProviderIcon provider={owner.provider} size={14} />
-    {pendingLabel(owner)}
-  </PendingName>
-);
+}> = ({ owner }) => {
+  const path = pendingHolderPath(owner);
+  const label = (
+    <>
+      <ProviderIcon provider={owner.provider} size={14} />
+      {pendingLabel(owner)}
+    </>
+  );
+  return (
+    <PendingName>{path ? <Link to={path}>{label}</Link> : label}</PendingName>
+  );
+};
 
 /**
  * Who it moved between, phrased per kind.

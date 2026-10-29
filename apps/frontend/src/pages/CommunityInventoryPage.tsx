@@ -12,24 +12,13 @@ import {
 } from "../contexts/CommunityHostContext";
 import { toast } from "react-hot-toast";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { RemoveItemsDialog } from "../components/items/RemoveItemsDialog";
+import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import {
   useGetMemberHoldingsQuery,
   useGetUserProfileQuery,
   useUseItemMutation,
 } from "../generated/graphql";
-
-/**
- * What one member holds in one community.
- *
- * One page, three audiences: a member looking at themselves, someone sizing up
- * a trade partner, and staff about to correct something. Inventories are public
- * within a community, so all three see the same thing.
- *
- * There are no staff actions here on purpose. Revoking happens on an item's own
- * page, where its history is in front of you — you should not be able to take
- * something away without first looking at what it is and where it came from.
- * This page's job is to get you there.
- */
 
 const Container = styled.div`
   max-width: 1100px;
@@ -304,6 +293,7 @@ export const CommunityInventoryPage: React.FC = () => {
     data,
     loading: holdingsLoading,
     error,
+    refetch,
   } = useGetMemberHoldingsQuery({
     variables: { communityId: communityId!, userId: targetUserId ?? "" },
     skip: !communityId || !targetUserId,
@@ -313,6 +303,14 @@ export const CommunityInventoryPage: React.FC = () => {
 
   const report = data?.memberHoldings;
   const holdings = report?.holdings ?? [];
+
+  // Staff take items back from here (#169): the same permission revoking
+  // needs, checked again by the server.
+  const { permissions } = useUserCommunityRole(communityId ?? undefined);
+  const [removing, setRemoving] = useState<{
+    itemTypeName: string;
+    itemIds: string[];
+  } | null>(null);
 
   /**
    * The use awaiting a yes.
@@ -506,6 +504,20 @@ export const CommunityInventoryPage: React.FC = () => {
                       <ChevronDown size={14} />
                     </Expand>
                   )}
+                  {permissions.canGrantItems && (
+                    <Button
+                      type="button"
+                      data-testid="remove-items"
+                      onClick={() =>
+                        setRemoving({
+                          itemTypeName: h.itemType.name,
+                          itemIds: h.items.map((i) => i.id),
+                        })
+                      }
+                    >
+                      Remove…
+                    </Button>
+                  )}
                 </GroupHead>
 
                 {open && (
@@ -616,6 +628,19 @@ export const CommunityInventoryPage: React.FC = () => {
           </>
         )}
       </ConfirmDialog>
+
+      <RemoveItemsDialog
+        open={removing !== null}
+        itemTypeName={removing?.itemTypeName ?? ""}
+        itemIds={removing?.itemIds ?? []}
+        holderLabel={viewingSelf ? "your inventory" : (who ?? "this member")}
+        expectedHolder={{ ownerId: targetUserId ?? "" }}
+        onClose={() => setRemoving(null)}
+        onRemoved={() => {
+          setRemoving(null);
+          void refetch();
+        }}
+      />
     </Container>
   );
 };
