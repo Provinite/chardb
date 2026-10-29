@@ -742,9 +742,13 @@ describe("/knock", () => {
       db.$transaction.mockImplementation(
         async (fn: (t: unknown) => Promise<unknown>) => {
           const result = await fn(tx);
+          // The whole user, so the prize records the winner's names (#445).
           expect(award.grant).toHaveBeenCalledWith(
             { ...candy, currentStock: 4 },
-            USER_ID,
+            expect.objectContaining({
+              id: USER_ID,
+              username: "trickortreater",
+            }),
             tx,
           );
           return result;

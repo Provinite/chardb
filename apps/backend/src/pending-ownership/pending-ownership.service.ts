@@ -16,6 +16,17 @@ import { notDeleted } from "../common/utils/prisma-filters";
 import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
 
+/**
+ * What a pending owner is called on the provider, as last seen. The account id
+ * is the key; these are for people to find and recognise it by (#445).
+ */
+export interface PendingOwnerNames {
+  /** The handle: a Discord or DeviantArt username. */
+  displayIdentifier?: string;
+  /** Discord's global_name. */
+  displayName?: string;
+}
+
 @Injectable()
 export class PendingOwnershipService {
   constructor(
@@ -208,7 +219,7 @@ export class PendingOwnershipService {
     characterId: string,
     provider: ExternalAccountProvider,
     providerAccountId: string,
-    displayIdentifier?: string,
+    names: PendingOwnerNames = {},
     tx: Prisma.TransactionClient = this.prisma,
   ): Promise<{
     claimed: boolean;
@@ -255,7 +266,8 @@ export class PendingOwnershipService {
         characterId,
         provider,
         providerAccountId,
-        displayIdentifier,
+        displayIdentifier: names.displayIdentifier,
+        displayName: names.displayName,
       },
     });
 
@@ -277,7 +289,7 @@ export class PendingOwnershipService {
     itemId: string,
     provider: ExternalAccountProvider,
     providerAccountId: string,
-    displayIdentifier?: string,
+    names: PendingOwnerNames = {},
     tx?: Prisma.TransactionClient,
   ): Promise<{
     claimed: boolean;
@@ -337,7 +349,8 @@ export class PendingOwnershipService {
         itemId,
         provider,
         providerAccountId,
-        displayIdentifier,
+        displayIdentifier: names.displayIdentifier,
+        displayName: names.displayName,
       },
     });
 

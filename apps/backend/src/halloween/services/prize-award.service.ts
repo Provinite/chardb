@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import type { APIUser } from "@discordjs/core";
 import {
   ExternalAccountProvider,
   type HalloweenPrize,
@@ -106,13 +107,19 @@ export class PrizeAwardService {
 
   /**
    * Hands the prize over inside the knock's transaction. The Discord id came
-   * signed from Discord, so it is not checked again.
+   * signed from Discord, so it is not checked again, and the names came with
+   * it: they are what staff find the winner by later (#445).
    */
   async grant(
     prize: HalloweenPrize,
-    discordUserId: string,
+    winner: Pick<APIUser, "id" | "username" | "global_name">,
     tx: Prisma.TransactionClient,
   ): Promise<void> {
+    const discordUserId = winner.id;
+    const names = {
+      displayIdentifier: winner.username,
+      displayName: winner.global_name ?? undefined,
+    };
     if (prize.itemTypeId) {
       await this.items.grantItemInTransaction(
         tx,
@@ -128,14 +135,20 @@ export class PrizeAwardService {
             reason: `Halloween prize: ${prize.name}`,
           },
         },
-        { discordIdVerified: true },
+        {
+          discordIdVerified: true,
+          discordNames: {
+            username: names.displayIdentifier,
+            displayName: names.displayName,
+          },
+        },
       );
     } else if (prize.characterId) {
       await this.pendingOwnership.createForCharacter(
         prize.characterId,
         ExternalAccountProvider.DISCORD,
         discordUserId,
-        undefined,
+        names,
         tx,
       );
     }

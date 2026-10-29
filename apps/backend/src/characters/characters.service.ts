@@ -257,7 +257,7 @@ export class CharactersService {
         character.id,
         pendingOwner.provider,
         resolvedAccountId,
-        displayIdentifier,
+        { displayIdentifier },
       );
     }
 
@@ -837,7 +837,7 @@ export class CharactersService {
           id,
           provider,
           resolvedAccountId,
-          displayIdentifier,
+          { displayIdentifier },
         );
 
         // If the character was auto-claimed, update the ownerId that was set earlier
@@ -1227,7 +1227,7 @@ export class CharactersService {
           id,
           provider,
           resolvedAccountId,
-          displayIdentifier,
+          { displayIdentifier },
         );
       }
     }

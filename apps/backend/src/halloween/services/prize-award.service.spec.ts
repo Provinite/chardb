@@ -184,10 +184,16 @@ describe("PrizeAwardService", () => {
   // Inside the knock's transaction, so the prize commits with the win.
   describe("grant", () => {
     const knockTx = { knock: true };
+    // As the knock's interaction carries them.
+    const winner = {
+      id: USER_ID,
+      username: "neo.baka",
+      global_name: "Neo the Baka",
+    };
     const grant = (p: HalloweenPrize) =>
       service.grant(
         p,
-        USER_ID,
+        winner,
         knockTx as unknown as Parameters<PrizeAwardService["grant"]>[2],
       );
 
@@ -207,8 +213,12 @@ describe("PrizeAwardService", () => {
             reason: "Halloween prize: MYO",
           },
         },
-        // The id came from Discord, signed, so there is no need to ask.
-        { discordIdVerified: true },
+        // The id came from Discord, signed, so there is no need to ask; the
+        // names came with it, so staff can find the winner by them (#445).
+        {
+          discordIdVerified: true,
+          discordNames: { username: "neo.baka", displayName: "Neo the Baka" },
+        },
       );
     });
 
@@ -218,7 +228,7 @@ describe("PrizeAwardService", () => {
         "ch-1",
         ExternalAccountProvider.DISCORD,
         USER_ID,
-        undefined,
+        { displayIdentifier: "neo.baka", displayName: "Neo the Baka" },
         knockTx,
       );
     });

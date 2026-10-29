@@ -6,7 +6,10 @@ import {
 } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import { DatabaseService } from "../database/database.service";
-import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import {
+  PendingOwnershipService,
+  type PendingOwnerNames,
+} from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
 import {
   Prisma,
@@ -42,10 +45,9 @@ type UseEffectKind =
   | "edit kit grant"
   | "variant change grant";
 
-export interface PendingOwnerInput {
+export interface PendingOwnerInput extends PendingOwnerNames {
   provider: ExternalAccountProvider;
   providerAccountId: string;
-  displayIdentifier?: string;
 }
 
 /**
@@ -77,6 +79,8 @@ export interface GrantOptions {
    * interaction, so it is not looked up again.
    */
   discordIdVerified?: boolean;
+  /** The names the same interaction carried, stored with the pending owner. */
+  discordNames?: { username: string; displayName?: string | null };
 }
 
 /** Who a grant's items go to, or the account they wait on. */
@@ -976,31 +980,32 @@ export class ItemsService {
     // PRE-VALIDATION: Resolve external account and check if claimed BEFORE creating item
     if (pendingOwner) {
       let resolvedAccountId: string;
-      let displayIdentifier: string | undefined;
+      let names: PendingOwnerNames = {};
 
       // Resolve Discord username to ID if necessary
       if (pendingOwner.provider === ExternalAccountProvider.DISCORD) {
-        // Check if the input is already a numeric ID
         const isNumericId = /^\d{17,19}$/.test(pendingOwner.providerAccountId);
 
-        // If it's not an ID (i.e., it's a username), store it as displayIdentifier
-        if (!isNumericId) {
-          displayIdentifier = pendingOwner.providerAccountId;
+        // An id that came from Discord's own signed interaction exists, and
+        // the interaction carries the names; asking Discord again would only
+        // add an HTTP call to the caller's transaction.
+        if (options.discordIdVerified && isNumericId) {
+          resolvedAccountId = pendingOwner.providerAccountId;
+          names = {
+            displayIdentifier: options.discordNames?.username,
+            displayName: options.discordNames?.displayName ?? undefined,
+          };
+        } else {
+          const resolved = await this.resolveDiscordIdentifier(
+            itemType.communityId,
+            pendingOwner.providerAccountId,
+          );
+          resolvedAccountId = resolved.accountId;
+          names = resolved.names;
         }
-
-        // An id that came from Discord's own signed interaction exists; asking
-        // Discord again would only add an HTTP call to the caller's
-        // transaction.
-        resolvedAccountId =
-          options.discordIdVerified && isNumericId
-            ? pendingOwner.providerAccountId
-            : await this.resolveDiscordIdentifier(
-                itemType.communityId,
-                pendingOwner.providerAccountId,
-              );
       } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
         // DeviantArt uses usernames, so always store as displayIdentifier
-        displayIdentifier = pendingOwner.providerAccountId;
+        names = { displayIdentifier: pendingOwner.providerAccountId };
         resolvedAccountId = pendingOwner.providerAccountId;
       } else {
         throw new BadRequestException(
@@ -1040,7 +1045,7 @@ export class ItemsService {
         pendingOwner = {
           ...pendingOwner,
           providerAccountId: resolvedAccountId,
-          displayIdentifier,
+          ...names,
         };
       }
     }
@@ -1124,7 +1129,10 @@ export class ItemsService {
           itemId,
           pendingOwner.provider,
           pendingOwner.providerAccountId, // Already resolved earlier
-          pendingOwner.displayIdentifier,
+          {
+            displayIdentifier: pendingOwner.displayIdentifier,
+            displayName: pendingOwner.displayName,
+          },
           tx,
         );
       }
@@ -1755,28 +1763,36 @@ export class ItemsService {
   }
 
   /**
-   * Resolve a Discord identifier (username or ID) to a Discord user ID
+   * Resolve a Discord identifier (username or ID) to a Discord user ID, and
+   * the names it goes by now -- staff find a pending owner by those (#445).
    * @param communityId The community ID to get the Discord guild from
    * @param identifier The Discord username or user ID
-   * @returns The Discord user ID
-   * @throws BadRequestException if guild not connected or username not found
+   * @throws NotFoundException if Discord does not know the user
+   * @throws BadRequestException if guild not connected
    */
   private async resolveDiscordIdentifier(
     communityId: string,
     identifier: string,
-  ): Promise<string> {
-    // Check if identifier is already a numeric ID (18-19 digits)
-    if (/^\d{17,19}$/.test(identifier)) {
-      // Validate the numeric ID exists in Discord
-      const isValid = await this.discordService.validateUserId(identifier);
-      if (!isValid) {
-        throw new NotFoundException(
-          `Discord user with ID "${identifier}" not found. Please verify the ID is correct.`,
-        );
-      }
-      return identifier;
-    }
+  ): Promise<{ accountId: string; names: PendingOwnerNames }> {
+    const accountId = /^\d{17,19}$/.test(identifier)
+      ? identifier
+      : await this.resolveDiscordUsername(communityId, identifier);
 
+    // Also the existence check for an id: Discord answers 404 for nobody.
+    const user = await this.discordService.getUserInfo(accountId);
+    return {
+      accountId,
+      names: {
+        displayIdentifier: user.username,
+        displayName: user.displayName,
+      },
+    };
+  }
+
+  private async resolveDiscordUsername(
+    communityId: string,
+    identifier: string,
+  ): Promise<string> {
     // It's a username - need to resolve it
     // Get the community to find the Discord guild
     const community = await this.db.community.findUnique({

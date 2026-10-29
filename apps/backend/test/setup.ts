@@ -212,6 +212,9 @@ const mockPrismaService = {
     findMany: jest.fn(),
     count: jest.fn(),
   },
+  community: {
+    findUnique: jest.fn(),
+  },
   currency: {
     create: jest.fn(),
     findUnique: jest.fn(),

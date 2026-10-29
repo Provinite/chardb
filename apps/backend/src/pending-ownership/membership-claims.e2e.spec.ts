@@ -29,7 +29,11 @@ describe("Pending ownership and community membership (e2e)", () => {
   let pending: PendingOwnershipService;
   let accounts: ExternalAccountsService;
   let invites: InviteCodesService;
-  const validateUserId = jest.fn().mockResolvedValue(true);
+  const getUserInfo = jest.fn().mockResolvedValue({
+    userId: DISCORD_ID,
+    username: "neo.baka",
+    displayName: "Neo the Baka",
+  });
 
   let communityId: string;
   let memberRoleId: string;
@@ -52,7 +56,7 @@ describe("Pending ownership and community membership (e2e)", () => {
         ],
       },
       (builder) =>
-        builder.overrideProvider(DiscordService).useValue({ validateUserId }),
+        builder.overrideProvider(DiscordService).useValue({ getUserInfo }),
     );
     db = testApp.getDb();
     items = testApp.getModuleRef().get(ItemsService);
@@ -192,7 +196,7 @@ describe("Pending ownership and community membership (e2e)", () => {
         { discordIdVerified: true },
       );
 
-    beforeEach(() => validateUserId.mockClear());
+    beforeEach(() => getUserInfo.mockClear());
 
     it("commits with the caller's transaction", async () => {
       await testApp.createTestCommunityMember(player.id, memberRoleId);
@@ -218,12 +222,21 @@ describe("Pending ownership and community membership (e2e)", () => {
 
     it("does not ask Discord about an id that came from Discord itself", async () => {
       await db.$transaction((tx) => grantIn(tx));
-      expect(validateUserId).not.toHaveBeenCalled();
+      expect(getUserInfo).not.toHaveBeenCalled();
     });
 
     it("still asks Discord about an id typed in by staff", async () => {
       await grantToDiscord();
-      expect(validateUserId).toHaveBeenCalledWith(DISCORD_ID);
+      expect(getUserInfo).toHaveBeenCalledWith(DISCORD_ID);
+    });
+
+    it("keeps the Discord names it was told, for staff to search by (#445)", async () => {
+      await grantToDiscord();
+      const pendingRow = await db.pendingOwnership.findFirstOrThrow({
+        where: { providerAccountId: DISCORD_ID },
+      });
+      expect(pendingRow.displayIdentifier).toBe("neo.baka");
+      expect(pendingRow.displayName).toBe("Neo the Baka");
     });
   });
 

@@ -12,7 +12,11 @@ import { PendingOwnershipService } from "../pending-ownership/pending-ownership.
 import { DiscordService } from "../discord/discord.service";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
-import { ItemTransactionKind, NotificationKind } from "@chardb/database";
+import {
+  ItemTransactionKind,
+  NotificationKind,
+  type Prisma,
+} from "@chardb/database";
 import {
   mockDatabaseService,
   mockNotificationsService,
@@ -27,6 +31,7 @@ const mockPendingOwnershipService = {
 const mockDiscordService = {
   validateUserId: jest.fn(),
   resolveUsernameToId: jest.fn(),
+  getUserInfo: jest.fn(),
 };
 const mockItemTransactions = { recordBatch: jest.fn() };
 const mockCurrencyLedger = { credit: jest.fn() };
@@ -86,6 +91,107 @@ describe("ItemsService", () => {
     mockPendingOwnershipService.isMember.mockResolvedValue(true);
     mockDatabaseService.item.createMany.mockResolvedValue({ count: 1 });
     mockDatabaseService.item.findMany.mockResolvedValue([]);
+    mockDiscordService.getUserInfo.mockImplementation((userId: string) =>
+      Promise.resolve({ userId, username: "someone", displayName: undefined }),
+    );
+  });
+
+  describe("Discord names on a pending grant (#445)", () => {
+    const DISCORD_ID = "214000000000009071";
+    const storedNames = () =>
+      mockPendingOwnershipService.createForItem.mock.calls[0][3] as {
+        displayIdentifier?: string;
+        displayName?: string;
+      };
+
+    beforeEach(() => {
+      mockPendingOwnershipService.checkIfAccountClaimed.mockResolvedValue(null);
+      mockDatabaseService.item.findMany.mockResolvedValue([{ id: "i1" }]);
+      mockDiscordService.getUserInfo.mockResolvedValue({
+        userId: DISCORD_ID,
+        username: "neo.baka",
+        displayName: "Neo the Baka",
+      });
+    });
+
+    it("records the username and display name for a grant by id", async () => {
+      await service.grantItem({
+        itemTypeId: "type1",
+        quantity: 1,
+        pendingOwner: { provider: "DISCORD", providerAccountId: DISCORD_ID },
+        actor,
+      });
+
+      expect(mockDiscordService.getUserInfo).toHaveBeenCalledWith(DISCORD_ID);
+      expect(storedNames()).toEqual({
+        displayIdentifier: "neo.baka",
+        displayName: "Neo the Baka",
+      });
+    });
+
+    it("records Discord's own spelling for a grant by username", async () => {
+      // Typed however staff typed it; stored as Discord has it.
+      mockDatabaseService.community.findUnique.mockResolvedValue({
+        discordGuildId: "guild1",
+        name: "Cloverse",
+      });
+      mockDiscordService.resolveUsernameToId.mockResolvedValue(DISCORD_ID);
+
+      await service.grantItem({
+        itemTypeId: "type1",
+        quantity: 1,
+        pendingOwner: { provider: "DISCORD", providerAccountId: "@Neo.Baka" },
+        actor,
+      });
+
+      expect(mockPendingOwnershipService.createForItem.mock.calls[0][2]).toBe(
+        DISCORD_ID,
+      );
+      expect(storedNames()).toEqual({
+        displayIdentifier: "neo.baka",
+        displayName: "Neo the Baka",
+      });
+    });
+
+    it("records names from a signed interaction without asking Discord", async () => {
+      // The Halloween bot's path: the interaction already carries the names,
+      // and an HTTP call would sit inside the knock's transaction.
+      await service.grantItemInTransaction(
+        mockDatabaseService as unknown as Prisma.TransactionClient,
+        {
+          itemTypeId: "type1",
+          quantity: 1,
+          pendingOwner: { provider: "DISCORD", providerAccountId: DISCORD_ID },
+          actor,
+        },
+        {
+          discordIdVerified: true,
+          discordNames: { username: "neo.baka", displayName: "Neo the Baka" },
+        },
+      );
+
+      expect(mockDiscordService.getUserInfo).not.toHaveBeenCalled();
+      expect(storedNames()).toEqual({
+        displayIdentifier: "neo.baka",
+        displayName: "Neo the Baka",
+      });
+    });
+
+    it("refuses an id Discord does not know", async () => {
+      mockDiscordService.getUserInfo.mockRejectedValue(
+        new NotFoundException("Discord user not found"),
+      );
+
+      await expect(
+        service.grantItem({
+          itemTypeId: "type1",
+          quantity: 1,
+          pendingOwner: { provider: "DISCORD", providerAccountId: DISCORD_ID },
+          actor,
+        }),
+      ).rejects.toThrow(NotFoundException);
+      expect(mockPendingOwnershipService.createForItem).not.toHaveBeenCalled();
+    });
   });
 
   describe("grantItem", () => {
