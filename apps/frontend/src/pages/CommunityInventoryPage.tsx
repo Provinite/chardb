@@ -20,19 +20,6 @@ import {
   useUseItemMutation,
 } from "../generated/graphql";
 
-/**
- * What one member holds in one community.
- *
- * One page, three audiences: a member looking at themselves, someone sizing up
- * a trade partner, and staff about to correct something. Inventories are public
- * within a community, so all three see the same thing.
- *
- * There are no staff actions here on purpose. Revoking happens on an item's own
- * page, where its history is in front of you — you should not be able to take
- * something away without first looking at what it is and where it came from.
- * This page's job is to get you there.
- */
-
 const Container = styled.div`
   max-width: 1100px;
   margin: 0 auto;
