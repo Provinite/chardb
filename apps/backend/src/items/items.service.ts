@@ -6,6 +6,7 @@ import {
 } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import { DatabaseService } from "../database/database.service";
+import { notDeleted } from "../common/utils/prisma-filters";
 import {
   PendingOwnershipService,
   type PendingOwnerNames,
@@ -1907,8 +1908,9 @@ export class ItemsService {
   }
 
   /**
-   * What waits on one external account in one community: the holdings of
-   * someone with no account here, for staff to find and clean up (#445).
+   * An external member's pending inventory: everything that waits on one
+   * external account in one community -- items and characters -- for staff to
+   * find and clean up (#445).
    *
    * @throws NotFoundException if nothing was ever held for the account here
    */
@@ -1917,15 +1919,20 @@ export class ItemsService {
     provider: ExternalAccountProvider,
     providerAccountId: string,
   ) {
-    const [holder, items] = await Promise.all([
+    const [holder, items, characters] = await Promise.all([
       // Any row ever held for them here, removed or not, so a holder staff
-      // have emptied out still has a page that says who they are.
+      // have emptied out still has a page that says who they are. The newest
+      // carries the names last recorded for them.
       this.db.pendingOwnership.findFirst({
         where: {
           provider,
           providerAccountId,
-          item: { itemType: { communityId } },
+          OR: [
+            { item: { itemType: { communityId } } },
+            { character: { species: { communityId } } },
+          ],
         },
+        orderBy: { createdAt: "desc" },
       }),
       this.db.item.findMany({
         where: {
@@ -1936,6 +1943,15 @@ export class ItemsService {
         },
         include: { itemType: true },
         orderBy: { createdAt: "asc" },
+      }),
+      this.db.character.findMany({
+        where: {
+          ...notDeleted,
+          species: { communityId },
+          pendingOwnership: { provider, providerAccountId, claimedAt: null },
+        },
+        select: { id: true, name: true },
+        orderBy: { name: "asc" },
       }),
     ]);
 
@@ -1951,6 +1967,7 @@ export class ItemsService {
       totalItems: items.length,
       distinctTypes: holdings.length,
       holdings,
+      characters,
     };
   }
 }

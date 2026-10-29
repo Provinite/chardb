@@ -1143,6 +1143,7 @@ describe("ItemsService.findPendingHoldings", () => {
     }).compile();
     service = module.get<ItemsService>(ItemsService);
     mockDatabaseService.pendingOwnership.findFirst.mockResolvedValue(holder);
+    mockDatabaseService.character.findMany.mockResolvedValue([]);
     mockDatabaseService.item.findMany.mockResolvedValue([
       held("i1", "gen4"),
       held("i2", "gen4"),
@@ -1198,7 +1199,36 @@ describe("ItemsService.findPendingHoldings", () => {
     expect(where).toEqual({
       provider: "DISCORD",
       providerAccountId: DISCORD_ID,
-      item: { itemType: { communityId: "comm1" } },
+      OR: [
+        { item: { itemType: { communityId: "comm1" } } },
+        { character: { species: { communityId: "comm1" } } },
+      ],
+    });
+  });
+
+  it("lists the characters waiting on them here too", async () => {
+    // A pending inventory is everything that waits on the account, not only
+    // items.
+    mockDatabaseService.character.findMany.mockResolvedValue([
+      { id: "c1", name: "Pinefall" },
+    ]);
+
+    const report = await service.findPendingHoldings(
+      "comm1",
+      "DISCORD",
+      DISCORD_ID,
+    );
+
+    expect(report.characters).toEqual([{ id: "c1", name: "Pinefall" }]);
+    const { where } = mockDatabaseService.character.findMany.mock.calls[0][0];
+    expect(where).toEqual({
+      deletedAt: null,
+      species: { communityId: "comm1" },
+      pendingOwnership: {
+        provider: "DISCORD",
+        providerAccountId: DISCORD_ID,
+        claimedAt: null,
+      },
     });
   });
 

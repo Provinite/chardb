@@ -1451,6 +1451,27 @@ enum ExternalAccountProvider {
   TOYHOUSE
 }
 
+"""Someone something waits on in a community without an account here."""
+type ExternalMember {
+  """Characters waiting on them."""
+  characterCount: Int!
+
+  """
+  Their most recent waiting claim, carrying the names last recorded for them. Blank to viewers who may not see who holds what.
+  """
+  holder: PendingOwnership!
+
+  """Live items waiting on them."""
+  itemCount: Int!
+}
+
+type ExternalMembersPage {
+  hasMore: Boolean!
+
+  """Newest waiting claim first."""
+  members: [ExternalMember!]!
+}
+
 type FollowListResult {
   followers: [User!]!
   following: [User!]!
@@ -3453,8 +3474,18 @@ input OwnerIdUpdate {
   set: ID
 }
 
-"""Live, unclaimed items held for one external account in one community."""
+"""A character waiting on an external account to be claimed."""
+type PendingCharacter {
+  id: ID!
+  name: String!
+}
+
+"""
+Live, unclaimed items and characters held for one external account in one community.
+"""
 type PendingHoldingsReport {
+  """By name."""
+  characters: [PendingCharacter!]!
   distinctTypes: Int!
 
   """
@@ -3782,6 +3813,11 @@ type Query {
     """Trait ID"""
     traitId: ID!
   ): EnumValueConnection!
+
+  """
+  Everyone something waits on in a community without an account here, one per external account, newest first. Narrowed by an optional search on either name or the exact account id.
+  """
+  externalMembers(communityId: ID!, limit: Int! = 25, offset: Int! = 0, provider: ExternalAccountProvider, search: String): ExternalMembersPage!
   followStatus(userId: ID!): FollowStatus!
   galleries(filters: GalleryFiltersInput): GalleryConnection!
   gallery(id: ID!): Gallery!
@@ -3978,7 +4014,7 @@ type Query {
   notifications(after: String, first: Int = 20, unreadOnly: Boolean): NotificationConnection!
 
   """
-  Live, unclaimed items held for one external account in one community, grouped by item type. For staff who can grant items.
+  An external member's pending inventory: the live, unclaimed items and characters held for one external account in one community. For staff who may see pending owners.
   """
   pendingHoldings(communityId: ID!, provider: ExternalAccountProvider!, providerAccountId: String!): PendingHoldingsReport!
 
