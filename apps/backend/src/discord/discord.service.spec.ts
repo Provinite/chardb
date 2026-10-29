@@ -47,7 +47,6 @@ jest.mock("@discordjs/core", () => ({
 
 describe("DiscordService", () => {
   let service: DiscordService;
-  let configService: ConfigService;
 
   const mockBotToken = "test-bot-token";
   const mockClientId = "test-client-id";
@@ -72,7 +71,6 @@ describe("DiscordService", () => {
     }).compile();
 
     service = module.get<DiscordService>(DiscordService);
-    configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(() => {
