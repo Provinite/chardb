@@ -32,6 +32,22 @@ export function useLedgerSearch() {
 }
 
 /**
+ * Whether two ledger filters ask for the same list, whatever page of it.
+ *
+ * `fetchMore` writes into the query as it stands when the page lands, not as
+ * it stood when Load more was clicked. A page asked for under a filter
+ * changed since then belongs to another list and has to be dropped.
+ */
+export function sameList<T extends { limit?: number; offset?: number }>(
+  a: T,
+  b: T,
+): boolean {
+  const list = ({ limit: _limit, offset: _offset, ...rest }: T) =>
+    JSON.stringify(rest);
+  return list(a) === list(b);
+}
+
+/**
  * The rows of `next` not already in `shown`, by id.
  *
  * Ledgers are newest first, so events recorded between two Load mores push

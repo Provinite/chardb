@@ -91,7 +91,12 @@ const pendingGrant: ItemTransactionFieldsFragment = {
   pendingOwner: discordOwner,
 };
 
-type Filters = { search?: string; limit: number; offset: number };
+type Filters = {
+  search?: string;
+  limit: number;
+  offset: number;
+  kinds?: string[];
+};
 
 /**
  * Answers every ledger query slowly enough that the page is caught mid-load,
@@ -105,11 +110,21 @@ type LedgerOptions = {
   rows?: ItemTransactionFieldsFragment[];
   /** What a page past the first holds. The first page's rows by default. */
   nextPage?: ItemTransactionFieldsFragment[];
+  /** What a kind filter's first page holds. The first page's rows by default. */
+  kindRows?: ItemTransactionFieldsFragment[];
+  /** How long a reply takes, in ms. 100 by default. */
+  delay?: (filters: Filters) => number;
 };
 
 const recordingLink = (
   sent: Filters[],
-  { emptyLedger = false, rows = [grant], nextPage }: LedgerOptions = {},
+  {
+    emptyLedger = false,
+    rows = [grant],
+    nextPage,
+    kindRows,
+    delay = () => 100,
+  }: LedgerOptions = {},
 ) =>
   new ApolloLink(
     (operation) =>
@@ -117,7 +132,12 @@ const recordingLink = (
         const { filters } = operation.variables as { filters: Filters };
         sent.push(filters);
         const empty = emptyLedger || filters.search === "zzz";
-        const page = filters.offset > 0 ? (nextPage ?? rows) : rows;
+        const page =
+          filters.offset > 0
+            ? (nextPage ?? rows)
+            : filters.kinds
+              ? (kindRows ?? rows)
+              : rows;
         const timer = setTimeout(() => {
           observer.next({
             data: {
@@ -129,7 +149,7 @@ const recordingLink = (
             },
           });
           observer.complete();
-        }, 100);
+        }, delay(filters));
         return () => clearTimeout(timer);
       }),
   );
@@ -251,6 +271,45 @@ describe("CommunityItemLedgerPage Load more", () => {
     await screen.findByText("An older grant");
     expect(sent[1]).toMatchObject({ limit: 25, offset: 1 });
     expect(screen.getAllByTestId("ledger-row")).toHaveLength(2);
+  });
+
+  it("drops a page that lands after the filter it was for has changed", async () => {
+    // The kind filter's own page lands first, then the old filter's page.
+    const sent: Filters[] = [];
+    renderLedger(sent, {
+      nextPage: [older],
+      kindRows: [pendingGrant],
+      delay: (f) => (f.offset > 0 ? 600 : 100),
+    });
+    await screen.findByText("Trait Change Potion");
+
+    await userEvent.click(screen.getByRole("button", { name: "Load more" }));
+    await userEvent.click(screen.getByRole("button", { name: "Granted" }));
+
+    await screen.findByText("Hollowtide 2025 prize");
+    await waitFor(() => expect(sent).toHaveLength(3));
+    // Past the old page's arrival.
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(screen.queryByText("An older grant")).toBeNull();
+    expect(screen.getAllByTestId("ledger-row")).toHaveLength(1);
+  });
+
+  it("drops a page that lands before the new filter has any results", async () => {
+    // Nothing is cached for the kind filter yet when the old page lands.
+    const sent: Filters[] = [];
+    renderLedger(sent, {
+      nextPage: [older],
+      kindRows: [pendingGrant],
+      delay: (f) => (f.offset > 0 ? 100 : f.kinds ? 600 : 100),
+    });
+    await screen.findByText("Trait Change Potion");
+
+    await userEvent.click(screen.getByRole("button", { name: "Load more" }));
+    await userEvent.click(screen.getByRole("button", { name: "Granted" }));
+
+    await screen.findByText("Hollowtide 2025 prize", {}, { timeout: 2000 });
+    expect(screen.queryByText("An older grant")).toBeNull();
+    expect(screen.getAllByTestId("ledger-row")).toHaveLength(1);
   });
 
   it("shows a row once when new events push it onto the next page", async () => {

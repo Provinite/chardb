@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
@@ -16,7 +16,11 @@ import {
   type ItemTransactionFieldsFragment,
 } from "../generated/graphql";
 import { collapseByBatch, KIND_LABEL, kindTone } from "../lib/itemDisplay";
-import { unseenRows, useLedgerSearch } from "../hooks/useLedgerSearch";
+import {
+  sameList,
+  unseenRows,
+  useLedgerSearch,
+} from "../hooks/useLedgerSearch";
 import { useOffsetPaging } from "../hooks/useOffsetPaging";
 import { pendingHolderPath, pendingLabel } from "../lib/pendingOwner";
 
@@ -524,6 +528,12 @@ export const CommunityItemLedgerPage: React.FC = () => {
   const entries = collapseByBatch(rows);
   const hasMore = data?.itemTransactions?.hasMore ?? false;
 
+  // What the query asks for now, for a page that lands after a filter change.
+  const currentFilters = useRef(filters);
+  useEffect(() => {
+    currentFilters.current = filters;
+  }, [filters]);
+
   // One page per click, appended. Asking again from the top with a larger
   // limit had the server rebuild every row already on screen.
   const { loadMore, loadingMore } = useOffsetPaging({
@@ -533,8 +543,11 @@ export const CommunityItemLedgerPage: React.FC = () => {
     load: ({ limit, offset }) =>
       fetchMore({
         variables: { filters: { ...filters, limit, offset } },
-        updateQuery: (prev, { fetchMoreResult }) =>
-          fetchMoreResult
+        updateQuery: (prev, { fetchMoreResult, variables }) =>
+          // `prev` is missing while a new filter's first page is in flight.
+          fetchMoreResult &&
+          prev?.itemTransactions &&
+          sameList(variables.filters, currentFilters.current)
             ? {
                 itemTransactions: {
                   ...fetchMoreResult.itemTransactions,

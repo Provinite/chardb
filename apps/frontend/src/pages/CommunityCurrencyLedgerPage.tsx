@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { useSearchParams, Link } from "react-router-dom";
@@ -21,7 +21,11 @@ import {
   collapseTransferLegs,
   type CurrencyTone,
 } from "../lib/currencyDisplay";
-import { unseenRows, useLedgerSearch } from "../hooks/useLedgerSearch";
+import {
+  sameList,
+  unseenRows,
+  useLedgerSearch,
+} from "../hooks/useLedgerSearch";
 import { useOffsetPaging } from "../hooks/useOffsetPaging";
 
 /**
@@ -329,14 +333,23 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
     skip: !communityId,
   });
 
-  const filters = {
-    communityId: communityId as string,
-    limit: PAGE_SIZE,
-    offset: 0,
-    kinds: kinds.length > 0 ? kinds : undefined,
-    currencyId,
-    search: debouncedSearch || undefined,
-  };
+  const filters = useMemo(
+    () => ({
+      communityId: communityId as string,
+      limit: PAGE_SIZE,
+      offset: 0,
+      kinds: kinds.length > 0 ? kinds : undefined,
+      currencyId,
+      search: debouncedSearch || undefined,
+    }),
+    [communityId, kinds, currencyId, debouncedSearch],
+  );
+
+  // What the query asks for now, for a page that lands after a filter change.
+  const currentFilters = useRef(filters);
+  useEffect(() => {
+    currentFilters.current = filters;
+  }, [filters]);
 
   const {
     data: currentData,
@@ -376,8 +389,11 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
     load: ({ limit, offset }) =>
       fetchMore({
         variables: { filters: { ...filters, limit, offset } },
-        updateQuery: (prev, { fetchMoreResult }) =>
-          fetchMoreResult
+        updateQuery: (prev, { fetchMoreResult, variables }) =>
+          // `prev` is missing while a new filter's first page is in flight.
+          fetchMoreResult &&
+          prev?.currencyTransactions &&
+          sameList(variables.filters, currentFilters.current)
             ? {
                 currencyTransactions: {
                   ...fetchMoreResult.currencyTransactions,

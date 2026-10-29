@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **`currencyTransactions` breaks timestamp ties by id**, so paging through a transfer's legs or a batch mint no longer repeats or skips a row.
+
 ## [v14.2.0] - 2026-10-28
 
 ### Security

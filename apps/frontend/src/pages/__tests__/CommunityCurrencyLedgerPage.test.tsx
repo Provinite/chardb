@@ -80,7 +80,16 @@ type Filters = { search?: string; limit: number; offset: number };
  * at a time from the offset asked for, so the page size shows in the rows on
  * screen; "zzz" matches nothing, and any other search matches one.
  */
-const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
+type LedgerOptions = {
+  emptyLedger?: boolean;
+  /** How long a reply takes, in ms. 100 by default. */
+  delay?: (filters: Filters) => number;
+};
+
+const recordingLink = (
+  sent: Filters[],
+  { emptyLedger = false, delay = () => 100 }: LedgerOptions = {},
+) =>
   new ApolloLink(
     (operation) =>
       new Observable((observer) => {
@@ -108,12 +117,12 @@ const recordingLink = (sent: Filters[], { emptyLedger = false } = {}) =>
             },
           });
           observer.complete();
-        }, 100);
+        }, delay(filters));
         return () => clearTimeout(timer);
       }),
   );
 
-const renderLedger = (sent: Filters[], options?: { emptyLedger?: boolean }) =>
+const renderLedger = (sent: Filters[], options?: LedgerOptions) =>
   render(
     <MockedProvider link={recordingLink(sent, options)}>
       <ThemeProvider theme={lightTheme}>
@@ -162,8 +171,23 @@ describe("CommunityCurrencyLedgerPage search", () => {
     ]);
   });
 
-  it("adds the next page below the first, and pages past 100", async () => {
-    // Asking again from the top with a larger limit was refused past 100.
+  it("drops a page that lands after the filter it was for has changed", async () => {
+    const sent: Filters[] = [];
+    renderLedger(sent, { delay: (f) => (f.offset > 0 ? 600 : 100) });
+    await screen.findByTestId("currency-ledger-list");
+
+    await userEvent.click(screen.getByRole("button", { name: /Load more/ }));
+    await userEvent.click(
+      screen.getByTestId(`kind-chip-${CurrencyTransactionKind.Mint}`),
+    );
+
+    await waitFor(() => expect(sent).toHaveLength(3));
+    // Past the old page's arrival.
+    await new Promise((resolve) => setTimeout(resolve, 700));
+    expect(screen.getAllByTestId("currency-ledger-row")).toHaveLength(25);
+  });
+
+  it("adds the next page below the first, and the one after", async () => {
     const sent: Filters[] = [];
     renderLedger(sent);
     await screen.findByTestId("currency-ledger-list");
