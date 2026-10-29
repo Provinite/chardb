@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import * as DataLoader from "dataloader";
 import { DatabaseService } from "../../database/database.service";
 import { notDeleted } from "../../common/utils/prisma-filters";
 import {
@@ -28,9 +29,64 @@ import { MaybePromise } from "@opentelemetry/resources";
  * - Role → Community (direct)
  * - CommunityColor → Community (direct)
  */
+/**
+ * One request's batched lookups. A field resolver guarded by a community
+ * permission resolves its community once per field, and a list of parents
+ * multiplies that: a ledger page guards three fields on every row's pending
+ * owner (#445). Within a request, the same tick's lookups share one query.
+ */
+class RequestLookups {
+  constructor(private readonly prisma: DatabaseService) {}
+
+  readonly pendingOwnershipCommunity = new DataLoader<string, string | null>(
+    async (ids) => {
+      const rows = await this.prisma.pendingOwnership.findMany({
+        where: { id: { in: [...ids] } },
+        select: {
+          id: true,
+          character: { select: { species: { select: { communityId: true } } } },
+          item: { select: { itemType: { select: { communityId: true } } } },
+        },
+      });
+      const byId = new Map(rows.map((row) => [row.id, row]));
+      return ids.map((id) => {
+        const row = byId.get(id);
+        if (!row) {
+          return new Error(`PendingOwnership with ID ${id} not found`);
+        }
+        return (
+          row.character?.species?.communityId ||
+          row.item?.itemType?.communityId ||
+          null
+        );
+      });
+    },
+  );
+
+  readonly community = new DataLoader<string, Community | null>(async (ids) => {
+    const rows = await this.prisma.community.findMany({
+      where: { id: { in: [...ids] } },
+    });
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    return ids.map((id) => byId.get(id) ?? null);
+  });
+}
+
 @Injectable()
 export class CommunityResolverService {
+  /** Keyed on the request object, so nothing outlives the request. */
+  private readonly byRequest = new WeakMap<object, RequestLookups>();
+
   constructor(private prisma: DatabaseService) {}
+
+  private lookupsFor(req: object): RequestLookups {
+    let lookups = this.byRequest.get(req);
+    if (!lookups) {
+      lookups = new RequestLookups(this.prisma);
+      this.byRequest.set(req, lookups);
+    }
+    return lookups;
+  }
 
   /**
    * Get the community ID for a character.
@@ -554,7 +610,20 @@ export class CommunityResolverService {
    */
   async resolve(
     config: CommunityResolutionReference,
+    /**
+     * The request being served, when there is one. Lookups for the same
+     * request are batched; without it each resolves on its own.
+     */
+    req?: object,
   ): Promise<Community | null> {
+    if (req && config.type === "pendingOwnershipId") {
+      const lookups = this.lookupsFor(req);
+      const communityId = await lookups.pendingOwnershipCommunity.load(
+        config.value,
+      );
+      return communityId ? lookups.community.load(communityId) : null;
+    }
+
     const lookupFn: Record<
       keyof CommunityResolutionConfig,
       (id: string) => MaybePromise<string | null>

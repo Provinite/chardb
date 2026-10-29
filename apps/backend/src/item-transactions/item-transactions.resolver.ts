@@ -35,6 +35,7 @@ import { mapPrismaItemTypeToGraphQL } from "../items/utils/item-type-resolver-ma
 import { mapPrismaItemToGraphQL } from "../items/utils/item-resolver-mappers";
 import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 import { PendingOwnership } from "../pending-ownership/entities/pending-ownership.entity";
+import { LoadersService } from "../dataloaders/loaders.service";
 import { mapPrismaPendingOwnershipToGraphQL } from "../pending-ownership/utils/pending-ownership-mappers";
 
 /**
@@ -57,6 +58,7 @@ export class ItemTransactionsResolver {
     private readonly itemTransactionsService: ItemTransactionsService,
     private readonly permissionService: PermissionService,
     private readonly database: DatabaseService,
+    private readonly loaders: LoadersService,
   ) {}
 
   @AllowCommunityPermission(CommunityPermission.Any)
@@ -191,11 +193,13 @@ export class ItemTransactionsResolver {
   })
   async resolvePendingOwner(
     @Parent() transaction: ItemTransaction,
+    @Context("req") req?: Request,
   ): Promise<PendingOwnership | null> {
     if (!transaction.itemId) return null;
-    const pending = await this.database.pendingOwnership.findUnique({
-      where: { itemId: transaction.itemId },
-    });
+    // Batched: a ledger page asks for every row's at once.
+    const pending = await this.loaders
+      .forRequest(req)
+      .pendingOwnershipByItem.load(transaction.itemId);
     return pending ? mapPrismaPendingOwnershipToGraphQL(pending) : null;
   }
 

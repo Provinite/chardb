@@ -1,5 +1,10 @@
 import * as DataLoader from "dataloader";
-import type { EnumValue, MediaTag, Tag } from "@prisma/client";
+import type {
+  EnumValue,
+  MediaTag,
+  PendingOwnership,
+  Tag,
+} from "@prisma/client";
 import { DatabaseService } from "../database/database.service";
 
 /** Up to this many enum values per trait, as the trait field has always returned. */
@@ -134,4 +139,17 @@ export class Loaders {
       );
     },
   );
+
+  /** The account an item waits on, or null. One per item: item_id is unique. */
+  readonly pendingOwnershipByItem = new DataLoader<
+    string,
+    PendingOwnership | null
+  >(async (ids) => {
+    const rows = await this.db.pendingOwnership.findMany({
+      where: { itemId: { in: [...ids] } },
+    });
+    return groupBy(ids, rows, (row) => row.itemId).map(
+      (group) => group[0] ?? null,
+    );
+  });
 }
