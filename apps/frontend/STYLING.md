@@ -157,7 +157,11 @@ Keep the table on phones when:
 ## Interaction
 
 - **Hover** styles go inside the shared hover condition, so they apply only on devices that hover. A bare `:hover` sticks after a tap on touch screens and is a lint error.
-- **Touch targets** are at least 44×44px on touch devices. Interactive primitives (`Button`, `IconButton`, menu items, list rows) enforce this; build on them.
+- **Touch targets** follow WCAG 2.2's target size criteria. Aim for 44×44px; never go under 24×24px.
+  - [2.5.5 Target Size (Enhanced)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html), level AAA: at least 44×44px. Aim for this on touch devices, especially for primary actions and anything in a dense list.
+  - [2.5.8 Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html), level AA: at least 24×24px. A smaller target passes only if a 24px circle centred on it does not overlap another target or its circle.
+  - Both exempt a link inside a sentence, a control with an equivalent full-size control on the same page, browser-drawn controls, and a size that is essential to the information (a map pin).
+  - The interactive primitives (`Button`, `IconButton`, menu items, list rows) meet 44×44px on touch devices. Build on them and the rule mostly takes care of itself; check by eye when you hand-build a control.
 - **Hover-only information** needs another way in. Tooltips open on long-press on touch devices. Anything users need to act on is visible without hovering.
 - **Focus** uses the shared focus ring on `:focus-visible`. Never remove an outline without replacing it.
 
