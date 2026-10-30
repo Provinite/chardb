@@ -1,4 +1,4 @@
-import { ExternalAccountProvider } from "@prisma/client";
+import { ExternalAccountProvider } from "@chardb/database";
 import type { OAuthLinkProvider } from "./oauth-link-state";
 
 /**

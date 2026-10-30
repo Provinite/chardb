@@ -37,7 +37,7 @@ import { Inventory } from "../items/entities/inventory.entity";
 import { Item as ItemEntity } from "../items/entities/item.entity";
 import { ItemsService } from "../items/items.service";
 import { EmptyStringOnForbiddenFilter } from "../auth/filters/EmptyStringOnForbiddenFilter";
-import { ModerationStatus } from "@prisma/client";
+import { ModerationStatus } from "@chardb/database";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
 import { CommunityMemberConnection } from "../community-members/entities/community-member.entity";
 import { CommunityMembersService } from "../community-members/community-members.service";

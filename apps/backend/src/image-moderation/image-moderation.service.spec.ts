@@ -6,7 +6,7 @@ import {
   NotificationKind,
   NotificationSubjectType,
   CurrencyTransactionSource,
-} from "@prisma/client";
+} from "@chardb/database";
 import { ImageModerationService } from "./image-moderation.service";
 import { DatabaseService } from "../database/database.service";
 import { PermissionService } from "../auth/PermissionService";

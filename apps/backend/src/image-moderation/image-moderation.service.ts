@@ -16,7 +16,7 @@ import {
   NotificationSubjectType,
   Prisma,
   CurrencyTransactionSource,
-} from "@prisma/client";
+} from "@chardb/database";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { MediaService } from "../media/media.service";
 import { ImageModerationQueueFiltersInput } from "./dto/image-moderation.dto";

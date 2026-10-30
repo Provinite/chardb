@@ -1,6 +1,6 @@
 import { InputType, Field } from "@nestjs/graphql";
 import { IsEnum } from "class-validator";
-import { ExternalAccountProvider } from "@prisma/client";
+import { ExternalAccountProvider } from "@chardb/database";
 
 @InputType()
 export class UnlinkExternalAccountInput {

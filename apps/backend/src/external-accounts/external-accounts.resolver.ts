@@ -3,7 +3,7 @@ import { ExternalAccountsService } from "./external-accounts.service";
 import { ExternalAccount } from "./entities/external-account.entity";
 import { UnlinkExternalAccountInput } from "./dto/unlink-external-account.dto";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
-import { User } from "@prisma/client";
+import { User } from "@chardb/database";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 
 @Resolver(() => ExternalAccount)

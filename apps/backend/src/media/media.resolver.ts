@@ -26,7 +26,7 @@ import { CharactersService } from "../characters/characters.service";
 import { GalleriesService } from "../galleries/galleries.service";
 import { ImagesService } from "../images/images.service";
 import { LoadersService } from "../dataloaders/loaders.service";
-import { ModerationStatus } from "@prisma/client";
+import { ModerationStatus } from "@chardb/database";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";

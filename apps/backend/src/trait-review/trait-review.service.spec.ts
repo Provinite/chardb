@@ -1,6 +1,6 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
-import { ModerationStatus, TraitReviewSource } from "@prisma/client";
+import { ModerationStatus, TraitReviewSource } from "@chardb/database";
 import { TraitReviewService } from "./trait-review.service";
 import { DatabaseService } from "../database/database.service";
 import { ItemsService } from "../items/items.service";

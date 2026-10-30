@@ -7,7 +7,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import type { Prisma, Visibility, TextFormatting } from "@chardb/database";
-import { ModerationStatus } from "@prisma/client";
+import { ModerationStatus } from "@chardb/database";
 import { ImagesService } from "../images/images.service";
 import {
   notDeleted,

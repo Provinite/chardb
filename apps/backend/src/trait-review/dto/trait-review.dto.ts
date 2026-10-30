@@ -9,7 +9,7 @@ import {
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
-import { TraitReviewSource, ModerationStatus } from "@prisma/client";
+import { TraitReviewSource, ModerationStatus } from "@chardb/database";
 import { NewCharacterFormInput } from "../../characters/dto/character-form.dto";
 
 // Register TraitReviewSource enum with GraphQL

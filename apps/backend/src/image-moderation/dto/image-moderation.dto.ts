@@ -14,7 +14,7 @@ import {
   ValidateNested,
 } from "class-validator";
 import { Type } from "class-transformer";
-import { ModerationStatus, ModerationRejectionReason } from "@prisma/client";
+import { ModerationStatus, ModerationRejectionReason } from "@chardb/database";
 
 // Register enums with GraphQL
 registerEnumType(ModerationStatus, {

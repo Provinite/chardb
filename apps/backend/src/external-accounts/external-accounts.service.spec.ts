@@ -4,7 +4,7 @@ import { ExternalAccountsService } from "./external-accounts.service";
 import { DatabaseService } from "../database/database.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
-import { ExternalAccountProvider } from "@prisma/client";
+import { ExternalAccountProvider } from "@chardb/database";
 import { mockDatabaseService } from "../../test/setup";
 
 const mockPendingOwnershipService = {

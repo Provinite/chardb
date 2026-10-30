@@ -11,7 +11,7 @@ import {
 import { UseGuards } from "@nestjs/common";
 import { ImageModerationService } from "./image-moderation.service";
 import { DatabaseService } from "../database/database.service";
-import { CurrencyTransactionSource, ModerationStatus } from "@prisma/client";
+import { CurrencyTransactionSource, ModerationStatus } from "@chardb/database";
 import { CurrencyTransaction } from "../currencies/entities/currency-transaction.entity";
 import { mapPrismaCurrencyTransactionToGraphQL } from "../currencies/utils/currency-resolver-mappers";
 import { MediaService } from "../media/media.service";

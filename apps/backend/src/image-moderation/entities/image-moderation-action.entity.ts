@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
-import { ModerationStatus, ModerationRejectionReason } from "@prisma/client";
+import { ModerationStatus, ModerationRejectionReason } from "@chardb/database";
 import { Image } from "../../images/entities/image.entity";
 import { User } from "../../users/entities/user.entity";
 
