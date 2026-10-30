@@ -14,6 +14,7 @@
 - The `gh` cli is configured for github interactions beyond simple `git` cli commands
 - Local Development Credentials: See [LOCAL_DEV_SEED_DATA.md](./LOCAL_DEV_SEED_DATA.md) for test user personas and credentials
 - Browser E2E tests live in `apps/e2e` (Playwright). Run with `yarn workspace @chardb/e2e e2e` — it starts Postgres, the backend, and the frontend itself; nothing needs to be running first. See [apps/e2e/README.md](./apps/e2e/README.md), especially "Adding a preset"
+- Vitest caches transformed modules in `node_modules/.vitest-cache`, and the cache ignores `postcss.config.js`. After editing that config, or when a test of emitted CSS passes when it should fail, `rm -rf node_modules/.vitest-cache` before trusting the result
 - To drive the app against a seeded world (by hand or with the Playwright MCP tools): `yarn workspace @chardb/e2e world community-basic --json` prints every id, URL, and credential. Requires the e2e servers to be up
 - Use the .tmp folder in the package root for temporary files (like image uploads).
 - App-specific changes should go in the appropriate CHANGELOG.md. The root-level CHANGELOG.md is for tracking cross-cutting changes and non-app-specific changes (like CI for example)
