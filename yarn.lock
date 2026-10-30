@@ -3331,6 +3331,7 @@ __metadata:
     "@vanilla-extract/recipes": "npm:^0.5.7"
     "@vanilla-extract/sprinkles": "npm:^1.7.1"
     "@vanilla-extract/vite-plugin": "npm:^5.2.6"
+    jsdom: "npm:^26.1.0"
     lucide-react: "npm:^0.513.0"
     react: "npm:^18.0.0"
     react-dom: "npm:^18.0.0"
