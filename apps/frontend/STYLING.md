@@ -244,6 +244,38 @@ Keep the table on phones when:
 - it already fits at 360px (two or three short columns), or
 - people compare values down a column, as in the item and currency ledgers. Those scroll sideways inside their container with the first column pinned (`position: sticky` on each row's first cell). The scroll container is keyboard-focusable (`tabIndex={0}`, `role="region"` and an `aria-label`) so it can be scrolled without a pointer, and sets `scroll-padding-inline-start` to the pinned column's width so focused cells never hide behind it.
 
+## Loading
+
+Pick the indicator by what is loading. Each follows the [no pop-in](#no-pop-in) rules: nothing around it moves when it appears or when the content replaces it.
+
+| Situation | Indicator |
+|---|---|
+| First load of a page or section | A skeleton shaped like the content |
+| Refetch, filter change or next page, with data on screen | Keep the data; show busy state on the control that caused it |
+| An action: save, submit, delete | A spinner inside the button |
+| Search and typeahead | A spinner in the input's end slot |
+| A long task with known progress: uploads, character creation | A determinate progress bar with text |
+| Background autosave | Status text in a fixed-width slot |
+| Images | A `surface.sunken` placeholder at the image's aspect ratio |
+| Navigating to another route | The current page stays; a thin progress bar runs along the top |
+
+- **Skeletons** take the footprint of the content they stand in for, so the swap moves nothing. They appear at once, with no delay. Their shimmer is a decorative loop and stops under reduced motion.
+- **Never replace content already on screen with a skeleton.** A refetch keeps the old data until the new data arrives. "Load more" shows busy state on its own button, and new rows appear below.
+- **Buttons keep their size while busy.** The label stays in place but invisible, the spinner sits over it, and the button is disabled with `aria-busy`. Do not swap the label for "Saving…". Report the outcome with a toast or inline status.
+- **Spinners** appear only inside controls: buttons and input end slots. A spinner centred in an empty section is not an option; that is what skeletons are for.
+- **Known progress is shown as progress.** A task that can report how far along it is uses a determinate bar, never a spinner.
+- **Route changes** keep the current page on screen until the next page's code and data are ready, with the top progress bar showing in the meantime.
+
+### Timing
+
+Every indicator except skeletons waits `timing.loader.delay` (500ms) before showing, so fast responses never flash one. Once shown, it stays at least `timing.loader.minVisible` (500ms), so it never blinks on and off. These are the values Android's `ContentLoadingProgressBar` uses for the same reason.
+
+A button disables the moment it is pressed, before the delay runs, so a quick action still gets feedback and cannot be submitted twice.
+
+### Startup
+
+While the app works out who is signed in and which community is being viewed, the shell renders with the destination route's skeleton. Each route declares its skeleton when its page is migrated. Routes without one yet fall back to `AppLoader`; `AppLoader` is deleted once every route has a skeleton.
+
 ## Interaction
 
 - **Hover** styles go inside the shared hover condition, so they apply only on devices that hover. A bare `:hover` sticks after a tap on touch screens and is a lint error.
