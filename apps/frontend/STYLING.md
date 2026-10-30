@@ -61,7 +61,7 @@ Every state or shade a component may use is its own token: `action.primary.bgHov
 
 **Pairs.** The theme lists which foregrounds may sit on which backgrounds, and what each pair is for: body text, large text, or non-text (icons, borders, focus rings). `text.default` on `surface.raised` for body text is a pair; `text.muted` on `action.primary.bg` is not, unless the list says so. Use only listed pairs, and only for the use they are listed for. A pair listed for large text is not a body text pair.
 
-**Contrast.** A unit test checks every listed pair in both themes against its use: 4.5:1 for body text, 3:1 for large text and non-text. The formula is the default, not the final word; a person looking at the pair decides borderline cases, in either direction. When a pair is approved despite failing the formula, put a one-line comment beside it in the theme with the ratio and why, so nobody reopens it, and mark it so the test skips it.
+**Contrast.** A unit test checks every listed pair in both themes against its use: 4.5:1 for body text, 3:1 for large text and non-text. The formula is the default, not the final word; a person looking at the pair decides borderline cases, in either direction. When a pair is approved despite failing the formula, record the approved ratio on the pair as its floor, with a one-line comment saying why, so nobody reopens it. The test then holds that pair to its floor instead of the standard threshold: a later palette change that pushes it lower still fails.
 
 ### Forced colours
 
