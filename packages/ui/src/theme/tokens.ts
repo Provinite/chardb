@@ -40,39 +40,39 @@ export const lightColors = {
   text: {
     default: p.slate800,
     muted: p.slate600,
-    subtle: p.slate400,
-    /** Text on a filled action or status background. */
+    subtle: p.slate500,
+    /** Text on a filled status background. */
     inverse: p.white,
-    link: p.violet500,
-    linkHover: p.violet600,
+    link: p.violet600,
+    linkHover: p.violet700,
   },
   border: {
     default: p.slate200,
-    input: p.slate200,
+    input: p.slate500,
     focus: p.violet500,
   },
   action: {
     primary: actionStates(
-      p.violet500,
       p.violet600,
       p.violet700,
+      p.violet800,
       p.violet50,
       p.slate400,
     ),
     secondary: actionStates(
-      p.emerald600,
       p.emerald700,
       p.emerald800,
+      p.emerald900,
       p.emerald50,
       p.slate400,
     ),
     danger: actionStates(p.red600, p.red700, p.red800, p.red50, p.slate400),
   },
   status: {
-    success: statusColors(p.emerald500, p.emerald50, p.emerald200),
-    warning: statusColors(p.amber500, p.amber50, p.amber200),
-    danger: statusColors(p.red500, p.red50, p.red200),
-    info: statusColors(p.cyan500, p.cyan50, p.cyan200),
+    success: statusColors(p.emerald700, p.emerald50, p.emerald200),
+    warning: statusColors(p.amber700, p.amber50, p.amber200),
+    danger: statusColors(p.red700, p.red50, p.red200),
+    info: statusColors(p.cyan700, p.cyan50, p.cyan200),
   },
 };
 
@@ -88,32 +88,33 @@ export const darkColors: ColorTokens = {
   text: {
     default: p.slate100,
     muted: p.slate300,
-    subtle: p.slate500,
-    inverse: p.white,
-    link: p.violet500,
-    linkHover: p.violet400,
+    subtle: p.slate400,
+    // Dark text, because the dark theme's status fills are light.
+    inverse: p.slate900,
+    link: p.violet400,
+    linkHover: p.violet300,
   },
   border: {
     default: p.slate700,
-    input: p.slate700,
+    input: p.slate500,
     focus: p.violet500,
   },
   action: {
     primary: actionStates(
-      p.violet500,
       p.violet600,
       p.violet700,
+      p.violet800,
       p.violet950,
       p.slate500,
     ),
     secondary: actionStates(
-      p.green500,
-      p.green600,
+      p.green700,
       p.green800,
+      p.green900,
       p.green950,
       p.slate500,
     ),
-    danger: actionStates(p.red400, p.red500, p.red600, p.red950, p.slate500),
+    danger: actionStates(p.red600, p.red700, p.red800, p.red950, p.slate500),
   },
   status: {
     success: statusColors(p.green500, p.green950, p.green800),

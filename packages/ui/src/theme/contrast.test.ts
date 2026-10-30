@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { contrastRatio } from "./contrast";
-import { colorAt, pairs, thresholds } from "./pairs";
+import { colorAt, pairs, requiredRatio, type Pair } from "./pairs";
 import { darkColors, lightColors } from "./tokens";
 
 describe("contrastRatio", () => {
@@ -40,8 +40,24 @@ describe.each(themeNames)("%s theme pairs", (name) => {
       colorAt(colors, pair.fg),
       colorAt(colors, pair.bg),
     );
-    const floor = pair.floor?.[name];
-    const required = floor?.ratio ?? thresholds[pair.use];
-    expect(ratio).toBeGreaterThanOrEqual(required);
+    expect(ratio).toBeGreaterThanOrEqual(requiredRatio(pair, name));
+  });
+});
+
+describe("requiredRatio", () => {
+  const pair: Pair = { fg: "text.subtle", bg: "surface.page", use: "body" };
+
+  it("is the use's threshold without a floor", () => {
+    expect(requiredRatio(pair, "light")).toBe(4.5);
+    expect(requiredRatio({ ...pair, use: "nonText" }, "light")).toBe(3);
+  });
+
+  it("is the floor for the theme that has one", () => {
+    const floored: Pair = {
+      ...pair,
+      floor: { dark: { ratio: 3.7, reason: "Approved by eye" } },
+    };
+    expect(requiredRatio(floored, "dark")).toBe(3.7);
+    expect(requiredRatio(floored, "light")).toBe(4.5);
   });
 });

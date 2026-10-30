@@ -30,6 +30,10 @@ export interface Pair {
   floor?: { light?: Floor; dark?: Floor };
 }
 
+/** The ratio a pair must meet in a theme: its floor there, or its use's threshold. */
+export const requiredRatio = (pair: Pair, theme: "light" | "dark") =>
+  pair.floor?.[theme]?.ratio ?? thresholds[pair.use];
+
 export const colorAt = (colors: ColorTokens, path: ColorPath): string => {
   let node: unknown = colors;
   for (const key of path.split(".")) {

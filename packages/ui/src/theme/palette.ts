@@ -7,7 +7,6 @@
  */
 export const palette = {
   white: "#ffffff",
-  black: "#000000",
 
   slate50: "#f8fafc",
   slate100: "#f1f5f9",
@@ -22,12 +21,12 @@ export const palette = {
   slate950: "#020617",
 
   violet50: "#f5f3ff",
-  violet100: "#ede9fe",
   violet300: "#c4b5fd",
   violet400: "#a78bfa",
   violet500: "#8b5cf6",
   violet600: "#7c3aed",
   violet700: "#6d28d9",
+  violet800: "#5b21b6",
   violet950: "#2e1065",
 
   emerald50: "#ecfdf5",
@@ -36,11 +35,12 @@ export const palette = {
   emerald600: "#059669",
   emerald700: "#047857",
   emerald800: "#065f46",
+  emerald900: "#064e3b",
 
-  green400: "#4ade80",
   green500: "#22c55e",
-  green600: "#16a34a",
+  green700: "#15803d",
   green800: "#166534",
+  green900: "#14532d",
   green950: "#052e16",
 
   red50: "#fef2f2",
@@ -56,6 +56,7 @@ export const palette = {
   amber200: "#fde68a",
   amber400: "#fbbf24",
   amber500: "#f59e0b",
+  amber700: "#b45309",
   amber800: "#92400e",
   amber950: "#451a03",
 
@@ -63,6 +64,7 @@ export const palette = {
   cyan200: "#a5f3fc",
   cyan400: "#22d3ee",
   cyan500: "#06b6d4",
+  cyan700: "#0e7490",
   cyan800: "#155e75",
   cyan950: "#083344",
 
