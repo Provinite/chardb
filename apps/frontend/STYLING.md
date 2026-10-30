@@ -185,6 +185,20 @@ Share a style when two places **represent the same thing**, not when they **happ
 
 Repetition is the backstop: three copies of the same declarations means something is missing from the pool.
 
+### No pop-in
+
+Nothing on the page moves because something else appeared, disappeared, loaded or changed state. When content changes, the layout around it holds still.
+
+- **Change state instead of presence.** Disable a button rather than removing it; show an empty or zero state rather than nothing. A control that comes and goes makes everything after it jump.
+- **Reserve space for what arrives later.** Loading states are skeletons the size of the content they stand in for. Images carry `width` and `height` or an `aspect-ratio`. A slot for an error or hint under a field keeps its `min-height` whether or not there is a message.
+- **Keep a hidden element's space** with `visibility: hidden` when it will come back in the same place; `display: none` only when its space should go too.
+- **Overlay rather than push.** Toasts, menus, tooltips and popovers float above the page; they never insert themselves into the flow.
+- **States keep their size.** Hover, focus, selected and active never change border width, padding or font weight. Use the focus ring, colour or a border that is always there and only changes colour. A tab that turns bold when selected reserves the bold width up front.
+- **Changing numbers** (counts, balances, timers) use `font-variant-numeric: tabular-nums`, so digits do not shift as the value changes.
+- **Scroll containers** whose content can grow past them set `scrollbar-gutter: stable`, so a scrollbar appearing does not narrow the content.
+
+Layout shift on the baseline pages is 0 (#427); keep it there.
+
 ### Truncation
 
 Truncating text is a design choice; use it on purpose, not to hide an overflow you did not plan for. Always truncate with `Truncate` from `@chardb/ui`, which makes the full text reachable:

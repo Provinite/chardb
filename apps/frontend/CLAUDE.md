@@ -11,6 +11,7 @@ Before writing or changing any style or styled component, read [STYLING.md](./ST
 - Share a style when two places represent the same thing, not when they happen to match. Ask whether changing one means you'd want to change the other.
 - Shared components compose from parts; add a part, not a prop. `DataTable` is a CSS grid with ARIA table roles, not a `<table>`, and renders one set of rows; never duplicate DOM to switch layouts.
 - Grid column proportions come from `split[...]` or the `track.*` helpers, not hand-written `grid-template-columns`.
+- No pop-in: nothing moves because something else appeared, loaded or changed state. Prefer disabling to removing, reserve space for what arrives later (skeletons, image dimensions, message slots), overlay rather than push, and keep every state the same size.
 - Truncate only on purpose, and only with `Truncate` (tap or click expands everywhere; the hover tooltip is an extra).
 - `:hover` only inside the hover condition. Touch targets aim for 44×44px and never go under 24×24px. Information people need goes in a toggletip, never a hover-only tooltip.
 - Focus rings are outlines, not just box-shadows, so they survive forced-colour mode.
