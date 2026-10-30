@@ -2,7 +2,7 @@
 
 How the frontend and `@chardb/ui` are styled. These conventions apply to every file written or migrated under the mobile work (#427). Files not yet migrated still use styled-components; leave them as they are unless you are migrating them.
 
-**This guide outranks WCAG.** Where a rule here differs from a WCAG criterion, follow the rule here. WCAG criteria this guide does not mention are very low severity: meet them when it is cheap, never block work on them.
+**This guide outranks WCAG.** Where a rule here differs from a WCAG criterion, follow the rule here. WCAG criteria this guide (or other repo-specific documentation) does not mention are very low severity: meet them when it is cheap, never block work on them.
 
 ## Stack
 
@@ -150,6 +150,23 @@ Layout primitives in `@chardb/ui` own the flex and grid patterns the app repeats
 
 Reach for a primitive before writing `display: flex`. A one-off flex rule in a component is fine when no primitive fits; three of the same one-off is a missing primitive.
 
+### Proportional grids
+
+Column proportions come from `@chardb/ui`, not hand-written `grid-template-columns`.
+
+**Ready-made splits** cover the common cases as classes: `split["1:1"]`, `split["2:1"]`, `split["1:2"]`, `split["1:1:1"]`, `split["3:1"]`. Each is a grid whose columns share the width in that ratio. Combine with `mq()` or a `Switcher` when the split should stack on phones.
+
+**Track helpers** build anything else:
+
+| Helper | Emits | For |
+|---|---|---|
+| `track.fr(2)` | `minmax(0, 2fr)` | A share of the remaining width |
+| `track.fr(1, size.column.md)` | `minmax(<token>, 1fr)` | A share that never shrinks below a size |
+| `track.fixed(size.column.sm)` | the token | A fixed-width column: dates, amounts, avatars |
+| `track.content` | `max-content` | A column as wide as its content (not in `DataTable`) |
+
+`track.fr` uses `minmax(0, …)` rather than a bare `fr` on purpose: a bare `1fr` cannot shrink below its content's width, so one long word can push the grid wider than its container.
+
 ### Shared styles
 
 Shared `style()` fragments live in `packages/ui/src/styles/` for non-layout needs that recur: visually hidden text, the focus ring, card and interactive surfaces.
@@ -174,13 +191,13 @@ A `title` attribute does not count: touch screens never show it.
 
 ```tsx
 <DataTable.Root rows={trades}>
-  <DataTable.Column id="item" header="Item" cardRole="title">
+  <DataTable.Column id="item" header="Item" cardRole="title" width={track.fr(2, size.column.md)}>
     {(t) => <ItemLink item={t.item} />}
   </DataTable.Column>
-  <DataTable.Column id="from" header="From" cardRole="field">
+  <DataTable.Column id="from" header="From" cardRole="field" width={track.fr(1)}>
     {(t) => <UserLink user={t.from} />}
   </DataTable.Column>
-  <DataTable.Column id="actions" cardRole="actions">
+  <DataTable.Column id="actions" cardRole="actions" width={track.fixed(size.column.sm)}>
     {(t) => <TradeActions trade={t} />}
   </DataTable.Column>
 </DataTable.Root>
@@ -191,15 +208,18 @@ A `title` attribute does not count: touch screens never show it.
 
 ### Tables on phones
 
-`DataTable` renders one `<table>`. When its container is narrow, a container query restyles the same rows as cards: rows and cells become blocks, the header row is hidden, and each field cell shows its column name from `data-label` with `::before`. A column's `cardRole` places its cell in the card: `title`, `field` (a label and value) or `actions`.
+`DataTable` is a CSS grid, not a `<table>`. Each row is a grid; the root turns the columns' `width` tracks into one `grid-template-columns` that every row and the header share, so columns line up. Widths come from the [track helpers](#proportional-grids), and `track.content` is not allowed: each row sizes its own grid, so content-sized columns would differ row to row.
 
-- Rows, cells and headers carry explicit `role` attributes (`table`, `row`, `cell`, `columnheader`). Changing `display` on table elements can strip their table semantics in some browsers; the roles keep them.
+When its container is narrow, a container query gives each row card areas instead: `grid-template-areas` stacks the title, the fields and the actions, the header row is hidden, and each field cell shows its column name from `data-label` with `::before`. A column's `cardRole` places its cell: `title`, `field` (a label and value) or `actions`.
+
+- The elements carry ARIA roles (`table`, `rowgroup`, `row`, `columnheader`, `cell`), so screen readers navigate it as a table.
 - No second copy of the rows, ever. One set of DOM nodes, two layouts.
+- `subgrid` would let content-sized columns line up across rows, but needs Chrome 117+, and the Playwright MCP browser is Chrome 108. Revisit if declared widths become a real limit.
 
 Keep the table on phones when:
 
 - it already fits at 360px (two or three short columns), or
-- people compare values down a column, as in the item and currency ledgers. Those scroll sideways inside their container with the first column pinned. The scroll container is keyboard-focusable (`tabIndex={0}`, `role="region"` and an `aria-label`) so it can be scrolled without a pointer, and sets `scroll-padding-inline-start` to the pinned column's width so focused cells never hide behind it.
+- people compare values down a column, as in the item and currency ledgers. Those scroll sideways inside their container with the first column pinned (`position: sticky` on each row's first cell). The scroll container is keyboard-focusable (`tabIndex={0}`, `role="region"` and an `aria-label`) so it can be scrolled without a pointer, and sets `scroll-padding-inline-start` to the pinned column's width so focused cells never hide behind it.
 
 ## Interaction
 
@@ -216,7 +236,7 @@ Keep the table on phones when:
 
 ## Accessibility
 
-The baseline is [WCAG 2.2](https://www.w3.org/TR/WCAG22/) level AA, plus the AAA criteria named here, within the precedence set at the top of this guide. These are the criteria styling decides.
+The baseline is [WCAG 2.2](https://www.w3.org/TR/WCAG22/) level AA, plus the AAA criteria named here, within the precedence set at the top of this guide. These are the criteria styling decides. We do not currently face specific compliance requirements, so full 100% compliance is not the primary goal.
 
 **Order**
 
