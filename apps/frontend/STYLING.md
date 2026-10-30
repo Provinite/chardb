@@ -223,6 +223,7 @@ A `title` attribute does not count: touch screens never show it.
 When its container is narrow, a container query gives each row card areas instead: `grid-template-areas` stacks the title, the fields and the actions, the header row is hidden, and each field cell shows its column name from `data-label` with `::before`. A column's `cardRole` places its cell: `title`, `field` (a label and value) or `actions`.
 
 - The elements carry ARIA roles (`table`, `rowgroup`, `row`, `columnheader`, `cell`), so screen readers navigate it as a table.
+- In card mode the header row is `display: none`, not visually hidden, and the `::before` label is the only label in the cell. A visually hidden header stays in the accessibility tree, so screen readers announce the column name from the header and again from the label.
 - No second copy of the rows, ever. One set of DOM nodes, two layouts.
 - `subgrid` would let content-sized columns line up across rows, but needs Chrome 117+, and the Playwright MCP browser is Chrome 108. Revisit if declared widths become a real limit.
 
