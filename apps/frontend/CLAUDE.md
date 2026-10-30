@@ -5,6 +5,7 @@ Before writing or changing any style or styled component, read [STYLING.md](./ST
 - STYLING.md outranks WCAG. WCAG criteria it does not mention are very low severity.
 - No new styled-components. Styles go in an adjacent `Foo.css.ts` (vanilla-extract), imported as `import * as styles from "./Foo.css"`. Migrating a file converts all of it.
 - Every colour, length, font, radius, shadow, duration, easing and `z-index` is a theme token. Colours are semantic (`text.muted`, `action.primary.bgHover`); use only the foreground/background pairs the theme lists, for the use they are listed for.
+- Dark mode is never allowed to flash. The theme preference is a root-domain cookie (not `localStorage`, which is per subdomain), applied by the inline script in `index.html` before first paint. Anything that paints a background, including `html`, dialogs and placeholders, uses a theme token.
 - Duration tokens are for transitions and one-shot animations; timers use `timing.*`. Looping animations go through `loop()` (decorative loops stop under reduced motion, essential ones slow down).
 - Mobile-first. Base styles are the phone layout, designed at 360px; nothing scrolls sideways at 320px. Breakpoints come from sprinkles or `mq()`, container queries from `cq(container, { [rem]: rules })` with thresholds as numbers; never a hand-written `@media` or `@container`. One source per property per element: sprinkles or the local style, not both.
 - Use the layout primitives (`Stack`, `Cluster`, `Grid`, `Switcher`, `Sidebar`) before writing flex or grid rules.

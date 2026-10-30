@@ -35,8 +35,16 @@ Every colour, space, size, border width, font family, font size, font weight, li
 
 Tokens are CSS custom properties. Light and dark themes set the same properties, switched by `data-theme` on `<html>`, so a theme change re-renders nothing.
 
-- Each theme sets `color-scheme` (`light` or `dark`), so scrollbars, form controls and other browser-drawn parts follow it.
-- An inline script in `index.html` sets `data-theme` from the saved preference, or from `prefers-color-scheme`, before the app's code loads. The page never paints in the wrong theme.
+### Dark mode
+
+The chosen theme is respected at every moment, for everyone: no frame of the page ever paints in the other theme.
+
+- **The preference lives in a cookie on the root domain**, so the apex and every community subdomain share it. `localStorage` is per origin and would give each subdomain its own answer. The cookie holds `light`, `dark` or `system`, and is written only when the user picks; `system` follows `prefers-color-scheme` live.
+- **The theme is set before the first paint.** A synchronous inline script, first in `<head>`, reads the cookie and sets `data-theme` and `color-scheme` on `<html>`. An inline `<style>` in `<head>` gives `html` the page background for both themes, plus a `prefers-color-scheme` rule for when scripts are off. The browser's default white never shows.
+- **The background is on `html`**, not only `body` or `#root`, so overscroll and the canvas behind the page match.
+- **`color-scheme`** is set per theme, so scrollbars, form controls and other browser-drawn parts follow it. `<dialog>` and `::backdrop` get token backgrounds.
+- **`<meta name="theme-color">`** matches the theme, so the mobile browser's toolbar does too, and changes with it.
+- **Switching theme** swaps CSS variables; nothing re-renders, and nothing in between paints.
 
 ### Colour
 
