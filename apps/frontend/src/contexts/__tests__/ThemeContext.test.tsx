@@ -102,6 +102,19 @@ describe("ThemeProvider", () => {
     expect(screen.getByRole("button")).toHaveTextContent("light");
   });
 
+  it("leaves no timers running after it unmounts", () => {
+    vi.useFakeTimers();
+    try {
+      document.documentElement.dataset.theme = "light";
+      const { unmount } = renderProvider();
+      act(() => screen.getByRole("button").click());
+      unmount();
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it("renders when site storage is blocked", () => {
     const original = window.localStorage;
     const blocked = () => {

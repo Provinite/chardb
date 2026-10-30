@@ -4,6 +4,7 @@ import React, {
   useState,
   useEffect,
   useLayoutEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
@@ -93,23 +94,36 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         rootElement.style.backgroundColor = theme.colors.background;
       }
 
-      // Re-enable transitions after a brief delay
-      setTimeout(() => {
+      // Re-enable transitions after a brief delay. The cleanup restores them
+      // at once if the theme changes again or the provider unmounts first, so
+      // no timer outlives it and the next run captures the real values.
+      const restore = () => {
         document.body.style.transition = bodyTransition;
         if (rootElement) {
           rootElement.style.transition = rootTransition || "";
         }
-      }, 50);
+      };
+      const timer = setTimeout(restore, 50);
+      return () => {
+        clearTimeout(timer);
+        restore();
+      };
     }
   }, [mode, theme]);
 
   // Enable blanket transitions briefly during theme switch
-  const enableThemeTransition = () => {
-    document.documentElement.classList.add("theme-transitioning");
-    setTimeout(() => {
-      document.documentElement.classList.remove("theme-transitioning");
-    }, 350);
+  const transitionTimer = useRef<ReturnType<typeof setTimeout>>();
+  const endThemeTransition = () => {
+    clearTimeout(transitionTimer.current);
+    transitionTimer.current = undefined;
+    document.documentElement.classList.remove("theme-transitioning");
   };
+  const enableThemeTransition = () => {
+    clearTimeout(transitionTimer.current);
+    document.documentElement.classList.add("theme-transitioning");
+    transitionTimer.current = setTimeout(endThemeTransition, 350);
+  };
+  useEffect(() => endThemeTransition, []);
 
   // Saved only here, when the user picks; mounting saves nothing, so a
   // visitor who never picks keeps following their system setting.
