@@ -144,7 +144,7 @@ Durations and easings are tokens, for transitions and animations only. A literal
 
   `infinite` outside `loop()` is a lint error.
 - **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token. `vars.timing.*` is for CSS such as `animation-delay`; JavaScript timers read the same values in milliseconds from `timingMs`.
-- **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, scroll with `scrollToElement(el, options)` and `scrollToPosition(position, el?)` from `@chardb/ui` instead of `scrollIntoView` and `scrollTo`; they pick `smooth` or `instant` from the preference.
+- **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, scroll with `scrollToElement(el, options)` and `scrollToPosition(position, el?)` from `@chardb/ui` instead of `scrollIntoView` and `scrollTo`; they scroll smoothly, or jump when the user prefers reduced motion.
 
 ## Breakpoints
 
@@ -332,7 +332,7 @@ The `AppLoader` animation is the startup screen, and it lives in `index.html`, n
 
 ## Interaction
 
-- **Hover** styles go inside the shared hover condition, so they apply only on devices that hover. A bare `:hover` sticks after a tap on touch screens and is a lint error. In a local style, `hover(rules, selector?)` returns the contents of the `"@media"` key, so it spreads beside `mq()` entries: `"@media": { ...hover({ background: vars.action.primary.bgHover }, "&:hover:not(:disabled)"), [mq("md")]: { … } }`. Sprinkles take hover colours as a condition: `sprinkles({ backgroundColor: { hover: "surface.raised" } })`.
+- **Hover** styles go inside the shared hover condition, so they apply only on devices that hover. A bare `:hover` sticks after a tap on touch screens and is a lint error. In a local style, `hover()` takes every hover selector the style needs and returns the contents of the `"@media"` key, so it spreads beside `mq()` entries: `"@media": { ...hover({ "&:hover:not(:disabled)": { background: vars.action.primary.bgHover } }), [mq("md")]: { … } }`. Call it once per style; a second spread replaces the first. Sprinkles take hover colours as a condition, which skips disabled controls: `sprinkles({ backgroundColor: { hover: "surface.raised" } })`.
 - **Touch targets** follow WCAG 2.2's target size criteria. Aim for 44×44px; never go under 24×24px.
   - [2.5.5 Target Size (Enhanced)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html), level AAA: at least 44×44px. Aim for this on touch devices, especially for primary actions and anything in a dense list.
   - [2.5.8 Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html), level AA: at least 24×24px. A smaller target passes only if a 24px circle centred on it does not overlap another target or its circle.

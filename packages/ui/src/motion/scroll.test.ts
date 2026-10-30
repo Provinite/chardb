@@ -33,7 +33,7 @@ describe("scrollToElement", () => {
     const el = document.createElement("div");
     el.scrollIntoView = vi.fn();
     scrollToElement(el);
-    expect(el.scrollIntoView).toHaveBeenCalledWith({ behavior: "instant" });
+    expect(el.scrollIntoView).toHaveBeenCalledWith({ behavior: "auto" });
   });
 });
 
@@ -50,6 +50,6 @@ describe("scrollToPosition", () => {
     const el = document.createElement("div");
     el.scrollTo = vi.fn();
     scrollToPosition({ top: 120 }, el);
-    expect(el.scrollTo).toHaveBeenCalledWith({ top: 120, behavior: "instant" });
+    expect(el.scrollTo).toHaveBeenCalledWith({ top: 120, behavior: "auto" });
   });
 });

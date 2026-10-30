@@ -14,16 +14,24 @@ describe("mq", () => {
 });
 
 describe("hover", () => {
-  it("nests :hover under the hover-capable condition", () => {
-    expect(hover({ color: "red" })).toEqual({
+  it("nests hover selectors under the hover-capable condition", () => {
+    expect(hover({ "&:hover": { color: "red" } })).toEqual({
       [hoverQuery]: { selectors: { "&:hover": { color: "red" } } },
     });
   });
 
-  it("takes a narrower hover selector", () => {
-    expect(hover({ color: "red" }, "&:hover:not(:disabled)")).toEqual({
+  it("keeps every selector passed in one call", () => {
+    expect(
+      hover({
+        "&:hover:not(:disabled)": { color: "red" },
+        "&:focus-visible:hover": { outline: "none" },
+      }),
+    ).toEqual({
       [hoverQuery]: {
-        selectors: { "&:hover:not(:disabled)": { color: "red" } },
+        selectors: {
+          "&:hover:not(:disabled)": { color: "red" },
+          "&:focus-visible:hover": { outline: "none" },
+        },
       },
     });
   });

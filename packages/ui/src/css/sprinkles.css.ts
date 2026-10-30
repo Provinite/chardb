@@ -76,7 +76,8 @@ const actionBorders = flatten({
 const colors = defineProperties({
   conditions: {
     default: {},
-    hover: { "@media": hoverQuery, selector: "&:hover" },
+    // A disabled control keeps its colour under the pointer.
+    hover: { "@media": hoverQuery, selector: "&:hover:not(:disabled)" },
   },
   defaultCondition: "default",
   properties: {

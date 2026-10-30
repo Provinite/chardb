@@ -13,13 +13,13 @@ export const hoverQuery = "(hover: hover)";
 export const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 
 /**
- * Hover styles, applied only on devices that hover. Returns the contents of
- * the `"@media"` key, so it spreads beside `mq()` entries:
- * `"@media": { ...hover({ color: vars.text.link }), [mq("md")]: { … } }`.
+ * Hover styles, applied only on devices that hover, keyed by selector:
+ * `hover({ "&:hover:not(:disabled)": { background: … } })`. Returns the
+ * contents of the `"@media"` key, so it spreads beside `mq()` entries. Every
+ * selector goes in one call: a second spread would replace the first.
  */
 export const hover = (
-  rules: SelectorStyle,
-  selector = "&:hover",
+  selectors: Record<string, SelectorStyle>,
 ): Record<string, { selectors: Record<string, SelectorStyle> }> => ({
-  [hoverQuery]: { selectors: { [selector]: rules } },
+  [hoverQuery]: { selectors },
 });

@@ -41,16 +41,15 @@ describe("sprinkles", () => {
     }
   });
 
-  it("applies hover colours only on devices that hover", () => {
+  it("applies hover colours only on devices that hover, and not when disabled", () => {
     const [cls] = classes(
       sprinkles({ backgroundColor: { hover: "surface.raised" } }),
     );
-    expect(
-      declarationsFor(`${classSelector(cls)}:hover`, `@media ${hoverQuery}`),
-    ).toContain("background-color: var(--surface-raised)");
-    expect(
-      topLevelDeclarationsFor(`${classSelector(cls)}:hover`),
-    ).toBeUndefined();
+    const selector = `${classSelector(cls)}:hover:not(:disabled)`;
+    expect(declarationsFor(selector, `@media ${hoverQuery}`)).toContain(
+      "background-color: var(--surface-raised)",
+    );
+    expect(topLevelDeclarationsFor(selector)).toBeUndefined();
   });
 
   it("takes action backgrounds and borders", () => {
