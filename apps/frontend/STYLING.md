@@ -90,10 +90,15 @@ Elements opened with `<dialog>.showModal()` or the Popover API render in the bro
 
 ### Motion
 
-Durations and easings are tokens, for animation and transitions only. Under `prefers-reduced-motion: reduce`, the theme sets every duration token to `0.01ms`. Transitions still finish and `transitionend` still fires, so a drawer that unmounts when its transition ends keeps working. A literal `200ms` in a transition is a lint error.
+Durations and easings are tokens, for transitions and animations only. A literal `200ms` is a lint error.
 
+- **Transitions and one-shot animations** use the ordinary duration tokens. Under `prefers-reduced-motion: reduce` the theme sets them to `0.01ms`: the change is effectively instant, and `transitionend` and `animationend` still fire, so a drawer that unmounts when its transition ends keeps working.
+- **Looping animations** (any infinite iteration count) never use the ordinary duration tokens; at `0.01ms` a loop would cycle thousands of times a second and flicker. Write them with the shared `loop()` helper, which picks one of two behaviours:
+  - **Decorative** loops (skeleton shimmer, a pulsing badge) stop under reduced motion.
+  - **Essential** loops that show something is happening (a loading spinner) use `motion.duration.essential`, which reduced motion slows but never stops, so the spinner never looks frozen.
+
+  `infinite` outside `loop()` is a lint error.
 - **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token.
-- **Loading indicators** use `motion.duration.essential`, which reduced motion slows but does not stop, so a spinner never looks frozen.
 - **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, call `scrollIntoView` and `scrollTo` through the shared helper, which picks `smooth` or `instant` from the preference.
 
 ## Breakpoints
