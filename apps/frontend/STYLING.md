@@ -189,9 +189,9 @@ Repetition is the backstop: three copies of the same declarations means somethin
 
 Truncating text is a design choice; use it on purpose, not to hide an overflow you did not plan for. Always truncate with `Truncate` from `@chardb/ui`, which makes the full text reachable:
 
-- On devices that hover, a tooltip shows the full text on hover and on keyboard focus.
-- On touch, tapping the text expands it in place.
-- Inside a link, a tap navigates instead, so the page the link opens must show the full text.
+- A tap or click expands the text in place, on every device. Truncated text is a control (`aria-expanded`), so Enter and Space expand it too.
+- A tooltip with the full text also appears on hover, as an extra.
+- Inside a link, a tap or click navigates instead, so the page the link opens must show the full text.
 
 A `title` attribute does not count: touch screens never show it.
 
