@@ -26,6 +26,7 @@
     "shared:up": "docker compose -f docker/compose.shared.yml up -d --wait",
     "shared:down": "docker compose -f docker/compose.shared.yml down",
     "test": "yarn workspaces foreach -A run test",
+    "test:clear-cache": "rm -rf node_modules/.vitest-cache",
     "lint": "eslint .",
     "type-check": "yarn workspaces foreach -A run type-check",
     "clean": "yarn workspaces foreach -A run clean",
