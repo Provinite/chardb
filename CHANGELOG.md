@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Styling conventions** for the vanilla-extract migration in `apps/frontend/STYLING.md`, with agent rules in `apps/frontend/CLAUDE.md` (#427).
 - **Frontend architecture guide** in `apps/frontend/ARCHITECTURE.md`: data components fetch, presentational components render from `@chardb/ui` parts (#473).
 - **Opt-in page-load measurements** in the e2e suite (`E2E_PERF=1`, `tests/perf/page-load.e2e.ts`), for comparing against the #427 baseline.
+- **Lint rules for the styling conventions** in `packages/eslint-plugin-styles`: literal tokens, hand-written queries, bare `:hover`, `!important` and new styled-components are errors (#468).
 - **Lint error for importing a package the workspace does not declare** (`import/no-extraneous-dependencies`); hoisting otherwise lets these resolve silently (#468).
 - **`yarn test:clear-cache`** clears Vitest's transform cache, which does not notice `postcss.config.js` changes (#474).
 

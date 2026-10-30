@@ -243,6 +243,8 @@ jobs:
             workspace: "@chardb/ui"
           - name: da-import
             workspace: "@chardb/da-import"
+          - name: eslint-plugin-styles
+            workspace: "@chardb/eslint-plugin-styles"
 
     env:
       # @chardb/database's build runs prisma generate, which resolves

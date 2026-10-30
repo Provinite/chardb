@@ -26,12 +26,12 @@ import * as styles from "./CharacterCard.css";
 <article className={styles.card}>
 ```
 
-- Add no new styled-components. When you migrate a file, convert all of it; a file is either styled-components or vanilla-extract.
+- Add no new styled-components (`no-styled-components`). Files that still use it are listed in `apps/frontend/styled-components-allowlist.json`; a migrated file comes off the list in the same change. When you migrate a file, convert all of it; a file is either styled-components or vanilla-extract.
 - `style={{}}` is for values only known at runtime (a crop offset, a user-picked colour). Pass them as CSS variables with `assignInlineVars` so the stylesheet still owns the declaration.
 
 ## Tokens
 
-Every colour, space, size, border width, font family, font size, font weight, line height, radius, shadow, duration, easing and layer comes from the theme in `packages/ui/src/theme/`. A literal value in a `*.css.ts` file is a lint error (#468). Values that are not design decisions stay literal: `0`, percentages, `fr`, `auto`, keywords such as `none` or `inherit`, and unitless line heights.
+Every colour, space, size, border width, font family, font size, font weight, line height, radius, shadow, duration, easing and layer comes from the theme in `packages/ui/src/theme/`. A literal value in a `*.css.ts` file is a lint error: `no-raw-color`, `no-raw-length`, `no-raw-font` and `no-raw-radius-shadow`. Values that are not design decisions stay literal: `0`, percentages, `fr`, `auto`, keywords such as `none` or `inherit`, and unitless line heights. Two exceptions: `z-index` takes a layer token even for `0` (see [Layers](#layers)), and a radius takes a token even for a circle (`radius.full`, not `50%`).
 
 Tokens are CSS custom properties. Light and dark themes set the same properties, switched by `data-theme` on `<html>`, so a theme change re-renders nothing.
 
@@ -48,7 +48,7 @@ export const card = style({
 
 `vars` has one key per family: `surface`, `text`, `border`, `action`, `status`, `space`, `size`, `borderWidth`, `font` (`family`, `size`, `weight`, `lineHeight`), `radius`, `shadow`, `layer`, `motion` and `timing`. Each property is named after its path, so `vars.action.primary.bgHover` is `--action-primary-bgHover` in devtools.
 
-`*.css.ts` files import from `@chardb/ui/theme`, never `@chardb/ui`. The style compiler runs each file's imports at build time, and the root entry would pull in every component.
+`*.css.ts` files import from `@chardb/ui/theme`, never `@chardb/ui`. The style compiler runs each file's imports at build time, and the root entry would pull in every component. `no-restricted-imports` enforces it.
 
 | File in `packages/ui/src/theme/` | Holds |
 |---|---|
@@ -105,7 +105,7 @@ Windows High Contrast and other forced-colour modes replace colours with system 
 
 ### Layers
 
-`z-index` comes from the layer scale only:
+`z-index` comes from the layer scale only (`no-raw-z-index`):
 
 | Layer | `base` | For |
 |---|---|---|
@@ -116,13 +116,15 @@ Windows High Contrast and other forced-colour modes replace colours with system 
 | `layer.modal` | 4000 | Dialogs |
 | `layer.toast` | 5000 | Toasts |
 
+The one literal allowed is `-1`, which puts an element behind its siblings inside its parent's stacking context.
+
 Each layer is a group: `layer.modal.base` is 4000, and `layer.modal[100]`, `layer.modal[200]` and `layer.modal[300]` are 4100, 4200 and 4300, for stacking inside one layer, such as a popover opened from a dialog. The steps are an escape hatch: leave a comment saying why. The gaps between them leave room for a new step without renaming the others.
 
 Elements opened with `<dialog>.showModal()` or the Popover API render in the browser's top layer, above every `z-index`. If dialogs use it, anything that must appear above an open dialog (a toast, a menu opened from inside it) must use the top layer too, or render inside the dialog.
 
 ### Motion
 
-Durations and easings are tokens, for transitions and animations only. A literal `200ms` is a lint error.
+Durations and easings are tokens, for transitions and animations only. A literal `200ms` is a lint error (`no-raw-motion`).
 
 - **Transitions and one-shot animations** use the ordinary duration tokens. Under `prefers-reduced-motion: reduce` the theme sets them to `0.01ms`: the change is effectively instant, and `transitionend` and `animationend` still fire, so a drawer that unmounts when its transition ends keeps working.
 - **Looping animations** (any infinite iteration count) never use the ordinary duration tokens; at `0.01ms` a loop would cycle thousands of times a second and flicker. Write them with the shared `loop()` helper, which picks one of two behaviours:
@@ -142,7 +144,7 @@ Durations and easings are tokens, for transitions and animations only. A literal
 
   A decorative loop takes `duration` (a motion token, default `motion.duration.essential`); both take `easing` (default `motion.easing.linear`).
 
-  `infinite` outside `loop()` is a lint error.
+  `infinite` outside `loop()` is a lint error (`loop-via-helper`).
 - **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token. `vars.timing.*` is for CSS such as `animation-delay`; JavaScript timers read the same values in milliseconds from `timingMs`.
 - **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, scroll with `scrollToElement(el, options)` and `scrollToPosition(position, el?)` from `@chardb/ui` instead of `scrollIntoView` and `scrollTo`; they scroll smoothly, or jump when the user prefers reduced motion.
 
@@ -164,7 +166,7 @@ Queries are in `em` so breakpoints follow the user's browser font size.
 The breakpoint helpers, like every style helper, come from `@chardb/ui/theme`.
 
 - **Sprinkles** carry responsive values for layout: `sprinkles({ flexDirection: { base: "column", md: "row" } })`. They cover `display`, flex direction, wrap and alignment, `gap`, and padding (with `padding`, `paddingX` and `paddingY` shorthands), taking space tokens by name (`gap: "md"`, or `"none"` for zero). Components call `sprinkles()` when rendering, so it is also exported from `@chardb/ui`.
-- **`mq("md")`** builds the query for anything sprinkles does not cover, as a key under `"@media"`: `"@media": { [mq("md")]: { flexDirection: "row" } }`. Never write a query string by hand; it is a lint error.
+- **`mq("md")`** builds the query for anything sprinkles does not cover, as a key under `"@media"`: `"@media": { [mq("md")]: { flexDirection: "row" } }`. Never write a query string by hand; it is a lint error (`no-raw-media`, which covers `@container` too).
 - **One source per property.** If sprinkles sets an element's `padding`, its local `style()` does not, and the reverse. Sprinkles and local styles live in different files, and which one wins depends on import order.
 - `md` and `lg` do most structural work (sidebar becomes drawer, one column becomes two). `sm` refines. `xl` and `xxl` mostly cap content width.
 - A layout that already adapts without a breakpoint (a wrapping row, an `auto-fit` grid) gets none.
@@ -332,7 +334,7 @@ The `AppLoader` animation is the startup screen, and it lives in `index.html`, n
 
 ## Interaction
 
-- **Hover** styles go inside the shared hover condition, so they apply only on devices that hover. A bare `:hover` sticks after a tap on touch screens and is a lint error. In a local style, `hover()` takes every hover selector the style needs and returns the contents of the `"@media"` key, so it spreads beside `mq()` entries: `"@media": { ...hover({ "&:hover:not(:disabled)": { background: vars.action.primary.bgHover } }), [mq("md")]: { … } }`. Call it once per style; a second spread replaces the first. Sprinkles take hover colours as a condition, which skips disabled controls: `sprinkles({ backgroundColor: { hover: "surface.raised" } })`.
+- **Hover** styles go inside the shared hover condition, so they apply only on devices that hover. A bare `:hover` sticks after a tap on touch screens and is a lint error (`hover-in-hover-condition`). In a local style, `hover()` takes every hover selector the style needs and returns the contents of the `"@media"` key, so it spreads beside `mq()` entries: `"@media": { ...hover({ "&:hover:not(:disabled)": { background: vars.action.primary.bgHover } }), [mq("md")]: { … } }`. Call it once per style; a second spread replaces the first. Sprinkles take hover colours as a condition, which skips disabled controls: `sprinkles({ backgroundColor: { hover: "surface.raised" } })`.
 - **Touch targets** follow WCAG 2.2's target size criteria. Aim for 44×44px; never go under 24×24px.
   - [2.5.5 Target Size (Enhanced)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html), level AAA: at least 44×44px. Aim for this on touch devices, especially for primary actions and anything in a dense list.
   - [2.5.8 Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html), level AA: at least 24×24px. A smaller target passes only if a 24px circle centred on it does not overlap another target or its circle.
@@ -384,13 +386,22 @@ The baseline is [WCAG 2.2](https://www.w3.org/TR/WCAG22/) level AA, plus the AAA
 
 ## Banned
 
-Each is a lint error once #468 lands.
+Each is a lint error, from the rules in `packages/eslint-plugin-styles` (`@chardb/styles/<rule>`). They check `*.css.ts` files and the style helpers in `packages/ui/src/css`; the theme module is exempt from the literal-value rules.
 
-- Literal colours, lengths, font families, font sizes, font weights, radii, shadows, `z-index` values, motion times and easings outside the theme
-- Hand-written `@media` or `@container` strings
-- `:hover` outside the hover condition
-- `!important`
-- New `styled-components` imports
+| Banned | Rule |
+|---|---|
+| Literal colours outside the theme | `no-raw-color` |
+| Literal lengths, including bare numbers in length properties | `no-raw-length` |
+| Literal font families, sizes and weights | `no-raw-font` |
+| Literal radii and shadows | `no-raw-radius-shadow` |
+| Numeric `z-index` | `no-raw-z-index` |
+| Literal durations and easings in transitions and animations | `no-raw-motion` |
+| `infinite` outside `loop()` | `loop-via-helper` |
+| Hand-written `@media` or `@container` conditions | `no-raw-media` |
+| `:hover` outside the hover condition | `hover-in-hover-condition` |
+| `!important` | `no-important` |
+| `@chardb/ui` imported from a `*.css.ts` file | `no-restricted-imports` |
+| `styled-components` in a file not on the allowlist | `no-styled-components` |
 
 ## Migrating a file
 

@@ -10,6 +10,27 @@
  * type-checked presets need a `project` per workspace and a full tsc program
  * per run; `yarn type-check` already covers what they would catch.
  */
+
+// Rules from packages/eslint-plugin-styles for the conventions in
+// apps/frontend/STYLING.md. The literal-value rules are off in the theme
+// module, which is where the literals live.
+const literalValueRules = [
+  "no-raw-color",
+  "no-raw-length",
+  "no-raw-font",
+  "no-raw-radius-shadow",
+  "no-raw-z-index",
+  "no-raw-motion",
+];
+const otherStyleRules = [
+  "no-raw-media",
+  "hover-in-hover-condition",
+  "loop-via-helper",
+  "no-important",
+];
+const setStyleRules = (rules, level) =>
+  Object.fromEntries(rules.map((rule) => [`@chardb/styles/${rule}`, level]));
+
 module.exports = {
   root: true,
   parser: "@typescript-eslint/parser",
@@ -82,6 +103,58 @@ module.exports = {
     },
     {
       files: [
+        "apps/frontend/src/**/*.{ts,tsx}",
+        "packages/ui/src/**/*.{ts,tsx}",
+      ],
+      plugins: ["@chardb/styles"],
+      rules: {
+        // Existing files keep styled-components until they are migrated; a
+        // test in the plugin keeps the list in step with the imports.
+        "@chardb/styles/no-styled-components": [
+          "error",
+          {
+            root: __dirname,
+            allow: require("./apps/frontend/styled-components-allowlist.json"),
+          },
+        ],
+      },
+    },
+    {
+      // The helpers in packages/ui/src/css build style objects too, so they
+      // are held to the same rules, apart from the one each exists to break.
+      files: [
+        "apps/frontend/**/*.css.ts",
+        "packages/ui/**/*.css.ts",
+        "packages/ui/src/css/**/*.ts",
+      ],
+      excludedFiles: ["**/*.test.ts"],
+      plugins: ["@chardb/styles"],
+      rules: {
+        ...setStyleRules([...literalValueRules, ...otherStyleRules], "error"),
+        "no-restricted-imports": [
+          "error",
+          {
+            paths: [
+              {
+                name: "@chardb/ui",
+                message:
+                  "Import from @chardb/ui/theme. The style compiler runs this file's imports at build time, and the root entry loads every component.",
+              },
+            ],
+          },
+        ],
+      },
+    },
+    {
+      files: ["packages/ui/src/theme/**"],
+      rules: setStyleRules(literalValueRules, "off"),
+    },
+    {
+      files: ["packages/ui/src/css/loop.ts"],
+      rules: { "@chardb/styles/loop-via-helper": "off" },
+    },
+    {
+      files: [
         "**/*.{test,spec}.{ts,tsx}",
         "apps/backend/test/**",
         "apps/e2e/**",
@@ -96,8 +169,8 @@ module.exports = {
       env: { browser: true, node: false },
     },
     {
-      // CommonJS config files.
-      files: ["**/*.cjs"],
+      // CommonJS config files, and the style plugin, which ESLint requires.
+      files: ["**/*.cjs", "packages/eslint-plugin-styles/src/**/*.js"],
       parserOptions: { sourceType: "script" },
       rules: { "@typescript-eslint/no-var-requires": "off" },
     },
