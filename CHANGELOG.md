@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Styling conventions** for the vanilla-extract migration in `apps/frontend/STYLING.md`, with agent rules in `apps/frontend/CLAUDE.md` (#427).
+
 ### Changed
 
 - **Vite 8 and Vitest 5** replace Vite 4 and Vitest 3 in the frontend and `da-import`; `da-import` tests now run only from `src/` (#463).
