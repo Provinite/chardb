@@ -58,7 +58,12 @@ export const pairs: Pair[] = [
     ["surface.page", "surface.raised", "surface.sunken"],
     "body",
   ),
-  ...on("text.muted", ["surface.page", "surface.raised"], "body"),
+  ...on("text.default", ["surface.raisedHover"], "body"),
+  ...on(
+    "text.muted",
+    ["surface.page", "surface.raised", "surface.raisedHover"],
+    "body",
+  ),
   ...on("text.subtle", ["surface.page", "surface.raised"], "body"),
   ...on("text.link", ["surface.page", "surface.raised"], "body"),
   ...on("text.linkHover", ["surface.page", "surface.raised"], "body"),
@@ -79,5 +84,7 @@ export const pairs: Pair[] = [
   ]),
 
   ...on("border.input", ["surface.page", "surface.raised"], "nonText"),
+  // Not on surface.raisedHover: the ring is offset outside the control, so it
+  // sits on the surface around a hovered card, never on the card itself.
   ...on("border.focus", ["surface.page", "surface.raised"], "nonText"),
 ];

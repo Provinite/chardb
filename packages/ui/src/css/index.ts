@@ -11,3 +11,4 @@ export { track } from "./track";
 export { split } from "./split.css";
 export { sprinkles, type Sprinkles } from "./sprinkles.css";
 export { loop } from "./loop";
+export { containers, type ContainerSize } from "./containers";

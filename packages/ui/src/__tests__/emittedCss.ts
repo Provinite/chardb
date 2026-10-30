@@ -56,3 +56,28 @@ const hasClass = (selector: string, className: string) => {
 /** The rules whose selector includes `className`, in stylesheet order. */
 export const rulesFor = (className: string) =>
   emittedRules().filter((rule) => hasClass(rule.selector, className));
+
+/**
+ * The declarations that apply to an element's classes under exactly
+ * `conditions`, merged in stylesheet order. Rules with a pseudo-class or a
+ * descendant in their selector are left out.
+ */
+export const declarationsOf = (element: Element, conditions: string[] = []) => {
+  const classes = [...element.classList];
+  const merged: Record<string, string> = {};
+  for (const rule of emittedRules()) {
+    const own = classes.some((name) => sameSelector(rule.selector, `.${name}`));
+    const sameConditions =
+      rule.conditions.length === conditions.length &&
+      rule.conditions.every((condition, i) => condition === conditions[i]);
+    if (own && sameConditions) Object.assign(merged, rule.declarations);
+  }
+  return merged;
+};
+
+/** Whether two selectors are the same once parsed, whatever their whitespace. */
+export const sameSelector = (a: string, b: string) => {
+  const normalize = (selector: string) =>
+    selectorParser().processSync(selector, { lossless: false });
+  return normalize(a) === normalize(b);
+};
