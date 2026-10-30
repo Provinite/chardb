@@ -1,10 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import {
-  LEGACY_THEME_STORAGE_KEY,
-  themeCookieName,
-} from "../themePreference";
+import { LEGACY_THEME_STORAGE_KEY, themeCookieName } from "../themePreference";
 
 /**
  * Runs the theme script inlined at the top of `index.html`. It runs before any
@@ -13,9 +10,7 @@ import {
  */
 const ROOT = "boot.test";
 const html = readFileSync(resolve(__dirname, "../../../index.html"), "utf8");
-const source = html.match(
-  /<script id="theme-boot">([\s\S]*?)<\/script>/,
-)?.[1];
+const source = html.match(/<script id="theme-boot">([\s\S]*?)<\/script>/)?.[1];
 
 const runBootScript = () => {
   if (!source) throw new Error("theme-boot script not found in index.html");

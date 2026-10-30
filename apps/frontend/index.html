@@ -47,7 +47,8 @@
         html.setAttribute("data-theme", mode);
         html.style.colorScheme = mode;
         var meta = document.querySelector('meta[name="theme-color"]');
-        if (meta) meta.setAttribute("content", mode === "dark" ? "#0f172a" : "#ffffff");
+        if (meta)
+          meta.setAttribute("content", mode === "dark" ? "#0f172a" : "#ffffff");
       })();
     </script>
     <!--
