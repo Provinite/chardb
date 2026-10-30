@@ -1,8 +1,5 @@
+import type { Leaves } from "./paths";
 import type { ColorTokens } from "./tokens";
-
-type Leaves<T> = {
-  [K in keyof T & string]: T[K] extends string ? K : `${K}.${Leaves<T[K]>}`;
-}[keyof T & string];
 
 /** A colour token's path, such as `action.primary.bgHover`. */
 export type ColorPath = Leaves<ColorTokens>;

@@ -8,3 +8,4 @@ This package owns the theme, the breakpoints, the layout primitives and the shar
 - Primitives and shared components compose from parts that forward `className` and `ref`. Add a part, not a prop.
 - Interactive primitives meet the target size, focus and contrast criteria in STYLING.md, because pages inherit them instead of checking them.
 - Components here never fetch, route or read app state; callers pass data in. See [apps/frontend/ARCHITECTURE.md](../../apps/frontend/ARCHITECTURE.md) for what belongs in this package.
+- Tests that check emitted CSS read it through `rulesFor` in `src/__tests__/emittedCss.ts`, which parses with PostCSS. Never parse CSS or selectors with regexes or string searches.

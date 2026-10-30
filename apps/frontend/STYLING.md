@@ -129,9 +129,22 @@ Durations and easings are tokens, for transitions and animations only. A literal
   - **Decorative** loops (skeleton shimmer, a pulsing badge) stop under reduced motion.
   - **Essential** loops that show something is happening (a loading spinner) use `motion.duration.essential`, which reduced motion slows but never stops, so the spinner never looks frozen.
 
+  `loop()` returns a class to compose with the element's own style:
+
+  ```ts
+  const spin = keyframes({ to: { transform: "rotate(1turn)" } });
+
+  export const spinner = style([
+    loop({ kind: "essential", keyframes: spin }),
+    { width: vars.size.target.min },
+  ]);
+  ```
+
+  A decorative loop takes `duration` (a motion token, default `motion.duration.essential`); both take `easing` (default `motion.easing.linear`).
+
   `infinite` outside `loop()` is a lint error.
 - **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token. `vars.timing.*` is for CSS such as `animation-delay`; JavaScript timers read the same values in milliseconds from `timingMs`.
-- **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, call `scrollIntoView` and `scrollTo` through the shared helper, which picks `smooth` or `instant` from the preference.
+- **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, scroll with `scrollToElement(el, options)` and `scrollToPosition(position, el?)` from `@chardb/ui` instead of `scrollIntoView` and `scrollTo`; they scroll smoothly, or jump when the user prefers reduced motion.
 
 ## Breakpoints
 
@@ -148,8 +161,10 @@ Mobile-first. Base styles are the phone layout; conditions add layout as width g
 
 Queries are in `em` so breakpoints follow the user's browser font size.
 
-- **Sprinkles** carry responsive values for common properties: `sprinkles({ flexDirection: { base: "column", md: "row" } })`.
-- **`mq("md")`** builds the query for anything sprinkles does not cover. Never write a query string by hand; it is a lint error.
+The breakpoint helpers, like every style helper, come from `@chardb/ui/theme`.
+
+- **Sprinkles** carry responsive values for layout: `sprinkles({ flexDirection: { base: "column", md: "row" } })`. They cover `display`, flex direction, wrap and alignment, `gap`, and padding (with `padding`, `paddingX` and `paddingY` shorthands), taking space tokens by name (`gap: "md"`, or `"none"` for zero). Components call `sprinkles()` when rendering, so it is also exported from `@chardb/ui`.
+- **`mq("md")`** builds the query for anything sprinkles does not cover, as a key under `"@media"`: `"@media": { [mq("md")]: { flexDirection: "row" } }`. Never write a query string by hand; it is a lint error.
 - **One source per property.** If sprinkles sets an element's `padding`, its local `style()` does not, and the reverse. Sprinkles and local styles live in different files, and which one wins depends on import order.
 - `md` and `lg` do most structural work (sidebar becomes drawer, one column becomes two). `sm` refines. `xl` and `xxl` mostly cap content width.
 - A layout that already adapts without a breakpoint (a wrapping row, an `auto-fit` grid) gets none.
@@ -196,15 +211,15 @@ Reach for a primitive before writing `display: flex`. A one-off flex rule in a c
 
 Column proportions come from `@chardb/ui`, not hand-written `grid-template-columns`.
 
-**Ready-made splits** cover the common cases as classes: `split["1:1"]`, `split["2:1"]`, `split["1:2"]`, `split["1:1:1"]`, `split["3:1"]`. Each is a grid whose columns share the width in that ratio. Combine with `mq()` or a `Switcher` when the split should stack on phones.
+**Ready-made splits** cover the common cases as classes: `split["1:1"]`, `split["2:1"]`, `split["1:2"]`, `split["1:1:1"]`, `split["3:1"]`. Each is a grid whose columns share the width in that ratio. A split sets no gap; give it one from sprinkles or the element's own style. Combine with `mq()` or a `Switcher` when the split should stack on phones.
 
 **Track helpers** build anything else:
 
 | Helper | Emits | For |
 |---|---|---|
 | `track.fr(2)` | `minmax(0, 2fr)` | A share of the remaining width |
-| `track.fr(1, size.column.md)` | `minmax(<token>, 1fr)` | A share that never shrinks below a size |
-| `track.fixed(size.column.sm)` | the token | A fixed-width column: dates, amounts, avatars |
+| `track.fr(1, vars.size.column.md)` | `minmax(<token>, 1fr)` | A share that never shrinks below a size |
+| `track.fixed(vars.size.column.sm)` | the token | A fixed-width column: dates, amounts, avatars |
 | `track.content` | `max-content` | A column as wide as its content (not in `DataTable`) |
 
 `track.fr` uses `minmax(0, …)` rather than a bare `fr` on purpose: a bare `1fr` cannot shrink below its content's width, so one long word can push the grid wider than its container.
@@ -245,13 +260,13 @@ A `title` attribute does not count: touch screens never show it.
 
 ```tsx
 <DataTable.Root rows={trades}>
-  <DataTable.Column id="item" header="Item" cardRole="title" width={track.fr(2, size.column.md)}>
+  <DataTable.Column id="item" header="Item" cardRole="title" width={track.fr(2, vars.size.column.md)}>
     {(t) => <ItemLink item={t.item} />}
   </DataTable.Column>
   <DataTable.Column id="from" header="From" cardRole="field" width={track.fr(1)}>
     {(t) => <UserLink user={t.from} />}
   </DataTable.Column>
-  <DataTable.Column id="actions" cardRole="actions" width={track.fixed(size.column.sm)}>
+  <DataTable.Column id="actions" cardRole="actions" width={track.fixed(vars.size.column.sm)}>
     {(t) => <TradeActions trade={t} />}
   </DataTable.Column>
 </DataTable.Root>
@@ -317,7 +332,7 @@ The `AppLoader` animation is the startup screen, and it lives in `index.html`, n
 
 ## Interaction
 
-- **Hover** styles go inside the shared hover condition, so they apply only on devices that hover. A bare `:hover` sticks after a tap on touch screens and is a lint error.
+- **Hover** styles go inside the shared hover condition, so they apply only on devices that hover. A bare `:hover` sticks after a tap on touch screens and is a lint error. In a local style, `hover()` takes every hover selector the style needs and returns the contents of the `"@media"` key, so it spreads beside `mq()` entries: `"@media": { ...hover({ "&:hover:not(:disabled)": { background: vars.action.primary.bgHover } }), [mq("md")]: { … } }`. Call it once per style; a second spread replaces the first. Sprinkles take hover colours as a condition, which skips disabled controls: `sprinkles({ backgroundColor: { hover: "surface.raised" } })`.
 - **Touch targets** follow WCAG 2.2's target size criteria. Aim for 44×44px; never go under 24×24px.
   - [2.5.5 Target Size (Enhanced)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html), level AAA: at least 44×44px. Aim for this on touch devices, especially for primary actions and anything in a dense list.
   - [2.5.8 Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html), level AA: at least 24×24px. A smaller target passes only if a 24px circle centred on it does not overlap another target or its circle.

@@ -1,4 +1,5 @@
 import { createGlobalTheme, globalStyle } from "@vanilla-extract/css";
+import { reducedMotionQuery } from "../css/media";
 import { colorVars, sharedVars } from "./contract.css";
 import {
   darkColors,
@@ -25,7 +26,7 @@ const duration = sharedVars.motion.duration;
 
 globalStyle(":root", {
   "@media": {
-    "(prefers-reduced-motion: reduce)": {
+    [reducedMotionQuery]: {
       vars: {
         [duration.fast]: reducedMotionDurations.fast,
         [duration.normal]: reducedMotionDurations.normal,

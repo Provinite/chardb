@@ -12,26 +12,30 @@ const css = `
 @media (min-width: 40em) { .a { color: green; } }
 `;
 
-const run = (from: string) =>
-  postcss(config.plugins).process(css, { from }).css;
-
-const order = (output: string) =>
-  [...output.matchAll(/min-width: (\d+)em|color: blue/g)].map((m) => m[0]);
+/** The top-level nodes after the plugins run: a rule's selector or an at-rule's prelude. */
+const order = (from: string) =>
+  postcss(config.plugins)
+    .process(css, { from })
+    .root.nodes.map((node) => {
+      if (node.type === "rule") return node.selector;
+      if (node.type === "atrule") return `@${node.name} ${node.params}`;
+      return node.type;
+    });
 
 describe("postcss config", () => {
   it("sorts media queries smallest-first in vanilla-extract output", () => {
-    expect(order(run("/app/src/Card.css.ts.vanilla.css"))).toEqual([
-      "color: blue",
-      "min-width: 40em",
-      "min-width: 64em",
+    expect(order("/app/src/Card.css.ts.vanilla.css")).toEqual([
+      ".a",
+      "@media (min-width: 40em)",
+      "@media (min-width: 64em)",
     ]);
   });
 
   it("leaves other stylesheets in their written order", () => {
-    expect(order(run("/app/node_modules/@mantine/core/styles.css"))).toEqual([
-      "min-width: 64em",
-      "color: blue",
-      "min-width: 40em",
+    expect(order("/app/node_modules/@mantine/core/styles.css")).toEqual([
+      "@media (min-width: 64em)",
+      ".a",
+      "@media (min-width: 40em)",
     ]);
   });
 });
