@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { darkTheme, lightTheme } from "./legacy";
+import { sharedTokens } from "./tokens";
 
 // The styled-components theme as it was before it read from the palette.
 // styled-components pages must look the same, so the bridge must match it.
@@ -75,5 +76,12 @@ describe("legacy styled-components theme", () => {
 
   it("keeps the dark theme's values", () => {
     expect(darkTheme).toEqual({ ...before.light, colors: before.darkColors });
+  });
+
+  it("shares no objects with the vanilla-extract tokens", () => {
+    expect(lightTheme.spacing).not.toBe(sharedTokens.space);
+    expect(lightTheme.typography.fontSize).not.toBe(sharedTokens.font.size);
+    expect(lightTheme.borderRadius).not.toBe(sharedTokens.radius);
+    expect(lightTheme.shadows).not.toBe(sharedTokens.shadow);
   });
 });

@@ -1,14 +1,12 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
-import { uiAliases } from "./uiAliases.mjs";
+import { workspaceAliases } from "./workspaceAliases.mjs";
 
 export default defineConfig({
   plugins: [react(), vanillaExtractPlugin()],
   resolve: {
-    // As in vite.config.mts: `@chardb/ui` from source, so its `.css.ts` files
-    // compile in tests too.
-    alias: uiAliases,
+    alias: workspaceAliases,
   },
   test: {
     globals: true,

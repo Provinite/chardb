@@ -36,6 +36,7 @@ Every colour, space, size, border width, font family, font size, font weight, li
 Tokens are CSS custom properties. Light and dark themes set the same properties, switched by `data-theme` on `<html>`, so a theme change re-renders nothing.
 
 ```ts
+import { style } from "@vanilla-extract/css";
 import { vars } from "@chardb/ui/theme";
 
 export const card = style({

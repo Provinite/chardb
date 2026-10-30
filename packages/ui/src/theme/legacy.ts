@@ -82,10 +82,11 @@ export const lightTheme: Theme = {
     danger: p.red600,
     dangerHover: p.red700,
   },
-  spacing: sharedTokens.space,
+  // Copies, so changing this theme in place cannot change the tokens.
+  spacing: { ...sharedTokens.space },
   typography: {
     fontFamily: sharedTokens.font.family.body,
-    fontSize: sharedTokens.font.size,
+    fontSize: { ...sharedTokens.font.size },
     fontWeight: {
       normal: 400,
       medium: 500,
@@ -93,8 +94,8 @@ export const lightTheme: Theme = {
       bold: 700,
     },
   },
-  borderRadius: sharedTokens.radius,
-  shadows: sharedTokens.shadow,
+  borderRadius: { ...sharedTokens.radius },
+  shadows: { ...sharedTokens.shadow },
 };
 
 export const darkTheme: Theme = {

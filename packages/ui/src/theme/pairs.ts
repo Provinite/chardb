@@ -66,13 +66,14 @@ export const pairs: Pair[] = [
   ...on("text.link", ["surface.page", "surface.raised"], "body"),
   ...on("text.linkHover", ["surface.page", "surface.raised"], "body"),
 
-  ...actions.flatMap((a) =>
-    on(
+  ...actions.flatMap((a) => [
+    ...on(
       `action.${a}.fg`,
       [`action.${a}.bg`, `action.${a}.bgHover`, `action.${a}.bgPressed`],
       "body",
     ),
-  ),
+    ...on("text.default", [`action.${a}.bgSubtle`], "body"),
+  ]),
 
   ...statuses.flatMap((s) => [
     ...on(`status.${s}.fg`, ["surface.page", `status.${s}.bgSubtle`], "body"),

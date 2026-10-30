@@ -44,6 +44,28 @@ describe.each(themeNames)("%s theme pairs", (name) => {
   });
 });
 
+const leafPaths = (node: object, prefix = ""): string[] =>
+  Object.entries(node).flatMap(([key, value]) =>
+    typeof value === "string"
+      ? [`${prefix}${key}`]
+      : leafPaths(value, `${prefix}${key}.`),
+  );
+
+describe("pair list", () => {
+  // Disabled controls are exempt from contrast, and the overlay is a scrim
+  // over other content, not a background text sits on.
+  const backgrounds = leafPaths(lightColors).filter(
+    (path) =>
+      (path.startsWith("surface.") || /\.bg[A-Z]?\w*$/.test(path)) &&
+      !path.endsWith("bgDisabled") &&
+      path !== "surface.overlay",
+  );
+
+  it.each(backgrounds)("lists a foreground for %s", (bg) => {
+    expect(pairs.some((pair) => pair.bg === bg)).toBe(true);
+  });
+});
+
 describe("requiredRatio", () => {
   const pair: Pair = { fg: "text.subtle", bg: "surface.page", use: "body" };
 

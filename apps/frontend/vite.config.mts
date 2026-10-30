@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import { fileURLToPath } from "node:url";
-import { uiAliases } from "./uiAliases.mjs";
+import { workspaceAliases } from "./workspaceAliases.mjs";
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -13,18 +13,7 @@ export default defineConfig({
         find: "@",
         replacement: fileURLToPath(new URL("./src", import.meta.url)),
       },
-      // Bundle `@chardb/ui` from source, so its `.css.ts` files compile here
-      // with the app's. Its dist is only for type declarations.
-      ...uiAliases,
-      // Bundle `@chardb/shared` from source. Its dist is CommonJS, and its
-      // `require("zod")` resolves to zod's CommonJS build while the app's
-      // `import` resolves to the ESM one, shipping zod twice.
-      {
-        find: "@chardb/shared",
-        replacement: fileURLToPath(
-          new URL("../../packages/shared/src/index.ts", import.meta.url),
-        ),
-      },
+      ...workspaceAliases,
     ],
   },
   server: {
