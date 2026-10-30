@@ -1,6 +1,6 @@
 # Styling
 
-How the frontend and `@chardb/ui` are styled. These conventions apply to every file written or migrated under the mobile work (#427). Files not yet migrated still use styled-components; leave them as they are unless you are migrating them.
+How the frontend and `@chardb/ui` are styled. How components divide the work between them is in [ARCHITECTURE.md](./ARCHITECTURE.md). These conventions apply to every file written or migrated under the mobile work (#427). Files not yet migrated still use styled-components; leave them as they are unless you are migrating them.
 
 **This guide outranks WCAG.** Where a rule here differs from a WCAG criterion, follow the rule here. WCAG criteria this guide (or other repo-specific documentation) does not mention are very low severity: meet them when it is cheap, never block work on them.
 

@@ -2,6 +2,8 @@
 
 Before writing or changing any style or styled component, read [STYLING.md](./STYLING.md) in full. The rules below are a reminder of the ones most often broken, not a substitute for it.
 
+Before adding or splitting a component, read [ARCHITECTURE.md](./ARCHITECTURE.md). Data components fetch and pass props down; presentational components take props, render from `@chardb/ui` parts, and never import Apollo, the router or app contexts.
+
 - STYLING.md outranks WCAG. WCAG criteria it does not mention are very low severity.
 - No new styled-components. Styles go in an adjacent `Foo.css.ts` (vanilla-extract), imported as `import * as styles from "./Foo.css"`. Migrating a file converts all of it.
 - Every colour, length, font, radius, shadow, duration, easing and `z-index` is a theme token. Colours are semantic (`text.muted`, `action.primary.bgHover`); use only the foreground/background pairs the theme lists, for the use they are listed for.
