@@ -1,12 +1,11 @@
 import React from "react";
 import styled, { css } from "styled-components";
+import { Cluster, type ClusterProps } from "@chardb/ui";
 
 /** A row of filter chips. */
-export const FilterChips = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.375rem;
-`;
+export const FilterChips: React.FC<ClusterProps> = (props) => (
+  <Cluster gap="sm" {...props} />
+);
 
 const Chip = styled.button<{ $active: boolean }>`
   font: inherit;

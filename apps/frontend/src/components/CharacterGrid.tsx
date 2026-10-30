@@ -1,13 +1,7 @@
 import React from "react";
-import styled from "styled-components";
+import { Grid } from "@chardb/ui";
 import { CharacterCard, CharacterCardItem } from "./CharacterCard";
-
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: ${({ theme }) => theme.spacing.lg};
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-`;
+import * as styles from "./CharacterGrid.css";
 
 interface CharacterGridProps {
   characters: CharacterCardItem[];
@@ -19,7 +13,8 @@ export const CharacterGrid: React.FC<CharacterGridProps> = ({
   showOwner = true,
 }) => {
   return (
-    <Grid>
+    // `fill` keeps a short last row at one card width instead of stretching it.
+    <Grid min="card" repeat="fill" gap="lg" className={styles.grid}>
       {characters.map((character) => (
         <CharacterCard
           key={character.id}
