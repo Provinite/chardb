@@ -194,6 +194,14 @@ yarn workspace @chardb/e2e world community-basic --json
 
 Prints every id, URL and credential for the seeded world. With `--json` only the JSON goes to stdout — logs go to stderr — so it pipes into `jq`. Requires the servers to be up.
 
+## Measuring page loads
+
+```bash
+E2E_PERF=1 yarn workspace @chardb/e2e e2e tests/perf/page-load.e2e.ts
+```
+
+Loads four pages of the production build on a throttled phone (Lighthouse's mobile profile), three cold loads each, and prints the medians: first and largest paint, blocking time, layout shift, bytes transferred. Results also land in `.tmp/perf-page-load.json`. Skipped in normal runs. Compare runs with each other; the baseline is on #427.
+
 ## Environment variables
 
 | Variable | Default | Purpose |
@@ -210,6 +218,7 @@ Prints every id, URL and credential for the seeded world. With `--json` only the
 | `E2E_SKIP_FRONTEND_BUILD` | unset | Just the frontend half. |
 | `E2E_KEEP_DB` | unset | Skip teardown so the database can be inspected. |
 | `E2E_REUSE_SERVERS` | unset | Attach to already-running servers. |
+| `E2E_PERF` | unset | Run the page-load measurements in `tests/perf/`. |
 
 ## Troubleshooting
 
