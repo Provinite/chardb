@@ -1,8 +1,13 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
+import { workspaceAliases } from "./workspaceAliases.mjs";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), vanillaExtractPlugin()],
+  resolve: {
+    alias: workspaceAliases,
+  },
   test: {
     globals: true,
     environment: "jsdom",

@@ -3,13 +3,28 @@
   "version": "14.2.0",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./theme": {
+      "types": "./dist/theme/index.d.ts",
+      "default": "./dist/theme/index.js"
+    }
+  },
   "scripts": {
-    "build": "tsc",
-    "dev": "tsc --watch",
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch",
     "clean": "rm -rf dist",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest"
   },
   "dependencies": {
+    "@vanilla-extract/css": "^1.21.3",
+    "@vanilla-extract/dynamic": "^2.1.5",
+    "@vanilla-extract/recipes": "^0.5.7",
+    "@vanilla-extract/sprinkles": "^1.7.1",
     "react": "^18.0.0",
     "react-dom": "^18.0.0",
     "styled-components": "^6.0.0"
@@ -17,7 +32,9 @@
   "devDependencies": {
     "@types/react": "^18.0.0",
     "@types/react-dom": "^18.0.0",
-    "typescript": "^5.0.0"
+    "@vanilla-extract/vite-plugin": "^5.2.6",
+    "typescript": "^5.0.0",
+    "vitest": "^5.0.5"
   },
   "peerDependencies": {
     "react": "^18.0.0",
