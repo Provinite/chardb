@@ -278,6 +278,7 @@ The `AppLoader` animation is the startup screen, and it lives in `index.html`, n
 
 - It is an element beside `<div id="root">`, not inside it. React never replaces it, so its animation runs without restarting while the code loads and while the app works out who is signed in and which community is being viewed.
 - Its styles are inline CSS in `index.html`, with the few theme colours it needs repeated there for both themes. The theme script runs first, so it paints in the right theme. The lint rules do not cover `index.html`; keep these values in step with the theme by hand.
+- It is exempt from the [loader timing](#timing): it fades in after 200ms, so a fast load never shows it, and has no minimum display time, so it never holds back a page that is ready.
 - The app fades it out once sign-in and community checks have resolved and the first page has rendered. Route guards and redirects render nothing while it is showing.
 - It covers the code download and the sign-in check, nothing more. The sign-in check stays under it because the shell depends on the answer: a shell skeleton shown before it could differ from the shell that follows.
 - Page data is not its job. Once the first page renders, that page loads its data behind skeletons like any other, per [Loading](#loading). The startup screen never comes back after the first page.
