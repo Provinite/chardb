@@ -3,7 +3,9 @@ import {
   LEGACY_THEME_STORAGE_KEY,
   migrateLegacyPreference,
   parseThemePreference,
+  readLegacyPreference,
   resolveThemeMode,
+  siteStorage,
   themeCookieName,
   themeCookieString,
 } from "../themePreference";
@@ -70,11 +72,12 @@ describe("migrateLegacyPreference", () => {
     expect(store.removeItem).toHaveBeenCalledWith(LEGACY_THEME_STORAGE_KEY);
   });
 
-  it("leaves an existing cookie alone", () => {
+  it("keeps an existing cookie and clears the old value from this origin", () => {
     const store = storage("dark");
     const write = vi.fn();
     expect(migrateLegacyPreference("light", store, write)).toBe("light");
     expect(write).not.toHaveBeenCalled();
+    expect(store.removeItem).toHaveBeenCalledWith(LEGACY_THEME_STORAGE_KEY);
   });
 
   it("does nothing when nothing was stored", () => {
@@ -82,5 +85,58 @@ describe("migrateLegacyPreference", () => {
     const write = vi.fn();
     expect(migrateLegacyPreference(null, store, write)).toBeNull();
     expect(write).not.toHaveBeenCalled();
+  });
+
+  it("copes with storage that throws", () => {
+    const blocked = {
+      getItem: vi.fn(() => {
+        throw new DOMException("blocked", "SecurityError");
+      }),
+      removeItem: vi.fn(() => {
+        throw new DOMException("blocked", "SecurityError");
+      }),
+    };
+    const write = vi.fn();
+    expect(migrateLegacyPreference(null, blocked, write)).toBeNull();
+    expect(migrateLegacyPreference("dark", blocked, write)).toBe("dark");
+    expect(write).not.toHaveBeenCalled();
+  });
+});
+
+describe("siteStorage", () => {
+  it("returns null when even reaching localStorage throws", () => {
+    const win = {
+      get localStorage(): Storage {
+        throw new DOMException("blocked", "SecurityError");
+      },
+    };
+    expect(siteStorage(win)).toBeNull();
+  });
+
+  it("returns localStorage when it is reachable", () => {
+    expect(siteStorage(window)).toBe(window.localStorage);
+  });
+});
+
+describe("readLegacyPreference", () => {
+  it("returns nothing without storage", () => {
+    expect(readLegacyPreference(null)).toBeNull();
+  });
+
+  it("reads light or dark and ignores anything else", () => {
+    const store = (value: string | null) => ({ getItem: () => value });
+    expect(readLegacyPreference(store("dark"))).toBe("dark");
+    expect(readLegacyPreference(store("light"))).toBe("light");
+    expect(readLegacyPreference(store("system"))).toBeNull();
+    expect(readLegacyPreference(store(null))).toBeNull();
+  });
+
+  it("returns nothing when storage throws", () => {
+    const blocked = {
+      getItem: () => {
+        throw new DOMException("blocked", "SecurityError");
+      },
+    };
+    expect(readLegacyPreference(blocked)).toBeNull();
   });
 });

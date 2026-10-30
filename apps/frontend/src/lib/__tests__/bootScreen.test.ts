@@ -28,6 +28,8 @@ describe("dismissBootScreen", () => {
     expect(document.getElementById(BOOT_SCREEN_ID)).toBe(el);
     expect(el.style.opacity).toBe("0");
     expect(el.style.transition).toContain("opacity");
+    // Clicks reach the app while it fades.
+    expect(el.style.pointerEvents).toBe("none");
 
     el.dispatchEvent(new Event("transitionend"));
     expect(document.getElementById(BOOT_SCREEN_ID)).toBeNull();
@@ -56,6 +58,18 @@ describe("dismissBootScreen", () => {
     addScreen("0");
     fresh.holdBootScreen();
     fresh.dismissBootScreen();
+    expect(document.getElementById(BOOT_SCREEN_ID)).not.toBeNull();
+    fresh.releaseBootScreen();
+    expect(document.getElementById(BOOT_SCREEN_ID)).toBeNull();
+  });
+
+  it("stays up until every hold is released", async () => {
+    vi.resetModules();
+    const fresh = await import("../bootScreen");
+    addScreen("0");
+    fresh.holdBootScreen();
+    fresh.holdBootScreen();
+    fresh.releaseBootScreen();
     expect(document.getElementById(BOOT_SCREEN_ID)).not.toBeNull();
     fresh.releaseBootScreen();
     expect(document.getElementById(BOOT_SCREEN_ID)).toBeNull();

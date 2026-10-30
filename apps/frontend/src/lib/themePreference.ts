@@ -69,18 +69,62 @@ export const writeThemePreference = (preference: ThemePreference): void => {
 };
 
 /**
- * Moves a light/dark choice saved under the old `localStorage` key into the
- * cookie, once. Returns the preference now in effect.
+ * `localStorage`, or null where site data is blocked: there, even reading the
+ * `localStorage` property throws.
+ */
+export const siteStorage = (
+  win: { readonly localStorage: Storage } = window,
+): Storage | null => {
+  try {
+    return win.localStorage;
+  } catch {
+    return null;
+  }
+};
+
+/**
+ * A light/dark choice saved under the old `localStorage` key on this origin.
+ * Null when there is none, or when storage access throws (site data blocked).
+ */
+export const readLegacyPreference = (
+  storage: Pick<Storage, "getItem"> | null,
+): ThemeMode | null => {
+  if (storage === null) return null;
+  try {
+    const legacy = storage.getItem(LEGACY_THEME_STORAGE_KEY);
+    return legacy === "light" || legacy === "dark" ? legacy : null;
+  } catch {
+    return null;
+  }
+};
+
+const clearLegacyPreference = (storage: Pick<Storage, "removeItem"> | null) => {
+  if (storage === null) return;
+  try {
+    storage.removeItem(LEGACY_THEME_STORAGE_KEY);
+  } catch {
+    // Storage blocked: nothing was readable there either.
+  }
+};
+
+/**
+ * Settles the old `localStorage` value on this origin against the cookie. With
+ * a cookie, the cookie wins and the old value is cleared. Without one, an old
+ * light/dark choice is written to the cookie and then cleared. Returns the
+ * preference now in effect.
  */
 export const migrateLegacyPreference = (
   current: ThemePreference | null,
-  storage: Pick<Storage, "getItem" | "removeItem">,
+  storage: Pick<Storage, "getItem" | "removeItem"> | null,
   write: (preference: ThemePreference) => void,
 ): ThemePreference | null => {
-  if (current !== null) return current;
-  const legacy = storage.getItem(LEGACY_THEME_STORAGE_KEY);
-  if (legacy !== "light" && legacy !== "dark") return null;
+  if (current !== null) {
+    clearLegacyPreference(storage);
+    return current;
+  }
+  const legacy = readLegacyPreference(storage);
+  if (legacy === null) return null;
   write(legacy);
-  storage.removeItem(LEGACY_THEME_STORAGE_KEY);
+  clearLegacyPreference(storage);
   return legacy;
 };

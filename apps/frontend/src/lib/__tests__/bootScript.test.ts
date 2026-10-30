@@ -88,6 +88,25 @@ describe("index.html theme boot script", () => {
     expect(document.documentElement.dataset.theme).toBe("dark");
   });
 
+  it("takes the first of two same-named cookies, as parseThemePreference does", () => {
+    setSystemDark(false);
+    const cookie = Object.getOwnPropertyDescriptor(
+      Document.prototype,
+      "cookie",
+    );
+    Object.defineProperty(document, "cookie", {
+      configurable: true,
+      get: () => `${name}=dark; ${name}=light`,
+    });
+    try {
+      runBootScript();
+      expect(document.documentElement.dataset.theme).toBe("dark");
+    } finally {
+      delete (document as { cookie?: string }).cookie;
+      if (cookie) Object.defineProperty(Document.prototype, "cookie", cookie);
+    }
+  });
+
   it("ignores a cookie for another root domain", () => {
     setSystemDark(false);
     document.cookie = `${themeCookieName("other.test")}=dark`;

@@ -102,6 +102,26 @@ describe("ThemeProvider", () => {
     expect(screen.getByRole("button")).toHaveTextContent("light");
   });
 
+  it("renders when site storage is blocked", () => {
+    const original = window.localStorage;
+    const blocked = () => {
+      throw new DOMException("blocked", "SecurityError");
+    };
+    window.localStorage = {
+      ...original,
+      getItem: blocked,
+      removeItem: blocked,
+      setItem: blocked,
+    };
+    try {
+      document.documentElement.dataset.theme = "dark";
+      renderProvider();
+      expect(screen.getByRole("button")).toHaveTextContent("dark");
+    } finally {
+      window.localStorage = original;
+    }
+  });
+
   it("moves a choice saved under the old localStorage key into the cookie", () => {
     vi.mocked(window.localStorage.getItem).mockImplementation((key) =>
       key === preference.LEGACY_THEME_STORAGE_KEY ? "dark" : null,

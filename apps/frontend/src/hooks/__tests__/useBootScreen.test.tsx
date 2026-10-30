@@ -59,4 +59,16 @@ describe("useHoldBootScreen", () => {
     rerender(<Guard leaving={false} />);
     expect(screenUp()).toBe(false);
   });
+
+  it("releases its hold when it unmounts while holding", async () => {
+    const { useHoldBootScreen } = await load();
+    const Guard = () => {
+      useHoldBootScreen(true);
+      return null;
+    };
+    const { unmount } = render(<Guard />);
+    expect(screenUp()).toBe(true);
+    unmount();
+    expect(screenUp()).toBe(false);
+  });
 });

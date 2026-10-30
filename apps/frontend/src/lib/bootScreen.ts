@@ -9,25 +9,29 @@ export const BOOT_SCREEN_ID = "boot-screen";
 
 const FADE_MS = 300;
 
-let held = false;
+let holds = 0;
 
 /**
  * Keeps the screen up while a page is about to send the browser to another
  * origin: dismissing would flash the shell for a moment before the browser
- * leaves, and the next origin shows its own startup screen.
+ * leaves, and the next origin shows its own startup screen. Holds are counted;
+ * each one is ended by one `releaseBootScreen`.
  */
 export const holdBootScreen = (): void => {
-  held = true;
+  holds += 1;
 };
 
-/** Ends a hold when the page turns out to stay, and dismisses the screen. */
+/**
+ * Ends one hold, when the page turns out to stay, and dismisses the screen
+ * once no holds are left.
+ */
 export const releaseBootScreen = (): void => {
-  held = false;
+  holds = Math.max(0, holds - 1);
   dismissBootScreen();
 };
 
 export const dismissBootScreen = (): void => {
-  if (held) return;
+  if (holds > 0) return;
   const el = document.getElementById(BOOT_SCREEN_ID);
   if (!el || el.dataset.leaving === "true") return;
   el.dataset.leaving = "true";
@@ -45,6 +49,8 @@ export const dismissBootScreen = (): void => {
   // Pin the current opacity before replacing the fade-in animation, so the
   // fade-out starts where the fade-in left off instead of jumping.
   el.style.animation = "none";
+  // Clicks go to the app underneath while the screen fades.
+  el.style.pointerEvents = "none";
   el.style.opacity = String(opacity);
   void el.offsetHeight;
   el.style.transition = `opacity ${reducedMotion ? 0.01 : FADE_MS}ms ease`;

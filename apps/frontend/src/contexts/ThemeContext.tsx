@@ -10,9 +10,10 @@ import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import { lightTheme, darkTheme, Theme } from "@chardb/ui";
 import { GlobalStyles } from "../components/GlobalStyles";
 import {
-  LEGACY_THEME_STORAGE_KEY,
   migrateLegacyPreference,
+  readLegacyPreference,
   readThemePreference,
+  siteStorage,
   resolveThemeMode,
   writeThemePreference,
   type ThemeMode,
@@ -38,12 +39,8 @@ const systemPrefersDark = (): boolean =>
   window.matchMedia?.(SYSTEM_DARK_QUERY).matches ?? false;
 
 /** A choice under the old localStorage key counts until it is migrated. */
-const initialPreference = (): ThemePreference | null => {
-  const saved = readThemePreference();
-  if (saved !== null) return saved;
-  const legacy = window.localStorage.getItem(LEGACY_THEME_STORAGE_KEY);
-  return legacy === "light" || legacy === "dark" ? legacy : null;
-};
+const initialPreference = (): ThemePreference | null =>
+  readThemePreference() ?? readLegacyPreference(siteStorage());
 
 /**
  * The inline script in index.html has already put the theme on <html> before
@@ -128,7 +125,7 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   useEffect(() => {
     migrateLegacyPreference(
       readThemePreference(),
-      window.localStorage,
+      siteStorage(),
       writeThemePreference,
     );
   }, []);
