@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The shop listing form's stock and limit fields stack on narrow screens**, and the shop's cart stacks below the listings when the content area is narrow rather than the window (#475).
 - **vanilla-extract build support**: `.css.ts` files compile in dev, production builds and tests, and `@chardb/ui` is bundled from source (#473).
 - **Vite 8, `@vitejs/plugin-react` 6 and Vitest 5**: production builds take under a second, and the bundle is about 50 kB smaller now that `@chardb/shared` is bundled from source (#463).
 
