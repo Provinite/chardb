@@ -3,8 +3,8 @@ import { useAuth } from "./contexts/AuthContext";
 import { useCommunityHost } from "./contexts/CommunityHostContext";
 import { apexUrl } from "./lib/communityHost";
 import { Layout } from "./components/Layout";
-import { AppLoader } from "./components/AppLoader";
 import { ScrollToTop } from "./components/ScrollToTop";
+import { useHoldBootScreen } from "./hooks/useBootScreen";
 import { ApexRoutes } from "./routes/ApexRoutes";
 import { CommunityRoutes } from "./routes/CommunityRoutes";
 import { CommunityUnreachable } from "./pages/CommunityUnreachable";
@@ -39,9 +39,13 @@ function App() {
   useEffect(() => {
     if (isUnknownHost) window.location.replace(apexUrl("/"));
   }, [isUnknownHost]);
+  useHoldBootScreen(isUnknownHost);
 
+  // Rendering nothing below leaves the startup screen in index.html up. It is
+  // dismissed by the first thing rendered once startup has resolved: Layout,
+  // or CommunityUnreachable.
   if (isUnknownHost) {
-    return <AppLoader fullscreen />;
+    return null;
   }
 
   // The lookup failed rather than answering. Say that, and nothing else: this
@@ -52,7 +56,7 @@ function App() {
   }
 
   if (authLoading || hostLoading) {
-    return <AppLoader fullscreen />;
+    return null;
   }
 
   return (

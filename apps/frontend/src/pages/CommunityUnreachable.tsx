@@ -1,5 +1,6 @@
 import styled from "styled-components";
 import { usePageMeta } from "../lib/pageMeta";
+import { useDismissBootScreen } from "../hooks/useBootScreen";
 
 const Wrapper = styled.div`
   max-width: 640px;
@@ -28,6 +29,7 @@ const Body = styled.p`
  */
 export const CommunityUnreachable: React.FC = () => {
   usePageMeta({ title: "Something Went Wrong" });
+  useDismissBootScreen();
 
   return (
     <Wrapper>

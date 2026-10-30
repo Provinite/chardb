@@ -40,6 +40,27 @@ describe("dismissBootScreen", () => {
     expect(document.getElementById(BOOT_SCREEN_ID)).toBeNull();
   });
 
+  it("stays up once a page that leaves for another origin holds it", async () => {
+    vi.resetModules();
+    const fresh = await import("../bootScreen");
+    addScreen("1");
+    fresh.holdBootScreen();
+    fresh.dismissBootScreen();
+    vi.advanceTimersByTime(1000);
+    expect(document.getElementById(BOOT_SCREEN_ID)).not.toBeNull();
+  });
+
+  it("dismisses on release when the page turns out to stay", async () => {
+    vi.resetModules();
+    const fresh = await import("../bootScreen");
+    addScreen("0");
+    fresh.holdBootScreen();
+    fresh.dismissBootScreen();
+    expect(document.getElementById(BOOT_SCREEN_ID)).not.toBeNull();
+    fresh.releaseBootScreen();
+    expect(document.getElementById(BOOT_SCREEN_ID)).toBeNull();
+  });
+
   it("does nothing when there is no screen, or when called twice", () => {
     expect(() => dismissBootScreen()).not.toThrow();
     const el = addScreen("1");

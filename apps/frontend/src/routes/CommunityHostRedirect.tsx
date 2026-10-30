@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useParams } from "react-router-dom";
-import { AppLoader } from "../components/AppLoader";
+import { useHoldBootScreen } from "../hooks/useBootScreen";
 import { NotFoundPage } from "../pages/NotFoundPage";
 import { CharacterPage } from "../pages/CharacterPage";
 import {
@@ -40,12 +40,11 @@ export const CommunityHostRedirect: React.FC = () => {
     );
   }, [slug, rest, location.search, location.hash]);
 
-  if (loading) {
-    return <AppLoader />;
-  }
+  const leaving = loading || Boolean(slug);
+  useHoldBootScreen(leaving);
 
   // A community id that resolves to nothing is a dead link, not a redirect.
-  return slug ? <AppLoader /> : <NotFoundPage />;
+  return leaving ? null : <NotFoundPage />;
 };
 
 /**
@@ -82,9 +81,8 @@ export const CharacterHostGuard: React.FC = () => {
     );
   }, [slug, id, location.search, location.hash]);
 
-  if (loading || slug) {
-    return <AppLoader />;
-  }
+  const leaving = loading || Boolean(slug);
+  useHoldBootScreen(leaving);
 
-  return <CharacterPage />;
+  return leaving ? null : <CharacterPage />;
 };

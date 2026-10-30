@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import { AppLoader } from "../components/AppLoader";
+import { useHoldBootScreen } from "../hooks/useBootScreen";
 import { apexUrl } from "../lib/communityHost";
 
 /**
@@ -23,5 +23,7 @@ export const ApexRedirect: React.FC = () => {
     );
   }, [location.pathname, location.search, location.hash]);
 
-  return <AppLoader />;
+  useHoldBootScreen(true);
+
+  return null;
 };

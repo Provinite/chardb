@@ -6,6 +6,7 @@ import { Footer } from "./Footer";
 import { CommunityNavigationSidebar } from "./navigation/CommunityNavigationSidebar";
 import { GlobalNavigationSidebar } from "./navigation/GlobalNavigationSidebar";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
+import { useDismissBootScreen } from "../hooks/useBootScreen";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -32,6 +33,7 @@ const Main = styled.main`
 `;
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
+  useDismissBootScreen();
   const location = useLocation();
   const [sidebarPreference, setSidebarPreference] =
     useState<SidebarPreference>("auto");
