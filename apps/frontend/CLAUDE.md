@@ -6,7 +6,7 @@ Before adding or splitting a component, read [ARCHITECTURE.md](./ARCHITECTURE.md
 
 - STYLING.md outranks WCAG. WCAG criteria it does not mention are very low severity.
 - Tests that check emitted CSS read it through `src/__tests__/emittedCss.ts`, which parses with PostCSS. Never parse CSS or selectors with regexes or string searches.
-- No new styled-components. Styles go in an adjacent `Foo.css.ts` (vanilla-extract), imported as `import * as styles from "./Foo.css"`. Migrating a file converts all of it.
+- No new styled-components. Styles go in an adjacent `Foo.css.ts` (vanilla-extract), imported as `import * as styles from "./Foo.css"`. Migrating a file converts all of it and removes it from `styled-components-allowlist.json`.
 - Every colour, length, font, radius, shadow, duration, easing and `z-index` is a theme token. Colours are semantic (`text.muted`, `action.primary.bgHover`); use only the foreground/background pairs the theme lists, for the use they are listed for.
 - Dark mode is never allowed to flash. The theme preference is a root-domain cookie (not `localStorage`, which is per subdomain), applied by the inline script in `index.html` before first paint. Anything that paints a background, including `html`, dialogs and placeholders, uses a theme token.
 - Duration tokens are for transitions and one-shot animations; timers use `timing.*`. Looping animations go through `loop()` (decorative loops stop under reduced motion, essential ones slow down).
