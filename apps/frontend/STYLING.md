@@ -274,7 +274,12 @@ A button disables the moment it is pressed, before the delay runs, so a quick ac
 
 ### Startup
 
-While the app works out who is signed in and which community is being viewed, the shell renders with the destination route's skeleton. Each route declares its skeleton when its page is migrated. Routes without one yet fall back to `AppLoader`; `AppLoader` is deleted once every route has a skeleton.
+The `AppLoader` animation is the startup screen, and it lives in `index.html`, not in React, so it shows the moment the HTML arrives instead of after the JavaScript has downloaded.
+
+- It is an element beside `<div id="root">`, not inside it. React never replaces it, so its animation runs without restarting while the code loads and while the app works out who is signed in and which community is being viewed.
+- Its styles are inline CSS in `index.html`, with the few theme colours it needs repeated there for both themes. The theme script runs first, so it paints in the right theme. The lint rules do not cover `index.html`; keep these values in step with the theme by hand.
+- The app fades it out once sign-in and community checks have resolved and the first page has rendered. Route guards and redirects render nothing while it is showing.
+- From then on, pages show their own [loading indicators](#loading). The startup screen never comes back after the first page.
 
 ## Interaction
 
