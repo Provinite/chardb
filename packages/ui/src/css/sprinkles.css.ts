@@ -1,6 +1,6 @@
 import { createSprinkles, defineProperties } from "@vanilla-extract/sprinkles";
 import { vars } from "../theme/contract.css";
-import { flatten, type Leaves } from "../theme/paths";
+import { flatten } from "../theme/paths";
 import { breakpoints, type Breakpoint } from "./breakpoints";
 import { hoverQuery, mq } from "./media";
 
@@ -47,21 +47,31 @@ const responsive = defineProperties({
 
 const { surface, text, border, action } = vars;
 
-type ActionPath = Leaves<{ action: typeof action }>;
-const actionPaths = flatten({ action });
+// Listed by hand so the names are inferred; the sprinkles test fails if a
+// token is added to the theme but not here.
+const backgroundStates = ({
+  bg,
+  bgHover,
+  bgPressed,
+  bgSubtle,
+  bgDisabled,
+}: typeof action.primary) => ({ bg, bgHover, bgPressed, bgSubtle, bgDisabled });
 
-/** The action tokens whose path passes `test`, keeping their names in the type. */
-const pickActions = <P extends ActionPath>(test: (path: string) => boolean) =>
-  Object.fromEntries(
-    Object.entries(actionPaths).filter(([path]) => test(path)),
-  ) as Record<P, string>;
+const actionBackgrounds = flatten({
+  action: {
+    primary: backgroundStates(action.primary),
+    secondary: backgroundStates(action.secondary),
+    danger: backgroundStates(action.danger),
+  },
+});
 
-const actionBackgrounds = pickActions<
-  Extract<ActionPath, `${string}.bg${string}`>
->((path) => /\.bg\w*$/.test(path));
-const actionBorders = pickActions<Extract<ActionPath, `${string}.border`>>(
-  (path) => path.endsWith(".border"),
-);
+const actionBorders = flatten({
+  action: {
+    primary: { border: action.primary.border },
+    secondary: { border: action.secondary.border },
+    danger: { border: action.danger.border },
+  },
+});
 
 const colors = defineProperties({
   conditions: {

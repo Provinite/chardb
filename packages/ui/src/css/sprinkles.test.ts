@@ -5,8 +5,10 @@ import {
   ruleContaining,
   topLevelDeclarationsFor,
 } from "../test/emittedCss";
+import { vars } from "../theme/contract.css";
+import { flatten } from "../theme/paths";
 import { hoverQuery, mq } from "./media";
-import { sprinkles } from "./sprinkles.css";
+import { sprinkles, type Sprinkles } from "./sprinkles.css";
 
 const classes = (className: string) => className.split(" ");
 
@@ -62,6 +64,24 @@ describe("sprinkles", () => {
     expect(ruleContaining(className, "border-color:")).toContain(
       "var(--action-danger-border)",
     );
+  });
+
+  // The action names sprinkles takes are listed by hand; this catches a token
+  // added to the theme but not to that list.
+  it("takes every action background and border token", () => {
+    const paths = Object.keys(flatten({ action: vars.action }));
+    const backgrounds = paths.filter((path) => /\.bg\w*$/.test(path));
+    const borders = paths.filter((path) => path.endsWith(".border"));
+    expect(backgrounds.length).toBeGreaterThan(0);
+    expect(borders.length).toBeGreaterThan(0);
+    for (const path of backgrounds) {
+      const value = path as Sprinkles["backgroundColor"];
+      expect(() => sprinkles({ backgroundColor: value }), path).not.toThrow();
+    }
+    for (const path of borders) {
+      const value = path as Sprinkles["borderColor"];
+      expect(() => sprinkles({ borderColor: value }), path).not.toThrow();
+    }
   });
 
   it("rejects colour names that are not tokens", () => {
