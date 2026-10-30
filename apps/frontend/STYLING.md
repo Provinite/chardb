@@ -268,7 +268,8 @@ The baseline is [WCAG 2.2](https://www.w3.org/TR/WCAG22/) level AA, plus the AAA
 - [2.4.7 Focus Visible](https://www.w3.org/WAI/WCAG22/Understanding/focus-visible.html), [2.4.13 Focus Appearance](https://www.w3.org/WAI/WCAG22/Understanding/focus-appearance.html) (AAA): the focus ring is at least as large as a 2px outline around the control and changes contrast by at least 3:1. The focus ring token is built to this.
 - [2.4.11 Focus Not Obscured (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum.html): sticky headers, the drawer, toasts and pinned columns never fully hide the focused element.
   - The sticky header's height changes with text size, so the shell measures it with a `ResizeObserver` and sets it as a CSS variable. `scroll-padding-top` on the page uses that variable.
-  - Toasts sit top-right on `md` and up, and at the bottom of the screen below `md`, never over the header.
+  - Toasts sit at the bottom of the screen below `md`, and top-right just under the sticky header on `md` and up, never over it.
+  - Toasts cover the edge they sit on, so while any toast is showing, the shell measures the toast stack the same way and adds its height to `scroll-padding` on that edge: `scroll-padding-bottom` on phones, `scroll-padding-top` (on top of the header's) on `md` and up. Focus then scrolls into the part of the page the toasts leave clear.
 
 **Pointer and touch**
 
