@@ -2,9 +2,150 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#ffffff" />
+    <!--
+      Sets the theme before anything paints, so the page never shows a frame
+      in the wrong one. Plain JS because it runs before any module has loaded;
+      it mirrors parseThemePreference and resolveThemeMode in
+      src/lib/themePreference.ts, and bootScript.test.ts holds the two to the
+      same answers. The legacy localStorage read covers visitors whose choice
+      has not been moved to the cookie yet; ThemeContext moves it.
+    -->
+    <script id="theme-boot">
+      (function () {
+        var root = "%VITE_ROOT_DOMAIN%";
+        if (root.charAt(0) === "%") root = "localhost";
+        var name = "chardb_theme_" + root.replace(/[^a-z0-9]+/gi, "_");
+        var preference = null;
+        var pairs = document.cookie.split(";");
+        for (var i = 0; i < pairs.length; i++) {
+          var pair = pairs[i].trim().split("=");
+          if (
+            pair[0] === name &&
+            (pair[1] === "light" || pair[1] === "dark" || pair[1] === "system")
+          ) {
+            preference = pair[1];
+            break;
+          }
+        }
+        if (preference === null) {
+          try {
+            var legacy = window.localStorage.getItem("chardb-theme-mode");
+            if (legacy === "light" || legacy === "dark") preference = legacy;
+          } catch (e) {
+            // Storage blocked: fall through to the system preference.
+          }
+        }
+        var mode =
+          preference === "light" || preference === "dark"
+            ? preference
+            : window.matchMedia &&
+                window.matchMedia("(prefers-color-scheme: dark)").matches
+              ? "dark"
+              : "light";
+        var html = document.documentElement;
+        html.setAttribute("data-theme", mode);
+        html.style.colorScheme = mode;
+        var meta = document.querySelector('meta[name="theme-color"]');
+        if (meta)
+          meta.setAttribute("content", mode === "dark" ? "#0f172a" : "#ffffff");
+      })();
+    </script>
+    <!--
+      Page background and the startup screen, before the app's CSS exists.
+      Colours repeat the theme in packages/ui/src/theme: background, primary,
+      and the wordmark glint from the old AppLoader. Update them with it.
+    -->
+    <style>
+      html,
+      #boot-screen {
+        background: #ffffff;
+      }
+      html[data-theme="dark"],
+      html[data-theme="dark"] #boot-screen {
+        background: #0f172a;
+      }
+      @media (prefers-color-scheme: dark) {
+        html:not([data-theme]),
+        html:not([data-theme]) #boot-screen {
+          background: #0f172a;
+        }
+      }
+      #boot-screen {
+        position: fixed;
+        inset: 0;
+        z-index: 2147483647;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        animation: boot-appear 300ms ease 200ms forwards;
+      }
+      #boot-screen .boot-wordmark {
+        font:
+          700 2.5rem/1 -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+        letter-spacing: -0.02em;
+        color: #8b5cf6;
+        user-select: none;
+      }
+      @media (prefers-reduced-motion: no-preference) {
+        #boot-screen .boot-wordmark {
+          background-image: linear-gradient(
+            100deg,
+            #8b5cf6 44%,
+            #c4b5fd 50%,
+            #8b5cf6 56%
+          );
+          background-size: 250% 100%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          -webkit-text-fill-color: transparent;
+          animation: boot-sweep 1.8s ease-in-out infinite;
+        }
+        html[data-theme="dark"] #boot-screen .boot-wordmark {
+          background-image: linear-gradient(
+            100deg,
+            #8b5cf6 44%,
+            #ede9fe 50%,
+            #8b5cf6 56%
+          );
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #boot-screen {
+          animation-duration: 0.01ms;
+        }
+      }
+      #boot-screen .boot-label {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        overflow: hidden;
+        clip: rect(0 0 0 0);
+        white-space: nowrap;
+      }
+      @keyframes boot-appear {
+        to {
+          opacity: 1;
+        }
+      }
+      @keyframes boot-sweep {
+        0% {
+          background-position: 100% 0;
+        }
+        70%,
+        100% {
+          background-position: 0% 0;
+        }
+      }
+    </style>
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="color-scheme" content="light dark" />
     <title>CharDB - Character Hub</title>
 
     <!--
@@ -33,6 +174,16 @@
     <meta name="twitter:card" content="summary" />
   </head>
   <body>
+    <!--
+      Shown from the first paint until the first page has rendered, then
+      faded out and removed by src/lib/bootScreen.ts. A sibling of #root, not
+      a child, so React's first render does not replace it and its animation
+      never restarts.
+    -->
+    <div id="boot-screen" role="status">
+      <span class="boot-wordmark" aria-hidden="true">CharDB</span>
+      <span class="boot-label">Loading</span>
+    </div>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

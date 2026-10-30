@@ -1,7 +1,6 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { AppLoader } from "./AppLoader";
 import { loginUrlReturningHere } from "../lib/communityHost";
 
 interface ProtectedRouteProps {
@@ -11,8 +10,10 @@ interface ProtectedRouteProps {
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   const { user, loading } = useAuth();
 
+  // App waits for auth before rendering any route, under the startup screen,
+  // so this only covers a re-check after startup.
   if (loading) {
-    return <AppLoader />;
+    return null;
   }
 
   if (!user) {

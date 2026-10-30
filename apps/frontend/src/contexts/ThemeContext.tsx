@@ -4,13 +4,22 @@ import React, {
   useState,
   useEffect,
   useLayoutEffect,
+  useRef,
   ReactNode,
 } from "react";
 import { ThemeProvider as StyledThemeProvider } from "styled-components";
 import { lightTheme, darkTheme, Theme } from "@chardb/ui";
 import { GlobalStyles } from "../components/GlobalStyles";
-
-type ThemeMode = "light" | "dark";
+import {
+  migrateLegacyPreference,
+  readLegacyPreference,
+  readThemePreference,
+  siteStorage,
+  resolveThemeMode,
+  writeThemePreference,
+  type ThemeMode,
+  type ThemePreference,
+} from "../lib/themePreference";
 
 interface ThemeContextType {
   mode: ThemeMode;
@@ -25,30 +34,39 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
-const THEME_STORAGE_KEY = "chardb-theme-mode";
+const SYSTEM_DARK_QUERY = "(prefers-color-scheme: dark)";
 
-// Get initial theme outside of React lifecycle
-const getInitialTheme = (): ThemeMode => {
-  if (typeof window !== "undefined") {
-    const stored = localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark") {
-      return stored;
-    }
+const systemPrefersDark = (): boolean =>
+  window.matchMedia?.(SYSTEM_DARK_QUERY).matches ?? false;
 
-    // Check system preference
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)",
-    ).matches;
-    return prefersDark ? "dark" : "light";
-  }
-  return "light";
+/** A choice under the old localStorage key counts until it is migrated. */
+const initialPreference = (): ThemePreference | null =>
+  readThemePreference() ?? readLegacyPreference(siteStorage());
+
+/**
+ * The inline script in index.html has already put the theme on <html> before
+ * the first paint; start from that rather than deciding a second time.
+ */
+const initialMode = (preference: ThemePreference | null): ThemeMode => {
+  const applied = document.documentElement.dataset.theme;
+  if (applied === "light" || applied === "dark") return applied;
+  return resolveThemeMode(preference, systemPrefersDark());
 };
 
-const initialTheme = getInitialTheme();
+const applyModeToDocument = (mode: ThemeMode, background: string) => {
+  const html = document.documentElement;
+  html.dataset.theme = mode;
+  html.style.colorScheme = mode;
+  document
+    .querySelector('meta[name="theme-color"]')
+    ?.setAttribute("content", background);
+};
 
 export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
-  // Initialize theme from pre-calculated value
-  const [mode, setMode] = useState<ThemeMode>(initialTheme);
+  const [preference, setPreference] = useState<ThemePreference | null>(
+    initialPreference,
+  );
+  const [mode, setMode] = useState<ThemeMode>(() => initialMode(preference));
 
   // Get current theme object
   const theme = mode === "dark" ? darkTheme : lightTheme;
@@ -56,6 +74,8 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
   // Apply theme immediately to DOM elements to prevent flash
   useLayoutEffect(() => {
     if (typeof document !== "undefined") {
+      applyModeToDocument(mode, theme.colors.background);
+
       // Temporarily disable transitions
       const bodyTransition = document.body.style.transition;
       document.body.style.transition = "none";
@@ -74,57 +94,66 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         rootElement.style.backgroundColor = theme.colors.background;
       }
 
-      // Re-enable transitions after a brief delay
-      setTimeout(() => {
+      // Re-enable transitions after a brief delay. The cleanup restores them
+      // at once if the theme changes again or the provider unmounts first, so
+      // no timer outlives it and the next run captures the real values.
+      const restore = () => {
         document.body.style.transition = bodyTransition;
         if (rootElement) {
           rootElement.style.transition = rootTransition || "";
         }
-      }, 50);
+      };
+      const timer = setTimeout(restore, 50);
+      return () => {
+        clearTimeout(timer);
+        restore();
+      };
     }
-  }, [theme]);
+  }, [mode, theme]);
 
   // Enable blanket transitions briefly during theme switch
+  const transitionTimer = useRef<ReturnType<typeof setTimeout>>();
+  const endThemeTransition = () => {
+    clearTimeout(transitionTimer.current);
+    transitionTimer.current = undefined;
+    document.documentElement.classList.remove("theme-transitioning");
+  };
   const enableThemeTransition = () => {
+    clearTimeout(transitionTimer.current);
     document.documentElement.classList.add("theme-transitioning");
-    setTimeout(() => {
-      document.documentElement.classList.remove("theme-transitioning");
-    }, 350);
+    transitionTimer.current = setTimeout(endThemeTransition, 350);
   };
+  useEffect(() => endThemeTransition, []);
 
-  // Toggle between light and dark
-  const toggleTheme = () => {
-    enableThemeTransition();
-    const newMode = mode === "light" ? "dark" : "light";
-    setMode(newMode);
-  };
-
-  // Set specific theme
+  // Saved only here, when the user picks; mounting saves nothing, so a
+  // visitor who never picks keeps following their system setting.
   const setTheme = (newMode: ThemeMode) => {
     enableThemeTransition();
+    writeThemePreference(newMode);
+    setPreference(newMode);
     setMode(newMode);
   };
 
-  // Persist theme preference
+  const toggleTheme = () => setTheme(mode === "light" ? "dark" : "light");
+
   useEffect(() => {
-    localStorage.setItem(THEME_STORAGE_KEY, mode);
-  }, [mode]);
+    migrateLegacyPreference(
+      readThemePreference(),
+      siteStorage(),
+      writeThemePreference,
+    );
+  }, []);
 
-  // Listen for system theme changes
+  const followsSystem = preference === null || preference === "system";
+
   useEffect(() => {
-    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-    const handleChange = (e: MediaQueryListEvent) => {
-      // Only auto-switch if user hasn't manually set a preference
-      const storedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-      if (!storedTheme) {
-        setMode(e.matches ? "dark" : "light");
-      }
-    };
-
+    if (!followsSystem || !window.matchMedia) return;
+    const mediaQuery = window.matchMedia(SYSTEM_DARK_QUERY);
+    const handleChange = (e: { matches: boolean }) =>
+      setMode(e.matches ? "dark" : "light");
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
+  }, [followsSystem]);
 
   const value: ThemeContextType = {
     mode,
