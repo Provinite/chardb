@@ -10,11 +10,15 @@ ruleTester.run("no-raw-font", rule, {
     'style({ font: "inherit" });',
     "style({ font: `${vars.font.size.md}/${vars.font.lineHeight.normal} ${vars.font.family.body}` });",
     'style({ fontVariantNumeric: "tabular-nums", fontStyle: "italic" });',
+    // Percentages are relative to the parent, not design decisions.
+    'style({ fontSize: "100%" });',
+    "style({ font: `100%/${vars.font.lineHeight.normal} ${vars.font.family.body}` });",
   ],
   invalid: [
     { code: 'style({ fontFamily: "Inter, sans-serif" });', errors: [error] },
     { code: 'style({ fontSize: "14px" });', errors: [error] },
     { code: 'style({ fontSize: "larger" });', errors: [error] },
+    { code: 'style({ fontSize: "1em" });', errors: [error] },
     { code: "style({ fontSize: 14 });", errors: [error] },
     { code: "style({ fontWeight: 700 });", errors: [error] },
     { code: 'style({ fontWeight: "bold" });', errors: [error] },

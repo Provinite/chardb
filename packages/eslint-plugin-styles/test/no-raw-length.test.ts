@@ -21,9 +21,15 @@ ruleTester.run("no-raw-length", rule, {
     'style({ color: "#1e293b" });',
     // Owned by no-raw-font and no-raw-radius-shadow.
     'style({ fontSize: "14px", borderRadius: "4px", boxShadow: "0 1px 2px" });',
+    // A condition decides the value; it is not one.
+    "style({ padding: 1 ? vars.space.sm : vars.space.md });",
+    "style({ padding: 8 && vars.space.md });",
   ],
   invalid: [
     { code: 'style({ padding: "16px" });', errors: [error] },
+    { code: "style({ padding: wide ? 8 : vars.space.md });", errors: [error] },
+    { code: "style({ padding: custom || 8 });", errors: [error] },
+    { code: "style({ padding: custom ?? 8 });", errors: [error] },
     { code: 'style({ width: "20rem" });', errors: [error] },
     { code: 'style({ letterSpacing: "0.12em" });', errors: [error] },
     {

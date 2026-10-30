@@ -2,23 +2,22 @@
 const {
   CSS_WIDE_KEYWORDS,
   RADIUS_PROPERTY,
+  inProperty,
   isValueString,
   isZero,
   literalVisitor,
-  propertyName,
-  styleProperty,
   valueWords,
 } = require("../lib/style");
+
+/** @param {string} name */
+const isRadiusOrShadow = (name) =>
+  RADIUS_PROPERTY.test(name) || name === "boxShadow";
 
 /**
  * Whether this node is a value of a radius or shadow property.
  * @param {import("estree").Node} node
  */
-function inRadiusOrShadow(node) {
-  const property = styleProperty(node);
-  const name = property && propertyName(property);
-  return name !== null && (RADIUS_PROPERTY.test(name) || name === "boxShadow");
-}
+const inRadiusOrShadow = (node) => inProperty(node, isRadiusOrShadow);
 
 /**
  * Words a radius or shadow may hold without a token. Zero offsets and `inset`

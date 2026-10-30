@@ -31,7 +31,7 @@ import * as styles from "./CharacterCard.css";
 
 ## Tokens
 
-Every colour, space, size, border width, font family, font size, font weight, line height, radius, shadow, duration, easing and layer comes from the theme in `packages/ui/src/theme/`. A literal value in a `*.css.ts` file is a lint error: `no-raw-color`, `no-raw-length`, `no-raw-font` and `no-raw-radius-shadow`. Values that are not design decisions stay literal: `0`, percentages, `fr`, `auto`, keywords such as `none` or `inherit`, and unitless line heights.
+Every colour, space, size, border width, font family, font size, font weight, line height, radius, shadow, duration, easing and layer comes from the theme in `packages/ui/src/theme/`. A literal value in a `*.css.ts` file is a lint error: `no-raw-color`, `no-raw-length`, `no-raw-font` and `no-raw-radius-shadow`. Values that are not design decisions stay literal: `0`, percentages, `fr`, `auto`, keywords such as `none` or `inherit`, and unitless line heights. Two exceptions: `z-index` takes a layer token even for `0` (see [Layers](#layers)), and a radius takes a token even for a circle (`radius.full`, not `50%`).
 
 Tokens are CSS custom properties. Light and dark themes set the same properties, switched by `data-theme` on `<html>`, so a theme change re-renders nothing.
 
@@ -115,6 +115,8 @@ Windows High Contrast and other forced-colour modes replace colours with system 
 | `layer.overlay` | 3000 | Drawer backdrop, the navigation drawer |
 | `layer.modal` | 4000 | Dialogs |
 | `layer.toast` | 5000 | Toasts |
+
+The one literal allowed is `-1`, which puts an element behind its siblings inside its parent's stacking context.
 
 Each layer is a group: `layer.modal.base` is 4000, and `layer.modal[100]`, `layer.modal[200]` and `layer.modal[300]` are 4100, 4200 and 4300, for stacking inside one layer, such as a popover opened from a dialog. The steps are an escape hatch: leave a comment saying why. The gaps between them leave room for a new step without renaming the others.
 

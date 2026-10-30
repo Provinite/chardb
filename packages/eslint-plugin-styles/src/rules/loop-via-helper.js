@@ -1,10 +1,5 @@
 // @ts-check
-const {
-  isValueString,
-  literalVisitor,
-  propertyName,
-  styleProperty,
-} = require("../lib/style");
+const { inProperty, isValueString, literalVisitor } = require("../lib/style");
 
 const LOOP_PROPERTIES = new Set(["animation", "animationIterationCount"]);
 
@@ -31,9 +26,7 @@ module.exports = {
         ) {
           return;
         }
-        const property = styleProperty(node);
-        const name = property && propertyName(property);
-        if (name !== null && LOOP_PROPERTIES.has(name)) {
+        if (inProperty(node, (name) => LOOP_PROPERTIES.has(name))) {
           context.report({ node, messageId: "loopViaHelper" });
         }
       },

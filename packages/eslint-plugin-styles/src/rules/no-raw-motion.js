@@ -1,11 +1,10 @@
 // @ts-check
 const {
   MOTION_PROPERTY,
+  inProperty,
   isValueString,
   isZero,
   literalVisitor,
-  propertyName,
-  styleProperty,
 } = require("../lib/style");
 
 const TIME = /(?<![\w.#-])[+-]?(?:\d+\.?\d*|\.\d+)m?s(?![\w-])/gi;
@@ -17,11 +16,8 @@ const EASING =
  * Whether this node is a value of a transition or animation property.
  * @param {import("estree").Node} node
  */
-function inMotionProperty(node) {
-  const property = styleProperty(node);
-  const name = property && propertyName(property);
-  return name !== null && MOTION_PROPERTY.test(name);
-}
+const inMotionProperty = (node) =>
+  inProperty(node, (name) => MOTION_PROPERTY.test(name));
 
 /** @type {import("eslint").Rule.RuleModule} */
 module.exports = {

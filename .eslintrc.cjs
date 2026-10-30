@@ -12,19 +12,24 @@
  */
 
 // Rules from packages/eslint-plugin-styles for the conventions in
-// apps/frontend/STYLING.md.
-const styleRules = {
-  "@chardb/styles/no-raw-color": "error",
-  "@chardb/styles/no-raw-length": "error",
-  "@chardb/styles/no-raw-font": "error",
-  "@chardb/styles/no-raw-radius-shadow": "error",
-  "@chardb/styles/no-raw-z-index": "error",
-  "@chardb/styles/no-raw-motion": "error",
-  "@chardb/styles/no-raw-media": "error",
-  "@chardb/styles/hover-in-hover-condition": "error",
-  "@chardb/styles/loop-via-helper": "error",
-  "@chardb/styles/no-important": "error",
-};
+// apps/frontend/STYLING.md. The literal-value rules are off in the theme
+// module, which is where the literals live.
+const literalValueRules = [
+  "no-raw-color",
+  "no-raw-length",
+  "no-raw-font",
+  "no-raw-radius-shadow",
+  "no-raw-z-index",
+  "no-raw-motion",
+];
+const otherStyleRules = [
+  "no-raw-media",
+  "hover-in-hover-condition",
+  "loop-via-helper",
+  "no-important",
+];
+const setStyleRules = (rules, level) =>
+  Object.fromEntries(rules.map((rule) => [`@chardb/styles/${rule}`, level]));
 
 module.exports = {
   root: true,
@@ -125,7 +130,7 @@ module.exports = {
       excludedFiles: ["**/*.test.ts"],
       plugins: ["@chardb/styles"],
       rules: {
-        ...styleRules,
+        ...setStyleRules([...literalValueRules, ...otherStyleRules], "error"),
         "no-restricted-imports": [
           "error",
           {
@@ -141,16 +146,8 @@ module.exports = {
       },
     },
     {
-      // The theme module is where the literal values live.
       files: ["packages/ui/src/theme/**"],
-      rules: {
-        "@chardb/styles/no-raw-color": "off",
-        "@chardb/styles/no-raw-length": "off",
-        "@chardb/styles/no-raw-font": "off",
-        "@chardb/styles/no-raw-radius-shadow": "off",
-        "@chardb/styles/no-raw-z-index": "off",
-        "@chardb/styles/no-raw-motion": "off",
-      },
+      rules: setStyleRules(literalValueRules, "off"),
     },
     {
       files: ["packages/ui/src/css/loop.ts"],

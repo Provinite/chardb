@@ -1,5 +1,6 @@
 // @ts-check
 const {
+  inProperty,
   isOwnedProperty,
   isValueString,
   isZero,
@@ -51,9 +52,7 @@ module.exports = {
       },
       number(node, value) {
         if (value === 0) return;
-        const property = styleProperty(node);
-        const name = property && propertyName(property);
-        if (name !== null && LENGTH_PROPERTY.test(name)) {
+        if (inProperty(node, (name) => LENGTH_PROPERTY.test(name))) {
           context.report({ node, messageId: "rawLength" });
         }
       },

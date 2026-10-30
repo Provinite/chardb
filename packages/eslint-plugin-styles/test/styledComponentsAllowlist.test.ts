@@ -1,47 +1,54 @@
-import { readdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { parse } from "@typescript-eslint/parser";
+import { ESLint } from "eslint";
 import { describe, expect, it } from "vitest";
 import allowlist from "../../../apps/frontend/styled-components-allowlist.json";
+import rule from "../src/rules/no-styled-components";
 
 const root = fileURLToPath(new URL("../../..", import.meta.url));
-const scanned = ["apps/frontend/src", "packages/ui/src"];
 
-function sourceFiles(dir: string): string[] {
-  return readdirSync(path.join(root, dir), { withFileTypes: true }).flatMap(
-    (entry) => {
-      const relative = path.posix.join(dir, entry.name);
-      if (entry.isDirectory()) return sourceFiles(relative);
-      return /\.tsx?$/.test(entry.name) ? [relative] : [];
+// The rule itself decides what counts as using styled-components, with an
+// empty allowlist so every use is reported.
+const eslint = new ESLint({
+  cwd: root,
+  useEslintrc: false,
+  plugins: { styles: { rules: { "no-styled-components": rule } } },
+  overrideConfig: {
+    parser: "@typescript-eslint/parser",
+    parserOptions: {
+      ecmaVersion: 2022,
+      sourceType: "module",
+      ecmaFeatures: { jsx: true },
     },
-  );
-}
-
-function importsStyledComponents(file: string): boolean {
-  const program = parse(readFileSync(path.join(root, file), "utf8"), {
-    ecmaVersion: 2022,
-    sourceType: "module",
-    // Scope analysis reads node ranges.
-    range: true,
-    ecmaFeatures: { jsx: file.endsWith(".tsx") },
-  });
-  return program.body.some(
-    (statement) =>
-      statement.type === "ImportDeclaration" &&
-      statement.source.value === "styled-components",
-  );
-}
+    plugins: ["styles"],
+    rules: { "styles/no-styled-components": ["error", { root, allow: [] }] },
+  },
+});
 
 describe("styled-components allowlist", () => {
-  it("lists exactly the files that still import styled-components", () => {
-    const importing = scanned
-      .flatMap(sourceFiles)
-      .filter(importsStyledComponents)
+  it("lists exactly the files that still use styled-components", async () => {
+    const results = await eslint.lintFiles([
+      "apps/frontend/src/**/*.{ts,tsx}",
+      "packages/ui/src/**/*.{ts,tsx}",
+    ]);
+
+    const fatal = results.find((result) => result.fatalErrorCount > 0);
+    expect(fatal?.messages).toBeUndefined();
+
+    const using = results
+      .filter((result) =>
+        // Disable comments for rules this run does not load report too.
+        result.messages.some(
+          (message) => message.ruleId === "styles/no-styled-components",
+        ),
+      )
+      .map((result) =>
+        path.relative(root, result.filePath).split(path.sep).join("/"),
+      )
       .sort();
 
     // A migrated file comes off the list in the same change, so the list
     // tracks what is left to migrate.
-    expect(allowlist).toEqual(importing);
-  });
+    expect(allowlist).toEqual(using);
+  }, 30_000);
 });

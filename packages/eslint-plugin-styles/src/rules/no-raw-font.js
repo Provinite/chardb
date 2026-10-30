@@ -2,21 +2,22 @@
 const {
   CSS_WIDE_KEYWORDS,
   FONT_PROPERTIES,
+  inProperty,
   isValueString,
   literalVisitor,
-  propertyName,
-  styleProperty,
   valueWords,
 } = require("../lib/style");
 
+/** @param {string} name */
+const isFontProperty = (name) => FONT_PROPERTIES.has(name);
+
 /**
- * The font property this node is a value of, if any.
- * @param {import("estree").Node} node
+ * Words a font value may hold without a token. A percentage is relative to
+ * the parent's font, as in `fontSize: "100%"` on a form control.
+ * @param {string} word
  */
-function inFontProperty(node) {
-  const property = styleProperty(node);
-  const name = property && propertyName(property);
-  return name !== null && FONT_PROPERTIES.has(name);
+function isAllowedWord(word) {
+  return CSS_WIDE_KEYWORDS.has(word) || /^(?:\d+\.?\d*|\.\d+)%$/.test(word);
 }
 
 /** @type {import("eslint").Rule.RuleModule} */
@@ -35,13 +36,13 @@ module.exports = {
   create(context) {
     return literalVisitor({
       string(node, text) {
-        if (!isValueString(node) || !inFontProperty(node)) return;
-        if (valueWords(text).some((word) => !CSS_WIDE_KEYWORDS.has(word))) {
+        if (!isValueString(node) || !inProperty(node, isFontProperty)) return;
+        if (!valueWords(text).every(isAllowedWord)) {
           context.report({ node, messageId: "rawFont" });
         }
       },
       number(node) {
-        if (inFontProperty(node)) {
+        if (inProperty(node, isFontProperty)) {
           context.report({ node, messageId: "rawFont" });
         }
       },

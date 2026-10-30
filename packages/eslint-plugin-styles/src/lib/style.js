@@ -114,7 +114,7 @@ function isValueString(node) {
 function styleProperty(node) {
   let child = expressionOf(node);
   let parent = child.parent;
-  while (parent && TRANSPARENT.has(parent.type)) {
+  while (parent && passesValueThrough(parent, child)) {
     child = parent;
     parent = parent.parent;
   }
@@ -122,6 +122,31 @@ function styleProperty(node) {
     return /** @type {Property} */ (parent);
   }
   return null;
+}
+
+/**
+ * Whether `parent` can evaluate to `child`. A condition decides the value
+ * without being one: the test of `a ? b : c`, and the left side of `a && b`.
+ * @param {Node} parent
+ * @param {Node} child
+ */
+function passesValueThrough(parent, child) {
+  if (parent.type === "ConditionalExpression") return child !== parent.test;
+  if (parent.type === "LogicalExpression") {
+    return parent.operator !== "&&" || child === parent.right;
+  }
+  return TRANSPARENT.has(parent.type);
+}
+
+/**
+ * Whether this node is a value of a property whose name passes `test`.
+ * @param {Node} node
+ * @param {(name: string) => boolean} test
+ */
+function inProperty(node, test) {
+  const property = styleProperty(node);
+  const name = property && propertyName(property);
+  return name !== null && test(name);
 }
 
 /**
@@ -171,19 +196,11 @@ function isZero(word) {
 }
 
 /**
- * Whether a number literal, with its sign, is zero.
- * @param {Node} node
- */
-function isZeroNumber(node) {
-  return node.type === "Literal" && node.value === 0;
-}
-
-/**
  * Visitors for every string literal and static template part, and every
  * number literal, in the file.
  * @param {{
  *   string?: (node: StringNode, text: string) => void,
- *   number?: (node: import("estree").Literal, value: number) => void,
+ *   number?: (node: import("estree").Literal & import("eslint").Rule.NodeParentExtension, value: number) => void,
  * }} handlers
  * @returns {import("eslint").Rule.RuleListener}
  */
@@ -239,10 +256,10 @@ module.exports = {
   MOTION_PROPERTY,
   RADIUS_PROPERTY,
   isModuleSource,
+  inProperty,
   isOwnedProperty,
   isValueString,
   isZero,
-  isZeroNumber,
   literalVisitor,
   propertyName,
   referenceName,
