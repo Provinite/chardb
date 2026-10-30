@@ -197,8 +197,6 @@ Nothing on the page moves because something else appeared, disappeared, loaded o
 - **Changing numbers** (counts, balances, timers) use `font-variant-numeric: tabular-nums`, so digits do not shift as the value changes.
 - **Scroll containers** whose content can grow past them set `scrollbar-gutter: stable`, so a scrollbar appearing does not narrow the content.
 
-Layout shift on the baseline pages is 0 (#427); keep it there.
-
 ### Truncation
 
 Truncating text is a design choice; use it on purpose, not to hide an overflow you did not plan for. Always truncate with `Truncate` from `@chardb/ui`, which makes the full text reachable:
