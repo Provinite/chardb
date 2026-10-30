@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **The CharDB startup screen shows as soon as the page arrives**, in the chosen theme, instead of a blank page until the app's code has loaded (#470).
+
 ### Changed
 
 - **Vite 8, `@vitejs/plugin-react` 6 and Vitest 5**: production builds take under a second, and the bundle is about 50 kB smaller now that `@chardb/shared` is bundled from source (#463).
 
 ### Fixed
 
+- **The light/dark choice carries between the main site and community subdomains**, and visitors who never choose keep following their system setting (#470).
 - **Item and currency ledger Load more fetches only the next page**: it refetched every row on screen with a larger limit, which slowed each click and was refused past 100 rows.
 
 ## [v14.2.0] - 2026-10-28
