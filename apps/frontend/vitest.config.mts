@@ -1,8 +1,19 @@
 import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
+import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
+import { fileURLToPath } from "node:url";
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), vanillaExtractPlugin()],
+  resolve: {
+    alias: {
+      // As in vite.config.mts: `@chardb/ui` from source, so its `.css.ts`
+      // files compile in tests too.
+      "@chardb/ui": fileURLToPath(
+        new URL("../../packages/ui/src/index.ts", import.meta.url),
+      ),
+    },
+  },
   test: {
     globals: true,
     environment: "jsdom",

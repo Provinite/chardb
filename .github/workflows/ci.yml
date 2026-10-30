@@ -239,6 +239,8 @@ jobs:
             workspace: "@chardb/backend"
           - name: frontend
             workspace: "@chardb/frontend"
+          - name: ui
+            workspace: "@chardb/ui"
           - name: da-import
             workspace: "@chardb/da-import"
 

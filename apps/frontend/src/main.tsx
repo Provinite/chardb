@@ -14,6 +14,7 @@ import { ThemedToaster } from "./components/ThemedToaster";
 import App from "./App";
 import { SpotlightNavigation } from "./components/spotlight/SpotlightNavigation";
 import "./index.css";
+import "./styles/global.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
