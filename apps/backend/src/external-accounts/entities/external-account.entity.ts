@@ -1,5 +1,5 @@
 import { ObjectType, Field, ID, registerEnumType } from "@nestjs/graphql";
-import { ExternalAccountProvider } from "@prisma/client";
+import { ExternalAccountProvider } from "@chardb/database";
 
 // Register the enum for GraphQL
 registerEnumType(ExternalAccountProvider, {

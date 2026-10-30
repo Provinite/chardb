@@ -11,7 +11,7 @@ import { AuthGuard } from "@nestjs/passport";
 import { Request, Response } from "express";
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
-import { User } from "@prisma/client";
+import { User } from "@chardb/database";
 import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
 import { AllowAnyAuthenticated } from "./decorators/AllowAnyAuthenticated";
 import { CurrentUser } from "./decorators/CurrentUser";

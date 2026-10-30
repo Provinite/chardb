@@ -8,7 +8,7 @@ import {
   imageApprovedTemplate,
   imageRejectedTemplate,
 } from "./templates";
-import { ModerationRejectionReason } from "@prisma/client";
+import { ModerationRejectionReason } from "@chardb/database";
 
 @Injectable()
 export class EmailService {

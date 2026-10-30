@@ -11,7 +11,7 @@ import {
 } from "@nestjs/graphql";
 import { BadRequestException, ForbiddenException } from "@nestjs/common";
 import type { Request } from "express";
-import { TraitReviewSource } from "@prisma/client";
+import { TraitReviewSource } from "@chardb/database";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import {
   AuthenticatedCurrentUserType,

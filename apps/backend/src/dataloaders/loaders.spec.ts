@@ -1,4 +1,4 @@
-import type { EnumValue } from "@prisma/client";
+import type { EnumValue } from "@chardb/database";
 import { mockDatabaseService } from "../../test/setup";
 import { DatabaseService } from "../database/database.service";
 import { ENUM_VALUES_PER_TRAIT, Loaders } from "./loaders";

@@ -1,7 +1,7 @@
 import { ObjectType, Field, ID, Int } from "@nestjs/graphql";
 import { User } from "../../users/entities/user.entity";
 import { Tag } from "../../shared/entities/tag.entity";
-import { ModerationStatus } from "@prisma/client";
+import { ModerationStatus } from "@chardb/database";
 
 /**
  * Declared before `Image` on purpose. `emitDecoratorMetadata` writes the

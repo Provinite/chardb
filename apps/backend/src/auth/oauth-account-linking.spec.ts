@@ -1,6 +1,6 @@
 import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
-import { ExternalAccountProvider, User } from "@prisma/client";
+import { ExternalAccountProvider, User } from "@chardb/database";
 import type { Request, Response } from "express";
 import {
   DeviantArtOAuthController,

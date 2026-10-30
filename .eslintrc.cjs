@@ -14,7 +14,7 @@ module.exports = {
   root: true,
   parser: "@typescript-eslint/parser",
   parserOptions: { ecmaVersion: 2022, sourceType: "module" },
-  plugins: ["@typescript-eslint"],
+  plugins: ["@typescript-eslint", "import"],
   extends: [
     "eslint:recommended",
     "plugin:@typescript-eslint/recommended",
@@ -47,6 +47,23 @@ module.exports = {
         argsIgnorePattern: "^_",
         varsIgnorePattern: "^_",
         caughtErrorsIgnorePattern: "^_",
+      },
+    ],
+    // Yarn hoists every workspace's dependencies to the root node_modules, so
+    // an import of a package the workspace never declared still resolves and
+    // type-checks. Checked against the nearest package.json.
+    "import/no-extraneous-dependencies": [
+      "error",
+      {
+        devDependencies: [
+          "**/*.{test,spec}.{ts,tsx}",
+          "**/__tests__/**",
+          "**/setupTests.ts",
+          "**/*.config.{js,cjs,mjs,ts,mts}",
+          "apps/e2e/**",
+          "apps/backend/test/**",
+          "scripts/**",
+        ],
       },
     ],
   },

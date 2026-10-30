@@ -10,7 +10,7 @@ import {
   ItemTransactionKind,
   ItemTransactionSource,
   Prisma,
-} from "@prisma/client";
+} from "@chardb/database";
 import { ItemsService } from "../items/items.service";
 import {
   CharacterFormsService,

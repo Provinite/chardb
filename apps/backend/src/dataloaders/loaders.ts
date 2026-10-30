@@ -4,7 +4,7 @@ import type {
   MediaTag,
   PendingOwnership,
   Tag,
-} from "@prisma/client";
+} from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 
 /** Up to this many enum values per trait, as the trait field has always returned. */
