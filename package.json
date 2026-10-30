@@ -38,6 +38,7 @@
     "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,cjs,mjs,css,html}\""
   },
   "devDependencies": {
+    "@chardb/eslint-plugin-styles": "workspace:*",
     "@types/node": "^20.0.0",
     "@types/supertest": "^6.0.3",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
