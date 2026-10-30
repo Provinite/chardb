@@ -79,7 +79,7 @@ Durations and easings are tokens. Under `prefers-reduced-motion: reduce` the the
 
 ## Breakpoints
 
-Mobile-first. Base styles are the phone layout; conditions add layout as width grows. The narrowest supported width is 360px: nothing scrolls sideways there.
+Mobile-first. Base styles are the phone layout; conditions add layout as width grows. Design for 360px. At 320px nothing may scroll sideways either ([1.4.10 Reflow](https://www.w3.org/WAI/WCAG22/Understanding/reflow.html): 320px is a 1280px screen at 400% zoom). That is the same base layout, not another breakpoint; rows that wrap, no fixed widths and `min-width: 0` on flex children are usually all it takes. Data tables are exempt and may scroll inside their container.
 
 | Name | Query | At default font size |
 |---|---|---|
@@ -165,6 +165,42 @@ Keep the table on phones when:
 - **Hover-only information** needs another way in. Tooltips open on long-press on touch devices. Anything users need to act on is visible without hovering.
 - **Focus** uses the shared focus ring on `:focus-visible`. Never remove an outline without replacing it.
 
+## Accessibility
+
+The baseline is [WCAG 2.2](https://www.w3.org/TR/WCAG22/) level AA, plus the AAA criteria named here. These are the criteria styling decides.
+
+**Order**
+
+- [1.3.2 Meaningful Sequence](https://www.w3.org/WAI/WCAG22/Understanding/meaningful-sequence.html), [2.4.3 Focus Order](https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html): reading and tab order follow the source. Change layout by changing the source order, not with `order`, grid placement or `row-reverse`. A visual reorder is acceptable when the reading and tab order still make sense, such as moving a decorative image above a heading on phones. Leave a comment saying why it is safe.
+
+**Colour and contrast**
+
+- [1.4.3 Contrast (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html): text 4.5:1, large text 3:1.
+- [1.4.11 Non-text Contrast](https://www.w3.org/WAI/WCAG22/Understanding/non-text-contrast.html): 3:1 for input borders, focus rings, icons, checkbox and toggle states, chart lines. The contrast test covers these pairs as well as text.
+- [1.4.1 Use of Color](https://www.w3.org/WAI/WCAG22/Understanding/use-of-color.html): colour never carries meaning alone. A `status.*` colour always comes with an icon or text.
+
+**Text**
+
+- [1.4.4 Resize Text](https://www.w3.org/WAI/WCAG22/Understanding/resize-text.html), [1.4.12 Text Spacing](https://www.w3.org/WAI/WCAG22/Understanding/text-spacing.html): nothing breaks at 200% text, or when a user sets line height to 1.5, paragraph spacing to 2×, letter spacing to 0.12em and word spacing to 0.16em. No fixed heights on boxes that hold text; no `overflow: hidden` that cuts text off when it grows.
+
+**Focus**
+
+- [2.4.7 Focus Visible](https://www.w3.org/WAI/WCAG22/Understanding/focus-visible.html), [2.4.13 Focus Appearance](https://www.w3.org/WAI/WCAG22/Understanding/focus-appearance.html) (AAA): the focus ring is at least as large as a 2px outline around the control and changes contrast by at least 3:1. The focus ring token is built to this.
+- [2.4.11 Focus Not Obscured (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/focus-not-obscured-minimum.html): sticky headers, the drawer, toasts and pinned columns never fully hide the focused element. Set `scroll-padding-top` to the sticky header height; toasts sit clear of focus.
+
+**Pointer and touch**
+
+- [2.5.5](https://www.w3.org/WAI/WCAG22/Understanding/target-size-enhanced.html) and [2.5.8](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html) Target Size: see [Interaction](#interaction).
+- [2.5.7 Dragging Movements](https://www.w3.org/WAI/WCAG22/Understanding/dragging-movements.html): everything done by dragging has a single-tap alternative: move up/down buttons, arrow keys or a "move to" menu for sorting; a zoom slider and nudge controls for the cropper and the candy board.
+- [2.5.1 Pointer Gestures](https://www.w3.org/WAI/WCAG22/Understanding/pointer-gestures.html): pinch and multi-finger gestures have a single-pointer alternative.
+- [2.5.2 Pointer Cancellation](https://www.w3.org/WAI/WCAG22/Understanding/pointer-cancellation.html): actions fire on release. Use `click`, not `pointerdown` or `touchstart`.
+- [1.3.4 Orientation](https://www.w3.org/WAI/WCAG22/Understanding/orientation.html): never lock portrait or landscape.
+
+**Hover, popovers and motion**
+
+- [1.4.13 Content on Hover or Focus](https://www.w3.org/WAI/WCAG22/Understanding/content-on-hover-or-focus.html): tooltips and popovers close on Escape, stay open while the pointer moves onto them, and stay until dismissed or no longer relevant.
+- [2.3.3 Animation from Interactions](https://www.w3.org/WAI/WCAG22/Understanding/animation-from-interactions.html) (AAA): covered by motion tokens dropping to `0ms` under reduced motion.
+
 ## Banned
 
 Each is a lint error once #468 lands.
@@ -187,7 +223,8 @@ Each is a lint error once #468 lands.
 ## Done for a page
 
 - [ ] No styled-components left in the page or the components migrated with it
-- [ ] Usable at 360px with no sideways scroll; checked at `md` and `lg`
+- [ ] Designed at 360px; no sideways scroll at 320px; checked at `md` and `lg`
+- [ ] Every drag has a tap alternative
 - [ ] Every interactive element reachable and labelled by keyboard and touch
 - [ ] Both themes checked by eye
 - [ ] `yarn lint:changed` passes
