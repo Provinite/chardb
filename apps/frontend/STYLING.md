@@ -31,7 +31,7 @@ import * as styles from "./CharacterCard.css";
 
 ## Tokens
 
-Every colour, space, size, font family, font size, font weight, line height, radius, shadow, duration, easing and layer comes from the theme in `packages/ui/src/theme/`. A literal value in a `*.css.ts` file is a lint error (#468). Values that are not design decisions stay literal: `0`, percentages, `fr`, `auto`, keywords such as `none` or `inherit`, and unitless line heights.
+Every colour, space, size, border width, font family, font size, font weight, line height, radius, shadow, duration, easing and layer comes from the theme in `packages/ui/src/theme/`. A literal value in a `*.css.ts` file is a lint error (#468). Values that are not design decisions stay literal: `0`, percentages, `fr`, `auto`, keywords such as `none` or `inherit`, and unitless line heights.
 
 Tokens are CSS custom properties. Light and dark themes set the same properties, switched by `data-theme` on `<html>`, so a theme change re-renders nothing.
 
@@ -68,7 +68,7 @@ Every state or shade a component may use is its own token: `action.primary.bgHov
 Windows High Contrast and other forced-colour modes replace colours with system ones and remove `box-shadow`. Build so nothing disappears:
 
 - The focus ring is an `outline`, never a `box-shadow` alone.
-- Cards, inputs and other surfaces separated from their background only by colour also get a `1px solid transparent` border. Forced-colour mode draws it in a visible system colour.
+- Cards, inputs and other surfaces separated from their background only by colour also get a transparent border, `borderWidth.hairline` wide. Forced-colour mode draws it in a visible system colour.
 - Icons use `currentColor`.
 
 ### Layers
@@ -133,13 +133,18 @@ export const wrap = style({ containerName: panel, containerType: "inline-size" }
 
 export const body = style({
   display: "block",
-  "@container": cq(panel, "30rem", { display: "flex" }),
+  "@container": cq(panel, {
+    30: { display: "flex" },
+    48: { gap: vars.space.lg },
+  }),
 });
 ```
 
-- `cq()` is to `@container` what `mq()` is to `@media`: the only way to write the condition.
-- Thresholds belong to the component, chosen where its layout breaks, not borrowed from the viewport breakpoints.
-- Thresholds are in `rem`. An `em` in a container query is measured against the container's own font size, so it shifts when that text is resized. Leave the root font size at the browser default, so `rem` follows the user's setting.
+- `cq()` is to `@container` what `mq()` is to `@media`: the only way to write the condition. It takes every threshold for one container at once and returns the contents of the `@container` key, so a component with several thresholds still has one `@container` key.
+- `cq()` emits the thresholds smallest-first, whatever order they are written in. `postcss-sort-media-queries` sorts only `@media`, so container queries rely on the helper for their order.
+- A component that queries two containers merges them: `"@container": { ...cq(card, {...}), ...cq(page, {...}) }`.
+- Thresholds belong to the component, chosen where its layout breaks, not borrowed from the viewport breakpoints. They are local to the component, so they are not theme tokens.
+- Thresholds are numbers of `rem`; `cq()` adds the unit. Numbers keep lengths out of the source as strings, so the no-literal-length rule holds without an exemption, and `cq()` can only ever emit `rem`. An `em` in a container query is measured against the container's own font size, so it would shift when that text is resized. Leave the root font size at the browser default, so `rem` follows the user's setting.
 
 ## Layout
 
