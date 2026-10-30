@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Styling conventions** for the vanilla-extract migration in `apps/frontend/STYLING.md`, with agent rules in `apps/frontend/CLAUDE.md` (#427).
+- **Opt-in page-load measurements** in the e2e suite (`E2E_PERF=1`, `tests/perf/page-load.e2e.ts`), for comparing against the #427 baseline.
 
 ### Changed
 
