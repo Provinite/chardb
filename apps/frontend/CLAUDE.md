@@ -1,6 +1,6 @@
 # Frontend
 
-Read [STYLING.md](./STYLING.md) before writing or changing any styles. The rules below are the ones most often broken; STYLING.md has the reasons and the patterns.
+Before writing or changing any style or styled component, read [STYLING.md](./STYLING.md) in full. The rules below are a reminder of the ones most often broken, not a substitute for it.
 
 - No new styled-components. Styles go in an adjacent `Foo.css.ts` (vanilla-extract), imported as `import * as styles from "./Foo.css"`. Migrating a file converts all of it.
 - Every colour, length, radius, shadow, duration and `z-index` is a theme token. Colours are semantic (`text.muted`, `action.primary.bgHover`); use only the foreground/background pairs the theme lists.
