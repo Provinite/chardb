@@ -75,16 +75,16 @@ Windows High Contrast and other forced-colour modes replace colours with system 
 
 `z-index` comes from the layer scale only:
 
-| Token | Value | For |
+| Layer | `base` | For |
 |---|---|---|
-| `layer.base` | 0 | Normal flow |
+| `layer.page` | 0 | Normal flow |
 | `layer.sticky` | 1000 | Sticky headers, pinned table columns |
 | `layer.dropdown` | 2000 | Menus, popovers, typeahead lists |
 | `layer.overlay` | 3000 | Drawer backdrop, the navigation drawer |
 | `layer.modal` | 4000 | Dialogs |
 | `layer.toast` | 5000 | Toasts |
 
-Each layer has `.100`, `.200` and `.300` steps (`layer.modal.100` is 4100) for stacking inside one layer, such as a popover opened from a dialog. They are an escape hatch: leave a comment saying why.
+Each layer is a group: `layer.modal.base` is 4000, and `layer.modal[100]`, `layer.modal[200]` and `layer.modal[300]` are 4100, 4200 and 4300, for stacking inside one layer, such as a popover opened from a dialog. The steps are an escape hatch: leave a comment saying why. The gaps between them leave room for a new step without renaming the others.
 
 Elements opened with `<dialog>.showModal()` or the Popover API render in the browser's top layer, above every `z-index`. If dialogs use it, anything that must appear above an open dialog (a toast, a menu opened from inside it) must use the top layer too, or render inside the dialog.
 
