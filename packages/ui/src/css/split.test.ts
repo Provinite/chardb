@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { classSelector, declarationsFor } from "../test/emittedCss";
+import { rulesFor } from "../__tests__/emittedCss";
 import { split } from "./split.css";
 
 describe("split", () => {
@@ -9,15 +9,15 @@ describe("split", () => {
     ["1:2", "minmax(0, 1fr) minmax(0, 2fr)"],
     ["1:1:1", "minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr)"],
     ["3:1", "minmax(0, 3fr) minmax(0, 1fr)"],
-  ] as const)("%s is a grid in that ratio", (ratio, columns) => {
-    const css = declarationsFor(classSelector(split[ratio]));
-    expect(css).toContain("display: grid");
-    expect(css).toContain(`grid-template-columns: ${columns}`);
-  });
-
-  it("leaves the gap to the caller", () => {
-    const css = declarationsFor(classSelector(split["1:1"]));
-    expect(css).toContain("display: grid");
-    expect(css).not.toContain("gap");
-  });
+  ] as const)(
+    "%s is a grid in that ratio, with no gap of its own",
+    (ratio, columns) => {
+      expect(rulesFor(split[ratio])).toEqual([
+        expect.objectContaining({
+          conditions: [],
+          declarations: { display: "grid", "grid-template-columns": columns },
+        }),
+      ]);
+    },
+  );
 });

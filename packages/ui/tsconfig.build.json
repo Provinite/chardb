@@ -6,6 +6,6 @@
     "**/*.stories.*",
     "**/*.test.*",
     "**/__fixtures__/**",
-    "src/test/**"
+    "**/__tests__/**"
   ]
 }

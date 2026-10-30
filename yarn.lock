@@ -3287,6 +3287,7 @@ __metadata:
     jsdom: "npm:^26.1.0"
     lucide-react: "npm:^0.513.0"
     postcss: "npm:^8.5.32"
+    postcss-selector-parser: "npm:7.1.6"
     postcss-sort-media-queries: "npm:^6.7.1"
     react: "npm:^18.2.0"
     react-dom: "npm:^18.2.0"
@@ -3333,6 +3334,8 @@ __metadata:
     "@vanilla-extract/vite-plugin": "npm:^5.2.6"
     jsdom: "npm:^26.1.0"
     lucide-react: "npm:^0.513.0"
+    postcss: "npm:^8.5.32"
+    postcss-selector-parser: "npm:7.1.6"
     react: "npm:^18.0.0"
     react-dom: "npm:^18.0.0"
     styled-components: "npm:^6.0.0"
@@ -11962,6 +11965,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"cssesc@npm:^3.0.0":
+  version: 3.0.0
+  resolution: "cssesc@npm:3.0.0"
+  bin:
+    cssesc: bin/cssesc
+  checksum: 10c0/6bcfd898662671be15ae7827120472c5667afb3d7429f1f917737f3bf84c4176003228131b643ae74543f17a394446247df090c597bb9a728cce298606ed0aa7
+  languageName: node
+  linkType: hard
+
 "cssfilter@npm:0.0.10":
   version: 0.0.10
   resolution: "cssfilter@npm:0.0.10"
@@ -19888,6 +19900,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"postcss-selector-parser@npm:7.1.6":
+  version: 7.1.6
+  resolution: "postcss-selector-parser@npm:7.1.6"
+  dependencies:
+    cssesc: "npm:^3.0.0"
+    util-deprecate: "npm:^1.0.2"
+  checksum: 10c0/fc8279859896b96ef25b24d0289b2bfff7bce6647b247aa983939ff872e226663788d1ea57bddf9d1695119c071e5cdcb8b2a364ed4313502efe4b0319879154
+  languageName: node
+  linkType: hard
+
 "postcss-sort-media-queries@npm:^6.7.1":
   version: 6.7.1
   resolution: "postcss-sort-media-queries@npm:6.7.1"
@@ -23325,7 +23347,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"util-deprecate@npm:^1.0.1, util-deprecate@npm:~1.0.1":
+"util-deprecate@npm:^1.0.1, util-deprecate@npm:^1.0.2, util-deprecate@npm:~1.0.1":
   version: 1.0.2
   resolution: "util-deprecate@npm:1.0.2"
   checksum: 10c0/41a5bdd214df2f6c3ecf8622745e4a366c4adced864bc3c833739791aeeeb1838119af7daed4ba36428114b5c67dcda034a79c882e97e43c03e66a4dd7389942

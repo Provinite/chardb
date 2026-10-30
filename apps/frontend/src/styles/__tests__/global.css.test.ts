@@ -1,5 +1,6 @@
 import "@chardb/ui";
 import "../global.css";
+import { rulesForSelectors } from "../../__tests__/emittedCss";
 
 const html = document.documentElement;
 
@@ -11,11 +12,13 @@ describe("global styles", () => {
   // jsdom drops declarations that use var() from computed style, so this
   // reads the emitted stylesheet.
   it("paints html with the page surface token", () => {
-    const css = [...document.querySelectorAll("style")]
-      .map((style) => style.textContent)
-      .join("\n");
-    expect(css).toMatch(
-      /html\s*{[^}]*background-color:\s*var\(--surface-page\)/,
+    expect(rulesForSelectors("html")).toContainEqual(
+      expect.objectContaining({
+        conditions: [],
+        declarations: expect.objectContaining({
+          "background-color": "var(--surface-page)",
+        }),
+      }),
     );
   });
 

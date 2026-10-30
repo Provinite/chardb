@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { emittedCss } from "../test/emittedCss";
+import { rulesFor } from "../__tests__/emittedCss";
 import { body, panel } from "./__fixtures__/containers.css";
 import { cq } from "./container";
 
@@ -10,7 +10,7 @@ describe("cq", () => {
     });
   });
 
-  it("emits thresholds smallest-first whatever order they are written in", () => {
+  it("orders thresholds smallest-first whatever order they are written in", () => {
     const rules = cq("panel", {
       48: { gap: "1rem" },
       30.5: { display: "flex" },
@@ -22,15 +22,11 @@ describe("cq", () => {
       "panel (min-width: 48rem)",
     ]);
   });
-});
 
-describe("cq output", () => {
   it("emits container rules smallest-first in the stylesheet", () => {
-    const css = emittedCss();
-    const at30 = css.indexOf(`@container ${panel} (min-width: 30.5rem)`);
-    const at48 = css.indexOf(`@container ${panel} (min-width: 48rem)`);
-    expect(body).toBeTruthy();
-    expect(at30).toBeGreaterThan(-1);
-    expect(at30).toBeLessThan(at48);
+    expect(rulesFor(body).map((rule) => rule.conditions)).toEqual([
+      [`@container ${panel} (min-width: 30.5rem)`],
+      [`@container ${panel} (min-width: 48rem)`],
+    ]);
   });
 });

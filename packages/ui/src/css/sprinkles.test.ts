@@ -1,67 +1,90 @@
 import { describe, expect, it } from "vitest";
-import {
-  classSelector,
-  declarationsFor,
-  ruleContaining,
-  topLevelDeclarationsFor,
-} from "../test/emittedCss";
+import { rulesFor, type EmittedRule } from "../__tests__/emittedCss";
 import { vars } from "../theme/contract.css";
 import { flatten } from "../theme/paths";
 import { hoverQuery, mq } from "./media";
 import { sprinkles, type Sprinkles } from "./sprinkles.css";
 
-const classes = (className: string) => className.split(" ");
+/** The rules behind every class sprinkles returned, in class order. */
+const rulesOf = (className: string): EmittedRule[] =>
+  className.split(" ").flatMap(rulesFor);
+
+/** Conditions and declarations only; selectors carry generated class names. */
+const shape = ({ conditions, declarations }: EmittedRule) => ({
+  conditions,
+  declarations,
+});
 
 describe("sprinkles", () => {
   it("applies a plain value at every width", () => {
-    const [cls] = classes(sprinkles({ display: "flex" }));
-    expect(declarationsFor(classSelector(cls))).toContain("display: flex");
+    expect(rulesOf(sprinkles({ display: "flex" })).map(shape)).toEqual([
+      { conditions: [], declarations: { display: "flex" } },
+    ]);
   });
 
   it("applies a responsive value from its breakpoint up", () => {
-    const [base, md] = classes(
+    const rules = rulesOf(
       sprinkles({ flexDirection: { base: "column", md: "row" } }),
-    );
-    expect(declarationsFor(classSelector(base))).toContain(
-      "flex-direction: column",
-    );
-    expect(declarationsFor(classSelector(md), `@media ${mq("md")}`)).toContain(
-      "flex-direction: row",
+    ).map(shape);
+    expect(rules).toHaveLength(2);
+    expect(rules).toEqual(
+      expect.arrayContaining([
+        { conditions: [], declarations: { "flex-direction": "column" } },
+        {
+          conditions: [`@media ${mq("md")}`],
+          declarations: { "flex-direction": "row" },
+        },
+      ]),
     );
   });
 
   it("takes space tokens for gap and padding", () => {
-    const className = sprinkles({ gap: "md", padding: "lg" });
-    expect(classes(className)).toHaveLength(5);
-    expect(ruleContaining(className, "gap:")).toContain("gap: var(--space-md)");
-    for (const side of ["top", "bottom", "left", "right"]) {
-      expect(ruleContaining(className, `padding-${side}:`)).toContain(
-        `padding-${side}: var(--space-lg)`,
-      );
-    }
+    const rules = rulesOf(sprinkles({ gap: "md", padding: "lg" })).map(shape);
+    expect(rules).toHaveLength(5);
+    expect(rules).toEqual(
+      expect.arrayContaining([
+        { conditions: [], declarations: { gap: "var(--space-md)" } },
+        ...["top", "bottom", "left", "right"].map((side) => ({
+          conditions: [],
+          declarations: { [`padding-${side}`]: "var(--space-lg)" },
+        })),
+      ]),
+    );
   });
 
   it("applies hover colours only on devices that hover, and not when disabled", () => {
-    const [cls] = classes(
+    const rules = rulesOf(
       sprinkles({ backgroundColor: { hover: "surface.raised" } }),
     );
-    const selector = `${classSelector(cls)}:hover:not(:disabled)`;
-    expect(declarationsFor(selector, `@media ${hoverQuery}`)).toContain(
-      "background-color: var(--surface-raised)",
-    );
-    expect(topLevelDeclarationsFor(selector)).toBeUndefined();
+    expect(rules.map(shape)).toEqual([
+      {
+        conditions: [`@media ${hoverQuery}`],
+        declarations: { "background-color": "var(--surface-raised)" },
+      },
+    ]);
+    expect(rules[0].selector.endsWith(":hover:not(:disabled)")).toBe(true);
   });
 
   it("takes action backgrounds and borders", () => {
-    const className = sprinkles({
-      backgroundColor: "action.primary.bgHover",
-      borderColor: "action.danger.border",
-    });
-    expect(ruleContaining(className, "background-color:")).toContain(
-      "var(--action-primary-bgHover)",
-    );
-    expect(ruleContaining(className, "border-color:")).toContain(
-      "var(--action-danger-border)",
+    const rules = rulesOf(
+      sprinkles({
+        backgroundColor: "action.primary.bgHover",
+        borderColor: "action.danger.border",
+      }),
+    ).map(shape);
+    expect(rules).toEqual(
+      expect.arrayContaining([
+        {
+          conditions: [],
+          declarations: {
+            "background-color": "var(--action-primary-bgHover)",
+          },
+        },
+        {
+          conditions: [],
+          declarations: { "border-color": "var(--action-danger-border)" },
+        },
+      ]),
     );
   });
 
@@ -95,9 +118,8 @@ describe("sprinkles", () => {
   });
 
   it("takes semantic colour tokens by path", () => {
-    const [cls] = classes(sprinkles({ color: "text.muted" }));
-    expect(declarationsFor(classSelector(cls))).toContain(
-      "color: var(--text-muted)",
-    );
+    expect(rulesOf(sprinkles({ color: "text.muted" })).map(shape)).toEqual([
+      { conditions: [], declarations: { color: "var(--text-muted)" } },
+    ]);
   });
 });
