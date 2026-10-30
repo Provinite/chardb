@@ -35,6 +35,29 @@ Every colour, space, size, border width, font family, font size, font weight, li
 
 Tokens are CSS custom properties. Light and dark themes set the same properties, switched by `data-theme` on `<html>`, so a theme change re-renders nothing.
 
+```ts
+import { vars } from "@chardb/ui/theme";
+
+export const card = style({
+  background: vars.surface.raised,
+  padding: vars.space.md,
+  borderRadius: vars.radius.md,
+});
+```
+
+`vars` has one key per family: `surface`, `text`, `border`, `action`, `status`, `space`, `size`, `borderWidth`, `font` (`family`, `size`, `weight`, `lineHeight`), `radius`, `shadow`, `layer`, `motion` and `timing`. Each property is named after its path, so `vars.action.primary.bgHover` is `--action-primary-bgHover` in devtools.
+
+`*.css.ts` files import from `@chardb/ui/theme`, never `@chardb/ui`. The style compiler runs each file's imports at build time, and the root entry would pull in every component.
+
+| File in `packages/ui/src/theme/` | Holds |
+|---|---|
+| `palette.ts` | Raw colours |
+| `tokens.ts` | Token values for each theme, and the reduced-motion durations |
+| `contract.css.ts` | `vars` |
+| `theme.css.ts` | Assigns the values to `:root` and each `data-theme` |
+| `pairs.ts` | Colour pairs and their floors |
+| `legacy.ts` | `lightTheme` and `darkTheme` for styled-components, read from the same palette |
+
 ### Dark mode
 
 The chosen theme is respected at every moment, for everyone: no frame of the page ever paints in the other theme.
@@ -59,15 +82,15 @@ Semantic families:
 
 | Family | For |
 |---|---|
-| `surface.*` | Backgrounds of the page, cards, raised and sunken panels, overlays |
-| `text.*` | Text and icons: default, muted, inverse, link |
-| `border.*` | Dividers, input outlines, focus rings |
-| `action.*` | Interactive controls: primary, secondary and danger, each with `bg`, `fg`, `border` and state variants |
-| `status.*` | Success, warning, danger and info messages, each with `bg`, `fg` and `border` |
+| `surface.*` | Backgrounds: `page`, `raised`, `sunken`, and `overlay` for scrims |
+| `text.*` | Text and icons: `default`, `muted`, `subtle`, `link`, `linkHover`, and `inverse` for text on a filled status colour |
+| `border.*` | `default` for dividers, `input` for input outlines, `focus` for focus rings |
+| `action.*` | Interactive controls: `primary`, `secondary` and `danger`, each with `bg`, `bgHover`, `bgPressed`, `bgSubtle`, `bgDisabled`, `fg`, `fgDisabled` and `border` |
+| `status.*` | `success`, `warning`, `danger` and `info` messages, each with `bg`, `bgSubtle`, `fg` and `border` |
 
 Every state or shade a component may use is its own token: `action.primary.bgHover`, `action.primary.bgPressed`, `action.primary.bgDisabled`, `status.danger.bgSubtle`. Components never lighten, darken, mix or add alpha themselves. If a shade you need is missing, add a token.
 
-**Pairs.** The theme lists which foregrounds may sit on which backgrounds, and what each pair is for: body text, large text, or non-text (icons, borders, focus rings). `text.default` on `surface.raised` for body text is a pair; `text.muted` on `action.primary.bg` is not, unless the list says so. Use only listed pairs, and only for the use they are listed for. A pair listed for large text is not a body text pair.
+**Pairs.** The theme (`pairs.ts`) lists which foregrounds may sit on which backgrounds, and what each pair is for: body text, large text, or non-text (icons, borders, focus rings). `text.default` on `surface.raised` for body text is a pair; `text.muted` on `action.primary.bg` is not, unless the list says so. Use only listed pairs, and only for the use they are listed for. A pair listed for large text is not a body text pair.
 
 **Contrast.** A unit test checks every listed pair in both themes against its use: 4.5:1 for body text, 3:1 for large text and non-text. The formula is the default, not the final word; a person looking at the pair decides borderline cases, in either direction. When a pair is approved despite failing the formula, record the approved ratio on the pair as its floor, with a one-line comment saying why, so nobody reopens it. The test then holds that pair to its floor instead of the standard threshold: a later palette change that pushes it lower still fails.
 
@@ -106,7 +129,7 @@ Durations and easings are tokens, for transitions and animations only. A literal
   - **Essential** loops that show something is happening (a loading spinner) use `motion.duration.essential`, which reduced motion slows but never stops, so the spinner never looks frozen.
 
   `infinite` outside `loop()` is a lint error.
-- **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token.
+- **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token. `vars.timing.*` is for CSS such as `animation-delay`; JavaScript timers read the same values in milliseconds from `timingMs`.
 - **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, call `scrollIntoView` and `scrollTo` through the shared helper, which picks `smooth` or `instant` from the preference.
 
 ## Breakpoints
