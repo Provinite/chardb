@@ -26,8 +26,7 @@ import * as styles from "./CharacterCard.css";
 <article className={styles.card}>
 ```
 
-- Add no new styled-components (`no-styled-components`). Files that still use it are listed in `apps/frontend/styled-components-allowlist.json`; a migrated file comes off the list in the same change. When you migrate a file, convert all of it; a file is either styled-components or vanilla-extract. The exception is foundation work before the page batches (#427, phases 1 to 3), which may convert one wrapper in a file to prove a primitive or component in place.
-- `style={{}}` is for values only known at runtime (a crop offset, a user-picked colour). Pass them as CSS variables with `assignInlineVars` so the stylesheet still owns the declaration.
+- Add no new styled-components (`no-styled-components`). Files that still use it are listed in `apps/frontend/styled-components-allowlist.json`; a migrated file comes off the list in the same change. When you migrate a file, convert all of it; a file is either styled-components or vanilla-extract.- `style={{}}` is for values only known at runtime (a crop offset, a user-picked colour). Pass them as CSS variables with `assignInlineVars` so the stylesheet still owns the declaration.
 
 ## Tokens
 
