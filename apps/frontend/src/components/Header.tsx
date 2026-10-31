@@ -5,7 +5,6 @@ import { Cluster } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { apexUrl } from "../lib/communityHost";
 import { AccountMenu } from "./AccountMenu";
 import { HostAwareLink } from "./HostAwareLink";
 import { ThemeToggle } from "./ThemeToggle";
@@ -32,18 +31,12 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(function Header(
     navigate("/");
   };
 
-  // In a community you belong to, your profile is the one this community
-  // shows: your role and holdings here, on this host. Anywhere else it is the
-  // site-wide profile on the apex.
-  const isMemberHere =
-    communitySlug !== null &&
-    (user?.communityMemberships?.nodes ?? []).some(
-      (m) => m.role.community?.slug === communitySlug,
-    );
+  // Your profile on the host you are on: a community host shows you as a
+  // member of it, the apex shows the site-wide profile.
   const profileTo = user
-    ? isMemberHere
+    ? communitySlug
       ? `/members/${user.username}`
-      : apexUrl(`/user/${user.username}`)
+      : `/user/${user.username}`
     : "";
 
   return (
