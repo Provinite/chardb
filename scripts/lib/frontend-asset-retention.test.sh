@@ -72,6 +72,38 @@ expect_output "refuses to judge anything stale against an empty keep list" \
 stale_assets "$KEEP_FILE" < /dev/null 2>/dev/null
 expect_output "and fails when asked to" "1" "$?"
 
+echo "require_retention_tools"
+
+# A PATH holding only the named tools, linked from the real ones.
+TOOLS_DIR=$(mktemp -d)
+trap 'rm -f "$KEEP_FILE"; rm -rf "$TOOLS_DIR"' EXIT
+only_tools() {
+    rm -f "$TOOLS_DIR"/*
+    local tool
+    for tool in "$@"; do ln -s "$(command -v "$tool")" "$TOOLS_DIR/$tool"; done
+}
+
+only_tools jq head
+PATH="$TOOLS_DIR" require_retention_tools > /dev/null 2>&1
+expect_output "passes with jq and GNU head" "0" "$?"
+
+only_tools head
+expect_output "names jq when it is missing" \
+    "❌ jq is required to prune old frontend assets" \
+    "$(PATH="$TOOLS_DIR" require_retention_tools 2>&1)"
+
+only_tools jq
+expect_output "names head when it is missing" \
+    "❌ GNU head is required to prune old frontend assets" \
+    "$(PATH="$TOOLS_DIR" require_retention_tools 2>&1)"
+
+# BSD head, as on macOS, rejects a negative line count.
+printf '#!/bin/sh\necho "head: illegal line count -- -1" >&2\nexit 1\n' > "$TOOLS_DIR/head"
+chmod +x "$TOOLS_DIR/head"
+expect_output "names head when it is not GNU head" \
+    "❌ GNU head is required to prune old frontend assets" \
+    "$(PATH="$TOOLS_DIR" require_retention_tools 2>&1)"
+
 echo
 if [ "$FAILURES" -gt 0 ]; then
     echo "$FAILURES failure(s)"

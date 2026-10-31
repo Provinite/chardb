@@ -34,10 +34,18 @@ if ! aws sts get-caller-identity &> /dev/null; then
     exit 1
 fi
 
-# Get terraform outputs for frontend infrastructure
-echo "📋 Getting terraform outputs..."
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
+
+# Production prunes old assets at the end; check for its tools before
+# uploading anything.
+source "$SCRIPT_DIR/lib/frontend-asset-retention.sh"
+if [ "$ENVIRONMENT" = "prod" ]; then
+    require_retention_tools
+fi
+
+# Get terraform outputs for frontend infrastructure
+echo "📋 Getting terraform outputs..."
 
 cd "$PROJECT_ROOT/infra/environments/$ENVIRONMENT"
 
@@ -82,7 +90,6 @@ echo "📤 Uploading hashed assets to S3..."
 aws s3 sync apps/frontend/dist/assets/ s3://$BUCKET_NAME/assets/ \
     --cache-control "public, max-age=31536000, immutable"
 
-source "$SCRIPT_DIR/lib/frontend-asset-retention.sh"
 if [ "$ENVIRONMENT" = "prod" ]; then
     echo "📝 Recording this build's assets..."
     record_frontend_assets "$BUCKET_NAME" apps/frontend/dist

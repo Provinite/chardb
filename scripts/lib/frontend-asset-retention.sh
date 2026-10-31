@@ -17,6 +17,25 @@
 
 FRONTEND_MANIFEST_PREFIX="deploys/"
 
+# Fails unless the tools pruning needs are here: bash 4 for `mapfile`, jq, and
+# GNU head for `head -n -N` (macOS ships bash 3 and BSD head). Call it before
+# the deploy uploads anything, so a missing tool stops the deploy rather than
+# leaving it half done.
+require_retention_tools() {
+    if [ "${BASH_VERSINFO[0]}" -lt 4 ]; then
+        echo "❌ bash 4 or later is required to prune old frontend assets" >&2
+        return 1
+    fi
+    if ! command -v jq > /dev/null 2>&1; then
+        echo "❌ jq is required to prune old frontend assets" >&2
+        return 1
+    fi
+    if [ "$(printf 'a\nb\n' | head -n -1 2> /dev/null)" != "a" ]; then
+        echo "❌ GNU head is required to prune old frontend assets" >&2
+        return 1
+    fi
+}
+
 # Reads manifest keys on stdin; prints every one but the newest $1. Keys are
 # UTC timestamps, so name order is age order.
 stale_manifests() {
