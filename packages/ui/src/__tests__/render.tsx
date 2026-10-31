@@ -17,12 +17,22 @@ afterEach(() => {
   }
 });
 
-/** Renders into a container in the body and returns that container. */
-export const render = (ui: ReactElement) => {
+/**
+ * Renders into a container in the body, and returns the container and a way
+ * to render something else into the same root. Unmounted after each test,
+ * whether or not it passed.
+ */
+export const mount = (ui: ReactElement) => {
   const container = document.createElement("div");
   document.body.append(container);
   const root = createRoot(container);
-  act(() => root.render(ui));
   mounted.push({ root, container });
-  return container;
+  act(() => root.render(ui));
+  return {
+    container,
+    rerender: (next: ReactElement) => act(() => root.render(next)),
+  };
 };
+
+/** Renders into a container in the body and returns that container. */
+export const render = (ui: ReactElement) => mount(ui).container;
