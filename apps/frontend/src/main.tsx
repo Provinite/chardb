@@ -6,6 +6,7 @@ import "@mantine/core/styles.css";
 import "@mantine/spotlight/styles.css";
 
 import { client } from "./lib/apollo";
+import { reloadOnStaleChunk } from "./lib/chunkReload";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import { AuthProvider } from "./contexts/AuthContext";
 import { CommunityHostProvider } from "./contexts/CommunityHostContext";
@@ -15,6 +16,8 @@ import { TransitionRouter } from "./routes/TransitionRouter";
 import { SpotlightNavigation } from "./components/spotlight/SpotlightNavigation";
 import "./index.css";
 import "./styles/global.css";
+
+reloadOnStaleChunk();
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
