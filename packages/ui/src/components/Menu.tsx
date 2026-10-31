@@ -6,7 +6,6 @@ import React, {
   useContext,
   useEffect,
   useId,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -14,6 +13,7 @@ import React, {
 import { createPortal } from "react-dom";
 import styled, { css } from "styled-components";
 import { vars } from "../theme/contract.css";
+import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
 
 /**
  * Menu - a "⋯" button that opens a short list of actions.
@@ -224,8 +224,6 @@ export const Menu: React.FC<MenuProps> = ({
   appearance = "outlined",
 }) => {
   const [open, setOpen] = useState(false);
-  const [position, setPosition] = useState({ top: 0, left: 0 });
-  const positionRef = useRef(position);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listId = useId();
@@ -244,32 +242,13 @@ export const Menu: React.FC<MenuProps> = ({
   // near the left edge would otherwise push the list off it. Opens upward
   // when it would run off the bottom of the viewport -- a button at the foot
   // of the screen is common, and a list below the fold cannot be reached.
-  const place = useCallback(() => {
-    if (!triggerRef.current) return;
-    const rect = triggerRef.current.getBoundingClientRect();
-    const height = listRef.current?.offsetHeight ?? 0;
-    const width = listRef.current?.offsetWidth ?? 0;
-    const below = rect.bottom + GAP_PX;
-    const above = rect.top - GAP_PX - height;
-    const fitsBelow = below + height <= window.innerHeight - GAP_PX;
-    const top = fitsBelow || above < GAP_PX ? below : above;
-    const left = Math.max(
-      GAP_PX,
-      Math.min(rect.right - width, window.innerWidth - width - GAP_PX),
-    );
-    // Scroll fires this many times a second; an unchanged position must not
-    // re-render the list. Compared against a ref, not inside the updater:
-    // React can still render once for an updater that returns the old state.
-    const prev = positionRef.current;
-    if (prev.top === top && prev.left === left) return;
-    positionRef.current = { top, left };
-    setPosition(positionRef.current);
-  }, []);
-
-  // Before paint, so the list never flashes in the wrong place.
-  useLayoutEffect(() => {
-    if (open) place();
-  }, [open, place]);
+  // Follows the button when the page scrolls rather than closing.
+  const position = useAnchoredPosition(triggerRef, listRef, open, {
+    side: "bottom",
+    align: "end",
+    gap: GAP_PX,
+    margin: GAP_PX,
+  });
 
   // preventScroll: the list is fixed, and scrolling the page to reach it
   // would only move the button away.
@@ -288,18 +267,11 @@ export const Menu: React.FC<MenuProps> = ({
         close(false);
       }
     };
-    // The list is fixed, so it follows the button when the page moves.
-    // Closing instead loses it to scrolls nobody made: scroll anchoring fires
-    // one when an image above the button finishes loading.
     document.addEventListener("mousedown", onPointerDown);
-    window.addEventListener("scroll", place, true);
-    window.addEventListener("resize", place);
     return () => {
       document.removeEventListener("mousedown", onPointerDown);
-      window.removeEventListener("scroll", place, true);
-      window.removeEventListener("resize", place);
     };
-  }, [open, close, place]);
+  }, [open, close]);
 
   const context = useMemo(
     () => ({ close: () => close(true), dismiss: () => close(false) }),
@@ -372,7 +344,7 @@ export const Menu: React.FC<MenuProps> = ({
               id={listId}
               role="menu"
               aria-label={label}
-              style={{ top: position.top, left: position.left }}
+              style={{ top: position?.top ?? 0, left: position?.left ?? 0 }}
               onKeyDown={onListKeyDown}
             >
               {children}
