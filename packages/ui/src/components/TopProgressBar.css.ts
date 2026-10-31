@@ -9,9 +9,10 @@ export const bar = style({
   insetBlockStart: "env(safe-area-inset-top, 0)",
   insetInline: 0,
   overflow: "hidden",
-  // Above the navigation drawer, which stays open until the next page renders
-  // and closes it.
-  zIndex: vars.layer.overlay[100],
+  // Above the page and nothing else: following a link closes the drawer and
+  // any menu it was in, so nothing above the page is open while the next one
+  // loads.
+  zIndex: vars.layer.sticky.base,
   pointerEvents: "none",
 });
 

@@ -1,8 +1,7 @@
-import { act, createRef } from "react";
-import { createRoot } from "react-dom/client";
+import { createRef } from "react";
 import { describe, expect, it } from "vitest";
 import { declarationsOf } from "../__tests__/emittedCss";
-import { render } from "../__tests__/render";
+import { mount, render } from "../__tests__/render";
 import { vars } from "../theme/contract.css";
 import { visuallyHidden } from "../styles/visuallyHidden.css";
 import { TopProgressBar } from "./TopProgressBar";
@@ -37,13 +36,13 @@ describe("TopProgressBar", () => {
     expect(bar.classList.contains("extra")).toBe(true);
   });
 
-  it("floats along the top of the viewport, clear of the safe area, above the navigation drawer", () => {
+  it("floats along the top of the viewport, clear of the safe area, above the page", () => {
     const bar = barIn(render(<TopProgressBar active label="Loading" />))!;
     expect(declarationsOf(bar)).toMatchObject({
       position: "fixed",
       "inset-block-start": "env(safe-area-inset-top, 0)",
       "inset-inline": "0",
-      "z-index": vars.layer.overlay[100],
+      "z-index": vars.layer.sticky.base,
       "pointer-events": "none",
     });
   });
@@ -68,27 +67,48 @@ describe("TopProgressBar", () => {
       expect(status.classList.contains(visuallyHidden)).toBe(true);
     });
 
-    // A live region announces a change to its text. The region stays mounted,
-    // so its text changes exactly once each time the bar appears.
-    it("puts the label in that region once when the bar appears", () => {
-      const container = document.createElement("div");
-      document.body.append(container);
-      const root = createRoot(container);
-      const show = (active: boolean) =>
-        act(() =>
-          root.render(<TopProgressBar active={active} label="Loading page" />),
-        );
-
-      show(false);
+    // A live region announces each change to its text, so the count of
+    // changes is the count of announcements. One region for the component's
+    // whole life: a region that mounts holding text is often not read.
+    it("announces the label exactly once each time the bar appears", () => {
+      const bar = (active: boolean, className?: string) => (
+        <TopProgressBar
+          active={active}
+          label="Loading page"
+          className={className}
+        />
+      );
+      const { container, rerender } = mount(bar(false));
       const status = statusIn(container)!;
-      show(true);
-      expect(statusIn(container)).toBe(status);
+      const observer = new MutationObserver(() => {});
+      observer.observe(status, {
+        childList: true,
+        characterData: true,
+        subtree: true,
+      });
+      /** How many times the region changed since the last call. */
+      const changes = () => observer.takeRecords().length;
+
+      rerender(bar(true));
+      expect(changes()).toBe(1);
       expect(status.textContent).toBe("Loading page");
-      show(false);
+
+      // Rendering again while the bar shows says nothing more.
+      rerender(bar(true, "restyled"));
+      expect(changes()).toBe(0);
+
+      // Hiding empties the region, which is not read out.
+      rerender(bar(false));
+      expect(changes()).toBe(1);
       expect(status.textContent).toBe("");
 
-      act(() => root.unmount());
-      container.remove();
+      // The next navigation is announced again, from the same region.
+      rerender(bar(true));
+      expect(changes()).toBe(1);
+      expect(status.textContent).toBe("Loading page");
+      expect(statusIn(container)).toBe(status);
+
+      observer.disconnect();
     });
   });
 });
