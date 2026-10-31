@@ -4,15 +4,18 @@ import { sprinkles, type Sprinkles } from "../css/sprinkles.css";
 import { cx, type LayoutProps } from "./element";
 import * as styles from "./Sidebar.css";
 
-export interface SidebarRootProps extends LayoutProps {
+export type SidebarRootProps = LayoutProps & {
   /** Below this container width the panes stack, in source order. */
   stackBelow: ContainerSize;
   gap?: Sprinkles["gap"];
-}
+};
 
 /**
- * Holds `Sidebar.Main` and `Sidebar.Side`. Renders a container `div` around
- * the layout; `as`, `ref`, `className` and other props go on the layout.
+ * Holds `Sidebar.Main` and `Sidebar.Side`.
+ *
+ * Renders a container `div` around the layout. The container is sized as if
+ * it were empty, so it takes its width from its parent; `className` goes on
+ * it, to place it there. `as`, `ref` and other props go on the layout.
  */
 export const SidebarRoot = forwardRef<HTMLElement, SidebarRootProps>(
   function SidebarRoot(
@@ -20,7 +23,7 @@ export const SidebarRoot = forwardRef<HTMLElement, SidebarRootProps>(
     ref,
   ) {
     return (
-      <div className={styles.wrapper}>
+      <div className={cx(styles.wrapper, className)}>
         {createElement(as, {
           ...rest,
           ref,
@@ -28,7 +31,6 @@ export const SidebarRoot = forwardRef<HTMLElement, SidebarRootProps>(
             styles.layout,
             styles.stackBelow[stackBelow],
             sprinkles({ gap }),
-            className,
           ),
         })}
       </div>
@@ -47,10 +49,10 @@ export const SidebarMain = forwardRef<HTMLElement, LayoutProps>(
   },
 );
 
-export interface SidebarSideProps extends LayoutProps {
+export type SidebarSideProps = LayoutProps & {
   /** The side pane's width when side by side, as a `size.column` token. */
   width: keyof typeof styles.sideWidths;
-}
+};
 
 /** The fixed-width pane. Full width once the panes stack. */
 export const SidebarSide = forwardRef<HTMLElement, SidebarSideProps>(

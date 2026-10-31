@@ -26,7 +26,8 @@ import * as styles from "./CharacterCard.css";
 <article className={styles.card}>
 ```
 
-- Add no new styled-components (`no-styled-components`). Files that still use it are listed in `apps/frontend/styled-components-allowlist.json`; a migrated file comes off the list in the same change. When you migrate a file, convert all of it; a file is either styled-components or vanilla-extract.- `style={{}}` is for values only known at runtime (a crop offset, a user-picked colour). Pass them as CSS variables with `assignInlineVars` so the stylesheet still owns the declaration.
+- Add no new styled-components (`no-styled-components`). Files that still use it are listed in `apps/frontend/styled-components-allowlist.json`; a migrated file comes off the list in the same change. When you migrate a file, convert all of it; a file is either styled-components or vanilla-extract.
+- `style={{}}` is for values only known at runtime (a crop offset, a user-picked colour). Pass them as CSS variables with `assignInlineVars` so the stylesheet still owns the declaration.
 
 ## Tokens
 
@@ -219,9 +220,9 @@ Layout primitives in `@chardb/ui` own the flex and grid patterns the app repeats
 </Sidebar.Root>
 ```
 
-- Every primitive takes `as` (`div`, `section`, `article`, `aside`, `nav`, `header`, `footer`, `main`, `form`, `fieldset`, `ul`, `ol` or `li`) and forwards `ref` and `className`.
+- Every primitive takes `as` (`div`, `section`, `article`, `aside`, `nav`, `header`, `footer`, `main`, `form`, `fieldset`, `ul`, `ol` or `li`), with that element's own attributes (`as="form"` takes `noValidate`), and forwards `ref` and `className`.
 - `gap`, `align` and `justify` are sprinkles values, so they take one per breakpoint: `gap={{ base: "sm", md: "lg" }}`. The primitive owns them; a `className` passed in sets neither gap nor alignment.
-- `Switcher` and `Sidebar.Root` render a container `div` around their layout element, which holds `as`, `ref`, `className` and other props.
+- `Switcher` and `Sidebar.Root` render a container `div` around their layout element. The container is sized as if it were empty, so it takes its width from its parent: in a flex row, a centred `Stack` or an `auto` grid track it collapses unless placed. `className` goes on the container, to place it (`flex: 1`, a grid area); `as`, `ref` and other props go on the layout element.
 - `Grid` clamps its minimum to the grid's width, so one column never overflows a grid narrower than `min`. `fill` keeps empty columns, so a short last row stays at one item width.
 - `Sidebar` is a layout inside a page. The app's navigation sidebar is a separate component.
 

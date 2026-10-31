@@ -3,7 +3,7 @@ import { sprinkles, type Sprinkles } from "../css/sprinkles.css";
 import { cx, type LayoutProps } from "./element";
 import { grid, type GridVariants } from "./Grid.css";
 
-export interface GridProps extends LayoutProps {
+export type GridProps = LayoutProps & {
   /** The narrowest a column gets, as a `size.column` token. */
   min: NonNullable<GridVariants["min"]>;
   /**
@@ -12,7 +12,7 @@ export interface GridProps extends LayoutProps {
    */
   repeat?: GridVariants["repeat"];
   gap?: Sprinkles["gap"];
-}
+};
 
 /** As many columns as the width allows, each at least `min` wide. */
 export const Grid = forwardRef<HTMLElement, GridProps>(function Grid(

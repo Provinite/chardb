@@ -2,12 +2,12 @@ import { createElement, forwardRef } from "react";
 import { sprinkles, type Sprinkles } from "../css/sprinkles.css";
 import { cx, type LayoutProps } from "./element";
 
-export interface ClusterProps extends LayoutProps {
+export type ClusterProps = LayoutProps & {
   /** Space between children, across and between rows. */
   gap?: Sprinkles["gap"];
   align?: Sprinkles["alignItems"];
   justify?: Sprinkles["justifyContent"];
-}
+};
 
 /** Children in a row that wraps when it runs out of width: toolbars, tags, action bars. */
 export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(

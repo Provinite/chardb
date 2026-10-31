@@ -1,4 +1,4 @@
-import type { HTMLAttributes } from "react";
+import type { ComponentPropsWithoutRef } from "react";
 
 /** The elements a layout primitive may render as. */
 export type LayoutElement =
@@ -16,10 +16,17 @@ export type LayoutElement =
   | "ol"
   | "li";
 
-export interface LayoutProps extends HTMLAttributes<HTMLElement> {
-  /** The element to render. Defaults to `div`. */
-  as?: LayoutElement;
-}
+type OtherElement = Exclude<LayoutElement, "div">;
+
+/**
+ * The element to render, with that element's own attributes: `as="form"`
+ * takes `noValidate`, `as="ol"` takes `start`. Without `as` it is a `div`.
+ */
+export type LayoutProps =
+  | ({ as?: "div" } & ComponentPropsWithoutRef<"div">)
+  | {
+      [E in OtherElement]: { as: E } & ComponentPropsWithoutRef<E>;
+    }[OtherElement];
 
 /** Joins class names, skipping empty ones. */
 export const cx = (...names: (string | undefined)[]) =>

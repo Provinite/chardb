@@ -37,4 +37,18 @@ describe("Stack", () => {
     expect(stack.classList).toContain("extra");
     expect(stack.getAttribute("data-testid")).toBe("list");
   });
+
+  it("takes the attributes of the element named by `as`", () => {
+    const form = render(<Stack as="form" noValidate />).firstElementChild!;
+    expect(form.hasAttribute("novalidate")).toBe(true);
+    const list = render(<Stack as="ol" start={3} />).firstElementChild!;
+    expect(list.getAttribute("start")).toBe("3");
+  });
+
+  it("rejects another element's attributes", () => {
+    // @ts-expect-error noValidate belongs to forms, and this Stack is a div.
+    render(<Stack noValidate />);
+    // @ts-expect-error start belongs to ordered lists.
+    render(<Stack as="ul" start={3} />);
+  });
 });

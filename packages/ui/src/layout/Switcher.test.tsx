@@ -58,13 +58,21 @@ describe("Switcher", () => {
     );
   });
 
-  it("puts `as`, ref and className on the row", () => {
+  it("puts `as`, ref and the element's own props on the row", () => {
     const ref = createRef<HTMLElement>();
     const row = render(
-      <Switcher stackBelow="md" as="fieldset" ref={ref} className="extra" />,
+      <Switcher stackBelow="md" as="fieldset" ref={ref} disabled />,
     ).firstElementChild!.firstElementChild!;
     expect(row.tagName).toBe("FIELDSET");
     expect(ref.current).toBe(row);
-    expect(row.classList).toContain("extra");
+    expect(row.hasAttribute("disabled")).toBe(true);
+  });
+
+  it("puts className on the container, which places it in its parent", () => {
+    const wrapper = render(
+      <Switcher stackBelow="md" className="extra" />,
+    ).firstElementChild!;
+    expect(wrapper.classList).toContain("extra");
+    expect(wrapper.firstElementChild!.classList).not.toContain("extra");
   });
 });

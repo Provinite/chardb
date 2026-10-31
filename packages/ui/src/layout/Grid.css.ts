@@ -1,5 +1,6 @@
 import { createVar } from "@vanilla-extract/css";
 import { recipe, type RecipeVariants } from "@vanilla-extract/recipes";
+import { track } from "../css/track";
 import { vars } from "../theme/contract.css";
 
 export const minTrack = createVar();
@@ -16,7 +17,7 @@ export const grid = recipe({
   base: {
     display: "grid",
     // min() keeps a track from overflowing a grid narrower than the minimum.
-    gridTemplateColumns: `repeat(${repeatMode}, minmax(min(${minTrack}, 100%), 1fr))`,
+    gridTemplateColumns: `repeat(${repeatMode}, ${track.fr(1, `min(${minTrack}, 100%)`)})`,
   },
   variants: {
     min: columnSizes,

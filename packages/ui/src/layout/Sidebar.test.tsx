@@ -88,19 +88,21 @@ describe("Sidebar", () => {
     expect(side.tagName).toBe("ASIDE");
   });
 
-  it("puts ref and className on each part's own element", () => {
+  it("puts the root's ref on the layout and its className on the container", () => {
     const rootRef = createRef<HTMLElement>();
     const sideRef = createRef<HTMLElement>();
-    const layout = render(
+    const wrapper = render(
       <Sidebar.Root stackBelow="md" ref={rootRef} className="root">
         <Sidebar.Main>main</Sidebar.Main>
         <Sidebar.Side width="md" ref={sideRef} className="side">
           side
         </Sidebar.Side>
       </Sidebar.Root>,
-    ).firstElementChild!.firstElementChild!;
+    ).firstElementChild!;
+    const layout = wrapper.firstElementChild!;
     expect(rootRef.current).toBe(layout);
-    expect(layout.classList).toContain("root");
+    expect(wrapper.classList).toContain("root");
+    expect(layout.classList).not.toContain("root");
     expect(sideRef.current).toBe(layout.children[1]);
     expect(layout.children[1].classList).toContain("side");
   });

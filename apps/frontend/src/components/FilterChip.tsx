@@ -3,8 +3,10 @@ import styled, { css } from "styled-components";
 import { Cluster, type ClusterProps } from "@chardb/ui";
 
 /** A row of filter chips. */
-export const FilterChips: React.FC<ClusterProps> = (props) => (
-  <Cluster gap="sm" {...props} />
+export const FilterChips = React.forwardRef<HTMLElement, ClusterProps>(
+  function FilterChips(props, ref) {
+    return <Cluster gap="sm" align="stretch" {...props} ref={ref} />;
+  },
 );
 
 const Chip = styled.button<{ $active: boolean }>`
