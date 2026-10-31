@@ -3,10 +3,11 @@ import react from "@vitejs/plugin-react";
 import { vanillaExtractPlugin } from "@vanilla-extract/vite-plugin";
 import { fileURLToPath } from "node:url";
 import { workspaceAliases } from "./workspaceAliases.mjs";
+import { chunkBudget } from "./chunkBudget.mjs";
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), vanillaExtractPlugin()],
+  plugins: [react(), vanillaExtractPlugin(), chunkBudget()],
   build: {
     rolldownOptions: {
       output: {
