@@ -246,7 +246,7 @@ export const PopoverPanel = forwardRef<HTMLDivElement, PopoverPanelProps>(
           if (!e.defaultPrevented) onTab(e);
         }}
       >
-        {children}
+        <div className={styles.body}>{children}</div>
         <span data-popover-arrow="" aria-hidden className={styles.arrow} />
       </div>,
       document.body,

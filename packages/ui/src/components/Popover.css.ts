@@ -21,9 +21,13 @@ export const panel = style({
   zIndex: vars.layer.dropdown.base,
   boxSizing: "border-box",
   // Fixed, its containing block is the viewport: never wider than the screen
-  // less the margin the positioning keeps.
+  // less the margin the positioning keeps, nor taller than the space below
+  // its top. A fixed panel does not scroll with the page, so what overflows
+  // scrolls inside it instead of off the screen.
   maxInlineSize: `calc(100% - 2 * ${vars.space.sm})`,
-  padding: vars.space.md,
+  maxBlockSize: `calc(100% - ${top} - ${vars.space.sm})`,
+  display: "flex",
+  flexDirection: "column",
   border: `${vars.borderWidth.hairline} solid ${vars.border.default}`,
   borderRadius: vars.radius.md,
   background: vars.surface.raised,
@@ -34,6 +38,19 @@ export const panel = style({
     // is not a control, so it gets no ring.
     "&:focus": { outline: "none" },
   },
+});
+
+/**
+ * The panel's content, which scrolls when the panel is capped. Inside the
+ * panel rather than the panel itself, so the arrow outside its edge is not
+ * clipped.
+ */
+export const body = style({
+  flex: 1,
+  minBlockSize: 0,
+  overflowY: "auto",
+  overscrollBehavior: "contain",
+  padding: vars.space.md,
 });
 
 /**

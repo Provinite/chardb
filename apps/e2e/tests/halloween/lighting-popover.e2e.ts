@@ -118,7 +118,9 @@ test.describe("the Lighting panel", () => {
     const cone = panel(page).getByRole("slider", { name: "Spotlight cone" });
     // The cone is off until there is a spotlight, so the last control that
     // takes focus is the spotlight slider.
-    await panel(page).getByRole("slider", { name: "Spotlight" }).focus();
+    await panel(page)
+      .getByRole("slider", { name: "Spotlight", exact: true })
+      .focus();
 
     await page.keyboard.press("Tab");
 
