@@ -64,9 +64,7 @@ export const SpotlightNavigation: React.FC = () => {
             description,
             keywords,
             onClick: () =>
-              path !== null
-                ? navigate(path)
-                : window.location.assign(item.to),
+              path !== null ? navigate(path) : window.location.assign(item.to),
           };
         }),
       })),
