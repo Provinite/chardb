@@ -4,6 +4,7 @@
  */
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { findTooltip } from "../../../__tests__/findTooltip";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
@@ -225,9 +226,7 @@ describe("LightingControl", () => {
     expect(reset).not.toHaveTextContent(/\S/);
 
     await userEvent.hover(reset);
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Default light",
-    );
+    expect(await findTooltip()).toHaveTextContent("Default light");
     await userEvent.click(reset);
     expect(onChange).toHaveBeenLastCalledWith(null);
   });

@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 import { Modal } from "@mantine/core";
 import { Blend, Droplets, Moon, Palette } from "lucide-react";
-import { Tooltip } from "../Tooltip";
+import { Tooltip } from "@chardb/ui";
 import {
   BOARD_BACKGROUNDS,
   SURFACE_COLOUR,

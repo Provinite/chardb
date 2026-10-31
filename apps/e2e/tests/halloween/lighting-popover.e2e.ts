@@ -10,6 +10,8 @@ const test = presetTest("candy-board");
  */
 const trigger = (page: Page) => page.getByRole("button", { name: "Lighting" });
 const panel = (page: Page) => page.getByRole("dialog", { name: "Lighting" });
+const firstControl = (page: Page) =>
+  panel(page).getByRole("button", { name: "How to move the light" });
 
 test.describe("the Lighting panel", () => {
   test.use({ persona: "player" });
@@ -84,10 +86,8 @@ test.describe("the Lighting panel", () => {
     await trigger(page).focus();
     await page.keyboard.press("Enter");
 
-    // Its first control: the light's position on the pad.
-    await expect(
-      panel(page).getByRole("group", { name: "Light position" }),
-    ).toBeFocused();
+    // Its first control: the note on how to move the light.
+    await expect(firstControl(page)).toBeFocused();
 
     await page.keyboard.press("Escape");
 
@@ -100,9 +100,7 @@ test.describe("the Lighting panel", () => {
   }) => {
     await trigger(page).focus();
     await page.keyboard.press("Enter");
-    await expect(
-      panel(page).getByRole("group", { name: "Light position" }),
-    ).toBeFocused();
+    await expect(firstControl(page)).toBeFocused();
 
     await page.keyboard.press("Shift+Tab");
 

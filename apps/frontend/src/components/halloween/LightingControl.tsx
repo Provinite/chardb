@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from "react";
 import styled from "styled-components";
-import { Popover } from "@chardb/ui";
+import { Cluster, Popover, Toggletip, Tooltip } from "@chardb/ui";
 import {
   ArrowUpFromLine,
   Blend,
@@ -11,7 +11,6 @@ import {
   RotateCcw,
   Sun,
 } from "lucide-react";
-import { Tooltip } from "../Tooltip";
 import { TintChoices } from "./TintChoices";
 import {
   DEFAULT_LIGHTING,
@@ -285,13 +284,20 @@ export const LightingControl: React.FC<LightingControlProps> = ({
       </Popover.Trigger>
       <Popover.Panel aria-label="Lighting">
         <Panel>
+          {/* How to use the pad, for anyone: a title would reach only those
+              hovering with a mouse, and the arrow keys are found nowhere
+              else. */}
+          <Cluster>
+            <Toggletip label="How to move the light">
+              Drag the light, or use the arrow keys
+            </Toggletip>
+          </Cluster>
           <Controls>
             <PadArea>
               <Pad
                 ref={pad}
                 role="group"
                 aria-label="Light position"
-                title="Drag the light, or use the arrow keys"
                 tabIndex={0}
                 onKeyDown={onKey}
                 onPointerDown={(e) => {

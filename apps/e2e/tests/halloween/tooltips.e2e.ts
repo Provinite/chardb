@@ -76,16 +76,24 @@ test.describe("the lighting pad's toggletip", () => {
     await page.getByRole("button", { name: "Lighting" }).click();
     const info = page.getByRole("button", { name: "How to move the light" });
 
+    const hint = "Drag the light, or use the arrow keys";
+    // What is seen, and what screen readers are told: the same words, in a
+    // bubble beside the button and in a live region announced on opening.
+    const bubble = page.locator("[data-toggletip-bubble]");
+    const announced = page
+      .getByRole("dialog", { name: "Lighting" })
+      .getByRole("status");
+
     await info.click();
 
-    await expect(
-      page.getByText("Drag the light, or use the arrow keys"),
-    ).toBeVisible();
+    await expect(bubble).toHaveText(hint);
+    await expect(announced).toHaveText(hint);
 
     await page.keyboard.press("Escape");
 
-    await expect(
-      page.getByText("Drag the light, or use the arrow keys"),
-    ).toBeHidden();
+    await expect(bubble).toBeHidden();
+    await expect(announced).toHaveText("");
+    // The panel it sits in stays open: that Escape was the toggletip's.
+    await expect(page.getByRole("dialog", { name: "Lighting" })).toBeVisible();
   });
 });

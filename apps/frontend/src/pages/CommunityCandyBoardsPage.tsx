@@ -10,7 +10,7 @@ import {
 } from "../contexts/CommunityHostContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import { Tooltip } from "../components/Tooltip";
+import { Tooltip } from "@chardb/ui";
 import { CandyBoard } from "../components/halloween/CandyBoard";
 import { formatBoardName } from "../components/halloween/boardName";
 import { copyBoardLink } from "../components/halloween/copyBoardLink";
