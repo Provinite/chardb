@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Toasts use the theme's tokens**: a fixed 320px width, paler status borders without a coloured glow, and a larger dismiss button (#484).
 - **Character and media pages describe themselves to search engines by owner and species** rather than by their markdown text, so most pages no longer load a markdown parser (#465).
 - **The shop listing form's stock and limit fields stack on narrow screens**, and the shop's cart stacks below the listings when the content area is narrow rather than the window (#475).
 - **Filter chips on the item ledger and Halloween admin pages sit 0.5rem apart**, up from 0.375rem (#475).

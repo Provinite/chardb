@@ -27,7 +27,7 @@ import * as styles from "./CharacterCard.css";
 ```
 
 - Add no new styled-components (`no-styled-components`). Files that still use it are listed in `apps/frontend/styled-components-allowlist.json`; a migrated file comes off the list in the same change. When you migrate a file, convert all of it; a file is either styled-components or vanilla-extract.
-- `style={{}}` is for values only known at runtime (a crop offset, a user-picked colour). Pass them as CSS variables with `assignInlineVars` so the stylesheet still owns the declaration.
+- `style={{}}` is for values only known at runtime (a crop offset, a user-picked colour). Pass them as CSS variables with `assignInlineVars` so the stylesheet still owns the declaration. In a migrated file any other `style` is a lint error (`no-inline-style`).
 
 ## Tokens
 
@@ -146,7 +146,7 @@ Durations and easings are tokens, for transitions and animations only. A literal
 
   `infinite` outside `loop()` is a lint error (`loop-via-helper`).
 - **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token. `vars.timing.*` is for CSS such as `animation-delay`; JavaScript timers read the same values in milliseconds from `timingMs`.
-- **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, scroll with `scrollToElement(el, options)` and `scrollToPosition(position, el?)` from `@chardb/ui` instead of `scrollIntoView` and `scrollTo`; they scroll smoothly, or jump when the user prefers reduced motion.
+- **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, scroll with `scrollToElement(el, options)` and `scrollToPosition(position, el?)` from `@chardb/ui` instead of `scrollIntoView` and `scrollTo`, which are lint errors (`no-restricted-properties`); they scroll smoothly, or jump when the user prefers reduced motion. A scroll that resets rather than moves, such as a new page starting at the top, passes `jump: true` to `scrollToPosition` and jumps for everyone.
 
 ## Breakpoints
 
@@ -231,7 +231,7 @@ Reach for a primitive before writing `display: flex`. A one-off flex rule in a c
 
 ### Proportional grids
 
-Column proportions come from `@chardb/ui`, not hand-written `grid-template-columns`.
+Column proportions come from `@chardb/ui`, not hand-written `grid-template-columns`; a written-out value is a lint error (`grid-columns-via-track`).
 
 **Ready-made splits** cover the common cases as classes: `split["1:1"]`, `split["2:1"]`, `split["1:2"]`, `split["1:1:1"]`, `split["3:1"]`. Each is a grid whose columns share the width in that ratio. A split sets no gap; give it one from sprinkles or the element's own style. Combine with `mq()` or a `Switcher` when the split should stack on phones.
 
@@ -416,7 +416,7 @@ The baseline is [WCAG 2.2](https://www.w3.org/TR/WCAG22/) level AA, plus the AAA
 
 ## Banned
 
-Each is a lint error, from the rules in `packages/eslint-plugin-styles` (`@chardb/styles/<rule>`). They check `*.css.ts` files and the style helpers in `packages/ui/src/css`; the theme module is exempt from the literal-value rules.
+Each is a lint error, from the rules in `packages/eslint-plugin-styles` (`@chardb/styles/<rule>`) or ESLint's own. The style rules check `*.css.ts` files and the style helpers in `packages/ui/src/css`; the theme module is exempt from the literal-value rules. `no-inline-style`, the scroll ban and `no-styled-components` check the frontend's and `@chardb/ui`'s TypeScript.
 
 | Banned | Rule |
 |---|---|
@@ -432,6 +432,9 @@ Each is a lint error, from the rules in `packages/eslint-plugin-styles` (`@chard
 | `!important` | `no-important` |
 | `@chardb/ui` imported from a `*.css.ts` file | `no-restricted-imports` |
 | `styled-components` in a file not on the allowlist | `no-styled-components` |
+| `style` other than `assignInlineVars(...)`, in a file off the allowlist | `no-inline-style` |
+| `scrollIntoView` and `scrollTo` outside the scroll helpers | `no-restricted-properties` |
+| A written-out `gridTemplateColumns` | `grid-columns-via-track` |
 
 ## Migrating a file
 

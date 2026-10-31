@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`scrollToPosition()` takes `jump: true`** to skip the animation for everyone, for scrolls that reset rather than move (#484).
 - **`loop()` returns a style rule instead of a class**, so the vanilla-extract runtime no longer ships in every bundle that imports `@chardb/ui`; `style([loop(...), {...}])` works unchanged (#465).
 
 ### Removed
