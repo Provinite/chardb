@@ -14,7 +14,7 @@ import {
   Tag as TagIcon,
   Users,
 } from "lucide-react";
-import { Button, TagInput } from "@chardb/ui";
+import { Button, TagInput, scrollToPosition } from "@chardb/ui";
 import {
   GrantTargetSelector,
   GrantTarget,
@@ -565,7 +565,8 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
     setForms([newFormDraft("Base")]);
     setRegistryId("");
     setProgress(null);
-    window.scrollTo({ top: 0 });
+    // A fresh form, so a jump rather than a scroll.
+    scrollToPosition({ top: 0, jump: true });
   };
 
   // Form submission

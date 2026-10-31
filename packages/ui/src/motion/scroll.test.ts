@@ -45,6 +45,18 @@ describe("scrollToPosition", () => {
     expect(scrollTo).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
   });
 
+  // A new page starts at the top; animating there would only delay it.
+  it("jumps when asked to, whatever the motion preference", () => {
+    preferReducedMotion(false);
+    const scrollTo = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+    scrollToPosition({ top: 0, left: 0, jump: true });
+    expect(scrollTo).toHaveBeenCalledWith({
+      top: 0,
+      left: 0,
+      behavior: "auto",
+    });
+  });
+
   it("scrolls a given element, jumping under reduced motion", () => {
     preferReducedMotion(true);
     const el = document.createElement("div");

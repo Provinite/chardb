@@ -1,115 +1,45 @@
 import React from "react";
 import { Toaster, toast, type Toast } from "react-hot-toast";
-import { useTheme } from "../contexts/ThemeContext";
+import { X } from "lucide-react";
+import { vars } from "@chardb/ui";
+import * as styles from "./ThemedToaster.css";
 
-export const ThemedToaster: React.FC = () => {
-  const { theme } = useTheme();
+const toneOf = (t: Toast) =>
+  t.type === "success" ? "success" : t.type === "error" ? "error" : "neutral";
 
-  const getToastStyles = (t: Toast) => {
-    const baseStyles = {
-      background: theme.colors.surface,
-      color: theme.colors.text.primary,
-      borderRadius: theme.borderRadius.lg,
-      padding: `${theme.spacing.md} ${theme.spacing.lg}`,
-      paddingRight: "48px",
-      fontSize: theme.typography.fontSize.sm,
-      fontFamily: theme.typography.fontFamily,
-      boxShadow: theme.shadows.lg,
-      minWidth: "300px",
-      maxWidth: "500px",
-      wordBreak: "break-word" as const,
-      position: "relative" as const,
-      display: "flex",
-      alignItems: "center",
-      width: "100%",
-    };
-
-    switch (t.type) {
-      case "success":
-        return {
-          ...baseStyles,
-          border: `1px solid ${theme.colors.success}`,
-          boxShadow: `0 4px 12px ${theme.colors.success}30, ${theme.shadows.lg}`,
-        };
-      case "error":
-        return {
-          ...baseStyles,
-          border: `1px solid ${theme.colors.error}`,
-          boxShadow: `0 4px 12px ${theme.colors.error}30, ${theme.shadows.lg}`,
-        };
-      default:
-        return {
-          ...baseStyles,
-          border: `1px solid ${theme.colors.border}`,
-        };
-    }
-  };
-
-  return (
-    <Toaster
-      position="top-right"
-      gutter={12}
-      containerStyle={{
-        top: 20,
-        right: 20,
-        zIndex: 1000000,
-      }}
-      toastOptions={{
-        duration: 4000,
-        success: { duration: 3500 },
-        error: { duration: 6000 },
-      }}
-    >
-      {(t) => (
-        <div
-          style={{
-            transform: t.visible ? "translateX(0)" : "translateX(100%)",
-            opacity: t.visible ? 1 : 0,
-            transition: "all 0.35s cubic-bezier(0.4, 0, 0.2, 1)",
-          }}
-        >
-          <div style={getToastStyles(t)}>
-            <div style={{ flex: 1 }}>
-              {typeof t.message === "function" ? t.message(t) : t.message}
-            </div>
-            <button
-              onClick={() => toast.dismiss(t.id)}
-              style={{
-                position: "absolute",
-                top: "50%",
-                right: "12px",
-                transform: "translateY(-52%)",
-                background: "transparent",
-                border: "none",
-                color: theme.colors.text.primary,
-                cursor: "pointer",
-                fontSize: "24px",
-                fontWeight: "bold",
-                lineHeight: "1",
-                padding: "8px",
-                borderRadius: "6px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: "32px",
-                height: "32px",
-                transition: "background-color 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                (e.currentTarget as HTMLElement).style.backgroundColor =
-                  theme.colors.border;
-              }}
-              onMouseLeave={(e) => {
-                (e.currentTarget as HTMLElement).style.backgroundColor =
-                  "transparent";
-              }}
-              aria-label="Dismiss notification"
-            >
-              ×
-            </button>
+export const ThemedToaster: React.FC = () => (
+  <Toaster
+    position="top-right"
+    gutter={12}
+    // The library positions its container with inline styles, which a class
+    // cannot override; this prop is how it takes others. Tokens only.
+    containerStyle={{
+      top: vars.space.lg,
+      right: vars.space.lg,
+      zIndex: vars.layer.toast.base,
+    }}
+    toastOptions={{
+      duration: 4000,
+      success: { duration: 3500 },
+      error: { duration: 6000 },
+    }}
+  >
+    {(t) => (
+      <div className={styles.slide} data-visible={t.visible}>
+        <div className={styles.toast({ tone: toneOf(t) })}>
+          <div className={styles.message}>
+            {typeof t.message === "function" ? t.message(t) : t.message}
           </div>
+          <button
+            type="button"
+            className={styles.dismiss}
+            onClick={() => toast.dismiss(t.id)}
+            aria-label="Dismiss notification"
+          >
+            <X size={18} aria-hidden />
+          </button>
         </div>
-      )}
-    </Toaster>
-  );
-};
+      </div>
+    )}
+  </Toaster>
+);

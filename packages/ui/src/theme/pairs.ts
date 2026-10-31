@@ -93,6 +93,8 @@ export const pairs: Pair[] = [
     ...on(`status.${s}.fg`, ["surface.page", `status.${s}.bgSubtle`], "body"),
     ...on("text.default", [`status.${s}.bgSubtle`], "body"),
     ...on("text.inverse", [`status.${s}.bg`], "body"),
+    // A control inside a tinted toast or alert rings itself on the tint.
+    ...on("border.focus", [`status.${s}.bgSubtle`], "nonText"),
   ]),
 
   ...on("border.input", ["surface.page", "surface.raised"], "nonText"),

@@ -66,6 +66,23 @@ describe("pair list", () => {
   });
 });
 
+// Toasts, and alerts with an action, tint their background in a status
+// colour, so a control inside them draws its focus ring on that tint.
+describe("pairs a status tint carries", () => {
+  it.each(["success", "warning", "danger", "info"] as const)(
+    "lists the focus ring on status.%s.bgSubtle",
+    (status) => {
+      expect(pairs).toContainEqual(
+        expect.objectContaining({
+          fg: "border.focus",
+          bg: `status.${status}.bgSubtle`,
+          use: "nonText",
+        }),
+      );
+    },
+  );
+});
+
 describe("requiredRatio", () => {
   const pair: Pair = { fg: "text.subtle", bg: "surface.page", use: "body" };
 
