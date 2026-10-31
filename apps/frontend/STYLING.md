@@ -340,7 +340,7 @@ Pick the indicator by what is loading. Each follows the [no pop-in](#no-pop-in) 
 - **Buttons keep their size while busy.** The label stays in place but invisible, the spinner sits over it, and the button is disabled with `aria-busy`. Do not swap the label for "Saving…". Report the outcome with a toast or inline status.
 - **Spinners** appear only inside controls: buttons and input end slots. A spinner centred in an empty section is not an option; that is what skeletons are for.
 - **Known progress is shown as progress.** A task that can report how far along it is uses a determinate bar, never a spinner.
-- **Route changes** keep the current page on screen until the next page's code and data are ready, with the top progress bar showing in the meantime.
+- **Route changes** keep the current page on screen until the next page's code and data are ready, with the top progress bar showing in the meantime. The bar is `TopProgressBar` from `@chardb/ui`, in `action.primary.bg`; the shell shows it while a navigation waits on the next page's code.
 
 ### Timing
 

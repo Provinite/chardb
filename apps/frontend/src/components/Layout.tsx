@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { useBreakpoint } from "@chardb/ui";
+import { TopProgressBar, useBreakpoint } from "@chardb/ui";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { CommunityNavigationSidebar } from "./navigation/CommunityNavigationSidebar";
@@ -8,6 +8,8 @@ import { GlobalNavigationSidebar } from "./navigation/GlobalNavigationSidebar";
 import { NavigationDrawer } from "./navigation/NavigationDrawer";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { useDismissBootScreen } from "../hooks/useBootScreen";
+import { useDelayedIndicator } from "../hooks/useDelayedIndicator";
+import { useRouteTransitionPending } from "../routes/TransitionRouter";
 import * as styles from "./Layout.css";
 
 interface LayoutProps {
@@ -26,6 +28,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const headerRef = useRef<HTMLElement>(null);
   const mainRef = useRef<HTMLElement>(null);
   const footerRef = useRef<HTMLElement>(null);
+  const routeLoading = useDelayedIndicator(useRouteTransitionPending());
 
   // Which sidebar belongs here is now a property of the host, not the path.
   // It used to be `isCommunityRoute(location.pathname)` against six patterns,
@@ -76,6 +79,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <div className={styles.layout}>
+      <TopProgressBar active={routeLoading} label="Loading page" />
       <Header
         ref={headerRef}
         navigationOpen={drawerModal}
