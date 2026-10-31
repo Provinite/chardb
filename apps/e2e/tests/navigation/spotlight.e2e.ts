@@ -84,7 +84,10 @@ for (const impl of SPOTLIGHT_IMPLS) {
       await s.search("liked");
 
       await expect(
-        s.result(/^Liked Characters/).locator("mark").first(),
+        s
+          .result(/^Liked Characters/)
+          .locator("mark")
+          .first(),
       ).toHaveText(/^liked$/i);
     });
 
