@@ -8,8 +8,8 @@ import { lazyPage } from "./lazyPage";
  * own chunk; pages always visited together load as one, from a barrel in
  * `chunks/`, because splitting them would only add requests.
  *
- * Nothing in the shell imports a page directly, error pages included: every
- * page calls `usePageMeta`, which brings the markdown parser with it.
+ * Nothing in the shell imports a page directly, error pages included, so the
+ * code every visitor downloads first holds no page's code.
  */
 
 const siteAdmin = () => import("./chunks/siteAdmin");

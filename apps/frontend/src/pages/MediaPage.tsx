@@ -396,9 +396,9 @@ export const MediaPage: React.FC = () => {
 
   usePageMeta({
     title: media?.title ?? "Media",
-    description: media
-      ? media.description || `Posted by ${media.owner.username}`
-      : null,
+    // Not `media.description`: it is markdown, and the description is plain
+    // text.
+    description: media ? `Posted by ${media.owner.username}` : null,
     image: media?.image?.isNsfw
       ? null
       : (media?.image?.thumbnailUrl ?? media?.image?.originalUrl),

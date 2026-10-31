@@ -474,14 +474,13 @@ export const CharacterPage: React.FC = () => {
   // title up for the length of the fetch.
   usePageMeta({
     title: character?.name ?? "Character",
-    description:
-      character?.details ||
-      [
-        character?.species?.name,
-        character?.owner ? `owned by ${character.owner.username}` : null,
-      ]
-        .filter(Boolean)
-        .join(" · "),
+    // Not `details`: it is markdown, and the description is plain text.
+    description: [
+      character?.species?.name,
+      character?.owner ? `owned by ${character.owner.username}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · "),
     // An NSFW image is behind a click-through on the page itself, and a tab
     // preview or an in-app share sheet reproduces none of that.
     image: character?.mainMedia?.image?.isNsfw
