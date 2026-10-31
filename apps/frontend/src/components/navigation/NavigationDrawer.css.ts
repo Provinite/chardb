@@ -17,13 +17,15 @@ export const scrim = style({
   background: vars.surface.overlay,
   opacity: 0,
   visibility: "hidden",
-  // `visibility` stays visible for the whole transition to or from
-  // `visible`, so it turns hidden only once the fade has finished.
+  // Closing, `visibility` stays visible for the whole transition, so it turns
+  // hidden only once the fade has finished. Opening leaves it out of the
+  // transition, so it is visible at once.
   transition: `opacity ${slide}, visibility ${slide}`,
   selectors: {
     "&[data-open]": {
       opacity: 1,
       visibility: "visible",
+      transition: `opacity ${slide}`,
     },
   },
   "@media": {
@@ -47,15 +49,15 @@ export const panel = style({
   // Leaves a strip of scrim to tap, even at 320px.
   inlineSize: `min(${vars.size.sidebar}, calc(100% - ${vars.size.target.comfortable}))`,
   background: vars.surface.page,
-  overflowY: "auto",
-  overscrollBehavior: "contain",
   transform: "translateX(-100%)",
   visibility: "hidden",
   transition: `transform ${slide}, visibility ${slide}`,
   selectors: {
+    // Visible at once, so focus can move in as soon as it opens.
     "&[data-open]": {
       transform: "none",
       visibility: "visible",
+      transition: `transform ${slide}`,
     },
   },
   "@media": {

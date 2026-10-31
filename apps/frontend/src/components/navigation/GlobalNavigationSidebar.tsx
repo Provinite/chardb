@@ -26,16 +26,14 @@ interface GlobalNavigationSidebarProps {
 }
 
 const SidebarContainer = styled.aside`
-  width: 280px;
-  height: 100vh;
+  /* Width, height and position belong to NavigationDrawer, around this. */
+  flex: 1;
+  min-height: 0;
   background-color: ${({ theme }) => theme.colors.background};
   border-right: 1px solid ${({ theme }) => theme.colors.border};
   display: flex;
   flex-direction: column;
   overflow-y: auto;
-  position: sticky;
-  top: 0;
-  flex-shrink: 0;
 
   /* Custom scrollbar */
   &::-webkit-scrollbar {

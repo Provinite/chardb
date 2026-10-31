@@ -1,80 +1,39 @@
-import React from "react";
+import { forwardRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import styled from "styled-components";
-import { Avatar, Button } from "@chardb/ui";
+import { Menu as MenuIcon } from "lucide-react";
+import { Cluster } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
-import { apexUrl, loginUrlReturningHere } from "../lib/communityHost";
+import { useTheme } from "../contexts/ThemeContext";
+import { localPath } from "../lib/communityHost";
+import { AccountMenu } from "./AccountMenu";
 import { HostAwareLink } from "./HostAwareLink";
 import { ThemeToggle } from "./ThemeToggle";
 import { NotificationBell } from "./notifications/NotificationBell";
+import * as styles from "./Header.css";
 
-const HeaderContainer = styled.header`
-  background-color: ${({ theme }) => theme.colors.surface};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  padding: ${({ theme }) => theme.spacing.md} 0;
-`;
+interface HeaderProps {
+  /** Whether the navigation drawer is open, for the menu button's state. */
+  navigationOpen: boolean;
+  onOpenNavigation: () => void;
+}
 
-const HeaderContent = styled.div`
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 ${({ theme }) => theme.spacing.md};
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-`;
-
-const Logo = styled(Link)`
-  font-size: ${({ theme }) => theme.typography.fontSize.xl};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  color: ${({ theme }) => theme.colors.primary};
-  text-decoration: none;
-`;
-
-const Nav = styled.nav`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.lg};
-`;
-
-const NavLink = styled(HostAwareLink)`
-  color: ${({ theme }) => theme.colors.text.primary};
-  text-decoration: none;
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-
-  &:hover {
-    color: ${({ theme }) => theme.colors.primary};
-  }
-`;
-
-const UserMenu = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const UserInfo = styled(HostAwareLink)`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  text-decoration: none;
-  color: inherit;
-  transition: opacity 0.2s ease;
-
-  &:hover {
-    opacity: 0.8;
-  }
-`;
-
-const Username = styled.span`
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-export const Header: React.FC = () => {
+export const Header = forwardRef<HTMLElement, HeaderProps>(function Header(
+  { navigationOpen, onOpenNavigation },
+  ref,
+) {
   const { user, logout } = useAuth();
   const { slug: communitySlug } = useCommunityHost();
+  const { mode, toggleTheme } = useTheme();
   const navigate = useNavigate();
+
+  // The router cannot cross an origin, so a destination on another host is a
+  // page load, the same choice HostAwareLink makes for links.
+  const go = (to: string) => {
+    const path = localPath(to);
+    if (path !== null) navigate(path);
+    else window.location.assign(to);
+  };
 
   const handleLogout = () => {
     logout();
@@ -82,61 +41,66 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <HeaderContainer>
-      <HeaderContent>
-        <Logo to="/">CharDB</Logo>
+    <header ref={ref} className={styles.header}>
+      <Cluster justify="space-between" gap="xs" className={styles.row}>
+        <Cluster gap="xs">
+          <button
+            type="button"
+            className={styles.menuButton}
+            aria-label="Open navigation"
+            aria-expanded={navigationOpen}
+            onClick={onOpenNavigation}
+          >
+            <MenuIcon size={24} aria-hidden />
+          </button>
+          <Link to="/" className={styles.logo}>
+            CharDB
+          </Link>
+        </Cluster>
 
-        <Nav>
-          <ThemeToggle />
-
-          {user ? (
-            <UserMenu>
+        <Cluster gap="xs">
+          {user && (
+            <>
               {/* A character is created in a community, so this only exists on
                   a community host. At the apex there is no community to create
                   it in and no route to offer. */}
               {communitySlug && (
-                <NavLink to="/character/create">Create Character</NavLink>
+                <HostAwareLink
+                  to="/character/create"
+                  className={styles.navLink}
+                >
+                  Create Character
+                </HostAwareLink>
               )}
               {/* Relative, so uploading stays on whichever host you clicked
                   it from. The media is still yours rather than the
                   community's, but the host decides which moderators review it
                   -- leaving for the apex first would throw that away. */}
-              <NavLink to="/upload">Upload</NavLink>
-              <NotificationBell />
-              <UserInfo to={apexUrl(`/user/${user.username}`)}>
-                <Avatar
-                  image={user.avatarImage}
-                  name={user.displayName || user.username}
-                  size={32}
-                />
-                <Username>{user.displayName || user.username}</Username>
-              </UserInfo>
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
-                Logout
-              </Button>
-            </UserMenu>
-          ) : (
-            <UserMenu>
-              <Button
-                variant="ghost"
-                size="sm"
-                // Carries where they were, so signing in from a community host
-                // comes back to it rather than dropping them at the apex.
-                onClick={() => navigate(loginUrlReturningHere())}
-              >
-                Login
-              </Button>
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => navigate("/signup")}
-              >
-                Sign Up
-              </Button>
-            </UserMenu>
+              <HostAwareLink to="/upload" className={styles.navLink}>
+                Upload
+              </HostAwareLink>
+            </>
           )}
-        </Nav>
-      </HeaderContent>
-    </HeaderContainer>
+          {/* Signed out, nothing else needs the room, so the toggle stays at
+              every width; signed in, the account menu carries it below sm. */}
+          {user ? (
+            <span className={styles.roomyOnly}>
+              <ThemeToggle />
+            </span>
+          ) : (
+            <ThemeToggle />
+          )}
+          {user && <NotificationBell />}
+          <AccountMenu
+            user={user}
+            themeMode={mode}
+            canCreateCharacter={Boolean(communitySlug)}
+            onNavigate={go}
+            onLogout={handleLogout}
+            onToggleTheme={toggleTheme}
+          />
+        </Cluster>
+      </Cluster>
+    </header>
   );
-};
+});

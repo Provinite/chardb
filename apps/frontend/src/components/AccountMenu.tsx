@@ -41,13 +41,13 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
   if (!user) {
     return (
       <Menu
-        label="Sign in"
+        label="Log in or sign up"
         appearance="ghost"
         testId="account-menu"
         trigger={
           <>
             <UserRound size={24} aria-hidden />
-            <span className={styles.name}>Sign in</span>
+            <span className={styles.name}>Log in</span>
           </>
         }
       >

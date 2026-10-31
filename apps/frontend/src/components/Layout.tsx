@@ -1,12 +1,14 @@
-import React, { useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import styled from "styled-components";
+import { useBreakpoint } from "@chardb/ui";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
 import { CommunityNavigationSidebar } from "./navigation/CommunityNavigationSidebar";
 import { GlobalNavigationSidebar } from "./navigation/GlobalNavigationSidebar";
+import { NavigationDrawer } from "./navigation/NavigationDrawer";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { useDismissBootScreen } from "../hooks/useBootScreen";
+import * as styles from "./Layout.css";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -14,29 +16,16 @@ interface LayoutProps {
 
 type SidebarPreference = "auto" | "global" | "community";
 
-const LayoutContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-`;
-
-const ContentWrapper = styled.div`
-  display: flex;
-  flex: 1;
-  position: relative;
-`;
-
-const Main = styled.main`
-  flex: 1;
-  padding: 2rem 0;
-  min-width: 0; /* Prevents flex item from overflowing */
-`;
-
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   useDismissBootScreen();
   const location = useLocation();
   const [sidebarPreference, setSidebarPreference] =
     useState<SidebarPreference>("auto");
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const sidebarIsColumn = useBreakpoint("md");
+  const headerRef = useRef<HTMLElement>(null);
+  const mainRef = useRef<HTMLElement>(null);
+  const footerRef = useRef<HTMLElement>(null);
 
   // Which sidebar belongs here is now a property of the host, not the path.
   // It used to be `isCommunityRoute(location.pathname)` against six patterns,
@@ -53,35 +42,66 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         ? false
         : isCommunityScopedRoute; // auto mode - use route detection
 
-  // Reset preference to auto when navigating to a different route type
-  React.useEffect(() => {
+  // Reset preference to auto when navigating to a different route type, and
+  // close the drawer: following one of its links is done with it.
+  useEffect(() => {
     setSidebarPreference("auto");
+    setDrawerOpen(false);
   }, [location.pathname]);
+
+  // From `md` the sidebar is a column again, and an open drawer would leave
+  // the page inert with nothing on screen to close it.
+  useEffect(() => {
+    if (sidebarIsColumn) setDrawerOpen(false);
+  }, [sidebarIsColumn]);
+
+  // An open drawer is modal, so the rest of the page goes inert: focus and
+  // screen readers stay inside the drawer. Set by hand because React 18 does
+  // not know the attribute. A layout effect, so the header is live again
+  // before the drawer's own effect hands focus back to the menu button in it.
+  const pageInert = drawerOpen && !sidebarIsColumn;
+  useLayoutEffect(() => {
+    const regions = [headerRef, mainRef, footerRef];
+    for (const region of regions) {
+      region.current?.toggleAttribute("inert", pageInert);
+    }
+  }, [pageInert]);
 
   const handleToggleSidebar = (preference: "global" | "community") => {
     setSidebarPreference(preference);
   };
 
   return (
-    <LayoutContainer>
-      <Header />
-      <ContentWrapper>
-        {showCommunitySidebar ? (
-          <CommunityNavigationSidebar
-            onToggleToGlobal={() => handleToggleSidebar("global")}
-          />
-        ) : (
-          <GlobalNavigationSidebar
-            onToggleToCommunity={
-              isCommunityScopedRoute
-                ? () => handleToggleSidebar("community")
-                : undefined
-            }
-          />
-        )}
-        <Main>{children}</Main>
-      </ContentWrapper>
-      <Footer />
-    </LayoutContainer>
+    <div className={styles.layout}>
+      <Header
+        ref={headerRef}
+        navigationOpen={pageInert}
+        onOpenNavigation={() => setDrawerOpen(true)}
+      />
+      <div className={styles.body}>
+        <NavigationDrawer
+          open={drawerOpen}
+          onClose={() => setDrawerOpen(false)}
+        >
+          {showCommunitySidebar ? (
+            <CommunityNavigationSidebar
+              onToggleToGlobal={() => handleToggleSidebar("global")}
+            />
+          ) : (
+            <GlobalNavigationSidebar
+              onToggleToCommunity={
+                isCommunityScopedRoute
+                  ? () => handleToggleSidebar("community")
+                  : undefined
+              }
+            />
+          )}
+        </NavigationDrawer>
+        <main ref={mainRef} className={styles.main}>
+          {children}
+        </main>
+      </div>
+      <Footer ref={footerRef} />
+    </div>
   );
 };

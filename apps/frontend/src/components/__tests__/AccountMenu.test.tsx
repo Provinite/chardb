@@ -117,7 +117,7 @@ describe("AccountMenu, signed out", () => {
   it("says it is for signing in, and holds log in and sign up", async () => {
     wideAt(true);
     const handlers = renderMenu({ user: null });
-    const { u, menu } = await openMenu(/^Sign in$/);
+    const { u, menu } = await openMenu(/^Log in or sign up$/);
     expect(itemNames(menu)).toEqual(["Log in", "Sign up"]);
     await u.click(within(menu).getByRole("menuitem", { name: "Sign up" }));
     expect(handlers.onNavigate).toHaveBeenCalledWith("/signup");

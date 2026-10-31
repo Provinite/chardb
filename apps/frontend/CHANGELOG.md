@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **On phones the navigation sidebar is a drawer** opened from a menu button in the header, so pages get the full width (#486).
+- **An account menu on your avatar** holds your profile and Log out; on phones it also holds Create Character, Upload and the theme switch (#486).
 - **The CharDB startup screen shows as soon as the page arrives**, in the chosen theme, instead of a blank page until the app's code has loaded (#470).
 
 ### Changed
@@ -20,6 +22,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Tab no longer lands on the fading startup screen** before it is removed (#486).
+- **The header's notification bell and theme switch are 44px touch targets**, up from 36px and 40px (#486).
 - **The light/dark choice carries between the main site and community subdomains**, and visitors who never choose keep following their system setting (#470).
 - **Item and currency ledger Load more fetches only the next page**: it refetched every row on screen with a larger limit, which slowed each click and was refused past 100 rows.
 

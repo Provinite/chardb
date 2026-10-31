@@ -34,6 +34,9 @@ const communityNav = (page: import("@playwright/test").Page) =>
   page.getByRole("navigation", { name: "Community navigation" });
 const globalNav = (page: import("@playwright/test").Page) =>
   page.getByRole("navigation", { name: "Global navigation" });
+/** The header's account menu, which is named for whoever is signed in. */
+const signedInMenu = (page: import("@playwright/test").Page) =>
+  page.getByRole("button", { name: /, account menu$/ });
 
 test.describe("community hosts", () => {
   test.use({ persona: "member" });
@@ -269,8 +272,10 @@ test.describe("one session across hosts", () => {
     // The session survives only because the cookie is not tied to a host.
     await page.goto(world.community.url);
 
-    await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Login" })).toHaveCount(0);
+    await expect(signedInMenu(page)).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Log in or sign up" }),
+    ).toHaveCount(0);
   });
 
   test("signing in from a community host comes back to it", async ({
@@ -288,7 +293,8 @@ test.describe("one session across hosts", () => {
     // visitor can actually stand and see the button.
     await page.goto(`${world.community.url}/characters`);
 
-    await page.getByRole("button", { name: "Login" }).click();
+    await page.getByRole("button", { name: "Log in or sign up" }).click();
+    await page.getByRole("menuitem", { name: "Log in" }).click();
 
     // Anchored on the APEX login page, not any `/login`. The community host has
     // one too -- it is the hop that sends you here -- and filling the form on
@@ -302,7 +308,7 @@ test.describe("one session across hosts", () => {
     // Back where they started, not stranded on the apex dashboard.
     await expect(page).toHaveURL(`${world.community.url}/characters`);
     await expect(communityNav(page)).toBeVisible();
-    await expect(page.getByRole("button", { name: "Logout" })).toBeVisible();
+    await expect(signedInMenu(page)).toBeVisible();
   });
 
   test("a signed-out visitor to a protected community page returns to it", async ({

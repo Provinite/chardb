@@ -169,6 +169,7 @@ The breakpoint helpers, like every style helper, come from `@chardb/ui/theme`.
 - **`mq("md")`** builds the query for anything sprinkles does not cover, as a key under `"@media"`: `"@media": { [mq("md")]: { flexDirection: "row" } }`. Never write a query string by hand; it is a lint error (`no-raw-media`, which covers `@container` too).
 - **One source per property.** If sprinkles sets an element's `padding`, its local `style()` does not, and the reverse. Sprinkles and local styles live in different files, and which one wins depends on import order.
 - `md` and `lg` do most structural work (sidebar becomes drawer, one column becomes two). `sm` refines. `xl` and `xxl` mostly cap content width.
+- The navigation sidebar is a column `size.sidebar` wide from `md`, and a drawer below it. Open, the drawer is modal: the app makes the rest of the page `inert`.
 - A layout that already adapts without a breakpoint (a wrapping row, an `auto-fit` grid) gets none.
 
 ### Container queries

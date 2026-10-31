@@ -11,8 +11,8 @@ const ToggleButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 2.75rem;
+  height: 2.75rem;
   transition: all 0.2s ease;
   color: ${({ theme }) => theme.colors.text.secondary};
 
