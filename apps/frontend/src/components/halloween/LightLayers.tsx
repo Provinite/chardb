@@ -1,16 +1,13 @@
-import React, { type CSSProperties } from "react";
+import React from "react";
+import { assignInlineVars } from "@vanilla-extract/dynamic";
 import {
   lightWash,
   spotlightGlow,
   spotlightLayer,
   type Lighting,
 } from "./candyLighting";
-
-const layer: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  pointerEvents: "none",
-};
+import { layerVars } from "./layers";
+import * as styles from "./layers.css";
 
 /**
  * What the board's light lays over everything under it: its colour, then a
@@ -31,25 +28,24 @@ export const LightLayers: React.FC<{ lighting: Lighting | null }> = ({
         <div
           data-testid="light-wash"
           aria-hidden
-          style={{ ...layer, ...wash }}
+          className={styles.fill}
+          style={assignInlineVars(layerVars(wash))}
         />
       )}
       {glow && (
         <div
           data-testid="light-glow"
           aria-hidden
-          style={{ position: "absolute", pointerEvents: "none", ...glow }}
+          className={styles.pool}
+          style={assignInlineVars(layerVars(glow))}
         />
       )}
       {spotlight && (
         <div
           data-testid="light-spotlight"
           aria-hidden
-          style={{
-            position: "absolute",
-            pointerEvents: "none",
-            ...spotlight,
-          }}
+          className={styles.pool}
+          style={assignInlineVars(layerVars(spotlight))}
         />
       )}
     </>

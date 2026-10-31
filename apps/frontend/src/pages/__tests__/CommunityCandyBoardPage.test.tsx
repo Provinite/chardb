@@ -18,6 +18,16 @@ import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
 import { MantineProvider } from "@mantine/core";
 import { BOARD_NAME_FIRST_WORDS, BOARD_NAME_LAST_WORDS } from "@chardb/shared";
+import * as layerStyles from "../../components/halloween/layers.css";
+
+/**
+ * A light or effect layer's value, which it sets as a variable for its class
+ * to read: `layer(el, "opacity")`.
+ */
+const layer = (
+  el: HTMLElement | null | undefined,
+  name: "backgroundColor" | "opacity" | "blendMode" | "backgroundImage",
+) => el?.style.getPropertyValue(layerStyles[name].slice("var(".length, -1));
 
 const COMMUNITY_ID = "11111111-1111-4111-8111-111111111111";
 const BOARD_ID = "22222222-2222-4222-8222-222222222222";
@@ -1167,10 +1177,10 @@ describe("CommunityCandyBoardPage", () => {
         const s = await surface();
         const tint = tintOf(s);
         const dim = dimOf(s);
-        expect(tint?.style.backgroundColor).toBe("rgb(124, 58, 237)");
-        expect(tint?.style.opacity).toBe("0.5");
-        expect(tint?.style.mixBlendMode).toBe("color");
-        expect(dim?.style.opacity).toBe("0.4");
+        expect(layer(tint, "backgroundColor")).toBe("#7c3aed");
+        expect(layer(tint, "opacity")).toBe("0.5");
+        expect(layer(tint, "blendMode")).toBe("color");
+        expect(layer(dim, "opacity")).toBe("0.4");
         // Drawn before the candies, so they lie over it.
         const candy = within(s).getByRole("img", { name: "luther head" });
         expect(
@@ -1206,7 +1216,7 @@ describe("CommunityCandyBoardPage", () => {
           el.querySelector<HTMLElement>(
             '[data-testid="background-saturation"]',
           );
-        expect(grey(await surface())?.style.opacity).toBe("0.1");
+        expect(layer(grey(await surface()), "opacity")).toBe("0.1");
 
         const dialog = await openDialog();
         const saturation = within(dialog).getByRole("slider", {
@@ -1214,7 +1224,7 @@ describe("CommunityCandyBoardPage", () => {
         });
         expect(saturation).toHaveValue("0.9");
         fireEvent.change(saturation, { target: { value: "0.25" } });
-        expect(grey(preview(dialog))?.style.opacity).toBe("0.75");
+        expect(layer(grey(preview(dialog)), "opacity")).toBe("0.75");
       });
 
       it("saves a saturation with the background", async () => {
@@ -1286,15 +1296,15 @@ describe("CommunityCandyBoardPage", () => {
           within(dialog).getByRole("slider", { name: "Tint strength" }),
           { target: { value: "0.5" } },
         );
-        expect(tintOf(preview(dialog))?.style.opacity).toBe("0.5");
-        expect(dimOf(preview(dialog))?.style.opacity).toBe("0.4");
+        expect(layer(tintOf(preview(dialog)), "opacity")).toBe("0.5");
+        expect(layer(dimOf(preview(dialog)), "opacity")).toBe("0.4");
         expect(tintOf(await surface())).toBe(null);
 
         await userEvent.click(
           within(dialog).getByRole("button", { name: "Use background" }),
         );
         await waitFor(() => expect(saved).toHaveBeenCalled());
-        expect(tintOf(await surface())?.style.opacity).toBe("0.5");
+        expect(layer(tintOf(await surface()), "opacity")).toBe("0.5");
       });
 
       it("starts a first tint part way, and lets it go with No tint", async () => {
@@ -1325,8 +1335,8 @@ describe("CommunityCandyBoardPage", () => {
         fireEvent.change(within(dialog).getByLabelText("Custom tint"), {
           target: { value: "#123456" },
         });
-        expect(tintOf(preview(dialog))?.style.backgroundColor).toBe(
-          "rgb(18, 52, 86)",
+        expect(layer(tintOf(preview(dialog)), "backgroundColor")).toBe(
+          "#123456",
         );
         expect(
           within(dialog).getByRole("radio", { name: "No tint" }),
@@ -1399,9 +1409,9 @@ describe("CommunityCandyBoardPage", () => {
       const wash = region.querySelector<HTMLElement>(
         '[data-testid="light-wash"]',
       );
-      expect(wash?.style.backgroundColor).toBe("rgb(249, 115, 22)");
-      expect(wash?.style.opacity).toBe("0.35");
-      expect(wash?.style.mixBlendMode).toBe("multiply");
+      expect(layer(wash, "backgroundColor")).toBe("#f97316");
+      expect(layer(wash, "opacity")).toBe("0.35");
+      expect(layer(wash, "blendMode")).toBe("multiply");
       // Over the candies and the background alike.
       const candy = within(region).getByRole("img", { name: "luther head" });
       expect(
@@ -1423,8 +1433,8 @@ describe("CommunityCandyBoardPage", () => {
       const wash = within(dialog)
         .getByRole("img", { name: "Background preview" })
         .querySelector<HTMLElement>('[data-testid="light-wash"]');
-      expect(wash?.style.backgroundColor).toBe("rgb(249, 115, 22)");
-      expect(wash?.style.opacity).toBe("0.35");
+      expect(layer(wash, "backgroundColor")).toBe("#f97316");
+      expect(layer(wash, "opacity")).toBe("0.35");
     });
 
     it("darkens the board outside a spotlight's pool, for anyone looking", async () => {
@@ -1435,13 +1445,13 @@ describe("CommunityCandyBoardPage", () => {
       const spot = (await pile()).querySelector<HTMLElement>(
         '[data-testid="light-spotlight"]',
       );
-      expect(spot?.style.backgroundImage).toBe(
+      expect(layer(spot, "backgroundImage")).toBe(
         spotlightLayer(light)?.backgroundImage,
       );
       const glow = (await pile()).querySelector<HTMLElement>(
         '[data-testid="light-glow"]',
       );
-      expect(glow?.style.backgroundImage).toBe(
+      expect(layer(glow, "backgroundImage")).toBe(
         spotlightGlow(light)?.backgroundImage,
       );
     });
