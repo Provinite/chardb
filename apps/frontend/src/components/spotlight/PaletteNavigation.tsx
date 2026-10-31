@@ -76,16 +76,21 @@ export const PaletteNavigation: React.FC<PaletteNavigationProps> = ({
     setQuery("");
   };
 
-  const body = (item: SpotlightItem) => (
+  const body = ({ icon: Icon, label, description }: SpotlightItem) => (
     <>
-      <CommandPalette.ItemLabel>
-        <Highlight text={item.label} match={highlight} />
-      </CommandPalette.ItemLabel>
-      {item.description && (
-        <CommandPalette.ItemDescription>
-          {item.description}
-        </CommandPalette.ItemDescription>
-      )}
+      <CommandPalette.ItemIcon>
+        <Icon size={20} />
+      </CommandPalette.ItemIcon>
+      <CommandPalette.ItemText>
+        <CommandPalette.ItemLabel>
+          <Highlight text={label} match={highlight} />
+        </CommandPalette.ItemLabel>
+        {description && (
+          <CommandPalette.ItemDescription>
+            {description}
+          </CommandPalette.ItemDescription>
+        )}
+      </CommandPalette.ItemText>
     </>
   );
 

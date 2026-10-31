@@ -309,6 +309,31 @@ export function CommandPaletteItem<C extends React.ElementType = "div">({
   );
 }
 
+/** A result's icon. Decorative: the label names the result. */
+export const CommandPaletteItemIcon = forwardRef<
+  HTMLSpanElement,
+  React.HTMLAttributes<HTMLSpanElement>
+>(function CommandPaletteItemIcon({ className, ...rest }, ref) {
+  return (
+    <span
+      ref={ref}
+      aria-hidden="true"
+      className={join(styles.itemIcon, className)}
+      {...rest}
+    />
+  );
+});
+
+/** Holds a result's label and description, beside its icon. */
+export const CommandPaletteItemText = forwardRef<
+  HTMLSpanElement,
+  React.HTMLAttributes<HTMLSpanElement>
+>(function CommandPaletteItemText({ className, ...rest }, ref) {
+  return (
+    <span ref={ref} className={join(styles.itemText, className)} {...rest} />
+  );
+});
+
 export const CommandPaletteItemLabel = forwardRef<
   HTMLSpanElement,
   React.HTMLAttributes<HTMLSpanElement>

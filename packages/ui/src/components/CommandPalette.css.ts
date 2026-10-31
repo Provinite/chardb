@@ -78,10 +78,12 @@ export const groupHeading = style({
   textTransform: "uppercase",
 });
 
+/** An icon, then the text: the icon is what the eye finds first. */
 export const item = style({
   display: "flex",
-  flexDirection: "column",
-  justifyContent: "center",
+  flexDirection: "row",
+  alignItems: "center",
+  gap: vars.space.md,
   minBlockSize: vars.size.target.comfortable,
   paddingBlock: vars.space.sm,
   paddingInline: vars.space.md,
@@ -99,6 +101,22 @@ export const item = style({
       outlineOffset: `calc(-1 * ${vars.borderWidth.hairline})`,
     },
   },
+});
+
+export const itemIcon = style({
+  display: "flex",
+  flexShrink: 0,
+  color: vars.text.muted,
+  selectors: {
+    [`${item}[aria-selected='true'] &`]: { color: vars.action.primary.fg },
+  },
+});
+
+export const itemText = style({
+  display: "flex",
+  flexDirection: "column",
+  flex: 1,
+  minInlineSize: 0,
 });
 
 export const itemLabel = style({

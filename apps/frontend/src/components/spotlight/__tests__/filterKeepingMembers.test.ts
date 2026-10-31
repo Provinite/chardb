@@ -1,14 +1,18 @@
 import { describe, it, expect } from "vitest";
+import { User } from "lucide-react";
 import { filterKeepingMembers } from "../filterKeepingMembers";
 import { MEMBER_GROUP, MEMBER_PAGES_GROUP } from "../useSpotlightActions";
 import type { SpotlightGroup } from "../types";
 
 const noop = () => {};
+// What a result looks like has no bearing on whether it matches.
+const icon = User;
 
 const members: SpotlightGroup = {
   group: MEMBER_GROUP,
   actions: [
     {
+      icon,
       id: "member-1",
       label: "Neo the Baka",
       description: "@neothebaka",
@@ -20,23 +24,30 @@ const members: SpotlightGroup = {
 const memberPages: SpotlightGroup = {
   group: MEMBER_PAGES_GROUP,
   actions: [
-    { id: "profile", label: "Profile", to: "/members/neothebaka" },
-    { id: "inventory", label: "Inventory", to: "/members/neothebaka/inv" },
-    { id: "characters", label: "Characters", to: "/user/neothebaka" },
+    { icon, id: "profile", label: "Profile", to: "/members/neothebaka" },
+    {
+      icon,
+      id: "inventory",
+      label: "Inventory",
+      to: "/members/neothebaka/inv",
+    },
+    { icon, id: "characters", label: "Characters", to: "/user/neothebaka" },
   ],
 };
 
 const pages: SpotlightGroup = {
   group: "Thornwood",
   actions: [
-    { id: "overview", label: "Overview", to: "/" },
+    { icon, id: "overview", label: "Overview", to: "/" },
     {
+      icon,
       id: "ledger",
       label: "Item Ledger",
       description: "Thornwood item ledger",
       to: "/ledger",
     },
     {
+      icon,
       id: "moderation",
       label: "Content Moderation",
       keywords: ["queue", "pending"],

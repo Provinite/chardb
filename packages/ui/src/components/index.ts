@@ -32,7 +32,9 @@ import {
   CommandPaletteInput,
   CommandPaletteItem,
   CommandPaletteItemDescription,
+  CommandPaletteItemIcon,
   CommandPaletteItemLabel,
+  CommandPaletteItemText,
   CommandPaletteList,
   CommandPaletteRoot,
 } from "./CommandPalette";
@@ -50,6 +52,8 @@ export const CommandPalette = {
   List: CommandPaletteList,
   Group: CommandPaletteGroup,
   Item: CommandPaletteItem,
+  ItemIcon: CommandPaletteItemIcon,
+  ItemText: CommandPaletteItemText,
   ItemLabel: CommandPaletteItemLabel,
   ItemDescription: CommandPaletteItemDescription,
   Empty: CommandPaletteEmpty,

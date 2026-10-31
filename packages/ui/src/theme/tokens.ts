@@ -169,7 +169,7 @@ export const sharedTokens = {
      * The height a dialog's result list holds at whatever it shows, so the
      * dialog never resizes as results come and go. Shorter screens shrink it.
      */
-    dialogList: "26rem",
+    dialogList: "28rem",
     /** The gap between a control and its focus ring. */
     focusOffset: "2px",
     /** The navigation sidebar's width, beside the page and as a drawer. */

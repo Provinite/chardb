@@ -245,6 +245,40 @@ describe("CommandPalette styles", () => {
   });
 });
 
+describe("CommandPalette item parts", () => {
+  const renderItem = () =>
+    render(
+      <CommandPalette.Root open onClose={() => {}} aria-label="Search">
+        <CommandPalette.List>
+          <CommandPalette.Item>
+            <CommandPalette.ItemIcon>
+              <svg data-testid="icon" />
+            </CommandPalette.ItemIcon>
+            <CommandPalette.ItemText>
+              <CommandPalette.ItemLabel>Inventory</CommandPalette.ItemLabel>
+              <CommandPalette.ItemDescription>
+                What you hold
+              </CommandPalette.ItemDescription>
+            </CommandPalette.ItemText>
+          </CommandPalette.Item>
+        </CommandPalette.List>
+      </CommandPalette.Root>,
+    );
+
+  it("keeps the icon out of the result's name", () => {
+    renderItem();
+    const icon = document.querySelector('[data-testid="icon"]')!;
+
+    expect(icon.closest('[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it("puts the icon beside the text, not above it", () => {
+    renderItem();
+
+    expect(declarationsOf(options()[0])["flex-direction"]).toBe("row");
+  });
+});
+
 describe("Highlight", () => {
   const marks = (container: Element) =>
     [...container.querySelectorAll("mark")].map((m) => m.textContent);

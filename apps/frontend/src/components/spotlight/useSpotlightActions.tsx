@@ -1,4 +1,30 @@
 import { useMemo } from "react";
+import {
+  Activity,
+  ArrowLeftRight,
+  BarChart3,
+  CircleUser,
+  ClipboardCheck,
+  Dna,
+  FilePlus,
+  FolderOpen,
+  FolderPlus,
+  House,
+  Image,
+  LayoutGrid,
+  Lock,
+  Mail,
+  Package,
+  Palette,
+  Plus,
+  Settings,
+  Shield,
+  ShieldCheck,
+  Upload,
+  User,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { useDebouncedValue } from "@mantine/hooks";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityHost } from "../../contexts/CommunityHostContext";
@@ -127,6 +153,7 @@ export function useSpotlightActions(
         group: MEMBER_GROUP,
         actions: members.map((member) => ({
           id: `member-${member.id}`,
+          icon: CircleUser,
           label: member.displayName || member.username,
           description: `@${member.username}`,
           // Narrows the box instead of leaving it. Picking a person is half a
@@ -152,18 +179,21 @@ export function useSpotlightActions(
         const pages: SpotlightItem[] = [
           {
             id: `member-page-profile-${member.id}`,
+            icon: User,
             label: "Profile",
             description: `${who} in ${communityName}`,
             to: nav(base),
           },
           {
             id: `member-page-inventory-${member.id}`,
+            icon: Package,
             label: "Inventory",
             description: `What ${who} holds in ${communityName}`,
             to: nav(`${base}/inventory`),
           },
           {
             id: `member-page-characters-${member.id}`,
+            icon: FolderOpen,
             label: "Characters",
             // Says "every" because it is the whole site rather than here --
             // the ones belonging to this community are on the profile above,
@@ -178,6 +208,7 @@ export function useSpotlightActions(
         if (member.id !== user?.id) {
           pages.push({
             id: `member-page-trade-${member.id}`,
+            icon: ArrowLeftRight,
             label: "Propose trade",
             description: `Open a trade with ${who}`,
             to: nav(`/trades/new?with=${member.id}`),
@@ -194,6 +225,7 @@ export function useSpotlightActions(
       actions: [
         {
           id: "home",
+          icon: House,
           label: "Home",
           description: "Go to the home page",
           // The site's home, not the community's -- `/` on a community host is
@@ -204,12 +236,14 @@ export function useSpotlightActions(
           ? [
               {
                 id: "dashboard",
+                icon: LayoutGrid,
                 label: "Dashboard",
                 description: "Your personal dashboard",
                 to: apex("/dashboard"),
               },
               {
                 id: "feed",
+                icon: Activity,
                 label: "Feed",
                 description: "Activity feed",
                 to: apex("/feed"),
@@ -225,6 +259,7 @@ export function useSpotlightActions(
       actions: [
         {
           id: "browse-characters",
+          icon: User,
           label: "Browse Characters",
           description: "View all characters",
           // Every character on the site, so the apex's `/characters`; the same
@@ -233,12 +268,14 @@ export function useSpotlightActions(
         },
         {
           id: "browse-galleries",
+          icon: LayoutGrid,
           label: "Browse Galleries",
           description: "View all galleries",
           to: apex("/galleries"),
         },
         {
           id: "browse-media",
+          icon: Image,
           label: "Browse Media",
           description: "View all media",
           to: apex("/media"),
@@ -254,18 +291,21 @@ export function useSpotlightActions(
       actions: [
         {
           id: "my-characters",
+          icon: User,
           label: "My Characters",
           description: "Your characters",
           to: apex("/my/characters"),
         },
         {
           id: "my-galleries",
+          icon: LayoutGrid,
           label: "My Galleries",
           description: "Your galleries",
           to: apex("/my/galleries"),
         },
         {
           id: "my-media",
+          icon: Image,
           label: "My Media",
           description: "Your media",
           to: apex("/my/media"),
@@ -279,18 +319,21 @@ export function useSpotlightActions(
       actions: [
         {
           id: "liked-characters",
+          icon: User,
           label: "Liked Characters",
           description: "Characters you liked",
           to: apex("/liked/characters"),
         },
         {
           id: "liked-galleries",
+          icon: LayoutGrid,
           label: "Liked Galleries",
           description: "Galleries you liked",
           to: apex("/liked/galleries"),
         },
         {
           id: "liked-media",
+          icon: Image,
           label: "Liked Media",
           description: "Media you liked",
           to: apex("/liked/media"),
@@ -309,6 +352,7 @@ export function useSpotlightActions(
           ? [
               {
                 id: "create-character",
+                icon: UserPlus,
                 label: "Create Character",
                 description: "Create a new character",
                 to: nav("/character/create"),
@@ -317,6 +361,7 @@ export function useSpotlightActions(
           : []),
         {
           id: "upload-media",
+          icon: Upload,
           label: "Upload Media",
           // `nav`, not `apex`: uploading stays on the host it was started
           // from, because that host is what decides which community's
@@ -328,12 +373,14 @@ export function useSpotlightActions(
         },
         {
           id: "create-gallery",
+          icon: FolderPlus,
           label: "Create Gallery",
           description: "Create a new gallery",
           to: apex("/gallery/create"),
         },
         {
           id: "create-text",
+          icon: FilePlus,
           label: "Create Text",
           // Stays on-host for the same reason as Upload Media above.
           description: "Create a new text post",
@@ -348,18 +395,21 @@ export function useSpotlightActions(
       actions: [
         {
           id: "my-profile",
+          icon: User,
           label: "Edit Profile",
           description: "View and edit your profile",
           to: apex(`/user/${user.username}`),
         },
         {
           id: "my-communities",
+          icon: Users,
           label: "My Communities",
           description: "View your communities",
           to: apex("/my/communities"),
         },
         {
           id: "join-community",
+          icon: Plus,
           label: "Join Community",
           description: "Join a new community",
           to: apex("/join-community"),
@@ -374,6 +424,7 @@ export function useSpotlightActions(
         actions: [
           {
             id: "site-admin",
+            icon: Shield,
             label: "Site Admin",
             description: "Site administration panel",
             // The site's admin panel, so the apex's `/admin`. A community host
@@ -382,12 +433,14 @@ export function useSpotlightActions(
           },
           {
             id: "site-invite-codes",
+            icon: Mail,
             label: "Site Invite Codes",
             description: "Manage site-wide invite codes",
             to: apex("/admin/site-invite-codes"),
           },
           {
             id: "admin-communities",
+            icon: Users,
             label: "Community Management",
             description: "Manage all communities",
             to: apex("/admin/communities"),
@@ -423,6 +476,7 @@ export function useSpotlightActions(
         const actions: SpotlightItem[] = [
           {
             id: `c-${cId}-overview`,
+            icon: BarChart3,
             label: "Overview",
             description: `${cName} overview`,
             to: inCommunity(cSlug, cId, ""),
@@ -433,24 +487,28 @@ export function useSpotlightActions(
           // typed any more than it could be clicked (#338).
           {
             id: `c-${cId}-characters`,
+            icon: User,
             label: "Browse Characters",
             description: `${cName} characters`,
             to: inCommunity(cSlug, cId, "/characters"),
           },
           {
             id: `c-${cId}-my-characters`,
+            icon: FolderOpen,
             label: "My Characters",
             description: `Your characters in ${cName}`,
             to: inCommunity(cSlug, cId, "/my-characters"),
           },
           {
             id: `c-${cId}-members`,
+            icon: Users,
             label: "Members",
             description: `${cName} members`,
             to: inCommunity(cSlug, cId, "/members"),
           },
           {
             id: `c-${cId}-inventory`,
+            icon: Package,
             label: "Inventory",
             description: `${cName} inventory`,
             to: inCommunity(cSlug, cId, "/inventory"),
@@ -460,6 +518,7 @@ export function useSpotlightActions(
         if (hasInvitePermissions) {
           actions.push({
             id: `c-${cId}-invite-codes`,
+            icon: Mail,
             label: "Invite Codes",
             description: `${cName} invite codes`,
             to: inCommunity(cSlug, cId, "/invite-codes"),
@@ -469,6 +528,7 @@ export function useSpotlightActions(
         if (hasAdminPermissions) {
           actions.push({
             id: `c-${cId}-settings`,
+            icon: Settings,
             label: "Settings",
             description: `${cName} settings`,
             to: inCommunity(cSlug, cId, "/settings"),
@@ -479,12 +539,14 @@ export function useSpotlightActions(
           actions.push(
             {
               id: `c-${cId}-admin`,
+              icon: Shield,
               label: "Admin Dashboard",
               description: `${cName} admin dashboard`,
               to: inCommunity(cSlug, cId, "/admin"),
             },
             {
               id: `c-${cId}-colors`,
+              icon: Palette,
               label: "Color Palette",
               description: `${cName} color palette`,
               to: inCommunity(cSlug, cId, "/admin/colors"),
@@ -495,6 +557,7 @@ export function useSpotlightActions(
         if (role.canManageItems || role.canGrantItems) {
           actions.push({
             id: `c-${cId}-items`,
+            icon: Package,
             label: "Items Admin",
             description: `${cName} items administration`,
             to: inCommunity(cSlug, cId, "/admin/items"),
@@ -504,6 +567,7 @@ export function useSpotlightActions(
         if (hasSpeciesPermissions) {
           actions.push({
             id: `c-${cId}-species`,
+            icon: Dna,
             label: "Species Management",
             description: `${cName} species management`,
             to: inCommunity(cSlug, cId, "/species"),
@@ -513,6 +577,7 @@ export function useSpotlightActions(
         if (role.canCreateRole || role.canEditRole) {
           actions.push({
             id: `c-${cId}-permissions`,
+            icon: Lock,
             label: "Permissions",
             description: `${cName} role permissions`,
             to: inCommunity(cSlug, cId, "/permissions"),
@@ -526,6 +591,7 @@ export function useSpotlightActions(
         if (role.canModerateImages || role.canEditCharacterRegistry) {
           actions.push({
             id: `c-${cId}-moderation`,
+            icon: ShieldCheck,
             label: "Content Moderation",
             description: `${cName} moderation queues`,
             keywords: [
@@ -548,6 +614,7 @@ export function useSpotlightActions(
         if (role.canModerateImages) {
           actions.push({
             id: `c-${cId}-image-moderation`,
+            icon: Image,
             label: "Image Moderation",
             description: `${cName} image moderation`,
             keywords: [
@@ -571,6 +638,7 @@ export function useSpotlightActions(
         if (role.canEditCharacterRegistry) {
           actions.push({
             id: `c-${cId}-trait-review`,
+            icon: ClipboardCheck,
             label: "Trait Review",
             description: `${cName} trait review`,
             keywords: [
