@@ -77,6 +77,14 @@ describe("reloadOnStaleChunk", () => {
     expect(reload).toHaveBeenCalledTimes(2);
   });
 
+  it("does not reload while offline, which a reload cannot fix", () => {
+    vi.spyOn(navigator, "onLine", "get").mockReturnValue(false);
+    const event = preloadError();
+    expect(reload).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+    vi.restoreAllMocks();
+  });
+
   it("does not reload when it cannot remember having reloaded", () => {
     useStorage(blockedStorage);
     const event = preloadError();
