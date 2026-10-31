@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A `candy-board` preset** (Halloween on, a Discord server and player linked, one empty board) and specs for its Lighting panel (#466).
 - **Page search specs run against Mantine's Spotlight and the new palette alike** through a `spotlight()` helper, until Mantine is removed (#466).
 
 ### Changed

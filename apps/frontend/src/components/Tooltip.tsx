@@ -1,6 +1,7 @@
 import React from "react";
 import { Tooltip as MantineTooltip } from "@mantine/core";
 import { useTheme } from "styled-components";
+import { vars } from "@chardb/ui/theme";
 
 interface CustomTooltipProps {
   label: string;
@@ -20,6 +21,9 @@ export const Tooltip: React.FC<CustomTooltipProps> = ({
       label={label}
       position={position}
       withArrow
+      // Above popovers, which some of these sit in: Mantine's own default is
+      // under the dropdown layer. Goes with this file when Tooltip is ours.
+      zIndex={vars.layer.dropdown[100]}
       styles={{
         tooltip: {
           backgroundColor: theme.colors.surface,

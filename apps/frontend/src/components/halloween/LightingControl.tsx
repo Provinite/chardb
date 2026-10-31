@@ -1,6 +1,6 @@
 import React, { useCallback, useRef } from "react";
 import styled from "styled-components";
-import { Popover } from "@mantine/core";
+import { Popover } from "@chardb/ui";
 import {
   ArrowUpFromLine,
   Blend,
@@ -276,16 +276,14 @@ export const LightingControl: React.FC<LightingControlProps> = ({
   };
 
   return (
-    // Not hidden when the button is out of view: the pad is still the light's
-    // whole state, and jsdom, with no layout, always reads the button as gone.
-    <Popover position="bottom" withArrow hideDetached={false}>
-      <Popover.Target>
+    <Popover.Root side="bottom" align="center">
+      <Popover.Trigger>
         <Trigger type="button">
           <Sun size={16} aria-hidden />
           Lighting
         </Trigger>
-      </Popover.Target>
-      <Popover.Dropdown role="dialog" aria-label="Lighting">
+      </Popover.Trigger>
+      <Popover.Panel aria-label="Lighting">
         <Panel>
           <Controls>
             <PadArea>
@@ -435,7 +433,7 @@ export const LightingControl: React.FC<LightingControlProps> = ({
             </IntensitySlider>
           </Tooltip>
         </Panel>
-      </Popover.Dropdown>
-    </Popover>
+      </Popover.Panel>
+    </Popover.Root>
   );
 };
