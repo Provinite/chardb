@@ -20,7 +20,7 @@ interface PaletteContextValue {
   setActiveId: (id: string | null) => void;
   /** The options on screen, in order. */
   options: () => HTMLElement[];
-  listRef: React.RefObject<HTMLDivElement>;
+  listRef: React.MutableRefObject<HTMLDivElement | null>;
   onClose: () => void;
 }
 
@@ -73,7 +73,7 @@ export const CommandPaletteRoot = forwardRef<
   ref,
 ) {
   const listId = useId();
-  const listRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const options = useCallback(
@@ -184,7 +184,7 @@ export const CommandPaletteList = forwardRef<
   HTMLDivElement,
   CommandPaletteListProps
 >(function CommandPaletteList(
-  { className, onClick, onPointerMove, ...rest },
+  { className, onClick, onMouseDown, onPointerMove, ...rest },
   ref,
 ) {
   const { listId, label, activeId, setActiveId, options, listRef, onClose } =
@@ -202,7 +202,7 @@ export const CommandPaletteList = forwardRef<
   return (
     <div
       ref={(el) => {
-        (listRef as React.MutableRefObject<HTMLDivElement | null>).current = el;
+        listRef.current = el;
         if (typeof ref === "function") ref(el);
         else if (ref) ref.current = el;
       }}
@@ -215,6 +215,18 @@ export const CommandPaletteList = forwardRef<
         // Closes even for a link to the page already open, where the route
         // does not change.
         if (followsLink(e)) onClose();
+      }}
+      onMouseDown={(e) => {
+        onMouseDown?.(e);
+        // Results are never focused: pressing one would otherwise take focus
+        // from the box, and with it the arrow keys and typing. The click that
+        // follows still goes through.
+        if (
+          e.target instanceof Element &&
+          e.target.closest('[role="option"]')
+        ) {
+          e.preventDefault();
+        }
       }}
       onPointerMove={(e) => {
         onPointerMove?.(e);

@@ -195,6 +195,22 @@ describe("CommandPalette", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it("keeps focus in the box when a result is pressed", () => {
+    render(<Harness />);
+    const down = new MouseEvent("mousedown", {
+      bubbles: true,
+      cancelable: true,
+    });
+
+    act(() => {
+      options()[1].dispatchEvent(down);
+    });
+
+    // The browser would otherwise focus the option, and arrow keys and
+    // typing would stop reaching the box.
+    expect(down.defaultPrevented).toBe(true);
+  });
+
   it("labels each group with its heading", () => {
     render(<Harness />);
 

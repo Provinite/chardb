@@ -1,51 +1,56 @@
 import { describe, it, expect } from "vitest";
-import type { SpotlightActionGroupData } from "@mantine/spotlight";
 import { filterKeepingMembers } from "../filterKeepingMembers";
 import { MEMBER_GROUP, MEMBER_PAGES_GROUP } from "../useSpotlightActions";
+import type { SpotlightGroup } from "../types";
 
 const noop = () => {};
 
-const members: SpotlightActionGroupData = {
+const members: SpotlightGroup = {
   group: MEMBER_GROUP,
   actions: [
     {
       id: "member-1",
       label: "Neo the Baka",
       description: "@neothebaka",
-      onClick: noop,
+      onSelect: noop,
     },
   ],
 };
 
-const memberPages: SpotlightActionGroupData = {
+const memberPages: SpotlightGroup = {
   group: MEMBER_PAGES_GROUP,
   actions: [
-    { id: "profile", label: "Profile", description: "", onClick: noop },
-    { id: "inventory", label: "Inventory", description: "", onClick: noop },
-    { id: "characters", label: "Characters", description: "", onClick: noop },
+    { id: "profile", label: "Profile", to: "/members/neothebaka" },
+    { id: "inventory", label: "Inventory", to: "/members/neothebaka/inv" },
+    { id: "characters", label: "Characters", to: "/user/neothebaka" },
   ],
 };
 
-const pages: SpotlightActionGroupData = {
+const pages: SpotlightGroup = {
   group: "Thornwood",
   actions: [
-    { id: "overview", label: "Overview", description: "", onClick: noop },
+    { id: "overview", label: "Overview", to: "/" },
     {
       id: "ledger",
       label: "Item Ledger",
       description: "Thornwood item ledger",
-      onClick: noop,
+      to: "/ledger",
+    },
+    {
+      id: "moderation",
+      label: "Content Moderation",
+      keywords: ["queue", "pending"],
+      to: "/moderation",
     },
   ],
 };
 
 const all = [members, memberPages, pages];
 
-const groupNames = (result: ReturnType<typeof filterKeepingMembers>) =>
-  result.map((item) => ("group" in item ? item.group : item.id));
+const groupNames = (result: SpotlightGroup[]) => result.map((g) => g.group);
 
-const actionsOf = (result: ReturnType<typeof filterKeepingMembers>) =>
-  (result[0] as SpotlightActionGroupData).actions.map((a) => a.id);
+const actionsOf = (result: SpotlightGroup[]) =>
+  result[0].actions.map((a) => a.id);
 
 describe("filterKeepingMembers", () => {
   it("answers an @ query with people and nothing else", () => {
@@ -90,6 +95,12 @@ describe("filterKeepingMembers", () => {
 
     expect(groupNames(result)).toEqual(["Thornwood"]);
     expect(actionsOf(result)).toEqual(["ledger"]);
+  });
+
+  it("matches a page by its keywords", () => {
+    const result = filterKeepingMembers("queue", all);
+
+    expect(actionsOf(result)).toEqual(["moderation"]);
   });
 
   it("drops people the moment the @ goes away", () => {
