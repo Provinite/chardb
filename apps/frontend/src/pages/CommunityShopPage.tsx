@@ -9,7 +9,7 @@ import {
   Check,
   AlertTriangle,
 } from "lucide-react";
-import { Button } from "@chardb/ui";
+import { Button, Sidebar, Stack } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -25,6 +25,7 @@ import {
 } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { formatAmount, formatPrice, sumPrices } from "../lib/currencyDisplay";
+import * as styles from "./CommunityShopPage.css";
 
 /**
  * The shop as a member sees it.
@@ -108,17 +109,6 @@ const WalletLink = styled(Link)`
 
   &:hover {
     text-decoration: underline;
-  }
-`;
-
-const Layout = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 320px;
-  gap: 1.5rem;
-  align-items: start;
-
-  @media (max-width: 900px) {
-    grid-template-columns: 1fr;
   }
 `;
 
@@ -229,14 +219,6 @@ const PriceButton = styled.button<{ $affordable: boolean }>`
     cursor: not-allowed;
     opacity: 0.45;
   }
-`;
-
-const Aside = styled.aside`
-  position: sticky;
-  top: 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
 `;
 
 const Panel = styled.div`
@@ -601,8 +583,8 @@ export const CommunityShopPage: React.FC = () => {
         </Wallet>
       </Header>
 
-      <Layout>
-        <div>
+      <Sidebar.Root stackBelow="lg" gap="lg">
+        <Sidebar.Main>
           {items.length === 0 ? (
             <Empty data-testid="shop-empty">
               <Package size={36} style={{ opacity: 0.5 }} />
@@ -668,115 +650,120 @@ export const CommunityShopPage: React.FC = () => {
               })}
             </Grid>
           )}
-        </div>
+        </Sidebar.Main>
 
-        <Aside>
-          <Panel data-testid="shop-cart">
-            <PanelTitle>
-              <ShoppingCart size={16} /> Cart
-              {cart.count > 0 && <Muted>({cart.count})</Muted>}
-            </PanelTitle>
-            {cartDetail.length === 0 ? (
-              <Muted>Nothing in it yet.</Muted>
-            ) : (
-              <>
-                {cartDetail.map(({ line, item, price }) => (
-                  <CartRow key={`${line.shopItemId}:${line.shopPriceId}`}>
-                    <CartName>
-                      <div>{item.name || item.itemType.name}</div>
-                      <Muted>{formatPrice(price.components)} each</Muted>
-                    </CartName>
-                    <QtyInput
-                      type="number"
-                      min={0}
-                      max={MAX_UNITS_PER_ITEM}
-                      step={1}
-                      value={line.quantity}
-                      aria-label={`Quantity of ${item.name || item.itemType.name}`}
-                      onChange={(e) =>
-                        cart.setQuantity(
-                          line.shopItemId,
-                          line.shopPriceId,
-                          Math.trunc(Number(e.target.value)) || 0,
-                        )
-                      }
-                    />
-                  </CartRow>
-                ))}
-                <Total data-testid="cart-total">
-                  {/* Currencies never convert, so a total is a set of amounts
+        <Sidebar.Side as="aside" width="xl" className={styles.cart}>
+          <Stack gap="md">
+            <Panel data-testid="shop-cart">
+              <PanelTitle>
+                <ShoppingCart size={16} /> Cart
+                {cart.count > 0 && <Muted>({cart.count})</Muted>}
+              </PanelTitle>
+              {cartDetail.length === 0 ? (
+                <Muted>Nothing in it yet.</Muted>
+              ) : (
+                <>
+                  {cartDetail.map(({ line, item, price }) => (
+                    <CartRow key={`${line.shopItemId}:${line.shopPriceId}`}>
+                      <CartName>
+                        <div>{item.name || item.itemType.name}</div>
+                        <Muted>{formatPrice(price.components)} each</Muted>
+                      </CartName>
+                      <QtyInput
+                        type="number"
+                        min={0}
+                        max={MAX_UNITS_PER_ITEM}
+                        step={1}
+                        value={line.quantity}
+                        aria-label={`Quantity of ${item.name || item.itemType.name}`}
+                        onChange={(e) =>
+                          cart.setQuantity(
+                            line.shopItemId,
+                            line.shopPriceId,
+                            Math.trunc(Number(e.target.value)) || 0,
+                          )
+                        }
+                      />
+                    </CartRow>
+                  ))}
+                  <Total data-testid="cart-total">
+                    {/* Currencies never convert, so a total is a set of amounts
                       rather than one number. */}
-                  Total:{" "}
-                  <strong>
-                    {total.map((t) => formatPrice([{ ...t }])).join(" + ")}
-                  </strong>
-                </Total>
-                <ModalActions>
-                  <Button variant="secondary" onClick={cart.clear} size="sm">
-                    Clear
-                  </Button>
-                  <Button onClick={() => setConfirming(true)} size="sm">
-                    Buy
-                  </Button>
-                </ModalActions>
-              </>
-            )}
-          </Panel>
+                    Total:{" "}
+                    <strong>
+                      {total.map((t) => formatPrice([{ ...t }])).join(" + ")}
+                    </strong>
+                  </Total>
+                  <ModalActions>
+                    <Button variant="secondary" onClick={cart.clear} size="sm">
+                      Clear
+                    </Button>
+                    <Button onClick={() => setConfirming(true)} size="sm">
+                      Buy
+                    </Button>
+                  </ModalActions>
+                </>
+              )}
+            </Panel>
 
-          <Panel data-testid="shop-purchases">
-            <PanelTitle>Recent purchases</PanelTitle>
-            {purchaseLines.length === 0 ? (
-              <Muted>Nothing bought yet.</Muted>
-            ) : (
-              purchaseLines.map((line) => (
-                <PurchaseRow key={line.id} data-testid={`purchase-${line.id}`}>
-                  <CartName>
-                    <div>
-                      {line.shopItem.name || line.shopItem.itemType.name}
-                    </div>
-                    <Muted>
-                      {formatPrice(line.costs)}
-                      {line.refundedAt ? " · refunded" : ""}
-                    </Muted>
-                  </CartName>
-                  {line.refundableByViewer ? (
-                    <UndoButton
-                      onClick={() =>
-                        setUndoTarget({
-                          lineId: line.id,
-                          item:
-                            line.shopItem.name || line.shopItem.itemType.name,
-                          cost: formatPrice(line.costs),
-                        })
-                      }
-                      data-testid={`undo-${line.id}`}
-                    >
-                      <Undo2 size={12} /> Undo
-                    </UndoButton>
-                  ) : (
-                    // The server says why, so the reason is never a guess
-                    // made from a timestamp on this side.
-                    <Muted title={line.refundBlockedReason ?? undefined}>
-                      {line.refundedAt ? <Check size={14} /> : "—"}
-                    </Muted>
-                  )}
-                </PurchaseRow>
-              ))
-            )}
-            {/* Truncation said out loud. Silently showing the eight most
+            <Panel data-testid="shop-purchases">
+              <PanelTitle>Recent purchases</PanelTitle>
+              {purchaseLines.length === 0 ? (
+                <Muted>Nothing bought yet.</Muted>
+              ) : (
+                purchaseLines.map((line) => (
+                  <PurchaseRow
+                    key={line.id}
+                    data-testid={`purchase-${line.id}`}
+                  >
+                    <CartName>
+                      <div>
+                        {line.shopItem.name || line.shopItem.itemType.name}
+                      </div>
+                      <Muted>
+                        {formatPrice(line.costs)}
+                        {line.refundedAt ? " · refunded" : ""}
+                      </Muted>
+                    </CartName>
+                    {line.refundableByViewer ? (
+                      <UndoButton
+                        onClick={() =>
+                          setUndoTarget({
+                            lineId: line.id,
+                            item:
+                              line.shopItem.name || line.shopItem.itemType.name,
+                            cost: formatPrice(line.costs),
+                          })
+                        }
+                        data-testid={`undo-${line.id}`}
+                      >
+                        <Undo2 size={12} /> Undo
+                      </UndoButton>
+                    ) : (
+                      // The server says why, so the reason is never a guess
+                      // made from a timestamp on this side.
+                      <Muted title={line.refundBlockedReason ?? undefined}>
+                        {line.refundedAt ? <Check size={14} /> : "—"}
+                      </Muted>
+                    )}
+                  </PurchaseRow>
+                ))
+              )}
+              {/* Truncation said out loud. Silently showing the eight most
                 recent is how a buyer with twenty purchases concluded the
                 older ten were gone (#289). */}
-            {purchaseTotal > purchaseLines.length && (
-              <PanelFooter data-testid="shop-purchases-more">
-                <Muted>
-                  Showing {purchaseLines.length} of {purchaseTotal}
-                </Muted>
-                <Link to="/shop/purchases">View all</Link>
-              </PanelFooter>
-            )}
-          </Panel>
-        </Aside>
-      </Layout>
+              {purchaseTotal > purchaseLines.length && (
+                <PanelFooter data-testid="shop-purchases-more">
+                  <Muted>
+                    Showing {purchaseLines.length} of {purchaseTotal}
+                  </Muted>
+                  <Link to="/shop/purchases">View all</Link>
+                </PanelFooter>
+              )}
+            </Panel>
+          </Stack>
+        </Sidebar.Side>
+      </Sidebar.Root>
 
       {/* Spending is irreversible after fifteen minutes, so it never happens
           on a single click. */}

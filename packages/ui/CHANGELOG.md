@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Layout primitives** `Stack`, `Cluster`, `Grid`, `Switcher` and `Sidebar`, and the `focusRing`, `visuallyHidden`, `cardSurface` and `interactiveSurface` style fragments (#475).
 - **Style helpers** from `@chardb/ui/theme`: `mq`, `hover`, `cq`, `track`, `split`, `sprinkles` and `loop`, plus `scrollToElement` and `scrollToPosition` that respect reduced motion (#474).
 - **vanilla-extract theme**: semantic tokens as `vars` for light and dark, with reduced-motion durations and a contrast test for every listed colour pair (#473).
 - **`Menu`**, with `MenuGroup` and `MenuItem`: a "⋯" button that opens a keyboard-navigable list of actions in labelled groups (#430).

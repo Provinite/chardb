@@ -83,7 +83,7 @@ Semantic families:
 
 | Family | For |
 |---|---|
-| `surface.*` | Backgrounds: `page`, `raised`, `sunken`, and `overlay` for scrims |
+| `surface.*` | Backgrounds: `page`, `raised`, `raisedHover` for a raised control under the pointer, `sunken`, and `overlay` for scrims |
 | `text.*` | Text and icons: `default`, `muted`, `subtle`, `link`, `linkHover`, and `inverse` for text on a filled status colour |
 | `border.*` | `default` for dividers, `input` for input outlines, `focus` for focus rings |
 | `action.*` | Interactive controls: `primary`, `secondary` and `danger`, each with `bg`, `bgHover`, `bgPressed`, `bgSubtle`, `bgDisabled`, `fg`, `fgDisabled` and `border` |
@@ -183,8 +183,8 @@ export const wrap = style({ containerName: panel, containerType: "inline-size" }
 export const body = style({
   display: "block",
   "@container": cq(panel, {
-    30: { display: "flex" },
-    48: { gap: vars.space.lg },
+    [containers.sm]: { display: "flex" },
+    [containers.lg]: { gap: vars.space.lg },
   }),
 });
 ```
@@ -192,20 +192,39 @@ export const body = style({
 - `cq()` is to `@container` what `mq()` is to `@media`: the only way to write the condition. It takes every threshold for one container at once and returns the contents of the `@container` key, so a component with several thresholds still has one `@container` key.
 - `cq()` emits the thresholds smallest-first, whatever order they are written in. `postcss-sort-media-queries` sorts only `@media`, so container queries rely on the helper for their order.
 - A component that queries two containers merges them: `"@container": { ...cq(card, {...}), ...cq(page, {...}) }`.
-- Thresholds belong to the component, chosen where its layout breaks, not borrowed from the viewport breakpoints. They are local to the component, so they are not theme tokens.
+- Thresholds come from the `containers` scale in `@chardb/ui/theme`, not from the viewport breakpoints:
+
+  | Name | `xs` | `sm` | `md` | `lg` | `xl` |
+  |---|---|---|---|---|---|
+  | Width | 20rem | 30rem | 40rem | 50rem | 60rem |
+
+  Pick the step nearest to where the component's layout breaks; if none is close, add a step. They are plain numbers rather than `vars`, because a container query cannot read a CSS variable.
 - Thresholds are numbers of `rem`; `cq()` adds the unit. Numbers keep lengths out of the source as strings, so the no-literal-length rule holds without an exemption, and `cq()` can only ever emit `rem`. An `em` in a container query is measured against the container's own font size, so it would shift when that text is resized. Leave the root font size at the browser default, so `rem` follows the user's setting.
 
 ## Layout
 
 Layout primitives in `@chardb/ui` own the flex and grid patterns the app repeats:
 
-| Primitive | Does |
-|---|---|
-| `Stack` | Vertical flow with a gap |
-| `Cluster` | Horizontal row that wraps: toolbars, tag lists, action bars |
-| `Grid` | Columns that fit as many items as the width allows |
-| `Switcher` | A row that becomes a column below a width |
-| `Sidebar` | Two panes side by side that stack when narrow |
+| Primitive | Does | Takes |
+|---|---|---|
+| `Stack` | Vertical flow with a gap | `gap` (default `md`), `align` |
+| `Cluster` | Horizontal row that wraps: toolbars, tag lists, action bars | `gap` (default `sm`), `align` (default `center`), `justify` |
+| `Grid` | Columns that fit as many items as the width allows | `min`, a `size.column` name; `repeat`, `fit` (default) or `fill`; `gap` |
+| `Switcher` | A row whose children share the width equally, and stack below a container width | `stackBelow`, a `containers` name; `gap` |
+| `Sidebar` | `Sidebar.Root` holds `Sidebar.Main` and `Sidebar.Side`, side by side, stacked below a container width | Root: `stackBelow`, `gap` (default `lg`). Side: `width`, a `size.column` name |
+
+```tsx
+<Sidebar.Root stackBelow="lg">
+  <Sidebar.Main>…</Sidebar.Main>
+  <Sidebar.Side as="aside" width="xl">…</Sidebar.Side>
+</Sidebar.Root>
+```
+
+- Every primitive takes `as` (`div`, `section`, `article`, `aside`, `nav`, `header`, `footer`, `main`, `form`, `fieldset`, `ul`, `ol` or `li`), with that element's own attributes (`as="form"` takes `noValidate`), and forwards `ref` and `className`.
+- `gap`, `align` and `justify` are sprinkles values, so they take one per breakpoint: `gap={{ base: "sm", md: "lg" }}`. The primitive owns them; a `className` passed in sets neither gap nor alignment.
+- `Switcher` and `Sidebar.Root` render a container `div` around their layout element. The container is sized as if it were empty, so it takes its width from its parent: in a flex row, a centred `Stack` or an `auto` grid track it collapses unless placed. `className` goes on the container, to place it (`flex: 1`, a grid area); `as`, `ref` and other props go on the layout element.
+- `Grid` clamps its minimum to the grid's width, so one column never overflows a grid narrower than `min`. `fill` keeps empty columns, so a short last row stays at one item width.
+- `Sidebar` is a layout inside a page. The app's navigation sidebar is a separate component.
 
 Reach for a primitive before writing `display: flex`. A one-off flex rule in a component is fine when no primitive fits; three of the same one-off is a missing primitive.
 
@@ -228,7 +247,14 @@ Column proportions come from `@chardb/ui`, not hand-written `grid-template-colum
 
 ### Shared styles
 
-Shared `style()` fragments live in `packages/ui/src/styles/` for non-layout needs that recur: visually hidden text, the focus ring, card and interactive surfaces.
+Shared `style()` fragments live in `packages/ui/src/styles/` for non-layout needs that recur. They are classes, exported from `@chardb/ui/theme`; compose them with `style([focusRing, { … }])`.
+
+| Fragment | Is |
+|---|---|
+| `focusRing` | An outline on `:focus-visible`, `size.focusOffset` outside the control |
+| `visuallyHidden` | Out of view and out of the layout, still read by screen readers |
+| `cardSurface` | `surface.raised` with a transparent hairline border, for forced colours |
+| `interactiveSurface` | A card surface with the focus ring that turns `surface.raisedHover` under the pointer |
 
 Share a style when two places **represent the same thing**, not when they **happen to look the same**. Ask: if I change one, will I wish I had changed the other, and would I have to remember to? If yes, share it, even between two components, when the link is that clear. If the match is coincidence, leave both alone; merging them couples things that will drift apart.
 
@@ -343,7 +369,7 @@ The `AppLoader` animation is the startup screen, and it lives in `index.html`, n
 - **Tooltips** come in two kinds:
   - A tooltip that names an icon button repeats its accessible name. It shows on hover and focus, and on long-press on touch as a bonus; nothing depends on it.
   - Information people need goes in a toggletip: an info button that opens it on tap or click. Never put it in a hover-only tooltip.
-- **Focus** uses the shared focus ring on `:focus-visible`. Never remove an outline without replacing it.
+- **Focus** uses the shared focus ring (`focusRing`) on `:focus-visible`. Never remove an outline without replacing it.
 
 ## Accessibility
 

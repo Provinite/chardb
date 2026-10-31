@@ -3,7 +3,7 @@ import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import { Store, Plus, Edit2, EyeOff, Eye, X } from "lucide-react";
-import { Button } from "@chardb/ui";
+import { Button, Stack, Switcher } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
@@ -169,24 +169,6 @@ const ModalTitle = styled.h2`
   font-weight: 600;
   margin: 0 0 1.25rem 0;
   color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-`;
-
-const TwoUp = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
 `;
 
 const Label = styled.label`
@@ -584,9 +566,9 @@ export const CommunityShopAdminPage: React.FC = () => {
               ? `Edit ${editing.name || editing.itemType.name}`
               : "New listing"}
           </ModalTitle>
-          <Form onSubmit={handleSave}>
+          <Stack as="form" gap="md" onSubmit={handleSave}>
             {!editing && (
-              <FormGroup>
+              <Stack gap="sm">
                 <Label htmlFor="shop-item-type">
                   Item type <Hint>What buying this grants.</Hint>
                 </Label>
@@ -602,10 +584,10 @@ export const CommunityShopAdminPage: React.FC = () => {
                     </option>
                   ))}
                 </Select>
-              </FormGroup>
+              </Stack>
             )}
 
-            <FormGroup>
+            <Stack gap="sm">
               <Label htmlFor="shop-name">
                 Name <Hint>Optional. Falls back to the item type's name.</Hint>
               </Label>
@@ -615,9 +597,9 @@ export const CommunityShopAdminPage: React.FC = () => {
                 maxLength={100}
                 onChange={(e) => setName(e.target.value)}
               />
-            </FormGroup>
+            </Stack>
 
-            <FormGroup>
+            <Stack gap="sm">
               <Label htmlFor="shop-description">Description</Label>
               <TextArea
                 id="shop-description"
@@ -625,10 +607,10 @@ export const CommunityShopAdminPage: React.FC = () => {
                 maxLength={2000}
                 onChange={(e) => setDescription(e.target.value)}
               />
-            </FormGroup>
+            </Stack>
 
-            <TwoUp>
-              <FormGroup>
+            <Switcher stackBelow="sm" gap="md">
+              <Stack gap="sm">
                 <Label htmlFor="shop-stock">
                   Stock <Hint>Blank for unlimited.</Hint>
                 </Label>
@@ -640,8 +622,8 @@ export const CommunityShopAdminPage: React.FC = () => {
                   value={stock}
                   onChange={(e) => setStock(e.target.value)}
                 />
-              </FormGroup>
-              <FormGroup>
+              </Stack>
+              <Stack gap="sm">
                 <Label htmlFor="shop-max">
                   Limit per member <Hint>Blank for none.</Hint>
                 </Label>
@@ -653,10 +635,10 @@ export const CommunityShopAdminPage: React.FC = () => {
                   value={maxPerUser}
                   onChange={(e) => setMaxPerUser(e.target.value)}
                 />
-              </FormGroup>
-            </TwoUp>
+              </Stack>
+            </Switcher>
 
-            <FormGroup>
+            <Stack gap="sm">
               <Label>
                 Prices{" "}
                 <Hint>
@@ -784,7 +766,7 @@ export const CommunityShopAdminPage: React.FC = () => {
               >
                 <Plus size={11} /> Another way to pay
               </TinyButton>
-            </FormGroup>
+            </Stack>
 
             <ModalActions>
               <Button variant="secondary" type="button" onClick={close}>
@@ -794,7 +776,7 @@ export const CommunityShopAdminPage: React.FC = () => {
                 {editing ? "Save" : "Create"}
               </Button>
             </ModalActions>
-          </Form>
+          </Stack>
         </ModalContent>
       </Modal>
     </Container>

@@ -34,13 +34,15 @@ export const lightColors = {
   surface: {
     page: p.white,
     raised: p.slate50,
+    /** A raised surface under the pointer. */
+    raisedHover: p.slate100,
     sunken: p.slate100,
     overlay: p.scrim,
   },
   text: {
     default: p.slate800,
     muted: p.slate600,
-    subtle: p.slate500,
+    subtle: p.slate550,
     /** Text on a filled status background. */
     inverse: p.white,
     link: p.violet600,
@@ -82,6 +84,7 @@ export const darkColors: ColorTokens = {
   surface: {
     page: p.slate900,
     raised: p.slate800,
+    raisedHover: p.slate750,
     sunken: p.slate950,
     overlay: p.scrim,
   },
@@ -157,7 +160,11 @@ export const sharedTokens = {
       md: "10rem",
       lg: "14rem",
       xl: "20rem",
+      /** The narrowest a character card gets. */
+      card: "18.75rem",
     },
+    /** The gap between a control and its focus ring. */
+    focusOffset: "2px",
     target: {
       /** The 24px floor no control goes under. */
       min: "1.5rem",

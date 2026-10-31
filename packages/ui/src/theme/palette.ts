@@ -14,8 +14,13 @@ export const palette = {
   slate300: "#cbd5e1",
   slate400: "#94a3b8",
   slate500: "#64748b",
+  // Off the Tailwind scale: the lightest grey that holds 4.5:1 on slate100.
+  slate550: "#617188",
   slate600: "#475569",
   slate700: "#334155",
+  // Off the Tailwind scale: a dark hover that keeps text.subtle and text.link
+  // at 4.5:1.
+  slate750: "#293549",
   slate800: "#1e293b",
   slate900: "#0f172a",
   slate950: "#020617",

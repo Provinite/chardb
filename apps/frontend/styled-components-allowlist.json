@@ -2,7 +2,6 @@
   "apps/frontend/src/__tests__/test-utils.tsx",
   "apps/frontend/src/components/AdvancedSearchForm.tsx",
   "apps/frontend/src/components/CharacterCard.tsx",
-  "apps/frontend/src/components/CharacterGrid.tsx",
   "apps/frontend/src/components/CharacterListView.tsx",
   "apps/frontend/src/components/CharacterMediaGallery.tsx",
   "apps/frontend/src/components/Comment.tsx",
