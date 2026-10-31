@@ -1,7 +1,7 @@
 import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render } from "../__tests__/render";
-import { Dialog } from "./Dialog";
+import { Dialog } from ".";
 
 const press = (key: string, target: Element = document.activeElement!) =>
   act(() => {

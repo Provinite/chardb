@@ -76,94 +76,101 @@ export interface DialogRootProps {
  * itself, and goes back to whatever had it on close. Escape closes the top
  * dialog only.
  */
-const Root = forwardRef<HTMLDialogElement, DialogRootProps>(function Root(
-  { open, onClose, children, "aria-label": ariaLabel, className },
-  ref,
-) {
-  const titleId = useId();
-  const [hasTitle, setHasTitle] = useState(false);
-  const layerRef = useRef<HTMLDivElement>(null);
-  const dialogRef = useRef<HTMLDialogElement | null>(null);
-  const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
+  function DialogRoot(
+    { open, onClose, children, "aria-label": ariaLabel, className },
+    ref,
+  ) {
+    const titleId = useId();
+    const [hasTitle, setHasTitle] = useState(false);
+    const layerRef = useRef<HTMLDivElement>(null);
+    const dialogRef = useRef<HTMLDialogElement | null>(null);
+    const onCloseRef = useRef(onClose);
+    onCloseRef.current = onClose;
 
-  useLayoutEffect(() => {
-    if (!open) return;
-    const layer = layerRef.current;
-    const dialog = dialogRef.current;
-    if (!layer || !dialog) return;
+    useLayoutEffect(() => {
+      if (!open) return;
+      const layer = layerRef.current;
+      const dialog = dialogRef.current;
+      if (!layer || !dialog) return;
 
-    // Before the page goes inert, which would blur the opener.
-    const opener =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
+      // Before the page goes inert, which would blur the opener.
+      const opener =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null;
 
-    stack.push(layer);
-    const restoreInert = inertOthers(layer);
-    const unlockScroll = lockScroll();
+      stack.push(layer);
+      const restoreInert = inertOthers(layer);
+      const unlockScroll = lockScroll();
 
-    const target =
-      dialog.querySelector<HTMLElement>("[data-autofocus]") ?? dialog;
-    target.focus();
+      const target =
+        dialog.querySelector<HTMLElement>("[data-autofocus]") ?? dialog;
+      target.focus();
 
-    setHasTitle(document.getElementById(titleId) !== null);
+      setHasTitle(document.getElementById(titleId) !== null);
 
-    return () => {
-      stack.splice(stack.indexOf(layer), 1);
-      restoreInert();
-      unlockScroll();
-      // Hidden by now (a drawer that closed, a breakpoint), focusing it would
-      // drop focus to the top of the page instead.
-      if (opener?.isConnected && (opener.checkVisibility?.() ?? true)) {
-        opener.focus();
-      }
-    };
-  }, [open, titleId]);
+      return () => {
+        stack.splice(stack.indexOf(layer), 1);
+        restoreInert();
+        unlockScroll();
+        // Hidden by now (a drawer that closed, a breakpoint), focusing it would
+        // drop focus to the top of the page instead.
+        if (opener?.isConnected && (opener.checkVisibility?.() ?? true)) {
+          opener.focus();
+        }
+      };
+    }, [open, titleId]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== "Escape" || stack[stack.length - 1] !== layerRef.current) {
-        return;
-      }
-      e.preventDefault();
-      onCloseRef.current();
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
+    useEffect(() => {
+      if (!open) return;
+      const onKeyDown = (e: KeyboardEvent) => {
+        if (
+          e.key !== "Escape" ||
+          stack[stack.length - 1] !== layerRef.current
+        ) {
+          return;
+        }
+        e.preventDefault();
+        onCloseRef.current();
+      };
+      document.addEventListener("keydown", onKeyDown);
+      return () => document.removeEventListener("keydown", onKeyDown);
+    }, [open]);
 
-  if (!open) return null;
+    if (!open) return null;
 
-  return createPortal(
-    <div ref={layerRef} className={styles.layer}>
-      <div
-        className={styles.scrim}
-        data-dialog-scrim=""
-        onClick={() => onCloseRef.current()}
-      />
-      <dialog
-        ref={(el) => {
-          dialogRef.current = el;
-          if (typeof ref === "function") ref(el);
-          else if (ref) ref.current = el;
-        }}
-        open
-        aria-modal="true"
-        aria-label={ariaLabel}
-        aria-labelledby={hasTitle ? titleId : undefined}
-        tabIndex={-1}
-        className={className ? `${styles.dialog} ${className}` : styles.dialog}
-      >
-        <TitleIdContext.Provider value={titleId}>
-          {children}
-        </TitleIdContext.Provider>
-      </dialog>
-    </div>,
-    document.body,
-  );
-});
+    return createPortal(
+      <div ref={layerRef} className={styles.layer}>
+        <div
+          className={styles.scrim}
+          data-dialog-scrim=""
+          onClick={() => onCloseRef.current()}
+        />
+        <dialog
+          ref={(el) => {
+            dialogRef.current = el;
+            if (typeof ref === "function") ref(el);
+            else if (ref) ref.current = el;
+          }}
+          open
+          aria-modal="true"
+          aria-label={ariaLabel}
+          aria-labelledby={hasTitle ? titleId : undefined}
+          tabIndex={-1}
+          className={
+            className ? `${styles.dialog} ${className}` : styles.dialog
+          }
+        >
+          <TitleIdContext.Provider value={titleId}>
+            {children}
+          </TitleIdContext.Provider>
+        </dialog>
+      </div>,
+      document.body,
+    );
+  },
+);
 
 export interface DialogTitleProps
   extends React.HTMLAttributes<HTMLHeadingElement> {
@@ -171,19 +178,16 @@ export interface DialogTitleProps
 }
 
 /** The dialog's heading, and its accessible name. */
-const Title = forwardRef<HTMLHeadingElement, DialogTitleProps>(function Title(
-  { className, ...rest },
-  ref,
-) {
-  const id = useContext(TitleIdContext);
-  return (
-    <h2
-      ref={ref}
-      id={id}
-      className={className ? `${styles.title} ${className}` : styles.title}
-      {...rest}
-    />
-  );
-});
-
-export const Dialog = { Root, Title };
+export const DialogTitle = forwardRef<HTMLHeadingElement, DialogTitleProps>(
+  function DialogTitle({ className, ...rest }, ref) {
+    const id = useContext(TitleIdContext);
+    return (
+      <h2
+        ref={ref}
+        id={id}
+        className={className ? `${styles.title} ${className}` : styles.title}
+        {...rest}
+      />
+    );
+  },
+);
