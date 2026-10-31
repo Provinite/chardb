@@ -76,20 +76,35 @@ fi
 # else, index.html above all, is revalidated on every load, because index.html
 # is what points at this build's asset names.
 #
-# Three passes, so a visitor mid-deploy never meets an index.html whose assets
-# are missing: the new assets go up first, then the new index.html, and only
-# then are the previous build's assets deleted.
+# The new assets go up before the new index.html, so a visitor mid-deploy never
+# meets an index.html whose assets are missing.
 echo "📤 Uploading hashed assets to S3..."
 aws s3 sync apps/frontend/dist/assets/ s3://$BUCKET_NAME/assets/ \
     --cache-control "public, max-age=31536000, immutable"
 
+source "$SCRIPT_DIR/lib/frontend-asset-retention.sh"
+if [ "$ENVIRONMENT" = "prod" ]; then
+    echo "📝 Recording this build's assets..."
+    record_frontend_assets "$BUCKET_NAME" apps/frontend/dist
+fi
+
 echo "📤 Uploading index.html and other files to S3..."
-aws s3 sync apps/frontend/dist/ s3://$BUCKET_NAME/ --exclude "assets/*" \
+aws s3 sync apps/frontend/dist/ s3://$BUCKET_NAME/ \
+    --exclude "assets/*" --exclude "${FRONTEND_MANIFEST_PREFIX}*" \
     --cache-control "no-cache" --delete
 
-echo "🧹 Removing the previous build's assets..."
-aws s3 sync apps/frontend/dist/assets/ s3://$BUCKET_NAME/assets/ --delete \
-    --cache-control "public, max-age=31536000, immutable"
+# Production keeps the last few builds' assets, so a tab opened before this
+# deploy can still load the pages it has not visited yet; see
+# lib/frontend-asset-retention.sh. Staging deletes them at once: a stale
+# staging tab breaking on its next navigation is acceptable there.
+if [ "$ENVIRONMENT" = "prod" ]; then
+    echo "🧹 Removing assets no recent build uses..."
+    prune_frontend_assets "$BUCKET_NAME" 5
+else
+    echo "🧹 Removing the previous build's assets..."
+    aws s3 sync apps/frontend/dist/assets/ s3://$BUCKET_NAME/assets/ --delete \
+        --cache-control "public, max-age=31536000, immutable"
+fi
 
 # Create CloudFront invalidation
 echo "🔄 Creating CloudFront invalidation..."
