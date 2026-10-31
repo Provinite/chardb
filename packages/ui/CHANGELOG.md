@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`Popover`**, a panel beside its button that keeps keyboard order as if it sat right after it, and **`useAnchoredPosition`**, which places it and `Menu`: flipping, sliding to stay on screen, and pointing an arrow (#466).
+- **`Popover`**, a panel beside its button that keeps keyboard order as if it sat right after it, and **`useAnchoredPosition`**, which places it and `Menu` with floating-ui's `fallbackPlacements` and `fallbackStrategy`, slides it to stay on screen, and caps it to the room it has (#466).
 - **`Dialog`**, a modal `<dialog>` on the modal layer that makes the rest of the page inert, and **`CommandPalette`**, a search box over a fixed-height listbox inside one; plus the `size.dialog` and `size.dialogList` tokens (#466).
 
 ### Changed

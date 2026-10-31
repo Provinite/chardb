@@ -42,12 +42,6 @@ describe("placeFloating", () => {
     expect(place({ anchor: low })).toMatchObject({ side: "top", top: 612 });
   });
 
-  it("stays on its side when neither side has room", () => {
-    const tall = { width: 200, height: 790 };
-
-    expect(place({ floating: tall }).side).toBe("bottom");
-  });
-
   it("slides left to stay on screen at the right edge", () => {
     const right = { ...anchor, left: 940, width: 50 };
     const placed = place({ anchor: right });
@@ -76,18 +70,79 @@ describe("placeFloating", () => {
     expect(place({ floating: wide }).left).toBe(8);
   });
 
+  describe("fallbackPlacements", () => {
+    /** Low on the screen: no room below, room above and to the right. */
+    const low = { ...anchor, left: 100, top: 720 };
+
+    it("tries them in order, taking the first that fits", () => {
+      const placed = place({
+        anchor: low,
+        fallbackPlacements: ["right", "top"],
+      });
+
+      expect(placed.side).toBe("right");
+    });
+
+    it("skips one that does not fit", () => {
+      const nearRight = { ...low, left: 850 };
+
+      expect(
+        place({ anchor: nearRight, fallbackPlacements: ["right", "top"] }).side,
+      ).toBe("top");
+    });
+
+    it("is the opposite side by default", () => {
+      expect(place({ anchor: low }).side).toBe("top");
+    });
+
+    it("never moves when empty", () => {
+      expect(place({ anchor: low, fallbackPlacements: [] }).side).toBe(
+        "bottom",
+      );
+    });
+  });
+
+  describe("fallbackStrategy, when nothing fits", () => {
+    /** 450 tall, by a button with 94 of room below it and 234 above. */
+    const tall = { width: 200, height: 450 };
+    const short = { width: 1000, height: 400 };
+    const lowButton = { ...anchor, top: 250 };
+
+    it("takes the side with the most room for bestFit, the default", () => {
+      const placed = place({
+        anchor: lowButton,
+        floating: tall,
+        viewport: short,
+      });
+
+      expect(placed).toMatchObject({ side: "top", maxHeight: 234 });
+    });
+
+    it("stays on the preferred side for initialPlacement", () => {
+      const placed = place({
+        anchor: lowButton,
+        floating: tall,
+        viewport: short,
+        fallbackStrategy: "initialPlacement",
+      });
+
+      expect(placed).toMatchObject({ side: "bottom", maxHeight: 94 });
+    });
+  });
+
   it("reports the room it has, to cap its size by", () => {
     // Below a button whose bottom is at 340: 800 - 8 - 348.
     expect(place()).toMatchObject({ maxHeight: 444, maxWidth: 984 });
   });
 
   it("sits a gap above its anchor on top even when capped", () => {
-    // 600 tall, and neither side has room: capped to the 284 above the
-    // button (300 less the gap and the margin), it starts at the margin and
-    // ends a gap above it.
+    // 600 tall, and neither side has room; kept on top, it is capped to the
+    // 284 above the button (300 less the gap and the margin), so it starts at
+    // the margin and ends a gap above it.
     const placed = place({
       side: "top",
       floating: { width: 200, height: 600 },
+      fallbackStrategy: "initialPlacement",
     });
 
     expect(placed).toMatchObject({ side: "top", top: 8, maxHeight: 284 });

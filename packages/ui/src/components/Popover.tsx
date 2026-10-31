@@ -13,7 +13,12 @@ import React, {
 import { createPortal } from "react-dom";
 import { setElementVars } from "@vanilla-extract/dynamic";
 import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
-import type { Align, Placement, Side } from "../hooks/placeFloating";
+import type {
+  Align,
+  FallbackStrategy,
+  Placement,
+  Side,
+} from "../hooks/placeFloating";
 import * as styles from "./Popover.css";
 
 /** Pixels between the trigger and the panel: room for the arrow. */
@@ -118,6 +123,17 @@ export interface PopoverRootProps {
   side?: Side;
   /** Where along that side, relative to the trigger. */
   align?: Align;
+  /**
+   * Sides to try, in order, when there is no room on `side`. The opposite
+   * side by default; `[]` keeps it on `side`.
+   */
+  fallbackPlacements?: Side[];
+  /**
+   * When there is room on none of them: `bestFit` (the default) takes the
+   * side with the most room, `initialPlacement` stays on `side`. Capped and
+   * scrolling either way.
+   */
+  fallbackStrategy?: FallbackStrategy;
   children?: React.ReactNode;
 }
 
@@ -134,6 +150,8 @@ export interface PopoverRootProps {
 export function PopoverRoot({
   side = "bottom",
   align = "center",
+  fallbackPlacements,
+  fallbackStrategy,
   children,
 }: PopoverRootProps) {
   const [open, setOpen] = useState(false);
@@ -145,6 +163,8 @@ export function PopoverRoot({
   useAnchoredPosition(triggerRef, panelRef, open, {
     side,
     align,
+    fallbackPlacements,
+    fallbackStrategy,
     gap: GAP_PX,
     margin: MARGIN_PX,
     arrowInset: ARROW_INSET_PX,

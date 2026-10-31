@@ -2,6 +2,7 @@ import { useLayoutEffect, useRef, type RefObject } from "react";
 import {
   placeFloating,
   type Align,
+  type FallbackStrategy,
   type Placement,
   type Side,
 } from "./placeFloating";
@@ -9,6 +10,10 @@ import {
 export interface AnchoredOptions {
   side: Side;
   align: Align;
+  /** See `placeFloating`: the opposite side by default. */
+  fallbackPlacements?: Side[];
+  /** See `placeFloating`: `bestFit` by default. */
+  fallbackStrategy?: FallbackStrategy;
   /** Pixels between the anchor and it. */
   gap?: number;
   /** Pixels it keeps from the viewport's edges. */
@@ -80,6 +85,8 @@ export function useAnchoredPosition(
       const {
         side,
         align,
+        fallbackPlacements,
+        fallbackStrategy,
         gap = 8,
         margin = 8,
         arrowInset = 0,
@@ -92,6 +99,8 @@ export function useAnchoredPosition(
         viewport: { width: window.innerWidth, height: window.innerHeight },
         side,
         align,
+        fallbackPlacements,
+        fallbackStrategy,
         gap,
         margin,
         arrowInset,
