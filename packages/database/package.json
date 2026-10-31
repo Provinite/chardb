@@ -7,7 +7,7 @@
     "build": "prisma generate && tsc",
     "dev": "tsc --watch",
     "clean": "rm -rf dist",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/type-check.tsbuildinfo",
     "db:generate": "node ../../scripts/with-instance.mjs dotenv -e .env -e ../../apps/backend/.env -- prisma generate",
     "db:push": "node ../../scripts/with-instance.mjs dotenv -e .env -e ../../apps/backend/.env -- prisma db push",
     "db:migrate": "node ../../scripts/with-instance.mjs dotenv -e .env -e ../../apps/backend/.env -- prisma migrate dev",
