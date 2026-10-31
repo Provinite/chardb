@@ -73,4 +73,18 @@ describe("the real route tables", () => {
     expect(home).toHaveBeenCalledTimes(1);
     expect(character).toHaveBeenCalledTimes(1);
   });
+
+  // A character with no species lives at the apex, behind the guard that
+  // forwards the rest to their community.
+  it("map an apex character to CharacterPage through its host guard", async () => {
+    const pages = await import("../pages");
+    const { apexRoutes } = await import("../ApexRoutes");
+    const character = vi
+      .spyOn(pages.CharacterPage, "preload")
+      .mockResolvedValue({});
+
+    preloadMatchedPage(apexRoutes, "/character/abc");
+
+    expect(character).toHaveBeenCalledTimes(1);
+  });
 });

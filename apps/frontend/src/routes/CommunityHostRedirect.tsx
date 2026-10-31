@@ -61,7 +61,7 @@ export const CommunityHostRedirect: React.FC = () => {
  * every `/character/:id` link ever shared keeps working, whichever of the two
  * states the character is in now, and moves with it if that changes.
  */
-export const CharacterHostGuard: React.FC = () => {
+export function CharacterHostGuard() {
   const { id } = useParams<{ id: string }>();
   const location = useLocation();
 
@@ -84,4 +84,8 @@ export const CharacterHostGuard: React.FC = () => {
   useHoldBootScreen(leaving);
 
   return leaving ? null : <CharacterPage />;
-};
+}
+
+// For the startup preload (`preloadRoute.ts`): the page this may render is not
+// among its children, so it says which one it is.
+CharacterHostGuard.preload = () => CharacterPage.preload();
