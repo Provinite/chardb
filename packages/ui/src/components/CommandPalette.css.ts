@@ -58,14 +58,13 @@ export const item = style({
   color: vars.text.default,
   textDecoration: "none",
   cursor: "pointer",
-  // Transparent until forced-colour mode, which drops the background below
-  // and draws this in a system colour instead.
-  outline: `${vars.borderWidth.hairline} solid transparent`,
-  outlineOffset: `calc(-1 * ${vars.borderWidth.hairline})`,
   selectors: {
     "&[aria-selected='true']": {
       background: vars.surface.raisedHover,
-      outlineColor: "currentColor",
+      // Invisible until forced-colour mode, which drops the background and
+      // draws this in a system colour instead.
+      outline: `${vars.borderWidth.hairline} solid transparent`,
+      outlineOffset: `calc(-1 * ${vars.borderWidth.hairline})`,
     },
   },
 });
@@ -79,10 +78,13 @@ export const itemDescription = style({
   fontSize: vars.font.size.sm,
 });
 
+/** Colour and an underline, neither of which changes the text's width. */
 export const mark = style({
-  borderRadius: vars.radius.sm,
-  background: vars.action.primary.bgSubtle,
-  color: vars.text.default,
+  background: "none",
+  color: vars.text.link,
+  textDecoration: "underline",
+  textDecorationThickness: vars.borderWidth.thick,
+  textUnderlineOffset: vars.borderWidth.thick,
 });
 
 export const empty = style({
