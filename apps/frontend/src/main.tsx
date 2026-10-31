@@ -14,7 +14,7 @@ import { ThemedToaster } from "./components/ThemedToaster";
 import App from "./App";
 import { TransitionRouter } from "./routes/TransitionRouter";
 import { preloadCurrentPage } from "./routes/preloadRoute";
-import { SpotlightNavigation } from "./components/spotlight/SpotlightNavigation";
+import { SpotlightProvider } from "./components/spotlight/SpotlightContext";
 import "./index.css";
 import "./styles/global.css";
 
@@ -33,8 +33,9 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
                   table all need to know which community's host this is before
                   any of them render. */}
               <CommunityHostProvider>
-                <SpotlightNavigation />
-                <App />
+                <SpotlightProvider>
+                  <App />
+                </SpotlightProvider>
                 <ThemedToaster />
               </CommunityHostProvider>
             </AuthProvider>

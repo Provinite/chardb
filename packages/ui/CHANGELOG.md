@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`Dialog`**, a modal `<dialog>` on the modal layer that makes the rest of the page inert, and **`CommandPalette`**, a search box over a fixed-height listbox inside one; plus the `size.dialog` and `size.dialogList` tokens (#466).
+
 ### Changed
 
 - **The focus ring is a listed pair on every status tint** (`status.*.bgSubtle`), so the contrast test covers controls inside tinted toasts and alerts (#484).

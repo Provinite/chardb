@@ -1,6 +1,10 @@
 import { presetTest, expect } from "../../src/fixtures.js";
-import type { Page } from "@playwright/test";
 import { SeedCommunityMemberRolesDocument } from "../../src/generated/graphql.js";
+import {
+  SPOTLIGHT_IMPLS,
+  chooseSpotlightImpl,
+  spotlight,
+} from "../../src/spotlight.js";
 const test = presetTest("community-items");
 
 /**
@@ -85,142 +89,123 @@ test.describe("a member's profile inside a community", () => {
   });
 });
 
-test.describe("finding a member from the search box", () => {
-  test.use({ persona: "member" });
+// Against both implementations while Mantine's Spotlight is being replaced
+// (#466); see `src/spotlight.ts`.
+for (const impl of SPOTLIGHT_IMPLS) {
+  test.describe(`finding a member from the search box (${impl})`, () => {
+    test.use({ persona: "member" });
 
-  const openSpotlight = async (page: Page, query: string) => {
-    await page.getByRole("button", { name: "Search pages" }).click();
-    await page
-      .getByPlaceholder("Search pages, or @ for members...")
-      .fill(query);
-  };
-
-  test("picking a person offers their pages rather than leaving", async ({
-    page,
-    world,
-  }) => {
     // Scoped to the community you are standing in: the same name means a
     // different person in each one, so the search only runs inside a
     // community's pages.
-    await page.goto(world.community.url);
+    test.beforeEach(async ({ page, world }) => {
+      await chooseSpotlightImpl(page, impl);
+      await page.goto(world.community.url);
+    });
 
-    await openSpotlight(page, `@${world.users.othermember.username}`);
-    await page
-      .getByRole("button", { name: world.users.othermember.username })
-      .click();
+    test("picking a person offers their pages rather than leaving", async ({
+      page,
+      world,
+    }) => {
+      const s = spotlight(page);
+      await s.search(`@${world.users.othermember.username}`);
+      await s.result(world.users.othermember.username).click();
 
-    // Still in the palette, one level down. Picking a person is half a
-    // request; this is the other half -- so the page did not move.
-    await expect(page).toHaveURL(`${world.community.url}/`);
-    await expect(page.getByRole("button", { name: /^Profile/ })).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /^Inventory/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /^Characters/ }),
-    ).toBeVisible();
+      // Still in the palette, one level down. Picking a person is half a
+      // request; this is the other half -- so the page did not move.
+      await expect(page).toHaveURL(`${world.community.url}/`);
+      await expect(s.result(/^Profile/)).toBeVisible();
+      await expect(s.result(/^Inventory/)).toBeVisible();
+      await expect(s.result(/^Characters/)).toBeVisible();
+    });
+
+    test("their Inventory from there reaches their holdings", async ({
+      page,
+      world,
+    }) => {
+      const s = spotlight(page);
+      await s.search(`@${world.users.othermember.username}`);
+      await s.result(world.users.othermember.username).click();
+      await s.result(/^Inventory/).click();
+
+      await expect(page).toHaveURL(
+        `${world.community.url}/members/${world.users.othermember.username}/inventory`,
+      );
+    });
+
+    test("their Profile from there reaches the profile", async ({
+      page,
+      world,
+    }) => {
+      const s = spotlight(page);
+      await s.search(`@${world.users.othermember.username}`);
+      await s.result(world.users.othermember.username).click();
+      await s.result(/^Profile/).click();
+
+      await expect(page).toHaveURL(
+        `${world.community.url}/members/${world.users.othermember.username}`,
+      );
+    });
+
+    test("typing past the slash narrows their pages", async ({
+      page,
+      world,
+    }) => {
+      const s = spotlight(page);
+      await s.search(`@${world.users.othermember.username}/inv`);
+
+      await expect(s.result(/^Inventory/)).toBeVisible();
+      await expect(s.result(/^Profile/)).toHaveCount(0);
+    });
+
+    test("offers no trade with yourself", async ({ page, world }) => {
+      const s = spotlight(page);
+      await s.search(`@${world.users.member.username}/`);
+
+      await expect(s.result(/^Inventory/)).toBeVisible();
+      await expect(s.result(/^Propose trade/)).toHaveCount(0);
+    });
+
+    test("the same name without the @ searches pages only", async ({
+      page,
+      world,
+    }) => {
+      // The sigil is the whole gate. Without it the box is what it always
+      // was, and does not spend a round trip per keystroke asking about
+      // people.
+      const s = spotlight(page);
+      await s.search(world.users.othermember.username);
+
+      await expect(s.result(world.users.othermember.username)).toHaveCount(0);
+    });
+
+    test("@ on its own lists who is here", async ({ page }) => {
+      // Asserting that people came back rather than which ones: the server
+      // returns the first few alphabetically, and naming one would pin this
+      // to the preset's roster rather than to the behaviour.
+      const s = spotlight(page);
+      await s.search("@");
+
+      // A member row reads "<name>@<username>" -- the label and the handle
+      // beneath it. Nothing else in the palette carries an @.
+      await expect(s.result(/@/).first()).toBeVisible();
+    });
+
+    test("an exact name comes back first", async ({ page, world }) => {
+      // `member` is also a substring of `othermember`. This world holds
+      // nobody who sorts ahead of an exact match while containing it, so
+      // ordering is pinned properly in `communities.service.spec.ts` -- this
+      // only asserts the two do not come back the wrong way round through the
+      // real stack.
+      const s = spotlight(page);
+      await s.search(`@${world.users.member.username}`);
+
+      await expect(s.result(/@/).first()).toHaveText(
+        new RegExp(`@${world.users.member.username}$`),
+      );
+    });
   });
-
-  test("their Inventory from there reaches their holdings", async ({
-    page,
-    world,
-  }) => {
-    await page.goto(world.community.url);
-
-    await openSpotlight(page, `@${world.users.othermember.username}`);
-    await page
-      .getByRole("button", { name: world.users.othermember.username })
-      .click();
-    await page.getByRole("button", { name: /^Inventory/ }).click();
-
-    await expect(page).toHaveURL(
-      `${world.community.url}/members/${world.users.othermember.username}/inventory`,
-    );
-  });
-
-  test("their Profile from there reaches the profile", async ({
-    page,
-    world,
-  }) => {
-    await page.goto(world.community.url);
-
-    await openSpotlight(page, `@${world.users.othermember.username}`);
-    await page
-      .getByRole("button", { name: world.users.othermember.username })
-      .click();
-    await page.getByRole("button", { name: /^Profile/ }).click();
-
-    await expect(page).toHaveURL(
-      `${world.community.url}/members/${world.users.othermember.username}`,
-    );
-  });
-
-  test("typing past the slash narrows their pages", async ({ page, world }) => {
-    await page.goto(world.community.url);
-
-    await openSpotlight(page, `@${world.users.othermember.username}/inv`);
-
-    await expect(
-      page.getByRole("button", { name: /^Inventory/ }),
-    ).toBeVisible();
-    await expect(page.getByRole("button", { name: /^Profile/ })).toHaveCount(0);
-  });
-
-  test("offers no trade with yourself", async ({ page, world }) => {
-    await page.goto(world.community.url);
-
-    await openSpotlight(page, `@${world.users.member.username}/`);
-
-    await expect(
-      page.getByRole("button", { name: /^Inventory/ }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /^Propose trade/ }),
-    ).toHaveCount(0);
-  });
-
-  test("the same name without the @ searches pages only", async ({
-    page,
-    world,
-  }) => {
-    // The sigil is the whole gate. Without it the box is what it always was,
-    // and does not spend a round trip per keystroke asking about people.
-    await page.goto(world.community.url);
-
-    await openSpotlight(page, world.users.othermember.username);
-
-    await expect(
-      page.getByRole("button", { name: world.users.othermember.username }),
-    ).toHaveCount(0);
-  });
-
-  test("@ on its own lists who is here", async ({ page, world }) => {
-    // Asserting that people came back rather than which ones: the server
-    // returns the first few alphabetically, and naming one would pin this to
-    // the preset's roster rather than to the behaviour.
-    await page.goto(world.community.url);
-
-    await openSpotlight(page, "@");
-
-    // A member row reads "<name>@<username>" -- the label and the handle
-    // beneath it. Nothing else in the palette carries an @.
-    await expect(page.getByRole("button", { name: /@/ }).first()).toBeVisible();
-  });
-
-  test("an exact name comes back first", async ({ page, world }) => {
-    // `member` is also a substring of `othermember`. This world holds nobody
-    // who sorts ahead of an exact match while containing it, so ordering is
-    // pinned properly in `communities.service.spec.ts` -- this only asserts
-    // the two do not come back the wrong way round through the real stack.
-    await page.goto(world.community.url);
-
-    await openSpotlight(page, `@${world.users.member.username}`);
-
-    await expect(
-      page.getByRole("button", { name: /@/ }).first(),
-    ).toHaveAccessibleName(new RegExp(`@${world.users.member.username}$`));
-  });
-});
+}
 
 test.describe("the trade composer", () => {
   test.use({ persona: "member" });

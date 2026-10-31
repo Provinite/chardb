@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Frontend deploys cache hashed assets for a year and revalidate `index.html` on every load**; production keeps the last five builds' assets so tabs opened before a deploy keep working (#465).
 - **`@chardb/shared` is marked side-effect free**, so bundles drop the zod schemas they do not use (#465).
 - **Vite 8 and Vitest 5** replace Vite 4 and Vitest 3 in the frontend and `da-import`; `da-import` tests now run only from `src/` (#463).
+- **The "Fuzzy Page Navigation" walkthrough is now "Page Search"**, with new screenshots of the palette; it no longer claims fuzzy matching, which the search has never done (#466, #501).
 
 ### Fixed
 

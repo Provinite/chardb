@@ -5,6 +5,16 @@ export * from "./UserTypeahead";
 export * from "./SearchSelect";
 export * from "./ErrorMessage";
 export * from "./Modal";
+export type { DialogRootProps, DialogTitleProps } from "./Dialog";
+export {
+  Highlight,
+  type HighlightProps,
+  type CommandPaletteRootProps,
+  type CommandPaletteInputProps,
+  type CommandPaletteListProps,
+  type CommandPaletteGroupProps,
+  type CommandPaletteItemProps,
+} from "./CommandPalette";
 export * from "./Input";
 export * from "./Card";
 export * from "./Typography";
@@ -12,3 +22,41 @@ export * from "./RadioGroup";
 export * from "./Alert";
 export * from "./Menu";
 export * from "./TopProgressBar";
+
+import { DialogRoot, DialogTitle } from "./Dialog";
+import {
+  CommandPaletteEmpty,
+  CommandPaletteFooter,
+  CommandPaletteGroup,
+  CommandPaletteKbd,
+  CommandPaletteInput,
+  CommandPaletteItem,
+  CommandPaletteItemDescription,
+  CommandPaletteItemIcon,
+  CommandPaletteItemLabel,
+  CommandPaletteItemText,
+  CommandPaletteList,
+  CommandPaletteRoot,
+} from "./CommandPalette";
+
+/** A modal dialog on the modal layer; see `DialogRoot`. */
+export const Dialog = {
+  Root: DialogRoot,
+  Title: DialogTitle,
+};
+
+/** A search box over a list of results, in a dialog; see `CommandPaletteRoot`. */
+export const CommandPalette = {
+  Root: CommandPaletteRoot,
+  Input: CommandPaletteInput,
+  List: CommandPaletteList,
+  Group: CommandPaletteGroup,
+  Item: CommandPaletteItem,
+  ItemIcon: CommandPaletteItemIcon,
+  ItemText: CommandPaletteItemText,
+  ItemLabel: CommandPaletteItemLabel,
+  ItemDescription: CommandPaletteItemDescription,
+  Empty: CommandPaletteEmpty,
+  Footer: CommandPaletteFooter,
+  Kbd: CommandPaletteKbd,
+};

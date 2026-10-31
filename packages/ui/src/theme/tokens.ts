@@ -163,6 +163,13 @@ export const sharedTokens = {
       /** The narrowest a character card gets. */
       card: "18.75rem",
     },
+    /** The widest a dialog gets. Narrower screens give it their full width. */
+    dialog: "36rem",
+    /**
+     * The height a dialog's result list holds at whatever it shows, so the
+     * dialog never resizes as results come and go. Shorter screens shrink it.
+     */
+    dialogList: "28rem",
     /** The gap between a control and its focus ring. */
     focusOffset: "2px",
     /** The navigation sidebar's width, beside the page and as a drawer. */

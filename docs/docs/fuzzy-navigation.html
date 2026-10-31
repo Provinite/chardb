@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Fuzzy Page Navigation - Feature Walkthrough</title>
+    <title>Page Search - Feature Walkthrough</title>
     <meta
       name="description"
       content="Jump to any page in CharDB instantly with the Find page spotlight: open it with Ctrl+K, type a few characters, and pick the page you need. Type @ to find a member instead."
@@ -14,7 +14,7 @@
     />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="CharDB" />
-    <meta property="og:title" content="Fuzzy Page Navigation" />
+    <meta property="og:title" content="Page Search" />
     <meta
       property="og:description"
       content="Jump to any page in CharDB instantly with the Find page spotlight: open it with Ctrl+K, type a few characters, and pick the page you need. Type @ to find a member instead."
@@ -227,7 +227,7 @@
   <body>
     <div class="container">
       <header>
-        <h1>Fuzzy Page Navigation</h1>
+        <h1>Page Search</h1>
         <p>
           Quickly jump to any page &mdash; or any member &mdash; in CharDB with
           the "Find page" spotlight
@@ -242,9 +242,9 @@
         </div>
         <div class="step-content">
           <p>
-            CharDB now includes a fuzzy page finder that lets you jump to any
-            page instantly. Instead of clicking through menus, type a few
-            characters and select the page you need. Inside a community, typing
+            The page search jumps to any page in CharDB. Instead of clicking
+            through menus, type a few characters and select the page you need.
+            Inside a community, typing
             <kbd>@</kbd> switches the same box to searching
             <strong>people</strong> instead of pages.
           </p>
@@ -252,8 +252,8 @@
           <div class="feature-list">
             <div class="feature-item">
               <div class="icon">&#x1F50D;</div>
-              <h4>Fuzzy Matching</h4>
-              <p>Type partial words and matching pages appear instantly</p>
+              <h4>Partial Words</h4>
+              <p>Type part of a page's name and matching pages appear</p>
             </div>
             <div class="feature-item">
               <div class="icon">&#x26A1;</div>
@@ -340,9 +340,10 @@
             Click the "Find page..." button or press <kbd>Ctrl+K</kbd> (<kbd
               >&#8984;K</kbd
             >
-            on Mac) anywhere in the application. A search overlay appears in the
-            center of the screen with a text input and a list of all available
-            pages grouped by category:
+            on Mac) anywhere in the application. A search box opens near the top
+            of the screen, over a list of pages grouped by category. Each page
+            carries the same icon it has in the sidebar. The list shows seven at
+            a time; typing narrows it.
           </p>
           <ul>
             <li><strong>General</strong> &mdash; Home, Dashboard, Feed</li>
@@ -358,9 +359,14 @@
               <strong>Liked</strong> &mdash; Liked Characters, Galleries, Media
             </li>
             <li>
-              <strong>Create</strong> &mdash; Create Character, Gallery, Media
+              <strong>Create</strong> &mdash; Upload Media, Create Gallery,
+              Create Text, and Create Character inside a community
             </li>
-            <li><strong>Account</strong> &mdash; Profile, Settings</li>
+            <li>
+              <strong>Account</strong> &mdash; Edit Profile, My Communities,
+              Join Community
+            </li>
+            <li>One group per community you belong to, named after it</li>
           </ul>
 
           <div class="highlight-box">
@@ -371,10 +377,10 @@
         <div class="screenshot">
           <img
             src="spotlight-open.png"
-            alt="Spotlight overlay showing all pages"
+            alt="The spotlight open, listing the first pages grouped by category"
           />
           <div class="screenshot-caption">
-            The spotlight overlay listing all available pages, grouped by
+            The spotlight before typing: the first seven pages, grouped by
             category
           </div>
         </div>
@@ -384,21 +390,20 @@
       <div class="step">
         <div class="step-header">
           <div class="step-number">3</div>
-          <h2 class="step-title">Filtering with Fuzzy Search</h2>
+          <h2 class="step-title">Narrowing the List</h2>
         </div>
         <div class="step-content">
           <p>
-            Start typing and the list narrows down instantly. The search uses
-            <strong>fuzzy matching</strong>, so you don't need to type the full
-            page name&mdash;just a few characters is enough. Matched portions
-            are highlighted in the results so you can see exactly what matched.
+            Start typing and the list narrows. The search matches any part of a
+            page's name or description, so a few letters are enough. The letters
+            that matched are underlined in each result.
           </p>
           <p>
-            For example, typing <strong>"char"</strong> filters the list to show
-            pages related to characters: Browse Characters, My Characters, Liked
-            Characters, and Create Character&mdash;plus each community's own
-            Browse Characters and My Characters, under a group named after the
-            community. The line under each result says which is which.
+            For example, typing <strong>"char"</strong> leaves the pages about
+            characters: Browse Characters, My Characters and Liked
+            Characters&mdash;plus each community's own Browse Characters and My
+            Characters, under a group named after the community. The line under
+            each result says which is which.
           </p>
           <p>
             You can also search by <strong>community name</strong>. Each
@@ -421,8 +426,8 @@
             alt="Spotlight showing filtered results for 'char'"
           />
           <div class="screenshot-caption">
-            Typing "char" filters results to character-related pages, with
-            matched text highlighted
+            Typing "char" leaves the pages about characters, with the matched
+            letters underlined
           </div>
         </div>
       </div>
@@ -572,6 +577,12 @@
             page. The whole flow&mdash;from pressing <kbd>Ctrl+K</kbd> to
             landing on a new page&mdash;takes just a few keystrokes.
           </p>
+          <p>
+            Every page in the list is a link, so it works like any other:
+            <kbd>Ctrl</kbd>-click (<kbd>&#8984;</kbd>-click on Mac) or
+            middle-click opens it in a new tab and leaves the spotlight open,
+            and right-click offers "Copy link address".
+          </p>
 
           <div class="highlight-box">
             <strong>Keyboard-only workflow:</strong> <kbd>Ctrl+K</kbd> &rarr;
@@ -582,7 +593,7 @@
       </div>
 
       <footer>
-        <p>CharDB Fuzzy Page Navigation &bull; Feature Documentation</p>
+        <p>CharDB Page Search &bull; Feature Documentation</p>
       </footer>
     </div>
     <script src="lightbox.js" defer></script>

@@ -1,51 +1,87 @@
-import React, { useState } from "react";
-import { Spotlight } from "@mantine/spotlight";
+import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  Spotlight,
+  type SpotlightActionData,
+  type SpotlightActionGroupData,
+} from "@mantine/spotlight";
+import { localPath } from "../../lib/communityHost";
 import { filterKeepingMembers } from "./filterKeepingMembers";
 import { parseSpotlightQuery } from "./spotlightQuery";
+import {
+  RESULT_LIMIT,
+  SEARCH_PLACEHOLDER,
+  nothingFoundText,
+} from "./spotlightText";
+import { isLink } from "./types";
 import {
   useActiveCommunityId,
   useSpotlightActions,
 } from "./useSpotlightActions";
 
-// The hint is the feature. A people search nobody knows the sigil for is the
-// same unfindable inventory this replaced (#349).
-const SEARCH_PROPS = {
-  placeholder: "Search pages, or @ for members...",
-} as const;
+const SEARCH_PROPS = { placeholder: SEARCH_PLACEHOLDER } as const;
 
+const isGroup = (
+  item: SpotlightActionData | SpotlightActionGroupData,
+): item is SpotlightActionGroupData => "actions" in item;
+
+/**
+ * The page search on Mantine's Spotlight. Being replaced by
+ * `PaletteNavigation` (#466), and goes with Mantine.
+ */
 export const SpotlightNavigation: React.FC = () => {
   // Controlled because the actions both depend on it and rewrite it: member
   // results are fetched for what has been typed, and picking a person appends
   // the slash that asks which of their pages you meant.
   const [query, setQuery] = useState("");
-  const actions = useSpotlightActions(query, setQuery);
+  const { groups } = useSpotlightActions(query, setQuery);
   const parsed = parseSpotlightQuery(query);
   const inCommunity = !!useActiveCommunityId();
+  const navigate = useNavigate();
 
-  // Answering the question that was asked. "No pages found" to someone who
-  // typed a person's name reads as the person not existing -- and "nobody by
-  // that name" reads the same way to someone who is not in a community at all,
-  // where there is no membership to search.
-  const nothingFound =
-    parsed.mode === "pages"
-      ? "No pages found... try @ for members"
-      : !inCommunity
-        ? "Open a community to search its members"
-        : parsed.mode === "people"
-          ? "Nobody here by that name..."
-          : "No pages of theirs match that...";
+  // Mantine's actions are click handlers, so each destination becomes one: a
+  // route on this host, a page load on another.
+  const actions = useMemo<SpotlightActionGroupData[]>(
+    () =>
+      groups.map(({ group, actions: items }) => ({
+        group,
+        actions: items.map((item) => {
+          const { id, label, description, keywords } = item;
+          if (!isLink(item)) {
+            return {
+              id,
+              label,
+              description,
+              keywords,
+              onClick: item.onSelect,
+              closeSpotlightOnTrigger: false,
+            };
+          }
+          const path = localPath(item.to);
+          return {
+            id,
+            label,
+            description,
+            keywords,
+            onClick: () =>
+              path !== null ? navigate(path) : window.location.assign(item.to),
+          };
+        }),
+      })),
+    [groups, navigate],
+  );
 
   return (
     <Spotlight
       actions={actions}
       query={query}
       onQueryChange={setQuery}
-      filter={filterKeepingMembers}
+      filter={(q, data) => filterKeepingMembers(q, data.filter(isGroup))}
       highlightQuery
-      limit={7}
+      limit={RESULT_LIMIT}
       scrollable
       maxHeight={400}
-      nothingFound={nothingFound}
+      nothingFound={nothingFoundText(parsed, inCommunity, false)}
       searchProps={SEARCH_PROPS}
     />
   );

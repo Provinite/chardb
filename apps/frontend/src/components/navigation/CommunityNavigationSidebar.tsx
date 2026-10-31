@@ -27,7 +27,7 @@ import {
   Receipt,
   UserSearch,
 } from "lucide-react";
-import { spotlight } from "@mantine/spotlight";
+import { useSpotlight } from "../spotlight/SpotlightContext";
 import { CommunityNavigationItem } from "./CommunityNavigationItem";
 import { CommunityNavigationGroup } from "./CommunityNavigationGroup";
 import { CommunitySwitcher } from "./CommunitySwitcher";
@@ -245,6 +245,7 @@ const extractTraitId = (pathname: string): string | undefined => {
 export const CommunityNavigationSidebar: React.FC<
   CommunityNavigationSidebarProps
 > = ({ className, onToggleToGlobal }) => {
+  const spotlight = useSpotlight();
   const location = useLocation();
 
   // Which community this is, straight off the hostname. No regex, no lookup,
