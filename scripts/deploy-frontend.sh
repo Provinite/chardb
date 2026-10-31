@@ -71,9 +71,25 @@ if [ ! -d "apps/frontend/dist" ]; then
     exit 1
 fi
 
-# Sync all files to S3 (CloudFront handles caching)
-echo "📤 Uploading all files to S3..."
-aws s3 sync apps/frontend/dist/ s3://$BUCKET_NAME/ --delete
+# Files under assets/ are named after a hash of their contents, so a name never
+# comes to mean different bytes: browsers may keep them for good. Everything
+# else, index.html above all, is revalidated on every load, because index.html
+# is what points at this build's asset names.
+#
+# Three passes, so a visitor mid-deploy never meets an index.html whose assets
+# are missing: the new assets go up first, then the new index.html, and only
+# then are the previous build's assets deleted.
+echo "📤 Uploading hashed assets to S3..."
+aws s3 sync apps/frontend/dist/assets/ s3://$BUCKET_NAME/assets/ \
+    --cache-control "public, max-age=31536000, immutable"
+
+echo "📤 Uploading index.html and other files to S3..."
+aws s3 sync apps/frontend/dist/ s3://$BUCKET_NAME/ --exclude "assets/*" \
+    --cache-control "no-cache" --delete
+
+echo "🧹 Removing the previous build's assets..."
+aws s3 sync apps/frontend/dist/assets/ s3://$BUCKET_NAME/assets/ --delete \
+    --cache-control "public, max-age=31536000, immutable"
 
 # Create CloudFront invalidation
 echo "🔄 Creating CloudFront invalidation..."
