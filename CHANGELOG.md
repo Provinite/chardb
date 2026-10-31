@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Vite 8 and Vitest 5** replace Vite 4 and Vitest 3 in the frontend and `da-import`; `da-import` tests now run only from `src/` (#463).
 
+### Fixed
+
+- **Staging deploy** builds the backend image again: the Dockerfiles now copy `packages/eslint-plugin-styles/package.json`, which the root manifest has depended on since #468.
+
 ## [v14.2.0] - 2026-10-28
 
 ### Added
