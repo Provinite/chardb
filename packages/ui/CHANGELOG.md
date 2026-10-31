@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`TopProgressBar`**: the indeterminate bar along the top of the viewport for route changes (#465).
+- **`TopProgressBar`**: the indeterminate bar along the top of the viewport for route changes, announced once to screen readers each time it appears (#465, #487).
 - **`MenuLinkItem`**: a menu item that is the caller's own link, so Ctrl-click, middle-click and "open in new tab" work on it (#486).
 - **`Menu` `appearance="ghost"`**: a borderless trigger at the 44px touch size, for a trigger with content of its own such as an avatar (#486).
 - **`useBreakpoint`**: whether the viewport is at least a breakpoint wide, known on the first render; and the `size.sidebar` token (#486).
