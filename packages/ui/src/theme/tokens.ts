@@ -165,6 +165,8 @@ export const sharedTokens = {
     },
     /** The gap between a control and its focus ring. */
     focusOffset: "2px",
+    /** The navigation sidebar's width, beside the page and as a drawer. */
+    sidebar: "17.5rem",
     target: {
       /** The 24px floor no control goes under. */
       min: "1.5rem",

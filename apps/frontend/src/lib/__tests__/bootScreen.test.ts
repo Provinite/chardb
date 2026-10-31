@@ -28,8 +28,9 @@ describe("dismissBootScreen", () => {
     expect(document.getElementById(BOOT_SCREEN_ID)).toBe(el);
     expect(el.style.opacity).toBe("0");
     expect(el.style.transition).toContain("opacity");
-    // Clicks reach the app while it fades.
+    // Clicks reach the app while it fades, and so does keyboard focus.
     expect(el.style.pointerEvents).toBe("none");
+    expect(el.hasAttribute("inert")).toBe(true);
 
     el.dispatchEvent(new Event("transitionend"));
     expect(document.getElementById(BOOT_SCREEN_ID)).toBeNull();

@@ -169,6 +169,7 @@ The breakpoint helpers, like every style helper, come from `@chardb/ui/theme`.
 - **`mq("md")`** builds the query for anything sprinkles does not cover, as a key under `"@media"`: `"@media": { [mq("md")]: { flexDirection: "row" } }`. Never write a query string by hand; it is a lint error (`no-raw-media`, which covers `@container` too).
 - **One source per property.** If sprinkles sets an element's `padding`, its local `style()` does not, and the reverse. Sprinkles and local styles live in different files, and which one wins depends on import order.
 - `md` and `lg` do most structural work (sidebar becomes drawer, one column becomes two). `sm` refines. `xl` and `xxl` mostly cap content width.
+- The navigation sidebar is a column `size.sidebar` wide from `md`, and a drawer below it. Open, the drawer is modal: the app makes the rest of the page `inert`.
 - A layout that already adapts without a breakpoint (a wrapping row, an `auto-fit` grid) gets none.
 
 ### Container queries
@@ -370,6 +371,9 @@ The `AppLoader` animation is the startup screen, and it lives in `index.html`, n
   - A tooltip that names an icon button repeats its accessible name. It shows on hover and focus, and on long-press on touch as a bonus; nothing depends on it.
   - Information people need goes in a toggletip: an info button that opens it on tap or click. Never put it in a hover-only tooltip.
 - **Focus** uses the shared focus ring (`focusRing`) on `:focus-visible`. Never remove an outline without replacing it.
+- **Links go somewhere; buttons do something.** Anything that takes people to a page is a real `<a href>`: a router `Link`, or `HostAwareLink` when the destination may be on another host. That keeps everything browsers do with links: Ctrl-click, Cmd-click, middle-click and Shift-click, "Open in new tab", "Copy link address", and the address shown on hover. Never send someone to a page from a button's `onClick` or with `navigate()` in a handler. Buttons are for actions: save, log out, switch theme.
+  - This holds inside menus, cards and lists too. A menu item that navigates is a `MenuLinkItem` around the link.
+  - A handler on a link, or on something around it, that does extra work on a click (closing a drawer, closing a menu) leaves modified and middle clicks alone, and never calls `preventDefault` on them.
 
 ## Accessibility
 

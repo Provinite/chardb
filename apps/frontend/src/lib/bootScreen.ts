@@ -49,8 +49,10 @@ export const dismissBootScreen = (): void => {
   // Pin the current opacity before replacing the fade-in animation, so the
   // fade-out starts where the fade-in left off instead of jumping.
   el.style.animation = "none";
-  // Clicks go to the app underneath while the screen fades.
+  // Clicks and keyboard focus go to the app underneath while the screen
+  // fades. It sits outside #root, so nothing the app makes inert reaches it.
   el.style.pointerEvents = "none";
+  el.setAttribute("inert", "");
   el.style.opacity = String(opacity);
   void el.offsetHeight;
   el.style.transition = `opacity ${reducedMotion ? 0.01 : FADE_MS}ms ease`;

@@ -9,7 +9,14 @@ import { act } from "@testing-library/react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "styled-components";
-import { Menu, MenuGroup, MenuItem, lightTheme } from "@chardb/ui";
+import {
+  Menu,
+  MenuGroup,
+  MenuItem,
+  MenuLinkItem,
+  lightTheme,
+  vars,
+} from "@chardb/ui";
 
 const renderMenu = (handlers: {
   onEdit?: () => void;
@@ -232,5 +239,73 @@ describe("Menu", () => {
     await user.click(item);
 
     expect(onDelete).not.toHaveBeenCalled();
+  });
+
+  it("has a borderless ghost trigger at the comfortable touch size", () => {
+    render(
+      <ThemeProvider theme={lightTheme}>
+        <Menu label="More actions">
+          <MenuItem onSelect={vi.fn()}>Edit</MenuItem>
+        </Menu>
+        <Menu label="Account" appearance="ghost" trigger="CA">
+          <MenuItem onSelect={vi.fn()}>Log out</MenuItem>
+        </Menu>
+      </ThemeProvider>,
+    );
+    const style = getComputedStyle(
+      screen.getByRole("button", { name: "Account" }),
+    );
+    // jsdom drops `border: none` rather than computing it, so the check is
+    // that the outlined trigger's border is gone.
+    expect(getComputedStyle(trigger()).borderStyle).toBe("solid");
+    expect(style.borderStyle).not.toBe("solid");
+    expect(style.minHeight).toBe(vars.size.target.comfortable);
+    expect(style.minWidth).toBe(vars.size.target.comfortable);
+  });
+});
+
+describe("MenuLinkItem", () => {
+  const renderWithLink = () =>
+    render(
+      <ThemeProvider theme={lightTheme}>
+        <Menu label="Account">
+          <MenuLinkItem>
+            <a href="/user/ash">My profile</a>
+          </MenuLinkItem>
+          <MenuItem onSelect={vi.fn()}>Log out</MenuItem>
+        </Menu>
+      </ThemeProvider>,
+    );
+
+  const openAccount = async () => {
+    const user = userEvent.setup();
+    renderWithLink();
+    await user.click(screen.getByRole("button", { name: "Account" }));
+    return user;
+  };
+
+  it("is the caller's own link, so it opens in a new tab like any other", async () => {
+    await openAccount();
+    const item = screen.getByRole("menuitem", { name: "My profile" });
+    expect(item.tagName).toBe("A");
+    expect(item).toHaveAttribute("href", "/user/ash");
+  });
+
+  it("takes focus first and is reached by the arrow keys", async () => {
+    const user = await openAccount();
+    expect(screen.getByRole("menuitem", { name: "My profile" })).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "Log out" })).toHaveFocus();
+    await user.keyboard("{ArrowDown}");
+    expect(screen.getByRole("menuitem", { name: "My profile" })).toHaveFocus();
+  });
+
+  it("closes the menu when followed", async () => {
+    const user = await openAccount();
+    const item = screen.getByRole("menuitem", { name: "My profile" });
+    // jsdom does not navigate, so the click only has to close the menu.
+    item.addEventListener("click", (e) => e.preventDefault());
+    await user.click(item);
+    expect(screen.queryByRole("menu")).toBeNull();
   });
 });
