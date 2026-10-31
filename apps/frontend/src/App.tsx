@@ -1,5 +1,4 @@
-import { Suspense, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useCommunityHost } from "./contexts/CommunityHostContext";
 import { apexUrl } from "./lib/communityHost";
@@ -8,8 +7,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { useHoldBootScreen } from "./hooks/useBootScreen";
 import { ApexRoutes } from "./routes/ApexRoutes";
 import { CommunityRoutes } from "./routes/CommunityRoutes";
-import { RouteFallback } from "./routes/RouteFallback";
-import { RouteErrorBoundary } from "./routes/RouteErrorBoundary";
+import { PageBoundary } from "./routes/PageBoundary";
 import { CommunityUnreachable } from "./routes/pages";
 
 /**
@@ -26,7 +24,6 @@ import { CommunityUnreachable } from "./routes/pages";
  * there.
  */
 function App() {
-  const { pathname } = useLocation();
   const { loading: authLoading } = useAuth();
   const {
     community,
@@ -57,11 +54,9 @@ function App() {
   // when the server is down sends them to check a URL that was fine.
   if (unreachable) {
     return (
-      <RouteErrorBoundary resetKey={pathname}>
-        <Suspense fallback={<RouteFallback />}>
-          <CommunityUnreachable />
-        </Suspense>
-      </RouteErrorBoundary>
+      <PageBoundary>
+        <CommunityUnreachable />
+      </PageBoundary>
     );
   }
 
@@ -72,14 +67,9 @@ function App() {
   return (
     <Layout>
       <ScrollToTop />
-      {/* One boundary for every page, never one per route: a boundary that
-          mounts during a navigation shows its fallback at once, while one
-          already on screen lets the transition keep the old page up. */}
-      <RouteErrorBoundary resetKey={pathname}>
-        <Suspense fallback={<RouteFallback />}>
-          {community ? <CommunityRoutes /> : <ApexRoutes />}
-        </Suspense>
-      </RouteErrorBoundary>
+      <PageBoundary>
+        {community ? <CommunityRoutes /> : <ApexRoutes />}
+      </PageBoundary>
     </Layout>
   );
 }
