@@ -75,6 +75,29 @@ test.describe("a cold load fetches only its own page's code", () => {
   });
 });
 
+test.describe("a page whose code will not load", () => {
+  test("reloads once, then offers a reload inside the shell", async ({
+    page,
+  }) => {
+    let loads = 0;
+    page.on("load", () => loads++);
+    await page.route(/\/assets\/CharactersPage-[\w-]+\.js$/, (route) =>
+      route.abort(),
+    );
+
+    await page.goto(apexUrl("/characters"));
+
+    await expect(
+      page.getByRole("heading", { name: "This page couldn't load" }),
+    ).toBeVisible();
+    await expect(page.getByRole("button", { name: "Reload" })).toBeVisible();
+    // The shell is still there around it.
+    await expect(page.getByRole("banner")).toBeVisible();
+    // The first failure reloaded the page; the second did not.
+    expect(loads).toBe(2);
+  });
+});
+
 test.describe("navigating to a page whose code is still loading", () => {
   test("keeps the current page up, with the progress bar, until the next is ready", async ({
     page,
