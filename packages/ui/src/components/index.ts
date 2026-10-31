@@ -5,6 +5,7 @@ export * from "./UserTypeahead";
 export * from "./SearchSelect";
 export * from "./ErrorMessage";
 export * from "./Modal";
+export * from "./Dialog";
 export * from "./Input";
 export * from "./Card";
 export * from "./Typography";
