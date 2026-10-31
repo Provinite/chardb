@@ -4,9 +4,7 @@ import { loop } from "../css/loop";
 
 export const bar = style({
   position: "fixed",
-  // Below a notch or status bar, should the page ever run under one
-  // (`viewport-fit=cover`); zero until then.
-  insetBlockStart: "env(safe-area-inset-top, 0)",
+  insetBlockStart: 0,
   insetInline: 0,
   overflow: "hidden",
   // Above the page and nothing else: following a link closes the drawer and

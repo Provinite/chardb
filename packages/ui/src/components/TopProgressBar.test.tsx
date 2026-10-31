@@ -36,11 +36,11 @@ describe("TopProgressBar", () => {
     expect(bar.classList.contains("extra")).toBe(true);
   });
 
-  it("floats along the top of the viewport, clear of the safe area, above the page", () => {
+  it("floats along the top of the viewport, above the page", () => {
     const bar = barIn(render(<TopProgressBar active label="Loading" />))!;
     expect(declarationsOf(bar)).toMatchObject({
       position: "fixed",
-      "inset-block-start": "env(safe-area-inset-top, 0)",
+      "inset-block-start": "0",
       "inset-inline": "0",
       "z-index": vars.layer.sticky.base,
       "pointer-events": "none",
