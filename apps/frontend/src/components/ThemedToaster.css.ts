@@ -37,8 +37,17 @@ export const toast = recipe({
   variants: {
     tone: {
       neutral: { borderColor: vars.border.default },
-      success: { borderColor: vars.status.success.border },
-      error: { borderColor: vars.status.danger.border },
+      // Tinted as well as bordered: the status borders are pale, and a tint
+      // tells success from error at a glance. `text.default` is a listed
+      // body pair on both.
+      success: {
+        borderColor: vars.status.success.border,
+        background: vars.status.success.bgSubtle,
+      },
+      error: {
+        borderColor: vars.status.danger.border,
+        background: vars.status.danger.bgSubtle,
+      },
     },
   },
   defaultVariants: { tone: "neutral" },

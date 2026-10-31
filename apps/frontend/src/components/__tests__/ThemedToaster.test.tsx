@@ -39,21 +39,33 @@ describe("ThemedToaster", () => {
     await userEvent.click(dismiss);
   });
 
-  it("borders a success and an error in their status colours", async () => {
+  it("borders and tints a success and an error in their status colours", async () => {
     render(<ThemedToaster />);
     act(() => {
+      toast("Note");
       toast.success("Done");
       toast.error("Nope");
     });
     await screen.findByText("Nope");
-    const borderOf = (el: HTMLElement) => {
-      const tone = [...el.classList]
-        .map((name) => rulesFor(name)[0]?.declarations["border-color"])
-        .find(Boolean);
-      return tone;
+    const looks = (text: string) => {
+      const declarations = declarationsOf(toastFor(text).className);
+      return {
+        border: declarations["border-color"],
+        background: declarations.background,
+      };
     };
-    expect(borderOf(toastFor("Done"))).toBe(vars.status.success.border);
-    expect(borderOf(toastFor("Nope"))).toBe(vars.status.danger.border);
+    expect(looks("Note")).toEqual({
+      border: vars.border.default,
+      background: vars.surface.raised,
+    });
+    expect(looks("Done")).toEqual({
+      border: vars.status.success.border,
+      background: vars.status.success.bgSubtle,
+    });
+    expect(looks("Nope")).toEqual({
+      border: vars.status.danger.border,
+      background: vars.status.danger.bgSubtle,
+    });
   });
 
   it("styles toasts from the stylesheet, with nothing inline", async () => {
