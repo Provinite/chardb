@@ -5,7 +5,7 @@
   "description": "ESLint rules for the styling conventions in apps/frontend/STYLING.md",
   "main": "./src/index.js",
   "scripts": {
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/type-check.tsbuildinfo",
     "test": "vitest"
   },
   "devDependencies": {
