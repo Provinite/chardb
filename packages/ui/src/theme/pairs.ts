@@ -64,9 +64,21 @@ export const pairs: Pair[] = [
     ["surface.page", "surface.raised", "surface.raisedHover"],
     "body",
   ),
-  ...on("text.subtle", ["surface.page", "surface.raised"], "body"),
-  ...on("text.link", ["surface.page", "surface.raised"], "body"),
-  ...on("text.linkHover", ["surface.page", "surface.raised"], "body"),
+  ...on(
+    "text.subtle",
+    ["surface.page", "surface.raised", "surface.raisedHover"],
+    "body",
+  ),
+  ...on(
+    "text.link",
+    ["surface.page", "surface.raised", "surface.raisedHover"],
+    "body",
+  ),
+  ...on(
+    "text.linkHover",
+    ["surface.page", "surface.raised", "surface.raisedHover"],
+    "body",
+  ),
 
   ...actions.flatMap((a) => [
     ...on(

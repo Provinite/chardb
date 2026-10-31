@@ -42,7 +42,7 @@ export const lightColors = {
   text: {
     default: p.slate800,
     muted: p.slate600,
-    subtle: p.slate500,
+    subtle: p.slate550,
     /** Text on a filled status background. */
     inverse: p.white,
     link: p.violet600,
@@ -84,7 +84,7 @@ export const darkColors: ColorTokens = {
   surface: {
     page: p.slate900,
     raised: p.slate800,
-    raisedHover: p.slate700,
+    raisedHover: p.slate750,
     sunken: p.slate950,
     overlay: p.scrim,
   },
