@@ -17,7 +17,7 @@
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc -p tsconfig.build.json --watch",
     "clean": "rm -rf dist",
-    "type-check": "tsc --noEmit",
+    "type-check": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/type-check.tsbuildinfo",
     "test": "vitest"
   },
   "dependencies": {

@@ -149,6 +149,8 @@ jobs:
           path: |
             apps/frontend/tsconfig.tsbuildinfo
             apps/backend/dist/tsconfig.tsbuildinfo
+            apps/e2e/node_modules/.cache/type-check.tsbuildinfo
+            packages/*/node_modules/.cache/type-check.tsbuildinfo
           key: tsbuildinfo-${{ runner.os }}-${{ github.sha }}
           restore-keys: |
             tsbuildinfo-${{ runner.os }}-

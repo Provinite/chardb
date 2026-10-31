@@ -10,7 +10,7 @@
     "world": "yarn codegen && node ../../scripts/with-instance.mjs tsx src/cli/world.ts",
     "build": "echo '@chardb/e2e: nothing to build'",
     "test": "echo '@chardb/e2e: browser suite is opt-in, run `yarn workspace @chardb/e2e e2e`'",
-    "type-check": "yarn codegen && tsc --noEmit",
+    "type-check": "yarn codegen && tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/type-check.tsbuildinfo",
     "clean": "rm -rf .artifacts playwright-report test-results blob-report all-blob-reports src/generated",
     "codegen": "graphql-codegen --config .graphqlrc.yml"
   },
