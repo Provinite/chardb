@@ -6,9 +6,11 @@
  */
 module.exports = {
   rules: {
+    "grid-columns-via-track": require("./rules/grid-columns-via-track"),
     "hover-in-hover-condition": require("./rules/hover-in-hover-condition"),
     "loop-via-helper": require("./rules/loop-via-helper"),
     "no-important": require("./rules/no-important"),
+    "no-inline-style": require("./rules/no-inline-style"),
     "no-raw-color": require("./rules/no-raw-color"),
     "no-raw-font": require("./rules/no-raw-font"),
     "no-raw-length": require("./rules/no-raw-length"),
