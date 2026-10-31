@@ -72,6 +72,23 @@ expect_output "refuses to judge anything stale against an empty keep list" \
 stale_assets "$KEEP_FILE" < /dev/null 2>/dev/null
 expect_output "and fails when asked to" "1" "$?"
 
+echo "still_in_use"
+
+STALE_FILE=$(mktemp)
+CURRENT_FILE=$(mktemp)
+printf '%s\n' assets/index-OLD.js assets/vendor-SAME.js > "$STALE_FILE"
+printf '%s\n' assets/index-NEW.js assets/vendor-SAME.js > "$CURRENT_FILE"
+
+expect_output "names stale keys the current build still uses" \
+    "assets/vendor-SAME.js" \
+    "$(still_in_use "$STALE_FILE" "$CURRENT_FILE")"
+
+printf '%s\n' assets/index-OLD.js > "$STALE_FILE"
+expect_output "names none when the current build is untouched" \
+    "" \
+    "$(still_in_use "$STALE_FILE" "$CURRENT_FILE")"
+rm -f "$STALE_FILE" "$CURRENT_FILE"
+
 echo "require_retention_tools"
 
 # A PATH holding only the named tools, linked from the real ones.

@@ -106,7 +106,7 @@ aws s3 sync apps/frontend/dist/ s3://$BUCKET_NAME/ \
 # staging tab breaking on its next navigation is acceptable there.
 if [ "$ENVIRONMENT" = "prod" ]; then
     echo "🧹 Removing assets no recent build uses..."
-    prune_frontend_assets "$BUCKET_NAME" 5
+    prune_frontend_assets "$BUCKET_NAME" 5 apps/frontend/dist
 else
     echo "🧹 Removing the previous build's assets..."
     aws s3 sync apps/frontend/dist/assets/ s3://$BUCKET_NAME/assets/ --delete \
