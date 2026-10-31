@@ -4,6 +4,7 @@
  * this keeps them from being shown the admin UI with forbidden errors where
  * its content should be.
  */
+import { Suspense } from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
@@ -46,9 +47,12 @@ function renderRoute(allow: typeof isSiteAdmin) {
   return render(
     <ThemeProvider theme={lightTheme}>
       <MemoryRouter initialEntries={["/admin"]}>
-        <SiteAdminRoute allow={allow}>
-          <div>Admin content</div>
-        </SiteAdminRoute>
+        {/* The not-found page is lazy, as in the app's route table. */}
+        <Suspense fallback={null}>
+          <SiteAdminRoute allow={allow}>
+            <div>Admin content</div>
+          </SiteAdminRoute>
+        </Suspense>
       </MemoryRouter>
     </ThemeProvider>,
   );
@@ -67,11 +71,11 @@ describe("SiteAdminRoute", () => {
     expect(screen.getByText("Admin content")).toBeInTheDocument();
   });
 
-  it("shows not found to a signed-in user the page does not allow", () => {
+  it("shows not found to a signed-in user the page does not allow", async () => {
     auth.user = nobody;
     renderRoute(isSiteAdmin);
 
-    expect(screen.getByText("Page not found")).toBeInTheDocument();
+    expect(await screen.findByText("Page not found")).toBeInTheDocument();
     expect(screen.queryByText("Admin content")).not.toBeInTheDocument();
   });
 

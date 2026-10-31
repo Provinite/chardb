@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useAuth } from "./contexts/AuthContext";
 import { useCommunityHost } from "./contexts/CommunityHostContext";
 import { apexUrl } from "./lib/communityHost";
@@ -7,7 +7,8 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { useHoldBootScreen } from "./hooks/useBootScreen";
 import { ApexRoutes } from "./routes/ApexRoutes";
 import { CommunityRoutes } from "./routes/CommunityRoutes";
-import { CommunityUnreachable } from "./pages/CommunityUnreachable";
+import { RouteFallback } from "./routes/RouteFallback";
+import { CommunityUnreachable } from "./routes/pages";
 
 /**
  * Picks the route table from the hostname.
@@ -52,7 +53,11 @@ function App() {
   // is not "no such community", and telling somebody their address is wrong
   // when the server is down sends them to check a URL that was fine.
   if (unreachable) {
-    return <CommunityUnreachable />;
+    return (
+      <Suspense fallback={<RouteFallback />}>
+        <CommunityUnreachable />
+      </Suspense>
+    );
   }
 
   if (authLoading || hostLoading) {
@@ -62,7 +67,12 @@ function App() {
   return (
     <Layout>
       <ScrollToTop />
-      {community ? <CommunityRoutes /> : <ApexRoutes />}
+      {/* One boundary for every page, never one per route: a boundary that
+          mounts during a navigation shows its fallback at once, while one
+          already on screen lets the transition keep the old page up. */}
+      <Suspense fallback={<RouteFallback />}>
+        {community ? <CommunityRoutes /> : <ApexRoutes />}
+      </Suspense>
     </Layout>
   );
 }

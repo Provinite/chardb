@@ -1,8 +1,7 @@
 import { useEffect } from "react";
 import { useLocation, useParams } from "react-router-dom";
 import { useHoldBootScreen } from "../hooks/useBootScreen";
-import { NotFoundPage } from "../pages/NotFoundPage";
-import { CharacterPage } from "../pages/CharacterPage";
+import { CharacterPage, NotFoundPage } from "./pages";
 import {
   useCommunityByIdQuery,
   useGetCharacterQuery,

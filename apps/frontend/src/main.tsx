@@ -1,6 +1,5 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { BrowserRouter } from "react-router-dom";
 import { ApolloProvider } from "@apollo/client";
 import { ThemedMantineProvider } from "./components/ThemedMantineProvider";
 import "@mantine/core/styles.css";
@@ -12,6 +11,7 @@ import { AuthProvider } from "./contexts/AuthContext";
 import { CommunityHostProvider } from "./contexts/CommunityHostContext";
 import { ThemedToaster } from "./components/ThemedToaster";
 import App from "./App";
+import { TransitionRouter } from "./routes/TransitionRouter";
 import { SpotlightNavigation } from "./components/spotlight/SpotlightNavigation";
 import "./index.css";
 import "./styles/global.css";
@@ -19,7 +19,7 @@ import "./styles/global.css";
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <ApolloProvider client={client}>
-      <BrowserRouter>
+      <TransitionRouter>
         <ThemeProvider>
           <ThemedMantineProvider>
             <AuthProvider>
@@ -34,7 +34,7 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
             </AuthProvider>
           </ThemedMantineProvider>
         </ThemeProvider>
-      </BrowserRouter>
+      </TransitionRouter>
     </ApolloProvider>
   </React.StrictMode>,
 );

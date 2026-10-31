@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { NotFoundPage } from "../pages/NotFoundPage";
+import { NotFoundPage } from "../routes/pages";
 import { ProtectedRoute } from "./ProtectedRoute";
 import type { isSiteAdmin } from "../lib/siteAdminAccess";
 

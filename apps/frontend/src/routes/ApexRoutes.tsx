@@ -1,42 +1,6 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 
-import { HomePage } from "../pages/HomePage";
-import { LoginPage } from "../pages/LoginPage";
-import { SignupPage } from "../pages/SignupPage";
-import { ForgotPasswordPage } from "../pages/ForgotPasswordPage";
-import { ResetPasswordPage } from "../pages/ResetPasswordPage";
-import { VerifyEmailPage } from "../pages/VerifyEmailPage";
-import { DashboardPage } from "../pages/DashboardPage";
-import { UserProfilePage } from "../pages/UserProfilePage";
-import { UserCharactersPage } from "../pages/UserCharactersPage";
-import { UserGalleriesPage } from "../pages/UserGalleriesPage";
-import { UserMediaPage } from "../pages/UserMediaPage";
-import { EditProfilePage } from "../pages/EditProfilePage";
-import { CharactersPage } from "../pages/CharactersPage";
-import { CharacterMediaPage } from "../pages/CharacterMediaPage";
-import { CreateTextPage } from "../pages/CreateTextPage";
-import { CreateMediaPage } from "../pages/CreateMediaPage";
-import { MediaPage } from "../pages/MediaPage";
-import { EditMediaPage } from "../pages/EditMediaPage";
-import { GalleryPage } from "../pages/GalleryPage";
-import { GalleriesPage } from "../pages/GalleriesPage";
-import { CreateGalleryPage } from "../pages/CreateGalleryPage";
-import { UploadImagePage } from "../pages/UploadImagePage";
-import { MediaLibraryPage } from "../pages/MediaLibraryPage";
-import { LikedCharactersPage } from "../pages/LikedCharactersPage";
-import { LikedGalleriesPage } from "../pages/LikedGalleriesPage";
-import { LikedMediaPage } from "../pages/LikedMediaPage";
-import { MyCharactersPage } from "../pages/MyCharactersPage";
-import { MyGalleriesPage } from "../pages/MyGalleriesPage";
-import { MyMediaPage } from "../pages/MyMediaPage";
-import { FollowersPage } from "../pages/FollowersPage";
-import { FollowingPage } from "../pages/FollowingPage";
-import { FeedPage } from "../pages/FeedPage";
-import { SiteAdminPage } from "../pages/SiteAdminPage";
-import { SiteInviteCodesPage } from "../pages/SiteInviteCodesPage";
-import { CommunityManagementPage } from "../pages/CommunityManagementPage";
-import { ImageModerationPage } from "../pages/ImageModerationPage";
 import { SiteAdminRoute } from "../components/SiteAdminRoute";
 import {
   canManageCommunities,
@@ -44,17 +8,55 @@ import {
   canUseSiteInviteCodes,
   isSiteAdmin,
 } from "../lib/siteAdminAccess";
-import { NotificationsPage } from "../pages/NotificationsPage";
-import { TradesPage } from "../pages/TradesPage";
-import { JoinCommunityPage } from "../pages/JoinCommunityPage";
-import { MyCommunitiesPage } from "../pages/MyCommunitiesPage";
-import { DeviantArtBackfillPage } from "../pages/DeviantArtBackfillPage";
-import { DiscordNameBackfillPage } from "../pages/DiscordNameBackfillPage";
-import { DeviantArtCallbackPage } from "../pages/DeviantArtCallbackPage";
-import { DiscordCallbackPage } from "../pages/DiscordCallbackPage";
-import { ToyhouseCallbackPage } from "../pages/ToyhouseCallbackPage";
-import { PatreonCallbackPage } from "../pages/PatreonCallbackPage";
-import { NotFoundPage } from "../pages/NotFoundPage";
+import {
+  NotFoundPage,
+  HomePage,
+  LoginPage,
+  SignupPage,
+  ForgotPasswordPage,
+  ResetPasswordPage,
+  VerifyEmailPage,
+  DashboardPage,
+  UserProfilePage,
+  UserCharactersPage,
+  UserGalleriesPage,
+  UserMediaPage,
+  EditProfilePage,
+  CharactersPage,
+  CharacterMediaPage,
+  CreateTextPage,
+  CreateMediaPage,
+  MediaPage,
+  EditMediaPage,
+  GalleryPage,
+  GalleriesPage,
+  CreateGalleryPage,
+  UploadImagePage,
+  MediaLibraryPage,
+  LikedCharactersPage,
+  LikedGalleriesPage,
+  LikedMediaPage,
+  MyCharactersPage,
+  MyGalleriesPage,
+  MyMediaPage,
+  FollowersPage,
+  FollowingPage,
+  FeedPage,
+  SiteAdminPage,
+  SiteInviteCodesPage,
+  CommunityManagementPage,
+  ImageModerationPage,
+  NotificationsPage,
+  TradesPage,
+  JoinCommunityPage,
+  MyCommunitiesPage,
+  DeviantArtBackfillPage,
+  DiscordNameBackfillPage,
+  DeviantArtCallbackPage,
+  DiscordCallbackPage,
+  ToyhouseCallbackPage,
+  PatreonCallbackPage,
+} from "./pages";
 import {
   CharacterHostGuard,
   CommunityHostRedirect,
