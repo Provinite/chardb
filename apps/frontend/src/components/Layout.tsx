@@ -55,17 +55,20 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (sidebarIsColumn) setDrawerOpen(false);
   }, [sidebarIsColumn]);
 
-  // An open drawer is modal, so the rest of the page goes inert: focus and
-  // screen readers stay inside the drawer. Set by hand because React 18 does
-  // not know the attribute. A layout effect, so the header is live again
-  // before the drawer's own effect hands focus back to the menu button in it.
-  const pageInert = drawerOpen && !sidebarIsColumn;
+  // The one place that decides whether the drawer is modal: open, and below
+  // `md`. The drawer's dialog role and the inert page both follow it.
+  const drawerModal = drawerOpen && !sidebarIsColumn;
+
+  // A modal drawer makes the rest of the page inert: focus and screen readers
+  // stay inside it. Set by hand because React 18 does not know the attribute.
+  // A layout effect, so the header is live again before the drawer's own
+  // effect hands focus back to the menu button in it.
   useLayoutEffect(() => {
     const regions = [headerRef, mainRef, footerRef];
     for (const region of regions) {
-      region.current?.toggleAttribute("inert", pageInert);
+      region.current?.toggleAttribute("inert", drawerModal);
     }
-  }, [pageInert]);
+  }, [drawerModal]);
 
   const handleToggleSidebar = (preference: "global" | "community") => {
     setSidebarPreference(preference);
@@ -75,12 +78,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     <div className={styles.layout}>
       <Header
         ref={headerRef}
-        navigationOpen={pageInert}
+        navigationOpen={drawerModal}
         onOpenNavigation={() => setDrawerOpen(true)}
       />
       <div className={styles.body}>
         <NavigationDrawer
-          open={drawerOpen}
+          open={drawerModal}
           onClose={() => setDrawerOpen(false)}
         >
           {showCommunitySidebar ? (

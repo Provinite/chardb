@@ -5,7 +5,6 @@ import { Cluster } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { localPath } from "../lib/communityHost";
 import { AccountMenu } from "./AccountMenu";
 import { HostAwareLink } from "./HostAwareLink";
 import { ThemeToggle } from "./ThemeToggle";
@@ -26,14 +25,6 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(function Header(
   const { slug: communitySlug } = useCommunityHost();
   const { mode, toggleTheme } = useTheme();
   const navigate = useNavigate();
-
-  // The router cannot cross an origin, so a destination on another host is a
-  // page load, the same choice HostAwareLink makes for links.
-  const go = (to: string) => {
-    const path = localPath(to);
-    if (path !== null) navigate(path);
-    else window.location.assign(to);
-  };
 
   const handleLogout = () => {
     logout();
@@ -95,7 +86,6 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(function Header(
             user={user}
             themeMode={mode}
             canCreateCharacter={Boolean(communitySlug)}
-            onNavigate={go}
             onLogout={handleLogout}
             onToggleTheme={toggleTheme}
           />

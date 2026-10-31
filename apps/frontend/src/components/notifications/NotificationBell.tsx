@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Bell } from "lucide-react";
+import { vars } from "@chardb/ui";
 import {
   useNotificationsQuery,
   useUnseenNotificationCountQuery,
@@ -33,8 +34,8 @@ const BellButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: ${vars.size.target.comfortable};
+  height: ${vars.size.target.comfortable};
   border: none;
   border-radius: 50%;
   background: transparent;

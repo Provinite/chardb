@@ -13,6 +13,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`MenuLinkItem`**: a menu item that is the caller's own link, so Ctrl-click, middle-click and "open in new tab" work on it (#486).
+- **`Menu` `appearance="ghost"`**: a borderless trigger at the 44px touch size, for a trigger with content of its own such as an avatar (#486).
+- **`useBreakpoint`**: whether the viewport is at least a breakpoint wide, known on the first render; and the `size.sidebar` token (#486).
 - **Layout primitives** `Stack`, `Cluster`, `Grid`, `Switcher` and `Sidebar`, and the `focusRing`, `visuallyHidden`, `cardSurface` and `interactiveSurface` style fragments (#475).
 - **Style helpers** from `@chardb/ui/theme`: `mq`, `hover`, `cq`, `track`, `split`, `sprinkles` and `loop`, plus `scrollToElement` and `scrollToPosition` that respect reduced motion (#474).
 - **vanilla-extract theme**: semantic tokens as `vars` for light and dark, with reduced-motion durations and a contrast test for every listed colour pair (#473).

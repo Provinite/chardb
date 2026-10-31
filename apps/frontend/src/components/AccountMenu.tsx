@@ -1,7 +1,14 @@
 import React from "react";
 import { UserRound } from "lucide-react";
-import { Avatar, Menu, MenuItem, useBreakpoint } from "@chardb/ui";
+import {
+  Avatar,
+  Menu,
+  MenuItem,
+  MenuLinkItem,
+  useBreakpoint,
+} from "@chardb/ui";
 import { apexUrl, loginUrlReturningHere } from "../lib/communityHost";
+import { HostAwareLink } from "./HostAwareLink";
 import * as styles from "./AccountMenu.css";
 
 interface AccountUser {
@@ -16,8 +23,6 @@ export interface AccountMenuProps {
   themeMode: "light" | "dark";
   /** Whether this host has a community to create a character in. */
   canCreateCharacter: boolean;
-  /** Goes to a path or an absolute URL on any of this site's hosts. */
-  onNavigate: (to: string) => void;
   onLogout: () => void;
   onToggleTheme: () => void;
 }
@@ -27,12 +32,14 @@ export interface AccountMenuProps {
  * header controls that no longer fit in the row. Which items it holds is
  * decided in render rather than hidden with CSS, because the menu's arrow
  * keys would still step onto a hidden item.
+ *
+ * Every item that goes somewhere is a real link, so it opens in a new tab
+ * like any other link; only actions are buttons.
  */
 export const AccountMenu: React.FC<AccountMenuProps> = ({
   user,
   themeMode,
   canCreateCharacter,
-  onNavigate,
   onLogout,
   onToggleTheme,
 }) => {
@@ -51,10 +58,12 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
           </>
         }
       >
-        <MenuItem onSelect={() => onNavigate(loginUrlReturningHere())}>
-          Log in
-        </MenuItem>
-        <MenuItem onSelect={() => onNavigate("/signup")}>Sign up</MenuItem>
+        <MenuLinkItem>
+          <HostAwareLink to={loginUrlReturningHere()}>Log in</HostAwareLink>
+        </MenuLinkItem>
+        <MenuLinkItem>
+          <HostAwareLink to="/signup">Sign up</HostAwareLink>
+        </MenuLinkItem>
       </Menu>
     );
   }
@@ -73,17 +82,23 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
         </>
       }
     >
-      <MenuItem onSelect={() => onNavigate(apexUrl(`/user/${user.username}`))}>
-        My profile
-      </MenuItem>
+      <MenuLinkItem>
+        <HostAwareLink to={apexUrl(`/user/${user.username}`)}>
+          My profile
+        </HostAwareLink>
+      </MenuLinkItem>
       {!roomInHeader && (
         <>
           {canCreateCharacter && (
-            <MenuItem onSelect={() => onNavigate("/character/create")}>
-              Create Character
-            </MenuItem>
+            <MenuLinkItem>
+              <HostAwareLink to="/character/create">
+                Create Character
+              </HostAwareLink>
+            </MenuLinkItem>
           )}
-          <MenuItem onSelect={() => onNavigate("/upload")}>Upload</MenuItem>
+          <MenuLinkItem>
+            <HostAwareLink to="/upload">Upload</HostAwareLink>
+          </MenuLinkItem>
           <MenuItem onSelect={onToggleTheme}>
             {themeMode === "light"
               ? "Switch to dark mode"

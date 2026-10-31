@@ -98,6 +98,31 @@ test.describe("navigation drawer at phone width", () => {
     await expect(drawer(page)).toBeHidden();
   });
 
+  test("closes for a link to the page already open", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(world.community.url);
+    await menuButton(page).click();
+    await drawer(page).getByRole("link", { name: "Overview" }).click();
+    await expect(drawer(page)).toBeHidden();
+  });
+
+  test("stays open when Escape closes the page search opened from it", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(world.community.url);
+    await menuButton(page).click();
+    await drawer(page).getByRole("button", { name: "Search pages" }).click();
+    const search = page.getByPlaceholder(/search/i).last();
+    await expect(search).toBeFocused();
+
+    await page.keyboard.press("Escape");
+    await expect(search).toBeHidden();
+    await expect(drawer(page)).toBeVisible();
+  });
+
   test("works the same on the apex, with global navigation", async ({
     page,
   }) => {
@@ -106,6 +131,24 @@ test.describe("navigation drawer at phone width", () => {
     await expect(
       drawer(page).getByRole("navigation", { name: "Global navigation" }),
     ).toBeVisible();
+  });
+});
+
+test.describe("account menu", () => {
+  test.use({ persona: "member" });
+
+  test("opens My profile in a new tab on Ctrl-click, like any link", async ({
+    page,
+    context,
+  }) => {
+    await page.goto(apexUrl("/dashboard"));
+    await page.getByRole("button", { name: /, account menu$/ }).click();
+    const tab = context.waitForEvent("page");
+    await page
+      .getByRole("menuitem", { name: "My profile" })
+      .click({ modifiers: ["ControlOrMeta"] });
+    await expect(await tab).toHaveURL(/\/user\//);
+    await expect(page).toHaveURL(apexUrl("/dashboard"));
   });
 });
 

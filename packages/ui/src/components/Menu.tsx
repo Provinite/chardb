@@ -1,4 +1,6 @@
 import React, {
+  Children,
+  cloneElement,
   createContext,
   useCallback,
   useContext,
@@ -10,7 +12,8 @@ import React, {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import styled from "styled-components";
+import styled, { css } from "styled-components";
+import { vars } from "../theme/contract.css";
 
 /**
  * Menu - a "⋯" button that opens a short list of actions.
@@ -72,7 +75,12 @@ export interface MenuItemProps {
   testId?: string;
 }
 
-const MenuContext = createContext<{ close: () => void } | null>(null);
+const MenuContext = createContext<{
+  /** Closes and gives focus back to the button. */
+  close: () => void;
+  /** Closes and leaves focus alone, for an item that navigates away. */
+  dismiss: () => void;
+} | null>(null);
 
 const Trigger = styled.button<{ $appearance: "outlined" | "ghost" }>`
   display: inline-flex;
@@ -80,9 +88,11 @@ const Trigger = styled.button<{ $appearance: "outlined" | "ghost" }>`
   justify-content: center;
   gap: ${({ theme }) => theme.spacing.sm};
   min-width: ${({ $appearance }) =>
-    $appearance === "ghost" ? "2.75rem" : "2rem"};
+    $appearance === "ghost" ? vars.size.target.comfortable : "2rem"};
   ${({ $appearance }) =>
-    $appearance === "ghost" ? "min-height: 2.75rem;" : "height: 2rem;"}
+    $appearance === "ghost"
+      ? `min-height: ${vars.size.target.comfortable};`
+      : "height: 2rem;"}
   padding: 0 ${({ theme }) => theme.spacing.sm};
   background: transparent;
   border: ${({ $appearance, theme }) =>
@@ -141,7 +151,7 @@ const GroupLabel = styled.div`
   letter-spacing: 0.08em;
 `;
 
-const Item = styled.button<{ $danger?: boolean }>`
+const itemStyles = css<{ $danger?: boolean }>`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.sm};
@@ -166,6 +176,41 @@ const Item = styled.button<{ $danger?: boolean }>`
     opacity: 0.5;
     cursor: not-allowed;
   }
+`;
+
+const Item = styled.button<{ $danger?: boolean }>`
+  ${itemStyles}
+`;
+
+/** The props a link item hands to the caller's link element. */
+interface LinkSlotProps {
+  className?: string;
+  role?: string;
+  tabIndex?: number;
+  onClick?: React.MouseEventHandler<HTMLElement>;
+}
+
+/**
+ * Passes the menu item's props to its one child instead of rendering an
+ * element of its own, so the child stays the caller's own link.
+ */
+const LinkSlot: React.FC<
+  LinkSlotProps & { children: React.ReactElement<LinkSlotProps> }
+> = ({ children, className, onClick, ...rest }) => {
+  const link = Children.only(children);
+  return cloneElement(link, {
+    ...rest,
+    className: [link.props.className, className].filter(Boolean).join(" "),
+    onClick: (e: React.MouseEvent<HTMLElement>) => {
+      link.props.onClick?.(e);
+      onClick?.(e);
+    },
+  });
+};
+
+const LinkItem = styled(LinkSlot)<{ $danger?: boolean }>`
+  ${itemStyles}
+  text-decoration: none;
 `;
 
 const GAP_PX = 4;
@@ -256,7 +301,10 @@ export const Menu: React.FC<MenuProps> = ({
     };
   }, [open, close, place]);
 
-  const context = useMemo(() => ({ close: () => close(true) }), [close]);
+  const context = useMemo(
+    () => ({ close: () => close(true), dismiss: () => close(false) }),
+    [close],
+  );
 
   const onListKeyDown = (e: React.KeyboardEvent) => {
     const all = items();
@@ -374,5 +422,28 @@ export const MenuItem: React.FC<MenuItemProps> = ({
       {icon}
       {children}
     </Item>
+  );
+};
+
+export interface MenuLinkItemProps {
+  /**
+   * One link element, such as a router link, with its own destination. It
+   * stays a real link, so Ctrl-click, middle-click and "open in new tab" work
+   * on it as they do anywhere else.
+   */
+  children: React.ReactElement<LinkSlotProps>;
+}
+
+/**
+ * A menu item that goes somewhere: the caller's link, given the menu item's
+ * role and styles. Following it closes the menu; focus goes with the page,
+ * so it is not handed back to the button.
+ */
+export const MenuLinkItem: React.FC<MenuLinkItemProps> = ({ children }) => {
+  const menu = useContext(MenuContext);
+  return (
+    <LinkItem role="menuitem" tabIndex={-1} onClick={() => menu?.dismiss()}>
+      {children}
+    </LinkItem>
   );
 };

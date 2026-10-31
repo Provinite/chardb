@@ -1,5 +1,6 @@
 import React from "react";
 import styled from "styled-components";
+import { vars } from "@chardb/ui";
 import { useTheme } from "../contexts/ThemeContext";
 
 const ToggleButton = styled.button`
@@ -11,8 +12,8 @@ const ToggleButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem;
-  height: 2.75rem;
+  width: ${vars.size.target.comfortable};
+  height: ${vars.size.target.comfortable};
   transition: all 0.2s ease;
   color: ${({ theme }) => theme.colors.text.secondary};
 

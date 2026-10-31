@@ -26,7 +26,6 @@ const user = {
 
 const renderMenu = (props: Partial<AccountMenuProps> = {}) => {
   const handlers = {
-    onNavigate: vi.fn(),
     onLogout: vi.fn(),
     onToggleTheme: vi.fn(),
   };
@@ -91,17 +90,25 @@ describe("AccountMenu, signed in", () => {
     expect(itemNames(menu)).not.toContain("Create Character");
   });
 
-  it("goes to the profile, switches theme and logs out", async () => {
+  it("makes every destination a real link, so it opens in a new tab like any other", async () => {
+    wideAt(false);
+    renderMenu();
+    const { menu } = await openMenu(/account menu/);
+    const href = (name: string) =>
+      within(menu).getByRole("menuitem", { name }).getAttribute("href");
+    expect(href("My profile")).toMatch(/\/user\/ash$/);
+    expect(href("Create Character")).toBe("/character/create");
+    expect(href("Upload")).toBe("/upload");
+    for (const name of ["My profile", "Create Character", "Upload"]) {
+      expect(within(menu).getByRole("menuitem", { name }).tagName).toBe("A");
+    }
+  });
+
+  it("switches theme and logs out", async () => {
     wideAt(false);
     const handlers = renderMenu();
 
     let { u, menu } = await openMenu(/account menu/);
-    await u.click(within(menu).getByRole("menuitem", { name: "My profile" }));
-    expect(handlers.onNavigate).toHaveBeenCalledWith(
-      expect.stringMatching(/\/user\/ash$/),
-    );
-
-    ({ u, menu } = await openMenu(/account menu/));
     await u.click(
       within(menu).getByRole("menuitem", { name: "Switch to dark mode" }),
     );
@@ -116,10 +123,14 @@ describe("AccountMenu, signed in", () => {
 describe("AccountMenu, signed out", () => {
   it("says it is for signing in, and holds log in and sign up", async () => {
     wideAt(true);
-    const handlers = renderMenu({ user: null });
-    const { u, menu } = await openMenu(/^Log in or sign up$/);
+    renderMenu({ user: null });
+    const { menu } = await openMenu(/^Log in or sign up$/);
     expect(itemNames(menu)).toEqual(["Log in", "Sign up"]);
-    await u.click(within(menu).getByRole("menuitem", { name: "Sign up" }));
-    expect(handlers.onNavigate).toHaveBeenCalledWith("/signup");
+    expect(
+      within(menu).getByRole("menuitem", { name: "Log in" }),
+    ).toHaveAttribute("href", expect.stringMatching(/\/login/));
+    expect(
+      within(menu).getByRole("menuitem", { name: "Sign up" }),
+    ).toHaveAttribute("href", "/signup");
   });
 });

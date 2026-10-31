@@ -6,7 +6,13 @@ const slide = `${vars.motion.duration.normal} ${vars.motion.easing.standard}`;
 /** On `<html>` while the drawer is open, so the page behind it holds still. */
 export const scrollLock = style({
   overflow: "hidden",
-  // Keeps the space the scrollbar took, so hiding it moves nothing.
+});
+
+/**
+ * With `scrollLock` when the page had a scrollbar: keeps its space, so hiding
+ * it moves nothing. Without one there is no space to keep.
+ */
+export const keepGutter = style({
   scrollbarGutter: "stable",
 });
 

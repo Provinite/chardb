@@ -371,6 +371,9 @@ The `AppLoader` animation is the startup screen, and it lives in `index.html`, n
   - A tooltip that names an icon button repeats its accessible name. It shows on hover and focus, and on long-press on touch as a bonus; nothing depends on it.
   - Information people need goes in a toggletip: an info button that opens it on tap or click. Never put it in a hover-only tooltip.
 - **Focus** uses the shared focus ring (`focusRing`) on `:focus-visible`. Never remove an outline without replacing it.
+- **Links go somewhere; buttons do something.** Anything that takes people to a page is a real `<a href>`: a router `Link`, or `HostAwareLink` when the destination may be on another host. That keeps everything browsers do with links: Ctrl-click, Cmd-click, middle-click and Shift-click, "Open in new tab", "Copy link address", and the address shown on hover. Never send someone to a page from a button's `onClick` or with `navigate()` in a handler. Buttons are for actions: save, log out, switch theme.
+  - This holds inside menus, cards and lists too. A menu item that navigates is a `MenuLinkItem` around the link.
+  - A handler on a link, or on something around it, that does extra work on a click (closing a drawer, closing a menu) leaves modified and middle clicks alone, and never calls `preventDefault` on them.
 
 ## Accessibility
 
