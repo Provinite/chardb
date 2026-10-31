@@ -88,9 +88,12 @@ const RedirectToItemType: React.FC = () => {
  * a nullable `characterId` if at all, so an upload without a character used to
  * belong nowhere and be reviewable by nobody but a site admin. Forcing those
  * pages to the apex threw the answer away before it could be recorded.
+ *
+ * The routes are a value of their own, apart from `CommunityRoutes`, so
+ * startup can match the current path against them (`preloadRoute.ts`).
  */
-export const CommunityRoutes: React.FC = () => (
-  <Routes>
+export const communityRoutes = (
+  <>
     {/* --- the community itself */}
     <Route path="/" element={<CommunityPage />} />
     <Route path="/characters" element={<CommunityCharactersPage />} />
@@ -552,5 +555,9 @@ export const CommunityRoutes: React.FC = () => (
     <Route path="/join-community" element={<ApexRedirect />} />
 
     <Route path="*" element={<NotFoundPage />} />
-  </Routes>
+  </>
+);
+
+export const CommunityRoutes: React.FC = () => (
+  <Routes>{communityRoutes}</Routes>
 );

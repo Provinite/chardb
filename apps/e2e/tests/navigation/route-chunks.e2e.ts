@@ -52,6 +52,27 @@ test.describe("a cold load fetches only its own page's code", () => {
     await page.goto(world.community.url, { waitUntil: "networkidle" });
     expect([...chunks]).toEqual(["CommunityPage"]);
   });
+
+  test("starts on the page's code without waiting for the sign-in check", async ({
+    page,
+  }) => {
+    // Hold every API request, so sign-in cannot answer and the route table
+    // never renders. Only the startup preload can ask for the page's chunk.
+    let release = () => {};
+    const held = new Promise<void>((resolve) => (release = resolve));
+    await page.route(/\/graphql(\?.*)?$/, async (route) => {
+      await held;
+      await route.continue();
+    });
+
+    const chunkRequested = page.waitForRequest(
+      (request) => chunkName(request.url()) === "HomePage",
+      { timeout: 15_000 },
+    );
+    await page.goto(apexUrl("/"), { waitUntil: "domcontentloaded" });
+    await chunkRequested;
+    release();
+  });
 });
 
 test.describe("navigating to a page whose code is still loading", () => {

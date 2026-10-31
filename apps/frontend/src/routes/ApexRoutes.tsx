@@ -75,9 +75,12 @@ import {
  * everything waiting on you across every community, while the same path on a
  * community host is that community's offers; `/characters` here is the global
  * browse, and there it is that community's roster.
+ *
+ * The routes are a value of their own, apart from `ApexRoutes`, so startup can
+ * match the current path against them (`preloadRoute.ts`).
  */
-export const ApexRoutes: React.FC = () => (
-  <Routes>
+export const apexRoutes = (
+  <>
     {/* --- public */}
     <Route path="/" element={<HomePage />} />
     <Route path="/login" element={<LoginPage />} />
@@ -344,5 +347,7 @@ export const ApexRoutes: React.FC = () => (
     />
 
     <Route path="*" element={<NotFoundPage />} />
-  </Routes>
+  </>
 );
+
+export const ApexRoutes: React.FC = () => <Routes>{apexRoutes}</Routes>;
