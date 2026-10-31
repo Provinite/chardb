@@ -48,6 +48,12 @@ export interface MenuProps {
   children: React.ReactNode;
   testId?: string;
   disabled?: boolean;
+  /**
+   * `outlined` (the default) is the bordered "⋯" button. `ghost` has no
+   * border and the comfortable touch size, for a trigger that shows content of
+   * its own, such as an avatar.
+   */
+  appearance?: "outlined" | "ghost";
 }
 
 export interface MenuGroupProps {
@@ -68,15 +74,19 @@ export interface MenuItemProps {
 
 const MenuContext = createContext<{ close: () => void } | null>(null);
 
-const Trigger = styled.button`
+const Trigger = styled.button<{ $appearance: "outlined" | "ghost" }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 2rem;
-  height: 2rem;
+  gap: ${({ theme }) => theme.spacing.sm};
+  min-width: ${({ $appearance }) =>
+    $appearance === "ghost" ? "2.75rem" : "2rem"};
+  ${({ $appearance }) =>
+    $appearance === "ghost" ? "min-height: 2.75rem;" : "height: 2rem;"}
   padding: 0 ${({ theme }) => theme.spacing.sm};
   background: transparent;
-  border: 1px solid ${({ theme }) => theme.colors.border};
+  border: ${({ $appearance, theme }) =>
+    $appearance === "ghost" ? "none" : `1px solid ${theme.colors.border}`};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   color: ${({ theme }) => theme.colors.text.secondary};
   font-family: ${({ theme }) => theme.typography.fontFamily};
@@ -166,6 +176,7 @@ export const Menu: React.FC<MenuProps> = ({
   children,
   testId,
   disabled = false,
+  appearance = "outlined",
 }) => {
   const [open, setOpen] = useState(false);
   const [position, setPosition] = useState({ top: 0, left: 0 });
@@ -292,6 +303,7 @@ export const Menu: React.FC<MenuProps> = ({
     <>
       <Trigger
         ref={triggerRef}
+        $appearance={appearance}
         type="button"
         aria-label={label}
         aria-haspopup="menu"

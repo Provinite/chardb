@@ -233,4 +233,26 @@ describe("Menu", () => {
 
     expect(onDelete).not.toHaveBeenCalled();
   });
+
+  it("has a borderless ghost trigger at the comfortable touch size", () => {
+    render(
+      <ThemeProvider theme={lightTheme}>
+        <Menu label="More actions">
+          <MenuItem onSelect={vi.fn()}>Edit</MenuItem>
+        </Menu>
+        <Menu label="Account" appearance="ghost" trigger="CA">
+          <MenuItem onSelect={vi.fn()}>Log out</MenuItem>
+        </Menu>
+      </ThemeProvider>,
+    );
+    const style = getComputedStyle(
+      screen.getByRole("button", { name: "Account" }),
+    );
+    // jsdom drops `border: none` rather than computing it, so the check is
+    // that the outlined trigger's border is gone.
+    expect(getComputedStyle(trigger()).borderStyle).toBe("solid");
+    expect(style.borderStyle).not.toBe("solid");
+    expect(style.minHeight).toBe("2.75rem");
+    expect(style.minWidth).toBe("2.75rem");
+  });
 });
