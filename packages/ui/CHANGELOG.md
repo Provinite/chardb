@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The focus ring is a listed pair on every status tint** (`status.*.bgSubtle`), so the contrast test covers controls inside tinted toasts and alerts (#484).
 - **`scrollToPosition()` takes `jump: true`** to skip the animation for everyone, for scrolls that reset rather than move (#484).
 - **`loop()` returns a style rule instead of a class**, so the vanilla-extract runtime no longer ships in every bundle that imports `@chardb/ui`; `style([loop(...), {...}])` works unchanged (#465).
 
