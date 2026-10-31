@@ -5,7 +5,9 @@ import { Dialog } from ".";
 
 const press = (key: string, target: Element = document.activeElement!) =>
   act(() => {
-    target.dispatchEvent(new KeyboardEvent("keydown", { key, bubbles: true }));
+    target.dispatchEvent(
+      new KeyboardEvent("keydown", { key, bubbles: true, cancelable: true }),
+    );
   });
 
 const click = (el: Element) =>
@@ -153,6 +155,73 @@ describe("Dialog", () => {
     press("Escape");
 
     expect(root.className).toBe(before);
+  });
+
+  it("leaves an Escape that something inside already handled", () => {
+    const onClose = vi.fn();
+    openHarness({
+      onClose,
+      children: (
+        <input
+          data-autofocus
+          aria-label="Field"
+          onKeyDown={(e) => {
+            if (e.key === "Escape") e.preventDefault();
+          }}
+        />
+      ),
+    });
+
+    press("Escape");
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("leaves an Escape that cancels composing a character", () => {
+    const onClose = vi.fn();
+    openHarness({ onClose });
+
+    act(() => {
+      document.activeElement!.dispatchEvent(
+        new KeyboardEvent("keydown", {
+          key: "Escape",
+          bubbles: true,
+          isComposing: true,
+        }),
+      );
+    });
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("keeps the page inert when a lower dialog closes under an open one", () => {
+    function Stacked() {
+      const [lower, setLower] = useState(true);
+      return (
+        <>
+          <button type="button" onClick={() => setLower(false)}>
+            Close lower
+          </button>
+          <Dialog.Root open={lower} onClose={() => {}} aria-label="Lower">
+            lower
+          </Dialog.Root>
+          <Dialog.Root open onClose={() => {}} aria-label="Upper">
+            upper
+          </Dialog.Root>
+        </>
+      );
+    }
+    const container = render(<Stacked />);
+    const closeLower = container.querySelector("button")!;
+
+    // The button is inert, so its handler is reached directly.
+    act(() => {
+      closeLower.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    });
+
+    expect(dialogs()).toHaveLength(1);
+    expect(container.hasAttribute("inert")).toBe(true);
+    expect(dialogs()[0].closest("[inert]")).toBeNull();
   });
 
   it("closes only the top dialog of a stack on Escape", () => {

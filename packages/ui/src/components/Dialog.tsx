@@ -20,21 +20,30 @@ const stack: HTMLElement[] = [];
 /** How many dialogs hold the page's scroll. */
 let scrollLocks = 0;
 
+/** The `inert` the dialogs set, and so theirs to clear. */
+const inertByDialogs = new Set<Element>();
+
 /**
- * Sets `inert` on every child of `<body>` except `keep`, and returns a function
- * that clears it again -- only where this call set it. `inert` set by someone
- * else (the navigation drawer, the boot screen) is theirs to clear.
+ * Makes every child of `<body>` except the top dialog inert, or none when no
+ * dialog is open. Worked out from the whole stack each time rather than undone
+ * per dialog, so a dialog closing under another leaves the page inert. `inert`
+ * set by someone else (the navigation drawer, the boot screen) is theirs, and
+ * left alone.
  */
-function inertOthers(keep: Element): () => void {
-  const set: Element[] = [];
-  for (const el of document.body.children) {
-    if (el === keep || el.hasAttribute("inert")) continue;
-    el.setAttribute("inert", "");
-    set.push(el);
+function applyInert(): void {
+  const top = stack[stack.length - 1];
+  for (const el of [...inertByDialogs]) {
+    if (!el.isConnected || el === top || !top) {
+      el.removeAttribute("inert");
+      inertByDialogs.delete(el);
+    }
   }
-  return () => {
-    for (const el of set) el.removeAttribute("inert");
-  };
+  if (!top) return;
+  for (const el of document.body.children) {
+    if (el === top || el.hasAttribute("inert")) continue;
+    el.setAttribute("inert", "");
+    inertByDialogs.add(el);
+  }
 }
 
 function lockScroll(): () => void {
@@ -101,7 +110,7 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
           : null;
 
       stack.push(layer);
-      const restoreInert = inertOthers(layer);
+      applyInert();
       const unlockScroll = lockScroll();
 
       const target =
@@ -111,12 +120,18 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
       setHasTitle(document.getElementById(titleId) !== null);
 
       return () => {
+        const wasTop = stack[stack.length - 1] === layer;
         stack.splice(stack.indexOf(layer), 1);
-        restoreInert();
+        applyInert();
         unlockScroll();
-        // Hidden by now (a drawer that closed, a breakpoint), focusing it would
-        // drop focus to the top of the page instead.
-        if (opener?.isConnected && (opener.checkVisibility?.() ?? true)) {
+        // Only the top dialog hands focus back: under another, its opener is
+        // inert. Hidden by now (a drawer that closed, a breakpoint), focusing
+        // the opener would drop focus to the top of the page instead.
+        if (
+          wasTop &&
+          opener?.isConnected &&
+          (opener.checkVisibility?.() ?? true)
+        ) {
           opener.focus();
         }
       };
@@ -125,8 +140,12 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
     useEffect(() => {
       if (!open) return;
       const onKeyDown = (e: KeyboardEvent) => {
+        // Handled already by something inside (a menu closing itself), or
+        // cancelling a character being composed: neither closes the dialog.
         if (
           e.key !== "Escape" ||
+          e.defaultPrevented ||
+          e.isComposing ||
           stack[stack.length - 1] !== layerRef.current
         ) {
           return;
