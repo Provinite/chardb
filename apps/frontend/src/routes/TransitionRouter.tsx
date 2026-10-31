@@ -49,8 +49,10 @@ export const TransitionRouter: React.FC<{ children: React.ReactNode }> = ({
   });
   const [pending, startTransition] = useTransition();
 
-  // A layout effect, so no navigation made by a child's mount effect is
-  // missed between render and subscription.
+  // A layout effect, as in `BrowserRouter`: it subscribes before any child's
+  // passive effect runs, so a navigation from a child's `useEffect` on mount
+  // is seen. One from a child's `useLayoutEffect` would run first and be
+  // missed, as it is with `BrowserRouter`.
   useLayoutEffect(
     () =>
       history.listen(({ action, location }) =>
