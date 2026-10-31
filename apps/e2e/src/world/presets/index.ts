@@ -1,3 +1,4 @@
+import candyBoard from "./candy-board.js";
 import communityBasic from "./community-basic.js";
 import communityItems from "./community-items.js";
 import emailVerification from "./email-verification.js";
@@ -8,6 +9,7 @@ import type { PresetDef } from "../types.js";
  * See apps/e2e/README.md for the walkthrough.
  */
 export const PRESETS = {
+  "candy-board": candyBoard,
   "community-basic": communityBasic,
   "community-items": communityItems,
   "email-verification": emailVerification,
