@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Hints that only showed on mouse hover now open from an info button** on any device: the lighting pad, the primary form, shop prices out of reach, refunds, deferrals, unemailed notifications, species you cannot pick, archiving and hiding (#466).
+- **Icon buttons say what they are** to screen readers and on hover, keyboard focus or long press: invite codes, role templates, form order, admin edit buttons and more (#466).
+
 - **The candy board's Lighting panel works from the keyboard**: focus moves into it, Escape in it or on its button closes it, and on phones it stays on screen and scrolls (#466).
 - **Every result in the page search (Ctrl+K) is a real link**, so it opens in a new tab and its address can be copied; screen readers hear the selected result as it moves (#466).
 - **A page that fails to load shows a Reload button inside the site** instead of a blank screen (#465).

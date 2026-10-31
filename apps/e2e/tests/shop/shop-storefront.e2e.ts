@@ -43,14 +43,18 @@ test("spending your allowance says so, in its own right", async ({
   await expect(notice).toBeVisible();
   await expect(notice).toHaveText(/Purchase limit reached/);
 
-  // The tooltip has to agree with the notice. It used to say nothing at all on
-  // a button disabled by the cap, and claimed you could not afford it on one
-  // that was still clickable.
+  // The notice is the only reason given. Prices used to carry their own on
+  // hover, which said nothing on a button disabled by the cap and claimed you
+  // could not afford it on one that was still clickable.
   const priceButton = page
     .getByTestId(`shop-price-${listing.priceIds[0]}`)
     .first();
   await expect(priceButton).toBeDisabled();
-  await expect(priceButton).toHaveAttribute("title", "Purchase limit reached");
+  await expect(
+    page
+      .getByTestId(`shop-item-${listing.id}`)
+      .getByRole("button", { name: "Why this price is out of reach" }),
+  ).toHaveCount(0);
 });
 
 test("a sold-out listing says that instead", async ({ page, world }) => {
@@ -79,7 +83,12 @@ test("a sold-out listing says that instead", async ({ page, world }) => {
   await expect(notice).toHaveText(/Sold out/);
   await expect(
     page.getByTestId(`shop-price-${listing.priceIds[0]}`).first(),
-  ).toHaveAttribute("title", "Sold out");
+  ).toBeDisabled();
+  await expect(
+    page
+      .getByTestId(`shop-item-${listing.id}`)
+      .getByRole("button", { name: "Why this price is out of reach" }),
+  ).toHaveCount(0);
 });
 
 test("a listing you can buy carries no notice", async ({ page, world }) => {

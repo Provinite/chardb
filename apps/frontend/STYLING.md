@@ -370,8 +370,9 @@ The `AppLoader` animation is the startup screen, and it lives in `index.html`, n
   - Both exempt a link inside a sentence, a control with an equivalent full-size control on the same page, browser-drawn controls, and a size that is essential to the information (a map pin).
   - The interactive primitives (`Button`, `IconButton`, menu items, list rows) meet 44×44px on touch devices. Build on them and the rule mostly takes care of itself; check by eye when you hand-build a control.
 - **Tooltips** come in two kinds:
-  - A tooltip that names an icon button repeats its accessible name. It shows on hover and focus, and on long-press on touch as a bonus; nothing depends on it.
-  - Information people need goes in a toggletip: an info button that opens it on tap or click. Never put it in a hover-only tooltip.
+  - A tooltip that names an icon button repeats its accessible name. It shows on hover and focus, and on long-press on touch as a bonus; nothing depends on it. `Tooltip` from `@chardb/ui` is hidden from screen readers, so the control carries its own name (`aria-label` or text). Hover waits `timing.tooltip.delay` (400ms), leaving waits `timing.tooltip.hideDelay` (100ms) so the pointer can cross onto it, and a long press is `timing.tooltip.longPress` (500ms).
+  - Information people need goes in a toggletip: an info button that opens it on tap or click. Never put it in a hover-only tooltip. `Toggletip` from `@chardb/ui` writes its note into a live region as it opens, so screen readers hear it.
+  - A `title` attribute is neither: touch screens never show it.
 - **Focus** uses the shared focus ring (`focusRing`) on `:focus-visible`. Never remove an outline without replacing it.
 - **Links go somewhere; buttons do something.** Anything that takes people to a page is a real `<a href>`: a router `Link`, or `HostAwareLink` when the destination may be on another host. That keeps everything browsers do with links: Ctrl-click, Cmd-click, middle-click and Shift-click, "Open in new tab", "Copy link address", and the address shown on hover. Never send someone to a page from a button's `onClick` or with `navigate()` in a handler. Buttons are for actions: save, log out, switch theme.
   - This holds inside menus, cards and lists too. A menu item that navigates is a `MenuLinkItem` around the link.
