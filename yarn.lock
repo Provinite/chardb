@@ -3277,6 +3277,7 @@ __metadata:
     "@mantine/core": "npm:^8.0.2"
     "@mantine/hooks": "npm:^8.0.2"
     "@mantine/spotlight": "npm:^8.0.2"
+    "@remix-run/router": "npm:1.23.0"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
     "@testing-library/react": "npm:^16.3.0"

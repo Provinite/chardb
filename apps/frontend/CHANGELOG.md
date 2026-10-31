@@ -9,12 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **A page that fails to load shows a Reload button inside the site** instead of a blank screen (#465).
+- **Each page loads its own code on demand**, so a first visit downloads 228 kB gzipped instead of 572 kB; a thin bar along the top shows while the next page loads (#465).
 - **On phones the navigation sidebar is a drawer** opened from a menu button in the header, so pages get the full width (#486).
 - **An account menu on your avatar** holds your profile and Log out; on phones it also holds Create Character, Upload and the theme switch (#486).
 - **The CharDB startup screen shows as soon as the page arrives**, in the chosen theme, instead of a blank page until the app's code has loaded (#470).
 
 ### Changed
 
+- **Character and media pages describe themselves to search engines by owner and species** rather than by their markdown text, so most pages no longer load a markdown parser (#465).
 - **The shop listing form's stock and limit fields stack on narrow screens**, and the shop's cart stacks below the listings when the content area is narrow rather than the window (#475).
 - **Filter chips on the item ledger and Halloween admin pages sit 0.5rem apart**, up from 0.375rem (#475).
 - **vanilla-extract build support**: `.css.ts` files compile in dev, production builds and tests, and `@chardb/ui` is bundled from source (#473).

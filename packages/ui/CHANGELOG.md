@@ -7,12 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **`loop()` returns a style rule instead of a class**, so the vanilla-extract runtime no longer ships in every bundle that imports `@chardb/ui`; `style([loop(...), {...}])` works unchanged (#465).
+
 ### Removed
 
 - Unused Storybook 7 dependencies and scripts; the package had no Storybook config or stories (#463).
 
 ### Added
 
+- **`TopProgressBar`**: the indeterminate bar along the top of the viewport for route changes (#465).
 - **`MenuLinkItem`**: a menu item that is the caller's own link, so Ctrl-click, middle-click and "open in new tab" work on it (#486).
 - **`Menu` `appearance="ghost"`**: a borderless trigger at the 44px touch size, for a trigger with content of its own such as an avatar (#486).
 - **`useBreakpoint`**: whether the viewport is at least a breakpoint wide, known on the first render; and the `size.sidebar` token (#486).

@@ -144,6 +144,13 @@ jobs:
         with:
           ref: ${{ steps.v.outputs.tag }}
 
+      # Pruning old assets runs last; fail before the install and build if the
+      # runner image has lost a tool it needs.
+      - name: Check deploy tools
+        run: |
+          source ./scripts/lib/frontend-asset-retention.sh
+          require_retention_tools
+
       - name: Enable Corepack
         run: corepack enable
 

@@ -15,7 +15,7 @@ export default defineConfig({
     // Scoped explicitly so Vitest's defaults can never collect a Playwright
     // spec. Browser E2E lives in apps/e2e and is run with `yarn workspace
     // @chardb/e2e e2e`.
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    include: ["src/**/*.{test,spec}.{ts,tsx}", "*.test.mts"],
     css: true,
   },
 });

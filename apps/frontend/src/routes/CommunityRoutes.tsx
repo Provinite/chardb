@@ -1,60 +1,62 @@
 import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 
-import { CommunityPage } from "../pages/CommunityPage";
-import { CommunityCharactersPage } from "../pages/CommunityCharactersPage";
-import { CommunityMyCharactersPage } from "../pages/CommunityMyCharactersPage";
-import { CharacterPage } from "../pages/CharacterPage";
-import { CharacterMediaPage } from "../pages/CharacterMediaPage";
-import { CreateCharacterPageEnhanced as CreateCharacterPage } from "../pages/CreateCharacterPageEnhanced";
-import { EditCharacterPage } from "../pages/EditCharacterPage";
-import { SpendEditKitPage } from "../pages/SpendEditKitPage";
-import { RedeemVariantChangePage } from "../pages/RedeemVariantChangePage";
-import { EditKitCharacterPickerPage } from "../pages/EditKitCharacterPickerPage";
-import { VariantChangeCharacterPickerPage } from "../pages/VariantChangeCharacterPickerPage";
-import { SpeciesPage } from "../pages/SpeciesPage";
-import { EditSpeciesPage } from "../pages/EditSpeciesPage";
-import { SpeciesManagementPage } from "../pages/SpeciesManagementPage";
-import { TraitBuilderPage } from "../pages/TraitBuilderPage";
-import { SpeciesVariantManagementPage } from "../pages/SpeciesVariantManagementPage";
-import { VariantDetailPage } from "../pages/VariantDetailPage";
-import { EnumValueManagementPage } from "../pages/EnumValueManagementPage";
-import { EnumValueSettingsPage } from "../pages/EnumValueSettingsPage";
-import { ItemTypePage } from "../pages/ItemTypePage";
-import { ItemProvenancePage } from "../pages/ItemProvenancePage";
-import { CommunityAdminPage } from "../pages/CommunityAdminPage";
-import { CommunityInviteCodesPage } from "../pages/CommunityInviteCodesPage";
-import { PermissionManagementPage } from "../pages/PermissionManagementPage";
-import { CommunityMembersPage } from "../pages/CommunityMembersPage";
-import { CommunityMemberProfilePage } from "../pages/CommunityMemberProfilePage";
-import { CommunitySettingsPage } from "../pages/CommunitySettingsPage";
-import { CommunityItemsAdminPage } from "../pages/CommunityItemsAdminPage";
-import { CommunityHalloweenAdminPage } from "../pages/CommunityHalloweenAdminPage";
-import { CommunityCandyBoardPage } from "../pages/CommunityCandyBoardPage";
-import { CommunityCandyBoardsPage } from "../pages/CommunityCandyBoardsPage";
-import { CommunityColorPalettePage } from "../pages/CommunityColorPalettePage";
-import { CommunityInventoryPage } from "../pages/CommunityInventoryPage";
-import { CommunityPendingHoldingsPage } from "../pages/CommunityPendingHoldingsPage";
-import { CommunityExternalMembersPage } from "../pages/CommunityExternalMembersPage";
-import { CommunityItemLedgerPage } from "../pages/CommunityItemLedgerPage";
-import { CommunityCurrenciesAdminPage } from "../pages/CommunityCurrenciesAdminPage";
-import { CommunityCurrencyLedgerPage } from "../pages/CommunityCurrencyLedgerPage";
-import { CommunityShopPage } from "../pages/CommunityShopPage";
-import { CommunityShopMyPurchasesPage } from "../pages/CommunityShopMyPurchasesPage";
-import { CommunityShopAdminPage } from "../pages/CommunityShopAdminPage";
-import { CommunityShopPurchasesPage } from "../pages/CommunityShopPurchasesPage";
-import { CommunityModerationPage } from "../pages/CommunityModerationPage";
-import { ImageModerationPage } from "../pages/ImageModerationPage";
-import { TraitReviewPage } from "../pages/TraitReviewPage";
-import { TradesPage } from "../pages/TradesPage";
-import { TradeComposerPage } from "../pages/TradeComposerPage";
-import { TradeOfferPage } from "../pages/TradeOfferPage";
-import { NotFoundPage } from "../pages/NotFoundPage";
-import { EditProfilePage } from "../pages/EditProfilePage";
-import { CreateMediaPage } from "../pages/CreateMediaPage";
-import { UploadImagePage } from "../pages/UploadImagePage";
-import { CreateTextPage } from "../pages/CreateTextPage";
 import { ApexRedirect } from "./ApexRedirect";
+import {
+  NotFoundPage,
+  CommunityPage,
+  CommunityCharactersPage,
+  CommunityMyCharactersPage,
+  CharacterPage,
+  CharacterMediaPage,
+  CreateCharacterPage,
+  EditCharacterPage,
+  SpendEditKitPage,
+  RedeemVariantChangePage,
+  EditKitCharacterPickerPage,
+  VariantChangeCharacterPickerPage,
+  SpeciesPage,
+  EditSpeciesPage,
+  SpeciesManagementPage,
+  TraitBuilderPage,
+  SpeciesVariantManagementPage,
+  VariantDetailPage,
+  EnumValueManagementPage,
+  EnumValueSettingsPage,
+  ItemTypePage,
+  ItemProvenancePage,
+  CommunityAdminPage,
+  CommunityInviteCodesPage,
+  PermissionManagementPage,
+  CommunityMembersPage,
+  CommunityMemberProfilePage,
+  CommunitySettingsPage,
+  CommunityItemsAdminPage,
+  CommunityHalloweenAdminPage,
+  CommunityCandyBoardPage,
+  CommunityCandyBoardsPage,
+  CommunityColorPalettePage,
+  CommunityInventoryPage,
+  CommunityPendingHoldingsPage,
+  CommunityExternalMembersPage,
+  CommunityItemLedgerPage,
+  CommunityCurrenciesAdminPage,
+  CommunityCurrencyLedgerPage,
+  CommunityShopPage,
+  CommunityShopMyPurchasesPage,
+  CommunityShopAdminPage,
+  CommunityShopPurchasesPage,
+  CommunityModerationPage,
+  ImageModerationPage,
+  TraitReviewPage,
+  TradesPage,
+  TradeComposerPage,
+  TradeOfferPage,
+  EditProfilePage,
+  CreateMediaPage,
+  UploadImagePage,
+  CreateTextPage,
+} from "./pages";
 
 /** Forwards the legacy singular /item/:id to the canonical item type page. */
 const RedirectToItemType: React.FC = () => {
@@ -86,9 +88,12 @@ const RedirectToItemType: React.FC = () => {
  * a nullable `characterId` if at all, so an upload without a character used to
  * belong nowhere and be reviewable by nobody but a site admin. Forcing those
  * pages to the apex threw the answer away before it could be recorded.
+ *
+ * The routes are a value of their own, apart from `CommunityRoutes`, so
+ * startup can match the current path against them (`preloadRoute.ts`).
  */
-export const CommunityRoutes: React.FC = () => (
-  <Routes>
+export const communityRoutes = (
+  <>
     {/* --- the community itself */}
     <Route path="/" element={<CommunityPage />} />
     <Route path="/characters" element={<CommunityCharactersPage />} />
@@ -550,5 +555,9 @@ export const CommunityRoutes: React.FC = () => (
     <Route path="/join-community" element={<ApexRedirect />} />
 
     <Route path="*" element={<NotFoundPage />} />
-  </Routes>
+  </>
+);
+
+export const CommunityRoutes: React.FC = () => (
+  <Routes>{communityRoutes}</Routes>
 );

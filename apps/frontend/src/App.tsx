@@ -7,7 +7,8 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import { useHoldBootScreen } from "./hooks/useBootScreen";
 import { ApexRoutes } from "./routes/ApexRoutes";
 import { CommunityRoutes } from "./routes/CommunityRoutes";
-import { CommunityUnreachable } from "./pages/CommunityUnreachable";
+import { PageBoundary } from "./routes/PageBoundary";
+import { CommunityUnreachable } from "./routes/pages";
 
 /**
  * Picks the route table from the hostname.
@@ -52,7 +53,11 @@ function App() {
   // is not "no such community", and telling somebody their address is wrong
   // when the server is down sends them to check a URL that was fine.
   if (unreachable) {
-    return <CommunityUnreachable />;
+    return (
+      <PageBoundary>
+        <CommunityUnreachable />
+      </PageBoundary>
+    );
   }
 
   if (authLoading || hostLoading) {
@@ -62,7 +67,9 @@ function App() {
   return (
     <Layout>
       <ScrollToTop />
-      {community ? <CommunityRoutes /> : <ApexRoutes />}
+      <PageBoundary>
+        {community ? <CommunityRoutes /> : <ApexRoutes />}
+      </PageBoundary>
     </Layout>
   );
 }
