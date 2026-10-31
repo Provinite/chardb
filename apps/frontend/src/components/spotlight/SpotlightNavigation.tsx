@@ -81,7 +81,7 @@ export const SpotlightNavigation: React.FC = () => {
       limit={RESULT_LIMIT}
       scrollable
       maxHeight={400}
-      nothingFound={nothingFoundText(parsed, inCommunity)}
+      nothingFound={nothingFoundText(parsed, inCommunity, false)}
       searchProps={SEARCH_PROPS}
     />
   );

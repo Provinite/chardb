@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { CommandPalette, Highlight } from "@chardb/ui";
 import { HostAwareLink } from "../HostAwareLink";
 import { filterKeepingMembers } from "./filterKeepingMembers";
@@ -6,11 +6,11 @@ import { parseSpotlightQuery } from "./spotlightQuery";
 import {
   RESULT_LIMIT,
   SEARCH_PLACEHOLDER,
+  isPaletteShortcut,
   limitResults,
   nothingFoundText,
 } from "./spotlightText";
 import { isLink, type SpotlightItem } from "./types";
-import { useHeldWhile } from "./useHeldWhile";
 import {
   useActiveCommunityId,
   useSpotlightActions,
@@ -20,12 +20,6 @@ interface PaletteNavigationProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
-
-/** Typing in these, Mod+K is theirs. */
-const typingIn = (target: EventTarget | null) =>
-  target instanceof HTMLElement &&
-  (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) ||
-    target.isContentEditable);
 
 /**
  * The page search: Mod+K, or the search button in either sidebar.
@@ -45,36 +39,30 @@ export const PaletteNavigation: React.FC<PaletteNavigationProps> = ({
   const parsed = parseSpotlightQuery(query);
   const inCommunity = !!useActiveCommunityId();
 
-  const filtered = useMemo(
+  // Filtered by what is in the box now, so nothing from the previous question
+  // stays up once the box has changed mode: switching to `@` empties the list
+  // until the members arrive, rather than leaving pages to be picked.
+  const shown = useMemo(
     () => limitResults(filterKeepingMembers(query, groups), RESULT_LIMIT),
     [query, groups],
   );
-  // Until the members for a people query arrive, the last results stay up:
-  // otherwise the list flashes "nobody by that name" and then fills.
-  const shown = useHeldWhile(filtered, pending);
-  const highlight = useHeldWhile(parsed.term, pending);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        e.key.toLowerCase() === "k" &&
-        !typingIn(e.target)
-      ) {
-        // Chrome's own Ctrl+K moves focus to the address bar.
-        e.preventDefault();
-        onOpenChange(true);
-      }
+      if (!isPaletteShortcut(e)) return;
+      // Chrome's own Ctrl+K moves focus to the address bar.
+      e.preventDefault();
+      onOpenChange(true);
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
   }, [onOpenChange]);
 
   // Opens empty every time: the last search is rarely the next one.
-  const close = () => {
+  const close = useCallback(() => {
     onOpenChange(false);
     setQuery("");
-  };
+  }, [onOpenChange]);
 
   const body = ({ icon: Icon, label, description }: SpotlightItem) => (
     <>
@@ -83,7 +71,7 @@ export const PaletteNavigation: React.FC<PaletteNavigationProps> = ({
       </CommandPalette.ItemIcon>
       <CommandPalette.ItemText>
         <CommandPalette.ItemLabel>
-          <Highlight text={label} match={highlight} />
+          <Highlight text={label} match={parsed.term} />
         </CommandPalette.ItemLabel>
         {description && (
           <CommandPalette.ItemDescription>
@@ -99,12 +87,17 @@ export const PaletteNavigation: React.FC<PaletteNavigationProps> = ({
       <CommandPalette.Input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={(e) => {
+          // Until the members for what was typed arrive, what is on screen
+          // answers an earlier query; Enter would open the wrong thing.
+          if (e.key === "Enter" && pending) e.preventDefault();
+        }}
         placeholder={SEARCH_PLACEHOLDER}
       />
       <CommandPalette.List>
         {shown.length === 0 ? (
           <CommandPalette.Empty>
-            {nothingFoundText(parsed, inCommunity)}
+            {nothingFoundText(parsed, inCommunity, pending)}
           </CommandPalette.Empty>
         ) : (
           shown.map(({ group, actions }) => (

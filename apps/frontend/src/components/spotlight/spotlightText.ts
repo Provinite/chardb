@@ -17,12 +17,33 @@ export const RESULT_LIMIT = 7;
 export function nothingFoundText(
   parsed: SpotlightQuery,
   inCommunity: boolean,
+  /** Members for what was typed are still on their way: no answer yet. */
+  pending: boolean,
 ): string {
+  if (pending) return "";
   if (parsed.mode === "pages") return "No pages found... try @ for members";
   if (!inCommunity) return "Open a community to search its members";
   if (parsed.mode === "people") return "Nobody here by that name...";
   return "No pages of theirs match that...";
 }
+
+/** Typing in these, Mod+K is theirs. */
+const typingIn = (target: EventTarget | null) =>
+  target instanceof HTMLElement &&
+  (["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName) ||
+    target.isContentEditable);
+
+/**
+ * Ctrl+K, or Cmd+K on Mac, outside a field being typed in. Exactly those
+ * modifiers: Ctrl+Shift+K and the like belong to the browser (Firefox's web
+ * console) or to whatever else is bound to them.
+ */
+export const isPaletteShortcut = (e: KeyboardEvent) =>
+  (e.ctrlKey || e.metaKey) &&
+  !e.shiftKey &&
+  !e.altKey &&
+  e.key.toLowerCase() === "k" &&
+  !typingIn(e.target);
 
 /** The first `limit` results, across groups in order; empty groups go. */
 export function limitResults(

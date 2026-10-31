@@ -121,10 +121,8 @@ export function useSpotlightActions(
     const groups: SpotlightGroup[] = [];
 
     // Destinations are URLs, and whoever renders them decides how to get
-    // there: a route on this host, a page load on another.
-
-    /** A page on this host. */
-    const nav = (path: string) => path;
+    // there: a route on this host, a page load on another. A bare path is a
+    // page on this host.
 
     /** Something that lives at the apex: a path from here, a URL from a community host. */
     const apex = (path: string) => (hostSlug ? apexUrl(path) : path);
@@ -182,14 +180,14 @@ export function useSpotlightActions(
             icon: User,
             label: "Profile",
             description: `${who} in ${communityName}`,
-            to: nav(base),
+            to: base,
           },
           {
             id: `member-page-inventory-${member.id}`,
             icon: Package,
             label: "Inventory",
             description: `What ${who} holds in ${communityName}`,
-            to: nav(`${base}/inventory`),
+            to: `${base}/inventory`,
           },
           {
             id: `member-page-characters-${member.id}`,
@@ -211,7 +209,7 @@ export function useSpotlightActions(
             icon: ArrowLeftRight,
             label: "Propose trade",
             description: `Open a trade with ${who}`,
-            to: nav(`/trades/new?with=${member.id}`),
+            to: `/trades/new?with=${member.id}`,
           });
         }
 
@@ -355,7 +353,7 @@ export function useSpotlightActions(
                 icon: UserPlus,
                 label: "Create Character",
                 description: "Create a new character",
-                to: nav("/character/create"),
+                to: "/character/create",
               },
             ]
           : []),
@@ -363,13 +361,13 @@ export function useSpotlightActions(
           id: "upload-media",
           icon: Upload,
           label: "Upload Media",
-          // `nav`, not `apex`: uploading stays on the host it was started
-          // from, because that host is what decides which community's
-          // moderators review the result.
+          // A bare path, not `apex`: uploading stays on the host it was
+          // started from, because that host is what decides which
+          // community's moderators review the result.
           description: hostSlug
             ? `Upload new media, reviewed by ${communityName}`
             : "Upload new media",
-          to: nav("/upload"),
+          to: "/upload",
         },
         {
           id: "create-gallery",
@@ -384,7 +382,7 @@ export function useSpotlightActions(
           label: "Create Text",
           // Stays on-host for the same reason as Upload Media above.
           description: "Create a new text post",
-          to: nav("/text/create"),
+          to: "/text/create",
         },
       ],
     });
