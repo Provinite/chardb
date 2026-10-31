@@ -1,4 +1,4 @@
-import { act, useState } from "react";
+import { act, createRef, useState } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import { declarationsOf, rulesFor } from "../__tests__/emittedCss";
 import { render } from "../__tests__/render";
@@ -188,6 +188,27 @@ describe("CommandPalette", () => {
     expect(onClose).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ["Ctrl", { ctrlKey: true }],
+    ["Cmd", { metaKey: true }],
+    ["Shift", { shiftKey: true }],
+  ])("opens a link in a new tab on %s+Enter, and stays open", (_, mods) => {
+    const onClose = vi.fn();
+    const open = vi.spyOn(window, "open").mockReturnValue(null);
+    render(<Harness onClose={onClose} />);
+
+    press("ArrowUp");
+    press("Enter", mods);
+
+    expect(open).toHaveBeenCalledWith(
+      new URL("#elsewhere", window.location.href).href,
+      "_blank",
+      "noopener",
+    );
+    expect(onClose).not.toHaveBeenCalled();
+    open.mockRestore();
+  });
+
   it("stays open for a result that is not a link", () => {
     const onClose = vi.fn();
     render(<Harness onClose={onClose} />);
@@ -265,6 +286,21 @@ describe("CommandPalette item parts", () => {
       </CommandPalette.Root>,
     );
 
+  it("forwards a ref to the result", () => {
+    const ref = createRef<HTMLAnchorElement>();
+    render(
+      <CommandPalette.Root open onClose={() => {}} aria-label="Search">
+        <CommandPalette.List>
+          <CommandPalette.Item as="a" href="#x" ref={ref}>
+            X
+          </CommandPalette.Item>
+        </CommandPalette.List>
+      </CommandPalette.Root>,
+    );
+
+    expect(ref.current).toBe(options()[0]);
+  });
+
   it("keeps the icon out of the result's name", () => {
     renderItem();
     const icon = document.querySelector('[data-testid="icon"]')!;
@@ -295,6 +331,14 @@ describe("Highlight", () => {
 
     expect(marks(container)).toEqual([]);
     expect(container.textContent).toBe("Liked");
+  });
+
+  it("marks the right letters after one that lower-cases longer", () => {
+    // "İ".toLowerCase() is two code units, which shifts every index after it.
+    const container = render(<Highlight text="İpek Neo" match="neo" />);
+
+    expect(marks(container)).toEqual(["Neo"]);
+    expect(container.textContent).toBe("İpek Neo");
   });
 
   it("treats the match as text, not a pattern", () => {

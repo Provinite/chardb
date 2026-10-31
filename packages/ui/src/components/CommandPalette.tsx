@@ -85,6 +85,12 @@ export const CommandPaletteRoot = forwardRef<
     [],
   );
 
+  // Through a ref, so a caller passing a fresh function every render does not
+  // change the context and re-render every result with it.
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const close = useCallback(() => onCloseRef.current(), []);
+
   const ctx = useMemo(
     () => ({
       listId,
@@ -93,9 +99,9 @@ export const CommandPaletteRoot = forwardRef<
       setActiveId,
       options,
       listRef,
-      onClose,
+      onClose: close,
     }),
-    [listId, label, activeId, options, onClose],
+    [listId, label, activeId, options, close],
   );
 
   return (
@@ -167,7 +173,19 @@ export const CommandPaletteInput = forwardRef<
             move(-1);
           } else if (e.key === "Enter" && activeId) {
             e.preventDefault();
-            document.getElementById(activeId)?.click();
+            const option = document.getElementById(activeId);
+            // A synthetic click carries no modifiers, so a link asked for in
+            // a new tab is opened as one here. The palette stays open, as it
+            // does for a Ctrl-click.
+            if (
+              option instanceof HTMLAnchorElement &&
+              option.href &&
+              (e.ctrlKey || e.metaKey || e.shiftKey)
+            ) {
+              window.open(option.href, "_blank", "noopener");
+              return;
+            }
+            option?.click();
           }
         }}
         {...rest}
@@ -283,19 +301,31 @@ export type CommandPaletteItemProps<C extends React.ElementType = "div"> =
       keyof ItemOwnProps<C> | "id" | "role" | "aria-selected" | "tabIndex"
     >;
 
+/**
+ * `forwardRef` loses the `as` generic, so the forwarded component is typed
+ * back to it: the ref is whatever `as` renders.
+ */
+type ItemComponent = <C extends React.ElementType = "div">(
+  props: CommandPaletteItemProps<C> & { ref?: React.Ref<React.ElementRef<C>> },
+) => React.ReactElement | null;
+
 /** One result. */
-export function CommandPaletteItem<C extends React.ElementType = "div">({
-  as,
-  className,
-  children,
-  ...rest
-}: CommandPaletteItemProps<C>) {
+export const CommandPaletteItem = forwardRef(function CommandPaletteItem(
+  {
+    as,
+    className,
+    children,
+    ...rest
+  }: CommandPaletteItemProps<React.ElementType>,
+  ref: React.ForwardedRef<Element>,
+) {
   const id = useId();
   const { activeId } = usePalette();
   const Component: React.ElementType = as ?? "div";
   return (
     <Component
       {...rest}
+      ref={ref}
       id={id}
       role="option"
       aria-selected={activeId === id}
@@ -307,7 +337,7 @@ export function CommandPaletteItem<C extends React.ElementType = "div">({
       {children}
     </Component>
   );
-}
+}) as ItemComponent;
 
 /** A result's icon. Decorative: the label names the result. */
 export const CommandPaletteItemIcon = forwardRef<
@@ -401,21 +431,41 @@ export function Highlight({ text, match }: HighlightProps) {
   const needle = match.toLowerCase();
   if (!needle) return <>{text}</>;
 
-  const haystack = text.toLowerCase();
+  // Lower-casing can lengthen a character ("İ" becomes two code units), so
+  // positions found in the lower-cased text are mapped back to the original:
+  // each lower-cased code unit remembers where its character starts and ends.
+  let haystack = "";
+  const starts: number[] = [];
+  const ends: number[] = [];
+  let at = 0;
+  for (const char of text) {
+    const lower = char.toLowerCase();
+    for (let i = 0; i < lower.length; i++) {
+      starts.push(at);
+      ends.push(at + char.length);
+    }
+    haystack += lower;
+    at += char.length;
+  }
+
   const parts: React.ReactNode[] = [];
   let from = 0;
+  let searchFrom = 0;
   for (
-    let at = haystack.indexOf(needle);
-    at !== -1;
-    at = haystack.indexOf(needle, from)
+    let found = haystack.indexOf(needle);
+    found !== -1;
+    found = haystack.indexOf(needle, searchFrom)
   ) {
-    if (at > from) parts.push(text.slice(from, at));
+    const start = starts[found];
+    const end = ends[found + needle.length - 1];
+    if (start > from) parts.push(text.slice(from, start));
     parts.push(
-      <mark key={at} className={styles.mark}>
-        {text.slice(at, at + needle.length)}
+      <mark key={start} className={styles.mark}>
+        {text.slice(start, end)}
       </mark>,
     );
-    from = at + needle.length;
+    from = end;
+    searchFrom = found + needle.length;
   }
   if (from < text.length) parts.push(text.slice(from));
   return <>{parts}</>;
