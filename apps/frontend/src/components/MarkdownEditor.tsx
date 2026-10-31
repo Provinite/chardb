@@ -139,7 +139,6 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
             <ToolbarButton
               type="button"
               onClick={() => setIsPreviewMode(!isPreviewMode)}
-              title={isPreviewMode ? "Switch to edit mode" : "Preview markdown"}
             >
               {isPreviewMode ? "✏️ Edit" : "👁️ Preview"}
             </ToolbarButton>

@@ -317,16 +317,11 @@ export const MediaCard: React.FC<MediaCardProps> = ({
                 variant="danger"
                 onClick={handleRemoveAsMain}
                 disabled={isSettingMain}
-                title="Remove as main image"
               >
                 {isSettingMain ? "..." : "Remove Main"}
               </ActionButton>
             ) : (
-              <ActionButton
-                onClick={handleSetAsMain}
-                disabled={isSettingMain}
-                title="Set as main image"
-              >
+              <ActionButton onClick={handleSetAsMain} disabled={isSettingMain}>
                 {isSettingMain ? "..." : "Set as Main"}
               </ActionButton>
             )}

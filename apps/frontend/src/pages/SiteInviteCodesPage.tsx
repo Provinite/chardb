@@ -9,6 +9,7 @@ import {
   ExternalLink,
   AlertCircle,
 } from "lucide-react";
+import { Tooltip } from "@chardb/ui";
 import {
   useInviteCodesQuery,
   useCreateInviteCodeMutation,
@@ -571,13 +572,15 @@ export function SiteInviteCodesPage() {
               <InviteCodeHeader>
                 <InviteCodeText>
                   <CodeDisplay>{inviteCode.id}</CodeDisplay>
-                  <ActionButton
-                    onClick={() => copyInviteLink(inviteCode.id)}
-                    title="Copy invite link"
-                    $variant="secondary"
-                  >
-                    <Copy size={16} />
-                  </ActionButton>
+                  <Tooltip label="Copy invite link">
+                    <ActionButton
+                      onClick={() => copyInviteLink(inviteCode.id)}
+                      aria-label="Copy invite link"
+                      $variant="secondary"
+                    >
+                      <Copy size={16} aria-hidden />
+                    </ActionButton>
+                  </Tooltip>
                 </InviteCodeText>
                 <StatusBadge $available={inviteCode.isAvailable}>
                   {inviteCode.isAvailable ? "Available" : "Exhausted"}
@@ -615,26 +618,32 @@ export function SiteInviteCodesPage() {
                     inviteCode.creator.username}
                 </CreatorInfo>
                 <ActionButtons>
-                  <ActionButton
-                    onClick={() => copyInviteLink(inviteCode.id)}
-                    title="Copy invite link"
-                    $variant="primary"
-                  >
-                    <ExternalLink size={16} />
-                  </ActionButton>
-                  <ActionButton
-                    onClick={() => setEditingCode(inviteCode)}
-                    title="Edit invite code"
-                  >
-                    <Edit2 size={16} />
-                  </ActionButton>
-                  <ActionButton
-                    onClick={() => handleDeleteInviteCode(inviteCode.id)}
-                    title="Delete invite code"
-                    $variant="danger"
-                  >
-                    <Trash2 size={16} />
-                  </ActionButton>
+                  <Tooltip label="Copy invite link">
+                    <ActionButton
+                      onClick={() => copyInviteLink(inviteCode.id)}
+                      aria-label="Copy invite link"
+                      $variant="primary"
+                    >
+                      <ExternalLink size={16} aria-hidden />
+                    </ActionButton>
+                  </Tooltip>
+                  <Tooltip label="Edit invite code">
+                    <ActionButton
+                      onClick={() => setEditingCode(inviteCode)}
+                      aria-label="Edit invite code"
+                    >
+                      <Edit2 size={16} aria-hidden />
+                    </ActionButton>
+                  </Tooltip>
+                  <Tooltip label="Delete invite code">
+                    <ActionButton
+                      onClick={() => handleDeleteInviteCode(inviteCode.id)}
+                      aria-label="Delete invite code"
+                      $variant="danger"
+                    >
+                      <Trash2 size={16} aria-hidden />
+                    </ActionButton>
+                  </Tooltip>
                 </ActionButtons>
               </InviteCodeActions>
             </InviteCodeCard>

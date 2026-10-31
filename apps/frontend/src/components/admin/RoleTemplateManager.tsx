@@ -11,6 +11,7 @@ import {
   Caption,
   Card,
   Label,
+  Tooltip,
 } from "@chardb/ui";
 import { PermissionSelector } from "./PermissionSelector";
 import { PERMISSION_LABELS, type PermissionKey } from "../../lib/permissions";
@@ -429,39 +430,45 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
               <TemplateActions>
                 {allowEditing && (
                   <>
-                    <ActionButton
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleCloneTemplate(template);
-                      }}
-                      title="Clone template"
-                    >
-                      <Copy size={12} />
-                    </ActionButton>
-
-                    {(!template.isSystem || allowEditing) && (
+                    <Tooltip label="Clone template">
                       <ActionButton
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleEditTemplate(template);
+                          handleCloneTemplate(template);
                         }}
-                        title="Edit template"
+                        aria-label="Clone template"
                       >
-                        <Edit3 size={12} />
+                        <Copy size={12} aria-hidden />
                       </ActionButton>
+                    </Tooltip>
+
+                    {(!template.isSystem || allowEditing) && (
+                      <Tooltip label="Edit template">
+                        <ActionButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleEditTemplate(template);
+                          }}
+                          aria-label="Edit template"
+                        >
+                          <Edit3 size={12} aria-hidden />
+                        </ActionButton>
+                      </Tooltip>
                     )}
 
                     {!template.isSystem && (
-                      <ActionButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteTemplate(template.id);
-                        }}
-                        title="Delete template"
-                        style={{ color: "var(--colors-danger)" }}
-                      >
-                        <Trash2 size={12} />
-                      </ActionButton>
+                      <Tooltip label="Delete template">
+                        <ActionButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteTemplate(template.id);
+                          }}
+                          aria-label="Delete template"
+                          style={{ color: "var(--colors-danger)" }}
+                        >
+                          <Trash2 size={12} aria-hidden />
+                        </ActionButton>
+                      </Tooltip>
                     )}
                   </>
                 )}

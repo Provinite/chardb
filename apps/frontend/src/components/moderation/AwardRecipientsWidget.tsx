@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { Coins } from "lucide-react";
+import { Tooltip } from "@chardb/ui";
 import { MediaAwardRelation } from "../../generated/graphql";
 import { formatAmount } from "../../lib/currencyDisplay";
 
@@ -192,7 +193,11 @@ export const AwardRecipientsWidget: React.FC<AwardRecipientsWidgetProps> = ({
             data-testid={`award-row-${recipient.user.username}`}
           >
             <Who>
-              <Name title={`@${recipient.user.username}`}>{label}</Name>
+              {/* The handle behind a display name, for whoever wants it; the
+                  row says who it is either way. */}
+              <Tooltip label={`@${recipient.user.username}`}>
+                <Name>{label}</Name>
+              </Tooltip>
               <Relations>
                 {recipient.relations
                   .map((relation) => RELATION_LABEL[relation])

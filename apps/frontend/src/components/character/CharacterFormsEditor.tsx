@@ -1,7 +1,7 @@
 import React, { useEffect } from "react";
 import styled from "styled-components";
 import { Plus, Trash2, ChevronUp, ChevronDown } from "lucide-react";
-import { Button, Input } from "@chardb/ui";
+import { Button, Input, Toggletip, Tooltip } from "@chardb/ui";
 import { TraitForm } from "./TraitForm";
 import {
   newFormDraft,
@@ -183,12 +183,14 @@ export const CharacterFormsEditor: React.FC<Props> = ({
                   the one at the top -- and reordering silently changes what
                   every listing and every link to this character shows. */}
               {index === 0 && (
-                <PrimaryBadge
-                  data-testid="primary-form-badge"
-                  title="Shown in listings and when somebody opens this character"
-                >
-                  Primary
-                </PrimaryBadge>
+                <>
+                  <PrimaryBadge data-testid="primary-form-badge">
+                    Primary
+                  </PrimaryBadge>
+                  <Toggletip label="What the primary form is">
+                    Shown in listings and when somebody opens this character
+                  </Toggletip>
+                </>
               )}
               <NameField>
                 <Input
@@ -209,37 +211,40 @@ export const CharacterFormsEditor: React.FC<Props> = ({
                   </NameError>
                 )}
               </NameField>
-              <IconButton
-                type="button"
-                title="Move up"
-                aria-label="Move up"
-                disabled={disabled || index === 0}
-                onClick={() => move(index, -1)}
-              >
-                <ChevronUp size={16} />
-              </IconButton>
-              <IconButton
-                type="button"
-                title="Move down"
-                aria-label="Move down"
-                disabled={disabled || index === forms.length - 1}
-                onClick={() => move(index, 1)}
-              >
-                <ChevronDown size={16} />
-              </IconButton>
-              <IconButton
-                type="button"
-                title="Remove this form"
-                aria-label="Remove this form"
-                data-testid={`remove-form-${index}`}
-                // A character must keep at least one form; removing the last
-                // one is not "no traits", it is a character that cannot be
-                // rendered.
-                disabled={disabled || forms.length === 1}
-                onClick={() => onChange(forms.filter((_, i) => i !== index))}
-              >
-                <Trash2 size={16} />
-              </IconButton>
+              <Tooltip label="Move up">
+                <IconButton
+                  type="button"
+                  aria-label="Move up"
+                  disabled={disabled || index === 0}
+                  onClick={() => move(index, -1)}
+                >
+                  <ChevronUp size={16} aria-hidden />
+                </IconButton>
+              </Tooltip>
+              <Tooltip label="Move down">
+                <IconButton
+                  type="button"
+                  aria-label="Move down"
+                  disabled={disabled || index === forms.length - 1}
+                  onClick={() => move(index, 1)}
+                >
+                  <ChevronDown size={16} aria-hidden />
+                </IconButton>
+              </Tooltip>
+              <Tooltip label="Remove this form">
+                <IconButton
+                  type="button"
+                  aria-label="Remove this form"
+                  data-testid={`remove-form-${index}`}
+                  // A character must keep at least one form; removing the last
+                  // one is not "no traits", it is a character that cannot be
+                  // rendered.
+                  disabled={disabled || forms.length === 1}
+                  onClick={() => onChange(forms.filter((_, i) => i !== index))}
+                >
+                  <Trash2 size={16} aria-hidden />
+                </IconButton>
+              </Tooltip>
             </FormHead>
             {body}
           </FormCard>

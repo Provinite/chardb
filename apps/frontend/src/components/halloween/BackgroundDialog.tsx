@@ -280,18 +280,18 @@ const BackgroundChoices = React.memo<{
   return (
     <Options role="radiogroup" aria-label="Backgrounds">
       {CHOICES.map(({ slug, name }) => (
-        <Option
-          key={slug}
-          type="button"
-          role="radio"
-          aria-checked={shown === slug}
-          aria-label={name}
-          title={name}
-          $chosen={shown === slug}
-          onClick={() => onChoose(slug)}
-        >
-          <Swatch style={backgroundStyle(backgroundOf(slug))} aria-hidden />
-        </Option>
+        <Tooltip key={slug} label={name}>
+          <Option
+            type="button"
+            role="radio"
+            aria-checked={shown === slug}
+            aria-label={name}
+            $chosen={shown === slug}
+            onClick={() => onChoose(slug)}
+          >
+            <Swatch style={backgroundStyle(backgroundOf(slug))} aria-hidden />
+          </Option>
+        </Tooltip>
       ))}
     </Options>
   );
