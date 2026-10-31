@@ -11,14 +11,10 @@ import React, {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { setElementVars } from "@vanilla-extract/dynamic";
 import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
-import type {
-  Align,
-  FallbackStrategy,
-  Placement,
-  Side,
-} from "../hooks/placeFloating";
+import type { Align, FallbackStrategy, Side } from "../hooks/placeFloating";
+import { applyPlacement, refOf, setRefs, tabbables } from "./floating";
+import * as floatingStyles from "./floating.css";
 import * as styles from "./Popover.css";
 
 /** Pixels between the trigger and the panel: room for the arrow. */
@@ -30,26 +26,6 @@ const GAP_PX = 10;
 const MARGIN_PX = 8;
 /** Pixels the arrow keeps from the panel's corners. */
 const ARROW_INSET_PX = 14;
-
-const TABBABLE = [
-  "a[href]",
-  "button",
-  "input",
-  "select",
-  "textarea",
-  "[tabindex]",
-  "[contenteditable]",
-].join(",");
-
-/** What Tab stops on inside `root`, in order. */
-const tabbables = (root: ParentNode): HTMLElement[] =>
-  [...root.querySelectorAll<HTMLElement>(TABBABLE)].filter(
-    (el) =>
-      el.tabIndex >= 0 &&
-      !el.matches(":disabled") &&
-      !el.closest("[inert]") &&
-      (el.checkVisibility?.() ?? true),
-  );
 
 /**
  * Escape, on the panel or its trigger. Handled there rather than on the
@@ -77,23 +53,6 @@ interface PopoverContextValue {
   panelRef: React.MutableRefObject<HTMLDivElement | null>;
   bodyRef: React.MutableRefObject<HTMLDivElement | null>;
 }
-
-/**
- * Writes a placement to the panel as CSS variables and `data-side`. Straight
- * to the element: following a scroll changes these many times a second, and
- * none of it needs React to render anything.
- */
-const applyTo = (panel: HTMLElement | null, p: Placement) => {
-  if (!panel) return;
-  setElementVars(panel, {
-    [styles.top]: `${p.top}px`,
-    [styles.left]: `${p.left}px`,
-    [styles.arrowAt]: `${p.arrow}px`,
-    [styles.maxWidth]: `${p.maxWidth}px`,
-    [styles.maxHeight]: `${p.maxHeight}px`,
-  });
-  panel.dataset.side = p.side;
-};
 
 /**
  * The panel's size with nothing capped: its body's whole content, plus the
@@ -168,7 +127,7 @@ export function PopoverRoot({
     gap: GAP_PX,
     margin: MARGIN_PX,
     arrowInset: ARROW_INSET_PX,
-    apply: (p) => applyTo(panelRef.current, p),
+    apply: (p) => applyPlacement(panelRef.current, p),
     measure: (panel) => naturalSize(panel, bodyRef.current),
   });
 
@@ -216,17 +175,9 @@ export interface PopoverTriggerProps {
 export function PopoverTrigger({ children }: PopoverTriggerProps) {
   const { open, toggle, close, panelId, triggerRef } = usePopover();
   const child = children;
-  // The child's own ref, if it has one. On React 18 a ref is not a prop:
-  // cloneElement replaces it, so both are set on the button from here.
-  const childRef = (child as unknown as { ref?: React.Ref<HTMLElement> }).ref;
+  const childRef = refOf<HTMLElement>(child);
   const ref = useCallback(
-    (el: HTMLElement | null) => {
-      triggerRef.current = el;
-      if (typeof childRef === "function") childRef(el);
-      else if (childRef) {
-        (childRef as React.MutableRefObject<HTMLElement | null>).current = el;
-      }
-    },
+    (el: HTMLElement | null) => setRefs(el, triggerRef, childRef),
     [triggerRef, childRef],
   );
   return cloneElement(child, {
@@ -308,7 +259,7 @@ export const PopoverPanel = forwardRef<HTMLDivElement, PopoverPanelProps>(
         id={panelId}
         role="dialog"
         tabIndex={-1}
-        // Placed by `applyTo`, before paint.
+        // Placed by `applyPlacement`, before paint.
         className={className ? `${styles.panel} ${className}` : styles.panel}
         onKeyDown={(e) => {
           onKeyDown?.(e);
@@ -319,7 +270,11 @@ export const PopoverPanel = forwardRef<HTMLDivElement, PopoverPanelProps>(
         <div ref={bodyRef} className={styles.body}>
           {children}
         </div>
-        <span data-popover-arrow="" aria-hidden className={styles.arrow} />
+        <span
+          data-popover-arrow=""
+          aria-hidden
+          className={floatingStyles.arrow}
+        />
       </div>,
       document.body,
     );

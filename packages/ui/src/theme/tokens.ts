@@ -140,6 +140,14 @@ export const timingMs = {
     delay: 500,
     minVisible: 500,
   },
+  tooltip: {
+    /** Hovering this long shows it; passing over on the way elsewhere does not. */
+    delay: 400,
+    /** Grace after the pointer leaves, so it can cross onto the tooltip. */
+    hideDelay: 100,
+    /** Holding a touch this long shows it, as the bonus on touch screens. */
+    longPress: 500,
+  },
 };
 
 /** Tokens that are the same in both themes. */
@@ -249,6 +257,11 @@ export const sharedTokens = {
     loader: {
       delay: `${timingMs.loader.delay}ms`,
       minVisible: `${timingMs.loader.minVisible}ms`,
+    },
+    tooltip: {
+      delay: `${timingMs.tooltip.delay}ms`,
+      hideDelay: `${timingMs.tooltip.hideDelay}ms`,
+      longPress: `${timingMs.tooltip.longPress}ms`,
     },
   },
 };
