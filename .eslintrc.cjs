@@ -23,6 +23,7 @@ const literalValueRules = [
   "no-raw-motion",
 ];
 const otherStyleRules = [
+  "grid-columns-via-track",
   "no-raw-media",
   "hover-in-hover-condition",
   "loop-via-helper",
@@ -30,6 +31,8 @@ const otherStyleRules = [
 ];
 const setStyleRules = (rules, level) =>
   Object.fromEntries(rules.map((rule) => [`@chardb/styles/${rule}`, level]));
+
+const styledComponentsAllowlist = require("./apps/frontend/styled-components-allowlist.json");
 
 module.exports = {
   root: true,
@@ -112,10 +115,38 @@ module.exports = {
         // test in the plugin keeps the list in step with the imports.
         "@chardb/styles/no-styled-components": [
           "error",
-          {
-            root: __dirname,
-            allow: require("./apps/frontend/styled-components-allowlist.json"),
-          },
+          { root: __dirname, allow: styledComponentsAllowlist },
+        ],
+        // Checked from the moment a file is migrated: files still on the
+        // styled-components list are skipped, and migrating converts all of
+        // a file anyway.
+        "@chardb/styles/no-inline-style": [
+          "error",
+          { root: __dirname, allow: styledComponentsAllowlist },
+        ],
+      },
+    },
+    {
+      // Scrolling goes through the helpers, which respect reduced motion.
+      // Tests stub these methods, which is not scrolling.
+      files: [
+        "apps/frontend/src/**/*.{ts,tsx}",
+        "packages/ui/src/**/*.{ts,tsx}",
+      ],
+      excludedFiles: [
+        "**/*.{test,spec}.{ts,tsx}",
+        "**/__tests__/**",
+        "**/setupTests.ts",
+        "packages/ui/src/motion/scroll.ts",
+      ],
+      rules: {
+        "no-restricted-properties": [
+          "error",
+          ...["scrollIntoView", "scrollTo"].map((property) => ({
+            property,
+            message:
+              "Use scrollToElement() or scrollToPosition() from @chardb/ui, which respect reduced motion.",
+          })),
         ],
       },
     },

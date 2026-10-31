@@ -11,8 +11,17 @@ export const scrollToElement = (
   options: Omit<ScrollIntoViewOptions, "behavior"> = {},
 ) => el.scrollIntoView({ ...options, behavior: behavior() });
 
-/** `scrollTo` on the window or `el`, smooth unless the user prefers reduced motion. */
+/**
+ * `scrollTo` on the window or `el`, smooth unless the user prefers reduced
+ * motion. `jump` skips the animation for everyone, for a scroll that resets
+ * rather than moves, such as a new page starting at the top.
+ */
 export const scrollToPosition = (
-  position: Omit<ScrollToOptions, "behavior">,
+  {
+    jump = false,
+    ...position
+  }: Omit<ScrollToOptions, "behavior"> & {
+    jump?: boolean;
+  },
   el: Element | Window = window,
-) => el.scrollTo({ ...position, behavior: behavior() });
+) => el.scrollTo({ ...position, behavior: jump ? "auto" : behavior() });

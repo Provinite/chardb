@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { Modal } from "@mantine/core";
 import { Dices } from "lucide-react";
+import { scrollToElement } from "@chardb/ui";
 import {
   BOARD_NAME_WORDS,
   formatBoardName,
@@ -243,9 +244,8 @@ const WordColumn: React.FC<{
   // The chosen word in view, wherever it is in the list: on opening on a
   // saved name, and after a shuffle.
   useEffect(() => {
-    list.current
-      ?.querySelector('[aria-checked="true"]')
-      ?.scrollIntoView?.({ block: "nearest" });
+    const word = list.current?.querySelector('[aria-checked="true"]');
+    if (word) scrollToElement(word, { block: "nearest" });
   }, [chosen]);
 
   return (

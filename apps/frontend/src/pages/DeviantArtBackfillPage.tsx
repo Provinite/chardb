@@ -2,6 +2,7 @@ import { useState, useCallback, useRef } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
+import { scrollToPosition } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import {
   useRunDeviantartUuidBackfillMutation,
@@ -246,10 +247,8 @@ export function DeviantArtBackfillPage() {
         setRecords((prev) => [...prev, progress.currentRecord!]);
         // Auto-scroll to bottom
         requestAnimationFrame(() => {
-          logRef.current?.scrollTo({
-            top: logRef.current.scrollHeight,
-            behavior: "smooth",
-          });
+          const log = logRef.current;
+          if (log) scrollToPosition({ top: log.scrollHeight }, log);
         });
       }
       if (progress.done) {

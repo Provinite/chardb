@@ -1,11 +1,8 @@
-import React, { type CSSProperties } from "react";
+import React from "react";
+import { assignInlineVars } from "@vanilla-extract/dynamic";
 import { effectLayers, type BackgroundEffects } from "./backgroundEffects";
-
-const layer: CSSProperties = {
-  position: "absolute",
-  inset: 0,
-  pointerEvents: "none",
-};
+import { layerVars } from "./layers";
+import * as styles from "./layers.css";
 
 /**
  * The grey, the tint, then the dim over them, laid over a background. Drawn before the
@@ -21,21 +18,24 @@ export const BackgroundEffectLayers: React.FC<{
         <div
           data-testid="background-saturation"
           aria-hidden
-          style={{ ...layer, ...saturate }}
+          className={styles.fill}
+          style={assignInlineVars(layerVars(saturate))}
         />
       )}
       {tint && (
         <div
           data-testid="background-tint"
           aria-hidden
-          style={{ ...layer, ...tint }}
+          className={styles.fill}
+          style={assignInlineVars(layerVars(tint))}
         />
       )}
       {dim && (
         <div
           data-testid="background-dim"
           aria-hidden
-          style={{ ...layer, ...dim }}
+          className={styles.fill}
+          style={assignInlineVars(layerVars(dim))}
         />
       )}
     </>
