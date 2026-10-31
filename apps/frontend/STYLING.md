@@ -131,7 +131,7 @@ Durations and easings are tokens, for transitions and animations only. A literal
   - **Decorative** loops (skeleton shimmer, a pulsing badge) stop under reduced motion.
   - **Essential** loops that show something is happening (a loading spinner) use `motion.duration.essential`, which reduced motion slows but never stops, so the spinner never looks frozen.
 
-  `loop()` returns a class to compose with the element's own style:
+  `loop()` returns a style rule to compose with the element's own style:
 
   ```ts
   const spin = keyframes({ to: { transform: "rotate(1turn)" } });
