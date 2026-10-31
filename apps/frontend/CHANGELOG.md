@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Each page loads its own code on demand**, so a first visit downloads 228 kB gzipped instead of 572 kB; a thin bar along the top shows while the next page loads (#465).
 - **On phones the navigation sidebar is a drawer** opened from a menu button in the header, so pages get the full width (#486).
 - **An account menu on your avatar** holds your profile and Log out; on phones it also holds Create Character, Upload and the theme switch (#486).
 - **The CharDB startup screen shows as soon as the page arrives**, in the chosen theme, instead of a blank page until the app's code has loaded (#470).
