@@ -13,7 +13,7 @@ import {
   Building2,
   Search,
 } from "lucide-react";
-import { spotlight } from "@mantine/spotlight";
+import { useSpotlight } from "../spotlight/SpotlightContext";
 import { CommunityNavigationItem } from "./CommunityNavigationItem";
 import { CommunityNavigationGroup } from "./CommunityNavigationGroup";
 import { useAuth } from "../../contexts/AuthContext";
@@ -178,6 +178,7 @@ const LoadingContainer = styled.div`
 export const GlobalNavigationSidebar: React.FC<
   GlobalNavigationSidebarProps
 > = ({ className, onToggleToCommunity }) => {
+  const spotlight = useSpotlight();
   const { user } = useAuth();
   const { slug: communitySlug } = useCommunityHost();
 
