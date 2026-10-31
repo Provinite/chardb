@@ -26,7 +26,9 @@ export * from "./TopProgressBar";
 import { DialogRoot, DialogTitle } from "./Dialog";
 import {
   CommandPaletteEmpty,
+  CommandPaletteFooter,
   CommandPaletteGroup,
+  CommandPaletteKbd,
   CommandPaletteInput,
   CommandPaletteItem,
   CommandPaletteItemDescription,
@@ -51,4 +53,6 @@ export const CommandPalette = {
   ItemLabel: CommandPaletteItemLabel,
   ItemDescription: CommandPaletteItemDescription,
   Empty: CommandPaletteEmpty,
+  Footer: CommandPaletteFooter,
+  Kbd: CommandPaletteKbd,
 };

@@ -34,7 +34,7 @@ export const SpotlightNavigation: React.FC = () => {
   // results are fetched for what has been typed, and picking a person appends
   // the slash that asks which of their pages you meant.
   const [query, setQuery] = useState("");
-  const groups = useSpotlightActions(query, setQuery);
+  const { groups } = useSpotlightActions(query, setQuery);
   const parsed = parseSpotlightQuery(query);
   const inCommunity = !!useActiveCommunityId();
   const navigate = useNavigate();

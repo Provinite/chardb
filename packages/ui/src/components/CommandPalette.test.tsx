@@ -1,6 +1,8 @@
 import { act, useState } from "react";
 import { beforeAll, describe, expect, it, vi } from "vitest";
+import { declarationsOf, rulesFor } from "../__tests__/emittedCss";
 import { render } from "../__tests__/render";
+import { vars } from "../theme/contract.css";
 import { CommandPalette, Highlight } from ".";
 
 beforeAll(() => {
@@ -219,6 +221,27 @@ describe("CommandPalette", () => {
       group.getAttribute("aria-labelledby")!,
     );
     expect(heading?.textContent).toBe("Pages");
+  });
+});
+
+describe("CommandPalette styles", () => {
+  it("holds the list at one height, whatever it shows", () => {
+    render(<Harness />);
+    const list = document.querySelector('[role="listbox"]')!;
+
+    expect(declarationsOf(list)["block-size"]).toBe(vars.size.dialogList);
+  });
+
+  it("fills the selected result with the primary action colours", () => {
+    render(<Harness />);
+    const selected = rulesFor(options()[0].classList[0]).find((rule) =>
+      rule.selector.includes("aria-selected"),
+    );
+
+    expect(selected?.declarations).toMatchObject({
+      background: vars.action.primary.bg,
+      color: vars.action.primary.fg,
+    });
   });
 });
 

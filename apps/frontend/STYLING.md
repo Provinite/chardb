@@ -122,7 +122,7 @@ Each layer is a group: `layer.modal.base` is 4000, and `layer.modal[100]`, `laye
 
 Elements opened with `<dialog>.showModal()` or the Popover API render in the browser's top layer, above every `z-index`. If dialogs used it, anything that must appear above an open dialog (a toast, a menu opened from inside it) would have to use the top layer too, or render inside the dialog.
 
-Dialogs stay on the layer scale instead. `Dialog` from `@chardb/ui` renders a `<dialog open>` (never `showModal()`) at `layer.modal`, at the end of `<body>`, no wider than `size.dialog`. While it is open, every other child of `<body>` is `inert`, which keeps focus and screen readers inside; it clears only the `inert` it set. Escape closes the top dialog of a stack. Toasts and menus inside a dialog are #499.
+Dialogs stay on the layer scale instead. `Dialog` from `@chardb/ui` renders a `<dialog open>` (never `showModal()`) at `layer.modal`, at the end of `<body>`, no wider than `size.dialog`. A list of results inside one holds at `size.dialogList` tall whatever it shows, so the dialog never resizes as results change. While it is open, every other child of `<body>` is `inert`, which keeps focus and screen readers inside; it clears only the `inert` it set. Escape closes the top dialog of a stack. Toasts and menus inside a dialog are #499.
 
 ### Motion
 

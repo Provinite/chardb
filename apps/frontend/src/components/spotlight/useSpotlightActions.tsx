@@ -32,11 +32,17 @@ export function useActiveCommunityId(): string | undefined {
   return community?.id;
 }
 
+export interface SpotlightActions {
+  groups: SpotlightGroup[];
+  /** Member results for what has been typed are still on their way. */
+  pending: boolean;
+}
+
 export function useSpotlightActions(
   query: string,
   /** Rewrites the box, for the actions that narrow it rather than navigate. */
   setQuery: (query: string) => void,
-): SpotlightGroup[] {
+): SpotlightActions {
   const { user } = useAuth();
   const { slug: hostSlug, community: hostCommunity } = useCommunityHost();
   const hostCommunityId = hostCommunity?.id ?? null;
@@ -67,16 +73,25 @@ export function useSpotlightActions(
         ? parsed.username
         : "";
 
-  const { data: memberData } = useGetCommunityMembersQuery({
-    variables: {
-      communityId: hostCommunityId ?? "",
-      search: memberSearch || null,
-      limit: MEMBER_RESULT_LIMIT,
-    },
-    skip: !user?.id || !hostCommunityId || parsed.mode === "pages",
-  });
+  const skipMembers = !user?.id || !hostCommunityId || parsed.mode === "pages";
+  const { data: memberData, loading: membersLoading } =
+    useGetCommunityMembersQuery({
+      variables: {
+        communityId: hostCommunityId ?? "",
+        search: memberSearch || null,
+        limit: MEMBER_RESULT_LIMIT,
+      },
+      skip: skipMembers,
+    });
 
-  return useMemo(() => {
+  // A people query typed but not yet answered: still inside the debounce, or
+  // on the network. The box has changed mode; the members have not arrived.
+  const pending =
+    !!hostCommunityId &&
+    parseSpotlightQuery(query).mode !== "pages" &&
+    (query.trim() !== debouncedQuery || (!skipMembers && membersLoading));
+
+  const groups = useMemo(() => {
     const groups: SpotlightGroup[] = [];
 
     // Destinations are URLs, and whoever renders them decides how to get
@@ -589,4 +604,6 @@ export function useSpotlightActions(
     memberData,
     parsed,
   ]);
+
+  return { groups, pending };
 }

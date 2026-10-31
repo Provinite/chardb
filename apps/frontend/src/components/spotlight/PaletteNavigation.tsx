@@ -10,6 +10,7 @@ import {
   nothingFoundText,
 } from "./spotlightText";
 import { isLink, type SpotlightItem } from "./types";
+import { useHeldWhile } from "./useHeldWhile";
 import {
   useActiveCommunityId,
   useSpotlightActions,
@@ -40,14 +41,18 @@ export const PaletteNavigation: React.FC<PaletteNavigationProps> = ({
   // results are fetched for what has been typed, and picking a person appends
   // the slash that asks which of their pages you meant.
   const [query, setQuery] = useState("");
-  const groups = useSpotlightActions(query, setQuery);
+  const { groups, pending } = useSpotlightActions(query, setQuery);
   const parsed = parseSpotlightQuery(query);
   const inCommunity = !!useActiveCommunityId();
 
-  const shown = useMemo(
+  const filtered = useMemo(
     () => limitResults(filterKeepingMembers(query, groups), RESULT_LIMIT),
     [query, groups],
   );
+  // Until the members for a people query arrive, the last results stay up:
+  // otherwise the list flashes "nobody by that name" and then fills.
+  const shown = useHeldWhile(filtered, pending);
+  const highlight = useHeldWhile(parsed.term, pending);
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
@@ -74,7 +79,7 @@ export const PaletteNavigation: React.FC<PaletteNavigationProps> = ({
   const body = (item: SpotlightItem) => (
     <>
       <CommandPalette.ItemLabel>
-        <Highlight text={item.label} match={parsed.term} />
+        <Highlight text={item.label} match={highlight} />
       </CommandPalette.ItemLabel>
       {item.description && (
         <CommandPalette.ItemDescription>
@@ -118,6 +123,21 @@ export const PaletteNavigation: React.FC<PaletteNavigationProps> = ({
           ))
         )}
       </CommandPalette.List>
+      <CommandPalette.Footer>
+        <span>
+          <CommandPalette.Kbd>↑</CommandPalette.Kbd>{" "}
+          <CommandPalette.Kbd>↓</CommandPalette.Kbd> to move
+        </span>
+        <span>
+          <CommandPalette.Kbd>Enter</CommandPalette.Kbd> to open
+        </span>
+        <span>
+          <CommandPalette.Kbd>@</CommandPalette.Kbd> for members
+        </span>
+        <span>
+          <CommandPalette.Kbd>Esc</CommandPalette.Kbd> to close
+        </span>
+      </CommandPalette.Footer>
     </CommandPalette.Root>
   );
 };

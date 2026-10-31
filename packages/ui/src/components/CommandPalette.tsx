@@ -9,6 +9,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { Search } from "lucide-react";
 import { scrollToElement } from "../motion/scroll";
 import { DialogRoot } from "./Dialog";
 import * as styles from "./CommandPalette.css";
@@ -136,6 +137,7 @@ export const CommandPaletteInput = forwardRef<
 
   return (
     <div className={styles.inputRow}>
+      <Search size={20} aria-hidden className={styles.searchIcon} />
       <input
         ref={ref}
         type="text"
@@ -335,6 +337,32 @@ export const CommandPaletteEmpty = forwardRef<
   React.HTMLAttributes<HTMLDivElement>
 >(function CommandPaletteEmpty({ className, ...rest }, ref) {
   return <div ref={ref} className={join(styles.empty, className)} {...rest} />;
+});
+
+/**
+ * Keyboard hints under the list, from `sm` up. Hidden from screen readers,
+ * which get the same from the combobox's role.
+ */
+export const CommandPaletteFooter = forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(function CommandPaletteFooter({ className, ...rest }, ref) {
+  return (
+    <div
+      ref={ref}
+      aria-hidden="true"
+      className={join(styles.footer, className)}
+      {...rest}
+    />
+  );
+});
+
+/** A key, in the footer's hints. */
+export const CommandPaletteKbd = forwardRef<
+  HTMLElement,
+  React.HTMLAttributes<HTMLElement>
+>(function CommandPaletteKbd({ className, ...rest }, ref) {
+  return <kbd ref={ref} className={join(styles.kbd, className)} {...rest} />;
 });
 
 export interface HighlightProps {
