@@ -39,6 +39,16 @@ import {
   CommandPaletteRoot,
 } from "./CommandPalette";
 
+import { PopoverPanel, PopoverRoot, PopoverTrigger } from "./Popover";
+export type { PopoverRootProps } from "./Popover";
+
+/** A panel that opens beside a button; see `PopoverRoot`. */
+export const Popover = {
+  Root: PopoverRoot,
+  Trigger: PopoverTrigger,
+  Panel: PopoverPanel,
+};
+
 /** A modal dialog on the modal layer; see `DialogRoot`. */
 export const Dialog = {
   Root: DialogRoot,
