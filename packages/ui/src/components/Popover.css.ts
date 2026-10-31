@@ -1,9 +1,11 @@
 import { createVar, style } from "@vanilla-extract/css";
 import { vars } from "../theme/contract.css";
 
-/** Where the panel sits, from `useAnchoredPosition`. */
+/** Where the panel sits, and how big it may be, from `useAnchoredPosition`. */
 export const top = createVar();
 export const left = createVar();
+export const maxWidth = createVar();
+export const maxHeight = createVar();
 /** Where along the panel's edge the arrow points at the trigger. */
 export const arrowAt = createVar();
 
@@ -20,12 +22,11 @@ export const panel = style({
   left,
   zIndex: vars.layer.dropdown.base,
   boxSizing: "border-box",
-  // Fixed, its containing block is the viewport: never wider than the screen
-  // less the margin the positioning keeps, nor taller than the space below
-  // its top. A fixed panel does not scroll with the page, so what overflows
-  // scrolls inside it instead of off the screen.
-  maxInlineSize: `calc(100% - 2 * ${vars.space.sm})`,
-  maxBlockSize: `calc(100% - ${top} - ${vars.space.sm})`,
+  // The room it has on screen, on whichever side it opened. A fixed panel
+  // does not scroll with the page, so what does not fit scrolls inside it
+  // instead of off the screen.
+  maxInlineSize: maxWidth,
+  maxBlockSize: maxHeight,
   display: "flex",
   flexDirection: "column",
   border: `${vars.borderWidth.hairline} solid ${vars.border.default}`,

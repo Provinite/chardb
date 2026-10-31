@@ -1,5 +1,5 @@
 import { act, useRef } from "react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { render } from "../__tests__/render";
 import { useAnchoredPosition } from "./useAnchoredPosition";
 import type { Placement } from "./placeFloating";
@@ -32,15 +32,26 @@ const boxed = (el: HTMLElement, box: Box) => {
   });
 };
 
-let seen: Placement | null = null;
 let anchorEl: HTMLElement | null = null;
+let renders = 0;
 
-function Probe({ open }: { open: boolean }) {
+function Probe({
+  open,
+  apply,
+  measure,
+}: {
+  open: boolean;
+  apply: (p: Placement) => void;
+  measure?: (el: HTMLElement) => { width: number; height: number };
+}) {
+  renders++;
   const anchor = useRef<HTMLButtonElement | null>(null);
   const floating = useRef<HTMLDivElement | null>(null);
-  seen = useAnchoredPosition(anchor, floating, open, {
+  useAnchoredPosition(anchor, floating, open, {
     side: "bottom",
     align: "start",
+    apply,
+    measure,
   });
   return (
     <>
@@ -62,37 +73,78 @@ function Probe({ open }: { open: boolean }) {
 }
 
 describe("useAnchoredPosition", () => {
-  it("is nothing while closed", () => {
-    render(<Probe open={false} />);
+  it("places nothing while closed", () => {
+    const apply = vi.fn();
+    render(<Probe open={false} apply={apply} />);
 
-    expect(seen).toBeNull();
+    expect(apply).not.toHaveBeenCalled();
   });
 
   it("places it beside its anchor once open", () => {
-    render(<Probe open />);
+    const apply = vi.fn();
+    render(<Probe open apply={apply} />);
 
-    expect(seen).toMatchObject({ top: 148, left: 100, side: "bottom" });
+    expect(apply).toHaveBeenLastCalledWith(
+      expect.objectContaining({ top: 148, left: 100, side: "bottom" }),
+    );
   });
 
-  it("follows the anchor when the page scrolls", () => {
-    render(<Probe open />);
+  it("follows the anchor on scroll without re-rendering", () => {
+    const apply = vi.fn();
+    render(<Probe open apply={apply} />);
+    const before = renders;
 
     boxed(anchorEl!, { top: 60, left: 100, width: 100, height: 40 });
     act(() => {
       window.dispatchEvent(new Event("scroll"));
     });
 
-    expect(seen).toMatchObject({ top: 108 });
+    expect(apply).toHaveBeenLastCalledWith(
+      expect.objectContaining({ top: 108 }),
+    );
+    expect(renders).toBe(before);
   });
 
   it("follows the anchor when the window resizes", () => {
-    render(<Probe open />);
+    const apply = vi.fn();
+    render(<Probe open apply={apply} />);
 
     boxed(anchorEl!, { top: 200, left: 100, width: 100, height: 40 });
     act(() => {
       window.dispatchEvent(new Event("resize"));
     });
 
-    expect(seen).toMatchObject({ top: 248 });
+    expect(apply).toHaveBeenLastCalledWith(
+      expect.objectContaining({ top: 248 }),
+    );
+  });
+
+  it("does not re-apply a placement that has not changed", () => {
+    const apply = vi.fn();
+    render(<Probe open apply={apply} />);
+    const calls = apply.mock.calls.length;
+
+    act(() => {
+      window.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(apply.mock.calls.length).toBe(calls);
+  });
+
+  it("decides by the size it measures, not the size it was capped to", () => {
+    const apply = vi.fn();
+    // Uncapped it would be 700 tall: too tall for the 612 below the button,
+    // so it is capped to that, whatever height the element reports.
+    render(
+      <Probe
+        open
+        apply={apply}
+        measure={() => ({ width: 200, height: 700 })}
+      />,
+    );
+
+    expect(apply).toHaveBeenLastCalledWith(
+      expect.objectContaining({ maxHeight: 612 }),
+    );
   });
 });

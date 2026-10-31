@@ -1,4 +1,4 @@
-import { act } from "react";
+import React, { act, createRef } from "react";
 import { describe, expect, it, vi } from "vitest";
 import { render } from "../__tests__/render";
 import { Dialog, Popover } from ".";
@@ -170,6 +170,63 @@ describe("Popover", () => {
 
     expect(panel()).toBeNull();
     expect(onDialogClose).not.toHaveBeenCalled();
+  });
+
+  it("keeps a ref already on its trigger's button", () => {
+    const ref = createRef<HTMLButtonElement>();
+    const container = render(
+      <Popover.Root>
+        <Popover.Trigger>
+          <button type="button" ref={ref}>
+            Lighting
+          </button>
+        </Popover.Trigger>
+        <Popover.Panel aria-label="Lighting">x</Popover.Panel>
+      </Popover.Root>,
+    );
+
+    expect(ref.current).toBe(container.querySelector("button"));
+  });
+
+  it("does not re-render its trigger as the page scrolls", () => {
+    let renders = 0;
+    const Counted = React.forwardRef<
+      HTMLButtonElement,
+      React.ButtonHTMLAttributes<HTMLButtonElement>
+    >(function Counted(props, ref) {
+      renders++;
+      return <button type="button" ref={ref} {...props} />;
+    });
+    const container = render(
+      <Popover.Root>
+        <Popover.Trigger>
+          <Counted>Lighting</Counted>
+        </Popover.Trigger>
+        <Popover.Panel aria-label="Lighting">
+          <input aria-label="First" />
+        </Popover.Panel>
+      </Popover.Root>,
+    );
+    click(container.querySelector("button")!);
+    const before = renders;
+
+    act(() => {
+      container.querySelector("button")!.getBoundingClientRect = () =>
+        ({
+          top: 50,
+          left: 0,
+          width: 80,
+          height: 30,
+          right: 80,
+          bottom: 80,
+          x: 0,
+          y: 50,
+          toJSON: () => ({}),
+        }) as DOMRect;
+      window.dispatchEvent(new Event("scroll"));
+    });
+
+    expect(renders).toBe(before);
   });
 
   it("points an arrow at its trigger", () => {

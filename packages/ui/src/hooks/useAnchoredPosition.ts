@@ -1,11 +1,4 @@
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type RefObject,
-} from "react";
+import { useLayoutEffect, useRef, type RefObject } from "react";
 import {
   placeFloating,
   type Align,
@@ -22,68 +15,95 @@ export interface AnchoredOptions {
   margin?: number;
   /** How close to its corners an arrow may sit. */
   arrowInset?: number;
+  /**
+   * Puts it where it goes: writes the placement to the element (CSS
+   * variables, `style`) rather than to React state, so following a scroll
+   * re-renders nothing. Called only when the placement changes.
+   */
+  apply: (placement: Placement) => void;
+  /**
+   * Its natural size, before any cap `apply` set. Defaults to its offset
+   * size, which is right for anything that is never capped. Something that
+   * can be capped must measure past the cap: deciding by the capped size
+   * would let the cap decide the side, and a new side means a new cap.
+   */
+  measure?: (el: HTMLElement) => { width: number; height: number };
 }
+
+const offsetSize = (el: HTMLElement) => ({
+  width: el.offsetWidth,
+  height: el.offsetHeight,
+});
 
 const same = (a: Placement | null, b: Placement) =>
   !!a &&
   a.top === b.top &&
   a.left === b.left &&
   a.side === b.side &&
-  a.arrow === b.arrow;
+  a.arrow === b.arrow &&
+  a.maxWidth === b.maxWidth &&
+  a.maxHeight === b.maxHeight;
 
 /**
- * Where to put something floating beside `anchor` while `open`, as viewport
+ * Keeps something floating beside `anchor` while `open`, in viewport
  * coordinates for `position: fixed`: on the asked side unless there is no
  * room, slid along it to stay on screen. See `placeFloating`.
  *
- * Worked out before paint, so it never flashes in the wrong place, and again
- * whenever the page scrolls (any scroller), the window resizes, or it changes
- * size itself. Fixed, it follows the anchor rather than closing on a scroll:
- * scroll anchoring fires scrolls nobody made, such as when an image above the
- * anchor finishes loading.
+ * Placed before paint, so it never flashes in the wrong place, and again
+ * whenever the page scrolls (any scroller), the window resizes, or either
+ * element changes size. Fixed, it follows the anchor rather than closing on a
+ * scroll: scroll anchoring fires scrolls nobody made, such as when an image
+ * above the anchor finishes loading.
  */
 export function useAnchoredPosition(
   anchor: RefObject<HTMLElement | null>,
   floating: RefObject<HTMLElement | null>,
   open: boolean,
-  { side, align, gap = 8, margin = 8, arrowInset = 0 }: AnchoredOptions,
-): Placement | null {
-  const [placement, setPlacement] = useState<Placement | null>(null);
-  const placementRef = useRef(placement);
-
-  const place = useCallback(() => {
-    const a = anchor.current;
-    const f = floating.current;
-    if (!a || !f) return;
-    const next = placeFloating({
-      anchor: a.getBoundingClientRect(),
-      floating: { width: f.offsetWidth, height: f.offsetHeight },
-      viewport: { width: window.innerWidth, height: window.innerHeight },
-      side,
-      align,
-      gap,
-      margin,
-      arrowInset,
-    });
-    // Scroll fires many times a second; an unchanged position must not
-    // re-render. Compared against a ref, not inside the updater: React can
-    // still render once for an updater that returns the old state.
-    if (same(placementRef.current, next)) return;
-    placementRef.current = next;
-    setPlacement(next);
-  }, [anchor, floating, side, align, gap, margin, arrowInset]);
+  options: AnchoredOptions,
+): void {
+  // Options through a ref, so callers can pass inline objects and functions
+  // without re-subscribing every render.
+  const optionsRef = useRef(options);
+  optionsRef.current = options;
+  const last = useRef<Placement | null>(null);
 
   useLayoutEffect(() => {
-    if (open) {
-      place();
-    } else if (placementRef.current) {
-      placementRef.current = null;
-      setPlacement(null);
+    if (!open) {
+      last.current = null;
+      return;
     }
-  }, [open, place]);
 
-  useEffect(() => {
-    if (!open) return;
+    const place = () => {
+      const a = anchor.current;
+      const f = floating.current;
+      if (!a || !f) return;
+      const {
+        side,
+        align,
+        gap = 8,
+        margin = 8,
+        arrowInset = 0,
+        apply,
+        measure = offsetSize,
+      } = optionsRef.current;
+      const next = placeFloating({
+        anchor: a.getBoundingClientRect(),
+        floating: measure(f),
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        side,
+        align,
+        gap,
+        margin,
+        arrowInset,
+      });
+      // Scroll fires many times a second; an unchanged placement writes
+      // nothing.
+      if (same(last.current, next)) return;
+      last.current = next;
+      apply(next);
+    };
+
+    place();
     window.addEventListener("scroll", place, true);
     window.addEventListener("resize", place);
     const resized =
@@ -95,7 +115,5 @@ export function useAnchoredPosition(
       window.removeEventListener("resize", place);
       resized?.disconnect();
     };
-  }, [open, place, anchor, floating]);
-
-  return open ? placement : null;
+  }, [open, anchor, floating]);
 }

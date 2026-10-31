@@ -243,11 +243,18 @@ export const Menu: React.FC<MenuProps> = ({
   // when it would run off the bottom of the viewport -- a button at the foot
   // of the screen is common, and a list below the fold cannot be reached.
   // Follows the button when the page scrolls rather than closing.
-  const position = useAnchoredPosition(triggerRef, listRef, open, {
+  useAnchoredPosition(triggerRef, listRef, open, {
     side: "bottom",
     align: "end",
     gap: GAP_PX,
     margin: GAP_PX,
+    // Straight to the element, so following a scroll re-renders nothing.
+    apply: ({ top, left }) => {
+      const list = listRef.current;
+      if (!list) return;
+      list.style.top = `${top}px`;
+      list.style.left = `${left}px`;
+    },
   });
 
   // preventScroll: the list is fixed, and scrolling the page to reach it
@@ -344,7 +351,6 @@ export const Menu: React.FC<MenuProps> = ({
               id={listId}
               role="menu"
               aria-label={label}
-              style={{ top: position?.top ?? 0, left: position?.left ?? 0 }}
               onKeyDown={onListKeyDown}
             >
               {children}

@@ -27,6 +27,13 @@ export interface Placement {
   side: Side;
   /** Where an arrow points at the anchor's centre, from its start edge. */
   arrow: number;
+  /**
+   * The most it may measure to stay on screen. Along the side it sits on, the
+   * room between the anchor and the margin; across it, the viewport less both
+   * margins. Larger than it is when it fits; the cap to scroll inside when not.
+   */
+  maxWidth: number;
+  maxHeight: number;
 }
 
 const OPPOSITE: Record<Side, Side> = {
@@ -59,44 +66,57 @@ export function placeFloating({
   arrowInset = 0,
 }: PlaceInput): Placement {
   const vertical = preferred === "top" || preferred === "bottom";
-
-  /** Its start on the main axis, on one side of the anchor. */
-  const mainStart = (side: Side) => {
-    switch (side) {
-      case "bottom":
-        return anchor.top + anchor.height + gap;
-      case "top":
-        return anchor.top - gap - floating.height;
-      case "right":
-        return anchor.left + anchor.width + gap;
-      case "left":
-        return anchor.left - gap - floating.width;
-    }
-  };
   const mainSize = vertical ? floating.height : floating.width;
   const mainLimit = vertical ? viewport.height : viewport.width;
-  const fits = (side: Side) => {
-    const start = mainStart(side);
-    return start >= margin && start + mainSize <= mainLimit - margin;
+
+  /** The room on one side of the anchor, between it (and the gap) and the margin. */
+  const room = (side: Side) => {
+    switch (side) {
+      case "bottom":
+        return mainLimit - margin - (anchor.top + anchor.height + gap);
+      case "top":
+        return anchor.top - gap - margin;
+      case "right":
+        return mainLimit - margin - (anchor.left + anchor.width + gap);
+      case "left":
+        return anchor.left - gap - margin;
+    }
   };
+  const fits = (side: Side) => mainSize <= room(side);
 
   const side =
     !fits(preferred) && fits(OPPOSITE[preferred])
       ? OPPOSITE[preferred]
       : preferred;
 
-  // The cross axis: along the side it sits on.
+  // What it measures once capped to the room it has, on the main axis.
+  const mainRoom = Math.max(0, room(side));
+  const mainShown = Math.min(mainSize, mainRoom);
+  const main =
+    side === "bottom"
+      ? anchor.top + anchor.height + gap
+      : side === "top"
+        ? anchor.top - gap - mainShown
+        : side === "right"
+          ? anchor.left + anchor.width + gap
+          : anchor.left - gap - mainShown;
+
+  // The cross axis: along the side it sits on. Capped to the viewport less
+  // both margins, so wider than the screen it starts at the margin.
   const anchorStart = vertical ? anchor.left : anchor.top;
   const anchorSize = vertical ? anchor.width : anchor.height;
-  const crossSize = vertical ? floating.width : floating.height;
   const crossLimit = vertical ? viewport.width : viewport.height;
+  const crossRoom = Math.max(0, crossLimit - 2 * margin);
+  const crossSize = Math.min(
+    vertical ? floating.width : floating.height,
+    crossRoom,
+  );
   const aligned =
     align === "start"
       ? anchorStart
       : align === "end"
         ? anchorStart + anchorSize - crossSize
         : anchorStart + anchorSize / 2 - crossSize / 2;
-  // Wider than the screen, it starts at the margin and runs off the far end.
   const cross = Math.max(
     margin,
     Math.min(aligned, crossLimit - crossSize - margin),
@@ -107,8 +127,21 @@ export function placeFloating({
     crossSize - arrowInset,
   );
 
-  const main = mainStart(side);
   return vertical
-    ? { top: main, left: cross, side, arrow }
-    : { top: cross, left: main, side, arrow };
+    ? {
+        top: main,
+        left: cross,
+        side,
+        arrow,
+        maxWidth: crossRoom,
+        maxHeight: mainRoom,
+      }
+    : {
+        top: cross,
+        left: main,
+        side,
+        arrow,
+        maxWidth: mainRoom,
+        maxHeight: crossRoom,
+      };
 }

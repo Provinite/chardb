@@ -11,14 +11,17 @@ import React, {
   useState,
 } from "react";
 import { createPortal } from "react-dom";
-import { assignInlineVars } from "@vanilla-extract/dynamic";
+import { setElementVars } from "@vanilla-extract/dynamic";
 import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
 import type { Align, Placement, Side } from "../hooks/placeFloating";
 import * as styles from "./Popover.css";
 
 /** Pixels between the trigger and the panel: room for the arrow. */
 const GAP_PX = 10;
-/** Pixels the panel keeps from the viewport's edges. */
+/**
+ * Pixels the panel keeps from the viewport's edges. The one source for it:
+ * the size caps arrive from the placement as CSS variables.
+ */
 const MARGIN_PX = 8;
 /** Pixels the arrow keeps from the panel's corners. */
 const ARROW_INSET_PX = 14;
@@ -67,8 +70,40 @@ interface PopoverContextValue {
   panelId: string;
   triggerRef: React.MutableRefObject<HTMLElement | null>;
   panelRef: React.MutableRefObject<HTMLDivElement | null>;
-  placement: Placement | null;
+  bodyRef: React.MutableRefObject<HTMLDivElement | null>;
 }
+
+/**
+ * Writes a placement to the panel as CSS variables and `data-side`. Straight
+ * to the element: following a scroll changes these many times a second, and
+ * none of it needs React to render anything.
+ */
+const applyTo = (panel: HTMLElement | null, p: Placement) => {
+  if (!panel) return;
+  setElementVars(panel, {
+    [styles.top]: `${p.top}px`,
+    [styles.left]: `${p.left}px`,
+    [styles.arrowAt]: `${p.arrow}px`,
+    [styles.maxWidth]: `${p.maxWidth}px`,
+    [styles.maxHeight]: `${p.maxHeight}px`,
+  });
+  panel.dataset.side = p.side;
+};
+
+/**
+ * The panel's size with nothing capped: its body's whole content, plus the
+ * panel's own border and padding. Deciding by the capped size would let the
+ * cap pick the side, and a new side means a new cap.
+ */
+const naturalSize = (
+  panel: HTMLElement,
+  body: HTMLElement | null,
+): { width: number; height: number } => ({
+  width: panel.offsetWidth,
+  height: body
+    ? panel.offsetHeight - body.clientHeight + body.scrollHeight
+    : panel.offsetHeight,
+});
 
 const PopoverContext = createContext<PopoverContextValue | null>(null);
 
@@ -105,13 +140,16 @@ export function PopoverRoot({
   const panelId = useId();
   const triggerRef = useRef<HTMLElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
+  const bodyRef = useRef<HTMLDivElement | null>(null);
 
-  const placement = useAnchoredPosition(triggerRef, panelRef, open, {
+  useAnchoredPosition(triggerRef, panelRef, open, {
     side,
     align,
     gap: GAP_PX,
     margin: MARGIN_PX,
     arrowInset: ARROW_INSET_PX,
+    apply: (p) => applyTo(panelRef.current, p),
+    measure: (panel) => naturalSize(panel, bodyRef.current),
   });
 
   const close = useCallback((refocus: boolean) => {
@@ -135,9 +173,11 @@ export function PopoverRoot({
     return () => document.removeEventListener("mousedown", onMouseDown);
   }, [open, close]);
 
+  // Changes only on open and close: where the panel sits is never in here, so
+  // following a scroll re-renders neither the trigger nor the panel.
   const ctx = useMemo(
-    () => ({ open, toggle, close, panelId, triggerRef, panelRef, placement }),
-    [open, toggle, close, panelId, placement],
+    () => ({ open, toggle, close, panelId, triggerRef, panelRef, bodyRef }),
+    [open, toggle, close, panelId],
   );
 
   return (
@@ -156,10 +196,21 @@ export interface PopoverTriggerProps {
 export function PopoverTrigger({ children }: PopoverTriggerProps) {
   const { open, toggle, close, panelId, triggerRef } = usePopover();
   const child = children;
-  return cloneElement(child, {
-    ref: (el: HTMLElement | null) => {
+  // The child's own ref, if it has one. On React 18 a ref is not a prop:
+  // cloneElement replaces it, so both are set on the button from here.
+  const childRef = (child as unknown as { ref?: React.Ref<HTMLElement> }).ref;
+  const ref = useCallback(
+    (el: HTMLElement | null) => {
       triggerRef.current = el;
+      if (typeof childRef === "function") childRef(el);
+      else if (childRef) {
+        (childRef as React.MutableRefObject<HTMLElement | null>).current = el;
+      }
     },
+    [triggerRef, childRef],
+  );
+  return cloneElement(child, {
+    ref,
     "aria-haspopup": "dialog",
     "aria-expanded": open,
     "aria-controls": open ? panelId : undefined,
@@ -183,8 +234,16 @@ export interface PopoverPanelProps
 /** The panel, with an arrow pointing at the trigger. Only there while open. */
 export const PopoverPanel = forwardRef<HTMLDivElement, PopoverPanelProps>(
   function PopoverPanel({ className, children, onKeyDown, ...rest }, ref) {
-    const { open, close, panelId, triggerRef, panelRef, placement } =
+    const { open, close, panelId, triggerRef, panelRef, bodyRef } =
       usePopover();
+    const setPanel = useCallback(
+      (el: HTMLDivElement | null) => {
+        panelRef.current = el;
+        if (typeof ref === "function") ref(el);
+        else if (ref) ref.current = el;
+      },
+      [panelRef, ref],
+    );
 
     // After it has been placed, so focusing does not scroll the page to
     // wherever it was before.
@@ -225,28 +284,21 @@ export const PopoverPanel = forwardRef<HTMLDivElement, PopoverPanelProps>(
     return createPortal(
       <div
         {...rest}
-        ref={(el) => {
-          panelRef.current = el;
-          if (typeof ref === "function") ref(el);
-          else if (ref) ref.current = el;
-        }}
+        ref={setPanel}
         id={panelId}
         role="dialog"
         tabIndex={-1}
-        data-side={placement?.side ?? "bottom"}
+        // Placed by `applyTo`, before paint.
         className={className ? `${styles.panel} ${className}` : styles.panel}
-        style={assignInlineVars({
-          [styles.top]: `${placement?.top ?? 0}px`,
-          [styles.left]: `${placement?.left ?? 0}px`,
-          [styles.arrowAt]: `${placement?.arrow ?? 0}px`,
-        })}
         onKeyDown={(e) => {
           onKeyDown?.(e);
           escapeCloses(e, close);
           if (!e.defaultPrevented) onTab(e);
         }}
       >
-        <div className={styles.body}>{children}</div>
+        <div ref={bodyRef} className={styles.body}>
+          {children}
+        </div>
         <span data-popover-arrow="" aria-hidden className={styles.arrow} />
       </div>,
       document.body,

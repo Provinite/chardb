@@ -76,6 +76,23 @@ describe("placeFloating", () => {
     expect(place({ floating: wide }).left).toBe(8);
   });
 
+  it("reports the room it has, to cap its size by", () => {
+    // Below a button whose bottom is at 340: 800 - 8 - 348.
+    expect(place()).toMatchObject({ maxHeight: 444, maxWidth: 984 });
+  });
+
+  it("sits a gap above its anchor on top even when capped", () => {
+    // 600 tall, and neither side has room: capped to the 284 above the
+    // button (300 less the gap and the margin), it starts at the margin and
+    // ends a gap above it.
+    const placed = place({
+      side: "top",
+      floating: { width: 200, height: 600 },
+    });
+
+    expect(placed).toMatchObject({ side: "top", top: 8, maxHeight: 284 });
+  });
+
   it("places beside the anchor for side right, flipping left when needed", () => {
     expect(place({ side: "right" })).toMatchObject({
       side: "right",
