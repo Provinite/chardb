@@ -1,6 +1,6 @@
 /**
- * Which page search is mounted: Mantine's Spotlight, or the `CommandPalette`
- * replacing it.
+ * Which page search is mounted: the `CommandPalette`, or Mantine's Spotlight
+ * it replaced.
  *
  * Temporary. Both ship until Mantine is removed (#466), so the e2e specs can
  * hold the palette to everything the Spotlight did; they pick one through this
@@ -12,11 +12,11 @@ const STORAGE_KEY = "chardb.spotlightImpl";
 
 export function readSpotlightImpl(): SpotlightImpl {
   try {
-    return window.localStorage.getItem(STORAGE_KEY) === "palette"
-      ? "palette"
-      : "mantine";
+    return window.localStorage.getItem(STORAGE_KEY) === "mantine"
+      ? "mantine"
+      : "palette";
   } catch {
     // Storage can be blocked outright; the default is the one in production.
-    return "mantine";
+    return "palette";
   }
 }

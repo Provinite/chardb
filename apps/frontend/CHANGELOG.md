@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Every result in the page search (Ctrl+K) is a real link**, so it opens in a new tab and its address can be copied; screen readers hear the selected result as it moves (#466).
 - **A page that fails to load shows a Reload button inside the site** instead of a blank screen (#465).
 - **Each page loads its own code on demand**, so a first visit downloads 228 kB gzipped instead of 572 kB; a thin bar along the top shows while the next page loads (#465).
 - **On phones the navigation sidebar is a drawer** opened from a menu button in the header, so pages get the full width (#486).

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Page search specs run against Mantine's Spotlight and the new palette alike** through a `spotlight()` helper, until Mantine is removed (#466).
+
 ### Changed
 
 - **Staff-action specs open the ⋯ menu** through a new `openMenuItem` fixture and confirm in the shared dialogs; a new spec checks Remove from Species stays disabled until the name is typed (#430).

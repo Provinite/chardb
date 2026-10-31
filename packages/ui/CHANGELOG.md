@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`Dialog`**, a modal `<dialog>` on the modal layer that makes the rest of the page inert, and **`CommandPalette`**, a search box over a listbox inside one; plus the `size.dialog` token (#466).
+
 ### Changed
 
 - **`loop()` returns a style rule instead of a class**, so the vanilla-extract runtime no longer ships in every bundle that imports `@chardb/ui`; `style([loop(...), {...}])` works unchanged (#465).
