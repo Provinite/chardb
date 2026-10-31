@@ -7,7 +7,7 @@ import {
   MenuLinkItem,
   useBreakpoint,
 } from "@chardb/ui";
-import { apexUrl, loginUrlReturningHere } from "../lib/communityHost";
+import { loginUrlReturningHere } from "../lib/communityHost";
 import { HostAwareLink } from "./HostAwareLink";
 import * as styles from "./AccountMenu.css";
 
@@ -23,6 +23,8 @@ export interface AccountMenuProps {
   themeMode: "light" | "dark";
   /** Whether this host has a community to create a character in. */
   canCreateCharacter: boolean;
+  /** Where "My profile" goes: a path on this host or an absolute URL. */
+  profileTo: string;
   onLogout: () => void;
   onToggleTheme: () => void;
 }
@@ -40,6 +42,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
   user,
   themeMode,
   canCreateCharacter,
+  profileTo,
   onLogout,
   onToggleTheme,
 }) => {
@@ -83,9 +86,7 @@ export const AccountMenu: React.FC<AccountMenuProps> = ({
       }
     >
       <MenuLinkItem>
-        <HostAwareLink to={apexUrl(`/user/${user.username}`)}>
-          My profile
-        </HostAwareLink>
+        <HostAwareLink to={profileTo}>My profile</HostAwareLink>
       </MenuLinkItem>
       {!roomInHeader && (
         <>

@@ -5,6 +5,7 @@ import { Cluster } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { apexUrl } from "../lib/communityHost";
 import { AccountMenu } from "./AccountMenu";
 import { HostAwareLink } from "./HostAwareLink";
 import { ThemeToggle } from "./ThemeToggle";
@@ -30,6 +31,20 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(function Header(
     logout();
     navigate("/");
   };
+
+  // In a community you belong to, your profile is the one this community
+  // shows: your role and holdings here, on this host. Anywhere else it is the
+  // site-wide profile on the apex.
+  const isMemberHere =
+    communitySlug !== null &&
+    (user?.communityMemberships?.nodes ?? []).some(
+      (m) => m.role.community?.slug === communitySlug,
+    );
+  const profileTo = user
+    ? isMemberHere
+      ? `/members/${user.username}`
+      : apexUrl(`/user/${user.username}`)
+    : "";
 
   return (
     <header ref={ref} className={styles.header}>
@@ -86,6 +101,7 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(function Header(
             user={user}
             themeMode={mode}
             canCreateCharacter={Boolean(communitySlug)}
+            profileTo={profileTo}
             onLogout={handleLogout}
             onToggleTheme={toggleTheme}
           />

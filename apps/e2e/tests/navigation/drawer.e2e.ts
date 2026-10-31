@@ -150,6 +150,30 @@ test.describe("account menu", () => {
     await expect(await tab).toHaveURL(/\/user\//);
     await expect(page).toHaveURL(apexUrl("/dashboard"));
   });
+
+  test("goes to your profile in the community you are in", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(world.community.url);
+    await page.getByRole("button", { name: /, account menu$/ }).click();
+    await page.getByRole("menuitem", { name: "My profile" }).click();
+    await expect(page).toHaveURL(
+      `${world.community.url}/members/${world.users.member.username}`,
+    );
+  });
+
+  test("goes to the site-wide profile on the main site", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(apexUrl("/dashboard"));
+    await page.getByRole("button", { name: /, account menu$/ }).click();
+    await page.getByRole("menuitem", { name: "My profile" }).click();
+    await expect(page).toHaveURL(
+      apexUrl(`/user/${world.users.member.username}`),
+    );
+  });
 });
 
 test.describe("header at the narrowest width", () => {

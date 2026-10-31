@@ -34,6 +34,7 @@ const renderMenu = (props: Partial<AccountMenuProps> = {}) => {
       user={user}
       themeMode="light"
       canCreateCharacter
+      profileTo="/members/ash"
       {...handlers}
       {...props}
     />,
@@ -96,7 +97,7 @@ describe("AccountMenu, signed in", () => {
     const { menu } = await openMenu(/account menu/);
     const href = (name: string) =>
       within(menu).getByRole("menuitem", { name }).getAttribute("href");
-    expect(href("My profile")).toMatch(/\/user\/ash$/);
+    expect(href("My profile")).toBe("/members/ash");
     expect(href("Create Character")).toBe("/character/create");
     expect(href("Upload")).toBe("/upload");
     for (const name of ["My profile", "Create Character", "Upload"]) {
