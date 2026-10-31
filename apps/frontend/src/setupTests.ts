@@ -38,6 +38,10 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
+// jsdom lays nothing out, so it has no scrollIntoView; the scroll helpers in
+// @chardb/ui call it unconditionally.
+Element.prototype.scrollIntoView = vi.fn();
+
 // Mock IntersectionObserver. Implementations are `function`s, not arrows:
 // Vitest runs them as constructors under `new`, which an arrow cannot be.
 global.IntersectionObserver = vi.fn().mockImplementation(function () {
