@@ -21,7 +21,10 @@ ruleTester.run("grid-columns-via-track", rule, {
   ],
   invalid: [
     { code: 'style({ gridTemplateColumns: "1fr 2fr" });', errors: [error] },
-    { code: 'style({ gridTemplateColumns: "repeat(3, 1fr)" });', errors: [error] },
+    {
+      code: 'style({ gridTemplateColumns: "repeat(3, 1fr)" });',
+      errors: [error],
+    },
     { code: "style({ gridTemplateColumns: `1fr 1fr` });", errors: [error] },
     // Under a condition, as anywhere else.
     {
