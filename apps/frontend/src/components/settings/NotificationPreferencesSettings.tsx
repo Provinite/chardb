@@ -1,6 +1,7 @@
 import styled from "styled-components";
 import toast from "react-hot-toast";
 import { NotificationKind } from "../../graphql/notifications.graphql";
+import { Toggletip } from "@chardb/ui";
 import {
   NotificationChannel,
   useNotificationPreferencesQuery,
@@ -162,8 +163,11 @@ export function NotificationPreferencesSettings() {
                   // No template behind this kind yet, so there is nothing to
                   // switch. A disabled box would read as "off", which is a
                   // different and wrong claim.
-                  <NotApplicable title="This kind is not emailed">
+                  <NotApplicable>
                     —
+                    <Toggletip label="Why there is no email switch">
+                      This kind is not emailed
+                    </Toggletip>
                   </NotApplicable>
                 )}
               </Cell>

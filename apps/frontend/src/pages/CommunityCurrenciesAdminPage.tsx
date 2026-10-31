@@ -10,7 +10,7 @@ import {
   ArchiveRestore,
   Send,
 } from "lucide-react";
-import { Button } from "@chardb/ui";
+import { Button, Toggletip, Tooltip } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
@@ -715,27 +715,38 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
                           </IconButton>
                         )}
                         {canManage && (
-                          <IconButton onClick={() => openEdit(row.currency)}>
-                            <Edit2 size={14} />
-                          </IconButton>
+                          <Tooltip label={`Edit ${row.currency.name}`}>
+                            <IconButton
+                              onClick={() => openEdit(row.currency)}
+                              aria-label={`Edit ${row.currency.name}`}
+                            >
+                              <Edit2 size={14} aria-hidden />
+                            </IconButton>
+                          </Tooltip>
                         )}
                         {canManage && (
-                          <IconButton
-                            onClick={() =>
-                              handleArchive(row.currency, !archived)
-                            }
-                            title={
-                              archived
-                                ? "Restore this currency"
-                                : "Archive: stops new transactions, keeps every balance and statement readable"
-                            }
+                          <Tooltip
+                            label={`${archived ? "Restore" : "Archive"} ${row.currency.name}`}
                           >
-                            {archived ? (
-                              <ArchiveRestore size={14} />
-                            ) : (
-                              <Archive size={14} />
-                            )}
-                          </IconButton>
+                            <IconButton
+                              onClick={() =>
+                                handleArchive(row.currency, !archived)
+                              }
+                              aria-label={`${archived ? "Restore" : "Archive"} ${row.currency.name}`}
+                            >
+                              {archived ? (
+                                <ArchiveRestore size={14} aria-hidden />
+                              ) : (
+                                <Archive size={14} aria-hidden />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        {canManage && !archived && (
+                          <Toggletip label="What archiving does">
+                            Archiving stops new transactions, and keeps every
+                            balance and statement readable
+                          </Toggletip>
                         )}
                       </Actions>
                     </Td>

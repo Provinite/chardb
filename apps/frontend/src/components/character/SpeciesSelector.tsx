@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
 import { Search, Database, Palette } from "lucide-react";
-import { Input, ErrorMessage } from "@chardb/ui";
+import { Input, ErrorMessage, Toggletip } from "@chardb/ui";
 import {
   useSpeciesQuery,
   useSpeciesVariantsBySpeciesQuery,
@@ -355,11 +355,6 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
                   isSelected={selectedSpecies?.id === species.id}
                   isDisabled={isCardDisabled}
                   onClick={() => !disabled && handleSpeciesSelect(species)}
-                  title={
-                    !hasPermission
-                      ? "You don't have permission to create characters for this species"
-                      : undefined
-                  }
                 >
                   <CardHeader>
                     <CardIcon>
@@ -376,6 +371,14 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
                       >
                         No Permission
                       </MetaBadge>
+                    )}
+                    {/* The card ignores the click a toggletip lets through:
+                        a species without permission cannot be picked. */}
+                    {!hasPermission && (
+                      <Toggletip label={`Why ${species.name} cannot be picked`}>
+                        You don&apos;t have permission to create characters for
+                        this species
+                      </Toggletip>
                     )}
                   </CardMeta>
                 </SelectionCard>
