@@ -174,10 +174,25 @@ describe("PrizeAwardService", () => {
     });
 
     it("refuses a character already promised to someone", async () => {
-      tx.pendingOwnership.findUnique.mockResolvedValue({ id: "po" });
+      tx.pendingOwnership.findUnique.mockResolvedValue({
+        id: "po",
+        claimedAt: null,
+      });
       await expect(
         validate(prize({ characterId: "ch-1" })),
       ).rejects.toBeInstanceOf(HalloweenDiscordError);
+    });
+
+    // A claimed promise is history: its owner has since given the character
+    // back to the community.
+    it("accepts a character whose earlier promise was claimed", async () => {
+      tx.pendingOwnership.findUnique.mockResolvedValue({
+        id: "po",
+        claimedAt: new Date("2026-02-26"),
+      });
+      await expect(
+        validate(prize({ characterId: "ch-1" })),
+      ).resolves.toBeUndefined();
     });
   });
 
