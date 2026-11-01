@@ -1,6 +1,6 @@
 import React, { act, useState } from "react";
 import { ThemeProvider } from "styled-components";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { render } from "../__tests__/render";
 import { lightTheme } from "../theme";
 import {
@@ -353,5 +353,68 @@ describe("Portal container", () => {
     mousedown(document.querySelector("p")!);
 
     expect(document.querySelector('[role="dialog"]')).toBeNull();
+  });
+});
+
+describe("Typeahead list width", () => {
+  /** A ResizeObserver that reports whatever size a test gives it. */
+  const observers: {
+    callback: ResizeObserverCallback;
+    targets: Element[];
+  }[] = [];
+  class FakeResizeObserver {
+    private entry: { callback: ResizeObserverCallback; targets: Element[] };
+    constructor(callback: ResizeObserverCallback) {
+      this.entry = { callback, targets: [] };
+      observers.push(this.entry);
+    }
+    observe(el: Element) {
+      this.entry.targets.push(el);
+    }
+    unobserve() {}
+    disconnect() {
+      this.entry.targets = [];
+    }
+  }
+  const resize = (el: Element, inlineSize: number) =>
+    act(() => {
+      for (const o of observers) {
+        if (!o.targets.includes(el)) continue;
+        const entry = {
+          target: el,
+          borderBoxSize: [{ inlineSize, blockSize: 40 }],
+        } as unknown as ResizeObserverEntry;
+        o.callback([entry], o as unknown as ResizeObserver);
+      }
+    });
+
+  beforeEach(() => {
+    observers.length = 0;
+    vi.stubGlobal("ResizeObserver", FakeResizeObserver);
+  });
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("follows its input's width, also when only the width changes", () => {
+    render(
+      themed(
+        <SearchSelect
+          label="Character"
+          value={null}
+          options={[wisp]}
+          onChange={() => {}}
+          onSearch={() => {}}
+        />,
+      ),
+    );
+    const input = document.querySelector<HTMLElement>('[role="combobox"]')!;
+    focus(input);
+    const box = input.parentElement!;
+    const list = () => document.querySelector<HTMLElement>('[role="listbox"]')!;
+
+    resize(box, 320);
+    expect(list().style.width).toBe("320px");
+
+    resize(box, 305);
+    expect(list().style.width).toBe("305px");
   });
 });
