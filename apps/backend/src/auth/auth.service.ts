@@ -97,11 +97,11 @@ export class AuthService {
    * none of them should wait on it. A failure is logged and goes no further.
    */
   private recordSignIn(userId: string): void {
-    this.achievements.recordSignIn(userId).catch((error: unknown) => {
+    this.achievements.recordSignIn(userId).catch((err: unknown) => {
       this.logger.warn({
         message: "Could not record sign-in achievements",
         userId,
-        error: error instanceof Error ? error.message : String(error),
+        err,
       });
     });
   }
