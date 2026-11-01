@@ -37,6 +37,7 @@ import { HalloweenNavigationSection } from "./HalloweenNavigationSection";
 import { CommunitySwitcher } from "./CommunitySwitcher";
 import { GlobalNavigationSidebar } from "./GlobalNavigationSidebar";
 import { useUserCommunityRole } from "../../hooks/useUserCommunityRole";
+import { useCanManageSpecies } from "../../hooks/useCanManageSpecies";
 import { useCommunityHost } from "../../contexts/CommunityHostContext";
 import {
   useSpeciesByIdQuery,
@@ -307,11 +308,11 @@ export const CommunityNavigationSidebar: React.FC<
   const {
     permissions,
     hasAdminPermissions,
-    hasSpeciesPermissions,
     hasInvitePermissions,
     loading,
     isMember,
   } = useUserCommunityRole(communityId);
+  const hasSpeciesPermissions = useCanManageSpecies(communityId);
 
   // Not a community host at all: nothing to show, hand back to the global one.
   // `Layout` normally decides this, but the sidebar can also be forced on by

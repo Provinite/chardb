@@ -20,6 +20,7 @@ import { useGetMyGalleriesQuery } from "../graphql/galleries.graphql";
 import { TextFormatting, Visibility } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { AccessDenied } from "../components/AccessDenied";
 import { MarkdownEditor } from "../components/MarkdownEditor";
 
 const mediaSchema = z.object({
@@ -478,10 +479,7 @@ export const EditMediaPage: React.FC = () => {
     return (
       <Container>
         <BackButton onClick={handleBackClick}>Back to Media</BackButton>
-        <ErrorContainer>
-          <h3>Access Denied</h3>
-          <p>You can only edit your own media.</p>
-        </ErrorContainer>
+        <AccessDenied>You can only edit your own media.</AccessDenied>
       </Container>
     );
   }

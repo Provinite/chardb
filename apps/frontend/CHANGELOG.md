@@ -20,7 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Species admin pages** (traits, variants, species management) are hidden from members without species permissions, and their URLs show Access Denied.
+- **Species admin pages** (traits, variants, species editing) are hidden from members without species permissions, and their URLs show Access Denied. A species from another community is not found.
 
 ## [v15.2.0] - 2026-11-01
 

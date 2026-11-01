@@ -1,30 +1,26 @@
 import React from "react";
-import { Stack, Subtitle, Title } from "@chardb/ui";
+import { Outlet } from "react-router-dom";
 import { useCommunityId } from "../contexts/CommunityHostContext";
 import { useCanManageSpecies } from "../hooks/useCanManageSpecies";
-import * as styles from "./SpeciesAdminRoute.css";
+import { AccessDenied } from "./AccessDenied";
 
 /**
- * Gates the species, trait and variant management pages, which are reachable
- * by URL. Sits inside `ProtectedRoute`, so the viewer is signed in. The
- * backend checks the specific permission on every write.
+ * Layout route for the species, trait and variant management pages, which are
+ * reachable by URL. Lets in anyone `canManageSpecies` allows; each page shows
+ * only the controls their permissions cover. Sits inside `ProtectedRoute`, so
+ * the viewer is signed in.
  */
-export const SpeciesAdminRoute: React.FC<{ children: React.ReactNode }> = ({
-  children,
-}) => {
+export const SpeciesAdminRoute: React.FC = () => {
   const communityId = useCommunityId();
   const allowed = useCanManageSpecies(communityId ?? undefined);
 
   if (!allowed) {
     return (
-      <Stack gap="sm" className={styles.denied}>
-        <Title>Access Denied</Title>
-        <Subtitle>
-          You don't have permission to manage species in this community.
-        </Subtitle>
-      </Stack>
+      <AccessDenied>
+        You don't have permission to manage species in this community.
+      </AccessDenied>
     );
   }
 
-  return <>{children}</>;
+  return <Outlet />;
 };

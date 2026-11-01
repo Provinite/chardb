@@ -1,7 +1,16 @@
+import type { Page } from "@playwright/test";
 import { presetTest, expect } from "../../src/fixtures.js";
+import { communityUrl } from "../../src/config.js";
+import {
+  SeedCreateCommunityDocument,
+  SeedCreateSpeciesDocument,
+  SeedCreateSpeciesVariantDocument,
+  SeedCreateTraitDocument,
+  TraitValueType,
+} from "../../src/generated/graphql.js";
 
 /**
- * Who sees the species admin pages.
+ * Who sees the species admin pages, and on which host.
  *
  * The species page offered its Traits and Variants cards to anyone signed in,
  * and the routes behind them checked only that someone was signed in. A plain
@@ -14,6 +23,12 @@ const test = presetTest("community-basic");
 const TRAITS_CARD = "Configure and manage traits";
 const VARIANTS_CARD = "Manage different variants";
 
+const expectDenied = (page: Page) =>
+  expect(page.getByRole("heading", { name: "Access Denied" })).toBeVisible();
+
+const expectNotFound = (page: Page) =>
+  expect(page.getByRole("heading", { name: "Page Not Found" })).toBeVisible();
+
 test.beforeEach(async ({ world }) => {
   await world.reset();
 });
@@ -21,7 +36,10 @@ test.beforeEach(async ({ world }) => {
 test.describe("a plain member", () => {
   test.use({ persona: "member" });
 
-  test("sees no admin cards on the species page", async ({ page, world }) => {
+  test("sees no admin controls on the species page", async ({
+    page,
+    world,
+  }) => {
     await page.goto(`${world.community.url}/species/${world.species.id}`);
 
     // The public card, so the absences below are not just an unloaded page.
@@ -35,8 +53,18 @@ test.describe("a plain member", () => {
     ).toHaveCount(0);
   });
 
+  test("can browse the species list", async ({ page, world }) => {
+    // Linked from the community page's Species card for every member. The
+    // page hides its create and edit controls by permission itself.
+    await page.goto(`${world.community.url}/species`);
+
+    await expect(page.getByText(world.species.name).first()).toBeVisible();
+    await expect(
+      page.getByRole("heading", { name: "Access Denied" }),
+    ).toHaveCount(0);
+  });
+
   for (const path of [
-    "/species",
     "/species/:id/edit",
     "/species/:id/traits",
     "/species/:id/variants",
@@ -45,10 +73,7 @@ test.describe("a plain member", () => {
       await page.goto(
         `${world.community.url}${path.replace(":id", world.species.id)}`,
       );
-
-      await expect(
-        page.getByRole("heading", { name: "Access Denied" }),
-      ).toBeVisible();
+      await expectDenied(page);
     });
   }
 
@@ -56,10 +81,7 @@ test.describe("a plain member", () => {
     await page.goto(
       `${world.community.url}/traits/${world.traits.eyeColor.id}/enum-values`,
     );
-
-    await expect(
-      page.getByRole("heading", { name: "Access Denied" }),
-    ).toBeVisible();
+    await expectDenied(page);
   });
 
   for (const suffix of ["manage", "enum-settings"]) {
@@ -70,10 +92,7 @@ test.describe("a plain member", () => {
       await page.goto(
         `${world.community.url}/variants/${world.species.variantId}/${suffix}`,
       );
-
-      await expect(
-        page.getByRole("heading", { name: "Access Denied" }),
-      ).toBeVisible();
+      await expectDenied(page);
     });
   }
 });
@@ -81,7 +100,7 @@ test.describe("a plain member", () => {
 test.describe("a moderator who can edit species", () => {
   test.use({ persona: "moderator" });
 
-  test("sees the admin cards and reaches the trait builder", async ({
+  test("sees the admin controls and reaches the trait builder", async ({
     page,
     world,
   }) => {
@@ -110,5 +129,67 @@ test.describe("a site admin outside the community", () => {
     await expect(
       page.getByRole("heading", { name: "Trait Builder" }),
     ).toBeVisible();
+  });
+});
+
+/**
+ * A species belongs to one community, and its pages live on that community's
+ * host. Any other host answers not found, even for staff of both.
+ */
+test.describe("a species from another community", () => {
+  test.use({ persona: "commadmin" });
+
+  test("is not found on this community's host", async ({ page, world }) => {
+    // commadmin creates the second community, so holds Admin in both: the
+    // not found below is about the host, not about permissions.
+    const staff = world.as("commadmin");
+    const { createCommunity: other } = await staff.gql(
+      SeedCreateCommunityDocument,
+      { createCommunityInput: { name: "Elsewhere", slug: "elsewhere" } },
+    );
+    const { createSpecies: species } = await staff.gql(
+      SeedCreateSpeciesDocument,
+      {
+        createSpeciesInput: {
+          communityId: other.id,
+          name: "Farflung",
+          hasImage: false,
+        },
+      },
+    );
+    const { createSpeciesVariant: variant } = await staff.gql(
+      SeedCreateSpeciesVariantDocument,
+      { createSpeciesVariantInput: { speciesId: species.id, name: "Plain" } },
+    );
+    const { createTrait: trait } = await staff.gql(SeedCreateTraitDocument, {
+      createTraitInput: {
+        speciesId: species.id,
+        name: "Fur",
+        valueType: TraitValueType.Enum,
+        allowsClarifier: false,
+        allowsMultipleValues: false,
+      },
+    });
+
+    // The baseline: on its own host the species is there.
+    await page.goto(communityUrl("elsewhere", `/species/${species.id}/traits`));
+    await expect(
+      page.getByRole("heading", { name: "Trait Builder" }),
+    ).toBeVisible();
+
+    for (const path of [
+      `/species/${species.id}`,
+      `/species/${species.id}/edit`,
+      `/species/${species.id}/traits`,
+      `/species/${species.id}/variants`,
+      `/traits/${trait.id}/enum-values`,
+      `/variants/${variant.id}/manage`,
+      `/variants/${variant.id}/enum-settings`,
+    ]) {
+      await test.step(path, async () => {
+        await page.goto(`${world.community.url}${path}`);
+        await expectNotFound(page);
+      });
+    }
   });
 });

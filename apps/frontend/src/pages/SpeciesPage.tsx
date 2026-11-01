@@ -29,6 +29,7 @@ import {
 } from "../generated/graphql";
 import { Link } from "react-router-dom";
 import { useCanManageSpecies } from "../hooks/useCanManageSpecies";
+import { useCommunityId } from "../contexts/CommunityHostContext";
 
 /**
  * Species Landing Page
@@ -238,9 +239,9 @@ export const SpeciesPage: React.FC = () => {
 
   usePageMeta({ title: data?.speciesById?.name ?? "Species" });
 
-  const canManageSpecies = useCanManageSpecies(
-    data?.speciesById?.community?.id,
-  );
+  // The host's community: `SpeciesScopeRoute` only renders this page for a
+  // species that belongs to it.
+  const canManageSpecies = useCanManageSpecies(useCommunityId() ?? undefined);
 
   // Fetch trait count for this species
   const { data: traitsData } = useTraitsBySpeciesQuery({

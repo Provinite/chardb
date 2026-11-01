@@ -29,6 +29,7 @@ import { timingMs, useDebouncedValue } from "@chardb/ui";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityHost } from "../../contexts/CommunityHostContext";
 import { apexUrl, communityUrl } from "../../lib/communityHost";
+import { canManageSpecies } from "../../lib/speciesAccess";
 import { useGetCommunityMembersQuery } from "../../generated/graphql";
 import { drillQuery, parseSpotlightQuery } from "./spotlightQuery";
 import type { SpotlightGroup, SpotlightItem } from "./types";
@@ -465,8 +466,7 @@ export function useSpotlightActions(
           role.canRemoveCommunityMember ||
           role.canManageMemberRoles;
 
-        const hasSpeciesPermissions =
-          role.canCreateSpecies || role.canEditSpecies;
+        const hasSpeciesPermissions = canManageSpecies(role, user.isAdmin);
 
         const hasInvitePermissions =
           role.canCreateInviteCode || role.canListInviteCodes;

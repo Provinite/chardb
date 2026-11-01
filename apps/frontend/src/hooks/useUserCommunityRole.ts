@@ -95,13 +95,6 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
   }, [permissions]);
 
   /**
-   * Check if the user has any species permissions
-   */
-  const hasSpeciesPermissions = useMemo(() => {
-    return permissions.canCreateSpecies || permissions.canEditSpecies;
-  }, [permissions]);
-
-  /**
    * Check if the user has any invite permissions
    */
   const hasInvitePermissions = useMemo(() => {
@@ -113,7 +106,6 @@ export const useUserCommunityRole = (communityId: string | undefined) => {
     community,
     permissions,
     hasAdminPermissions,
-    hasSpeciesPermissions,
     hasInvitePermissions,
     loading,
     isMember: !!userRole,
