@@ -815,7 +815,6 @@ export const CommunityShopPage: React.FC = () => {
         open={undoTarget !== null}
         title={undoTarget ? `Undo buying ${undoTarget.item}?` : "Undo?"}
         confirmLabel="Undo it"
-        busyLabel="Undoing…"
         busy={undoing}
         onCancel={() => setUndoTarget(null)}
         onConfirm={() => {

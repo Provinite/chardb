@@ -1002,7 +1002,6 @@ export const CreateCharacterPageEnhanced: React.FC = () => {
         open={confirmingRedeem}
         title={`Redeem your ${ticket?.itemType?.name ?? "ticket"}?`}
         confirmLabel="Redeem it"
-        busyLabel="Redeeming…"
         busy={isSubmitting}
         destructive
         testId="redeem-myo-dialog"

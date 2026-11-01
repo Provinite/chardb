@@ -640,7 +640,6 @@ export const SpeciesManagementPage: React.FC = () => {
         open={deleteTarget !== null}
         title={deleteTarget ? `Delete "${deleteTarget.name}"?` : "Delete?"}
         confirmLabel="Delete"
-        busyLabel="Deleting…"
         busy={deleting}
         destructive
         confirmPhrase={deleteTarget?.name}

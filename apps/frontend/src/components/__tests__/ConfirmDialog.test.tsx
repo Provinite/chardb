@@ -2,15 +2,13 @@ import { describe, it, expect, vi } from "vitest";
 import { useLayoutEffect, useState } from "react";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ThemeProvider } from "styled-components";
-import { lightTheme } from "@chardb/ui";
 import { ConfirmDialog } from "../ConfirmDialog";
 
 const renderDialog = (onConfirm = vi.fn()) => {
   const Harness = () => {
     const [open, setOpen] = useState(true);
     return (
-      <ThemeProvider theme={lightTheme}>
+      <>
         <button type="button" onClick={() => setOpen(true)}>
           reopen
         </button>
@@ -25,11 +23,119 @@ const renderDialog = (onConfirm = vi.fn()) => {
         >
           Its traits become custom fields.
         </ConfirmDialog>
-      </ThemeProvider>
+      </>
     );
   };
   render(<Harness />);
 };
+
+describe("ConfirmDialog", () => {
+  it("is a dialog named by its title, carrying its test id", () => {
+    render(
+      <ConfirmDialog
+        open
+        title="Refund this purchase?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+        testId="refund-dialog"
+      />,
+    );
+    const dialog = screen.getByRole("dialog", {
+      name: "Refund this purchase?",
+    });
+    expect(dialog).toHaveAttribute("data-testid", "refund-dialog");
+  });
+
+  it("renders nothing while closed", () => {
+    render(
+      <ConfirmDialog
+        open={false}
+        title="Refund?"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
+
+  it("cancels on Escape and on the scrim", async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    render(
+      <ConfirmDialog
+        open
+        title="Refund?"
+        onConfirm={vi.fn()}
+        onCancel={onCancel}
+      />,
+    );
+
+    await user.keyboard("{Escape}");
+    expect(onCancel).toHaveBeenCalledTimes(1);
+
+    await user.click(document.querySelector("[data-dialog-scrim]")!);
+    expect(onCancel).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not cancel while busy, which would hide a request still running", async () => {
+    const user = userEvent.setup();
+    const onCancel = vi.fn();
+    render(
+      <ConfirmDialog
+        open
+        busy
+        title="Refund?"
+        onConfirm={vi.fn()}
+        onCancel={onCancel}
+      />,
+    );
+
+    await user.keyboard("{Escape}");
+    await user.click(document.querySelector("[data-dialog-scrim]")!);
+    await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+    expect(onCancel).not.toHaveBeenCalled();
+  });
+
+  it("shows busy on the confirm button without changing its label", async () => {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    render(
+      <ConfirmDialog
+        open
+        busy
+        title="Refund?"
+        confirmLabel="Refund"
+        onConfirm={onConfirm}
+        onCancel={vi.fn()}
+      />,
+    );
+    const confirm = screen.getByRole("button", { name: "Refund" });
+    expect(confirm).toHaveAttribute("aria-disabled", "true");
+
+    await user.click(confirm);
+    expect(onConfirm).not.toHaveBeenCalled();
+  });
+
+  it("starts on Cancel when destructive", () => {
+    render(
+      <ConfirmDialog
+        open
+        destructive
+        title="Delete?"
+        confirmLabel="Delete"
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+    expect(screen.getByRole("button", { name: "Cancel" })).toHaveFocus();
+  });
+
+  it("starts in the phrase box when there is one", () => {
+    renderDialog();
+    expect(screen.getByLabelText(/Type Pinefall to confirm/)).toHaveFocus();
+  });
+});
 
 describe("ConfirmDialog with a confirmPhrase", () => {
   it("keeps confirm disabled until the phrase is typed exactly", async () => {
@@ -71,7 +177,7 @@ describe("ConfirmDialog with a confirmPhrase", () => {
     const Harness = () => {
       const [open, setOpen] = useState(true);
       return (
-        <ThemeProvider theme={lightTheme}>
+        <>
           <button type="button" onClick={() => setOpen(true)}>
             reopen
           </button>
@@ -86,7 +192,7 @@ describe("ConfirmDialog with a confirmPhrase", () => {
             body
           </ConfirmDialog>
           <Probe open={open} />
-        </ThemeProvider>
+        </>
       );
     };
     render(<Harness />);
@@ -101,21 +207,18 @@ describe("ConfirmDialog with a confirmPhrase", () => {
 
   it("ignores surrounding and repeated whitespace on both sides", async () => {
     const user = userEvent.setup();
-    const Harness = () => (
-      <ThemeProvider theme={lightTheme}>
-        <ConfirmDialog
-          open
-          title="Delete?"
-          confirmLabel="Remove"
-          confirmPhrase=" Ember  Wisp "
-          onConfirm={vi.fn()}
-          onCancel={vi.fn()}
-        >
-          body
-        </ConfirmDialog>
-      </ThemeProvider>
+    render(
+      <ConfirmDialog
+        open
+        title="Delete?"
+        confirmLabel="Remove"
+        confirmPhrase=" Ember  Wisp "
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      >
+        body
+      </ConfirmDialog>,
     );
-    render(<Harness />);
 
     // The label shows the normalised name, which is what gets typed.
     await user.type(
@@ -142,30 +245,26 @@ describe("ConfirmDialog with confirmDisabled", () => {
   it("holds confirm until the caller's own form is complete (#445)", () => {
     // For a dialog that asks for something in its body, like a reason.
     const { rerender } = render(
-      <ThemeProvider theme={lightTheme}>
-        <ConfirmDialog
-          open
-          title="Remove 2 MYO Tickets?"
-          confirmLabel="Remove"
-          confirmDisabled
-          onConfirm={vi.fn()}
-          onCancel={vi.fn()}
-        />
-      </ThemeProvider>,
+      <ConfirmDialog
+        open
+        title="Remove 2 MYO Tickets?"
+        confirmLabel="Remove"
+        confirmDisabled
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     );
     expect(screen.getByRole("button", { name: "Remove" })).toBeDisabled();
 
     rerender(
-      <ThemeProvider theme={lightTheme}>
-        <ConfirmDialog
-          open
-          title="Remove 2 MYO Tickets?"
-          confirmLabel="Remove"
-          confirmDisabled={false}
-          onConfirm={vi.fn()}
-          onCancel={vi.fn()}
-        />
-      </ThemeProvider>,
+      <ConfirmDialog
+        open
+        title="Remove 2 MYO Tickets?"
+        confirmLabel="Remove"
+        confirmDisabled={false}
+        onConfirm={vi.fn()}
+        onCancel={vi.fn()}
+      />,
     );
     expect(screen.getByRole("button", { name: "Remove" })).toBeEnabled();
   });

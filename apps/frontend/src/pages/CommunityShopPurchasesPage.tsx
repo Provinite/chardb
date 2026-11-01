@@ -358,7 +358,6 @@ export const CommunityShopPurchasesPage: React.FC = () => {
           pending ? `Refund ${pending.item} to ${pending.buyer}?` : "Refund?"
         }
         confirmLabel="Refund"
-        busyLabel="Refunding…"
         busy={busyLineId !== null}
         onCancel={() => setPending(null)}
         onConfirm={() => {

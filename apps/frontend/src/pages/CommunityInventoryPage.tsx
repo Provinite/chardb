@@ -613,7 +613,6 @@ export const CommunityInventoryPage: React.FC = () => {
         open={pendingUse !== null}
         title={pendingUse ? `Redeem ${pendingUse.itemTypeName}?` : "Redeem it?"}
         confirmLabel="Redeem it"
-        busyLabel="Redeeming…"
         busy={usingItemId !== null}
         onCancel={() => setPendingUse(null)}
         onConfirm={() => {

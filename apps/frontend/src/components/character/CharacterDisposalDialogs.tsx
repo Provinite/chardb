@@ -27,7 +27,6 @@ export const DeleteCharacterDialog: React.FC<DisposalDialogProps> = ({
     open={open}
     title={`Delete "${characterName}"?`}
     confirmLabel="Delete"
-    busyLabel="Deleting…"
     busy={busy}
     destructive
     onCancel={onCancel}
@@ -47,7 +46,6 @@ export const RemoveFromSpeciesDialog: React.FC<
     open={open}
     title={`Remove "${characterName}" from ${speciesName ?? "its species"}?`}
     confirmLabel="Remove"
-    busyLabel="Removing…"
     busy={busy}
     destructive
     confirmPhrase={characterName}
@@ -71,7 +69,6 @@ export const GiveToCommunityDialog: React.FC<
     open={open}
     title={`Give "${characterName}" to ${communityName}?`}
     confirmLabel="Give"
-    busyLabel="Giving…"
     busy={busy}
     destructive
     confirmPhrase={characterName}

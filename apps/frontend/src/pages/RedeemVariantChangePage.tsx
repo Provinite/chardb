@@ -595,7 +595,6 @@ export const RedeemVariantChangePage: React.FC = () => {
         open={confirming}
         title={chosen ? `Redeem your ${chosen.name}?` : "Redeem this item?"}
         confirmLabel="Redeem it"
-        busyLabel="Redeeming…"
         busy={redeeming}
         destructive
         testId="redeem-variant-change-dialog"

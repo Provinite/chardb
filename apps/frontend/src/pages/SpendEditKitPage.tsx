@@ -371,7 +371,6 @@ export const SpendEditKitPage: React.FC = () => {
           chosenKit ? `Redeem your ${chosenKit.name}?` : "Redeem this item?"
         }
         confirmLabel="Redeem it"
-        busyLabel="Redeeming…"
         busy={spending}
         destructive
         testId="redeem-edit-kit-dialog"

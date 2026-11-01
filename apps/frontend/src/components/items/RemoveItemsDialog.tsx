@@ -129,7 +129,6 @@ export const RemoveItemsDialog: React.FC<RemoveItemsDialogProps> = ({
       open={open}
       title={`Remove ${itemTypeName} from ${holderLabel}?`}
       confirmLabel={countValid ? `Remove ${count}` : "Remove"}
-      busyLabel="Removing…"
       busy={loading}
       destructive
       confirmDisabled={!countValid || !reason.trim()}

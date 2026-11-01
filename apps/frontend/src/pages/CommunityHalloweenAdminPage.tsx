@@ -706,7 +706,6 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
         destructive
         title={removing ? `Remove ${removing.name}?` : "Remove prize?"}
         confirmLabel="Remove"
-        busyLabel="Removing…"
         busy={removingPrize}
         onCancel={() => setRemoving(null)}
         onConfirm={() => {
@@ -721,7 +720,6 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
         open={undoing !== null}
         title="Mark not delivered?"
         confirmLabel="Mark not delivered"
-        busyLabel="Saving…"
         busy={undoing !== null && busyId === undoing.id}
         onCancel={() => setUndoing(null)}
         onConfirm={() => {

@@ -427,7 +427,6 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
         open={undoTarget !== null}
         title={undoTarget ? `Undo buying ${undoTarget.item}?` : "Undo?"}
         confirmLabel="Undo it"
-        busyLabel="Undoing…"
         busy={busyLineId !== null}
         onCancel={() => setUndoTarget(null)}
         onConfirm={() => {

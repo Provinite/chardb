@@ -1,64 +1,6 @@
-import React, { useCallback, useEffect, useId, useRef, useState } from "react";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
-
-const Overlay = styled.div<{ $isOpen: boolean }>`
-  display: ${({ $isOpen }) => ($isOpen ? "flex" : "none")};
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-`;
-
-const Panel = styled.div`
-  background: ${({ theme }) => theme.colors.background};
-  padding: 2rem;
-  border-radius: 12px;
-  max-width: 460px;
-  width: 90%;
-`;
-
-const Title = styled.h2`
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin: 0 0 1rem 0;
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Body = styled.div`
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: 0.9375rem;
-  line-height: 1.5;
-`;
-
-const PhraseLabel = styled.label`
-  display: block;
-  margin-top: 1rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: 0.875rem;
-`;
-
-const PhraseInput = styled.input`
-  display: block;
-  width: 100%;
-  box-sizing: border-box;
-  margin-top: 0.375rem;
-  padding: 0.5rem 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 6px;
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: 0.9375rem;
-`;
-
-const Actions = styled.div`
-  display: flex;
-  justify-content: flex-end;
-  gap: 0.75rem;
-  margin-top: 1.25rem;
-`;
+import React, { useCallback, useId, useState } from "react";
+import { Button, Cluster, Dialog, Stack } from "@chardb/ui";
+import * as styles from "./ConfirmDialog.css";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -73,8 +15,10 @@ interface ConfirmDialogProps {
   onCancel: () => void;
   /** Defaults to "Confirm". Say the verb: "Refund", "Delete". */
   confirmLabel?: string;
-  /** Shown on the confirm button while the action is in flight. */
-  busyLabel?: string;
+  /**
+   * The action is in flight: confirm shows a spinner after the loader delay
+   * and keeps its label, and the dialog cannot be cancelled.
+   */
   busy?: boolean;
   /**
    * Colours the confirm red and puts the initial focus on Cancel.
@@ -99,23 +43,23 @@ interface ConfirmDialogProps {
 }
 
 /**
- * A yes/no gate in front of something that cannot be taken back.
- *
- * Extracted because this codebase keeps re-deciding it. Eight files hand-roll
- * a modal, and whether a given one-way action gets a gate has been decided
- * case by case -- shop checkout has one, the staff refund beside it did not
- * (#296), and the difference was not deliberate.
- *
- * Cancel is reachable three ways: the button, Escape, and the backdrop. All
- * three are safe, so being generous with them costs nothing; there is no
- * equivalent shortcut to confirm, and there should not be.
- */
-/**
  * Trims and collapses runs of whitespace, so a stray or doubled space on
  * either side never blocks a match. Case still counts.
  */
 const normalise = (text: string) => text.trim().replace(/\s+/g, " ");
 
+/**
+ * A yes/no gate in front of something that cannot be taken back.
+ *
+ * Extracted because this codebase keeps re-deciding it. Whether a given
+ * one-way action gets a gate had been decided case by case -- shop checkout
+ * has one, the staff refund beside it did not (#296), and the difference was
+ * not deliberate.
+ *
+ * Cancel is reachable three ways: the button, Escape, and the scrim. All
+ * three are safe, so being generous with them costs nothing; there is no
+ * equivalent shortcut to confirm, and there should not be.
+ */
 export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   open,
   title,
@@ -123,15 +67,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   onConfirm,
   onCancel,
   confirmLabel = "Confirm",
-  busyLabel,
   busy = false,
   destructive = false,
   confirmPhrase,
   confirmDisabled = false,
   testId,
 }) => {
-  const cancelRef = useRef<HTMLButtonElement>(null);
-  const phraseRef = useRef<HTMLInputElement>(null);
   const phraseId = useId();
   const [typed, setTyped] = useState("");
   const phrase =
@@ -153,71 +94,52 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
     if (!busy) onCancel();
   }, [busy, onCancel]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") dismiss();
-    };
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
-  }, [open, dismiss]);
-
-  useEffect(() => {
-    if (!open) return;
-    if (confirmPhrase !== undefined) phraseRef.current?.focus();
-    else if (destructive) cancelRef.current?.focus();
-  }, [open, destructive, confirmPhrase]);
-
-  if (!open) return null;
-
   return (
-    <Overlay $isOpen={open} onClick={dismiss}>
-      <Panel
-        role="dialog"
-        aria-modal="true"
-        aria-label={title}
-        data-testid={testId}
-        // The backdrop cancels; a click inside it must not travel up and do
-        // the same.
-        onClick={(e) => e.stopPropagation()}
-      >
-        <Title>{title}</Title>
-        {children && <Body>{children}</Body>}
-        {confirmPhrase !== undefined && (
-          <PhraseLabel htmlFor={phraseId}>
-            Type <strong>{phrase}</strong> to confirm
-            <PhraseInput
-              ref={phraseRef}
-              id={phraseId}
-              value={typed}
-              onChange={(e) => setTyped(e.target.value)}
-              autoComplete="off"
-              spellCheck={false}
+    <Dialog.Root open={open} onClose={dismiss} data-testid={testId}>
+      <Dialog.Title>{title}</Dialog.Title>
+      <Dialog.Body>
+        <Stack>
+          {children && <div className={styles.message}>{children}</div>}
+          {phrase !== undefined && (
+            <label htmlFor={phraseId} className={styles.phraseLabel}>
+              Type <strong>{phrase}</strong> to confirm
+              <input
+                id={phraseId}
+                className={styles.phraseInput}
+                value={typed}
+                onChange={(e) => setTyped(e.target.value)}
+                autoComplete="off"
+                spellCheck={false}
+                disabled={busy}
+                data-autofocus=""
+                data-testid="confirm-phrase"
+              />
+            </label>
+          )}
+          <Cluster justify="flex-end">
+            <Button
+              tone="secondary"
+              onClick={dismiss}
               disabled={busy}
-              data-testid="confirm-phrase"
-            />
-          </PhraseLabel>
-        )}
-        <Actions>
-          <Button
-            ref={cancelRef}
-            tone="secondary"
-            onClick={dismiss}
-            disabled={busy}
-            data-testid="confirm-cancel"
-          >
-            Cancel
-          </Button>
-          <Button
-            tone={destructive ? "danger" : "primary"}
-            onClick={onConfirm}
-            disabled={busy || !phraseMatches || confirmDisabled}
-            data-testid="confirm-accept"
-          >
-            {busy && busyLabel ? busyLabel : confirmLabel}
-          </Button>
-        </Actions>
-      </Panel>
-    </Overlay>
+              data-autofocus={
+                destructive && phrase === undefined ? "" : undefined
+              }
+              data-testid="confirm-cancel"
+            >
+              Cancel
+            </Button>
+            <Button
+              tone={destructive ? "danger" : "primary"}
+              onClick={onConfirm}
+              busy={busy}
+              disabled={!phraseMatches || confirmDisabled}
+              data-testid="confirm-accept"
+            >
+              {confirmLabel}
+            </Button>
+          </Cluster>
+        </Stack>
+      </Dialog.Body>
+    </Dialog.Root>
   );
 };
