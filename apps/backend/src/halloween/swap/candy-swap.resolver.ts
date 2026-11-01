@@ -85,17 +85,19 @@ export class CandySwapResolver {
   @Mutation(() => HalloweenCandyOfferPlaced, {
     description:
       "Offer 1-3 of your candies, none of the wanted kind, for one candy of " +
-      "`wantSlug`. They are held until the offer is filled or cancelled. At " +
-      "most 10 open offers. A one-for-one offer that meets another player's " +
-      "mirror offer trades at once.",
+      "`wantSlug`, or of any kind when it is null. They are held until the " +
+      "offer is filled or cancelled. At most 10 open offers. A one-for-one " +
+      "offer that meets a compatible one-for-one offer of another player's " +
+      "trades at once; two offers for any kind never meet.",
   })
   placeHalloweenCandyOffer(
     @Args("communityId", { type: () => ID }) communityId: string,
     @Args("candyIds", { type: () => [Int] }) candyIds: number[],
-    @Args("wantSlug") wantSlug: string,
+    @Args("wantSlug", { type: () => String, nullable: true }) // Undefined when left out of the request.
+    wantSlug: string | null | undefined,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyOfferPlaced> {
-    return this.swap.place(communityId, user.id, candyIds, wantSlug);
+    return this.swap.place(communityId, user.id, candyIds, wantSlug ?? null);
   }
 
   @AllowAnyAuthenticated()
@@ -103,14 +105,17 @@ export class CandySwapResolver {
     description:
       "Fill another player's open offer: one of your spare candies of the " +
       "wanted kind, the oldest not on a board or else the oldest, for " +
-      "everything it offers.",
+      "everything it offers. An offer for any kind needs `giveSlug`, a " +
+      "kind it does not give.",
   })
   acceptHalloweenCandyOffer(
     @Args("communityId", { type: () => ID }) communityId: string,
     @Args("offerId", { type: () => ID }) offerId: string,
+    @Args("giveSlug", { type: () => String, nullable: true }) // Undefined when left out of the request.
+    giveSlug: string | null | undefined,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyTradeRecord> {
-    return this.swap.accept(communityId, user.id, offerId);
+    return this.swap.accept(communityId, user.id, offerId, giveSlug ?? null);
   }
 
   @AllowAnyAuthenticated()

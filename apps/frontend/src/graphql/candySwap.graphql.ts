@@ -62,7 +62,7 @@ export const PLACE_CANDY_OFFER = gql`
   mutation PlaceHalloweenCandyOffer(
     $communityId: ID!
     $candyIds: [Int!]!
-    $wantSlug: String!
+    $wantSlug: String
   ) {
     placeHalloweenCandyOffer(
       communityId: $communityId
@@ -82,8 +82,16 @@ export const PLACE_CANDY_OFFER = gql`
 `;
 
 export const ACCEPT_CANDY_OFFER = gql`
-  mutation AcceptHalloweenCandyOffer($communityId: ID!, $offerId: ID!) {
-    acceptHalloweenCandyOffer(communityId: $communityId, offerId: $offerId) {
+  mutation AcceptHalloweenCandyOffer(
+    $communityId: ID!
+    $offerId: ID!
+    $giveSlug: String
+  ) {
+    acceptHalloweenCandyOffer(
+      communityId: $communityId
+      offerId: $offerId
+      giveSlug: $giveSlug
+    ) {
       ...HalloweenCandyTradeFields
     }
   }

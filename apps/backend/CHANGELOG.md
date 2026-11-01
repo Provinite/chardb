@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Candy swap offers for any kind**: a null `wantSlug` takes any candy the offer does not give, picked by the taker with `giveSlug`, and auto-matches compatible one-for-one offers.
 - **Halloween board names take community-submitted words.**
 - **Halloween dashboard reports the last 24 hours and each reset day**: players, knocks, wins, gifties and gifty senders, plus unspent gifties.
 

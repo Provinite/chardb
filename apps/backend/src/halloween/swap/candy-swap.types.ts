@@ -9,15 +9,20 @@ registerEnumType(HalloweenCandyOfferStatus, {
 
 @ObjectType({
   description:
-    "1-3 candies offered for one candy of `wantSlug`. Whose an offer is " +
-    "is not told: players find out whom they traded with once they have.",
+    "1-3 candies offered for one candy of `wantSlug`, or of any kind. " +
+    "Whose an offer is is not told: players find out whom they traded " +
+    "with once they have.",
 })
 export class HalloweenCandyOffer {
   @Field(() => ID)
   id: string;
 
-  @Field({ description: "The kind of candy asked for, by its slug" })
-  wantSlug: string;
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "The kind of candy asked for, by its slug. Null when any kind will do.",
+  })
+  wantSlug: string | null;
 
   @Field(() => HalloweenCandyOfferStatus)
   status: HalloweenCandyOfferStatus;

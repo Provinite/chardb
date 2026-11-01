@@ -1746,7 +1746,7 @@ input HalloweenCandyLightingInput {
 }
 
 """
-1-3 candies offered for one candy of `wantSlug`. Whose an offer is is not told: players find out whom they traded with once they have.
+1-3 candies offered for one candy of `wantSlug`, or of any kind. Whose an offer is is not told: players find out whom they traded with once they have.
 """
 type HalloweenCandyOffer {
   """What is offered. Empty once the offer is no longer open."""
@@ -1755,8 +1755,8 @@ type HalloweenCandyOffer {
   id: ID!
   status: HalloweenCandyOfferStatus!
 
-  """The kind of candy asked for, by its slug"""
-  wantSlug: String!
+  """The kind of candy asked for, by its slug. Null when any kind will do."""
+  wantSlug: String
 }
 
 """
@@ -2748,9 +2748,9 @@ input MoveCharactersToFolderInput {
 
 type Mutation {
   """
-  Fill another player's open offer: one of your spare candies of the wanted kind, the oldest not on a board or else the oldest, for everything it offers.
+  Fill another player's open offer: one of your spare candies of the wanted kind, the oldest not on a board or else the oldest, for everything it offers. An offer for any kind needs `giveSlug`, a kind it does not give.
   """
-  acceptHalloweenCandyOffer(communityId: ID!, offerId: ID!): HalloweenCandyTradeRecord!
+  acceptHalloweenCandyOffer(communityId: ID!, giveSlug: String, offerId: ID!): HalloweenCandyTradeRecord!
 
   """
   Accept and settle. Items, characters and coin move in one transaction across all three ledgers, or the whole accept fails.
@@ -3033,9 +3033,9 @@ type Mutation {
   moveCharactersToFolder(input: MoveCharactersToFolderInput!): Int!
 
   """
-  Offer 1-3 of your candies, none of the wanted kind, for one candy of `wantSlug`. They are held until the offer is filled or cancelled. At most 10 open offers. A one-for-one offer that meets another player's mirror offer trades at once.
+  Offer 1-3 of your candies, none of the wanted kind, for one candy of `wantSlug`, or of any kind when it is null. They are held until the offer is filled or cancelled. At most 10 open offers. A one-for-one offer that meets a compatible one-for-one offer of another player's trades at once; two offers for any kind never meet.
   """
-  placeHalloweenCandyOffer(candyIds: [Int!]!, communityId: ID!, wantSlug: String!): HalloweenCandyOfferPlaced!
+  placeHalloweenCandyOffer(candyIds: [Int!]!, communityId: ID!, wantSlug: String): HalloweenCandyOfferPlaced!
 
   """
   Compose an offer. Nothing is reserved: what it names is checked now so you are told early, and checked again decisively at accept.
