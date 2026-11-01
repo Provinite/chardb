@@ -4481,6 +4481,11 @@ input RevertTraitReviewInput {
 
 """A role within a community that defines permissions for members"""
 type Role {
+  """
+  Whether open sign-up may give this role: true when it grants nothing beyond a member's own characters
+  """
+  allowedForOpenSignup: Boolean!
+
   """Whether members with this role can create new characters"""
   canCreateCharacter: Boolean!
 

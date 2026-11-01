@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Open sign-up**: `setCommunityOpenSignup` and `joinCommunity` mutations, and `signup` takes a `communityId` in place of an invite code when that community is open.
+- **Open sign-up**: `setCommunityOpenSignup` and `joinCommunity` mutations, and `signup` takes a `communityId` in place of an invite code when that community is open. Roles with staff permissions are refused.
 
 ## [v15.2.0] - 2026-11-01
 

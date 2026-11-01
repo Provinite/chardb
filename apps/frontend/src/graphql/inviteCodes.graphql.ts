@@ -163,6 +163,7 @@ export const ROLES_BY_COMMUNITY_QUERY = gql`
         id
         name
         canCreateInviteCode
+        allowedForOpenSignup
         community {
           id
           name

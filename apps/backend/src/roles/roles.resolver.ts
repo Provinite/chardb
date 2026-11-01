@@ -28,6 +28,7 @@ import { RemovalResponse } from "../shared/entities/removal-response.entity";
 import { Community } from "../communities/entities/community.entity";
 import { CommunitiesService } from "../communities/communities.service";
 import { mapPrismaCommunityToGraphQL } from "../communities/utils/community-resolver-mappers";
+import { hasStaffPermissions } from "../communities/open-signup-role";
 
 @Resolver(() => Role)
 export class RolesResolver {
@@ -157,5 +158,16 @@ export class RolesResolver {
       }
       throw error;
     }
+  }
+
+  @AllowUnauthenticated()
+  // Not `can...`: the frontend treats every `can*` field on Role as a
+  // permission to edit.
+  @ResolveField("allowedForOpenSignup", () => Boolean, {
+    description:
+      "Whether open sign-up may give this role: true when it grants nothing beyond a member's own characters",
+  })
+  resolveAllowedForOpenSignup(@Parent() role: Role): boolean {
+    return !hasStaffPermissions(role);
   }
 }

@@ -7,6 +7,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
+import { hasStaffPermissions } from "./open-signup-role";
 
 /**
  * Service layer input types for communities operations.
@@ -223,10 +224,14 @@ export class CommunitiesService {
     if (roleId) {
       const role = await this.prisma.role.findUnique({
         where: { id: roleId },
-        select: { communityId: true },
       });
       if (role?.communityId !== communityId) {
         throw new BadRequestException("The role must belong to this community");
+      }
+      if (hasStaffPermissions(role)) {
+        throw new BadRequestException(
+          "Open sign-up cannot give a role with staff permissions",
+        );
       }
     }
     return this.prisma.community.update({
@@ -241,9 +246,13 @@ export class CommunitiesService {
       return await this.prisma.$transaction(async (tx) => {
         const community = await tx.community.findUnique({
           where: { id: communityId },
-          select: { openSignupRoleId: true },
+          select: { openSignupRoleId: true, openSignupRole: true },
         });
-        if (!community?.openSignupRoleId) {
+        if (
+          !community?.openSignupRoleId ||
+          !community.openSignupRole ||
+          hasStaffPermissions(community.openSignupRole)
+        ) {
           throw new BadRequestException(
             "This community requires an invite code",
           );

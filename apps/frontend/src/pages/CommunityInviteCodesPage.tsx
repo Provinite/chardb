@@ -655,6 +655,7 @@ export function CommunityInviteCodesPage() {
 
   const inviteCodes = data?.inviteCodes?.nodes || [];
   const roles = rolesData?.rolesByCommunity?.nodes || [];
+  const openSignupRoles = roles.filter((r) => r.allowedForOpenSignup);
   const communityName = roles[0]?.community?.name || `Community ${communityId}`;
 
   return (
@@ -674,9 +675,15 @@ export function CommunityInviteCodesPage() {
         </CreateButton>
       </Header>
 
+      {/* A role that has gained a staff permission since it was chosen no
+          longer lets anyone in, so the setting shows sign-up as closed. */}
       <OpenSignupSetting
-        roles={roles}
-        roleId={hostCommunity?.openSignupRoleId ?? null}
+        roles={openSignupRoles}
+        roleId={
+          openSignupRoles.some((r) => r.id === hostCommunity?.openSignupRoleId)
+            ? (hostCommunity?.openSignupRoleId ?? null)
+            : null
+        }
         disabled={!canSetOpenSignup || savingOpenSignup}
         onChange={(roleId) => void changeOpenSignup(roleId)}
       />

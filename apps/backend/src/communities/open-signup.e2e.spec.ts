@@ -334,4 +334,127 @@ describe("Community open sign-up (e2e)", () => {
       expect(community.openSignupRoleId).toBeNull();
     });
   });
+
+  /**
+   * Whoever joins gets the role at once, with no one looking, so it may only
+   * carry permissions over a member's own things.
+   */
+  describe("roles with staff permissions", () => {
+    let moderatorRoleId: string;
+
+    beforeEach(async () => {
+      moderatorRoleId = (
+        await testApp.getDb().role.create({
+          data: {
+            name: "Moderator",
+            communityId,
+            canCreateCharacter: true,
+            canModerateImages: true,
+          },
+        })
+      ).id;
+    });
+
+    it("cannot be chosen", async () => {
+      const token = await staffToken({ canCreateInviteCode: true });
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        SET_OPEN_SIGNUP,
+        { communityId, roleId: moderatorRoleId },
+        token,
+      );
+
+      expect(response.body.errors?.[0].message).toBe(
+        "Open sign-up cannot give a role with staff permissions",
+      );
+      const community = await testApp
+        .getDb()
+        .community.findUniqueOrThrow({ where: { id: communityId } });
+      expect(community.openSignupRoleId).toBeNull();
+    });
+
+    it("are marked on the role, so a picker can leave them out", async () => {
+      const token = await staffToken({ canCreateInviteCode: true });
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        `query roles($communityId: ID!) {
+          rolesByCommunity(communityId: $communityId) {
+            nodes { name allowedForOpenSignup }
+          }
+        }`,
+        { communityId },
+        token,
+      );
+
+      expect(response.body.errors).toBeUndefined();
+      const byName = Object.fromEntries(
+        response.body.data.rolesByCommunity.nodes.map(
+          (r: { name: string; allowedForOpenSignup: boolean }) => [
+            r.name,
+            r.allowedForOpenSignup,
+          ],
+        ),
+      );
+      expect(byName).toEqual({ Member: true, Moderator: false, Staff: false });
+    });
+
+    it("can be chosen with only a member's own permissions", async () => {
+      const token = await staffToken({ canCreateInviteCode: true });
+      const ownOnly = await testApp.getDb().role.create({
+        data: {
+          name: "Artist",
+          communityId,
+          canCreateCharacter: true,
+          canEditOwnCharacter: true,
+          canEditOwnCharacterRegistry: true,
+          canUploadOwnCharacterImages: true,
+        },
+      });
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        SET_OPEN_SIGNUP,
+        { communityId, roleId: ownOnly.id },
+        token,
+      );
+
+      expect(response.body.errors).toBeUndefined();
+    });
+
+    // The role can gain a permission after it was chosen. Joining checks it
+    // again, so that edit never reaches anybody who joins afterwards.
+    it("refuses signup once the chosen role gains one", async () => {
+      await openSignup(moderatorRoleId);
+
+      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input: signupInput({ communityId }),
+      });
+
+      expect(response.body.errors?.[0].message).toBe(
+        "This community requires an invite code",
+      );
+      const user = await testApp
+        .getDb()
+        .user.findUnique({ where: { email: "newcomer@example.com" } });
+      expect(user).toBeNull();
+    });
+
+    it("refuses joining once the chosen role gains one", async () => {
+      await openSignup(moderatorRoleId);
+      const user = await testApp.createTestUser({
+        username: "outsider",
+        email: "outsider@example.com",
+      });
+      const token = await testApp.generateTestToken(user.id, user.username);
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        JOIN_COMMUNITY,
+        { communityId },
+        token,
+      );
+
+      expect(response.body.errors?.[0].message).toBe(
+        "This community requires an invite code",
+      );
+    });
+  });
 });
