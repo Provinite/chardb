@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Menu as MenuIcon } from "lucide-react";
-import { Cluster } from "@chardb/ui";
+import { Cluster, IconButton } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { useTheme } from "../contexts/ThemeContext";
@@ -43,15 +43,14 @@ export const Header = forwardRef<HTMLElement, HeaderProps>(function Header(
     <header ref={ref} className={styles.header}>
       <Cluster justify="space-between" gap="xs" className={styles.row}>
         <Cluster gap="xs">
-          <button
-            type="button"
-            className={styles.menuButton}
-            aria-label="Open navigation"
-            aria-expanded={navigationOpen}
-            onClick={onOpenNavigation}
-          >
-            <MenuIcon size={24} aria-hidden />
-          </button>
+          <span className={styles.menuSlot}>
+            <IconButton
+              label="Open navigation"
+              icon={<MenuIcon size={24} aria-hidden />}
+              aria-expanded={navigationOpen}
+              onClick={onOpenNavigation}
+            />
+          </span>
           <Link to="/" className={styles.logo}>
             CharDB
           </Link>

@@ -49,7 +49,8 @@ export const touchHitArea = {
   },
 } as const;
 
-const root = style({
+/** What every button shares, labelled or icon-only. */
+export const control = style({
   position: "relative",
   display: "inline-flex",
   alignItems: "center",
@@ -83,43 +84,46 @@ const root = style({
   },
 });
 
-export const button = recipe({
-  base: [focusRing, root],
-  variants: {
-    tone: {
-      primary: filled(vars.action.primary),
-      secondary: filled(vars.action.secondary),
-      danger: filled(vars.action.danger),
-      outline: {
-        backgroundColor: "transparent",
-        color: vars.action.primary.fgOutline,
-        borderColor: vars.action.primary.border,
-        selectors: {
-          [`&:active${live}`]: {
-            backgroundColor: vars.action.primary.bgPressed,
-            borderColor: vars.action.primary.bgPressed,
-            color: vars.action.primary.fg,
-          },
-        },
-        "@media": hover({
-          [`&:hover${live}`]: {
-            backgroundColor: vars.action.primary.bgHover,
-            borderColor: vars.action.primary.bgHover,
-            color: vars.action.primary.fg,
-          },
-        }),
-      },
-      ghost: {
-        backgroundColor: "transparent",
-        color: vars.text.default,
-        selectors: {
-          [`&:active${live}`]: { backgroundColor: vars.surface.sunken },
-        },
-        "@media": hover({
-          [`&:hover${live}`]: { backgroundColor: vars.surface.raisedHover },
-        }),
+/** The tones, shared by `Button` and `IconButton`. */
+export const tones = {
+  primary: filled(vars.action.primary),
+  secondary: filled(vars.action.secondary),
+  danger: filled(vars.action.danger),
+  outline: {
+    backgroundColor: "transparent",
+    color: vars.action.primary.fgOutline,
+    borderColor: vars.action.primary.border,
+    selectors: {
+      [`&:active${live}`]: {
+        backgroundColor: vars.action.primary.bgPressed,
+        borderColor: vars.action.primary.bgPressed,
+        color: vars.action.primary.fg,
       },
     },
+    "@media": hover({
+      [`&:hover${live}`]: {
+        backgroundColor: vars.action.primary.bgHover,
+        borderColor: vars.action.primary.bgHover,
+        color: vars.action.primary.fg,
+      },
+    }),
+  },
+  ghost: {
+    backgroundColor: "transparent",
+    color: vars.text.default,
+    selectors: {
+      [`&:active${live}`]: { backgroundColor: vars.surface.sunken },
+    },
+    "@media": hover({
+      [`&:hover${live}`]: { backgroundColor: vars.surface.raisedHover },
+    }),
+  },
+};
+
+export const button = recipe({
+  base: [focusRing, control],
+  variants: {
+    tone: tones,
     size: {
       sm: {
         minBlockSize: vars.size.target.min,
@@ -146,7 +150,7 @@ export const label = style({
   alignItems: "center",
   gap: vars.space.xs,
   selectors: {
-    [`${root}[aria-busy="true"] &`]: { visibility: "hidden" },
+    [`${control}[aria-busy="true"] &`]: { visibility: "hidden" },
   },
 });
 

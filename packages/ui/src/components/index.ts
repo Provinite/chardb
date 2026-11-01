@@ -1,5 +1,6 @@
 export * from "./Avatar";
 export * from "./Button";
+export * from "./IconButton";
 export * from "./Spinner";
 export * from "./TagInput";
 export * from "./UserTypeahead";

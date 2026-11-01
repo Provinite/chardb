@@ -1,5 +1,5 @@
 import { style } from "@vanilla-extract/css";
-import { focusRing, hover, mq, vars } from "@chardb/ui/theme";
+import { mq, vars } from "@chardb/ui/theme";
 
 const slide = `${vars.motion.duration.normal} ${vars.motion.easing.standard}`;
 
@@ -89,26 +89,6 @@ export const closeRow = style({
     [mq("md")]: { display: "none" },
   },
 });
-
-export const closeButton = style([
-  focusRing,
-  {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    minInlineSize: vars.size.target.comfortable,
-    minBlockSize: vars.size.target.comfortable,
-    padding: 0,
-    border: 0,
-    borderRadius: vars.radius.md,
-    background: "transparent",
-    color: vars.text.muted,
-    cursor: "pointer",
-    "@media": hover({
-      "&:hover": { background: vars.surface.raised, color: vars.text.default },
-    }),
-  },
-]);
 
 /** The sidebar inside, filling the rest of the panel's height. */
 export const body = style({

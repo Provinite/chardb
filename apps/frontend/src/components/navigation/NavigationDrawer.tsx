@@ -1,5 +1,6 @@
 import React, { useEffect, useLayoutEffect, useRef } from "react";
 import { X } from "lucide-react";
+import { IconButton } from "@chardb/ui";
 import * as styles from "./NavigationDrawer.css";
 
 interface NavigationDrawerProps {
@@ -106,15 +107,12 @@ export const NavigationDrawer: React.FC<NavigationDrawerProps> = ({
         }}
       >
         <div className={styles.closeRow}>
-          <button
+          <IconButton
             ref={closeRef}
-            type="button"
-            className={styles.closeButton}
-            aria-label="Close navigation"
+            label="Close navigation"
+            icon={<X size={20} aria-hidden />}
             onClick={onClose}
-          >
-            <X size={20} aria-hidden />
-          </button>
+          />
         </div>
         <div className={styles.body}>{children}</div>
       </div>

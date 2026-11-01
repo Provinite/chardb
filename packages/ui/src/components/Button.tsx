@@ -1,6 +1,6 @@
 import React, { Children, cloneElement, forwardRef } from "react";
-import { useLoaderVisible } from "../hooks/useLoaderVisible";
 import * as styles from "./Button.css";
+import { useBusyPress } from "./busyPress";
 import { Spinner } from "./Spinner";
 
 export type ButtonTone =
@@ -37,12 +37,8 @@ const join = (...classes: (string | undefined)[]) =>
 
 /**
  * A button: something that does something. For a control that goes to a
- * page, use `ButtonLink` around the app's own link.
- *
- * Busy, it stays focusable and uses `aria-disabled` rather than `disabled`,
- * which would drop keyboard focus to the page. Every press reaches a button
- * as a click, Enter in a form field included, so cancelling the click is what
- * blocks it. Busy wins over `disabled`, so the spinner can show.
+ * page, use `ButtonLink` around the app's own link. Busy, it stays focusable;
+ * see `useBusyPress`.
  *
  * Forwards its ref so callers can move focus to a particular button, such as
  * Cancel in a confirm dialog.
@@ -63,33 +59,21 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     },
     ref,
   ) {
-    const spinnerShown = useLoaderVisible(busy);
-    // Held for the spinner's minimum time too: a press on a button still
-    // showing a spinner would read as a second submit.
-    const blocked = busy || spinnerShown;
+    const press = useBusyPress({ busy, disabled, onClick });
 
     return (
       <button
         {...rest}
+        {...press.props}
         ref={ref}
         type={type}
         className={join(styles.button({ tone, size }), className)}
-        disabled={disabled && !blocked}
-        aria-disabled={blocked || undefined}
-        aria-busy={spinnerShown || undefined}
-        onClick={(e) => {
-          if (blocked) {
-            e.preventDefault();
-            return;
-          }
-          onClick?.(e);
-        }}
       >
         <span className={styles.label}>
           {icon}
           {children}
         </span>
-        {spinnerShown && (
+        {press.spinnerShown && (
           <span className={styles.spinnerSlot}>
             <Spinner />
           </span>
