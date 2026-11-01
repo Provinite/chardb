@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.0.0] - 2026-10-31
+
 ### Added
 
 - **Owners can give a character to its community** from the character page's actions menu, after typing its name (#521).

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.0.0] - 2026-10-31
+
 ### Added
 
 - **Styling conventions** for the vanilla-extract migration in `apps/frontend/STYLING.md`, with agent rules in `apps/frontend/CLAUDE.md` (#427).
