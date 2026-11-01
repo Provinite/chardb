@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.2.0] - 2026-11-01
+
 ### Added
 
 - **Candy swap offers for any kind**: a null `wantSlug` takes any candy the offer does not give, picked by the taker with `giveSlug`, and auto-matches compatible one-for-one offers.
