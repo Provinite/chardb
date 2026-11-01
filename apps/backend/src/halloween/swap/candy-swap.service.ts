@@ -155,11 +155,27 @@ export class CandySwapService {
       WHERE o."guild_id" = ${guildId}
         AND o."status" = 'OPEN'
         AND o."owner_id" <> ${userId}
-        AND o."want_slug" IN (
-          SELECT c."slug" FROM "halloween_candies" c
-          WHERE c."guild_id" = ${guildId}
-            AND c."owner_id" = ${userId}
-            AND c."offer_id" IS NULL
+        AND (
+          o."want_slug" IN (
+            SELECT c."slug" FROM "halloween_candies" c
+            WHERE c."guild_id" = ${guildId}
+              AND c."owner_id" = ${userId}
+              AND c."offer_id" IS NULL
+          )
+          -- One for any kind, given a spare of a kind it does not give.
+          OR (
+            o."want_slug" IS NULL
+            AND EXISTS (
+              SELECT 1 FROM "halloween_candies" c
+              WHERE c."guild_id" = ${guildId}
+                AND c."owner_id" = ${userId}
+                AND c."offer_id" IS NULL
+                AND c."slug" NOT IN (
+                  SELECT oc."slug" FROM "halloween_candies" oc
+                  WHERE oc."offer_id" = o."id"
+                )
+            )
+          )
         )
       ORDER BY random()
       LIMIT ${take}
@@ -194,20 +210,21 @@ export class CandySwapService {
   }
 
   /**
-   * Holds the given candies in a new offer for one candy of `wantSlug`. A
-   * one-for-one offer that meets its mirror trades straight away.
+   * Holds the given candies in a new offer for one candy of `wantSlug`, or
+   * of any kind when it is null. A one-for-one offer that meets a compatible
+   * one trades straight away.
    */
   async place(
     communityId: string,
     userId: string,
     candyIds: number[],
-    wantSlug: string,
+    wantSlug: string | null,
   ): Promise<HalloweenCandyOfferPlaced> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
     if (candyIds.length < 1 || candyIds.length > MAX_OFFERED_CANDIES) {
       throw new BadRequestException("An offer is one to three of your candies");
     }
-    if (!CANDY_SLUGS.includes(wantSlug)) {
+    if (wantSlug !== null && !CANDY_SLUGS.includes(wantSlug)) {
       throw new BadRequestException("There is no such candy");
     }
 
@@ -307,12 +324,14 @@ export class CandySwapService {
   /**
    * Fills another player's open offer: one of the player's spare candies of
    * the wanted kind -- the oldest not on a board, else the oldest -- for
-   * everything it offers.
+   * everything it offers. An offer for any kind is paid in `giveSlug`, which
+   * must not be a kind it gives.
    */
   async accept(
     communityId: string,
     userId: string,
     offerId: string,
+    giveSlug: string | null = null,
   ): Promise<HalloweenCandyTradeRecord> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
     if (!isUuid(offerId)) {
@@ -332,12 +351,13 @@ export class CandySwapService {
       if (offer.ownerId === userId) {
         throw new BadRequestException("You cannot accept your own offer");
       }
+      const kind = paymentKind(offer, giveSlug);
       const spares = await tx.halloweenCandy.findMany({
         where: {
           guildId,
           ownerId: userId,
           offerId: null,
-          slug: offer.wantSlug,
+          slug: kind,
         },
         orderBy: [{ receivedAt: "asc" }, { id: "asc" }],
         select: { id: true, slug: true },
@@ -405,33 +425,46 @@ export class CandySwapService {
   }
 
   /**
-   * Another player's open one-for-one offer that gives `wantSlug` for
-   * `giveSlug`, picked at random and locked. One being filled or cancelled
-   * by someone else right now is passed over rather than waited for.
+   * Another player's open one-for-one offer that the player's one-for-one
+   * offer of `giveSlug` for `wantSlug` fills, picked at random and locked:
+   * one that asks for `giveSlug` and gives `wantSlug`, or gives `wantSlug`
+   * for any kind, or -- when `wantSlug` is null -- asks for `giveSlug` and
+   * gives anything. Two offers for any kind never meet. One being filled or
+   * cancelled by someone else right now is passed over rather than waited
+   * for.
    */
   private async findMirror(
     tx: Prisma.TransactionClient,
     guildId: string,
     userId: string,
     giveSlug: string,
-    wantSlug: string,
+    wantSlug: string | null,
   ): Promise<{
     offerId: string;
     ownerId: string;
     candy: { id: number; slug: string };
   } | null> {
+    const asks =
+      wantSlug === null
+        ? Prisma.sql`o."want_slug" = ${giveSlug}`
+        : Prisma.sql`(o."want_slug" = ${giveSlug} OR o."want_slug" IS NULL)`;
+    const gives =
+      wantSlug === null
+        ? Prisma.empty
+        : Prisma.sql`AND MIN(c."slug") = ${wantSlug}`;
     const candidates = await tx.$queryRaw<
-      { offerId: string; ownerId: string; candyId: number }[]
+      { offerId: string; ownerId: string; candyId: number; slug: string }[]
     >`
-      SELECT o."id" AS "offerId", o."owner_id" AS "ownerId", MIN(c."id") AS "candyId"
+      SELECT o."id" AS "offerId", o."owner_id" AS "ownerId",
+        MIN(c."id") AS "candyId", MIN(c."slug") AS "slug"
       FROM "halloween_candy_offers" o
       JOIN "halloween_candies" c ON c."offer_id" = o."id"
       WHERE o."guild_id" = ${guildId}
         AND o."status" = 'OPEN'
-        AND o."want_slug" = ${giveSlug}
+        AND ${asks}
         AND o."owner_id" <> ${userId}
       GROUP BY o."id", o."owner_id"
-      HAVING COUNT(*) = 1 AND MIN(c."slug") = ${wantSlug}
+      HAVING COUNT(*) = 1 ${gives}
       ORDER BY random()
     `;
     // A grouped query cannot take FOR UPDATE, so each candidate is locked on
@@ -446,7 +479,7 @@ export class CandySwapService {
         return {
           offerId: candidate.offerId,
           ownerId: candidate.ownerId,
-          candy: { id: candidate.candyId, slug: wantSlug },
+          candy: { id: candidate.candyId, slug: candidate.slug },
         };
       }
     }
@@ -583,6 +616,31 @@ export class CandySwapService {
       include: tradeInclude,
     });
   }
+}
+
+/**
+ * The kind of candy that fills `offer`: the kind it asks for, or for an
+ * offer for any kind, the taker's pick of one it does not give.
+ */
+function paymentKind(
+  offer: { wantSlug: string | null; candies: { slug: string }[] },
+  giveSlug: string | null,
+): string {
+  if (offer.wantSlug !== null) {
+    if (giveSlug !== null && giveSlug !== offer.wantSlug) {
+      throw new BadRequestException("This offer asks for a different candy");
+    }
+    return offer.wantSlug;
+  }
+  if (giveSlug === null) {
+    throw new BadRequestException("Choose a candy to give for this offer");
+  }
+  if (offer.candies.some((c) => c.slug === giveSlug)) {
+    throw new BadRequestException(
+      "You cannot give a kind of candy this offer gives",
+    );
+  }
+  return giveSlug;
 }
 
 function toOffer(offer: OfferRow): HalloweenCandyOffer {

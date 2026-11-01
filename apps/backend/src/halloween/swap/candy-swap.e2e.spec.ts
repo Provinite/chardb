@@ -19,7 +19,7 @@ const TRADE_FIELDS = `
 `;
 
 const PLACE = `
-  mutation Place($communityId: ID!, $candyIds: [Int!]!, $wantSlug: String!) {
+  mutation Place($communityId: ID!, $candyIds: [Int!]!, $wantSlug: String) {
     placeHalloweenCandyOffer(communityId: $communityId, candyIds: $candyIds, wantSlug: $wantSlug) {
       offer { ${OFFER_FIELDS} }
       trade { ${TRADE_FIELDS} }
@@ -28,8 +28,8 @@ const PLACE = `
 `;
 
 const ACCEPT = `
-  mutation Accept($communityId: ID!, $offerId: ID!) {
-    acceptHalloweenCandyOffer(communityId: $communityId, offerId: $offerId) {
+  mutation Accept($communityId: ID!, $offerId: ID!, $giveSlug: String) {
+    acceptHalloweenCandyOffer(communityId: $communityId, offerId: $offerId, giveSlug: $giveSlug) {
       ${TRADE_FIELDS}
     }
   }
@@ -156,10 +156,18 @@ describe("Halloween candy swap (e2e)", () => {
       who.token,
     );
 
-  const place = (who: Player, candyIds: number[], wantSlug: string) =>
+  const place = (
+    who: Player,
+    candyIds: number[],
+    wantSlug: string | null,
+  ) =>
     gql(PLACE, { candyIds, wantSlug }, who);
 
-  const placed = async (who: Player, candyIds: number[], wantSlug: string) => {
+  const placed = async (
+    who: Player,
+    candyIds: number[],
+    wantSlug: string | null,
+  ) => {
     const res = await place(who, candyIds, wantSlug);
     expect(res.body.errors).toBeUndefined();
     return res.body.data.placeHalloweenCandyOffer as {
@@ -612,6 +620,198 @@ describe("Halloween candy swap (e2e)", () => {
 
       const { trade } = await placed(bob, [banana.id], "candy-corn");
 
+      expect(trade).toBeNull();
+    });
+  });
+
+  describe("offers for anything", () => {
+    it("asks for no kind in particular", async () => {
+      const corn = await candy(alice, "candy-corn");
+      const { offer } = await placed(alice, [corn.id], null);
+
+      const mine = await gql(MY_OFFERS, {}, alice);
+      expect(mine.body.data.myHalloweenCandyOffers).toEqual([
+        {
+          id: offer.id,
+          wantSlug: null,
+          status: "OPEN",
+          candies: [{ id: corn.id, slug: "candy-corn" }],
+        },
+      ]);
+    });
+
+    it("shows to players holding a spare candy of a kind it does not give", async () => {
+      const { offer } = await placed(
+        alice,
+        [(await candy(alice, "candy-corn")).id],
+        null,
+      );
+      await candy(bob, "banana");
+      // Carol's only spare is the kind the offer gives.
+      await candy(carol, "candy-corn");
+
+      const bobs = await gql(BROWSE, {}, bob);
+      expect(bobs.body.data.halloweenCandySwapOffers).toEqual([
+        expect.objectContaining({ id: offer.id, wantSlug: null }),
+      ]);
+      const carols = await gql(BROWSE, {}, carol);
+      expect(carols.body.data.halloweenCandySwapOffers).toEqual([]);
+    });
+
+    it("is filled with the kind the taker picks", async () => {
+      const corn = await candy(alice, "candy-corn");
+      const { offer } = await placed(alice, [corn.id], null);
+      const banana = await candy(bob, "banana");
+      const tart = await candy(bob, "berry-tart");
+
+      const res = await gql(
+        ACCEPT,
+        { offerId: offer.id, giveSlug: "berry-tart" },
+        bob,
+      );
+
+      expect(res.body.errors).toBeUndefined();
+      expect(res.body.data.acceptHalloweenCandyOffer).toMatchObject({
+        gave: ["berry-tart"],
+        received: ["candy-corn"],
+      });
+      expect(await ownerOf(tart.id)).toBe(alice.id);
+      expect(await ownerOf(banana.id)).toBe(bob.id);
+      expect(await ownerOf(corn.id)).toBe(bob.id);
+    });
+
+    it("needs the taker to pick a kind", async () => {
+      const { offer } = await placed(
+        alice,
+        [(await candy(alice, "candy-corn")).id],
+        null,
+      );
+      await candy(bob, "banana");
+      expect(error(await gql(ACCEPT, { offerId: offer.id }, bob))).toBe(
+        "Choose a candy to give for this offer",
+      );
+    });
+
+    it("refuses a kind the offer gives", async () => {
+      const { offer } = await placed(
+        alice,
+        [(await candy(alice, "candy-corn")).id],
+        null,
+      );
+      await candy(bob, "candy-corn");
+      expect(
+        error(
+          await gql(
+            ACCEPT,
+            { offerId: offer.id, giveSlug: "candy-corn" },
+            bob,
+          ),
+        ),
+      ).toBe("You cannot give a kind of candy this offer gives");
+    });
+
+    it("refuses a kind the taker has no spare of", async () => {
+      const { offer } = await placed(
+        alice,
+        [(await candy(alice, "candy-corn")).id],
+        null,
+      );
+      await candy(bob, "banana");
+      expect(
+        error(
+          await gql(
+            ACCEPT,
+            { offerId: offer.id, giveSlug: "berry-tart" },
+            bob,
+          ),
+        ),
+      ).toBe("You have no spare candy of the kind this offer asks for");
+    });
+
+    it("does not let the taker pick a kind other than the one asked for", async () => {
+      const { offer } = await placed(
+        alice,
+        [(await candy(alice, "candy-corn")).id],
+        "banana",
+      );
+      await candy(bob, "banana");
+      await candy(bob, "berry-tart");
+      expect(
+        error(
+          await gql(
+            ACCEPT,
+            { offerId: offer.id, giveSlug: "berry-tart" },
+            bob,
+          ),
+        ),
+      ).toBe("This offer asks for a different candy");
+    });
+
+    it("is filled straight away by a one-for-one offer for what it gives", async () => {
+      const corn = await candy(alice, "candy-corn");
+      const first = await placed(alice, [corn.id], null);
+      const banana = await candy(bob, "banana");
+
+      const { offer, trade } = await placed(bob, [banana.id], "candy-corn");
+
+      expect(offer.status).toBe("FILLED");
+      expect(trade).toMatchObject({
+        with: { username: alice.username },
+        gave: ["banana"],
+        received: ["candy-corn"],
+      });
+      expect(
+        await db.halloweenCandyOffer.findUniqueOrThrow({
+          where: { id: first.offer.id },
+        }),
+      ).toMatchObject({ status: "FILLED" });
+    });
+
+    it("fills a one-for-one offer asking for what it gives straight away", async () => {
+      const banana = await candy(bob, "banana");
+      await placed(bob, [banana.id], "candy-corn");
+      const corn = await candy(alice, "candy-corn");
+
+      const { offer, trade } = await placed(alice, [corn.id], null);
+
+      expect(offer.status).toBe("FILLED");
+      expect(trade).toMatchObject({
+        with: { username: bob.username },
+        gave: ["candy-corn"],
+        received: ["banana"],
+      });
+    });
+
+    it("does not match another offer for anything", async () => {
+      await placed(alice, [(await candy(alice, "candy-corn")).id], null);
+      const { trade } = await placed(
+        bob,
+        [(await candy(bob, "banana")).id],
+        null,
+      );
+      expect(trade).toBeNull();
+    });
+
+    it("does not match when giving a bundle", async () => {
+      await placed(bob, [(await candy(bob, "banana")).id], "candy-corn");
+      const { trade } = await placed(
+        alice,
+        [
+          (await candy(alice, "candy-corn")).id,
+          (await candy(alice, "berry-tart")).id,
+        ],
+        null,
+      );
+      expect(trade).toBeNull();
+    });
+
+    it("is not matched by a one-for-one offer for something it does not give", async () => {
+      await placed(alice, [(await candy(alice, "candy-corn")).id], null);
+      const { trade } = await placed(
+        bob,
+        [(await candy(bob, "banana")).id],
+        "berry-tart",
+      );
       expect(trade).toBeNull();
     });
   });
