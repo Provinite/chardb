@@ -2,11 +2,7 @@
  * A candy board's name: a first word, any joiner and a last word.
  */
 import { describe, it, expect } from "vitest";
-import {
-  BOARD_NAME_WORDS,
-  formatBoardName,
-  shuffledName,
-} from "../boardName";
+import { BOARD_NAME_WORDS, formatBoardName, shuffledName } from "../boardName";
 
 const words = {
   first: ["Spooky", "Moonlit", "Golden"],
