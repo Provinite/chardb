@@ -651,12 +651,10 @@ describe("CharactersResolver (e2e)", () => {
 
     it("refuses a deleted character", async () => {
       const characterId = await createOwned();
-      await testApp
-        .getDb()
-        .character.update({
-          where: { id: characterId },
-          data: { deletedAt: new Date() },
-        });
+      await testApp.getDb().character.update({
+        where: { id: characterId },
+        data: { deletedAt: new Date() },
+      });
 
       const response = await testApp.authenticatedGraphqlRequest(
         GIVE,

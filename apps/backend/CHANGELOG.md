@@ -7,7 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`giveCharacterToCommunity`** lets an owner leave their character with no owner, making it public and recording the change, so it can go in a prize pool (#521).
+
 ### Changed
+
+- **`CharacterOwnershipChange.toUserId` and `toUser` are nullable**: null records a character given to its community. Staff orphaning a character now records a change too (#521).
 
 - **`externalMembers` counts in the database** and loads one row per holder, their newest, instead of every waiting row of everyone on the page (#445).
 - **Traces leave out a span per GraphQL field and per DataLoader load unless `DEBUG_TRACE_LEVEL=full`**: a 100-row ledger request went from about 448 to 289 CPU-ms.

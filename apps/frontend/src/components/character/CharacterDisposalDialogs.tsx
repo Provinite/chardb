@@ -2,8 +2,9 @@ import React from "react";
 import { ConfirmDialog } from "../ConfirmDialog";
 
 /**
- * The two staff disposal confirmations, shared by the character page and the
- * trait review queue so their wording and safeguards cannot drift apart.
+ * The confirmations for actions that take a character out of someone's hands.
+ * The staff ones are shared by the character page and the trait review queue
+ * so their wording and safeguards cannot drift apart.
  */
 
 interface DisposalDialogProps {
@@ -56,5 +57,30 @@ export const RemoveFromSpeciesDialog: React.FC<
   >
     Its trait values become plain custom fields, and it leaves the species and
     the community. There is no undo.
+  </ConfirmDialog>
+);
+
+/**
+ * The owner's own: getting it back takes staff choosing to hand it over, so
+ * the name has to be typed.
+ */
+export const GiveToCommunityDialog: React.FC<
+  DisposalDialogProps & { communityName: string }
+> = ({ open, characterName, communityName, busy, onConfirm, onCancel }) => (
+  <ConfirmDialog
+    open={open}
+    title={`Give "${characterName}" to ${communityName}?`}
+    confirmLabel="Give"
+    busyLabel="Giving…"
+    busy={busy}
+    destructive
+    confirmPhrase={characterName}
+    onCancel={onCancel}
+    onConfirm={onConfirm}
+    testId="give-to-community-dialog"
+  >
+    It stops being yours and becomes a community character, which staff can give
+    out or offer as a prize. It is made public, and you can no longer edit it.
+    There is no undo.
   </ConfirmDialog>
 );

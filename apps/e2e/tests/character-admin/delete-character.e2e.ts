@@ -23,7 +23,7 @@ test("deleting a character removes it everywhere", async ({ page, world }) => {
   await page.goto(character.url);
 
   await (
-    await openMenuItem(page, "character-staff-menu", "Delete Character")
+    await openMenuItem(page, "character-actions-menu", "Delete Character")
   ).click();
   const dialog = page.getByTestId("delete-character-dialog");
   await expect(dialog).toContainText(character.name);
@@ -56,7 +56,7 @@ test("cancelling the confirm leaves the character alone", async ({
   await page.goto(character.url);
 
   await (
-    await openMenuItem(page, "character-staff-menu", "Delete Character")
+    await openMenuItem(page, "character-actions-menu", "Delete Character")
   ).click();
   await page
     .getByTestId("delete-character-dialog")

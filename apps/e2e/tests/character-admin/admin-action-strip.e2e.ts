@@ -4,7 +4,6 @@ import type { Page } from "@playwright/test";
 const test = presetTest("community-basic");
 
 const strip = (page: Page) => page.getByTestId("character-actions");
-const staffMenu = (page: Page) => page.getByTestId("character-staff-menu");
 
 test.describe("moderator with canDeleteCharacter", () => {
   test.use({ persona: "moderator" });
@@ -27,7 +26,7 @@ test.describe("moderator with canDeleteCharacter", () => {
     ).toHaveCount(0);
 
     await expect(
-      await openMenuItem(page, "character-staff-menu", "Remove from Species"),
+      await openMenuItem(page, "character-actions-menu", "Remove from Species"),
     ).toBeVisible();
     const group = page.getByRole("group", { name: "Staff actions" });
     await expect(
@@ -58,17 +57,25 @@ test.describe("plain member", () => {
     await expect(strip(page)).toHaveCount(0);
   });
 
-  test("sees only Edit on their own character", async ({ page, world }) => {
+  test("sees Edit and only owner actions on their own character", async ({
+    page,
+    world,
+  }) => {
     // Pins a genuine subtlety: the Member role has canEditOwnCharacter, so an
     // owner DOES see the action strip. What they must never see is the staff
-    // menu. Written explicitly so nobody "simplifies" the hidden-strip test
+    // actions. Written explicitly so nobody "simplifies" the hidden-strip test
     // onto an owned character.
     await page.goto(world.characters.pending.url);
 
     await expect(
       strip(page).getByRole("button", { name: "Edit Character" }),
     ).toBeVisible();
-    await expect(staffMenu(page)).toHaveCount(0);
+    await expect(
+      await openMenuItem(page, "character-actions-menu", "Give to Community"),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("group", { name: "Staff actions" }),
+    ).toHaveCount(0);
     // The strip used to be labelled "Admin", over the owner's own button.
     await expect(strip(page)).not.toContainText("Admin");
   });

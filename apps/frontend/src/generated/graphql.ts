@@ -254,7 +254,7 @@ export type CharacterFormsChangeInput = {
   updateForms?: InputMaybe<Array<UpdateCharacterFormInput>>;
 };
 
-/** A record of character ownership transfer between users */
+/** A record of a character changing hands: created for a user, moved between users, or given to its community */
 export type CharacterOwnershipChange = {
   __typename?: 'CharacterOwnershipChange';
   character: Maybe<Character>;
@@ -267,9 +267,9 @@ export type CharacterOwnershipChange = {
   fromUserId: Maybe<Scalars['ID']['output']>;
   /** Unique identifier for the ownership change record */
   id: Scalars['ID']['output'];
-  toUser: User;
-  /** The ID of the new owner */
-  toUserId: Scalars['ID']['output'];
+  toUser: Maybe<User>;
+  /** The ID of the new owner (null when the character was given to its community) */
+  toUserId: Maybe<Scalars['ID']['output']>;
 };
 
 /** Paginated list of character ownership changes with connection metadata */
@@ -2240,6 +2240,8 @@ export type Mutation = {
   /** Spend an edit kit to propose a change to one of your characters' traits. Destroys the kit and creates a pending USER_EDIT review; the character is unchanged until staff approve it. Authorized by holding the kit, not by canEditOwnCharacterRegistry. */
   editCharacterTraitsWithKit: TraitReview;
   forgotPassword: Scalars['Boolean']['output'];
+  /** Give a character to the community its species belongs to, leaving it with no owner and making it public. Owner only. */
+  giveCharacterToCommunity: Scalars['Boolean']['output'];
   /** Grant items to a user. Returns one Item per unit granted -- there is no stacking, so a quantity of 3 creates three items. */
   grantItem: Array<Item>;
   /** Remove a character from its species, flattening its trait values into custom fields. Requires CanEditCharacterRegistry permission. */
@@ -2661,6 +2663,11 @@ export type MutationEditCharacterTraitsWithKitArgs = {
 
 export type MutationForgotPasswordArgs = {
   input: ForgotPasswordInput;
+};
+
+
+export type MutationGiveCharacterToCommunityArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -5513,6 +5520,13 @@ export type KickCharacterFromSpeciesMutationVariables = Exact<{
 
 
 export type KickCharacterFromSpeciesMutation = { __typename?: 'Mutation', kickCharacterFromSpecies: boolean };
+
+export type GiveCharacterToCommunityMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type GiveCharacterToCommunityMutation = { __typename?: 'Mutation', giveCharacterToCommunity: boolean };
 
 export type TransferCharacterMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -9496,6 +9510,37 @@ export function useKickCharacterFromSpeciesMutation(baseOptions?: Apollo.Mutatio
 export type KickCharacterFromSpeciesMutationHookResult = ReturnType<typeof useKickCharacterFromSpeciesMutation>;
 export type KickCharacterFromSpeciesMutationResult = Apollo.MutationResult<KickCharacterFromSpeciesMutation>;
 export type KickCharacterFromSpeciesMutationOptions = Apollo.BaseMutationOptions<KickCharacterFromSpeciesMutation, KickCharacterFromSpeciesMutationVariables>;
+export const GiveCharacterToCommunityDocument = gql`
+    mutation GiveCharacterToCommunity($id: ID!) {
+  giveCharacterToCommunity(id: $id)
+}
+    `;
+export type GiveCharacterToCommunityMutationFn = Apollo.MutationFunction<GiveCharacterToCommunityMutation, GiveCharacterToCommunityMutationVariables>;
+
+/**
+ * __useGiveCharacterToCommunityMutation__
+ *
+ * To run a mutation, you first call `useGiveCharacterToCommunityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useGiveCharacterToCommunityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [giveCharacterToCommunityMutation, { data, loading, error }] = useGiveCharacterToCommunityMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGiveCharacterToCommunityMutation(baseOptions?: Apollo.MutationHookOptions<GiveCharacterToCommunityMutation, GiveCharacterToCommunityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<GiveCharacterToCommunityMutation, GiveCharacterToCommunityMutationVariables>(GiveCharacterToCommunityDocument, options);
+      }
+export type GiveCharacterToCommunityMutationHookResult = ReturnType<typeof useGiveCharacterToCommunityMutation>;
+export type GiveCharacterToCommunityMutationResult = Apollo.MutationResult<GiveCharacterToCommunityMutation>;
+export type GiveCharacterToCommunityMutationOptions = Apollo.BaseMutationOptions<GiveCharacterToCommunityMutation, GiveCharacterToCommunityMutationVariables>;
 export const TransferCharacterDocument = gql`
     mutation TransferCharacter($id: ID!, $input: TransferCharacterInput!) {
   transferCharacter(id: $id, input: $input) {
