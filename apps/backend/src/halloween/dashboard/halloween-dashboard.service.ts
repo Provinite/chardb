@@ -17,8 +17,11 @@ import {
   userMapperSelect,
 } from "../../users/utils/user-resolver-mappers";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
+import { HalloweenClock } from "../clock";
+import { getLastReset } from "../time";
 import {
   HalloweenDashboard,
+  HalloweenPeriodStats,
   HalloweenPrizeDelivery,
   HalloweenPrizeView,
   HalloweenWin,
@@ -38,6 +41,8 @@ type WinRow = Prisma.HalloweenKnockEventGetPayload<{
 
 /** The most wins one page of the feed returns, whatever the caller asks. */
 const MAX_WINS_PAGE = 100;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** A prize nothing delivers but staff. */
 const staffPrize = {
@@ -98,6 +103,7 @@ export class HalloweenDashboardService {
   constructor(
     private readonly db: DatabaseService,
     private readonly prizeImages: PrizeImageService,
+    private readonly clock: HalloweenClock,
   ) {}
 
   /**
@@ -134,6 +140,7 @@ export class HalloweenDashboardService {
   async getDashboard(communityId: string): Promise<HalloweenDashboard> {
     const guildId = await this.guildFor(communityId);
     if (!guildId) {
+      const now = this.clock.now();
       return {
         communityId,
         guildId: null,
@@ -144,6 +151,18 @@ export class HalloweenDashboardService {
           giftiesSent: 0,
           players: 0,
           toDeliver: 0,
+          unspentGifties: 0,
+          last24Hours: {
+            from: new Date(now.getTime() - DAY_MS),
+            to: now,
+            players: 0,
+            knocks: 0,
+            wins: 0,
+            giftiesSent: 0,
+            giftySenders: 0,
+          },
+          today: null,
+          yesterday: null,
         },
         prizes: [],
       };
@@ -171,6 +190,16 @@ export class HalloweenDashboardService {
         `,
       ]);
 
+    const now = this.clock.now();
+    const resetDays = settings && this.resetDays(settings.resetTime, now);
+    const [unspentGifties, last24Hours, today, yesterday] = await Promise.all([
+      this.db.halloweenGifty.count({ where: { guildId, knockEventId: null } }),
+      this.periodStats(guildId, new Date(now.getTime() - DAY_MS), now),
+      resetDays && this.periodStats(guildId, resetDays.today, now),
+      resetDays &&
+        this.periodStats(guildId, resetDays.yesterday, resetDays.today),
+    ]);
+
     return {
       communityId,
       guildId,
@@ -188,9 +217,57 @@ export class HalloweenDashboardService {
         giftiesSent,
         players: players[0].count,
         toDeliver,
+        unspentGifties,
+        last24Hours,
+        today,
+        yesterday,
       },
       prizes: await this.prizeViews(prizes),
     };
+  }
+
+  /** When today's reset day began, and when the one before it did. */
+  private resetDays(
+    resetTime: number,
+    now: Date,
+  ): { today: Date; yesterday: Date } {
+    const today = getLastReset(resetTime, now);
+    // The reset before the moment just before today's: DST-safe.
+    const yesterday = getLastReset(resetTime, new Date(today.getTime() - 1));
+    return { today, yesterday };
+  }
+
+  /**
+   * Knocks and gifties after `from`, up to and including `to`: the same
+   * boundary the allowance counts knocks from.
+   */
+  private async periodStats(
+    guildId: string,
+    from: Date,
+    to: Date,
+  ): Promise<HalloweenPeriodStats> {
+    const [counts] = await this.db.$queryRaw<
+      [Omit<HalloweenPeriodStats, "from" | "to">]
+    >`
+      WITH k AS (
+        SELECT "user_id", "prize_id", "is_pending"
+        FROM "halloween_knock_events"
+        WHERE "guild_id" = ${guildId} AND "time" > ${from} AND "time" <= ${to}
+      ), g AS (
+        SELECT "from_user_id"
+        FROM "halloween_gifties"
+        WHERE "guild_id" = ${guildId} AND "time" > ${from} AND "time" <= ${to}
+      )
+      SELECT
+        (SELECT COUNT(DISTINCT "user_id") FROM k)::int AS "players",
+        (SELECT COUNT(*) FROM k)::int AS "knocks",
+        (SELECT COUNT(*) FROM k
+          WHERE "prize_id" IS NOT NULL AND NOT "is_pending")::int AS "wins",
+        (SELECT COUNT(*) FROM g)::int AS "giftiesSent",
+        (SELECT COUNT(DISTINCT "user_id") FROM k
+          WHERE "user_id" IN (SELECT "from_user_id" FROM g))::int AS "giftySenders"
+    `;
+    return { from, to, ...counts };
   }
 
   /** A page of the win feed, newest first. */

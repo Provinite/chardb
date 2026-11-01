@@ -6,6 +6,11 @@ import { DatabaseService } from "../../database/database.service";
 import { HalloweenModule } from "../halloween.module";
 import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { mockDiscord } from "../testing/command-harness";
+import { HalloweenClock } from "../clock";
+import { fixedClock } from "../testing/fixtures";
+
+/** Noon in Chicago (CDT), six hours after the 6 AM reset. */
+const NOW = "2025-10-15T17:00:00.000Z";
 
 const GUILD = "100000000000000001";
 const WINNER = "200000000000000001";
@@ -83,7 +88,9 @@ describe("Halloween dashboard (e2e)", () => {
       (builder) =>
         builder
           .overrideProvider(HalloweenDiscordClient)
-          .useValue(mockDiscord()),
+          .useValue(mockDiscord())
+          .overrideProvider(HalloweenClock)
+          .useValue(fixedClock(NOW)),
     );
     db = testApp.getDb();
   });
@@ -281,6 +288,88 @@ describe("Halloween dashboard (e2e)", () => {
           characterId: null,
         },
       ]);
+    });
+
+    it("counts players, knocks and gifty senders over the last 24 hours and each reset day", async () => {
+      await seedEvent();
+      const [a, b, c, d] = [
+        "200000000000000011",
+        "200000000000000012",
+        "200000000000000013",
+        "200000000000000014",
+      ];
+      const knock = (userId: string, time: string, prizeId?: string) =>
+        db.halloweenKnockEvent.create({
+          data: { guildId: GUILD, userId, prizeId, time: new Date(time) },
+        });
+      const gifty = (fromUserId: string, toUserId: string, time: string) =>
+        db.halloweenGifty.create({
+          data: { guildId: GUILD, fromUserId, toUserId, time: new Date(time) },
+        });
+      // Yesterday's reset day, before the last 24 hours.
+      await knock(c, "2025-10-14T12:00:00Z");
+      await gifty(c, b, "2025-10-14T12:30:00Z");
+      // Yesterday's reset day, inside the last 24 hours.
+      await knock(a, "2025-10-14T20:00:00Z");
+      // Today's.
+      await knock(a, "2025-10-15T12:00:00Z");
+      await gifty(a, c, "2025-10-15T12:05:00Z");
+      await knock(b, "2025-10-15T13:00:00Z", "adopt");
+      // Sent by someone who has not knocked: a gifty, not a player.
+      await gifty(d, a, "2025-10-15T14:00:00Z");
+
+      const res = await testApp.authenticatedGraphqlRequest(
+        `query Stats($communityId: ID!) {
+          halloweenDashboard(communityId: $communityId) {
+            summary {
+              players
+              unspentGifties
+              last24Hours { ...Period }
+              today { ...Period }
+              yesterday { ...Period }
+            }
+          }
+        }
+        fragment Period on HalloweenPeriodStats {
+          from to players knocks wins giftiesSent giftySenders
+        }`,
+        { communityId },
+        staffToken,
+      );
+
+      expect(res.body.errors).toBeUndefined();
+      expect(res.body.data.halloweenDashboard.summary).toEqual({
+        players: 5,
+        // The seed's own gifty paid for a knock; the three above did not.
+        unspentGifties: 3,
+        last24Hours: {
+          from: "2025-10-14T17:00:00.000Z",
+          to: NOW,
+          players: 2,
+          knocks: 3,
+          wins: 1,
+          giftiesSent: 2,
+          giftySenders: 1,
+        },
+        today: {
+          from: "2025-10-15T11:00:00.000Z",
+          to: NOW,
+          players: 2,
+          knocks: 2,
+          wins: 1,
+          giftiesSent: 2,
+          giftySenders: 1,
+        },
+        yesterday: {
+          from: "2025-10-14T11:00:00.000Z",
+          to: "2025-10-15T11:00:00.000Z",
+          players: 2,
+          knocks: 2,
+          wins: 0,
+          giftiesSent: 1,
+          giftySenders: 1,
+        },
+      });
     });
 
     it("is empty, not an error, before a Discord server is linked", async () => {
