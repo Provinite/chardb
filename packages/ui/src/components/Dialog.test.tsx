@@ -120,7 +120,21 @@ describe("Dialog", () => {
     expect(document.activeElement).toBe(opener);
   });
 
-  it("focuses itself when nothing inside asks for focus", () => {
+  it("focuses its first control when none asks for focus", () => {
+    openHarness({
+      children: (
+        <>
+          <p>Pick one</p>
+          <button type="button">Shuffle</button>
+          <button type="button">Cancel</button>
+        </>
+      ),
+    });
+
+    expect(document.activeElement?.textContent).toBe("Shuffle");
+  });
+
+  it("focuses itself when there is nothing inside to focus", () => {
     openHarness({ children: <p>Nothing to focus</p> });
 
     expect(document.activeElement).toBe(dialogs()[0]);
@@ -272,16 +286,22 @@ describe("Dialog styles", () => {
     );
   });
 
-  it("leaves room under its title", () => {
+  it("keeps its title above the body, lined up with it and never shrunk", () => {
     render(
       <Dialog.Root open onClose={() => {}}>
         <Dialog.Title>Name your board</Dialog.Title>
+        <Dialog.Body>x</Dialog.Body>
       </Dialog.Root>,
     );
 
-    expect(
-      declarationsOf(document.querySelector("dialog h2")!)["margin-block-end"],
-    ).toBe(vars.space.md);
+    // A sibling of the scrolling body, so it stays put while the body
+    // scrolls; padded to the body's edges, with the body's own padding below.
+    expect(declarationsOf(document.querySelector("dialog h2")!)).toMatchObject({
+      "flex-shrink": "0",
+      "padding-block-start": vars.space.lg,
+      "padding-inline": vars.space.lg,
+      "padding-block-end": "0",
+    });
   });
 
   it("pads its body, which scrolls when the dialog is capped", () => {

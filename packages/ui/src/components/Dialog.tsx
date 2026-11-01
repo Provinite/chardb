@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import * as styles from "./Dialog.css";
+import { tabbables } from "./floating";
 
 /**
  * The open dialogs, oldest first. Escape belongs to the last one, and each
@@ -86,8 +87,8 @@ export interface DialogRootProps {
  * Opened with `open`, not `showModal()`, so it stays on the layer scale: the
  * browser's top layer would sit above toasts. While open, everything else in
  * the body is inert, which is what keeps focus and screen readers inside.
- * Focus moves to the first `[data-autofocus]` element inside, or the dialog
- * itself, and goes back to whatever had it on close. Escape closes the top
+ * Focus moves to the first `[data-autofocus]` element inside, else its first
+ * control, else the dialog itself, and goes back to whatever had it on close. Escape closes the top
  * dialog only.
  */
 export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
@@ -125,8 +126,12 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
       applyInert();
       const unlockScroll = lockScroll();
 
+      // What asked for focus, else the first control, else the dialog: a
+      // keyboard user lands where they can act at once.
       const target =
-        dialog.querySelector<HTMLElement>("[data-autofocus]") ?? dialog;
+        dialog.querySelector<HTMLElement>("[data-autofocus]") ??
+        tabbables(dialog)[0] ??
+        dialog;
       target.focus();
 
       setHasTitle(document.getElementById(titleId) !== null);
@@ -223,16 +228,17 @@ export const DialogTitle = forwardRef<HTMLHeadingElement, DialogTitleProps>(
   },
 );
 
+export type DialogBodyProps = React.HTMLAttributes<HTMLDivElement>;
+
 /** The dialog's content: padded, and scrolling when the dialog is capped. */
-export const DialogBody = forwardRef<
-  HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(function DialogBody({ className, ...rest }, ref) {
-  return (
-    <div
-      ref={ref}
-      className={className ? `${styles.body} ${className}` : styles.body}
-      {...rest}
-    />
-  );
-});
+export const DialogBody = forwardRef<HTMLDivElement, DialogBodyProps>(
+  function DialogBody({ className, ...rest }, ref) {
+    return (
+      <div
+        ref={ref}
+        className={className ? `${styles.body} ${className}` : styles.body}
+        {...rest}
+      />
+    );
+  },
+);

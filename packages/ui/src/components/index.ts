@@ -5,7 +5,11 @@ export * from "./UserTypeahead";
 export * from "./SearchSelect";
 export * from "./ErrorMessage";
 export * from "./Modal";
-export type { DialogRootProps, DialogTitleProps } from "./Dialog";
+export type {
+  DialogBodyProps,
+  DialogRootProps,
+  DialogTitleProps,
+} from "./Dialog";
 export {
   Highlight,
   type HighlightProps,

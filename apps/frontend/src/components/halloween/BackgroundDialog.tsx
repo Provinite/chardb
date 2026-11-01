@@ -133,8 +133,8 @@ export const BackgroundDialog: React.FC<BackgroundDialogProps> = ({
   ...body
 }) => (
   <Dialog.Root open={open} onClose={body.onClose} width="wide">
+    <Dialog.Title>Background</Dialog.Title>
     <Dialog.Body>
-      <Dialog.Title>Background</Dialog.Title>
       {/* Mounted afresh each opening, so it starts from what the board has. */}
       <DialogBody {...body} />
     </Dialog.Body>

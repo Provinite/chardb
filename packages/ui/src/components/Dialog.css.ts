@@ -79,10 +79,16 @@ export const body = style({
   padding: vars.space.lg,
 });
 
+/**
+ * Above `Dialog.Body` rather than in it, so it stays in view while the body
+ * scrolls. Padded to the body's edges; the body's own padding is the gap.
+ */
 export const title = style({
-  marginBlockStart: 0,
-  marginBlockEnd: vars.space.md,
-  marginInline: 0,
+  flexShrink: 0,
+  margin: 0,
+  paddingBlockStart: vars.space.lg,
+  paddingInline: vars.space.lg,
+  paddingBlockEnd: 0,
   fontSize: vars.font.size.xl,
   fontWeight: vars.font.weight.semibold,
   lineHeight: vars.font.lineHeight.tight,

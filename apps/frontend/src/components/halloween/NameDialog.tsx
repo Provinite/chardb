@@ -139,8 +139,8 @@ interface NameDialogProps {
 
 export const NameDialog: React.FC<NameDialogProps> = ({ open, ...body }) => (
   <Dialog.Root open={open} onClose={body.onClose} width="wide">
+    <Dialog.Title>Name your board</Dialog.Title>
     <Dialog.Body>
-      <Dialog.Title>Name your board</Dialog.Title>
       {/* Mounted afresh each opening, so it starts from the board's name. */}
       <DialogBody {...body} />
     </Dialog.Body>
