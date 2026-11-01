@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`achievements` preset** and a spec for achievements on a community member profile.
+- **Halloween prize list spec and `halloween-prizes` preset**: what a visitor, a member and item staff each see of the prizes and the winners.
 
 ## [v15.1.0] - 2026-11-01
 

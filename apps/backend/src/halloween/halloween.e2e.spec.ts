@@ -169,6 +169,31 @@ describe("Halloween bot (e2e)", () => {
       provider: ExternalAccountProvider.DISCORD,
       providerAccountId: USER_ID,
     });
+    // Its pending owner records the winner; staff hand nothing over.
+    expect(await db.halloweenStaffAward.count()).toBe(0);
+  });
+
+  it("records a staff prize's win as an award waiting to be handed over", async () => {
+    await setUpEvent();
+    await addPrize("adopt");
+    alwaysWin();
+
+    const reply = await run("knock");
+
+    expect(reply.embeds?.[0].title).toBe("Winner!");
+    const knock = await db.halloweenKnockEvent.findFirstOrThrow();
+    expect(await db.halloweenStaffAward.findMany()).toEqual([
+      expect.objectContaining({
+        knockEventId: knock.id,
+        guildId: GUILD_ID,
+        discordUserId: USER_ID,
+        // As the interaction's member carries them.
+        discordUsername: "trickortreater",
+        discordDisplayName: null,
+        deliveredAt: null,
+        deliveredById: null,
+      }),
+    ]);
   });
 
   it("gives a winner who is a linked member the item outright", async () => {

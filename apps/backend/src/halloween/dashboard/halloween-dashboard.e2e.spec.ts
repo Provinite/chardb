@@ -197,6 +197,15 @@ describe("Halloween dashboard (e2e)", () => {
         time: new Date("2025-10-10T00:00:00Z"),
       },
     });
+    // A staff prize's win waits on its award, as the knock leaves it.
+    await db.halloweenStaffAward.create({
+      data: {
+        knockEventId: adoptWin.id,
+        guildId: GUILD,
+        discordUserId: WINNER,
+        discordUsername: "spookyfan",
+      },
+    });
     const candyWin = await db.halloweenKnockEvent.create({
       data: {
         guildId: GUILD,
@@ -565,6 +574,28 @@ describe("Halloween dashboard (e2e)", () => {
       });
     });
 
+    it("keeps the mark on the staff award", async () => {
+      const { adoptWin } = await seedEvent();
+      const staff = await db.user.findFirstOrThrow({
+        where: { username: staffUsername },
+      });
+
+      await testApp.authenticatedGraphqlRequest(
+        SET_DELIVERED,
+        { communityId, knockEventId: adoptWin.id, delivered: true },
+        staffToken,
+      );
+
+      expect(
+        await db.halloweenStaffAward.findUniqueOrThrow({
+          where: { knockEventId: adoptWin.id },
+        }),
+      ).toMatchObject({
+        deliveredAt: expect.any(Date),
+        deliveredById: staff.id,
+      });
+    });
+
     it("refuses a chardb prize, which delivers itself", async () => {
       const { candyWin } = await seedEvent();
       const res = await testApp.authenticatedGraphqlRequest(
@@ -616,8 +647,8 @@ describe("Halloween dashboard (e2e)", () => {
       expect(res.body.errors?.[0]).toBeDefined();
       expect(
         (
-          await db.halloweenKnockEvent.findUniqueOrThrow({
-            where: { id: adoptWin.id },
+          await db.halloweenStaffAward.findUniqueOrThrow({
+            where: { knockEventId: adoptWin.id },
           })
         ).deliveredAt,
       ).toBeNull();

@@ -228,7 +228,8 @@ model User {
   tradeCurrencyGiven      TradeCurrencyLine[] @relation("TradeCurrencySource")
   tradeCurrencyReceived   TradeCurrencyLine[] @relation("TradeCurrencyDestination")
 
-  halloweenPrizesDelivered HalloweenKnockEvent[] @relation("HalloweenPrizesDelivered")
+  halloweenPrizesDelivered      HalloweenKnockEvent[] @relation("HalloweenPrizesDelivered")
+  halloweenStaffAwardsDelivered HalloweenStaffAward[] @relation("HalloweenStaffAwardsDelivered")
   halloweenCandies         HalloweenCandy[]
   halloweenCandyBoards     HalloweenCandyBoard[]
   halloweenCandyOffers     HalloweenCandyOffer[]
@@ -2418,14 +2419,17 @@ model HalloweenKnockEvent {
   /// The candy a loss showed, by its image's slug (`candy/<slug>.png`). Null
   /// on a win, and on a loss from before candies were recorded.
   candySlug String?  @map("candy_slug") @db.VarChar(40)
-
-  /// When staff marked a prize with no chardb item or character as handed
-  /// over, and who. Chardb prizes deliver themselves and never set these.
+  /// Deprecated: delivery lives on HalloweenStaffAward. Kept only so the
+  /// release still running while the next rolls out can read them; nothing
+  /// reads or writes them now, and a later migration drops them.
   deliveredAt   DateTime? @map("delivered_at") @db.Timestamptz
   deliveredById String?   @map("delivered_by_id")
 
   prize       HalloweenPrize?  @relation(fields: [guildId, prizeId], references: [guildId, id])
+  /// Deprecated with deliveredById.
   deliveredBy User?            @relation("HalloweenPrizesDelivered", fields: [deliveredById], references: [id], onDelete: SetNull)
+  /// Set on a win of a prize staff hand over themselves.
+  staffAward  HalloweenStaffAward?
   /// The gifty spent on this knock, if it was paid for with one. A knock paid
   /// for with a gifty does not count against the daily allowance.
   gifties     HalloweenGifty[]
@@ -2436,6 +2440,31 @@ model HalloweenKnockEvent {
   // The dashboard's last-24-hours and reset-day counts.
   @@index([guildId, time])
   @@map("halloween_knock_events")
+}
+
+/// A win of a prize with no chardb item or character, which staff hand over
+/// themselves: who won it, as Discord showed them, and whether it has been
+/// handed over. A chardb prize's winner is recorded by its PendingOwnership
+/// instead, or is already linked.
+model HalloweenStaffAward {
+  knockEventId       Int       @id @map("knock_event_id")
+  guildId            String    @map("guild_id") @db.VarChar(30)
+  discordUserId      String    @map("discord_user_id") @db.VarChar(30)
+  /// The winner's Discord handle and global display name when they won.
+  /// Null on wins from before awards were recorded.
+  discordUsername    String?   @map("discord_username") @db.VarChar(32)
+  discordDisplayName String?   @map("discord_display_name") @db.VarChar(32)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  /// When staff marked it handed over, and who. Null while it waits.
+  deliveredAt        DateTime? @map("delivered_at") @db.Timestamptz
+  deliveredById      String?   @map("delivered_by_id")
+
+  knockEvent  HalloweenKnockEvent @relation(fields: [knockEventId], references: [id], onDelete: Cascade)
+  deliveredBy User?               @relation("HalloweenStaffAwardsDelivered", fields: [deliveredById], references: [id], onDelete: SetNull)
+
+  // The event page's "needs delivery" count and list.
+  @@index([guildId, deliveredAt])
+  @@map("halloween_staff_awards")
 }
 
 /// An extra knock one player gives another. Pending until spent on a knock.

@@ -18,6 +18,7 @@ import {
   Image,
   ClipboardCheck,
   ShieldCheck,
+  Gift,
   Globe,
   LayoutGrid,
   Package,
@@ -487,6 +488,12 @@ export const CommunityNavigationSidebar: React.FC<
           {/* Halloween - every member's, while the event is on here */}
           {community?.halloweenEnabled && (
             <HalloweenNavigationSection>
+              <CommunityNavigationItem
+                to={`${communityBasePath}/halloween/prizes`}
+                icon={Gift}
+                label="Prize List"
+                isNested
+              />
               <CommunityNavigationItem
                 to={`${communityBasePath}/halloween/board`}
                 icon={Candy}

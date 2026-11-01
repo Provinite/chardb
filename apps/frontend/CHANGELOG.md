@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Community member profiles show achievements** earned in that community.
 - **Candy board download options**: Download opens a dialog to leave out the background (transparent PNG) or the candies' shadows.
+- **Halloween prize list** (`/halloween/prizes`), open to anyone: every prize with how many are left, and the latest wins; linked from the sidebar's Halloween section and from `/prize list`.
 
 ## [v15.2.0] - 2026-11-01
 

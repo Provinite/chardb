@@ -1889,6 +1889,24 @@ enum HalloweenPrizeDelivery {
   STAFF
 }
 
+"""A prize in the Halloween pool as anyone may see it: no draw weight"""
+type HalloweenPrizeListing {
+  currentStock: Int!
+  id: ID!
+
+  """
+  The URL staff gave, or a chardb prize's own approved item or character image
+  """
+  image: String
+  initialStock: Int!
+  name: String!
+
+  """
+  The item type or character the prize hands over, on the community's host; null for a prize staff hand over themselves
+  """
+  url: String
+}
+
 """A prize in the guild's pool"""
 type HalloweenPrizeView {
   characterId: String
@@ -1906,6 +1924,15 @@ type HalloweenPrizeView {
   itemTypeId: String
   name: String!
   weight: Int!
+}
+
+"""One win in the public Halloween feed"""
+type HalloweenPublicWin {
+  """The knock's id"""
+  id: Int!
+  prize: HalloweenPrizeListing!
+  time: DateTime!
+  winner: HalloweenWinner!
 }
 
 input HalloweenSettingsInput {
@@ -1983,6 +2010,26 @@ type HalloweenWinPage {
   """How many wins match the filter in all"""
   total: Int!
   wins: [HalloweenWin!]!
+}
+
+"""A win's winner, already narrowed to what the viewer may see of them"""
+type HalloweenWinner {
+  displayName: String!
+  kind: HalloweenWinnerKind!
+
+  """
+  The chardb profile of a MEMBER, the Discord profile of a DISCORD winner; null for ANONYMOUS
+  """
+  url: String
+
+  """Set only for a MEMBER"""
+  user: User
+}
+
+enum HalloweenWinnerKind {
+  ANONYMOUS
+  DISCORD
+  MEMBER
 }
 
 type Image {
@@ -3997,6 +4044,16 @@ type Query {
   Item types of the community a new Halloween prize could hand over, by name (25 per search)
   """
   halloweenPrizeItemTypes(communityId: ID!, search: String!): [ItemType!]!
+
+  """
+  Every prize in the community's Halloween pool, in stock first. Empty while the event is off.
+  """
+  halloweenPrizes(communityId: ID!): [HalloweenPrizeListing!]!
+
+  """
+  The community's latest Halloween wins, newest first: 20 unless given, at most 50. Staff who grant or manage items see unlinked winners' Discord handles; everyone else sees only linked chardb accounts.
+  """
+  halloweenRecentWins(communityId: ID!, limit: Int): [HalloweenPublicWin!]!
 
   """
   The Halloween event's wins, newest first, a page at a time (at most 100).

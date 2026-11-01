@@ -8,7 +8,7 @@ How components in the frontend and `@chardb/ui` divide the work. How they look i
 
 **Presentational components** show what they are given. Everything arrives through props; anything the user does leaves through callbacks (`onSave`, `onSelect`). They hold UI state only: whether a menu is open, what is typed in a field before it is submitted.
 
-A presentational component never imports `@apollo/client`, `react-router-dom`, generated GraphQL hooks or app contexts. If it needs something from one of them, its data component passes it in.
+A presentational component never imports `@apollo/client`, `react-router-dom`, generated GraphQL hooks or app contexts. If it needs something from one of them, its data component passes it in. Generated types and enums are the exception: its props take the codegen fragment types, never a hand-written copy of them.
 
 ```tsx
 // TradeList.tsx: data
