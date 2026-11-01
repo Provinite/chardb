@@ -267,7 +267,7 @@ export class PendingOwnershipService {
     const existing = await tx.pendingOwnership.findUnique({
       where: { characterId },
     });
-    if (existing) {
+    if (existing && !existing.claimedAt) {
       throw new ConflictException(
         `Character ${characterId} already has a pending ownership record`,
       );
@@ -287,6 +287,12 @@ export class PendingOwnershipService {
         claimed: true,
         ownerId: claimantId,
       };
+    }
+
+    // A character holds one pending ownership row at most, so an earlier,
+    // claimed one makes way for the new promise.
+    if (existing) {
+      await tx.pendingOwnership.delete({ where: { id: existing.id } });
     }
 
     // Waits on the account until its person links it and is a member.

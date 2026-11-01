@@ -1,6 +1,13 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { X } from "lucide-react";
 import styled from "styled-components";
-import { Theme } from "../theme";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { timingMs } from "../theme/tokens";
+import { AnchoredList } from "./AnchoredList";
+import { usePressOutside } from "./floating";
+
+/** The tallest the suggestions grow before they scroll. */
+const SUGGESTIONS_MAX_HEIGHT_PX = 200;
 
 export interface Tag {
   id: string;
@@ -73,13 +80,12 @@ const RemoveButton = styled.button`
   justify-content: center;
   width: 16px;
   height: 16px;
+  padding: 0;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
   cursor: pointer;
-  font-size: 12px;
-  line-height: 1;
   transition: background 0.2s;
   flex-shrink: 0;
 
@@ -113,20 +119,11 @@ const Input = styled.input`
   }
 `;
 
-const SuggestionsDropdown = styled.div<{ $isOpen: boolean }>`
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+const SuggestionsDropdown = styled(AnchoredList)`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: ${({ theme }) => theme.shadows.md};
-  z-index: 1000;
-  max-height: 200px;
-  overflow-y: auto;
-  display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
-  margin-top: 2px;
 `;
 
 const SuggestionItem = styled.button<{ $isHighlighted: boolean }>`
@@ -179,61 +176,30 @@ export const TagInput: React.FC<TagInputProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
 
   // Filter suggestions to exclude already selected tags
   const availableSuggestions = suggestions.filter(
     (suggestion) => !value.includes(suggestion.name.toLowerCase()),
   );
+  const listOpen = isOpen && (loading || availableSuggestions.length > 0);
 
-  // Debounced search
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
-    null,
+  // Searched once typing pauses. Through a ref, so a caller passing a new
+  // function each render does not search again.
+  const settled = useDebouncedValue(
+    inputValue.trim(),
+    timingMs.debounce.typeahead,
   );
-
-  const performSearch = useCallback(
-    (query: string) => {
-      if (onSearch) {
-        onSearch(query);
-      }
-    },
-    [onSearch],
-  );
-
+  const onSearchRef = useRef(onSearch);
+  onSearchRef.current = onSearch;
   useEffect(() => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
+    if (settled) onSearchRef.current?.(settled);
+  }, [settled]);
 
-    if (inputValue.trim()) {
-      const timeout = setTimeout(() => {
-        performSearch(inputValue.trim());
-      }, 300); // 300ms debounce
-      setSearchTimeout(timeout);
-    }
-
-    return () => {
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-      }
-    };
-  }, [inputValue, performSearch]);
-
-  // Handle clicks outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-        setHighlightedIndex(-1);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const pressInside = usePressOutside(isOpen, () => {
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+  });
 
   const addTag = (tagName: string) => {
     const normalizedTag = tagName.trim().toLowerCase();
@@ -272,6 +238,8 @@ export const TagInput: React.FC<TagInputProps> = ({
         break;
 
       case "Escape":
+        // Handled, so a dialog the box sits in stays open.
+        if (listOpen) e.preventDefault();
         setIsOpen(false);
         setHighlightedIndex(-1);
         break;
@@ -314,8 +282,12 @@ export const TagInput: React.FC<TagInputProps> = ({
   };
 
   return (
-    <div ref={containerRef}>
-      <Container $hasError={!!error} onClick={handleContainerClick}>
+    <div onMouseDownCapture={pressInside.onMouseDownCapture}>
+      <Container
+        ref={boxRef}
+        $hasError={!!error}
+        onClick={handleContainerClick}
+      >
         {value.map((tag, index) => (
           <TagChip key={`${tag}-${index}`}>
             <span title={tag}>{tag}</span>
@@ -328,7 +300,7 @@ export const TagInput: React.FC<TagInputProps> = ({
               disabled={disabled}
               aria-label={`Remove tag ${tag}`}
             >
-              ×
+              <X size={10} aria-hidden />
             </RemoveButton>
           </TagChip>
         ))}
@@ -346,7 +318,9 @@ export const TagInput: React.FC<TagInputProps> = ({
         />
 
         <SuggestionsDropdown
-          $isOpen={isOpen && (loading || availableSuggestions.length > 0)}
+          anchor={boxRef}
+          open={listOpen}
+          maxHeight={SUGGESTIONS_MAX_HEIGHT_PX}
         >
           {loading ? (
             <LoadingIndicator>Searching...</LoadingIndicator>
@@ -355,6 +329,10 @@ export const TagInput: React.FC<TagInputProps> = ({
               <SuggestionItem
                 key={suggestion.id}
                 type="button"
+                // Picked with the arrow keys and Enter from the input;
+                // Tab moves on past the list, which sits at the end of
+                // the page.
+                tabIndex={-1}
                 $isHighlighted={index === highlightedIndex}
                 onClick={() => handleSuggestionClick(suggestion)}
               >

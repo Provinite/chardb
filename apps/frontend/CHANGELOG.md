@@ -14,9 +14,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Busy buttons keep their label and show a spinner**, and every button is a 44px target on touch screens; confirm dialogs open as `Dialog`s with focus inside them (#503).
+- **Dialogs close with Escape or their close button, not a click outside**; the item type create, edit and grant forms are dialogs (#499).
 
 ### Fixed
 
+- **Toasts shown over a dialog can be clicked and focused** (#499).
 - **Approve stays green and Following turns red under the pointer**, and the character gallery's View All controls are single links (#503).
 
 ## [v15.0.0] - 2026-10-31

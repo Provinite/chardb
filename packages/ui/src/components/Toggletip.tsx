@@ -1,18 +1,13 @@
-import React, {
-  forwardRef,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import React, { forwardRef, useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Info } from "lucide-react";
 import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
 import type { Side } from "../hooks/placeFloating";
 import { visuallyHidden } from "../styles/visuallyHidden.css";
-import { applyPlacement, setRefs } from "./floating";
+import { applyPlacement, setRefs, usePressOutside } from "./floating";
 import * as floatingStyles from "./floating.css";
 import * as styles from "./Toggletip.css";
+import { usePortalContainer } from "./portal";
 
 /** Pixels between the button and the bubble: room for the arrow. */
 const GAP_PX = 8;
@@ -49,6 +44,7 @@ export interface ToggletipProps {
 export const Toggletip = forwardRef<HTMLButtonElement, ToggletipProps>(
   function Toggletip({ label, side = "top", className, children }, ref) {
     const [open, setOpen] = useState(false);
+    const container = usePortalContainer();
     const buttonRef = useRef<HTMLButtonElement | null>(null);
     const bubbleRef = useRef<HTMLDivElement | null>(null);
 
@@ -66,20 +62,9 @@ export const Toggletip = forwardRef<HTMLButtonElement, ToggletipProps>(
       apply: (p) => applyPlacement(bubbleRef.current, p),
     });
 
-    useEffect(() => {
-      if (!open) return;
-      const onMouseDown = (e: MouseEvent) => {
-        const target = e.target as Node;
-        if (
-          !buttonRef.current?.contains(target) &&
-          !bubbleRef.current?.contains(target)
-        ) {
-          setOpen(false);
-        }
-      };
-      document.addEventListener("mousedown", onMouseDown);
-      return () => document.removeEventListener("mousedown", onMouseDown);
-    }, [open]);
+    const pressInside = usePressOutside(open, () => setOpen(false), [
+      buttonRef,
+    ]);
 
     return (
       <>
@@ -119,11 +104,12 @@ export const Toggletip = forwardRef<HTMLButtonElement, ToggletipProps>(
               data-toggletip-bubble=""
               aria-hidden="true"
               className={styles.bubble}
+              onMouseDownCapture={pressInside.onMouseDownCapture}
             >
               {children}
               <span aria-hidden className={floatingStyles.arrow} />
             </div>,
-            document.body,
+            container,
           )}
       </>
     );

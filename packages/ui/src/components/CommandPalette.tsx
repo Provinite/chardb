@@ -109,6 +109,8 @@ export const CommandPaletteRoot = forwardRef<
       ref={ref}
       open={open}
       onClose={onClose}
+      // A light picker with nothing to lose: a click away dismisses it.
+      closeOnScrimClick
       aria-label={label}
       className={className}
     >

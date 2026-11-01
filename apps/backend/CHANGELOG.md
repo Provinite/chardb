@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Halloween candies are owned by chardb users** (`HalloweenCandy`), claimed on linking Discord or joining the community; candy boards belong to the chardb user and no longer need Discord linked, and existing boards are deleted (#535).
 
+### Fixed
+
+- **A character whose earlier pending ownership was claimed can be a Halloween prize again**: the prize picker lists it, a win delivers it, and the new promise replaces the claimed row.
+
 ## [v15.0.0] - 2026-10-31
 
 ### Added

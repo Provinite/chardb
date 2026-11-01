@@ -10,7 +10,13 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import * as styles from "./Dialog.css";
+import { X } from "lucide-react";
 import { tabbables } from "./floating";
+import { IconButton } from "./IconButton";
+import { INERT_EXEMPT, PortalContainerContext } from "./portal";
+
+/** On the close button, so initial focus can pass it by. */
+const CLOSE_ATTR = "data-dialog-close";
 
 /**
  * The open dialogs, oldest first. Escape belongs to the last one, and each
@@ -29,7 +35,8 @@ const inertByDialogs = new Set<Element>();
  * dialog is open. Worked out from the whole stack each time rather than undone
  * per dialog, so a dialog closing under another leaves the page inert. `inert`
  * set by someone else (the navigation drawer, the boot screen) is theirs, and
- * left alone.
+ * left alone. So is anything marked `data-inert-exempt`: the toasts, which
+ * must stay clickable over a dialog.
  */
 function applyInert(): void {
   const top = stack[stack.length - 1];
@@ -41,7 +48,13 @@ function applyInert(): void {
   }
   if (!top) return;
   for (const el of document.body.children) {
-    if (el === top || el.hasAttribute("inert")) continue;
+    if (
+      el === top ||
+      el.hasAttribute("inert") ||
+      el.hasAttribute(INERT_EXEMPT)
+    ) {
+      continue;
+    }
     el.setAttribute("inert", "");
     inertByDialogs.add(el);
   }
@@ -67,8 +80,19 @@ const TitleIdContext = createContext<string | undefined>(undefined);
 
 export interface DialogRootProps {
   open: boolean;
-  /** Escape, or a click on the scrim. The caller closes it. */
+  /** Escape or the close button, or a scrim click when allowed. The caller closes it. */
   onClose: () => void;
+  /**
+   * Also close on a click on the scrim. For light pickers such as the command
+   * palette only: a dialog holding a form or a decision would lose the work
+   * to a stray click.
+   */
+  closeOnScrimClick?: boolean;
+  /**
+   * Nothing closes it, and its close button shows as disabled: while a
+   * request it started is still running, which closing would hide.
+   */
+  closeDisabled?: boolean;
   children?: React.ReactNode;
   /** The name, when there is no `Dialog.Title` to take it from. */
   "aria-label"?: string;
@@ -90,14 +114,16 @@ export interface DialogRootProps {
  * browser's top layer would sit above toasts. While open, everything else in
  * the body is inert, which is what keeps focus and screen readers inside.
  * Focus moves to the first `[data-autofocus]` element inside, else its first
- * control, else the dialog itself, and goes back to whatever had it on close. Escape closes the top
- * dialog only.
+ * control, else the dialog itself, and goes back to whatever had it on close.
+ * Escape closes the top dialog only, as does the close button in its corner.
  */
 export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
   function DialogRoot(
     {
       open,
       onClose,
+      closeOnScrimClick = false,
+      closeDisabled = false,
       children,
       "aria-label": ariaLabel,
       width = "default",
@@ -108,14 +134,16 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
   ) {
     const titleId = useId();
     const [hasTitle, setHasTitle] = useState(false);
-    const layerRef = useRef<HTMLDivElement>(null);
+    // State rather than a ref: it is the portal container for what opens
+    // inside, which needs it at render time.
+    const [layer, setLayer] = useState<HTMLDivElement | null>(null);
     const dialogRef = useRef<HTMLDialogElement | null>(null);
+    // Every way to close goes through here, so disabling closing is one place.
     const onCloseRef = useRef(onClose);
-    onCloseRef.current = onClose;
+    onCloseRef.current = closeDisabled ? () => {} : onClose;
 
     useLayoutEffect(() => {
       if (!open) return;
-      const layer = layerRef.current;
       const dialog = dialogRef.current;
       if (!layer || !dialog) return;
 
@@ -130,10 +158,11 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
       const unlockScroll = lockScroll();
 
       // What asked for focus, else the first control, else the dialog: a
-      // keyboard user lands where they can act at once.
+      // keyboard user lands where they can act at once. Never the close
+      // button, which would make Enter close what just opened.
       const target =
         dialog.querySelector<HTMLElement>("[data-autofocus]") ??
-        tabbables(dialog)[0] ??
+        tabbables(dialog).find((el) => !el.hasAttribute(CLOSE_ATTR)) ??
         dialog;
       target.focus();
 
@@ -155,7 +184,7 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
           opener.focus();
         }
       };
-    }, [open, titleId]);
+    }, [open, layer, titleId]);
 
     useEffect(() => {
       if (!open) return;
@@ -166,7 +195,8 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
           e.key !== "Escape" ||
           e.defaultPrevented ||
           e.isComposing ||
-          stack[stack.length - 1] !== layerRef.current
+          !layer ||
+          stack[stack.length - 1] !== layer
         ) {
           return;
         }
@@ -175,16 +205,19 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
       };
       document.addEventListener("keydown", onKeyDown);
       return () => document.removeEventListener("keydown", onKeyDown);
-    }, [open]);
+    }, [open, layer]);
 
     if (!open) return null;
 
+    // Always the body, never the portal container of a dialog this one opened
+    // from: the dialogs must be children of `<body>` for each to make the
+    // others inert.
     return createPortal(
-      <div ref={layerRef} className={styles.layer}>
+      <div ref={setLayer} className={styles.layer}>
         <div
           className={styles.scrim}
           data-dialog-scrim=""
-          onClick={() => onCloseRef.current()}
+          onClick={closeOnScrimClick ? () => onCloseRef.current() : undefined}
         />
         <dialog
           ref={(el) => {
@@ -202,8 +235,21 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
             .filter(Boolean)
             .join(" ")}
         >
+          {/* First, as it is drawn in the top corner; skipped when focus
+              first moves in. */}
+          <IconButton
+            label="Close"
+            tone="ghost"
+            icon={<X size={20} aria-hidden />}
+            className={styles.close}
+            onClick={() => onCloseRef.current()}
+            disabled={closeDisabled}
+            data-dialog-close=""
+          />
           <TitleIdContext.Provider value={titleId}>
-            {children}
+            <PortalContainerContext.Provider value={layer}>
+              {children}
+            </PortalContainerContext.Provider>
           </TitleIdContext.Provider>
         </dialog>
       </div>,

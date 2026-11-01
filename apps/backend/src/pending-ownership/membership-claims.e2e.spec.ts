@@ -158,6 +158,44 @@ describe("Pending ownership and community membership (e2e)", () => {
     });
   });
 
+  // A character can be promised again once an earlier promise was claimed
+  // and the owner gave it back: the claimed row is replaced, since a
+  // character holds one pending ownership row at most.
+  describe("promising a character whose earlier promise was claimed", () => {
+    beforeEach(async () => {
+      await db.pendingOwnership.create({
+        data: {
+          characterId,
+          provider: ExternalAccountProvider.DEVIANTART,
+          providerAccountId: "earlier-owner",
+          claimedAt: new Date("2026-02-26"),
+        },
+      });
+    });
+
+    it("replaces the claimed row with the new promise", async () => {
+      await pending.createForCharacter(characterId, DISCORD, DISCORD_ID);
+
+      const rows = await db.pendingOwnership.findMany({
+        where: { characterId },
+      });
+      expect(rows).toEqual([
+        expect.objectContaining({
+          provider: DISCORD,
+          providerAccountId: DISCORD_ID,
+          claimedAt: null,
+        }),
+      ]);
+    });
+
+    it("still refuses a character with an unclaimed promise", async () => {
+      await pending.createForCharacter(characterId, DISCORD, DISCORD_ID);
+      await expect(
+        pending.createForCharacter(characterId, DISCORD, "200000000000000043"),
+      ).rejects.toThrow("already has a pending ownership record");
+    });
+  });
+
   describe("linking an account", () => {
     it("claims what was waiting in the communities they belong to", async () => {
       await grantToDiscord();

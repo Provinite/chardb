@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Persona seed turns on Halloween** for Test Community, with a candy board for Member and a Test Lantern item type to grant (#499).
+
 ## [v15.0.0] - 2026-10-31
 
 ### Added

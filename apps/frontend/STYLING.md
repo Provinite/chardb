@@ -119,11 +119,24 @@ Windows High Contrast and other forced-colour modes replace colours with system 
 
 The one literal allowed is `-1`, which puts an element behind its siblings inside its parent's stacking context.
 
-Each layer is a group: `layer.modal.base` is 4000, and `layer.modal[100]`, `layer.modal[200]` and `layer.modal[300]` are 4100, 4200 and 4300, for stacking inside one layer, such as a popover opened from a dialog. The steps are an escape hatch: leave a comment saying why. Tooltips and toggletips sit at `layer.modal[100]`, because they name and explain controls inside dialogs and popovers alike. The gaps between them leave room for a new step without renaming the others.
+Each layer is a group: `layer.modal.base` is 4000, and `layer.modal[100]`, `layer.modal[200]` and `layer.modal[300]` are 4100, 4200 and 4300, for stacking inside one layer. The steps are an escape hatch: leave a comment saying why. Tooltips and toggletips sit at `layer.modal[100]`, because they name and explain controls inside dialogs and popovers alike. The gaps between them leave room for a new step without renaming the others.
 
 Elements opened with `<dialog>.showModal()` or the Popover API render in the browser's top layer, above every `z-index`. If dialogs used it, anything that must appear above an open dialog (a toast, a menu opened from inside it) would have to use the top layer too, or render inside the dialog.
 
-Dialogs stay on the layer scale instead. `Dialog` from `@chardb/ui` renders a `<dialog open>` (never `showModal()`) at `layer.modal`, at the end of `<body>`, no wider than `size.dialog`, or `size.dialogWide` with `width="wide"` for columns or a grid. `Dialog.Body` pads its content and scrolls it when the dialog is capped to the screen; `Dialog.Title` names the dialog. A list of results inside one holds at `size.dialogList` tall whatever it shows, so the dialog never resizes as results change. While it is open, every other child of `<body>` is `inert`, which keeps focus and screen readers inside; it clears only the `inert` it set. Escape closes the top dialog of a stack. Toasts and menus inside a dialog are #499.
+Dialogs stay on the layer scale instead. `Dialog` from `@chardb/ui` renders a `<dialog open>` (never `showModal()`) at `layer.modal`, at the end of `<body>`, no wider than `size.dialog`, or `size.dialogWide` with `width="wide"` for columns or a grid. `Dialog.Body` pads its content and scrolls it when the dialog is capped to the screen; `Dialog.Title` names the dialog. A list of results inside one holds at `size.dialogList` tall whatever it shows, so the dialog never resizes as results change. While it is open, every other child of `<body>` is `inert`, which keeps focus and screen readers inside; it clears only the `inert` it set.
+
+Closing works the same in every dialog:
+
+- **Escape** closes the top dialog of a stack. A menu, popover or typeahead list open inside it takes the Escape first, so the dialog stays open.
+- **The close button** in the top corner, built in. `Dialog.Title` leaves room for it. Initial focus passes it by, so Enter on a just-opened dialog never closes it.
+- **The scrim** closes nothing, unless the dialog passes `closeOnScrimClick`. That is for light pickers such as the command palette; a form or a confirmation would lose its work to a stray click.
+
+Each of these does what Cancel does, never what confirm does.
+
+Two things stay usable over an open dialog:
+
+- **What opens inside it.** Menus, popovers, tooltips, toggletips and typeahead lists render into a portal container: `document.body`, or the layer of the dialog they opened in. Inside the layer they sit beside the `<dialog>`, at their usual layer, which stacks within the dialog's layer above its scrim and the dialog itself. Being outside the `<dialog>`, its `overflow: hidden` cannot clip them. They are `position: fixed`, so the layer must never take a `transform`, `filter` or `contain`, which would make it their containing block. A dialog opened from inside another still renders at the end of `<body>`, so that each makes the others inert. A press in a list or menu portalled from inside a popover, menu or toggletip counts as inside it, by the component tree rather than the page, so picking from it does not close what it opened from.
+- **Toasts.** `ThemedToaster` renders into its own child of `<body>` marked `data-inert-exempt` (`INERT_EXEMPT` from `@chardb/ui`), which dialogs leave out of `inert`. Mark anything else that must stay interactive over a dialog the same way. A toast holding focus when it goes hands focus back to where it came from.
 
 ### Motion
 
