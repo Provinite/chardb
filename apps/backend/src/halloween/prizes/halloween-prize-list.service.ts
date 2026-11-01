@@ -59,9 +59,7 @@ export class HalloweenPrizeListService {
     const images = await this.prizeImages.imagesFor(prizes);
     return prizes
       .map((p) => toListing(p, images.get(p) ?? null))
-      .sort(
-        (a, b) => Number(b.currentStock > 0) - Number(a.currentStock > 0),
-      );
+      .sort((a, b) => Number(b.currentStock > 0) - Number(a.currentStock > 0));
   }
 
   /** Newest first. `showDiscord` is whether the viewer is item staff here. */

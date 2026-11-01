@@ -210,7 +210,13 @@ describe("Halloween prize list (e2e)", () => {
       extra: { discordUsername?: string; isPending?: boolean } = {},
     ) =>
       db.halloweenKnockEvent.create({
-        data: { guildId: GUILD, userId, prizeId, time: new Date(time), ...extra },
+        data: {
+          guildId: GUILD,
+          userId,
+          prizeId,
+          time: new Date(time),
+          ...extra,
+        },
       });
     await win(NAMED_WINNER, "adopt", "2025-10-10T00:00:00Z", {
       discordUsername: "spookyfan",
