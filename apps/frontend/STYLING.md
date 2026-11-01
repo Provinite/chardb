@@ -119,7 +119,7 @@ Windows High Contrast and other forced-colour modes replace colours with system 
 
 The one literal allowed is `-1`, which puts an element behind its siblings inside its parent's stacking context.
 
-Each layer is a group: `layer.modal.base` is 4000, and `layer.modal[100]`, `layer.modal[200]` and `layer.modal[300]` are 4100, 4200 and 4300, for stacking inside one layer, such as a popover opened from a dialog. The steps are an escape hatch: leave a comment saying why. The gaps between them leave room for a new step without renaming the others.
+Each layer is a group: `layer.modal.base` is 4000, and `layer.modal[100]`, `layer.modal[200]` and `layer.modal[300]` are 4100, 4200 and 4300, for stacking inside one layer, such as a popover opened from a dialog. The steps are an escape hatch: leave a comment saying why. Tooltips and toggletips sit at `layer.modal[100]`, because they name and explain controls inside dialogs and popovers alike. The gaps between them leave room for a new step without renaming the others.
 
 Elements opened with `<dialog>.showModal()` or the Popover API render in the browser's top layer, above every `z-index`. If dialogs used it, anything that must appear above an open dialog (a toast, a menu opened from inside it) would have to use the top layer too, or render inside the dialog.
 

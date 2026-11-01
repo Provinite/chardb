@@ -33,9 +33,9 @@ export const button = style([
 export const bubble = style([
   floating,
   {
-    // A step above the dropdown layer, like tooltips: toggletips explain
-    // controls inside popovers.
-    zIndex: vars.layer.dropdown[100],
+    // A step above the modal layer, like tooltips: toggletips explain
+    // controls inside popovers and dialogs.
+    zIndex: vars.layer.modal[100],
     maxInlineSize: `min(${maxWidth}, ${vars.size.column.xl})`,
     paddingBlock: vars.space.sm,
     paddingInline: vars.space.md,
