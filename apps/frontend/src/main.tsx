@@ -1,9 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { ApolloProvider } from "@apollo/client";
-import { ThemedMantineProvider } from "./components/ThemedMantineProvider";
-import "@mantine/core/styles.css";
-import "@mantine/spotlight/styles.css";
 
 import { client } from "./lib/apollo";
 import { reloadOnStaleChunk } from "./lib/chunkReload";
@@ -27,19 +24,17 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     <ApolloProvider client={client}>
       <TransitionRouter>
         <ThemeProvider>
-          <ThemedMantineProvider>
-            <AuthProvider>
-              {/* Outside <App /> because Layout, the navigation and the route
-                  table all need to know which community's host this is before
-                  any of them render. */}
-              <CommunityHostProvider>
-                <SpotlightProvider>
-                  <App />
-                </SpotlightProvider>
-                <ThemedToaster />
-              </CommunityHostProvider>
-            </AuthProvider>
-          </ThemedMantineProvider>
+          <AuthProvider>
+            {/* Outside <App /> because Layout, the navigation and the route
+                table all need to know which community's host this is before
+                any of them render. */}
+            <CommunityHostProvider>
+              <SpotlightProvider>
+                <App />
+              </SpotlightProvider>
+              <ThemedToaster />
+            </CommunityHostProvider>
+          </AuthProvider>
         </ThemeProvider>
       </TransitionRouter>
     </ApolloProvider>

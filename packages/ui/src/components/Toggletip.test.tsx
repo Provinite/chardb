@@ -1,6 +1,8 @@
 import { act } from "react";
 import { describe, expect, it } from "vitest";
+import { declarationsOf } from "../__tests__/emittedCss";
 import { render } from "../__tests__/render";
+import { vars } from "../theme/contract.css";
 import { Popover, Toggletip } from ".";
 
 const click = (el: Element) =>
@@ -124,5 +126,12 @@ describe("Toggletip", () => {
 
     expect(bubble()).toBeNull();
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  });
+
+  it("draws above dialogs, since it explains controls inside them", () => {
+    const { button } = renderToggletip();
+    click(button);
+
+    expect(declarationsOf(bubble()!)["z-index"]).toBe(vars.layer.modal[100]);
   });
 });

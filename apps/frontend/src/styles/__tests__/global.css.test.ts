@@ -22,6 +22,48 @@ describe("global styles", () => {
     );
   });
 
+  // The baseline Mantine's stylesheet carried, kept when it went (#466).
+  it("gives form controls the font around them, size and line height too", () => {
+    expect(
+      rulesForSelectors("input", "button", "textarea", "select"),
+    ).toContainEqual(
+      expect.objectContaining({
+        declarations: expect.objectContaining({ font: "inherit" }),
+      }),
+    );
+  });
+
+  it("sets the body's line height and smoothing", () => {
+    expect(rulesForSelectors("body")).toContainEqual(
+      expect.objectContaining({
+        declarations: expect.objectContaining({
+          "line-height": "var(--font-lineHeight-normal)",
+          "-webkit-font-smoothing": "antialiased",
+          "-moz-osx-font-smoothing": "grayscale",
+        }),
+      }),
+    );
+  });
+
+  it("sizes pseudo-elements by their border box, as everything else", () => {
+    expect(rulesForSelectors("*::before", "*::after")).toContainEqual(
+      expect.objectContaining({
+        declarations: expect.objectContaining({ "box-sizing": "border-box" }),
+      }),
+    );
+  });
+
+  it("keeps phones from resizing text on rotation", () => {
+    expect(rulesForSelectors("html")).toContainEqual(
+      expect.objectContaining({
+        declarations: expect.objectContaining({
+          "-webkit-text-size-adjust": "100%",
+          "text-size-adjust": "100%",
+        }),
+      }),
+    );
+  });
+
   it("gives html the light page surface without data-theme", () => {
     expect(getComputedStyle(html).getPropertyValue("--surface-page")).toBe(
       "#ffffff",

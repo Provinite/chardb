@@ -25,7 +25,7 @@ import {
   UserPlus,
   Users,
 } from "lucide-react";
-import { useDebouncedValue } from "@mantine/hooks";
+import { timingMs, useDebouncedValue } from "@chardb/ui";
 import { useAuth } from "../../contexts/AuthContext";
 import { useCommunityHost } from "../../contexts/CommunityHostContext";
 import { apexUrl, communityUrl } from "../../lib/communityHost";
@@ -78,9 +78,11 @@ export function useSpotlightActions(
   // separately could not start until `me` had returned the id to ask with.
   const communitiesData = user?.communityMemberships;
 
-  // Every keystroke would otherwise be a round trip. 200ms is below the point
-  // where the list feels like it is lagging the box.
-  const [debouncedQuery] = useDebouncedValue(query.trim(), 200);
+  // Every keystroke would otherwise be a round trip.
+  const debouncedQuery = useDebouncedValue(
+    query.trim(),
+    timingMs.debounce.typeahead,
+  );
   // Memoised: it is a dependency of the actions below, and a fresh object
   // every render would rebuild the whole list on every render.
   const parsed = useMemo(

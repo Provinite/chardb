@@ -8,7 +8,6 @@ import { findTooltip } from "../../../__tests__/findTooltip";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
-import { MantineProvider } from "@mantine/core";
 import { LightingControl } from "../LightingControl";
 import * as styles from "../LightingControl.css";
 import { DEFAULT_LIGHTING, type Lighting } from "../candyLighting";
@@ -30,9 +29,7 @@ const renderControl = (value: Lighting | null = null) => {
   const onChange = vi.fn();
   render(
     <ThemeProvider theme={lightTheme}>
-      <MantineProvider>
-        <LightingControl value={value} onChange={onChange} />
-      </MantineProvider>
+      <LightingControl value={value} onChange={onChange} />
     </ThemeProvider>,
   );
   return onChange;

@@ -8,7 +8,7 @@
  *    unbundled ESM with different resolution and no minification, so bugs that
  *    only appear in the built output -- precisely what an E2E suite exists to
  *    catch -- are invisible there.
- *  - Speed: with Apollo, Mantine, framer-motion and react-markdown in the graph,
+ *  - Speed: with Apollo, framer-motion and react-markdown in the graph,
  *    a cold dev-mode first navigation costs seconds of on-demand transform, paid
  *    on every test. Preview serves static files.
  *

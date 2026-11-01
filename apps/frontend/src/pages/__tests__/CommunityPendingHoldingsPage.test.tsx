@@ -7,7 +7,6 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
 import { ThemeProvider } from "styled-components";
-import { MantineProvider } from "@mantine/core";
 import { lightTheme } from "@chardb/ui";
 import {
   ExternalAccountProvider,
@@ -63,22 +62,20 @@ const renderAt = (claimedBy: { id: string; username: string } | null) => {
   render(
     <MockedProvider mocks={mocks}>
       <ThemeProvider theme={lightTheme}>
-        <MantineProvider>
-          <MemoryRouter
-            initialEntries={[`/external-members/discord/${DISCORD_ID}`]}
-          >
-            <Routes>
-              <Route
-                path="/external-members/:provider/:accountId"
-                element={<CommunityPendingHoldingsPage />}
-              />
-              <Route
-                path="/members/:username/inventory"
-                element={<p>inventory of the claimant</p>}
-              />
-            </Routes>
-          </MemoryRouter>
-        </MantineProvider>
+        <MemoryRouter
+          initialEntries={[`/external-members/discord/${DISCORD_ID}`]}
+        >
+          <Routes>
+            <Route
+              path="/external-members/:provider/:accountId"
+              element={<CommunityPendingHoldingsPage />}
+            />
+            <Route
+              path="/members/:username/inventory"
+              element={<p>inventory of the claimant</p>}
+            />
+          </Routes>
+        </MemoryRouter>
       </ThemeProvider>
     </MockedProvider>,
   );

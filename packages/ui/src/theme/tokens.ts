@@ -158,6 +158,12 @@ export const timingMs = {
     delay: 500,
     minVisible: 500,
   },
+  debounce: {
+    /** A list of picks updating as you type: under the point where it lags the box. */
+    typeahead: 200,
+    /** A search box over a page of results, each search a round trip. */
+    search: 300,
+  },
   tooltip: {
     /** Hovering this long shows it; passing over on the way elsewhere does not. */
     delay: 400,
@@ -191,6 +197,8 @@ export const sharedTokens = {
     },
     /** The widest a dialog gets. Narrower screens give it their full width. */
     dialog: "36rem",
+    /** For a dialog with columns or a grid in it: a picker, a form side by side. */
+    dialogWide: "48rem",
     /**
      * The height a dialog's result list holds at whatever it shows, so the
      * dialog never resizes as results come and go. Shorter screens shrink it.
@@ -275,6 +283,10 @@ export const sharedTokens = {
     loader: {
       delay: `${timingMs.loader.delay}ms`,
       minVisible: `${timingMs.loader.minVisible}ms`,
+    },
+    debounce: {
+      typeahead: `${timingMs.debounce.typeahead}ms`,
+      search: `${timingMs.debounce.search}ms`,
     },
     tooltip: {
       delay: `${timingMs.tooltip.delay}ms`,

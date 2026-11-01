@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`useDebouncedValue`**, **`Dialog.Body`**, and a `wide` `Dialog` with the `size.dialogWide` token, for what Mantine supplied (#466).
+
 - **`Tooltip`**, a name shown on hover, keyboard focus and long press, and **`Toggletip`**, a note behind an info button that screen readers hear as it opens; plus the `timing.tooltip` tokens and the `illustration.lamp` colours (#466).
 
 - **`Popover`**, a panel beside its button that keeps keyboard order as if it sat right after it, and **`useAnchoredPosition`**, which places it and `Menu` with floating-ui's `fallbackPlacements` and `fallbackStrategy`, slides it to stay on screen, and caps it to the room it has (#466).

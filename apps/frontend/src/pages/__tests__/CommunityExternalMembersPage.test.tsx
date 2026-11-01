@@ -9,7 +9,6 @@ import { MemoryRouter } from "react-router-dom";
 import { MockedProvider } from "@apollo/client/testing";
 import { ApolloLink, Observable } from "@apollo/client";
 import { ThemeProvider } from "styled-components";
-import { MantineProvider } from "@mantine/core";
 import { lightTheme } from "@chardb/ui";
 import { ExternalAccountProvider } from "../../generated/graphql";
 import { CommunityExternalMembersPage } from "../CommunityExternalMembersPage";
@@ -74,11 +73,9 @@ const renderPage = (sent: Vars[], delayMs = 0) =>
   render(
     <MockedProvider link={recordingLink(sent, delayMs)}>
       <ThemeProvider theme={lightTheme}>
-        <MantineProvider>
-          <MemoryRouter>
-            <CommunityExternalMembersPage />
-          </MemoryRouter>
-        </MantineProvider>
+        <MemoryRouter>
+          <CommunityExternalMembersPage />
+        </MemoryRouter>
       </ThemeProvider>
     </MockedProvider>,
   );
