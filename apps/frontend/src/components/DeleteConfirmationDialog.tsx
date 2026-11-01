@@ -150,20 +150,15 @@ export const DeleteConfirmationDialog: React.FC<
         </Message>
 
         <ButtonGroup>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onClose}
-            disabled={isLoading}
-          >
+          <Button tone="ghost" size="sm" onClick={onClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button
-            variant="secondary"
+            tone="secondary"
             size="sm"
             onClick={onConfirm}
             disabled={isLoading}
-            loading={isLoading}
+            busy={isLoading}
           >
             {isLoading ? "Deleting..." : "Delete"}
           </Button>

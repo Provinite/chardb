@@ -585,19 +585,19 @@ export const MediaPage: React.FC = () => {
 
         {user && user.id === media.ownerId && (
           <HeaderActions>
-            <Button variant="primary" size="sm" onClick={handleEditClick}>
+            <Button tone="primary" size="sm" onClick={handleEditClick}>
               Edit Content
             </Button>
             {canReframeThumbnail && (
               <Button
-                variant="outline"
+                tone="outline"
                 size="sm"
                 onClick={() => setShowCropper(true)}
               >
                 Adjust Thumbnail
               </Button>
             )}
-            <Button variant="secondary" size="sm" onClick={handleDeleteClick}>
+            <Button tone="secondary" size="sm" onClick={handleDeleteClick}>
               Delete
             </Button>
           </HeaderActions>

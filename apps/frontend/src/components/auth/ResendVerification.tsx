@@ -81,8 +81,8 @@ export const ResendVerification: React.FC<ResendVerificationProps> = ({
         type="button"
         // Outline, not secondary: secondary renders green, which reads as a
         // confirmation the panel has not earned -- nothing has been sent yet.
-        variant="outline"
-        loading={loading}
+        tone="outline"
+        busy={loading}
         disabled={loading}
         onClick={onResend}
       >

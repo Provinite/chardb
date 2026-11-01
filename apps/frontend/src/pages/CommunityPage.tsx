@@ -303,7 +303,7 @@ export const CommunityPage: React.FC = () => {
                 <>
                   {!isMember && (
                     <Button
-                      variant="primary"
+                      tone="primary"
                       icon={<UserPlus size={16} />}
                       // Joining, like signing in, happens at the apex: the
                       // router cannot cross a host.
@@ -316,7 +316,7 @@ export const CommunityPage: React.FC = () => {
                   )}
                   {isMember && (
                     <Button
-                      variant="outline"
+                      tone="outline"
                       icon={<Settings size={16} />}
                       as={Link}
                       to="/admin"
@@ -328,7 +328,7 @@ export const CommunityPage: React.FC = () => {
               ) : (
                 // The session cookie is set on the parent domain, so signing
                 // in has to happen at the apex.
-                <Button variant="primary" as="a" href={apexUrl("/login")}>
+                <Button tone="primary" as="a" href={apexUrl("/login")}>
                   Sign In to Join
                 </Button>
               )}
@@ -360,7 +360,7 @@ export const CommunityPage: React.FC = () => {
                   <StatText>
                     {section.count} {section.title.toLowerCase()}
                   </StatText>
-                  <ViewButton variant="outline" size="sm">
+                  <ViewButton tone="outline" size="sm">
                     Explore
                   </ViewButton>
                 </SectionStats>

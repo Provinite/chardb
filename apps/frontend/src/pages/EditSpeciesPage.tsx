@@ -217,7 +217,7 @@ export const EditSpeciesPage: React.FC = () => {
           }
         />
         <BackButton
-          variant="secondary"
+          tone="secondary"
           icon={<ArrowLeft size={16} />}
           onClick={() => navigate(-1)}
         >
@@ -232,7 +232,7 @@ export const EditSpeciesPage: React.FC = () => {
   return (
     <Container>
       <BackButton
-        variant="ghost"
+        tone="ghost"
         icon={<ArrowLeft size={16} />}
         onClick={handleCancel}
       >
@@ -282,7 +282,7 @@ export const EditSpeciesPage: React.FC = () => {
         <Actions>
           <Button
             type="button"
-            variant="secondary"
+            tone="secondary"
             onClick={handleCancel}
             disabled={updateLoading}
           >

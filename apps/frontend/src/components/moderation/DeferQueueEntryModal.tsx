@@ -104,11 +104,11 @@ export const DeferQueueEntryModal: React.FC<DeferQueueEntryModalProps> = ({
         )}
 
         <Actions>
-          <Button variant="outline" onClick={onCancel} disabled={submitting}>
+          <Button tone="outline" onClick={onCancel} disabled={submitting}>
             Cancel
           </Button>
           <Button
-            variant="primary"
+            tone="primary"
             onClick={() => onDefer(note.trim() || undefined)}
             disabled={submitting}
           >

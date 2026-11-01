@@ -252,7 +252,7 @@ export const ResetPasswordPage: React.FC = () => {
             )}
           </FormGroup>
 
-          <Button type="submit" loading={isLoading} disabled={isLoading}>
+          <Button type="submit" busy={isLoading} disabled={isLoading}>
             {isLoading ? "Resetting..." : "Reset Password"}
           </Button>
         </Form>

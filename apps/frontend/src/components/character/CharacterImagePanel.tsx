@@ -273,7 +273,7 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
           />
           <Button
             type="button"
-            variant="ghost"
+            tone="ghost"
             size="sm"
             onClick={() => onChange(null)}
           >
@@ -298,7 +298,7 @@ export const CharacterImagePicker: React.FC<CharacterImagePickerProps> = ({
                 : "Thumbnail: centre of the image"}
               <Button
                 type="button"
-                variant="outline"
+                tone="outline"
                 size="sm"
                 onClick={() => setCropping(true)}
               >

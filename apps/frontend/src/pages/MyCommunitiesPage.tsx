@@ -178,7 +178,7 @@ export const MyCommunitiesPage: React.FC = () => {
             <Button
               as={Link}
               to="/join-community"
-              variant="primary"
+              tone="primary"
               icon={<Users size={16} />}
             >
               Join Community
@@ -236,7 +236,7 @@ export const MyCommunitiesPage: React.FC = () => {
                 <Button
                   as="a"
                   href={communityUrl(membership.role.community.slug, "/admin")}
-                  variant="primary"
+                  tone="primary"
                   size="sm"
                   icon={<ExternalLink size={14} />}
                 >

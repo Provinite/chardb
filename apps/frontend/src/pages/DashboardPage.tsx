@@ -127,19 +127,19 @@ export const DashboardPage: React.FC = () => {
         <ActionButtons>
           {/* Creating a character happens inside a community; the dashboard
               is at the apex, so this picks one first. */}
-          <Button as={Link} to="/my/communities" variant="primary">
+          <Button as={Link} to="/my/communities" tone="primary">
             Create Character
           </Button>
-          <Button as={Link} to="/gallery/create" variant="outline">
+          <Button as={Link} to="/gallery/create" tone="outline">
             Create Gallery
           </Button>
-          <Button as={Link} to="/upload" variant="outline">
+          <Button as={Link} to="/upload" tone="outline">
             Create Media
           </Button>
-          <Button as={Link} to="/join-community" variant="outline">
+          <Button as={Link} to="/join-community" tone="outline">
             Join Community
           </Button>
-          <Button as={Link} to="/characters" variant="ghost">
+          <Button as={Link} to="/characters" tone="ghost">
             Browse Characters
           </Button>
         </ActionButtons>
@@ -157,7 +157,7 @@ export const DashboardPage: React.FC = () => {
             View and manage all your character profiles. Edit details, upload
             new artwork, or create new characters to expand your collection.
           </CardDescription>
-          <Button as={Link} to="/my/characters" variant="outline" size="sm">
+          <Button as={Link} to="/my/characters" tone="outline" size="sm">
             View Characters
           </Button>
         </DashboardCard>
@@ -168,7 +168,7 @@ export const DashboardPage: React.FC = () => {
             Organize your artwork into themed galleries. Create collections for
             different characters, art styles, or projects.
           </CardDescription>
-          <Button as={Link} to="/my/galleries" variant="outline" size="sm">
+          <Button as={Link} to="/my/galleries" tone="outline" size="sm">
             View Galleries
           </Button>
         </DashboardCard>
@@ -179,7 +179,7 @@ export const DashboardPage: React.FC = () => {
             Browse all your uploaded images and text content. Organize them into
             galleries or assign them to specific characters.
           </CardDescription>
-          <Button as={Link} to="/my/media" variant="outline" size="sm">
+          <Button as={Link} to="/my/media" tone="outline" size="sm">
             View Media
           </Button>
         </DashboardCard>
@@ -190,7 +190,7 @@ export const DashboardPage: React.FC = () => {
             Update your profile information, avatar, bio, and privacy settings.
             Customize how others see your profile.
           </CardDescription>
-          <Button as={Link} to="/profile/edit" variant="outline" size="sm">
+          <Button as={Link} to="/profile/edit" tone="outline" size="sm">
             Edit Profile
           </Button>
         </DashboardCard>
@@ -201,7 +201,7 @@ export const DashboardPage: React.FC = () => {
             See what's happening in your network. View comments, likes, and
             updates from characters and users you follow.
           </CardDescription>
-          <Button as={Link} to="/feed" variant="outline" size="sm">
+          <Button as={Link} to="/feed" tone="outline" size="sm">
             View Feed
           </Button>
         </DashboardCard>
@@ -212,7 +212,7 @@ export const DashboardPage: React.FC = () => {
             Browse through all the characters you've liked. Discover interesting
             personalities and designs that caught your attention.
           </CardDescription>
-          <Button as={Link} to="/liked/characters" variant="outline" size="sm">
+          <Button as={Link} to="/liked/characters" tone="outline" size="sm">
             View Liked Characters
           </Button>
         </DashboardCard>
@@ -223,7 +223,7 @@ export const DashboardPage: React.FC = () => {
             View all the art galleries you've shown love to. Explore curated
             collections and themed artwork that inspired you.
           </CardDescription>
-          <Button as={Link} to="/liked/galleries" variant="outline" size="sm">
+          <Button as={Link} to="/liked/galleries" tone="outline" size="sm">
             View Liked Galleries
           </Button>
         </DashboardCard>
@@ -234,7 +234,7 @@ export const DashboardPage: React.FC = () => {
             Access your collection of liked media and content. Revisit the
             pieces that captured your imagination.
           </CardDescription>
-          <Button as={Link} to="/liked/media" variant="outline" size="sm">
+          <Button as={Link} to="/liked/media" tone="outline" size="sm">
             View Liked Media
           </Button>
         </DashboardCard>
@@ -245,7 +245,7 @@ export const DashboardPage: React.FC = () => {
             Track your activity with detailed statistics about your characters,
             artwork views, and community engagement.
           </CardDescription>
-          <Button as={Link} to="/stats" variant="outline" size="sm">
+          <Button as={Link} to="/stats" tone="outline" size="sm">
             View Stats
           </Button>
         </DashboardCard>
@@ -257,7 +257,7 @@ export const DashboardPage: React.FC = () => {
               Manage site-wide settings, invite codes, user accounts, and
               community oversight. Administrative tools for site management.
             </CardDescription>
-            <Button as={Link} to="/admin" variant="outline" size="sm">
+            <Button as={Link} to="/admin" tone="outline" size="sm">
               Admin Panel
             </Button>
           </DashboardCard>

@@ -273,7 +273,7 @@ export const CommunityShopPurchasesPage: React.FC = () => {
           />
         </SearchBox>
         {query && (
-          <Button variant="secondary" onClick={() => setQuery("")}>
+          <Button tone="secondary" onClick={() => setQuery("")}>
             <X size={14} /> Clear
           </Button>
         )}
@@ -316,7 +316,7 @@ export const CommunityShopPurchasesPage: React.FC = () => {
                   </Refunded>
                 ) : line.refundableByViewer ? (
                   <Button
-                    variant="secondary"
+                    tone="secondary"
                     disabled={busyLineId === line.id}
                     data-testid={`staff-refund-${line.id}`}
                     onClick={() =>

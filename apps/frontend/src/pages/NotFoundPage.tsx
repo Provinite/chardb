@@ -42,7 +42,7 @@ export const NotFoundPage: React.FC = () => {
         The page you're looking for doesn't exist. It might have been moved,
         deleted, or you entered the wrong URL.
       </ErrorDescription>
-      <Button as={Link} to="/" variant="primary">
+      <Button as={Link} to="/" tone="primary">
         Go Home
       </Button>
     </Container>

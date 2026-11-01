@@ -318,7 +318,7 @@ export const TradeOfferPage: React.FC = () => {
           {actions.canRespond && (
             <>
               <Button
-                variant="ghost"
+                tone="ghost"
                 disabled={declining}
                 data-testid="decline-trade"
                 onClick={() =>
@@ -328,7 +328,7 @@ export const TradeOfferPage: React.FC = () => {
                 Decline
               </Button>
               <Button
-                variant="secondary"
+                tone="secondary"
                 data-testid="counter-trade"
                 onClick={() =>
                   // Only navigation. The decline happens with the replacement
@@ -340,7 +340,7 @@ export const TradeOfferPage: React.FC = () => {
                 Counter…
               </Button>
               <Button
-                variant="primary"
+                tone="primary"
                 disabled={accepting}
                 data-testid="accept-trade"
                 onClick={() =>
@@ -353,7 +353,7 @@ export const TradeOfferPage: React.FC = () => {
           )}
           {actions.canCancel && (
             <Button
-              variant="ghost"
+              tone="ghost"
               disabled={cancelling}
               data-testid="cancel-trade"
               onClick={() =>

@@ -251,7 +251,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
             <Button
               as={Link}
               to={`/upload?character=${characterId}`}
-              variant="primary"
+              tone="primary"
               size="sm"
             >
               Add Media
@@ -259,7 +259,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
           )}
           {hasMore && showViewAll && (
             <Link to={`/character/${characterId}/media`}>
-              <Button variant="ghost" size="sm">
+              <Button tone="ghost" size="sm">
                 View All ({totalCount})
               </Button>
             </Link>
@@ -314,7 +314,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
       {hasMore && (
         <ViewAllContainer>
           <Button
-            variant="secondary"
+            tone="secondary"
             size="md"
             data-testid="load-more-media"
             disabled={loading}
@@ -324,7 +324,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
           </Button>
           {showViewAll && (
             <Link to={`/character/${characterId}/media`}>
-              <Button variant="primary" size="md">
+              <Button tone="primary" size="md">
                 View All Media ({totalCount})
               </Button>
             </Link>

@@ -177,12 +177,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({
         {/* A comment form renders on a character page, which lives on a
             community host -- so this has to carry the way back, and it is a
             router link because /login on this host is a route like any other. */}
-        <Button
-          as={Link}
-          to={loginUrlReturningHere()}
-          variant="primary"
-          size="sm"
-        >
+        <Button as={Link} to={loginUrlReturningHere()} tone="primary" size="sm">
           Log In
         </Button>
       </LoginPrompt>
@@ -220,7 +215,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({
           {onCancel && (
             <Button
               type="button"
-              variant="outline"
+              tone="outline"
               size="sm"
               onClick={handleCancel}
               disabled={isSubmitting}
@@ -231,7 +226,7 @@ export const CommentForm: React.FC<CommentFormProps> = ({
 
           <Button
             type="submit"
-            variant="primary"
+            tone="primary"
             size="sm"
             disabled={isSubmitting || !content.trim() || isOverLimit}
           >

@@ -541,7 +541,7 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
                   <Spacer />
                   {subfolders.length > 1 && (
                     <Button
-                      variant={reordering ? "primary" : "ghost"}
+                      tone={reordering ? "primary" : "ghost"}
                       size="sm"
                       onClick={() => setReordering((on) => !on)}
                     >
@@ -550,7 +550,7 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
                   )}
                   {newName === null ? (
                     <Button
-                      variant="outline"
+                      tone="outline"
                       size="sm"
                       onClick={() => setNewName("")}
                     >
@@ -573,11 +573,11 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
                           if (event.key === "Escape") setNewName(null);
                         }}
                       />
-                      <Button variant="primary" size="sm" type="submit">
+                      <Button tone="primary" size="sm" type="submit">
                         Create
                       </Button>
                       <Button
-                        variant="ghost"
+                        tone="ghost"
                         size="sm"
                         onClick={() => setNewName(null)}
                       >
@@ -636,7 +636,7 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
                 that second half is a choice made in the picker, where it can
                 name the folder, rather than a second button that can't. */}
               <Button
-                variant="outline"
+                tone="outline"
                 size="sm"
                 onClick={() => setPicker({ kind: "file-characters" })}
               >
@@ -644,7 +644,7 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
               </Button>
               {openFolder && (
                 <Button
-                  variant="ghost"
+                  tone="ghost"
                   size="sm"
                   onClick={() => void runMove([...selected], null, true)}
                 >
@@ -652,7 +652,7 @@ export const CharacterFolderBrowser: React.FC<CharacterFolderBrowserProps> = ({
                 </Button>
               )}
               <Button
-                variant="ghost"
+                tone="ghost"
                 size="sm"
                 onClick={() => setSelected(new Set())}
               >
@@ -840,10 +840,10 @@ const FolderHeader: React.FC<{
               if (event.key === "Escape") setDraft(null);
             }}
           />
-          <Button variant="primary" size="sm" type="submit">
+          <Button tone="primary" size="sm" type="submit">
             Save
           </Button>
-          <Button variant="ghost" size="sm" onClick={() => setDraft(null)}>
+          <Button tone="ghost" size="sm" onClick={() => setDraft(null)}>
             Cancel
           </Button>
         </NameForm>
@@ -858,7 +858,7 @@ const FolderHeader: React.FC<{
       {editable && draft === null && (
         <Actions>
           <Button
-            variant="ghost"
+            tone="ghost"
             size="sm"
             icon={<Pencil size={14} aria-hidden />}
             onClick={() => setDraft(folder.name)}
@@ -866,7 +866,7 @@ const FolderHeader: React.FC<{
             Rename
           </Button>
           <Button
-            variant="ghost"
+            tone="ghost"
             size="sm"
             icon={
               folder.isPrivate ? (
@@ -880,7 +880,7 @@ const FolderHeader: React.FC<{
             {folder.isPrivate ? "Make public" : "Make private"}
           </Button>
           <Button
-            variant="ghost"
+            tone="ghost"
             size="sm"
             icon={<FolderInput size={14} aria-hidden />}
             onClick={onMove}
@@ -888,7 +888,7 @@ const FolderHeader: React.FC<{
             Move
           </Button>
           <Button
-            variant="ghost"
+            tone="ghost"
             size="sm"
             icon={<Trash2 size={14} aria-hidden />}
             onClick={onDelete}

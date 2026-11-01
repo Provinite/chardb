@@ -285,7 +285,7 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
           <SmallText style={{ margin: 0 }}>
             Failed to load moderation queue. Please try again.
           </SmallText>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button tone="outline" size="sm" onClick={() => refetch()}>
             Retry
           </Button>
         </ErrorState>
@@ -301,7 +301,7 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
           {!loading && <CountBadge>{total} pending</CountBadge>}
         </HeaderLeft>
         <Button
-          variant="outline"
+          tone="outline"
           size="sm"
           onClick={() => refetch()}
           disabled={loading}
@@ -388,7 +388,7 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
           {totalPages > 1 && (
             <Pagination>
               <Button
-                variant="outline"
+                tone="outline"
                 size="sm"
                 onClick={handlePrevPage}
                 disabled={offset === 0}
@@ -399,7 +399,7 @@ export const ImageModerationQueue: React.FC<ImageModerationQueueProps> = ({
                 Page {currentPage} of {totalPages}
               </PageInfo>
               <Button
-                variant="outline"
+                tone="outline"
                 size="sm"
                 onClick={handleNextPage}
                 disabled={!hasMore}

@@ -385,7 +385,7 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
               size="sm"
               onClick={handleApprove}
               disabled={isLoading}
-              loading={approving}
+              busy={approving}
               icon={<Check size={14} />}
             >
               Approve
@@ -393,21 +393,21 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
             {/* Between the two outcomes and neither of them: the image stays
                 pending, the uploader hears nothing. */}
             <ActionButton
-              variant="outline"
+              tone="outline"
               size="sm"
               onClick={() => setShowDeferModal(true)}
               disabled={isLoading}
-              loading={deferring}
+              busy={deferring}
               icon={<Undo2 size={14} />}
             >
               Send to back
             </ActionButton>
             <ActionButton
-              variant="danger"
+              tone="danger"
               size="sm"
               onClick={() => setShowRejectModal(true)}
               disabled={isLoading}
-              loading={rejecting}
+              busy={rejecting}
               icon={<X size={14} />}
             >
               Reject

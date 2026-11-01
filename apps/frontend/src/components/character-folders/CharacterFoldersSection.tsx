@@ -182,7 +182,7 @@ export const CharacterFoldersSection: React.FC<
       <Heading>
         <h3>Folders</h3>
         {editable && (
-          <Button variant="ghost" size="sm" onClick={() => setEditing(true)}>
+          <Button tone="ghost" size="sm" onClick={() => setEditing(true)}>
             {filed.length === 0 ? "Add to folder" : "Edit"}
           </Button>
         )}
@@ -261,16 +261,16 @@ export const CharacterFoldersSection: React.FC<
 
         <Actions>
           <Button
-            variant="ghost"
+            tone="ghost"
             onClick={() => setEditing(false)}
             disabled={busy}
           >
             Cancel
           </Button>
           <Button
-            variant="primary"
+            tone="primary"
             onClick={() => void save()}
-            loading={busy}
+            busy={busy}
             disabled={all.length === 0}
           >
             Save

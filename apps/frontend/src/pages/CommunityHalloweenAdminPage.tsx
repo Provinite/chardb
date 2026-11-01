@@ -457,7 +457,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
             <SectionTitle>Settings</SectionTitle>
             {canManage && !editingSettings && (
               <Button
-                variant="secondary"
+                tone="secondary"
                 size="sm"
                 onClick={() => setEditingSettings(true)}
               >
@@ -504,7 +504,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
             <SectionTitle>Prize pool</SectionTitle>
             {canManage && (
               <Button
-                variant="primary"
+                tone="primary"
                 size="sm"
                 onClick={() => setPrizeForm({ prize: null })}
               >
@@ -544,7 +544,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                         <td>
                           <RowActions>
                             <Button
-                              variant="secondary"
+                              tone="secondary"
                               size="sm"
                               aria-label={`Edit ${prize.name}`}
                               onClick={() => setPrizeForm({ prize })}
@@ -552,7 +552,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                               <Pencil size={14} /> Edit
                             </Button>
                             <Button
-                              variant="danger"
+                              tone="danger"
                               size="sm"
                               aria-label={`Remove ${prize.name}`}
                               onClick={() => setRemoving(prize)}
@@ -667,7 +667,7 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
               </Muted>
               {page.hasMore && (
                 <Button
-                  variant="secondary"
+                  tone="secondary"
                   disabled={loadingMore}
                   onClick={loadMore}
                 >
@@ -781,7 +781,7 @@ const WinActions: React.FC<{
 
   return win.deliveredAt ? (
     <Button
-      variant="secondary"
+      tone="secondary"
       size="sm"
       disabled={busy}
       onClick={onUndo}
@@ -790,7 +790,7 @@ const WinActions: React.FC<{
       <Undo2 size={14} /> Undo
     </Button>
   ) : (
-    <Button variant="primary" size="sm" disabled={busy} onClick={onDeliver}>
+    <Button tone="primary" size="sm" disabled={busy} onClick={onDeliver}>
       <Check size={14} /> {busy ? "Saving…" : "Mark delivered"}
     </Button>
   );

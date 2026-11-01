@@ -289,7 +289,7 @@ export const JoinCommunityPage: React.FC = () => {
 
           <Button
             type="submit"
-            loading={isLoading}
+            busy={isLoading}
             disabled={
               isLoading ||
               inviteCodeLoading ||

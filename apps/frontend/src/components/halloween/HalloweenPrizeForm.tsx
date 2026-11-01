@@ -386,12 +386,12 @@ export const HalloweenPrizeForm: React.FC<HalloweenPrizeFormProps> = ({
 
       <Actions>
         {error && <ErrorText role="alert">{error}</ErrorText>}
-        <Button type="button" variant="secondary" onClick={onCancel}>
+        <Button type="button" tone="secondary" onClick={onCancel}>
           Cancel
         </Button>
         <Button
           type="submit"
-          variant="primary"
+          tone="primary"
           disabled={busy || (!editing && !isStaffPrize && !pick)}
         >
           {editing ? "Save prize" : "Add prize"}

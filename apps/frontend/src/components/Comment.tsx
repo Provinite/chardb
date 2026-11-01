@@ -302,12 +302,12 @@ export const Comment: React.FC<CommentProps> = ({
             autoFocus
           />
           <EditActions>
-            <Button type="submit" variant="primary" size="sm">
+            <Button type="submit" tone="primary" size="sm">
               Save
             </Button>
             <Button
               type="button"
-              variant="outline"
+              tone="outline"
               size="sm"
               onClick={handleCancelEdit}
             >

@@ -318,7 +318,7 @@ const CreateSpeciesModal: React.FC<CreateSpeciesModalProps> = ({
         >
           <Button
             type="button"
-            variant="secondary"
+            tone="secondary"
             onClick={onClose}
             disabled={isSubmitting}
           >
@@ -588,7 +588,7 @@ export const SpeciesManagementPage: React.FC = () => {
                     }}
                   >
                     <ActionButton
-                      variant="secondary"
+                      tone="secondary"
                       size="sm"
                       onClick={() => handleManageTraits(species)}
                       icon={<Database size={14} />}
@@ -596,7 +596,7 @@ export const SpeciesManagementPage: React.FC = () => {
                       Traits
                     </ActionButton>
                     <ActionButton
-                      variant="secondary"
+                      tone="secondary"
                       size="sm"
                       onClick={() => handleManageVariants(species)}
                       icon={<Palette size={14} />}
@@ -604,7 +604,7 @@ export const SpeciesManagementPage: React.FC = () => {
                       Variants
                     </ActionButton>
                     <ActionButton
-                      variant="secondary"
+                      tone="secondary"
                       size="sm"
                       onClick={() => handleEditSpecies(species)}
                       icon={<Edit size={14} />}

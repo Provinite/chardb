@@ -103,7 +103,7 @@ export const CommunitySettingsPage: React.FC = () => {
         <Header>
           <HeaderTop>
             <BackButton
-              variant="outline"
+              tone="outline"
               onClick={() => window.history.back()}
               icon={<ArrowLeft size={16} />}
             >
@@ -121,7 +121,7 @@ export const CommunitySettingsPage: React.FC = () => {
       <Header>
         <HeaderTop>
           <BackButton
-            variant="outline"
+            tone="outline"
             onClick={() => window.history.back()}
             icon={<ArrowLeft size={16} />}
           >

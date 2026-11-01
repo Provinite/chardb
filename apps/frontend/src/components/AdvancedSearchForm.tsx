@@ -291,7 +291,7 @@ export const AdvancedSearchForm: React.FC<AdvancedSearchFormProps> = ({
         <Button type="submit" disabled={loading}>
           {loading ? "Searching..." : "Search Characters"}
         </Button>
-        <Button type="button" variant="secondary" onClick={handleClear}>
+        <Button type="button" tone="secondary" onClick={handleClear}>
           Clear Filters
         </Button>
       </ButtonRow>

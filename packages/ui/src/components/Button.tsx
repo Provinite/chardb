@@ -80,10 +80,10 @@ import { Theme } from "../theme";
  */
 
 interface ButtonProps {
-  variant?: "primary" | "secondary" | "outline" | "ghost" | "danger";
+  tone?: "primary" | "secondary" | "outline" | "ghost" | "danger";
   size?: "sm" | "md" | "lg";
   disabled?: boolean;
-  loading?: boolean;
+  busy?: boolean;
   children: React.ReactNode;
   onClick?: () => void;
   type?: "button" | "submit" | "reset";
@@ -178,7 +178,7 @@ const getSizeStyles = (size: string, theme: Theme) => {
 
 const StyledButton = styled.button.withConfig({
   shouldForwardProp: (prop) =>
-    !["variant", "size", "loading", "isFollowing"].includes(prop as string),
+    !["tone", "size", "busy", "isFollowing"].includes(prop as string),
 })<ButtonProps>`
   display: inline-flex;
   align-items: center;
@@ -190,7 +190,7 @@ const StyledButton = styled.button.withConfig({
   cursor: pointer;
   transition: all 0.2s ease-in-out;
 
-  ${({ variant = "primary", theme }) => getVariantStyles(variant, theme)}
+  ${({ tone = "primary", theme }) => getVariantStyles(tone, theme)}
   ${({ size = "md", theme }) => getSizeStyles(size, theme)}
   
   &:disabled {
@@ -219,10 +219,10 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   (
     {
       children,
-      variant = "primary",
+      tone = "primary",
       size = "md",
       disabled = false,
-      loading = false,
+      busy = false,
       type = "button",
       onClick,
       as,
@@ -235,15 +235,15 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       <StyledButton
         ref={ref}
         as={as}
-        variant={variant}
+        tone={tone}
         size={size}
-        disabled={disabled || loading}
+        disabled={disabled || busy}
         type={type}
         onClick={onClick}
         {...props}
       >
-        {loading && <span>⏳</span>}
-        {!loading && icon && icon}
+        {busy && <span>⏳</span>}
+        {!busy && icon && icon}
         {children}
       </StyledButton>
     );

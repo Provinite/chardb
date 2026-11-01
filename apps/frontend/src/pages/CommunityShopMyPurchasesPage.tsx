@@ -410,7 +410,7 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
             </Muted>
             {hasMore && (
               <Button
-                variant="secondary"
+                tone="secondary"
                 onClick={() => setLimit((n) => n + PAGE_SIZE)}
               >
                 Load more

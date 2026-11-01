@@ -322,7 +322,7 @@ export const DiscordIntegrationSettings: React.FC<
                 />
               </InputGroup>
               <Button
-                variant="outline"
+                tone="outline"
                 onClick={handleValidate}
                 disabled={!guildIdInput.trim() || validating || linking}
                 icon={
@@ -360,7 +360,7 @@ export const DiscordIntegrationSettings: React.FC<
             {validationData?.validateDiscordGuild?.botHasAccess && (
               <Row>
                 <Button
-                  variant="primary"
+                  tone="primary"
                   onClick={handleLink}
                   disabled={linking}
                   icon={
@@ -385,7 +385,7 @@ export const DiscordIntegrationSettings: React.FC<
           </HelpText>
           <Row>
             <Button
-              variant="outline"
+              tone="outline"
               onClick={handleUnlink}
               disabled={unlinking}
               icon={<Unlink size={16} />}

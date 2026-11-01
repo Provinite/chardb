@@ -166,7 +166,7 @@ export const CreateMediaPage: React.FC = () => {
             PNG, GIF, and WebP formats. Perfect for character art, reference
             images, and visual galleries.
           </OptionDescription>
-          <OptionButton variant="primary">Upload Image</OptionButton>
+          <OptionButton tone="primary">Upload Image</OptionButton>
         </OptionCard>
 
         <OptionCard to={buildUrl("/text/create")}>
@@ -176,7 +176,7 @@ export const CreateMediaPage: React.FC = () => {
             Write stories, character descriptions, world-building notes, or any
             textual content. Supports both plain text and Markdown formatting.
           </OptionDescription>
-          <OptionButton variant="primary">Create Text</OptionButton>
+          <OptionButton tone="primary">Create Text</OptionButton>
         </OptionCard>
       </OptionsGrid>
 

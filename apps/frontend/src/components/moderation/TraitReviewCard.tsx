@@ -275,7 +275,7 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
 
           <Actions>
             <Button
-              variant="primary"
+              tone="primary"
               size="sm"
               onClick={() => onApprove(review.id)}
               disabled={actionInProgress}
@@ -285,7 +285,7 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
             </Button>
             {onEditAndApprove && (
               <Button
-                variant="outline"
+                tone="outline"
                 size="sm"
                 onClick={() => onEditAndApprove(review.id)}
                 disabled={actionInProgress}
@@ -304,7 +304,7 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
             {review.source !== TraitReviewSource.Creation &&
               review.source !== TraitReviewSource.Import && (
                 <Button
-                  variant="outline"
+                  tone="outline"
                   size="sm"
                   onClick={() => setShowRejectModal(true)}
                   disabled={actionInProgress}
@@ -318,7 +318,7 @@ export const TraitReviewCard: React.FC<TraitReviewCardProps> = ({
                 two that cannot be reverted -- an import nobody can rule on
                 yet is exactly the case this exists for. */}
             <Button
-              variant="outline"
+              tone="outline"
               size="sm"
               onClick={() => setShowDeferModal(true)}
               disabled={actionInProgress}

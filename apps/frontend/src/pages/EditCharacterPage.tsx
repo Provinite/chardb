@@ -1052,7 +1052,7 @@ export const EditCharacterPage: React.FC = () => {
               <TraitActions>
                 <Button
                   type="button"
-                  variant="primary"
+                  tone="primary"
                   onClick={handleSaveRegistry}
                   data-testid="save-species-details"
                   disabled={
@@ -1075,7 +1075,7 @@ export const EditCharacterPage: React.FC = () => {
           <Actions>
             <Button
               type="button"
-              variant="ghost"
+              tone="ghost"
               onClick={handleBack}
               disabled={isSubmitting}
             >
@@ -1083,7 +1083,7 @@ export const EditCharacterPage: React.FC = () => {
             </Button>
             <Button
               type="submit"
-              variant="primary"
+              tone="primary"
               disabled={!canEditProfile || isSubmitting || !isGrantTargetValid}
             >
               {isSubmitting ? "Saving..." : "Save Changes"}

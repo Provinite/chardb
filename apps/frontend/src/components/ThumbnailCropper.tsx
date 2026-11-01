@@ -189,7 +189,7 @@ export const ThumbnailCropper: React.FC<ThumbnailCropperProps> = ({
           <ResetSlot>
             <Button
               type="button"
-              variant="ghost"
+              tone="ghost"
               onClick={onReset}
               disabled={busy}
             >
@@ -199,7 +199,7 @@ export const ThumbnailCropper: React.FC<ThumbnailCropperProps> = ({
         )}
         <Button
           type="button"
-          variant="secondary"
+          tone="secondary"
           onClick={onCancel}
           disabled={busy}
         >

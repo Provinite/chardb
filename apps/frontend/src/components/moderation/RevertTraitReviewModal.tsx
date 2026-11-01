@@ -113,7 +113,7 @@ export const RevertTraitReviewModal: React.FC<RevertTraitReviewModalProps> = ({
 
         <Actions>
           <Button
-            variant="outline"
+            tone="outline"
             data-testid="revert-cancel"
             onClick={onCancel}
             disabled={submitting}
@@ -121,7 +121,7 @@ export const RevertTraitReviewModal: React.FC<RevertTraitReviewModalProps> = ({
             Cancel
           </Button>
           <Button
-            variant="primary"
+            tone="primary"
             data-testid="revert-confirm"
             onClick={handleSubmit}
             disabled={!reason.trim() || submitting}

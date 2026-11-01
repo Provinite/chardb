@@ -334,7 +334,7 @@ export function CommunityManagementPage() {
         </HeaderContent>
         <Actions>
           <Button
-            variant="primary"
+            tone="primary"
             onClick={() => setIsCreateModalOpen(true)}
             icon={<Plus size={16} />}
           >
@@ -466,17 +466,13 @@ export function CommunityManagementPage() {
           <div
             style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}
           >
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={closeCreateModal}
-            >
+            <Button type="button" tone="secondary" onClick={closeCreateModal}>
               Cancel
             </Button>
             <Button
               type="submit"
-              variant="primary"
-              loading={creating}
+              tone="primary"
+              busy={creating}
               disabled={!newName || Boolean(slugError) || !newSlug}
             >
               Create Community

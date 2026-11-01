@@ -215,7 +215,7 @@ export const CommunityExternalMembersPage: React.FC = () => {
           ))}
         </Select>
         {!browsing && (
-          <Button variant="outline" onClick={() => setBrowsing(true)}>
+          <Button tone="outline" onClick={() => setBrowsing(true)}>
             Browse all
           </Button>
         )}
@@ -259,7 +259,7 @@ export const CommunityExternalMembersPage: React.FC = () => {
           {(offset > 0 || page.hasMore) && (
             <Pager>
               <Button
-                variant="secondary"
+                tone="secondary"
                 disabled={offset === 0 || stale}
                 onClick={() =>
                   setPages({
@@ -271,7 +271,7 @@ export const CommunityExternalMembersPage: React.FC = () => {
                 Previous
               </Button>
               <Button
-                variant="secondary"
+                tone="secondary"
                 disabled={!page.hasMore || stale}
                 onClick={() =>
                   setPages({ key: filterKey, offset: offset + PAGE_SIZE })

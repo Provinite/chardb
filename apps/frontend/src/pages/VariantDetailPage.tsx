@@ -551,7 +551,7 @@ export const VariantDetailPage: React.FC = () => {
           <HeaderRight>
             {hasChanges && (
               <Button
-                variant="primary"
+                tone="primary"
                 size="sm"
                 onClick={handleSaveVariantName}
                 icon={<Save size={14} />}
@@ -560,7 +560,7 @@ export const VariantDetailPage: React.FC = () => {
               </Button>
             )}
             <Button
-              variant="secondary"
+              tone="secondary"
               onClick={() => navigate(`/species/${variant.speciesId}/variants`)}
               icon={<ArrowLeft size={16} />}
             >
@@ -615,11 +615,11 @@ export const VariantDetailPage: React.FC = () => {
           <SectionTitle>Active Traits</SectionTitle>
           {hasOrderChanges && (
             <div style={{ display: "flex", gap: "0.5rem" }}>
-              <Button variant="secondary" size="sm" onClick={handleResetOrder}>
+              <Button tone="secondary" size="sm" onClick={handleResetOrder}>
                 Reset Order
               </Button>
               <Button
-                variant="primary"
+                tone="primary"
                 size="sm"
                 onClick={handleSaveOrder}
                 icon={<Save size={14} />}

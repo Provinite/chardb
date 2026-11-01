@@ -819,7 +819,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
                         <RowActions>
                           <Button
                             size="sm"
-                            variant="outline"
+                            tone="outline"
                             as={Link}
                             to={`/item-types/${itemType.id}`}
                           >
@@ -827,21 +827,21 @@ export const CommunityItemsAdminPage: React.FC = () => {
                           </Button>
                           <Button
                             size="sm"
-                            variant="secondary"
+                            tone="secondary"
                             onClick={() => openGrantModal(itemType)}
                           >
                             <Gift size={14} /> Grant
                           </Button>
                           <Button
                             size="sm"
-                            variant="secondary"
+                            tone="secondary"
                             onClick={() => openEditModal(itemType)}
                           >
                             <Edit2 size={14} /> Edit
                           </Button>
                           <Button
                             size="sm"
-                            variant="secondary"
+                            tone="secondary"
                             onClick={() => handleDeleteItemType(itemType.id)}
                           >
                             <Trash2 size={14} /> Delete
@@ -940,7 +940,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <FormActions>
               <Button
                 type="button"
-                variant="ghost"
+                tone="ghost"
                 onClick={() => setIsCreateModalOpen(false)}
               >
                 Cancel
@@ -1071,7 +1071,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <FormActions>
               <Button
                 type="button"
-                variant="ghost"
+                tone="ghost"
                 onClick={() => setIsEditModalOpen(false)}
               >
                 Cancel
@@ -1130,7 +1130,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <FormActions>
               <Button
                 type="button"
-                variant="ghost"
+                tone="ghost"
                 onClick={() => setIsGrantModalOpen(false)}
               >
                 Cancel

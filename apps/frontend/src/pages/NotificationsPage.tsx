@@ -146,7 +146,7 @@ export const NotificationsPage: React.FC = () => {
           >
             Unread
           </FilterTab>
-          <Button variant="ghost" size="sm" onClick={onMarkAll}>
+          <Button tone="ghost" size="sm" onClick={onMarkAll}>
             Mark all read
           </Button>
         </Filters>
@@ -180,7 +180,7 @@ export const NotificationsPage: React.FC = () => {
       {hasMore && (
         <Footer>
           <Button
-            variant="secondary"
+            tone="secondary"
             onClick={() => setLimit((n) => n + PAGE_SIZE)}
           >
             Load more ({notifications.length} of {total})

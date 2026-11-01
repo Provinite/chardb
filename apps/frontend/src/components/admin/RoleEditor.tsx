@@ -586,14 +586,14 @@ export const RoleEditor: React.FC<RoleEditorProps> = ({
           </InfoAlert>
 
           <FooterButtons>
-            <Button variant="outline" onClick={onClose} disabled={isLoading}>
+            <Button tone="outline" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
             <Button
-              variant="primary"
+              tone="primary"
               type="submit"
               disabled={isLoading || !roleName.trim()}
-              loading={isLoading}
+              busy={isLoading}
             >
               {isEditing ? "Update Role" : "Create Role"}
             </Button>

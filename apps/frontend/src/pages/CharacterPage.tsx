@@ -821,7 +821,7 @@ export const CharacterPage: React.FC = () => {
           {(canEdit || canKick || canDelete || giftCommunity) && (
             <CharacterActions data-testid="character-actions">
               {canEdit && (
-                <Button variant="outline" size="sm" onClick={handleEditClick}>
+                <Button tone="outline" size="sm" onClick={handleEditClick}>
                   Edit Character
                 </Button>
               )}
@@ -1032,7 +1032,7 @@ export const CharacterPage: React.FC = () => {
             {canProposeTrade && (
               <TradeAction>
                 <Button
-                  variant="primary"
+                  tone="primary"
                   size="sm"
                   data-testid="propose-character-trade"
                   onClick={() =>

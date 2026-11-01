@@ -253,7 +253,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
           <SmallText style={{ margin: 0 }}>
             Failed to load trait review queue. Please try again.
           </SmallText>
-          <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <Button tone="outline" size="sm" onClick={() => refetch()}>
             Retry
           </Button>
         </ErrorState>
@@ -269,7 +269,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
           {!loading && <CountBadge>{total} pending</CountBadge>}
         </HeaderLeft>
         <Button
-          variant="outline"
+          tone="outline"
           size="sm"
           onClick={() => refetch()}
           disabled={loading}
@@ -355,7 +355,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
           {totalPages > 1 && (
             <Pagination>
               <Button
-                variant="outline"
+                tone="outline"
                 size="sm"
                 onClick={() => setOffset(Math.max(0, offset - PAGE_SIZE))}
                 disabled={offset === 0}
@@ -366,7 +366,7 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
                 Page {currentPage} of {totalPages}
               </PageInfo>
               <Button
-                variant="outline"
+                tone="outline"
                 size="sm"
                 onClick={() => setOffset(offset + PAGE_SIZE)}
                 disabled={!hasMore}

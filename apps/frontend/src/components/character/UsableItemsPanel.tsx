@@ -258,7 +258,7 @@ export const UsableItemsPanel: React.FC<Props> = ({
             <Button
               as={Link}
               to={offer.to}
-              variant="outline"
+              tone="outline"
               size="sm"
               data-testid={`redeem-${offer.itemTypeId}`}
             >

@@ -201,7 +201,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
         <Actions>
           <Button
             ref={cancelRef}
-            variant="secondary"
+            tone="secondary"
             onClick={dismiss}
             disabled={busy}
             data-testid="confirm-cancel"
@@ -209,7 +209,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             Cancel
           </Button>
           <Button
-            variant={destructive ? "danger" : "primary"}
+            tone={destructive ? "danger" : "primary"}
             onClick={onConfirm}
             disabled={busy || !phraseMatches || confirmDisabled}
             data-testid="confirm-accept"

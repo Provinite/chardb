@@ -255,7 +255,7 @@ export const CharacterFormsEditor: React.FC<Props> = ({
         <div>
           <Button
             type="button"
-            variant="secondary"
+            tone="secondary"
             data-testid="add-form"
             disabled={disabled || forms.length >= maxForms}
             onClick={() => onChange([...forms, newFormDraft()])}

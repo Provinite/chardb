@@ -197,7 +197,7 @@ export const LoginPage: React.FC = () => {
             )}
           </FormGroup>
 
-          <Button type="submit" loading={isLoading} disabled={isLoading}>
+          <Button type="submit" busy={isLoading} disabled={isLoading}>
             {isLoading ? "Signing In..." : "Sign In"}
           </Button>
         </Form>

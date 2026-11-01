@@ -306,7 +306,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
         <TraitName>{entry.trait.name}</TraitName>
 
         <Button
-          variant="secondary"
+          tone="secondary"
           size="sm"
           onClick={onToggleExpand}
           icon={
@@ -317,7 +317,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
         </Button>
 
         <Button
-          variant="danger"
+          tone="danger"
           size="sm"
           onClick={onRemove}
           disabled={disabled}
@@ -401,7 +401,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
           <Actions>
             {hasChanges && (
               <Button
-                variant="secondary"
+                tone="secondary"
                 size="sm"
                 onClick={handleReset}
                 disabled={disabled || isSaving}
@@ -410,7 +410,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
               </Button>
             )}
             <Button
-              variant="primary"
+              tone="primary"
               size="sm"
               onClick={handleSave}
               disabled={disabled || !hasChanges || isSaving}

@@ -376,7 +376,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
               <Button
                 onClick={handleAddValue}
                 disabled={disabled || !currentValue.trim()}
-                variant="secondary"
+                tone="secondary"
               >
                 <Plus size={16} />
                 Add
@@ -438,7 +438,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
               <Button
                 onClick={handleAddValue}
                 disabled={disabled || !currentValue.trim()}
-                variant="secondary"
+                tone="secondary"
               >
                 <Plus size={16} />
                 Add
@@ -493,7 +493,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
               <Button
                 onClick={handleAddValue}
                 disabled={disabled || !currentValue.trim()}
-                variant="secondary"
+                tone="secondary"
               >
                 <Plus size={16} />
                 Add
@@ -594,7 +594,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
               <Button
                 onClick={handleAddValue}
                 disabled={disabled || !currentValue}
-                variant="secondary"
+                tone="secondary"
               >
                 <Plus size={16} />
                 Add

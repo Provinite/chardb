@@ -258,7 +258,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
             </HeaderText>
           </HeaderInfo>
           <Button
-            variant="primary"
+            tone="primary"
             onClick={onCreateRole}
             icon={<Plus size={16} />}
           >
@@ -301,11 +301,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
             </SmallText>
           </HeaderText>
         </HeaderInfo>
-        <Button
-          variant="primary"
-          onClick={onCreateRole}
-          icon={<Plus size={16} />}
-        >
+        <Button tone="primary" onClick={onCreateRole} icon={<Plus size={16} />}>
           Create Role
         </Button>
       </Header>
@@ -322,7 +318,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
               </RoleTitle>
               <RoleActions>
                 <ActionButton
-                  variant="outline"
+                  tone="outline"
                   size="sm"
                   onClick={() => onEditRole?.(role)}
                   icon={<Edit size={14} />}
@@ -331,7 +327,7 @@ export const RoleManagementTab: React.FC<RoleManagementTabProps> = ({
                 </ActionButton>
                 {/* TODO: Add delete functionality */}
                 <ActionButton
-                  variant="outline"
+                  tone="outline"
                   size="sm"
                   disabled
                   icon={<Trash2 size={14} />}
