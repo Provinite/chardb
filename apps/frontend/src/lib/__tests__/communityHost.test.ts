@@ -6,6 +6,7 @@ import {
 } from "@chardb/shared";
 import {
   communityUrl,
+  communitySlugParam,
   parseCommunitySlug,
   returnDestination,
   ROOT_DOMAIN,
@@ -127,6 +128,30 @@ describe("returnDestination", () => {
   it("refuses a path that is not one", () => {
     expect(returnDestination(params({ nextPath: "dashboard" }))).toBeNull();
     expect(returnDestination(params({}))).toBeNull();
+  });
+});
+
+describe("communitySlugParam", () => {
+  const read = (query: string) =>
+    communitySlugParam(new URLSearchParams(query));
+
+  it("reads a valid slug", () => {
+    expect(read("community=willowmere")).toBe("willowmere");
+  });
+
+  it("is null without one", () => {
+    expect(read("")).toBeNull();
+  });
+
+  // The slug becomes a hostname. Anything that could not be a community's
+  // name could name somebody else's site.
+  it.each([
+    ["evil.com/?", "a path"],
+    ["evil.com#", "a fragment"],
+    ["evil.com", "a dot"],
+    ["Willowmere", "uppercase"],
+  ])("refuses %s (%s)", (slug) => {
+    expect(read(`community=${encodeURIComponent(slug)}`)).toBeNull();
   });
 });
 

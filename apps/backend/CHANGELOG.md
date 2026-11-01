@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Open sign-up**: `setCommunityOpenSignup` and `joinCommunity` mutations, and `signup` takes a `communityId` in place of an invite code when that community is open. Roles with staff permissions are refused.
 - **Community achievements**: signing in during Trick-or-Treat 2026 earns members Trick-or-Treater 2026, backfilled from candy swap and board use; `User.achievements(communityId)` lists them.
 - **Errors logged under `err` are serialized** with name, message, stack, own fields and cause.
 - **Public Halloween prize list**: `halloweenPrizes` and `halloweenRecentWins`, open to anyone, where a winner shows as their linked chardb account, their Discord handle for item staff, or "A Discord user".

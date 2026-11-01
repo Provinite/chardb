@@ -31,6 +31,7 @@ export function mapSignupInputToService(
     password: input.password,
     displayName: input.displayName,
     inviteCode: input.inviteCode,
+    communityId: input.communityId,
   };
 }
 

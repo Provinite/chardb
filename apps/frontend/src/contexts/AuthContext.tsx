@@ -58,6 +58,8 @@ interface AuthContextType {
     password: string,
     displayName?: string,
     inviteCode?: string,
+    /** Joins this community without a code, if its sign-up is open. */
+    communityId?: string,
   ) => Promise<boolean>;
   logout: () => void;
   refreshAccessToken: () => Promise<boolean>;
@@ -198,6 +200,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       password: string,
       displayName?: string,
       inviteCode?: string,
+      communityId?: string,
     ): Promise<boolean> => {
       try {
         const { data } = await signupMutation({
@@ -207,7 +210,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               email,
               password,
               displayName,
-              inviteCode: inviteCode || "",
+              inviteCode: inviteCode || undefined,
+              communityId,
             },
           },
         });

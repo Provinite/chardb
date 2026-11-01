@@ -1188,3 +1188,12 @@ mutation SeedTransferCharacter($id: ID!, $input: TransferCharacterInput!) {
     ownerId
   }
 }
+
+# Requires community CanCreateInviteCode (or global admin). A null role closes
+# sign-up again.
+mutation SeedSetCommunityOpenSignup($communityId: ID!, $roleId: ID) {
+  setCommunityOpenSignup(communityId: $communityId, roleId: $roleId) {
+    id
+    openSignupRoleId
+  }
+}

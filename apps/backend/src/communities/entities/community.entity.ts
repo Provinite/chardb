@@ -41,6 +41,14 @@ export class Community {
   })
   halloweenEnabled: boolean;
 
+  /** The role anyone may join with, without an invite code */
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "The role anyone may join with, without an invite code. Null when joining takes an invite.",
+  })
+  openSignupRoleId: string | null;
+
   /** When the community was created */
   @Field({ description: "When the community was created" })
   createdAt: Date;

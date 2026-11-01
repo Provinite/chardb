@@ -11,9 +11,11 @@ import {
   Card,
   ButtonLink,
 } from "@chardb/ui";
+import { toast } from "react-hot-toast";
 import {
   useSpeciesByCommunityQuery,
   useGetCharactersQuery,
+  useJoinCommunityMutation,
 } from "../generated/graphql";
 import { Link } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
@@ -185,6 +187,13 @@ export const CommunityPage: React.FC = () => {
   // page load.
   const hostCommunity = useHostCommunity();
 
+  // Refetches the viewer for the new membership, and the community for its
+  // member count. Awaited so the button stays busy until the page shows both.
+  const [joinCommunity, { loading: joining }] = useJoinCommunityMutation({
+    refetchQueries: ["Me", "CommunityBySlug"],
+    awaitRefetchQueries: true,
+  });
+
   // Fetch species count for this community
   const { data: speciesData } = useSpeciesByCommunityQuery({
     variables: { communityId: communityId!, first: 1 }, // Just get count
@@ -306,9 +315,24 @@ export const CommunityPage: React.FC = () => {
                     <Button
                       tone="primary"
                       icon={<UserPlus size={16} />}
-                      // Joining, like signing in, happens at the apex: the
-                      // router cannot cross a host.
+                      busy={joining}
                       onClick={() => {
+                        if (community.openSignupRoleId) {
+                          joinCommunity({
+                            variables: { communityId: community.id },
+                          }).then(
+                            () => toast.success(`Joined ${community.name}`),
+                            (error: unknown) =>
+                              toast.error(
+                                error instanceof Error
+                                  ? error.message
+                                  : "Could not join the community",
+                              ),
+                          );
+                          return;
+                        }
+                        // Claiming an invite code, like signing in, happens at
+                        // the apex: the router cannot cross a host.
                         window.location.assign(apexUrl("/join-community"));
                       }}
                     >
@@ -323,10 +347,27 @@ export const CommunityPage: React.FC = () => {
                 </>
               ) : (
                 // The session cookie is set on the parent domain, so signing
-                // in has to happen at the apex.
-                <ButtonLink tone="primary">
-                  <a href={apexUrl("/login")}>Sign In to Join</a>
-                </ButtonLink>
+                // in and up have to happen at the apex.
+                // Sign Up comes last and Sign In never changes: the page can
+                // first render from a remembered copy of the community, and
+                // when the fresh one opens sign-up, nothing already on screen
+                // moves or restyles.
+                <>
+                  <ButtonLink tone="primary">
+                    <a href={apexUrl("/login")}>Sign In to Join</a>
+                  </ButtonLink>
+                  {community.openSignupRoleId && (
+                    <ButtonLink tone="outline">
+                      <a
+                        href={apexUrl(
+                          `/signup?community=${encodeURIComponent(community.slug)}`,
+                        )}
+                      >
+                        Sign Up to Join
+                      </a>
+                    </ButtonLink>
+                  )}
+                </>
               )}
             </ActionButtons>
           </CommunityInfo>

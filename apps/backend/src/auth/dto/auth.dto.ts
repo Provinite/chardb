@@ -1,4 +1,4 @@
-import { ObjectType, Field, InputType } from "@nestjs/graphql";
+import { ObjectType, Field, InputType, ID } from "@nestjs/graphql";
 import {
   IsEmail,
   IsString,
@@ -46,11 +46,22 @@ export class SignupInput {
   @MaxLength(100)
   displayName?: string;
 
-  @Field()
+  /** Required unless `communityId` names a community with open sign-up. */
+  @Field({ nullable: true })
+  @IsOptional()
   @IsString()
   @MinLength(1)
   @MaxLength(50)
-  inviteCode: string;
+  inviteCode?: string;
+
+  /**
+   * The community to join without an invite code. Ignored when `inviteCode`
+   * is given.
+   */
+  @Field(() => ID, { nullable: true })
+  @IsOptional()
+  @IsString()
+  communityId?: string;
 }
 
 @ObjectType()

@@ -9,6 +9,7 @@ import {
 } from "@nestjs/common";
 import { AchievementsService } from "../achievements/achievements.service";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
+import { findOpenSignupRoleId } from "../communities/open-signup";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";
@@ -49,8 +50,10 @@ export interface SignupServiceInput {
   password: string;
   /** Optional display name */
   displayName?: string;
-  /** Required invite code */
-  inviteCode: string;
+  /** Required unless `communityId` names a community with open sign-up */
+  inviteCode?: string;
+  /** Community to join without a code; ignored when `inviteCode` is given */
+  communityId?: string;
 }
 
 /**
@@ -163,12 +166,29 @@ export class AuthService {
   async signup(input: SignupServiceInput): Promise<void> {
     const normalizedEmail = input.email.toLowerCase();
     const userId = await this.prisma.$transaction(async (tx) => {
-      // 1. Validate invite code first (using regular service, not transaction)
-      const inviteCode = await this.inviteCodesService.findOne(
-        input.inviteCode,
-      );
-      if (inviteCode.claimCount >= inviteCode.maxClaims) {
-        throw new BadRequestException("Invite code has been exhausted");
+      // 1. Find what lets this person in: an invite code, or a community that
+      // takes anyone. A code wins when both are given, since following an
+      // invite link is the more deliberate act.
+      let openSignupRoleId: string | null = null;
+      if (input.inviteCode) {
+        const inviteCode = await this.inviteCodesService.findOne(
+          input.inviteCode,
+        );
+        if (inviteCode.claimCount >= inviteCode.maxClaims) {
+          throw new BadRequestException("Invite code has been exhausted");
+        }
+      } else if (input.communityId) {
+        // A community that does not exist gets the same answer as a closed
+        // one: signup is unauthenticated, and it is no place to learn which
+        // ids are real.
+        openSignupRoleId = await findOpenSignupRoleId(tx, input.communityId);
+        if (!openSignupRoleId) {
+          throw new BadRequestException(
+            "This community requires an invite code",
+          );
+        }
+      } else {
+        throw new BadRequestException("An invite code is required");
       }
 
       // 2. Check for existing user by email (within transaction)
@@ -199,20 +219,23 @@ export class AuthService {
       });
 
       // 5. Claim invite code and increment usage (within transaction)
-      const updatedInviteCode = await tx.inviteCode.update({
-        where: { id: input.inviteCode },
-        data: {
-          claimCount: { increment: 1 },
-        },
-        include: { role: true },
-      });
+      let roleId = openSignupRoleId;
+      if (input.inviteCode) {
+        const updatedInviteCode = await tx.inviteCode.update({
+          where: { id: input.inviteCode },
+          data: {
+            claimCount: { increment: 1 },
+          },
+        });
+        roleId = updatedInviteCode.roleId;
+      }
 
-      // 6. Create community membership if invite code has a role (within transaction)
-      if (updatedInviteCode.roleId) {
+      // 6. Join the community the code or open sign-up names, if any
+      if (roleId) {
         try {
           await this.membership.join(tx, {
             userId: user.id,
-            roleId: updatedInviteCode.roleId,
+            roleId,
           });
         } catch (error) {
           // Handle unique constraint violation with a more user-friendly error

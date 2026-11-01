@@ -4,6 +4,10 @@ import type { Role } from "../generated/graphql";
  * Extract all permission keys (can* boolean fields) from the Role type.
  * This ensures type safety - if a new permission is added to the backend,
  * TypeScript will error until it's added to PERMISSIONS_MAP.
+ *
+ * The backend has a second list to update for a new permission:
+ * `apps/backend/src/roles/open-signup-permissions.ts`, which decides whether
+ * open sign-up may give it to strangers.
  */
 export type PermissionKey = {
   [K in keyof Role]-?: K extends `can${string}`
