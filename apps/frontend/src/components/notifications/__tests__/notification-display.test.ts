@@ -5,7 +5,10 @@ import {
   type NotificationFieldsFragment,
 } from "../../../graphql/notifications.graphql";
 import { communityUrl } from "../../../lib/communityHost";
-import { notificationHref, notificationSentence } from "../notification-display";
+import {
+  notificationHref,
+  notificationSentence,
+} from "../notification-display";
 
 const candyTrade = (
   changes: Partial<NotificationFieldsFragment> = {},
