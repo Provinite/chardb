@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import * as path from "node:path";
 import * as bcrypt from "bcrypt";
+import { Logger } from "@nestjs/common";
 import { TestApp, AUTH_QUERIES } from "../../test/setup-e2e";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
@@ -161,6 +162,35 @@ describe("Achievements (e2e)", () => {
       );
       expect(refreshed.body.errors).toBeUndefined();
       expect(await earned(alice.id)).toHaveLength(1);
+    });
+
+    it("logs each achievement granted, and nothing when none is", async () => {
+      const log = jest.spyOn(Logger.prototype, "log");
+      const granted = () =>
+        log.mock.calls.filter(
+          ([line]) =>
+            (line as { event?: string }).event === "achievements.granted",
+        );
+      const alice = await member("alice");
+
+      await login(alice.email);
+      expect(granted()).toEqual([
+        [
+          {
+            event: "achievements.granted",
+            message: "Achievement granted",
+            userId: alice.id,
+            communityId,
+            slug: SLUG,
+            reason: "sign-in",
+          },
+        ],
+      ]);
+
+      // Already earned: checked again, granted nothing, logged nothing.
+      now = later(DURING, 2 * SIGN_IN_CHECK_TTL_MS);
+      await login(alice.email);
+      expect(granted()).toHaveLength(1);
     });
 
     it("earns it once however often they sign in", async () => {

@@ -1,4 +1,4 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Clock } from "../clock/clock";
 import {
@@ -22,11 +22,22 @@ export interface EarnedAchievementView extends AchievementDefinition {
  */
 export const SIGN_IN_CHECK_TTL_MS = 60 * 60 * 1000;
 
-/** The most users remembered as checked; the least recent go first. */
-const SIGN_IN_CHECK_CACHE_USERS = 10_000;
+/**
+ * The most users remembered as checked; the least recent go first. One
+ * pushed out costs a query on their next page load, nothing more.
+ */
+const SIGN_IN_CHECK_CACHE_USERS = 1_000;
+
+/** The `event` field of achievement log lines, for searching. */
+export const AchievementLogEvent = {
+  /** A user earned an achievement; `reason` says how. */
+  Granted: "achievements.granted",
+} as const;
 
 @Injectable()
 export class AchievementsService {
+  private readonly logger = new Logger(AchievementsService.name);
+
   /**
    * When each user was last checked, least recent first: a Map keeps
    * insertion order. Per instance, so another instance may check a user
@@ -67,10 +78,21 @@ export class AchievementsService {
     `;
     const earned = signInAchievements(events, now);
     if (earned.length) {
-      await this.db.userAchievement.createMany({
+      // Returns only the rows it inserted, so one already earned is not
+      // logged as granted again.
+      const granted = await this.db.userAchievement.createManyAndReturn({
         data: earned.map((e) => ({ ...e, userId, earnedAt: now })),
         skipDuplicates: true,
+        select: { userId: true, communityId: true, slug: true },
       });
+      for (const row of granted) {
+        this.logger.log({
+          event: AchievementLogEvent.Granted,
+          message: "Achievement granted",
+          ...row,
+          reason: "sign-in",
+        });
+      }
     }
     this.remember(userId, now.getTime());
   }
