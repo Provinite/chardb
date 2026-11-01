@@ -1,10 +1,10 @@
 import React, { useEffect, useId, useRef, useState } from "react";
-import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import styled from "styled-components";
-import { vars } from "../theme/contract.css";
-import { LIST_MAX_HEIGHT_PX, useAnchoredList } from "./anchoredList";
-import { usePortalContainer } from "./portal";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { timingMs } from "../theme/tokens";
+import { AnchoredList } from "./AnchoredList";
+import { usePressOutside } from "./floating";
 
 /**
  * SearchSelect - a search box that picks one thing from a list of matches.
@@ -64,8 +64,6 @@ export interface SearchSelectProps<T extends SearchSelectOption> {
   /** Shown when a search matched nothing. */
   emptyText?: string;
 }
-
-const SEARCH_DELAY_MS = 300;
 
 const Container = styled.div`
   position: relative;
@@ -189,23 +187,14 @@ const ClearButton = styled.button`
   }
 `;
 
-/** In the portal container, placed under the box by `useAnchoredList`. */
-const Dropdown = styled.ul`
-  position: fixed;
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+const Dropdown = styled(AnchoredList)`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: ${({ theme }) => theme.shadows.md};
-  z-index: ${vars.layer.dropdown.base};
-  max-height: ${LIST_MAX_HEIGHT_PX}px;
-  overflow-y: auto;
 `;
 
-const Item = styled.li<{ $highlighted: boolean }>`
+const Item = styled.div<{ $highlighted: boolean }>`
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -220,7 +209,7 @@ const Item = styled.li<{ $highlighted: boolean }>`
   }
 `;
 
-const Note = styled.li<{ $error?: boolean }>`
+const Note = styled.div<{ $error?: boolean }>`
   padding: ${({ theme }) => theme.spacing.md};
   color: ${({ theme, $error }) =>
     $error ? theme.colors.error : theme.colors.text.muted};
@@ -259,14 +248,10 @@ export function SearchSelect<T extends SearchSelectOption>({
   const [text, setText] = useState("");
   const [open, setOpen] = useState(false);
   const [highlighted, setHighlighted] = useState(-1);
-  const containerRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLUListElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const typed = useRef(false);
-  const portal = usePortalContainer();
   const listOpen = open && !value;
-  useAnchoredList(boxRef, listRef, listOpen);
 
   const query = text.trim();
   const searchable = query.length >= minSearchLength;
@@ -277,32 +262,21 @@ export function SearchSelect<T extends SearchSelectOption>({
   const [sent, setSent] = useState<string | null>(null);
   const pending = typed.current && searchable && query !== sent;
 
-  // The timer lives in the closure, so the cleanup always clears the run it
-  // belongs to -- including on unmount.
+  // Searched once typing pauses. Through a ref, so a caller passing a new
+  // function each render does not search again.
+  const settled = useDebouncedValue(query, timingMs.debounce.typeahead);
+  const onSearchRef = useRef(onSearch);
+  onSearchRef.current = onSearch;
   useEffect(() => {
-    if (!typed.current || !searchable) return;
-    const timeout = setTimeout(() => {
-      onSearch(query);
-      setSent(query);
-    }, SEARCH_DELAY_MS);
-    return () => clearTimeout(timeout);
-  }, [query, searchable, onSearch]);
+    if (!typed.current || settled.length < minSearchLength) return;
+    onSearchRef.current(settled);
+    setSent(settled);
+  }, [settled, minSearchLength]);
 
-  useEffect(() => {
-    const close = (event: MouseEvent) => {
-      const target = event.target as Node;
-      // The list is portalled, so it is outside the container.
-      if (
-        !containerRef.current?.contains(target) &&
-        !listRef.current?.contains(target)
-      ) {
-        setOpen(false);
-        setHighlighted(-1);
-      }
-    };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, []);
+  const pressInside = usePressOutside(open, () => {
+    setOpen(false);
+    setHighlighted(-1);
+  });
 
   const choose = (option: T) => {
     onChange(option);
@@ -355,7 +329,7 @@ export function SearchSelect<T extends SearchSelectOption>({
           : null;
 
   return (
-    <Container ref={containerRef}>
+    <Container onMouseDownCapture={pressInside.onMouseDownCapture}>
       <Label htmlFor={id}>{label}</Label>
 
       <InputWrapper ref={boxRef} $hasError={!!error} $disabled={disabled}>
@@ -407,40 +381,42 @@ export function SearchSelect<T extends SearchSelectOption>({
         )}
       </InputWrapper>
 
-      {listOpen &&
-        createPortal(
-          <Dropdown ref={listRef} id={listId} role="listbox" aria-label={label}>
-            {note ? (
-              <Note $error={failed} role={failed ? "alert" : undefined}>
-                {note}
-              </Note>
-            ) : (
-              listed.map((option, index) => (
-                <Item
-                  key={option.id}
-                  id={`${id}-${index}`}
-                  role="option"
-                  aria-selected={index === highlighted}
-                  $highlighted={index === highlighted}
-                  // Picked on mousedown, before the input's blur can close
-                  // the list.
-                  onMouseDown={(e) => {
-                    e.preventDefault();
-                    choose(option);
-                  }}
-                  onMouseEnter={() => setHighlighted(index)}
-                >
-                  <OptionPicture option={option} />
-                  <Info>
-                    <Name>{option.name}</Name>
-                    {option.subtitle && <Subtitle>{option.subtitle}</Subtitle>}
-                  </Info>
-                </Item>
-              ))
-            )}
-          </Dropdown>,
-          portal,
+      <Dropdown
+        anchor={boxRef}
+        open={listOpen}
+        id={listId}
+        role="listbox"
+        aria-label={label}
+      >
+        {note ? (
+          <Note $error={failed} role={failed ? "alert" : undefined}>
+            {note}
+          </Note>
+        ) : (
+          listed.map((option, index) => (
+            <Item
+              key={option.id}
+              id={`${id}-${index}`}
+              role="option"
+              aria-selected={index === highlighted}
+              $highlighted={index === highlighted}
+              // Picked on mousedown, before the input's blur can close
+              // the list.
+              onMouseDown={(e) => {
+                e.preventDefault();
+                choose(option);
+              }}
+              onMouseEnter={() => setHighlighted(index)}
+            >
+              <OptionPicture option={option} />
+              <Info>
+                <Name>{option.name}</Name>
+                {option.subtitle && <Subtitle>{option.subtitle}</Subtitle>}
+              </Info>
+            </Item>
+          ))
         )}
+      </Dropdown>
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
     </Container>

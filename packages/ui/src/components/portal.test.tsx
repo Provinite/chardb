@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { declarationsOf } from "../__tests__/emittedCss";
 import { render } from "../__tests__/render";
 import { lightTheme } from "../theme";
+import { timingMs } from "../theme/tokens";
 import {
   Dialog,
   Menu,
@@ -463,4 +464,64 @@ describe("Typeahead list width", () => {
     resize(box, 305);
     expect(list().style.width).toBe("305px");
   });
+});
+
+describe("Typeahead debounce", () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  const wait = (ms: number) => act(() => vi.advanceTimersByTime(ms));
+  const delay = timingMs.debounce.typeahead;
+
+  it.each([
+    {
+      name: "a search select",
+      ui: (onSearch: (q: string) => void) => (
+        <SearchSelect
+          label="Character"
+          value={null}
+          options={[]}
+          onChange={() => {}}
+          onSearch={onSearch}
+        />
+      ),
+      input: '[role="combobox"]',
+    },
+    {
+      name: "a user typeahead",
+      ui: (onSearch: (q: string) => void) => (
+        <UserTypeahead value={null} onChange={() => {}} onSearch={onSearch} />
+      ),
+      input: '[aria-label="Search for user"]',
+    },
+    {
+      name: "a tag input",
+      ui: (onSearch: (q: string) => void) => (
+        <TagInput
+          value={[]}
+          onChange={() => {}}
+          onSearch={async (q) => {
+            onSearch(q);
+            return [];
+          }}
+        />
+      ),
+      input: '[aria-label="Add tags"]',
+    },
+  ])(
+    "searches $name once typing pauses for timing.debounce.typeahead",
+    ({ ui, input }) => {
+      const onSearch = vi.fn();
+      render(themed(ui(onSearch)));
+      const field = document.querySelector<HTMLInputElement>(input)!;
+      focus(field);
+      type(field, "wisp");
+
+      wait(delay - 1);
+      expect(onSearch).not.toHaveBeenCalled();
+
+      wait(1);
+      expect(onSearch).toHaveBeenCalledWith("wisp");
+    },
+  );
 });

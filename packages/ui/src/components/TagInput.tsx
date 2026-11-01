@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { createPortal } from "react-dom";
+import React, { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
 import styled from "styled-components";
-import { vars } from "../theme/contract.css";
-import { useAnchoredList } from "./anchoredList";
-import { usePortalContainer } from "./portal";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { timingMs } from "../theme/tokens";
+import { AnchoredList } from "./AnchoredList";
+import { usePressOutside } from "./floating";
 
 /** The tallest the suggestions grow before they scroll. */
 const SUGGESTIONS_MAX_HEIGHT_PX = 200;
@@ -119,17 +119,11 @@ const Input = styled.input`
   }
 `;
 
-/** In the portal container, placed under the box by `useAnchoredList`. */
-const SuggestionsDropdown = styled.div`
-  position: fixed;
-  box-sizing: border-box;
+const SuggestionsDropdown = styled(AnchoredList)`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: ${({ theme }) => theme.shadows.md};
-  z-index: ${vars.layer.dropdown.base};
-  max-height: ${SUGGESTIONS_MAX_HEIGHT_PX}px;
-  overflow-y: auto;
 `;
 
 const SuggestionItem = styled.button<{ $isHighlighted: boolean }>`
@@ -182,55 +176,30 @@ export const TagInput: React.FC<TagInputProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const boxRef = useRef<HTMLDivElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
-  const portal = usePortalContainer();
 
   // Filter suggestions to exclude already selected tags
   const availableSuggestions = suggestions.filter(
     (suggestion) => !value.includes(suggestion.name.toLowerCase()),
   );
   const listOpen = isOpen && (loading || availableSuggestions.length > 0);
-  useAnchoredList(boxRef, listRef, listOpen, SUGGESTIONS_MAX_HEIGHT_PX);
 
-  const performSearch = useCallback(
-    (query: string) => {
-      if (onSearch) {
-        onSearch(query);
-      }
-    },
-    [onSearch],
+  // Searched once typing pauses. Through a ref, so a caller passing a new
+  // function each render does not search again.
+  const settled = useDebouncedValue(
+    inputValue.trim(),
+    timingMs.debounce.typeahead,
   );
-
-  // Debounced search. The timer lives in the closure, so the cleanup clears
-  // the run it belongs to; held in state, it was a render behind and cleared
-  // the previous run's instead.
+  const onSearchRef = useRef(onSearch);
+  onSearchRef.current = onSearch;
   useEffect(() => {
-    const query = inputValue.trim();
-    if (!query) return;
-    const timeout = setTimeout(() => performSearch(query), 300);
-    return () => clearTimeout(timeout);
-  }, [inputValue, performSearch]);
+    if (settled) onSearchRef.current?.(settled);
+  }, [settled]);
 
-  // Handle clicks outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as Node;
-      // The list is portalled, so it is outside the container.
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(target) &&
-        !listRef.current?.contains(target)
-      ) {
-        setIsOpen(false);
-        setHighlightedIndex(-1);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const pressInside = usePressOutside(isOpen, () => {
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+  });
 
   const addTag = (tagName: string) => {
     const normalizedTag = tagName.trim().toLowerCase();
@@ -313,7 +282,7 @@ export const TagInput: React.FC<TagInputProps> = ({
   };
 
   return (
-    <div ref={containerRef}>
+    <div onMouseDownCapture={pressInside.onMouseDownCapture}>
       <Container
         ref={boxRef}
         $hasError={!!error}
@@ -348,30 +317,30 @@ export const TagInput: React.FC<TagInputProps> = ({
           aria-label="Add tags"
         />
 
-        {listOpen &&
-          createPortal(
-            <SuggestionsDropdown ref={listRef}>
-              {loading ? (
-                <LoadingIndicator>Searching...</LoadingIndicator>
-              ) : (
-                availableSuggestions.map((suggestion, index) => (
-                  <SuggestionItem
-                    key={suggestion.id}
-                    type="button"
-                    // Picked with the arrow keys and Enter from the input;
-                    // Tab moves on past the list, which sits at the end of
-                    // the page.
-                    tabIndex={-1}
-                    $isHighlighted={index === highlightedIndex}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                  >
-                    {suggestion.name}
-                  </SuggestionItem>
-                ))
-              )}
-            </SuggestionsDropdown>,
-            portal,
+        <SuggestionsDropdown
+          anchor={boxRef}
+          open={listOpen}
+          maxHeight={SUGGESTIONS_MAX_HEIGHT_PX}
+        >
+          {loading ? (
+            <LoadingIndicator>Searching...</LoadingIndicator>
+          ) : (
+            availableSuggestions.map((suggestion, index) => (
+              <SuggestionItem
+                key={suggestion.id}
+                type="button"
+                // Picked with the arrow keys and Enter from the input;
+                // Tab moves on past the list, which sits at the end of
+                // the page.
+                tabIndex={-1}
+                $isHighlighted={index === highlightedIndex}
+                onClick={() => handleSuggestionClick(suggestion)}
+              >
+                {suggestion.name}
+              </SuggestionItem>
+            ))
           )}
+        </SuggestionsDropdown>
       </Container>
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
