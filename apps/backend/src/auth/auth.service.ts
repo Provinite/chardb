@@ -92,19 +92,18 @@ export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
   /**
-   * Signing in can earn achievements. Awarding one is never worth refusing
-   * the session over, so a failure is logged and the sign-in goes ahead.
+   * Signing in can earn achievements. The award runs after the session is
+   * handed back, never ahead of it: every page load renews the session, and
+   * none of them should wait on it. A failure is logged and goes no further.
    */
-  private async recordSignIn(userId: string): Promise<void> {
-    try {
-      await this.achievements.recordSignIn(userId);
-    } catch (error) {
+  private recordSignIn(userId: string): void {
+    this.achievements.recordSignIn(userId).catch((error: unknown) => {
       this.logger.warn({
         message: "Could not record sign-in achievements",
         userId,
         error: error instanceof Error ? error.message : String(error),
       });
-    }
+    });
   }
 
   async validateUser(
@@ -145,7 +144,7 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: "7d" });
-    await this.recordSignIn(user.id);
+    this.recordSignIn(user.id);
 
     return {
       user,
@@ -257,7 +256,7 @@ export class AuthService {
 
       const newPayload = { email: user.email, sub: user.id };
       const accessToken = this.jwtService.sign(newPayload);
-      await this.recordSignIn(user.id);
+      this.recordSignIn(user.id);
 
       return { accessToken };
     } catch (error) {

@@ -13,8 +13,6 @@ JOIN (
   SELECT guild_id, initiator_id, created_at FROM "halloween_candy_trades" WHERE initiator_id IS NOT NULL
   UNION ALL
   SELECT guild_id, owner_id, created_at FROM "halloween_candy_boards"
-  UNION ALL
-  SELECT guild_id, owner_id, updated_at FROM "halloween_candy_boards"
 ) activity ON activity.guild_id = c.discord_guild_id
 WHERE c.halloween_enabled
   AND s.start_date IS NOT NULL

@@ -9,7 +9,10 @@ import { DatabaseService } from "../database/database.service";
 import { refreshCookieName } from "../auth/refresh-cookie";
 import { Clock } from "../clock/clock";
 import { AchievementsModule } from "./achievements.module";
-import { AchievementsService } from "./achievements.service";
+import {
+  AchievementsService,
+  SIGN_IN_CHECK_TTL_MS,
+} from "./achievements.service";
 
 const COOKIE = refreshCookieName();
 const GUILD_ID = "100000000000000001";
@@ -18,6 +21,9 @@ const START = new Date("2026-10-01T11:00:00Z");
 const END = new Date("2026-11-08T05:00:00Z");
 const DURING = new Date("2026-10-15T12:00:00Z");
 const AFTER = new Date("2026-11-20T12:00:00Z");
+const BEFORE = new Date("2026-09-20T12:00:00Z");
+
+const later = (date: Date, ms: number) => new Date(date.getTime() + ms);
 
 const BACKFILL_SQL = readFileSync(
   path.resolve(
@@ -27,17 +33,15 @@ const BACKFILL_SQL = readFileSync(
   "utf8",
 );
 
-const ACHIEVEMENTS_QUERY = `
-  query UserAchievements($username: String!) {
-    user(username: $username) {
-      achievements {
-        slug
-        name
-        description
-        imagePath
-        earnedAt
-        community { id name }
-      }
+const MEMBER_ACHIEVEMENTS = `
+  query MemberAchievements($communityId: ID!, $userId: ID!) {
+    communityMemberAchievements(communityId: $communityId, userId: $userId) {
+      id
+      slug
+      name
+      description
+      imagePath
+      earnedAt
     }
   }
 `;
@@ -45,6 +49,7 @@ const ACHIEVEMENTS_QUERY = `
 describe("Achievements (e2e)", () => {
   let testApp: TestApp;
   let db: DatabaseService;
+  let achievements: AchievementsService;
   let now: Date;
   let communityId: string;
   let roleId: string;
@@ -58,6 +63,7 @@ describe("Achievements (e2e)", () => {
       (builder) => builder.overrideProvider(Clock).useValue({ now: () => now }),
     );
     db = testApp.getDb();
+    achievements = testApp.getModuleRef().get(AchievementsService);
   });
 
   afterAll(async () => {
@@ -96,16 +102,30 @@ describe("Achievements (e2e)", () => {
       passwordHash: await bcrypt.hash("password123", 4),
     });
   };
-  const member = async (name: string) => {
+  const member = async (name: string, inRole = roleId) => {
     const u = await user(name);
-    await testApp.createTestCommunityMember(u.id, roleId);
+    await testApp.createTestCommunityMember(u.id, inRole);
     return u;
   };
 
+  /**
+   * Signs in and waits for the award, which runs after the response has
+   * gone: whatever `recordSignIn` started is awaited before returning.
+   */
+  const awaitingAwards = async <T>(send: () => Promise<T>): Promise<T> => {
+    const spy = jest.spyOn(achievements, "recordSignIn");
+    const res = await send();
+    await Promise.all(spy.mock.results.map((r) => r.value as Promise<void>));
+    spy.mockRestore();
+    return res;
+  };
+
   const login = (email: string) =>
-    testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
-      input: { email, password: "password123" },
-    });
+    awaitingAwards(() =>
+      testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input: { email, password: "password123" },
+      }),
+    );
 
   const earned = (userId: string) =>
     db.userAchievement.findMany({ where: { userId } });
@@ -116,15 +136,14 @@ describe("Achievements (e2e)", () => {
       const res = await login(alice.email);
       expect(res.body.errors).toBeUndefined();
 
-      const rows = await earned(alice.id);
-      expect(rows).toEqual([
+      expect(await earned(alice.id)).toEqual([
         expect.objectContaining({ communityId, slug: SLUG, earnedAt: DURING }),
       ]);
     });
 
     it("earns it when a session refreshes", async () => {
       const alice = await member("alice");
-      now = AFTER;
+      now = BEFORE;
       const res = await login(alice.email);
       const raw = res.headers["set-cookie"];
       const cookies = Array.isArray(raw) ? raw : raw ? [raw] : [];
@@ -133,10 +152,12 @@ describe("Achievements (e2e)", () => {
       expect(await earned(alice.id)).toEqual([]);
 
       now = DURING;
-      const refreshed = await testApp.graphqlRequest(
-        "mutation { refreshToken }",
-        {},
-        { Cookie: cookie.split(";")[0] },
+      const refreshed = await awaitingAwards(() =>
+        testApp.graphqlRequest(
+          "mutation { refreshToken }",
+          {},
+          { Cookie: cookie.split(";")[0] },
+        ),
       );
       expect(refreshed.body.errors).toBeUndefined();
       expect(await earned(alice.id)).toHaveLength(1);
@@ -145,12 +166,26 @@ describe("Achievements (e2e)", () => {
     it("earns it once however often they sign in", async () => {
       const alice = await member("alice");
       await login(alice.email);
-      now = new Date("2026-10-20T12:00:00Z");
+      now = later(DURING, 2 * SIGN_IN_CHECK_TTL_MS);
       await login(alice.email);
 
       const rows = await earned(alice.id);
       expect(rows).toHaveLength(1);
       expect(rows[0].earnedAt).toEqual(DURING);
+    });
+
+    it("checks a user again only once the last check is an hour old", async () => {
+      const alice = await member("alice");
+      await login(alice.email);
+      await db.userAchievement.deleteMany({ where: { userId: alice.id } });
+
+      now = later(DURING, SIGN_IN_CHECK_TTL_MS - 1);
+      await login(alice.email);
+      expect(await earned(alice.id)).toEqual([]);
+
+      now = later(DURING, SIGN_IN_CHECK_TTL_MS);
+      await login(alice.email);
+      expect(await earned(alice.id)).toHaveLength(1);
     });
 
     it("earns nothing for someone who is not a member", async () => {
@@ -179,34 +214,96 @@ describe("Achievements (e2e)", () => {
     it("still signs in when awarding fails", async () => {
       const alice = await member("alice");
       jest
-        .spyOn(testApp.getModuleRef().get(AchievementsService), "recordSignIn")
+        .spyOn(achievements, "recordSignIn")
         .mockRejectedValue(new Error("database down"));
 
-      const res = await login(alice.email);
+      const res = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input: { email: alice.email, password: "password123" },
+      });
       expect(res.body.errors).toBeUndefined();
       expect(res.body.data.login.accessToken).toEqual(expect.any(String));
     });
+
+    it("signs in without waiting for the award", async () => {
+      const alice = await member("alice");
+      jest
+        .spyOn(achievements, "recordSignIn")
+        .mockReturnValue(new Promise<void>(() => undefined));
+
+      const res = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
+        input: { email: alice.email, password: "password123" },
+      });
+      expect(res.body.data.login.accessToken).toEqual(expect.any(String));
+    }, 5_000);
   });
 
-  describe("User.achievements", () => {
-    it("lists what a user earned, by name, to anyone", async () => {
+  describe("communityMemberAchievements", () => {
+    const ask = (
+      asUserId: string | null,
+      userId: string,
+      community = communityId,
+    ) =>
+      asUserId
+        ? testApp
+            .generateTestToken(asUserId)
+            .then((token) =>
+              testApp.authenticatedGraphqlRequest(
+                MEMBER_ACHIEVEMENTS,
+                { communityId: community, userId },
+                token,
+              ),
+            )
+        : testApp.graphqlRequest(MEMBER_ACHIEVEMENTS, {
+            communityId: community,
+            userId,
+          });
+
+    it("lists what a member earned here, by name, to a fellow member", async () => {
       const alice = await member("alice");
+      const bob = await member("bob");
       await login(alice.email);
 
-      const res = await testApp.graphqlRequest(ACHIEVEMENTS_QUERY, {
-        username: alice.username,
-      });
+      const res = await ask(bob.id, alice.id);
       expect(res.body.errors).toBeUndefined();
-      expect(res.body.data.user.achievements).toEqual([
+      expect(res.body.data.communityMemberAchievements).toEqual([
         {
+          id: expect.any(String),
           slug: SLUG,
           name: "Trick-or-Treater 2026",
           description: "Signed in during Trick-or-Treat 2026.",
           imagePath: "/halloween/candy/big-candy-corn.png",
           earnedAt: DURING.toISOString(),
-          community: { id: communityId, name: expect.any(String) },
         },
       ]);
+    });
+
+    it("leaves out what was earned in another community", async () => {
+      const alice = await member("alice");
+      const other = await testApp.createTestCommunity("Elsewhere");
+      await db.userAchievement.create({
+        data: { userId: alice.id, communityId: other.id, slug: SLUG },
+      });
+
+      const res = await ask(alice.id, alice.id);
+      expect(res.body.data.communityMemberAchievements).toEqual([]);
+    });
+
+    it("refuses someone who is not a member", async () => {
+      const alice = await member("alice");
+      const outsider = await user("outsider");
+      await login(alice.email);
+
+      const res = await ask(outsider.id, alice.id);
+      expect(res.body.errors).toBeDefined();
+      expect(res.body.data?.communityMemberAchievements ?? null).toBeNull();
+    });
+
+    it("refuses someone signed out", async () => {
+      const alice = await member("alice");
+      await login(alice.email);
+
+      const res = await ask(null, alice.id);
+      expect(res.body.errors).toBeDefined();
     });
 
     it("leaves out a slug the catalog no longer has", async () => {
@@ -215,17 +312,14 @@ describe("Achievements (e2e)", () => {
         data: { userId: alice.id, communityId, slug: "retired" },
       });
 
-      const res = await testApp.graphqlRequest(ACHIEVEMENTS_QUERY, {
-        username: alice.username,
-      });
-      expect(res.body.data.user.achievements).toEqual([]);
+      const res = await ask(alice.id, alice.id);
+      expect(res.body.data.communityMemberAchievements).toEqual([]);
     });
   });
 
   describe("backfill migration", () => {
     const backfill = () => db.$executeRawUnsafe(BACKFILL_SQL);
     const IN_WINDOW = new Date("2026-10-05T12:00:00Z");
-    const LATER_IN_WINDOW = new Date("2026-10-06T12:00:00Z");
     const BEFORE_WINDOW = new Date("2026-09-20T12:00:00Z");
 
     it("credits a member who placed a candy offer during the event", async () => {
@@ -256,12 +350,40 @@ describe("Achievements (e2e)", () => {
       expect(await earned(alice.id)).toHaveLength(1);
     });
 
-    it("credits a member who edited a candy board during the event, from the earliest activity", async () => {
+    it("credits a member who made a candy board during the event", async () => {
+      const alice = await member("alice");
+      await db.halloweenCandyBoard.create({
+        data: { guildId: GUILD_ID, ownerId: alice.id, createdAt: IN_WINDOW },
+      });
+      await backfill();
+      expect(await earned(alice.id)).toEqual([
+        expect.objectContaining({ earnedAt: IN_WINDOW }),
+      ]);
+    });
+
+    it("skips a board made before the event, even if it changed during it", async () => {
       const alice = await member("alice");
       const board = await db.halloweenCandyBoard.create({
-        data: { guildId: GUILD_ID, ownerId: alice.id },
+        data: {
+          guildId: GUILD_ID,
+          ownerId: alice.id,
+          createdAt: BEFORE_WINDOW,
+        },
       });
-      await db.$executeRaw`UPDATE halloween_candy_boards SET created_at = ${BEFORE_WINDOW}, updated_at = ${LATER_IN_WINDOW} WHERE id = ${board.id}::uuid`;
+      await db.$executeRaw`UPDATE halloween_candy_boards SET updated_at = ${IN_WINDOW} WHERE id = ${board.id}::uuid`;
+      await backfill();
+      expect(await earned(alice.id)).toEqual([]);
+    });
+
+    it("dates it from the earliest activity", async () => {
+      const alice = await member("alice");
+      await db.halloweenCandyBoard.create({
+        data: {
+          guildId: GUILD_ID,
+          ownerId: alice.id,
+          createdAt: later(IN_WINDOW, 60_000),
+        },
+      });
       await db.halloweenCandyOffer.create({
         data: { guildId: GUILD_ID, ownerId: alice.id, createdAt: IN_WINDOW },
       });

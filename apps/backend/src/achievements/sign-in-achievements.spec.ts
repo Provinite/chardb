@@ -60,7 +60,7 @@ describe("signInAchievements", () => {
   });
 
   it("names the year by the start date in US Central", () => {
-    // 2026-01-01 03:00 UTC is still New Year's Eve in Chicago.
+    // 2027-01-01 03:00 UTC is still New Year's Eve 2026 in Chicago.
     expect(
       signInAchievements(
         [

@@ -1,21 +1,39 @@
 import { Injectable } from "@nestjs/common";
-import type { Community } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import { Clock } from "../clock/clock";
 import {
   findAchievement,
   type AchievementDefinition,
 } from "./achievement-catalog";
-import { signInAchievements } from "./sign-in-achievements";
+import {
+  signInAchievements,
+  type CommunityHalloweenEvent,
+} from "./sign-in-achievements";
 
 export interface EarnedAchievementView extends AchievementDefinition {
   id: string;
   earnedAt: Date;
-  community: Community;
 }
+
+/**
+ * How long a user's sign-in check stands before they are checked again.
+ * Every page load renews the session, so without this every page load would
+ * look the user's events up.
+ */
+export const SIGN_IN_CHECK_TTL_MS = 60 * 60 * 1000;
+
+/** The most users remembered as checked; the least recent go first. */
+const SIGN_IN_CHECK_CACHE_USERS = 10_000;
 
 @Injectable()
 export class AchievementsService {
+  /**
+   * When each user was last checked, least recent first: a Map keeps
+   * insertion order. Per instance, so another instance may check a user
+   * again, which costs a query and grants nothing twice.
+   */
+  private readonly checkedAt = new Map<string, number>();
+
   constructor(
     private readonly db: DatabaseService,
     private readonly clock: Clock,
@@ -24,70 +42,64 @@ export class AchievementsService {
   /**
    * Grants what signing in now earns: trick-or-treater for each community
    * the user belongs to whose Halloween event is on. One already earned is
-   * left as it was.
+   * left as it was. A user checked within the last hour is not checked again.
    */
   async recordSignIn(userId: string): Promise<void> {
-    const communities = await this.db.community.findMany({
-      where: {
-        halloweenEnabled: true,
-        discordGuildId: { not: null },
-        roles: { some: { communityMembers: { some: { userId } } } },
-      },
-      select: { id: true, discordGuildId: true },
-    });
-    if (!communities.length) return;
-
-    const settings = await this.db.halloweenGuildSettings.findMany({
-      where: {
-        guildId: {
-          in: communities.flatMap((c) =>
-            c.discordGuildId ? [c.discordGuildId] : [],
-          ),
-        },
-      },
-      select: { guildId: true, startDate: true, endDate: true },
-    });
-    const byGuild = new Map(settings.map((s) => [s.guildId, s]));
-    const events = communities.flatMap((c) => {
-      const event = c.discordGuildId ? byGuild.get(c.discordGuildId) : null;
-      return event
-        ? [
-            {
-              communityId: c.id,
-              startDate: event.startDate,
-              endDate: event.endDate,
-            },
-          ]
-        : [];
-    });
-
     const now = this.clock.now();
+    const last = this.checkedAt.get(userId);
+    if (last !== undefined && now.getTime() - last < SIGN_IN_CHECK_TTL_MS) {
+      return;
+    }
+
+    const events = await this.db.$queryRaw<CommunityHalloweenEvent[]>`
+      SELECT c.id AS "communityId",
+             s.start_date AS "startDate",
+             s.end_date AS "endDate"
+      FROM "communities" c
+      JOIN "halloween_guild_settings" s ON s.guild_id = c.discord_guild_id
+      WHERE c.halloween_enabled
+        AND EXISTS (
+          SELECT 1
+          FROM "community_members" m
+          JOIN "roles" r ON r.id = m.role_id
+          WHERE r.community_id = c.id AND m.user_id = ${userId}
+        )
+    `;
     const earned = signInAchievements(events, now);
-    if (!earned.length) return;
-    await this.db.userAchievement.createMany({
-      data: earned.map((e) => ({ ...e, userId, earnedAt: now })),
-      skipDuplicates: true,
-    });
+    if (earned.length) {
+      await this.db.userAchievement.createMany({
+        data: earned.map((e) => ({ ...e, userId, earnedAt: now })),
+        skipDuplicates: true,
+      });
+    }
+    this.remember(userId, now.getTime());
   }
 
-  /** Newest first. A slug no longer in the catalog is left out. */
-  async forUser(userId: string): Promise<EarnedAchievementView[]> {
+  private remember(userId: string, at: number): void {
+    this.checkedAt.delete(userId);
+    this.checkedAt.set(userId, at);
+    if (this.checkedAt.size > SIGN_IN_CHECK_CACHE_USERS) {
+      const [oldest] = this.checkedAt.keys();
+      this.checkedAt.delete(oldest);
+    }
+  }
+
+  /**
+   * What a user earned in one community, newest first. A slug no longer in
+   * the catalog is left out.
+   */
+  async inCommunity(
+    userId: string,
+    communityId: string,
+  ): Promise<EarnedAchievementView[]> {
     const rows = await this.db.userAchievement.findMany({
-      where: { userId },
-      include: { community: true },
+      where: { userId, communityId },
       orderBy: { earnedAt: "desc" },
     });
     return rows.flatMap((row) => {
       const definition = findAchievement(row.slug);
       return definition
-        ? [
-            {
-              ...definition,
-              id: row.id,
-              earnedAt: row.earnedAt,
-              community: row.community,
-            },
-          ]
+        ? [{ ...definition, id: row.id, earnedAt: row.earnedAt }]
         : [];
     });
   }

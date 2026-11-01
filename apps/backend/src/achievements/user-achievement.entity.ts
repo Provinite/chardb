@@ -1,5 +1,4 @@
 import { Field, ID, ObjectType } from "@nestjs/graphql";
-import { Community } from "../communities/entities/community.entity";
 
 @ObjectType({ description: "An achievement a user earned in a community." })
 export class UserAchievement {
@@ -24,7 +23,4 @@ export class UserAchievement {
 
   @Field()
   earnedAt: Date;
-
-  @Field(() => Community, { description: "The community it was earned in." })
-  community: Community;
 }
