@@ -1,0 +1,160 @@
+import { style } from "@vanilla-extract/css";
+import { recipe } from "@vanilla-extract/recipes";
+import { hover, touchQuery } from "../css/media";
+import { focusRing } from "../styles/focus.css";
+import { vars } from "../theme/contract.css";
+
+/** Not disabled, not busy: the states a press can act in. */
+const live = ':not(:disabled):not([aria-disabled="true"])';
+
+const filled = (action: typeof vars.action.secondary) => ({
+  background: action.bg,
+  color: action.fg,
+  borderColor: action.border,
+  selectors: {
+    [`&:active${live}`]: {
+      background: action.bgPressed,
+      borderColor: action.bgPressed,
+    },
+  },
+  "@media": hover({
+    [`&:hover${live}`]: {
+      background: action.bgHover,
+      borderColor: action.bgHover,
+    },
+  }),
+});
+
+/**
+ * The hit area of a control that looks smaller than 44px: an invisible
+ * pseudo-element centred on it, at least 44px each way, on touch devices
+ * only. A fine pointer keeps the visible size, so neighbours in a dense row
+ * do not take each other's clicks.
+ */
+export const touchHitArea = {
+  [touchQuery]: {
+    selectors: {
+      "&::before": {
+        content: "",
+        position: "absolute",
+        insetBlockStart: "50%",
+        insetInlineStart: "50%",
+        inlineSize: "100%",
+        blockSize: "100%",
+        minInlineSize: vars.size.target.comfortable,
+        minBlockSize: vars.size.target.comfortable,
+        transform: "translate(-50%, -50%)",
+      },
+    },
+  },
+} as const;
+
+const root = style({
+  position: "relative",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  // A border that is always there, so tones and states that colour it never
+  // change the size; transparent until a tone colours it, and drawn in a
+  // system colour under forced colours.
+  border: `${vars.borderWidth.hairline} solid transparent`,
+  borderRadius: vars.radius.md,
+  fontFamily: vars.font.family.body,
+  fontWeight: vars.font.weight.medium,
+  lineHeight: vars.font.lineHeight.normal,
+  textAlign: "center",
+  textDecoration: "none",
+  cursor: "pointer",
+  transition: [
+    `background ${vars.motion.duration.fast} ${vars.motion.easing.standard}`,
+    `border-color ${vars.motion.duration.fast} ${vars.motion.easing.standard}`,
+    `color ${vars.motion.duration.fast} ${vars.motion.easing.standard}`,
+  ].join(", "),
+  selectors: {
+    // Every tone greys out the same way.
+    "&:disabled": {
+      background: vars.action.primary.bgDisabled,
+      borderColor: vars.action.primary.bgDisabled,
+      color: vars.action.primary.fgDisabled,
+      cursor: "not-allowed",
+    },
+    '&[aria-disabled="true"]': { cursor: "progress" },
+  },
+});
+
+export const button = recipe({
+  base: [focusRing, root],
+  variants: {
+    tone: {
+      primary: filled(vars.action.primary),
+      secondary: filled(vars.action.secondary),
+      danger: filled(vars.action.danger),
+      outline: {
+        background: "transparent",
+        color: vars.action.primary.fgOutline,
+        borderColor: vars.action.primary.border,
+        selectors: {
+          [`&:active${live}`]: {
+            background: vars.action.primary.bgPressed,
+            borderColor: vars.action.primary.bgPressed,
+            color: vars.action.primary.fg,
+          },
+        },
+        "@media": hover({
+          [`&:hover${live}`]: {
+            background: vars.action.primary.bgHover,
+            borderColor: vars.action.primary.bgHover,
+            color: vars.action.primary.fg,
+          },
+        }),
+      },
+      ghost: {
+        background: "transparent",
+        color: vars.text.default,
+        selectors: {
+          [`&:active${live}`]: { background: vars.surface.sunken },
+        },
+        "@media": hover({
+          [`&:hover${live}`]: { background: vars.surface.raisedHover },
+        }),
+      },
+    },
+    size: {
+      sm: {
+        minBlockSize: vars.size.target.min,
+        paddingBlock: vars.space.xs,
+        paddingInline: vars.space.sm,
+        fontSize: vars.font.size.sm,
+        "@media": touchHitArea,
+      },
+      md: {
+        minBlockSize: vars.size.target.comfortable,
+        minInlineSize: vars.size.target.comfortable,
+        paddingBlock: vars.space.sm,
+        paddingInline: vars.space.md,
+        fontSize: vars.font.size.md,
+      },
+    },
+  },
+  defaultVariants: { tone: "primary", size: "md" },
+});
+
+/** The icon and text. Hidden, not removed, while busy, so the width holds. */
+export const label = style({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: vars.space.xs,
+  selectors: {
+    [`${root}[aria-busy="true"] &`]: { visibility: "hidden" },
+  },
+});
+
+/** Over the label while busy. */
+export const spinnerSlot = style({
+  position: "absolute",
+  inset: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});

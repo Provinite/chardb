@@ -218,7 +218,6 @@
   "apps/frontend/src/styled.d.ts",
   "packages/ui/src/components/Alert.tsx",
   "packages/ui/src/components/Avatar.tsx",
-  "packages/ui/src/components/Button.tsx",
   "packages/ui/src/components/Card.tsx",
   "packages/ui/src/components/ErrorMessage.tsx",
   "packages/ui/src/components/Input.tsx",

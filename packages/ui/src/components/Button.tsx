@@ -1,253 +1,136 @@
-import React from "react";
-import styled, { css } from "styled-components";
-import { Theme } from "../theme";
+import React, { Children, cloneElement, forwardRef } from "react";
+import { useLoaderVisible } from "../hooks/useLoaderVisible";
+import * as styles from "./Button.css";
+import { Spinner } from "./Spinner";
 
-/**
- * Button - A flexible, themeable button component with multiple variants and icon support
- *
- * Provides consistent button styling across the application with support for different
- * visual variants, sizes, loading states, and optional icons. Built with accessibility
- * in mind and integrates seamlessly with the application theme.
- *
- * Features:
- * - Multiple visual variants (primary, secondary, outline, ghost)
- * - Three sizes (sm, md, lg) with appropriate spacing
- * - Loading state with visual indicator
- * - Optional icon support with proper spacing
- * - Disabled state handling
- * - Full accessibility support
- * - Can render as different elements (button, a, Link, etc.)
- *
- * @example
- * ```tsx
- * // Basic primary button
- * <Button onClick={handleClick}>
- *   Save Changes
- * </Button>
- *
- * // Button with icon
- * <Button
- *   variant="primary"
- *   icon={<Plus size={16} />}
- *   onClick={handleCreate}
- * >
- *   Create New
- * </Button>
- *
- * // Secondary button with loading state
- * <Button
- *   variant="secondary"
- *   loading={isSubmitting}
- *   onClick={handleSubmit}
- * >
- *   Submit Form
- * </Button>
- *
- * // Outline button with custom size
- * <Button
- *   variant="outline"
- *   size="lg"
- *   icon={<Download size={20} />}
- * >
- *   Download File
- * </Button>
- *
- * // Ghost button for subtle actions
- * <Button variant="ghost" size="sm">
- *   Cancel
- * </Button>
- *
- * // Disabled button
- * <Button disabled>
- *   Cannot Click
- * </Button>
- *
- * // Button rendered as Link (requires router integration)
- * <Button
- *   as={Link}
- *   to="/dashboard"
- *   variant="primary"
- *   icon={<ArrowRight size={16} />}
- * >
- *   Go to Dashboard
- * </Button>
- *
- * // Submit button for forms
- * <Button type="submit" variant="primary">
- *   Submit
- * </Button>
- * ```
- */
+export type ButtonTone =
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "danger";
+export type ButtonSize = "sm" | "md";
 
-interface ButtonProps {
-  tone?: "primary" | "secondary" | "outline" | "ghost" | "danger";
-  size?: "sm" | "md" | "lg";
-  disabled?: boolean;
+export interface ButtonProps
+  extends Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, "children"> {
+  /** Defaults to `primary`. */
+  tone?: ButtonTone;
+  /**
+   * Defaults to `md`, 44px tall. `sm` looks smaller and grows its hit area
+   * to 44px on touch devices.
+   */
+  size?: ButtonSize;
+  /**
+   * The action it started is running. Presses are blocked at once; after
+   * `timing.loader.delay` a spinner covers the label and `aria-busy` is set.
+   * Keep the label as it is: the spinner says it is working, and a toast or
+   * inline status reports how it went.
+   */
   busy?: boolean;
-  children: React.ReactNode;
-  onClick?: () => void;
-  type?: "button" | "submit" | "reset";
-  as?: React.ElementType;
-  to?: string;
-  href?: string;
-  /** Optional icon to display before the button text */
+  /** Shown before the label. */
   icon?: React.ReactNode;
+  children: React.ReactNode;
 }
 
-const getVariantStyles = (variant: string, theme: Theme) => {
-  switch (variant) {
-    case "primary":
-      return css`
-        background-color: ${theme.colors.primary};
-        color: white;
-        border: 1px solid ${theme.colors.primary};
-
-        &:hover:not(:disabled) {
-          background-color: ${theme.colors.primary}e6;
-          border-color: ${theme.colors.primary}e6;
-        }
-      `;
-    case "secondary":
-      return css`
-        background-color: ${theme.colors.secondary};
-        color: white;
-        border: 1px solid ${theme.colors.secondary};
-
-        &:hover:not(:disabled) {
-          opacity: 0.9;
-        }
-      `;
-    case "outline":
-      return css`
-        background-color: transparent;
-        color: ${theme.colors.primary};
-        border: 1px solid ${theme.colors.primary};
-
-        &:hover:not(:disabled) {
-          background-color: ${theme.colors.primary};
-          color: white;
-        }
-      `;
-    case "ghost":
-      return css`
-        background-color: transparent;
-        color: ${theme.colors.text.primary};
-        border: 1px solid transparent;
-
-        &:hover:not(:disabled) {
-          background-color: ${theme.colors.surface};
-        }
-      `;
-    case "danger":
-      return css`
-        background-color: ${theme.colors.danger};
-        color: white;
-        border: 1px solid ${theme.colors.danger};
-
-        &:hover:not(:disabled) {
-          background-color: ${theme.colors.dangerHover};
-          border-color: ${theme.colors.dangerHover};
-        }
-      `;
-    default:
-      return "";
-  }
-};
-
-const getSizeStyles = (size: string, theme: Theme) => {
-  switch (size) {
-    case "sm":
-      return css`
-        padding: ${theme.spacing.xs} ${theme.spacing.sm};
-        font-size: ${theme.typography.fontSize.sm};
-      `;
-    case "md":
-      return css`
-        padding: ${theme.spacing.sm} ${theme.spacing.md};
-        font-size: ${theme.typography.fontSize.md};
-      `;
-    case "lg":
-      return css`
-        padding: ${theme.spacing.md} ${theme.spacing.lg};
-        font-size: ${theme.typography.fontSize.lg};
-      `;
-    default:
-      return "";
-  }
-};
-
-const StyledButton = styled.button.withConfig({
-  shouldForwardProp: (prop) =>
-    !["tone", "size", "busy", "isFollowing"].includes(prop as string),
-})<ButtonProps>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  font-family: ${({ theme }) => theme.typography.fontFamily};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  cursor: pointer;
-  transition: all 0.2s ease-in-out;
-
-  ${({ tone = "primary", theme }) => getVariantStyles(tone, theme)}
-  ${({ size = "md", theme }) => getSizeStyles(size, theme)}
-  
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    background-color: ${({ theme }) => theme.colors.text.muted} !important;
-    border-color: ${({ theme }) => theme.colors.text.muted} !important;
-    color: ${({ theme }) => theme.colors.background} !important;
-  }
-
-  &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
-    outline-offset: 2px;
-  }
-`;
+const join = (...classes: (string | undefined)[]) =>
+  classes.filter(Boolean).join(" ");
 
 /**
- * Forwards its ref so callers can move focus to a particular button.
+ * A button: something that does something. For a control that goes to a
+ * page, use `ButtonLink` around the app's own link.
  *
- * Which matters most for a confirm dialog: one that opens with the
- * destructive button focused turns a stray Enter into the thing it was trying
- * to prevent, and putting focus on Cancel instead needs a handle on it. With
- * `as`, the ref is whatever element that renders.
+ * Busy, it stays focusable and uses `aria-disabled` rather than `disabled`,
+ * which would drop keyboard focus to the page. Every press reaches a button
+ * as a click, Enter in a form field included, so cancelling the click is what
+ * blocks it. Busy wins over `disabled`, so the spinner can show.
+ *
+ * Forwards its ref so callers can move focus to a particular button, such as
+ * Cancel in a confirm dialog.
  */
-export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  (
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
+  function Button(
     {
-      children,
-      tone = "primary",
-      size = "md",
-      disabled = false,
+      tone,
+      size,
       busy = false,
-      type = "button",
-      onClick,
-      as,
+      disabled = false,
       icon,
-      ...props
+      type = "button",
+      className,
+      onClick,
+      children,
+      ...rest
     },
     ref,
-  ) => {
+  ) {
+    const spinnerShown = useLoaderVisible(busy);
+    // Held for the spinner's minimum time too: a press on a button still
+    // showing a spinner would read as a second submit.
+    const blocked = busy || spinnerShown;
+
     return (
-      <StyledButton
+      <button
+        {...rest}
         ref={ref}
-        as={as}
-        tone={tone}
-        size={size}
-        disabled={disabled || busy}
         type={type}
-        onClick={onClick}
-        {...props}
+        className={join(styles.button({ tone, size }), className)}
+        disabled={disabled && !blocked}
+        aria-disabled={blocked || undefined}
+        aria-busy={spinnerShown || undefined}
+        onClick={(e) => {
+          if (blocked) {
+            e.preventDefault();
+            return;
+          }
+          onClick?.(e);
+        }}
       >
-        {busy && <span>⏳</span>}
-        {!busy && icon && icon}
-        {children}
-      </StyledButton>
+        <span className={styles.label}>
+          {icon}
+          {children}
+        </span>
+        {spinnerShown && (
+          <span className={styles.spinnerSlot}>
+            <Spinner />
+          </span>
+        )}
+      </button>
     );
   },
 );
 
-Button.displayName = "Button";
+interface LinkSlotProps {
+  className?: string;
+  children?: React.ReactNode;
+}
+
+export interface ButtonLinkProps {
+  tone?: ButtonTone;
+  size?: ButtonSize;
+  /** Shown before the link's text. */
+  icon?: React.ReactNode;
+  /**
+   * One link element, such as a router `Link` or `HostAwareLink`, with its
+   * own destination. It stays a real `<a href>`, so Ctrl-click, middle-click
+   * and "open in new tab" work on it as on any link.
+   */
+  children: React.ReactElement<LinkSlotProps>;
+}
+
+/**
+ * A link that looks like a button: the caller's link element, given the
+ * button's classes and label. `@chardb/ui` cannot import the router, so the
+ * app passes its own link in. Links have no busy state; they go somewhere.
+ */
+export function ButtonLink({ tone, size, icon, children }: ButtonLinkProps) {
+  const link = Children.only(children);
+  return cloneElement(link, {
+    className: join(styles.button({ tone, size }), link.props.className),
+    children: (
+      <span className={styles.label}>
+        {icon}
+        {link.props.children}
+      </span>
+    ),
+  });
+}
