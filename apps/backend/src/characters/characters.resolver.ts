@@ -345,6 +345,19 @@ export class CharactersResolver {
   }
 
   @AllowEntityOwner({ characterId: "id" })
+  @Mutation(() => Boolean, {
+    description:
+      "Give a character to the community its species belongs to, leaving it with no owner and making it public. Owner only.",
+  })
+  async giveCharacterToCommunity(
+    @Args("id", { type: () => ID }) id: string,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<boolean> {
+    await this.charactersService.giveToCommunity(id, user.id);
+    return true;
+  }
+
+  @AllowEntityOwner({ characterId: "id" })
   @AllowGlobalAdmin()
   @Mutation(() => CharacterEntity)
   async transferCharacter(

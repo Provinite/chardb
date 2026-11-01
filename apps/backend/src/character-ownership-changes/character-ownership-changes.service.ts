@@ -14,7 +14,7 @@ import type { Prisma } from "@chardb/database";
 export interface CreateCharacterOwnershipChangeServiceInput {
   characterId: string;
   fromUserId?: string | null;
-  toUserId: string;
+  toUserId: string | null;
 }
 
 /**

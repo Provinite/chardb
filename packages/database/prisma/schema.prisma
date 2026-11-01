@@ -1042,8 +1042,11 @@ model CharacterVariantChange {
 model CharacterOwnershipChange {
   id          String  @id @default(uuid())
   characterId String  @map("character_id")
+  /// Null when the character was created rather than moved.
   fromUserId  String? @map("from_user_id")
-  toUserId    String  @map("to_user_id")
+  /// Null when the character went to its community and was left with no
+  /// owner (#521).
+  toUserId    String? @map("to_user_id")
 
   /// Set when this move was one leg of something larger, and carries the same
   /// value as the `settlementBatchId` on the trade that caused it -- the same
@@ -1059,7 +1062,7 @@ model CharacterOwnershipChange {
   // Relations
   character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
   fromUser  User?     @relation("CharacterOwnershipChangeFrom", fields: [fromUserId], references: [id], onDelete: SetNull)
-  toUser    User      @relation("CharacterOwnershipChangeTo", fields: [toUserId], references: [id], onDelete: Cascade)
+  toUser    User?     @relation("CharacterOwnershipChangeTo", fields: [toUserId], references: [id], onDelete: Cascade)
 
   @@index([batchId])
   @@map("character_ownership_changes")

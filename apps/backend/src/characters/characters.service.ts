@@ -31,6 +31,7 @@ import {
   DEFAULT_FORM,
 } from "../character-forms/character-forms.service";
 import { notDeleted } from "../common/utils/prisma-filters";
+import { CharacterNotGivableError } from "./characters.errors";
 import {
   availabilityWhere,
   CharacterAvailability,
@@ -750,17 +751,14 @@ export class CharactersService {
           data: { ownerId },
         });
 
-        // Create ownership change audit record (only when transferring to a user)
-        // Note: We don't create audit records for orphaning (toUserId null) since the schema requires toUserId
-        if (ownerId !== null) {
-          await this.db.characterOwnershipChange.create({
-            data: {
-              characterId: id,
-              fromUserId: oldOwnerId,
-              toUserId: ownerId,
-            },
-          });
-        }
+        // A null recipient records the character going to its community
+        await this.db.characterOwnershipChange.create({
+          data: {
+            characterId: id,
+            fromUserId: oldOwnerId,
+            toUserId: ownerId,
+          },
+        });
 
         // If setting an actual owner, clear any pending ownership
         if (ownerId !== null) {
@@ -1126,16 +1124,14 @@ export class CharactersService {
           data: { ownerId },
         });
 
-        // Create ownership change audit record (only when transferring to a user)
-        if (ownerId !== null) {
-          await this.db.characterOwnershipChange.create({
-            data: {
-              characterId: id,
-              fromUserId: oldOwnerId,
-              toUserId: ownerId,
-            },
-          });
-        }
+        // A null recipient records the character going to its community
+        await this.db.characterOwnershipChange.create({
+          data: {
+            characterId: id,
+            fromUserId: oldOwnerId,
+            toUserId: ownerId,
+          },
+        });
 
         // If setting an actual owner, clear any pending ownership
         if (ownerId !== null) {
@@ -1702,6 +1698,31 @@ export class CharactersService {
     });
 
     return transferredCharacter;
+  }
+
+  /**
+   * The owner hands the character to the community its species belongs to,
+   * leaving it with no owner (#521). It is made public as well: a private
+   * character is visible only to its owner, so with none it would be visible
+   * to nobody, staff included.
+   *
+   * The ownership check is the update's own condition rather than a read
+   * before it, so a trade settling at the same moment cannot also move it.
+   */
+  async giveToCommunity(id: string, ownerId: string): Promise<void> {
+    await this.db.$transaction(async (tx) => {
+      const { count } = await tx.character.updateMany({
+        where: { id, ownerId, speciesId: { not: null }, ...notDeleted },
+        data: { ownerId: null, visibility: Visibility.PUBLIC },
+      });
+      if (count !== 1) {
+        throw new CharacterNotGivableError(id);
+      }
+
+      await tx.characterOwnershipChange.create({
+        data: { characterId: id, fromUserId: ownerId, toUserId: null },
+      });
+    });
   }
 
   async addTags(characterId: string, userId: string, tagNames: string[]) {

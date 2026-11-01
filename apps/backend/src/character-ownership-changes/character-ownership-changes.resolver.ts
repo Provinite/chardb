@@ -253,10 +253,12 @@ export class CharacterOwnershipChangesResolver {
   }
 
   @AllowAnyAuthenticated()
-  @ResolveField("toUser", () => User)
+  @ResolveField("toUser", () => User, { nullable: true })
   async resolveToUser(
     @Parent() ownershipChange: CharacterOwnershipChange,
-  ): Promise<User> {
+  ): Promise<User | null> {
+    if (!ownershipChange.toUserId) return null;
+
     const prismaUser = await this.usersService.findById(
       ownershipChange.toUserId,
     );
