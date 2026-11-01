@@ -3,12 +3,15 @@ import {
   Activity,
   ArrowLeftRight,
   BarChart3,
+  Candy,
   CircleUser,
   ClipboardCheck,
   Dna,
   FilePlus,
   FolderOpen,
   FolderPlus,
+  Ghost,
+  Gift,
   House,
   Image,
   LayoutGrid,
@@ -17,6 +20,7 @@ import {
   Package,
   Palette,
   Plus,
+  Repeat,
   Settings,
   Shield,
   ShieldCheck,
@@ -283,6 +287,27 @@ export function useSpotlightActions(
       ],
     });
 
+    // The current community's public pages, for a visitor who is not a member
+    // of it. A member has them in that community's own group below.
+    const memberHere = communitiesData?.nodes.some(
+      (membership) => membership.role.communityId === hostCommunityId,
+    );
+    if (hostCommunity?.halloweenEnabled && !memberHere) {
+      groups.push({
+        group: hostCommunity.name,
+        actions: [
+          {
+            id: `c-${hostCommunity.id}-halloween-prizes`,
+            icon: Gift,
+            label: "Prize List",
+            description: `${hostCommunity.name} Halloween prizes`,
+            keywords: ["halloween", "event"],
+            to: "/halloween/prizes",
+          },
+        ],
+      });
+    }
+
     if (!user) return groups;
 
     // My Content
@@ -515,6 +540,47 @@ export function useSpotlightActions(
           },
         ];
 
+        // Halloween, while the event is on here, as in the sidebar.
+        if (community.halloweenEnabled) {
+          const keywords = ["halloween", "event"];
+          actions.push(
+            {
+              id: `c-${cId}-halloween-prizes`,
+              icon: Gift,
+              label: "Prize List",
+              description: `${cName} Halloween prizes`,
+              keywords,
+              to: inCommunity(cSlug, cId, "/halloween/prizes"),
+            },
+            {
+              id: `c-${cId}-halloween-boards`,
+              icon: Candy,
+              label: "Candy Boards",
+              description: `Your Halloween candy boards in ${cName}`,
+              keywords,
+              to: inCommunity(cSlug, cId, "/halloween/board"),
+            },
+            {
+              id: `c-${cId}-halloween-swap`,
+              icon: Repeat,
+              label: "Candy Swap",
+              description: `${cName} Halloween candy swap`,
+              keywords,
+              to: inCommunity(cSlug, cId, "/halloween/swap"),
+            },
+          );
+          if (role.canManageItems || role.canGrantItems) {
+            actions.push({
+              id: `c-${cId}-halloween-admin`,
+              icon: Ghost,
+              label: "Halloween Event",
+              description: `Run ${cName}'s Halloween event`,
+              keywords,
+              to: inCommunity(cSlug, cId, "/admin/halloween"),
+            });
+          }
+        }
+
         if (hasInvitePermissions) {
           actions.push({
             id: `c-${cId}-invite-codes`,
@@ -666,6 +732,7 @@ export function useSpotlightActions(
     user,
     communitiesData,
     hostSlug,
+    hostCommunity,
     hostCommunityId,
     communityName,
     setQuery,

@@ -98,6 +98,7 @@ export const ME_QUERY = gql`
               id
               name
               slug
+              halloweenEnabled
             }
             canCreateSpecies
             canEditSpecies
