@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Halloween candies are owned by chardb users** (`HalloweenCandy`), claimed on linking Discord or joining the community; candy boards belong to the chardb user, and existing boards are deleted (#535).
+- **Halloween candies are owned by chardb users** (`HalloweenCandy`), claimed on linking Discord or joining the community; candy boards belong to the chardb user and no longer need Discord linked, and existing boards are deleted (#535).
 
 ## [v15.0.0] - 2026-10-31
 
