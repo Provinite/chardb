@@ -139,12 +139,13 @@ export const CandySwapView = ({
     return [...groups].sort(([a], [b]) => a.localeCompare(b));
   }, [myCandies, offering]);
   const giving = new Set(offering.map((c) => c.slug));
+  // Every candy you hold, including those in your open offers.
   const owned = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const c of myCandies)
+    for (const c of [...myCandies, ...myOffers.flatMap((o) => o.candies)])
       counts.set(c.slug, (counts.get(c.slug) ?? 0) + 1);
     return counts;
-  }, [myCandies]);
+  }, [myCandies, myOffers]);
 
   const atLimit = myOffers.length >= maxOpenOffers;
   const full = offering.length >= maxOffered;
@@ -321,9 +322,11 @@ export const CandySwapView = ({
                         className={styles.pickCandy}
                         aria-label={have ? `${name} (you have ${have})` : name}
                         aria-pressed={slug === want}
+                        data-autofocus={slug === want ? "" : undefined}
                         disabled={giving.has(slug)}
                         onClick={() => {
-                          setWant(slug);
+                          // Picking the one asked for again stops asking.
+                          setWant(slug === want ? "" : slug);
                           setPicking(false);
                         }}
                       >
