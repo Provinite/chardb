@@ -13,10 +13,12 @@ test.describe("achievements on a member profile", () => {
       `${world.community.url}/members/${world.users.alice.username}`,
     );
 
+    // Arrives with the profile: there the moment the profile is, no waiting.
+    await expect(page.getByTestId("member-inventory-link")).toBeVisible();
     const section = page.getByTestId("member-achievements");
     await expect(
       section.getByRole("heading", { name: "Achievements" }),
-    ).toBeVisible();
+    ).toBeVisible({ timeout: 0 });
     const item = section.getByRole("listitem");
     await expect(item.getByText("Trick-or-Treater 2026")).toBeVisible();
     await expect(

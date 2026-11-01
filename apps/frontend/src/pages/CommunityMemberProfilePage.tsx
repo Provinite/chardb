@@ -19,9 +19,8 @@ import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
 import { AchievementList } from "../components/achievements/AchievementList";
 import {
-  useCommunityMemberAchievementsQuery,
+  useCommunityMemberProfileQuery,
   useCommunityMemberRolesQuery,
-  useGetUserProfileQuery,
   useUserCharactersQuery,
 } from "../generated/graphql";
 
@@ -216,14 +215,14 @@ export const CommunityMemberProfilePage: React.FC = () => {
 
   usePageMeta({ title: username ? `@${username}` : "Member" });
 
-  const { data: profileData, loading: profileLoading } = useGetUserProfileQuery(
-    {
-      variables: { username: username ?? "" },
-      skip: !username,
-    },
-  );
+  // Achievements come with the person, so the page renders whole.
+  const { data: profileData, loading: profileLoading } =
+    useCommunityMemberProfileQuery({
+      variables: { username: username ?? "", communityId: communityId! },
+      skip: !username || !communityId,
+    });
 
-  const member = profileData?.userProfile?.user;
+  const member = profileData?.user;
   const memberId = member?.id;
   const isSelf = memberId === user?.id;
 
@@ -243,11 +242,6 @@ export const CommunityMemberProfilePage: React.FC = () => {
       },
       skip: !memberId || !communityId,
     });
-
-  const { data: achievementsData } = useCommunityMemberAchievementsQuery({
-    variables: { communityId: communityId!, userId: memberId ?? "" },
-    skip: !communityId || !memberId,
-  });
 
   if (profileLoading) {
     return (
@@ -270,7 +264,7 @@ export const CommunityMemberProfilePage: React.FC = () => {
   const roles = rolesData?.communityMemberRoles ?? [];
   const characters = charactersData?.userCharacters?.characters ?? [];
   const characterTotal = charactersData?.userCharacters?.total ?? 0;
-  const achievements = achievementsData?.communityMemberAchievements ?? [];
+  const { achievements } = member;
   const displayName = member.displayName || member.username;
   const communityName = community?.name || "this community";
 
@@ -346,7 +340,6 @@ export const CommunityMemberProfilePage: React.FC = () => {
         )}
       </Section>
 
-      {/* Last on the page, so arriving after the rest moves nothing. */}
       {achievements.length > 0 && (
         <Section data-testid="member-achievements">
           <SectionHead>

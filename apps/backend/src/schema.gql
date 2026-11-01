@@ -3789,9 +3789,6 @@ type Query {
     inviteeId: ID!
   ): CommunityInvitationConnection!
 
-  """What a member has earned in a community, newest first."""
-  communityMemberAchievements(communityId: ID!, userId: ID!): [UserAchievement!]!
-
   """Get a community member by ID"""
   communityMemberById(
     """Community member ID"""
@@ -5703,6 +5700,8 @@ type UseItemResult {
 }
 
 type User {
+  """What the user has earned in a community, newest first."""
+  achievements(communityId: ID!): [UserAchievement!]!
   avatarImage: Image
   bio: String
   canCreateCommunity: Boolean!

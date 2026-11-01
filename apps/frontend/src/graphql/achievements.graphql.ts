@@ -1,14 +1,30 @@
 import { gql } from "@apollo/client";
 
-/** What one member earned in the community being viewed. */
-export const COMMUNITY_MEMBER_ACHIEVEMENTS = gql`
-  query CommunityMemberAchievements($communityId: ID!, $userId: ID!) {
-    communityMemberAchievements(communityId: $communityId, userId: $userId) {
+/**
+ * One person, as a community member profile shows them: who they are and
+ * what they earned in that community, in one request so the page renders
+ * whole.
+ */
+export const COMMUNITY_MEMBER_PROFILE = gql`
+  query CommunityMemberProfile($username: String!, $communityId: ID!) {
+    user(username: $username) {
       id
-      name
-      description
-      imagePath
-      earnedAt
+      username
+      displayName
+      bio
+      avatarImage {
+        id
+        originalUrl
+        thumbnailUrl
+        altText
+      }
+      achievements(communityId: $communityId) {
+        id
+        name
+        description
+        imagePath
+        earnedAt
+      }
     }
   }
 `;

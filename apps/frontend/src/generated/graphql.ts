@@ -3428,8 +3428,6 @@ export type Query = {
   communityInvitationsByCommunity: CommunityInvitationConnection;
   /** Get community invitations by invitee ID with pagination */
   communityInvitationsByInvitee: CommunityInvitationConnection;
-  /** What a member has earned in a community, newest first. */
-  communityMemberAchievements: Array<UserAchievement>;
   /** Get a community member by ID */
   communityMemberById: CommunityMember;
   /** Roles a user holds in a community */
@@ -3754,12 +3752,6 @@ export type QueryCommunityInvitationsByInviteeArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   inviteeId: Scalars['ID']['input'];
-};
-
-
-export type QueryCommunityMemberAchievementsArgs = {
-  communityId: Scalars['ID']['input'];
-  userId: Scalars['ID']['input'];
 };
 
 
@@ -5373,6 +5365,8 @@ export type UseItemResult = {
 
 export type User = {
   __typename?: 'User';
+  /** What the user has earned in a community, newest first. */
+  achievements: Array<UserAchievement>;
   avatarImage: Maybe<Image>;
   bio: Maybe<Scalars['String']['output']>;
   canCreateCommunity: Scalars['Boolean']['output'];
@@ -5398,6 +5392,11 @@ export type User = {
   userIsFollowing: Scalars['Boolean']['output'];
   username: Scalars['String']['output'];
   website: Maybe<Scalars['String']['output']>;
+};
+
+
+export type UserAchievementsArgs = {
+  communityId: Scalars['ID']['input'];
 };
 
 
@@ -5480,13 +5479,13 @@ export enum Visibility {
   Unlisted = 'UNLISTED'
 }
 
-export type CommunityMemberAchievementsQueryVariables = Exact<{
+export type CommunityMemberProfileQueryVariables = Exact<{
+  username: Scalars['String']['input'];
   communityId: Scalars['ID']['input'];
-  userId: Scalars['ID']['input'];
 }>;
 
 
-export type CommunityMemberAchievementsQuery = { __typename?: 'Query', communityMemberAchievements: Array<{ __typename?: 'UserAchievement', id: string, name: string, description: string, imagePath: string, earnedAt: string }> };
+export type CommunityMemberProfileQuery = { __typename?: 'Query', user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, achievements: Array<{ __typename?: 'UserAchievement', id: string, name: string, description: string, imagePath: string, earnedAt: string }> } | null };
 
 export type LoginMutationVariables = Exact<{
   input: LoginInput;
@@ -8396,51 +8395,63 @@ export const FormSnapshotFieldsFragmentDoc = gql`
   }
 }
     ${TraitValueFieldsFragmentDoc}`;
-export const CommunityMemberAchievementsDocument = gql`
-    query CommunityMemberAchievements($communityId: ID!, $userId: ID!) {
-  communityMemberAchievements(communityId: $communityId, userId: $userId) {
+export const CommunityMemberProfileDocument = gql`
+    query CommunityMemberProfile($username: String!, $communityId: ID!) {
+  user(username: $username) {
     id
-    name
-    description
-    imagePath
-    earnedAt
+    username
+    displayName
+    bio
+    avatarImage {
+      id
+      originalUrl
+      thumbnailUrl
+      altText
+    }
+    achievements(communityId: $communityId) {
+      id
+      name
+      description
+      imagePath
+      earnedAt
+    }
   }
 }
     `;
 
 /**
- * __useCommunityMemberAchievementsQuery__
+ * __useCommunityMemberProfileQuery__
  *
- * To run a query within a React component, call `useCommunityMemberAchievementsQuery` and pass it any options that fit your needs.
- * When your component renders, `useCommunityMemberAchievementsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useCommunityMemberProfileQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityMemberProfileQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useCommunityMemberAchievementsQuery({
+ * const { data, loading, error } = useCommunityMemberProfileQuery({
  *   variables: {
+ *      username: // value for 'username'
  *      communityId: // value for 'communityId'
- *      userId: // value for 'userId'
  *   },
  * });
  */
-export function useCommunityMemberAchievementsQuery(baseOptions: Apollo.QueryHookOptions<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables> & ({ variables: CommunityMemberAchievementsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useCommunityMemberProfileQuery(baseOptions: Apollo.QueryHookOptions<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables> & ({ variables: CommunityMemberProfileQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>(CommunityMemberAchievementsDocument, options);
+        return Apollo.useQuery<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>(CommunityMemberProfileDocument, options);
       }
-export function useCommunityMemberAchievementsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>) {
+export function useCommunityMemberProfileLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>(CommunityMemberAchievementsDocument, options);
+          return Apollo.useLazyQuery<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>(CommunityMemberProfileDocument, options);
         }
-export function useCommunityMemberAchievementsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>) {
+export function useCommunityMemberProfileSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>(CommunityMemberAchievementsDocument, options);
+          return Apollo.useSuspenseQuery<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>(CommunityMemberProfileDocument, options);
         }
-export type CommunityMemberAchievementsQueryHookResult = ReturnType<typeof useCommunityMemberAchievementsQuery>;
-export type CommunityMemberAchievementsLazyQueryHookResult = ReturnType<typeof useCommunityMemberAchievementsLazyQuery>;
-export type CommunityMemberAchievementsSuspenseQueryHookResult = ReturnType<typeof useCommunityMemberAchievementsSuspenseQuery>;
-export type CommunityMemberAchievementsQueryResult = Apollo.QueryResult<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>;
+export type CommunityMemberProfileQueryHookResult = ReturnType<typeof useCommunityMemberProfileQuery>;
+export type CommunityMemberProfileLazyQueryHookResult = ReturnType<typeof useCommunityMemberProfileLazyQuery>;
+export type CommunityMemberProfileSuspenseQueryHookResult = ReturnType<typeof useCommunityMemberProfileSuspenseQuery>;
+export type CommunityMemberProfileQueryResult = Apollo.QueryResult<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>;
 export const LoginDocument = gql`
     mutation Login($input: LoginInput!) {
   login(input: $input) {

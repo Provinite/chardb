@@ -34,15 +34,17 @@ const BACKFILL_SQL = readFileSync(
   "utf8",
 );
 
-const MEMBER_ACHIEVEMENTS = `
-  query MemberAchievements($communityId: ID!, $userId: ID!) {
-    communityMemberAchievements(communityId: $communityId, userId: $userId) {
-      id
-      slug
-      name
-      description
-      imagePath
-      earnedAt
+const USER_ACHIEVEMENTS = `
+  query UserAchievements($username: String!, $communityId: ID!) {
+    user(username: $username) {
+      achievements(communityId: $communityId) {
+        id
+        slug
+        name
+        description
+        imagePath
+        earnedAt
+      }
     }
   }
 `;
@@ -287,35 +289,24 @@ describe("Achievements (e2e)", () => {
     }, 5_000);
   });
 
-  describe("communityMemberAchievements", () => {
-    const ask = (
-      asUserId: string | null,
-      userId: string,
-      community = communityId,
-    ) =>
-      asUserId
-        ? testApp
-            .generateTestToken(asUserId)
-            .then((token) =>
-              testApp.authenticatedGraphqlRequest(
-                MEMBER_ACHIEVEMENTS,
-                { communityId: community, userId },
-                token,
-              ),
-            )
-        : testApp.graphqlRequest(MEMBER_ACHIEVEMENTS, {
-            communityId: community,
-            userId,
-          });
+  describe("User.achievements", () => {
+    /** Signed out: what a community asks of a user it shows. */
+    const ask = (username: string, community = communityId) =>
+      testApp.graphqlRequest(USER_ACHIEVEMENTS, {
+        username,
+        communityId: community,
+      });
+    const achievementsIn = (res: { body: { data: unknown } }) =>
+      (res.body.data as { user: { achievements: unknown[] } }).user
+        .achievements;
 
-    it("lists what a member earned here, by name, to a fellow member", async () => {
+    it("lists what a user earned in a community, by name, to anyone", async () => {
       const alice = await member("alice");
-      const bob = await member("bob");
       await login(alice.email);
 
-      const res = await ask(bob.id, alice.id);
+      const res = await ask(alice.username);
       expect(res.body.errors).toBeUndefined();
-      expect(res.body.data.communityMemberAchievements).toEqual([
+      expect(achievementsIn(res)).toEqual([
         {
           id: expect.any(String),
           slug: SLUG,
@@ -334,26 +325,8 @@ describe("Achievements (e2e)", () => {
         data: { userId: alice.id, communityId: other.id, slug: SLUG },
       });
 
-      const res = await ask(alice.id, alice.id);
-      expect(res.body.data.communityMemberAchievements).toEqual([]);
-    });
-
-    it("refuses someone who is not a member", async () => {
-      const alice = await member("alice");
-      const outsider = await user("outsider");
-      await login(alice.email);
-
-      const res = await ask(outsider.id, alice.id);
-      expect(res.body.errors).toBeDefined();
-      expect(res.body.data?.communityMemberAchievements ?? null).toBeNull();
-    });
-
-    it("refuses someone signed out", async () => {
-      const alice = await member("alice");
-      await login(alice.email);
-
-      const res = await ask(null, alice.id);
-      expect(res.body.errors).toBeDefined();
+      const res = await ask(alice.username);
+      expect(achievementsIn(res)).toEqual([]);
     });
 
     it("leaves out a slug the catalog no longer has", async () => {
@@ -362,8 +335,8 @@ describe("Achievements (e2e)", () => {
         data: { userId: alice.id, communityId, slug: "retired" },
       });
 
-      const res = await ask(alice.id, alice.id);
-      expect(res.body.data.communityMemberAchievements).toEqual([]);
+      const res = await ask(alice.username);
+      expect(achievementsIn(res)).toEqual([]);
     });
   });
 
