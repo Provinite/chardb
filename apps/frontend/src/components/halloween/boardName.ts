@@ -18,8 +18,17 @@ export interface BoardNameWords {
   last: readonly string[];
 }
 
-const alphabetical = (list: readonly string[]) =>
-  [...list].sort((a, b) => a.localeCompare(b));
+/**
+ * A copy of the list in the viewer's alphabetical order, ignoring punctuation
+ * so "'n'" sorts with the n's.
+ */
+export const alphabetical = (
+  list: readonly string[],
+  locales?: Intl.LocalesArgument,
+) =>
+  [...list].sort((a, b) =>
+    a.localeCompare(b, locales, { ignorePunctuation: true }),
+  );
 
 /** The words a board's name is picked from, each list in alphabetical order. */
 export const BOARD_NAME_WORDS: BoardNameWords = {

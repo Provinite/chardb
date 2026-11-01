@@ -2,7 +2,7 @@
  * A candy board's name: a first word, any joiner and a last word.
  */
 import { describe, it, expect } from "vitest";
-import { BOARD_NAME_WORDS, formatBoardName, shuffledName } from "../boardName";
+import { alphabetical, formatBoardName, shuffledName } from "../boardName";
 
 const words = {
   first: ["Spooky", "Moonlit", "Golden"],
@@ -54,16 +54,25 @@ describe("shuffledName", () => {
   });
 });
 
-describe("BOARD_NAME_WORDS", () => {
-  const alphabetical = (list: readonly string[]) =>
-    [...list].sort((a, b) => a.localeCompare(b));
+describe("alphabetical", () => {
+  it("sorts a copy, leaving the list as it was", () => {
+    const list = ["Moonlit", "Bat", "Spooky"];
+    expect(alphabetical(list, "en")).toEqual(["Bat", "Moonlit", "Spooky"]);
+    expect(list).toEqual(["Moonlit", "Bat", "Spooky"]);
+  });
 
-  it.each(["first", "joiners", "last"] as const)(
-    "offers the %s words in alphabetical order",
-    (which) => {
-      const list = BOARD_NAME_WORDS[which];
-      expect(list.length).toBeGreaterThan(1);
-      expect(list).toEqual(alphabetical(list));
-    },
-  );
+  it("sorts by letters, ignoring punctuation and accents", () => {
+    expect(alphabetical(["of", "'n'", "and", "à la", "la"], "en")).toEqual([
+      "à la",
+      "and",
+      "la",
+      "'n'",
+      "of",
+    ]);
+  });
+
+  it("sorts in the given locale", () => {
+    // Swedish puts ä after z.
+    expect(alphabetical(["ä", "z", "s"], "sv")).toEqual(["s", "z", "ä"]);
+  });
 });
