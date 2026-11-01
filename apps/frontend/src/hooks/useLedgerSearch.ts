@@ -12,10 +12,7 @@ const SEARCH_DEBOUNCE_MS = 300;
  */
 export function useLedgerSearch() {
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(
-    search.trim(),
-    SEARCH_DEBOUNCE_MS,
-  );
+  const debouncedSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
 
   return {
     /** What is in the box, untrimmed. */

@@ -4,7 +4,7 @@ const sortMediaQueries = require("postcss-sort-media-queries")({
 
 // Sorts the media queries in each `.css.ts` file's output smallest-first, so
 // within one file a wider breakpoint overrides a narrower one. Other
-// stylesheets (Mantine, index.css) are written in an order they rely on, so
+// stylesheets (third-party ones, index.css) are written in an order they rely on, so
 // they are left alone.
 const sortVanillaExtractMediaQueries = {
   postcssPlugin: "sort-vanilla-extract-media-queries",

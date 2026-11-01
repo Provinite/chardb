@@ -32,7 +32,7 @@ describe("postcss config", () => {
   });
 
   it("leaves other stylesheets in their written order", () => {
-    expect(order("/app/node_modules/@mantine/core/styles.css")).toEqual([
+    expect(order("/app/node_modules/some-library/styles.css")).toEqual([
       "@media (min-width: 64em)",
       ".a",
       "@media (min-width: 40em)",

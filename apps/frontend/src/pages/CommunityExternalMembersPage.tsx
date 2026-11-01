@@ -155,10 +155,7 @@ export const CommunityExternalMembersPage: React.FC = () => {
   const communityId = useCommunityId();
 
   const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(
-    search.trim(),
-    SEARCH_DEBOUNCE_MS,
-  );
+  const debouncedSearch = useDebouncedValue(search.trim(), SEARCH_DEBOUNCE_MS);
   const [provider, setProvider] = useState<ExternalAccountProvider | "">("");
   const [browsing, setBrowsing] = useState(false);
 

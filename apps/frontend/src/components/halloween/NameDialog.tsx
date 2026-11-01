@@ -1,8 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
-import { Modal } from "@mantine/core";
 import { Dices } from "lucide-react";
-import { scrollToElement } from "@chardb/ui";
+import { Dialog, scrollToElement } from "@chardb/ui";
 import {
   BOARD_NAME_WORDS,
   formatBoardName,
@@ -139,16 +138,13 @@ interface NameDialogProps {
 }
 
 export const NameDialog: React.FC<NameDialogProps> = ({ open, ...body }) => (
-  <Modal
-    opened={open}
-    onClose={body.onClose}
-    title="Name your board"
-    size="xl"
-    centered
-  >
-    {/* Mounted afresh each opening, so it starts from the board's name. */}
-    <DialogBody {...body} />
-  </Modal>
+  <Dialog.Root open={open} onClose={body.onClose} width="wide">
+    <Dialog.Body>
+      <Dialog.Title>Name your board</Dialog.Title>
+      {/* Mounted afresh each opening, so it starts from the board's name. */}
+      <DialogBody {...body} />
+    </Dialog.Body>
+  </Dialog.Root>
 );
 
 const DialogBody: React.FC<Omit<NameDialogProps, "open">> = ({
