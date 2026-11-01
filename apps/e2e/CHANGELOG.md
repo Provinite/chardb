@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Button specs**: Ctrl-click on a link button, 44px touch targets on a phone, and Enter not resubmitting while a submit button is busy (#503).
+- **Button specs**: Ctrl-click on a link button, 44px touch targets on a phone, Enter not resubmitting while a submit button is busy, and View All as a single link (#503).
+
+## [v15.0.0] - 2026-10-31
+
+### Added
+
 - **Give-to-community specs**; the character page's `character-staff-menu` test id is now `character-actions-menu`, since owners use it too (#521).
 - **Trait review deep-link specs**: badge to narrowed queue, the empty state after approving, and no link for members (#526).
 
@@ -17,13 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **A `candy-board` preset** (Halloween on, a Discord server and player linked, one empty board) and specs for its Lighting panel (#466).
 - **Page search specs drive the palette through a `spotlight()` helper**; they ran against Mantine's Spotlight too until it was removed (#466).
-
-### Changed
-
-- **Staff-action specs open the ⋯ menu** through a new `openMenuItem` fixture and confirm in the shared dialogs; a new spec checks Remove from Species stays disabled until the name is typed (#430).
-
-### Added
-
 - **Site admin access specs** (`tests/navigation/site-admin-access.e2e.ts`): a member gets not found on every `/admin` page, a community creator sees only community management, and a site admin opens all of them (#405).
 - **Site-wide image queue specs** (`tests/moderation/global-image-queue.e2e.ts`): an avatar uploaded at the apex is approved by a site admin from Site Administration and then shown to its owner, and a member opening the queue sees nothing (#404).
 - **User avatar specs** (`tests/settings/user-avatar.e2e.ts`): uploading from a community host records the chosen crop and that community as the reviewer, an unapproved avatar is withheld from visitors until it is approved, and removing one clears the column (#345).
@@ -55,6 +53,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Staff-action specs open the ⋯ menu** through a new `openMenuItem` fixture and confirm in the shared dialogs; a new spec checks Remove from Species stays disabled until the name is typed (#430).
 - **Avatar and site-wide queue specs follow #410**: `user-avatar.e2e.ts` asserts an upload is shown at once with no media and replaces the previous avatar, and `global-image-queue.e2e.ts` uses a community-less upload made through the API instead of an avatar.
 - **CI runs the suite across six shards**, cutting the job from ~9m. Shard count is the `strategy.matrix.shard` list in `ci.yml` and nothing else; local runs stay unsharded on one worker. Six is the last count that helps — Playwright balances by test count rather than duration, so the same eleven slow files land in one shard at six shards and at eight alike. (#353)
 - **CI caches the backend and frontend build outputs**, so a shard that hits skips ~31s of compilation. Keyed on the sources that produce each output; a miss costs nothing. New `E2E_SKIP_BACKEND_BUILD` / `E2E_SKIP_FRONTEND_BUILD` flags drive it, and `E2E_SKIP_BUILD` now covers both servers rather than just the frontend. Each server errors up front if told to reuse a dist that is not there. The workspace package build is deliberately left uncached — it runs `prisma generate`, without which the package's `dist` re-exports a client that does not exist. (#353)

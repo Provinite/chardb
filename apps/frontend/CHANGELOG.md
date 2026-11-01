@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Busy buttons keep their label and show a spinner**, and every button is a 44px target on touch screens; confirm dialogs open as `Dialog`s with focus inside them (#503).
+
+### Fixed
+
+- **Approve stays green and Following turns red under the pointer**, and the character gallery's View All controls are single links (#503).
+
+## [v15.0.0] - 2026-10-31
+
 ### Added
 
 - **Owners can give a character to its community** from the character page's actions menu, after typing its name (#521).
@@ -25,7 +35,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Busy buttons keep their label and show a spinner**, and every button is a 44px target on touch screens; confirm dialogs open as `Dialog`s with focus inside them (#503).
 - **Toasts use the theme's tokens**: success and error toasts are tinted in their status colour instead of glowing, toasts are a fixed 320px wide, and the dismiss button is larger (#484).
 - **Character and media pages describe themselves to search engines by owner and species** rather than by their markdown text, so most pages no longer load a markdown parser (#465).
 - **The shop listing form's stock and limit fields stack on narrow screens**, and the shop's cart stacks below the listings when the content area is narrow rather than the window (#475).
