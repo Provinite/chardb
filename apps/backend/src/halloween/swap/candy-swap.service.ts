@@ -21,6 +21,13 @@ import { HalloweenDashboardService } from "../dashboard/halloween-dashboard.serv
 import { CANDY_SLUGS } from "../discord/images.generated";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { PlayerLock } from "../services/player-lock";
+import { lockedTransaction } from "../services/locked-transaction";
+import { BusyError } from "../errors";
+import { isUuid } from "../uuid";
+import {
+  candiesOnBoards,
+  removeCandiesFromBoards,
+} from "../board/candy-board.service";
 import type { HalloweenCandy } from "../board/candy-board.types";
 import type {
   HalloweenCandyOffer,
@@ -37,8 +44,6 @@ export const DEFAULT_BROWSE_LIMIT = 12;
 const MAX_BROWSE_LIMIT = 50;
 /** How many past trades the history shows. */
 const HISTORY_LIMIT = 50;
-
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const candySelect = { id: true, slug: true, receivedAt: true } as const;
 
@@ -92,6 +97,14 @@ export class CandySwapService {
   /** Every kind of candy there is, by slug. */
   candyTypes(): readonly string[] {
     return CANDY_SLUGS;
+  }
+
+  /** How many candies an offer may give, and how many may be open at once. */
+  limits(): { maxOpenOffers: number; maxOfferedCandies: number } {
+    return {
+      maxOpenOffers: MAX_OPEN_OFFERS,
+      maxOfferedCandies: MAX_OFFERED_CANDIES,
+    };
   }
 
   /** The player's candies here that are not held in an offer, oldest first. */
@@ -198,7 +211,7 @@ export class CandySwapService {
       throw new BadRequestException("There is no such candy");
     }
 
-    const { offerId, tradeId } = await this.db.$transaction(async (tx) => {
+    const { offerId, tradeId } = await this.transaction("place", async (tx) => {
       await this.lock.acquire(tx, "swap", guildId, userId);
 
       const candies = await tx.halloweenCandy.findMany({
@@ -301,11 +314,11 @@ export class CandySwapService {
     offerId: string,
   ): Promise<HalloweenCandyTradeRecord> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
-    if (!UUID.test(offerId)) {
+    if (!isUuid(offerId)) {
       throw new NotFoundException("That offer is no longer open");
     }
 
-    const tradeId = await this.db.$transaction(async (tx) => {
+    const tradeId = await this.transaction("accept", async (tx) => {
       await this.lock.acquire(tx, "swap", guildId, userId);
       await tx.$queryRaw`SELECT 1 FROM "halloween_candy_offers" WHERE "id" = ${offerId}::uuid FOR UPDATE`;
       const offer = await tx.halloweenCandyOffer.findFirst({
@@ -318,7 +331,7 @@ export class CandySwapService {
       if (offer.ownerId === userId) {
         throw new BadRequestException("You cannot accept your own offer");
       }
-      const payment = await tx.halloweenCandy.findFirst({
+      const spares = await tx.halloweenCandy.findMany({
         where: {
           guildId,
           ownerId: userId,
@@ -328,6 +341,10 @@ export class CandySwapService {
         orderBy: [{ receivedAt: "asc" }, { id: "asc" }],
         select: { id: true, slug: true },
       });
+      // One that is not stuck on a board, if there is one, so a board
+      // keeps what is on it.
+      const onBoards = await candiesOnBoards(tx, guildId, userId);
+      const payment = spares.find((c) => !onBoards.has(c.id)) ?? spares[0];
       if (!payment) {
         throw new BadRequestException(
           "You have no spare candy of the kind this offer asks for",
@@ -352,9 +369,9 @@ export class CandySwapService {
   ): Promise<boolean> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
     const gone = new NotFoundException("There is no such open offer of yours");
-    if (!UUID.test(offerId)) throw gone;
+    if (!isUuid(offerId)) throw gone;
 
-    await this.db.$transaction(async (tx) => {
+    await this.transaction("cancel", async (tx) => {
       await this.lock.acquire(tx, "swap", guildId, userId);
       await tx.$queryRaw`SELECT 1 FROM "halloween_candy_offers" WHERE "id" = ${offerId}::uuid FOR UPDATE`;
       const { count } = await tx.halloweenCandyOffer.updateMany({
@@ -486,6 +503,16 @@ export class CandySwapService {
       where: { id: { in: initiator.candies.map((c) => c.id) } },
       data: { ownerId: offerer.userId, offerId: null, receivedAt: now },
     });
+    // Off the boards they were on, so one that comes back later does not
+    // reappear where it used to be.
+    await removeCandiesFromBoards(
+      tx,
+      guildId,
+      new Map([
+        [offerer.userId, offerer.candies.map((c) => c.id)],
+        [initiator.userId, initiator.candies.map((c) => c.id)],
+      ]),
+    );
     await tx.halloweenCandyOffer.updateMany({
       where: {
         id: {
@@ -522,6 +549,31 @@ export class CandySwapService {
       matched: initiatorOfferId !== null,
     } satisfies HalloweenLogLine);
     return trade.id;
+  }
+
+  /**
+   * A transaction under the swap's locks, which wait a short while at most:
+   * one that cannot get them in time is refused as busy, to be tried again,
+   * rather than failing as a database error.
+   */
+  private async transaction<T>(
+    action: string,
+    work: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    try {
+      return await lockedTransaction(
+        this.db,
+        `CandySwapService.${action}`,
+        work,
+      );
+    } catch (error) {
+      if (error instanceof BusyError) {
+        throw new ConflictException(
+          "The candy swap is busy. Try again in a moment.",
+        );
+      }
+      throw error;
+    }
   }
 
   private loadTrade(id: string): Promise<TradeRow> {

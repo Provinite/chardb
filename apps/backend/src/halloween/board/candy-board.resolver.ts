@@ -39,15 +39,12 @@ export class CandyBoardResolver {
 
   @AllowAnyAuthenticated()
   @Query(() => [HalloweenCandyBoard], {
-    nullable: true,
-    description:
-      "Your Halloween candy boards here, the last changed first. Null " +
-      "without Discord linked, since candies come from knocking on Discord.",
+    description: "Your Halloween candy boards here, the last changed first.",
   })
   async myHalloweenCandyBoards(
     @Args("communityId", { type: () => ID }) communityId: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<HalloweenCandyBoard[] | null> {
+  ): Promise<HalloweenCandyBoard[]> {
     return this.boards.getMyBoards(communityId, user.id);
   }
 
@@ -55,7 +52,7 @@ export class CandyBoardResolver {
   @Mutation(() => HalloweenCandyBoard, {
     description:
       "Make a new, empty candy board, which can use all of your candies. At " +
-      "most 10 each. Needs Discord linked.",
+      "most 10 each.",
   })
   async createHalloweenCandyBoard(
     @Args("communityId", { type: () => ID }) communityId: string,
@@ -84,7 +81,7 @@ export class CandyBoardResolver {
       "Apply changes to one of your boards, in order, and get it back as it " +
       "now is. A change that cannot apply -- a candy not yours, not on the " +
       "board, already on it, or placed off it -- is skipped, and the rest " +
-      "still apply. At most 100 changes at once. Needs Discord linked.",
+      "still apply. At most 100 changes at once.",
   })
   async applyHalloweenCandyBoardActions(
     @Args("communityId", { type: () => ID }) communityId: string,
@@ -100,7 +97,7 @@ export class CandyBoardResolver {
   @Mutation(() => HalloweenCandyBoard, {
     description:
       "Name one of your boards from the word lists in @chardb/shared; null " +
-      "leaves it unnamed. Needs Discord linked.",
+      "leaves it unnamed.",
   })
   async setHalloweenCandyBoardName(
     @Args("communityId", { type: () => ID }) communityId: string,
@@ -116,7 +113,7 @@ export class CandyBoardResolver {
   @Mutation(() => HalloweenCandyBoard, {
     description:
       "Put the light that casts the shadows on one of your boards; null " +
-      "goes back to the board's default light. Needs Discord linked.",
+      "goes back to the board's default light.",
   })
   async setHalloweenCandyBoardLighting(
     @Args("communityId", { type: () => ID }) communityId: string,
@@ -136,7 +133,7 @@ export class CandyBoardResolver {
     description:
       "Set the picture or tile behind the candies on one of your boards, by " +
       "its slug, and how it is dimmed and tinted; a null slug goes back to " +
-      "none chosen, and null effects to neither. Needs Discord linked.",
+      "none chosen, and null effects to neither.",
   })
   async setHalloweenCandyBoardBackground(
     @Args("communityId", { type: () => ID }) communityId: string,

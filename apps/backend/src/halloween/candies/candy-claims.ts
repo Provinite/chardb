@@ -1,4 +1,4 @@
-import { ExternalAccountProvider, type Prisma } from "@chardb/database";
+import { ExternalAccountProvider, Prisma } from "@chardb/database";
 
 /**
  * Who owns a Halloween candy. A candy from a lost knock belongs to the chardb
@@ -18,24 +18,31 @@ export async function candyOwnerFor(
   guildId: string,
   discordUserId: string,
 ): Promise<string | null> {
-  const account = await tx.externalAccount.findUnique({
+  // One query: it runs inside every lost knock's locked transaction.
+  const account = await tx.externalAccount.findFirst({
     where: {
-      provider_providerAccountId: {
-        provider: ExternalAccountProvider.DISCORD,
-        providerAccountId: discordUserId,
+      provider: ExternalAccountProvider.DISCORD,
+      providerAccountId: discordUserId,
+      user: {
+        communityMemberships: {
+          some: { role: { community: { discordGuildId: guildId } } },
+        },
       },
     },
     select: { userId: true },
   });
-  if (!account) return null;
-  const memberships = await tx.communityMember.count({
-    where: {
-      userId: account.userId,
-      role: { community: { discordGuildId: guildId } },
-    },
-  });
-  return memberships > 0 ? account.userId : null;
+  return account?.userId ?? null;
 }
+
+/**
+ * Only a candy that has never had an owner is claimed. One traded away whose
+ * owner's account is later deleted is ownerless too, but no longer the
+ * knocker's to get back.
+ */
+const neverOwned = {
+  ownerId: null,
+  tradeLines: { none: {} },
+} as const satisfies Prisma.HalloweenCandyWhereInput;
 
 /**
  * Gives a user who has just linked a Discord account the candies waiting on
@@ -58,7 +65,7 @@ export async function claimCandiesOnLink(
   );
   if (!guildIds.length) return 0;
   const { count } = await tx.halloweenCandy.updateMany({
-    where: { discordUserId, ownerId: null, guildId: { in: guildIds } },
+    where: { ...neverOwned, discordUserId, guildId: { in: guildIds } },
     data: { ownerId: userId },
   });
   return count;
@@ -88,9 +95,9 @@ export async function claimCandiesOnJoin(
   if (!community?.discordGuildId || !account) return 0;
   const { count } = await tx.halloweenCandy.updateMany({
     where: {
+      ...neverOwned,
       guildId: community.discordGuildId,
       discordUserId: account.providerAccountId,
-      ownerId: null,
     },
     data: { ownerId: userId },
   });

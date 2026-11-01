@@ -1,4 +1,4 @@
-import { Field, ID, ObjectType, registerEnumType } from "@nestjs/graphql";
+import { Field, ID, Int, ObjectType, registerEnumType } from "@nestjs/graphql";
 import { HalloweenCandyOfferStatus } from "@chardb/database";
 import { User } from "../../users/entities/user.entity";
 import { HalloweenCandy } from "../board/candy-board.types";
@@ -29,6 +29,17 @@ export class HalloweenCandyOffer {
 
   @Field()
   createdAt: Date;
+}
+
+@ObjectType({ description: "The candy swap's limits on offers" })
+export class HalloweenCandySwapLimits {
+  @Field(() => Int, {
+    description: "The most offers one player may have open at once",
+  })
+  maxOpenOffers: number;
+
+  @Field(() => Int, { description: "The most candies one offer may give" })
+  maxOfferedCandies: number;
 }
 
 @ObjectType({ description: "A candy swap you took part in, as you saw it" })

@@ -1,15 +1,11 @@
 import {
   BadRequestException,
-  ForbiddenException,
   Injectable,
   Logger,
   NotFoundException,
 } from "@nestjs/common";
-import {
-  ExternalAccountProvider,
-  Prisma,
-  type HalloweenCandyBoard as BoardRow,
-} from "@chardb/database";
+import { Prisma, type HalloweenCandyBoard as BoardRow } from "@chardb/database";
+import { isUuid } from "../uuid";
 import { DatabaseService } from "../../database/database.service";
 import {
   mapPrismaUserToGraphQL,
@@ -51,18 +47,75 @@ import type {
  */
 export const MAX_ACTIONS = 100;
 
-const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-
 /**
  * A board's placements, checked on the way out as on the way in: Prisma's
  * type for the column is only what this code promises it wrote.
  */
-function storedPlacements(board: BoardRow): CandyPlacement[] {
+function storedPlacements(
+  board: Pick<BoardRow, "id" | "placements">,
+): CandyPlacement[] {
   const parsed = candyPlacementsSchema.safeParse(board.placements);
   if (!parsed.success) {
     throw new StoredCandyBoardInvalidError(board.id, parsed.error.message);
   }
   return parsed.data;
+}
+
+/** The candies stuck on a player's boards in a guild, by id. */
+export async function candiesOnBoards(
+  tx: Prisma.TransactionClient,
+  guildId: string,
+  ownerId: string,
+): Promise<Set<number>> {
+  const boards = await tx.halloweenCandyBoard.findMany({
+    where: { guildId, ownerId },
+    select: { id: true, placements: true },
+  });
+  return new Set(
+    boards.flatMap((b) =>
+      storedPlacements(b).flatMap((p) =>
+        isNameplate(p.sticker) ? [] : [p.sticker.candy],
+      ),
+    ),
+  );
+}
+
+/**
+ * Takes candies off their former owners' boards in a guild, for when they
+ * change hands: `lost` maps each former owner to the candies they no longer
+ * have. Every board is locked while it changes, as a save locks it, so a save
+ * at the same time cannot put them back. All are locked in one query in one
+ * order, so two trades between the same players cannot deadlock.
+ */
+export async function removeCandiesFromBoards(
+  tx: Prisma.TransactionClient,
+  guildId: string,
+  lost: Map<string, number[]>,
+): Promise<void> {
+  if (!lost.size) return;
+  const boards = await tx.$queryRaw<{ id: string; owner_id: string }[]>`
+    SELECT "id", "owner_id" FROM "halloween_candy_boards"
+    WHERE "guild_id" = ${guildId} AND "owner_id" IN (${Prisma.join([...lost.keys()])})
+    ORDER BY "id"
+    FOR UPDATE
+  `;
+  for (const { id, owner_id: ownerId } of boards) {
+    const gone = new Set(lost.get(ownerId));
+    const board = await tx.halloweenCandyBoard.findUniqueOrThrow({
+      where: { id },
+      select: { id: true, placements: true },
+    });
+    const placements = storedPlacements(board);
+    const kept = placements.filter(
+      (p) => isNameplate(p.sticker) || !gone.has(p.sticker.candy),
+    );
+    if (kept.length !== placements.length) {
+      await tx.halloweenCandyBoard.update({
+        where: { id },
+        data: { placements: kept },
+      });
+    }
+  }
 }
 
 /** How a board's background is muted, checked on the way out as on the way in. */
@@ -122,7 +175,7 @@ export class CandyBoardService {
     viewerId: string | null,
   ): Promise<HalloweenCandyBoard | null> {
     const guildId = await this.dashboard.guildFor(communityId);
-    if (!guildId || !UUID.test(id)) {
+    if (!guildId || !isUuid(id)) {
       return null;
     }
     const board = await this.db.halloweenCandyBoard.findFirst({
@@ -134,18 +187,12 @@ export class CandyBoardService {
     return this.toBoard(board, viewerId === board.ownerId);
   }
 
-  /**
-   * The signed-in player's boards here, the last changed first. Null
-   * without Discord linked.
-   */
+  /** The signed-in player's boards here, the last changed first. */
   async getMyBoards(
     communityId: string,
     userId: string,
-  ): Promise<HalloweenCandyBoard[] | null> {
+  ): Promise<HalloweenCandyBoard[]> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
-    if (!(await this.discordIdOf(userId))) {
-      return null;
-    }
     const boards = await this.db.halloweenCandyBoard.findMany({
       where: { guildId, ownerId: userId },
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
@@ -164,7 +211,6 @@ export class CandyBoardService {
     userId: string,
   ): Promise<HalloweenCandyBoard> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
-    await this.requireDiscord(userId);
     const board = await this.db.$transaction(async (tx) => {
       const count = await tx.halloweenCandyBoard.count({
         where: { guildId, ownerId: userId },
@@ -368,8 +414,8 @@ export class CandyBoardService {
   }
 
   /**
-   * One of the signed-in player's boards, to change: refused without
-   * Discord linked, and for a board that is not theirs here or not at all.
+   * One of the signed-in player's boards, to change: refused for a board
+   * that is not theirs here, or not at all.
    */
   private async myBoard(
     communityId: string,
@@ -377,8 +423,7 @@ export class CandyBoardService {
     id: string,
   ): Promise<BoardRow> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
-    await this.requireDiscord(userId);
-    const board = UUID.test(id)
+    const board = isUuid(id)
       ? await this.db.halloweenCandyBoard.findFirst({
           where: { id, guildId, ownerId: userId },
         })
@@ -387,26 +432,6 @@ export class CandyBoardService {
       throw new NotFoundException("There is no such candy board of yours");
     }
     return board;
-  }
-
-  private async requireDiscord(userId: string): Promise<string> {
-    const discordUserId = await this.discordIdOf(userId);
-    if (!discordUserId) {
-      throw new ForbiddenException(
-        "Link your Discord account to have a candy board",
-      );
-    }
-    return discordUserId;
-  }
-
-  private async discordIdOf(userId: string): Promise<string | null> {
-    const account = await this.db.externalAccount.findUnique({
-      where: {
-        provider_userId: { provider: ExternalAccountProvider.DISCORD, userId },
-      },
-      select: { providerAccountId: true },
-    });
-    return account?.providerAccountId ?? null;
   }
 
   private async toBoard(

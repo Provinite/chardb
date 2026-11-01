@@ -623,4 +623,76 @@ describe("Halloween candy swap (e2e)", () => {
     );
     expect(res.body.data.halloweenCandyTypes).not.toContain("brussels-sprout");
   });
+
+  it("says how many candies an offer gives and how many offers can be open", async () => {
+    const res = await testApp.graphqlRequest(
+      `query { halloweenCandySwapLimits { maxOpenOffers maxOfferedCandies } }`,
+      {},
+    );
+    expect(res.body.data.halloweenCandySwapLimits).toEqual({
+      maxOpenOffers: 10,
+      maxOfferedCandies: 3,
+    });
+  });
+
+  describe("candies on boards", () => {
+    /** A board of `owner`'s with these candies stuck on it. */
+    const board = (owner: Player, candyIds: number[]) =>
+      db.halloweenCandyBoard.create({
+        data: {
+          guildId: GUILD,
+          ownerId: owner.id,
+          placements: candyIds.map((candy) => ({
+            sticker: { candy },
+            x: 0.5,
+            y: 0.5,
+            rotation: 0,
+            scale: 1,
+          })),
+        },
+      });
+
+    const stuckOn = async (boardId: string) =>
+      (
+        (
+          await db.halloweenCandyBoard.findUniqueOrThrow({
+            where: { id: boardId },
+          })
+        ).placements as { sticker: { candy?: number } }[]
+      ).map((p) => p.sticker.candy);
+
+    it("pays with a spare candy that is not on a board before one that is", async () => {
+      const { offer } = await placed(
+        alice,
+        [(await candy(alice, "candy-corn")).id],
+        "banana",
+      );
+      const onBoard = await candy(bob, "banana", {
+        receivedAt: new Date("2026-10-01T00:00:00Z"),
+      });
+      const loose = await candy(bob, "banana", {
+        receivedAt: new Date("2026-10-20T00:00:00Z"),
+      });
+      await board(bob, [onBoard.id]);
+
+      await gql(ACCEPT, { offerId: offer.id }, bob);
+
+      expect(await ownerOf(loose.id)).toBe(alice.id);
+      expect(await ownerOf(onBoard.id)).toBe(bob.id);
+    });
+
+    it("takes traded candies off their old owners' boards", async () => {
+      const corn = await candy(alice, "candy-corn");
+      const kept = await candy(alice, "berry-tart");
+      const banana = await candy(bob, "banana");
+      const alicesBoard = await board(alice, [corn.id, kept.id]);
+      const bobsBoard = await board(bob, [banana.id]);
+      const { offer } = await placed(alice, [corn.id], "banana");
+
+      await gql(ACCEPT, { offerId: offer.id }, bob);
+
+      expect(await stuckOn(alicesBoard.id)).toEqual([kept.id]);
+      expect(await stuckOn(bobsBoard.id)).toEqual([]);
+    });
+  });
 });

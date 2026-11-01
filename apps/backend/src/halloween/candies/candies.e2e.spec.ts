@@ -199,6 +199,34 @@ describe("Halloween candies (e2e)", () => {
     expect((await db.halloweenCandy.findFirstOrThrow()).ownerId).toBeNull();
   });
 
+  it("does not give a traded candy back to its knocker when its new owner's account is gone", async () => {
+    await knock();
+    const candy = await db.halloweenCandy.findFirstOrThrow();
+    const buyer = await user("buyer");
+    const trade = await db.halloweenCandyTrade.create({
+      data: { guildId: GUILD_ID, offererId: buyer.id },
+    });
+    await db.halloweenCandyTradeLine.create({
+      data: {
+        tradeId: trade.id,
+        candyId: candy.id,
+        slug: candy.slug,
+        toInitiator: false,
+      },
+    });
+    // Traded away, then its owner's account deleted: owner set null.
+    await db.halloweenCandy.update({
+      where: { id: candy.id },
+      data: { ownerId: null },
+    });
+
+    const player = await user("player");
+    await join(player.id);
+    await linkDiscord(player.id);
+
+    expect((await db.halloweenCandy.findFirstOrThrow()).ownerId).toBeNull();
+  });
+
   it("gives no candy for a win", async () => {
     jest.spyOn(random, "unit").mockReturnValue(0);
 

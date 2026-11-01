@@ -8,6 +8,7 @@ import { CandySwapService } from "./candy-swap.service";
 import {
   HalloweenCandyOffer,
   HalloweenCandyOfferPlaced,
+  HalloweenCandySwapLimits,
   HalloweenCandyTradeRecord,
 } from "./candy-swap.types";
 
@@ -24,6 +25,12 @@ export class CandySwapResolver {
   })
   halloweenCandyTypes(): readonly string[] {
     return this.swap.candyTypes();
+  }
+
+  @AllowUnauthenticated()
+  @Query(() => HalloweenCandySwapLimits)
+  halloweenCandySwapLimits(): HalloweenCandySwapLimits {
+    return this.swap.limits();
   }
 
   @AllowAnyAuthenticated()

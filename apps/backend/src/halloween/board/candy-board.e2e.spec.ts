@@ -413,13 +413,16 @@ describe("Halloween candy board (e2e)", () => {
       expect(await placementsNow()).toEqual([at(kept.id)]);
     });
 
-    it("are nothing without Discord linked, and none can be made", async () => {
+    it("belong to the account, with Discord linked or not", async () => {
       const res = await myBoards(unlinkedToken);
       expect(res.body.errors).toBeUndefined();
-      expect(res.body.data.myHalloweenCandyBoards).toBeNull();
-      expect((await create(unlinkedToken)).body.errors?.[0].message).toBe(
-        "Link your Discord account to have a candy board",
-      );
+      expect(res.body.data.myHalloweenCandyBoards).toEqual([]);
+
+      const made = await create(unlinkedToken);
+      expect(made.body.errors).toBeUndefined();
+      expect(
+        (await myBoards(unlinkedToken)).body.data.myHalloweenCandyBoards,
+      ).toHaveLength(1);
     });
 
     it("says so when the community has no Discord server", async () => {
@@ -743,10 +746,10 @@ describe("Halloween candy board (e2e)", () => {
       expect(await placementsNow()).toEqual([]);
     });
 
-    it("needs Discord linked", async () => {
+    it("is the owner's alone", async () => {
       const res = await apply([], unlinkedToken);
       expect(res.body.errors?.[0].message).toBe(
-        "Link your Discord account to have a candy board",
+        "There is no such candy board of yours",
       );
     });
 
@@ -850,10 +853,10 @@ describe("Halloween candy board (e2e)", () => {
       );
     });
 
-    it("needs Discord linked", async () => {
+    it("is the owner's alone", async () => {
       const res = await setLighting(light(), unlinkedToken);
       expect(res.body.errors?.[0].message).toBe(
-        "Link your Discord account to have a candy board",
+        "There is no such candy board of yours",
       );
     });
   });
@@ -995,10 +998,10 @@ describe("Halloween candy board (e2e)", () => {
       );
     });
 
-    it("needs Discord linked", async () => {
+    it("is the owner's alone", async () => {
       const res = await setBackground("tile-corkboard", unlinkedToken);
       expect(res.body.errors?.[0].message).toBe(
-        "Link your Discord account to have a candy board",
+        "There is no such candy board of yours",
       );
     });
   });
@@ -1064,13 +1067,13 @@ describe("Halloween candy board (e2e)", () => {
       expect((await myBoard()).body.data.halloweenCandyBoard.name).toBe(null);
     });
 
-    it("needs Discord linked", async () => {
+    it("is the owner's alone", async () => {
       const res = await setName(
         { first: "Spooky", joiner: null, last: "Cauldron" },
         unlinkedToken,
       );
       expect(res.body.errors?.[0].message).toBe(
-        "Link your Discord account to have a candy board",
+        "There is no such candy board of yours",
       );
     });
 
