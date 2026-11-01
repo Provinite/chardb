@@ -1,6 +1,8 @@
 import React, { act, createRef } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { declarationsOf } from "../__tests__/emittedCss";
 import { render } from "../__tests__/render";
+import { vars } from "../theme/contract.css";
 import { timingMs } from "../theme/tokens";
 import { Tooltip } from ".";
 
@@ -204,5 +206,12 @@ describe("Tooltip", () => {
 
     expect(ref.current).toBe(button);
     expect(onFocus).toHaveBeenCalled();
+  });
+
+  it("draws above dialogs, since it names controls inside them", () => {
+    const { button } = renderTooltip();
+    act(() => button.focus());
+
+    expect(declarationsOf(tip()!)["z-index"]).toBe(vars.layer.modal[100]);
   });
 });

@@ -5,9 +5,8 @@ const test = presetTest("candy-board");
 
 /**
  * Tooltips that name icon buttons, and the toggletip that explains the
- * lighting pad. Written against Mantine's Tooltip and kept for the one that
- * replaces it (#466). Tooltips are visual only -- the button already carries
- * its name -- so they are found by their text, not a role.
+ * lighting pad. Tooltips are visual only -- the button already carries its
+ * name -- so they are found by their text, not a role.
  */
 const copyButton = (page: Page) =>
   page.getByRole("button", { name: /^Copy link to/ });

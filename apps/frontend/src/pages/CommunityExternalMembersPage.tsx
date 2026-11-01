@@ -2,8 +2,7 @@ import React, { useState } from "react";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
-import { useDebouncedValue } from "@mantine/hooks";
-import { Button } from "@chardb/ui";
+import { Button, timingMs, useDebouncedValue } from "@chardb/ui";
 import { usePageMeta } from "../lib/pageMeta";
 import { ProviderIcon } from "../components/ProviderIcon";
 import { useCommunityId } from "../contexts/CommunityHostContext";
@@ -27,7 +26,6 @@ import {
  */
 
 const PAGE_SIZE = 25;
-const SEARCH_DEBOUNCE_MS = 300;
 
 /** The accounts something can wait on. */
 const PROVIDERS = [
@@ -156,9 +154,9 @@ export const CommunityExternalMembersPage: React.FC = () => {
   const communityId = useCommunityId();
 
   const [search, setSearch] = useState("");
-  const [debouncedSearch] = useDebouncedValue(
+  const debouncedSearch = useDebouncedValue(
     search.trim(),
-    SEARCH_DEBOUNCE_MS,
+    timingMs.debounce.search,
   );
   const [provider, setProvider] = useState<ExternalAccountProvider | "">("");
   const [browsing, setBrowsing] = useState(false);

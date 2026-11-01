@@ -119,11 +119,11 @@ Windows High Contrast and other forced-colour modes replace colours with system 
 
 The one literal allowed is `-1`, which puts an element behind its siblings inside its parent's stacking context.
 
-Each layer is a group: `layer.modal.base` is 4000, and `layer.modal[100]`, `layer.modal[200]` and `layer.modal[300]` are 4100, 4200 and 4300, for stacking inside one layer, such as a popover opened from a dialog. The steps are an escape hatch: leave a comment saying why. The gaps between them leave room for a new step without renaming the others.
+Each layer is a group: `layer.modal.base` is 4000, and `layer.modal[100]`, `layer.modal[200]` and `layer.modal[300]` are 4100, 4200 and 4300, for stacking inside one layer, such as a popover opened from a dialog. The steps are an escape hatch: leave a comment saying why. Tooltips and toggletips sit at `layer.modal[100]`, because they name and explain controls inside dialogs and popovers alike. The gaps between them leave room for a new step without renaming the others.
 
 Elements opened with `<dialog>.showModal()` or the Popover API render in the browser's top layer, above every `z-index`. If dialogs used it, anything that must appear above an open dialog (a toast, a menu opened from inside it) would have to use the top layer too, or render inside the dialog.
 
-Dialogs stay on the layer scale instead. `Dialog` from `@chardb/ui` renders a `<dialog open>` (never `showModal()`) at `layer.modal`, at the end of `<body>`, no wider than `size.dialog`. A list of results inside one holds at `size.dialogList` tall whatever it shows, so the dialog never resizes as results change. While it is open, every other child of `<body>` is `inert`, which keeps focus and screen readers inside; it clears only the `inert` it set. Escape closes the top dialog of a stack. Toasts and menus inside a dialog are #499.
+Dialogs stay on the layer scale instead. `Dialog` from `@chardb/ui` renders a `<dialog open>` (never `showModal()`) at `layer.modal`, at the end of `<body>`, no wider than `size.dialog`, or `size.dialogWide` with `width="wide"` for columns or a grid. `Dialog.Body` pads its content and scrolls it when the dialog is capped to the screen; `Dialog.Title` names the dialog. A list of results inside one holds at `size.dialogList` tall whatever it shows, so the dialog never resizes as results change. While it is open, every other child of `<body>` is `inert`, which keeps focus and screen readers inside; it clears only the `inert` it set. Escape closes the top dialog of a stack. Toasts and menus inside a dialog are #499.
 
 ### Motion
 
@@ -148,7 +148,7 @@ Durations and easings are tokens, for transitions and animations only. A literal
   A decorative loop takes `duration` (a motion token, default `motion.duration.essential`); both take `easing` (default `motion.easing.linear`).
 
   `infinite` outside `loop()` is a lint error (`loop-via-helper`).
-- **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token. `vars.timing.*` is for CSS such as `animation-delay`; JavaScript timers read the same values in milliseconds from `timingMs`.
+- **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token. `vars.timing.*` is for CSS such as `animation-delay`; JavaScript timers read the same values in milliseconds from `timingMs`. Debounced input waits `timing.debounce.typeahead` (200ms) for a list of picks updating as you type, and `timing.debounce.search` (300ms) for a search box over a page of results.
 - **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, scroll with `scrollToElement(el, options)` and `scrollToPosition(position, el?)` from `@chardb/ui` instead of `scrollIntoView` and `scrollTo`, which are lint errors (`no-restricted-properties`); they scroll smoothly, or jump when the user prefers reduced motion. A scroll that resets rather than moves, such as a new page starting at the top, passes `jump: true` to `scrollToPosition` and jumps for everyone.
 
 ## Breakpoints

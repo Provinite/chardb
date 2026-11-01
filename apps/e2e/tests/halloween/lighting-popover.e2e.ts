@@ -5,8 +5,7 @@ const test = presetTest("candy-board");
 
 /**
  * The candy board's Lighting control: a button that opens a panel of light
- * settings beside it. Written against Mantine's Popover and kept for the one
- * that replaces it (#466).
+ * settings beside it.
  */
 const trigger = (page: Page) => page.getByRole("button", { name: "Lighting" });
 const panel = (page: Page) => page.getByRole("dialog", { name: "Lighting" });
