@@ -30,7 +30,24 @@ const statusColors = (bg: string, bgSubtle: string, border: string) => ({
   border,
 });
 
+/**
+ * Colours of things drawn rather than of the interface: the same in both
+ * themes, because a lamp is yellow by day and by night. No text sits on
+ * them, so they have no pairs.
+ */
+const illustration = {
+  /** The light over the candy board, as its control draws it. */
+  lamp: {
+    fill: p.amber200,
+    edge: p.amber700,
+    /** Where a spotlight lands. */
+    pool: p.amber200Faint,
+    poolEdge: p.amber200Strong,
+  },
+};
+
 export const lightColors = {
+  illustration,
   surface: {
     page: p.white,
     raised: p.slate50,
@@ -81,6 +98,7 @@ export const lightColors = {
 export type ColorTokens = typeof lightColors;
 
 export const darkColors: ColorTokens = {
+  illustration,
   surface: {
     page: p.slate900,
     raised: p.slate800,

@@ -88,6 +88,7 @@ Semantic families:
 | `border.*` | `default` for dividers, `input` for input outlines, `focus` for focus rings |
 | `action.*` | Interactive controls: `primary`, `secondary` and `danger`, each with `bg`, `bgHover`, `bgPressed`, `bgSubtle`, `bgDisabled`, `fg`, `fgDisabled` and `border` |
 | `status.*` | `success`, `warning`, `danger` and `info` messages, each with `bg`, `bgSubtle`, `fg` and `border` |
+| `illustration.*` | Things drawn rather than interface, the same in both themes and with no text on them: `lamp` (`fill`, `edge`, `pool`, `poolEdge`) for the candy board's light |
 
 Every state or shade a component may use is its own token: `action.primary.bgHover`, `action.primary.bgPressed`, `action.primary.bgDisabled`, `status.danger.bgSubtle`. Components never lighten, darken, mix or add alpha themselves. If a shade you need is missing, add a token.
 

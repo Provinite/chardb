@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Hints that only showed on mouse hover now open from an info button** on any device: the lighting pad, the primary form, shop prices out of reach, refunds, deferrals, unemailed notifications, species you cannot pick, archiving and hiding (#466).
+- **The lighting pad's info button sits on the pad's corner**, opposite its reset button; the Lighting control is off styled-components (#466).
 - **Icon buttons say what they are** to screen readers and on hover, keyboard focus or long press: invite codes, role templates, form order, admin edit buttons and more (#466).
 
 - **The candy board's Lighting panel works from the keyboard**: focus moves into it, Escape in it or on its button closes it, and on phones it stays on screen and scrolls (#466).

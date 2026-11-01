@@ -59,6 +59,9 @@ export const palette = {
 
   amber50: "#fffbeb",
   amber200: "#fde68a",
+  // amber200 seen through: the candy board lamp's pool and its outline.
+  amber200Faint: "#fde68a22",
+  amber200Strong: "#fde68acc",
   amber400: "#fbbf24",
   amber500: "#f59e0b",
   amber700: "#b45309",

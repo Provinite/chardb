@@ -69,7 +69,6 @@
   "apps/frontend/src/components/halloween/CandyBoard.tsx",
   "apps/frontend/src/components/halloween/HalloweenPrizeForm.tsx",
   "apps/frontend/src/components/halloween/HalloweenSettingsForm.tsx",
-  "apps/frontend/src/components/halloween/LightingControl.tsx",
   "apps/frontend/src/components/halloween/NameDialog.tsx",
   "apps/frontend/src/components/halloween/SaveStatusIndicator.tsx",
   "apps/frontend/src/components/halloween/TintChoices.tsx",
