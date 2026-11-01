@@ -141,7 +141,8 @@ export const CandySwapView = ({
   const giving = new Set(offering.map((c) => c.slug));
   const owned = useMemo(() => {
     const counts = new Map<string, number>();
-    for (const c of myCandies) counts.set(c.slug, (counts.get(c.slug) ?? 0) + 1);
+    for (const c of myCandies)
+      counts.set(c.slug, (counts.get(c.slug) ?? 0) + 1);
     return counts;
   }, [myCandies]);
 
