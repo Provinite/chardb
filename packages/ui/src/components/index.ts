@@ -25,7 +25,7 @@ export * from "./TopProgressBar";
 export * from "./Tooltip";
 export * from "./Toggletip";
 
-import { DialogRoot, DialogTitle } from "./Dialog";
+import { DialogBody, DialogRoot, DialogTitle } from "./Dialog";
 import {
   CommandPaletteEmpty,
   CommandPaletteFooter,
@@ -55,6 +55,7 @@ export const Popover = {
 export const Dialog = {
   Root: DialogRoot,
   Title: DialogTitle,
+  Body: DialogBody,
 };
 
 /** A search box over a list of results, in a dialog; see `CommandPaletteRoot`. */

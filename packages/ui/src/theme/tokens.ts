@@ -191,6 +191,8 @@ export const sharedTokens = {
     },
     /** The widest a dialog gets. Narrower screens give it their full width. */
     dialog: "36rem",
+    /** For a dialog with columns or a grid in it: a picker, a form side by side. */
+    dialogWide: "48rem",
     /**
      * The height a dialog's result list holds at whatever it shows, so the
      * dialog never resizes as results come and go. Shorter screens shrink it.

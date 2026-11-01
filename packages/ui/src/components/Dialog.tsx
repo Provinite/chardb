@@ -71,6 +71,11 @@ export interface DialogRootProps {
   children?: React.ReactNode;
   /** The name, when there is no `Dialog.Title` to take it from. */
   "aria-label"?: string;
+  /**
+   * How wide it may grow: `wide` (`size.dialogWide`) for columns or a grid,
+   * otherwise `size.dialog`.
+   */
+  width?: keyof typeof styles.width;
   className?: string;
 }
 
@@ -87,7 +92,14 @@ export interface DialogRootProps {
  */
 export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
   function DialogRoot(
-    { open, onClose, children, "aria-label": ariaLabel, className },
+    {
+      open,
+      onClose,
+      children,
+      "aria-label": ariaLabel,
+      width = "default",
+      className,
+    },
     ref,
   ) {
     const titleId = useId();
@@ -177,9 +189,9 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
           aria-label={ariaLabel}
           aria-labelledby={hasTitle ? titleId : undefined}
           tabIndex={-1}
-          className={
-            className ? `${styles.dialog} ${className}` : styles.dialog
-          }
+          className={[styles.dialog, styles.width[width], className]
+            .filter(Boolean)
+            .join(" ")}
         >
           <TitleIdContext.Provider value={titleId}>
             {children}
@@ -210,3 +222,17 @@ export const DialogTitle = forwardRef<HTMLHeadingElement, DialogTitleProps>(
     );
   },
 );
+
+/** The dialog's content: padded, and scrolling when the dialog is capped. */
+export const DialogBody = forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>(function DialogBody({ className, ...rest }, ref) {
+  return (
+    <div
+      ref={ref}
+      className={className ? `${styles.body} ${className}` : styles.body}
+      {...rest}
+    />
+  );
+});

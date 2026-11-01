@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useDebouncedValue } from "@mantine/hooks";
+import { useDebouncedValue } from "@chardb/ui";
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -12,7 +12,7 @@ const SEARCH_DEBOUNCE_MS = 300;
  */
 export function useLedgerSearch() {
   const [search, setSearch] = useState("");
-  const [debouncedSearch] = useDebouncedValue(
+  const debouncedSearch = useDebouncedValue(
     search.trim(),
     SEARCH_DEBOUNCE_MS,
   );

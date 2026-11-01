@@ -1,6 +1,8 @@
 import { act, useState } from "react";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { declarationsOf } from "../__tests__/emittedCss";
 import { render } from "../__tests__/render";
+import { vars } from "../theme/contract.css";
 import { Dialog } from ".";
 
 const press = (key: string, target: Element = document.activeElement!) =>
@@ -242,5 +244,45 @@ describe("Dialog", () => {
 
     expect(inner).toHaveBeenCalledOnce();
     expect(outer).not.toHaveBeenCalled();
+  });
+});
+
+describe("Dialog styles", () => {
+  it("is no wider than size.dialog by default", () => {
+    render(
+      <Dialog.Root open onClose={() => {}} aria-label="Default">
+        x
+      </Dialog.Root>,
+    );
+
+    expect(declarationsOf(dialogs()[0])["max-inline-size"]).toBe(
+      vars.size.dialog,
+    );
+  });
+
+  it("is no wider than size.dialogWide when wide", () => {
+    render(
+      <Dialog.Root open onClose={() => {}} aria-label="Wide" width="wide">
+        x
+      </Dialog.Root>,
+    );
+
+    expect(declarationsOf(dialogs()[0])["max-inline-size"]).toBe(
+      vars.size.dialogWide,
+    );
+  });
+
+  it("pads its body, which scrolls when the dialog is capped", () => {
+    render(
+      <Dialog.Root open onClose={() => {}} aria-label="Body">
+        <Dialog.Body data-testid="body">x</Dialog.Body>
+      </Dialog.Root>,
+    );
+    const body = document.querySelector('[data-testid="body"]')!;
+
+    expect(declarationsOf(body)).toMatchObject({
+      padding: vars.space.lg,
+      "overflow-y": "auto",
+    });
   });
 });

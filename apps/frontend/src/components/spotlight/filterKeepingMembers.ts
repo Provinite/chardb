@@ -1,38 +1,15 @@
 import { MEMBER_GROUP, MEMBER_PAGES_GROUP } from "./useSpotlightActions";
 import { parseSpotlightQuery } from "./spotlightQuery";
+import type { SpotlightGroup, SpotlightItem } from "./types";
 
-/**
- * What the filter reads of a result. Loose enough for Mantine's actions as
- * well as ours while both implementations ship (#466).
- */
-interface Matchable {
-  label?: string;
-  description?: string;
-  keywords?: string | string[];
-}
+const matches = (item: SpotlightItem, query: string) =>
+  item.label.toLowerCase().includes(query) ||
+  !!item.description?.toLowerCase().includes(query) ||
+  (item.keywords ?? []).join(",").toLowerCase().includes(query);
 
-interface GroupOf<T> {
-  group: string;
-  actions: T[];
-}
-
-const matches = (action: Matchable, query: string) => {
-  const keywords = Array.isArray(action.keywords)
-    ? action.keywords.join(",")
-    : (action.keywords ?? "");
-  return (
-    !!action.label?.toLowerCase().includes(query) ||
-    !!action.description?.toLowerCase().includes(query) ||
-    keywords.toLowerCase().includes(query)
-  );
-};
-
-const narrow = <T extends Matchable>(
-  groups: GroupOf<T>[],
-  term: string,
-): GroupOf<T>[] =>
-  groups.reduce<GroupOf<T>[]>((acc, group) => {
-    const actions = group.actions.filter((action) => matches(action, term));
+const narrow = (groups: SpotlightGroup[], term: string): SpotlightGroup[] =>
+  groups.reduce<SpotlightGroup[]>((acc, group) => {
+    const actions = group.actions.filter((item) => matches(item, term));
     if (actions.length > 0) acc.push({ ...group, actions });
     return acc;
   }, []);
@@ -50,12 +27,13 @@ const narrow = <T extends Matchable>(
  * person's own pages are a fixed handful and filter normally, against the
  * text after the slash rather than the whole query.
  */
-export function filterKeepingMembers<T extends Matchable>(
+export function filterKeepingMembers(
   rawQuery: string,
-  groups: GroupOf<T>[],
-): GroupOf<T>[] {
+  groups: SpotlightGroup[],
+): SpotlightGroup[] {
   const parsed = parseSpotlightQuery(rawQuery);
-  const inGroup = (name: string) => (group: GroupOf<T>) => group.group === name;
+  const inGroup = (name: string) => (group: SpotlightGroup) =>
+    group.group === name;
 
   if (parsed.mode === "people") return groups.filter(inGroup(MEMBER_GROUP));
 
