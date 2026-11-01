@@ -12,7 +12,6 @@
   "apps/frontend/src/components/DeleteConfirmationDialog.tsx",
   "apps/frontend/src/components/DiscordIntegrationSettings.tsx",
   "apps/frontend/src/components/FilterChip.tsx",
-  "apps/frontend/src/components/FollowButton.tsx",
   "apps/frontend/src/components/GlobalStyles.tsx",
   "apps/frontend/src/components/GrantTargetSelector.tsx",
   "apps/frontend/src/components/ImageUpload.tsx",
