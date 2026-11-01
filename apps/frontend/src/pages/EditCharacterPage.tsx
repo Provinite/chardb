@@ -32,6 +32,7 @@ import {
   canUserEditCharacterRegistry,
 } from "../lib/characterPermissions";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { AccessDenied } from "../components/AccessDenied";
 import { useTagSearch } from "../hooks/useTagSearch";
 import { SpeciesSelector } from "../components/character/SpeciesSelector";
 import { CharacterFormsEditor } from "../components/character/CharacterFormsEditor";
@@ -690,12 +691,9 @@ export const EditCharacterPage: React.FC = () => {
   // Check if user has permission to edit this character
   if (character && !canUserEditCharacter(character, user, permissions)) {
     return (
-      <Container>
-        <ErrorContainer>
-          <h3>Access Denied</h3>
-          <p>You do not have permission to edit this character.</p>
-        </ErrorContainer>
-      </Container>
+      <AccessDenied>
+        You do not have permission to edit this character.
+      </AccessDenied>
     );
   }
 

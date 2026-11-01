@@ -23,7 +23,9 @@ test.describe("the Halloween prize list", () => {
       const wins = page.getByRole("list", { name: "Recent wins" });
       const [newest, older] = await wins.getByRole("listitem").all();
       await expect(newest.getByText("A Discord user")).toBeVisible();
-      await expect(newest.getByText("5 minutes ago")).toBeVisible();
+      // The preset stamps this win five minutes before its snapshot is built,
+      // and a shard can reach this spec a few minutes after that.
+      await expect(newest.getByText(/^[5-8] minutes ago$/)).toBeVisible();
       await expect(
         older.getByRole("link", { name: world.users.carol.username }),
       ).toHaveAttribute(

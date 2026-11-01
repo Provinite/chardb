@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { scrollToPosition } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { AccessDenied } from "../components/AccessDenied";
 import {
   useRunDeviantartUuidBackfillMutation,
   useCancelDeviantartUuidBackfillMutation,
@@ -275,10 +276,7 @@ export function DeviantArtBackfillPage() {
 
   if (!user?.isAdmin) {
     return (
-      <Container>
-        <Title>Access Denied</Title>
-        <Description>You must be a site admin to access this page.</Description>
-      </Container>
+      <AccessDenied>You must be a site admin to access this page.</AccessDenied>
     );
   }
 
