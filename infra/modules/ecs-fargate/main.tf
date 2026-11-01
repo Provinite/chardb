@@ -319,3 +319,15 @@ resource "aws_ecs_service" "app" {
     aws_iam_role_policy_attachment.task_execution,
   ]
 }
+
+# The task count. No scaling policy is attached, so auto-scaling only holds
+# the count within these bounds; equal bounds pin it.
+resource "aws_appautoscaling_target" "app" {
+  service_namespace  = "ecs"
+  resource_id        = "service/${aws_ecs_cluster.main.name}/${aws_ecs_service.app.name}"
+  scalable_dimension = "ecs:service:DesiredCount"
+  min_capacity       = var.min_capacity
+  max_capacity       = var.max_capacity
+
+  tags = var.tags
+}
