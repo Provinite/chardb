@@ -80,12 +80,10 @@ describe("Community open sign-up (e2e)", () => {
   });
 
   const openSignup = (roleId: string | null) =>
-    testApp
-      .getDb()
-      .community.update({
-        where: { id: communityId },
-        data: { openSignupRoleId: roleId },
-      });
+    testApp.getDb().community.update({
+      where: { id: communityId },
+      data: { openSignupRoleId: roleId },
+    });
 
   /** A member of the community whose role carries `permissions`. */
   const staffToken = async (permissions: Record<string, boolean>) => {
@@ -165,9 +163,10 @@ describe("Community open sign-up (e2e)", () => {
     it("uses the invite code when both are given", async () => {
       await openSignup(memberRoleId);
       const code = await testApp.createTestInviteCode();
-      await testApp
-        .getDb()
-        .inviteCode.update({ where: { id: code }, data: { roleId: otherRoleId } });
+      await testApp.getDb().inviteCode.update({
+        where: { id: code },
+        data: { roleId: otherRoleId },
+      });
 
       const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
         input: signupInput({ communityId, inviteCode: code }),
@@ -232,7 +231,9 @@ describe("Community open sign-up (e2e)", () => {
       await openSignup(memberRoleId);
       const { userId, token } = await outsiderToken();
       const db = testApp.getDb();
-      const elder = await db.role.create({ data: { name: "Elder", communityId } });
+      const elder = await db.role.create({
+        data: { name: "Elder", communityId },
+      });
       await testApp.createTestCommunityMember(userId, elder.id);
 
       const response = await testApp.authenticatedGraphqlRequest(

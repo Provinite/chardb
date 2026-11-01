@@ -484,6 +484,11 @@ type Community {
   name: String!
 
   """
+  The role anyone may join with, without an invite code. Null when joining takes an invite.
+  """
+  openSignupRoleId: ID
+
+  """
   The community's subdomain label -- `cloverse` in `cloverse.chardb.cc`. Chosen at creation and never changed.
   """
   slug: String!
@@ -2988,6 +2993,9 @@ type Mutation {
   """
   grantItem(input: GrantItemInput!): [Item!]!
 
+  """Join a community that has open sign-up"""
+  joinCommunity(communityId: ID!): CommunityMember!
+
   """
   Remove a character from its species, flattening its trait values into custom fields. Requires CanEditCharacterRegistry permission.
   """
@@ -3215,6 +3223,11 @@ type Mutation {
   Turn the Halloween event's pages on or off for a community (site admins)
   """
   setCommunityHalloweenEnabled(communityId: ID!, enabled: Boolean!): Community!
+
+  """
+  Let anyone join the community with a role, without an invite code. A null role closes sign-up.
+  """
+  setCommunityOpenSignup(communityId: ID!, roleId: ID): Community!
 
   """
   Set the picture or tile behind the candies on one of your boards, by its slug, and how it is dimmed and tinted; a null slug goes back to none chosen, and null effects to neither.
@@ -4764,9 +4777,10 @@ enum ShopPurchaseLineStatus {
 }
 
 input SignupInput {
+  communityId: ID
   displayName: String
   email: String!
-  inviteCode: String!
+  inviteCode: String
   password: String!
   username: String!
 }
