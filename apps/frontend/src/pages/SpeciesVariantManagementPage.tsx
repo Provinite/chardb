@@ -23,6 +23,7 @@ import {
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
 import { ColorPip } from "../components/colors";
+import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
 
 /**
  * Species Variant Management Interface
@@ -200,6 +201,7 @@ export const SpeciesVariantManagementPage: React.FC = () => {
 
   const { speciesId } = useParams<{ speciesId: string }>();
   const navigate = useNavigate();
+  const canEdit = useCanEditSpecies();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // GraphQL operations
@@ -341,12 +343,14 @@ export const SpeciesVariantManagementPage: React.FC = () => {
           >
             Manage Traits
           </Button>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            icon={<Plus size={16} />}
-          >
-            Add Variant
-          </Button>
+          {canEdit && (
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              icon={<Plus size={16} />}
+            >
+              Add Variant
+            </Button>
+          )}
         </HeaderRight>
       </Header>
 
@@ -359,12 +363,14 @@ export const SpeciesVariantManagementPage: React.FC = () => {
             unique trait configurations. For example: Common/Rare variants,
             Adult/Juvenile forms, or different color patterns.
           </p>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            icon={<Plus size={16} />}
-          >
-            Create Your First Variant
-          </Button>
+          {canEdit && (
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              icon={<Plus size={16} />}
+            >
+              Create Your First Variant
+            </Button>
+          )}
         </EmptyState>
       ) : (
         <Grid>
@@ -404,14 +410,16 @@ export const SpeciesVariantManagementPage: React.FC = () => {
                 >
                   Manage
                 </ActionButton>
-                <ActionButton
-                  tone="danger"
-                  size="sm"
-                  onClick={() => handleDeleteVariant(variant)}
-                  icon={<Trash2 size={14} />}
-                >
-                  Delete
-                </ActionButton>
+                {canEdit && (
+                  <ActionButton
+                    tone="danger"
+                    size="sm"
+                    onClick={() => handleDeleteVariant(variant)}
+                    icon={<Trash2 size={14} />}
+                  >
+                    Delete
+                  </ActionButton>
+                )}
               </CardActions>
             </Card>
           ))}

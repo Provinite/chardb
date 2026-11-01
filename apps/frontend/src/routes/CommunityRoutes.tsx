@@ -1,5 +1,7 @@
 import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { ProtectedRoute } from "../components/ProtectedRoute";
+import { SpeciesAdminRoute } from "../components/SpeciesAdminRoute";
+import { SpeciesScopeRoute } from "../components/SpeciesScopeRoute";
 
 import { ApexRedirect } from "./ApexRedirect";
 import {
@@ -181,7 +183,6 @@ export const communityRoutes = (
     />
 
     {/* --- species, traits and variants */}
-    <Route path="/species/:speciesId" element={<SpeciesPage />} />
     <Route
       path="/species"
       element={
@@ -190,54 +191,40 @@ export const communityRoutes = (
         </ProtectedRoute>
       }
     />
-    <Route
-      path="/species/:speciesId/edit"
-      element={
-        <ProtectedRoute>
-          <EditSpeciesPage />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/species/:speciesId/traits"
-      element={
-        <ProtectedRoute>
-          <TraitBuilderPage />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/species/:speciesId/variants"
-      element={
-        <ProtectedRoute>
-          <SpeciesVariantManagementPage />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/traits/:traitId/enum-values"
-      element={
-        <ProtectedRoute>
-          <EnumValueManagementPage />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/variants/:variantId/manage"
-      element={
-        <ProtectedRoute>
-          <VariantDetailPage />
-        </ProtectedRoute>
-      }
-    />
-    <Route
-      path="/variants/:variantId/enum-settings"
-      element={
-        <ProtectedRoute>
-          <EnumValueSettingsPage />
-        </ProtectedRoute>
-      }
-    />
+    {/* A species on another community's host is not found. */}
+    <Route element={<SpeciesScopeRoute />}>
+      <Route path="/species/:speciesId" element={<SpeciesPage />} />
+      {/* Staff tooling: refused to anyone without species permissions. */}
+      <Route
+        element={
+          <ProtectedRoute>
+            <SpeciesAdminRoute />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/species/:speciesId/edit" element={<EditSpeciesPage />} />
+        <Route
+          path="/species/:speciesId/traits"
+          element={<TraitBuilderPage />}
+        />
+        <Route
+          path="/species/:speciesId/variants"
+          element={<SpeciesVariantManagementPage />}
+        />
+        <Route
+          path="/traits/:traitId/enum-values"
+          element={<EnumValueManagementPage />}
+        />
+        <Route
+          path="/variants/:variantId/manage"
+          element={<VariantDetailPage />}
+        />
+        <Route
+          path="/variants/:variantId/enum-settings"
+          element={<EnumValueSettingsPage />}
+        />
+      </Route>
+    </Route>
 
     {/* --- items. `/items/ledger` outranks `/items/:itemId` by React Router's
         static-beats-dynamic ordering, so a literal "ledger" is never read as

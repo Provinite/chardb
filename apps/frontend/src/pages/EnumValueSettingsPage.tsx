@@ -11,6 +11,7 @@ import {
   TraitValueType,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
+import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
 
 /**
  * Enum Value Settings Management Interface
@@ -221,6 +222,7 @@ export const EnumValueSettingsPage: React.FC = () => {
 
   const { variantId } = useParams<{ variantId: string }>();
   const navigate = useNavigate();
+  const canEdit = useCanEditSpecies();
 
   const { data, loading, error, refetch } =
     useSpeciesVariantWithEnumValueSettingsQuery({
@@ -435,6 +437,7 @@ export const EnumValueSettingsPage: React.FC = () => {
                           )
                         }
                         icon={isEnabled ? <Check size={14} /> : <X size={14} />}
+                        disabled={!canEdit}
                       >
                         {isEnabled ? "Enabled" : "Disabled"}
                       </ToggleButton>

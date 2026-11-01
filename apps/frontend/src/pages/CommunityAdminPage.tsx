@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Title, Subtitle, Card } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { AccessDenied } from "../components/AccessDenied";
 import { useCommunityMembersByUserQuery } from "../generated/graphql";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -200,15 +201,10 @@ export const CommunityAdminPage: React.FC = () => {
 
   if (!userMembership) {
     return (
-      <Container>
-        <ErrorContainer>
-          <Title>Access Denied</Title>
-          <Subtitle>
-            You are not a member of this community or don't have administrative
-            permissions.
-          </Subtitle>
-        </ErrorContainer>
-      </Container>
+      <AccessDenied>
+        You are not a member of this community or don't have administrative
+        permissions.
+      </AccessDenied>
     );
   }
 

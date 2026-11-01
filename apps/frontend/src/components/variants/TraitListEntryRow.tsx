@@ -51,7 +51,11 @@ interface TraitListEntryRowProps {
     isEnabled: boolean,
     settingId?: string,
   ) => Promise<void>;
-  disabled?: boolean;
+  /**
+   * For a viewer who cannot edit species: no drag handle, Remove or Save, and
+   * the inputs and option toggles disabled so they still show their values.
+   */
+  readOnly?: boolean;
 }
 
 export interface EntryUpdates {
@@ -220,7 +224,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
   onUpdate,
   enumValueSettings = [],
   onToggleEnumValue,
-  disabled = false,
+  readOnly = false,
 }) => {
   const {
     attributes,
@@ -229,7 +233,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: entry.id });
+  } = useSortable({ id: entry.id, disabled: readOnly });
 
   const [localRequired, setLocalRequired] = useState(entry.required);
   const [localDefaults, setLocalDefaults] = useState<DefaultValueState>({
@@ -292,9 +296,11 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
       {...attributes}
     >
       <RowHeader>
-        <DragHandle {...listeners}>
-          <GripVertical size={20} />
-        </DragHandle>
+        {!readOnly && (
+          <DragHandle {...listeners}>
+            <GripVertical size={20} />
+          </DragHandle>
+        )}
 
         <OrderInput
           type="text"
@@ -316,15 +322,16 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
           {isExpanded ? "Collapse" : "Expand"}
         </Button>
 
-        <Button
-          tone="danger"
-          size="sm"
-          onClick={onRemove}
-          disabled={disabled}
-          icon={<Trash2 size={14} />}
-        >
-          Remove
-        </Button>
+        {!readOnly && (
+          <Button
+            tone="danger"
+            size="sm"
+            onClick={onRemove}
+            icon={<Trash2 size={14} />}
+          >
+            Remove
+          </Button>
+        )}
       </RowHeader>
 
       {isExpanded && (
@@ -335,7 +342,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
                 type="checkbox"
                 checked={localRequired}
                 onChange={(e) => setLocalRequired(e.target.checked)}
-                disabled={disabled}
+                disabled={readOnly}
               />
               <span>Required Trait</span>
             </RequiredToggle>
@@ -347,7 +354,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
               defaultValueTimestamp={localDefaults.defaultValueTimestamp}
               enumValues={sortedEnumValues}
               onChange={setLocalDefaults}
-              disabled={disabled}
+              disabled={readOnly}
             />
 
             {entry.valueType === TraitValueType.Enum &&
@@ -380,7 +387,7 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
                                   settingId,
                                 )
                               }
-                              disabled={disabled}
+                              disabled={readOnly}
                               aria-label={`${isEnabled ? "Disable" : "Enable"} ${enumValue.name}`}
                             >
                               {isEnabled ? (
@@ -398,27 +405,29 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
               )}
           </ConfigSection>
 
-          <Actions>
-            {hasChanges && (
+          {!readOnly && (
+            <Actions>
+              {hasChanges && (
+                <Button
+                  tone="secondary"
+                  size="sm"
+                  onClick={handleReset}
+                  disabled={isSaving}
+                >
+                  Reset
+                </Button>
+              )}
               <Button
-                tone="secondary"
+                tone="primary"
                 size="sm"
-                onClick={handleReset}
-                disabled={disabled || isSaving}
+                onClick={handleSave}
+                disabled={!hasChanges || isSaving}
+                icon={<Save size={14} />}
               >
-                Reset
+                {isSaving ? "Saving..." : "Save Configuration"}
               </Button>
-            )}
-            <Button
-              tone="primary"
-              size="sm"
-              onClick={handleSave}
-              disabled={disabled || !hasChanges || isSaving}
-              icon={<Save size={14} />}
-            >
-              {isSaving ? "Saving..." : "Save Configuration"}
-            </Button>
-          </Actions>
+            </Actions>
+          )}
         </ExpandableContent>
       )}
     </RowContainer>

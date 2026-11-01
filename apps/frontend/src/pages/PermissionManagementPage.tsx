@@ -6,6 +6,7 @@ import { Button, Heading2, SmallText, HelpText } from "@chardb/ui";
 import { PermissionMatrix } from "../components/admin/PermissionMatrix";
 import { RoleEditor } from "../components/admin/RoleEditor";
 import { RoleManagementTab } from "../components/admin/RoleManagementTab";
+import { AccessDenied } from "../components/AccessDenied";
 import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
   useRolesByCommunityDetailedQuery,
@@ -180,13 +181,9 @@ export const PermissionManagementPage: React.FC = () => {
 
   if (rolesError) {
     return (
-      <ErrorContainer>
-        <Shield size={48} />
-        <Heading2>Access Denied</Heading2>
-        <HelpText>
-          You don't have permission to manage roles in this community.
-        </HelpText>
-      </ErrorContainer>
+      <AccessDenied>
+        You don't have permission to manage roles in this community.
+      </AccessDenied>
     );
   }
 

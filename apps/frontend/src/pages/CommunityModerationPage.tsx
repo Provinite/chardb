@@ -5,6 +5,7 @@ import { Link } from "react-router-dom";
 import { Image, ClipboardCheck } from "lucide-react";
 import { Title, Subtitle, Card } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { AccessDenied } from "../components/AccessDenied";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
@@ -124,15 +125,6 @@ const LoadingContainer = styled.div`
   padding: 4rem;
 `;
 
-const MessageContainer = styled.div`
-  text-align: center;
-  padding: 4rem 2rem;
-`;
-
-const ErrorContainer = styled(MessageContainer)`
-  color: ${({ theme }) => theme.colors.error};
-`;
-
 export const CommunityModerationPage: React.FC = () => {
   usePageMeta({ title: "Content Moderation" });
 
@@ -185,14 +177,9 @@ export const CommunityModerationPage: React.FC = () => {
   // on the cards that link in.
   if (!canModerateImages && !canReviewTraits) {
     return (
-      <Container>
-        <ErrorContainer>
-          <Title>Access Denied</Title>
-          <Subtitle>
-            You don't have permission to moderate content in this community.
-          </Subtitle>
-        </ErrorContainer>
-      </Container>
+      <AccessDenied>
+        You don't have permission to moderate content in this community.
+      </AccessDenied>
     );
   }
 

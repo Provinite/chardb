@@ -20,6 +20,7 @@ import {
 } from "@dnd-kit/sortable";
 import { Button, Input, ErrorMessage } from "@chardb/ui";
 import { ColorSelector } from "../components/colors";
+import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
 import {
   useSpeciesVariantByIdQuery,
   useTraitListEntriesByVariantQuery,
@@ -192,6 +193,7 @@ export const VariantDetailPage: React.FC = () => {
 
   const { variantId } = useParams<{ variantId: string }>();
   const navigate = useNavigate();
+  const canEdit = useCanEditSpecies();
 
   // State
   const [variantName, setVariantName] = useState("");
@@ -545,6 +547,7 @@ export const VariantDetailPage: React.FC = () => {
               value={variantName}
               onChange={(e) => setVariantName(e.target.value)}
               placeholder="Variant name..."
+              disabled={!canEdit}
             />
           </HeaderLeft>
 
@@ -582,6 +585,7 @@ export const VariantDetailPage: React.FC = () => {
             onChange={setVariantColorId}
             label=""
             placeholder="No color"
+            disabled={!canEdit}
           />
         </ColorRow>
 
@@ -593,6 +597,7 @@ export const VariantDetailPage: React.FC = () => {
             max={MAX_FORMS_CEILING}
             value={maxForms}
             data-testid="variant-max-forms"
+            disabled={!canEdit}
             onChange={(e) =>
               setMaxForms(
                 Math.min(
@@ -633,7 +638,9 @@ export const VariantDetailPage: React.FC = () => {
         {entries.length === 0 ? (
           <EmptyState>
             <p>No traits have been added to this variant yet.</p>
-            <p>Use the "Available Traits" section below to add traits.</p>
+            {canEdit && (
+              <p>Use the "Available Traits" section below to add traits.</p>
+            )}
           </EmptyState>
         ) : (
           <DndContext
@@ -659,6 +666,7 @@ export const VariantDetailPage: React.FC = () => {
                       []
                     }
                     onToggleEnumValue={handleToggleEnumValue}
+                    readOnly={!canEdit}
                   />
                 ))}
               </TraitList>
@@ -667,40 +675,44 @@ export const VariantDetailPage: React.FC = () => {
         )}
       </Section>
 
-      <Section>
-        <CollapsibleHeader
-          onClick={() => setIsInactiveTraitsExpanded(!isInactiveTraitsExpanded)}
-        >
-          <SectionTitle>
-            Available Traits ({inactiveTraits.length})
-          </SectionTitle>
-          {isInactiveTraitsExpanded ? (
-            <ChevronUp size={20} />
-          ) : (
-            <ChevronDown size={20} />
-          )}
-        </CollapsibleHeader>
-
-        {isInactiveTraitsExpanded && (
-          <>
-            {inactiveTraits.length === 0 ? (
-              <EmptyState style={{ marginTop: "1rem" }}>
-                All species traits have been added to this variant.
-              </EmptyState>
+      {canEdit && (
+        <Section>
+          <CollapsibleHeader
+            onClick={() =>
+              setIsInactiveTraitsExpanded(!isInactiveTraitsExpanded)
+            }
+          >
+            <SectionTitle>
+              Available Traits ({inactiveTraits.length})
+            </SectionTitle>
+            {isInactiveTraitsExpanded ? (
+              <ChevronUp size={20} />
             ) : (
-              <TraitList style={{ marginTop: "1rem" }}>
-                {inactiveTraits.map((trait) => (
-                  <InactiveTraitCard
-                    key={trait.id}
-                    trait={trait}
-                    onAdd={handleAddTrait}
-                  />
-                ))}
-              </TraitList>
+              <ChevronDown size={20} />
             )}
-          </>
-        )}
-      </Section>
+          </CollapsibleHeader>
+
+          {isInactiveTraitsExpanded && (
+            <>
+              {inactiveTraits.length === 0 ? (
+                <EmptyState style={{ marginTop: "1rem" }}>
+                  All species traits have been added to this variant.
+                </EmptyState>
+              ) : (
+                <TraitList style={{ marginTop: "1rem" }}>
+                  {inactiveTraits.map((trait) => (
+                    <InactiveTraitCard
+                      key={trait.id}
+                      trait={trait}
+                      onAdd={handleAddTrait}
+                    />
+                  ))}
+                </TraitList>
+              )}
+            </>
+          )}
+        </Section>
+      )}
     </Container>
   );
 };
