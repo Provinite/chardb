@@ -1,32 +1,10 @@
 import React, { useState } from "react";
-import styled from "styled-components";
 import { toast } from "react-hot-toast";
 import { Button } from "@chardb/ui";
 
 import { useResendVerificationEmailMutation } from "../../graphql/email-verification.graphql";
 import { isRateLimited } from "../../lib/rateLimit";
-
-const Panel = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.sm};
-  background: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-left: 4px solid ${({ theme }) => theme.colors.primary};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  padding: ${({ theme }) => theme.spacing.md};
-  margin-bottom: ${({ theme }) => theme.spacing.lg};
-`;
-
-const Heading = styled.strong`
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Body = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-`;
+import * as styles from "./ResendVerification.css";
 
 interface ResendVerificationProps {
   /** The address to send to. Shown back to the reader so a typo is visible. */
@@ -71,12 +49,12 @@ export const ResendVerification: React.FC<ResendVerificationProps> = ({
   };
 
   return (
-    <Panel>
-      <Heading>{heading}</Heading>
-      <Body>{children}</Body>
-      <Body>
+    <div className={styles.panel}>
+      <strong className={styles.heading}>{heading}</strong>
+      <p className={styles.body}>{children}</p>
+      <p className={styles.body}>
         We sent it to <strong>{email}</strong>.
-      </Body>
+      </p>
       <Button
         type="button"
         // Outline, not secondary: secondary renders green, which reads as a
@@ -88,6 +66,6 @@ export const ResendVerification: React.FC<ResendVerificationProps> = ({
       >
         {sentOnce ? "Send it again" : "Resend the link"}
       </Button>
-    </Panel>
+    </div>
   );
 };

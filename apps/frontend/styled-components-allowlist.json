@@ -38,7 +38,6 @@
   "apps/frontend/src/components/admin/RoleEditor.tsx",
   "apps/frontend/src/components/admin/RoleManagementTab.tsx",
   "apps/frontend/src/components/admin/RoleTemplateManager.tsx",
-  "apps/frontend/src/components/auth/ResendVerification.tsx",
   "apps/frontend/src/components/character-folders/CharacterFolderBrowser.tsx",
   "apps/frontend/src/components/character-folders/CharacterFoldersSection.tsx",
   "apps/frontend/src/components/character-folders/FolderPickerModal.tsx",
