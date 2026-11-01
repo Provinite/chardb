@@ -35,6 +35,7 @@ import {
   CommunityHalloweenAdminPage,
   CommunityCandyBoardPage,
   CommunityCandySwapPage,
+  CommunityHalloweenPrizesPage,
   CommunityCandyBoardsPage,
   CommunityColorPalettePage,
   CommunityInventoryPage,
@@ -134,6 +135,11 @@ export const communityRoutes = (
           <CommunityCandySwapPage />
         </ProtectedRoute>
       }
+    />
+    {/* The prize list is public: `/prize list` on Discord links here. */}
+    <Route
+      path="/halloween/prizes"
+      element={<CommunityHalloweenPrizesPage />}
     />
 
     {/* --- characters. A character reaches its community through its species,

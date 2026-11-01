@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Halloween prize list** (`/halloween/prizes`), open to anyone: every prize with how many are left, and the latest wins; linked from the sidebar's Halloween section and from `/prize list`.
+
 ## [v15.2.0] - 2026-11-01
 
 ### Added

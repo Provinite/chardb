@@ -207,6 +207,10 @@ export const CommunityCandySwapPage = lazyPage(
   () => import("../pages/CommunityCandySwapPage"),
   "CommunityCandySwapPage",
 );
+export const CommunityHalloweenPrizesPage = lazyPage(
+  () => import("../pages/CommunityHalloweenPrizesPage"),
+  "CommunityHalloweenPrizesPage",
+);
 export const CommunityMembersPage = lazyPage(
   () => import("../pages/CommunityMembersPage"),
   "CommunityMembersPage",
