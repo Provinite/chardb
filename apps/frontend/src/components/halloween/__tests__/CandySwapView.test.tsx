@@ -68,8 +68,17 @@ describe("CandySwapView", () => {
 
       const offers = section("Offers you can take");
       const card = within(offers).getByRole("listitem");
-      expect(within(card).getByText("luther head")).toBeInTheDocument();
-      expect(within(card).getByText("berry tart")).toBeInTheDocument();
+      expect(
+        within(card).getByRole("img", { name: "luther head" }),
+      ).toBeInTheDocument();
+      expect(
+        within(card).getByRole("img", { name: "berry tart" }),
+      ).toBeInTheDocument();
+      expect(
+        within(card).getByRole("img", { name: "banana" }),
+      ).toBeInTheDocument();
+      // Pictures only: the names are for screen readers.
+      expect(within(card).queryByText("luther head")).toBeNull();
 
       await userEvent.click(
         within(card).getByRole("button", { name: "Trade your banana" }),

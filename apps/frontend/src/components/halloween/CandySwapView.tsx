@@ -53,21 +53,14 @@ const Candy = ({ slug, small }: { slug: string; small?: boolean }) => (
   />
 );
 
-const NamedCandy = ({ slug }: { slug: string }) => (
-  <span className={styles.namedCandy}>
-    <img className={styles.candy} src={candyImageUrl(slug)} alt="" />
-    {candyName(slug)}
-  </span>
-);
-
 /** What an offer gives, and what it asks for. */
 const OfferTerms = ({ offer }: { offer: SwapOffer }) => (
   <Cluster gap="sm">
     {offer.candies.map((c) => (
-      <NamedCandy key={c.id} slug={c.slug} />
+      <Candy key={c.id} slug={c.slug} />
     ))}
     <ArrowRight aria-label="for" />
-    <NamedCandy slug={offer.wantSlug} />
+    <Candy slug={offer.wantSlug} />
   </Cluster>
 );
 

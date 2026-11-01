@@ -18,7 +18,7 @@ test.describe("the candy swap", () => {
     page,
   }) => {
     const offers = page.getByRole("region", { name: "Offers you can take" });
-    await expect(offers.getByText("berry tart")).toBeVisible();
+    await expect(offers.getByRole("img", { name: "berry tart" })).toBeVisible();
     // Whose it is shows only once it is traded.
     await expect(offers.getByText("alice")).toHaveCount(0);
 

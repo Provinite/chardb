@@ -60,17 +60,6 @@ export const candy = style({
   objectFit: "contain",
 });
 
-/** A candy with its name under it, in an offer. */
-export const namedCandy = style({
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: vars.space.xs,
-  fontSize: vars.font.size.sm,
-  color: vars.text.default,
-  textAlign: "center",
-});
-
 export const label = style({
   margin: 0,
   fontSize: vars.font.size.sm,
