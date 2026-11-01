@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Prod backend runs two 0.5 vCPU / 1 GB tasks**, pinned by an auto-scaling target, for the Halloween event's knock bursts.
+
 ## [v15.1.0] - 2026-11-01
 
 ### Added

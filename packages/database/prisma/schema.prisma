@@ -2414,6 +2414,8 @@ model HalloweenKnockEvent {
   candy       HalloweenCandy?
 
   @@index([guildId, userId, time])
+  // The dashboard's last-24-hours and reset-day counts.
+  @@index([guildId, time])
   @@map("halloween_knock_events")
 }
 
@@ -2431,6 +2433,10 @@ model HalloweenGifty {
 
   @@index([guildId, toUserId])
   @@index([guildId, fromUserId])
+  // Every knock counts the day's knocks no gifty paid for.
+  @@index([knockEventId])
+  // The dashboard's last-24-hours and reset-day counts.
+  @@index([guildId, time])
   @@map("halloween_gifties")
 }
 

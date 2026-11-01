@@ -43,6 +43,7 @@ import { EventStatus } from "../time";
 import { HalloweenLinks } from "../halloween-links";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { requireChatInput } from "./command-helpers";
+import { knockWins, prizeDrawWeight } from "@chardb/shared";
 
 /** A knock as committed. Its reply is built after, outside the transaction. */
 interface Spent {
@@ -146,9 +147,8 @@ export class KnockCommand implements HalloweenCommandHandler {
     }
 
     const roll = this.random.unit();
-    // The roll is in [0, 1): this wins exactly winRate of the time. The bot's
-    // `<=` could win at a rate of 0.
-    const win = roll < settings.winRate;
+    // The bot's `<=` could win at a rate of 0.
+    const win = knockWins(roll, settings.winRate);
     this.logger.log({
       event: HalloweenLogEvent.KnockRolled,
       message: "Knock rolled",
@@ -378,10 +378,7 @@ export class KnockCommand implements HalloweenCommandHandler {
     if (!pool.length) {
       throw new OutOfPrizesError({ thrownFrom: "KnockCommand.win", guildId });
     }
-    const pick = this.random.weighted(
-      pool,
-      pool.map((p) => p.currentStock * p.weight),
-    );
+    const pick = this.random.weighted(pool, pool.map(prizeDrawWeight));
     // Before taking it, so a misconfigured prize is never used up.
     await this.prizeAward.validate(pick, guildId, tx);
     const prize = await this.prizes.decrement(pick.id, guildId, tx);
