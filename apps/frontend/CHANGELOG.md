@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Open sign-up**: Communities can let anyone join as a chosen role without an invite code, set from the Invite Codes page.
 - **Candy board download options**: Download opens a dialog to leave out the background (transparent PNG) or the candies' shadows.
 
 ## [v15.2.0] - 2026-11-01

@@ -21,8 +21,15 @@ import {
   type CreateInviteCodeInput,
 } from "../graphql/inviteCodes.graphql";
 import { useMeQuery } from "../graphql/auth.graphql";
-import { useCommunityId } from "../contexts/CommunityHostContext";
+import {
+  useCommunityId,
+  useHostCommunity,
+} from "../contexts/CommunityHostContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
+import { OpenSignupSetting } from "../components/community/OpenSignupSetting";
+import { useSetCommunityOpenSignupMutation } from "../generated/graphql";
+import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
+import { toast } from "react-hot-toast";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -517,6 +524,31 @@ export function CommunityInviteCodesPage() {
   const [updateInviteCode] = useUpdateInviteCodeMutation();
   const [removeInviteCode] = useRemoveInviteCodeMutation();
 
+  const hostCommunity = useHostCommunity();
+  const { permissions } = useUserCommunityRole(communityId ?? undefined);
+  const canSetOpenSignup =
+    Boolean(userData?.me?.isAdmin) || permissions.canCreateInviteCode;
+  const [setOpenSignup, { loading: savingOpenSignup }] =
+    useSetCommunityOpenSignupMutation();
+  const changeOpenSignup = async (roleId: string | null) => {
+    if (!communityId) return;
+    try {
+      await setOpenSignup({ variables: { communityId, roleId } });
+      const role = rolesData?.rolesByCommunity?.nodes.find(
+        (r) => r.id === roleId,
+      );
+      toast.success(
+        role
+          ? `Anyone can now join as ${role.name}`
+          : "Joining now takes an invite code",
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not change who can join",
+      );
+    }
+  };
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [editingCode, setEditingCode] = useState<
     InviteCodesQuery["inviteCodes"]["nodes"][0] | null
@@ -641,6 +673,13 @@ export function CommunityInviteCodesPage() {
           Create Invite Code
         </CreateButton>
       </Header>
+
+      <OpenSignupSetting
+        roles={roles}
+        roleId={hostCommunity?.openSignupRoleId ?? null}
+        disabled={!canSetOpenSignup || savingOpenSignup}
+        onChange={(roleId) => void changeOpenSignup(roleId)}
+      />
 
       {inviteCodes.length > 0 ? (
         <InviteCodesGrid>

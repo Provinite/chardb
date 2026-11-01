@@ -65,6 +65,7 @@ export const COMMUNITY_BY_SLUG_QUERY = gql`
       discordGuildId
       discordGuildName
       halloweenEnabled
+      openSignupRoleId
       memberCount
       createdAt
       updatedAt
@@ -145,6 +146,23 @@ export const SET_COMMUNITY_HALLOWEEN_ENABLED_MUTATION = gql`
     setCommunityHalloweenEnabled(communityId: $communityId, enabled: $enabled) {
       id
       halloweenEnabled
+    }
+  }
+`;
+
+export const SET_COMMUNITY_OPEN_SIGNUP_MUTATION = gql`
+  mutation SetCommunityOpenSignup($communityId: ID!, $roleId: ID) {
+    setCommunityOpenSignup(communityId: $communityId, roleId: $roleId) {
+      id
+      openSignupRoleId
+    }
+  }
+`;
+
+export const JOIN_COMMUNITY_MUTATION = gql`
+  mutation JoinCommunity($communityId: ID!) {
+    joinCommunity(communityId: $communityId) {
+      id
     }
   }
 `;

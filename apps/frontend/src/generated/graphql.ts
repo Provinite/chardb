@@ -415,6 +415,8 @@ export type Community = {
   members: Array<User>;
   /** Name of the community */
   name: Scalars['String']['output'];
+  /** The role anyone may join with, without an invite code. Null when joining takes an invite. */
+  openSignupRoleId: Maybe<Scalars['ID']['output']>;
   /** The community's subdomain label -- `cloverse` in `cloverse.chardb.cc`. Chosen at creation and never changed. */
   slug: Scalars['String']['output'];
   /** When the community was last updated */
@@ -2315,6 +2317,8 @@ export type Mutation = {
   giveCharacterToCommunity: Scalars['Boolean']['output'];
   /** Grant items to a user. Returns one Item per unit granted -- there is no stacking, so a quantity of 3 creates three items. */
   grantItem: Array<Item>;
+  /** Join a community that has open sign-up */
+  joinCommunity: CommunityMember;
   /** Remove a character from its species, flattening its trait values into custom fields. Requires CanEditCharacterRegistry permission. */
   kickCharacterFromSpecies: Scalars['Boolean']['output'];
   /** Link a Discord guild to a community */
@@ -2393,6 +2397,8 @@ export type Mutation = {
   setCharacterMainMedia: Character;
   /** Turn the Halloween event's pages on or off for a community (site admins) */
   setCommunityHalloweenEnabled: Community;
+  /** Let anyone join the community with a role, without an invite code. A null role closes sign-up. */
+  setCommunityOpenSignup: Community;
   /** Set the picture or tile behind the candies on one of your boards, by its slug, and how it is dimmed and tinted; a null slug goes back to none chosen, and null effects to neither. */
   setHalloweenCandyBoardBackground: HalloweenCandyBoard;
   /** Put the light that casts the shadows on one of your boards; null goes back to the board's default light. */
@@ -2762,6 +2768,11 @@ export type MutationGrantItemArgs = {
 };
 
 
+export type MutationJoinCommunityArgs = {
+  communityId: Scalars['ID']['input'];
+};
+
+
 export type MutationKickCharacterFromSpeciesArgs = {
   id: Scalars['ID']['input'];
 };
@@ -2958,6 +2969,12 @@ export type MutationSetCharacterMainMediaArgs = {
 export type MutationSetCommunityHalloweenEnabledArgs = {
   communityId: Scalars['ID']['input'];
   enabled: Scalars['Boolean']['input'];
+};
+
+
+export type MutationSetCommunityOpenSignupArgs = {
+  communityId: Scalars['ID']['input'];
+  roleId?: InputMaybe<Scalars['ID']['input']>;
 };
 
 
@@ -4622,9 +4639,10 @@ export enum ShopPurchaseLineStatus {
 }
 
 export type SignupInput = {
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   displayName?: InputMaybe<Scalars['String']['input']>;
   email: Scalars['String']['input'];
-  inviteCode: Scalars['String']['input'];
+  inviteCode?: InputMaybe<Scalars['String']['input']>;
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };
@@ -5783,7 +5801,7 @@ export type CommunityBySlugQueryVariables = Exact<{
 }>;
 
 
-export type CommunityBySlugQuery = { __typename?: 'Query', communityBySlug: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null, halloweenEnabled: boolean, memberCount: number, createdAt: string, updatedAt: string } | null };
+export type CommunityBySlugQuery = { __typename?: 'Query', communityBySlug: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null, halloweenEnabled: boolean, openSignupRoleId: string | null, memberCount: number, createdAt: string, updatedAt: string } | null };
 
 export type GetCommunityMembersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5836,6 +5854,21 @@ export type SetCommunityHalloweenEnabledMutationVariables = Exact<{
 
 
 export type SetCommunityHalloweenEnabledMutation = { __typename?: 'Mutation', setCommunityHalloweenEnabled: { __typename?: 'Community', id: string, halloweenEnabled: boolean } };
+
+export type SetCommunityOpenSignupMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  roleId?: InputMaybe<Scalars['ID']['input']>;
+}>;
+
+
+export type SetCommunityOpenSignupMutation = { __typename?: 'Mutation', setCommunityOpenSignup: { __typename?: 'Community', id: string, openSignupRoleId: string | null } };
+
+export type JoinCommunityMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type JoinCommunityMutation = { __typename?: 'Mutation', joinCommunity: { __typename?: 'CommunityMember', id: string } };
 
 export type LinkDiscordGuildMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -10506,6 +10539,7 @@ export const CommunityBySlugDocument = gql`
     discordGuildId
     discordGuildName
     halloweenEnabled
+    openSignupRoleId
     memberCount
     createdAt
     updatedAt
@@ -10813,6 +10847,74 @@ export function useSetCommunityHalloweenEnabledMutation(baseOptions?: Apollo.Mut
 export type SetCommunityHalloweenEnabledMutationHookResult = ReturnType<typeof useSetCommunityHalloweenEnabledMutation>;
 export type SetCommunityHalloweenEnabledMutationResult = Apollo.MutationResult<SetCommunityHalloweenEnabledMutation>;
 export type SetCommunityHalloweenEnabledMutationOptions = Apollo.BaseMutationOptions<SetCommunityHalloweenEnabledMutation, SetCommunityHalloweenEnabledMutationVariables>;
+export const SetCommunityOpenSignupDocument = gql`
+    mutation SetCommunityOpenSignup($communityId: ID!, $roleId: ID) {
+  setCommunityOpenSignup(communityId: $communityId, roleId: $roleId) {
+    id
+    openSignupRoleId
+  }
+}
+    `;
+export type SetCommunityOpenSignupMutationFn = Apollo.MutationFunction<SetCommunityOpenSignupMutation, SetCommunityOpenSignupMutationVariables>;
+
+/**
+ * __useSetCommunityOpenSignupMutation__
+ *
+ * To run a mutation, you first call `useSetCommunityOpenSignupMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useSetCommunityOpenSignupMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [setCommunityOpenSignupMutation, { data, loading, error }] = useSetCommunityOpenSignupMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      roleId: // value for 'roleId'
+ *   },
+ * });
+ */
+export function useSetCommunityOpenSignupMutation(baseOptions?: Apollo.MutationHookOptions<SetCommunityOpenSignupMutation, SetCommunityOpenSignupMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<SetCommunityOpenSignupMutation, SetCommunityOpenSignupMutationVariables>(SetCommunityOpenSignupDocument, options);
+      }
+export type SetCommunityOpenSignupMutationHookResult = ReturnType<typeof useSetCommunityOpenSignupMutation>;
+export type SetCommunityOpenSignupMutationResult = Apollo.MutationResult<SetCommunityOpenSignupMutation>;
+export type SetCommunityOpenSignupMutationOptions = Apollo.BaseMutationOptions<SetCommunityOpenSignupMutation, SetCommunityOpenSignupMutationVariables>;
+export const JoinCommunityDocument = gql`
+    mutation JoinCommunity($communityId: ID!) {
+  joinCommunity(communityId: $communityId) {
+    id
+  }
+}
+    `;
+export type JoinCommunityMutationFn = Apollo.MutationFunction<JoinCommunityMutation, JoinCommunityMutationVariables>;
+
+/**
+ * __useJoinCommunityMutation__
+ *
+ * To run a mutation, you first call `useJoinCommunityMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useJoinCommunityMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [joinCommunityMutation, { data, loading, error }] = useJoinCommunityMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useJoinCommunityMutation(baseOptions?: Apollo.MutationHookOptions<JoinCommunityMutation, JoinCommunityMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<JoinCommunityMutation, JoinCommunityMutationVariables>(JoinCommunityDocument, options);
+      }
+export type JoinCommunityMutationHookResult = ReturnType<typeof useJoinCommunityMutation>;
+export type JoinCommunityMutationResult = Apollo.MutationResult<JoinCommunityMutation>;
+export type JoinCommunityMutationOptions = Apollo.BaseMutationOptions<JoinCommunityMutation, JoinCommunityMutationVariables>;
 export const LinkDiscordGuildDocument = gql`
     mutation LinkDiscordGuild($communityId: ID!, $guildId: ID!) {
   linkDiscordGuild(communityId: $communityId, guildId: $guildId) {

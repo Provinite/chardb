@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -8,44 +8,50 @@ import styled from "styled-components";
 import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useInviteCodeByIdQuery } from "../graphql/inviteCodes.graphql";
+import { useCommunityBySlugQuery } from "../generated/graphql";
+import { communityUrl } from "../lib/communityHost";
 import { ResendVerification } from "../components/auth/ResendVerification";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
-const signupSchema = z
-  .object({
-    inviteCode: z
-      .string()
-      .min(1, "Invite code is required")
-      .max(50, "Invite code must be less than 50 characters")
-      .regex(
-        /^[a-zA-Z0-9_-]+$/,
-        "Invite code can only contain letters, numbers, underscores, and hyphens",
-      ),
-    username: z
-      .string()
-      .min(2, "Username must be at least 2 characters")
-      .max(30, "Username must be less than 30 characters")
-      .regex(
-        /^[a-zA-Z0-9_-]+$/,
-        "Username can only contain letters, numbers, underscores, and hyphens",
-      ),
-    email: z.string().email("Please enter a valid email"),
-    password: z
-      .string()
-      .min(8, "Password must be at least 8 characters")
-      .max(100, "Password must be less than 100 characters"),
-    confirmPassword: z.string(),
-    displayName: z
-      .string()
-      .max(100, "Display name must be less than 100 characters")
-      .optional(),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
+const inviteCodeField = z
+  .string()
+  .min(1, "Invite code is required")
+  .max(50, "Invite code must be less than 50 characters")
+  .regex(
+    /^[a-zA-Z0-9_-]+$/,
+    "Invite code can only contain letters, numbers, underscores, and hyphens",
+  );
 
-type SignupForm = z.infer<typeof signupSchema>;
+/** No code is asked for when joining a community with open sign-up. */
+const makeSignupSchema = (codeRequired: boolean) =>
+  z
+    .object({
+      inviteCode: codeRequired ? inviteCodeField : inviteCodeField.optional(),
+      username: z
+        .string()
+        .min(2, "Username must be at least 2 characters")
+        .max(30, "Username must be less than 30 characters")
+        .regex(
+          /^[a-zA-Z0-9_-]+$/,
+          "Username can only contain letters, numbers, underscores, and hyphens",
+        ),
+      email: z.string().email("Please enter a valid email"),
+      password: z
+        .string()
+        .min(8, "Password must be at least 8 characters")
+        .max(100, "Password must be less than 100 characters"),
+      confirmPassword: z.string(),
+      displayName: z
+        .string()
+        .max(100, "Display name must be less than 100 characters")
+        .optional(),
+    })
+    .refine((data) => data.password === data.confirmPassword, {
+      message: "Passwords don't match",
+      path: ["confirmPassword"],
+    });
+
+type SignupForm = z.infer<ReturnType<typeof makeSignupSchema>>;
 
 const Container = styled.div`
   max-width: 400px;
@@ -192,6 +198,24 @@ export const SignupPage: React.FC = () => {
   const { signup, user } = useAuth();
   const navigate = useNavigate();
 
+  // `?community=<slug>`: sent here from a community's page. An invite link
+  // wins over it, so the code it carries is still asked for and used.
+  const inviteParam = searchParams.get("invite");
+  const communitySlug = inviteParam ? null : searchParams.get("community");
+  const { data: communityData, loading: communityLoading } =
+    useCommunityBySlugQuery({
+      variables: { slug: communitySlug ?? "" },
+      skip: !communitySlug,
+    });
+  const openCommunity = communityData?.communityBySlug?.openSignupRoleId
+    ? communityData.communityBySlug
+    : null;
+  // Until the community has loaded, its preview holds the code field's place,
+  // so a community that turns out to be open never shows the field at all.
+  const awaitingCommunity = Boolean(communitySlug) && communityLoading;
+  const askForCode = !openCommunity && !awaitingCommunity;
+
+  const schema = useMemo(() => makeSignupSchema(askForCode), [askForCode]);
   const {
     register,
     handleSubmit,
@@ -199,14 +223,13 @@ export const SignupPage: React.FC = () => {
     setValue,
     formState: { errors },
   } = useForm<SignupForm>({
-    resolver: zodResolver(signupSchema),
+    resolver: zodResolver(schema),
   });
 
   const inviteCode = watch("inviteCode");
 
   // Auto-populate invite code from URL parameter (run once on mount)
   useEffect(() => {
-    const inviteParam = searchParams.get("invite");
     if (inviteParam) {
       setValue("inviteCode", inviteParam);
     }
@@ -214,11 +237,17 @@ export const SignupPage: React.FC = () => {
 
   // Redirect to join community page if already logged in with invite code
   useEffect(() => {
-    const inviteParam = searchParams.get("invite");
     if (user && inviteParam) {
       navigate(`/join-community?invite=${inviteParam}`);
     }
-  }, [user, searchParams, navigate]);
+  }, [user, inviteParam, navigate]);
+
+  // Signed in already: the community's own page has the Join button.
+  useEffect(() => {
+    if (user && communitySlug) {
+      window.location.assign(communityUrl(communitySlug));
+    }
+  }, [user, communitySlug]);
 
   // Query to validate invite code
   const {
@@ -238,7 +267,8 @@ export const SignupPage: React.FC = () => {
         data.email,
         data.password,
         data.displayName,
-        data.inviteCode,
+        askForCode ? data.inviteCode : undefined,
+        askForCode ? undefined : openCommunity?.id,
       );
       if (success) {
         // Not the dashboard: signup no longer produces a session. The account
@@ -318,44 +348,54 @@ export const SignupPage: React.FC = () => {
         <Title>Join CharDB</Title>
 
         <Form onSubmit={handleSubmit(onSubmit)}>
-          <FormGroup>
-            <Label htmlFor="inviteCode">Invite Code *</Label>
-            <Input
-              {...register("inviteCode")}
-              type="text"
-              id="inviteCode"
-              placeholder="Enter your invite code"
-            />
-            {errors.inviteCode && (
-              <ErrorMessage>{errors.inviteCode.message}</ErrorMessage>
-            )}
-            {getInviteCodeValidation()}
-            {inviteCodeData?.inviteCodeById?.role && (
-              <CommunityPreview>
-                <CommunityInfo>
-                  <CommunityName>
-                    {inviteCodeData.inviteCodeById.role.community.name}
-                  </CommunityName>
-                  <RoleInfo>
-                    as {inviteCodeData.inviteCodeById.role.name}
-                  </RoleInfo>
-                </CommunityInfo>
-                <PreviewText>
-                  You'll be joining this community and assigned the{" "}
-                  {inviteCodeData.inviteCodeById.role.name} role.
-                </PreviewText>
-              </CommunityPreview>
-            )}
-            {inviteCodeData?.inviteCodeById &&
-              !inviteCodeData.inviteCodeById.role && (
+          {askForCode ? (
+            <FormGroup>
+              <Label htmlFor="inviteCode">Invite Code *</Label>
+              <Input
+                {...register("inviteCode")}
+                type="text"
+                id="inviteCode"
+                placeholder="Enter your invite code"
+              />
+              {errors.inviteCode && (
+                <ErrorMessage>{errors.inviteCode.message}</ErrorMessage>
+              )}
+              {getInviteCodeValidation()}
+              {inviteCodeData?.inviteCodeById?.role && (
                 <CommunityPreview>
+                  <CommunityInfo>
+                    <CommunityName>
+                      {inviteCodeData.inviteCodeById.role.community.name}
+                    </CommunityName>
+                    <RoleInfo>
+                      as {inviteCodeData.inviteCodeById.role.name}
+                    </RoleInfo>
+                  </CommunityInfo>
                   <PreviewText>
-                    <strong>Site Registration:</strong> This code will give you
-                    access to the platform.
+                    You'll be joining this community and assigned the{" "}
+                    {inviteCodeData.inviteCodeById.role.name} role.
                   </PreviewText>
                 </CommunityPreview>
               )}
-          </FormGroup>
+              {inviteCodeData?.inviteCodeById &&
+                !inviteCodeData.inviteCodeById.role && (
+                  <CommunityPreview>
+                    <PreviewText>
+                      <strong>Site Registration:</strong> This code will give
+                      you access to the platform.
+                    </PreviewText>
+                  </CommunityPreview>
+                )}
+            </FormGroup>
+          ) : (
+            <CommunityPreview aria-busy={awaitingCommunity}>
+              <PreviewText>
+                {openCommunity
+                  ? `You'll be joining ${openCommunity.name}.`
+                  : "Looking up the community…"}
+              </PreviewText>
+            </CommunityPreview>
+          )}
 
           <FormGroup>
             <Label htmlFor="username">Username</Label>
@@ -426,7 +466,11 @@ export const SignupPage: React.FC = () => {
             )}
           </FormGroup>
 
-          <Button type="submit" busy={isLoading} disabled={isLoading}>
+          <Button
+            type="submit"
+            busy={isLoading}
+            disabled={isLoading || awaitingCommunity}
+          >
             {isLoading ? "Creating Account..." : "Create Account"}
           </Button>
         </Form>

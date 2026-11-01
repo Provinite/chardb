@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Open sign-up specs**: `open-signup` preset, plus signing up, joining and turning it on through the UI.
+
 ## [v15.1.0] - 2026-11-01
 
 ### Added
