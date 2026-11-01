@@ -310,7 +310,7 @@ test.describe("staff editing a character's forms", () => {
 
     await page.goto(world.characters.pinefall.url);
     await (
-      await openMenuItem(page, "character-staff-menu", "Remove from Species")
+      await openMenuItem(page, "character-actions-menu", "Remove from Species")
     ).click();
     const dialog = page.getByTestId("remove-from-species-dialog");
     await dialog

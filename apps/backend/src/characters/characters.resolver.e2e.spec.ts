@@ -2,7 +2,7 @@ import { TestApp, CHARACTER_QUERIES } from "../../test/setup-e2e";
 import { CharactersModule } from "./characters.module";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
-import { Visibility } from "@chardb/database";
+import { TraitReviewSource, Visibility } from "@chardb/database";
 
 describe("CharactersResolver (e2e)", () => {
   let testApp: TestApp;
@@ -441,6 +441,40 @@ describe("CharactersResolver (e2e)", () => {
         name: "Updated Name",
       });
     });
+
+    it("records staff leaving a character with no owner as a change to the community", async () => {
+      const db = testApp.getDb();
+      const membership = await db.communityMember.findFirstOrThrow({
+        where: { userId: testUserId },
+      });
+      await db.role.update({
+        where: { id: membership.roleId },
+        data: { canCreateOrphanedCharacter: true },
+      });
+      const createResponse = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        { input: { name: "Orphaned By Staff", speciesId: testSpeciesId } },
+        testToken,
+      );
+      const characterId = createResponse.body.data.createCharacter.id;
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        `mutation updateCharacterProfile($id: ID!, $input: UpdateCharacterProfileInput!) {
+          updateCharacterProfile(id: $id, input: $input) { id }
+        }`,
+        { id: characterId, input: { ownerIdUpdate: { set: null } } },
+        testToken,
+      );
+
+      expect(response.body.errors).toBeUndefined();
+      const changes = await db.characterOwnershipChange.findMany({
+        where: { characterId },
+        orderBy: { createdAt: "asc" },
+      });
+      expect(changes.at(-1)).toEqual(
+        expect.objectContaining({ fromUserId: testUserId, toUserId: null }),
+      );
+    });
   });
 
   describe("kickCharacterFromSpecies", () => {
@@ -525,6 +559,144 @@ describe("CharactersResolver (e2e)", () => {
 
       expect(secondKick.body.errors).toBeDefined();
       expect(secondKick.body.errors[0].message).toContain("Forbidden");
+    });
+  });
+
+  /**
+   * An owner handing a character to its community (#521), so staff can put it
+   * in a prize pool or give it out like any other ownerless character.
+   */
+  describe("giveCharacterToCommunity", () => {
+    const GIVE = `mutation give($id: ID!) { giveCharacterToCommunity(id: $id) }`;
+
+    const createOwned = async (visibility: Visibility = Visibility.PUBLIC) => {
+      const response = await testApp.authenticatedGraphqlRequest(
+        CHARACTER_QUERIES.CREATE_CHARACTER,
+        { input: { name: "Donation", speciesId: testSpeciesId, visibility } },
+        testToken,
+      );
+      return response.body.data.createCharacter.id as string;
+    };
+
+    it("leaves the character with no owner, makes it public, and records the change", async () => {
+      const characterId = await createOwned(Visibility.PRIVATE);
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        GIVE,
+        { id: characterId },
+        testToken,
+      );
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.giveCharacterToCommunity).toBe(true);
+
+      const db = testApp.getDb();
+      const character = await db.character.findUniqueOrThrow({
+        where: { id: characterId },
+      });
+      expect(character.ownerId).toBeNull();
+      expect(character.visibility).toBe(Visibility.PUBLIC);
+
+      const changes = await db.characterOwnershipChange.findMany({
+        where: { characterId },
+        orderBy: { createdAt: "asc" },
+      });
+      expect(changes.at(-1)).toEqual(
+        expect.objectContaining({ fromUserId: testUserId, toUserId: null }),
+      );
+    });
+
+    it("refuses anyone but the owner", async () => {
+      const characterId = await createOwned();
+      const other = await testApp.createTestUser();
+      const otherToken = await testApp.generateTestToken(
+        other.id,
+        other.username,
+      );
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        GIVE,
+        { id: characterId },
+        otherToken,
+      );
+
+      expect(response.body.errors).toBeDefined();
+      const character = await testApp
+        .getDb()
+        .character.findUniqueOrThrow({ where: { id: characterId } });
+      expect(character.ownerId).toBe(testUserId);
+    });
+
+    it("refuses a character with no species, which has no community to go to", async () => {
+      const character = await testApp.getDb().character.create({
+        data: {
+          name: "Speciesless",
+          ownerId: testUserId,
+          creatorId: testUserId,
+        },
+      });
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        GIVE,
+        { id: character.id },
+        testToken,
+      );
+
+      expect(response.body.errors).toBeDefined();
+      const after = await testApp
+        .getDb()
+        .character.findUniqueOrThrow({ where: { id: character.id } });
+      expect(after.ownerId).toBe(testUserId);
+    });
+
+    it.each([TraitReviewSource.MYO, TraitReviewSource.USER_EDIT])(
+      "refuses while a %s redemption awaits review",
+      async (source) => {
+        const characterId = await createOwned();
+        const db = testApp.getDb();
+        await db.traitReview.create({
+          data: {
+            characterId,
+            source,
+            proposedForms: [],
+            previousForms: [],
+          },
+        });
+
+        const response = await testApp.authenticatedGraphqlRequest(
+          GIVE,
+          { id: characterId },
+          testToken,
+        );
+
+        expect(response.body.errors?.[0]?.message).toBe(
+          "This character has a redemption awaiting review, so it cannot be given away until the review is decided",
+        );
+        const after = await db.character.findUniqueOrThrow({
+          where: { id: characterId },
+        });
+        expect(after.ownerId).toBe(testUserId);
+      },
+    );
+
+    it("refuses a deleted character", async () => {
+      const characterId = await createOwned();
+      await testApp.getDb().character.update({
+        where: { id: characterId },
+        data: { deletedAt: new Date() },
+      });
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        GIVE,
+        { id: characterId },
+        testToken,
+      );
+
+      expect(response.body.errors).toBeDefined();
+      const after = await testApp
+        .getDb()
+        .character.findUniqueOrThrow({ where: { id: characterId } });
+      expect(after.ownerId).toBe(testUserId);
     });
   });
 

@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Give-to-community specs**; the character page's `character-staff-menu` test id is now `character-actions-menu`, since owners use it too (#521).
 - **Trait review deep-link specs**: badge to narrowed queue, the empty state after approving, and no link for members (#526).
 
 - **Tooltip and toggletip specs** on the candy board, written against Mantine's Tooltip first (#466).

@@ -550,6 +550,12 @@ export const KICK_CHARACTER_FROM_SPECIES = gql`
   }
 `;
 
+export const GIVE_CHARACTER_TO_COMMUNITY = gql`
+  mutation GiveCharacterToCommunity($id: ID!) {
+    giveCharacterToCommunity(id: $id)
+  }
+`;
+
 export const TRANSFER_CHARACTER = gql`
   mutation TransferCharacter($id: ID!, $input: TransferCharacterInput!) {
     transferCharacter(id: $id, input: $input) {

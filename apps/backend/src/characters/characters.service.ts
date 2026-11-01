@@ -32,6 +32,10 @@ import {
 } from "../character-forms/character-forms.service";
 import { notDeleted } from "../common/utils/prisma-filters";
 import {
+  CharacterNotGivableError,
+  CharacterRedemptionPendingError,
+} from "./characters.errors";
+import {
   availabilityWhere,
   CharacterAvailability,
 } from "./character-availability";
@@ -750,17 +754,14 @@ export class CharactersService {
           data: { ownerId },
         });
 
-        // Create ownership change audit record (only when transferring to a user)
-        // Note: We don't create audit records for orphaning (toUserId null) since the schema requires toUserId
-        if (ownerId !== null) {
-          await this.db.characterOwnershipChange.create({
-            data: {
-              characterId: id,
-              fromUserId: oldOwnerId,
-              toUserId: ownerId,
-            },
-          });
-        }
+        // A null recipient records the character going to its community
+        await this.db.characterOwnershipChange.create({
+          data: {
+            characterId: id,
+            fromUserId: oldOwnerId,
+            toUserId: ownerId,
+          },
+        });
 
         // If setting an actual owner, clear any pending ownership
         if (ownerId !== null) {
@@ -857,8 +858,11 @@ export class CharactersService {
    * Narrow on purpose: a CREATION or IMPORT review has no item behind it and
    * blocks nothing.
    */
-  private async assertNoPendingRedemption(characterId: string) {
-    const pending = await this.db.traitReview.findFirst({
+  private findPendingRedemption(
+    characterId: string,
+    db: Prisma.TransactionClient = this.db,
+  ) {
+    return db.traitReview.findFirst({
       where: {
         characterId,
         status: ModerationStatus.PENDING,
@@ -868,6 +872,10 @@ export class CharactersService {
       },
       select: { source: true },
     });
+  }
+
+  private async assertNoPendingRedemption(characterId: string) {
+    const pending = await this.findPendingRedemption(characterId);
     if (!pending) return;
 
     const what =
@@ -1126,16 +1134,14 @@ export class CharactersService {
           data: { ownerId },
         });
 
-        // Create ownership change audit record (only when transferring to a user)
-        if (ownerId !== null) {
-          await this.db.characterOwnershipChange.create({
-            data: {
-              characterId: id,
-              fromUserId: oldOwnerId,
-              toUserId: ownerId,
-            },
-          });
-        }
+        // A null recipient records the character going to its community
+        await this.db.characterOwnershipChange.create({
+          data: {
+            characterId: id,
+            fromUserId: oldOwnerId,
+            toUserId: ownerId,
+          },
+        });
 
         // If setting an actual owner, clear any pending ownership
         if (ownerId !== null) {
@@ -1702,6 +1708,39 @@ export class CharactersService {
     });
 
     return transferredCharacter;
+  }
+
+  /**
+   * The owner hands the character to the community its species belongs to,
+   * leaving it with no owner (#521). It is made public as well: a private
+   * character is visible only to its owner, so with none it would be visible
+   * to nobody, staff included.
+   *
+   * The ownership check is the update's own condition rather than a read
+   * before it, so a trade settling at the same moment cannot also move it.
+   *
+   * Refused while a redemption is in review: the owner spent an item on it,
+   * and the character should not leave them before the review decides
+   * whether that item comes back.
+   */
+  async giveToCommunity(id: string, ownerId: string): Promise<void> {
+    await this.db.$transaction(async (tx) => {
+      if (await this.findPendingRedemption(id, tx)) {
+        throw new CharacterRedemptionPendingError(id);
+      }
+
+      const { count } = await tx.character.updateMany({
+        where: { id, ownerId, speciesId: { not: null }, ...notDeleted },
+        data: { ownerId: null, visibility: Visibility.PUBLIC },
+      });
+      if (count !== 1) {
+        throw new CharacterNotGivableError(id);
+      }
+
+      await tx.characterOwnershipChange.create({
+        data: { characterId: id, fromUserId: ownerId, toUserId: null },
+      });
+    });
   }
 
   async addTags(characterId: string, userId: string, tagNames: string[]) {

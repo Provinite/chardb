@@ -3,7 +3,8 @@ import { User } from "../../users/entities/user.entity";
 import { Character } from "../../characters/entities/character.entity";
 
 @ObjectType({
-  description: "A record of character ownership transfer between users",
+  description:
+    "A record of a character changing hands: created for a user, moved between users, or given to its community",
 })
 export class CharacterOwnershipChange {
   @Field(() => ID, {
@@ -25,9 +26,13 @@ export class CharacterOwnershipChange {
   })
   fromUserId?: string | null;
 
-  /** The new owner */
-  @Field(() => ID, { description: "The ID of the new owner" })
-  toUserId!: string;
+  /** The new owner (null when the character was given to its community) */
+  @Field(() => ID, {
+    description:
+      "The ID of the new owner (null when the character was given to its community)",
+    nullable: true,
+  })
+  toUserId?: string | null;
 
   /** When the ownership change occurred */
   @Field(() => Date, { description: "When the ownership change occurred" })
@@ -42,8 +47,8 @@ export class CharacterOwnershipChange {
   @Field(() => User, { description: "The previous owner", nullable: true })
   fromUser?: User | null;
 
-  @Field(() => User, { description: "The new owner" })
-  toUser?: User;
+  @Field(() => User, { description: "The new owner", nullable: true })
+  toUser?: User | null;
 }
 
 @ObjectType({

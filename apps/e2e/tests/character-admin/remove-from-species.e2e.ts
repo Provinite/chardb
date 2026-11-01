@@ -20,7 +20,7 @@ const removeFromSpecies = async (
   characterName: string,
 ): Promise<void> => {
   await (
-    await openMenuItem(page, "character-staff-menu", "Remove from Species")
+    await openMenuItem(page, "character-actions-menu", "Remove from Species")
   ).click();
   const dialog = page.getByTestId("remove-from-species-dialog");
   await dialog.getByTestId("confirm-phrase").fill(characterName);
@@ -83,7 +83,7 @@ test("will not remove until the character's name is typed", async ({
   await page.goto(character.url);
 
   await (
-    await openMenuItem(page, "character-staff-menu", "Remove from Species")
+    await openMenuItem(page, "character-actions-menu", "Remove from Species")
   ).click();
   const dialog = page.getByTestId("remove-from-species-dialog");
   await expect(dialog.getByTestId("confirm-accept")).toBeDisabled();

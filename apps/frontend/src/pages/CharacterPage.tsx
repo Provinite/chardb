@@ -3,11 +3,13 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 
 import { Avatar, Button, Menu, MenuGroup, MenuItem } from "@chardb/ui";
-import { Trash2, Unlink } from "lucide-react";
+import { HandHeart, Trash2, Unlink } from "lucide-react";
+import { toast } from "react-hot-toast";
 import {
   useGetCharacterQuery,
   TraitReviewSource,
   useDeleteCharacterMutation,
+  useGiveCharacterToCommunityMutation,
   useKickCharacterFromSpeciesMutation,
   LikeableType,
   CommentableType,
@@ -25,6 +27,7 @@ import { CharacterAvailability } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
 import {
   DeleteCharacterDialog,
+  GiveToCommunityDialog,
   RemoveFromSpeciesDialog,
 } from "../components/character/CharacterDisposalDialogs";
 import { CommentList } from "../components/CommentList";
@@ -447,7 +450,9 @@ export const CharacterPage: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [actionError, setActionError] = useState<string | null>(null);
-  const [confirming, setConfirming] = useState<"delete" | "kick" | null>(null);
+  const [confirming, setConfirming] = useState<
+    "delete" | "kick" | "give" | null
+  >(null);
 
   const { data, loading, error } = useGetCharacterQuery({
     variables: { id: id! },
@@ -549,6 +554,11 @@ export const CharacterPage: React.FC = () => {
   const [deleteCharacter, { loading: deleting }] = useDeleteCharacterMutation();
   const [kickFromSpecies, { loading: kicking }] =
     useKickCharacterFromSpeciesMutation();
+  const [giveToCommunity, { loading: giving }] =
+    useGiveCharacterToCommunityMutation({
+      refetchQueries: ["GetCharacter"],
+      awaitRefetchQueries: true,
+    });
 
   const handleBackClick = () => {
     navigate("/characters");
@@ -584,6 +594,27 @@ export const CharacterPage: React.FC = () => {
         e instanceof Error
           ? e.message
           : "Failed to remove character from species",
+      );
+    }
+  };
+
+  const handleGiveToCommunity = async () => {
+    if (!id || !character) return;
+    // Read before the refetch, after which the character is no longer ours
+    // and the community is no longer offered.
+    const { name } = character;
+    const communityName = character.species?.community?.name;
+    setActionError(null);
+    try {
+      await giveToCommunity({ variables: { id } });
+      setConfirming(null);
+      toast.success(`"${name}" now belongs to ${communityName}`);
+    } catch (e) {
+      setConfirming(null);
+      setActionError(
+        e instanceof Error
+          ? e.message
+          : "Failed to give character to the community",
       );
     }
   };
@@ -634,9 +665,9 @@ export const CharacterPage: React.FC = () => {
     );
   }
 
-  // Editing is the owner's as much as staff's, so it stays a button. The two
-  // disposal actions are staff-only and one-way, so they sit a deliberate
-  // step away in the menu (#430).
+  // Editing is the owner's as much as staff's, so it stays a button. The
+  // disposal actions -- staff's two and the owner's gift to the community --
+  // are one-way, so they sit a deliberate step away in the menu (#430).
   const canEdit = canUserEditCharacter(character, user, permissions);
   // The trait review queue's own permission.
   const canReviewTraits =
@@ -654,6 +685,11 @@ export const CharacterPage: React.FC = () => {
   const canDelete =
     !pendingRedemption &&
     (permissions.canDeleteCharacter || (user?.isAdmin ?? false));
+  // A character reaches a community through its species; with none, there is
+  // no community to give it to. Refused by the server, like the staff actions,
+  // while a redemption is in review.
+  const giftCommunity =
+    ownsCharacter && !pendingRedemption ? character.species?.community : null;
 
   return (
     <Container>
@@ -782,38 +818,50 @@ export const CharacterPage: React.FC = () => {
             )}
           </InfoGrid>
 
-          {(canEdit || canKick || canDelete) && (
+          {(canEdit || canKick || canDelete || giftCommunity) && (
             <CharacterActions data-testid="character-actions">
               {canEdit && (
                 <Button variant="outline" size="sm" onClick={handleEditClick}>
                   Edit Character
                 </Button>
               )}
-              {(canKick || canDelete) && (
+              {(canKick || canDelete || giftCommunity) && (
                 <Menu
                   label="More actions"
-                  testId="character-staff-menu"
-                  disabled={kicking || deleting}
+                  testId="character-actions-menu"
+                  disabled={kicking || deleting || giving}
                 >
-                  <MenuGroup label="Staff actions">
-                    {canKick && (
+                  {giftCommunity && (
+                    <MenuGroup label="Owner actions">
                       <MenuItem
-                        icon={<Unlink size={14} />}
-                        onSelect={() => setConfirming("kick")}
+                        icon={<HandHeart size={14} />}
+                        onSelect={() => setConfirming("give")}
                       >
-                        Remove from Species
+                        Give to Community
                       </MenuItem>
-                    )}
-                    {canDelete && (
-                      <MenuItem
-                        danger
-                        icon={<Trash2 size={14} />}
-                        onSelect={() => setConfirming("delete")}
-                      >
-                        Delete Character
-                      </MenuItem>
-                    )}
-                  </MenuGroup>
+                    </MenuGroup>
+                  )}
+                  {(canKick || canDelete) && (
+                    <MenuGroup label="Staff actions">
+                      {canKick && (
+                        <MenuItem
+                          icon={<Unlink size={14} />}
+                          onSelect={() => setConfirming("kick")}
+                        >
+                          Remove from Species
+                        </MenuItem>
+                      )}
+                      {canDelete && (
+                        <MenuItem
+                          danger
+                          icon={<Trash2 size={14} />}
+                          onSelect={() => setConfirming("delete")}
+                        >
+                          Delete Character
+                        </MenuItem>
+                      )}
+                    </MenuGroup>
+                  )}
                 </Menu>
               )}
             </CharacterActions>
@@ -833,6 +881,16 @@ export const CharacterPage: React.FC = () => {
             onCancel={() => setConfirming(null)}
             onConfirm={() => void handleKickFromSpecies()}
           />
+          {giftCommunity && (
+            <GiveToCommunityDialog
+              open={confirming === "give"}
+              characterName={character.name}
+              communityName={giftCommunity.name}
+              busy={giving}
+              onCancel={() => setConfirming(null)}
+              onConfirm={() => void handleGiveToCommunity()}
+            />
+          )}
           {actionError && (
             <div
               style={{

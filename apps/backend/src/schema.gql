@@ -296,7 +296,9 @@ input CharacterFormsChangeInput {
   updateForms: [UpdateCharacterFormInput!]
 }
 
-"""A record of character ownership transfer between users"""
+"""
+A record of a character changing hands: created for a user, moved between users, or given to its community
+"""
 type CharacterOwnershipChange {
   character: Character
 
@@ -312,10 +314,12 @@ type CharacterOwnershipChange {
 
   """Unique identifier for the ownership change record"""
   id: ID!
-  toUser: User!
+  toUser: User
 
-  """The ID of the new owner"""
-  toUserId: ID!
+  """
+  The ID of the new owner (null when the character was given to its community)
+  """
+  toUserId: ID
 }
 
 """Paginated list of character ownership changes with connection metadata"""
@@ -2889,6 +2893,11 @@ type Mutation {
   """
   editCharacterTraitsWithKit(input: EditCharacterTraitsWithKitInput!): TraitReview!
   forgotPassword(input: ForgotPasswordInput!): Boolean!
+
+  """
+  Give a character to the community its species belongs to, leaving it with no owner and making it public. Owner only.
+  """
+  giveCharacterToCommunity(id: ID!): Boolean!
 
   """
   Grant items to a user. Returns one Item per unit granted -- there is no stacking, so a quantity of 3 creates three items.
