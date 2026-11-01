@@ -2431,6 +2431,8 @@ model HalloweenGifty {
 
   @@index([guildId, toUserId])
   @@index([guildId, fromUserId])
+  // Every knock counts the day's knocks no gifty paid for.
+  @@index([knockEventId])
   @@map("halloween_gifties")
 }
 
