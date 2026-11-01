@@ -100,9 +100,8 @@ function storedLighting(board: BoardRow): CandyLighting | null {
 }
 
 /**
- * Candy boards. A board belongs to a Discord player in a guild, as knocks do;
- * a chardb account reaches its own through the Discord account linked to it,
- * and anyone can look at one through its id.
+ * Candy boards. A board belongs to a chardb user in a guild, and draws on the
+ * candies they own there; anyone can look at one through its id.
  */
 @Injectable()
 export class CandyBoardService {
@@ -132,8 +131,7 @@ export class CandyBoardService {
     if (!board) {
       return null;
     }
-    const viewerDiscordId = viewerId ? await this.discordIdOf(viewerId) : null;
-    return this.toBoard(board, viewerDiscordId === board.userId);
+    return this.toBoard(board, viewerId === board.ownerId);
   }
 
   /**
@@ -145,16 +143,15 @@ export class CandyBoardService {
     userId: string,
   ): Promise<HalloweenCandyBoard[] | null> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
-    const discordUserId = await this.discordIdOf(userId);
-    if (!discordUserId) {
+    if (!(await this.discordIdOf(userId))) {
       return null;
     }
     const boards = await this.db.halloweenCandyBoard.findMany({
-      where: { guildId, userId: discordUserId },
+      where: { guildId, ownerId: userId },
       orderBy: [{ updatedAt: "desc" }, { createdAt: "desc" }],
     });
     // One player's: their candies and name are fetched once for them all.
-    const owner = await this.ownerOf(guildId, discordUserId);
+    const owner = await this.ownerOf(guildId, userId);
     return boards.map((board) => this.present(board, true, owner));
   }
 
@@ -167,10 +164,10 @@ export class CandyBoardService {
     userId: string,
   ): Promise<HalloweenCandyBoard> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
-    const discordUserId = await this.requireDiscord(userId);
+    await this.requireDiscord(userId);
     const board = await this.db.$transaction(async (tx) => {
       const count = await tx.halloweenCandyBoard.count({
-        where: { guildId, userId: discordUserId },
+        where: { guildId, ownerId: userId },
       });
       if (count >= CANDY_BOARD_LIMIT) {
         throw new BadRequestException(
@@ -178,14 +175,14 @@ export class CandyBoardService {
         );
       }
       return tx.halloweenCandyBoard.create({
-        data: { guildId, userId: discordUserId },
+        data: { guildId, ownerId: userId },
       });
     });
     this.logger.log({
       event: HalloweenLogEvent.CandyBoardCreated,
       message: "Candy board created",
       guildId,
-      userId: discordUserId,
+      userId,
       boardId: board.id,
     } satisfies HalloweenLogLine);
     return this.toBoard(board, true);
@@ -206,7 +203,7 @@ export class CandyBoardService {
       event: HalloweenLogEvent.CandyBoardDeleted,
       message: "Candy board deleted",
       guildId: board.guildId,
-      userId: board.userId,
+      userId: board.ownerId,
       boardId: board.id,
     } satisfies HalloweenLogLine);
     return true;
@@ -229,22 +226,18 @@ export class CandyBoardService {
         "Too many changes to save at once: at most 100",
       );
     }
-    const { guildId, userId: discordUserId } = await this.myBoard(
-      communityId,
-      userId,
-      id,
-    );
+    const { guildId } = await this.myBoard(communityId, userId, id);
 
     const added = addedCandies(actions);
     const owned = new Set(
       added.length
         ? (
-            await this.db.halloweenKnockEvent.findMany({
+            await this.db.halloweenCandy.findMany({
               where: {
                 id: { in: [...new Set(added)] },
                 guildId,
-                userId: discordUserId,
-                candySlug: { not: null },
+                ownerId: userId,
+                offerId: null,
               },
               select: { id: true },
             })
@@ -279,7 +272,7 @@ export class CandyBoardService {
       event: HalloweenLogEvent.CandyBoardSaved,
       message: "Candy board saved",
       guildId,
-      userId: discordUserId,
+      userId,
       boardId: board.id,
       actions: actions.length,
       placed: board.placements.length,
@@ -384,10 +377,10 @@ export class CandyBoardService {
     id: string,
   ): Promise<BoardRow> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
-    const discordUserId = await this.requireDiscord(userId);
+    await this.requireDiscord(userId);
     const board = UUID.test(id)
       ? await this.db.halloweenCandyBoard.findFirst({
-          where: { id, guildId, userId: discordUserId },
+          where: { id, guildId, ownerId: userId },
         })
       : null;
     if (!board) {
@@ -423,36 +416,29 @@ export class CandyBoardService {
     return this.present(
       board,
       viewerIsOwner,
-      await this.ownerOf(board.guildId, board.userId),
+      await this.ownerOf(board.guildId, board.ownerId),
     );
   }
 
-  /** A board's owner, as their boards show them: their candies, and who. */
-  private async ownerOf(guildId: string, discordUserId: string) {
-    const [knocks, account] = await Promise.all([
-      this.db.halloweenKnockEvent.findMany({
-        where: { guildId, userId: discordUserId, candySlug: { not: null } },
-        orderBy: [{ time: "asc" }, { id: "asc" }],
-        select: { id: true, candySlug: true, time: true },
+  /**
+   * A board's owner, as their boards show them: who, and their candies here
+   * that are not held in an offer.
+   */
+  private async ownerOf(guildId: string, ownerId: string) {
+    const [candies, user] = await Promise.all([
+      this.db.halloweenCandy.findMany({
+        where: { guildId, ownerId, offerId: null },
+        orderBy: [{ receivedAt: "asc" }, { id: "asc" }],
+        select: { id: true, slug: true, receivedAt: true },
       }),
-      this.db.externalAccount.findUnique({
-        where: {
-          provider_providerAccountId: {
-            provider: ExternalAccountProvider.DISCORD,
-            providerAccountId: discordUserId,
-          },
-        },
-        select: { user: { select: userMapperSelect } },
+      this.db.user.findUnique({
+        where: { id: ownerId },
+        select: userMapperSelect,
       }),
     ]);
-    const candies: HalloweenCandy[] = knocks.flatMap((k) =>
-      k.candySlug
-        ? [{ knockEventId: k.id, slug: k.candySlug, receivedAt: k.time }]
-        : [],
-    );
     return {
-      candies,
-      user: account ? mapPrismaUserToGraphQL(account.user) : null,
+      candies: candies satisfies HalloweenCandy[],
+      user: user ? mapPrismaUserToGraphQL(user) : null,
     };
   }
 
@@ -461,7 +447,7 @@ export class CandyBoardService {
     viewerIsOwner: boolean,
     { candies, user }: Awaited<ReturnType<CandyBoardService["ownerOf"]>>,
   ): HalloweenCandyBoard {
-    const held = new Set(candies.map((c) => c.knockEventId));
+    const held = new Set(candies.map((c) => c.id));
     return {
       id: board.id,
       owner: user,
@@ -471,8 +457,9 @@ export class CandyBoardService {
       lighting: storedLighting(board),
       name: storedName(board),
       candies,
-      // A candy whose knock is gone is dropped rather than drawn as nothing;
-      // the nameplate waits, where it was, while the board has no name.
+      // A candy traded away or held in an offer is dropped rather than drawn
+      // as nothing; the nameplate waits, where it was, while the board has
+      // no name.
       placements: storedPlacements(board).filter((p) =>
         isNameplate(p.sticker)
           ? board.name !== null

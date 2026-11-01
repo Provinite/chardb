@@ -8,7 +8,7 @@ export const CANDY_SCALE_MIN = 0.25;
 export const CANDY_SCALE_MAX = 4;
 
 /**
- * What a placement on a board is: a candy, by the knock that gave it, or the
+ * What a placement on a board is: a candy, by its id, or the
  * board's nameplate -- a banner with its name, of which a board has one.
  */
 export const stickerSchema = z.union([

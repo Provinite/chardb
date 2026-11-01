@@ -83,6 +83,11 @@ const payloadSchemas = {
     /** The moderator's own words, when they added any. */
     reasonText: z.string().max(500).nullable(),
   }),
+
+  [NotificationKind.HALLOWEEN_CANDY_TRADED]: z.object({
+    /** How many candies the recipient got in the trade. */
+    count: z.number().int().positive(),
+  }),
 } as const satisfies Record<NotificationKind, z.ZodObject<z.ZodRawShape>>;
 
 /** The payload shape for each kind, keyed by kind. */

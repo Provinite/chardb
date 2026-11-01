@@ -42,7 +42,7 @@ export class CandyBoardResolver {
     nullable: true,
     description:
       "Your Halloween candy boards here, the last changed first. Null " +
-      "without Discord linked, since candies belong to Discord players.",
+      "without Discord linked, since candies come from knocking on Discord.",
   })
   async myHalloweenCandyBoards(
     @Args("communityId", { type: () => ID }) communityId: string,

@@ -16,7 +16,7 @@ const BOARD_FIELDS = `
   id
   viewerIsOwner
   owner { username }
-  candies { knockEventId slug receivedAt }
+  candies { id slug receivedAt }
   placements { sticker { candy nameplate } x y rotation scale }
   background
   backgroundEffects { dim tint tintStrength saturation }
@@ -130,11 +130,15 @@ describe("Halloween candy board (e2e)", () => {
         displayName: name,
       },
     });
+    owners.set(discordId, user.id);
     return {
       username: user.username,
       token: await testApp.generateTestToken(user.id, user.username),
     };
   };
+
+  /** The chardb user behind each Discord player, who owns their candies. */
+  const owners = new Map<string, string>();
 
   beforeEach(async () => {
     await testApp.clearDatabase();
@@ -169,7 +173,8 @@ describe("Halloween candy board (e2e)", () => {
   const myBoards = (token = playerToken) =>
     testApp.authenticatedGraphqlRequest(MY_BOARDS, { communityId }, token);
 
-  const knock = (
+  /** A knock, and the candy it gave its player if it lost. */
+  const knock = async (
     data: Partial<{
       guildId: string;
       userId: string;
@@ -177,8 +182,8 @@ describe("Halloween candy board (e2e)", () => {
       candySlug: string | null;
       time: Date;
     }> = {},
-  ) =>
-    db.halloweenKnockEvent.create({
+  ) => {
+    const k = await db.halloweenKnockEvent.create({
       data: {
         guildId: GUILD,
         userId: PLAYER,
@@ -186,8 +191,39 @@ describe("Halloween candy board (e2e)", () => {
         ...data,
       },
     });
+    // A win gives no candy: an id no candy has stands in for one.
+    if (!k.candySlug) return { id: 1_000_000 + k.id };
+    return db.halloweenCandy.create({
+      data: {
+        guildId: k.guildId,
+        slug: k.candySlug,
+        knockEventId: k.id,
+        discordUserId: k.userId,
+        ownerId: owners.get(k.userId) ?? null,
+        receivedAt: k.time,
+      },
+    });
+  };
 
-  /** A sticker: a candy, by its knock's id, or the board's nameplate. */
+  /** Puts a candy in an open offer, which takes it out of the tray. */
+  const holdInOffer = async (candyId: number) => {
+    const candy = await db.halloweenCandy.findUniqueOrThrow({
+      where: { id: candyId },
+    });
+    const offer = await db.halloweenCandyOffer.create({
+      data: {
+        guildId: candy.guildId,
+        ownerId: candy.ownerId ?? "",
+        wantSlug: "banana",
+      },
+    });
+    await db.halloweenCandy.update({
+      where: { id: candyId },
+      data: { offerId: offer.id },
+    });
+  };
+
+  /** A sticker: a candy, by its id, or the board's nameplate. */
   type Ref = number | "nameplate";
   /** A sticker as an action names it: exactly one field. */
   const sticker = (ref: Ref) =>
@@ -350,16 +386,33 @@ describe("Halloween candy board (e2e)", () => {
       const res = await myBoard();
       expect(res.body.data.halloweenCandyBoard.candies).toEqual([
         {
-          knockEventId: first.id,
+          id: first.id,
           slug: "luther-head",
           receivedAt: "2026-10-20T00:00:00.000Z",
         },
         {
-          knockEventId: second.id,
+          id: second.id,
           slug: "candy-corn",
           receivedAt: "2026-10-21T00:00:00.000Z",
         },
       ]);
+    });
+
+    it("leave out a candy held in an offer, and drop it from the board", async () => {
+      const kept = await knock();
+      const offered = await knock();
+      await apply([add(kept.id), add(offered.id)]);
+
+      await holdInOffer(offered.id);
+
+      const board = (await myBoard()).body.data.halloweenCandyBoard;
+      expect(board.candies.map((c: { id: number }) => c.id)).toEqual([
+        kept.id,
+      ]);
+      expect(board.placements).toEqual([at(kept.id)]);
+      const res = await apply([add(offered.id, { x: 0.1 })]);
+      expect(res.body.errors).toBeUndefined();
+      expect(await placementsNow()).toEqual([at(kept.id)]);
     });
 
     it("are nothing without Discord linked, and none can be made", async () => {
@@ -418,7 +471,7 @@ describe("Halloween candy board (e2e)", () => {
       expect(res.body.data.halloweenCandyBoard.viewerIsOwner).toBe(true);
     });
 
-    it("still shows a board whose owner unlinked Discord, without a name", async () => {
+    it("still shows a board, and whose it is, after its owner unlinks Discord", async () => {
       const { id } = (await myBoard()).body.data.halloweenCandyBoard;
       await db.externalAccount.deleteMany({
         where: { providerAccountId: PLAYER },
@@ -426,7 +479,7 @@ describe("Halloween candy board (e2e)", () => {
       const res = await testApp.graphqlRequest(BOARD, { communityId, id });
       expect(res.body.data.halloweenCandyBoard).toMatchObject({
         id,
-        owner: null,
+        owner: { username: playerUsername },
       });
     });
 
@@ -566,9 +619,9 @@ describe("Halloween candy board (e2e)", () => {
     // else.
     describe("skipping what cannot apply", () => {
       it.each([
-        ["another player's knock", { userId: OTHER_PLAYER }],
-        ["a win's knock", { candySlug: null }],
-        ["another guild's knock", { guildId: OTHER_GUILD }],
+        ["another player's candy", { userId: OTHER_PLAYER }],
+        ["a candy that does not exist", { candySlug: null }],
+        ["your candy from another guild", { guildId: OTHER_GUILD }],
       ])("skips adding %s, and adds the rest", async (_what, data) => {
         const mine = await knock();
         const k = await knock(data);

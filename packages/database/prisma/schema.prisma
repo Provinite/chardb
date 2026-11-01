@@ -229,6 +229,11 @@ model User {
   tradeCurrencyReceived   TradeCurrencyLine[] @relation("TradeCurrencyDestination")
 
   halloweenPrizesDelivered HalloweenKnockEvent[] @relation("HalloweenPrizesDelivered")
+  halloweenCandies         HalloweenCandy[]
+  halloweenCandyBoards     HalloweenCandyBoard[]
+  halloweenCandyOffers     HalloweenCandyOffer[]
+  halloweenTradesStarted   HalloweenCandyTrade[] @relation("HalloweenCandyTradeInitiator")
+  halloweenTradesFilled    HalloweenCandyTrade[] @relation("HalloweenCandyTradeOfferer")
 
   @@map("users")
 }
@@ -2039,6 +2044,8 @@ enum NotificationKind {
   IMAGE_APPROVED
   /// An image you uploaded was rejected, with a reason.
   IMAGE_REJECTED
+  /// Someone traded Halloween candies with you on the candy swap.
+  HALLOWEEN_CANDY_TRADED
 }
 
 /// How a notification reaches someone.
@@ -2095,6 +2102,7 @@ enum NotificationSubjectType {
   CURRENCY
   USER
   TRADE
+  HALLOWEEN_CANDY_TRADE
 }
 
 /// One notification, already addressed to one recipient. An event concerning
@@ -2402,6 +2410,8 @@ model HalloweenKnockEvent {
   /// The gifty spent on this knock, if it was paid for with one. A knock paid
   /// for with a gifty does not count against the daily allowance.
   gifties     HalloweenGifty[]
+  /// The candy a loss gave.
+  candy       HalloweenCandy?
 
   @@index([guildId, userId, time])
   @@map("halloween_knock_events")
@@ -2436,16 +2446,115 @@ model HalloweenDeviantArtUser {
   @@map("halloween_deviantart_users")
 }
 
+/// A candy from a lost knock. It belongs to a chardb user once the Discord
+/// player who knocked has linked their account and joined the guild's
+/// community -- at the knock if both are already true, otherwise when the
+/// second happens. Until then `ownerId` is null and it waits on
+/// `discordUserId`. Trading moves it to another user.
+model HalloweenCandy {
+  id            Int      @id @default(autoincrement())
+  guildId       String   @map("guild_id") @db.VarChar(30)
+  /// Which candy it is, by its image's slug (`candy/<slug>.png`).
+  slug          String   @db.VarChar(40)
+  knockEventId  Int      @unique @map("knock_event_id")
+  /// The Discord player whose knock gave it, who claims it on linking.
+  discordUserId String   @map("discord_user_id") @db.VarChar(30)
+  ownerId       String?  @map("owner_id")
+  /// The open offer it is held in, if any. A held candy is in neither its
+  /// owner's tray nor on their boards, and in no other offer.
+  offerId       String?  @map("offer_id") @db.Uuid
+  /// When its current owner got it: the knock, or the trade.
+  receivedAt    DateTime @default(now()) @map("received_at") @db.Timestamptz
+
+  knockEvent HalloweenKnockEvent  @relation(fields: [knockEventId], references: [id], onDelete: Cascade)
+  owner      User?                @relation(fields: [ownerId], references: [id], onDelete: SetNull)
+  offer      HalloweenCandyOffer? @relation(fields: [offerId], references: [id], onDelete: SetNull)
+  tradeLines HalloweenCandyTradeLine[]
+
+  @@index([guildId, ownerId])
+  @@index([guildId, discordUserId])
+  @@index([offerId])
+  @@map("halloween_candies")
+}
+
+enum HalloweenCandyOfferStatus {
+  OPEN
+  FILLED
+  CANCELLED
+
+  @@map("halloween_candy_offer_status")
+}
+
+/// 1-3 of a player's candies offered for one candy of `wantSlug`. The
+/// offered candies are the ones whose `offerId` is this offer's while it is
+/// open; a filled or cancelled offer holds none.
+model HalloweenCandyOffer {
+  id        String                    @id @default(uuid()) @db.Uuid
+  guildId   String                    @map("guild_id") @db.VarChar(30)
+  ownerId   String                    @map("owner_id")
+  wantSlug  String                    @map("want_slug") @db.VarChar(40)
+  status    HalloweenCandyOfferStatus @default(OPEN)
+  createdAt DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  closedAt  DateTime?                 @map("closed_at") @db.Timestamptz
+  /// The trade that filled it.
+  tradeId   String?                   @map("trade_id") @db.Uuid
+
+  owner   User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  candies HalloweenCandy[]
+  trade   HalloweenCandyTrade? @relation(fields: [tradeId], references: [id], onDelete: SetNull)
+
+  @@index([guildId, status, wantSlug])
+  @@index([ownerId, status])
+  @@map("halloween_candy_offers")
+}
+
+/// A completed swap between two players. `offererId` placed the offer that
+/// was filled; `initiatorId` filled it, by accepting it or by placing an
+/// offer that matched it.
+model HalloweenCandyTrade {
+  id          String   @id @default(uuid()) @db.Uuid
+  guildId     String   @map("guild_id") @db.VarChar(30)
+  initiatorId String?  @map("initiator_id")
+  offererId   String?  @map("offerer_id")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  initiator User?                     @relation("HalloweenCandyTradeInitiator", fields: [initiatorId], references: [id], onDelete: SetNull)
+  offerer   User?                     @relation("HalloweenCandyTradeOfferer", fields: [offererId], references: [id], onDelete: SetNull)
+  offers    HalloweenCandyOffer[]
+  lines     HalloweenCandyTradeLine[]
+
+  @@index([guildId, initiatorId, createdAt])
+  @@index([guildId, offererId, createdAt])
+  @@map("halloween_candy_trades")
+}
+
+/// One candy a trade moved, and to whom: to the initiator or the offerer.
+model HalloweenCandyTradeLine {
+  id               Int     @id @default(autoincrement())
+  tradeId          String  @map("trade_id") @db.Uuid
+  candyId          Int     @map("candy_id")
+  /// The slug, kept so the history reads the same if the candy is gone.
+  slug             String  @db.VarChar(40)
+  toInitiator      Boolean @map("to_initiator")
+
+  trade HalloweenCandyTrade @relation(fields: [tradeId], references: [id], onDelete: Cascade)
+  candy HalloweenCandy      @relation(fields: [candyId], references: [id], onDelete: Cascade)
+
+  @@index([tradeId])
+  @@map("halloween_candy_trade_lines")
+}
+
 /// Where a player has stuck their candies. Only the placements are stored:
-/// which candies they have comes from their lost knocks, and a candy not on
-/// the board is in its tray. A player can have several boards, each drawing
-/// on their whole collection; each is made when its owner asks for it.
+/// which candies they have is their `HalloweenCandy` rows in the guild, and a
+/// candy not on the board is in its tray. A player can have several boards,
+/// each drawing on their whole collection; each is made when its owner asks
+/// for it.
 model HalloweenCandyBoard {
   /// What a shared link names. Random, so a board cannot be found from its
-  /// owner's username, nor tell anyone whose Discord is linked.
+  /// owner's username.
   id         String   @id @default(uuid()) @db.Uuid
   guildId    String   @map("guild_id") @db.VarChar(30)
-  userId     String   @map("user_id") @db.VarChar(30)
+  ownerId    String   @map("owner_id")
   /// [HalloweenCandyPlacementsJson]
   placements Json     @default("[]")
   /// The picture or tile behind the candies, by its slug
@@ -2465,6 +2574,8 @@ model HalloweenCandyBoard {
   createdAt  DateTime @default(now()) @map("created_at") @db.Timestamptz
   updatedAt  DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
-  @@index([guildId, userId])
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  @@index([guildId, ownerId])
   @@map("halloween_candy_boards")
 }
