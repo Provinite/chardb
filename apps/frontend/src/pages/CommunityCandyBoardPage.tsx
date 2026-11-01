@@ -9,7 +9,6 @@ import {
   Tag,
   Image as ImageIcon,
   Link2,
-  Loader2,
 } from "lucide-react";
 import { toast } from "react-hot-toast";
 import { usePageMeta } from "../lib/pageMeta";
@@ -28,7 +27,11 @@ import type { Lighting } from "../components/halloween/candyLighting";
 import type { BackgroundEffects } from "../components/halloween/backgroundEffects";
 import { NameDialog } from "../components/halloween/NameDialog";
 import { stickerRef } from "../components/halloween/candyBoard";
-import { downloadBoardImage } from "../components/halloween/boardImage";
+import {
+  downloadBoardImage,
+  type BoardImageOptions,
+} from "../components/halloween/boardImage";
+import { DownloadDialog } from "../components/halloween/DownloadDialog";
 import { copyBoardLink } from "../components/halloween/copyBoardLink";
 import {
   formatBoardName,
@@ -97,16 +100,6 @@ const Actions = styled.div`
   display: flex;
   align-items: center;
   gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const Spinning = styled(Loader2)`
-  animation: candy-board-spin 1s linear infinite;
-
-  @keyframes candy-board-spin {
-    to {
-      transform: rotate(360deg);
-    }
-  }
 `;
 
 const Button = styled.button`
@@ -293,6 +286,7 @@ const BoardView: React.FC<{
   const [choosingBackground, setChoosingBackground] = useState(false);
   const [clearing, setClearing] = useState(false);
   const [downloading, setDownloading] = useState(false);
+  const [choosingDownload, setChoosingDownload] = useState(false);
   const useBackground = async (
     slug: string | null,
     effects: BackgroundEffects | null,
@@ -348,17 +342,21 @@ const BoardView: React.FC<{
   });
 
   /** A picture of the board as it is shown, changes not yet saved and all. */
-  const download = async () => {
+  const download = async (options: BoardImageOptions) => {
     setDownloading(true);
     try {
-      await downloadBoardImage({
-        candies: board.candies,
-        placements,
-        background,
-        backgroundEffects,
-        lighting,
-        name,
-      });
+      await downloadBoardImage(
+        {
+          candies: board.candies,
+          placements,
+          background,
+          backgroundEffects,
+          lighting,
+          name,
+        },
+        options,
+      );
+      setChoosingDownload(false);
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not make the picture",
@@ -422,17 +420,8 @@ const BoardView: React.FC<{
             </>
           )}
           {/* Anyone can keep a picture of what they can see. */}
-          <Button
-            type="button"
-            disabled={downloading}
-            aria-busy={downloading}
-            onClick={download}
-          >
-            {downloading ? (
-              <Spinning size={16} aria-hidden />
-            ) : (
-              <DownloadIcon size={16} aria-hidden />
-            )}
+          <Button type="button" onClick={() => setChoosingDownload(true)}>
+            <DownloadIcon size={16} aria-hidden />
             Download
           </Button>
         </Actions>
@@ -447,6 +436,13 @@ const BoardView: React.FC<{
         backgroundEffects={backgroundEffects}
         lighting={lighting}
         name={name}
+      />
+
+      <DownloadDialog
+        open={choosingDownload}
+        busy={downloading}
+        onClose={() => setChoosingDownload(false)}
+        onDownload={download}
       />
 
       {isOwner && (
