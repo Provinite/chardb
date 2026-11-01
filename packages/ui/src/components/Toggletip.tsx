@@ -1,9 +1,4 @@
-import React, {
-  forwardRef,
-  useCallback,
-  useRef,
-  useState,
-} from "react";
+import React, { forwardRef, useCallback, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Info } from "lucide-react";
 import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
