@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.1.0] - 2026-11-01
+
 ### Added
 
 - **Halloween candy swap**: players offer 1-3 candies for one they want, take each other's offers, and one-for-one mirror offers trade at once; the other side gets a `HALLOWEEN_CANDY_TRADED` notification (#535).

@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.1.0] - 2026-11-01
+
 ### Added
 
 - **`IconButton`**, named by a required `label`, plus **`ButtonLink`**, **`Spinner`**, `useLoaderVisible`, `touchQuery` and the `size.spinner` and `action.primary.fgOutline` tokens (#503).
