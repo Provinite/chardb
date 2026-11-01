@@ -30,9 +30,7 @@ test.describe("the Halloween prize list", () => {
         "href",
         new RegExp(`/user/${world.users.carol.username}$`),
       );
-      await expect(page.getByText(world.discordWinner.username)).toHaveCount(
-        0,
-      );
+      await expect(page.getByText(world.discordWinner.username)).toHaveCount(0);
     });
   });
 
@@ -44,9 +42,7 @@ test.describe("the Halloween prize list", () => {
 
       const wins = page.getByRole("list", { name: "Recent wins" });
       await expect(wins.getByText("A Discord user")).toBeVisible();
-      await expect(page.getByText(world.discordWinner.username)).toHaveCount(
-        0,
-      );
+      await expect(page.getByText(world.discordWinner.username)).toHaveCount(0);
     });
   });
 

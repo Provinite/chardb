@@ -65,7 +65,7 @@ const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
 const relativeTime = new Intl.RelativeTimeFormat("en", { numeric: "always" });
 
 /** "5 minutes ago", "2 days ago"; "just now" under a minute. */
-const timeAgo =(iso: string, now: Date): string => {
+const timeAgo = (iso: string, now: Date): string => {
   const seconds = Math.max(0, (now.getTime() - Date.parse(iso)) / 1000);
   for (const [unit, size] of UNITS) {
     if (seconds >= size) {
