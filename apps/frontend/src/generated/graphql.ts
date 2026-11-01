@@ -5469,6 +5469,49 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null, communityMemberships: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canEditSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string } } }> } } };
 
+export type HalloweenCandyOfferFieldsFragment = { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> };
+
+export type HalloweenCandyTradeFieldsFragment = { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null };
+
+export type CandySwapQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type CandySwapQuery = { __typename?: 'Query', halloweenCandyTypes: Array<string>, myHalloweenCandies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }>, myHalloweenCandyOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }>, myHalloweenCandyTrades: Array<{ __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
+
+export type CandySwapOffersQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type CandySwapOffersQuery = { __typename?: 'Query', halloweenCandySwapOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }> };
+
+export type PlaceHalloweenCandyOfferMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  candyIds: Array<Scalars['Int']['input']> | Scalars['Int']['input'];
+  wantSlug: Scalars['String']['input'];
+}>;
+
+
+export type PlaceHalloweenCandyOfferMutation = { __typename?: 'Mutation', placeHalloweenCandyOffer: { __typename?: 'HalloweenCandyOfferPlaced', offer: { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }, trade: { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } | null } };
+
+export type AcceptHalloweenCandyOfferMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  offerId: Scalars['ID']['input'];
+}>;
+
+
+export type AcceptHalloweenCandyOfferMutation = { __typename?: 'Mutation', acceptHalloweenCandyOffer: { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } };
+
+export type CancelHalloweenCandyOfferMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  offerId: Scalars['ID']['input'];
+}>;
+
+
+export type CancelHalloweenCandyOfferMutation = { __typename?: 'Mutation', cancelHalloweenCandyOffer: boolean };
+
 export type CharacterFolderFieldsFragment = { __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number };
 
 export type GetMyCharacterFoldersQueryVariables = Exact<{
@@ -7351,6 +7394,31 @@ export type RateLimitBackoffSpecQueryVariables = Exact<{ [key: string]: never; }
 
 export type RateLimitBackoffSpecQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string } };
 
+export const HalloweenCandyOfferFieldsFragmentDoc = gql`
+    fragment HalloweenCandyOfferFields on HalloweenCandyOffer {
+  id
+  wantSlug
+  status
+  createdAt
+  candies {
+    id
+    slug
+  }
+}
+    `;
+export const HalloweenCandyTradeFieldsFragmentDoc = gql`
+    fragment HalloweenCandyTradeFields on HalloweenCandyTradeRecord {
+  id
+  gave
+  received
+  createdAt
+  with {
+    id
+    username
+    displayName
+  }
+}
+    `;
 export const CharacterFolderFieldsFragmentDoc = gql`
     fragment CharacterFolderFields on CharacterFolder {
   id
@@ -8544,6 +8612,206 @@ export type MeQueryHookResult = ReturnType<typeof useMeQuery>;
 export type MeLazyQueryHookResult = ReturnType<typeof useMeLazyQuery>;
 export type MeSuspenseQueryHookResult = ReturnType<typeof useMeSuspenseQuery>;
 export type MeQueryResult = Apollo.QueryResult<MeQuery, MeQueryVariables>;
+export const CandySwapDocument = gql`
+    query CandySwap($communityId: ID!) {
+  halloweenCandyTypes
+  myHalloweenCandies(communityId: $communityId) {
+    id
+    slug
+  }
+  myHalloweenCandyOffers(communityId: $communityId) {
+    ...HalloweenCandyOfferFields
+  }
+  myHalloweenCandyTrades(communityId: $communityId) {
+    ...HalloweenCandyTradeFields
+  }
+}
+    ${HalloweenCandyOfferFieldsFragmentDoc}
+${HalloweenCandyTradeFieldsFragmentDoc}`;
+
+/**
+ * __useCandySwapQuery__
+ *
+ * To run a query within a React component, call `useCandySwapQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCandySwapQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCandySwapQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useCandySwapQuery(baseOptions: Apollo.QueryHookOptions<CandySwapQuery, CandySwapQueryVariables> & ({ variables: CandySwapQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CandySwapQuery, CandySwapQueryVariables>(CandySwapDocument, options);
+      }
+export function useCandySwapLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CandySwapQuery, CandySwapQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CandySwapQuery, CandySwapQueryVariables>(CandySwapDocument, options);
+        }
+export function useCandySwapSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CandySwapQuery, CandySwapQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CandySwapQuery, CandySwapQueryVariables>(CandySwapDocument, options);
+        }
+export type CandySwapQueryHookResult = ReturnType<typeof useCandySwapQuery>;
+export type CandySwapLazyQueryHookResult = ReturnType<typeof useCandySwapLazyQuery>;
+export type CandySwapSuspenseQueryHookResult = ReturnType<typeof useCandySwapSuspenseQuery>;
+export type CandySwapQueryResult = Apollo.QueryResult<CandySwapQuery, CandySwapQueryVariables>;
+export const CandySwapOffersDocument = gql`
+    query CandySwapOffers($communityId: ID!) {
+  halloweenCandySwapOffers(communityId: $communityId) {
+    ...HalloweenCandyOfferFields
+  }
+}
+    ${HalloweenCandyOfferFieldsFragmentDoc}`;
+
+/**
+ * __useCandySwapOffersQuery__
+ *
+ * To run a query within a React component, call `useCandySwapOffersQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCandySwapOffersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCandySwapOffersQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useCandySwapOffersQuery(baseOptions: Apollo.QueryHookOptions<CandySwapOffersQuery, CandySwapOffersQueryVariables> & ({ variables: CandySwapOffersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CandySwapOffersQuery, CandySwapOffersQueryVariables>(CandySwapOffersDocument, options);
+      }
+export function useCandySwapOffersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CandySwapOffersQuery, CandySwapOffersQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CandySwapOffersQuery, CandySwapOffersQueryVariables>(CandySwapOffersDocument, options);
+        }
+export function useCandySwapOffersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CandySwapOffersQuery, CandySwapOffersQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CandySwapOffersQuery, CandySwapOffersQueryVariables>(CandySwapOffersDocument, options);
+        }
+export type CandySwapOffersQueryHookResult = ReturnType<typeof useCandySwapOffersQuery>;
+export type CandySwapOffersLazyQueryHookResult = ReturnType<typeof useCandySwapOffersLazyQuery>;
+export type CandySwapOffersSuspenseQueryHookResult = ReturnType<typeof useCandySwapOffersSuspenseQuery>;
+export type CandySwapOffersQueryResult = Apollo.QueryResult<CandySwapOffersQuery, CandySwapOffersQueryVariables>;
+export const PlaceHalloweenCandyOfferDocument = gql`
+    mutation PlaceHalloweenCandyOffer($communityId: ID!, $candyIds: [Int!]!, $wantSlug: String!) {
+  placeHalloweenCandyOffer(
+    communityId: $communityId
+    candyIds: $candyIds
+    wantSlug: $wantSlug
+  ) {
+    offer {
+      ...HalloweenCandyOfferFields
+    }
+    trade {
+      ...HalloweenCandyTradeFields
+    }
+  }
+}
+    ${HalloweenCandyOfferFieldsFragmentDoc}
+${HalloweenCandyTradeFieldsFragmentDoc}`;
+export type PlaceHalloweenCandyOfferMutationFn = Apollo.MutationFunction<PlaceHalloweenCandyOfferMutation, PlaceHalloweenCandyOfferMutationVariables>;
+
+/**
+ * __usePlaceHalloweenCandyOfferMutation__
+ *
+ * To run a mutation, you first call `usePlaceHalloweenCandyOfferMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `usePlaceHalloweenCandyOfferMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [placeHalloweenCandyOfferMutation, { data, loading, error }] = usePlaceHalloweenCandyOfferMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      candyIds: // value for 'candyIds'
+ *      wantSlug: // value for 'wantSlug'
+ *   },
+ * });
+ */
+export function usePlaceHalloweenCandyOfferMutation(baseOptions?: Apollo.MutationHookOptions<PlaceHalloweenCandyOfferMutation, PlaceHalloweenCandyOfferMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<PlaceHalloweenCandyOfferMutation, PlaceHalloweenCandyOfferMutationVariables>(PlaceHalloweenCandyOfferDocument, options);
+      }
+export type PlaceHalloweenCandyOfferMutationHookResult = ReturnType<typeof usePlaceHalloweenCandyOfferMutation>;
+export type PlaceHalloweenCandyOfferMutationResult = Apollo.MutationResult<PlaceHalloweenCandyOfferMutation>;
+export type PlaceHalloweenCandyOfferMutationOptions = Apollo.BaseMutationOptions<PlaceHalloweenCandyOfferMutation, PlaceHalloweenCandyOfferMutationVariables>;
+export const AcceptHalloweenCandyOfferDocument = gql`
+    mutation AcceptHalloweenCandyOffer($communityId: ID!, $offerId: ID!) {
+  acceptHalloweenCandyOffer(communityId: $communityId, offerId: $offerId) {
+    ...HalloweenCandyTradeFields
+  }
+}
+    ${HalloweenCandyTradeFieldsFragmentDoc}`;
+export type AcceptHalloweenCandyOfferMutationFn = Apollo.MutationFunction<AcceptHalloweenCandyOfferMutation, AcceptHalloweenCandyOfferMutationVariables>;
+
+/**
+ * __useAcceptHalloweenCandyOfferMutation__
+ *
+ * To run a mutation, you first call `useAcceptHalloweenCandyOfferMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useAcceptHalloweenCandyOfferMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [acceptHalloweenCandyOfferMutation, { data, loading, error }] = useAcceptHalloweenCandyOfferMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      offerId: // value for 'offerId'
+ *   },
+ * });
+ */
+export function useAcceptHalloweenCandyOfferMutation(baseOptions?: Apollo.MutationHookOptions<AcceptHalloweenCandyOfferMutation, AcceptHalloweenCandyOfferMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<AcceptHalloweenCandyOfferMutation, AcceptHalloweenCandyOfferMutationVariables>(AcceptHalloweenCandyOfferDocument, options);
+      }
+export type AcceptHalloweenCandyOfferMutationHookResult = ReturnType<typeof useAcceptHalloweenCandyOfferMutation>;
+export type AcceptHalloweenCandyOfferMutationResult = Apollo.MutationResult<AcceptHalloweenCandyOfferMutation>;
+export type AcceptHalloweenCandyOfferMutationOptions = Apollo.BaseMutationOptions<AcceptHalloweenCandyOfferMutation, AcceptHalloweenCandyOfferMutationVariables>;
+export const CancelHalloweenCandyOfferDocument = gql`
+    mutation CancelHalloweenCandyOffer($communityId: ID!, $offerId: ID!) {
+  cancelHalloweenCandyOffer(communityId: $communityId, offerId: $offerId)
+}
+    `;
+export type CancelHalloweenCandyOfferMutationFn = Apollo.MutationFunction<CancelHalloweenCandyOfferMutation, CancelHalloweenCandyOfferMutationVariables>;
+
+/**
+ * __useCancelHalloweenCandyOfferMutation__
+ *
+ * To run a mutation, you first call `useCancelHalloweenCandyOfferMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCancelHalloweenCandyOfferMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [cancelHalloweenCandyOfferMutation, { data, loading, error }] = useCancelHalloweenCandyOfferMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      offerId: // value for 'offerId'
+ *   },
+ * });
+ */
+export function useCancelHalloweenCandyOfferMutation(baseOptions?: Apollo.MutationHookOptions<CancelHalloweenCandyOfferMutation, CancelHalloweenCandyOfferMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CancelHalloweenCandyOfferMutation, CancelHalloweenCandyOfferMutationVariables>(CancelHalloweenCandyOfferDocument, options);
+      }
+export type CancelHalloweenCandyOfferMutationHookResult = ReturnType<typeof useCancelHalloweenCandyOfferMutation>;
+export type CancelHalloweenCandyOfferMutationResult = Apollo.MutationResult<CancelHalloweenCandyOfferMutation>;
+export type CancelHalloweenCandyOfferMutationOptions = Apollo.BaseMutationOptions<CancelHalloweenCandyOfferMutation, CancelHalloweenCandyOfferMutationVariables>;
 export const GetMyCharacterFoldersDocument = gql`
     query GetMyCharacterFolders($communityId: ID) {
   myCharacterFolders(communityId: $communityId) {
