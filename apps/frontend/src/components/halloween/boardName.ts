@@ -18,11 +18,23 @@ export interface BoardNameWords {
   last: readonly string[];
 }
 
-/** The words a board's name is picked from. */
+/**
+ * A copy of the list in the viewer's alphabetical order, ignoring punctuation
+ * so "'n'" sorts with the n's.
+ */
+export const alphabetical = (
+  list: readonly string[],
+  locales?: Intl.LocalesArgument,
+) =>
+  [...list].sort((a, b) =>
+    a.localeCompare(b, locales, { ignorePunctuation: true }),
+  );
+
+/** The words a board's name is picked from, each list in alphabetical order. */
 export const BOARD_NAME_WORDS: BoardNameWords = {
-  first: BOARD_NAME_FIRST_WORDS,
-  joiners: BOARD_NAME_JOINERS,
-  last: BOARD_NAME_LAST_WORDS,
+  first: alphabetical(BOARD_NAME_FIRST_WORDS),
+  joiners: alphabetical(BOARD_NAME_JOINERS),
+  last: alphabetical(BOARD_NAME_LAST_WORDS),
 };
 
 /** "Moonlit von Pumpkin", or "Spooky Hoard" with no joiner. */
