@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Halloween board names take community-submitted words.**
 - **Halloween dashboard reports the last 24 hours and each reset day**: players, knocks, wins, gifties and gifty senders, plus unspent gifties.
 
 ### Changed
