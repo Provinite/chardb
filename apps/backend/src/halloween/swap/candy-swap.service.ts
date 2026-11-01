@@ -114,7 +114,11 @@ export class CandySwapService {
   ): Promise<HalloweenCandyOffer[]> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
     const offers = await this.db.halloweenCandyOffer.findMany({
-      where: { guildId, ownerId: userId, status: HalloweenCandyOfferStatus.OPEN },
+      where: {
+        guildId,
+        ownerId: userId,
+        status: HalloweenCandyOfferStatus.OPEN,
+      },
       orderBy: [{ createdAt: "desc" }, { id: "asc" }],
       include: offerInclude,
     });
@@ -221,7 +225,11 @@ export class CandySwapService {
         );
       }
       const open = await tx.halloweenCandyOffer.count({
-        where: { guildId, ownerId: userId, status: HalloweenCandyOfferStatus.OPEN },
+        where: {
+          guildId,
+          ownerId: userId,
+          status: HalloweenCandyOfferStatus.OPEN,
+        },
       });
       if (open >= MAX_OPEN_OFFERS) {
         throw new BadRequestException(
@@ -239,7 +247,13 @@ export class CandySwapService {
 
       const mirror =
         candies.length === 1
-          ? await this.findMirror(tx, guildId, userId, candies[0].slug, wantSlug)
+          ? await this.findMirror(
+              tx,
+              guildId,
+              userId,
+              candies[0].slug,
+              wantSlug,
+            )
           : null;
       if (!mirror) {
         return { offerId: offer.id, tradeId: null };

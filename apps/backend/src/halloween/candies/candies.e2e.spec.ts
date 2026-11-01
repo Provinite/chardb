@@ -45,7 +45,9 @@ describe("Halloween candies (e2e)", () => {
         ],
       },
       (builder) =>
-        builder.overrideProvider(HalloweenDiscordClient).useValue(mockDiscord()),
+        builder
+          .overrideProvider(HalloweenDiscordClient)
+          .useValue(mockDiscord()),
     );
     db = testApp.getDb();
     dispatcher = testApp.getModuleRef().get(HalloweenCommandDispatcher);

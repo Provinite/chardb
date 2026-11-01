@@ -406,9 +406,7 @@ describe("Halloween candy board (e2e)", () => {
       await holdInOffer(offered.id);
 
       const board = (await myBoard()).body.data.halloweenCandyBoard;
-      expect(board.candies.map((c: { id: number }) => c.id)).toEqual([
-        kept.id,
-      ]);
+      expect(board.candies.map((c: { id: number }) => c.id)).toEqual([kept.id]);
       expect(board.placements).toEqual([at(kept.id)]);
       const res = await apply([add(offered.id, { x: 0.1 })]);
       expect(res.body.errors).toBeUndefined();

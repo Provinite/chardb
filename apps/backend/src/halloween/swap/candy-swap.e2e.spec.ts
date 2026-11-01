@@ -87,7 +87,9 @@ describe("Halloween candy swap (e2e)", () => {
     await testApp.setup(
       { imports: [DatabaseModule, AuthModule, HalloweenModule] },
       (builder) =>
-        builder.overrideProvider(HalloweenDiscordClient).useValue(mockDiscord()),
+        builder
+          .overrideProvider(HalloweenDiscordClient)
+          .useValue(mockDiscord()),
     );
     db = testApp.getDb();
   });
@@ -162,7 +164,11 @@ describe("Halloween candy swap (e2e)", () => {
     expect(res.body.errors).toBeUndefined();
     return res.body.data.placeHalloweenCandyOffer as {
       offer: { id: string; status: string };
-      trade: { with: { username: string }; gave: string[]; received: string[] } | null;
+      trade: {
+        with: { username: string };
+        gave: string[];
+        received: string[];
+      } | null;
     };
   };
 
@@ -179,7 +185,11 @@ describe("Halloween candy swap (e2e)", () => {
       const tart = await candy(alice, "berry-tart");
       const kept = await candy(alice, "banana");
 
-      const { offer, trade } = await placed(alice, [corn.id, tart.id], "luther-head");
+      const { offer, trade } = await placed(
+        alice,
+        [corn.id, tart.id],
+        "luther-head",
+      );
 
       expect(trade).toBeNull();
       expect(offer.status).toBe("OPEN");
@@ -223,8 +233,9 @@ describe("Halloween candy swap (e2e)", () => {
       const res = await gql(CANCEL, { offerId: offer.id }, bob);
 
       expect(error(res)).toBe("There is no such open offer of yours");
-      expect(await db.halloweenCandy.findUniqueOrThrow({ where: { id: corn.id } }))
-        .toMatchObject({ offerId: offer.id });
+      expect(
+        await db.halloweenCandy.findUniqueOrThrow({ where: { id: corn.id } }),
+      ).toMatchObject({ offerId: offer.id });
     });
 
     it("takes one to three candies", async () => {
@@ -316,10 +327,18 @@ describe("Halloween candy swap (e2e)", () => {
         "banana",
       );
       // Carol has no luther-head, so cannot fill this one.
-      await placed(alice, [(await candy(alice, "berry-tart")).id], "luther-head");
+      await placed(
+        alice,
+        [(await candy(alice, "berry-tart")).id],
+        "luther-head",
+      );
       // Carol's own offer is not shown to her.
       await candy(carol, "candy-corn");
-      await placed(carol, [(await candy(carol, "bitten-pumpkin")).id], "banana");
+      await placed(
+        carol,
+        [(await candy(carol, "bitten-pumpkin")).id],
+        "banana",
+      );
       // Nor is one that has been cancelled.
       const cancelled = await placed(
         bob,
@@ -404,7 +423,9 @@ describe("Halloween candy swap (e2e)", () => {
       });
       expect(traded.every((c) => c.offerId === null)).toBe(true);
       expect(
-        await db.halloweenCandyOffer.findUniqueOrThrow({ where: { id: offer.id } }),
+        await db.halloweenCandyOffer.findUniqueOrThrow({
+          where: { id: offer.id },
+        }),
       ).toMatchObject({ status: "FILLED", tradeId: expect.any(String) });
     });
 
@@ -582,7 +603,11 @@ describe("Halloween candy swap (e2e)", () => {
     });
 
     it("does not match an offer asking for something else", async () => {
-      await placed(alice, [(await candy(alice, "candy-corn")).id], "berry-tart");
+      await placed(
+        alice,
+        [(await candy(alice, "candy-corn")).id],
+        "berry-tart",
+      );
       const banana = await candy(bob, "banana");
 
       const { trade } = await placed(bob, [banana.id], "candy-corn");
