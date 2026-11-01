@@ -104,6 +104,10 @@ export class TraitReviewService {
       whereClause.source = filters.source;
     }
 
+    if (filters?.characterId) {
+      whereClause.characterId = filters.characterId;
+    }
+
     const [items, total] = await Promise.all([
       this.db.traitReview.findMany({
         where: whereClause,

@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Trait review deep-link specs**: badge to narrowed queue, the empty state after approving, and no link for members (#526).
+
 - **Tooltip and toggletip specs** on the candy board, written against Mantine's Tooltip first (#466).
 
 - **A `candy-board` preset** (Halloween on, a Discord server and player linked, one empty board) and specs for its Lighting panel (#466).

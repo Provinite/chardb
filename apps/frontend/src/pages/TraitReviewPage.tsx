@@ -1,4 +1,5 @@
 import React from "react";
+import { Link, useSearchParams } from "react-router-dom";
 import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { ClipboardCheck, ArrowLeft } from "lucide-react";
@@ -66,6 +67,9 @@ export const TraitReviewPage: React.FC = () => {
   usePageMeta({ title: "Trait Review" });
 
   const communityId = useCommunityId();
+  // Set by the pending badge on a character's page.
+  const [searchParams] = useSearchParams();
+  const characterId = searchParams.get("character");
 
   if (!communityId) {
     return (
@@ -104,7 +108,14 @@ export const TraitReviewPage: React.FC = () => {
         </HeaderContent>
       </Header>
 
-      <TraitReviewQueue communityId={communityId} />
+      {characterId && (
+        <HelpText>
+          Showing one character’s review.{" "}
+          <Link to="/moderation/traits">Show full queue</Link>
+        </HelpText>
+      )}
+
+      <TraitReviewQueue communityId={communityId} characterId={characterId} />
     </Container>
   );
 };
