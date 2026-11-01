@@ -17,7 +17,7 @@ import { LOCK_TIMEOUT_MS } from "./locked-transaction";
 export class PlayerLock {
   async acquire(
     tx: Prisma.TransactionClient,
-    scope: "knock" | "gifty",
+    scope: "knock" | "gifty" | "swap",
     guildId: string,
     userId: string,
   ): Promise<void> {

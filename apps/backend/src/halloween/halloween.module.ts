@@ -30,6 +30,9 @@ import { HalloweenAdminService } from "./dashboard/halloween-admin.service";
 import { HalloweenAdminResolver } from "./dashboard/halloween-admin.resolver";
 import { CandyBoardService } from "./board/candy-board.service";
 import { CandyBoardResolver } from "./board/candy-board.resolver";
+import { CandySwapService } from "./swap/candy-swap.service";
+import { CandySwapResolver } from "./swap/candy-swap.resolver";
+import { NotificationsModule } from "../notifications/notifications.module";
 import { KnockCommand } from "./commands/knock.command";
 import { AdminKnockCommand } from "./commands/adminknock.command";
 import { GiftyCommand } from "./commands/gifty.command";
@@ -66,6 +69,7 @@ const COMMANDS = [
     AuthModule,
     ItemsModule,
     PendingOwnershipModule,
+    NotificationsModule,
   ],
   controllers: [HalloweenInteractionsController],
   providers: [
@@ -90,6 +94,8 @@ const COMMANDS = [
     HalloweenAdminResolver,
     CandyBoardService,
     CandyBoardResolver,
+    CandySwapService,
+    CandySwapResolver,
     ...COMMANDS,
     {
       provide: HALLOWEEN_COMMANDS,
