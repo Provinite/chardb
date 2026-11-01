@@ -622,6 +622,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
       ...grantFormData,
       itemTypeId: itemType.id,
     });
+    // The selector starts fresh each time the dialog opens, its Discord
+    // check included, so the target it would show starts fresh too.
+    setGrantTarget(null);
     setIsGrantModalOpen(true);
   };
 
