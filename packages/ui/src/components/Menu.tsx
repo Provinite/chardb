@@ -125,7 +125,9 @@ const Trigger = styled.button<{ $appearance: "outlined" | "ghost" }>`
 
 const List = styled.div`
   position: fixed;
-  z-index: 1000;
+  /* The popovers' layer: one opened inside a popover renders after it, so
+     paints above it. */
+  z-index: ${vars.layer.dropdown.base};
   min-width: 12rem;
   max-width: calc(100vw - 16px);
   padding: ${({ theme }) => theme.spacing.xs} 0;

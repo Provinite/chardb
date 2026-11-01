@@ -1,6 +1,7 @@
 import React, { act, useState } from "react";
 import { ThemeProvider } from "styled-components";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { declarationsOf } from "../__tests__/emittedCss";
 import { render } from "../__tests__/render";
 import { lightTheme } from "../theme";
 import {
@@ -348,6 +349,35 @@ describe("Portal container", () => {
     mousedown(document.querySelector('[role="menuitem"]')!);
 
     expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  });
+
+  it("draws a menu opened in a popover on the popover's layer, so above it", () => {
+    render(
+      themed(
+        <Popover.Root>
+          <Popover.Trigger>
+            <button type="button">Options</button>
+          </Popover.Trigger>
+          <Popover.Panel aria-label="Options">
+            <Menu label="More actions">
+              <MenuItem onSelect={() => {}}>Rename</MenuItem>
+            </Menu>
+          </Popover.Panel>
+        </Popover.Root>,
+      ),
+    );
+    click(document.querySelector("button[aria-haspopup]")!);
+    click(document.querySelector('[aria-label="More actions"]')!);
+    const panel = document.querySelector<HTMLElement>('[role="dialog"]')!;
+    const menu = document.querySelector<HTMLElement>('[role="menu"]')!;
+
+    // Same layer, and later in the page, so it paints over the panel.
+    expect(getComputedStyle(menu).zIndex).toBe(
+      declarationsOf(panel)["z-index"],
+    );
+    expect(
+      panel.compareDocumentPosition(menu) & Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
   });
 
   it("still closes a popover on a press outside it", () => {
