@@ -24,7 +24,7 @@ export const inactiveLabel = style([label, { visibility: "hidden" }]);
  */
 export const following = style({
   selectors: {
-    "&&": { borderColor: vars.border.input },
+    "&&:not(:disabled)": { borderColor: vars.border.input },
   },
   "@media": hover({
     '&&:hover:not(:disabled):not([aria-disabled="true"])': {

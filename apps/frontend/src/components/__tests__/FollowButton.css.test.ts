@@ -35,6 +35,15 @@ describe("FollowButton styles", () => {
     });
   });
 
+  it("leaves a disabled button's border to the disabled look", () => {
+    const bordered = rulesFor(styles.following).filter(
+      (rule) =>
+        rule.conditions.length === 0 && "border-color" in rule.declarations,
+    );
+    expect(bordered).toHaveLength(1);
+    expect(bordered[0].selector).toContain(":not(:disabled)");
+  });
+
   it("outranks the Button recipe's own hover, whatever the stylesheet order", () => {
     // The recipe's hover is one class plus three pseudo-classes and an
     // attribute; naming the class twice puts this rule above it.

@@ -97,26 +97,28 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
     return null;
   }
 
-  const isFollowing = followData?.followStatus?.isFollowing || false;
-  const followersCount = followData?.followStatus?.followersCount || 0;
+  const status = followData?.followStatus;
+  // Until the status arrives the button claims neither: "Follow" on the
+  // profile of someone already followed would be wrong for that moment.
+  const pending = followLoading && !status;
+  const isFollowing = status?.isFollowing || false;
+  const followersCount = status?.followersCount || 0;
+  const labelClass = (shown: boolean) =>
+    shown && !pending ? styles.label : styles.inactiveLabel;
 
   return (
     <Cluster gap="sm">
       <Button
         size={size}
-        tone={isFollowing ? "ghost" : "primary"}
+        tone={isFollowing || pending ? "ghost" : "primary"}
         className={isFollowing ? styles.following : undefined}
         onClick={handleToggleFollow}
-        busy={toggleLoading}
-        disabled={followLoading}
+        busy={pending || toggleLoading}
+        aria-label={pending ? "Loading follow status" : undefined}
       >
         <span className={styles.labels}>
-          <span className={isFollowing ? styles.inactiveLabel : styles.label}>
-            Follow
-          </span>
-          <span className={isFollowing ? styles.label : styles.inactiveLabel}>
-            Following
-          </span>
+          <span className={labelClass(!isFollowing)}>Follow</span>
+          <span className={labelClass(isFollowing)}>Following</span>
         </span>
       </Button>
 
