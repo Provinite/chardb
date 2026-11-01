@@ -73,7 +73,7 @@ const board = (
   candies: [
     {
       __typename: "HalloweenCandy" as const,
-      knockEventId: 1,
+      id: 1,
       slug: "candy-corn",
       receivedAt: "2026-10-20T00:00:00.000Z",
     },
@@ -92,9 +92,7 @@ const board = (
   })),
 });
 
-const boardsQuery = (
-  boards: ReturnType<typeof board>[] | null,
-): MockedResponse => ({
+const boardsQuery = (boards: ReturnType<typeof board>[]): MockedResponse => ({
   request: {
     query: MyHalloweenCandyBoardsDocument,
     variables: { communityId: COMMUNITY_ID },
@@ -167,6 +165,13 @@ describe("CommunityCandyBoardsPage", () => {
       await screen.findByRole("button", { name: "Create your first board" }),
     ).toBeInTheDocument();
     expect(screen.queryAllByRole("article")).toHaveLength(0);
+  });
+
+  it("says where candies come from to someone with none", async () => {
+    renderPage([boardsQuery([])]);
+    expect(
+      await screen.findByRole("link", { name: "Link your Discord account" }),
+    ).toHaveAttribute("href", "/profile/edit");
   });
 
   it("makes a new board, and opens it", async () => {
@@ -276,13 +281,6 @@ describe("CommunityCandyBoardsPage", () => {
 
     await waitFor(() => expect(deleted).toHaveBeenCalled());
     await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(1));
-  });
-
-  it("asks to link Discord first", async () => {
-    renderPage([boardsQuery(null)]);
-    expect(
-      await screen.findByRole("link", { name: "Link Discord" }),
-    ).toHaveAttribute("href", "/profile/edit");
   });
 
   it("says when the community has no Discord server", async () => {

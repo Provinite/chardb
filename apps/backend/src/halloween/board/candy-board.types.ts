@@ -1,10 +1,12 @@
 import { Field, Float, ID, InputType, Int, ObjectType } from "@nestjs/graphql";
 import { User } from "../../users/entities/user.entity";
 
-@ObjectType({ description: "A candy a player got from a lost knock" })
+@ObjectType({
+  description: "A candy a player got from a lost knock, or by trading",
+})
 export class HalloweenCandy {
-  @Field(() => Int, { description: "The knock that gave it; its id" })
-  knockEventId: number;
+  @Field(() => Int)
+  id: number;
 
   @Field({
     description:
@@ -24,7 +26,7 @@ export class HalloweenCandy {
 export class HalloweenSticker {
   @Field(() => Int, {
     nullable: true,
-    description: "A candy, by the knock that gave it",
+    description: "A candy, by its id",
   })
   candy?: number | null;
 
@@ -38,8 +40,8 @@ export class HalloweenSticker {
 @InputType({
   isOneOf: true,
   description:
-    "A sticker on your board: exactly one of a candy, by the knock that " +
-    "gave it, or the nameplate (true)",
+    "A sticker on your board: exactly one of a candy, by its id, or the " +
+    "nameplate (true)",
 })
 export class HalloweenStickerInput {
   @Field(() => Int, { nullable: true })

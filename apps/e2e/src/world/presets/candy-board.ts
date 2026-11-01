@@ -47,7 +47,7 @@ export default definePreset<CandyBoardWorld>({
     });
 
     const board = await ctx.prisma.halloweenCandyBoard.create({
-      data: { guildId: GUILD_ID, userId: PLAYER_DISCORD_ID },
+      data: { guildId: GUILD_ID, ownerId: player.userId },
     });
 
     const url = communityUrl(community.slug);

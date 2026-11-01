@@ -5,6 +5,7 @@ import {
   ArrowLeftRight,
   BarChart3,
   Candy,
+  Repeat,
   Users,
   User,
   Mail,
@@ -466,6 +467,14 @@ export const CommunityNavigationSidebar: React.FC<
                 to={`${communityBasePath}/halloween/board`}
                 icon={Candy}
                 label="Candy Boards"
+                isNested
+              />
+            )}
+            {community?.halloweenEnabled && (
+              <CommunityNavigationItem
+                to={`${communityBasePath}/halloween/swap`}
+                icon={Repeat}
+                label="Candy Swap"
                 isNested
               />
             )}

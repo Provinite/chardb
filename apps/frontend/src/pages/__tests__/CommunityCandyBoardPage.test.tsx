@@ -106,9 +106,9 @@ import {
 import type { BackgroundEffects } from "../../components/halloween/backgroundEffects";
 import type { BoardName } from "../../components/halloween/boardName";
 
-const candy = (knockEventId: number, slug: string) => ({
+const candy = (id: number, slug: string) => ({
   __typename: "HalloweenCandy" as const,
-  knockEventId,
+  id,
   slug,
   receivedAt: "2026-10-20T00:00:00.000Z",
 });

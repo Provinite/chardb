@@ -99,16 +99,16 @@ describe("pointOnBoard", () => {
 
 describe("trayGroups", () => {
   const candies = [
-    { knockEventId: 1, slug: "candy-corn" },
-    { knockEventId: 2, slug: "luther-head" },
-    { knockEventId: 3, slug: "candy-corn" },
-    { knockEventId: 4, slug: "banana" },
+    { id: 1, slug: "candy-corn" },
+    { id: 2, slug: "luther-head" },
+    { id: 3, slug: "candy-corn" },
+    { id: 4, slug: "banana" },
   ];
 
   it("groups the candies not on the board by slug, in order of their names", () => {
     expect(trayGroups(candies, [at(2)])).toEqual([
-      { slug: "banana", knockEventIds: [4] },
-      { slug: "candy-corn", knockEventIds: [1, 3] },
+      { slug: "banana", candyIds: [4] },
+      { slug: "candy-corn", candyIds: [1, 3] },
     ]);
   });
 

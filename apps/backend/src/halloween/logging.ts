@@ -52,6 +52,10 @@ export const HalloweenLogEvent = {
   CandyBoardSaved: "halloween.candy_board.saved",
   CandyBoardCreated: "halloween.candy_board.created",
   CandyBoardDeleted: "halloween.candy_board.deleted",
+  CandyOfferPlaced: "halloween.candy_swap.offer_placed",
+  CandyOfferCancelled: "halloween.candy_swap.offer_cancelled",
+  /** Candies changed hands; `matched` when an offer met its mirror. */
+  CandyTraded: "halloween.candy_swap.traded",
   WinChannelTested: "halloween.win_channel.tested",
   /** A win that stands, but never reached the win channel. */
   WinChannelPostFailed: "halloween.win_channel.post_failed",

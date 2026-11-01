@@ -36,7 +36,7 @@ export const BOARD_IMAGE_HEIGHT = 1800;
 
 /** Everything the board's picture is drawn from. */
 export interface BoardScene {
-  candies: readonly { knockEventId: number; slug: string }[];
+  candies: readonly { id: number; slug: string }[];
   placements: readonly Placement[];
   background: string | null | undefined;
   backgroundEffects: BackgroundEffects | null | undefined;
@@ -112,7 +112,7 @@ async function drawStickers(
   scene: BoardScene,
   load: LoadImage,
 ) {
-  const slugs = new Map(scene.candies.map((c) => [c.knockEventId, c.slug]));
+  const slugs = new Map(scene.candies.map((c) => [c.id, c.slug]));
   const ribbon = scene.name ? await loadRibbon() : null;
   const nameplate =
     scene.name && ribbon

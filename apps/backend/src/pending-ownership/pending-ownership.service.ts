@@ -13,6 +13,10 @@ import {
   Prisma,
 } from "@chardb/database";
 import { notDeleted } from "../common/utils/prisma-filters";
+import {
+  claimCandiesOnJoin,
+  claimCandiesOnLink,
+} from "../halloween/candies/candy-claims";
 import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
 
@@ -201,6 +205,7 @@ export class PendingOwnershipService {
     userId: string,
     communityId: string,
   ): Promise<PendingOwnership[]> {
+    await claimCandiesOnJoin(tx, userId, communityId);
     const linked = await tx.externalAccount.findMany({
       where: { userId },
       select: { provider: true, providerAccountId: true },
@@ -656,6 +661,9 @@ export class PendingOwnershipService {
   ): Promise<PendingOwnership[]> {
     // Use a transaction to ensure atomicity and prevent race conditions
     return this.prisma.$transaction(async (tx: Prisma.TransactionClient) => {
+      if (provider === ExternalAccountProvider.DISCORD) {
+        await claimCandiesOnLink(tx, userId, providerAccountId);
+      }
       // Query for unclaimed items INSIDE transaction to ensure consistent snapshot
       const pendingItems = await tx.pendingOwnership.findMany({
         where: { provider, providerAccountId, claimedAt: null },

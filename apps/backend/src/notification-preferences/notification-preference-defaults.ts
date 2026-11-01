@@ -29,6 +29,8 @@ export const NOTIFICATION_PREFERENCE_DEFAULTS = {
   // rejection is the one they have to do something about, so it does.
   [NotificationKind.IMAGE_APPROVED]: { inApp: true, email: false },
   [NotificationKind.IMAGE_REJECTED]: { inApp: true, email: true },
+
+  [NotificationKind.HALLOWEEN_CANDY_TRADED]: { inApp: true, email: false },
 } as const satisfies Record<
   NotificationKind,
   { inApp: boolean; email: boolean }

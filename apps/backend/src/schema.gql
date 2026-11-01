@@ -1556,10 +1556,9 @@ input GrantItemInput {
   userId: ID
 }
 
-"""A candy a player got from a lost knock"""
+"""A candy a player got from a lost knock, or by trading"""
 type HalloweenCandy {
-  """The knock that gave it; its id"""
-  knockEventId: Int!
+  id: Int!
   receivedAt: DateTime!
 
   """
@@ -1746,6 +1745,34 @@ input HalloweenCandyLightingInput {
   y: Float!
 }
 
+"""
+1-3 candies offered for one candy of `wantSlug`. Whose an offer is is not told: players find out whom they traded with once they have.
+"""
+type HalloweenCandyOffer {
+  """What is offered. Empty once the offer is no longer open."""
+  candies: [HalloweenCandy!]!
+  createdAt: DateTime!
+  id: ID!
+  status: HalloweenCandyOfferStatus!
+
+  """The kind of candy asked for, by its slug"""
+  wantSlug: String!
+}
+
+"""
+An offer just placed, and the trade it made straight away if it met its mirror: a one-for-one offer asking for what this one gives.
+"""
+type HalloweenCandyOfferPlaced {
+  offer: HalloweenCandyOffer!
+  trade: HalloweenCandyTradeRecord
+}
+
+enum HalloweenCandyOfferStatus {
+  CANCELLED
+  FILLED
+  OPEN
+}
+
 """Where a sticker sits on a board"""
 type HalloweenCandyPlacement {
   """Degrees clockwise, -180 to 180"""
@@ -1760,6 +1787,30 @@ type HalloweenCandyPlacement {
 
   """The candy's centre, as a fraction of the board's height, 0-1"""
   y: Float!
+}
+
+"""The candy swap's limits on offers"""
+type HalloweenCandySwapLimits {
+  """The most candies one offer may give"""
+  maxOfferedCandies: Int!
+
+  """The most offers one player may have open at once"""
+  maxOpenOffers: Int!
+}
+
+"""A candy swap you took part in, as you saw it"""
+type HalloweenCandyTradeRecord {
+  createdAt: DateTime!
+
+  """The slugs of the candies you gave"""
+  gave: [String!]!
+  id: ID!
+
+  """The slugs of the candies you got"""
+  received: [String!]!
+
+  """Whom you traded with. Null if their account is gone."""
+  with: User
 }
 
 """The Halloween event as staff see it"""
@@ -1851,7 +1902,7 @@ input HalloweenSettingsInput {
 What a placement on a board is: a candy, or the board's nameplate -- a banner with its name. Exactly one field is set.
 """
 type HalloweenSticker {
-  """A candy, by the knock that gave it"""
+  """A candy, by its id"""
   candy: Int
 
   """The board's nameplate, of which it has one"""
@@ -1859,7 +1910,7 @@ type HalloweenSticker {
 }
 
 """
-A sticker on your board: exactly one of a candy, by the knock that gave it, or the nameplate (true)
+A sticker on your board: exactly one of a candy, by its id, or the nameplate (true)
 """
 input HalloweenStickerInput @oneOf {
   candy: Int
@@ -2672,6 +2723,11 @@ input MoveCharactersToFolderInput {
 
 type Mutation {
   """
+  Fill another player's open offer: one of your spare candies of the wanted kind, the oldest not on a board or else the oldest, for everything it offers.
+  """
+  acceptHalloweenCandyOffer(communityId: ID!, offerId: ID!): HalloweenCandyTradeRecord!
+
+  """
   Accept and settle. Items, characters and coin move in one transaction across all three ledgers, or the whole accept fails.
   """
   acceptTrade(
@@ -2694,7 +2750,7 @@ type Mutation {
   ): Media!
 
   """
-  Apply changes to one of your boards, in order, and get it back as it now is. A change that cannot apply -- a candy not yours, not on the board, already on it, or placed off it -- is skipped, and the rest still apply. At most 100 changes at once. Needs Discord linked.
+  Apply changes to one of your boards, in order, and get it back as it now is. A change that cannot apply -- a candy not yours, not on the board, already on it, or placed off it -- is skipped, and the rest still apply. At most 100 changes at once.
   """
   applyHalloweenCandyBoardActions(actions: [HalloweenCandyBoardAction!]!, communityId: ID!, id: ID!): HalloweenCandyBoard!
 
@@ -2716,6 +2772,9 @@ type Mutation {
 
   """Cancel a running DeviantArt UUID backfill job."""
   cancelDeviantartUuidBackfill: Boolean!
+
+  """Withdraw one of your open offers, getting its candies back"""
+  cancelHalloweenCandyOffer(communityId: ID!, offerId: ID!): Boolean!
 
   """Withdraw an offer you sent."""
   cancelTrade(id: ID!): Trade!
@@ -2794,7 +2853,7 @@ type Mutation {
   createGallery(input: CreateGalleryInput!): Gallery!
 
   """
-  Make a new, empty candy board, which can use all of your candies. At most 10 each. Needs Discord linked.
+  Make a new, empty candy board, which can use all of your candies. At most 10 each.
   """
   createHalloweenCandyBoard(communityId: ID!): HalloweenCandyBoard!
 
@@ -2947,6 +3006,11 @@ type Mutation {
   File characters, unfile them, or move them between folders. Returns how many characters were affected.
   """
   moveCharactersToFolder(input: MoveCharactersToFolderInput!): Int!
+
+  """
+  Offer 1-3 of your candies, none of the wanted kind, for one candy of `wantSlug`. They are held until the offer is filled or cancelled. At most 10 open offers. A one-for-one offer that meets another player's mirror offer trades at once.
+  """
+  placeHalloweenCandyOffer(candyIds: [Int!]!, communityId: ID!, wantSlug: String!): HalloweenCandyOfferPlaced!
 
   """
   Compose an offer. Nothing is reserved: what it names is checked now so you are told early, and checked again decisively at accept.
@@ -3128,17 +3192,17 @@ type Mutation {
   setCommunityHalloweenEnabled(communityId: ID!, enabled: Boolean!): Community!
 
   """
-  Set the picture or tile behind the candies on one of your boards, by its slug, and how it is dimmed and tinted; a null slug goes back to none chosen, and null effects to neither. Needs Discord linked.
+  Set the picture or tile behind the candies on one of your boards, by its slug, and how it is dimmed and tinted; a null slug goes back to none chosen, and null effects to neither.
   """
   setHalloweenCandyBoardBackground(communityId: ID!, effects: HalloweenCandyBackgroundEffectsInput, id: ID!, slug: String): HalloweenCandyBoard!
 
   """
-  Put the light that casts the shadows on one of your boards; null goes back to the board's default light. Needs Discord linked.
+  Put the light that casts the shadows on one of your boards; null goes back to the board's default light.
   """
   setHalloweenCandyBoardLighting(communityId: ID!, id: ID!, lighting: HalloweenCandyLightingInput): HalloweenCandyBoard!
 
   """
-  Name one of your boards from the word lists in @chardb/shared; null leaves it unnamed. Needs Discord linked.
+  Name one of your boards from the word lists in @chardb/shared; null leaves it unnamed.
   """
   setHalloweenCandyBoardName(communityId: ID!, id: ID!, name: HalloweenCandyBoardNameInput): HalloweenCandyBoard!
 
@@ -3440,6 +3504,7 @@ enum NotificationKind {
   COMMENT_RECEIVED
   CURRENCY_RECEIVED
   FOLLOW_RECEIVED
+  HALLOWEEN_CANDY_TRADED
   IMAGE_APPROVED
   IMAGE_REJECTED
   ITEM_GRANTED
@@ -3474,6 +3539,7 @@ enum NotificationSubjectType {
   COMMENT
   CURRENCY
   GALLERY
+  HALLOWEEN_CANDY_TRADE
   IMAGE
   ITEM
   MEDIA
@@ -3880,6 +3946,17 @@ type Query {
   A Halloween candy board, by the id in its link. Null if there is no such board in this community's Discord server, or the community has none linked. An error if the community does not exist or has the Halloween event turned off.
   """
   halloweenCandyBoard(communityId: ID!, id: ID!): HalloweenCandyBoard
+  halloweenCandySwapLimits: HalloweenCandySwapLimits!
+
+  """
+  A random handful of other players' open candy offers that you have a spare candy of the wanted kind for. At most 50; 12 unless given.
+  """
+  halloweenCandySwapOffers(communityId: ID!, limit: Int): [HalloweenCandyOffer!]!
+
+  """
+  Every kind of Halloween candy, by slug: its image is /halloween/candy/<slug>.png on the frontend
+  """
+  halloweenCandyTypes: [String!]!
 
   """
   The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems.
@@ -4019,9 +4096,18 @@ type Query {
   myGalleries(filters: GalleryFiltersInput): GalleryConnection!
 
   """
-  Your Halloween candy boards here, the last changed first. Null without Discord linked, since candies belong to Discord players.
+  Your Halloween candies here that are not held in an offer, oldest first
   """
-  myHalloweenCandyBoards(communityId: ID!): [HalloweenCandyBoard!]
+  myHalloweenCandies(communityId: ID!): [HalloweenCandy!]!
+
+  """Your Halloween candy boards here, the last changed first."""
+  myHalloweenCandyBoards(communityId: ID!): [HalloweenCandyBoard!]!
+
+  """Your open candy offers here, newest first"""
+  myHalloweenCandyOffers(communityId: ID!): [HalloweenCandyOffer!]!
+
+  """The candy swaps you took part in here, newest first"""
+  myHalloweenCandyTrades(communityId: ID!): [HalloweenCandyTradeRecord!]!
 
   """Retrieves media owned by the current authenticated user"""
   myMedia(

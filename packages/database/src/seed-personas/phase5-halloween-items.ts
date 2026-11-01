@@ -36,9 +36,9 @@ export async function runPhase5(
   const member = users.get(PERSONAS.member.email);
   if (!member) throw new Error("Member persona missing");
 
-  // A Discord account Member already has is kept, and the board follows it:
-  // a board is its owner's by Discord id.
-  const discord = await prisma.externalAccount.upsert({
+  // A Discord account Member already has is kept. Candies reach them through
+  // it; the board is theirs as a chardb user.
+  await prisma.externalAccount.upsert({
     where: {
       provider_userId: {
         provider: ExternalAccountProvider.DISCORD,
@@ -54,14 +54,13 @@ export async function runPhase5(
     },
   });
 
-  const discordId = discord.providerAccountId;
   const existing = await prisma.halloweenCandyBoard.findFirst({
-    where: { guildId: GUILD_ID, userId: discordId },
+    where: { guildId: GUILD_ID, ownerId: member.id },
   });
   const board =
     existing ??
     (await prisma.halloweenCandyBoard.create({
-      data: { guildId: GUILD_ID, userId: discordId },
+      data: { guildId: GUILD_ID, ownerId: member.id },
     }));
   if (existing) log.skip("Member's candy board (exists)");
   else log.success("Member's candy board (created)");

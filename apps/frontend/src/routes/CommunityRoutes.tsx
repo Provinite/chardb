@@ -34,6 +34,7 @@ import {
   CommunityItemsAdminPage,
   CommunityHalloweenAdminPage,
   CommunityCandyBoardPage,
+  CommunityCandySwapPage,
   CommunityCandyBoardsPage,
   CommunityColorPalettePage,
   CommunityInventoryPage,
@@ -125,6 +126,14 @@ export const communityRoutes = (
     <Route
       path="/halloween/board/:boardId"
       element={<CommunityCandyBoardPage />}
+    />
+    <Route
+      path="/halloween/swap"
+      element={
+        <ProtectedRoute>
+          <CommunityCandySwapPage />
+        </ProtectedRoute>
+      }
     />
 
     {/* --- characters. A character reaches its community through its species,

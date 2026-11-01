@@ -1,4 +1,5 @@
 import candyBoard from "./candy-board.js";
+import candySwap from "./candy-swap.js";
 import communityBasic from "./community-basic.js";
 import communityItems from "./community-items.js";
 import emailVerification from "./email-verification.js";
@@ -10,6 +11,7 @@ import type { PresetDef } from "../types.js";
  */
 export const PRESETS = {
   "candy-board": candyBoard,
+  "candy-swap": candySwap,
   "community-basic": communityBasic,
   "community-items": communityItems,
   "email-verification": emailVerification,

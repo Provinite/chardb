@@ -125,8 +125,8 @@ const W = BOARD_IMAGE_WIDTH;
 
 const scene = (changes: Partial<BoardScene> = {}): BoardScene => ({
   candies: [
-    { knockEventId: 1, slug: "candy-corn" },
-    { knockEventId: 2, slug: "luther-head" },
+    { id: 1, slug: "candy-corn" },
+    { id: 2, slug: "luther-head" },
   ],
   placements: [
     { sticker: { candy: 1 }, x: 0.25, y: 0.5, rotation: 0, scale: 1 },

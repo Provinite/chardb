@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Candy swap page** (`/halloween/swap`) for offering candies, taking other players' offers and seeing whom you traded with (#535).
+
 ### Changed
 
 - **Busy buttons keep their label and show a spinner**, and every button is a 44px target on touch screens; confirm dialogs open as `Dialog`s with focus inside them (#503).

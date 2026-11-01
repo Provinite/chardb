@@ -203,6 +203,10 @@ export const CommunityCandyBoardPage = lazyPage(
   () => import("../pages/CommunityCandyBoardPage"),
   "CommunityCandyBoardPage",
 );
+export const CommunityCandySwapPage = lazyPage(
+  () => import("../pages/CommunityCandySwapPage"),
+  "CommunityCandySwapPage",
+);
 export const CommunityMembersPage = lazyPage(
   () => import("../pages/CommunityMembersPage"),
   "CommunityMembersPage",

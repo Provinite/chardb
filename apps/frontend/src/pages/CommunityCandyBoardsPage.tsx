@@ -226,17 +226,7 @@ export const CommunityCandyBoardsPage: React.FC = () => {
       </Container>
     );
   }
-  const boards = data?.myHalloweenCandyBoards;
-  if (!boards) {
-    return (
-      <Container>
-        <Message>
-          Link your Discord account to collect candies here.{" "}
-          <Link to="/profile/edit">Link Discord</Link>
-        </Message>
-      </Container>
-    );
-  }
+  const boards = data?.myHalloweenCandyBoards ?? [];
 
   const makeBoard = async () => {
     if (!communityId) return;
@@ -278,10 +268,16 @@ export const CommunityCandyBoardsPage: React.FC = () => {
             <CandyIcon size={28} aria-hidden />
             Your candy boards
           </Title>
-          {collection !== undefined && (
+          {collection ? (
             <Meta>
               Every board can use all {collection}{" "}
               {collection === 1 ? "candy" : "candies"} you've collected
+            </Meta>
+          ) : (
+            <Meta>
+              Knock on Discord to collect candies.{" "}
+              <Link to="/profile/edit">Link your Discord account</Link> if you
+              haven't.
             </Meta>
           )}
         </div>
