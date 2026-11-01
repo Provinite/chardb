@@ -253,11 +253,11 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
             </ButtonLink>
           )}
           {hasMore && showViewAll && (
-            <Link to={`/character/${characterId}/media`}>
-              <Button tone="ghost" size="sm">
+            <ButtonLink tone="ghost" size="sm">
+              <Link to={`/character/${characterId}/media`}>
                 View All ({totalCount})
-              </Button>
-            </Link>
+              </Link>
+            </ButtonLink>
           )}
         </HeaderActions>
       </GalleryHeader>
@@ -318,11 +318,11 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
             {loading ? "Loading…" : "Load more"}
           </Button>
           {showViewAll && (
-            <Link to={`/character/${characterId}/media`}>
-              <Button tone="primary" size="md">
+            <ButtonLink tone="primary" size="md">
+              <Link to={`/character/${characterId}/media`}>
                 View All Media ({totalCount})
-              </Button>
-            </Link>
+              </Link>
+            </ButtonLink>
           )}
         </ViewAllContainer>
       )}
