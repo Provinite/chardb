@@ -1529,14 +1529,14 @@ export enum HalloweenPrizeDelivery {
 /** A prize in the Halloween pool as anyone may see it: no draw weight */
 export type HalloweenPrizeListing = {
   __typename?: 'HalloweenPrizeListing';
-  characterId: Maybe<Scalars['String']['output']>;
   currentStock: Scalars['Int']['output'];
   id: Scalars['ID']['output'];
   /** The URL staff gave, or a chardb prize's own approved item or character image */
   image: Maybe<Scalars['String']['output']>;
   initialStock: Scalars['Int']['output'];
-  itemTypeId: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
+  /** The item type or character the prize hands over, on the community's host; null for a prize staff hand over themselves */
+  url: Maybe<Scalars['String']['output']>;
 };
 
 /** A prize in the guild's pool */
@@ -1632,7 +1632,7 @@ export type HalloweenWinner = {
   __typename?: 'HalloweenWinner';
   displayName: Scalars['String']['output'];
   kind: HalloweenWinnerKind;
-  /** A chardb profile path for a MEMBER, a Discord profile URL for DISCORD */
+  /** The chardb profile of a MEMBER, the Discord profile of a DISCORD winner; null for ANONYMOUS */
   url: Maybe<Scalars['String']['output']>;
   /** Set only for a MEMBER */
   user: Maybe<User>;
@@ -6439,14 +6439,14 @@ export type SetHalloweenCandyBoardBackgroundMutationVariables = Exact<{
 
 export type SetHalloweenCandyBoardBackgroundMutation = { __typename?: 'Mutation', setHalloweenCandyBoardBackground: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
 
-export type HalloweenPrizeListingFieldsFragment = { __typename?: 'HalloweenPrizeListing', id: string, name: string, image: string | null, initialStock: number, currentStock: number, itemTypeId: string | null, characterId: string | null };
+export type HalloweenPrizeListingFieldsFragment = { __typename?: 'HalloweenPrizeListing', id: string, name: string, image: string | null, initialStock: number, currentStock: number, url: string | null };
 
 export type HalloweenPrizeListQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
 
 
-export type HalloweenPrizeListQuery = { __typename?: 'Query', halloweenPrizes: Array<{ __typename?: 'HalloweenPrizeListing', id: string, name: string, image: string | null, initialStock: number, currentStock: number, itemTypeId: string | null, characterId: string | null }>, halloweenRecentWins: Array<{ __typename?: 'HalloweenPublicWin', id: number, time: string, prize: { __typename?: 'HalloweenPrizeListing', id: string, name: string, image: string | null, initialStock: number, currentStock: number, itemTypeId: string | null, characterId: string | null }, winner: { __typename?: 'HalloweenWinner', kind: HalloweenWinnerKind, displayName: string, url: string | null } }> };
+export type HalloweenPrizeListQuery = { __typename?: 'Query', halloweenPrizes: Array<{ __typename?: 'HalloweenPrizeListing', id: string, name: string, image: string | null, initialStock: number, currentStock: number, url: string | null }>, halloweenRecentWins: Array<{ __typename?: 'HalloweenPublicWin', id: number, time: string, prize: { __typename?: 'HalloweenPrizeListing', id: string, name: string, image: string | null, initialStock: number, currentStock: number, url: string | null }, winner: { __typename?: 'HalloweenWinner', kind: HalloweenWinnerKind, displayName: string, url: string | null } }> };
 
 export type ImageModerationQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -7870,8 +7870,7 @@ export const HalloweenPrizeListingFieldsFragmentDoc = gql`
   image
   initialStock
   currentStock
-  itemTypeId
-  characterId
+  url
 }
     `;
 export const ModerationQueueMediaFieldsFragmentDoc = gql`

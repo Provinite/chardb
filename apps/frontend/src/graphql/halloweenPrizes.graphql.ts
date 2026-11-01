@@ -7,8 +7,7 @@ export const HALLOWEEN_PRIZE_LISTING_FRAGMENT = gql`
     image
     initialStock
     currentStock
-    itemTypeId
-    characterId
+    url
   }
 `;
 

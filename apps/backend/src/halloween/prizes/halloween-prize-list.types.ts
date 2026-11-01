@@ -37,11 +37,13 @@ export class HalloweenPrizeListing {
   @Field(() => Int)
   currentStock: number;
 
-  @Field(() => String, { nullable: true })
-  itemTypeId: string | null;
-
-  @Field(() => String, { nullable: true })
-  characterId: string | null;
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "The item type or character the prize hands over, on the community's " +
+      "host; null for a prize staff hand over themselves",
+  })
+  url: string | null;
 }
 
 @ObjectType({
@@ -58,7 +60,8 @@ export class HalloweenWinner {
   @Field(() => String, {
     nullable: true,
     description:
-      "A chardb profile path for a MEMBER, a Discord profile URL for DISCORD",
+      "The chardb profile of a MEMBER, the Discord profile of a DISCORD " +
+      "winner; null for ANONYMOUS",
   })
   url: string | null;
 

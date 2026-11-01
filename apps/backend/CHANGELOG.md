@@ -16,6 +16,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`/prize list` links the prize list on chardb** instead of listing 20 random prizes.
 
+### Fixed
+
+- **`/adminknock` records the player's own Discord names on what they win**, not the admin's.
+
 ## [v15.2.0] - 2026-11-01
 
 ### Added

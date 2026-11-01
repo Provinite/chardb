@@ -1,11 +1,10 @@
 import { Args, ID, Int, Query, Resolver } from "@nestjs/graphql";
-import { PermissionService } from "../../auth/PermissionService";
 import { AllowUnauthenticated } from "../../auth/decorators/AllowUnauthenticated";
 import {
   CurrentUser,
   type CurrentUserType,
 } from "../../auth/decorators/CurrentUser";
-import { CommunityPermission } from "../../auth/CommunityPermission";
+import { HalloweenStaffAccess } from "../dashboard/halloween-staff-access";
 import { HalloweenPrizeListService } from "./halloween-prize-list.service";
 import {
   HalloweenPrizeListing,
@@ -17,7 +16,7 @@ import {
 export class HalloweenPrizeListResolver {
   constructor(
     private readonly prizeList: HalloweenPrizeListService,
-    private readonly permissions: PermissionService,
+    private readonly staffAccess: HalloweenStaffAccess,
   ) {}
 
   @AllowUnauthenticated()
@@ -47,26 +46,7 @@ export class HalloweenPrizeListResolver {
     return this.prizeList.recentWins(
       communityId,
       limit ?? undefined,
-      user ? await this.isItemStaff(user.id, communityId) : false,
+      user ? await this.staffAccess.isStaff(user.id, communityId) : false,
     );
-  }
-
-  private async isItemStaff(
-    userId: string,
-    communityId: string,
-  ): Promise<boolean> {
-    const [canGrant, canManage] = await Promise.all([
-      this.permissions.hasCommunityPermission(
-        userId,
-        communityId,
-        CommunityPermission.CanGrantItems,
-      ),
-      this.permissions.hasCommunityPermission(
-        userId,
-        communityId,
-        CommunityPermission.CanManageItems,
-      ),
-    ]);
-    return canGrant || canManage;
   }
 }

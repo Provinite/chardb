@@ -9,8 +9,8 @@ export interface PrizeListing {
   image?: string | null;
   initialStock: number;
   currentStock: number;
-  itemTypeId?: string | null;
-  characterId?: string | null;
+  /** What it hands over on chardb; null for a prize staff hand over. */
+  url?: string | null;
 }
 
 export type WinnerKind = "MEMBER" | "DISCORD" | "ANONYMOUS";
@@ -37,7 +37,7 @@ export interface PrizeListViewProps {
   wins: PublicWin[] | null;
   /** What the wins' times are counted back from. */
   now: Date;
-  /** Renders a link to a page on this site. */
+  /** Renders a link to a page anywhere on this site, from its full URL. */
   LinkComponent: React.ComponentType<PrizeLinkProps>;
 }
 
@@ -48,13 +48,6 @@ const placeholders = (n: number, className: string) =>
   Array.from({ length: n }, (_, i) => (
     <li key={i} className={className} aria-hidden="true" />
   ));
-
-const chardbPath = (prize: PrizeListing): string | null =>
-  prize.itemTypeId
-    ? `/item-types/${prize.itemTypeId}`
-    : prize.characterId
-      ? `/character/${prize.characterId}`
-      : null;
 
 const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
   ["day", 86_400],
@@ -99,7 +92,6 @@ const PrizeCard: React.FC<{
   LinkComponent: React.ComponentType<PrizeLinkProps>;
 }> = ({ prize, LinkComponent }) => {
   const won = prize.currentStock <= 0;
-  const path = chardbPath(prize);
   return (
     <li className={styles.card}>
       <PrizePicture prize={prize} won={won} />
@@ -112,9 +104,9 @@ const PrizeCard: React.FC<{
             {prize.currentStock} of {prize.initialStock} left
           </p>
         )}
-        {path && (
+        {prize.url && (
           <LinkComponent
-            to={path}
+            to={prize.url}
             className={styles.link}
             aria-label={`View ${prize.name} on chardb`}
           >

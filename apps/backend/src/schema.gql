@@ -1891,7 +1891,6 @@ enum HalloweenPrizeDelivery {
 
 """A prize in the Halloween pool as anyone may see it: no draw weight"""
 type HalloweenPrizeListing {
-  characterId: String
   currentStock: Int!
   id: ID!
 
@@ -1900,8 +1899,12 @@ type HalloweenPrizeListing {
   """
   image: String
   initialStock: Int!
-  itemTypeId: String
   name: String!
+
+  """
+  The item type or character the prize hands over, on the community's host; null for a prize staff hand over themselves
+  """
+  url: String
 }
 
 """A prize in the guild's pool"""
@@ -2014,7 +2017,9 @@ type HalloweenWinner {
   displayName: String!
   kind: HalloweenWinnerKind!
 
-  """A chardb profile path for a MEMBER, a Discord profile URL for DISCORD"""
+  """
+  The chardb profile of a MEMBER, the Discord profile of a DISCORD winner; null for ANONYMOUS
+  """
   url: String
 
   """Set only for a MEMBER"""

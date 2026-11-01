@@ -13,14 +13,22 @@ const NOW = "2025-10-15T17:00:00.000Z";
 
 const GUILD = "100000000000000001";
 const OTHER_GUILD = "100000000000000002";
-/** Unlinked; the knock recorded their Discord handle. */
+/** Unlinked; won a staff prize, whose award has their Discord handle. */
 const NAMED_WINNER = "200000000000000001";
 /** Linked to a chardb account. */
 const LINKED_WINNER = "200000000000000002";
-/** Unlinked, from before knocks recorded names; a pending ownership has it. */
+/** Unlinked; won a chardb prize, so only its pending owner has their handle. */
 const PENDING_WINNER = "200000000000000003";
-/** Unlinked, with no name stored anywhere. */
+/** Unlinked; won a staff prize whose award has no handle. */
 const NAMELESS_WINNER = "200000000000000004";
+
+/** A path on the site, as the backend's configured address builds it. */
+const siteUrl = (communitySlug: string | null, path: string) => {
+  const { protocol, port } = new URL(process.env.FRONTEND_URL as string);
+  const root = process.env.ROOT_DOMAIN as string;
+  const host = communitySlug ? `${communitySlug}.${root}` : root;
+  return `${protocol}//${host}${port ? `:${port}` : ""}${path}`;
+};
 
 const PRIZES = `
   query Prizes($communityId: ID!) {
@@ -30,8 +38,7 @@ const PRIZES = `
       image
       initialStock
       currentStock
-      itemTypeId
-      characterId
+      url
     }
   }
 `;
@@ -56,6 +63,7 @@ describe("Halloween prize list (e2e)", () => {
   let testApp: TestApp;
   let db: DatabaseService;
   let communityId: string;
+  let communitySlug: string;
   let staffToken: string;
   let managerToken: string;
   let memberToken: string;
@@ -86,6 +94,7 @@ describe("Halloween prize list (e2e)", () => {
 
     const community = await testApp.createTestCommunity();
     communityId = community.id;
+    communitySlug = community.slug;
     await db.community.update({
       where: { id: communityId },
       data: { discordGuildId: GUILD, halloweenEnabled: true },
@@ -308,8 +317,8 @@ describe("Halloween prize list (e2e)", () => {
           image: "https://cdn.test/candy/medium.webp",
           initialStock: 5,
           currentStock: 4,
-          itemTypeId,
-          characterId: null,
+          // On the community's host, as Discord's links are.
+          url: siteUrl(communitySlug, `/item-types/${itemTypeId}`),
         },
         {
           id: "adopt",
@@ -317,8 +326,7 @@ describe("Halloween prize list (e2e)", () => {
           image: "https://i.test/adopt.png",
           initialStock: 2,
           currentStock: 1,
-          itemTypeId: null,
-          characterId: null,
+          url: null,
         },
         {
           id: "ghost",
@@ -326,8 +334,7 @@ describe("Halloween prize list (e2e)", () => {
           image: "https://i.test/ghost.png",
           initialStock: 1,
           currentStock: 0,
-          itemTypeId: null,
-          characterId: null,
+          url: null,
         },
       ]);
     });
@@ -384,7 +391,7 @@ describe("Halloween prize list (e2e)", () => {
           winner: {
             kind: "MEMBER",
             displayName: linkedUsername,
-            url: `/user/${linkedUsername}`,
+            url: siteUrl(null, `/user/${linkedUsername}`),
             user: { id: linkedUserId, username: linkedUsername },
           },
         }),
@@ -436,7 +443,7 @@ describe("Halloween prize list (e2e)", () => {
       ["canGrantItems", () => staffToken],
       ["canManageItems", () => managerToken],
     ])(
-      "shows staff with %s the Discord handle of an unlinked winner",
+      "shows staff with %s an unlinked winner's Discord, and their handle from a staff award",
       async (_permission, token) => {
         const res = await testApp.authenticatedGraphqlRequest(
           RECENT_WINS,
@@ -452,20 +459,21 @@ describe("Halloween prize list (e2e)", () => {
         ).toEqual([
           {
             kind: "DISCORD",
-            displayName: `Discord user ${NAMELESS_WINNER}`,
+            displayName: "A Discord user",
             url: `https://discord.com/users/${NAMELESS_WINNER}`,
             user: null,
           },
+          // A chardb prize has no award: the feed does not go looking.
           {
             kind: "DISCORD",
-            displayName: "oldhandle",
+            displayName: "A Discord user",
             url: `https://discord.com/users/${PENDING_WINNER}`,
             user: null,
           },
           {
             kind: "MEMBER",
             displayName: linkedUsername,
-            url: `/user/${linkedUsername}`,
+            url: siteUrl(null, `/user/${linkedUsername}`),
             user: { id: linkedUserId, username: linkedUsername },
           },
           {

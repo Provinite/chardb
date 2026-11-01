@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
-import { apexUrl } from "../lib/communityHost";
 import {
   useCommunityId,
   useHostCommunity,
@@ -47,19 +46,9 @@ export const CommunityHalloweenPrizesPage: React.FC = () => {
     return <p>{error.message}</p>;
   }
 
-  // Profiles live on the apex; a member's link goes there.
   const wins: PublicWin[] | null =
-    data?.halloweenRecentWins.map((w) => ({
-      ...w,
-      time: String(w.time),
-      winner: {
-        ...w.winner,
-        url:
-          w.winner.kind === "MEMBER" && w.winner.url
-            ? apexUrl(w.winner.url)
-            : w.winner.url,
-      },
-    })) ?? null;
+    data?.halloweenRecentWins.map((w) => ({ ...w, time: String(w.time) })) ??
+    null;
 
   return (
     <PrizeListView

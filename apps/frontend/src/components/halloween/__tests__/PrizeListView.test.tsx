@@ -21,8 +21,7 @@ const candy: PrizeListing = {
   image: "https://cdn.test/candy.webp",
   initialStock: 5,
   currentStock: 4,
-  itemTypeId: "it-1",
-  characterId: null,
+  url: "https://hollow.chardb.test/item-types/it-1",
 };
 const ghost: PrizeListing = {
   id: "ghost",
@@ -30,8 +29,7 @@ const ghost: PrizeListing = {
   image: null,
   initialStock: 1,
   currentStock: 0,
-  itemTypeId: null,
-  characterId: "ch-1",
+  url: "https://hollow.chardb.test/character/ch-1",
 };
 const adopt: PrizeListing = {
   id: "adopt",
@@ -39,8 +37,7 @@ const adopt: PrizeListing = {
   image: "https://i.test/adopt.png",
   initialStock: 2,
   currentStock: 1,
-  itemTypeId: null,
-  characterId: null,
+  url: null,
 };
 
 const win = (
@@ -74,17 +71,17 @@ describe("PrizeListView", () => {
     expect(within(items[1]).getByText("1 of 2 left")).toBeInTheDocument();
   });
 
-  it("links a chardb prize to its item type or character", () => {
+  it("links a chardb prize where the server says it lives", () => {
     renderView([candy, ghost, adopt], []);
     const items = within(
       screen.getByRole("list", { name: "Prizes" }),
     ).getAllByRole("listitem");
     expect(
       within(items[0]).getByRole("link", { name: "View Candy Corn on chardb" }),
-    ).toHaveAttribute("href", "/item-types/it-1");
+    ).toHaveAttribute("href", "https://hollow.chardb.test/item-types/it-1");
     expect(
       within(items[1]).getByRole("link", { name: "View A Ghost on chardb" }),
-    ).toHaveAttribute("href", "/character/ch-1");
+    ).toHaveAttribute("href", "https://hollow.chardb.test/character/ch-1");
     expect(within(items[2]).queryByRole("link")).not.toBeInTheDocument();
   });
 
@@ -109,7 +106,7 @@ describe("PrizeListView", () => {
         win(3, candy, {
           kind: "MEMBER",
           displayName: "pumpkin",
-          url: "/user/pumpkin",
+          url: "https://chardb.test/user/pumpkin",
         }),
         win(
           2,
@@ -134,7 +131,7 @@ describe("PrizeListView", () => {
 
     expect(
       within(member).getByRole("link", { name: "pumpkin" }),
-    ).toHaveAttribute("href", "/user/pumpkin");
+    ).toHaveAttribute("href", "https://chardb.test/user/pumpkin");
     expect(within(member).getByText("Candy Corn")).toBeInTheDocument();
     expect(within(member).getByText("5 minutes ago")).toBeInTheDocument();
 
