@@ -110,8 +110,12 @@ describe("forecastRunOut", () => {
 
   it("never runs out without wins or knocks", () => {
     const base = { stock: 5, runs: 10, rng: seeded(1) };
-    expect(forecastRunOut({ ...base, winRate: 0, knocksPerDay: 10 })).toBeNull();
-    expect(forecastRunOut({ ...base, winRate: 0.1, knocksPerDay: 0 })).toBeNull();
+    expect(
+      forecastRunOut({ ...base, winRate: 0, knocksPerDay: 10 }),
+    ).toBeNull();
+    expect(
+      forecastRunOut({ ...base, winRate: 0.1, knocksPerDay: 0 }),
+    ).toBeNull();
   });
 
   it("has already run out with no stock", () => {

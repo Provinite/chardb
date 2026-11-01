@@ -3,6 +3,24 @@ import { knockWins, pickWeighted, prizeDrawWeight } from "@chardb/shared";
 /** A number in [0, 1), as `Math.random` gives. */
 export type Rng = () => number;
 
+/** Players a day the forecast assumes until anyone has knocked. */
+export const DEFAULT_PLAYERS_PER_DAY = 175;
+
+/** Gifties a player sends a day the forecast assumes with nothing measured. */
+export const DEFAULT_GIFTY_SEND_RATE = 0.5;
+
+export interface PeriodStats {
+  players: number;
+  knocks: number;
+  wins: number;
+  giftiesSent: number;
+  giftySenders: number;
+}
+
+/** The share of a period's players who sent a gifty, or null with none. */
+export const giftySendRate = (period: PeriodStats | null): number | null =>
+  period && period.players > 0 ? period.giftySenders / period.players : null;
+
 interface Drawable {
   currentStock: number;
   weight: number;
@@ -124,10 +142,7 @@ export function histogram(
   const last = Math.floor(quantile(sorted, 1 - tail) / width);
   const counts = new Array<number>(last - first + 1).fill(0);
   for (const value of sorted) {
-    const index = Math.min(
-      Math.max(Math.floor(value / width), first),
-      last,
-    );
+    const index = Math.min(Math.max(Math.floor(value / width), first), last);
     counts[index - first]++;
   }
   return counts.map((count, i) => ({ from: (first + i) * width, count }));

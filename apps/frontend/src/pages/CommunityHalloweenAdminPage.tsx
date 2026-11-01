@@ -9,6 +9,11 @@ import { ConfirmDialog } from "../components/ConfirmDialog";
 import { FilterChip, FilterChips } from "../components/FilterChip";
 import { HalloweenSettingsForm } from "../components/halloween/HalloweenSettingsForm";
 import { HalloweenPrizeForm } from "../components/halloween/HalloweenPrizeForm";
+import {
+  HalloweenEventStats,
+  HalloweenRunOutForecast,
+  HalloweenSimulators,
+} from "../components/halloween/HalloweenEventInsights";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
 import {
   useCommunityId,
@@ -95,30 +100,6 @@ const RowActions = styled.div`
   display: flex;
   gap: 0.4rem;
   justify-content: flex-end;
-`;
-
-const Stats = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
-  gap: 0.75rem;
-`;
-
-const Stat = styled.div`
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 12px;
-  background: ${({ theme }) => theme.colors.surface};
-  padding: 0.75rem 1rem;
-`;
-
-const StatValue = styled.div`
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const StatLabel = styled.div`
-  font-size: 0.8125rem;
-  color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const SettingsList = styled.dl`
@@ -431,28 +412,23 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
         )
       ) : (
         <>
-          <Stats data-testid="halloween-summary">
-            <Stat>
-              <StatValue>{summary.knocks}</StatValue>
-              <StatLabel>Knocks</StatLabel>
-            </Stat>
-            <Stat>
-              <StatValue>{summary.wins}</StatValue>
-              <StatLabel>Wins</StatLabel>
-            </Stat>
-            <Stat>
-              <StatValue>{summary.players}</StatValue>
-              <StatLabel>Players</StatLabel>
-            </Stat>
-            <Stat>
-              <StatValue>{summary.giftiesSent}</StatValue>
-              <StatLabel>Gifties sent</StatLabel>
-            </Stat>
-            <Stat>
-              <StatValue>{summary.toDeliver}</StatValue>
-              <StatLabel>To deliver</StatLabel>
-            </Stat>
-          </Stats>
+          <HalloweenEventStats summary={summary} prizes={dashboard.prizes} />
+          <SectionTitle>Simulators</SectionTitle>
+          <HalloweenSimulators
+            prizes={dashboard.prizes}
+            winRate={settings.winRate}
+            candySlugs={data?.halloweenCandyTypes ?? []}
+          />
+          <HalloweenRunOutForecast
+            key={`${settings.winRate}`}
+            prizes={dashboard.prizes}
+            winRate={settings.winRate}
+            knocksPerDay={settings.knocksPerDay}
+            last24Hours={summary.last24Hours}
+            yesterday={summary.yesterday ?? null}
+            endDate={settings.endDate ?? null}
+            now={new Date()}
+          />
           <SectionHeader>
             <SectionTitle>Settings</SectionTitle>
             {canManage && !editingSettings && (
