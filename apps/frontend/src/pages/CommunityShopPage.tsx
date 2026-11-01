@@ -9,7 +9,7 @@ import {
   Check,
   AlertTriangle,
 } from "lucide-react";
-import { Button, Sidebar, Stack } from "@chardb/ui";
+import { Button, Sidebar, Stack, Toggletip } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -617,23 +617,25 @@ export const CommunityShopPage: React.FC = () => {
                     )}
                     <Prices>
                       {item.prices.map((price) => (
-                        <PriceButton
-                          key={price.id}
-                          $affordable={price.affordable}
-                          disabled={soldOut || capped}
-                          // Every reason it cannot be acted on, not only the
-                          // one that leaves the button enabled. A button
-                          // disabled by stock or by the cap used to explain
-                          // nothing at all on hover.
-                          title={
-                            blockedReason(item, price.affordable) ?? undefined
-                          }
-                          onClick={() => cart.add(item.id, price.id)}
-                          data-testid={`shop-price-${price.id}`}
-                        >
-                          <span>{formatPrice(price.components)}</span>
-                          <span>+</span>
-                        </PriceButton>
+                        <React.Fragment key={price.id}>
+                          <PriceButton
+                            $affordable={price.affordable}
+                            disabled={soldOut || capped}
+                            onClick={() => cart.add(item.id, price.id)}
+                            data-testid={`shop-price-${price.id}`}
+                          >
+                            <span>{formatPrice(price.components)}</span>
+                            <span>+</span>
+                          </PriceButton>
+                          {/* Sold out and capped are said in the card's
+                              notice below; a price out of reach is not, and
+                              its button stays enabled. */}
+                          {!cardReason && !price.affordable && (
+                            <Toggletip label="Why this price is out of reach">
+                              {blockedReason(item, false)}
+                            </Toggletip>
+                          )}
+                        </React.Fragment>
                       ))}
                     </Prices>
                     {cardReason && (
@@ -742,8 +744,13 @@ export const CommunityShopPage: React.FC = () => {
                     ) : (
                       // The server says why, so the reason is never a guess
                       // made from a timestamp on this side.
-                      <Muted title={line.refundBlockedReason ?? undefined}>
+                      <Muted>
                         {line.refundedAt ? <Check size={14} /> : "—"}
+                        {line.refundBlockedReason && (
+                          <Toggletip label="Why it cannot be undone">
+                            {line.refundBlockedReason}
+                          </Toggletip>
+                        )}
                       </Muted>
                     )}
                   </PurchaseRow>

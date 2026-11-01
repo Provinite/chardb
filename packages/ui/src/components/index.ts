@@ -22,6 +22,8 @@ export * from "./RadioGroup";
 export * from "./Alert";
 export * from "./Menu";
 export * from "./TopProgressBar";
+export * from "./Tooltip";
+export * from "./Toggletip";
 
 import { DialogRoot, DialogTitle } from "./Dialog";
 import {

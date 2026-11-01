@@ -390,7 +390,7 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
                   // Said rather than left blank: the difference between "this
                   // is too old" and "this is already refunded" is exactly what
                   // the reporter could not tell.
-                  <Muted title={line.refundBlockedReason ?? undefined}>
+                  <Muted>
                     {line.refundedAt ? (
                       <>
                         <Check size={13} /> Refunded

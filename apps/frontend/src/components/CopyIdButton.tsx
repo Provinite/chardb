@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { toast } from "react-hot-toast";
+import { Tooltip } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 
 const Button = styled.button`
@@ -59,8 +60,10 @@ export const CopyIdButton: React.FC<CopyIdButtonProps> = ({
   };
 
   return (
-    <Button onClick={handleClick} title="Copy ID" className={className}>
-      {label}
-    </Button>
+    <Tooltip label="Copy ID">
+      <Button onClick={handleClick} aria-label="Copy ID" className={className}>
+        {label}
+      </Button>
+    </Tooltip>
   );
 };

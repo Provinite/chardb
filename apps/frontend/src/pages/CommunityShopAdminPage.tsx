@@ -3,7 +3,7 @@ import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import { Store, Plus, Edit2, EyeOff, Eye, X } from "lucide-react";
-import { Button, Stack, Switcher } from "@chardb/ui";
+import { Button, Stack, Switcher, Toggletip, Tooltip } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
@@ -531,23 +531,36 @@ export const CommunityShopAdminPage: React.FC = () => {
                     <Td>
                       {canManage && (
                         <Actions>
-                          <IconButton onClick={() => open(item)}>
-                            <Edit2 size={14} />
-                          </IconButton>
-                          <IconButton
-                            onClick={() => toggleActive(item)}
-                            title={
-                              item.active
-                                ? "Hide from members. Past purchases keep their meaning."
-                                : "Show to members again"
-                            }
+                          <Tooltip
+                            label={`Edit ${item.name || item.itemType.name}`}
                           >
-                            {item.active ? (
-                              <EyeOff size={14} />
-                            ) : (
-                              <Eye size={14} />
-                            )}
-                          </IconButton>
+                            <IconButton
+                              onClick={() => open(item)}
+                              aria-label={`Edit ${item.name || item.itemType.name}`}
+                            >
+                              <Edit2 size={14} aria-hidden />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip
+                            label={`${item.active ? "Hide" : "Show"} ${item.name || item.itemType.name}`}
+                          >
+                            <IconButton
+                              onClick={() => toggleActive(item)}
+                              aria-label={`${item.active ? "Hide" : "Show"} ${item.name || item.itemType.name}`}
+                            >
+                              {item.active ? (
+                                <EyeOff size={14} aria-hidden />
+                              ) : (
+                                <Eye size={14} aria-hidden />
+                              )}
+                            </IconButton>
+                          </Tooltip>
+                          {item.active && (
+                            <Toggletip label="What hiding does">
+                              Hidden items leave the shop for members. Past
+                              purchases keep their meaning.
+                            </Toggletip>
+                          )}
                         </Actions>
                       )}
                     </Td>

@@ -4,11 +4,13 @@
  */
 import { describe, it, expect, vi } from "vitest";
 import { fireEvent, render, screen, within } from "@testing-library/react";
+import { findTooltip } from "../../../__tests__/findTooltip";
 import userEvent from "@testing-library/user-event";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
 import { MantineProvider } from "@mantine/core";
 import { LightingControl } from "../LightingControl";
+import * as styles from "../LightingControl.css";
 import { DEFAULT_LIGHTING, type Lighting } from "../candyLighting";
 
 // jsdom has no PointerEvent, and without one a fired pointer event carries no
@@ -179,8 +181,11 @@ describe("LightingControl", () => {
     const pool = screen
       .getByRole("group", { name: "Light position" })
       .querySelector<HTMLElement>('[data-testid="spotlight-pool"]');
-    expect(pool?.style.left).toBe("75%");
-    expect(pool?.style.top).toBe("40%");
+    // Placed through CSS variables, set on the element at runtime.
+    const set = (v: string) =>
+      pool?.style.getPropertyValue(v.slice("var(".length, -")".length));
+    expect(set(styles.poolLeft)).toBe("75%");
+    expect(set(styles.poolTop)).toBe("40%");
   });
 
   it("outlines no pool with no spotlight", async () => {
@@ -225,9 +230,7 @@ describe("LightingControl", () => {
     expect(reset).not.toHaveTextContent(/\S/);
 
     await userEvent.hover(reset);
-    expect(await screen.findByRole("tooltip")).toHaveTextContent(
-      "Default light",
-    );
+    expect(await findTooltip()).toHaveTextContent("Default light");
     await userEvent.click(reset);
     expect(onChange).toHaveBeenLastCalledWith(null);
   });

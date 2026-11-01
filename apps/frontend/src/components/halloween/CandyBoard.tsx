@@ -10,7 +10,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
-import { Tooltip } from "../Tooltip";
+import { Tooltip } from "@chardb/ui";
 import {
   SURFACE_COLOUR,
   backgroundOf,

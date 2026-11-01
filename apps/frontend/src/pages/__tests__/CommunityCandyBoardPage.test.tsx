@@ -11,6 +11,7 @@ import {
   within,
 } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { findTooltip } from "../../__tests__/findTooltip";
 import { Link, MemoryRouter, Route, Routes } from "react-router-dom";
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
 import { GraphQLError } from "graphql";
@@ -658,9 +659,7 @@ describe("CommunityCandyBoardPage", () => {
       await userEvent.hover(
         screen.getByRole("button", { name: "Bring forward" }),
       );
-      expect(await screen.findByRole("tooltip")).toHaveTextContent(
-        "Bring forward",
-      );
+      expect(await findTooltip()).toHaveTextContent("Bring forward");
     });
 
     describe("picking a candy out of a pile", () => {
@@ -787,7 +786,7 @@ describe("CommunityCandyBoardPage", () => {
       await userEvent.hover(
         within(toolbar).getByRole("slider", { name: "Rotate" }),
       );
-      expect(await screen.findByRole("tooltip")).toHaveTextContent("Rotate");
+      expect(await findTooltip()).toHaveTextContent("Rotate");
     });
 
     it("shows corner handles and a rotate handle only on the selected candy", async () => {
@@ -975,9 +974,7 @@ describe("CommunityCandyBoardPage", () => {
       const remove = screen.getByRole("button", { name: "Remove sticker" });
       expect(remove.textContent).toBe("");
       await userEvent.hover(remove);
-      expect(await screen.findByRole("tooltip")).toHaveTextContent(
-        "Remove sticker (Delete)",
-      );
+      expect(await findTooltip()).toHaveTextContent("Remove sticker (Delete)");
     });
 
     it("offers a link to share", async () => {

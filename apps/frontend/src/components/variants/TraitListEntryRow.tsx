@@ -11,7 +11,7 @@ import {
   X,
   Save,
 } from "lucide-react";
-import { Button, Input } from "@chardb/ui";
+import { Button, Input, Tooltip } from "@chardb/ui";
 import { TraitValueType } from "../../generated/graphql";
 import {
   TraitDefaultValueInput,
@@ -368,20 +368,28 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
                           $isEnabled={isEnabled}
                         >
                           <EnumValueName>{enumValue.name}</EnumValueName>
-                          <ToggleButton
-                            $isEnabled={isEnabled}
-                            onClick={() =>
-                              onToggleEnumValue?.(
-                                enumValue.id,
-                                isEnabled,
-                                settingId,
-                              )
-                            }
-                            disabled={disabled}
-                            title={isEnabled ? "Disable" : "Enable"}
+                          <Tooltip
+                            label={`${isEnabled ? "Disable" : "Enable"} ${enumValue.name}`}
                           >
-                            {isEnabled ? <Check size={16} /> : <X size={16} />}
-                          </ToggleButton>
+                            <ToggleButton
+                              $isEnabled={isEnabled}
+                              onClick={() =>
+                                onToggleEnumValue?.(
+                                  enumValue.id,
+                                  isEnabled,
+                                  settingId,
+                                )
+                              }
+                              disabled={disabled}
+                              aria-label={`${isEnabled ? "Disable" : "Enable"} ${enumValue.name}`}
+                            >
+                              {isEnabled ? (
+                                <Check size={16} aria-hidden />
+                              ) : (
+                                <X size={16} aria-hidden />
+                              )}
+                            </ToggleButton>
+                          </Tooltip>
                         </EnumValueCard>
                       );
                     })}

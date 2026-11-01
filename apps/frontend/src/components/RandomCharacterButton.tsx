@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Tooltip } from "./Tooltip";
+import { Tooltip } from "@chardb/ui";
 import { useRandomCharacter } from "../hooks/useRandomCharacter";
 
 interface Character {

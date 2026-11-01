@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { Undo2 } from "lucide-react";
-import { Caption } from "@chardb/ui";
+import { Caption, Toggletip } from "@chardb/ui";
 
 const Badge = styled.span`
   display: inline-flex;
@@ -47,16 +47,16 @@ export const DeferralBadge: React.FC<{ deferralCount: number }> = ({
   if (deferralCount < 1) return null;
 
   return (
-    <Badge
-      data-testid="deferral-badge"
-      data-deferral-count={deferralCount}
-      title={`Sent to the back of the queue ${deferralCount} ${
-        deferralCount === 1 ? "time" : "times"
-      }`}
-    >
-      <Undo2 size={11} />
-      Deferred ×{deferralCount}
-    </Badge>
+    <>
+      <Badge data-testid="deferral-badge" data-deferral-count={deferralCount}>
+        <Undo2 size={11} aria-hidden />
+        Deferred ×{deferralCount}
+      </Badge>
+      <Toggletip label="What deferred means">
+        Sent to the back of the queue {deferralCount}{" "}
+        {deferralCount === 1 ? "time" : "times"}
+      </Toggletip>
+    </>
   );
 };
 

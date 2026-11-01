@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { ExternalAccountProvider } from "../generated/graphql";
-import { Tooltip } from "./Tooltip";
+import { Tooltip } from "@chardb/ui";
 import toyhouseIcon from "../assets/providers/toyhouse.png";
 
 /**

@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { vars } from "@chardb/ui";
+import { Tooltip, vars } from "@chardb/ui";
 import { useTheme } from "../contexts/ThemeContext";
 
 const ToggleButton = styled.button`
@@ -45,13 +45,12 @@ const Icon = styled.span`
 export const ThemeToggle: React.FC = () => {
   const { mode, toggleTheme } = useTheme();
 
+  const label = `Switch to ${mode === "light" ? "dark" : "light"} mode`;
   return (
-    <ToggleButton
-      onClick={toggleTheme}
-      aria-label={`Switch to ${mode === "light" ? "dark" : "light"} mode`}
-      title={`Switch to ${mode === "light" ? "dark" : "light"} mode`}
-    >
-      <Icon>{mode === "light" ? "🌙" : "☀️"}</Icon>
-    </ToggleButton>
+    <Tooltip label={label}>
+      <ToggleButton onClick={toggleTheme} aria-label={label}>
+        <Icon aria-hidden>{mode === "light" ? "🌙" : "☀️"}</Icon>
+      </ToggleButton>
+    </Tooltip>
   );
 };

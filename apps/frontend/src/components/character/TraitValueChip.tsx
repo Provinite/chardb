@@ -1,6 +1,7 @@
 import React from "react";
 import styled from "styled-components";
 import { X } from "lucide-react";
+import { Tooltip } from "@chardb/ui";
 import { ColorPip } from "../colors/ColorPip";
 
 /**
@@ -109,16 +110,17 @@ export const TraitValueChip: React.FC<TraitValueChipProps> = ({
         </ColorPipWrapper>
       )}
       <ValueText title={displayText}>{displayText}</ValueText>
-      <RemoveButton
-        onClick={onRemove}
-        disabled={disabled}
-        $disabled={disabled}
-        type="button"
-        title="Remove value"
-        aria-label={`Remove ${displayText}`}
-      >
-        <X size={14} />
-      </RemoveButton>
+      <Tooltip label={`Remove ${displayText}`}>
+        <RemoveButton
+          onClick={onRemove}
+          disabled={disabled}
+          $disabled={disabled}
+          type="button"
+          aria-label={`Remove ${displayText}`}
+        >
+          <X size={14} aria-hidden />
+        </RemoveButton>
+      </Tooltip>
     </Chip>
   );
 };

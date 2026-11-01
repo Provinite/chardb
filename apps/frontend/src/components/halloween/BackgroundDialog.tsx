@@ -2,7 +2,7 @@ import React, { useCallback, useState } from "react";
 import styled from "styled-components";
 import { Modal } from "@mantine/core";
 import { Blend, Droplets, Moon, Palette } from "lucide-react";
-import { Tooltip } from "../Tooltip";
+import { Tooltip } from "@chardb/ui";
 import {
   BOARD_BACKGROUNDS,
   SURFACE_COLOUR,
@@ -280,18 +280,18 @@ const BackgroundChoices = React.memo<{
   return (
     <Options role="radiogroup" aria-label="Backgrounds">
       {CHOICES.map(({ slug, name }) => (
-        <Option
-          key={slug}
-          type="button"
-          role="radio"
-          aria-checked={shown === slug}
-          aria-label={name}
-          title={name}
-          $chosen={shown === slug}
-          onClick={() => onChoose(slug)}
-        >
-          <Swatch style={backgroundStyle(backgroundOf(slug))} aria-hidden />
-        </Option>
+        <Tooltip key={slug} label={name}>
+          <Option
+            type="button"
+            role="radio"
+            aria-checked={shown === slug}
+            aria-label={name}
+            $chosen={shown === slug}
+            onClick={() => onChoose(slug)}
+          >
+            <Swatch style={backgroundStyle(backgroundOf(slug))} aria-hidden />
+          </Option>
+        </Tooltip>
       ))}
     </Options>
   );
