@@ -409,14 +409,19 @@ jobs:
       # it -- measured, and worth exactly nothing. Backgrounded, the pull and
       # start happen during the steps that follow.
       #
-      # Fire-and-forget is acceptable here because it is not the only attempt:
-      # provision() runs the same idempotent `up -d --wait` later and is what
-      # actually gates on the container being healthy. If this fails, that one
-      # reports it.
+      # Not the only attempt: provision() runs the same `up -d --wait` later and
+      # is what actually gates on the container being healthy. If this fails,
+      # that one reports it. But `up` is idempotent only one run after another,
+      # not concurrently: with the images uncached this one can still be
+      # pulling when provision() starts, and then both create the container and
+      # the second fails on its name (#529). Hence the pid, which "Wait for
+      # test Postgres" waits on before the suite starts.
       #
       # CI-only -- a local `yarn e2e` still brings its own Postgres up as before.
       - name: Start test Postgres in the background
-        run: nohup docker compose -f docker/compose.test.yml up -d > /dev/null 2>&1 &
+        run: |
+          nohup docker compose -f docker/compose.test.yml up -d > /dev/null 2>&1 &
+          echo $! > "$RUNNER_TEMP/compose-up.pid"
 
       - name: Enable Corepack
         run: corepack enable
@@ -536,6 +541,12 @@ jobs:
       #
       # Each shard reruns the `setup` project against its own database, which is
       # what makes them independent.
+      # Usually long finished by now; see "Start test Postgres in the background".
+      - name: Wait for test Postgres
+        run: |
+          pid=$(cat "$RUNNER_TEMP/compose-up.pid")
+          while kill -0 "$pid" 2>/dev/null; do sleep 1; done
+
       - name: Run browser E2E
         run: yarn workspace @chardb/e2e e2e --shard=${{ matrix.shard }}/${{ strategy.job-total }}
         env:

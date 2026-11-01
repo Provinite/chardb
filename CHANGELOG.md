@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Browser E2E shards no longer fail on a test Postgres name conflict**: CI waits for the background `docker compose up` before the suite runs its own (#529).
 - **Staging deploy** builds the backend image again: the Dockerfiles now copy `packages/eslint-plugin-styles/package.json`, which the root manifest has depended on since #468.
 
 ## [v14.2.0] - 2026-10-28
