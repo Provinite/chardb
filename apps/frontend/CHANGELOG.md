@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Profiles show earned achievements**, with the community each was earned in.
+- **Community member profiles show achievements** earned in that community.
 
 ## [v15.2.0] - 2026-11-01
 

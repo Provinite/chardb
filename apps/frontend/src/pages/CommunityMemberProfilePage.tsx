@@ -17,7 +17,9 @@ import { apexUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
+import { AchievementList } from "../components/achievements/AchievementList";
 import {
+  useCommunityMemberAchievementsQuery,
   useCommunityMemberRolesQuery,
   useGetUserProfileQuery,
   useUserCharactersQuery,
@@ -242,6 +244,11 @@ export const CommunityMemberProfilePage: React.FC = () => {
       skip: !memberId || !communityId,
     });
 
+  const { data: achievementsData } = useCommunityMemberAchievementsQuery({
+    variables: { communityId: communityId!, userId: memberId ?? "" },
+    skip: !communityId || !memberId,
+  });
+
   if (profileLoading) {
     return (
       <LoadingContainer>
@@ -263,6 +270,7 @@ export const CommunityMemberProfilePage: React.FC = () => {
   const roles = rolesData?.communityMemberRoles ?? [];
   const characters = charactersData?.userCharacters?.characters ?? [];
   const characterTotal = charactersData?.userCharacters?.total ?? 0;
+  const achievements = achievementsData?.communityMemberAchievements ?? [];
   const displayName = member.displayName || member.username;
   const communityName = community?.name || "this community";
 
@@ -337,6 +345,16 @@ export const CommunityMemberProfilePage: React.FC = () => {
           <CharacterGrid characters={characters} showOwner={false} />
         )}
       </Section>
+
+      {/* Last on the page, so arriving after the rest moves nothing. */}
+      {achievements.length > 0 && (
+        <Section data-testid="member-achievements">
+          <SectionHead>
+            <SectionTitle>Achievements</SectionTitle>
+          </SectionHead>
+          <AchievementList achievements={achievements} />
+        </Section>
+      )}
     </Container>
   );
 };

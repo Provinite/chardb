@@ -1,15 +1,19 @@
 import { presetTest, expect } from "../../src/fixtures.js";
-import { apexUrl } from "../../src/config.js";
 
 const test = presetTest("achievements");
 
-test.describe("achievements on a profile", () => {
+test.describe("achievements on a member profile", () => {
   test.use({ persona: "bob" });
 
-  test("lists what a user earned and where", async ({ page, world }) => {
-    await page.goto(apexUrl(`/user/${world.users.alice.username}`));
+  test("lists what a member earned in the community", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(
+      `${world.community.url}/members/${world.users.alice.username}`,
+    );
 
-    const section = page.getByTestId("profile-achievements");
+    const section = page.getByTestId("member-achievements");
     await expect(
       section.getByRole("heading", { name: "Achievements" }),
     ).toBeVisible();
@@ -18,17 +22,29 @@ test.describe("achievements on a profile", () => {
     await expect(
       item.getByText("Signed in during Trick-or-Treat 2026."),
     ).toBeVisible();
-    await expect(item.getByText(world.community.name)).toBeVisible();
   });
 
-  test("shows no achievements section for someone with none", async ({
+  test("shows no achievements section for a member with none", async ({
     page,
     world,
   }) => {
-    await page.goto(apexUrl(`/user/${world.users.bob.username}`));
+    await page.goto(
+      `${world.community.url}/members/${world.users.bob.username}`,
+    );
+    await expect(page.getByTestId("member-inventory-link")).toBeVisible();
+    await expect(page.getByTestId("member-achievements")).toHaveCount(0);
+  });
+
+  test("leaves achievements off the site profile", async ({ page, world }) => {
+    await page.goto(
+      `${world.community.url}/members/${world.users.alice.username}`,
+    );
+    await expect(page.getByTestId("member-achievements")).toBeVisible();
+
+    await page.getByRole("link", { name: "Site profile" }).click();
     await expect(
-      page.getByRole("heading", { name: `@${world.users.bob.username}` }),
+      page.getByRole("heading", { name: `@${world.users.alice.username}` }),
     ).toBeVisible();
-    await expect(page.getByTestId("profile-achievements")).toHaveCount(0);
+    await expect(page.getByText("Trick-or-Treater 2026")).toHaveCount(0);
   });
 });

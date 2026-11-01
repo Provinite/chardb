@@ -8,14 +8,13 @@ export interface AchievementListItem {
   description: string;
   imagePath: string;
   earnedAt: string;
-  community: { id: string; name: string };
 }
 
 export interface AchievementListProps {
   achievements: readonly AchievementListItem[];
 }
 
-/** Achievements a user earned, as cards. */
+/** Achievements a member earned in one community, as cards. */
 export const AchievementList: React.FC<AchievementListProps> = ({
   achievements,
 }) => (
@@ -39,9 +38,8 @@ export const AchievementList: React.FC<AchievementListProps> = ({
           <p className={styles.name}>{a.name}</p>
           <p className={styles.description}>{a.description}</p>
           <p className={styles.meta}>
-            {a.community.name} ·{" "}
             <time dateTime={a.earnedAt}>
-              {new Date(a.earnedAt).toLocaleDateString()}
+              Earned {new Date(a.earnedAt).toLocaleDateString()}
             </time>
           </p>
         </Stack>

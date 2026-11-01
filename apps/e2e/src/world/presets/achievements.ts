@@ -1,12 +1,13 @@
 import { SeedCreateCommunityDocument } from "../../generated/graphql.js";
+import { communityUrl } from "../../config.js";
 import { definePreset, type Persona } from "../types.js";
 
 export interface AchievementsWorld {
-  community: { id: string; name: string };
+  community: { id: string; slug: string; url: string };
   users: {
-    /** Earned Trick-or-Treater 2026 in the community. */
+    /** Owns the community and earned Trick-or-Treater 2026 in it. */
     alice: Persona;
-    /** Has earned nothing. */
+    /** A member who has earned nothing. */
     bob: Persona;
   };
 }
@@ -14,7 +15,7 @@ export interface AchievementsWorld {
 export default definePreset<AchievementsWorld>({
   name: "achievements",
   description:
-    "A community where one member has earned Trick-or-Treater 2026 and another has earned nothing.",
+    "A community where one member has earned Trick-or-Treater 2026 and another member has earned nothing.",
 
   async build(ctx) {
     const alice = await ctx.user("alice", { canCreateCommunity: true });
@@ -25,6 +26,13 @@ export default definePreset<AchievementsWorld>({
       .gql(SeedCreateCommunityDocument, {
         createCommunityInput: { name: "Hollowmere", slug: "hollowmere" },
       });
+    // Adding a member through the API needs a site admin, which neither is.
+    const memberRole = await ctx.prisma.role.findFirstOrThrow({
+      where: { communityId: community.id, name: "Member" },
+    });
+    await ctx.prisma.communityMember.create({
+      data: { userId: bob.userId, roleId: memberRole.id },
+    });
     // Earned by signing in during the event, which depends on the date the
     // suite runs; seeded directly so the profile has something to show.
     await ctx.prisma.userAchievement.create({
@@ -37,7 +45,11 @@ export default definePreset<AchievementsWorld>({
     });
 
     return {
-      community: { id: community.id, name: community.name },
+      community: {
+        id: community.id,
+        slug: community.slug,
+        url: communityUrl(community.slug),
+      },
       users: { alice, bob },
     };
   },

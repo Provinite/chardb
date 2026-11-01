@@ -9,7 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Community achievements**: signing in during Trick-or-Treat 2026 earns members Trick-or-Treater 2026, backfilled from candy swap and board use; `User.achievements` lists them.
+- **Community achievements**: signing in during Trick-or-Treat 2026 earns members Trick-or-Treater 2026, backfilled from candy swap and board use; `communityMemberAchievements` lists one member's to fellow members.
+
+### Changed
+
+- **One shared `Clock`**, provided by `ClockModule` alone, replaces `HalloweenClock`.
 
 ## [v15.2.0] - 2026-11-01
 

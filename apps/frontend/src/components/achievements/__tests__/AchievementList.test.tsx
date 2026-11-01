@@ -8,11 +8,10 @@ const trickOrTreater = {
   description: "Signed in during Trick-or-Treat 2026.",
   imagePath: "/halloween/candy/big-candy-corn.png",
   earnedAt: "2026-10-15T12:00:00.000Z",
-  community: { id: "c1", name: "Cloverse" },
 };
 
 describe("AchievementList", () => {
-  it("shows each achievement with its picture, description and community", () => {
+  it("shows each achievement with its picture and description", () => {
     render(<AchievementList achievements={[trickOrTreater]} />);
 
     const item = screen.getByRole("listitem");
@@ -20,7 +19,6 @@ describe("AchievementList", () => {
     expect(
       within(item).getByText("Signed in during Trick-or-Treat 2026."),
     ).toBeTruthy();
-    expect(within(item).getByText(/Cloverse/)).toBeTruthy();
     // Decorative: the name beside it says what it is.
     const img = within(item).getByRole("presentation");
     expect(img.getAttribute("src")).toBe("/halloween/candy/big-candy-corn.png");
@@ -34,5 +32,6 @@ describe("AchievementList", () => {
       (_, el) => el?.tagName === "TIME",
     ) as HTMLTimeElement;
     expect(time.dateTime).toBe("2026-10-15T12:00:00.000Z");
+    expect(time.textContent).toMatch(/^Earned /);
   });
 });

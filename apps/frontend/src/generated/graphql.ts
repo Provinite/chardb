@@ -3428,6 +3428,8 @@ export type Query = {
   communityInvitationsByCommunity: CommunityInvitationConnection;
   /** Get community invitations by invitee ID with pagination */
   communityInvitationsByInvitee: CommunityInvitationConnection;
+  /** What a member has earned in a community, newest first. */
+  communityMemberAchievements: Array<UserAchievement>;
   /** Get a community member by ID */
   communityMemberById: CommunityMember;
   /** Roles a user holds in a community */
@@ -3752,6 +3754,12 @@ export type QueryCommunityInvitationsByInviteeArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   inviteeId: Scalars['ID']['input'];
+};
+
+
+export type QueryCommunityMemberAchievementsArgs = {
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -5365,8 +5373,6 @@ export type UseItemResult = {
 
 export type User = {
   __typename?: 'User';
-  /** What the user has earned, newest first. */
-  achievements: Array<UserAchievement>;
   avatarImage: Maybe<Image>;
   bio: Maybe<Scalars['String']['output']>;
   canCreateCommunity: Scalars['Boolean']['output'];
@@ -5408,8 +5414,6 @@ export type UserInventoriesArgs = {
 /** An achievement a user earned in a community. */
 export type UserAchievement = {
   __typename?: 'UserAchievement';
-  /** The community it was earned in. */
-  community: Community;
   /** How it was earned. */
   description: Scalars['String']['output'];
   earnedAt: Scalars['DateTime']['output'];
@@ -5475,6 +5479,14 @@ export enum Visibility {
   Public = 'PUBLIC',
   Unlisted = 'UNLISTED'
 }
+
+export type CommunityMemberAchievementsQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type CommunityMemberAchievementsQuery = { __typename?: 'Query', communityMemberAchievements: Array<{ __typename?: 'UserAchievement', id: string, name: string, description: string, imagePath: string, earnedAt: string }> };
 
 export type LoginMutationVariables = Exact<{
   input: LoginInput;
@@ -7426,7 +7438,7 @@ export type GetUserProfileQueryVariables = Exact<{
 }>;
 
 
-export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, website: string | null, isVerified: boolean, createdAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, achievements: Array<{ __typename?: 'UserAchievement', id: string, name: string, description: string, imagePath: string, earnedAt: string, community: { __typename?: 'Community', id: string, name: string } }> }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, visibility: Visibility, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, textContent: { __typename?: 'TextContent', content: string, wordCount: number } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } | null };
+export type GetUserProfileQuery = { __typename?: 'Query', userProfile: { __typename?: 'UserProfile', isOwnProfile: boolean, canViewPrivateContent: boolean, user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, website: string | null, isVerified: boolean, createdAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, stats: { __typename?: 'UserStats', charactersCount: number, galleriesCount: number, imagesCount: number, totalViews: number, totalLikes: number, followersCount: number, followingCount: number }, recentCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }>, recentGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, createdAt: string, updatedAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string } | null }>, recentMedia: Array<{ __typename?: 'Media', id: string, title: string, description: string | null, visibility: Visibility, createdAt: string, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, textContent: { __typename?: 'TextContent', content: string, wordCount: number } | null }>, featuredCharacters: Array<{ __typename?: 'Character', id: string, name: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null }> } | null };
 
 export type GetUserStatsQueryVariables = Exact<{
   userId: Scalars['ID']['input'];
@@ -8384,6 +8396,51 @@ export const FormSnapshotFieldsFragmentDoc = gql`
   }
 }
     ${TraitValueFieldsFragmentDoc}`;
+export const CommunityMemberAchievementsDocument = gql`
+    query CommunityMemberAchievements($communityId: ID!, $userId: ID!) {
+  communityMemberAchievements(communityId: $communityId, userId: $userId) {
+    id
+    name
+    description
+    imagePath
+    earnedAt
+  }
+}
+    `;
+
+/**
+ * __useCommunityMemberAchievementsQuery__
+ *
+ * To run a query within a React component, call `useCommunityMemberAchievementsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityMemberAchievementsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunityMemberAchievementsQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useCommunityMemberAchievementsQuery(baseOptions: Apollo.QueryHookOptions<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables> & ({ variables: CommunityMemberAchievementsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>(CommunityMemberAchievementsDocument, options);
+      }
+export function useCommunityMemberAchievementsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>(CommunityMemberAchievementsDocument, options);
+        }
+export function useCommunityMemberAchievementsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>(CommunityMemberAchievementsDocument, options);
+        }
+export type CommunityMemberAchievementsQueryHookResult = ReturnType<typeof useCommunityMemberAchievementsQuery>;
+export type CommunityMemberAchievementsLazyQueryHookResult = ReturnType<typeof useCommunityMemberAchievementsLazyQuery>;
+export type CommunityMemberAchievementsSuspenseQueryHookResult = ReturnType<typeof useCommunityMemberAchievementsSuspenseQuery>;
+export type CommunityMemberAchievementsQueryResult = Apollo.QueryResult<CommunityMemberAchievementsQuery, CommunityMemberAchievementsQueryVariables>;
 export const LoginDocument = gql`
     mutation Login($input: LoginInput!) {
   login(input: $input) {
@@ -20192,17 +20249,6 @@ export const GetUserProfileDocument = gql`
       website
       isVerified
       createdAt
-      achievements {
-        id
-        name
-        description
-        imagePath
-        earnedAt
-        community {
-          id
-          name
-        }
-      }
     }
     stats {
       charactersCount
