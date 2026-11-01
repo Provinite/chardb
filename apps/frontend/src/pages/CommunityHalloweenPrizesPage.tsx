@@ -5,10 +5,7 @@ import {
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
 import { HostAwareLink } from "../components/HostAwareLink";
-import {
-  PrizeListView,
-  type PublicWin,
-} from "../components/halloween/PrizeListView";
+import { PrizeListView } from "../components/halloween/PrizeListView";
 import { useHalloweenPrizeListQuery } from "../generated/graphql";
 
 /** How often the feed fetches again, and its times count on. */
@@ -46,14 +43,10 @@ export const CommunityHalloweenPrizesPage: React.FC = () => {
     return <p>{error.message}</p>;
   }
 
-  const wins: PublicWin[] | null =
-    data?.halloweenRecentWins.map((w) => ({ ...w, time: String(w.time) })) ??
-    null;
-
   return (
     <PrizeListView
       prizes={data?.halloweenPrizes ?? null}
-      wins={wins}
+      wins={data?.halloweenRecentWins ?? null}
       now={now}
       LinkComponent={HostAwareLink}
     />

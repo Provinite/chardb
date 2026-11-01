@@ -11,6 +11,22 @@ export const HALLOWEEN_PRIZE_LISTING_FRAGMENT = gql`
   }
 `;
 
+export const HALLOWEEN_PUBLIC_WIN_FRAGMENT = gql`
+  fragment HalloweenPublicWinFields on HalloweenPublicWin {
+    id
+    time
+    prize {
+      ...HalloweenPrizeListingFields
+    }
+    winner {
+      kind
+      displayName
+      url
+    }
+  }
+  ${HALLOWEEN_PRIZE_LISTING_FRAGMENT}
+`;
+
 /** The public prize list: open to anyone, signed in or not. */
 export const HALLOWEEN_PRIZE_LIST_QUERY = gql`
   query HalloweenPrizeList($communityId: ID!) {
@@ -18,17 +34,9 @@ export const HALLOWEEN_PRIZE_LIST_QUERY = gql`
       ...HalloweenPrizeListingFields
     }
     halloweenRecentWins(communityId: $communityId) {
-      id
-      time
-      prize {
-        ...HalloweenPrizeListingFields
-      }
-      winner {
-        kind
-        displayName
-        url
-      }
+      ...HalloweenPublicWinFields
     }
   }
   ${HALLOWEEN_PRIZE_LISTING_FRAGMENT}
+  ${HALLOWEEN_PUBLIC_WIN_FRAGMENT}
 `;

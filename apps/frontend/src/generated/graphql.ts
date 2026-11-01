@@ -6470,6 +6470,8 @@ export type SetHalloweenCandyBoardBackgroundMutation = { __typename?: 'Mutation'
 
 export type HalloweenPrizeListingFieldsFragment = { __typename?: 'HalloweenPrizeListing', id: string, name: string, image: string | null, initialStock: number, currentStock: number, url: string | null };
 
+export type HalloweenPublicWinFieldsFragment = { __typename?: 'HalloweenPublicWin', id: number, time: string, prize: { __typename?: 'HalloweenPrizeListing', id: string, name: string, image: string | null, initialStock: number, currentStock: number, url: string | null }, winner: { __typename?: 'HalloweenWinner', kind: HalloweenWinnerKind, displayName: string, url: string | null } };
+
 export type HalloweenPrizeListQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
@@ -7902,6 +7904,20 @@ export const HalloweenPrizeListingFieldsFragmentDoc = gql`
   url
 }
     `;
+export const HalloweenPublicWinFieldsFragmentDoc = gql`
+    fragment HalloweenPublicWinFields on HalloweenPublicWin {
+  id
+  time
+  prize {
+    ...HalloweenPrizeListingFields
+  }
+  winner {
+    kind
+    displayName
+    url
+  }
+}
+    ${HalloweenPrizeListingFieldsFragmentDoc}`;
 export const ModerationQueueMediaFieldsFragmentDoc = gql`
     fragment ModerationQueueMediaFields on Media {
   id
@@ -14009,19 +14025,11 @@ export const HalloweenPrizeListDocument = gql`
     ...HalloweenPrizeListingFields
   }
   halloweenRecentWins(communityId: $communityId) {
-    id
-    time
-    prize {
-      ...HalloweenPrizeListingFields
-    }
-    winner {
-      kind
-      displayName
-      url
-    }
+    ...HalloweenPublicWinFields
   }
 }
-    ${HalloweenPrizeListingFieldsFragmentDoc}`;
+    ${HalloweenPrizeListingFieldsFragmentDoc}
+${HalloweenPublicWinFieldsFragmentDoc}`;
 
 /**
  * __useHalloweenPrizeListQuery__

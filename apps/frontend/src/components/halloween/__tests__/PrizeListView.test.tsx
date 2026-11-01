@@ -4,12 +4,12 @@
  */
 import { describe, it, expect } from "vitest";
 import { render, screen, within } from "@testing-library/react";
+import { PrizeListView, type PrizeLinkProps } from "../PrizeListView";
 import {
-  PrizeListView,
-  type PrizeLinkProps,
-  type PrizeListing,
-  type PublicWin,
-} from "../PrizeListView";
+  HalloweenWinnerKind,
+  type HalloweenPrizeListingFieldsFragment as PrizeListing,
+  type HalloweenPublicWinFieldsFragment as PublicWin,
+} from "../../../generated/graphql";
 
 const TestLink = ({ to, ...rest }: PrizeLinkProps) => <a href={to} {...rest} />;
 
@@ -104,7 +104,7 @@ describe("PrizeListView", () => {
       [candy, adopt],
       [
         win(3, candy, {
-          kind: "MEMBER",
+          kind: HalloweenWinnerKind.Member,
           displayName: "pumpkin",
           url: "https://chardb.test/user/pumpkin",
         }),
@@ -112,7 +112,7 @@ describe("PrizeListView", () => {
           2,
           adopt,
           {
-            kind: "DISCORD",
+            kind: HalloweenWinnerKind.Discord,
             displayName: "spookyfan",
             url: "https://discord.com/users/200000000000000001",
           },
@@ -121,7 +121,11 @@ describe("PrizeListView", () => {
         win(
           1,
           adopt,
-          { kind: "ANONYMOUS", displayName: "A Discord user", url: null },
+          {
+            kind: HalloweenWinnerKind.Anonymous,
+            displayName: "A Discord user",
+            url: null,
+          },
           "2025-10-13T17:00:00.000Z",
         ),
       ],

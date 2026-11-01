@@ -1,27 +1,15 @@
 import React, { useId } from "react";
 import { Gift } from "lucide-react";
 import { Grid, Sidebar, Stack } from "@chardb/ui";
+import {
+  HalloweenWinnerKind,
+  type HalloweenPrizeListingFieldsFragment,
+  type HalloweenPublicWinFieldsFragment,
+} from "../../generated/graphql";
 import * as styles from "./PrizeListView.css";
 
-export interface PrizeListing {
-  id: string;
-  name: string;
-  image?: string | null;
-  initialStock: number;
-  currentStock: number;
-  /** What it hands over on chardb; null for a prize staff hand over. */
-  url?: string | null;
-}
-
-export type WinnerKind = "MEMBER" | "DISCORD" | "ANONYMOUS";
-
-export interface PublicWin {
-  id: number;
-  time: string;
-  prize: PrizeListing;
-  /** Already narrowed by the server to what this viewer may see. */
-  winner: { kind: WinnerKind; displayName: string; url?: string | null };
-}
+type PrizeListing = HalloweenPrizeListingFieldsFragment;
+type PublicWin = HalloweenPublicWinFieldsFragment;
 
 export interface PrizeLinkProps {
   to: string;
@@ -122,14 +110,14 @@ const Winner: React.FC<{
   winner: PublicWin["winner"];
   LinkComponent: React.ComponentType<PrizeLinkProps>;
 }> = ({ winner, LinkComponent }) => {
-  if (winner.kind === "MEMBER" && winner.url) {
+  if (winner.kind === HalloweenWinnerKind.Member && winner.url) {
     return (
       <LinkComponent to={winner.url} className={styles.link}>
         {winner.displayName}
       </LinkComponent>
     );
   }
-  if (winner.kind === "DISCORD" && winner.url) {
+  if (winner.kind === HalloweenWinnerKind.Discord && winner.url) {
     return (
       <a
         href={winner.url}
