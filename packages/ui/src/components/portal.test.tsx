@@ -9,6 +9,7 @@ import {
   MenuItem,
   Popover,
   SearchSelect,
+  TagInput,
   Toggletip,
   Tooltip,
   UserTypeahead,
@@ -147,6 +148,21 @@ const overlays: {
       type(input, "gh");
     },
     find: userList,
+  },
+  {
+    name: "a tag input's suggestions",
+    ui: (
+      <TagInput
+        value={[]}
+        onChange={() => {}}
+        suggestions={[{ id: "t-1", name: "forest" }]}
+      />
+    ),
+    open: () => focus(document.querySelector('[aria-label="Add tags"]')!),
+    find: () =>
+      [...document.querySelectorAll("button")].find(
+        (b) => b.textContent === "forest",
+      )?.parentElement ?? null,
   },
 ];
 

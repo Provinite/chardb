@@ -1,5 +1,6 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 import styled from "styled-components";
 import { vars } from "../theme/contract.css";
 import { LIST_MAX_HEIGHT_PX, useAnchoredList } from "./anchoredList";
@@ -167,13 +168,12 @@ const ClearButton = styled.button`
   justify-content: center;
   width: 24px;
   height: 24px;
+  padding: 0;
   border-radius: 50%;
   background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
   color: ${({ theme }) => theme.colors.text.secondary};
   cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
   transition: all 0.2s;
   flex-shrink: 0;
 
@@ -372,7 +372,7 @@ export function SearchSelect<T extends SearchSelectOption>({
                 onClick={clear}
                 aria-label={`Clear ${label.toLowerCase()}`}
               >
-                ×
+                <X size={14} aria-hidden />
               </ClearButton>
             )}
           </>

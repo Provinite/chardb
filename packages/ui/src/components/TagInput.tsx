@@ -1,6 +1,13 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
+import { X } from "lucide-react";
 import styled from "styled-components";
-import { Theme } from "../theme";
+import { vars } from "../theme/contract.css";
+import { useAnchoredList } from "./anchoredList";
+import { usePortalContainer } from "./portal";
+
+/** The tallest the suggestions grow before they scroll. */
+const SUGGESTIONS_MAX_HEIGHT_PX = 200;
 
 export interface Tag {
   id: string;
@@ -73,13 +80,12 @@ const RemoveButton = styled.button`
   justify-content: center;
   width: 16px;
   height: 16px;
+  padding: 0;
   border-radius: 50%;
   background: rgba(255, 255, 255, 0.2);
   border: none;
   color: white;
   cursor: pointer;
-  font-size: 12px;
-  line-height: 1;
   transition: background 0.2s;
   flex-shrink: 0;
 
@@ -113,20 +119,17 @@ const Input = styled.input`
   }
 `;
 
-const SuggestionsDropdown = styled.div<{ $isOpen: boolean }>`
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+/** In the portal container, placed under the box by `useAnchoredList`. */
+const SuggestionsDropdown = styled.div`
+  position: fixed;
+  box-sizing: border-box;
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: ${({ theme }) => theme.shadows.md};
-  z-index: 1000;
-  max-height: 200px;
+  z-index: ${vars.layer.dropdown.base};
+  max-height: ${SUGGESTIONS_MAX_HEIGHT_PX}px;
   overflow-y: auto;
-  display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
-  margin-top: 2px;
 `;
 
 const SuggestionItem = styled.button<{ $isHighlighted: boolean }>`
@@ -180,16 +183,16 @@ export const TagInput: React.FC<TagInputProps> = ({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const portal = usePortalContainer();
 
   // Filter suggestions to exclude already selected tags
   const availableSuggestions = suggestions.filter(
     (suggestion) => !value.includes(suggestion.name.toLowerCase()),
   );
-
-  // Debounced search
-  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(
-    null,
-  );
+  const listOpen = isOpen && (loading || availableSuggestions.length > 0);
+  useAnchoredList(boxRef, listRef, listOpen, SUGGESTIONS_MAX_HEIGHT_PX);
 
   const performSearch = useCallback(
     (query: string) => {
@@ -200,31 +203,25 @@ export const TagInput: React.FC<TagInputProps> = ({
     [onSearch],
   );
 
+  // Debounced search. The timer lives in the closure, so the cleanup clears
+  // the run it belongs to; held in state, it was a render behind and cleared
+  // the previous run's instead.
   useEffect(() => {
-    if (searchTimeout) {
-      clearTimeout(searchTimeout);
-    }
-
-    if (inputValue.trim()) {
-      const timeout = setTimeout(() => {
-        performSearch(inputValue.trim());
-      }, 300); // 300ms debounce
-      setSearchTimeout(timeout);
-    }
-
-    return () => {
-      if (searchTimeout) {
-        clearTimeout(searchTimeout);
-      }
-    };
+    const query = inputValue.trim();
+    if (!query) return;
+    const timeout = setTimeout(() => performSearch(query), 300);
+    return () => clearTimeout(timeout);
   }, [inputValue, performSearch]);
 
   // Handle clicks outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      // The list is portalled, so it is outside the container.
       if (
         containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        !containerRef.current.contains(target) &&
+        !listRef.current?.contains(target)
       ) {
         setIsOpen(false);
         setHighlightedIndex(-1);
@@ -272,6 +269,8 @@ export const TagInput: React.FC<TagInputProps> = ({
         break;
 
       case "Escape":
+        // Handled, so a dialog the box sits in stays open.
+        if (listOpen) e.preventDefault();
         setIsOpen(false);
         setHighlightedIndex(-1);
         break;
@@ -315,7 +314,11 @@ export const TagInput: React.FC<TagInputProps> = ({
 
   return (
     <div ref={containerRef}>
-      <Container $hasError={!!error} onClick={handleContainerClick}>
+      <Container
+        ref={boxRef}
+        $hasError={!!error}
+        onClick={handleContainerClick}
+      >
         {value.map((tag, index) => (
           <TagChip key={`${tag}-${index}`}>
             <span title={tag}>{tag}</span>
@@ -328,7 +331,7 @@ export const TagInput: React.FC<TagInputProps> = ({
               disabled={disabled}
               aria-label={`Remove tag ${tag}`}
             >
-              ×
+              <X size={10} aria-hidden />
             </RemoveButton>
           </TagChip>
         ))}
@@ -345,24 +348,30 @@ export const TagInput: React.FC<TagInputProps> = ({
           aria-label="Add tags"
         />
 
-        <SuggestionsDropdown
-          $isOpen={isOpen && (loading || availableSuggestions.length > 0)}
-        >
-          {loading ? (
-            <LoadingIndicator>Searching...</LoadingIndicator>
-          ) : (
-            availableSuggestions.map((suggestion, index) => (
-              <SuggestionItem
-                key={suggestion.id}
-                type="button"
-                $isHighlighted={index === highlightedIndex}
-                onClick={() => handleSuggestionClick(suggestion)}
-              >
-                {suggestion.name}
-              </SuggestionItem>
-            ))
+        {listOpen &&
+          createPortal(
+            <SuggestionsDropdown ref={listRef}>
+              {loading ? (
+                <LoadingIndicator>Searching...</LoadingIndicator>
+              ) : (
+                availableSuggestions.map((suggestion, index) => (
+                  <SuggestionItem
+                    key={suggestion.id}
+                    type="button"
+                    // Picked with the arrow keys and Enter from the input;
+                    // Tab moves on past the list, which sits at the end of
+                    // the page.
+                    tabIndex={-1}
+                    $isHighlighted={index === highlightedIndex}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                  >
+                    {suggestion.name}
+                  </SuggestionItem>
+                ))
+              )}
+            </SuggestionsDropdown>,
+            portal,
           )}
-        </SuggestionsDropdown>
       </Container>
 
       {error && <ErrorMessage>{error}</ErrorMessage>}

@@ -5,18 +5,20 @@ import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
 const GAP_PX = 4;
 /** Pixels the list keeps from the viewport's edges. */
 const MARGIN_PX = 8;
-/** The tallest a list grows before it scrolls; its CSS caps it the same. */
+/** The tallest a list grows before it scrolls, unless it says otherwise. */
 export const LIST_MAX_HEIGHT_PX = 300;
 
 /**
  * Keeps a typeahead's list under its input, as wide as the input, or above
  * it when there is no room below. For a list rendered into the portal
  * container with `position: fixed`, which nothing on the page can clip.
+ * `maxHeight` matches the cap in the list's own CSS.
  */
 export function useAnchoredList(
   anchor: RefObject<HTMLElement | null>,
   list: RefObject<HTMLElement | null>,
   open: boolean,
+  maxHeight = LIST_MAX_HEIGHT_PX,
 ): void {
   useAnchoredPosition(anchor, list, open, {
     side: "bottom",
@@ -26,16 +28,16 @@ export function useAnchoredList(
     // Past the cap `apply` sets, so the cap never decides the side.
     measure: (el) => ({
       width: anchor.current?.offsetWidth ?? el.offsetWidth,
-      height: Math.min(el.scrollHeight, LIST_MAX_HEIGHT_PX),
+      height: Math.min(el.scrollHeight, maxHeight),
     }),
     // Straight to the element, so following a scroll re-renders nothing.
     // Writes only: a read here would force a layout on every scroll step.
-    apply: ({ top, left, maxHeight }) => {
+    apply: (p) => {
       const el = list.current;
       if (!el) return;
-      el.style.top = `${top}px`;
-      el.style.left = `${left}px`;
-      el.style.maxHeight = `${Math.min(maxHeight, LIST_MAX_HEIGHT_PX)}px`;
+      el.style.top = `${p.top}px`;
+      el.style.left = `${p.left}px`;
+      el.style.maxHeight = `${Math.min(p.maxHeight, maxHeight)}px`;
     },
   });
 
