@@ -150,7 +150,9 @@ export const label = style({
   alignItems: "center",
   gap: vars.space.xs,
   selectors: {
-    [`${control}[aria-busy="true"] &`]: { visibility: "hidden" },
+    // Opacity rather than `visibility: hidden`, which would take the label
+    // out of the accessible name too.
+    [`${control}[aria-busy="true"] &`]: { opacity: 0 },
   },
 });
 

@@ -193,15 +193,18 @@ describe("Button", () => {
       render(<Button size="sm">Save</Button>);
     });
 
-    it("hides a busy button's label with visibility, keeping its space", () => {
-      const hidden = rulesFor(styles.label).filter(
-        (rule) => rule.declarations.visibility === "hidden",
-      );
+    it("hides a busy button's label with opacity, keeping its space and its name", () => {
+      // `visibility: hidden` or `display: none` would also take the label out
+      // of the accessible name, leaving a busy button nameless.
+      const rules = rulesFor(styles.label);
+      const hidden = rules.filter((rule) => rule.declarations.opacity === "0");
       expect(hidden).toHaveLength(1);
       expect(hidden[0].selector).toContain('[aria-busy="true"]');
       expect(
-        rulesFor(styles.label).some(
-          (rule) => rule.declarations.display === "none",
+        rules.some(
+          (rule) =>
+            rule.declarations.display === "none" ||
+            rule.declarations.visibility === "hidden",
         ),
       ).toBe(false);
     });
@@ -229,6 +232,9 @@ describe("Button", () => {
           rule.selector.includes("::before"),
       );
       expect(hitArea?.declarations).toMatchObject({
+        // An empty string, quoted: without content the pseudo-element is
+        // never generated.
+        content: '""',
         "min-inline-size": vars.size.target.comfortable,
         "min-block-size": vars.size.target.comfortable,
       });
