@@ -14,6 +14,7 @@ import { createPortal } from "react-dom";
 import styled, { css } from "styled-components";
 import { vars } from "../theme/contract.css";
 import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
+import { usePortalContainer } from "./portal";
 
 /**
  * Menu - a "⋯" button that opens a short list of actions.
@@ -23,8 +24,8 @@ import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
  * fit an action bar at phone width. Items can sit in labelled groups, so a
  * "Staff actions" heading says whose controls they are.
  *
- * The list renders into `document.body`, so a card with `overflow: hidden`
- * cannot clip it. React events still bubble through the portal to the
+ * The list renders into `document.body`, or into the dialog it opened in,
+ * so a card with `overflow: hidden` cannot clip it. React events still bubble through the portal to the
  * component tree, so a wrapper that stops propagation still sees them.
  *
  * Follows the WAI-ARIA menu button pattern: opening focuses the first item,
@@ -224,6 +225,7 @@ export const Menu: React.FC<MenuProps> = ({
   appearance = "outlined",
 }) => {
   const [open, setOpen] = useState(false);
+  const container = usePortalContainer();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listId = useId();
@@ -356,7 +358,7 @@ export const Menu: React.FC<MenuProps> = ({
               {children}
             </List>
           </MenuContext.Provider>,
-          document.body,
+          container,
         )}
     </>
   );

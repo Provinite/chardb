@@ -16,6 +16,7 @@ import type { Align, FallbackStrategy, Side } from "../hooks/placeFloating";
 import { applyPlacement, refOf, setRefs, tabbables } from "./floating";
 import * as floatingStyles from "./floating.css";
 import * as styles from "./Popover.css";
+import { usePortalContainer } from "./portal";
 
 /** Pixels between the trigger and the panel: room for the arrow. */
 const GAP_PX = 10;
@@ -207,6 +208,7 @@ export const PopoverPanel = forwardRef<HTMLDivElement, PopoverPanelProps>(
   function PopoverPanel({ className, children, onKeyDown, ...rest }, ref) {
     const { open, close, panelId, triggerRef, panelRef, bodyRef } =
       usePopover();
+    const container = usePortalContainer();
     const setPanel = useCallback(
       (el: HTMLDivElement | null) => {
         panelRef.current = el;
@@ -276,7 +278,7 @@ export const PopoverPanel = forwardRef<HTMLDivElement, PopoverPanelProps>(
           className={floatingStyles.arrow}
         />
       </div>,
-      document.body,
+      container,
     );
   },
 );

@@ -1,6 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import styled from "styled-components";
+import { vars } from "../theme/contract.css";
+import { LIST_MAX_HEIGHT_PX, useAnchoredList } from "./anchoredList";
 import { Avatar } from "./Avatar";
+import { usePortalContainer } from "./portal";
 
 export interface SelectedUser {
   id: string;
@@ -147,19 +151,17 @@ const ClearButton = styled.button`
   }
 `;
 
-const Dropdown = styled.div<{ $isOpen: boolean }>`
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
+/** In the portal container, placed under the box by `useAnchoredList`. */
+const Dropdown = styled.div`
+  position: fixed;
+  box-sizing: border-box;
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: ${({ theme }) => theme.shadows.md};
-  z-index: 1000;
-  max-height: 300px;
+  z-index: ${vars.layer.dropdown.base};
+  max-height: ${LIST_MAX_HEIGHT_PX}px;
   overflow-y: auto;
-  display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
 `;
 
 const UserItem = styled.button<{ $isHighlighted: boolean }>`
@@ -226,6 +228,9 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
+  const portal = usePortalContainer();
 
   const performSearch = useCallback(
     (query: string) => {
@@ -249,9 +254,12 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
   // Handle clicks outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Node;
+      // The list is portalled, so it is outside the container.
       if (
         containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
+        !containerRef.current.contains(target) &&
+        !listRef.current?.contains(target)
       ) {
         setIsOpen(false);
         setHighlightedIndex(-1);
@@ -273,6 +281,12 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
       setSelectedUser(null);
     }
   }, [value, users]);
+
+  const shouldShowDropdown =
+    isOpen &&
+    !selectedUser &&
+    (loading || users.length > 0 || inputValue.length >= 2);
+  useAnchoredList(boxRef, listRef, shouldShowDropdown);
 
   const selectUser = (user: SelectedUser) => {
     setSelectedUser(user);
@@ -306,6 +320,8 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
         break;
 
       case "Escape":
+        // Handled, so a dialog the box sits in stays open.
+        if (shouldShowDropdown) e.preventDefault();
         setIsOpen(false);
         setHighlightedIndex(-1);
         break;
@@ -338,16 +354,11 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
     />
   );
 
-  const shouldShowDropdown =
-    isOpen &&
-    !selectedUser &&
-    (loading || users.length > 0 || inputValue.length >= 2);
-
   return (
     <Container ref={containerRef}>
       {label && <Label>{label}</Label>}
 
-      <InputWrapper $hasError={!!error} $disabled={disabled}>
+      <InputWrapper ref={boxRef} $hasError={!!error} $disabled={disabled}>
         {selectedUser ? (
           <>
             {renderAvatar(selectedUser)}
@@ -386,32 +397,39 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
         )}
       </InputWrapper>
 
-      <Dropdown $isOpen={shouldShowDropdown}>
-        {loading ? (
-          <LoadingIndicator>Searching...</LoadingIndicator>
-        ) : inputValue.length < 2 ? (
-          <EmptyState>Type at least 2 characters to search</EmptyState>
-        ) : users.length === 0 ? (
-          <EmptyState>No users found</EmptyState>
-        ) : (
-          users.map((user, index) => (
-            <UserItem
-              key={user.id}
-              type="button"
-              $isHighlighted={index === highlightedIndex}
-              onClick={() => selectUser(user)}
-            >
-              {renderAvatar(user)}
-              <UserItemInfo>
-                <Username>{user.username}</Username>
-                {user.displayName && (
-                  <DisplayName>{user.displayName}</DisplayName>
-                )}
-              </UserItemInfo>
-            </UserItem>
-          ))
+      {shouldShowDropdown &&
+        createPortal(
+          <Dropdown ref={listRef} data-typeahead-list="">
+            {loading ? (
+              <LoadingIndicator>Searching...</LoadingIndicator>
+            ) : inputValue.length < 2 ? (
+              <EmptyState>Type at least 2 characters to search</EmptyState>
+            ) : users.length === 0 ? (
+              <EmptyState>No users found</EmptyState>
+            ) : (
+              users.map((user, index) => (
+                <UserItem
+                  key={user.id}
+                  type="button"
+                  // Picked with the arrow keys and Enter from the input; Tab
+                  // moves on past the list, which sits at the end of the page.
+                  tabIndex={-1}
+                  $isHighlighted={index === highlightedIndex}
+                  onClick={() => selectUser(user)}
+                >
+                  {renderAvatar(user)}
+                  <UserItemInfo>
+                    <Username>{user.username}</Username>
+                    {user.displayName && (
+                      <DisplayName>{user.displayName}</DisplayName>
+                    )}
+                  </UserItemInfo>
+                </UserItem>
+              ))
+            )}
+          </Dropdown>,
+          portal,
         )}
-      </Dropdown>
 
       {error && <ErrorMessage>{error}</ErrorMessage>}
     </Container>

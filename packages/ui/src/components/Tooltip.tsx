@@ -12,6 +12,7 @@ import { timingMs } from "../theme/tokens";
 import { applyPlacement, refOf, setRefs } from "./floating";
 import * as floatingStyles from "./floating.css";
 import * as styles from "./Tooltip.css";
+import { usePortalContainer } from "./portal";
 
 /** Pixels between the anchor and the tooltip: room for the arrow. */
 const GAP_PX = 8;
@@ -59,6 +60,7 @@ export interface TooltipProps {
  */
 export function Tooltip({ label, side = "top", children }: TooltipProps) {
   const [shown, setShown] = useState(false);
+  const container = usePortalContainer();
   const anchorRef = useRef<HTMLElement | null>(null);
   const tipRef = useRef<HTMLDivElement | null>(null);
   const showTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -194,7 +196,7 @@ export function Tooltip({ label, side = "top", children }: TooltipProps) {
             {label}
             <span aria-hidden className={floatingStyles.arrow} />
           </div>,
-          document.body,
+          container,
         )}
     </>
   );

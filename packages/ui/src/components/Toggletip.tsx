@@ -13,6 +13,7 @@ import { visuallyHidden } from "../styles/visuallyHidden.css";
 import { applyPlacement, setRefs } from "./floating";
 import * as floatingStyles from "./floating.css";
 import * as styles from "./Toggletip.css";
+import { usePortalContainer } from "./portal";
 
 /** Pixels between the button and the bubble: room for the arrow. */
 const GAP_PX = 8;
@@ -49,6 +50,7 @@ export interface ToggletipProps {
 export const Toggletip = forwardRef<HTMLButtonElement, ToggletipProps>(
   function Toggletip({ label, side = "top", className, children }, ref) {
     const [open, setOpen] = useState(false);
+    const container = usePortalContainer();
     const buttonRef = useRef<HTMLButtonElement | null>(null);
     const bubbleRef = useRef<HTMLDivElement | null>(null);
 
@@ -123,7 +125,7 @@ export const Toggletip = forwardRef<HTMLButtonElement, ToggletipProps>(
               {children}
               <span aria-hidden className={floatingStyles.arrow} />
             </div>,
-            document.body,
+            container,
           )}
       </>
     );
