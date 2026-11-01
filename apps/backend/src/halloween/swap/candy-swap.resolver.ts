@@ -94,10 +94,11 @@ export class CandySwapResolver {
     @Args("communityId", { type: () => ID }) communityId: string,
     @Args("candyIds", { type: () => [Int] }) candyIds: number[],
     @Args("wantSlug", { type: () => String, nullable: true })
-    wantSlug: string | null,
+    wantSlug // Undefined when left out of the request.
+    : string | null | undefined,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyOfferPlaced> {
-    return this.swap.place(communityId, user.id, candyIds, wantSlug);
+    return this.swap.place(communityId, user.id, candyIds, wantSlug ?? null);
   }
 
   @AllowAnyAuthenticated()
@@ -112,10 +113,11 @@ export class CandySwapResolver {
     @Args("communityId", { type: () => ID }) communityId: string,
     @Args("offerId", { type: () => ID }) offerId: string,
     @Args("giveSlug", { type: () => String, nullable: true })
-    giveSlug: string | null,
+    giveSlug // Undefined when left out of the request.
+    : string | null | undefined,
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyTradeRecord> {
-    return this.swap.accept(communityId, user.id, offerId, giveSlug);
+    return this.swap.accept(communityId, user.id, offerId, giveSlug ?? null);
   }
 
   @AllowAnyAuthenticated()

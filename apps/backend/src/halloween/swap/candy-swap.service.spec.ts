@@ -42,7 +42,7 @@ describe("CandySwapService under contention", () => {
     const swap = serviceFailingWith(failure);
 
     for (const attempt of [
-      () => swap.accept("community", "user", OFFER_ID),
+      () => swap.accept("community", "user", OFFER_ID, null),
       () => swap.cancel("community", "user", OFFER_ID),
       () => swap.place("community", "user", [1], "banana"),
     ]) {

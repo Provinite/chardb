@@ -713,7 +713,25 @@ describe("Halloween candy swap (e2e)", () => {
         error(
           await gql(ACCEPT, { offerId: offer.id, giveSlug: "berry-tart" }, bob),
         ),
-      ).toBe("You have no spare candy of the kind this offer asks for");
+      ).toBe("You have no spare candy of that kind");
+    });
+
+    it("refuses a candy that does not exist", async () => {
+      const { offer } = await placed(
+        alice,
+        [(await candy(alice, "candy-corn")).id],
+        null,
+      );
+      await candy(bob, "banana");
+      expect(
+        error(
+          await gql(
+            ACCEPT,
+            { offerId: offer.id, giveSlug: "brussels-sprout" },
+            bob,
+          ),
+        ),
+      ).toBe("There is no such candy");
     });
 
     it("does not let the taker pick a kind other than the one asked for", async () => {

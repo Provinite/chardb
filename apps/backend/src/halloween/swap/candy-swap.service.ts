@@ -331,9 +331,12 @@ export class CandySwapService {
     communityId: string,
     userId: string,
     offerId: string,
-    giveSlug: string | null = null,
+    giveSlug: string | null,
   ): Promise<HalloweenCandyTradeRecord> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
+    if (giveSlug !== null && !CANDY_SLUGS.includes(giveSlug)) {
+      throw new BadRequestException("There is no such candy");
+    }
     if (!isUuid(offerId)) {
       throw new NotFoundException("That offer is no longer open");
     }
@@ -368,7 +371,9 @@ export class CandySwapService {
       const payment = spares.find((c) => !onBoards.has(c.id)) ?? spares[0];
       if (!payment) {
         throw new BadRequestException(
-          "You have no spare candy of the kind this offer asks for",
+          offer.wantSlug === null
+            ? "You have no spare candy of that kind"
+            : "You have no spare candy of the kind this offer asks for",
         );
       }
       return this.swap(tx, communityId, guildId, {

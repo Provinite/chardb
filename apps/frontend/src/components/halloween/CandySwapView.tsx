@@ -57,11 +57,24 @@ const ANYTHING = Symbol("anything");
 /** What the offer being made asks for; null before anything is chosen. */
 type Ask = string | typeof ANYTHING | null;
 
-const Candy = ({ slug, small }: { slug: string; small?: boolean }) => (
+const Candy = ({
+  slug,
+  small,
+  decorative,
+  lazy,
+}: {
+  slug: string;
+  small?: boolean;
+  /** Inside a control that names it, so it goes unannounced. */
+  decorative?: boolean;
+  /** For long lists, such as the pickers, that load as they scroll. */
+  lazy?: boolean;
+}) => (
   <img
     className={small ? styles.smallCandy : styles.candy}
     src={candyImageUrl(slug)}
-    alt={candyName(slug)}
+    alt={decorative ? "" : candyName(slug)}
+    loading={lazy ? "lazy" : undefined}
   />
 );
 
@@ -96,7 +109,7 @@ const OfferTerms = ({ offer }: { offer: SwapOffer }) => (
 const Choice = ({
   label,
   have = 0,
-  chosen = false,
+  chosen,
   disabled,
   onPick,
   children,
@@ -104,6 +117,10 @@ const Choice = ({
   label: string;
   /** How many of it you hold, shown as a badge when any. */
   have?: number;
+  /**
+   * Whether it is the current choice, in a picker that keeps one. Left out
+   * where picking acts at once, which is no toggle.
+   */
   chosen?: boolean;
   disabled?: boolean;
   onPick: () => void;
@@ -127,15 +144,6 @@ const Choice = ({
       )}
     </button>
   </li>
-);
-
-const PickerImage = ({ slug }: { slug: string }) => (
-  <img
-    className={styles.candy}
-    src={candyImageUrl(slug)}
-    alt=""
-    loading="lazy"
-  />
 );
 
 /** A section named by its heading, so it is a landmark people can jump to. */
@@ -225,10 +233,13 @@ export const CandySwapView = ({
     [myCandies, myOffers],
   );
   // The kinds you could pay with: candies not in an offer.
-  const spares = useMemo(
-    () => [...countBySlug(myCandies)].sort(([a], [b]) => a.localeCompare(b)),
-    [myCandies],
-  );
+  const spares = useMemo(() => {
+    const counts = countBySlug(myCandies);
+    return candyTypes.flatMap((slug) => {
+      const have = counts.get(slug);
+      return have ? [[slug, have] as const] : [];
+    });
+  }, [candyTypes, myCandies]);
 
   const atLimit = myOffers.length >= maxOpenOffers;
   const full = offering.length >= maxOffered;
@@ -328,7 +339,7 @@ export const CandySwapView = ({
                   setPaying(null);
                 }}
               >
-                <PickerImage slug={slug} />
+                <Candy slug={slug} decorative lazy />
               </Choice>
             ))}
           </Cluster>
@@ -352,11 +363,7 @@ export const CandySwapView = ({
                       setPicked((p) => p.filter((x) => x.id !== c.id))
                     }
                   >
-                    <img
-                      className={styles.candy}
-                      src={candyImageUrl(c.slug)}
-                      alt=""
-                    />
+                    <Candy slug={c.slug} decorative />
                   </button>
                 ) : (
                   <span key={`empty-${i}`} className={styles.slot}>
@@ -385,11 +392,7 @@ export const CandySwapView = ({
                       disabled={left.length === 0 || full || slug === want}
                       onClick={() => setPicked((p) => [...p, left[0]])}
                     >
-                      <img
-                        className={styles.candy}
-                        src={candyImageUrl(slug)}
-                        alt=""
-                      />
+                      <Candy slug={slug} decorative />
                       <span className={styles.count} aria-hidden>
                         {left.length}
                       </span>
@@ -420,11 +423,7 @@ export const CandySwapView = ({
                 ) : want === ANYTHING ? (
                   <AnythingMark />
                 ) : (
-                  <img
-                    className={styles.candy}
-                    src={candyImageUrl(want)}
-                    alt=""
-                  />
+                  <Candy slug={want} decorative />
                 )}
               </button>
             </Cluster>
@@ -455,7 +454,7 @@ export const CandySwapView = ({
                     disabled={giving.has(slug)}
                     onPick={() => ask(slug)}
                   >
-                    <PickerImage slug={slug} />
+                    <Candy slug={slug} decorative lazy />
                   </Choice>
                 ))}
               </Cluster>

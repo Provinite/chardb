@@ -144,6 +144,37 @@ describe("CandySwapView", () => {
       ).toBeDisabled();
     });
 
+    it("trades at once from the candy picked, rather than toggling it", async () => {
+      renderView({ offers: [offer("o1", null, ["luther-head"])] });
+      const card = within(section("Offers you can take")).getByRole("listitem");
+      await userEvent.click(
+        within(card).getByRole("button", { name: "Pick a candy to trade" }),
+      );
+      const picker = screen.getByRole("dialog", { name: "Trade a candy" });
+      for (const button of within(picker).getAllByRole("button", {
+        name: /you have/,
+      })) {
+        expect(button).not.toHaveAttribute("aria-pressed");
+      }
+    });
+
+    it("lists your candies in the same order as the candy types", async () => {
+      renderView({
+        candyTypes: ["candy-corn", "banana", "berry-tart", "luther-head"],
+        offers: [offer("o1", null, ["luther-head"])],
+      });
+      const card = within(section("Offers you can take")).getByRole("listitem");
+      await userEvent.click(
+        within(card).getByRole("button", { name: "Pick a candy to trade" }),
+      );
+      const picker = screen.getByRole("dialog", { name: "Trade a candy" });
+      expect(
+        within(picker)
+          .getAllByRole("button", { name: /you have/ })
+          .map((b) => b.getAttribute("aria-label")),
+      ).toEqual(["candy corn (you have 2)", "banana (you have 1)"]);
+    });
+
     it("says when there are none, and asks for more", async () => {
       const { onReroll } = renderView({ offers: [] });
       const offers = section("Offers you can take");
