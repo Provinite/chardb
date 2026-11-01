@@ -35,6 +35,14 @@ export class TraitReviewQueueFiltersInput {
   @IsOptional()
   @IsEnum(TraitReviewSource)
   source?: TraitReviewSource;
+
+  @Field(() => ID, {
+    nullable: true,
+    description: "Only this character's reviews",
+  })
+  @IsOptional()
+  @IsUUID()
+  characterId?: string;
 }
 
 @InputType()

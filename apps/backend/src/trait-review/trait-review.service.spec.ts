@@ -165,4 +165,32 @@ describe("TraitReviewService", () => {
       );
     });
   });
+
+  /** The character page's badge links to its review this way (#526). */
+  describe("getQueueForCommunity filtered to a character", () => {
+    it("narrows to that character, still within the community", async () => {
+      mockDatabaseService.traitReview.findMany.mockResolvedValue([]);
+      mockDatabaseService.traitReview.count.mockResolvedValue(0);
+
+      await service.getQueueForCommunity(
+        "community-1",
+        { characterId: "char-1" },
+        10,
+        0,
+      );
+
+      const where = mockDatabaseService.traitReview.findMany.mock.calls.at(
+        -1,
+      )?.[0].where;
+      expect(where).toEqual(
+        expect.objectContaining({
+          characterId: "char-1",
+          character: { species: { communityId: "community-1" } },
+        }),
+      );
+      expect(mockDatabaseService.traitReview.count).toHaveBeenCalledWith({
+        where,
+      });
+    });
+  });
 });
