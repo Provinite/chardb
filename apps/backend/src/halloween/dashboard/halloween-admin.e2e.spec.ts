@@ -738,6 +738,25 @@ describe("Halloween management (e2e)", () => {
         ]);
       });
 
+      // Its owner claimed it, then gave it back to the community.
+      it("includes a character whose earlier promise was claimed", async () => {
+        const returned = await character({ name: "Returned Ghost" });
+        await db.pendingOwnership.create({
+          data: {
+            characterId: returned.id,
+            provider: "DEVIANTART",
+            providerAccountId: "returned-ghost-owner",
+            claimedAt: new Date("2026-02-26"),
+          },
+        });
+
+        const res = await gql(CHARACTERS, { search: "ghost" });
+        expect(res.body.errors).toBeUndefined();
+        expect(res.body.data.halloweenPrizeCharacters).toEqual([
+          expect.objectContaining({ id: returned.id, name: "Returned Ghost" }),
+        ]);
+      });
+
       it("leaves out characters already in the prize pool", async () => {
         const pooled = await character({ name: "Pooled Ghost" });
         const free = await character({ name: "Free Ghost" });

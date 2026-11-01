@@ -98,7 +98,8 @@ export class PrizeAwardService {
       const pending = await tx.pendingOwnership.findUnique({
         where: { characterId: prize.characterId },
       });
-      if (pending) {
+      // A claimed promise is history: its owner gave the character back.
+      if (pending && !pending.claimedAt) {
         return "the character is already promised to someone";
       }
     }

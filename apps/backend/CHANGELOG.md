@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A character whose earlier pending ownership was claimed can be a Halloween prize again**: the prize picker lists it, a win delivers it, and the new promise replaces the claimed row.
+
 ## [v15.0.0] - 2026-10-31
 
 ### Added
