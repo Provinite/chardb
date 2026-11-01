@@ -1,4 +1,10 @@
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { createPortal } from "react-dom";
 import { Toaster, toast, type Toast } from "react-hot-toast";
 import { X } from "lucide-react";
@@ -14,7 +20,8 @@ const toneOf = (t: Toast) =>
  * any dialog the toast was shown over.
  */
 const ToastItem: React.FC<{
-  returnTo: React.MutableRefObject<HTMLElement | null>;
+  /** Read as the toast leaves, so it is wherever focus was last. */
+  returnTo: () => HTMLElement | null;
   children: React.ReactNode;
 }> = ({ returnTo, children }) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -22,7 +29,7 @@ const ToastItem: React.FC<{
     const el = ref.current;
     return () => {
       // Still in the page here: React removes it after this runs.
-      const back = returnTo.current;
+      const back = returnTo();
       if (
         el?.contains(document.activeElement) &&
         back?.isConnected &&
@@ -63,6 +70,7 @@ export const ThemedToaster: React.FC = () => {
     document.addEventListener("focusin", onFocusIn);
     return () => document.removeEventListener("focusin", onFocusIn);
   }, [host]);
+  const getReturnTo = useCallback(() => returnTo.current, []);
 
   return createPortal(
     <Toaster
@@ -82,7 +90,7 @@ export const ThemedToaster: React.FC = () => {
       }}
     >
       {(t) => (
-        <ToastItem returnTo={returnTo}>
+        <ToastItem returnTo={getReturnTo}>
           <div className={styles.slide} data-visible={t.visible}>
             <div className={styles.toast({ tone: toneOf(t) })}>
               <div className={styles.message}>
