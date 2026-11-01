@@ -280,6 +280,8 @@ export class KnockCommand implements HalloweenCommandHandler {
         guildId: interaction.guild_id,
         userId: interaction.member.user.id,
         ...outcome,
+        discordUsername: interaction.member.user.username,
+        discordDisplayName: interaction.member.user.global_name,
       },
       tx,
     );

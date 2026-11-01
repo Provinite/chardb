@@ -19,6 +19,9 @@ export interface KnockEventInput {
   userId: string;
   prizeId: string | null;
   candySlug: string | null;
+  /** The knocker's Discord handle and global name, for staff. */
+  discordUsername?: string | null;
+  discordDisplayName?: string | null;
 }
 
 export function validateKnockEventForCreate({

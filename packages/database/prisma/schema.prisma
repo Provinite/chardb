@@ -2399,6 +2399,10 @@ model HalloweenKnockEvent {
   /// The candy a loss showed, by its image's slug (`candy/<slug>.png`). Null
   /// on a win, and on a loss from before candies were recorded.
   candySlug String?  @map("candy_slug") @db.VarChar(40)
+  /// The knocker's Discord handle and global display name as the knock saw
+  /// them, for staff reading the win feed. Null before they were recorded.
+  discordUsername    String? @map("discord_username") @db.VarChar(32)
+  discordDisplayName String? @map("discord_display_name") @db.VarChar(32)
 
   /// When staff marked a prize with no chardb item or character as handed
   /// over, and who. Chardb prizes deliver themselves and never set these.

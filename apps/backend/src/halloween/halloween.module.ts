@@ -32,6 +32,8 @@ import { CandyBoardService } from "./board/candy-board.service";
 import { CandyBoardResolver } from "./board/candy-board.resolver";
 import { CandySwapService } from "./swap/candy-swap.service";
 import { CandySwapResolver } from "./swap/candy-swap.resolver";
+import { HalloweenPrizeListService } from "./prizes/halloween-prize-list.service";
+import { HalloweenPrizeListResolver } from "./prizes/halloween-prize-list.resolver";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { KnockCommand } from "./commands/knock.command";
 import { AdminKnockCommand } from "./commands/adminknock.command";
@@ -96,6 +98,8 @@ const COMMANDS = [
     CandyBoardResolver,
     CandySwapService,
     CandySwapResolver,
+    HalloweenPrizeListService,
+    HalloweenPrizeListResolver,
     ...COMMANDS,
     {
       provide: HALLOWEEN_COMMANDS,

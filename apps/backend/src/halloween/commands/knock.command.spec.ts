@@ -87,6 +87,8 @@ const knockEvent = (
   userId: USER_ID,
   prizeId: null,
   candySlug: null,
+  discordUsername: "trickortreater",
+  discordDisplayName: null,
   deliveredAt: null,
   deliveredById: null,
   time: new Date(TIMESTAMP),
@@ -450,6 +452,8 @@ describe("/knock", () => {
           userId: USER_ID,
           prizeId: null,
           candySlug: CANDY_SLUG,
+          discordUsername: "trickortreater",
+          discordDisplayName: null,
         },
         tx,
       );
@@ -546,7 +550,15 @@ describe("/knock", () => {
       expect(knocks.save).toHaveBeenCalledTimes(1);
       // A win gives no candy.
       expect(knocks.save).toHaveBeenCalledWith(
-        { guildId: GUILD_ID, userId: USER_ID, prizeId: "myo", candySlug: null },
+        {
+          guildId: GUILD_ID,
+          userId: USER_ID,
+          prizeId: "myo",
+          candySlug: null,
+          // For staff reading the win feed.
+          discordUsername: "trickortreater",
+          discordDisplayName: null,
+        },
         tx,
       );
     });

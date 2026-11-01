@@ -33,6 +33,11 @@ export class HalloweenLinks {
     return this.communityUrl(guildId, "/admin/halloween");
   }
 
+  /** The community's public prize list, or null with nowhere to link to. */
+  async prizeListPage(guildId: string): Promise<string | null> {
+    return this.communityUrl(guildId, "/halloween/prizes");
+  }
+
   /**
    * A markdown link to what the prize hands over on chardb, or undefined for
    * a prize staff hand over themselves, or with nowhere to link to.

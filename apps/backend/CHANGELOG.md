@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Public Halloween prize list**: `halloweenPrizes` and `halloweenRecentWins`, open to anyone, where a winner shows as their linked chardb account, their Discord handle for item staff, or "A Discord user"; knocks now record the knocker's Discord handle.
+
+### Changed
+
+- **`/prize list` links the prize list on chardb** instead of listing 20 random prizes.
+
 ## [v15.2.0] - 2026-11-01
 
 ### Added
