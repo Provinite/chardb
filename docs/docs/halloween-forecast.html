@@ -1,0 +1,444 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Halloween Event Stats and Forecast - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Reading the Halloween event page's numbers, rolling a knock or a prize draw without spending anything, and forecasting when the prizes run out."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/halloween-forecast.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Halloween Event Stats and Forecast" />
+    <meta
+      property="og:description"
+      content="Reading the Halloween event page's numbers, rolling a knock or a prize draw without spending anything, and forecasting when the prizes run out."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/halloween-forecast.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/halloween-forecast-what-if.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The run-out forecast at a 6% win rate: a histogram of days until the prizes run out, with a dashed line at the scheduled end."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul,
+      .step-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        max-width: 520px;
+        margin: 0 auto 1.5rem;
+      }
+
+      .screenshot.wide {
+        max-width: 100%;
+      }
+
+      .screenshot.narrow {
+        max-width: 300px;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      code {
+        background: #f3f3f8;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        font-size: 0.875em;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+
+      footer a {
+        color: white;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        font-size: 0.9375rem;
+      }
+
+      th,
+      td {
+        text-align: left;
+        padding: 0.5rem 0.75rem;
+        border-bottom: 1px solid #e0e0e0;
+        vertical-align: top;
+      }
+
+      th {
+        color: #333;
+        background: #f8f9fa;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Halloween Event Stats and Forecast</h1>
+        <p>How the event is going, and when the prizes run out.</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The <a href="halloween-event.html">Halloween event</a> page opens
+            with the event's numbers, then two simulators and a forecast. Staff
+            use them to decide whether to raise the win rate as the week goes
+            on.
+          </p>
+          <p>
+            Everything here is read-only. The simulators roll in your browser
+            and never take a prize or spend a knock.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Getting There</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            While the event is on, the community sidebar has a
+            <strong>Halloween</strong> section for players, with
+            <a href="halloween-candy-board.html">Candy Boards</a> and
+            <a href="halloween-candy-swap.html">Candy Swap</a>.
+          </p>
+          <p>
+            Staff who can grant or manage items also get
+            <strong>Halloween Event</strong> under
+            <strong>Administration</strong>, which opens the event page.
+          </p>
+        </div>
+        <div class="screenshot narrow">
+          <img
+            src="halloween-nav.png"
+            alt="The community sidebar: a dark purple Halloween heading in orange capitals with a ghost and a candy, above Candy Boards and Candy Swap."
+          />
+          <div class="screenshot-caption">The Halloween section</div>
+        </div>
+        <div class="screenshot narrow">
+          <img
+            src="halloween-nav-dark.png"
+            alt="The same sidebar in dark mode; the Halloween heading keeps its colours."
+          />
+          <div class="screenshot-caption">Dark mode</div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Reading the Numbers</h2>
+        </div>
+        <div class="step-content">
+          <table>
+            <tr>
+              <th>Tile</th>
+              <th>Counts</th>
+            </tr>
+            <tr>
+              <td>Prizes at start, Prizes left</td>
+              <td>Units across the whole pool, before and after wins</td>
+            </tr>
+            <tr>
+              <td>Players, last 24h</td>
+              <td>Discord users who knocked in the past 24 hours</td>
+            </tr>
+            <tr>
+              <td>Players, all time</td>
+              <td>Discord users who have knocked since the event began</td>
+            </tr>
+            <tr>
+              <td>Gifties unspent</td>
+              <td>Gifties waiting for their receiver's next knock</td>
+            </tr>
+            <tr>
+              <td>Sent a gifty today, yesterday</td>
+              <td>
+                Share of the day's players who also sent a gifty. Days run from
+                one daily reset to the next, US Central.
+              </td>
+            </tr>
+          </table>
+          <p>
+            Each gifty sent is one more knock for someone, so the send rate is
+            what turns players into total knocks.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-dashboard-stats.png"
+            alt="The event page's tiles: 822 knocks, 24 wins, 127 prizes at start, 103 left, 160 players in the last 24 hours and all time, 160 gifties sent, 64 unspent, 19% sent a gifty today, 76% yesterday, 17 to deliver."
+          />
+          <div class="screenshot-caption">Two days into an event</div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Simulators</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            <strong>Draw a prize</strong> picks a prize the way a win does: from
+            what is left, each unit counting its weight. Use it to sanity-check
+            weights before players do.
+          </p>
+          <p>
+            <strong>Knock</strong> rolls against today's win rate. A win draws a
+            prize; a loss shows the candy it would leave. The roll is shown, so
+            you can see how close it came.
+          </p>
+          <p>Both use the same code as <code>/knock</code> in Discord.</p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-simulators.png"
+            alt="Prize draw showing Test Lantern, 53 of 60 left. Knock showing Winner, Test Lantern, rolled 0.0138 against a win rate of 0.0300."
+          />
+          <div class="screenshot-caption">
+            A drawn prize and a winning knock
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 4 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">When the Prizes Run Out</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The forecast plays the rest of the event out thousands of times and
+            charts how many days from now the last prize goes, in quarter-day
+            bars. Under it:
+          </p>
+          <ul>
+            <li><strong>Median</strong>: half the runs finish sooner</li>
+            <li><strong>80% of runs</strong>: the likely range</li>
+            <li>
+              <strong>Runs out before the scheduled end</strong>: the share of
+              runs that empty the pool before the event's end date
+            </li>
+          </ul>
+          <p>
+            It starts from the current win rate and the last 24 hours' players
+            and knocks per player. Before anyone has knocked, it assumes 175
+            players a day. Days before the start date count no knocks.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-forecast.png"
+            alt="The forecast at a 3% win rate: median 8.3 days, 80% of runs 7.3 to 9.3 days, 0% before the scheduled end 5 days away. A bell-shaped histogram from 6.3 to 10.5 days."
+          />
+          <div class="screenshot-caption">
+            At 3%, the prizes outlast the event
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 5 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">5</div>
+          <h2 class="step-title">Trying a Different Win Rate</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Change any of the three numbers and the chart redraws. Nothing is
+            saved: to change the real win rate, use
+            <strong>Edit settings</strong>. <strong>Reset</strong> puts the
+            measured numbers back.
+          </p>
+          <p>
+            Once the end date falls inside the chart, a dashed line marks it.
+            Aim for most of the curve to sit just left of the line.
+          </p>
+          <p>
+            The forecast assumes the same knocks every day. A busy first day
+            followed by a quieter week stretches the real finish out further
+            than the chart shows.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="halloween-forecast-what-if.png"
+            alt="The forecast with the win rate changed to 6%: median 4.1 days, 98% of runs before the scheduled end, and a dashed line at 5 days near the right of the histogram."
+          />
+          <div class="screenshot-caption">What if the win rate were 6%</div>
+        </div>
+        <div class="screenshot narrow">
+          <img
+            src="halloween-forecast-phone.png"
+            alt="The forecast at phone width: the three fields stacked, the summary, and the histogram."
+          />
+          <div class="screenshot-caption">At 375px wide</div>
+        </div>
+      </div>
+
+      <footer>
+        <p>
+          CharDB Halloween Event Stats and Forecast &bull; Feature Documentation
+        </p>
+        <p>
+          Setting the event up?
+          <a href="halloween-event.html">Halloween Event</a> covers that.
+        </p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>
