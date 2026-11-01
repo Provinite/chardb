@@ -1,5 +1,10 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
+import { hasStaffPermissions } from "./open-signup-permissions";
 import { Prisma } from "@chardb/database";
 
 /**
@@ -264,9 +269,25 @@ export class RolesService {
     if (input.canDeleteCharacter !== undefined)
       updateData.canDeleteCharacter = input.canDeleteCharacter;
 
-    return this.prisma.role.update({
-      where: { id },
-      data: updateData,
+    // Checked after the write, inside the transaction, so it judges the role
+    // as it would end up and a refusal leaves it untouched.
+    return this.prisma.$transaction(async (tx) => {
+      const updated = await tx.role.update({
+        where: { id },
+        data: updateData,
+      });
+      if (hasStaffPermissions(updated)) {
+        const openSignup = await tx.community.findFirst({
+          where: { openSignupRoleId: id },
+          select: { id: true },
+        });
+        if (openSignup) {
+          throw new BadRequestException(
+            "This role is the community's open sign-up role, which cannot have staff permissions. Choose another role for open sign-up, or close it, first.",
+          );
+        }
+      }
+      return updated;
     });
   }
 

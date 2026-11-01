@@ -1,6 +1,10 @@
 /**
  * Community role permissions from the Role entity.
  * These permissions are checked within the context of a specific community.
+ *
+ * ADDING ONE? Also classify it as `member` or `staff` in
+ * `roles/open-signup-permissions.ts`, which decides whether open sign-up may
+ * give it to strangers.
  */
 export enum CommunityPermission {
   /** Special sentinel value: user just needs ANY role in the community (membership check) */

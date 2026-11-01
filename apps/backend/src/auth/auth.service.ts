@@ -7,7 +7,7 @@ import {
   forwardRef,
 } from "@nestjs/common";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
-import { hasStaffPermissions } from "../communities/open-signup-role";
+import { hasStaffPermissions } from "../roles/open-signup-permissions";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";

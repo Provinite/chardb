@@ -7,7 +7,7 @@ import {
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
-import { hasStaffPermissions } from "./open-signup-role";
+import { hasStaffPermissions } from "../roles/open-signup-permissions";
 
 /**
  * Service layer input types for communities operations.

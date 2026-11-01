@@ -20,6 +20,7 @@
 - App-specific changes should go in the appropriate CHANGELOG.md. The root-level CHANGELOG.md is for tracking cross-cutting changes and non-app-specific changes (like CI for example)
 - PSQL credentials are in the backend .env file
 - Don't use `git -C` unless absolutely necessary. If you're already in the directory you're passing to -C, just omit it.
+- Adding a community role permission (a `can*` column on `Role`)? Classify it as `member` or `staff` in [apps/backend/src/roles/open-signup-permissions.ts](./apps/backend/src/roles/open-signup-permissions.ts). Communities with open sign-up hand their role to strangers, so only `member` permissions may reach them. When unsure, `staff`.
 - Logging conventions:
   - Prefer entirely static log and error messages
   - Prefer strongly typed error subclasses for additional data.

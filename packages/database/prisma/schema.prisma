@@ -917,8 +917,13 @@ model Role {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  // Community-scoped permissions
-  canCreateSpecies            Boolean @default(false) @map("can_create_species")
+  // Community-scoped permissions.
+  //
+  // ADDING ONE? Classify it as `member` or `staff` in
+  // apps/backend/src/roles/open-signup-permissions.ts. Open sign-up hands its
+  // role to strangers, so only `member` permissions may reach them; backend
+  // type-check fails until the new column is listed there.
+  canCreateSpecies           Boolean @default(false) @map("can_create_species")
   canCreateCharacter          Boolean @default(false) @map("can_create_character")
   canCreateOrphanedCharacter  Boolean @default(false) @map("can_create_orphaned_character")
   canEditCharacter            Boolean @default(false) @map("can_edit_character")

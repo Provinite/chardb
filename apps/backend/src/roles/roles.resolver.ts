@@ -28,7 +28,7 @@ import { RemovalResponse } from "../shared/entities/removal-response.entity";
 import { Community } from "../communities/entities/community.entity";
 import { CommunitiesService } from "../communities/communities.service";
 import { mapPrismaCommunityToGraphQL } from "../communities/utils/community-resolver-mappers";
-import { hasStaffPermissions } from "../communities/open-signup-role";
+import { hasStaffPermissions } from "./open-signup-permissions";
 
 @Resolver(() => Role)
 export class RolesResolver {

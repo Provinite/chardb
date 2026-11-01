@@ -438,6 +438,66 @@ describe("Community open sign-up (e2e)", () => {
       expect(user).toBeNull();
     });
 
+    describe("editing the chosen role", () => {
+      const UPDATE_ROLE = `
+        mutation updateRole($id: ID!, $input: UpdateRoleInput!) {
+          updateRole(id: $id, updateRoleInput: $input) {
+            id
+            name
+          }
+        }
+      `;
+
+      it("refuses an edit that adds one", async () => {
+        await openSignup(memberRoleId);
+        const token = await staffToken({ canEditRole: true });
+
+        const response = await testApp.authenticatedGraphqlRequest(
+          UPDATE_ROLE,
+          { id: memberRoleId, input: { canModerateImages: true } },
+          token,
+        );
+
+        expect(response.body.errors?.[0].message).toBe(
+          "This role is the community's open sign-up role, which cannot have staff permissions. Choose another role for open sign-up, or close it, first.",
+        );
+        const role = await testApp
+          .getDb()
+          .role.findUniqueOrThrow({ where: { id: memberRoleId } });
+        expect(role.canModerateImages).toBe(false);
+      });
+
+      it("allows an edit that keeps it to a member's own permissions", async () => {
+        await openSignup(memberRoleId);
+        const token = await staffToken({ canEditRole: true });
+
+        const response = await testApp.authenticatedGraphqlRequest(
+          UPDATE_ROLE,
+          {
+            id: memberRoleId,
+            input: { name: "Villager", canEditOwnCharacter: true },
+          },
+          token,
+        );
+
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.data.updateRole.name).toBe("Villager");
+      });
+
+      it("allows staff permissions on a role sign-up does not use", async () => {
+        await openSignup(memberRoleId);
+        const token = await staffToken({ canEditRole: true });
+
+        const response = await testApp.authenticatedGraphqlRequest(
+          UPDATE_ROLE,
+          { id: moderatorRoleId, input: { canEditRole: true } },
+          token,
+        );
+
+        expect(response.body.errors).toBeUndefined();
+      });
+    });
+
     it("refuses joining once the chosen role gains one", async () => {
       await openSignup(moderatorRoleId);
       const user = await testApp.createTestUser({
