@@ -1,6 +1,7 @@
 import React, {
   createContext,
   forwardRef,
+  useCallback,
   useContext,
   useEffect,
   useId,
@@ -11,6 +12,7 @@ import React, {
 import { createPortal } from "react-dom";
 import * as styles from "./Dialog.css";
 import { tabbables } from "./floating";
+import { INERT_EXEMPT, PortalContainerContext } from "./portal";
 
 /**
  * The open dialogs, oldest first. Escape belongs to the last one, and each
@@ -29,7 +31,8 @@ const inertByDialogs = new Set<Element>();
  * dialog is open. Worked out from the whole stack each time rather than undone
  * per dialog, so a dialog closing under another leaves the page inert. `inert`
  * set by someone else (the navigation drawer, the boot screen) is theirs, and
- * left alone.
+ * left alone. So is anything marked `data-inert-exempt`: the toasts, which
+ * must stay clickable over a dialog.
  */
 function applyInert(): void {
   const top = stack[stack.length - 1];
@@ -41,7 +44,13 @@ function applyInert(): void {
   }
   if (!top) return;
   for (const el of document.body.children) {
-    if (el === top || el.hasAttribute("inert")) continue;
+    if (
+      el === top ||
+      el.hasAttribute("inert") ||
+      el.hasAttribute(INERT_EXEMPT)
+    ) {
+      continue;
+    }
     el.setAttribute("inert", "");
     inertByDialogs.add(el);
   }
@@ -108,7 +117,14 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
   ) {
     const titleId = useId();
     const [hasTitle, setHasTitle] = useState(false);
-    const layerRef = useRef<HTMLDivElement>(null);
+    const layerRef = useRef<HTMLDivElement | null>(null);
+    // Also in state, for the portal container: what opens inside renders
+    // into the layer, which needs it at render time rather than in a ref.
+    const [layer, setLayer] = useState<HTMLDivElement | null>(null);
+    const setLayerRef = useCallback((el: HTMLDivElement | null) => {
+      layerRef.current = el;
+      setLayer(el);
+    }, []);
     const dialogRef = useRef<HTMLDialogElement | null>(null);
     const onCloseRef = useRef(onClose);
     onCloseRef.current = onClose;
@@ -179,8 +195,11 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
 
     if (!open) return null;
 
+    // Always the body, never the portal container of a dialog this one opened
+    // from: the dialogs must be children of `<body>` for each to make the
+    // others inert.
     return createPortal(
-      <div ref={layerRef} className={styles.layer}>
+      <div ref={setLayerRef} className={styles.layer}>
         <div
           className={styles.scrim}
           data-dialog-scrim=""
@@ -203,7 +222,9 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
             .join(" ")}
         >
           <TitleIdContext.Provider value={titleId}>
-            {children}
+            <PortalContainerContext.Provider value={layer}>
+              {children}
+            </PortalContainerContext.Provider>
           </TitleIdContext.Provider>
         </dialog>
       </div>,

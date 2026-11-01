@@ -116,6 +116,44 @@ describe("Dialog", () => {
     already.remove();
   });
 
+  it("leaves what is marked data-inert-exempt interactive", () => {
+    const toasts = document.createElement("div");
+    toasts.setAttribute("data-inert-exempt", "");
+    document.body.append(toasts);
+    const { container } = openHarness();
+
+    expect(container.hasAttribute("inert")).toBe(true);
+    expect(toasts.hasAttribute("inert")).toBe(false);
+    toasts.remove();
+  });
+
+  it("opens a dialog from inside another at the end of the body", () => {
+    function Nested() {
+      const [inner, setInner] = useState(false);
+      return (
+        <Dialog.Root open onClose={() => {}} aria-label="Outer">
+          <button type="button" onClick={() => setInner(true)}>
+            More
+          </button>
+          <Dialog.Root open={inner} onClose={() => {}} aria-label="Inner">
+            inner
+          </Dialog.Root>
+        </Dialog.Root>
+      );
+    }
+    render(<Nested />);
+    click(dialogs()[0].querySelector("button")!);
+
+    const byName = (name: string) =>
+      dialogs().find((d) => d.getAttribute("aria-label") === name)!;
+    const outer = byName("Outer");
+    const inner = byName("Inner");
+    expect(outer.contains(inner)).toBe(false);
+    expect(inner.parentElement?.parentElement).toBe(document.body);
+    expect(inner.closest("[inert]")).toBeNull();
+    expect(outer.closest("[inert]")).not.toBeNull();
+  });
+
   it("moves focus in on open and back to the opener on close", () => {
     const { opener } = openHarness();
 
