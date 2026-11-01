@@ -25,30 +25,6 @@ const filled = (action: typeof vars.action.secondary) => ({
   }),
 });
 
-/**
- * The hit area of a control that looks smaller than 44px: an invisible
- * pseudo-element centred on it, at least 44px each way, on touch devices
- * only. A fine pointer keeps the visible size, so neighbours in a dense row
- * do not take each other's clicks.
- */
-export const touchHitArea = {
-  [touchQuery]: {
-    selectors: {
-      "&::before": {
-        content: "",
-        position: "absolute",
-        insetBlockStart: "50%",
-        insetInlineStart: "50%",
-        inlineSize: "100%",
-        blockSize: "100%",
-        minInlineSize: vars.size.target.comfortable,
-        minBlockSize: vars.size.target.comfortable,
-        transform: "translate(-50%, -50%)",
-      },
-    },
-  },
-} as const;
-
 /** What every button shares, labelled or icon-only. */
 export const control = style({
   position: "relative",
@@ -130,7 +106,15 @@ export const button = recipe({
         paddingBlock: vars.space.xs,
         paddingInline: vars.space.sm,
         fontSize: vars.font.size.sm,
-        "@media": touchHitArea,
+        // Full size to a finger. The control itself grows rather than an
+        // invisible hit area, which would overlap its neighbours in a dense
+        // row and take their taps.
+        "@media": {
+          [touchQuery]: {
+            minInlineSize: vars.size.target.comfortable,
+            minBlockSize: vars.size.target.comfortable,
+          },
+        },
       },
       md: {
         minBlockSize: vars.size.target.comfortable,

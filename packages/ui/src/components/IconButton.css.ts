@@ -1,7 +1,8 @@
 import { recipe } from "@vanilla-extract/recipes";
+import { touchQuery } from "../css/media";
 import { focusRing } from "../styles/focus.css";
 import { vars } from "../theme/contract.css";
-import { control, tones, touchHitArea } from "./Button.css";
+import { control, tones } from "./Button.css";
 
 export const iconButton = recipe({
   base: [focusRing, control, { padding: 0, flexShrink: 0 }],
@@ -12,7 +13,12 @@ export const iconButton = recipe({
       sm: {
         inlineSize: vars.size.target.min,
         blockSize: vars.size.target.min,
-        "@media": touchHitArea,
+        "@media": {
+          [touchQuery]: {
+            inlineSize: vars.size.target.comfortable,
+            blockSize: vars.size.target.comfortable,
+          },
+        },
       },
       /** 44px everywhere. */
       md: {

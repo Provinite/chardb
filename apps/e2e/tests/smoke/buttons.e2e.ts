@@ -11,29 +11,12 @@ const test = presetTest("community-basic");
  */
 const PHONE = { width: 390, height: 844 };
 
-/** Half of the 44px a touch target spans, less a pixel for rounding. */
-const REACH = 21;
-
-/**
- * Whether a tap `REACH` pixels from the centre, in each direction, lands on
- * the control. Its hit area may be a pseudo-element, which hit-testing
- * reports as the element itself, so this measures what a finger gets.
- */
-const reachesEveryWay = (control: Locator) =>
-  control.evaluate((el, reach) => {
-    const box = el.getBoundingClientRect();
-    const x = box.left + box.width / 2;
-    const y = box.top + box.height / 2;
-    return [
-      [x - reach, y],
-      [x + reach, y],
-      [x, y - reach],
-      [x, y + reach],
-    ].map(([px, py]) => {
-      const hit = document.elementFromPoint(px, py);
-      return hit !== null && (hit === el || el.contains(hit));
-    });
-  }, REACH);
+/** Whether a control is at least 44px each way, the size a finger needs. */
+const expectFingerSized = async (control: Locator) => {
+  const box = await control.boundingBox();
+  expect(box?.width).toBeGreaterThanOrEqual(44);
+  expect(box?.height).toBeGreaterThanOrEqual(44);
+};
 
 test.describe("link buttons", () => {
   test.use({ persona: "anon" });
@@ -66,32 +49,21 @@ test.describe("touch targets on a phone", () => {
 
   test("an md icon button is a 44px square", async ({ page }) => {
     await page.goto(apexUrl("/dashboard"));
-    const menu = page.getByRole("button", { name: "Open navigation" });
-    const box = await menu.boundingBox();
-    expect(box?.width).toBeGreaterThanOrEqual(44);
-    expect(box?.height).toBeGreaterThanOrEqual(44);
+    await expectFingerSized(
+      page.getByRole("button", { name: "Open navigation" }),
+    );
   });
 
   test("an md button is at least 44px each way", async ({ page }) => {
     await page.goto(apexUrl("/dashboard"));
-    const box = await page
-      .getByRole("link", { name: "Join Community" })
-      .boundingBox();
-    expect(box?.width).toBeGreaterThanOrEqual(44);
-    expect(box?.height).toBeGreaterThanOrEqual(44);
+    await expectFingerSized(page.getByRole("link", { name: "Join Community" }));
   });
 
-  test("an sm button takes a tap 22px from its centre in every direction", async ({
-    page,
-  }) => {
+  test("an sm button grows to 44px each way", async ({ page }) => {
     await page.goto(apexUrl("/dashboard"));
-    const small = page.getByRole("link", { name: "View Characters" });
-    const box = await small.boundingBox();
-    // Smaller than a finger to look at; the hit area is what reaches.
-    expect(box?.height).toBeLessThan(44);
-    // Hit-testing only sees what is in the viewport.
-    await small.scrollIntoViewIfNeeded();
-    expect(await reachesEveryWay(small)).toEqual([true, true, true, true]);
+    await expectFingerSized(
+      page.getByRole("link", { name: "View Characters" }),
+    );
   });
 });
 

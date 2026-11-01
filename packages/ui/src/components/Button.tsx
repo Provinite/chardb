@@ -16,8 +16,8 @@ export interface ButtonProps
   /** Defaults to `primary`. */
   tone?: ButtonTone;
   /**
-   * Defaults to `md`, 44px tall. `sm` looks smaller and grows its hit area
-   * to 44px on touch devices.
+   * Defaults to `md`, 44px tall. `sm` is smaller, and grows to 44px on touch
+   * devices.
    */
   size?: ButtonSize;
   /**

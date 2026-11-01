@@ -219,25 +219,28 @@ describe("Button", () => {
       });
     });
 
-    it("keeps sm at 24px or more, and grows its hit area to 44px on touch", () => {
+    it("keeps sm at 24px or more, and grows it to 44px itself on touch", () => {
       const [sm] = styles.button.classNames.variants.size.sm.split(" ");
       const rules = rulesFor(sm);
       expect(
         rules.find((rule) => rule.conditions.length === 0)?.declarations,
       ).toMatchObject({ "min-block-size": vars.size.target.min });
 
-      const hitArea = rules.find(
-        (rule) =>
-          rule.conditions.includes(`@media ${touchQuery}`) &&
-          rule.selector.includes("::before"),
-      );
-      expect(hitArea?.declarations).toMatchObject({
-        // An empty string, quoted: without content the pseudo-element is
-        // never generated.
-        content: '""',
+      // The control grows, not an invisible hit area: hit areas centred on
+      // neighbours in a dense row would overlap.
+      expect(
+        rules.find(
+          (rule) =>
+            rule.conditions.includes(`@media ${touchQuery}`) &&
+            rule.selector === `.${sm}`,
+        )?.declarations,
+      ).toMatchObject({
         "min-inline-size": vars.size.target.comfortable,
         "min-block-size": vars.size.target.comfortable,
       });
+      expect(rules.some((rule) => rule.selector.includes("::before"))).toBe(
+        false,
+      );
     });
 
     it("applies hover colours only on devices that hover", () => {

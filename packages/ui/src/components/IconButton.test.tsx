@@ -107,20 +107,22 @@ describe("IconButton", () => {
       });
     });
 
-    it("is a 24px square at sm, with a 44px hit area on touch", () => {
+    it("is a 24px square at sm, and a 44px square on touch", () => {
       const sm = styles.iconButton.classNames.variants.size.sm;
+      const [own] = sm.split(" ");
       expect(ownRule(sm)).toMatchObject({
         "inline-size": vars.size.target.min,
         "block-size": vars.size.target.min,
       });
-      const hitArea = rulesFor(sm.split(" ")[0]).find(
-        (rule) =>
-          rule.conditions.includes(`@media ${touchQuery}`) &&
-          rule.selector.includes("::before"),
-      );
-      expect(hitArea?.declarations).toMatchObject({
-        "min-inline-size": vars.size.target.comfortable,
-        "min-block-size": vars.size.target.comfortable,
+      expect(
+        rulesFor(own).find(
+          (rule) =>
+            rule.conditions.includes(`@media ${touchQuery}`) &&
+            rule.selector === `.${own}`,
+        )?.declarations,
+      ).toMatchObject({
+        "inline-size": vars.size.target.comfortable,
+        "block-size": vars.size.target.comfortable,
       });
     });
   });

@@ -19,7 +19,7 @@ export interface IconButtonProps
   icon: React.ReactNode;
   /** Defaults to `ghost`. */
   tone?: ButtonTone;
-  /** Defaults to `md`, a 44px square. `sm` is 24px, with a 44px hit area on touch. */
+  /** Defaults to `md`, a 44px square. `sm` is 24px, and 44px on touch devices. */
   size?: ButtonSize;
   /** As on `Button`: presses blocked at once, a spinner after the loader delay. */
   busy?: boolean;
