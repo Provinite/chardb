@@ -887,6 +887,9 @@ model Community {
   /// Uploads that name this community directly; see `Media.communityId`.
   media                Media[]
 
+  /// Every role edit that adds a staff permission, and every role deletion,
+  /// looks communities up by this.
+  @@index([openSignupRoleId])
   @@map("communities")
 }
 

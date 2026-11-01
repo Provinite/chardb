@@ -352,6 +352,24 @@ export class CommunitiesResolver {
   }
 
   /**
+   * Resolved rather than read off the column: a stored role that has somehow
+   * gained a staff permission lets nobody in, and clients decide whether to
+   * offer sign-up from this field alone.
+   */
+  @AllowUnauthenticated()
+  @ResolveField("openSignupRoleId", () => ID, {
+    nullable: true,
+    description:
+      "The role anyone may join with, without an invite code. Null when joining takes an invite.",
+  })
+  async resolveOpenSignupRoleId(
+    @Parent() community: Community,
+  ): Promise<string | null> {
+    if (!community.openSignupRoleId) return null;
+    return this.communitiesService.findOpenSignupRoleId(community.id);
+  }
+
+  /**
    * Staff who can hand out invite codes can also do without them: opening
    * sign-up is the same decision about who gets in, made for everyone at once.
    */

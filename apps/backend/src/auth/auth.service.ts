@@ -7,7 +7,7 @@ import {
   forwardRef,
 } from "@nestjs/common";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
-import { hasStaffPermissions } from "../roles/open-signup-permissions";
+import { findOpenSignupRoleId } from "../communities/open-signup";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
 import * as crypto from "crypto";
@@ -160,22 +160,12 @@ export class AuthService {
         // A community that does not exist gets the same answer as a closed
         // one: signup is unauthenticated, and it is no place to learn which
         // ids are real.
-        // The role is checked again here, not only when it was chosen: it can
-        // have gained a staff permission since.
-        const community = await tx.community.findUnique({
-          where: { id: input.communityId },
-          select: { openSignupRoleId: true, openSignupRole: true },
-        });
-        if (
-          !community?.openSignupRoleId ||
-          !community.openSignupRole ||
-          hasStaffPermissions(community.openSignupRole)
-        ) {
+        openSignupRoleId = await findOpenSignupRoleId(tx, input.communityId);
+        if (!openSignupRoleId) {
           throw new BadRequestException(
             "This community requires an invite code",
           );
         }
-        openSignupRoleId = community.openSignupRoleId;
       } else {
         throw new BadRequestException("An invite code is required");
       }

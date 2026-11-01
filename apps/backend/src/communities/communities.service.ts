@@ -8,6 +8,7 @@ import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
 import { hasStaffPermissions } from "../roles/open-signup-permissions";
+import { findOpenSignupRoleId } from "./open-signup";
 
 /**
  * Service layer input types for communities operations.
@@ -221,38 +222,42 @@ export class CommunitiesService {
    */
   async setOpenSignup(communityId: string, roleId: string | null) {
     await this.findOne(communityId);
-    if (roleId) {
-      const role = await this.prisma.role.findUnique({
-        where: { id: roleId },
+    return this.prisma.$transaction(async (tx) => {
+      if (roleId) {
+        // Locked so a concurrent `updateRole` cannot add a staff permission
+        // between this check and the write below. That edit's UPDATE waits on
+        // the lock, then sees this community pointing at the role and refuses.
+        await tx.$queryRaw`SELECT id FROM roles WHERE id = ${roleId} FOR UPDATE`;
+        const role = await tx.role.findUnique({ where: { id: roleId } });
+        if (role?.communityId !== communityId) {
+          throw new BadRequestException(
+            "The role must belong to this community",
+          );
+        }
+        if (hasStaffPermissions(role)) {
+          throw new BadRequestException(
+            "Open sign-up cannot give a role with staff permissions",
+          );
+        }
+      }
+      return tx.community.update({
+        where: { id: communityId },
+        data: { openSignupRoleId: roleId },
       });
-      if (role?.communityId !== communityId) {
-        throw new BadRequestException("The role must belong to this community");
-      }
-      if (hasStaffPermissions(role)) {
-        throw new BadRequestException(
-          "Open sign-up cannot give a role with staff permissions",
-        );
-      }
-    }
-    return this.prisma.community.update({
-      where: { id: communityId },
-      data: { openSignupRoleId: roleId },
     });
+  }
+
+  /** See `findOpenSignupRoleId`. */
+  async findOpenSignupRoleId(communityId: string): Promise<string | null> {
+    return findOpenSignupRoleId(this.prisma, communityId);
   }
 
   /** Join a community with open sign-up, with the role it gives. */
   async joinOpen(userId: string, communityId: string) {
     try {
       return await this.prisma.$transaction(async (tx) => {
-        const community = await tx.community.findUnique({
-          where: { id: communityId },
-          select: { openSignupRoleId: true, openSignupRole: true },
-        });
-        if (
-          !community?.openSignupRoleId ||
-          !community.openSignupRole ||
-          hasStaffPermissions(community.openSignupRole)
-        ) {
+        const roleId = await findOpenSignupRoleId(tx, communityId);
+        if (!roleId) {
           throw new BadRequestException(
             "This community requires an invite code",
           );
@@ -268,10 +273,7 @@ export class CommunitiesService {
             "You are already a member of this community",
           );
         }
-        return this.membership.join(tx, {
-          userId,
-          roleId: community.openSignupRoleId,
-        });
+        return this.membership.join(tx, { userId, roleId });
       });
     } catch (error) {
       if (

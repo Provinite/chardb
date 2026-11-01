@@ -388,11 +388,14 @@ export const SignupPage: React.FC = () => {
                 )}
             </FormGroup>
           ) : (
+            // While the community loads, the box holds a line's height and
+            // says nothing: a fast answer never flashes a loading message,
+            // and the name lands without moving the form.
             <CommunityPreview aria-busy={awaitingCommunity}>
               <PreviewText>
                 {openCommunity
                   ? `You'll be joining ${openCommunity.name}.`
-                  : "Looking up the community…"}
+                  : " "}
               </PreviewText>
             </CommunityPreview>
           )}

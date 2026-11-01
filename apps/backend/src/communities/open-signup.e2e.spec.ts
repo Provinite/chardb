@@ -398,6 +398,40 @@ describe("Community open sign-up (e2e)", () => {
       expect(byName).toEqual({ Member: true, Moderator: false, Staff: false });
     });
 
+    // Write skew: without a lock, choosing the role reads it before a
+    // concurrent edit commits, and both succeed.
+    it("cannot be chosen while an edit adding one is in flight", async () => {
+      const token = await staffToken({ canCreateInviteCode: true });
+      const db = testApp.getDb();
+      let chosen: Promise<{
+        body: { errors?: { message: string }[] };
+      }> = Promise.resolve({ body: {} });
+
+      await db.$transaction(async (tx) => {
+        await tx.role.update({
+          where: { id: memberRoleId },
+          data: { canGrantItems: true },
+        });
+        chosen = testApp.authenticatedGraphqlRequest(
+          SET_OPEN_SIGNUP,
+          { communityId, roleId: memberRoleId },
+          token,
+        );
+        // Long enough for the request to reach the database and wait on the
+        // role row, if it waits at all.
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      });
+
+      const response = await chosen;
+      expect(response.body.errors?.[0].message).toBe(
+        "Open sign-up cannot give a role with staff permissions",
+      );
+      const community = await db.community.findUniqueOrThrow({
+        where: { id: communityId },
+      });
+      expect(community.openSignupRoleId).toBeNull();
+    });
+
     it("can be chosen with only a member's own permissions", async () => {
       const token = await staffToken({ canCreateInviteCode: true });
       const ownOnly = await testApp.getDb().role.create({
@@ -496,6 +530,25 @@ describe("Community open sign-up (e2e)", () => {
 
         expect(response.body.errors).toBeUndefined();
       });
+    });
+
+    // Clients read this one field to decide whether to offer sign-up, so it
+    // has to agree with what signing up will actually do.
+    it("reports the community closed while its role holds one", async () => {
+      await openSignup(moderatorRoleId);
+      const { slug } = await testApp
+        .getDb()
+        .community.findUniqueOrThrow({ where: { id: communityId } });
+
+      const response = await testApp.graphqlRequest(
+        `query bySlug($slug: String!) {
+          communityBySlug(slug: $slug) { openSignupRoleId }
+        }`,
+        { slug },
+      );
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.communityBySlug.openSignupRoleId).toBeNull();
     });
 
     it("refuses joining once the chosen role gains one", async () => {

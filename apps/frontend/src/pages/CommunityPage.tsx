@@ -348,9 +348,16 @@ export const CommunityPage: React.FC = () => {
               ) : (
                 // The session cookie is set on the parent domain, so signing
                 // in and up have to happen at the apex.
+                // Sign Up comes last and Sign In never changes: the page can
+                // first render from a remembered copy of the community, and
+                // when the fresh one opens sign-up, nothing already on screen
+                // moves or restyles.
                 <>
+                  <ButtonLink tone="primary">
+                    <a href={apexUrl("/login")}>Sign In to Join</a>
+                  </ButtonLink>
                   {community.openSignupRoleId && (
-                    <ButtonLink tone="primary">
+                    <ButtonLink tone="outline">
                       <a
                         href={apexUrl(
                           `/signup?community=${encodeURIComponent(community.slug)}`,
@@ -360,11 +367,6 @@ export const CommunityPage: React.FC = () => {
                       </a>
                     </ButtonLink>
                   )}
-                  <ButtonLink
-                    tone={community.openSignupRoleId ? "outline" : "primary"}
-                  >
-                    <a href={apexUrl("/login")}>Sign In to Join</a>
-                  </ButtonLink>
                 </>
               )}
             </ActionButtons>
