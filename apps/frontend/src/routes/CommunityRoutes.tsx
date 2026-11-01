@@ -1,5 +1,6 @@
 import { Routes, Route, Navigate, useParams } from "react-router-dom";
 import { ProtectedRoute } from "../components/ProtectedRoute";
+import { SpeciesAdminRoute } from "../components/SpeciesAdminRoute";
 
 import { ApexRedirect } from "./ApexRedirect";
 import {
@@ -186,7 +187,9 @@ export const communityRoutes = (
       path="/species"
       element={
         <ProtectedRoute>
-          <SpeciesManagementPage />
+          <SpeciesAdminRoute>
+            <SpeciesManagementPage />
+          </SpeciesAdminRoute>
         </ProtectedRoute>
       }
     />
@@ -194,7 +197,9 @@ export const communityRoutes = (
       path="/species/:speciesId/edit"
       element={
         <ProtectedRoute>
-          <EditSpeciesPage />
+          <SpeciesAdminRoute>
+            <EditSpeciesPage />
+          </SpeciesAdminRoute>
         </ProtectedRoute>
       }
     />
@@ -202,7 +207,9 @@ export const communityRoutes = (
       path="/species/:speciesId/traits"
       element={
         <ProtectedRoute>
-          <TraitBuilderPage />
+          <SpeciesAdminRoute>
+            <TraitBuilderPage />
+          </SpeciesAdminRoute>
         </ProtectedRoute>
       }
     />
@@ -210,7 +217,9 @@ export const communityRoutes = (
       path="/species/:speciesId/variants"
       element={
         <ProtectedRoute>
-          <SpeciesVariantManagementPage />
+          <SpeciesAdminRoute>
+            <SpeciesVariantManagementPage />
+          </SpeciesAdminRoute>
         </ProtectedRoute>
       }
     />
@@ -218,7 +227,9 @@ export const communityRoutes = (
       path="/traits/:traitId/enum-values"
       element={
         <ProtectedRoute>
-          <EnumValueManagementPage />
+          <SpeciesAdminRoute>
+            <EnumValueManagementPage />
+          </SpeciesAdminRoute>
         </ProtectedRoute>
       }
     />
@@ -226,7 +237,9 @@ export const communityRoutes = (
       path="/variants/:variantId/manage"
       element={
         <ProtectedRoute>
-          <VariantDetailPage />
+          <SpeciesAdminRoute>
+            <VariantDetailPage />
+          </SpeciesAdminRoute>
         </ProtectedRoute>
       }
     />
@@ -234,7 +247,9 @@ export const communityRoutes = (
       path="/variants/:variantId/enum-settings"
       element={
         <ProtectedRoute>
-          <EnumValueSettingsPage />
+          <SpeciesAdminRoute>
+            <EnumValueSettingsPage />
+          </SpeciesAdminRoute>
         </ProtectedRoute>
       }
     />

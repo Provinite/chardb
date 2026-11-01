@@ -18,6 +18,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Candy board name dialog** lists each column's words in alphabetical order.
 
+### Fixed
+
+- **Species admin pages** (traits, variants, species management) are hidden from members without species permissions, and their URLs show Access Denied.
+
 ## [v15.2.0] - 2026-11-01
 
 ### Added

@@ -28,7 +28,7 @@ import {
   useGetCharactersQuery,
 } from "../generated/graphql";
 import { Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+import { useCanManageSpecies } from "../hooks/useCanManageSpecies";
 
 /**
  * Species Landing Page
@@ -228,7 +228,6 @@ const StatusBadge = styled.div<{ $available?: boolean }>`
 
 export const SpeciesPage: React.FC = () => {
   const { speciesId } = useParams<{ speciesId: string }>();
-  const { user } = useAuth();
 
   const { data, loading, error } = useSpeciesByIdQuery({
     variables: { id: speciesId! },
@@ -238,6 +237,10 @@ export const SpeciesPage: React.FC = () => {
   });
 
   usePageMeta({ title: data?.speciesById?.name ?? "Species" });
+
+  const canManageSpecies = useCanManageSpecies(
+    data?.speciesById?.community?.id,
+  );
 
   // Fetch trait count for this species
   const { data: traitsData } = useTraitsBySpeciesQuery({
@@ -345,7 +348,7 @@ export const SpeciesPage: React.FC = () => {
   ];
 
   const availableSections = sections.filter(
-    (section) => !section.adminOnly || (user && section.adminOnly),
+    (section) => !section.adminOnly || canManageSpecies,
   );
 
   return (
@@ -388,7 +391,7 @@ export const SpeciesPage: React.FC = () => {
               </MetaItem>
             </SpeciesMeta>
 
-            {user && (
+            {canManageSpecies && (
               <ActionButtons>
                 <ButtonLink tone="primary" icon={<Settings size={16} />}>
                   <Link to="/species">Manage Species</Link>
