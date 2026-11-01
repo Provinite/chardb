@@ -63,6 +63,16 @@ export const BOARD_NAME_FIRST_WORDS = [
   "Prickly",
   // Clovercoin's own.
   "Clover",
+  // From the community.
+  "Flabbergasted",
+  "Rabid",
+  "Chattering",
+  "Frightful",
+  "Ghost",
+  "Zombie",
+  "Yokai",
+  "Harvest",
+  "Moon",
 ] as const;
 
 export const BOARD_NAME_JOINERS = [
@@ -140,4 +150,13 @@ export const BOARD_NAME_LAST_WORDS = [
   "Nook",
   // Clovercoin's own.
   "Coin",
+  // From the community.
+  "Poltergeist",
+  "Eggs",
+  "Bow",
+  "Phantasmagoria",
+  "Abhor",
+  "Ghost",
+  "Zombie",
+  "Yokai",
 ] as const;
