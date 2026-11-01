@@ -5,8 +5,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ThemeProvider } from "styled-components";
-import { lightTheme } from "@chardb/ui";
 import {
   CandySwapView,
   type CandySwapViewProps,
@@ -36,26 +34,24 @@ const renderView = (props: Partial<CandySwapViewProps> = {}) => {
     onReroll: vi.fn(),
   };
   render(
-    <ThemeProvider theme={lightTheme}>
-      <CandySwapView
-        candyTypes={["banana", "berry-tart", "candy-corn", "luther-head"]}
-        myCandies={[
-          { id: 1, slug: "candy-corn" },
-          { id: 2, slug: "candy-corn" },
-          { id: 3, slug: "banana" },
-        ]}
-        offers={[]}
-        myOffers={[]}
-        trades={[]}
-        maxOpenOffers={10}
-        placing={false}
-        acceptingId={null}
-        cancellingId={null}
-        rerolling={false}
-        {...handlers}
-        {...props}
-      />
-    </ThemeProvider>,
+    <CandySwapView
+      candyTypes={["banana", "berry-tart", "candy-corn", "luther-head"]}
+      myCandies={[
+        { id: 1, slug: "candy-corn" },
+        { id: 2, slug: "candy-corn" },
+        { id: 3, slug: "banana" },
+      ]}
+      offers={[]}
+      myOffers={[]}
+      trades={[]}
+      maxOpenOffers={10}
+      placing={false}
+      acceptingId={null}
+      cancellingId={null}
+      rerolling={false}
+      {...handlers}
+      {...props}
+    />,
   );
   return handlers;
 };
