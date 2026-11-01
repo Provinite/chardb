@@ -3,12 +3,15 @@ import {
   Activity,
   ArrowLeftRight,
   BarChart3,
+  Candy,
   CircleUser,
   ClipboardCheck,
   Dna,
   FilePlus,
   FolderOpen,
   FolderPlus,
+  Ghost,
+  Gift,
   House,
   Image,
   LayoutGrid,
@@ -17,6 +20,7 @@ import {
   Package,
   Palette,
   Plus,
+  Repeat,
   Settings,
   Shield,
   ShieldCheck,
@@ -514,6 +518,47 @@ export function useSpotlightActions(
             to: inCommunity(cSlug, cId, "/inventory"),
           },
         ];
+
+        // Halloween, while the event is on here, as in the sidebar.
+        if (community.halloweenEnabled) {
+          const keywords = ["halloween", "event"];
+          actions.push(
+            {
+              id: `c-${cId}-halloween-prizes`,
+              icon: Gift,
+              label: "Prize List",
+              description: `${cName} Halloween prizes`,
+              keywords,
+              to: inCommunity(cSlug, cId, "/halloween/prizes"),
+            },
+            {
+              id: `c-${cId}-halloween-boards`,
+              icon: Candy,
+              label: "Candy Boards",
+              description: `Your Halloween candy boards in ${cName}`,
+              keywords,
+              to: inCommunity(cSlug, cId, "/halloween/board"),
+            },
+            {
+              id: `c-${cId}-halloween-swap`,
+              icon: Repeat,
+              label: "Candy Swap",
+              description: `${cName} Halloween candy swap`,
+              keywords,
+              to: inCommunity(cSlug, cId, "/halloween/swap"),
+            },
+          );
+          if (role.canManageItems || role.canGrantItems) {
+            actions.push({
+              id: `c-${cId}-halloween-admin`,
+              icon: Ghost,
+              label: "Halloween Event",
+              description: `Run ${cName}'s Halloween event`,
+              keywords,
+              to: inCommunity(cSlug, cId, "/admin/halloween"),
+            });
+          }
+        }
 
         if (hasInvitePermissions) {
           actions.push({

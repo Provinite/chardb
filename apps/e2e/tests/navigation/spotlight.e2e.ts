@@ -116,6 +116,13 @@ test.describe("page search", () => {
     await expect(page).toHaveURL(apexUrl("/liked/characters"));
   });
 
+  test("offers no Halloween pages while the event is off", async ({ page }) => {
+    const s = spotlight(page);
+    await s.search("halloween");
+
+    await expect(s.results).toHaveCount(0);
+  });
+
   test("says so when nothing matches", async ({ page }) => {
     const s = spotlight(page);
     await s.search("zzzzzz");
