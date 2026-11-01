@@ -1,6 +1,6 @@
 {
   "name": "@chardb/eslint-plugin-styles",
-  "version": "15.1.1",
+  "version": "15.2.0",
   "private": true,
   "description": "ESLint rules for the styling conventions in apps/frontend/STYLING.md",
   "main": "./src/index.js",
