@@ -162,6 +162,14 @@ Each persona owns their own character, enabling proper testing of "own vs any" p
 
 Characters are created as orphaned characters (`assignToSelf: false`) by Site Admin using `canCreateOrphanedCharacter` permission, then ownership is assigned to the appropriate persona via `updateCharacterProfile`.
 
+### Items
+
+One item type, **Test Lantern**, in Test Community, for grant flows. No items are held until one is granted.
+
+### Halloween
+
+Test Community has the Halloween event on and a Discord server linked. Member has a linked Discord account and an empty candy board; the script prints its path (`/halloween/board/<id>`) at the end. Sign in as Member to get the owner's controls (name, background, lighting, clear).
+
 ---
 
 ## Testing Scenarios
