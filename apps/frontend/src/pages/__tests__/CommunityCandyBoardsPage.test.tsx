@@ -10,7 +10,6 @@ import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
 import { GraphQLError } from "graphql";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
-import { MantineProvider } from "@mantine/core";
 import {
   CreateHalloweenCandyBoardDocument,
   DeleteHalloweenCandyBoardDocument,
@@ -106,27 +105,25 @@ const boardsQuery = (
 const renderPage = (mocks: MockedResponse[]) =>
   render(
     <ThemeProvider theme={lightTheme}>
-      <MantineProvider>
-        <MockedProvider mocks={mocks}>
-          <MemoryRouter initialEntries={["/halloween/board"]}>
-            <Routes>
-              <Route
-                path="/halloween/board"
-                element={<CommunityCandyBoardsPage />}
-              />
-              <Route
-                path="/halloween/board/:boardId"
-                element={
-                  <>
-                    <p>Opened a board</p>
-                    <Link to="/halloween/board">Your boards</Link>
-                  </>
-                }
-              />
-            </Routes>
-          </MemoryRouter>
-        </MockedProvider>
-      </MantineProvider>
+      <MockedProvider mocks={mocks}>
+        <MemoryRouter initialEntries={["/halloween/board"]}>
+          <Routes>
+            <Route
+              path="/halloween/board"
+              element={<CommunityCandyBoardsPage />}
+            />
+            <Route
+              path="/halloween/board/:boardId"
+              element={
+                <>
+                  <p>Opened a board</p>
+                  <Link to="/halloween/board">Your boards</Link>
+                </>
+              }
+            />
+          </Routes>
+        </MemoryRouter>
+      </MockedProvider>
     </ThemeProvider>,
   );
 

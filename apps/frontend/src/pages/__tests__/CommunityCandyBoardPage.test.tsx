@@ -17,7 +17,6 @@ import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
 import { GraphQLError } from "graphql";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
-import { MantineProvider } from "@mantine/core";
 import { BOARD_NAME_FIRST_WORDS, BOARD_NAME_LAST_WORDS } from "@chardb/shared";
 import * as layerStyles from "../../components/halloween/layers.css";
 
@@ -210,19 +209,17 @@ const renderAt = (
 ) =>
   render(
     <ThemeProvider theme={lightTheme}>
-      <MantineProvider>
-        <MockedProvider mocks={mocks}>
-          <MemoryRouter initialEntries={[path]}>
-            {extra}
-            <Routes>
-              <Route
-                path="/halloween/board/:boardId"
-                element={<CommunityCandyBoardPage />}
-              />
-            </Routes>
-          </MemoryRouter>
-        </MockedProvider>
-      </MantineProvider>
+      <MockedProvider mocks={mocks}>
+        <MemoryRouter initialEntries={[path]}>
+          {extra}
+          <Routes>
+            <Route
+              path="/halloween/board/:boardId"
+              element={<CommunityCandyBoardPage />}
+            />
+          </Routes>
+        </MemoryRouter>
+      </MockedProvider>
     </ThemeProvider>,
   );
 

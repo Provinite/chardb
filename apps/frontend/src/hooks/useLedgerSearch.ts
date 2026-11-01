@@ -1,7 +1,5 @@
 import { useState } from "react";
-import { useDebouncedValue } from "@mantine/hooks";
-
-const SEARCH_DEBOUNCE_MS = 300;
+import { timingMs, useDebouncedValue } from "@chardb/ui";
 
 /**
  * A ledger's search box, shared by the item and currency ledgers (#444).
@@ -12,9 +10,9 @@ const SEARCH_DEBOUNCE_MS = 300;
  */
 export function useLedgerSearch() {
   const [search, setSearch] = useState("");
-  const [debouncedSearch] = useDebouncedValue(
+  const debouncedSearch = useDebouncedValue(
     search.trim(),
-    SEARCH_DEBOUNCE_MS,
+    timingMs.debounce.search,
   );
 
   return {

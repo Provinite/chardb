@@ -1,4 +1,4 @@
-import { style } from "@vanilla-extract/css";
+import { style, styleVariants } from "@vanilla-extract/css";
 import { vars } from "../theme/contract.css";
 
 /** On `<html>` while any dialog is open, so the page behind holds still. */
@@ -45,7 +45,6 @@ export const dialog = style({
   display: "flex",
   flexDirection: "column",
   inlineSize: "100%",
-  maxInlineSize: vars.size.dialog,
   maxBlockSize: "100%",
   padding: 0,
   // Transparent, so forced-colour mode draws it in a system colour.
@@ -62,8 +61,34 @@ export const dialog = style({
   },
 });
 
+/** How wide it may grow; narrower screens give it their full width. */
+export const width = styleVariants({
+  default: { maxInlineSize: vars.size.dialog },
+  wide: { maxInlineSize: vars.size.dialogWide },
+});
+
+/**
+ * The content, padded, scrolling when the dialog is capped to the screen.
+ * The command palette brings its own layout and uses none.
+ */
+export const body = style({
+  flex: 1,
+  minBlockSize: 0,
+  overflowY: "auto",
+  overscrollBehavior: "contain",
+  padding: vars.space.lg,
+});
+
+/**
+ * Above `Dialog.Body` rather than in it, so it stays in view while the body
+ * scrolls. Padded to the body's edges; the body's own padding is the gap.
+ */
 export const title = style({
+  flexShrink: 0,
   margin: 0,
+  paddingBlockStart: vars.space.lg,
+  paddingInline: vars.space.lg,
+  paddingBlockEnd: 0,
   fontSize: vars.font.size.xl,
   fontWeight: vars.font.weight.semibold,
   lineHeight: vars.font.lineHeight.tight,

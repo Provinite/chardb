@@ -1,8 +1,5 @@
 import React, { createContext, useContext, useMemo, useState } from "react";
-import { spotlight } from "@mantine/spotlight";
-import { SpotlightNavigation } from "./SpotlightNavigation";
 import { PaletteNavigation } from "./PaletteNavigation";
-import { readSpotlightImpl } from "./spotlightImpl";
 
 interface SpotlightControls {
   open: () => void;
@@ -17,32 +14,19 @@ export function useSpotlight(): SpotlightControls {
   return controls;
 }
 
-/**
- * Mounts the page search and lets the rest of the app open it.
- *
- * Replaces Mantine's global `spotlight` store, which only its own Spotlight
- * can listen to.
- */
+/** Mounts the page search and lets the rest of the app open it. */
 export const SpotlightProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [impl] = useState(readSpotlightImpl);
-  const [paletteOpen, setPaletteOpen] = useState(false);
-
+  const [open, setOpen] = useState(false);
   const controls = useMemo<SpotlightControls>(
-    () => ({
-      open: impl === "mantine" ? spotlight.open : () => setPaletteOpen(true),
-    }),
-    [impl],
+    () => ({ open: () => setOpen(true) }),
+    [],
   );
 
   return (
     <SpotlightContext.Provider value={controls}>
-      {impl === "mantine" ? (
-        <SpotlightNavigation />
-      ) : (
-        <PaletteNavigation open={paletteOpen} onOpenChange={setPaletteOpen} />
-      )}
+      <PaletteNavigation open={open} onOpenChange={setOpen} />
       {children}
     </SpotlightContext.Provider>
   );

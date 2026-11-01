@@ -10,6 +10,7 @@ import React, {
 } from "react";
 import { createPortal } from "react-dom";
 import * as styles from "./Dialog.css";
+import { tabbables } from "./floating";
 
 /**
  * The open dialogs, oldest first. Escape belongs to the last one, and each
@@ -71,6 +72,11 @@ export interface DialogRootProps {
   children?: React.ReactNode;
   /** The name, when there is no `Dialog.Title` to take it from. */
   "aria-label"?: string;
+  /**
+   * How wide it may grow: `wide` (`size.dialogWide`) for columns or a grid,
+   * otherwise `size.dialog`.
+   */
+  width?: keyof typeof styles.width;
   className?: string;
 }
 
@@ -81,13 +87,20 @@ export interface DialogRootProps {
  * Opened with `open`, not `showModal()`, so it stays on the layer scale: the
  * browser's top layer would sit above toasts. While open, everything else in
  * the body is inert, which is what keeps focus and screen readers inside.
- * Focus moves to the first `[data-autofocus]` element inside, or the dialog
- * itself, and goes back to whatever had it on close. Escape closes the top
+ * Focus moves to the first `[data-autofocus]` element inside, else its first
+ * control, else the dialog itself, and goes back to whatever had it on close. Escape closes the top
  * dialog only.
  */
 export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
   function DialogRoot(
-    { open, onClose, children, "aria-label": ariaLabel, className },
+    {
+      open,
+      onClose,
+      children,
+      "aria-label": ariaLabel,
+      width = "default",
+      className,
+    },
     ref,
   ) {
     const titleId = useId();
@@ -113,8 +126,12 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
       applyInert();
       const unlockScroll = lockScroll();
 
+      // What asked for focus, else the first control, else the dialog: a
+      // keyboard user lands where they can act at once.
       const target =
-        dialog.querySelector<HTMLElement>("[data-autofocus]") ?? dialog;
+        dialog.querySelector<HTMLElement>("[data-autofocus]") ??
+        tabbables(dialog)[0] ??
+        dialog;
       target.focus();
 
       setHasTitle(document.getElementById(titleId) !== null);
@@ -177,9 +194,9 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
           aria-label={ariaLabel}
           aria-labelledby={hasTitle ? titleId : undefined}
           tabIndex={-1}
-          className={
-            className ? `${styles.dialog} ${className}` : styles.dialog
-          }
+          className={[styles.dialog, styles.width[width], className]
+            .filter(Boolean)
+            .join(" ")}
         >
           <TitleIdContext.Provider value={titleId}>
             {children}
@@ -205,6 +222,21 @@ export const DialogTitle = forwardRef<HTMLHeadingElement, DialogTitleProps>(
         ref={ref}
         id={id}
         className={className ? `${styles.title} ${className}` : styles.title}
+        {...rest}
+      />
+    );
+  },
+);
+
+export type DialogBodyProps = React.HTMLAttributes<HTMLDivElement>;
+
+/** The dialog's content: padded, and scrolling when the dialog is capped. */
+export const DialogBody = forwardRef<HTMLDivElement, DialogBodyProps>(
+  function DialogBody({ className, ...rest }, ref) {
+    return (
+      <div
+        ref={ref}
+        className={className ? `${styles.body} ${className}` : styles.body}
         {...rest}
       />
     );

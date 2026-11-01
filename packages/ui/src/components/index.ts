@@ -5,7 +5,11 @@ export * from "./UserTypeahead";
 export * from "./SearchSelect";
 export * from "./ErrorMessage";
 export * from "./Modal";
-export type { DialogRootProps, DialogTitleProps } from "./Dialog";
+export type {
+  DialogBodyProps,
+  DialogRootProps,
+  DialogTitleProps,
+} from "./Dialog";
 export {
   Highlight,
   type HighlightProps,
@@ -25,7 +29,7 @@ export * from "./TopProgressBar";
 export * from "./Tooltip";
 export * from "./Toggletip";
 
-import { DialogRoot, DialogTitle } from "./Dialog";
+import { DialogBody, DialogRoot, DialogTitle } from "./Dialog";
 import {
   CommandPaletteEmpty,
   CommandPaletteFooter,
@@ -55,6 +59,7 @@ export const Popover = {
 export const Dialog = {
   Root: DialogRoot,
   Title: DialogTitle,
+  Body: DialogBody,
 };
 
 /** A search box over a list of results, in a dialog; see `CommandPaletteRoot`. */
