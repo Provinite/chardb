@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.0.0] - 2026-10-31
+
 ### Added
 
 - **`useDebouncedValue`**, **`Dialog.Body`**, and a `wide` `Dialog` with the `size.dialogWide` token, for what Mantine supplied (#466).
@@ -15,19 +17,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`Popover`**, a panel beside its button that keeps keyboard order as if it sat right after it, and **`useAnchoredPosition`**, which places it and `Menu` with floating-ui's `fallbackPlacements` and `fallbackStrategy`, slides it to stay on screen, and caps it to the room it has (#466).
 - **`Dialog`**, a modal `<dialog>` on the modal layer that makes the rest of the page inert, and **`CommandPalette`**, a search box over a fixed-height listbox inside one; plus the `size.dialog` and `size.dialogList` tokens (#466).
-
-### Changed
-
-- **The focus ring is a listed pair on every status tint** (`status.*.bgSubtle`), so the contrast test covers controls inside tinted toasts and alerts (#484).
-- **`scrollToPosition()` takes `jump: true`** to skip the animation for everyone, for scrolls that reset rather than move (#484).
-- **`loop()` returns a style rule instead of a class**, so the vanilla-extract runtime no longer ships in every bundle that imports `@chardb/ui`; `style([loop(...), {...}])` works unchanged (#465).
-
-### Removed
-
-- Unused Storybook 7 dependencies and scripts; the package had no Storybook config or stories (#463).
-
-### Added
-
 - **`TopProgressBar`**: the indeterminate bar along the top of the viewport for route changes, announced once to screen readers each time it appears (#465, #487).
 - **`MenuLinkItem`**: a menu item that is the caller's own link, so Ctrl-click, middle-click and "open in new tab" work on it (#486).
 - **`Menu` `appearance="ghost"`**: a borderless trigger at the 44px touch size, for a trigger with content of its own such as an avatar (#486).
@@ -39,6 +28,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`SearchSelect`**, with `CharacterTypeahead` and `ItemTypeTypeahead` on top: a search box that picks one option; the caller fetches the options, so it works with any query.
 - **`Avatar`**: a user's picture as a circle, or their initials when there is
   none, falling back to initials when the image fails to load.
+
+### Changed
+
+- **The focus ring is a listed pair on every status tint** (`status.*.bgSubtle`), so the contrast test covers controls inside tinted toasts and alerts (#484).
+- **`scrollToPosition()` takes `jump: true`** to skip the animation for everyone, for scrolls that reset rather than move (#484).
+- **`loop()` returns a style rule instead of a class**, so the vanilla-extract runtime no longer ships in every bundle that imports `@chardb/ui`; `style([loop(...), {...}])` works unchanged (#465).
+
+### Removed
+
+- Unused Storybook 7 dependencies and scripts; the package had no Storybook config or stories (#463).
 
 ### Fixed
 
