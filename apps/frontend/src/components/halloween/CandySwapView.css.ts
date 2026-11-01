@@ -119,16 +119,41 @@ export const filledSlot = style([
   },
 ]);
 
-export const select = style([
+/** The empty slot for the candy asked for, which opens the picker. */
+export const slotButton = style([
+  slot,
   focusRing,
   {
-    minHeight: vars.size.target.comfortable,
-    paddingInline: vars.space.sm,
-    border: `${vars.borderWidth.hairline} solid ${vars.border.input}`,
-    borderRadius: vars.radius.md,
-    background: vars.surface.raised,
-    color: vars.text.default,
-    font: "inherit",
+    background: "none",
+    color: vars.text.muted,
+    cursor: "pointer",
+  },
+]);
+
+/** The empty slot's plus, centred in a candy's footprint. */
+export const plus = style([
+  candy,
+  {
+    display: "grid",
+    placeItems: "center",
+  },
+]);
+
+export const plusIcon = style({
+  width: vars.size.target.min,
+  height: vars.size.target.min,
+});
+
+/** A candy in the picker; the one asked for has a coloured border. */
+export const pickCandy = style([
+  trayCandy,
+  {
+    borderWidth: vars.borderWidth.thick,
+    selectors: {
+      '&[aria-pressed="true"]': {
+        borderColor: vars.action.primary.bg,
+      },
+    },
   },
 ]);
 

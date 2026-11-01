@@ -59,6 +59,17 @@ const renderView = (props: Partial<CandySwapViewProps> = {}) => {
 
 const section = (name: string) => screen.getByRole("region", { name });
 
+/** Opens the picker from the offer form and picks a candy by name. */
+const askFor = async (form: HTMLElement, name: string) => {
+  await userEvent.click(
+    within(form).getByRole("button", { name: "Choose a candy to ask for" }),
+  );
+  const picker = screen.getByRole("dialog", { name: "Ask for a candy" });
+  await userEvent.click(
+    within(picker).getByRole("button", { name: new RegExp(`^${name}\\b`) }),
+  );
+};
+
 describe("CandySwapView", () => {
   describe("offers to take", () => {
     it("shows what each offer gives and wants, and takes it", async () => {
@@ -110,15 +121,65 @@ describe("CandySwapView", () => {
       await userEvent.click(
         within(form).getByRole("button", { name: "Add candy corn (1 left)" }),
       );
-      await userEvent.selectOptions(
-        within(form).getByRole("combobox", { name: "Asking for" }),
-        "luther-head",
-      );
+      await askFor(form, "luther head");
       await userEvent.click(
         within(form).getByRole("button", { name: "Place offer" }),
       );
 
       expect(onPlace).toHaveBeenCalledWith([1, 2], "luther-head");
+    });
+
+    it("picks the candy asked for from pictures, and closes", async () => {
+      renderView();
+      const form = section("Make an offer");
+
+      await userEvent.click(
+        within(form).getByRole("button", { name: "Choose a candy to ask for" }),
+      );
+      const picker = screen.getByRole("dialog", { name: "Ask for a candy" });
+      // Pictures only: the names are for screen readers.
+      expect(within(picker).queryByText("luther head")).toBeNull();
+      await userEvent.click(
+        within(picker).getByRole("button", { name: "luther head" }),
+      );
+
+      expect(screen.queryByRole("dialog")).toBeNull();
+      expect(
+        within(form).getByRole("button", { name: "Asking for luther head" }),
+      ).toBeInTheDocument();
+      expect(within(form).queryByText("luther head")).toBeNull();
+    });
+
+    it("marks the candy already asked for", async () => {
+      renderView();
+      const form = section("Make an offer");
+      await askFor(form, "berry tart");
+      await userEvent.click(
+        within(form).getByRole("button", { name: "Asking for berry tart" }),
+      );
+      const picker = screen.getByRole("dialog", { name: "Ask for a candy" });
+      expect(
+        within(picker).getByRole("button", { name: "berry tart" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(
+        within(picker).getByRole("button", { name: "banana (you have 1)" }),
+      ).toHaveAttribute("aria-pressed", "false");
+    });
+
+    it("shows how many of each candy you have", async () => {
+      renderView();
+      const form = section("Make an offer");
+      await userEvent.click(
+        within(form).getByRole("button", { name: "Choose a candy to ask for" }),
+      );
+      const picker = screen.getByRole("dialog", { name: "Ask for a candy" });
+      const corn = within(picker).getByRole("button", {
+        name: "candy corn (you have 2)",
+      });
+      expect(within(corn).getByText("2")).toBeInTheDocument();
+      expect(
+        within(picker).getByRole("button", { name: "luther head" }),
+      ).toBeInTheDocument();
     });
 
     it("takes a picked candy back off the offer", async () => {
@@ -180,9 +241,12 @@ describe("CandySwapView", () => {
       await userEvent.click(
         within(form).getByRole("button", { name: "Add banana (1 left)" }),
       );
-      const asking = within(form).getByRole("combobox", { name: "Asking for" });
+      await userEvent.click(
+        within(form).getByRole("button", { name: "Choose a candy to ask for" }),
+      );
+      const picker = screen.getByRole("dialog", { name: "Ask for a candy" });
       expect(
-        within(asking).getByRole("option", { name: "banana" }),
+        within(picker).getByRole("button", { name: "banana (you have 1)" }),
       ).toBeDisabled();
     });
 

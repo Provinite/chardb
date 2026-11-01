@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Candy swap** picks the candy you ask for from a dialog of candy pictures, with how many of each you have, instead of a list of names.
+
 ## [v15.1.1] - 2026-11-01
 
 ### Added
