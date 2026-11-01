@@ -35,13 +35,11 @@ export async function candyOwnerFor(
 }
 
 /**
- * Only a candy that has never had an owner is claimed. One traded away whose
- * owner's account is later deleted is ownerless too, but no longer the
- * knocker's to get back.
+ * A candy is claimed once. One that has had an owner and lost them is no
+ * longer the knocker's to get back.
  */
-const neverOwned = {
-  ownerId: null,
-  tradeLines: { none: {} },
+const unclaimed = {
+  claimedAt: null,
 } as const satisfies Prisma.HalloweenCandyWhereInput;
 
 /**
@@ -65,8 +63,8 @@ export async function claimCandiesOnLink(
   );
   if (!guildIds.length) return 0;
   const { count } = await tx.halloweenCandy.updateMany({
-    where: { ...neverOwned, discordUserId, guildId: { in: guildIds } },
-    data: { ownerId: userId },
+    where: { ...unclaimed, discordUserId, guildId: { in: guildIds } },
+    data: { ownerId: userId, claimedAt: new Date() },
   });
   return count;
 }
@@ -95,11 +93,11 @@ export async function claimCandiesOnJoin(
   if (!community?.discordGuildId || !account) return 0;
   const { count } = await tx.halloweenCandy.updateMany({
     where: {
-      ...neverOwned,
+      ...unclaimed,
       guildId: community.discordGuildId,
       discordUserId: account.providerAccountId,
     },
-    data: { ownerId: userId },
+    data: { ownerId: userId, claimedAt: new Date() },
   });
   return count;
 }

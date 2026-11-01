@@ -2460,6 +2460,9 @@ model HalloweenCandy {
   /// The Discord player whose knock gave it, who claims it on linking.
   discordUserId String   @map("discord_user_id") @db.VarChar(30)
   ownerId       String?  @map("owner_id")
+  /// When it first got an owner, at the knock or when claimed. A candy is
+  /// claimed once: one with this set and no owner stays ownerless.
+  claimedAt     DateTime? @map("claimed_at") @db.Timestamptz
   /// The open offer it is held in, if any. A held candy is in neither its
   /// owner's tray nor on their boards, and in no other offer.
   offerId       String?  @map("offer_id") @db.Uuid

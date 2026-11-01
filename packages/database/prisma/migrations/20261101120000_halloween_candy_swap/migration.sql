@@ -26,6 +26,7 @@ CREATE TABLE "halloween_candies" (
     "knock_event_id" INTEGER NOT NULL,
     "discord_user_id" VARCHAR(30) NOT NULL,
     "owner_id" TEXT,
+    "claimed_at" TIMESTAMPTZ,
     "offer_id" UUID,
     "received_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
 

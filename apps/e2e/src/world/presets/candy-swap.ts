@@ -59,6 +59,7 @@ export default definePreset<CandySwapWorld>({
           knockEventId: knock.id,
           discordUserId,
           ownerId: owner.userId,
+          claimedAt: knock.time,
         },
       });
     };

@@ -199,25 +199,34 @@ describe("Halloween candies (e2e)", () => {
     expect((await db.halloweenCandy.findFirstOrThrow()).ownerId).toBeNull();
   });
 
-  it("does not give a traded candy back to its knocker when its new owner's account is gone", async () => {
+  it("records when a candy was first claimed, at the knock or on linking", async () => {
+    const early = await user("early");
+    await join(early.id);
+    await linkDiscord(early.id);
+    await knock();
+    const atKnock = await db.halloweenCandy.findFirstOrThrow();
+    const knockEvent = await db.halloweenKnockEvent.findFirstOrThrow();
+    expect(atKnock.claimedAt).toEqual(knockEvent.time);
+
+    await db.halloweenCandy.deleteMany();
+    await db.externalAccount.deleteMany();
+    await knock();
+    expect((await db.halloweenCandy.findFirstOrThrow()).claimedAt).toBeNull();
+    const before = new Date();
+    await linkDiscord(early.id);
+    const onLink = await db.halloweenCandy.findFirstOrThrow();
+    expect(onLink.claimedAt?.getTime()).toBeGreaterThanOrEqual(
+      before.getTime(),
+    );
+  });
+
+  it("never claims a candy a second time, even if it has lost its owner", async () => {
     await knock();
     const candy = await db.halloweenCandy.findFirstOrThrow();
-    const buyer = await user("buyer");
-    const trade = await db.halloweenCandyTrade.create({
-      data: { guildId: GUILD_ID, offererId: buyer.id },
-    });
-    await db.halloweenCandyTradeLine.create({
-      data: {
-        tradeId: trade.id,
-        candyId: candy.id,
-        slug: candy.slug,
-        toInitiator: false,
-      },
-    });
-    // Traded away, then its owner's account deleted: owner set null.
+    // Claimed once, then left with no owner, however that came about.
     await db.halloweenCandy.update({
       where: { id: candy.id },
-      data: { ownerId: null },
+      data: { claimedAt: new Date(), ownerId: null },
     });
 
     const player = await user("player");

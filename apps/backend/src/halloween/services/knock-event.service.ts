@@ -57,6 +57,7 @@ export class KnockEventService {
     }
     const event = await tx.halloweenKnockEvent.create({ data: knock });
     if (knock.candySlug) {
+      const ownerId = await candyOwnerFor(tx, knock.guildId, knock.userId);
       await tx.halloweenCandy.create({
         data: {
           guildId: knock.guildId,
@@ -64,7 +65,8 @@ export class KnockEventService {
           knockEventId: event.id,
           discordUserId: knock.userId,
           receivedAt: event.time,
-          ownerId: await candyOwnerFor(tx, knock.guildId, knock.userId),
+          ownerId,
+          claimedAt: ownerId ? event.time : null,
         },
       });
     }
