@@ -179,9 +179,8 @@ describe("TraitReviewService", () => {
         0,
       );
 
-      const where = mockDatabaseService.traitReview.findMany.mock.calls.at(
-        -1,
-      )?.[0].where;
+      const where =
+        mockDatabaseService.traitReview.findMany.mock.calls.at(-1)?.[0].where;
       expect(where).toEqual(
         expect.objectContaining({
           characterId: "char-1",
