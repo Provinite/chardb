@@ -238,7 +238,9 @@ describe("Halloween prize list (e2e)", () => {
     );
     await win(LINKED_WINNER, "candy", "2025-10-11T00:00:00Z");
     await win(PENDING_WINNER, "candy", "2025-10-12T00:00:00Z");
-    await staffAward(await win(NAMELESS_WINNER, "ghost", "2025-10-13T00:00:00Z"));
+    await staffAward(
+      await win(NAMELESS_WINNER, "ghost", "2025-10-13T00:00:00Z"),
+    );
     // Not shown: a win still waiting for its prize, a loss, another guild's.
     await win(NAMED_WINNER, "adopt", "2025-10-14T00:00:00Z", {
       isPending: true,
