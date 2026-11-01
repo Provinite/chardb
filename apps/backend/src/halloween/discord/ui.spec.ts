@@ -1,6 +1,6 @@
 import { HalloweenUi, Color, EVENT_NAME } from "./ui";
 import { HalloweenRandom } from "../random";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import { HalloweenConfig } from "../halloween.config";
 import { buildInteraction, fixedClock, testConfig } from "../testing/fixtures";
 
@@ -18,7 +18,7 @@ describe("HalloweenUi", () => {
     ui = new HalloweenUi(
       testConfig() as HalloweenConfig,
       random,
-      fixedClock("2025-10-17T15:30:00.000Z") as HalloweenClock,
+      fixedClock("2025-10-17T15:30:00.000Z") as Clock,
     );
   });
 

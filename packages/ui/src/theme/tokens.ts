@@ -232,6 +232,8 @@ export const sharedTokens = {
     dialogList: "28rem",
     /** The gap between a control and its focus ring. */
     focusOffset: "2px",
+    /** An achievement's picture on a profile. */
+    achievement: "3rem",
     /** A spinner inside a control: as tall as the control's text. */
     spinner: "1em",
     /** The navigation sidebar's width, beside the page and as a drawer. */

@@ -1,0 +1,332 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Halloween Prize List - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Every Halloween prize, how many are left, and the latest wins, on one public page."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/halloween-prize-list.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Halloween Prize List" />
+    <meta
+      property="og:description"
+      content="Every Halloween prize, how many are left, and the latest wins, on one public page."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/halloween-prize-list.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/prize-list-overview.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The Halloween prizes page: a grid of prize cards with how many are left, beside a list of recent wins."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul,
+      .step-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        max-width: 520px;
+        margin: 0 auto 1.5rem;
+      }
+
+      .screenshot.wide {
+        max-width: 100%;
+      }
+
+      .screenshot.narrow {
+        max-width: 300px;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      code {
+        background: #f3f3f8;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        font-size: 0.875em;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+
+      footer a {
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Halloween Prize List</h1>
+        <p>What's left to win, and who won lately.</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            While the <a href="halloween-event.html">Halloween event</a> runs,
+            <code>/halloween/prizes</code> on the community's site lists every
+            prize in the pool beside the latest wins. Anyone can open it, signed
+            in or not.
+          </p>
+          <p>
+            Members reach it from <strong>Prize List</strong> in the sidebar's
+            Halloween section. On Discord, <code>/prize list</code> replies with
+            a link to it.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="prize-list-overview.png"
+            alt="The Halloween prizes page, signed out. Prize cards for Bronze Badge, Chest Mimic Sticker Set, Cloverse TCG Booster Pack, Commission Ticket, Spooky Adopt and A Ghost, each with a picture and how many are left; A Ghost reads All won. Beside them, Recent wins lists seven wins, newest first."
+          />
+          <div class="screenshot-caption">The prize list, signed out</div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Prizes</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Each card shows the prize's picture, its name and how many are left
+            of how many there were. Prizes still in stock come first, by name;
+            those all won follow, greyed out, with an
+            <strong>All won</strong> badge.
+          </p>
+          <p>
+            A prize that is a CharDB item or character links to it with
+            <strong>View on chardb</strong>. Draw odds aren't shown.
+          </p>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Recent Wins</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The twenty latest wins, newest first: the prize, who won it and how
+            long ago. The list refreshes every minute.
+          </p>
+          <p>Who won depends on who's looking:</p>
+          <ul>
+            <li>
+              A winner whose Discord is
+              <a href="account-linking.html">linked</a> to CharDB shows as their
+              CharDB name, linked to their profile, for everyone.
+            </li>
+            <li>
+              Anyone else shows as <strong>A Discord user</strong>, to visitors
+              and to members.
+            </li>
+            <li>
+              Staff who can grant or manage items get that winner linked to
+              their Discord profile, under their Discord handle when the prize
+              is one staff hand over.
+            </li>
+          </ul>
+        </div>
+        <div class="screenshot narrow">
+          <img
+            src="prize-list-public-wins.png"
+            alt="Recent wins as a visitor sees it: carol on two wins, and A Discord user on the other five."
+          />
+          <div class="screenshot-caption">What visitors and members see</div>
+        </div>
+        <div class="screenshot narrow">
+          <img
+            src="prize-list-staff-wins.png"
+            alt="The same Recent wins as staff see it: carol on two wins, and Discord handles spookyfan, moonlitmoth, batsy and gourdon on the rest."
+          />
+          <div class="screenshot-caption">What item staff see</div>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">On a Phone, and in the Dark</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            On a phone each prize is a row with its picture beside it, and the
+            wins follow the prizes.
+          </p>
+        </div>
+        <div class="screenshot narrow">
+          <img
+            src="prize-list-phone.png"
+            alt="The prize list at phone width: prizes in rows, each with a small picture, its name and how many are left."
+          />
+          <div class="screenshot-caption">At 360px wide</div>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="prize-list-dark.png"
+            alt="The prize list in dark mode, signed in as staff, with Prize List highlighted in the sidebar's Halloween section."
+          />
+          <div class="screenshot-caption">Dark mode, signed in as staff</div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Halloween Prize List &bull; Feature Documentation</p>
+        <p>
+          Setting up the prizes?
+          <a href="halloween-event.html">Halloween Event</a> covers that.
+        </p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

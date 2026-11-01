@@ -17,7 +17,7 @@ import {
   userMapperSelect,
 } from "../../users/utils/user-resolver-mappers";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import { getLastReset } from "../time";
 import {
   HalloweenDashboard,
@@ -32,7 +32,7 @@ import {
 const winInclude = {
   prize: true,
   gifties: { select: { fromUserId: true }, take: 1 },
-  deliveredBy: { select: userMapperSelect },
+  staffAward: { include: { deliveredBy: { select: userMapperSelect } } },
 } satisfies Prisma.HalloweenKnockEventInclude;
 
 type WinRow = Prisma.HalloweenKnockEventGetPayload<{
@@ -54,11 +54,6 @@ const emptyPeriod = (from: Date, to: Date): HalloweenPeriodStats => ({
   giftySenders: 0,
 });
 
-/** A prize nothing delivers but staff. */
-const staffPrize = {
-  is: { itemTypeId: null, characterId: null },
-} satisfies Prisma.HalloweenPrizeNullableScalarRelationFilter;
-
 function winsWhere(
   guildId: string,
   filter: HalloweenWinFilter,
@@ -66,9 +61,9 @@ function winsWhere(
   const win = { guildId, prizeId: { not: null }, isPending: false };
   switch (filter) {
     case HalloweenWinFilter.NEEDS_DELIVERY:
-      return { ...win, prize: staffPrize, deliveredAt: null };
+      return { ...win, staffAward: { is: { deliveredAt: null } } };
     case HalloweenWinFilter.DELIVERED:
-      return { ...win, deliveredAt: { not: null } };
+      return { ...win, staffAward: { is: { deliveredAt: { not: null } } } };
     default:
       return win;
   }
@@ -82,17 +77,24 @@ export function prizeDelivery(
   return HalloweenPrizeDelivery.STAFF;
 }
 
+/** What anyone may see of a prize: the event page and the prize list. */
+export function toPrizeBasics(prize: HalloweenPrize, image: string | null) {
+  return {
+    id: prize.id,
+    name: prize.name,
+    image,
+    initialStock: prize.initialStock,
+    currentStock: prize.currentStock,
+  };
+}
+
 function toPrizeView(
   prize: HalloweenPrize,
   image: string | null,
 ): HalloweenPrizeView {
   return {
-    id: prize.id,
-    name: prize.name,
-    initialStock: prize.initialStock,
-    currentStock: prize.currentStock,
+    ...toPrizeBasics(prize, image),
     weight: prize.weight,
-    image,
     delivery: prizeDelivery(prize),
     itemTypeId: prize.itemTypeId,
     characterId: prize.characterId,
@@ -113,7 +115,7 @@ export class HalloweenDashboardService {
   constructor(
     private readonly db: DatabaseService,
     private readonly prizeImages: PrizeImageService,
-    private readonly clock: HalloweenClock,
+    private readonly clock: Clock,
   ) {}
 
   /**
@@ -121,10 +123,7 @@ export class HalloweenDashboardService {
    * it. Every Halloween operation on chardb starts here.
    */
   async guildFor(communityId: string): Promise<string | null> {
-    const community = await this.db.community.findUnique({
-      where: { id: communityId },
-      select: { halloweenEnabled: true, discordGuildId: true },
-    });
+    const community = await this.eventCommunity(communityId);
     if (!community) {
       throw new NotFoundException("Community not found");
     }
@@ -134,6 +133,27 @@ export class HalloweenDashboardService {
       );
     }
     return community.discordGuildId;
+  }
+
+  /**
+   * The community's slug and guild while its event is on and a guild is
+   * linked, or null: for pages anyone may open, which show nothing rather
+   * than refuse.
+   */
+  async runningEvent(
+    communityId: string,
+  ): Promise<{ guildId: string; slug: string } | null> {
+    const community = await this.eventCommunity(communityId);
+    return community?.halloweenEnabled && community.discordGuildId
+      ? { guildId: community.discordGuildId, slug: community.slug }
+      : null;
+  }
+
+  private eventCommunity(communityId: string) {
+    return this.db.community.findUnique({
+      where: { id: communityId },
+      select: { halloweenEnabled: true, discordGuildId: true, slug: true },
+    });
   }
 
   /** As {@link guildFor}, for changes, which need a guild to belong to. */
@@ -334,7 +354,7 @@ export class HalloweenDashboardService {
     const guildId = await this.guildFor(communityId);
     const knock = await this.db.halloweenKnockEvent.findUnique({
       where: { id: knockEventId },
-      include: { prize: true },
+      include: { prize: true, staffAward: { select: { knockEventId: true } } },
     });
     if (!knock || !guildId || knock.guildId !== guildId || !knock.prize) {
       throw new NotFoundException("No such win in this community");
@@ -344,12 +364,21 @@ export class HalloweenDashboardService {
         "This prize is a chardb item or character, which is delivered automatically",
       );
     }
+    // Every staff prize's win gets one, from the knock or the migration.
+    if (!knock.staffAward) {
+      throw new NotFoundException("This win has no staff award to mark");
+    }
 
+    // One statement, so the win returned is the one this call made.
     const updated = await this.db.halloweenKnockEvent.update({
       where: { id: knockEventId },
-      data: delivered
-        ? { deliveredAt: new Date(), deliveredById: actorUserId }
-        : { deliveredAt: null, deliveredById: null },
+      data: {
+        staffAward: {
+          update: delivered
+            ? { deliveredAt: new Date(), deliveredById: actorUserId }
+            : { deliveredAt: null, deliveredById: null },
+        },
+      },
       include: winInclude,
     });
 
@@ -431,9 +460,9 @@ export class HalloweenDashboardService {
           deviantArtName: deviantArtNames.get(row.userId) ?? null,
           giftyFromDiscordUserId: row.gifties[0]?.fromUserId ?? null,
           prize: toPrizeView(row.prize, images.get(row.prize) ?? null),
-          deliveredAt: row.deliveredAt,
-          deliveredBy: row.deliveredBy
-            ? mapPrismaUserToGraphQL(row.deliveredBy)
+          deliveredAt: row.staffAward?.deliveredAt ?? null,
+          deliveredBy: row.staffAward?.deliveredBy
+            ? mapPrismaUserToGraphQL(row.staffAward.deliveredBy)
             : null,
         },
       ];

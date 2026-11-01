@@ -5,7 +5,7 @@ import { AuthModule } from "../auth/auth.module";
 import { ItemsModule } from "../items/items.module";
 import { PendingOwnershipModule } from "../pending-ownership/pending-ownership.module";
 import { HalloweenConfig } from "./halloween.config";
-import { HalloweenClock } from "./clock";
+import { ClockModule } from "../clock/clock.module";
 import { HalloweenRandom } from "./random";
 import { HalloweenUi } from "./discord/ui";
 import { HalloweenDiscordClient } from "./discord/halloween-discord.client";
@@ -32,6 +32,9 @@ import { CandyBoardService } from "./board/candy-board.service";
 import { CandyBoardResolver } from "./board/candy-board.resolver";
 import { CandySwapService } from "./swap/candy-swap.service";
 import { CandySwapResolver } from "./swap/candy-swap.resolver";
+import { HalloweenStaffAccess } from "./dashboard/halloween-staff-access";
+import { HalloweenPrizeListService } from "./prizes/halloween-prize-list.service";
+import { HalloweenPrizeListResolver } from "./prizes/halloween-prize-list.resolver";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { KnockCommand } from "./commands/knock.command";
 import { AdminKnockCommand } from "./commands/adminknock.command";
@@ -65,6 +68,7 @@ const COMMANDS = [
 @Module({
   imports: [
     ConfigModule,
+    ClockModule,
     DatabaseModule,
     AuthModule,
     ItemsModule,
@@ -74,7 +78,6 @@ const COMMANDS = [
   controllers: [HalloweenInteractionsController],
   providers: [
     HalloweenConfig,
-    HalloweenClock,
     HalloweenRandom,
     HalloweenUi,
     HalloweenDiscordClient,
@@ -96,6 +99,9 @@ const COMMANDS = [
     CandyBoardResolver,
     CandySwapService,
     CandySwapResolver,
+    HalloweenStaffAccess,
+    HalloweenPrizeListService,
+    HalloweenPrizeListResolver,
     ...COMMANDS,
     {
       provide: HALLOWEEN_COMMANDS,

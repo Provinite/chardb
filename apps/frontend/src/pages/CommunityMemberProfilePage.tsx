@@ -17,9 +17,10 @@ import { apexUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
+import { AchievementList } from "../components/achievements/AchievementList";
 import {
+  useCommunityMemberProfileQuery,
   useCommunityMemberRolesQuery,
-  useGetUserProfileQuery,
   useUserCharactersQuery,
 } from "../generated/graphql";
 
@@ -214,14 +215,14 @@ export const CommunityMemberProfilePage: React.FC = () => {
 
   usePageMeta({ title: username ? `@${username}` : "Member" });
 
-  const { data: profileData, loading: profileLoading } = useGetUserProfileQuery(
-    {
-      variables: { username: username ?? "" },
-      skip: !username,
-    },
-  );
+  // Achievements come with the person, so the page renders whole.
+  const { data: profileData, loading: profileLoading } =
+    useCommunityMemberProfileQuery({
+      variables: { username: username ?? "", communityId: communityId! },
+      skip: !username || !communityId,
+    });
 
-  const member = profileData?.userProfile?.user;
+  const member = profileData?.user;
   const memberId = member?.id;
   const isSelf = memberId === user?.id;
 
@@ -263,6 +264,7 @@ export const CommunityMemberProfilePage: React.FC = () => {
   const roles = rolesData?.communityMemberRoles ?? [];
   const characters = charactersData?.userCharacters?.characters ?? [];
   const characterTotal = charactersData?.userCharacters?.total ?? 0;
+  const { achievements } = member;
   const displayName = member.displayName || member.username;
   const communityName = community?.name || "this community";
 
@@ -337,6 +339,15 @@ export const CommunityMemberProfilePage: React.FC = () => {
           <CharacterGrid characters={characters} showOwner={false} />
         )}
       </Section>
+
+      {achievements.length > 0 && (
+        <Section data-testid="member-achievements">
+          <SectionHead>
+            <SectionTitle>Achievements</SectionTitle>
+          </SectionHead>
+          <AchievementList achievements={achievements} />
+        </Section>
+      )}
     </Container>
   );
 };

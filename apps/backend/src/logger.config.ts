@@ -1,6 +1,7 @@
 import { WinstonModuleOptions } from "nest-winston";
 import * as winston from "winston";
 import { OpenTelemetryTransportV3 } from "@opentelemetry/winston-transport";
+import { errFormat } from "./logging/err-format";
 
 /**
  * Winston logger configuration for NestJS with OpenTelemetry integration
@@ -10,12 +11,16 @@ import { OpenTelemetryTransportV3 } from "@opentelemetry/winston-transport";
  * - OpenTelemetry transport for sending logs to OTLP endpoint (production)
  * - Automatic trace/span ID correlation
  * - Structured JSON logging
+ * - An `Error` under the `err` field serialized with its stack and cause
+ *   (see `logging/err-format.ts`)
  */
 export const loggerConfig: WinstonModuleOptions = {
   level: process.env.LOG_LEVEL || "info",
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
+    // Before `metadata()`, which gathers the fields under `metadata`.
+    errFormat(),
     winston.format.metadata(),
   ),
   transports: [

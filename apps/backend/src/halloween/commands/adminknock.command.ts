@@ -31,14 +31,22 @@ export class AdminKnockCommand implements HalloweenCommandHandler {
     requireAdministrator(chat, "AdminKnockCommand");
 
     const [option] = chat.data.options ?? [];
-    if (option?.type !== ApplicationCommandOptionType.User) {
+    // Discord sends the whole user beside a user option. The knock takes it
+    // as the player, so a prize records their names and not the admin's.
+    const player =
+      option?.type === ApplicationCommandOptionType.User
+        ? chat.data.resolved?.users?.[option.value]
+        : undefined;
+    if (!player) {
       throw new HalloweenDiscordError({
         thrownFrom: "AdminKnockCommand",
         message: "You must provide a target user for the adminknock command",
         sourceError: new Error(
-          option
-            ? "Got a non-user option in the first slot for /adminknock"
-            : "No options provided for /adminknock",
+          !option
+            ? "No options provided for /adminknock"
+            : option.type !== ApplicationCommandOptionType.User
+              ? "Got a non-user option in the first slot for /adminknock"
+              : "Discord resolved no user for the /adminknock target",
         ),
         // The admin's mistake, not the bot's.
         logAsError: false,
@@ -53,16 +61,13 @@ export class AdminKnockCommand implements HalloweenCommandHandler {
       interactionId: chat.id,
       guildId: chat.guild_id,
       adminUserId: chat.member.user.id,
-      targetUserId: option.value,
+      targetUserId: player.id,
     } satisfies HalloweenLogLine);
 
     return this.knockCommand.knock({
       ...chat,
       data: { ...chat.data, name: this.knockCommand.name },
-      member: {
-        ...chat.member,
-        user: { ...chat.member.user, id: option.value },
-      },
+      member: { ...chat.member, user: player },
     });
   }
 }

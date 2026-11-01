@@ -1,6 +1,6 @@
 import { Args, ID, Int, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { ForbiddenException, Logger } from "@nestjs/common";
-import { PermissionService } from "../../auth/PermissionService";
+import { HalloweenStaffAccess } from "./halloween-staff-access";
 import { AllowCommunityPermission } from "../../auth/decorators/AllowCommunityPermission";
 import { AllowGlobalAdmin } from "../../auth/decorators/AllowGlobalAdmin";
 import { ResolveCommunityFrom } from "../../auth/decorators/ResolveCommunityFrom";
@@ -30,32 +30,18 @@ export class HalloweenDashboardResolver {
   constructor(
     private readonly dashboard: HalloweenDashboardService,
     private readonly db: DatabaseService,
-    private readonly permissions: PermissionService,
+    private readonly staffAccess: HalloweenStaffAccess,
   ) {}
 
   /**
-   * Reading is open to the people who hand prizes out (`canGrantItems`, as
-   * the shop's purchase list is) and to those who set the pool up
-   * (`canManageItems`). The decorator takes one permission, so it admits any
-   * member and this narrows it.
+   * Reading is open to Halloween staff. The decorator takes one permission,
+   * so it admits any member and this narrows it.
    */
   private async assertCanView(
     userId: string,
     communityId: string,
   ): Promise<void> {
-    const [canGrant, canManage] = await Promise.all([
-      this.permissions.hasCommunityPermission(
-        userId,
-        communityId,
-        CommunityPermission.CanGrantItems,
-      ),
-      this.permissions.hasCommunityPermission(
-        userId,
-        communityId,
-        CommunityPermission.CanManageItems,
-      ),
-    ]);
-    if (!canGrant && !canManage) {
+    if (!(await this.staffAccess.isStaff(userId, communityId))) {
       throw new ForbiddenException(
         "Seeing the Halloween event needs permission to grant or manage items",
       );

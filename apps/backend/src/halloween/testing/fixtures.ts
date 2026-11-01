@@ -2,11 +2,12 @@ import {
   APIApplicationCommandInteractionDataOption,
   APIChatInputApplicationCommandGuildInteraction,
   APIUserApplicationCommandGuildInteraction,
+  type APIUser,
   ApplicationCommandType,
   InteractionType,
 } from "@discordjs/core";
 import { generateKeyPairSync } from "crypto";
-import type { HalloweenClock } from "../clock";
+import type { Clock } from "../../clock/clock";
 import type { HalloweenConfig } from "../halloween.config";
 
 export const GUILD_ID = "100000000000000001";
@@ -29,7 +30,7 @@ export function testConfig(): Pick<
   };
 }
 
-export function fixedClock(iso: string): Pick<HalloweenClock, "now"> {
+export function fixedClock(iso: string): Pick<Clock, "now"> {
   return { now: () => new Date(iso) };
 }
 
@@ -40,6 +41,8 @@ interface InteractionOverrides {
   userId?: string;
   guildId?: string;
   permissions?: string;
+  /** Users the options name, as Discord resolves them alongside. */
+  resolvedUsers?: Record<string, APIUser>;
 }
 
 /**
@@ -83,6 +86,9 @@ export function buildInteraction(
       name: overrides.name ?? "knock",
       type: ApplicationCommandType.ChatInput,
       ...(overrides.options ? { options: overrides.options } : {}),
+      ...(overrides.resolvedUsers
+        ? { resolved: { users: overrides.resolvedUsers } }
+        : {}),
     },
   };
   return interaction as unknown as APIChatInputApplicationCommandGuildInteraction;

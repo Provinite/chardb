@@ -4,6 +4,8 @@ Before writing or changing any style or styled component, read [STYLING.md](./ST
 
 Before adding or splitting a component, read [ARCHITECTURE.md](./ARCHITECTURE.md). Data components fetch and pass props down; presentational components take props, render from `@chardb/ui` parts, and never import Apollo, the router or app contexts.
 
+Never write a TypeScript type, interface or string union that restates a GraphQL type. Shapes of query data come from codegen: put a fragment in the `src/graphql/*.graphql.ts` document, run `yarn workspace @chardb/frontend codegen`, and use the generated `…FieldsFragment` type and enums (`HalloweenWinnerKind.Member`, not `"MEMBER"`). This holds in presentational components, which may `import type` from `generated/graphql`, and in test fixtures. A hand-written copy keeps compiling after the schema changes.
+
 - STYLING.md outranks WCAG. WCAG criteria it does not mention are very low severity.
 - Tests that check emitted CSS read it through `src/__tests__/emittedCss.ts`, which parses with PostCSS. Never parse CSS or selectors with regexes or string searches.
 - No new styled-components. Styles go in an adjacent `Foo.css.ts` (vanilla-extract), imported as `import * as styles from "./Foo.css"`. Migrating a file converts all of it and removes it from `styled-components-allowlist.json`.

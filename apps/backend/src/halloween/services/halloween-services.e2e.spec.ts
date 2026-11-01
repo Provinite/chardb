@@ -3,7 +3,7 @@ import { TestApp } from "../../../test/setup-e2e";
 import { DatabaseModule } from "../../database/database.module";
 import { AuthModule } from "../../auth/auth.module";
 import { DatabaseService } from "../../database/database.service";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import { GuildSettingsService } from "./guild-settings.service";
 import { PrizeService } from "./prize.service";
 import { KnockEventService } from "./knock-event.service";
@@ -39,7 +39,7 @@ describe("Halloween services (e2e)", () => {
       // AuthModule only because TestApp installs the app's global guards.
       imports: [DatabaseModule, AuthModule],
       providers: [
-        { provide: HalloweenClock, useValue: { now: () => NOW } },
+        { provide: Clock, useValue: { now: () => NOW } },
         GuildSettingsService,
         PrizeService,
         KnockEventService,

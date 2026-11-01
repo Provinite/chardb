@@ -1,7 +1,7 @@
 import type { HalloweenGuildSettings } from "@chardb/database";
 import { GuildSettingsService } from "./guild-settings.service";
 import { DatabaseService } from "../../database/database.service";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import { MissingGuildSettingsError } from "../errors";
 
 const settings = (guildId: string): HalloweenGuildSettings => ({
@@ -32,7 +32,7 @@ describe("GuildSettingsService.getCached", () => {
     );
     service = new GuildSettingsService(
       { halloweenGuildSettings: { findUnique } } as unknown as DatabaseService,
-      { now: () => new Date(now) } as HalloweenClock,
+      { now: () => new Date(now) } as Clock,
     );
   });
 

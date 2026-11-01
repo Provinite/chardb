@@ -5,7 +5,7 @@ import * as request from "supertest";
 import { HalloweenInteractionsController } from "./halloween-interactions.controller";
 import { HalloweenCommandDispatcher } from "./halloween-command.dispatcher";
 import { HalloweenConfig } from "../halloween.config";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import {
   GUILD_ID,
   USER_ID,
@@ -37,7 +37,7 @@ describe("HalloweenInteractionsController", () => {
           provide: HalloweenConfig,
           useValue: { ...testConfig(), publicKey },
         },
-        { provide: HalloweenClock, useValue: fixedClock(NOW.toISOString()) },
+        { provide: Clock, useValue: fixedClock(NOW.toISOString()) },
         { provide: HalloweenCommandDispatcher, useValue: { dispatch } },
       ],
     }).compile();
