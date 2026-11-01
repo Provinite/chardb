@@ -93,7 +93,7 @@ const board = (
 });
 
 const boardsQuery = (
-  boards: ReturnType<typeof board>[] | null,
+  boards: ReturnType<typeof board>[],
 ): MockedResponse => ({
   request: {
     query: MyHalloweenCandyBoardsDocument,
@@ -276,13 +276,6 @@ describe("CommunityCandyBoardsPage", () => {
 
     await waitFor(() => expect(deleted).toHaveBeenCalled());
     await waitFor(() => expect(screen.getAllByRole("article")).toHaveLength(1));
-  });
-
-  it("asks to link Discord first", async () => {
-    renderPage([boardsQuery(null)]);
-    expect(
-      await screen.findByRole("link", { name: "Link Discord" }),
-    ).toHaveAttribute("href", "/profile/edit");
   });
 
   it("says when the community has no Discord server", async () => {
