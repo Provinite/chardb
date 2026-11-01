@@ -218,6 +218,26 @@ describe("Achievements (e2e)", () => {
       expect(await earned(alice.id)).toHaveLength(1);
     });
 
+    it("checks again straight away when the last check found no event on", async () => {
+      const alice = await member("alice");
+      now = later(START, -60_000);
+      await login(alice.email);
+      expect(await earned(alice.id)).toEqual([]);
+
+      now = later(START, 60_000);
+      await login(alice.email);
+      expect(await earned(alice.id)).toHaveLength(1);
+    });
+
+    it("checks again straight away when the last check found no membership", async () => {
+      const alice = await user("alice");
+      await login(alice.email);
+      await testApp.createTestCommunityMember(alice.id, roleId);
+
+      await login(alice.email);
+      expect(await earned(alice.id)).toHaveLength(1);
+    });
+
     it("earns nothing for someone who is not a member", async () => {
       const bob = await user("bob");
       await login(bob.email);

@@ -53,7 +53,8 @@ export class AchievementsService {
   /**
    * Grants what signing in now earns: trick-or-treater for each community
    * the user belongs to whose Halloween event is on. One already earned is
-   * left as it was. A user checked within the last hour is not checked again.
+   * left as it was. A user whose check found something to award is not
+   * checked again for an hour.
    */
   async recordSignIn(userId: string): Promise<void> {
     const now = this.clock.now();
@@ -77,22 +78,25 @@ export class AchievementsService {
         )
     `;
     const earned = signInAchievements(events, now);
-    if (earned.length) {
-      // Returns only the rows it inserted, so one already earned is not
-      // logged as granted again.
-      const granted = await this.db.userAchievement.createManyAndReturn({
-        data: earned.map((e) => ({ ...e, userId, earnedAt: now })),
-        skipDuplicates: true,
-        select: { userId: true, communityId: true, slug: true },
+    // Nothing to award is not remembered: the event may start, or the user
+    // join a community, before an hour is up, and the next page load should
+    // catch it.
+    if (!earned.length) return;
+
+    // Returns only the rows it inserted, so one already earned is not logged
+    // as granted again.
+    const granted = await this.db.userAchievement.createManyAndReturn({
+      data: earned.map((e) => ({ ...e, userId, earnedAt: now })),
+      skipDuplicates: true,
+      select: { userId: true, communityId: true, slug: true },
+    });
+    for (const row of granted) {
+      this.logger.log({
+        event: AchievementLogEvent.Granted,
+        message: "Achievement granted",
+        ...row,
+        reason: "sign-in",
       });
-      for (const row of granted) {
-        this.logger.log({
-          event: AchievementLogEvent.Granted,
-          message: "Achievement granted",
-          ...row,
-          reason: "sign-in",
-        });
-      }
     }
     this.remember(userId, now.getTime());
   }
