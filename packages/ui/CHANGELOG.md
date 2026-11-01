@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`IconButton`**, named by a required `label`, plus **`ButtonLink`**, **`Spinner`**, `useLoaderVisible`, `touchQuery` and the `size.spinner` and `action.primary.fgOutline` tokens (#503).
+- **Overlays opened in a `Dialog` render in its layer**: menus, popovers, tooltips, toggletips and typeahead lists; dialogs leave `data-inert-exempt` (`INERT_EXEMPT`) elements interactive (#499).
 
 ### Changed
 

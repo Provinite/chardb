@@ -18,6 +18,10 @@ export const keepGutter = style({
  * The fixed layer holding the scrim and the dialog. The dialog sits near the
  * top rather than centred, so a list that grows or shrinks under a search box
  * never moves the box.
+ *
+ * Also the portal container for menus and popovers opened inside, which are
+ * `position: fixed`: a `transform`, `filter` or `contain` here would make it
+ * their containing block and misplace them.
  */
 export const layer = style({
   position: "fixed",

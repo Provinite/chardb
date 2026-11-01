@@ -1,6 +1,7 @@
 import { act, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import toast from "react-hot-toast";
+import { Dialog, INERT_EXEMPT } from "@chardb/ui";
 import { vars } from "@chardb/ui/theme";
 import { afterEach, describe, expect, it } from "vitest";
 import { rulesFor } from "../../__tests__/emittedCss";
@@ -66,6 +67,32 @@ describe("ThemedToaster", () => {
       border: vars.status.danger.border,
       background: vars.status.danger.bgSubtle,
     });
+  });
+
+  it("keeps toasts clickable and focusable while a dialog is open", async () => {
+    render(
+      <>
+        <ThemedToaster />
+        <Dialog.Root open onClose={() => {}} aria-label="Rename">
+          <input aria-label="Name" />
+        </Dialog.Root>
+      </>,
+    );
+    act(() => {
+      toast("Saved");
+    });
+    const dismiss = await screen.findByRole("button", {
+      name: "Dismiss notification",
+    });
+
+    // In its own child of the body, which the dialog leaves out of `inert`.
+    expect(dismiss.closest("[inert]")).toBeNull();
+    const host = [...document.body.children].find((el) =>
+      el.contains(dismiss),
+    )!;
+    expect(host.hasAttribute(INERT_EXEMPT)).toBe(true);
+    act(() => dismiss.focus());
+    expect(document.activeElement).toBe(dismiss);
   });
 
   it("styles toasts from the stylesheet, with nothing inline", async () => {
