@@ -9,11 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Halloween candy swap**: players offer 1-3 candies for one they want, take each other's offers, and one-for-one mirror offers trade at once; the other side gets a `HALLOWEEN_CANDY_TRADED` notification.
+- **Halloween candy swap**: players offer 1-3 candies for one they want, take each other's offers, and one-for-one mirror offers trade at once; the other side gets a `HALLOWEEN_CANDY_TRADED` notification (#535).
 
 ### Changed
 
-- **Halloween candies are owned by chardb users** (`HalloweenCandy`), claimed on linking Discord or joining the community; candy boards belong to the chardb user, and existing boards are deleted.
+- **Halloween candies are owned by chardb users** (`HalloweenCandy`), claimed on linking Discord or joining the community; candy boards belong to the chardb user, and existing boards are deleted (#535).
 
 ## [v15.0.0] - 2026-10-31
 

@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Candy swap page** (`/halloween/swap`) for offering candies, taking other players' offers and seeing whom you traded with.
+- **Candy swap page** (`/halloween/swap`) for offering candies, taking other players' offers and seeing whom you traded with (#535).
 
 ### Changed
 
