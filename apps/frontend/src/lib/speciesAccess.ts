@@ -13,3 +13,13 @@ export const canManageSpecies = (
   isAdmin: boolean,
 ): boolean =>
   isAdmin || Boolean(role?.canCreateSpecies || role?.canEditSpecies);
+
+/**
+ * Whether the viewer may change a species, its traits, their options and its
+ * variants. Every write on the species management pages checks
+ * `CanEditSpecies` or site admin on the server.
+ */
+export const canEditSpecies = (
+  role: Pick<MembershipRole, "canEditSpecies"> | null,
+  isAdmin: boolean,
+): boolean => isAdmin || Boolean(role?.canEditSpecies);

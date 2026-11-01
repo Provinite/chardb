@@ -6,6 +6,7 @@ import {
   SeedCreateSpeciesDocument,
   SeedCreateSpeciesVariantDocument,
   SeedCreateTraitDocument,
+  SeedUpdateRoleDocument,
   TraitValueType,
 } from "../../src/generated/graphql.js";
 
@@ -115,6 +116,141 @@ test.describe("a moderator who can edit species", () => {
     await expect(
       page.getByRole("heading", { name: "Trait Builder" }),
     ).toBeVisible();
+  });
+});
+
+/**
+ * Every write on these pages needs `canEditSpecies`. A role that can only
+ * create species may open them, and sees what is there without the controls
+ * it cannot use: buttons hidden, inputs that show a value disabled.
+ */
+test.describe("a role that can create species but not edit them", () => {
+  test.use({ persona: "member" });
+
+  test.beforeEach(async ({ world }) => {
+    await world.as("commadmin").gql(SeedUpdateRoleDocument, {
+      id: world.roles.member,
+      updateRoleInput: { canCreateSpecies: true },
+    });
+  });
+
+  const button = (page: Page, name: string) =>
+    page.getByRole("button", { name, exact: true });
+
+  test("sees the trait builder without its write controls", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(
+      `${world.community.url}/species/${world.species.id}/traits`,
+    );
+
+    await expect(page.getByText(world.traits.eyeColor.name)).toBeVisible();
+    await expect(button(page, "Options")).toBeVisible();
+    for (const name of ["Add Trait", "Edit", "Delete"]) {
+      await expect(button(page, name)).toHaveCount(0);
+    }
+  });
+
+  test("sees the variant list without its write controls", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(
+      `${world.community.url}/species/${world.species.id}/variants`,
+    );
+
+    await expect(button(page, "Manage")).toBeVisible();
+    for (const name of ["Add Variant", "Delete"]) {
+      await expect(button(page, name)).toHaveCount(0);
+    }
+  });
+
+  test("sees a trait's options without their write controls", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(
+      `${world.community.url}/traits/${world.traits.eyeColor.id}/enum-values`,
+    );
+
+    await expect(page.getByText("Blue").first()).toBeVisible();
+    for (const name of ["Add Option", "Up", "Down", "Edit", "Delete"]) {
+      await expect(button(page, name)).toHaveCount(0);
+    }
+  });
+
+  test("sees a variant without its write controls", async ({ page, world }) => {
+    await page.goto(
+      `${world.community.url}/variants/${world.species.variantId}/manage`,
+    );
+
+    await expect(page.getByPlaceholder("Variant name...")).toBeDisabled();
+    await expect(page.getByTestId("variant-max-forms")).toBeDisabled();
+    await expect(page.getByText(/Available Traits/)).toHaveCount(0);
+    await expect(button(page, "Remove")).toHaveCount(0);
+  });
+
+  test("sees a variant's option settings disabled", async ({ page, world }) => {
+    await page.goto(
+      `${world.community.url}/variants/${world.species.variantId}/enum-settings`,
+    );
+
+    const toggles = page.getByRole("button", { name: /^(Enabled|Disabled)$/ });
+    await expect(toggles.first()).toBeVisible();
+    for (const toggle of await toggles.all()) {
+      await expect(toggle).toBeDisabled();
+    }
+  });
+
+  test("is turned away from the species edit form", async ({ page, world }) => {
+    await page.goto(`${world.community.url}/species/${world.species.id}/edit`);
+    await expectDenied(page);
+  });
+});
+
+test.describe("a moderator who can edit species, on each page", () => {
+  test.use({ persona: "moderator" });
+
+  test("sees the write controls", async ({ page, world }) => {
+    const button = (name: string) =>
+      page.getByRole("button", { name, exact: true }).first();
+
+    await page.goto(
+      `${world.community.url}/species/${world.species.id}/traits`,
+    );
+    await expect(button("Add Trait")).toBeVisible();
+    await expect(button("Edit")).toBeVisible();
+
+    await page.goto(
+      `${world.community.url}/species/${world.species.id}/variants`,
+    );
+    await expect(button("Add Variant")).toBeVisible();
+
+    await page.goto(
+      `${world.community.url}/traits/${world.traits.eyeColor.id}/enum-values`,
+    );
+    await expect(button("Add Option")).toBeVisible();
+
+    await page.goto(
+      `${world.community.url}/variants/${world.species.variantId}/manage`,
+    );
+    await expect(page.getByPlaceholder("Variant name...")).toBeEnabled();
+    await expect(
+      page.getByRole("heading", { name: /^Available Traits/ }),
+    ).toBeVisible();
+
+    await page.goto(
+      `${world.community.url}/variants/${world.species.variantId}/enum-settings`,
+    );
+    await expect(
+      page.getByRole("button", { name: /^(Enabled|Disabled)$/ }).first(),
+    ).toBeEnabled();
+
+    await page.goto(`${world.community.url}/species/${world.species.id}/edit`);
+    await expect(
+      page.getByRole("heading", { name: "Access Denied" }),
+    ).toHaveCount(0);
   });
 });
 

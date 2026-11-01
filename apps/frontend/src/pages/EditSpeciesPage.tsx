@@ -9,6 +9,8 @@ import {
   useUpdateSpeciesMutation,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
+import { AccessDenied } from "../components/AccessDenied";
+import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
 
 /**
  * Edit Species Page
@@ -133,6 +135,7 @@ export const EditSpeciesPage: React.FC = () => {
 
   const navigate = useNavigate();
   const { speciesId } = useParams<{ speciesId: string }>();
+  const canEdit = useCanEditSpecies();
 
   const [formData, setFormData] = useState<EditSpeciesFormData>({
     name: "",
@@ -192,6 +195,16 @@ export const EditSpeciesPage: React.FC = () => {
   const handleCancel = () => {
     navigate("/species");
   };
+
+  // The whole page is the one write, so a viewer who cannot make it is
+  // turned away rather than shown a form with no way to submit.
+  if (!canEdit) {
+    return (
+      <AccessDenied>
+        You don't have permission to edit species in this community.
+      </AccessDenied>
+    );
+  }
 
   // Loading state
   if (speciesLoading) {

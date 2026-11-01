@@ -24,6 +24,7 @@ import {
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
 import { ColorSelector, ColorPip } from "../components/colors";
+import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
 
 /**
  * Trait Builder Interface for Species Configuration
@@ -554,6 +555,7 @@ export const TraitBuilderPage: React.FC = () => {
   const { speciesId } = useParams<{ speciesId: string }>();
   const navigate = useNavigate();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const canEdit = useCanEditSpecies();
 
   // GraphQL operations
   const {
@@ -730,12 +732,14 @@ export const TraitBuilderPage: React.FC = () => {
           >
             Manage Variants
           </Button>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            icon={<Plus size={16} />}
-          >
-            Add Trait
-          </Button>
+          {canEdit && (
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              icon={<Plus size={16} />}
+            >
+              Add Trait
+            </Button>
+          )}
         </HeaderRight>
       </Header>
 
@@ -747,12 +751,14 @@ export const TraitBuilderPage: React.FC = () => {
             Traits define the characteristics that characters of this species
             can have.
           </p>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            icon={<Plus size={16} />}
-          >
-            Create Your First Trait
-          </Button>
+          {canEdit && (
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              icon={<Plus size={16} />}
+            >
+              Create Your First Trait
+            </Button>
+          )}
         </EmptyState>
       ) : (
         <TraitGrid>
@@ -792,22 +798,26 @@ export const TraitBuilderPage: React.FC = () => {
                       Options
                     </Button>
                   )}
-                  <Button
-                    tone="secondary"
-                    size="sm"
-                    onClick={() => handleEditTrait(trait)}
-                    icon={<Edit size={14} />}
-                  >
-                    Edit
-                  </Button>
-                  <Button
-                    tone="danger"
-                    size="sm"
-                    onClick={() => handleDeleteTrait(trait)}
-                    icon={<Trash2 size={14} />}
-                  >
-                    Delete
-                  </Button>
+                  {canEdit && (
+                    <>
+                      <Button
+                        tone="secondary"
+                        size="sm"
+                        onClick={() => handleEditTrait(trait)}
+                        icon={<Edit size={14} />}
+                      >
+                        Edit
+                      </Button>
+                      <Button
+                        tone="danger"
+                        size="sm"
+                        onClick={() => handleDeleteTrait(trait)}
+                        icon={<Trash2 size={14} />}
+                      >
+                        Delete
+                      </Button>
+                    </>
+                  )}
                 </TraitActions>
               </TraitHeader>
 

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canManageSpecies } from "../speciesAccess";
+import { canEditSpecies, canManageSpecies } from "../speciesAccess";
 
 const role = (canCreateSpecies: boolean, canEditSpecies: boolean) => ({
   canCreateSpecies,
@@ -26,5 +26,23 @@ describe("canManageSpecies", () => {
   it("allows a site admin whatever their role", () => {
     expect(canManageSpecies(role(false, false), true)).toBe(true);
     expect(canManageSpecies(null, true)).toBe(true);
+  });
+});
+
+describe("canEditSpecies", () => {
+  it("allows a role that can edit species", () => {
+    expect(canEditSpecies(role(false, true), false)).toBe(true);
+  });
+
+  it("refuses a role that can only create species", () => {
+    expect(canEditSpecies(role(true, false), false)).toBe(false);
+  });
+
+  it("refuses a viewer with no role in the community", () => {
+    expect(canEditSpecies(null, false)).toBe(false);
+  });
+
+  it("allows a site admin whatever their role", () => {
+    expect(canEditSpecies(null, true)).toBe(true);
   });
 });

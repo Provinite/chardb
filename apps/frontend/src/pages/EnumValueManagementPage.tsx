@@ -21,6 +21,7 @@ import {
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
 import { ColorSelector, ColorPip } from "../components/colors";
+import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
 
 /**
  * Enum Value Management Interface for ENUM-type Traits
@@ -344,6 +345,7 @@ export const EnumValueManagementPage: React.FC = () => {
 
   const { traitId } = useParams<{ traitId: string }>();
   const navigate = useNavigate();
+  const canEdit = useCanEditSpecies();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingEnumValue, setEditingEnumValue] = useState<
     EnumValuesByTraitQuery["enumValuesByTrait"]["nodes"][0] | null
@@ -557,12 +559,14 @@ export const EnumValueManagementPage: React.FC = () => {
           >
             Back to Traits
           </Button>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            icon={<Plus size={16} />}
-          >
-            Add Option
-          </Button>
+          {canEdit && (
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              icon={<Plus size={16} />}
+            >
+              Add Option
+            </Button>
+          )}
         </HeaderRight>
       </Header>
 
@@ -571,12 +575,14 @@ export const EnumValueManagementPage: React.FC = () => {
           <ArrowUpDown size={48} />
           <h3>No options configured</h3>
           <p>Add predefined options that users can select for this trait.</p>
-          <Button
-            onClick={() => setIsCreateModalOpen(true)}
-            icon={<Plus size={16} />}
-          >
-            Create Your First Option
-          </Button>
+          {canEdit && (
+            <Button
+              onClick={() => setIsCreateModalOpen(true)}
+              icon={<Plus size={16} />}
+            >
+              Create Your First Option
+            </Button>
+          )}
         </EmptyState>
       ) : (
         <EnumValueList>
@@ -604,42 +610,44 @@ export const EnumValueManagementPage: React.FC = () => {
                 </div>
               </EnumValueInfo>
 
-              <EnumValueActions>
-                <Button
-                  tone="secondary"
-                  size="sm"
-                  onClick={() => handleMoveUp(enumValue)}
-                  disabled={index === 0}
-                  icon={<ArrowUp size={14} />}
-                >
-                  Up
-                </Button>
-                <Button
-                  tone="secondary"
-                  size="sm"
-                  onClick={() => handleMoveDown(enumValue)}
-                  disabled={index === sortedEnumValues.length - 1}
-                  icon={<ArrowDown size={14} />}
-                >
-                  Down
-                </Button>
-                <Button
-                  tone="secondary"
-                  size="sm"
-                  onClick={() => handleEditEnumValue(enumValue)}
-                  icon={<Edit size={14} />}
-                >
-                  Edit
-                </Button>
-                <Button
-                  tone="danger"
-                  size="sm"
-                  onClick={() => handleDeleteEnumValue(enumValue)}
-                  icon={<Trash2 size={14} />}
-                >
-                  Delete
-                </Button>
-              </EnumValueActions>
+              {canEdit && (
+                <EnumValueActions>
+                  <Button
+                    tone="secondary"
+                    size="sm"
+                    onClick={() => handleMoveUp(enumValue)}
+                    disabled={index === 0}
+                    icon={<ArrowUp size={14} />}
+                  >
+                    Up
+                  </Button>
+                  <Button
+                    tone="secondary"
+                    size="sm"
+                    onClick={() => handleMoveDown(enumValue)}
+                    disabled={index === sortedEnumValues.length - 1}
+                    icon={<ArrowDown size={14} />}
+                  >
+                    Down
+                  </Button>
+                  <Button
+                    tone="secondary"
+                    size="sm"
+                    onClick={() => handleEditEnumValue(enumValue)}
+                    icon={<Edit size={14} />}
+                  >
+                    Edit
+                  </Button>
+                  <Button
+                    tone="danger"
+                    size="sm"
+                    onClick={() => handleDeleteEnumValue(enumValue)}
+                    icon={<Trash2 size={14} />}
+                  >
+                    Delete
+                  </Button>
+                </EnumValueActions>
+              )}
             </EnumValueCard>
           ))}
         </EnumValueList>
