@@ -6,7 +6,7 @@ import * as request from "supertest";
 import { HalloweenInteractionsController } from "./halloween-interactions.controller";
 import { HalloweenCommandDispatcher } from "./halloween-command.dispatcher";
 import { HalloweenConfig } from "../halloween.config";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import { CustomThrottlerGuard } from "../../middleware/custom-throttler.guard";
 import { ALL_THROTTLES } from "../../middleware/throttles";
 import { testConfig } from "../testing/fixtures";
@@ -38,7 +38,7 @@ describe("HalloweenInteractionsController rate limiting", () => {
       providers: [
         { provide: APP_GUARD, useClass: CustomThrottlerGuard },
         { provide: HalloweenConfig, useValue: testConfig() },
-        { provide: HalloweenClock, useValue: new HalloweenClock() },
+        { provide: Clock, useValue: new Clock() },
         {
           provide: HalloweenCommandDispatcher,
           useValue: { dispatch: jest.fn() },

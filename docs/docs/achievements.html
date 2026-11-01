@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Achievements - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Earn achievements in a community, like Trick-or-Treater 2026 for signing in during the Halloween event, and see them on members' profiles there."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/achievements.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Achievements" />
+    <meta
+      property="og:description"
+      content="Earn achievements in a community, like Trick-or-Treater 2026 for signing in during the Halloween event, and see them on members' profiles there."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/achievements.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/achievements-profile.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="A community member profile with an Achievements section showing Trick-or-Treater 2026."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul,
+      .step-content ol {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+        max-width: 520px;
+        margin: 0 auto 1.5rem;
+      }
+
+      .screenshot.wide {
+        max-width: 100%;
+      }
+
+      .screenshot.narrow {
+        max-width: 300px;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      code {
+        background: #f3f3f8;
+        padding: 0.1rem 0.35rem;
+        border-radius: 4px;
+        font-size: 0.875em;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+
+      footer p {
+        margin-bottom: 0.35rem;
+      }
+
+      footer a {
+        color: white;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Achievements</h1>
+        <p>Badges you earn in a community, shown on your profile there.</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Communities hand out achievements for taking part in what they run.
+            Each one belongs to the community it was earned in, and stays on
+            your member profile there for good.
+          </p>
+          <p>
+            The first is <strong>Trick-or-Treater 2026</strong>, for members who
+            sign in during the
+            <a href="halloween-event.html">Halloween event</a>.
+          </p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="achievements-profile.png"
+            alt="Moderator's member profile in Test Community. Below Characters in Test Community is an Achievements section with one card: a candy corn picture, Trick-or-Treater 2026, Signed in during Trick-or-Treat 2026, and Earned 11/1/2026."
+          />
+          <div class="screenshot-caption">
+            An achievement on a community member profile
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 1 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Earning Trick-or-Treater 2026</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Sign in to CharDB while your community's Halloween event is on. It's
+            yours the moment you're in.
+          </p>
+          <ul>
+            <li>You need to be a member of the community running the event.</li>
+            <li>
+              Already signed in? Coming back to CharDB on any day of the event
+              counts too.
+            </li>
+            <li>You earn it once per community, dated from the first time.</li>
+          </ul>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="achievements-sign-in.png"
+            alt="The Welcome Back sign-in form, filled in with moderator@test.local and a password, above a Sign In button."
+          />
+          <div class="screenshot-caption">Signing in during the event</div>
+        </div>
+        <div class="step-content">
+          <div class="highlight-box">
+            <strong>Played before achievements arrived?</strong> If you used the
+            <a href="halloween-candy-swap.html">candy swap</a> or a
+            <a href="halloween-candy-board.html">candy board</a> during the
+            event, you have it already, dated from when you first did.
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Seeing Achievements</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            In the community, open <strong>Members</strong> in the sidebar and
+            pick a name, yours included. <strong>Achievements</strong> sits at
+            the bottom of their member profile, newest first, each with the date
+            it was earned.
+          </p>
+          <p>A member profile shows only what was earned in that community.</p>
+        </div>
+        <div class="screenshot wide">
+          <img
+            src="achievements-dark.png"
+            alt="Member's profile in Test Community, in dark mode, with Inventory, Propose trade and Site profile buttons, and the same Trick-or-Treater 2026 card under Achievements."
+          />
+          <div class="screenshot-caption">
+            Another member's profile, in dark mode
+          </div>
+        </div>
+        <div class="step-content">
+          <p>On a phone the cards stack in one column.</p>
+        </div>
+        <div class="screenshot narrow">
+          <img
+            src="achievements-phone.png"
+            alt="The Achievements section at phone width: one card with the candy corn picture beside its name, description and date."
+          />
+          <div class="screenshot-caption">At 360px wide</div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Achievements &bull; Feature Documentation</p>
+        <p>
+          Running the event?
+          <a href="halloween-event.html">Halloween Event</a> covers setting it
+          up.
+        </p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>

@@ -5365,6 +5365,8 @@ export type UseItemResult = {
 
 export type User = {
   __typename?: 'User';
+  /** What the user has earned in a community, newest first. */
+  achievements: Array<UserAchievement>;
   avatarImage: Maybe<Image>;
   bio: Maybe<Scalars['String']['output']>;
   canCreateCommunity: Scalars['Boolean']['output'];
@@ -5393,6 +5395,11 @@ export type User = {
 };
 
 
+export type UserAchievementsArgs = {
+  communityId: Scalars['ID']['input'];
+};
+
+
 export type UserCommunityMembershipsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -5401,6 +5408,20 @@ export type UserCommunityMembershipsArgs = {
 
 export type UserInventoriesArgs = {
   communityId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+/** An achievement a user earned in a community. */
+export type UserAchievement = {
+  __typename?: 'UserAchievement';
+  /** How it was earned. */
+  description: Scalars['String']['output'];
+  earnedAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  /** Path of its picture on the frontend's own origin. */
+  imagePath: Scalars['String']['output'];
+  name: Scalars['String']['output'];
+  /** Which achievement it is, e.g. `trick-or-treater-2026`. */
+  slug: Scalars['String']['output'];
 };
 
 export type UserConnection = {
@@ -5457,6 +5478,14 @@ export enum Visibility {
   Public = 'PUBLIC',
   Unlisted = 'UNLISTED'
 }
+
+export type CommunityMemberProfileQueryVariables = Exact<{
+  username: Scalars['String']['input'];
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type CommunityMemberProfileQuery = { __typename?: 'Query', user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, achievements: Array<{ __typename?: 'UserAchievement', id: string, name: string, description: string, imagePath: string, earnedAt: string }> } | null };
 
 export type LoginMutationVariables = Exact<{
   input: LoginInput;
@@ -8366,6 +8395,63 @@ export const FormSnapshotFieldsFragmentDoc = gql`
   }
 }
     ${TraitValueFieldsFragmentDoc}`;
+export const CommunityMemberProfileDocument = gql`
+    query CommunityMemberProfile($username: String!, $communityId: ID!) {
+  user(username: $username) {
+    id
+    username
+    displayName
+    bio
+    avatarImage {
+      id
+      originalUrl
+      thumbnailUrl
+      altText
+    }
+    achievements(communityId: $communityId) {
+      id
+      name
+      description
+      imagePath
+      earnedAt
+    }
+  }
+}
+    `;
+
+/**
+ * __useCommunityMemberProfileQuery__
+ *
+ * To run a query within a React component, call `useCommunityMemberProfileQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCommunityMemberProfileQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCommunityMemberProfileQuery({
+ *   variables: {
+ *      username: // value for 'username'
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useCommunityMemberProfileQuery(baseOptions: Apollo.QueryHookOptions<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables> & ({ variables: CommunityMemberProfileQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>(CommunityMemberProfileDocument, options);
+      }
+export function useCommunityMemberProfileLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>(CommunityMemberProfileDocument, options);
+        }
+export function useCommunityMemberProfileSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>(CommunityMemberProfileDocument, options);
+        }
+export type CommunityMemberProfileQueryHookResult = ReturnType<typeof useCommunityMemberProfileQuery>;
+export type CommunityMemberProfileLazyQueryHookResult = ReturnType<typeof useCommunityMemberProfileLazyQuery>;
+export type CommunityMemberProfileSuspenseQueryHookResult = ReturnType<typeof useCommunityMemberProfileSuspenseQuery>;
+export type CommunityMemberProfileQueryResult = Apollo.QueryResult<CommunityMemberProfileQuery, CommunityMemberProfileQueryVariables>;
 export const LoginDocument = gql`
     mutation Login($input: LoginInput!) {
   login(input: $input) {

@@ -41,6 +41,7 @@ import { CustomThrottlerGuard } from "../middleware/custom-throttler.guard";
 import { OrGuard } from "./guards/OrGuard";
 import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
 import { CommunityMembershipModule } from "../community-membership/community-membership.module";
+import { AchievementsModule } from "../achievements/achievements.module";
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { CommunityMembershipModule } from "../community-membership/community-mem
     EmailVerificationModule,
     forwardRef(() => CommunityMembersModule),
     forwardRef(() => CommunityMembershipModule),
+    AchievementsModule,
   ],
   controllers: [
     DeviantArtOAuthController,

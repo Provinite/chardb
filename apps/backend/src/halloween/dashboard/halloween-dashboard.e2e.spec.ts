@@ -6,7 +6,7 @@ import { DatabaseService } from "../../database/database.service";
 import { HalloweenModule } from "../halloween.module";
 import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { mockDiscord } from "../testing/command-harness";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import { fixedClock } from "../testing/fixtures";
 
 /** Noon in Chicago (CDT), six hours after the 6 AM reset. */
@@ -89,7 +89,7 @@ describe("Halloween dashboard (e2e)", () => {
         builder
           .overrideProvider(HalloweenDiscordClient)
           .useValue(mockDiscord())
-          .overrideProvider(HalloweenClock)
+          .overrideProvider(Clock)
           .useValue(fixedClock(NOW)),
     );
     db = testApp.getDb();

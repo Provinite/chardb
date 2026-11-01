@@ -1,3 +1,4 @@
+import achievements from "./achievements.js";
 import candyBoard from "./candy-board.js";
 import candySwap from "./candy-swap.js";
 import communityBasic from "./community-basic.js";
@@ -10,6 +11,7 @@ import type { PresetDef } from "../types.js";
  * See apps/e2e/README.md for the walkthrough.
  */
 export const PRESETS = {
+  achievements,
   "candy-board": candyBoard,
   "candy-swap": candySwap,
   "community-basic": communityBasic,
