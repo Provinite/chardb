@@ -1,22 +1,18 @@
 import { describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen } from "../../../__tests__/test-utils";
 import userEvent from "@testing-library/user-event";
-import { ThemeProvider } from "styled-components";
-import { lightTheme } from "@chardb/ui";
 import { GiveToCommunityDialog } from "../CharacterDisposalDialogs";
 
 const renderDialog = (onConfirm = vi.fn()) =>
   render(
-    <ThemeProvider theme={lightTheme}>
-      <GiveToCommunityDialog
-        open
-        characterName="Pinefall"
-        communityName="Willowmere"
-        busy={false}
-        onConfirm={onConfirm}
-        onCancel={vi.fn()}
-      />
-    </ThemeProvider>,
+    <GiveToCommunityDialog
+      open
+      characterName="Pinefall"
+      communityName="Willowmere"
+      busy={false}
+      onConfirm={onConfirm}
+      onCancel={vi.fn()}
+    />,
   );
 
 describe("GiveToCommunityDialog", () => {

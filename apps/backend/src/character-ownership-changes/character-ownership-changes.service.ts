@@ -1,6 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import type { Prisma } from "@chardb/database";
 
 /**
  * Service layer input types for character ownership change operations.
@@ -157,7 +156,7 @@ export class CharacterOwnershipChangesService {
   }
 
   async remove(id: string) {
-    const ownershipChange = await this.findOne(id); // This will throw if not found
+    await this.findOne(id); // This will throw if not found
 
     await this.prisma.characterOwnershipChange.delete({
       where: { id },
