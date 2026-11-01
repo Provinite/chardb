@@ -36,6 +36,26 @@ halloween.describe("Halloween pages in the page search", () => {
     });
   });
 
+  // The prize list is public, so it is offered on the community's own host
+  // to anyone; the player pages need membership.
+  for (const persona of ["anon", "carol"] as const) {
+    halloween.describe(`as ${persona}, not a member`, () => {
+      halloween.use({ persona });
+
+      halloween("offers the prize list", async ({ page, world }) => {
+        await page.goto(world.community.url);
+        const s = spotlight(page);
+        await s.search("halloween");
+
+        await expect(s.result(/^Candy Boards/)).toHaveCount(0);
+        await expect(s.result(/^Candy Swap/)).toHaveCount(0);
+        await s.result(/^Prize List/).click();
+
+        await expect(page).toHaveURL(`${world.community.url}/halloween/prizes`);
+      });
+    });
+  }
+
   halloween.describe("as staff", () => {
     halloween.use({ persona: "alice" });
 

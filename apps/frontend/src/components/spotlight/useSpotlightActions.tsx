@@ -287,6 +287,27 @@ export function useSpotlightActions(
       ],
     });
 
+    // The current community's public pages, for a visitor who is not a member
+    // of it. A member has them in that community's own group below.
+    const memberHere = communitiesData?.nodes.some(
+      (membership) => membership.role.communityId === hostCommunityId,
+    );
+    if (hostCommunity?.halloweenEnabled && !memberHere) {
+      groups.push({
+        group: hostCommunity.name,
+        actions: [
+          {
+            id: `c-${hostCommunity.id}-halloween-prizes`,
+            icon: Gift,
+            label: "Prize List",
+            description: `${hostCommunity.name} Halloween prizes`,
+            keywords: ["halloween", "event"],
+            to: "/halloween/prizes",
+          },
+        ],
+      });
+    }
+
     if (!user) return groups;
 
     // My Content
@@ -711,6 +732,7 @@ export function useSpotlightActions(
     user,
     communitiesData,
     hostSlug,
+    hostCommunity,
     hostCommunityId,
     communityName,
     setQuery,
