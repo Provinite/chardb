@@ -329,7 +329,7 @@ export const CandySwapView = ({
               >
                 <OfferTerms offer={offer} />
                 <Button
-                  tone="secondary"
+                  tone="outline"
                   size="sm"
                   busy={cancellingId === offer.id}
                   aria-label={`Cancel offer for ${candyName(offer.wantSlug)}`}

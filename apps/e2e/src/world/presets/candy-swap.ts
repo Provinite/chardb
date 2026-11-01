@@ -35,6 +35,14 @@ export default definePreset<CandySwapWorld>({
       where: { id: community.id },
       data: { discordGuildId: GUILD_ID, halloweenEnabled: true },
     });
+    // Only members hold candies; Alice is one as its creator. Adding a member
+    // through the API needs a site admin, which no player here is.
+    const memberRole = await ctx.prisma.role.findFirstOrThrow({
+      where: { communityId: community.id, name: "Member" },
+    });
+    await ctx.prisma.communityMember.create({
+      data: { userId: bob.userId, roleId: memberRole.id },
+    });
 
     // Candies come from knocks on Discord, so they are seeded as a knock
     // leaves them, already claimed by their owner.
