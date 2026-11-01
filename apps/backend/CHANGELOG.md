@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **`giveCharacterToCommunity`** lets an owner leave their character with no owner, making it public and recording the change, so it can go in a prize pool (#521).
+- **`giveCharacterToCommunity`** lets an owner leave their character with no owner, making it public and recording the change, so it can go in a prize pool; refused while a redemption is in review (#521).
 
 ### Changed
 

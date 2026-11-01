@@ -2,7 +2,7 @@ import { TestApp, CHARACTER_QUERIES } from "../../test/setup-e2e";
 import { CharactersModule } from "./characters.module";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
-import { Visibility } from "@chardb/database";
+import { TraitReviewSource, Visibility } from "@chardb/database";
 
 describe("CharactersResolver (e2e)", () => {
   let testApp: TestApp;
@@ -648,6 +648,36 @@ describe("CharactersResolver (e2e)", () => {
         .character.findUniqueOrThrow({ where: { id: character.id } });
       expect(after.ownerId).toBe(testUserId);
     });
+
+    it.each([TraitReviewSource.MYO, TraitReviewSource.USER_EDIT])(
+      "refuses while a %s redemption awaits review",
+      async (source) => {
+        const characterId = await createOwned();
+        const db = testApp.getDb();
+        await db.traitReview.create({
+          data: {
+            characterId,
+            source,
+            proposedForms: [],
+            previousForms: [],
+          },
+        });
+
+        const response = await testApp.authenticatedGraphqlRequest(
+          GIVE,
+          { id: characterId },
+          testToken,
+        );
+
+        expect(response.body.errors?.[0]?.message).toBe(
+          "This character has a redemption awaiting review, so it cannot be given away until the review is decided",
+        );
+        const after = await db.character.findUniqueOrThrow({
+          where: { id: characterId },
+        });
+        expect(after.ownerId).toBe(testUserId);
+      },
+    );
 
     it("refuses a deleted character", async () => {
       const characterId = await createOwned();

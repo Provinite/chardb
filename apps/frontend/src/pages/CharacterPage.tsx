@@ -671,8 +671,10 @@ export const CharacterPage: React.FC = () => {
     !pendingRedemption &&
     (permissions.canDeleteCharacter || (user?.isAdmin ?? false));
   // A character reaches a community through its species; with none, there is
-  // no community to give it to.
-  const giftCommunity = ownsCharacter ? character.species?.community : null;
+  // no community to give it to. Refused by the server, like the staff actions,
+  // while a redemption is in review.
+  const giftCommunity =
+    ownsCharacter && !pendingRedemption ? character.species?.community : null;
 
   return (
     <Container>

@@ -31,7 +31,10 @@ import {
   DEFAULT_FORM,
 } from "../character-forms/character-forms.service";
 import { notDeleted } from "../common/utils/prisma-filters";
-import { CharacterNotGivableError } from "./characters.errors";
+import {
+  CharacterNotGivableError,
+  CharacterRedemptionPendingError,
+} from "./characters.errors";
 import {
   availabilityWhere,
   CharacterAvailability,
@@ -855,8 +858,11 @@ export class CharactersService {
    * Narrow on purpose: a CREATION or IMPORT review has no item behind it and
    * blocks nothing.
    */
-  private async assertNoPendingRedemption(characterId: string) {
-    const pending = await this.db.traitReview.findFirst({
+  private findPendingRedemption(
+    characterId: string,
+    db: Prisma.TransactionClient = this.db,
+  ) {
+    return db.traitReview.findFirst({
       where: {
         characterId,
         status: ModerationStatus.PENDING,
@@ -866,6 +872,10 @@ export class CharactersService {
       },
       select: { source: true },
     });
+  }
+
+  private async assertNoPendingRedemption(characterId: string) {
+    const pending = await this.findPendingRedemption(characterId);
     if (!pending) return;
 
     const what =
@@ -1708,9 +1718,17 @@ export class CharactersService {
    *
    * The ownership check is the update's own condition rather than a read
    * before it, so a trade settling at the same moment cannot also move it.
+   *
+   * Refused while a redemption is in review: the owner spent an item on it,
+   * and the character should not leave them before the review decides
+   * whether that item comes back.
    */
   async giveToCommunity(id: string, ownerId: string): Promise<void> {
     await this.db.$transaction(async (tx) => {
+      if (await this.findPendingRedemption(id, tx)) {
+        throw new CharacterRedemptionPendingError(id);
+      }
+
       const { count } = await tx.character.updateMany({
         where: { id, ownerId, speciesId: { not: null }, ...notDeleted },
         data: { ownerId: null, visibility: Visibility.PUBLIC },
