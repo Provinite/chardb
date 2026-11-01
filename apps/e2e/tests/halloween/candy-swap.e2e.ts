@@ -60,4 +60,24 @@ test.describe("the candy swap", () => {
       form.getByRole("button", { name: "Add banana (2 left)" }),
     ).toBeVisible();
   });
+
+  test("an offer for anything fills an offer for what it gives", async ({
+    page,
+  }) => {
+    // Alice offers a berry tart for a banana; Bob offers a banana for anything.
+    const form = page.getByRole("region", { name: "Make an offer" });
+    await form.getByRole("button", { name: "Add banana (2 left)" }).click();
+    await form
+      .getByRole("button", { name: "Choose a candy to ask for" })
+      .click();
+    await page
+      .getByRole("dialog", { name: "Ask for a candy" })
+      .getByRole("button", { name: "Anything" })
+      .click();
+    await form.getByRole("button", { name: "Place offer" }).click();
+
+    const trades = page.getByRole("region", { name: "Your trades" });
+    await expect(trades.getByText("alice")).toBeVisible();
+    await expect(trades.getByRole("img", { name: "berry tart" })).toBeVisible();
+  });
 });

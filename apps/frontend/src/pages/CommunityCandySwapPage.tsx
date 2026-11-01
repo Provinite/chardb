@@ -97,7 +97,7 @@ export const CommunityCandySwapPage: React.FC = () => {
     }
   };
 
-  const onPlace = async (candyIds: number[], wantSlug: string) => {
+  const onPlace = async (candyIds: number[], wantSlug: string | null) => {
     try {
       const result = await place({
         variables: { ...variables, candyIds, wantSlug },
@@ -115,10 +115,12 @@ export const CommunityCandySwapPage: React.FC = () => {
     }
   };
 
-  const onAccept = async (offerId: string) => {
+  const onAccept = async (offerId: string, giveSlug?: string) => {
     setAcceptingId(offerId);
     try {
-      const result = await accept({ variables: { ...variables, offerId } });
+      const result = await accept({
+        variables: { ...variables, offerId, giveSlug: giveSlug ?? null },
+      });
       if (result.data) tradedToast(result.data.acceptHalloweenCandyOffer);
     } catch (e) {
       toast.error(errorMessage(e, "Could not take the offer"));

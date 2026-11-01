@@ -156,11 +156,7 @@ describe("Halloween candy swap (e2e)", () => {
       who.token,
     );
 
-  const place = (
-    who: Player,
-    candyIds: number[],
-    wantSlug: string | null,
-  ) =>
+  const place = (who: Player, candyIds: number[], wantSlug: string | null) =>
     gql(PLACE, { candyIds, wantSlug }, who);
 
   const placed = async (
@@ -701,11 +697,7 @@ describe("Halloween candy swap (e2e)", () => {
       await candy(bob, "candy-corn");
       expect(
         error(
-          await gql(
-            ACCEPT,
-            { offerId: offer.id, giveSlug: "candy-corn" },
-            bob,
-          ),
+          await gql(ACCEPT, { offerId: offer.id, giveSlug: "candy-corn" }, bob),
         ),
       ).toBe("You cannot give a kind of candy this offer gives");
     });
@@ -719,11 +711,7 @@ describe("Halloween candy swap (e2e)", () => {
       await candy(bob, "banana");
       expect(
         error(
-          await gql(
-            ACCEPT,
-            { offerId: offer.id, giveSlug: "berry-tart" },
-            bob,
-          ),
+          await gql(ACCEPT, { offerId: offer.id, giveSlug: "berry-tart" }, bob),
         ),
       ).toBe("You have no spare candy of the kind this offer asks for");
     });
@@ -738,11 +726,7 @@ describe("Halloween candy swap (e2e)", () => {
       await candy(bob, "berry-tart");
       expect(
         error(
-          await gql(
-            ACCEPT,
-            { offerId: offer.id, giveSlug: "berry-tart" },
-            bob,
-          ),
+          await gql(ACCEPT, { offerId: offer.id, giveSlug: "berry-tart" }, bob),
         ),
       ).toBe("This offer asks for a different candy");
     });

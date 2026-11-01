@@ -1399,7 +1399,7 @@ export type HalloweenCandyLightingInput = {
   y: Scalars['Float']['input'];
 };
 
-/** 1-3 candies offered for one candy of `wantSlug`. Whose an offer is is not told: players find out whom they traded with once they have. */
+/** 1-3 candies offered for one candy of `wantSlug`, or of any kind. Whose an offer is is not told: players find out whom they traded with once they have. */
 export type HalloweenCandyOffer = {
   __typename?: 'HalloweenCandyOffer';
   /** What is offered. Empty once the offer is no longer open. */
@@ -1407,8 +1407,8 @@ export type HalloweenCandyOffer = {
   createdAt: Scalars['DateTime']['output'];
   id: Scalars['ID']['output'];
   status: HalloweenCandyOfferStatus;
-  /** The kind of candy asked for, by its slug */
-  wantSlug: Scalars['String']['output'];
+  /** The kind of candy asked for, by its slug. Null when any kind will do. */
+  wantSlug: Maybe<Scalars['String']['output']>;
 };
 
 /** An offer just placed, and the trade it made straight away if it met its mirror: a one-for-one offer asking for what this one gives. */
@@ -2196,7 +2196,7 @@ export type MoveCharactersToFolderInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  /** Fill another player's open offer: one of your spare candies of the wanted kind, the oldest not on a board or else the oldest, for everything it offers. */
+  /** Fill another player's open offer: one of your spare candies of the wanted kind, the oldest not on a board or else the oldest, for everything it offers. An offer for any kind needs `giveSlug`, a kind it does not give. */
   acceptHalloweenCandyOffer: HalloweenCandyTradeRecord;
   /** Accept and settle. Items, characters and coin move in one transaction across all three ledgers, or the whole accept fails. */
   acceptTrade: Trade;
@@ -2312,7 +2312,7 @@ export type Mutation = {
   moveCharacterFolder: Array<CharacterFolder>;
   /** File characters, unfile them, or move them between folders. Returns how many characters were affected. */
   moveCharactersToFolder: Scalars['Int']['output'];
-  /** Offer 1-3 of your candies, none of the wanted kind, for one candy of `wantSlug`. They are held until the offer is filled or cancelled. At most 10 open offers. A one-for-one offer that meets another player's mirror offer trades at once. */
+  /** Offer 1-3 of your candies, none of the wanted kind, for one candy of `wantSlug`, or of any kind when it is null. They are held until the offer is filled or cancelled. At most 10 open offers. A one-for-one offer that meets a compatible one-for-one offer of another player's trades at once; two offers for any kind never meet. */
   placeHalloweenCandyOffer: HalloweenCandyOfferPlaced;
   /** Compose an offer. Nothing is reserved: what it names is checked now so you are told early, and checked again decisively at accept. */
   proposeTrade: Trade;
@@ -2455,6 +2455,7 @@ export type Mutation = {
 
 export type MutationAcceptHalloweenCandyOfferArgs = {
   communityId: Scalars['ID']['input'];
+  giveSlug?: InputMaybe<Scalars['String']['input']>;
   offerId: Scalars['ID']['input'];
 };
 
@@ -2779,7 +2780,7 @@ export type MutationMoveCharactersToFolderArgs = {
 export type MutationPlaceHalloweenCandyOfferArgs = {
   candyIds: Array<Scalars['Int']['input']>;
   communityId: Scalars['ID']['input'];
-  wantSlug: Scalars['String']['input'];
+  wantSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -5479,7 +5480,7 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null, communityMemberships: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canEditSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string } } }> } } };
 
-export type HalloweenCandyOfferFieldsFragment = { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> };
+export type HalloweenCandyOfferFieldsFragment = { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> };
 
 export type HalloweenCandyTradeFieldsFragment = { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null };
 
@@ -5488,27 +5489,28 @@ export type CandySwapQueryVariables = Exact<{
 }>;
 
 
-export type CandySwapQuery = { __typename?: 'Query', halloweenCandyTypes: Array<string>, halloweenCandySwapLimits: { __typename?: 'HalloweenCandySwapLimits', maxOpenOffers: number, maxOfferedCandies: number }, myHalloweenCandies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }>, myHalloweenCandyOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }>, myHalloweenCandyTrades: Array<{ __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
+export type CandySwapQuery = { __typename?: 'Query', halloweenCandyTypes: Array<string>, halloweenCandySwapLimits: { __typename?: 'HalloweenCandySwapLimits', maxOpenOffers: number, maxOfferedCandies: number }, myHalloweenCandies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }>, myHalloweenCandyOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }>, myHalloweenCandyTrades: Array<{ __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
 
 export type CandySwapOffersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
 
 
-export type CandySwapOffersQuery = { __typename?: 'Query', halloweenCandySwapOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }> };
+export type CandySwapOffersQuery = { __typename?: 'Query', halloweenCandySwapOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }> };
 
 export type PlaceHalloweenCandyOfferMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
   candyIds: Array<Scalars['Int']['input']> | Scalars['Int']['input'];
-  wantSlug: Scalars['String']['input'];
+  wantSlug?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
-export type PlaceHalloweenCandyOfferMutation = { __typename?: 'Mutation', placeHalloweenCandyOffer: { __typename?: 'HalloweenCandyOfferPlaced', offer: { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }, trade: { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } | null } };
+export type PlaceHalloweenCandyOfferMutation = { __typename?: 'Mutation', placeHalloweenCandyOffer: { __typename?: 'HalloweenCandyOfferPlaced', offer: { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }, trade: { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } | null } };
 
 export type AcceptHalloweenCandyOfferMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
   offerId: Scalars['ID']['input'];
+  giveSlug?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -8716,7 +8718,7 @@ export type CandySwapOffersLazyQueryHookResult = ReturnType<typeof useCandySwapO
 export type CandySwapOffersSuspenseQueryHookResult = ReturnType<typeof useCandySwapOffersSuspenseQuery>;
 export type CandySwapOffersQueryResult = Apollo.QueryResult<CandySwapOffersQuery, CandySwapOffersQueryVariables>;
 export const PlaceHalloweenCandyOfferDocument = gql`
-    mutation PlaceHalloweenCandyOffer($communityId: ID!, $candyIds: [Int!]!, $wantSlug: String!) {
+    mutation PlaceHalloweenCandyOffer($communityId: ID!, $candyIds: [Int!]!, $wantSlug: String) {
   placeHalloweenCandyOffer(
     communityId: $communityId
     candyIds: $candyIds
@@ -8761,8 +8763,12 @@ export type PlaceHalloweenCandyOfferMutationHookResult = ReturnType<typeof usePl
 export type PlaceHalloweenCandyOfferMutationResult = Apollo.MutationResult<PlaceHalloweenCandyOfferMutation>;
 export type PlaceHalloweenCandyOfferMutationOptions = Apollo.BaseMutationOptions<PlaceHalloweenCandyOfferMutation, PlaceHalloweenCandyOfferMutationVariables>;
 export const AcceptHalloweenCandyOfferDocument = gql`
-    mutation AcceptHalloweenCandyOffer($communityId: ID!, $offerId: ID!) {
-  acceptHalloweenCandyOffer(communityId: $communityId, offerId: $offerId) {
+    mutation AcceptHalloweenCandyOffer($communityId: ID!, $offerId: ID!, $giveSlug: String) {
+  acceptHalloweenCandyOffer(
+    communityId: $communityId
+    offerId: $offerId
+    giveSlug: $giveSlug
+  ) {
     ...HalloweenCandyTradeFields
   }
 }
@@ -8784,6 +8790,7 @@ export type AcceptHalloweenCandyOfferMutationFn = Apollo.MutationFunction<Accept
  *   variables: {
  *      communityId: // value for 'communityId'
  *      offerId: // value for 'offerId'
+ *      giveSlug: // value for 'giveSlug'
  *   },
  * });
  */

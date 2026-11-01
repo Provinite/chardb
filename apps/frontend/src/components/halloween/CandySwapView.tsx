@@ -1,5 +1,5 @@
 import React, { useId, useMemo, useState } from "react";
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight, Asterisk, Plus } from "lucide-react";
 import { Button, Cluster, Dialog, Grid, Stack } from "@chardb/ui";
 import { candyImageUrl, candyName } from "./candyBoard";
 import * as styles from "./CandySwapView.css";
@@ -11,7 +11,8 @@ export interface SwapCandy {
 
 export interface SwapOffer {
   id: string;
-  wantSlug: string;
+  /** Null when any kind of candy will do. */
+  wantSlug: string | null;
   candies: SwapCandy[];
 }
 
@@ -34,9 +35,13 @@ export interface CandySwapViewProps {
   maxOpenOffers: number;
   /** The most candies one offer may give. */
   maxOffered: number;
-  /** Resolves true once the offer is placed, so the form can clear. */
-  onPlace: (candyIds: number[], wantSlug: string) => Promise<boolean>;
-  onAccept: (offerId: string) => void;
+  /**
+   * Resolves true once the offer is placed, so the form can clear. A null
+   * `wantSlug` asks for any kind.
+   */
+  onPlace: (candyIds: number[], wantSlug: string | null) => Promise<boolean>;
+  /** `giveSlug` is the kind picked to fill an offer for any kind. */
+  onAccept: (offerId: string, giveSlug?: string) => void;
   onCancel: (offerId: string) => void;
   onReroll: () => void;
   placing: boolean;
@@ -47,12 +52,29 @@ export interface CandySwapViewProps {
   noCandies?: React.ReactNode;
 }
 
+/** Asking for any kind of candy. */
+const ANYTHING = Symbol("anything");
+/** What the offer being made asks for; null before anything is chosen. */
+type Ask = string | typeof ANYTHING | null;
+
 const Candy = ({ slug, small }: { slug: string; small?: boolean }) => (
   <img
     className={small ? styles.smallCandy : styles.candy}
     src={candyImageUrl(slug)}
     alt={candyName(slug)}
   />
+);
+
+/** Stands in for a candy where any kind will do. */
+const AnythingMark = ({ label }: { label?: string }) => (
+  <span
+    className={styles.glyph}
+    role={label ? "img" : undefined}
+    aria-label={label}
+    aria-hidden={label ? undefined : true}
+  >
+    <Asterisk className={styles.glyphIcon} aria-hidden />
+  </span>
 );
 
 /** What an offer gives, and what it asks for. */
@@ -62,8 +84,58 @@ const OfferTerms = ({ offer }: { offer: SwapOffer }) => (
       <Candy key={c.id} slug={c.slug} />
     ))}
     <ArrowRight aria-label="for" />
-    <Candy slug={offer.wantSlug} />
+    {offer.wantSlug === null ? (
+      <AnythingMark label="anything" />
+    ) : (
+      <Candy slug={offer.wantSlug} />
+    )}
   </Cluster>
+);
+
+/** One choice in a picker dialog: a candy, or the mark for any kind. */
+const Choice = ({
+  label,
+  have = 0,
+  chosen = false,
+  disabled,
+  onPick,
+  children,
+}: {
+  label: string;
+  /** How many of it you hold, shown as a badge when any. */
+  have?: number;
+  chosen?: boolean;
+  disabled?: boolean;
+  onPick: () => void;
+  children: React.ReactNode;
+}) => (
+  <li>
+    <button
+      type="button"
+      className={styles.pickCandy}
+      aria-label={have ? `${label} (you have ${have})` : label}
+      aria-pressed={chosen}
+      data-autofocus={chosen ? "" : undefined}
+      disabled={disabled}
+      onClick={onPick}
+    >
+      {children}
+      {have > 0 && (
+        <span className={styles.count} aria-hidden>
+          {have}
+        </span>
+      )}
+    </button>
+  </li>
+);
+
+const PickerImage = ({ slug }: { slug: string }) => (
+  <img
+    className={styles.candy}
+    src={candyImageUrl(slug)}
+    alt=""
+    loading="lazy"
+  />
 );
 
 /** A section named by its heading, so it is a landmark people can jump to. */
@@ -95,6 +167,12 @@ const dateFormat = new Intl.DateTimeFormat(undefined, {
   timeStyle: "short",
 });
 
+const countBySlug = (candies: SwapCandy[]) => {
+  const counts = new Map<string, number>();
+  for (const c of candies) counts.set(c.slug, (counts.get(c.slug) ?? 0) + 1);
+  return counts;
+};
+
 export const CandySwapView = ({
   candyTypes,
   myCandies,
@@ -114,8 +192,10 @@ export const CandySwapView = ({
   noCandies,
 }: CandySwapViewProps) => {
   const [picked, setPicked] = useState<SwapCandy[]>([]);
-  const [want, setWant] = useState("");
+  const [want, setWant] = useState<Ask>(null);
   const [picking, setPicking] = useState(false);
+  /** The offer for any kind whose payment is being picked. */
+  const [paying, setPaying] = useState<SwapOffer | null>(null);
 
   // Picked candies leave the tray; candies traded away since are dropped.
   const available = useMemo(
@@ -140,17 +220,29 @@ export const CandySwapView = ({
   }, [myCandies, offering]);
   const giving = new Set(offering.map((c) => c.slug));
   // Every candy you hold, including those in your open offers.
-  const owned = useMemo(() => {
-    const counts = new Map<string, number>();
-    for (const c of [...myCandies, ...myOffers.flatMap((o) => o.candies)])
-      counts.set(c.slug, (counts.get(c.slug) ?? 0) + 1);
-    return counts;
-  }, [myCandies, myOffers]);
+  const owned = useMemo(
+    () => countBySlug([...myCandies, ...myOffers.flatMap((o) => o.candies)]),
+    [myCandies, myOffers],
+  );
+  // The kinds you could pay with: candies not in an offer.
+  const spares = useMemo(
+    () => [...countBySlug(myCandies)].sort(([a], [b]) => a.localeCompare(b)),
+    [myCandies],
+  );
 
   const atLimit = myOffers.length >= maxOpenOffers;
   const full = offering.length >= maxOffered;
   const canPlace =
-    !atLimit && offering.length > 0 && want !== "" && !giving.has(want);
+    !atLimit &&
+    offering.length > 0 &&
+    want !== null &&
+    (want === ANYTHING || !giving.has(want));
+
+  const ask = (choice: Exclude<Ask, null>) => {
+    // Picking the one asked for again stops asking.
+    setWant(choice === want ? null : choice);
+    setPicking(false);
+  };
 
   const place = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -158,11 +250,11 @@ export const CandySwapView = ({
     if (
       await onPlace(
         offering.map((c) => c.id),
-        want,
+        want === ANYTHING ? null : want,
       )
     ) {
       setPicked([]);
-      setWant("");
+      setWant(null);
     }
   };
 
@@ -200,15 +292,48 @@ export const CandySwapView = ({
                 <Button
                   busy={acceptingId === offer.id}
                   disabled={acceptingId !== null && acceptingId !== offer.id}
-                  onClick={() => onAccept(offer.id)}
+                  onClick={() =>
+                    offer.wantSlug === null
+                      ? setPaying(offer)
+                      : onAccept(offer.id)
+                  }
                 >
-                  Trade your {candyName(offer.wantSlug)}
+                  {offer.wantSlug === null
+                    ? "Pick a candy to trade"
+                    : `Trade your ${candyName(offer.wantSlug)}`}
                 </Button>
               </Stack>
             ))}
           </Grid>
         )}
       </Section>
+
+      <Dialog.Root
+        open={paying !== null}
+        onClose={() => setPaying(null)}
+        closeOnScrimClick
+        width="wide"
+      >
+        <Dialog.Title>Trade a candy</Dialog.Title>
+        <Dialog.Body>
+          <Cluster as="ul" gap="sm" className={styles.list}>
+            {spares.map(([slug, have]) => (
+              <Choice
+                key={slug}
+                label={candyName(slug)}
+                have={have}
+                disabled={paying?.candies.some((c) => c.slug === slug)}
+                onPick={() => {
+                  if (paying) onAccept(paying.id, slug);
+                  setPaying(null);
+                }}
+              >
+                <PickerImage slug={slug} />
+              </Choice>
+            ))}
+          </Cluster>
+        </Dialog.Body>
+      </Dialog.Root>
 
       <Section title="Make an offer">
         <Stack as="form" gap="md" noValidate onSubmit={place}>
@@ -282,22 +407,24 @@ export const CandySwapView = ({
                 type="button"
                 className={want ? styles.filledSlot : styles.slotButton}
                 aria-label={
-                  want
-                    ? `Asking for ${candyName(want)}`
-                    : "Choose a candy to ask for"
+                  want === null
+                    ? "Choose a candy to ask for"
+                    : `Asking for ${want === ANYTHING ? "anything" : candyName(want)}`
                 }
                 onClick={() => setPicking(true)}
               >
-                {want ? (
+                {want === null ? (
+                  <span className={styles.glyph}>
+                    <Plus className={styles.glyphIcon} aria-hidden />
+                  </span>
+                ) : want === ANYTHING ? (
+                  <AnythingMark />
+                ) : (
                   <img
                     className={styles.candy}
                     src={candyImageUrl(want)}
                     alt=""
                   />
-                ) : (
-                  <span className={styles.plus}>
-                    <Plus className={styles.plusIcon} aria-hidden />
-                  </span>
                 )}
               </button>
             </Cluster>
@@ -312,39 +439,25 @@ export const CandySwapView = ({
             <Dialog.Title>Ask for a candy</Dialog.Title>
             <Dialog.Body>
               <Cluster as="ul" gap="sm" className={styles.list}>
-                {candyTypes.map((slug) => {
-                  const have = owned.get(slug) ?? 0;
-                  const name = candyName(slug);
-                  return (
-                    <li key={slug}>
-                      <button
-                        type="button"
-                        className={styles.pickCandy}
-                        aria-label={have ? `${name} (you have ${have})` : name}
-                        aria-pressed={slug === want}
-                        data-autofocus={slug === want ? "" : undefined}
-                        disabled={giving.has(slug)}
-                        onClick={() => {
-                          // Picking the one asked for again stops asking.
-                          setWant(slug === want ? "" : slug);
-                          setPicking(false);
-                        }}
-                      >
-                        <img
-                          className={styles.candy}
-                          src={candyImageUrl(slug)}
-                          alt=""
-                          loading="lazy"
-                        />
-                        {have > 0 && (
-                          <span className={styles.count} aria-hidden>
-                            {have}
-                          </span>
-                        )}
-                      </button>
-                    </li>
-                  );
-                })}
+                <Choice
+                  label="Anything"
+                  chosen={want === ANYTHING}
+                  onPick={() => ask(ANYTHING)}
+                >
+                  <AnythingMark />
+                </Choice>
+                {candyTypes.map((slug) => (
+                  <Choice
+                    key={slug}
+                    label={candyName(slug)}
+                    have={owned.get(slug)}
+                    chosen={slug === want}
+                    disabled={giving.has(slug)}
+                    onPick={() => ask(slug)}
+                  >
+                    <PickerImage slug={slug} />
+                  </Choice>
+                ))}
               </Cluster>
             </Dialog.Body>
           </Dialog.Root>
@@ -380,7 +493,7 @@ export const CandySwapView = ({
                   tone="outline"
                   size="sm"
                   busy={cancellingId === offer.id}
-                  aria-label={`Cancel offer for ${candyName(offer.wantSlug)}`}
+                  aria-label={`Cancel offer for ${offer.wantSlug === null ? "anything" : candyName(offer.wantSlug)}`}
                   onClick={() => onCancel(offer.id)}
                 >
                   Cancel

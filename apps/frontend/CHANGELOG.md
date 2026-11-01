@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Candy swap offers for anything**: ask for any kind of candy, and take such offers by picking which of your candies to give.
+
 ### Changed
 
 - **Candy swap** picks the candy you ask for from a dialog of candy pictures, with how many of each you have, instead of a list of names.

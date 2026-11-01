@@ -130,16 +130,20 @@ export const slotButton = style([
   },
 ]);
 
-/** The empty slot's plus, centred in a candy's footprint. */
-export const plus = style([
+/**
+ * An icon in a candy's place, centred in its footprint: the empty slot's
+ * plus, or the mark for any kind of candy.
+ */
+export const glyph = style([
   candy,
   {
     display: "grid",
     placeItems: "center",
+    color: vars.text.muted,
   },
 ]);
 
-export const plusIcon = style({
+export const glyphIcon = style({
   width: vars.size.target.min,
   height: vars.size.target.min,
 });

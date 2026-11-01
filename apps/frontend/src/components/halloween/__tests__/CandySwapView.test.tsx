@@ -12,7 +12,11 @@ import {
   type SwapTrade,
 } from "../CandySwapView";
 
-const offer = (id: string, wantSlug: string, slugs: string[]): SwapOffer => ({
+const offer = (
+  id: string,
+  wantSlug: string | null,
+  slugs: string[],
+): SwapOffer => ({
   id,
   wantSlug,
   candies: slugs.map((slug, i) => ({ id: i + 100, slug })),
@@ -100,6 +104,44 @@ describe("CandySwapView", () => {
         within(card).getByRole("button", { name: "Trade your banana" }),
       );
       expect(onAccept).toHaveBeenCalledWith("o1");
+    });
+
+    it("takes an offer for anything with the candy you pick", async () => {
+      const { onAccept } = renderView({
+        offers: [offer("o1", null, ["luther-head"])],
+      });
+      const card = within(section("Offers you can take")).getByRole("listitem");
+      expect(
+        within(card).getByRole("img", { name: "anything" }),
+      ).toBeInTheDocument();
+
+      await userEvent.click(
+        within(card).getByRole("button", { name: "Pick a candy to trade" }),
+      );
+      const picker = screen.getByRole("dialog", { name: "Trade a candy" });
+      expect(
+        within(picker).getByRole("button", { name: "banana (you have 1)" }),
+      ).toBeEnabled();
+      await userEvent.click(
+        within(picker).getByRole("button", {
+          name: "candy corn (you have 2)",
+        }),
+      );
+
+      expect(onAccept).toHaveBeenCalledWith("o1", "candy-corn");
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
+
+    it("will not trade a kind an offer for anything gives", async () => {
+      renderView({ offers: [offer("o1", null, ["banana"])] });
+      const card = within(section("Offers you can take")).getByRole("listitem");
+      await userEvent.click(
+        within(card).getByRole("button", { name: "Pick a candy to trade" }),
+      );
+      const picker = screen.getByRole("dialog", { name: "Trade a candy" });
+      expect(
+        within(picker).getByRole("button", { name: "banana (you have 1)" }),
+      ).toBeDisabled();
     });
 
     it("says when there are none, and asks for more", async () => {
@@ -306,6 +348,22 @@ describe("CandySwapView", () => {
       ).toBeDisabled();
     });
 
+    it("asks for anything", async () => {
+      const { onPlace } = renderView();
+      const form = section("Make an offer");
+      await userEvent.click(
+        within(form).getByRole("button", { name: "Add banana (1 left)" }),
+      );
+      await askFor(form, "Anything");
+      expect(
+        within(form).getByRole("button", { name: "Asking for anything" }),
+      ).toBeInTheDocument();
+      await userEvent.click(
+        within(form).getByRole("button", { name: "Place offer" }),
+      );
+      expect(onPlace).toHaveBeenCalledWith([3], null);
+    });
+
     it("stops at the most open offers", () => {
       renderView({
         maxOpenOffers: 1,
@@ -321,6 +379,17 @@ describe("CandySwapView", () => {
         ),
       ).toBeInTheDocument();
     });
+  });
+
+  it("names an offer for anything by what it asks for", () => {
+    renderView({ myOffers: [offer("mine", null, ["candy-corn"])] });
+    const mine = section("Your open offers");
+    expect(
+      within(mine).getByRole("button", { name: "Cancel offer for anything" }),
+    ).toBeInTheDocument();
+    expect(
+      within(mine).getByRole("img", { name: "anything" }),
+    ).toBeInTheDocument();
   });
 
   it("lists your open offers, each cancellable", async () => {
