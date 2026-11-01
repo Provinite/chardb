@@ -9,6 +9,8 @@ import { MemoryRouter } from "react-router-dom";
 import { MockedProvider, MockedResponse } from "@apollo/client/testing";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
+import { vars } from "@chardb/ui/theme";
+import { rulesFor } from "../../../__tests__/emittedCss";
 
 import {
   GlobalMediaModerationQueueDocument,
@@ -91,5 +93,25 @@ describe("ImageModerationQueue without a community", () => {
     expect(await screen.findByText("1 pending")).toBeInTheDocument();
     expect(screen.getByAltText("avatar.png")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /approve/i })).toBeEnabled();
+  });
+
+  it("colours Approve with the green secondary tone, hover included", async () => {
+    // A green override on top of the primary tone lost to the tone's hover,
+    // so Approve turned violet under the pointer. The tone's own colours
+    // carry its hover with them.
+    renderQueue([globalQueue]);
+    const approve = await screen.findByRole("button", { name: /approve/i });
+    // jsdom does not resolve theme variables, so read the emitted rules.
+    const backgrounds = [...approve.classList].flatMap((name) =>
+      rulesFor(name)
+        .filter(
+          (rule) =>
+            rule.selector === `.${name}` &&
+            rule.conditions.length === 0 &&
+            "background-color" in rule.declarations,
+        )
+        .map((rule) => rule.declarations["background-color"]),
+    );
+    expect(backgrounds).toEqual([vars.action.secondary.bg]);
   });
 });
