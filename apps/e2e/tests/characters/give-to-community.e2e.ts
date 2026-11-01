@@ -23,6 +23,9 @@ test("an owner gives their character to the community", async ({
   await dialog.getByTestId("confirm-phrase").fill(character.name);
   await dialog.getByTestId("confirm-accept").click();
 
+  await expect(
+    page.getByText(`"${character.name}" now belongs to Willowmere`),
+  ).toBeVisible();
   await expect(page.getByText("Community Character (No Owner)")).toBeVisible();
   await expect(page.getByTestId("character-owner")).toHaveCount(0);
   await expect(page.getByTestId("character-actions")).toHaveCount(0);

@@ -4,6 +4,7 @@ import styled from "styled-components";
 
 import { Avatar, Button, Menu, MenuGroup, MenuItem } from "@chardb/ui";
 import { HandHeart, Trash2, Unlink } from "lucide-react";
+import { toast } from "react-hot-toast";
 import {
   useGetCharacterQuery,
   TraitReviewSource,
@@ -598,11 +599,16 @@ export const CharacterPage: React.FC = () => {
   };
 
   const handleGiveToCommunity = async () => {
-    if (!id) return;
+    if (!id || !character) return;
+    // Read before the refetch, after which the character is no longer ours
+    // and the community is no longer offered.
+    const { name } = character;
+    const communityName = character.species?.community?.name;
     setActionError(null);
     try {
       await giveToCommunity({ variables: { id } });
       setConfirming(null);
+      toast.success(`"${name}" now belongs to ${communityName}`);
     } catch (e) {
       setConfirming(null);
       setActionError(
