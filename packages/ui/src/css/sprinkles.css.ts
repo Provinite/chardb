@@ -55,7 +55,13 @@ const backgroundStates = ({
   bgPressed,
   bgSubtle,
   bgDisabled,
-}: typeof action.primary) => ({ bg, bgHover, bgPressed, bgSubtle, bgDisabled });
+}: typeof action.secondary) => ({
+  bg,
+  bgHover,
+  bgPressed,
+  bgSubtle,
+  bgDisabled,
+});
 
 const actionBackgrounds = flatten({
   action: {
