@@ -95,7 +95,12 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
   }, [busy, onCancel]);
 
   return (
-    <Dialog.Root open={open} onClose={dismiss} data-testid={testId}>
+    <Dialog.Root
+      open={open}
+      onClose={dismiss}
+      closeDisabled={busy}
+      data-testid={testId}
+    >
       <Dialog.Title>{title}</Dialog.Title>
       <Dialog.Body>
         <Stack>

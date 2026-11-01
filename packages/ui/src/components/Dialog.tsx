@@ -88,6 +88,11 @@ export interface DialogRootProps {
    * to a stray click.
    */
   closeOnScrimClick?: boolean;
+  /**
+   * Nothing closes it, and its close button shows as disabled: while a
+   * request it started is still running, which closing would hide.
+   */
+  closeDisabled?: boolean;
   children?: React.ReactNode;
   /** The name, when there is no `Dialog.Title` to take it from. */
   "aria-label"?: string;
@@ -118,6 +123,7 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
       open,
       onClose,
       closeOnScrimClick = false,
+      closeDisabled = false,
       children,
       "aria-label": ariaLabel,
       width = "default",
@@ -132,8 +138,9 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
     // inside, which needs it at render time.
     const [layer, setLayer] = useState<HTMLDivElement | null>(null);
     const dialogRef = useRef<HTMLDialogElement | null>(null);
+    // Every way to close goes through here, so disabling closing is one place.
     const onCloseRef = useRef(onClose);
-    onCloseRef.current = onClose;
+    onCloseRef.current = closeDisabled ? () => {} : onClose;
 
     useLayoutEffect(() => {
       if (!open) return;
@@ -236,6 +243,7 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
             icon={<X size={20} aria-hidden />}
             className={styles.close}
             onClick={() => onCloseRef.current()}
+            disabled={closeDisabled}
             data-dialog-close=""
           />
           <TitleIdContext.Provider value={titleId}>

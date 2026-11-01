@@ -98,6 +98,7 @@ describe("ConfirmDialog", () => {
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(onCancel).not.toHaveBeenCalled();
+    expect(screen.getByRole("button", { name: "Close" })).toBeDisabled();
   });
 
   it("shows busy on the confirm button without changing its label", async () => {

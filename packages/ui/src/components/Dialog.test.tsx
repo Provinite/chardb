@@ -230,6 +230,31 @@ describe("Dialog", () => {
     expect(onClose).toHaveBeenCalledOnce();
   });
 
+  it("cannot be closed while closing is disabled, and its close button says so", () => {
+    const onClose = vi.fn();
+    render(
+      <Dialog.Root
+        open
+        onClose={onClose}
+        closeDisabled
+        closeOnScrimClick
+        aria-label="Refunding"
+      >
+        <input data-autofocus aria-label="Field" />
+      </Dialog.Root>,
+    );
+    const close = dialogs()[0].querySelector<HTMLButtonElement>(
+      'button[aria-label="Close"]',
+    )!;
+
+    press("Escape");
+    click(close);
+    click(document.querySelector("[data-dialog-scrim]")!);
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(close.disabled).toBe(true);
+  });
+
   it("leaves its close button out of where focus first lands", () => {
     openHarness({ children: <p>Nothing to focus</p> });
 
