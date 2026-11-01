@@ -9,6 +9,7 @@ import {
   SmallText,
   HelpText,
   Card,
+  ButtonLink,
 } from "@chardb/ui";
 import {
   useSpeciesByCommunityQuery,
@@ -315,22 +316,17 @@ export const CommunityPage: React.FC = () => {
                     </Button>
                   )}
                   {isMember && (
-                    <Button
-                      tone="outline"
-                      icon={<Settings size={16} />}
-                      as={Link}
-                      to="/admin"
-                    >
-                      Manage
-                    </Button>
+                    <ButtonLink tone="outline" icon={<Settings size={16} />}>
+                      <Link to="/admin">Manage</Link>
+                    </ButtonLink>
                   )}
                 </>
               ) : (
                 // The session cookie is set on the parent domain, so signing
                 // in has to happen at the apex.
-                <Button tone="primary" as="a" href={apexUrl("/login")}>
-                  Sign In to Join
-                </Button>
+                <ButtonLink tone="primary">
+                  <a href={apexUrl("/login")}>Sign In to Join</a>
+                </ButtonLink>
               )}
             </ActionButtons>
           </CommunityInfo>

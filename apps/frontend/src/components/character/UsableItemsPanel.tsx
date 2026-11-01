@@ -2,7 +2,7 @@ import React, { useMemo } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Package } from "lucide-react";
-import { Button } from "@chardb/ui";
+import { ButtonLink } from "@chardb/ui";
 import {
   useGetMyEditKitsQuery,
   useGetMyVariantChangeItemsQuery,
@@ -255,15 +255,11 @@ export const UsableItemsPanel: React.FC<Props> = ({
               </Name>
               <Effect>{offer.effect}</Effect>
             </Text>
-            <Button
-              as={Link}
-              to={offer.to}
-              tone="outline"
-              size="sm"
-              data-testid={`redeem-${offer.itemTypeId}`}
-            >
-              Redeem
-            </Button>
+            <ButtonLink tone="outline" size="sm">
+              <Link to={offer.to} data-testid={`redeem-${offer.itemTypeId}`}>
+                Redeem
+              </Link>
+            </ButtonLink>
           </Row>
         ))}
       </List>

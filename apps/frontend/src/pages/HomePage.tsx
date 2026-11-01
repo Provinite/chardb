@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { usePageMeta } from "../lib/pageMeta";
 
@@ -69,7 +68,10 @@ const HeroActions = styled.div`
   }
 `;
 
-const HeroPrimaryButton = styled(Button)`
+// Links styled by hand, until this page moves to vanilla-extract. They were
+// `styled(Button)` rendered `as={Link}`, which renders the link alone with
+// only these styles.
+const HeroPrimaryButton = styled(Link)`
   background: white;
   color: #1e293b;
   border: none;
@@ -86,7 +88,7 @@ const HeroPrimaryButton = styled(Button)`
   }
 `;
 
-const HeroSecondaryButton = styled(Button)`
+const HeroSecondaryButton = styled(Link)`
   background: rgba(255, 255, 255, 0.1);
   color: white;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -184,21 +186,19 @@ export const HomePage: React.FC = () => {
           <HeroActions>
             {user ? (
               <>
-                <HeroPrimaryButton as={Link} to="/dashboard" size="lg">
+                <HeroPrimaryButton to="/dashboard">
                   Go to Dashboard
                 </HeroPrimaryButton>
                 {/* A character is created inside a community, and this page
                     is the apex, which is in none. Pick one first. */}
-                <HeroSecondaryButton as={Link} to="/my/communities" size="lg">
+                <HeroSecondaryButton to="/my/communities">
                   Create Character
                 </HeroSecondaryButton>
               </>
             ) : (
               <>
-                <HeroPrimaryButton as={Link} to="/signup" size="lg">
-                  Get Started
-                </HeroPrimaryButton>
-                <HeroSecondaryButton as={Link} to="/characters" size="lg">
+                <HeroPrimaryButton to="/signup">Get Started</HeroPrimaryButton>
+                <HeroSecondaryButton to="/characters">
                   Browse Characters
                 </HeroSecondaryButton>
               </>

@@ -2,7 +2,7 @@ import React from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import { ButtonLink } from "@chardb/ui";
 
 const Container = styled.div`
   max-width: 600px;
@@ -42,9 +42,9 @@ export const NotFoundPage: React.FC = () => {
         The page you're looking for doesn't exist. It might have been moved,
         deleted, or you entered the wrong URL.
       </ErrorDescription>
-      <Button as={Link} to="/" tone="primary">
-        Go Home
-      </Button>
+      <ButtonLink tone="primary">
+        <Link to="/">Go Home</Link>
+      </ButtonLink>
     </Container>
   );
 };

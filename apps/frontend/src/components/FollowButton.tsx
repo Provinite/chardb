@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import { Button, type ButtonSize } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import {
   useToggleFollowMutation,
@@ -58,7 +58,7 @@ const LoginPrompt = styled.div`
 interface FollowButtonProps {
   userId: string;
   showCount?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: ButtonSize;
   variant?: "default" | "compact";
 }
 

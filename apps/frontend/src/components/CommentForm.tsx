@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useMutation } from "@apollo/client";
 import styled from "styled-components";
 import { Link } from "react-router-dom";
-import { Avatar, Button } from "@chardb/ui";
+import { Avatar, Button, ButtonLink } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { loginUrlReturningHere } from "../lib/communityHost";
 import { CREATE_COMMENT } from "../graphql/social.graphql";
@@ -177,9 +177,9 @@ export const CommentForm: React.FC<CommentFormProps> = ({
         {/* A comment form renders on a character page, which lives on a
             community host -- so this has to carry the way back, and it is a
             router link because /login on this host is a route like any other. */}
-        <Button as={Link} to={loginUrlReturningHere()} tone="primary" size="sm">
-          Log In
-        </Button>
+        <ButtonLink tone="primary" size="sm">
+          <Link to={loginUrlReturningHere()}>Log In</Link>
+        </ButtonLink>
       </LoginPrompt>
     );
   }

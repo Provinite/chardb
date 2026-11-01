@@ -9,6 +9,8 @@ import { MemoryRouter } from "react-router-dom";
 import { MockedProvider, MockedResponse } from "@apollo/client/testing";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
+import { vars } from "@chardb/ui/theme";
+import { rulesFor } from "../../__tests__/emittedCss";
 
 const COMMUNITY_ID = "11111111-1111-4111-8111-111111111111";
 
@@ -323,9 +325,19 @@ describe("CommunityHalloweenAdminPage", () => {
     const edit = within(pool).getByRole("button", {
       name: "Edit Spooky Adopt",
     });
-    expect(getComputedStyle(remove).backgroundColor).not.toBe(
-      getComputedStyle(edit).backgroundColor,
-    );
+    // jsdom does not resolve theme variables, so read the emitted rules.
+    const background = (el: Element) =>
+      [...el.classList]
+        .flatMap((name) =>
+          rulesFor(name).filter((rule) => rule.selector === `.${name}`),
+        )
+        .find(
+          (rule) =>
+            rule.conditions.length === 0 &&
+            "background-color" in rule.declarations,
+        )?.declarations["background-color"];
+    expect(background(remove)).toBe(vars.action.danger.bg);
+    expect(background(edit)).toBe(vars.action.secondary.bg);
   });
 
   it("says how each win is being delivered", async () => {

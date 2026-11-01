@@ -3,7 +3,7 @@ import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift, ExternalLink } from "lucide-react";
-import { Button } from "@chardb/ui";
+import { Button, ButtonLink } from "@chardb/ui";
 import {
   GrantTargetSelector,
   GrantTarget,
@@ -817,14 +817,11 @@ export const CommunityItemsAdminPage: React.FC = () => {
                       </Num>
                       <td>
                         <RowActions>
-                          <Button
-                            size="sm"
-                            tone="outline"
-                            as={Link}
-                            to={`/item-types/${itemType.id}`}
-                          >
-                            <ExternalLink size={14} /> View
-                          </Button>
+                          <ButtonLink size="sm" tone="outline">
+                            <Link to={`/item-types/${itemType.id}`}>
+                              <ExternalLink size={14} /> View
+                            </Link>
+                          </ButtonLink>
                           <Button
                             size="sm"
                             tone="secondary"

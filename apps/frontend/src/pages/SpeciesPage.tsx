@@ -18,6 +18,7 @@ import {
   SmallText,
   HelpText,
   Card,
+  ButtonLink,
 } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
@@ -389,14 +390,9 @@ export const SpeciesPage: React.FC = () => {
 
             {user && (
               <ActionButtons>
-                <Button
-                  tone="primary"
-                  icon={<Settings size={16} />}
-                  as={Link}
-                  to="/species"
-                >
-                  Manage Species
-                </Button>
+                <ButtonLink tone="primary" icon={<Settings size={16} />}>
+                  <Link to="/species">Manage Species</Link>
+                </ButtonLink>
               </ActionButtons>
             )}
           </SpeciesInfo>
@@ -460,9 +456,9 @@ export const SpeciesPage: React.FC = () => {
             features.
           </HelpText>
           <div style={{ marginTop: "1rem" }}>
-            <Button tone="primary" as={Link} to="/login">
-              Sign In
-            </Button>
+            <ButtonLink tone="primary">
+              <Link to="/login">Sign In</Link>
+            </ButtonLink>
           </div>
         </div>
       )}
