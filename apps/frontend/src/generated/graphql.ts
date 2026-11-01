@@ -4842,6 +4842,8 @@ export type TraitReviewQueueConnection = {
 };
 
 export type TraitReviewQueueFiltersInput = {
+  /** Only this character's reviews */
+  characterId?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by source */
   source?: InputMaybe<TraitReviewSource>;
   /** Filter by status */
