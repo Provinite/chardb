@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Community achievements**: signing in during Trick-or-Treat 2026 earns members Trick-or-Treater 2026, backfilled from candy swap and board use; `User.achievements` lists them.
+
 ## [v15.2.0] - 2026-11-01
 
 ### Added

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Profiles show earned achievements**, with the community each was earned in.
+
 ## [v15.2.0] - 2026-11-01
 
 ### Added

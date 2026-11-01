@@ -48,6 +48,17 @@ export const GET_USER_PROFILE = gql`
         website
         isVerified
         createdAt
+        achievements {
+          id
+          name
+          description
+          imagePath
+          earnedAt
+          community {
+            id
+            name
+          }
+        }
       }
       stats {
         charactersCount

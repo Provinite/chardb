@@ -5,7 +5,9 @@ import {
   ConflictException,
   BadRequestException,
   forwardRef,
+  Logger,
 } from "@nestjs/common";
+import { AchievementsService } from "../achievements/achievements.service";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
 import { JwtService } from "@nestjs/jwt";
 import * as bcrypt from "bcrypt";
@@ -84,7 +86,26 @@ export class AuthService {
     private emailVerificationService: EmailVerificationService,
     @Inject(forwardRef(() => CommunityMembershipService))
     private membership: CommunityMembershipService,
+    private achievements: AchievementsService,
   ) {}
+
+  private readonly logger = new Logger(AuthService.name);
+
+  /**
+   * Signing in can earn achievements. Awarding one is never worth refusing
+   * the session over, so a failure is logged and the sign-in goes ahead.
+   */
+  private async recordSignIn(userId: string): Promise<void> {
+    try {
+      await this.achievements.recordSignIn(userId);
+    } catch (error) {
+      this.logger.warn({
+        message: "Could not record sign-in achievements",
+        userId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
 
   async validateUser(
     email: string,
@@ -124,6 +145,7 @@ export class AuthService {
     const payload = { email: user.email, sub: user.id };
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, { expiresIn: "7d" });
+    await this.recordSignIn(user.id);
 
     return {
       user,
@@ -235,6 +257,7 @@ export class AuthService {
 
       const newPayload = { email: user.email, sub: user.id };
       const accessToken = this.jwtService.sign(newPayload);
+      await this.recordSignIn(user.id);
 
       return { accessToken };
     } catch (error) {

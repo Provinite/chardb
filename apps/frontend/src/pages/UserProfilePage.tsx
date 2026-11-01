@@ -11,6 +11,7 @@ import { RandomCharacterButton } from "../components/RandomCharacterButton";
 import { FollowButton } from "../components/FollowButton";
 import { ProviderIcon } from "../components/ProviderIcon";
 import { MediaGrid } from "../components/MediaGrid";
+import { AchievementList } from "../components/achievements/AchievementList";
 import { characterUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
 
@@ -464,6 +465,15 @@ export const UserProfilePage: React.FC = () => {
           </StatLink>
         </StatCard>
       </StatsGrid>
+
+      {user.achievements.length > 0 && (
+        <Section data-testid="profile-achievements">
+          <SectionHeader>
+            <SectionTitle>Achievements</SectionTitle>
+          </SectionHeader>
+          <AchievementList achievements={user.achievements} />
+        </Section>
+      )}
 
       {featuredCharacters.length > 0 && (
         <Section>
