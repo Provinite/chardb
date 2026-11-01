@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Candy board name dialog** lists each column's words in alphabetical order.
+
 ### Added
 
 - **Open sign-up**: Communities can let anyone join as a chosen role without an invite code, set from the Invite Codes page.

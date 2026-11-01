@@ -2,7 +2,11 @@
  * A candy board's name: a first word, any joiner and a last word.
  */
 import { describe, it, expect } from "vitest";
-import { formatBoardName, shuffledName } from "../boardName";
+import {
+  BOARD_NAME_WORDS,
+  formatBoardName,
+  shuffledName,
+} from "../boardName";
 
 const words = {
   first: ["Spooky", "Moonlit", "Golden"],
@@ -52,4 +56,18 @@ describe("shuffledName", () => {
       shuffledName(words, rolls(0, 0.9, 0, 0.5, 0.9, 0.9), current),
     ).not.toEqual(current);
   });
+});
+
+describe("BOARD_NAME_WORDS", () => {
+  const alphabetical = (list: readonly string[]) =>
+    [...list].sort((a, b) => a.localeCompare(b));
+
+  it.each(["first", "joiners", "last"] as const)(
+    "offers the %s words in alphabetical order",
+    (which) => {
+      const list = BOARD_NAME_WORDS[which];
+      expect(list.length).toBeGreaterThan(1);
+      expect(list).toEqual(alphabetical(list));
+    },
+  );
 });

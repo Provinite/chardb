@@ -18,11 +18,14 @@ export interface BoardNameWords {
   last: readonly string[];
 }
 
-/** The words a board's name is picked from. */
+const alphabetical = (list: readonly string[]) =>
+  [...list].sort((a, b) => a.localeCompare(b));
+
+/** The words a board's name is picked from, each list in alphabetical order. */
 export const BOARD_NAME_WORDS: BoardNameWords = {
-  first: BOARD_NAME_FIRST_WORDS,
-  joiners: BOARD_NAME_JOINERS,
-  last: BOARD_NAME_LAST_WORDS,
+  first: alphabetical(BOARD_NAME_FIRST_WORDS),
+  joiners: alphabetical(BOARD_NAME_JOINERS),
+  last: alphabetical(BOARD_NAME_LAST_WORDS),
 };
 
 /** "Moonlit von Pumpkin", or "Spooky Hoard" with no joiner. */
