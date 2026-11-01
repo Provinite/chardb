@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Candy swap offers for anything**: ask for any kind of candy, and take such offers by picking which of your candies to give.
+- **Halloween dashboard stats, simulators and run-out forecast**: stock, players, gifty send rates, a knock and prize-draw simulator, and a histogram of days until the prizes run out.
+- **Halloween section in the community sidebar** for Candy Boards and Candy Swap, and a Halloween Event link under Administration.
 
 ### Changed
 

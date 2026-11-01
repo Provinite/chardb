@@ -1848,12 +1848,37 @@ type HalloweenEventSettings {
 type HalloweenEventSummary {
   giftiesSent: Int!
   knocks: Int!
+  last24Hours: HalloweenPeriodStats!
 
   """Distinct Discord users who have knocked"""
   players: Int!
 
   """Wins of STAFF prizes not yet marked delivered"""
   toDeliver: Int!
+
+  """Since the last daily reset; null without settings"""
+  today: HalloweenPeriodStats
+
+  """Gifties no knock has spent yet"""
+  unspentGifties: Int!
+  wins: Int!
+
+  """The reset day before today's; null without settings"""
+  yesterday: HalloweenPeriodStats
+}
+
+"""What happened between two moments"""
+type HalloweenPeriodStats {
+  from: DateTime!
+  giftiesSent: Int!
+
+  """Players, of those who knocked, who also sent a gifty"""
+  giftySenders: Int!
+  knocks: Int!
+
+  """Distinct Discord users who knocked"""
+  players: Int!
+  to: DateTime!
   wins: Int!
 }
 

@@ -13,6 +13,7 @@ import {
 } from "./halloween-dashboard.types";
 import { DatabaseService } from "../../database/database.service";
 import { PrizeImageService } from "../services/prize-image.service";
+import { fixedClock } from "../testing/fixtures";
 
 const GUILD = "100000000000000001";
 
@@ -61,6 +62,7 @@ describe("HalloweenDashboardService", () => {
       {
         imagesFor: () => Promise.resolve(new Map()),
       } as unknown as PrizeImageService,
+      fixedClock("2025-10-15T17:00:00.000Z"),
     );
   });
 

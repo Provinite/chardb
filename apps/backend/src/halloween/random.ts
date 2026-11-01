@@ -1,5 +1,6 @@
 import { Injectable } from "@nestjs/common";
 import { randomInt } from "crypto";
+import { pickWeighted } from "@chardb/shared";
 
 /**
  * crypto.randomInt requires max - min < 2^48, and both must be safe integers.
@@ -49,19 +50,8 @@ export class HalloweenRandom {
    * is twice as likely as weight 1.
    */
   weighted<T>(items: readonly T[], weights: readonly number[]): T {
-    if (items.length !== weights.length) {
-      throw new Error("elements and weights must be the same length");
-    }
     const total = weights.reduce((acc, w) => acc + w, 0);
-    const roll = this.int(total);
-    let sum = 0;
-    for (let i = 0; i < items.length; i++) {
-      sum += weights[i];
-      if (sum > roll) {
-        return items[i];
-      }
-    }
-    return items[items.length - 1];
+    return pickWeighted(items, weights, this.int(total));
   }
 
   shuffle<T>(items: readonly T[]): T[] {

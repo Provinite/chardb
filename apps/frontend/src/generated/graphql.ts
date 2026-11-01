@@ -1491,10 +1491,31 @@ export type HalloweenEventSummary = {
   __typename?: 'HalloweenEventSummary';
   giftiesSent: Scalars['Int']['output'];
   knocks: Scalars['Int']['output'];
+  last24Hours: HalloweenPeriodStats;
   /** Distinct Discord users who have knocked */
   players: Scalars['Int']['output'];
   /** Wins of STAFF prizes not yet marked delivered */
   toDeliver: Scalars['Int']['output'];
+  /** Since the last daily reset; null without settings */
+  today: Maybe<HalloweenPeriodStats>;
+  /** Gifties no knock has spent yet */
+  unspentGifties: Scalars['Int']['output'];
+  wins: Scalars['Int']['output'];
+  /** The reset day before today's; null without settings */
+  yesterday: Maybe<HalloweenPeriodStats>;
+};
+
+/** What happened between two moments */
+export type HalloweenPeriodStats = {
+  __typename?: 'HalloweenPeriodStats';
+  from: Scalars['DateTime']['output'];
+  giftiesSent: Scalars['Int']['output'];
+  /** Players, of those who knocked, who also sent a gifty */
+  giftySenders: Scalars['Int']['output'];
+  knocks: Scalars['Int']['output'];
+  /** Distinct Discord users who knocked */
+  players: Scalars['Int']['output'];
+  to: Scalars['DateTime']['output'];
   wins: Scalars['Int']['output'];
 };
 
@@ -6218,7 +6239,9 @@ export type HalloweenDashboardQueryVariables = Exact<{
 }>;
 
 
-export type HalloweenDashboardQuery = { __typename?: 'Query', halloweenDashboard: { __typename?: 'HalloweenDashboard', communityId: string, guildId: string | null, settings: { __typename?: 'HalloweenEventSettings', startDate: string | null, endDate: string | null, knocksPerDay: number, resetTime: number, winRate: number, winChannel: string | null } | null, summary: { __typename?: 'HalloweenEventSummary', knocks: number, wins: number, giftiesSent: number, players: number, toDeliver: number }, prizes: Array<{ __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }> } };
+export type HalloweenDashboardQuery = { __typename?: 'Query', halloweenCandyTypes: Array<string>, halloweenDashboard: { __typename?: 'HalloweenDashboard', communityId: string, guildId: string | null, settings: { __typename?: 'HalloweenEventSettings', startDate: string | null, endDate: string | null, knocksPerDay: number, resetTime: number, winRate: number, winChannel: string | null } | null, summary: { __typename?: 'HalloweenEventSummary', knocks: number, wins: number, giftiesSent: number, players: number, toDeliver: number, unspentGifties: number, last24Hours: { __typename?: 'HalloweenPeriodStats', from: string, to: string, players: number, knocks: number, wins: number, giftiesSent: number, giftySenders: number }, today: { __typename?: 'HalloweenPeriodStats', from: string, to: string, players: number, knocks: number, wins: number, giftiesSent: number, giftySenders: number } | null, yesterday: { __typename?: 'HalloweenPeriodStats', from: string, to: string, players: number, knocks: number, wins: number, giftiesSent: number, giftySenders: number } | null }, prizes: Array<{ __typename?: 'HalloweenPrizeView', id: string, name: string, initialStock: number, currentStock: number, weight: number, image: string | null, delivery: HalloweenPrizeDelivery, itemTypeId: string | null, characterId: string | null }> } };
+
+export type HalloweenPeriodStatsFieldsFragment = { __typename?: 'HalloweenPeriodStats', from: string, to: string, players: number, knocks: number, wins: number, giftiesSent: number, giftySenders: number };
 
 export type HalloweenWinsQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -7698,6 +7721,17 @@ export const HalloweenWinFieldsFragmentDoc = gql`
   }
 }
     ${HalloweenPrizeFieldsFragmentDoc}`;
+export const HalloweenPeriodStatsFieldsFragmentDoc = gql`
+    fragment HalloweenPeriodStatsFields on HalloweenPeriodStats {
+  from
+  to
+  players
+  knocks
+  wins
+  giftiesSent
+  giftySenders
+}
+    `;
 export const HalloweenSettingsFieldsFragmentDoc = gql`
     fragment HalloweenSettingsFields on HalloweenEventSettings {
   startDate
@@ -13130,13 +13164,25 @@ export const HalloweenDashboardDocument = gql`
       giftiesSent
       players
       toDeliver
+      unspentGifties
+      last24Hours {
+        ...HalloweenPeriodStatsFields
+      }
+      today {
+        ...HalloweenPeriodStatsFields
+      }
+      yesterday {
+        ...HalloweenPeriodStatsFields
+      }
     }
     prizes {
       ...HalloweenPrizeFields
     }
   }
+  halloweenCandyTypes
 }
-    ${HalloweenPrizeFieldsFragmentDoc}`;
+    ${HalloweenPeriodStatsFieldsFragmentDoc}
+${HalloweenPrizeFieldsFragmentDoc}`;
 
 /**
  * __useHalloweenDashboardQuery__

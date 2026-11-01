@@ -58,11 +58,31 @@ export const HALLOWEEN_DASHBOARD_QUERY = gql`
         giftiesSent
         players
         toDeliver
+        unspentGifties
+        last24Hours {
+          ...HalloweenPeriodStatsFields
+        }
+        today {
+          ...HalloweenPeriodStatsFields
+        }
+        yesterday {
+          ...HalloweenPeriodStatsFields
+        }
       }
       prizes {
         ...HalloweenPrizeFields
       }
     }
+    halloweenCandyTypes
+  }
+  fragment HalloweenPeriodStatsFields on HalloweenPeriodStats {
+    from
+    to
+    players
+    knocks
+    wins
+    giftiesSent
+    giftySenders
   }
   ${HALLOWEEN_PRIZE_FRAGMENT}
 `;
