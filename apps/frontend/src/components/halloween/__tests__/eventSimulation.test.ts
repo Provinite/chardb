@@ -5,7 +5,10 @@
 import { describe, it, expect } from "vitest";
 import {
   drawPrize,
+  bucketWidth,
   forecastRunOut,
+  forecastRuns,
+  MAX_BUCKETS,
   histogram,
   quantile,
   simulateKnock,
@@ -68,6 +71,14 @@ describe("simulateKnock", () => {
       kind: "loss",
       roll: 0.25,
       candySlug: "caramel-apple",
+    });
+  });
+
+  it("loses without a candy when it knows of none", () => {
+    expect(simulateKnock(prizes, 0, [], scripted(0.5))).toEqual({
+      kind: "loss",
+      roll: 0.5,
+      candySlug: null,
     });
   });
 
@@ -153,5 +164,26 @@ describe("histogram", () => {
     const days = Float64Array.from([...Array(999).fill(1.1), 100]);
     const buckets = histogram(days, 0.25, 0.001);
     expect(buckets).toEqual([{ from: 1, count: 1000 }]);
+  });
+});
+
+describe("bucketWidth", () => {
+  it("is a quarter day while that keeps the chart readable", () => {
+    expect(bucketWidth(Float64Array.from([3, 20]))).toBe(0.25);
+  });
+
+  it("doubles until a long spread fits in the most buckets a chart shows", () => {
+    // 0.25 would make 4000 buckets; 16 makes 63.
+    const width = bucketWidth(Float64Array.from([0, 1000]));
+    expect(width).toBe(16);
+    expect(1000 / width).toBeLessThanOrEqual(MAX_BUCKETS);
+  });
+});
+
+describe("forecastRuns", () => {
+  it("rolls fewer runs for a big pool, to keep a forecast quick", () => {
+    expect(forecastRuns(500)).toBe(4000);
+    expect(forecastRuns(100_000)).toBe(200);
+    expect(forecastRuns(10)).toBe(5000);
   });
 });

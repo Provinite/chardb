@@ -420,12 +420,14 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
             candySlugs={data?.halloweenCandyTypes ?? []}
           />
           <HalloweenRunOutForecast
-            key={`${settings.winRate}`}
+            // New settings start the what-ifs over from them.
+            key={`${settings.winRate}:${settings.knocksPerDay}:${settings.startDate}:${settings.endDate}`}
             prizes={dashboard.prizes}
             winRate={settings.winRate}
             knocksPerDay={settings.knocksPerDay}
             last24Hours={summary.last24Hours}
             yesterday={summary.yesterday ?? null}
+            startDate={settings.startDate ?? null}
             endDate={settings.endDate ?? null}
             now={new Date()}
           />

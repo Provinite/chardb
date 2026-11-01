@@ -43,12 +43,13 @@ export function drawPrize<T extends Drawable>(
 
 export type SimulatedKnock<T> =
   | { kind: "win"; roll: number; prize: T }
-  | { kind: "loss"; roll: number; candySlug: string }
+  | { kind: "loss"; roll: number; candySlug: string | null }
   | { kind: "outOfPrizes" };
 
 /**
  * A knock as `/knock` rolls it: refused with no stock left, else a win under
- * the win rate, which draws a prize, or a loss, which gives a random candy.
+ * the win rate, which draws a prize, or a loss, which gives a random candy
+ * (null if no candies are known).
  */
 export function simulateKnock<T extends Drawable>(
   prizes: readonly T[],
@@ -67,9 +68,21 @@ export function simulateKnock<T extends Drawable>(
   return {
     kind: "loss",
     roll,
-    candySlug: candySlugs[Math.floor(rng() * candySlugs.length)],
+    candySlug: candySlugs.length
+      ? candySlugs[Math.floor(rng() * candySlugs.length)]
+      : null,
   };
 }
+
+/** Rolls per forecast at most, and the fewest a big pool still gets. */
+const MAX_RUNS = 5000;
+const MIN_RUNS = 200;
+/** Geometric draws one forecast may make: runs times units in stock. */
+const MAX_DRAWS = 2_000_000;
+
+/** How many runs a forecast over `stock` units makes. */
+export const forecastRuns = (stock: number): number =>
+  Math.min(MAX_RUNS, Math.max(MIN_RUNS, Math.floor(MAX_DRAWS / stock)));
 
 export interface RunOutInputs {
   /** Prize units left. */
@@ -126,6 +139,23 @@ export interface Bucket {
   count: number;
 }
 
+/** The share of runs at each end that `histogram` folds into its end buckets. */
+const TAIL = 0.005;
+
+/** The most buckets a chart shows before they get wider. */
+export const MAX_BUCKETS = 80;
+
+/**
+ * A quarter day, doubled until the runs between the tails fit in
+ * `MAX_BUCKETS`.
+ */
+export function bucketWidth(sorted: Float64Array, base = 0.25): number {
+  const span = quantile(sorted, 1 - TAIL) - quantile(sorted, TAIL);
+  let width = base;
+  while (span / width > MAX_BUCKETS) width *= 2;
+  return width;
+}
+
 /**
  * Sorted values counted into buckets `width` wide, every bucket from the
  * lowest to the highest included. Values beyond the `tail` and `1 - tail`
@@ -135,7 +165,7 @@ export interface Bucket {
 export function histogram(
   sorted: Float64Array,
   width: number,
-  tail = 0.005,
+  tail = TAIL,
 ): Bucket[] {
   if (!sorted.length) return [];
   const first = Math.floor(quantile(sorted, tail) / width);

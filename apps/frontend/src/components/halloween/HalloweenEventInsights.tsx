@@ -1,12 +1,14 @@
-import React, { useMemo, useState } from "react";
+import React, { useDeferredValue, useMemo, useState } from "react";
 import { assignInlineVars } from "@vanilla-extract/dynamic";
 import { Button, Cluster, Grid, Stack } from "@chardb/ui";
 import { candyImageUrl } from "./candyBoard";
 import {
+  bucketWidth,
   DEFAULT_GIFTY_SEND_RATE,
   DEFAULT_PLAYERS_PER_DAY,
   drawPrize,
   forecastRunOut,
+  forecastRuns,
   giftySendRate,
   type PeriodStats,
   histogram,
@@ -18,11 +20,9 @@ import * as styles from "./HalloweenEventInsights.css";
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Runs the forecast rolls: enough for a smooth curve, quick to redo. */
-const FORECAST_RUNS = 5000;
-
-/** The forecast's bucket width, in days. */
-const BUCKET_DAYS = 0.25;
+/** Gifties sent per player in a period, or null with no players. */
+const giftiesPerPlayer = (period: PeriodStats | null): number | null =>
+  period && period.players > 0 ? period.giftiesSent / period.players : null;
 
 export interface EventSummary {
   knocks: number;
@@ -153,16 +153,20 @@ const KnockResult: React.FC<{
   return (
     <Stack gap="xs">
       <p className={styles.resultTitle}>No one was home</p>
-      <Cluster gap="md" align="center">
-        <img
-          className={styles.resultImage}
-          src={candyImageUrl(knock.candySlug)}
-          alt=""
-          width={64}
-          height={64}
-        />
-        <p className={styles.resultTitle}>{candyName(knock.candySlug)}</p>
-      </Cluster>
+      {knock.candySlug ? (
+        <Cluster gap="md" align="center">
+          <img
+            className={styles.resultImage}
+            src={candyImageUrl(knock.candySlug)}
+            alt=""
+            width={64}
+            height={64}
+          />
+          <p className={styles.resultTitle}>{candyName(knock.candySlug)}</p>
+        </Cluster>
+      ) : (
+        <p className={styles.muted}>No candies are known to give</p>
+      )}
       {rolled}
     </Stack>
   );
@@ -245,14 +249,16 @@ export interface HalloweenRunOutForecastProps {
   knocksPerDay: number;
   last24Hours: PeriodStats;
   yesterday: PeriodStats | null;
+  startDate: string | null;
   endDate: string | null;
   now: Date;
 }
 
 /**
  * When the prizes run out, rolled thousands of times at a steady rate of
- * knocks, as a histogram of days from now. The inputs start from the last 24
- * hours and can be changed to try other win rates and crowds.
+ * knocks from the start (or now, once started), as a histogram of days from
+ * now. The inputs start from the last 24 hours and can be changed to try
+ * other win rates and crowds.
  */
 export const HalloweenRunOutForecast: React.FC<
   HalloweenRunOutForecastProps
@@ -262,6 +268,7 @@ export const HalloweenRunOutForecast: React.FC<
   knocksPerDay,
   last24Hours,
   yesterday,
+  startDate,
   endDate,
   now,
 }) => {
@@ -271,7 +278,8 @@ export const HalloweenRunOutForecast: React.FC<
     players: String(measured ? last24Hours.players : DEFAULT_PLAYERS_PER_DAY),
     knocksPerPlayer: (measured
       ? last24Hours.knocks / last24Hours.players
-      : knocksPerDay + (giftySendRate(yesterday) ?? DEFAULT_GIFTY_SEND_RATE)
+      : knocksPerDay +
+        (giftiesPerPlayer(yesterday) ?? DEFAULT_GIFTY_SEND_RATE)
     ).toFixed(2),
   };
   const [winRatePct, setWinRatePct] = useState(defaults.winRatePct);
@@ -285,28 +293,40 @@ export const HalloweenRunOutForecast: React.FC<
   const guildKnocks =
     parsed(players, Number(defaults.players)) *
     parsed(knocksPerPlayer, Number(defaults.knocksPerPlayer));
+  // One moment for the whole forecast, so it does not re-roll on every render.
+  const [openedAt] = useState(now);
+  // Days with no knocks: those before the start.
+  const startsIn = startDate
+    ? Math.max(0, (new Date(startDate).getTime() - openedAt.getTime()) / DAY_MS)
+    : 0;
 
-  const runOut = useMemo(
-    () =>
-      forecastRunOut({
-        stock,
-        winRate: rate,
-        knocksPerDay: guildKnocks,
-        runs: FORECAST_RUNS,
-        rng: Math.random,
-      }),
-    [stock, rate, guildKnocks],
+  const inputs = useMemo(
+    () => ({ stock, rate, guildKnocks, startsIn }),
+    [stock, rate, guildKnocks, startsIn],
   );
+  // Typing stays responsive while the forecast catches up.
+  const forecastInputs = useDeferredValue(inputs);
+  const runOut = useMemo(() => {
+    const knocking = forecastRunOut({
+      stock: forecastInputs.stock,
+      winRate: forecastInputs.rate,
+      knocksPerDay: forecastInputs.guildKnocks,
+      runs: forecastRuns(forecastInputs.stock),
+      rng: Math.random,
+    });
+    return knocking && knocking.map((d) => d + forecastInputs.startsIn);
+  }, [forecastInputs]);
+  const width = useMemo(() => (runOut ? bucketWidth(runOut) : 0.25), [runOut]);
   const buckets = useMemo(
-    () => (runOut ? histogram(runOut, BUCKET_DAYS) : []),
-    [runOut],
+    () => (runOut ? histogram(runOut, width) : []),
+    [runOut, width],
   );
   const tallest = Math.max(1, ...buckets.map((b) => b.count));
   const daysToEnd = endDate
-    ? (new Date(endDate).getTime() - now.getTime()) / DAY_MS
+    ? (new Date(endDate).getTime() - openedAt.getTime()) / DAY_MS
     : null;
   const chartFrom = buckets[0]?.from ?? 0;
-  const chartTo = (buckets[buckets.length - 1]?.from ?? 0) + BUCKET_DAYS;
+  const chartTo = (buckets[buckets.length - 1]?.from ?? 0) + width;
   const markerShare =
     daysToEnd !== null && daysToEnd >= chartFrom && daysToEnd <= chartTo
       ? (daysToEnd - chartFrom) / (chartTo - chartFrom)
@@ -428,11 +448,11 @@ export const HalloweenRunOutForecast: React.FC<
         <span>{days((chartFrom + chartTo) / 2)}</span>
         <span>{days(chartTo)}</span>
       </div>
-      {markerShare !== null ? (
-        <p className={styles.muted}>The dashed line is the scheduled end.</p>
-      ) : (
-        <p className={styles.muted}>&nbsp;</p>
-      )}
+      <p className={styles.muted}>
+        Days from now. Each bar is{" "}
+        {width === 0.25 ? "a quarter day" : `${width} days`}
+        {markerShare !== null ? "; the dashed line is the scheduled end." : "."}
+      </p>
     </Stack>
   );
 };

@@ -92,7 +92,7 @@ describe("HalloweenSimulators", () => {
 });
 
 describe("HalloweenRunOutForecast", () => {
-  const forecast = (winRate: number) =>
+  const forecast = (winRate: number, startDate: string | null = null) =>
     render(
       <HalloweenRunOutForecast
         prizes={prizes}
@@ -101,10 +101,37 @@ describe("HalloweenRunOutForecast", () => {
         // 2 players knocking 2 times: 4 knocks a day.
         last24Hours={period(2, 4, 0)}
         yesterday={null}
+        startDate={startDate}
         endDate="2025-10-16T17:00:00.000Z"
         now={new Date("2025-10-15T17:00:00.000Z")}
       />,
     );
+
+  it("counts no knocks before the event starts", () => {
+    // Starts half a day from now; the prizes go half a day after that.
+    forecast(1, "2025-10-16T05:00:00.000Z");
+    const summary = screen.getByTestId("halloween-forecast-summary");
+    expect(within(summary).getByText(/Median: 1\.0 days/)).toBeInTheDocument();
+  });
+
+  it("assumes gifties sent per player on top of the daily knocks, before anyone knocks", () => {
+    render(
+      <HalloweenRunOutForecast
+        prizes={prizes}
+        winRate={1}
+        knocksPerDay={3}
+        last24Hours={period(0, 0, 0)}
+        // 2 of 10 players sent 5 gifties: half a knock more each.
+        yesterday={{ ...period(10, 30, 2), giftiesSent: 5 }}
+        startDate={null}
+        endDate={null}
+        now={new Date("2025-10-15T17:00:00.000Z")}
+      />,
+    );
+    expect(screen.getByLabelText("Knocks per player a day")).toHaveValue(
+      "3.50",
+    );
+  });
 
   it("runs out on schedule when every knock wins", () => {
     forecast(1);
