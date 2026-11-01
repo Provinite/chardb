@@ -443,7 +443,7 @@ describe("Halloween candy swap (e2e)", () => {
           actorUserId: bob.id,
           kind: NotificationKind.HALLOWEEN_CANDY_TRADED,
           communityId,
-          data: { count: 1 },
+          data: {},
         }),
       ]);
     });

@@ -51,9 +51,10 @@ export const MAX_ACTIONS = 100;
  * A board's placements, checked on the way out as on the way in: Prisma's
  * type for the column is only what this code promises it wrote.
  */
-function storedPlacements(
-  board: Pick<BoardRow, "id" | "placements">,
-): CandyPlacement[] {
+function storedPlacements(board: {
+  id: string;
+  placements: unknown;
+}): CandyPlacement[] {
   const parsed = candyPlacementsSchema.safeParse(board.placements);
   if (!parsed.success) {
     throw new StoredCandyBoardInvalidError(board.id, parsed.error.message);
@@ -93,19 +94,17 @@ export async function removeCandiesFromBoards(
   lost: Map<string, number[]>,
 ): Promise<void> {
   if (!lost.size) return;
-  const boards = await tx.$queryRaw<{ id: string; owner_id: string }[]>`
-    SELECT "id", "owner_id" FROM "halloween_candy_boards"
+  const boards = await tx.$queryRaw<
+    { id: string; owner_id: string; placements: Prisma.JsonValue }[]
+  >`
+    SELECT "id", "owner_id", "placements" FROM "halloween_candy_boards"
     WHERE "guild_id" = ${guildId} AND "owner_id" IN (${Prisma.join([...lost.keys()])})
     ORDER BY "id"
     FOR UPDATE
   `;
-  for (const { id, owner_id: ownerId } of boards) {
+  for (const { id, owner_id: ownerId, placements: stored } of boards) {
     const gone = new Set(lost.get(ownerId));
-    const board = await tx.halloweenCandyBoard.findUniqueOrThrow({
-      where: { id },
-      select: { id: true, placements: true },
-    });
-    const placements = storedPlacements(board);
+    const placements = storedPlacements({ id, placements: stored });
     const kept = placements.filter(
       (p) => isNameplate(p.sticker) || !gone.has(p.sticker.candy),
     );
@@ -273,23 +272,7 @@ export class CandyBoardService {
       );
     }
     const { guildId } = await this.myBoard(communityId, userId, id);
-
     const added = addedCandies(actions);
-    const owned = new Set(
-      added.length
-        ? (
-            await this.db.halloweenCandy.findMany({
-              where: {
-                id: { in: [...new Set(added)] },
-                guildId,
-                ownerId: userId,
-                offerId: null,
-              },
-              select: { id: true },
-            })
-          ).map((k) => k.id)
-        : [],
-    );
 
     const board = await orBoardGone(
       id,
@@ -298,6 +281,23 @@ export class CandyBoardService {
         const locked = await tx.halloweenCandyBoard.findUniqueOrThrow({
           where: { id },
         });
+        // Checked under the board's lock, which a trade also takes to take
+        // its candies off: a candy traded away meanwhile is not put back.
+        const owned = new Set(
+          added.length
+            ? (
+                await tx.halloweenCandy.findMany({
+                  where: {
+                    id: { in: [...new Set(added)] },
+                    guildId,
+                    ownerId: userId,
+                    offerId: null,
+                  },
+                  select: { id: true },
+                })
+              ).map((k) => k.id)
+            : [],
+        );
         return tx.halloweenCandyBoard.update({
           where: { id },
           data: {

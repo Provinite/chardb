@@ -128,9 +128,7 @@ export function notificationSentence(
         : `could not approve ${name}`;
     }
     case NotificationKind.HalloweenCandyTraded:
-      return count && count > 1
-        ? `traded you ${count} candies on the candy swap`
-        : "traded you a candy on the candy swap";
+      return "took your candy swap offer";
   }
 }
 

@@ -17,18 +17,14 @@ const candyTrade = (
     kind: NotificationKind.HalloweenCandyTraded,
     subjectType: NotificationSubjectType.HalloweenCandyTrade,
     subjectId: "trade-1",
-    count: 1,
     community: { id: "c1", slug: "willowmere" },
     ...changes,
   }) as NotificationFieldsFragment;
 
 describe("a candy trade notification", () => {
-  it("says how many candies came the recipient's way", () => {
+  it("says the recipient's offer was taken", () => {
     expect(notificationSentence(candyTrade())).toBe(
-      "traded you a candy on the candy swap",
-    );
-    expect(notificationSentence(candyTrade({ count: 3 }))).toBe(
-      "traded you 3 candies on the candy swap",
+      "took your candy swap offer",
     );
   });
 

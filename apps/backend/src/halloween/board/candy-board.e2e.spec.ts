@@ -6,6 +6,7 @@ import { DatabaseService } from "../../database/database.service";
 import { HalloweenModule } from "../halloween.module";
 import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { mockDiscord } from "../testing/command-harness";
+import { removeCandiesFromBoards } from "./candy-board.service";
 
 const GUILD = "100000000000000001";
 const OTHER_GUILD = "100000000000000002";
@@ -614,6 +615,47 @@ describe("Halloween candy board (e2e)", () => {
     const returned = (res: {
       body: { data: Record<string, { placements: unknown }> };
     }) => res.body.data.applyHalloweenCandyBoardActions.placements;
+
+    it("does not put back a candy traded away while the save waited", async () => {
+      const candy = await knock();
+      const ownerId = owners.get(PLAYER) ?? "";
+      const buyerId = owners.get(OTHER_PLAYER) ?? "";
+
+      // A trade takes the candy, holding the board's lock until it commits.
+      let finishTrade = () => {};
+      let tradeLocked = () => {};
+      const locked = new Promise<void>((resolve) => (tradeLocked = resolve));
+      const trading = db.$transaction(
+        async (tx) => {
+          await removeCandiesFromBoards(
+            tx,
+            GUILD,
+            new Map([[ownerId, [candy.id]]]),
+          );
+          await tx.halloweenCandy.update({
+            where: { id: candy.id },
+            data: { ownerId: buyerId },
+          });
+          tradeLocked();
+          await new Promise<void>((resolve) => (finishTrade = resolve));
+        },
+        { timeout: 10_000 },
+      );
+      await locked;
+      // `.then` sends it now: a supertest request waits to be awaited.
+      const saving = apply([add(candy.id)]).then((res) => res);
+      // Long enough for the save to be waiting on the board's lock.
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      finishTrade();
+      const [, saved] = await Promise.all([trading, saving]);
+
+      expect(saved.body.errors).toBeUndefined();
+      // As stored: the board as shown hides candies that are not the owner's.
+      const stored = await db.halloweenCandyBoard.findUniqueOrThrow({
+        where: { id: boardId },
+      });
+      expect(stored.placements).toEqual([]);
+    });
 
     // A change that cannot apply is skipped and the rest of the batch lands;
     // the board sent back is how it now is, so the page needs telling nothing

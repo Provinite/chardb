@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import { usePageMeta } from "../lib/pageMeta";
 import {
@@ -156,6 +157,7 @@ export const CommunityCandySwapPage: React.FC = () => {
       acceptingId={acceptingId}
       cancellingId={cancellingId}
       rerolling={rerolling}
+      noCandies={<Link to="/profile/edit">Link your Discord account</Link>}
     />
   );
 };

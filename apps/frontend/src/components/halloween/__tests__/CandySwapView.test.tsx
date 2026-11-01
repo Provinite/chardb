@@ -163,6 +163,17 @@ describe("CandySwapView", () => {
       ).toBeDisabled();
     });
 
+    it("says where candies come from when there are none to offer", () => {
+      renderView({
+        myCandies: [],
+        noCandies: <a href="/profile/edit">Link your Discord account</a>,
+      });
+      const form = section("Make an offer");
+      expect(
+        within(form).getByRole("link", { name: "Link your Discord account" }),
+      ).toHaveAttribute("href", "/profile/edit");
+    });
+
     it("will not ask for a kind it gives", async () => {
       renderView();
       const form = section("Make an offer");

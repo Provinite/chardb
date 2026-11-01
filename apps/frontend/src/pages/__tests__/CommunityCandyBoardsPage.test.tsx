@@ -167,6 +167,13 @@ describe("CommunityCandyBoardsPage", () => {
     expect(screen.queryAllByRole("article")).toHaveLength(0);
   });
 
+  it("says where candies come from to someone with none", async () => {
+    renderPage([boardsQuery([])]);
+    expect(
+      await screen.findByRole("link", { name: "Link your Discord account" }),
+    ).toHaveAttribute("href", "/profile/edit");
+  });
+
   it("makes a new board, and opens it", async () => {
     const made = vi.fn(() => ({
       data: { createHalloweenCandyBoard: board(SECOND) },

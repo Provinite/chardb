@@ -2044,7 +2044,7 @@ enum NotificationKind {
   IMAGE_APPROVED
   /// An image you uploaded was rejected, with a reason.
   IMAGE_REJECTED
-  /// Someone traded Halloween candies with you on the candy swap.
+  /// Someone took your Halloween candy swap offer.
   HALLOWEEN_CANDY_TRADED
 }
 

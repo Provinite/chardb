@@ -101,8 +101,9 @@ export class CandySwapResolver {
   @AllowAnyAuthenticated()
   @Mutation(() => HalloweenCandyTradeRecord, {
     description:
-      "Fill another player's open offer: your oldest spare candy of the " +
-      "wanted kind for everything it offers.",
+      "Fill another player's open offer: one of your spare candies of the " +
+      "wanted kind, the oldest not on a board or else the oldest, for " +
+      "everything it offers.",
   })
   acceptHalloweenCandyOffer(
     @Args("communityId", { type: () => ID }) communityId: string,

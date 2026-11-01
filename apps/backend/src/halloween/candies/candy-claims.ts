@@ -12,8 +12,56 @@ import { ExternalAccountProvider, Prisma } from "@chardb/database";
  * module.
  */
 
+/**
+ * Makes giving out one Discord player's candies happen one at a time: a new
+ * candy being made for them, and a claim of their waiting candies. Without
+ * it, a knock that finds them not yet linked and a link that commits before
+ * the knock does each miss the other's work, and the candy waits forever.
+ *
+ * Held until the transaction ends. The key is this purpose's alone and
+ * stays in this file; anything else that needs to serialize on a Discord
+ * player takes a lock of its own.
+ */
+async function lockCandyClaims(
+  tx: Prisma.TransactionClient,
+  discordUserId: string,
+): Promise<void> {
+  const key = `halloween:candy-claims:${discordUserId}`;
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`;
+}
+
+/**
+ * Makes the candy a lost knock gives, owned at once if the knocker is linked
+ * and a member here, otherwise waiting to be claimed. Returns its owner.
+ */
+export async function createCandyForKnock(
+  tx: Prisma.TransactionClient,
+  candy: {
+    guildId: string;
+    discordUserId: string;
+    slug: string;
+    knockEventId: number;
+    at: Date;
+  },
+): Promise<string | null> {
+  await lockCandyClaims(tx, candy.discordUserId);
+  const ownerId = await candyOwnerFor(tx, candy.guildId, candy.discordUserId);
+  await tx.halloweenCandy.create({
+    data: {
+      guildId: candy.guildId,
+      slug: candy.slug,
+      knockEventId: candy.knockEventId,
+      discordUserId: candy.discordUserId,
+      receivedAt: candy.at,
+      ownerId,
+      claimedAt: ownerId ? candy.at : null,
+    },
+  });
+  return ownerId;
+}
+
 /** The chardb user a new candy from this Discord player's knock goes to. */
-export async function candyOwnerFor(
+async function candyOwnerFor(
   tx: Prisma.TransactionClient,
   guildId: string,
   discordUserId: string,
@@ -62,6 +110,7 @@ export async function claimCandiesOnLink(
     c.discordGuildId ? [c.discordGuildId] : [],
   );
   if (!guildIds.length) return 0;
+  await lockCandyClaims(tx, discordUserId);
   const { count } = await tx.halloweenCandy.updateMany({
     where: { ...unclaimed, discordUserId, guildId: { in: guildIds } },
     data: { ownerId: userId, claimedAt: new Date() },
@@ -91,6 +140,7 @@ export async function claimCandiesOnJoin(
     }),
   ]);
   if (!community?.discordGuildId || !account) return 0;
+  await lockCandyClaims(tx, account.providerAccountId);
   const { count } = await tx.halloweenCandy.updateMany({
     where: {
       ...unclaimed,

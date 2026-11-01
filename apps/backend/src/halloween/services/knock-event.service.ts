@@ -7,7 +7,7 @@ import type {
 import { DatabaseService } from "../../database/database.service";
 import { GuildSettingsService } from "./guild-settings.service";
 import { ValidationError, type ValidationFieldError } from "../errors";
-import { candyOwnerFor } from "../candies/candy-claims";
+import { createCandyForKnock } from "../candies/candy-claims";
 
 /**
  * A knock as it happened: lost with its candy, or won with its prize. The bot
@@ -57,17 +57,12 @@ export class KnockEventService {
     }
     const event = await tx.halloweenKnockEvent.create({ data: knock });
     if (knock.candySlug) {
-      const ownerId = await candyOwnerFor(tx, knock.guildId, knock.userId);
-      await tx.halloweenCandy.create({
-        data: {
-          guildId: knock.guildId,
-          slug: knock.candySlug,
-          knockEventId: event.id,
-          discordUserId: knock.userId,
-          receivedAt: event.time,
-          ownerId,
-          claimedAt: ownerId ? event.time : null,
-        },
+      await createCandyForKnock(tx, {
+        guildId: knock.guildId,
+        discordUserId: knock.userId,
+        slug: knock.candySlug,
+        knockEventId: event.id,
+        at: event.time,
       });
     }
     return event;

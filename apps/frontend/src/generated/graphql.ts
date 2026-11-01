@@ -2196,7 +2196,7 @@ export type MoveCharactersToFolderInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
-  /** Fill another player's open offer: your oldest spare candy of the wanted kind for everything it offers. */
+  /** Fill another player's open offer: one of your spare candies of the wanted kind, the oldest not on a board or else the oldest, for everything it offers. */
   acceptHalloweenCandyOffer: HalloweenCandyTradeRecord;
   /** Accept and settle. Items, characters and coin move in one transaction across all three ledgers, or the whole accept fails. */
   acceptTrade: Trade;

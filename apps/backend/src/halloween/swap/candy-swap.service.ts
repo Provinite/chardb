@@ -305,8 +305,9 @@ export class CandySwapService {
   }
 
   /**
-   * Fills another player's open offer: the player's oldest spare candy of
-   * the wanted kind for everything it offers.
+   * Fills another player's open offer: one of the player's spare candies of
+   * the wanted kind -- the oldest not on a board, else the oldest -- for
+   * everything it offers.
    */
   async accept(
     communityId: string,
@@ -533,7 +534,7 @@ export class CandySwapService {
         communityId,
         subjectType: NotificationSubjectType.HALLOWEEN_CANDY_TRADE,
         subjectId: trade.id,
-        data: { count: initiator.candies.length },
+        data: {},
       },
       tx,
     );

@@ -15,6 +15,7 @@ import { HalloweenRandom } from "../random";
 import { GuildSettingsService } from "../services/guild-settings.service";
 import { GUILD_ID, USER_ID, buildInteraction } from "../testing/fixtures";
 import { mockDiscord } from "../testing/command-harness";
+import { createCandyForKnock } from "./candy-claims";
 
 const OTHER_GUILD = "100000000000000009";
 
@@ -234,6 +235,44 @@ describe("Halloween candies (e2e)", () => {
     await linkDiscord(player.id);
 
     expect((await db.halloweenCandy.findFirstOrThrow()).ownerId).toBeNull();
+  });
+
+  it("gives a candy to a player who links while their knock is still saving", async () => {
+    const player = await user("player");
+    await join(player.id);
+    const knockEvent = await db.halloweenKnockEvent.create({
+      data: { guildId: GUILD_ID, userId: USER_ID, candySlug: "banana" },
+    });
+
+    // The knock's transaction makes its candy, unlinked so ownerless, and
+    // stays open while the player links Discord.
+    let finishKnock = () => {};
+    let candyMade = () => {};
+    const made = new Promise<void>((resolve) => (candyMade = resolve));
+    const knocking = db.$transaction(
+      async (tx) => {
+        await createCandyForKnock(tx, {
+          guildId: GUILD_ID,
+          discordUserId: USER_ID,
+          slug: "banana",
+          knockEventId: knockEvent.id,
+          at: knockEvent.time,
+        });
+        candyMade();
+        await new Promise<void>((resolve) => (finishKnock = resolve));
+      },
+      { timeout: 10_000 },
+    );
+    await made;
+    const linking = linkDiscord(player.id);
+    // Long enough for the link to reach its claim while the knock is open.
+    await new Promise((resolve) => setTimeout(resolve, 300));
+    finishKnock();
+    await Promise.all([knocking, linking]);
+
+    expect((await db.halloweenCandy.findFirstOrThrow()).ownerId).toBe(
+      player.id,
+    );
   });
 
   it("gives no candy for a win", async () => {

@@ -43,6 +43,8 @@ export interface CandySwapViewProps {
   acceptingId: string | null;
   cancellingId: string | null;
   rerolling: boolean;
+  /** Shown after the empty tray's note: where to link Discord. */
+  noCandies?: React.ReactNode;
 }
 
 const Candy = ({ slug, small }: { slug: string; small?: boolean }) => (
@@ -109,6 +111,7 @@ export const CandySwapView = ({
   acceptingId,
   cancellingId,
   rerolling,
+  noCandies,
 }: CandySwapViewProps) => {
   const [picked, setPicked] = useState<SwapCandy[]>([]);
   const [want, setWant] = useState("");
@@ -119,7 +122,10 @@ export const CandySwapView = ({
     () => new Map(myCandies.map((c) => [c.id, c])),
     [myCandies],
   );
-  const offering = picked.filter((c) => available.has(c.id));
+  const offering = useMemo(
+    () => picked.filter((c) => available.has(c.id)),
+    [picked, available],
+  );
   const tray = useMemo(() => {
     const taken = new Set(offering.map((c) => c.id));
     const groups = new Map<string, SwapCandy[]>();
@@ -233,8 +239,8 @@ export const CandySwapView = ({
             <p className={styles.label}>Your candies</p>
             {tray.length === 0 ? (
               <p className={styles.muted}>
-                You have no candies to offer. Knocking on Discord gives them,
-                once your Discord account is linked.
+                You have no candies to offer. Knock on Discord to collect some.{" "}
+                {noCandies}
               </p>
             ) : (
               <Cluster as="ul" gap="sm" className={styles.list}>
