@@ -36,8 +36,12 @@ test.describe("the candy swap", () => {
     const form = page.getByRole("region", { name: "Make an offer" });
     await form.getByRole("button", { name: "Add banana (2 left)" }).click();
     await form
-      .getByRole("combobox", { name: "Asking for" })
-      .selectOption("luther-head");
+      .getByRole("button", { name: "Choose a candy to ask for" })
+      .click();
+    await page
+      .getByRole("dialog", { name: "Ask for a candy" })
+      .getByRole("button", { name: "luther head", exact: true })
+      .click();
     await form.getByRole("button", { name: "Place offer" }).click();
 
     const mine = page.getByRole("region", { name: "Your open offers" });

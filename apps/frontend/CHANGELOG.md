@@ -12,6 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Halloween dashboard stats, simulators and run-out forecast**: stock, players, gifty send rates, a knock and prize-draw simulator, and a histogram of days until the prizes run out.
 - **Halloween section in the community sidebar** for Candy Boards and Candy Swap, and a Halloween Event link under Administration.
 
+### Changed
+
+- **Candy swap** picks the candy you ask for from a dialog of candy pictures, with how many of each you have, instead of a list of names.
+
 ## [v15.1.1] - 2026-11-01
 
 ### Added

@@ -1,6 +1,6 @@
 import React, { useId, useMemo, useState } from "react";
-import { ArrowRight } from "lucide-react";
-import { Button, Cluster, Grid, Stack } from "@chardb/ui";
+import { ArrowRight, Plus } from "lucide-react";
+import { Button, Cluster, Dialog, Grid, Stack } from "@chardb/ui";
 import { candyImageUrl, candyName } from "./candyBoard";
 import * as styles from "./CandySwapView.css";
 
@@ -115,7 +115,7 @@ export const CandySwapView = ({
 }: CandySwapViewProps) => {
   const [picked, setPicked] = useState<SwapCandy[]>([]);
   const [want, setWant] = useState("");
-  const wantId = useId();
+  const [picking, setPicking] = useState(false);
 
   // Picked candies leave the tray; candies traded away since are dropped.
   const available = useMemo(
@@ -139,6 +139,13 @@ export const CandySwapView = ({
     return [...groups].sort(([a], [b]) => a.localeCompare(b));
   }, [myCandies, offering]);
   const giving = new Set(offering.map((c) => c.slug));
+  // Every candy you hold, including those in your open offers.
+  const owned = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const c of [...myCandies, ...myOffers.flatMap((o) => o.candies)])
+      counts.set(c.slug, (counts.get(c.slug) ?? 0) + 1);
+    return counts;
+  }, [myCandies, myOffers]);
 
   const atLimit = myOffers.length >= maxOpenOffers;
   const full = offering.length >= maxOffered;
@@ -269,24 +276,18 @@ export const CandySwapView = ({
           </Stack>
 
           <Stack gap="xs">
-            <label htmlFor={wantId} className={styles.label}>
-              Asking for
-            </label>
+            <p className={styles.label}>Asking for</p>
             <Cluster gap="sm">
-              <select
-                id={wantId}
-                className={styles.select}
-                value={want}
-                onChange={(e) => setWant(e.target.value)}
+              <button
+                type="button"
+                className={want ? styles.filledSlot : styles.slotButton}
+                aria-label={
+                  want
+                    ? `Asking for ${candyName(want)}`
+                    : "Choose a candy to ask for"
+                }
+                onClick={() => setPicking(true)}
               >
-                <option value="">Choose a candy</option>
-                {candyTypes.map((slug) => (
-                  <option key={slug} value={slug} disabled={giving.has(slug)}>
-                    {candyName(slug)}
-                  </option>
-                ))}
-              </select>
-              <span className={styles.slot}>
                 {want ? (
                   <img
                     className={styles.candy}
@@ -294,11 +295,59 @@ export const CandySwapView = ({
                     alt=""
                   />
                 ) : (
-                  <span className={styles.candy} />
+                  <span className={styles.plus}>
+                    <Plus className={styles.plusIcon} aria-hidden />
+                  </span>
                 )}
-              </span>
+              </button>
             </Cluster>
           </Stack>
+
+          <Dialog.Root
+            open={picking}
+            onClose={() => setPicking(false)}
+            closeOnScrimClick
+            width="wide"
+          >
+            <Dialog.Title>Ask for a candy</Dialog.Title>
+            <Dialog.Body>
+              <Cluster as="ul" gap="sm" className={styles.list}>
+                {candyTypes.map((slug) => {
+                  const have = owned.get(slug) ?? 0;
+                  const name = candyName(slug);
+                  return (
+                    <li key={slug}>
+                      <button
+                        type="button"
+                        className={styles.pickCandy}
+                        aria-label={have ? `${name} (you have ${have})` : name}
+                        aria-pressed={slug === want}
+                        data-autofocus={slug === want ? "" : undefined}
+                        disabled={giving.has(slug)}
+                        onClick={() => {
+                          // Picking the one asked for again stops asking.
+                          setWant(slug === want ? "" : slug);
+                          setPicking(false);
+                        }}
+                      >
+                        <img
+                          className={styles.candy}
+                          src={candyImageUrl(slug)}
+                          alt=""
+                          loading="lazy"
+                        />
+                        {have > 0 && (
+                          <span className={styles.count} aria-hidden>
+                            {have}
+                          </span>
+                        )}
+                      </button>
+                    </li>
+                  );
+                })}
+              </Cluster>
+            </Dialog.Body>
+          </Dialog.Root>
 
           <Cluster gap="md">
             <Button type="submit" busy={placing} disabled={!canPlace}>
