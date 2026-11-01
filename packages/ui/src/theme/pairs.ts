@@ -101,6 +101,12 @@ export const pairs: Pair[] = [
   // Not on surface.raisedHover: the ring is offset outside the control, so it
   // sits on the surface around a hovered card, never on the card itself.
   ...on("border.focus", ["surface.page", "surface.raised"], "nonText"),
+  // An outline button's label, on the surfaces a button sits on.
+  ...on(
+    "action.primary.fgOutline",
+    ["surface.page", "surface.raised", "surface.sunken"],
+    "body",
+  ),
   // The route progress bar, over the page or the header.
   ...on("action.primary.bg", ["surface.page"], "nonText"),
   {

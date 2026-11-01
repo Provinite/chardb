@@ -86,7 +86,7 @@ Semantic families:
 | `surface.*` | Backgrounds: `page`, `raised`, `raisedHover` for a raised control under the pointer, `sunken`, and `overlay` for scrims |
 | `text.*` | Text and icons: `default`, `muted`, `subtle`, `link`, `linkHover`, and `inverse` for text on a filled status colour |
 | `border.*` | `default` for dividers, `input` for input outlines, `focus` for focus rings |
-| `action.*` | Interactive controls: `primary`, `secondary` and `danger`, each with `bg`, `bgHover`, `bgPressed`, `bgSubtle`, `bgDisabled`, `fg`, `fgDisabled` and `border` |
+| `action.*` | Interactive controls: `primary`, `secondary` and `danger`, each with `bg`, `bgHover`, `bgPressed`, `bgSubtle`, `bgDisabled`, `fg`, `fgDisabled` and `border`; `primary` also has `fgOutline` for an outline button's label on a surface |
 | `status.*` | `success`, `warning`, `danger` and `info` messages, each with `bg`, `bgSubtle`, `fg` and `border` |
 | `illustration.*` | Things drawn rather than interface, the same in both themes and with no text on them: `lamp` (`fill`, `edge`, `pool`, `poolEdge`) for the candy board's light |
 
@@ -341,7 +341,7 @@ Pick the indicator by what is loading. Each follows the [no pop-in](#no-pop-in) 
 - **Skeletons** take the footprint of the content they stand in for, so the swap moves nothing. They appear at once, with no delay. Their shimmer is a decorative loop and stops under reduced motion.
 - **Never replace content already on screen with a skeleton.** A refetch keeps the old data until the new data arrives. "Load more" shows busy state on its own button, and new rows appear below.
 - **Buttons keep their size while busy.** The label stays in place but invisible, the spinner sits over it, and the button is disabled with `aria-busy`. Do not swap the label for "Saving…". Report the outcome with a toast or inline status.
-- **Spinners** appear only inside controls: buttons and input end slots. A spinner centred in an empty section is not an option; that is what skeletons are for.
+- **Spinners** appear only inside controls: buttons and input end slots. A spinner centred in an empty section is not an option; that is what skeletons are for. `Spinner` from `@chardb/ui` is `size.spinner` square, as tall as the control's text, and drawn in `currentColor`.
 - **Known progress is shown as progress.** A task that can report how far along it is uses a determinate bar, never a spinner.
 - **Route changes** keep the current page on screen until the next page's code and data are ready, with the top progress bar showing in the meantime. The bar is `TopProgressBar` from `@chardb/ui`, in `action.primary.bg`; the shell shows it while a navigation waits on the next page's code.
 
@@ -370,6 +370,7 @@ The `AppLoader` animation is the startup screen, and it lives in `index.html`, n
   - [2.5.8 Target Size (Minimum)](https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum.html), level AA: at least 24×24px. A smaller target passes only if a 24px circle centred on it does not overlap another target or its circle.
   - Both exempt a link inside a sentence, a control with an equivalent full-size control on the same page, browser-drawn controls, and a size that is essential to the information (a map pin).
   - The interactive primitives (`Button`, `IconButton`, menu items, list rows) meet 44×44px on touch devices. Build on them and the rule mostly takes care of itself; check by eye when you hand-build a control.
+  - "Touch device" is `touchQuery` from `@chardb/ui/theme`, a coarse primary pointer, used as a key under `"@media"`. A control that looks smaller than 44px on a fine pointer grows its hit area under it with an invisible pseudo-element, not its visible size.
 - **Tooltips** come in two kinds:
   - A tooltip that names an icon button repeats its accessible name. It shows on hover and focus, and on long-press on touch as a bonus; nothing depends on it. `Tooltip` from `@chardb/ui` is hidden from screen readers, so the control carries its own name (`aria-label` or text). Hover waits `timing.tooltip.delay` (400ms), leaving waits `timing.tooltip.hideDelay` (100ms) so the pointer can cross onto it, and a long press is `timing.tooltip.longPress` (500ms).
   - Information people need goes in a toggletip: an info button that opens it on tap or click. Never put it in a hover-only tooltip. `Toggletip` from `@chardb/ui` writes its note into a live region as it opens, so screen readers hear it.

@@ -83,6 +83,23 @@ describe("pairs a status tint carries", () => {
   );
 });
 
+// An outline button's label is the primary colour on whatever surface the
+// button sits on.
+describe("pairs an outline button carries", () => {
+  it.each(["surface.page", "surface.raised", "surface.sunken"] as const)(
+    "lists action.primary.fgOutline as body text on %s",
+    (bg) => {
+      expect(pairs).toContainEqual(
+        expect.objectContaining({
+          fg: "action.primary.fgOutline",
+          bg,
+          use: "body",
+        }),
+      );
+    },
+  );
+});
+
 describe("requiredRatio", () => {
   const pair: Pair = { fg: "text.subtle", bg: "surface.page", use: "body" };
 

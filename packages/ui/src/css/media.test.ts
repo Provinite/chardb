@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { hover, hoverQuery, mq, reducedMotionQuery } from "./media";
+import {
+  hover,
+  hoverQuery,
+  mq,
+  reducedMotionQuery,
+  touchQuery,
+} from "./media";
 
 describe("mq", () => {
   it.each([
@@ -38,6 +44,12 @@ describe("hover", () => {
 
   it("is the (hover: hover) query", () => {
     expect(hoverQuery).toBe("(hover: hover)");
+  });
+});
+
+describe("touchQuery", () => {
+  it("is a coarse primary pointer", () => {
+    expect(touchQuery).toBe("(pointer: coarse)");
   });
 });
 
