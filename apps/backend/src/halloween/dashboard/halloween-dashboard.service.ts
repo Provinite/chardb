@@ -32,7 +32,7 @@ import {
 const winInclude = {
   prize: true,
   gifties: { select: { fromUserId: true }, take: 1 },
-  deliveredBy: { select: userMapperSelect },
+  staffAward: { include: { deliveredBy: { select: userMapperSelect } } },
 } satisfies Prisma.HalloweenKnockEventInclude;
 
 type WinRow = Prisma.HalloweenKnockEventGetPayload<{
@@ -54,11 +54,6 @@ const emptyPeriod = (from: Date, to: Date): HalloweenPeriodStats => ({
   giftySenders: 0,
 });
 
-/** A prize nothing delivers but staff. */
-const staffPrize = {
-  is: { itemTypeId: null, characterId: null },
-} satisfies Prisma.HalloweenPrizeNullableScalarRelationFilter;
-
 function winsWhere(
   guildId: string,
   filter: HalloweenWinFilter,
@@ -66,9 +61,9 @@ function winsWhere(
   const win = { guildId, prizeId: { not: null }, isPending: false };
   switch (filter) {
     case HalloweenWinFilter.NEEDS_DELIVERY:
-      return { ...win, prize: staffPrize, deliveredAt: null };
+      return { ...win, staffAward: { is: { deliveredAt: null } } };
     case HalloweenWinFilter.DELIVERED:
-      return { ...win, deliveredAt: { not: null } };
+      return { ...win, staffAward: { is: { deliveredAt: { not: null } } } };
     default:
       return win;
   }
@@ -334,7 +329,7 @@ export class HalloweenDashboardService {
     const guildId = await this.guildFor(communityId);
     const knock = await this.db.halloweenKnockEvent.findUnique({
       where: { id: knockEventId },
-      include: { prize: true },
+      include: { prize: true, staffAward: { select: { knockEventId: true } } },
     });
     if (!knock || !guildId || knock.guildId !== guildId || !knock.prize) {
       throw new NotFoundException("No such win in this community");
@@ -344,12 +339,19 @@ export class HalloweenDashboardService {
         "This prize is a chardb item or character, which is delivered automatically",
       );
     }
+    // Every staff prize's win gets one, from the knock or the migration.
+    if (!knock.staffAward) {
+      throw new NotFoundException("This win has no staff award to mark");
+    }
 
-    const updated = await this.db.halloweenKnockEvent.update({
-      where: { id: knockEventId },
+    await this.db.halloweenStaffAward.update({
+      where: { knockEventId },
       data: delivered
         ? { deliveredAt: new Date(), deliveredById: actorUserId }
         : { deliveredAt: null, deliveredById: null },
+    });
+    const updated = await this.db.halloweenKnockEvent.findUniqueOrThrow({
+      where: { id: knockEventId },
       include: winInclude,
     });
 
@@ -431,9 +433,9 @@ export class HalloweenDashboardService {
           deviantArtName: deviantArtNames.get(row.userId) ?? null,
           giftyFromDiscordUserId: row.gifties[0]?.fromUserId ?? null,
           prize: toPrizeView(row.prize, images.get(row.prize) ?? null),
-          deliveredAt: row.deliveredAt,
-          deliveredBy: row.deliveredBy
-            ? mapPrismaUserToGraphQL(row.deliveredBy)
+          deliveredAt: row.staffAward?.deliveredAt ?? null,
+          deliveredBy: row.staffAward?.deliveredBy
+            ? mapPrismaUserToGraphQL(row.staffAward.deliveredBy)
             : null,
         },
       ];

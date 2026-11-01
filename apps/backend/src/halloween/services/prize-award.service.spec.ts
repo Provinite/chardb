@@ -198,18 +198,23 @@ describe("PrizeAwardService", () => {
 
   // Inside the knock's transaction, so the prize commits with the win.
   describe("grant", () => {
-    const knockTx = { knock: true };
+    let knockTx: { halloweenStaffAward: { create: jest.Mock } };
     // As the knock's interaction carries them.
     const winner = {
       id: USER_ID,
       username: "neo.baka",
       global_name: "Neo the Baka",
     };
+    const KNOCK_EVENT_ID = 41;
+    beforeEach(() => {
+      knockTx = { halloweenStaffAward: { create: jest.fn() } };
+    });
     const grant = (p: HalloweenPrize) =>
       service.grant(
         p,
         winner,
-        knockTx as unknown as Parameters<PrizeAwardService["grant"]>[2],
+        KNOCK_EVENT_ID,
+        knockTx as unknown as Parameters<PrizeAwardService["grant"]>[3],
       );
 
     it("grants one of the item to the winner's Discord account", async () => {
@@ -251,10 +256,30 @@ describe("PrizeAwardService", () => {
       );
     });
 
-    it("does nothing for a prize with no chardb item or character", async () => {
+    it("records a staff award, with the winner's names, for a prize with no chardb item or character", async () => {
       await grant(prize());
       expect(items.grantItemInTransaction).not.toHaveBeenCalled();
       expect(pendingOwnership.createForCharacter).not.toHaveBeenCalled();
+      expect(knockTx.halloweenStaffAward.create).toHaveBeenCalledWith({
+        data: {
+          knockEventId: KNOCK_EVENT_ID,
+          guildId: GUILD_ID,
+          discordUserId: USER_ID,
+          discordUsername: "neo.baka",
+          discordDisplayName: "Neo the Baka",
+        },
+      });
     });
+
+    it.each([
+      ["item", { itemTypeId: "it-1" }],
+      ["character", { characterId: "ch-1" }],
+    ])(
+      "records no staff award for a chardb %s, whose pending owner has the names",
+      async (_kind, overrides) => {
+        await grant(prize(overrides));
+        expect(knockTx.halloweenStaffAward.create).not.toHaveBeenCalled();
+      },
+    );
   });
 });

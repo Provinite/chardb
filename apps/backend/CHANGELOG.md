@@ -9,7 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Public Halloween prize list**: `halloweenPrizes` and `halloweenRecentWins`, open to anyone, where a winner shows as their linked chardb account, their Discord handle for item staff, or "A Discord user"; knocks now record the knocker's Discord handle.
+- **Public Halloween prize list**: `halloweenPrizes` and `halloweenRecentWins`, open to anyone, where a winner shows as their linked chardb account, their Discord handle for item staff, or "A Discord user".
+- **`HalloweenStaffAward`**: a win of a prize staff hand over records its winner's Discord names and its delivery, backfilled for past wins; `halloween_knock_events.delivered_at` and `delivered_by_id` are unused and dropped in a later release.
 
 ### Changed
 

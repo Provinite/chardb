@@ -76,7 +76,10 @@ export class HalloweenPrizeListService {
     );
     const rows = await this.db.halloweenKnockEvent.findMany({
       where: { guildId, prizeId: { not: null }, isPending: false },
-      include: { prize: true },
+      include: {
+        prize: true,
+        staffAward: { select: { discordUsername: true } },
+      },
       orderBy: [{ time: "desc" }, { id: "desc" }],
       take,
     });
@@ -117,7 +120,8 @@ export class HalloweenPrizeListService {
 
     const winnerFor = (
       discordUserId: string,
-      knockHandle: string | null,
+      /** A staff prize's award has it; a chardb prize's pending owner does. */
+      awardHandle: string | null,
     ): HalloweenWinner => {
       const linked = linkedUsers.get(discordUserId);
       if (linked) {
@@ -132,7 +136,7 @@ export class HalloweenPrizeListService {
       return {
         kind: HalloweenWinnerKind.DISCORD,
         displayName:
-          knockHandle ??
+          awardHandle ??
           handles.get(discordUserId) ??
           `Discord user ${discordUserId}`,
         url: `https://discord.com/users/${discordUserId}`,
@@ -147,7 +151,10 @@ export class HalloweenPrizeListService {
               id: row.id,
               time: row.time,
               prize: toListing(row.prize, images.get(row.prize) ?? null),
-              winner: winnerFor(row.userId, row.discordUsername),
+              winner: winnerFor(
+                row.userId,
+                row.staffAward?.discordUsername ?? null,
+              ),
             },
           ]
         : [],

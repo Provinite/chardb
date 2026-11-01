@@ -207,7 +207,7 @@ describe("Halloween prize list (e2e)", () => {
       userId: string,
       prizeId: string,
       time: string,
-      extra: { discordUsername?: string; isPending?: boolean } = {},
+      extra: { isPending?: boolean } = {},
     ) =>
       db.halloweenKnockEvent.create({
         data: {
@@ -218,12 +218,27 @@ describe("Halloween prize list (e2e)", () => {
           ...extra,
         },
       });
-    await win(NAMED_WINNER, "adopt", "2025-10-10T00:00:00Z", {
-      discordUsername: "spookyfan",
-    });
+    // Staff prizes' wins carry an award, as the knock leaves it; one from
+    // before awards were recorded has no names on it.
+    const staffAward = (
+      knock: { id: number; userId: string },
+      discordUsername?: string,
+    ) =>
+      db.halloweenStaffAward.create({
+        data: {
+          knockEventId: knock.id,
+          guildId: GUILD,
+          discordUserId: knock.userId,
+          discordUsername,
+        },
+      });
+    await staffAward(
+      await win(NAMED_WINNER, "adopt", "2025-10-10T00:00:00Z"),
+      "spookyfan",
+    );
     await win(LINKED_WINNER, "candy", "2025-10-11T00:00:00Z");
     await win(PENDING_WINNER, "candy", "2025-10-12T00:00:00Z");
-    await win(NAMELESS_WINNER, "ghost", "2025-10-13T00:00:00Z");
+    await staffAward(await win(NAMELESS_WINNER, "ghost", "2025-10-13T00:00:00Z"));
     // Not shown: a win still waiting for its prize, a loss, another guild's.
     await win(NAMED_WINNER, "adopt", "2025-10-14T00:00:00Z", {
       isPending: true,

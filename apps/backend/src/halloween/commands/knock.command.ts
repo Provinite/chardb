@@ -280,8 +280,6 @@ export class KnockCommand implements HalloweenCommandHandler {
         guildId: interaction.guild_id,
         userId: interaction.member.user.id,
         ...outcome,
-        discordUsername: interaction.member.user.username,
-        discordDisplayName: interaction.member.user.global_name,
       },
       tx,
     );
@@ -384,11 +382,17 @@ export class KnockCommand implements HalloweenCommandHandler {
     // Before taking it, so a misconfigured prize is never used up.
     await this.prizeAward.validate(pick, guildId, tx);
     const prize = await this.prizes.decrement(pick.id, guildId, tx);
-    await this.prizeAward.grant(prize, interaction.member.user, tx);
     const spent = await this.record(
       interaction,
       allowance,
       { prizeId: prize.id, candySlug: null },
+      tx,
+    );
+    // After the knock, which a staff prize's award belongs to.
+    await this.prizeAward.grant(
+      prize,
+      interaction.member.user,
+      spent.knockEvent.id,
       tx,
     );
     return { ...spent, prize, poolRequestedAt, poolLockedAt };

@@ -107,13 +107,15 @@ export class PrizeAwardService {
   }
 
   /**
-   * Hands the prize over inside the knock's transaction. The Discord id came
-   * signed from Discord, so it is not checked again, and the names came with
-   * it: they are what staff find the winner by later (#445).
+   * Hands the prize over inside the knock's transaction, or, for a prize
+   * staff hand over themselves, records the award they will. The Discord id
+   * came signed from Discord, so it is not checked again, and the names came
+   * with it: they are what staff find the winner by later (#445).
    */
   async grant(
     prize: HalloweenPrize,
     winner: Pick<APIUser, "id" | "username" | "global_name">,
+    knockEventId: number,
     tx: Prisma.TransactionClient,
   ): Promise<void> {
     const discordUserId = winner.id;
@@ -146,6 +148,16 @@ export class PrizeAwardService {
         names,
         tx,
       );
+    } else {
+      await tx.halloweenStaffAward.create({
+        data: {
+          knockEventId,
+          guildId: prize.guildId,
+          discordUserId,
+          discordUsername: winner.username,
+          discordDisplayName: winner.global_name,
+        },
+      });
     }
   }
 

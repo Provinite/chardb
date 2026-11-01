@@ -87,8 +87,6 @@ const knockEvent = (
   userId: USER_ID,
   prizeId: null,
   candySlug: null,
-  discordUsername: "trickortreater",
-  discordDisplayName: null,
   deliveredAt: null,
   deliveredById: null,
   time: new Date(TIMESTAMP),
@@ -452,8 +450,6 @@ describe("/knock", () => {
           userId: USER_ID,
           prizeId: null,
           candySlug: CANDY_SLUG,
-          discordUsername: "trickortreater",
-          discordDisplayName: null,
         },
         tx,
       );
@@ -550,15 +546,7 @@ describe("/knock", () => {
       expect(knocks.save).toHaveBeenCalledTimes(1);
       // A win gives no candy.
       expect(knocks.save).toHaveBeenCalledWith(
-        {
-          guildId: GUILD_ID,
-          userId: USER_ID,
-          prizeId: "myo",
-          candySlug: null,
-          // For staff reading the win feed.
-          discordUsername: "trickortreater",
-          discordDisplayName: null,
-        },
+        { guildId: GUILD_ID, userId: USER_ID, prizeId: "myo", candySlug: null },
         tx,
       );
     });
@@ -754,14 +742,19 @@ describe("/knock", () => {
       db.$transaction.mockImplementation(
         async (fn: (t: unknown) => Promise<unknown>) => {
           const result = await fn(tx);
-          // The whole user, so the prize records the winner's names (#445).
+          // The whole user, so the prize records the winner's names (#445),
+          // and the knock, which a staff prize's award belongs to.
           expect(award.grant).toHaveBeenCalledWith(
             { ...candy, currentStock: 4 },
             expect.objectContaining({
               id: USER_ID,
               username: "trickortreater",
             }),
+            41,
             tx,
+          );
+          expect(knocks.save.mock.invocationCallOrder[0]).toBeLessThan(
+            award.grant.mock.invocationCallOrder[0],
           );
           return result;
         },

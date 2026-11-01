@@ -86,24 +86,34 @@ export default definePreset<HalloweenPrizesWorld>({
       ],
     });
     const now = Date.now();
-    await ctx.prisma.halloweenKnockEvent.create({
-      data: {
-        guildId: GUILD_ID,
-        userId: CAROL_DISCORD_ID,
-        prizeId: "adopt",
-        discordUsername: "carolknocks",
-        time: new Date(now - 2 * 3_600_000),
-      },
-    });
-    await ctx.prisma.halloweenKnockEvent.create({
-      data: {
-        guildId: GUILD_ID,
-        userId: UNLINKED_DISCORD_ID,
-        prizeId: "ghost",
-        discordUsername: "spookyfan",
-        time: new Date(now - 5 * 60_000),
-      },
-    });
+    // Both prizes are ones staff hand over, so each win carries the award the
+    // knock leaves, with the winner's Discord handle.
+    const staffWin = async (
+      discordUserId: string,
+      prizeId: string,
+      discordUsername: string,
+      msAgo: number,
+    ) => {
+      const knock = await ctx.prisma.halloweenKnockEvent.create({
+        data: {
+          guildId: GUILD_ID,
+          userId: discordUserId,
+          prizeId,
+          time: new Date(now - msAgo),
+        },
+      });
+      await ctx.prisma.halloweenStaffAward.create({
+        data: {
+          knockEventId: knock.id,
+          guildId: GUILD_ID,
+          discordUserId,
+          discordUsername,
+          createdAt: knock.time,
+        },
+      });
+    };
+    await staffWin(CAROL_DISCORD_ID, "adopt", "carolknocks", 2 * 3_600_000);
+    await staffWin(UNLINKED_DISCORD_ID, "ghost", "spookyfan", 5 * 60_000);
 
     return {
       community: {
