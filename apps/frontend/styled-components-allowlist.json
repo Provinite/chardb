@@ -31,7 +31,6 @@
   "apps/frontend/src/components/TextViewer.tsx",
   "apps/frontend/src/components/ThemeToggle.tsx",
   "apps/frontend/src/components/ThumbnailCropper.tsx",
-  "apps/frontend/src/components/Tooltip.tsx",
   "apps/frontend/src/components/__tests__/ConfirmDialog.test.tsx",
   "apps/frontend/src/components/__tests__/Menu.test.tsx",
   "apps/frontend/src/components/__tests__/MyCharacterTypeahead.test.tsx",
