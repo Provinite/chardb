@@ -669,6 +669,15 @@ export const CharacterPage: React.FC = () => {
   // disposal actions -- staff's two and the owner's gift to the community --
   // are one-way, so they sit a deliberate step away in the menu (#430).
   const canEdit = canUserEditCharacter(character, user, permissions);
+  // The trait review queue's own permission.
+  const canReviewTraits =
+    permissions.canEditCharacterRegistry || (user?.isAdmin ?? false);
+  const reviewLinkProps = canReviewTraits
+    ? {
+        as: Link,
+        to: `/moderation/traits?character=${character.id}`,
+      }
+    : {};
   const canKick =
     Boolean(character.speciesId) &&
     !pendingRedemption &&
@@ -772,14 +781,22 @@ export const CharacterPage: React.FC = () => {
                 shown are the approved ones and a *change* to them is waiting.
                 One badge for both would tell a reader the design in front of
                 them is provisional when it is settled. */}
+            {/* Reviewers get the badge as a link to this character's review
+                (#526); for anyone else it is only a status. */}
             {character.traitReviewStatus === ModerationStatus.Pending &&
               (character.pendingTraitReviewSource ===
               TraitReviewSource.UserEdit ? (
-                <MetaBadge variant="warning" data-testid="trait-edit-pending">
+                <MetaBadge
+                  variant="warning"
+                  data-testid="trait-edit-pending"
+                  {...reviewLinkProps}
+                >
                   Trait Change Pending Review
                 </MetaBadge>
               ) : (
-                <MetaBadge variant="warning">Traits Pending Review</MetaBadge>
+                <MetaBadge variant="warning" {...reviewLinkProps}>
+                  Traits Pending Review
+                </MetaBadge>
               ))}
             {character.traitReviewStatus === ModerationStatus.Rejected && (
               <MetaBadge variant="error">Traits Rejected</MetaBadge>

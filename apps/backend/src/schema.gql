@@ -5096,6 +5096,9 @@ type TraitReviewQueueConnection {
 }
 
 input TraitReviewQueueFiltersInput {
+  """Only this character's reviews"""
+  characterId: ID
+
   """Filter by source"""
   source: TraitReviewSource
 
