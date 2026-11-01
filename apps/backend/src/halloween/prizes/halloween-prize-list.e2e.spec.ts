@@ -8,6 +8,8 @@ import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { mockDiscord } from "../testing/command-harness";
 import { Clock } from "../../clock/clock";
 import { fixedClock } from "../testing/fixtures";
+import { ConfigService } from "@nestjs/config";
+import { HalloweenLinks } from "../halloween-links";
 
 const NOW = "2025-10-15T17:00:00.000Z";
 
@@ -22,13 +24,18 @@ const PENDING_WINNER = "200000000000000003";
 /** Unlinked; won a staff prize whose award has no handle. */
 const NAMELESS_WINNER = "200000000000000004";
 
-/** A path on the site, as the backend's configured address builds it. */
-const siteUrl = (communitySlug: string | null, path: string) => {
-  const { protocol, port } = new URL(process.env.FRONTEND_URL as string);
-  const root = process.env.ROOT_DOMAIN as string;
-  const host = communitySlug ? `${communitySlug}.${root}` : root;
-  return `${protocol}//${host}${port ? `:${port}` : ""}${path}`;
+/**
+ * The site's address, pinned here: links are built from it, and neither CI
+ * nor a local checkout can be relied on to configure the same one.
+ */
+const SITE = {
+  FRONTEND_URL: "https://chardb.test",
+  ROOT_DOMAIN: "chardb.test",
 };
+
+/** A path on the site, on a community's host or on the apex. */
+const siteUrl = (communitySlug: string | null, path: string) =>
+  `https://${communitySlug ? `${communitySlug}.` : ""}chardb.test${path}`;
 
 const PRIZES = `
   query Prizes($communityId: ID!) {
@@ -80,7 +87,13 @@ describe("Halloween prize list (e2e)", () => {
           .overrideProvider(HalloweenDiscordClient)
           .useValue(mockDiscord())
           .overrideProvider(Clock)
-          .useValue(fixedClock(NOW)),
+          .useValue(fixedClock(NOW))
+          .overrideProvider(HalloweenLinks)
+          .useFactory({
+            factory: (database: DatabaseService) =>
+              new HalloweenLinks(new ConfigService(SITE), database),
+            inject: [DatabaseService],
+          }),
     );
     db = testApp.getDb();
   });
