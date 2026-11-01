@@ -256,6 +256,14 @@ describe("CommunityCandyBoardPage", () => {
   });
 
   describe("downloading the board as a picture", () => {
+    /** Opens the download dialog and returns it. */
+    const openDownload = async () => {
+      await userEvent.click(
+        await screen.findByRole("button", { name: "Download" }),
+      );
+      return screen.findByRole("dialog", { name: "Download picture" });
+    };
+
     it("draws the board as it is shown, for anyone looking", async () => {
       const name = { first: "Clover", joiner: null, last: "Coin" };
       renderBoard([
@@ -267,8 +275,16 @@ describe("CommunityCandyBoardPage", () => {
           }),
         ),
       ]);
+      const dialog = await openDownload();
+      expect(download).not.toHaveBeenCalled();
+      expect(
+        within(dialog).getByRole("checkbox", { name: /Background/ }),
+      ).toBeChecked();
+      expect(
+        within(dialog).getByRole("checkbox", { name: /Shadows/ }),
+      ).toBeChecked();
       await userEvent.click(
-        await screen.findByRole("button", { name: "Download" }),
+        within(dialog).getByRole("button", { name: "Download" }),
       );
       await waitFor(() => expect(download).toHaveBeenCalledTimes(1));
       expect(download).toHaveBeenCalledWith(
@@ -276,6 +292,33 @@ describe("CommunityCandyBoardPage", () => {
           background: "tile-corkboard",
           name,
           placements: [expect.objectContaining({ sticker: { candy: 2 } })],
+        }),
+        { background: true, shadows: true },
+      );
+      await waitFor(() =>
+        expect(
+          screen.queryByRole("dialog", { name: "Download picture" }),
+        ).not.toBeInTheDocument(),
+      );
+    });
+
+    it("leaves out the background and the shadows when asked", async () => {
+      download.mockClear();
+      renderBoard([boardQuery(board([2]))]);
+      const dialog = await openDownload();
+      await userEvent.click(
+        within(dialog).getByRole("checkbox", { name: /Background/ }),
+      );
+      await userEvent.click(
+        within(dialog).getByRole("checkbox", { name: /Shadows/ }),
+      );
+      await userEvent.click(
+        within(dialog).getByRole("button", { name: "Download" }),
+      );
+      await waitFor(() =>
+        expect(download).toHaveBeenCalledWith(expect.anything(), {
+          background: false,
+          shadows: false,
         }),
       );
     });
@@ -285,8 +328,9 @@ describe("CommunityCandyBoardPage", () => {
         new Error("This browser cannot draw the picture"),
       );
       renderBoard([boardQuery(board([2]))]);
+      const dialog = await openDownload();
       await userEvent.click(
-        await screen.findByRole("button", { name: "Download" }),
+        within(dialog).getByRole("button", { name: "Download" }),
       );
       await waitFor(() =>
         expect(toast.error).toHaveBeenCalledWith(
