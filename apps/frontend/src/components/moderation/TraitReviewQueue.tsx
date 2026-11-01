@@ -116,10 +116,13 @@ const PAGE_SIZE = 10;
 
 interface TraitReviewQueueProps {
   communityId: string;
+  /** Narrows the queue to this one character's review (#526). */
+  characterId?: string | null;
 }
 
 export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
   communityId,
+  characterId,
 }) => {
   const [offset, setOffset] = useState(0);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
@@ -127,7 +130,12 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
   const { permissions } = useUserCommunityRole(communityId);
 
   const { data, loading, error, refetch } = useTraitReviewQueueQuery({
-    variables: { communityId, first: PAGE_SIZE, offset },
+    variables: {
+      communityId,
+      filters: characterId ? { characterId } : null,
+      first: PAGE_SIZE,
+      offset,
+    },
     fetchPolicy: "network-only",
   });
 
@@ -294,10 +302,16 @@ export const TraitReviewQueue: React.FC<TraitReviewQueueProps> = ({
           <EmptyIcon>
             <CheckCircle size={48} />
           </EmptyIcon>
-          <Heading3>All Caught Up!</Heading3>
-          <HelpText>
-            There are no trait reviews pending moderation. Check back later.
-          </HelpText>
+          {characterId ? (
+            <HelpText>This character has no trait review waiting.</HelpText>
+          ) : (
+            <>
+              <Heading3>All Caught Up!</Heading3>
+              <HelpText>
+                There are no trait reviews pending moderation. Check back later.
+              </HelpText>
+            </>
+          )}
         </EmptyState>
       ) : (
         <>

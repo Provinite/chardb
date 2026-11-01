@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`traitReviewQueue` filters take a `characterId`**, narrowing the queue to one character's review (#526).
+
 ### Changed
 
 - **`externalMembers` counts in the database** and loads one row per holder, their newest, instead of every waiting row of everyone on the page (#445).
