@@ -101,26 +101,28 @@ const PrizeCard: React.FC<{
   const won = prize.currentStock <= 0;
   const path = chardbPath(prize);
   return (
-    <Stack as="li" gap="sm" className={styles.card}>
+    <li className={styles.card}>
       <PrizePicture prize={prize} won={won} />
-      <h3 className={styles.prizeName}>{prize.name}</h3>
-      {won ? (
-        <p className={styles.allWon}>All won</p>
-      ) : (
-        <p className={styles.stock}>
-          {prize.currentStock} of {prize.initialStock} left
-        </p>
-      )}
-      {path && (
-        <LinkComponent
-          to={path}
-          className={styles.link}
-          aria-label={`View ${prize.name} on chardb`}
-        >
-          View on chardb
-        </LinkComponent>
-      )}
-    </Stack>
+      <Stack gap="xs" className={styles.cardBody}>
+        <h3 className={styles.prizeName}>{prize.name}</h3>
+        {won ? (
+          <p className={styles.allWon}>All won</p>
+        ) : (
+          <p className={styles.stock}>
+            {prize.currentStock} of {prize.initialStock} left
+          </p>
+        )}
+        {path && (
+          <LinkComponent
+            to={path}
+            className={styles.link}
+            aria-label={`View ${prize.name} on chardb`}
+          >
+            View on chardb
+          </LinkComponent>
+        )}
+      </Stack>
+    </li>
   );
 };
 
@@ -172,7 +174,7 @@ export const PrizeListView: React.FC<PrizeListViewProps> = ({
       </Stack>
       <Sidebar.Root stackBelow="lg">
         <Sidebar.Main as="section" aria-labelledby={prizesId}>
-          <Stack gap="md">
+          <Stack gap="md" className={styles.prizesSection}>
             <h2 id={prizesId} className={styles.sectionTitle}>
               Prizes
             </h2>

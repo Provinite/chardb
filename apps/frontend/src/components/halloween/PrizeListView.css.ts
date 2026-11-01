@@ -1,5 +1,24 @@
-import { style } from "@vanilla-extract/css";
-import { cardSurface, focusRing, vars } from "@chardb/ui/theme";
+import { createContainer, style } from "@vanilla-extract/css";
+import {
+  cardSurface,
+  containers,
+  cq,
+  focusRing,
+  track,
+  vars,
+} from "@chardb/ui/theme";
+
+/**
+ * The prizes section. Narrower than `containers.sm` (a phone) each prize is a
+ * row with its picture beside it, so the wins after it are not a long scroll
+ * away; wider, prizes are cards with the picture on top.
+ */
+export const prizesContainer = createContainer();
+
+export const prizesSection = style({
+  containerName: prizesContainer,
+  containerType: "inline-size",
+});
 
 export const page = style({
   paddingBlock: vars.space.xl,
@@ -34,11 +53,27 @@ export const list = style({
 export const card = style([
   cardSurface,
   {
-    padding: vars.space.md,
+    display: "grid",
+    gridTemplateColumns: `${track.fixed(vars.size.column.xs)} ${track.fr(1)}`,
+    alignItems: "center",
+    gap: vars.space.md,
+    padding: vars.space.sm,
     borderRadius: vars.radius.lg,
     minWidth: 0,
+    "@container": cq(prizesContainer, {
+      [containers.sm]: {
+        gridTemplateColumns: track.fr(1),
+        alignItems: "start",
+        gap: vars.space.sm,
+        padding: vars.space.md,
+      },
+    }),
   },
 ]);
+
+export const cardBody = style({
+  minWidth: 0,
+});
 
 /** Square, so every card is the same height whatever its picture. */
 export const picture = style({
@@ -121,10 +156,14 @@ export const win = style([
 
 /** Stands in for a prize card while the list loads, at a card's footprint. */
 export const cardPlaceholder = style([
-  card,
+  cardSurface,
   {
     background: vars.surface.sunken,
-    aspectRatio: "3 / 4",
+    borderRadius: vars.radius.lg,
+    minHeight: vars.size.column.sm,
+    "@container": cq(prizesContainer, {
+      [containers.sm]: { aspectRatio: "3 / 4" },
+    }),
   },
 ]);
 
