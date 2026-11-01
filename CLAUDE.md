@@ -24,6 +24,7 @@
   - Prefer entirely static log and error messages
   - Prefer strongly typed error subclasses for additional data.
   - Dynamic log content should be log attributes rather than embedded in strings
+  - Log a caught error under the `err` key: `this.logger.warn({ message: "Static message", userId, err })`. The backend logger serializes `err` alone into its name, message, stack, own fields and cause chain (`apps/backend/src/logging/err-format.ts`). Don't hand-roll `error.message` or `error.stack` into fields, and don't use another key: an `Error` anywhere else serializes to `{}`
 - Prefer Test-Driven-Development using unit and/or e2e tests as appropriate when feasible.
   1. Write the test
   2. Prove it fails (run it, see red)
