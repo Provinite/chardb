@@ -9,7 +9,7 @@ import { Button } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useInviteCodeByIdQuery } from "../graphql/inviteCodes.graphql";
 import { useCommunityBySlugQuery } from "../generated/graphql";
-import { communityUrl } from "../lib/communityHost";
+import { communitySlugParam, communityUrl } from "../lib/communityHost";
 import { ResendVerification } from "../components/auth/ResendVerification";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 
@@ -201,7 +201,7 @@ export const SignupPage: React.FC = () => {
   // `?community=<slug>`: sent here from a community's page. An invite link
   // wins over it, so the code it carries is still asked for and used.
   const inviteParam = searchParams.get("invite");
-  const communitySlug = inviteParam ? null : searchParams.get("community");
+  const communitySlug = inviteParam ? null : communitySlugParam(searchParams);
   const { data: communityData, loading: communityLoading } =
     useCommunityBySlugQuery({
       variables: { slug: communitySlug ?? "" },

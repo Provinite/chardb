@@ -195,6 +195,15 @@ export const returnDestination = (params: URLSearchParams): string | null => {
 };
 
 /**
+ * The `?community=` slug, if it could name a community. It becomes a
+ * hostname, so anything else is dropped rather than navigated to.
+ */
+export const communitySlugParam = (params: URLSearchParams): string | null => {
+  const slug = params.get("community");
+  return slug && isValidCommunitySlug(slug) ? slug : null;
+};
+
+/**
  * The path part of `url` if it lands on the page's own origin, else `null`.
  *
  * Splitting hosts made every cross-scope link absolute, and an absolute URL in
