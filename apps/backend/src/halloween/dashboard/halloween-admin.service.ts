@@ -403,11 +403,8 @@ export class HalloweenAdminService {
       where: {
         species: { communityId },
         ownerId: null,
-        // A claimed promise is history: its owner gave the character back.
-        OR: [
-          { pendingOwnership: null },
-          { pendingOwnership: { claimedAt: { not: null } } },
-        ],
+        // Claimed rows are history; only an unclaimed one is a pending owner.
+        NOT: { pendingOwnership: { is: { claimedAt: null } } },
         id: { notIn: pooledCharacterIds },
         name: nameContains(search),
         ...notDeleted,
