@@ -142,7 +142,7 @@ describe("Dialog", () => {
       );
     }
     render(<Nested />);
-    click(dialogs()[0].querySelector("button")!);
+    click(dialogs()[0].querySelector("button:not([data-dialog-close])")!);
 
     const byName = (name: string) =>
       dialogs().find((d) => d.getAttribute("aria-label") === name)!;
@@ -194,15 +194,46 @@ describe("Dialog", () => {
     expect(dialogs()).toHaveLength(0);
   });
 
-  it("closes on a click on the scrim, not on one inside", () => {
+  it("stays open on a click on the scrim", () => {
     const onClose = vi.fn();
     openHarness({ onClose });
+
+    click(document.querySelector("[data-dialog-scrim]")!);
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("closes on a click on the scrim when it asks to, not on one inside", () => {
+    const onClose = vi.fn();
+    render(
+      <Dialog.Root open onClose={onClose} closeOnScrimClick aria-label="Pick">
+        <input aria-label="Field" />
+      </Dialog.Root>,
+    );
 
     click(dialogs()[0].querySelector("input")!);
     expect(onClose).not.toHaveBeenCalled();
 
     click(document.querySelector("[data-dialog-scrim]")!);
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("closes from its close button", () => {
+    const onClose = vi.fn();
+    openHarness({ onClose });
+
+    const close = dialogs()[0].querySelector<HTMLButtonElement>(
+      'button[aria-label="Close"]',
+    )!;
+    click(close);
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("leaves its close button out of where focus first lands", () => {
+    openHarness({ children: <p>Nothing to focus</p> });
+
+    expect(document.activeElement).toBe(dialogs()[0]);
   });
 
   it("holds the page still while open", () => {
@@ -343,9 +374,23 @@ describe("Dialog styles", () => {
     expect(declarationsOf(document.querySelector("dialog h2")!)).toMatchObject({
       "flex-shrink": "0",
       "padding-block-start": vars.space.lg,
-      "padding-inline": vars.space.lg,
+      "padding-inline-start": vars.space.lg,
       "padding-block-end": "0",
     });
+  });
+
+  it("keeps its title clear of the close button in the corner", () => {
+    render(
+      <Dialog.Root open onClose={() => {}}>
+        <Dialog.Title>A very long name for a board that runs on</Dialog.Title>
+      </Dialog.Root>,
+    );
+
+    expect(
+      declarationsOf(document.querySelector("dialog h2")!)[
+        "padding-inline-end"
+      ],
+    ).toContain(vars.size.target.comfortable);
   });
 
   it("pads its body, which scrolls when the dialog is capped", () => {

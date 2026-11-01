@@ -58,7 +58,7 @@ describe("ConfirmDialog", () => {
     expect(screen.queryByRole("dialog")).toBeNull();
   });
 
-  it("cancels on Escape and on the scrim", async () => {
+  it("cancels on Escape and from the close button, not on the scrim", async () => {
     const user = userEvent.setup();
     const onCancel = vi.fn();
     render(
@@ -72,6 +72,9 @@ describe("ConfirmDialog", () => {
 
     await user.keyboard("{Escape}");
     expect(onCancel).toHaveBeenCalledTimes(1);
+
+    await user.click(screen.getByRole("button", { name: "Close" }));
+    expect(onCancel).toHaveBeenCalledTimes(2);
 
     await user.click(document.querySelector("[data-dialog-scrim]")!);
     expect(onCancel).toHaveBeenCalledTimes(2);
@@ -91,7 +94,7 @@ describe("ConfirmDialog", () => {
     );
 
     await user.keyboard("{Escape}");
-    await user.click(document.querySelector("[data-dialog-scrim]")!);
+    await user.click(screen.getByRole("button", { name: "Close" }));
     await user.click(screen.getByRole("button", { name: "Cancel" }));
 
     expect(onCancel).not.toHaveBeenCalled();

@@ -1,6 +1,7 @@
 import { style } from "@vanilla-extract/css";
 import { vars } from "../theme/contract.css";
 import { mq } from "../css/media";
+import { closeClearance } from "./Dialog.css";
 
 /**
  * The search box's row: an icon and a borderless input over a divider. The
@@ -11,7 +12,9 @@ export const inputRow = style({
   display: "flex",
   alignItems: "center",
   gap: vars.space.sm,
-  paddingInline: vars.space.md,
+  paddingInlineStart: vars.space.md,
+  // The dialog's close button sits at the row's end.
+  paddingInlineEnd: closeClearance,
   borderBlockEnd: `${vars.borderWidth.thick} solid ${vars.border.default}`,
   color: vars.text.muted,
   selectors: {

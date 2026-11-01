@@ -163,7 +163,7 @@ describe("Popover", () => {
         </Popover.Root>
       </Dialog.Root>,
     );
-    click(document.querySelector("dialog button")!);
+    click(document.querySelector("dialog button[aria-haspopup]")!);
     expect(document.activeElement).toBe(field("First"));
 
     key("Escape");

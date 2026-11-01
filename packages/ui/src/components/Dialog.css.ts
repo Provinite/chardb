@@ -65,6 +65,24 @@ export const dialog = style({
   },
 });
 
+/** How far from the corner the close button sits. */
+const closeInset = vars.space.sm;
+
+/**
+ * Room the top row leaves at its end for the close button: the button and
+ * its inset, plus the inset again as the gap before it.
+ */
+export const closeClearance = `calc(${vars.size.target.comfortable} + 2 * ${closeInset})`;
+
+/** In the top corner, over whatever the dialog's first row is. */
+export const close = style({
+  position: "absolute",
+  insetBlockStart: closeInset,
+  insetInlineEnd: closeInset,
+  // Above the content after it, which may be positioned too.
+  zIndex: vars.layer.page[100],
+});
+
 /** How wide it may grow; narrower screens give it their full width. */
 export const width = styleVariants({
   default: { maxInlineSize: vars.size.dialog },
@@ -91,7 +109,8 @@ export const title = style({
   flexShrink: 0,
   margin: 0,
   paddingBlockStart: vars.space.lg,
-  paddingInline: vars.space.lg,
+  paddingInlineStart: vars.space.lg,
+  paddingInlineEnd: closeClearance,
   paddingBlockEnd: 0,
   fontSize: vars.font.size.xl,
   fontWeight: vars.font.weight.semibold,
