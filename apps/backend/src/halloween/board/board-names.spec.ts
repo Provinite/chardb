@@ -7,10 +7,10 @@ import { boardNameSchema } from "./board-names";
 
 describe("board name words", () => {
   it.each([
-    ["first", BOARD_NAME_FIRST_WORDS],
-    ["last", BOARD_NAME_LAST_WORDS],
-  ])("offers fifty-one %s words, each once, in title case", (_which, words) => {
-    expect(words).toHaveLength(51);
+    ["first", BOARD_NAME_FIRST_WORDS, 60],
+    ["last", BOARD_NAME_LAST_WORDS, 59],
+  ])("offers %s words, each once, in title case", (_which, words, count) => {
+    expect(words).toHaveLength(count);
     expect(new Set(words).size).toBe(words.length);
     for (const word of words) {
       expect(word).toMatch(/^[A-Z][a-z]+$/);
