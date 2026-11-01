@@ -17,10 +17,21 @@ describe("HealthController", () => {
       .spyOn(trace, "getTracer")
       .mockReturnValue({ startSpan, startActiveSpan } as unknown as Tracer);
 
-    const health = new HealthController().healthCheck();
+    new HealthController().healthCheck();
 
-    expect(health.status).toBe("ok");
     expect(startSpan).not.toHaveBeenCalled();
     expect(startActiveSpan).not.toHaveBeenCalled();
+  });
+
+  /**
+   * Public and unauthenticated. Probes read only the status code; the e2e
+   * setup reads `status`; `version` says which release is live.
+   */
+  it("reports only that it is up and which version is running", () => {
+    expect(Object.keys(new HealthController().healthCheck()).sort()).toEqual([
+      "status",
+      "version",
+    ]);
+    expect(new HealthController().healthCheck().status).toBe("ok");
   });
 });

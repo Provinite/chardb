@@ -3,7 +3,7 @@ import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentation
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { createDenyListAttributesProcessor } from "@opentelemetry/sdk-metrics";
-import { hostname } from "os";
+import { randomUUID } from "crypto";
 import { WinstonInstrumentation } from "@opentelemetry/instrumentation-winston";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 import { SeverityNumber } from "@opentelemetry/api-logs";
@@ -42,7 +42,7 @@ if (tracingDisabled) {
   // Initialize OpenTelemetry SDK with simplified configuration
   sdk = new NodeSDK({
     resource: resourceFromAttributes(
-      tracingResourceAttributes(process.env, hostname()),
+      tracingResourceAttributes(process.env, randomUUID()),
     ),
 
     // Trace exporter

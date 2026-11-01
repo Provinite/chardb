@@ -19,6 +19,13 @@ describe("isUntracedRequest", () => {
     expect(isUntracedRequest(request("GET", "/health?probe=1"))).toBe(true);
   });
 
+  /** Express routing ignores case and a trailing slash, so these all land. */
+  it("skips every spelling Express routes to the health check", () => {
+    expect(isUntracedRequest(request("GET", "/health/"))).toBe(true);
+    expect(isUntracedRequest(request("GET", "/Health"))).toBe(true);
+    expect(isUntracedRequest(request("GET", "/HEALTH/?x=1"))).toBe(true);
+  });
+
   it("traces everything else", () => {
     expect(isUntracedRequest(request("POST", "/graphql"))).toBe(false);
     expect(isUntracedRequest(request("GET", "/healthz"))).toBe(false);
@@ -29,22 +36,22 @@ describe("isUntracedRequest", () => {
 
 describe("tracingResourceAttributes", () => {
   /**
-   * Without an instance id every task exports into the same metric series, so
-   * each task's cumulative counter looks like a reset of the other's and every
-   * rate() and increase() comes out inflated.
+   * Without an instance id every process exports into the same metric
+   * series, so each one's cumulative counter looks like a reset of the
+   * other's and every rate() and increase() comes out inflated.
    */
-  it("gives each process its own service.instance.id", () => {
-    const attributes = tracingResourceAttributes({}, "ip-10-0-1-113");
-    expect(attributes[ATTR_SERVICE_INSTANCE_ID]).toBe("ip-10-0-1-113");
+  it("sets service.instance.id to the id it is given", () => {
+    const attributes = tracingResourceAttributes({}, "instance-a");
+    expect(attributes[ATTR_SERVICE_INSTANCE_ID]).toBe("instance-a");
   });
 
   it("lets OTEL_SERVICE_NAME override the service name", () => {
     expect(
-      tracingResourceAttributes({ OTEL_SERVICE_NAME: "other" }, "host")[
+      tracingResourceAttributes({ OTEL_SERVICE_NAME: "other" }, "id")[
         ATTR_SERVICE_NAME
       ],
     ).toBe("other");
-    expect(tracingResourceAttributes({}, "host")[ATTR_SERVICE_NAME]).toBe(
+    expect(tracingResourceAttributes({}, "id")[ATTR_SERVICE_NAME]).toBe(
       "chardb-backend",
     );
   });
