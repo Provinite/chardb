@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
@@ -207,6 +212,69 @@ export class CommunitiesService {
       where: { id },
       data: updateData,
     });
+  }
+
+  /**
+   * Let anyone join with `roleId`, without an invite code, or take that away
+   * with null.
+   */
+  async setOpenSignup(communityId: string, roleId: string | null) {
+    await this.findOne(communityId);
+    if (roleId) {
+      const role = await this.prisma.role.findUnique({
+        where: { id: roleId },
+        select: { communityId: true },
+      });
+      if (role?.communityId !== communityId) {
+        throw new BadRequestException("The role must belong to this community");
+      }
+    }
+    return this.prisma.community.update({
+      where: { id: communityId },
+      data: { openSignupRoleId: roleId },
+    });
+  }
+
+  /** Join a community with open sign-up, with the role it gives. */
+  async joinOpen(userId: string, communityId: string) {
+    try {
+      return await this.prisma.$transaction(async (tx) => {
+        const community = await tx.community.findUnique({
+          where: { id: communityId },
+          select: { openSignupRoleId: true },
+        });
+        if (!community?.openSignupRoleId) {
+          throw new BadRequestException(
+            "This community requires an invite code",
+          );
+        }
+        // A member holds one role in a community, whichever it is; the unique
+        // index only stops a second copy of the same role.
+        const existing = await tx.communityMember.findFirst({
+          where: { userId, role: { communityId } },
+          select: { id: true },
+        });
+        if (existing) {
+          throw new ConflictException(
+            "You are already a member of this community",
+          );
+        }
+        return this.membership.join(tx, {
+          userId,
+          roleId: community.openSignupRoleId,
+        });
+      });
+    } catch (error) {
+      if (
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        error.code === "P2002"
+      ) {
+        throw new ConflictException(
+          "You are already a member of this community",
+        );
+      }
+      throw error;
+    }
   }
 
   /** Remove a community */

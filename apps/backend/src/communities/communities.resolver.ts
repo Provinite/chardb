@@ -40,6 +40,9 @@ import {
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { CommunityPermission } from "../auth/CommunityPermission";
+import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
+import { CommunityMember } from "../community-members/entities/community-member.entity";
+import { mapPrismaCommunityMemberToGraphQL } from "../community-members/utils/community-member-resolver-mappers";
 import { Prisma } from "@chardb/database";
 
 @Resolver(() => Community)
@@ -346,5 +349,39 @@ export class CommunitiesResolver {
 
     // Fetch and return user info
     return await this.discordService.getUserInfo(userId);
+  }
+
+  /**
+   * Staff who can hand out invite codes can also do without them: opening
+   * sign-up is the same decision about who gets in, made for everyone at once.
+   */
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanCreateInviteCode)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Mutation(() => Community, {
+    description:
+      "Let anyone join the community with a role, without an invite code. A null role closes sign-up.",
+  })
+  async setCommunityOpenSignup(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("roleId", { type: () => ID, nullable: true }) roleId: string | null,
+  ): Promise<Community> {
+    const community = await this.communitiesService.setOpenSignup(
+      communityId,
+      roleId ?? null,
+    );
+    return mapPrismaCommunityToGraphQL(community);
+  }
+
+  @AllowAnyAuthenticated()
+  @Mutation(() => CommunityMember, {
+    description: "Join a community that has open sign-up",
+  })
+  async joinCommunity(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<CommunityMember> {
+    const member = await this.communitiesService.joinOpen(user.id, communityId);
+    return mapPrismaCommunityMemberToGraphQL(member);
   }
 }

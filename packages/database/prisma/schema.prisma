@@ -863,12 +863,18 @@ model Community {
   /// available, and a community without it should see nothing about it.
   /// Controls chardb's UI, not the Discord bot, which answers by guild.
   halloweenEnabled Boolean  @default(false) @map("halloween_enabled")
+
+  /// The role anyone may join with, without an invite code. Null means joining
+  /// takes an invite. Set null when the role is deleted, which closes sign-up
+  /// rather than leaving it open with no role to give.
+  openSignupRoleId String?  @map("open_signup_role_id")
   createdAt        DateTime @default(now()) @map("created_at")
   updatedAt        DateTime @updatedAt @map("updated_at")
 
   // Relations
+  openSignupRole       Role?                 @relation("CommunityOpenSignupRole", fields: [openSignupRoleId], references: [id], onDelete: SetNull)
   species              Species[]
-  roles                Role[]
+  roles                Role[]                @relation("CommunityRoles")
   communityInvitations CommunityInvitation[]
   itemTypes            ItemType[]
   communityColors      CommunityColor[]
@@ -934,10 +940,11 @@ model Role {
   canDeleteCharacter          Boolean @default(false) @map("can_delete_character")
 
   // Relations
-  community            Community             @relation(fields: [communityId], references: [id], onDelete: Cascade)
+  community            Community             @relation("CommunityRoles", fields: [communityId], references: [id], onDelete: Cascade)
   communityMembers     CommunityMember[]
   communityInvitations CommunityInvitation[]
   inviteCodes          InviteCode[]
+  openSignupFor        Community[]           @relation("CommunityOpenSignupRole")
 
   @@unique([communityId, name])
   @@map("roles")
