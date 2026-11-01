@@ -177,7 +177,7 @@ const VariantModal: React.FC<VariantModalProps> = ({
         >
           <Button
             type="button"
-            variant="secondary"
+            tone="secondary"
             onClick={onClose}
             disabled={isSubmitting}
           >
@@ -335,7 +335,7 @@ export const SpeciesVariantManagementPage: React.FC = () => {
 
         <HeaderRight>
           <Button
-            variant="secondary"
+            tone="secondary"
             onClick={() => navigate(`/species/${speciesId}/traits`)}
             icon={<Database size={16} />}
           >
@@ -397,7 +397,7 @@ export const SpeciesVariantManagementPage: React.FC = () => {
 
               <CardActions>
                 <ActionButton
-                  variant="primary"
+                  tone="primary"
                   size="sm"
                   onClick={() => handleManageVariant(variant)}
                   icon={<Settings size={14} />}
@@ -405,7 +405,7 @@ export const SpeciesVariantManagementPage: React.FC = () => {
                   Manage
                 </ActionButton>
                 <ActionButton
-                  variant="danger"
+                  tone="danger"
                   size="sm"
                   onClick={() => handleDeleteVariant(variant)}
                   icon={<Trash2 size={14} />}

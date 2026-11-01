@@ -380,23 +380,23 @@ export const FolderPickerModal: React.FC<FolderPickerModalProps> = ({
         )}
 
         <Actions>
-          <Button variant="ghost" onClick={close} disabled={busy}>
+          <Button tone="ghost" onClick={close} disabled={busy}>
             Cancel
           </Button>
           {canCreate && !(selected !== null && destinationChosen) ? (
             <Button
-              variant="primary"
+              tone="primary"
               onClick={createThenSubmit}
-              loading={busy}
+              busy={busy}
               disabled={!creating}
             >
               Create &ldquo;{typed}&rdquo; and {actionLabel.toLowerCase()}
             </Button>
           ) : (
             <Button
-              variant="primary"
+              tone="primary"
               onClick={() => void submit(selected)}
-              loading={busy}
+              busy={busy}
               disabled={!destinationChosen}
             >
               {actionLabel}

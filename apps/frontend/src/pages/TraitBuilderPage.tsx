@@ -526,7 +526,7 @@ const TraitModal: React.FC<TraitModalProps> = ({
         <FormActions>
           <Button
             type="button"
-            variant="secondary"
+            tone="secondary"
             onClick={onClose}
             disabled={isSubmitting}
           >
@@ -724,7 +724,7 @@ export const TraitBuilderPage: React.FC = () => {
 
         <HeaderRight>
           <Button
-            variant="secondary"
+            tone="secondary"
             onClick={() => navigate(`/species/${speciesId}/variants`)}
             icon={<Settings size={16} />}
           >
@@ -784,7 +784,7 @@ export const TraitBuilderPage: React.FC = () => {
                 <TraitActions>
                   {trait.valueType === TraitValueType.Enum && (
                     <Button
-                      variant="secondary"
+                      tone="secondary"
                       size="sm"
                       onClick={() => handleManageEnumValues(trait)}
                       icon={<List size={14} />}
@@ -793,7 +793,7 @@ export const TraitBuilderPage: React.FC = () => {
                     </Button>
                   )}
                   <Button
-                    variant="secondary"
+                    tone="secondary"
                     size="sm"
                     onClick={() => handleEditTrait(trait)}
                     icon={<Edit size={14} />}
@@ -801,7 +801,7 @@ export const TraitBuilderPage: React.FC = () => {
                     Edit
                   </Button>
                   <Button
-                    variant="danger"
+                    tone="danger"
                     size="sm"
                     onClick={() => handleDeleteTrait(trait)}
                     icon={<Trash2 size={14} />}

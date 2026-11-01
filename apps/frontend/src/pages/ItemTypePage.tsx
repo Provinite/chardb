@@ -265,7 +265,7 @@ export const ItemTypePage: React.FC = () => {
   return (
     <Container>
       <BackButton
-        variant="outline"
+        tone="outline"
         icon={<ArrowLeft size={16} />}
         onClick={() => window.history.back()}
       >

@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import { Button, ButtonLink } from "@chardb/ui";
 import {
   MediaType,
   useGetCharacterMediaQuery,
@@ -248,21 +248,16 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
         <SectionTitle>Media Gallery</SectionTitle>
         <HeaderActions>
           {canUpload && (
-            <Button
-              as={Link}
-              to={`/upload?character=${characterId}`}
-              variant="primary"
-              size="sm"
-            >
-              Add Media
-            </Button>
+            <ButtonLink tone="primary" size="sm">
+              <Link to={`/upload?character=${characterId}`}>Add Media</Link>
+            </ButtonLink>
           )}
           {hasMore && showViewAll && (
-            <Link to={`/character/${characterId}/media`}>
-              <Button variant="ghost" size="sm">
+            <ButtonLink tone="ghost" size="sm">
+              <Link to={`/character/${characterId}/media`}>
                 View All ({totalCount})
-              </Button>
-            </Link>
+              </Link>
+            </ButtonLink>
           )}
         </HeaderActions>
       </GalleryHeader>
@@ -314,7 +309,7 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
       {hasMore && (
         <ViewAllContainer>
           <Button
-            variant="secondary"
+            tone="secondary"
             size="md"
             data-testid="load-more-media"
             disabled={loading}
@@ -323,11 +318,11 @@ export const CharacterMediaGallery: React.FC<CharacterMediaGalleryProps> = ({
             {loading ? "Loading…" : "Load more"}
           </Button>
           {showViewAll && (
-            <Link to={`/character/${characterId}/media`}>
-              <Button variant="primary" size="md">
+            <ButtonLink tone="primary" size="md">
+              <Link to={`/character/${characterId}/media`}>
                 View All Media ({totalCount})
-              </Button>
-            </Link>
+              </Link>
+            </ButtonLink>
           )}
         </ViewAllContainer>
       )}

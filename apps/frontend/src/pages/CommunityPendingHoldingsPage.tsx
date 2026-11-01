@@ -255,7 +255,7 @@ export const CommunityPendingHoldingsPage: React.FC = () => {
                 <Count>×{h.count}</Count>
                 {permissions.canGrantItems && (
                   <Button
-                    variant="outline"
+                    tone="outline"
                     size="sm"
                     data-testid="remove-items"
                     onClick={() =>

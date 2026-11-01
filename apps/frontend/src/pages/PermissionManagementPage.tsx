@@ -205,7 +205,7 @@ export const PermissionManagementPage: React.FC = () => {
       <Header>
         <HeaderTop>
           <BackButton
-            variant="outline"
+            tone="outline"
             onClick={() => window.history.back()}
             icon={<ArrowLeft size={16} />}
           >
@@ -229,7 +229,7 @@ export const PermissionManagementPage: React.FC = () => {
 
           <HeaderActions>
             <Button
-              variant="primary"
+              tone="primary"
               onClick={() => setShowRoleEditor(true)}
               icon={<Plus size={16} />}
             >

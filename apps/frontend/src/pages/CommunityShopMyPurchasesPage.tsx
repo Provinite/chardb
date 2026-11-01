@@ -410,7 +410,7 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
             </Muted>
             {hasMore && (
               <Button
-                variant="secondary"
+                tone="secondary"
                 onClick={() => setLimit((n) => n + PAGE_SIZE)}
               >
                 Load more
@@ -427,7 +427,6 @@ export const CommunityShopMyPurchasesPage: React.FC = () => {
         open={undoTarget !== null}
         title={undoTarget ? `Undo buying ${undoTarget.item}?` : "Undo?"}
         confirmLabel="Undo it"
-        busyLabel="Undoing…"
         busy={busyLineId !== null}
         onCancel={() => setUndoTarget(null)}
         onConfirm={() => {

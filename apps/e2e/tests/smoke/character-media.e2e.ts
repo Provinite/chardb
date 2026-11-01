@@ -46,12 +46,18 @@ test("View All reaches a real page holding everything", async ({
   const character = world.characters.gallery;
   await page.goto(character.url);
 
-  await page
+  const viewAll = page
     .getByRole("link", {
       name: new RegExp(`View All \\(${character.mediaCount}\\)`),
     })
-    .first()
-    .click();
+    .first();
+  await expect(viewAll).toBeVisible();
+  // Links, not buttons inside links: that is two tab stops, the second of
+  // which does nothing (#503).
+  await expect(
+    page.locator("a", { hasText: "View All" }).locator("button"),
+  ).toHaveCount(0);
+  await viewAll.click();
 
   await expect(page).toHaveURL(new RegExp(`/character/${character.id}/media$`));
   // Would have been "Page not found" before this existed.

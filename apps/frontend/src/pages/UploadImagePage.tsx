@@ -595,10 +595,10 @@ export const UploadImagePage: React.FC = () => {
         </UploadedImagesGrid>
 
         <SuccessActions>
-          <Button variant="primary" onClick={handleUploadMore}>
+          <Button tone="primary" onClick={handleUploadMore}>
             Upload More Images
           </Button>
-          <Button variant="ghost" onClick={() => navigate("/dashboard")}>
+          <Button tone="ghost" onClick={() => navigate("/dashboard")}>
             Go to Dashboard
           </Button>
         </SuccessActions>
@@ -679,7 +679,7 @@ export const UploadImagePage: React.FC = () => {
                     </ThumbnailSummary>
                     <Button
                       type="button"
-                      variant="outline"
+                      tone="outline"
                       size="sm"
                       disabled={uploading}
                       onClick={() => setCroppingFile(file)}
@@ -813,7 +813,7 @@ export const UploadImagePage: React.FC = () => {
                     !formData.characterId ||
                     formData.nsfwSensitive
                   }
-                  variant="primary"
+                  tone="primary"
                 >
                   {uploading ? "Uploading..." : "Upload Image"}
                 </UploadButton>
@@ -841,7 +841,7 @@ export const UploadImagePage: React.FC = () => {
                     </CharacterMeta>
                   </CharacterInfo>
                   <Button
-                    variant="ghost"
+                    tone="ghost"
                     size="sm"
                     onClick={() => handleInputChange("characterId", "")}
                   >
@@ -866,7 +866,7 @@ export const UploadImagePage: React.FC = () => {
                   placeholder="Search for a character..."
                 />
               </div>
-              <Button variant="ghost" size="sm">
+              <Button tone="ghost" size="sm">
                 + Add Character
               </Button>
             </SidebarSection>
@@ -972,7 +972,7 @@ export const UploadImagePage: React.FC = () => {
 
             <div style={{ padding: "0 16px" }}>
               <CancelButton
-                variant="ghost"
+                tone="ghost"
                 onClick={handleCancel}
                 disabled={uploading}
               >

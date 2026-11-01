@@ -167,7 +167,7 @@ export const MediaLibraryPage: React.FC = () => {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          <Button variant="primary" onClick={() => navigate("/upload")}>
+          <Button tone="primary" onClick={() => navigate("/upload")}>
             Add Media
           </Button>
         </Controls>

@@ -949,7 +949,7 @@ export const TradeComposerPage: React.FC = () => {
           )}
         </div>
         <Button
-          variant="primary"
+          tone="primary"
           disabled={empty || overdrawn || sending}
           onClick={send}
           data-testid="send-offer"

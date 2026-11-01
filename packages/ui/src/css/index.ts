@@ -4,6 +4,7 @@ export {
   hoverQuery,
   mq,
   reducedMotionQuery,
+  touchQuery,
   type SelectorStyle,
 } from "./media";
 export { cq } from "./container";

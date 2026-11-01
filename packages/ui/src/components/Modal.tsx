@@ -102,7 +102,7 @@ interface ModalProps {
  *   <UserProfile user={selectedUser} />
  *   <div style={{ marginTop: '1rem' }}>
  *     <Button onClick={handleEdit}>Edit</Button>
- *     <Button variant="secondary" onClick={() => setShowDetails(false)}>
+ *     <Button tone="secondary" onClick={() => setShowDetails(false)}>
  *       Close
  *     </Button>
  *   </div>

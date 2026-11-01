@@ -3,7 +3,7 @@ import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift, ExternalLink } from "lucide-react";
-import { Button } from "@chardb/ui";
+import { Button, ButtonLink } from "@chardb/ui";
 import {
   GrantTargetSelector,
   GrantTarget,
@@ -817,31 +817,28 @@ export const CommunityItemsAdminPage: React.FC = () => {
                       </Num>
                       <td>
                         <RowActions>
+                          <ButtonLink size="sm" tone="outline">
+                            <Link to={`/item-types/${itemType.id}`}>
+                              <ExternalLink size={14} /> View
+                            </Link>
+                          </ButtonLink>
                           <Button
                             size="sm"
-                            variant="outline"
-                            as={Link}
-                            to={`/item-types/${itemType.id}`}
-                          >
-                            <ExternalLink size={14} /> View
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
+                            tone="secondary"
                             onClick={() => openGrantModal(itemType)}
                           >
                             <Gift size={14} /> Grant
                           </Button>
                           <Button
                             size="sm"
-                            variant="secondary"
+                            tone="secondary"
                             onClick={() => openEditModal(itemType)}
                           >
                             <Edit2 size={14} /> Edit
                           </Button>
                           <Button
                             size="sm"
-                            variant="secondary"
+                            tone="secondary"
                             onClick={() => handleDeleteItemType(itemType.id)}
                           >
                             <Trash2 size={14} /> Delete
@@ -940,7 +937,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <FormActions>
               <Button
                 type="button"
-                variant="ghost"
+                tone="ghost"
                 onClick={() => setIsCreateModalOpen(false)}
               >
                 Cancel
@@ -1071,7 +1068,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <FormActions>
               <Button
                 type="button"
-                variant="ghost"
+                tone="ghost"
                 onClick={() => setIsEditModalOpen(false)}
               >
                 Cancel
@@ -1130,7 +1127,7 @@ export const CommunityItemsAdminPage: React.FC = () => {
             <FormActions>
               <Button
                 type="button"
-                variant="ghost"
+                tone="ghost"
                 onClick={() => setIsGrantModalOpen(false)}
               >
                 Cancel

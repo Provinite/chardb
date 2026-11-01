@@ -366,7 +366,7 @@ export const EnumValueSettingsPage: React.FC = () => {
 
         <HeaderRight>
           <Button
-            variant="secondary"
+            tone="secondary"
             onClick={() => navigate(`/species/${variant.speciesId}/variants`)}
             icon={<ArrowLeft size={16} />}
           >

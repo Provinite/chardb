@@ -252,14 +252,14 @@ export const RejectImageModal: React.FC<RejectImageModalProps> = ({
           {error && <ErrorMessage message={error} />}
 
           <FooterButtons>
-            <Button variant="outline" onClick={handleClose} disabled={loading}>
+            <Button tone="outline" onClick={handleClose} disabled={loading}>
               Cancel
             </Button>
             <Button
-              variant="danger"
+              tone="danger"
               type="submit"
               disabled={loading || !selectedReason}
-              loading={loading}
+              busy={loading}
             >
               Reject Image
             </Button>

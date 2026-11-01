@@ -28,23 +28,17 @@ const control = style([
   },
 ]);
 
-/** Opens the navigation drawer; the sidebar sits beside the page from `md`. */
-export const menuButton = style([
-  control,
-  {
-    justifyContent: "center",
-    minInlineSize: vars.size.target.comfortable,
-    padding: 0,
-    border: 0,
-    background: "transparent",
-    color: vars.text.default,
-    cursor: "pointer",
-    "@media": {
-      ...hover({ "&:hover": { background: vars.surface.sunken } }),
-      [mq("md")]: { display: "none" },
-    },
+/**
+ * Holds the button that opens the navigation drawer; the sidebar sits beside
+ * the page from `md`. Hidden on the wrapper, so the button's own `display`
+ * never competes with it.
+ */
+export const menuSlot = style({
+  display: "flex",
+  "@media": {
+    [mq("md")]: { display: "none" },
   },
-]);
+});
 
 export const logo = style([
   control,

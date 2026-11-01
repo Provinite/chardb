@@ -399,7 +399,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
 
         {allowEditing && (
           <Button
-            variant="primary"
+            tone="primary"
             onClick={handleCreateTemplate}
             icon={<Plus size={16} />}
           >
@@ -491,7 +491,7 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
 
               {onTemplateApply && (
                 <UseButton
-                  variant="outline"
+                  tone="outline"
                   onClick={() => handleApplyTemplate(template)}
                 >
                   Use Template
@@ -548,11 +548,11 @@ export const RoleTemplateManager: React.FC<RoleTemplateManagerProps> = ({
               justifyContent: "flex-end",
             }}
           >
-            <Button variant="outline" onClick={() => setShowCreateModal(false)}>
+            <Button tone="outline" onClick={() => setShowCreateModal(false)}>
               Cancel
             </Button>
             <Button
-              variant="primary"
+              tone="primary"
               onClick={handleSaveTemplate}
               disabled={
                 !templateName.trim() || selectedPermissions.length === 0

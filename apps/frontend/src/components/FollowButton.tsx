@@ -1,6 +1,5 @@
 import React from "react";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import { Button, Cluster, type ButtonSize } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import {
   useToggleFollowMutation,
@@ -8,57 +7,12 @@ import {
   GetFollowStatusDocument,
 } from "../generated/graphql";
 import toast from "react-hot-toast";
-
-const FollowButtonContainer = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-`;
-
-const FollowCount = styled.span`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.muted};
-  margin-left: ${({ theme }) => theme.spacing.xs};
-`;
-
-const StyledButton = styled(Button).withConfig({
-  shouldForwardProp: (prop) => prop !== "isFollowing",
-})<{ isFollowing?: boolean }>`
-  min-width: 100px;
-  background: ${({ theme, isFollowing }) =>
-    isFollowing ? theme.colors.surface : theme.colors.primary};
-  color: ${({ theme, isFollowing }) =>
-    isFollowing ? theme.colors.text.primary : "white"};
-  border: 1px solid
-    ${({ theme, isFollowing }) =>
-      isFollowing ? theme.colors.border : theme.colors.primary};
-
-  &:hover:not(:disabled) {
-    background: ${({ theme, isFollowing }) =>
-      isFollowing ? theme.colors.error + "20" : theme.colors.secondary};
-    color: ${({ theme, isFollowing }) =>
-      isFollowing ? theme.colors.error : "white"};
-    border-color: ${({ theme, isFollowing }) =>
-      isFollowing ? theme.colors.error : theme.colors.secondary};
-  }
-`;
-
-const LoginPrompt = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  background: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.muted};
-`;
+import * as styles from "./FollowButton.css";
 
 interface FollowButtonProps {
   userId: string;
   showCount?: boolean;
-  size?: "sm" | "md" | "lg";
+  size?: ButtonSize;
   variant?: "default" | "compact";
 }
 
@@ -138,48 +92,42 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
     }
   };
 
-  // Don't show follow button for own profile
+  // Signed out, or on your own profile: nothing to follow.
   if (!user || user.id === userId) {
     return null;
   }
 
-  if (!user) {
-    return (
-      <LoginPrompt>
-        <span>Log in to follow users</span>
-      </LoginPrompt>
-    );
-  }
-
-  const isFollowing = followData?.followStatus?.isFollowing || false;
-  const followersCount = followData?.followStatus?.followersCount || 0;
-  const isLoading = followLoading || toggleLoading;
-
-  const getButtonText = () => {
-    if (isLoading) return "Loading...";
-    if (variant === "compact") {
-      return isFollowing ? "Following" : "Follow";
-    }
-    return isFollowing ? "Following" : "Follow";
-  };
+  const status = followData?.followStatus;
+  // Until the status arrives the button claims neither: "Follow" on the
+  // profile of someone already followed would be wrong for that moment.
+  const pending = followLoading && !status;
+  const isFollowing = status?.isFollowing || false;
+  const followersCount = status?.followersCount || 0;
+  const labelClass = (shown: boolean) =>
+    shown && !pending ? styles.label : styles.inactiveLabel;
 
   return (
-    <FollowButtonContainer>
-      <StyledButton
+    <Cluster gap="sm">
+      <Button
         size={size}
-        isFollowing={isFollowing}
+        tone={isFollowing || pending ? "ghost" : "primary"}
+        className={isFollowing ? styles.following : undefined}
         onClick={handleToggleFollow}
-        disabled={isLoading}
+        busy={pending || toggleLoading}
+        aria-label={pending ? "Loading follow status" : undefined}
       >
-        {getButtonText()}
-      </StyledButton>
+        <span className={styles.labels}>
+          <span className={labelClass(!isFollowing)}>Follow</span>
+          <span className={labelClass(isFollowing)}>Following</span>
+        </span>
+      </Button>
 
       {showCount && variant !== "compact" && (
-        <FollowCount>
+        <span className={styles.count}>
           {followersCount} {followersCount === 1 ? "follower" : "followers"}
-        </FollowCount>
+        </span>
       )}
-    </FollowButtonContainer>
+    </Cluster>
   );
 };
 

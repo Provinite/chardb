@@ -294,7 +294,7 @@ export const TradesPage: React.FC = () => {
       {hasMore && (
         <Footer>
           <Button
-            variant="secondary"
+            tone="secondary"
             onClick={() => setLimit((n) => n + PAGE_SIZE)}
           >
             Load more

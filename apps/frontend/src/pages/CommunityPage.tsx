@@ -9,6 +9,7 @@ import {
   SmallText,
   HelpText,
   Card,
+  ButtonLink,
 } from "@chardb/ui";
 import {
   useSpeciesByCommunityQuery,
@@ -303,7 +304,7 @@ export const CommunityPage: React.FC = () => {
                 <>
                   {!isMember && (
                     <Button
-                      variant="primary"
+                      tone="primary"
                       icon={<UserPlus size={16} />}
                       // Joining, like signing in, happens at the apex: the
                       // router cannot cross a host.
@@ -315,22 +316,17 @@ export const CommunityPage: React.FC = () => {
                     </Button>
                   )}
                   {isMember && (
-                    <Button
-                      variant="outline"
-                      icon={<Settings size={16} />}
-                      as={Link}
-                      to="/admin"
-                    >
-                      Manage
-                    </Button>
+                    <ButtonLink tone="outline" icon={<Settings size={16} />}>
+                      <Link to="/admin">Manage</Link>
+                    </ButtonLink>
                   )}
                 </>
               ) : (
                 // The session cookie is set on the parent domain, so signing
                 // in has to happen at the apex.
-                <Button variant="primary" as="a" href={apexUrl("/login")}>
-                  Sign In to Join
-                </Button>
+                <ButtonLink tone="primary">
+                  <a href={apexUrl("/login")}>Sign In to Join</a>
+                </ButtonLink>
               )}
             </ActionButtons>
           </CommunityInfo>
@@ -360,7 +356,7 @@ export const CommunityPage: React.FC = () => {
                   <StatText>
                     {section.count} {section.title.toLowerCase()}
                   </StatText>
-                  <ViewButton variant="outline" size="sm">
+                  <ViewButton tone="outline" size="sm">
                     Explore
                   </ViewButton>
                 </SectionStats>

@@ -195,11 +195,11 @@ export const HalloweenSettingsForm: React.FC<HalloweenSettingsFormProps> = ({
         <Hint>Discord channel every win is also announced in.</Hint>
       </Field>
       <Actions>
-        <Button type="submit" variant="primary" disabled={loading}>
+        <Button type="submit" tone="primary" disabled={loading}>
           {settings ? "Save settings" : "Set up the event"}
         </Button>
         {onCancel && (
-          <Button type="button" variant="secondary" onClick={onCancel}>
+          <Button type="button" tone="secondary" onClick={onCancel}>
             Cancel
           </Button>
         )}

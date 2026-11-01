@@ -182,17 +182,6 @@ const ActionButton = styled(Button)`
   flex: 1;
 `;
 
-const ApproveButton = styled(ActionButton)`
-  background: ${({ theme }) => theme.colors.success};
-  border-color: ${({ theme }) => theme.colors.success};
-  color: white;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.success}dd;
-    border-color: ${({ theme }) => theme.colors.success}dd;
-  }
-`;
-
 const ImageModal = styled.div`
   position: fixed;
   inset: 0;
@@ -381,33 +370,34 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
           )}
 
           <ActionButtons>
-            <ApproveButton
+            <ActionButton
+              tone="secondary"
               size="sm"
               onClick={handleApprove}
               disabled={isLoading}
-              loading={approving}
+              busy={approving}
               icon={<Check size={14} />}
             >
               Approve
-            </ApproveButton>
+            </ActionButton>
             {/* Between the two outcomes and neither of them: the image stays
                 pending, the uploader hears nothing. */}
             <ActionButton
-              variant="outline"
+              tone="outline"
               size="sm"
               onClick={() => setShowDeferModal(true)}
               disabled={isLoading}
-              loading={deferring}
+              busy={deferring}
               icon={<Undo2 size={14} />}
             >
               Send to back
             </ActionButton>
             <ActionButton
-              variant="danger"
+              tone="danger"
               size="sm"
               onClick={() => setShowRejectModal(true)}
               disabled={isLoading}
-              loading={rejecting}
+              busy={rejecting}
               icon={<X size={14} />}
             >
               Reject

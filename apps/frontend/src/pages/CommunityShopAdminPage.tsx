@@ -782,7 +782,7 @@ export const CommunityShopAdminPage: React.FC = () => {
             </Stack>
 
             <ModalActions>
-              <Button variant="secondary" type="button" onClick={close}>
+              <Button tone="secondary" type="button" onClick={close}>
                 Cancel
               </Button>
               <Button type="submit" disabled={saving || updating}>

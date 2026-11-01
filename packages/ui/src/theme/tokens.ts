@@ -71,13 +71,17 @@ export const lightColors = {
     focus: p.violet500,
   },
   action: {
-    primary: actionStates(
-      p.violet600,
-      p.violet700,
-      p.violet800,
-      p.violet50,
-      p.slate400,
-    ),
+    primary: {
+      ...actionStates(
+        p.violet600,
+        p.violet700,
+        p.violet800,
+        p.violet50,
+        p.slate400,
+      ),
+      /** An outline button's label, on the surface around it. */
+      fgOutline: p.violet600,
+    },
     secondary: actionStates(
       p.emerald700,
       p.emerald800,
@@ -121,13 +125,17 @@ export const darkColors: ColorTokens = {
     focus: p.violet500,
   },
   action: {
-    primary: actionStates(
-      p.violet600,
-      p.violet700,
-      p.violet800,
-      p.violet950,
-      p.slate500,
-    ),
+    primary: {
+      ...actionStates(
+        p.violet600,
+        p.violet700,
+        p.violet800,
+        p.violet950,
+        p.slate500,
+      ),
+      // Lighter than the fill: violet600 is too dark to read on dark surfaces.
+      fgOutline: p.violet400,
+    },
     secondary: actionStates(
       p.green700,
       p.green800,
@@ -206,6 +214,8 @@ export const sharedTokens = {
     dialogList: "28rem",
     /** The gap between a control and its focus ring. */
     focusOffset: "2px",
+    /** A spinner inside a control: as tall as the control's text. */
+    spinner: "1em",
     /** The navigation sidebar's width, beside the page and as a drawer. */
     sidebar: "17.5rem",
     target: {

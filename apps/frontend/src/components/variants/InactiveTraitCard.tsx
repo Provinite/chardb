@@ -99,7 +99,7 @@ export const InactiveTraitCard: React.FC<InactiveTraitCardProps> = ({
       </TraitInfo>
 
       <Button
-        variant="secondary"
+        tone="secondary"
         size="sm"
         onClick={() => onAdd(trait.id)}
         disabled={disabled}

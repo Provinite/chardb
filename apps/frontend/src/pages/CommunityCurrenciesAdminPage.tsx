@@ -846,7 +846,7 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
               </Preview>
             )}
             <ModalActions>
-              <Button variant="secondary" type="button" onClick={closeModal}>
+              <Button tone="secondary" type="button" onClick={closeModal}>
                 Cancel
               </Button>
               <Button type="submit" disabled={busy}>
@@ -934,7 +934,7 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
               </Preview>
             )}
             <ModalActions>
-              <Button variant="secondary" type="button" onClick={closeModal}>
+              <Button tone="secondary" type="button" onClick={closeModal}>
                 Cancel
               </Button>
               <Button
@@ -1011,12 +1011,12 @@ export const CommunityCurrenciesAdminPage: React.FC = () => {
               />
             </FormGroup>
             <ModalActions>
-              <Button variant="secondary" type="button" onClick={closeModal}>
+              <Button tone="secondary" type="button" onClick={closeModal}>
                 Cancel
               </Button>
               <Button
                 type="submit"
-                variant="danger"
+                tone="danger"
                 disabled={busy || !burnTarget || !amount}
               >
                 Remove

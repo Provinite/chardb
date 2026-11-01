@@ -11,9 +11,9 @@ import {
   CardBadge,
   Title,
   Subtitle,
-  Button,
   SmallText,
   Heading3,
+  ButtonLink,
 } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
@@ -175,14 +175,9 @@ export const MyCommunitiesPage: React.FC = () => {
             connect with other users and access exclusive content.
           </EmptyDescription>
           <EmptyActions>
-            <Button
-              as={Link}
-              to="/join-community"
-              variant="primary"
-              icon={<Users size={16} />}
-            >
-              Join Community
-            </Button>
+            <ButtonLink tone="primary" icon={<Users size={16} />}>
+              <Link to="/join-community">Join Community</Link>
+            </ButtonLink>
           </EmptyActions>
         </EmptyState>
       </Container>
@@ -233,15 +228,20 @@ export const MyCommunitiesPage: React.FC = () => {
                   e.stopPropagation();
                 }}
               >
-                <Button
-                  as="a"
-                  href={communityUrl(membership.role.community.slug, "/admin")}
-                  variant="primary"
+                <ButtonLink
+                  tone="primary"
                   size="sm"
                   icon={<ExternalLink size={14} />}
                 >
-                  Manage Community
-                </Button>
+                  <a
+                    href={communityUrl(
+                      membership.role.community.slug,
+                      "/admin",
+                    )}
+                  >
+                    Manage Community
+                  </a>
+                </ButtonLink>
               </CardActions>
             </CommunityCard>
           </ClickableCommunityCard>

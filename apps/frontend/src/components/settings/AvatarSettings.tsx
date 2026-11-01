@@ -182,7 +182,7 @@ export const AvatarSettings: React.FC<AvatarSettingsProps> = ({
           <ButtonRow>
             <Button
               type="button"
-              variant="primary"
+              tone="primary"
               disabled={busy}
               onClick={() => fileInputRef.current?.click()}
             >
@@ -191,7 +191,7 @@ export const AvatarSettings: React.FC<AvatarSettingsProps> = ({
             {avatarImage && (
               <Button
                 type="button"
-                variant="secondary"
+                tone="secondary"
                 disabled={busy}
                 onClick={() => setReframing(true)}
               >
@@ -201,7 +201,7 @@ export const AvatarSettings: React.FC<AvatarSettingsProps> = ({
             {avatarImage && (
               <Button
                 type="button"
-                variant="ghost"
+                tone="ghost"
                 disabled={busy}
                 onClick={() => void removeAvatar()}
               >

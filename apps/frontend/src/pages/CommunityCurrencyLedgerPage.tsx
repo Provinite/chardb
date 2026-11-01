@@ -587,7 +587,7 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
           {hasMore && (
             <Footer>
               <Button
-                variant="secondary"
+                tone="secondary"
                 onClick={loadMore}
                 // Not while typing either: it would page the old search,
                 // and the new one is about to replace it.

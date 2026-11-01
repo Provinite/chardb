@@ -376,7 +376,6 @@ export const CommunityCandyBoardsPage: React.FC = () => {
         title={`Delete ${deletingBoard ? titleOf(deletingBoard) : "this board"}?`}
         confirmLabel="Delete"
         busy={deleting}
-        busyLabel="Deleting…"
         onCancel={() => setDeletingBoard(null)}
         onConfirm={() => deletingBoard && deleteBoard(deletingBoard)}
       >

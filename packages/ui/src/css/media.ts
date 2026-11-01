@@ -10,6 +10,12 @@ export const mq = (bp: Breakpoint) =>
 /** Devices that can hover. A bare `:hover` sticks after a tap on touch screens. */
 export const hoverQuery = "(hover: hover)";
 
+/**
+ * Devices whose main pointer is a finger. Touch targets grow to 44px under
+ * it; a fine pointer keeps the denser layout. Used as a key under `"@media"`.
+ */
+export const touchQuery = "(pointer: coarse)";
+
 export const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 
 /**

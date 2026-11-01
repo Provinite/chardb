@@ -18,6 +18,7 @@ import {
   SmallText,
   HelpText,
   Card,
+  ButtonLink,
 } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import {
@@ -350,7 +351,7 @@ export const SpeciesPage: React.FC = () => {
   return (
     <Container>
       <BackButton
-        variant="outline"
+        tone="outline"
         icon={<ArrowLeft size={16} />}
         onClick={() => window.history.back()}
       >
@@ -389,14 +390,9 @@ export const SpeciesPage: React.FC = () => {
 
             {user && (
               <ActionButtons>
-                <Button
-                  variant="primary"
-                  icon={<Settings size={16} />}
-                  as={Link}
-                  to="/species"
-                >
-                  Manage Species
-                </Button>
+                <ButtonLink tone="primary" icon={<Settings size={16} />}>
+                  <Link to="/species">Manage Species</Link>
+                </ButtonLink>
               </ActionButtons>
             )}
           </SpeciesInfo>
@@ -436,7 +432,7 @@ export const SpeciesPage: React.FC = () => {
                     {section.count} {section.title.toLowerCase()}
                   </StatText>
                   {section.available ? (
-                    <ViewButton variant="outline" size="sm">
+                    <ViewButton tone="outline" size="sm">
                       {section.adminOnly ? "Manage" : "View"}
                     </ViewButton>
                   ) : (
@@ -460,9 +456,9 @@ export const SpeciesPage: React.FC = () => {
             features.
           </HelpText>
           <div style={{ marginTop: "1rem" }}>
-            <Button variant="primary" as={Link} to="/login">
-              Sign In
-            </Button>
+            <ButtonLink tone="primary">
+              <Link to="/login">Sign In</Link>
+            </ButtonLink>
           </div>
         </div>
       )}

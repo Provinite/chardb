@@ -91,7 +91,7 @@ export const ImageModerationPage: React.FC<ImageModerationPageProps> = ({
       <Header>
         <HeaderTop>
           <BackButton
-            variant="outline"
+            tone="outline"
             onClick={() => window.history.back()}
             icon={<ArrowLeft size={16} />}
           >

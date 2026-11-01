@@ -355,7 +355,7 @@ export const CurrencyWallet: React.FC<CurrencyWalletProps> = ({
               />
             </FormGroup>
             <ModalActions>
-              <Button variant="secondary" type="button" onClick={closeModal}>
+              <Button tone="secondary" type="button" onClick={closeModal}>
                 Cancel
               </Button>
               <Button

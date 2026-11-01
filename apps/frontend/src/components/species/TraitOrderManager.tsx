@@ -351,7 +351,7 @@ export const TraitOrderManager: React.FC<TraitOrderManagerProps> = ({
       <Actions>
         {hasChanges && (
           <Button
-            variant="secondary"
+            tone="secondary"
             size="sm"
             onClick={handleReset}
             disabled={saving}
@@ -360,7 +360,7 @@ export const TraitOrderManager: React.FC<TraitOrderManagerProps> = ({
           </Button>
         )}
         <Button
-          variant="primary"
+          tone="primary"
           size="sm"
           onClick={handleSave}
           disabled={!hasChanges || saving}

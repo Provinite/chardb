@@ -317,7 +317,7 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
         >
           <Button
             type="button"
-            variant="secondary"
+            tone="secondary"
             onClick={onClose}
             disabled={isSubmitting}
           >
@@ -552,7 +552,7 @@ export const EnumValueManagementPage: React.FC = () => {
 
         <HeaderRight>
           <Button
-            variant="secondary"
+            tone="secondary"
             onClick={() => navigate(`/species/${trait.species?.id}/traits`)}
           >
             Back to Traits
@@ -606,7 +606,7 @@ export const EnumValueManagementPage: React.FC = () => {
 
               <EnumValueActions>
                 <Button
-                  variant="secondary"
+                  tone="secondary"
                   size="sm"
                   onClick={() => handleMoveUp(enumValue)}
                   disabled={index === 0}
@@ -615,7 +615,7 @@ export const EnumValueManagementPage: React.FC = () => {
                   Up
                 </Button>
                 <Button
-                  variant="secondary"
+                  tone="secondary"
                   size="sm"
                   onClick={() => handleMoveDown(enumValue)}
                   disabled={index === sortedEnumValues.length - 1}
@@ -624,7 +624,7 @@ export const EnumValueManagementPage: React.FC = () => {
                   Down
                 </Button>
                 <Button
-                  variant="secondary"
+                  tone="secondary"
                   size="sm"
                   onClick={() => handleEditEnumValue(enumValue)}
                   icon={<Edit size={14} />}
@@ -632,7 +632,7 @@ export const EnumValueManagementPage: React.FC = () => {
                   Edit
                 </Button>
                 <Button
-                  variant="danger"
+                  tone="danger"
                   size="sm"
                   onClick={() => handleDeleteEnumValue(enumValue)}
                   icon={<Trash2 size={14} />}

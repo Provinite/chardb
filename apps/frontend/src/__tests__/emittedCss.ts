@@ -12,8 +12,13 @@ export interface EmittedRule {
   declarations: Record<string, string>;
 }
 
+/**
+ * Every stylesheet vanilla-extract has injected. styled-components' own tag
+ * (`data-styled`) is left out: it holds rules from unmigrated files that
+ * PostCSS cannot always parse, and none of them is vanilla-extract's.
+ */
 const emittedCss = () =>
-  [...document.querySelectorAll("style")]
+  [...document.querySelectorAll("style:not([data-styled])")]
     .map((style) => style.textContent)
     .join("\n");
 

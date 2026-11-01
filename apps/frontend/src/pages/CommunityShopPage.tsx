@@ -697,7 +697,7 @@ export const CommunityShopPage: React.FC = () => {
                     </strong>
                   </Total>
                   <ModalActions>
-                    <Button variant="secondary" onClick={cart.clear} size="sm">
+                    <Button tone="secondary" onClick={cart.clear} size="sm">
                       Clear
                     </Button>
                     <Button onClick={() => setConfirming(true)} size="sm">
@@ -795,7 +795,7 @@ export const CommunityShopPage: React.FC = () => {
             .
           </Total>
           <ModalActions>
-            <Button variant="secondary" onClick={() => setConfirming(false)}>
+            <Button tone="secondary" onClick={() => setConfirming(false)}>
               Cancel
             </Button>
             <Button onClick={handleCheckout} disabled={buying}>
@@ -815,7 +815,6 @@ export const CommunityShopPage: React.FC = () => {
         open={undoTarget !== null}
         title={undoTarget ? `Undo buying ${undoTarget.item}?` : "Undo?"}
         confirmLabel="Undo it"
-        busyLabel="Undoing…"
         busy={undoing}
         onCancel={() => setUndoTarget(null)}
         onConfirm={() => {

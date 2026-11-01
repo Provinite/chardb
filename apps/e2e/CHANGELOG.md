@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Button specs**: Ctrl-click on a link button, 44px touch targets on a phone, Enter not resubmitting while a submit button is busy, and View All as a single link (#503).
+
 ## [v15.0.0] - 2026-10-31
 
 ### Added

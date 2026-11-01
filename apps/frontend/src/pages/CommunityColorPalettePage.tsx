@@ -379,7 +379,7 @@ export const CommunityColorPalettePage: React.FC = () => {
                 </ColorInfo>
                 <ColorActions>
                   <Button
-                    variant="secondary"
+                    tone="secondary"
                     size="sm"
                     onClick={() => handleOpenEditModal(color)}
                   >
@@ -387,7 +387,7 @@ export const CommunityColorPalettePage: React.FC = () => {
                     Edit
                   </Button>
                   <Button
-                    variant="danger"
+                    tone="danger"
                     size="sm"
                     onClick={() => handleDelete(color.id)}
                   >
@@ -407,7 +407,7 @@ export const CommunityColorPalettePage: React.FC = () => {
             <ModalTitle>
               {editingColor ? "Edit Color" : "Create New Color"}
             </ModalTitle>
-            <Button variant="ghost" size="sm" onClick={handleCloseModal}>
+            <Button tone="ghost" size="sm" onClick={handleCloseModal}>
               <X size={20} />
             </Button>
           </ModalHeader>
@@ -459,11 +459,7 @@ export const CommunityColorPalettePage: React.FC = () => {
             </FormGroup>
 
             <FormActions>
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={handleCloseModal}
-              >
+              <Button type="button" tone="secondary" onClick={handleCloseModal}>
                 Cancel
               </Button>
               <Button type="submit" disabled={creating || updating}>
