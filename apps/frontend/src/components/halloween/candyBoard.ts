@@ -28,8 +28,8 @@ export type Sticker = HalloweenStickerInput;
 
 export const NAMEPLATE: Sticker = { nameplate: true };
 
-export const candySticker = (knockEventId: number): Sticker => ({
-  candy: knockEventId,
+export const candySticker = (candyId: number): Sticker => ({
+  candy: candyId,
 });
 
 /** What the page knows a sticker by: "candy:12", or "nameplate". */
@@ -109,26 +109,26 @@ export function pointOnBoard(
 export interface TrayGroup {
   slug: string;
   /** Every candy of this kind not on the board, first got first. */
-  knockEventIds: number[];
+  candyIds: number[];
 }
 
 /** The candies not on the board, one group per kind, by the kind's name. */
 export function trayGroups(
-  candies: { knockEventId: number; slug: string }[],
+  candies: { id: number; slug: string }[],
   placements: Placement[],
 ): TrayGroup[] {
   const placed = new Set(placements.map((p) => p.sticker.candy));
   const groups = new Map<string, number[]>();
   for (const candy of candies) {
-    if (placed.has(candy.knockEventId)) continue;
+    if (placed.has(candy.id)) continue;
     const ids = groups.get(candy.slug) ?? [];
-    ids.push(candy.knockEventId);
+    ids.push(candy.id);
     groups.set(candy.slug, ids);
   }
   // By name, so a group keeps its place as its candies come and go.
   return [...groups]
     .sort(([a], [b]) => a.localeCompare(b))
-    .map(([slug, knockEventIds]) => ({ slug, knockEventIds }));
+    .map(([slug, candyIds]) => ({ slug, candyIds }));
 }
 
 /** The sticker an action is about. */

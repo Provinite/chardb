@@ -1263,11 +1263,10 @@ export type GrantItemInput = {
   userId?: InputMaybe<Scalars['ID']['input']>;
 };
 
-/** A candy a player got from a lost knock */
+/** A candy a player got from a lost knock, or by trading */
 export type HalloweenCandy = {
   __typename?: 'HalloweenCandy';
-  /** The knock that gave it; its id */
-  knockEventId: Scalars['Int']['output'];
+  id: Scalars['Int']['output'];
   receivedAt: Scalars['DateTime']['output'];
   /** Which candy it is: its image is /halloween/candy/<slug>.png on the frontend */
   slug: Scalars['String']['output'];
@@ -1400,6 +1399,31 @@ export type HalloweenCandyLightingInput = {
   y: Scalars['Float']['input'];
 };
 
+/** 1-3 candies offered for one candy of `wantSlug`. Whose an offer is is not told: players find out whom they traded with once they have. */
+export type HalloweenCandyOffer = {
+  __typename?: 'HalloweenCandyOffer';
+  /** What is offered. Empty once the offer is no longer open. */
+  candies: Array<HalloweenCandy>;
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  status: HalloweenCandyOfferStatus;
+  /** The kind of candy asked for, by its slug */
+  wantSlug: Scalars['String']['output'];
+};
+
+/** An offer just placed, and the trade it made straight away if it met its mirror: a one-for-one offer asking for what this one gives. */
+export type HalloweenCandyOfferPlaced = {
+  __typename?: 'HalloweenCandyOfferPlaced';
+  offer: HalloweenCandyOffer;
+  trade: Maybe<HalloweenCandyTradeRecord>;
+};
+
+export enum HalloweenCandyOfferStatus {
+  Cancelled = 'CANCELLED',
+  Filled = 'FILLED',
+  Open = 'OPEN'
+}
+
 /** Where a sticker sits on a board */
 export type HalloweenCandyPlacement = {
   __typename?: 'HalloweenCandyPlacement';
@@ -1412,6 +1436,19 @@ export type HalloweenCandyPlacement = {
   x: Scalars['Float']['output'];
   /** The candy's centre, as a fraction of the board's height, 0-1 */
   y: Scalars['Float']['output'];
+};
+
+/** A candy swap you took part in, as you saw it */
+export type HalloweenCandyTradeRecord = {
+  __typename?: 'HalloweenCandyTradeRecord';
+  createdAt: Scalars['DateTime']['output'];
+  /** The slugs of the candies you gave */
+  gave: Array<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  /** The slugs of the candies you got */
+  received: Array<Scalars['String']['output']>;
+  /** Whom you traded with. Null if their account is gone. */
+  with: Maybe<User>;
 };
 
 /** The Halloween event as staff see it */
@@ -1490,13 +1527,13 @@ export type HalloweenSettingsInput = {
 /** What a placement on a board is: a candy, or the board's nameplate -- a banner with its name. Exactly one field is set. */
 export type HalloweenSticker = {
   __typename?: 'HalloweenSticker';
-  /** A candy, by the knock that gave it */
+  /** A candy, by its id */
   candy: Maybe<Scalars['Int']['output']>;
   /** The board's nameplate, of which it has one */
   nameplate: Maybe<Scalars['Boolean']['output']>;
 };
 
-/** A sticker on your board: exactly one of a candy, by the knock that gave it, or the nameplate (true) */
+/** A sticker on your board: exactly one of a candy, by its id, or the nameplate (true) */
 export type HalloweenStickerInput =
   { candy: Scalars['Int']['input']; nameplate?: never; }
   |  { candy?: never; nameplate: Scalars['Boolean']['input']; };
@@ -2150,6 +2187,8 @@ export type MoveCharactersToFolderInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  /** Fill another player's open offer: your oldest spare candy of the wanted kind for everything it offers. */
+  acceptHalloweenCandyOffer: HalloweenCandyTradeRecord;
   /** Accept and settle. Items, characters and coin move in one transaction across all three ledgers, or the whole accept fails. */
   acceptTrade: Trade;
   addCharacterTags: Character;
@@ -2167,6 +2206,8 @@ export type Mutation = {
   burnCurrency: Scalars['String']['output'];
   /** Cancel a running DeviantArt UUID backfill job. */
   cancelDeviantartUuidBackfill: Scalars['Boolean']['output'];
+  /** Withdraw one of your open offers, getting its candies back */
+  cancelHalloweenCandyOffer: Scalars['Boolean']['output'];
   /** Withdraw an offer you sent. */
   cancelTrade: Trade;
   /** Redeem an item to move one of your characters to the variant that item grants. Destroys the item and applies the change immediately -- there is no review. Authorized by holding the item, not by canEditCharacterRegistry. */
@@ -2262,6 +2303,8 @@ export type Mutation = {
   moveCharacterFolder: Array<CharacterFolder>;
   /** File characters, unfile them, or move them between folders. Returns how many characters were affected. */
   moveCharactersToFolder: Scalars['Int']['output'];
+  /** Offer 1-3 of your candies, none of the wanted kind, for one candy of `wantSlug`. They are held until the offer is filled or cancelled. At most 10 open offers. A one-for-one offer that meets another player's mirror offer trades at once. */
+  placeHalloweenCandyOffer: HalloweenCandyOfferPlaced;
   /** Compose an offer. Nothing is reserved: what it names is checked now so you are told early, and checked again decisively at accept. */
   proposeTrade: Trade;
   /** Permanently hard-delete a character. Global admin only. Use deleteCharacter for soft-delete. */
@@ -2401,6 +2444,12 @@ export type Mutation = {
 };
 
 
+export type MutationAcceptHalloweenCandyOfferArgs = {
+  communityId: Scalars['ID']['input'];
+  offerId: Scalars['ID']['input'];
+};
+
+
 export type MutationAcceptTradeArgs = {
   id: Scalars['ID']['input'];
   selections?: InputMaybe<Array<TradeSelectionInput>>;
@@ -2444,6 +2493,12 @@ export type MutationAssignCharacterSpeciesArgs = {
 
 export type MutationBurnCurrencyArgs = {
   input: BurnCurrencyInput;
+};
+
+
+export type MutationCancelHalloweenCandyOfferArgs = {
+  communityId: Scalars['ID']['input'];
+  offerId: Scalars['ID']['input'];
 };
 
 
@@ -2709,6 +2764,13 @@ export type MutationMoveCharacterFolderArgs = {
 
 export type MutationMoveCharactersToFolderArgs = {
   input: MoveCharactersToFolderInput;
+};
+
+
+export type MutationPlaceHalloweenCandyOfferArgs = {
+  candyIds: Array<Scalars['Int']['input']>;
+  communityId: Scalars['ID']['input'];
+  wantSlug: Scalars['String']['input'];
 };
 
 
@@ -3192,6 +3254,7 @@ export enum NotificationKind {
   CommentReceived = 'COMMENT_RECEIVED',
   CurrencyReceived = 'CURRENCY_RECEIVED',
   FollowReceived = 'FOLLOW_RECEIVED',
+  HalloweenCandyTraded = 'HALLOWEEN_CANDY_TRADED',
   ImageApproved = 'IMAGE_APPROVED',
   ImageRejected = 'IMAGE_REJECTED',
   ItemGranted = 'ITEM_GRANTED',
@@ -3219,6 +3282,7 @@ export enum NotificationSubjectType {
   Comment = 'COMMENT',
   Currency = 'CURRENCY',
   Gallery = 'GALLERY',
+  HalloweenCandyTrade = 'HALLOWEEN_CANDY_TRADE',
   Image = 'IMAGE',
   Item = 'ITEM',
   Media = 'MEDIA',
@@ -3389,6 +3453,10 @@ export type Query = {
   globalPendingImageCount: Scalars['Int']['output'];
   /** A Halloween candy board, by the id in its link. Null if there is no such board in this community's Discord server, or the community has none linked. An error if the community does not exist or has the Halloween event turned off. */
   halloweenCandyBoard: Maybe<HalloweenCandyBoard>;
+  /** A random handful of other players' open candy offers that you have a spare candy of the wanted kind for. At most 50; 12 unless given. */
+  halloweenCandySwapOffers: Array<HalloweenCandyOffer>;
+  /** Every kind of Halloween candy, by slug: its image is /halloween/candy/<slug>.png on the frontend */
+  halloweenCandyTypes: Array<Scalars['String']['output']>;
   /** The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems. */
   halloweenDashboard: HalloweenDashboard;
   /** Characters of the community a new Halloween prize could hand over, by name: no owner, no pending owner, and not a prize already (25 per search) */
@@ -3442,8 +3510,14 @@ export type Query = {
   /** Get all external accounts linked to the current user */
   myExternalAccounts: Array<ExternalAccount>;
   myGalleries: GalleryConnection;
-  /** Your Halloween candy boards here, the last changed first. Null without Discord linked, since candies belong to Discord players. */
+  /** Your Halloween candies here that are not held in an offer, oldest first */
+  myHalloweenCandies: Array<HalloweenCandy>;
+  /** Your Halloween candy boards here, the last changed first. Null without Discord linked, since candies come from knocking on Discord. */
   myHalloweenCandyBoards: Maybe<Array<HalloweenCandyBoard>>;
+  /** Your open candy offers here, newest first */
+  myHalloweenCandyOffers: Array<HalloweenCandyOffer>;
+  /** The candy swaps you took part in here, newest first */
+  myHalloweenCandyTrades: Array<HalloweenCandyTradeRecord>;
   /** Retrieves media owned by the current authenticated user */
   myMedia: MediaConnection;
   /** The viewer's own purchase lines, newest first, searchable and paged. A line is what a buyer counts and acts on, so it is the level a history filters at. */
@@ -3817,6 +3891,12 @@ export type QueryHalloweenCandyBoardArgs = {
 };
 
 
+export type QueryHalloweenCandySwapOffersArgs = {
+  communityId: Scalars['ID']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryHalloweenDashboardArgs = {
   communityId: Scalars['ID']['input'];
 };
@@ -3971,7 +4051,22 @@ export type QueryMyGalleriesArgs = {
 };
 
 
+export type QueryMyHalloweenCandiesArgs = {
+  communityId: Scalars['ID']['input'];
+};
+
+
 export type QueryMyHalloweenCandyBoardsArgs = {
+  communityId: Scalars['ID']['input'];
+};
+
+
+export type QueryMyHalloweenCandyOffersArgs = {
+  communityId: Scalars['ID']['input'];
+};
+
+
+export type QueryMyHalloweenCandyTradesArgs = {
   communityId: Scalars['ID']['input'];
 };
 
@@ -6142,7 +6237,7 @@ export type HalloweenPrizeCharactersQueryVariables = Exact<{
 
 export type HalloweenPrizeCharactersQuery = { __typename?: 'Query', halloweenPrizeCharacters: Array<{ __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, name: string } | null, mainMedia: { __typename?: 'Media', id: string, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus } | null } | null }> };
 
-export type HalloweenCandyBoardFieldsFragment = { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> };
+export type HalloweenCandyBoardFieldsFragment = { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> };
 
 export type HalloweenCandyBoardQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -6150,21 +6245,21 @@ export type HalloweenCandyBoardQueryVariables = Exact<{
 }>;
 
 
-export type HalloweenCandyBoardQuery = { __typename?: 'Query', halloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } | null };
+export type HalloweenCandyBoardQuery = { __typename?: 'Query', halloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } | null };
 
 export type MyHalloweenCandyBoardsQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
 
 
-export type MyHalloweenCandyBoardsQuery = { __typename?: 'Query', myHalloweenCandyBoards: Array<{ __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> }> | null };
+export type MyHalloweenCandyBoardsQuery = { __typename?: 'Query', myHalloweenCandyBoards: Array<{ __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> }> | null };
 
 export type CreateHalloweenCandyBoardMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
 
 
-export type CreateHalloweenCandyBoardMutation = { __typename?: 'Mutation', createHalloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
+export type CreateHalloweenCandyBoardMutation = { __typename?: 'Mutation', createHalloweenCandyBoard: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
 
 export type DeleteHalloweenCandyBoardMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -6181,7 +6276,7 @@ export type ApplyHalloweenCandyBoardActionsMutationVariables = Exact<{
 }>;
 
 
-export type ApplyHalloweenCandyBoardActionsMutation = { __typename?: 'Mutation', applyHalloweenCandyBoardActions: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
+export type ApplyHalloweenCandyBoardActionsMutation = { __typename?: 'Mutation', applyHalloweenCandyBoardActions: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
 
 export type SetHalloweenCandyBoardNameMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -6190,7 +6285,7 @@ export type SetHalloweenCandyBoardNameMutationVariables = Exact<{
 }>;
 
 
-export type SetHalloweenCandyBoardNameMutation = { __typename?: 'Mutation', setHalloweenCandyBoardName: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
+export type SetHalloweenCandyBoardNameMutation = { __typename?: 'Mutation', setHalloweenCandyBoardName: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
 
 export type SetHalloweenCandyBoardLightingMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -6199,7 +6294,7 @@ export type SetHalloweenCandyBoardLightingMutationVariables = Exact<{
 }>;
 
 
-export type SetHalloweenCandyBoardLightingMutation = { __typename?: 'Mutation', setHalloweenCandyBoardLighting: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
+export type SetHalloweenCandyBoardLightingMutation = { __typename?: 'Mutation', setHalloweenCandyBoardLighting: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
 
 export type SetHalloweenCandyBoardBackgroundMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -6209,7 +6304,7 @@ export type SetHalloweenCandyBoardBackgroundMutationVariables = Exact<{
 }>;
 
 
-export type SetHalloweenCandyBoardBackgroundMutation = { __typename?: 'Mutation', setHalloweenCandyBoardBackground: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', knockEventId: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
+export type SetHalloweenCandyBoardBackgroundMutation = { __typename?: 'Mutation', setHalloweenCandyBoardBackground: { __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> } };
 
 export type ImageModerationQueueQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -7574,7 +7669,7 @@ export const HalloweenCandyBoardFieldsFragmentDoc = gql`
     displayName
   }
   candies {
-    knockEventId
+    id
     slug
     receivedAt
   }

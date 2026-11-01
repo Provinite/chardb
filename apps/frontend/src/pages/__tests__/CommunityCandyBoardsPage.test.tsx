@@ -73,7 +73,7 @@ const board = (
   candies: [
     {
       __typename: "HalloweenCandy" as const,
-      knockEventId: 1,
+      id: 1,
       slug: "candy-corn",
       receivedAt: "2026-10-20T00:00:00.000Z",
     },

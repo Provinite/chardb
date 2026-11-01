@@ -242,7 +242,7 @@ export const HALLOWEEN_CANDY_BOARD_FRAGMENT = gql`
       displayName
     }
     candies {
-      knockEventId
+      id
       slug
       receivedAt
     }

@@ -3,7 +3,7 @@ import {
   NotificationSubjectType,
   type NotificationFieldsFragment,
 } from "../../graphql/notifications.graphql";
-import { apexUrl } from "../../lib/communityHost";
+import { apexUrl, communityUrl } from "../../lib/communityHost";
 
 /**
  * Where clicking a notification goes, or null when it goes nowhere.
@@ -61,6 +61,9 @@ export function notificationHref(
       return community
         ? apexUrl(`/communities/${community.id}/trades/${subjectId}`)
         : null;
+    case NotificationSubjectType.HalloweenCandyTrade:
+      // The trade shows in the swap page's history; it has no page of its own.
+      return community ? communityUrl(community.slug, "/halloween/swap") : null;
     case NotificationSubjectType.Comment:
     case NotificationSubjectType.Image:
       // Neither has a page of its own: a comment is rendered inside whatever it
@@ -124,6 +127,10 @@ export function notificationSentence(
         ? `could not approve ${name} — ${why}`
         : `could not approve ${name}`;
     }
+    case NotificationKind.HalloweenCandyTraded:
+      return count && count > 1
+        ? `traded you ${count} candies on the candy swap`
+        : "traded you a candy on the candy swap";
   }
 }
 

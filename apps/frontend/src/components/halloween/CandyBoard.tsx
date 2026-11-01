@@ -60,7 +60,7 @@ import {
  */
 
 export interface BoardCandy {
-  knockEventId: number;
+  id: number;
   slug: string;
 }
 
@@ -511,7 +511,7 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
   const draggedFromTray = useRef(false);
 
   const editable = Boolean(onAction);
-  const slugs = new Map(candies.map((c) => [c.knockEventId, c.slug]));
+  const slugs = new Map(candies.map((c) => [c.id, c.slug]));
   const nameText = name ? formatBoardName(name) : null;
   const ribbon = useRibbon();
   // No nameplate, placed or in the tray, until its ribbon has loaded.
@@ -1047,15 +1047,15 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                 </TrayItem>
               </WideSlot>
             )}
-            {groups.map(({ slug, knockEventIds }) => (
+            {groups.map(({ slug, candyIds }) => (
               <li key={slug}>
                 <TrayItem
                   type="button"
-                  aria-label={`Place ${candyName(slug)} (${knockEventIds.length} left)`}
+                  aria-label={`Place ${candyName(slug)} (${candyIds.length} left)`}
                   onPointerDown={(e) =>
                     startTrayDrag(
                       e,
-                      candySticker(knockEventIds[0]),
+                      candySticker(candyIds[0]),
                       candyImageUrl(slug),
                     )
                   }
@@ -1067,13 +1067,11 @@ export const CandyBoard: React.FC<CandyBoardProps> = ({
                       draggedFromTray.current = false;
                       return;
                     }
-                    place(candySticker(knockEventIds[0]), CENTRE);
+                    place(candySticker(candyIds[0]), CENTRE);
                   }}
                 >
                   <img src={candyImageUrl(slug)} alt="" draggable={false} />
-                  {knockEventIds.length > 1 && (
-                    <Count>{knockEventIds.length}</Count>
-                  )}
+                  {candyIds.length > 1 && <Count>{candyIds.length}</Count>}
                 </TrayItem>
               </li>
             ))}

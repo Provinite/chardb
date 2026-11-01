@@ -61,6 +61,10 @@ const KIND_COPY: Partial<
     label: "Trades declined",
     description: "A trade you proposed was turned down.",
   },
+  [NotificationKind.HalloweenCandyTraded]: {
+    label: "Candy swaps",
+    description: "Somebody took one of your candy swap offers.",
+  },
 };
 
 export function NotificationPreferencesSettings() {
