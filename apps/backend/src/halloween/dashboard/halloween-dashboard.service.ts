@@ -44,6 +44,16 @@ const MAX_WINS_PAGE = 100;
 
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+const emptyPeriod = (from: Date, to: Date): HalloweenPeriodStats => ({
+  from,
+  to,
+  players: 0,
+  knocks: 0,
+  wins: 0,
+  giftiesSent: 0,
+  giftySenders: 0,
+});
+
 /** A prize nothing delivers but staff. */
 const staffPrize = {
   is: { itemTypeId: null, characterId: null },
@@ -139,8 +149,9 @@ export class HalloweenDashboardService {
 
   async getDashboard(communityId: string): Promise<HalloweenDashboard> {
     const guildId = await this.guildFor(communityId);
+    const now = this.clock.now();
+    const dayAgo = new Date(now.getTime() - DAY_MS);
     if (!guildId) {
-      const now = this.clock.now();
       return {
         communityId,
         guildId: null,
@@ -152,15 +163,7 @@ export class HalloweenDashboardService {
           players: 0,
           toDeliver: 0,
           unspentGifties: 0,
-          last24Hours: {
-            from: new Date(now.getTime() - DAY_MS),
-            to: now,
-            players: 0,
-            knocks: 0,
-            wins: 0,
-            giftiesSent: 0,
-            giftySenders: 0,
-          },
+          last24Hours: emptyPeriod(dayAgo, now),
           today: null,
           yesterday: null,
         },
@@ -168,36 +171,53 @@ export class HalloweenDashboardService {
       };
     }
 
-    const [settings, prizes, knocks, wins, toDeliver, giftiesSent, players] =
-      await Promise.all([
-        this.db.halloweenGuildSettings.findUnique({ where: { guildId } }),
-        this.db.halloweenPrize.findMany({
-          where: { guildId },
-          orderBy: { id: "asc" },
-        }),
-        this.db.halloweenKnockEvent.count({ where: { guildId } }),
-        this.db.halloweenKnockEvent.count({
-          where: winsWhere(guildId, HalloweenWinFilter.ALL),
-        }),
-        this.db.halloweenKnockEvent.count({
-          where: winsWhere(guildId, HalloweenWinFilter.NEEDS_DELIVERY),
-        }),
-        this.db.halloweenGifty.count({ where: { guildId } }),
-        this.db.$queryRaw<[{ count: number }]>`
+    const settingsRead = this.db.halloweenGuildSettings.findUnique({
+      where: { guildId },
+    });
+    // Only the reset days wait for the settings, for the reset hour.
+    const resetDayStats = settingsRead.then(
+      (s): Promise<(HalloweenPeriodStats | null)[]> => {
+        if (!s) return Promise.resolve([null, null]);
+        const days = this.resetDays(s.resetTime, now);
+        return Promise.all([
+          this.periodStats(guildId, days.today, now),
+          this.periodStats(guildId, days.yesterday, days.today),
+        ]);
+      },
+    );
+    const [
+      settings,
+      prizes,
+      knocks,
+      wins,
+      toDeliver,
+      giftiesSent,
+      players,
+      unspentGifties,
+      last24Hours,
+      [today, yesterday],
+    ] = await Promise.all([
+      settingsRead,
+      this.db.halloweenPrize.findMany({
+        where: { guildId },
+        orderBy: { id: "asc" },
+      }),
+      this.db.halloweenKnockEvent.count({ where: { guildId } }),
+      this.db.halloweenKnockEvent.count({
+        where: winsWhere(guildId, HalloweenWinFilter.ALL),
+      }),
+      this.db.halloweenKnockEvent.count({
+        where: winsWhere(guildId, HalloweenWinFilter.NEEDS_DELIVERY),
+      }),
+      this.db.halloweenGifty.count({ where: { guildId } }),
+      this.db.$queryRaw<[{ count: number }]>`
           SELECT COUNT(DISTINCT "user_id")::int AS count
           FROM "halloween_knock_events"
           WHERE "guild_id" = ${guildId}
         `,
-      ]);
-
-    const now = this.clock.now();
-    const resetDays = settings && this.resetDays(settings.resetTime, now);
-    const [unspentGifties, last24Hours, today, yesterday] = await Promise.all([
       this.db.halloweenGifty.count({ where: { guildId, knockEventId: null } }),
-      this.periodStats(guildId, new Date(now.getTime() - DAY_MS), now),
-      resetDays && this.periodStats(guildId, resetDays.today, now),
-      resetDays &&
-        this.periodStats(guildId, resetDays.yesterday, resetDays.today),
+      this.periodStats(guildId, dayAgo, now),
+      resetDayStats,
     ]);
 
     return {

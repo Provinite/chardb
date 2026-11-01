@@ -50,9 +50,6 @@ export class HalloweenRandom {
    * is twice as likely as weight 1.
    */
   weighted<T>(items: readonly T[], weights: readonly number[]): T {
-    if (items.length !== weights.length) {
-      throw new Error("elements and weights must be the same length");
-    }
     const total = weights.reduce((acc, w) => acc + w, 0);
     return pickWeighted(items, weights, this.int(total));
   }
