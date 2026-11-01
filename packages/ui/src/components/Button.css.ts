@@ -8,18 +8,18 @@ import { vars } from "../theme/contract.css";
 const live = ':not(:disabled):not([aria-disabled="true"])';
 
 const filled = (action: typeof vars.action.secondary) => ({
-  background: action.bg,
+  backgroundColor: action.bg,
   color: action.fg,
   borderColor: action.border,
   selectors: {
     [`&:active${live}`]: {
-      background: action.bgPressed,
+      backgroundColor: action.bgPressed,
       borderColor: action.bgPressed,
     },
   },
   "@media": hover({
     [`&:hover${live}`]: {
-      background: action.bgHover,
+      backgroundColor: action.bgHover,
       borderColor: action.bgHover,
     },
   }),
@@ -67,14 +67,14 @@ const root = style({
   textDecoration: "none",
   cursor: "pointer",
   transition: [
-    `background ${vars.motion.duration.fast} ${vars.motion.easing.standard}`,
+    `background-color ${vars.motion.duration.fast} ${vars.motion.easing.standard}`,
     `border-color ${vars.motion.duration.fast} ${vars.motion.easing.standard}`,
     `color ${vars.motion.duration.fast} ${vars.motion.easing.standard}`,
   ].join(", "),
   selectors: {
     // Every tone greys out the same way.
     "&:disabled": {
-      background: vars.action.primary.bgDisabled,
+      backgroundColor: vars.action.primary.bgDisabled,
       borderColor: vars.action.primary.bgDisabled,
       color: vars.action.primary.fgDisabled,
       cursor: "not-allowed",
@@ -91,32 +91,32 @@ export const button = recipe({
       secondary: filled(vars.action.secondary),
       danger: filled(vars.action.danger),
       outline: {
-        background: "transparent",
+        backgroundColor: "transparent",
         color: vars.action.primary.fgOutline,
         borderColor: vars.action.primary.border,
         selectors: {
           [`&:active${live}`]: {
-            background: vars.action.primary.bgPressed,
+            backgroundColor: vars.action.primary.bgPressed,
             borderColor: vars.action.primary.bgPressed,
             color: vars.action.primary.fg,
           },
         },
         "@media": hover({
           [`&:hover${live}`]: {
-            background: vars.action.primary.bgHover,
+            backgroundColor: vars.action.primary.bgHover,
             borderColor: vars.action.primary.bgHover,
             color: vars.action.primary.fg,
           },
         }),
       },
       ghost: {
-        background: "transparent",
+        backgroundColor: "transparent",
         color: vars.text.default,
         selectors: {
-          [`&:active${live}`]: { background: vars.surface.sunken },
+          [`&:active${live}`]: { backgroundColor: vars.surface.sunken },
         },
         "@media": hover({
-          [`&:hover${live}`]: { background: vars.surface.raisedHover },
+          [`&:hover${live}`]: { backgroundColor: vars.surface.raisedHover },
         }),
       },
     },
