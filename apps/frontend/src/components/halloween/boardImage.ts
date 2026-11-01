@@ -6,6 +6,10 @@
  * the board's filters and blend modes only nearly right; this gets them as
  * the board does.
  *
+ * Its background and the candies' shadows can each be left out: with no
+ * background, the picture is the candies alone on nothing, lit as the board
+ * lights them.
+ *
  * `drawBoard` draws on any canvas context with any picture loader, so it is
  * tested without a canvas; `downloadBoardImage` is what the page calls.
  */
@@ -44,7 +48,23 @@ export interface BoardScene {
   name: BoardName | null | undefined;
 }
 
+/** What of the board the picture has. */
+export interface BoardImageOptions {
+  /** The background, and what mutes it; without, the PNG is see-through. */
+  background: boolean;
+  /** The shadow each candy casts. */
+  shadows: boolean;
+}
+
+export const DEFAULT_BOARD_IMAGE_OPTIONS: BoardImageOptions = {
+  background: true,
+  shadows: true,
+};
+
 export type LoadImage = (src: string) => Promise<HTMLImageElement>;
+
+/** A blank canvas the picture's size, to draw on. */
+export type NewLayer = () => CanvasRenderingContext2D;
 
 /** "Clover upon Coin" -> "clover-upon-coin.png"; "candy-board.png" unnamed. */
 export function boardImageFileName(name: BoardName | null | undefined): string {
@@ -111,6 +131,7 @@ async function drawStickers(
   ctx: CanvasRenderingContext2D,
   scene: BoardScene,
   load: LoadImage,
+  shadows: boolean,
 ) {
   const slugs = new Map(scene.candies.map((c) => [c.id, c.slug]));
   const ribbon = scene.name ? await loadRibbon() : null;
@@ -139,10 +160,12 @@ async function drawStickers(
     const w = stickerSize(p.sticker) * p.scale * W;
     const h = (w * image.naturalHeight) / image.naturalWidth;
     ctx.save();
-    ctx.shadowColor = `rgba(0, 0, 0, ${shadow.opacity})`;
-    ctx.shadowOffsetX = shadow.dx * CQW;
-    ctx.shadowOffsetY = shadow.dy * CQW;
-    ctx.shadowBlur = shadow.blur * CQW;
+    if (shadows) {
+      ctx.shadowColor = `rgba(0, 0, 0, ${shadow.opacity})`;
+      ctx.shadowOffsetX = shadow.dx * CQW;
+      ctx.shadowOffsetY = shadow.dy * CQW;
+      ctx.shadowBlur = shadow.blur * CQW;
+    }
     ctx.translate(p.x * W, p.y * H);
     ctx.rotate((p.rotation * Math.PI) / 180);
     ctx.drawImage(image, -w / 2, -h / 2, w, h);
@@ -195,15 +218,39 @@ function drawLight(ctx: CanvasRenderingContext2D, scene: BoardScene) {
   );
 }
 
+const newCanvasLayer: NewLayer = () => {
+  const canvas = document.createElement("canvas");
+  canvas.width = W;
+  canvas.height = H;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) throw new Error("This browser cannot draw the picture");
+  return ctx;
+};
+
 /** Draws the board on `ctx`, BOARD_IMAGE_WIDTH by BOARD_IMAGE_HEIGHT. */
 export async function drawBoard(
   ctx: CanvasRenderingContext2D,
   scene: BoardScene,
   load: LoadImage,
+  options: BoardImageOptions = DEFAULT_BOARD_IMAGE_OPTIONS,
+  newLayer: NewLayer = newCanvasLayer,
 ): Promise<void> {
-  await drawBackground(ctx, scene, load);
-  await drawStickers(ctx, scene, load);
+  if (options.background) await drawBackground(ctx, scene, load);
+  await drawStickers(ctx, scene, load, options.shadows);
+  if (options.background) {
+    drawLight(ctx, scene);
+    return;
+  }
+  if (!lightWash(scene.lighting) && !spotlightOf(scene.lighting)) return;
+  // The light fills the whole picture, the empty part too. Cut it back to
+  // what it fell on: the candies, and their shadows.
+  const drawn = newLayer();
+  drawn.drawImage(ctx.canvas, 0, 0);
   drawLight(ctx, scene);
+  ctx.save();
+  ctx.globalCompositeOperation = "destination-in";
+  ctx.drawImage(drawn.canvas, 0, 0);
+  ctx.restore();
 }
 
 const loadImage: LoadImage = (src) =>
@@ -220,6 +267,7 @@ const RELEASE_AFTER_MS = 60_000;
 /** Draws the board and saves it as a PNG, named for it. */
 export async function downloadBoardImage(
   scene: BoardScene,
+  options: BoardImageOptions = DEFAULT_BOARD_IMAGE_OPTIONS,
   load: LoadImage = loadImage,
 ): Promise<void> {
   const canvas = document.createElement("canvas");
@@ -227,7 +275,7 @@ export async function downloadBoardImage(
   canvas.height = H;
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("This browser cannot draw the picture");
-  await drawBoard(ctx, scene, load);
+  await drawBoard(ctx, scene, load, options);
   const blob = await new Promise<Blob | null>((resolve) =>
     canvas.toBlob(resolve, "image/png"),
   );

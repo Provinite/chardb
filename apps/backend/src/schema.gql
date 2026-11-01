@@ -5757,6 +5757,8 @@ type UseItemResult {
 }
 
 type User {
+  """What the user has earned in a community, newest first."""
+  achievements(communityId: ID!): [UserAchievement!]!
   avatarImage: Image
   bio: String
   canCreateCommunity: Boolean!
@@ -5783,6 +5785,21 @@ type User {
   userIsFollowing: Boolean!
   username: String!
   website: String
+}
+
+"""An achievement a user earned in a community."""
+type UserAchievement {
+  """How it was earned."""
+  description: String!
+  earnedAt: DateTime!
+  id: ID!
+
+  """Path of its picture on the frontend's own origin."""
+  imagePath: String!
+  name: String!
+
+  """Which achievement it is, e.g. `trick-or-treater-2026`."""
+  slug: String!
 }
 
 type UserConnection {

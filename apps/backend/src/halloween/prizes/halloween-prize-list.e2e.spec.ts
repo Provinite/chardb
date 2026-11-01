@@ -6,7 +6,7 @@ import { DatabaseService } from "../../database/database.service";
 import { HalloweenModule } from "../halloween.module";
 import { HalloweenDiscordClient } from "../discord/halloween-discord.client";
 import { mockDiscord } from "../testing/command-harness";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import { fixedClock } from "../testing/fixtures";
 
 const NOW = "2025-10-15T17:00:00.000Z";
@@ -79,7 +79,7 @@ describe("Halloween prize list (e2e)", () => {
         builder
           .overrideProvider(HalloweenDiscordClient)
           .useValue(mockDiscord())
-          .overrideProvider(HalloweenClock)
+          .overrideProvider(Clock)
           .useValue(fixedClock(NOW)),
     );
     db = testApp.getDb();

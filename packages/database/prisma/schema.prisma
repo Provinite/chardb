@@ -235,6 +235,7 @@ model User {
   halloweenCandyOffers     HalloweenCandyOffer[]
   halloweenTradesStarted   HalloweenCandyTrade[] @relation("HalloweenCandyTradeInitiator")
   halloweenTradesFilled    HalloweenCandyTrade[] @relation("HalloweenCandyTradeOfferer")
+  achievements             UserAchievement[]
 
   @@map("users")
 }
@@ -881,8 +882,26 @@ model Community {
   trades               Trade[]
   /// Uploads that name this community directly; see `Media.communityId`.
   media                Media[]
+  userAchievements     UserAchievement[]
 
   @@map("communities")
+}
+
+/// An achievement a user earned in a community. Which achievements exist, and
+/// what each is called, lives in the backend's achievement catalog; `slug`
+/// names one of them.
+model UserAchievement {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  communityId String   @map("community_id")
+  slug        String   @db.VarChar(60)
+  earnedAt    DateTime @default(now()) @map("earned_at") @db.Timestamptz
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  community Community @relation(fields: [communityId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, communityId, slug])
+  @@map("user_achievements")
 }
 
 model CommunityColor {

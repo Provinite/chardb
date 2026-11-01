@@ -17,7 +17,7 @@ import {
   userMapperSelect,
 } from "../../users/utils/user-resolver-mappers";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import { getLastReset } from "../time";
 import {
   HalloweenDashboard,
@@ -115,7 +115,7 @@ export class HalloweenDashboardService {
   constructor(
     private readonly db: DatabaseService,
     private readonly prizeImages: PrizeImageService,
-    private readonly clock: HalloweenClock,
+    private readonly clock: Clock,
   ) {}
 
   /**

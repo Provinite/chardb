@@ -9,6 +9,7 @@ import {
   boardImageFileName,
   downloadBoardImage,
   drawBoard,
+  type BoardImageOptions,
   type BoardScene,
   type LoadImage,
 } from "../boardImage";
@@ -55,7 +56,7 @@ type Op =
     };
 
 /** A canvas context that remembers what was drawn on it. */
-function recorder() {
+function recorder(name = "board") {
   const ops: Op[] = [];
   const state = {
     fillStyle: "" as unknown,
@@ -69,6 +70,7 @@ function recorder() {
   const saved: (typeof state)[] = [];
   const ctx = {
     ...state,
+    canvas: { src: `canvas:${name}` },
     save() {
       saved.push({ ...this });
     },
@@ -139,14 +141,25 @@ const scene = (changes: Partial<BoardScene> = {}): BoardScene => ({
   ...changes,
 });
 
-const draw = async (s: BoardScene, broken: string[] = []) => {
+const draw = async (
+  s: BoardScene,
+  broken: string[] = [],
+  options?: BoardImageOptions,
+) => {
   const { ctx, ops } = recorder();
+  const layers: Op[][] = [];
   await drawBoard(
     ctx as unknown as CanvasRenderingContext2D,
     s,
     loader(broken),
+    options,
+    () => {
+      const layer = recorder("mask");
+      layers.push(layer.ops);
+      return layer.ctx as unknown as CanvasRenderingContext2D;
+    },
   );
-  return ops;
+  return Object.assign(ops, { layers });
 };
 
 const images = (ops: Op[]) =>
@@ -275,6 +288,62 @@ describe("drawBoard", () => {
   });
 });
 
+describe("drawBoard, with the board's choices left out", () => {
+  const bare: BoardImageOptions = { background: false, shadows: true };
+
+  it("draws no paper or background picture, and does not mute what is not there", async () => {
+    const ops = await draw(scene(), [], bare);
+    expect(ops[0]).toMatchObject({
+      op: "drawImage",
+      src: "/halloween/candy/candy-corn.png",
+    });
+    expect(ops.some((o) => o.op === "fillRect")).toBe(false);
+  });
+
+  it("draws the candies without their shadows", async () => {
+    const candies = images(
+      await draw(scene(), [], { background: true, shadows: false }),
+    ).filter((o) => o.src.includes("/candy/"));
+    expect(candies).toHaveLength(2);
+    for (const candy of candies) {
+      expect(candy.shadow).toEqual({
+        colour: "rgba(0, 0, 0, 0)",
+        x: 0,
+        y: 0,
+        blur: 0,
+      });
+    }
+  });
+
+  it("lights the candies alone: the light is cut back to what was drawn under it", async () => {
+    const ops = await draw(
+      scene({
+        lighting: { ...DEFAULT_LIGHTING, colour: "#f97316", spotlight: 0.6 },
+      }),
+      [],
+      bare,
+    );
+    // What was drawn before the light, copied to be cut to.
+    expect(ops.layers).toHaveLength(1);
+    expect(ops.layers[0]).toEqual([
+      expect.objectContaining({ op: "drawImage", src: "canvas:board" }),
+    ]);
+    const last = ops[ops.length - 1];
+    expect(last).toMatchObject({
+      op: "drawImage",
+      src: "canvas:mask",
+      blend: "destination-in",
+    });
+    expect(lastCandyAt(ops)).toBeLessThan(ops.length - 2);
+  });
+
+  it("needs no cutting under the default light", async () => {
+    const ops = await draw(scene(), [], bare);
+    expect(ops.layers).toEqual([]);
+    expect(ops.slice(lastCandyAt(ops) + 1)).toEqual([]);
+  });
+});
+
 describe("downloadBoardImage", () => {
   afterEach(() => {
     vi.restoreAllMocks();
@@ -302,6 +371,7 @@ describe("downloadBoardImage", () => {
 
     await downloadBoardImage(
       scene({ name: { first: "Clover", joiner: null, last: "Coin" } }),
+      undefined,
       loader(),
     );
 
