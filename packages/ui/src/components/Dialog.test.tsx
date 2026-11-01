@@ -272,6 +272,18 @@ describe("Dialog styles", () => {
     );
   });
 
+  it("leaves room under its title", () => {
+    render(
+      <Dialog.Root open onClose={() => {}}>
+        <Dialog.Title>Name your board</Dialog.Title>
+      </Dialog.Root>,
+    );
+
+    expect(
+      declarationsOf(document.querySelector("dialog h2")!)["margin-block-end"],
+    ).toBe(vars.space.md);
+  });
+
   it("pads its body, which scrolls when the dialog is capped", () => {
     render(
       <Dialog.Root open onClose={() => {}} aria-label="Body">

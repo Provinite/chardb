@@ -80,7 +80,9 @@ export const body = style({
 });
 
 export const title = style({
-  margin: 0,
+  marginBlockStart: 0,
+  marginBlockEnd: vars.space.md,
+  marginInline: 0,
   fontSize: vars.font.size.xl,
   fontWeight: vars.font.weight.semibold,
   lineHeight: vars.font.lineHeight.tight,

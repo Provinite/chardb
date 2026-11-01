@@ -30,6 +30,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **vanilla-extract build support**: `.css.ts` files compile in dev, production builds and tests, and `@chardb/ui` is bundled from source (#473).
 - **Vite 8, `@vitejs/plugin-react` 6 and Vitest 5**: production builds take under a second, and the bundle is about 50 kB smaller now that `@chardb/shared` is bundled from source (#463).
 
+### Removed
+
+- **Mantine**: its three packages, stylesheets and theme bridge. Stylesheets shrink from 239 kB to 44 kB (35 kB to 7 kB gzipped), and the vendor script from 167 kB to 56 kB (#466).
+
 ### Fixed
 
 - **Tab no longer lands on the fading startup screen** before it is removed (#486).
