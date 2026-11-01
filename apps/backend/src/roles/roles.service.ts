@@ -221,7 +221,7 @@ export class RolesService {
 
   /** Update a role */
   async update(id: string, input: UpdateRoleServiceInput) {
-    const role = await this.findOne(id); // This will throw if not found
+    await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.RoleUpdateInput = {};
 
