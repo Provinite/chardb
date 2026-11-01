@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **30 more Halloween candies** that knocks can give, players can swap and stick on their candy boards.
+
 ## [v15.1.0] - 2026-11-01
 
 ### Added
