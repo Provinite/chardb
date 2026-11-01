@@ -14,6 +14,8 @@ import { createPortal } from "react-dom";
 import styled, { css } from "styled-components";
 import { vars } from "../theme/contract.css";
 import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
+import { usePressOutside } from "./floating";
+import { usePortalContainer } from "./portal";
 
 /**
  * Menu - a "⋯" button that opens a short list of actions.
@@ -23,8 +25,8 @@ import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
  * fit an action bar at phone width. Items can sit in labelled groups, so a
  * "Staff actions" heading says whose controls they are.
  *
- * The list renders into `document.body`, so a card with `overflow: hidden`
- * cannot clip it. React events still bubble through the portal to the
+ * The list renders into `document.body`, or into the dialog it opened in,
+ * so a card with `overflow: hidden` cannot clip it. React events still bubble through the portal to the
  * component tree, so a wrapper that stops propagation still sees them.
  *
  * Follows the WAI-ARIA menu button pattern: opening focuses the first item,
@@ -123,7 +125,9 @@ const Trigger = styled.button<{ $appearance: "outlined" | "ghost" }>`
 
 const List = styled.div`
   position: fixed;
-  z-index: 1000;
+  /* The popovers' layer: one opened inside a popover renders after it, so
+     paints above it. */
+  z-index: ${vars.layer.dropdown.base};
   min-width: 12rem;
   max-width: calc(100vw - 16px);
   padding: ${({ theme }) => theme.spacing.xs} 0;
@@ -224,6 +228,7 @@ export const Menu: React.FC<MenuProps> = ({
   appearance = "outlined",
 }) => {
   const [open, setOpen] = useState(false);
+  const container = usePortalContainer();
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const listId = useId();
@@ -263,22 +268,7 @@ export const Menu: React.FC<MenuProps> = ({
     if (open) items()[0]?.focus({ preventScroll: true });
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        !listRef.current?.contains(target) &&
-        !triggerRef.current?.contains(target)
-      ) {
-        close(false);
-      }
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-    };
-  }, [open, close]);
+  const pressInside = usePressOutside(open, () => close(false), [triggerRef]);
 
   const context = useMemo(
     () => ({ close: () => close(true), dismiss: () => close(false) }),
@@ -352,11 +342,12 @@ export const Menu: React.FC<MenuProps> = ({
               role="menu"
               aria-label={label}
               onKeyDown={onListKeyDown}
+              onMouseDownCapture={pressInside.onMouseDownCapture}
             >
               {children}
             </List>
           </MenuContext.Provider>,
-          document.body,
+          container,
         )}
     </>
   );

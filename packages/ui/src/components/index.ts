@@ -30,6 +30,7 @@ export * from "./Menu";
 export * from "./TopProgressBar";
 export * from "./Tooltip";
 export * from "./Toggletip";
+export { INERT_EXEMPT } from "./portal";
 
 import { DialogBody, DialogRoot, DialogTitle } from "./Dialog";
 import {

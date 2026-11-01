@@ -1,6 +1,11 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect } from "react";
+import { X } from "lucide-react";
 import styled from "styled-components";
+import { useDebouncedValue } from "../hooks/useDebouncedValue";
+import { timingMs } from "../theme/tokens";
+import { AnchoredList } from "./AnchoredList";
 import { Avatar } from "./Avatar";
+import { usePressOutside } from "./floating";
 
 export interface SelectedUser {
   id: string;
@@ -125,13 +130,12 @@ const ClearButton = styled.button`
   justify-content: center;
   width: 24px;
   height: 24px;
+  padding: 0;
   border-radius: 50%;
   background: ${({ theme }) => theme.colors.surface};
   border: 1px solid ${({ theme }) => theme.colors.border};
   color: ${({ theme }) => theme.colors.text.secondary};
   cursor: pointer;
-  font-size: 16px;
-  line-height: 1;
   transition: all 0.2s;
   flex-shrink: 0;
 
@@ -147,19 +151,11 @@ const ClearButton = styled.button`
   }
 `;
 
-const Dropdown = styled.div<{ $isOpen: boolean }>`
-  position: absolute;
-  top: calc(100% + 4px);
-  left: 0;
-  right: 0;
+const Dropdown = styled(AnchoredList)`
   background: ${({ theme }) => theme.colors.background};
   border: 1px solid ${({ theme }) => theme.colors.border};
   border-radius: ${({ theme }) => theme.borderRadius.md};
   box-shadow: ${({ theme }) => theme.shadows.md};
-  z-index: 1000;
-  max-height: 300px;
-  overflow-y: auto;
-  display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
 `;
 
 const UserItem = styled.button<{ $isHighlighted: boolean }>`
@@ -225,42 +221,24 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [selectedUser, setSelectedUser] = useState<SelectedUser | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const boxRef = useRef<HTMLDivElement>(null);
 
-  const performSearch = useCallback(
-    (query: string) => {
-      onSearch(query);
-    },
-    [onSearch],
+  // Searched once typing pauses. Through a ref, so a caller passing a new
+  // function each render does not search again.
+  const settled = useDebouncedValue(
+    inputValue.trim(),
+    timingMs.debounce.typeahead,
   );
-
-  // Debounced search. The timer lives in the closure rather than in state:
-  // a state value is a render behind by the time the cleanup reads it, so the
-  // cleanup cleared the previous run's timer and left the current one to fire
-  // -- including after unmount.
+  const onSearchRef = useRef(onSearch);
+  onSearchRef.current = onSearch;
   useEffect(() => {
-    const query = inputValue.trim();
-    if (query.length < 2) return;
+    if (settled.length >= 2) onSearchRef.current(settled);
+  }, [settled]);
 
-    const timeout = setTimeout(() => performSearch(query), 300);
-    return () => clearTimeout(timeout);
-  }, [inputValue, performSearch]);
-
-  // Handle clicks outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
-        setIsOpen(false);
-        setHighlightedIndex(-1);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const pressInside = usePressOutside(isOpen, () => {
+    setIsOpen(false);
+    setHighlightedIndex(-1);
+  });
 
   // Sync value prop with internal selectedUser state
   useEffect(() => {
@@ -273,6 +251,11 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
       setSelectedUser(null);
     }
   }, [value, users]);
+
+  const shouldShowDropdown =
+    isOpen &&
+    !selectedUser &&
+    (loading || users.length > 0 || inputValue.length >= 2);
 
   const selectUser = (user: SelectedUser) => {
     setSelectedUser(user);
@@ -306,6 +289,8 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
         break;
 
       case "Escape":
+        // Handled, so a dialog the box sits in stays open.
+        if (shouldShowDropdown) e.preventDefault();
         setIsOpen(false);
         setHighlightedIndex(-1);
         break;
@@ -338,16 +323,11 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
     />
   );
 
-  const shouldShowDropdown =
-    isOpen &&
-    !selectedUser &&
-    (loading || users.length > 0 || inputValue.length >= 2);
-
   return (
-    <Container ref={containerRef}>
+    <Container onMouseDownCapture={pressInside.onMouseDownCapture}>
       {label && <Label>{label}</Label>}
 
-      <InputWrapper $hasError={!!error} $disabled={disabled}>
+      <InputWrapper ref={boxRef} $hasError={!!error} $disabled={disabled}>
         {selectedUser ? (
           <>
             {renderAvatar(selectedUser)}
@@ -363,7 +343,7 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
                 onClick={clearSelection}
                 aria-label="Clear selection"
               >
-                ×
+                <X size={14} aria-hidden />
               </ClearButton>
             )}
           </>
@@ -386,7 +366,7 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
         )}
       </InputWrapper>
 
-      <Dropdown $isOpen={shouldShowDropdown}>
+      <Dropdown anchor={boxRef} open={shouldShowDropdown}>
         {loading ? (
           <LoadingIndicator>Searching...</LoadingIndicator>
         ) : inputValue.length < 2 ? (
@@ -398,6 +378,9 @@ export const UserTypeahead: React.FC<UserTypeaheadProps> = ({
             <UserItem
               key={user.id}
               type="button"
+              // Picked with the arrow keys and Enter from the input; Tab
+              // moves on past the list, which sits at the end of the page.
+              tabIndex={-1}
               $isHighlighted={index === highlightedIndex}
               onClick={() => selectUser(user)}
             >

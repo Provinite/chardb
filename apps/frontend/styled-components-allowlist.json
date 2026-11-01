@@ -225,6 +225,7 @@
   "packages/ui/src/components/TagInput.tsx",
   "packages/ui/src/components/Typography.tsx",
   "packages/ui/src/components/UserTypeahead.tsx",
+  "packages/ui/src/components/portal.test.tsx",
   "packages/ui/src/hooks/useTheme.ts",
   "packages/ui/src/styled.d.ts"
 ]

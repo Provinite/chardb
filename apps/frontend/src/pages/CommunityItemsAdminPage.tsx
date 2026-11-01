@@ -3,7 +3,7 @@ import { usePageMeta } from "../lib/pageMeta";
 import styled, { css } from "styled-components";
 import { Link } from "react-router-dom";
 import { Package, Plus, Edit2, Trash2, Gift, ExternalLink } from "lucide-react";
-import { Button, ButtonLink } from "@chardb/ui";
+import { Button, ButtonLink, Dialog } from "@chardb/ui";
 import {
   GrantTargetSelector,
   GrantTarget,
@@ -246,36 +246,6 @@ const ItemTypeName = styled.h3`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-`;
-
-const Modal = styled.div<{ isOpen: boolean }>`
-  display: ${({ isOpen }) => (isOpen ? "flex" : "none")};
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-`;
-
-const ModalContent = styled.div`
-  background: ${({ theme }) => theme.colors.background};
-  padding: 2rem;
-  border-radius: 12px;
-  max-width: 600px;
-  width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
-`;
-
-const ModalTitle = styled.h2`
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin: 0 0 1.5rem 0;
-  color: ${({ theme }) => theme.colors.text.primary};
 `;
 
 const Form = styled.form`
@@ -652,6 +622,9 @@ export const CommunityItemsAdminPage: React.FC = () => {
       ...grantFormData,
       itemTypeId: itemType.id,
     });
+    // The selector starts fresh each time the dialog opens, its Discord
+    // check included, so the target it would show starts fresh too.
+    setGrantTarget(null);
     setIsGrantModalOpen(true);
   };
 
@@ -854,10 +827,12 @@ export const CommunityItemsAdminPage: React.FC = () => {
         )}
       </Section>
 
-      {/* Create Modal */}
-      <Modal isOpen={isCreateModalOpen}>
-        <ModalContent>
-          <ModalTitle>Create Item Type</ModalTitle>
+      <Dialog.Root
+        open={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+      >
+        <Dialog.Title>Create Item Type</Dialog.Title>
+        <Dialog.Body>
           <Form onSubmit={handleCreateItemType}>
             <FormGroup>
               <Label htmlFor="create-item-name">Name *</Label>
@@ -945,13 +920,15 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Button type="submit">Create</Button>
             </FormActions>
           </Form>
-        </ModalContent>
-      </Modal>
+        </Dialog.Body>
+      </Dialog.Root>
 
-      {/* Edit Modal */}
-      <Modal isOpen={isEditModalOpen}>
-        <ModalContent>
-          <ModalTitle>Edit Item Type</ModalTitle>
+      <Dialog.Root
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+      >
+        <Dialog.Title>Edit Item Type</Dialog.Title>
+        <Dialog.Body>
           <Form onSubmit={handleUpdateItemType}>
             <FormGroup>
               <Label htmlFor="edit-item-name">Name *</Label>
@@ -1076,13 +1053,15 @@ export const CommunityItemsAdminPage: React.FC = () => {
               <Button type="submit">Save Changes</Button>
             </FormActions>
           </Form>
-        </ModalContent>
-      </Modal>
+        </Dialog.Body>
+      </Dialog.Root>
 
-      {/* Grant Item Modal */}
-      <Modal isOpen={isGrantModalOpen}>
-        <ModalContent>
-          <ModalTitle>Grant Item</ModalTitle>
+      <Dialog.Root
+        open={isGrantModalOpen}
+        onClose={() => setIsGrantModalOpen(false)}
+      >
+        <Dialog.Title>Grant Item</Dialog.Title>
+        <Dialog.Body>
           <Form onSubmit={handleGrantItem}>
             <FormGroup>
               <GrantTargetSelector
@@ -1143,8 +1122,8 @@ export const CommunityItemsAdminPage: React.FC = () => {
               </Button>
             </FormActions>
           </Form>
-        </ModalContent>
-      </Modal>
+        </Dialog.Body>
+      </Dialog.Root>
     </Container>
   );
 };

@@ -116,6 +116,44 @@ describe("Dialog", () => {
     already.remove();
   });
 
+  it("leaves what is marked data-inert-exempt interactive", () => {
+    const toasts = document.createElement("div");
+    toasts.setAttribute("data-inert-exempt", "");
+    document.body.append(toasts);
+    const { container } = openHarness();
+
+    expect(container.hasAttribute("inert")).toBe(true);
+    expect(toasts.hasAttribute("inert")).toBe(false);
+    toasts.remove();
+  });
+
+  it("opens a dialog from inside another at the end of the body", () => {
+    function Nested() {
+      const [inner, setInner] = useState(false);
+      return (
+        <Dialog.Root open onClose={() => {}} aria-label="Outer">
+          <button type="button" onClick={() => setInner(true)}>
+            More
+          </button>
+          <Dialog.Root open={inner} onClose={() => {}} aria-label="Inner">
+            inner
+          </Dialog.Root>
+        </Dialog.Root>
+      );
+    }
+    render(<Nested />);
+    click(dialogs()[0].querySelector("button:not([data-dialog-close])")!);
+
+    const byName = (name: string) =>
+      dialogs().find((d) => d.getAttribute("aria-label") === name)!;
+    const outer = byName("Outer");
+    const inner = byName("Inner");
+    expect(outer.contains(inner)).toBe(false);
+    expect(inner.parentElement?.parentElement).toBe(document.body);
+    expect(inner.closest("[inert]")).toBeNull();
+    expect(outer.closest("[inert]")).not.toBeNull();
+  });
+
   it("moves focus in on open and back to the opener on close", () => {
     const { opener } = openHarness();
 
@@ -156,15 +194,71 @@ describe("Dialog", () => {
     expect(dialogs()).toHaveLength(0);
   });
 
-  it("closes on a click on the scrim, not on one inside", () => {
+  it("stays open on a click on the scrim", () => {
     const onClose = vi.fn();
     openHarness({ onClose });
+
+    click(document.querySelector("[data-dialog-scrim]")!);
+
+    expect(onClose).not.toHaveBeenCalled();
+  });
+
+  it("closes on a click on the scrim when it asks to, not on one inside", () => {
+    const onClose = vi.fn();
+    render(
+      <Dialog.Root open onClose={onClose} closeOnScrimClick aria-label="Pick">
+        <input aria-label="Field" />
+      </Dialog.Root>,
+    );
 
     click(dialogs()[0].querySelector("input")!);
     expect(onClose).not.toHaveBeenCalled();
 
     click(document.querySelector("[data-dialog-scrim]")!);
     expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("closes from its close button", () => {
+    const onClose = vi.fn();
+    openHarness({ onClose });
+
+    const close = dialogs()[0].querySelector<HTMLButtonElement>(
+      'button[aria-label="Close"]',
+    )!;
+    click(close);
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it("cannot be closed while closing is disabled, and its close button says so", () => {
+    const onClose = vi.fn();
+    render(
+      <Dialog.Root
+        open
+        onClose={onClose}
+        closeDisabled
+        closeOnScrimClick
+        aria-label="Refunding"
+      >
+        <input data-autofocus aria-label="Field" />
+      </Dialog.Root>,
+    );
+    const close = dialogs()[0].querySelector<HTMLButtonElement>(
+      'button[aria-label="Close"]',
+    )!;
+
+    press("Escape");
+    click(close);
+    click(document.querySelector("[data-dialog-scrim]")!);
+
+    expect(onClose).not.toHaveBeenCalled();
+    expect(close.disabled).toBe(true);
+  });
+
+  it("leaves its close button out of where focus first lands", () => {
+    openHarness({ children: <p>Nothing to focus</p> });
+
+    expect(document.activeElement).toBe(dialogs()[0]);
   });
 
   it("holds the page still while open", () => {
@@ -305,9 +399,23 @@ describe("Dialog styles", () => {
     expect(declarationsOf(document.querySelector("dialog h2")!)).toMatchObject({
       "flex-shrink": "0",
       "padding-block-start": vars.space.lg,
-      "padding-inline": vars.space.lg,
+      "padding-inline-start": vars.space.lg,
       "padding-block-end": "0",
     });
+  });
+
+  it("keeps its title clear of the close button in the corner", () => {
+    render(
+      <Dialog.Root open onClose={() => {}}>
+        <Dialog.Title>A very long name for a board that runs on</Dialog.Title>
+      </Dialog.Root>,
+    );
+
+    expect(
+      declarationsOf(document.querySelector("dialog h2")!)[
+        "padding-inline-end"
+      ],
+    ).toContain(vars.size.target.comfortable);
   });
 
   it("pads its body, which scrolls when the dialog is capped", () => {

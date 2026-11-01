@@ -177,6 +177,15 @@ describe("CommandPalette", () => {
     expect(onClose).toHaveBeenCalledTimes(2);
   });
 
+  it("closes on a click on the scrim", () => {
+    const onClose = vi.fn();
+    render(<Harness onClose={onClose} />);
+
+    click(document.querySelector("[data-dialog-scrim]")!);
+
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
   it("stays open for a link opened elsewhere", () => {
     const onClose = vi.fn();
     render(<Harness onClose={onClose} />);

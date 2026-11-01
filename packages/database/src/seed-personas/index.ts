@@ -16,6 +16,7 @@ import { runPhase1 } from "./phase1-users";
 import { runPhase2 } from "./phase2-community";
 import { runPhase3 } from "./phase3-memberships";
 import { runPhase4 } from "./phase4-sample-data";
+import { runPhase5 } from "./phase5-halloween-items";
 import { log } from "./utils";
 import { TEST_COMMUNITY_NAME, PERSONA_LIST, TEST_PASSWORD } from "./personas";
 
@@ -56,11 +57,17 @@ export async function seedPersonas(
       phase2Result.roles,
     );
 
-    // Phase 4: Create sample data (optional)
+    // Phases 4 and 5: Create sample data (optional)
+    let boardId: string | null = null;
     if (!skipSampleData) {
       await runPhase4(client, phase1Result.users, phase2Result.communityId);
+      ({ boardId } = await runPhase5(
+        prisma,
+        phase1Result.users,
+        phase2Result.communityId,
+      ));
     } else {
-      log.phase("Phase 4: Skipped (--skip-sample-data)");
+      log.phase("Phases 4 and 5: Skipped (--skip-sample-data)");
     }
 
     // Summary
@@ -70,6 +77,9 @@ export async function seedPersonas(
     console.log(`Community: ${TEST_COMMUNITY_NAME}`);
     console.log(`Users created: ${PERSONA_LIST.length}`);
     console.log(`Roles available: ${phase2Result.roles.size}`);
+    if (boardId) {
+      console.log(`Member's candy board: /halloween/board/${boardId}`);
+    }
     console.log(`\nTest credentials (all users):`);
     console.log(`  Password: ${TEST_PASSWORD}`);
     console.log(`\nPersona emails:`);
