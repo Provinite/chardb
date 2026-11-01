@@ -4,9 +4,6 @@ import { Button, Cluster, Grid, Stack } from "@chardb/ui";
 import { candyImageUrl, candyName } from "./candyBoard";
 import * as styles from "./CandySwapView.css";
 
-/** The most candies one offer gives. Mirrors the backend's limit. */
-export const MAX_OFFERED = 3;
-
 export interface SwapCandy {
   id: number;
   slug: string;
@@ -35,6 +32,8 @@ export interface CandySwapViewProps {
   myOffers: SwapOffer[];
   trades: SwapTrade[];
   maxOpenOffers: number;
+  /** The most candies one offer may give. */
+  maxOffered: number;
   /** Resolves true once the offer is placed, so the form can clear. */
   onPlace: (candyIds: number[], wantSlug: string) => Promise<boolean>;
   onAccept: (offerId: string) => void;
@@ -108,6 +107,7 @@ export const CandySwapView = ({
   myOffers,
   trades,
   maxOpenOffers,
+  maxOffered,
   onPlace,
   onAccept,
   onCancel,
@@ -142,7 +142,7 @@ export const CandySwapView = ({
   const giving = new Set(offering.map((c) => c.slug));
 
   const atLimit = myOffers.length >= maxOpenOffers;
-  const full = offering.length >= MAX_OFFERED;
+  const full = offering.length >= maxOffered;
   const canPlace =
     !atLimit && offering.length > 0 && want !== "" && !giving.has(want);
 
@@ -165,8 +165,8 @@ export const CandySwapView = ({
       <Stack gap="xs">
         <h1 className={styles.title}>Candy swap</h1>
         <p className={styles.muted}>
-          Offer up to three candies for one you want. Who you traded with shows
-          once a trade goes through.
+          Offer up to {maxOffered} candies for one you want. Who you traded with
+          shows once a trade goes through.
         </p>
       </Stack>
 
@@ -209,7 +209,7 @@ export const CandySwapView = ({
           <Stack gap="xs">
             <p className={styles.label}>Giving</p>
             <Cluster gap="sm">
-              {Array.from({ length: MAX_OFFERED }, (_, i) => {
+              {Array.from({ length: maxOffered }, (_, i) => {
                 const c = offering[i];
                 return c ? (
                   <button

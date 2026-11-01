@@ -1438,6 +1438,15 @@ export type HalloweenCandyPlacement = {
   y: Scalars['Float']['output'];
 };
 
+/** The candy swap's limits on offers */
+export type HalloweenCandySwapLimits = {
+  __typename?: 'HalloweenCandySwapLimits';
+  /** The most candies one offer may give */
+  maxOfferedCandies: Scalars['Int']['output'];
+  /** The most offers one player may have open at once */
+  maxOpenOffers: Scalars['Int']['output'];
+};
+
 /** A candy swap you took part in, as you saw it */
 export type HalloweenCandyTradeRecord = {
   __typename?: 'HalloweenCandyTradeRecord';
@@ -2194,7 +2203,7 @@ export type Mutation = {
   addCharacterTags: Character;
   /** Adds tags to a media item */
   addMediaTags: Media;
-  /** Apply changes to one of your boards, in order, and get it back as it now is. A change that cannot apply -- a candy not yours, not on the board, already on it, or placed off it -- is skipped, and the rest still apply. At most 100 changes at once. Needs Discord linked. */
+  /** Apply changes to one of your boards, in order, and get it back as it now is. A change that cannot apply -- a candy not yours, not on the board, already on it, or placed off it -- is skipped, and the rest still apply. At most 100 changes at once. */
   applyHalloweenCandyBoardActions: HalloweenCandyBoard;
   /** Approve an image (moderator action) */
   approveImage: ImageModerationAction;
@@ -2238,7 +2247,7 @@ export type Mutation = {
   /** Create a new enum value setting */
   createEnumValueSetting: EnumValueSetting;
   createGallery: Gallery;
-  /** Make a new, empty candy board, which can use all of your candies. At most 10 each. Needs Discord linked. */
+  /** Make a new, empty candy board, which can use all of your candies. At most 10 each. */
   createHalloweenCandyBoard: HalloweenCandyBoard;
   /** Add a prize to the Halloween event's pool */
   createHalloweenPrize: HalloweenPrizeView;
@@ -2363,11 +2372,11 @@ export type Mutation = {
   setCharacterMainMedia: Character;
   /** Turn the Halloween event's pages on or off for a community (site admins) */
   setCommunityHalloweenEnabled: Community;
-  /** Set the picture or tile behind the candies on one of your boards, by its slug, and how it is dimmed and tinted; a null slug goes back to none chosen, and null effects to neither. Needs Discord linked. */
+  /** Set the picture or tile behind the candies on one of your boards, by its slug, and how it is dimmed and tinted; a null slug goes back to none chosen, and null effects to neither. */
   setHalloweenCandyBoardBackground: HalloweenCandyBoard;
-  /** Put the light that casts the shadows on one of your boards; null goes back to the board's default light. Needs Discord linked. */
+  /** Put the light that casts the shadows on one of your boards; null goes back to the board's default light. */
   setHalloweenCandyBoardLighting: HalloweenCandyBoard;
-  /** Name one of your boards from the word lists in @chardb/shared; null leaves it unnamed. Needs Discord linked. */
+  /** Name one of your boards from the word lists in @chardb/shared; null leaves it unnamed. */
   setHalloweenCandyBoardName: HalloweenCandyBoard;
   /** Mark a prize staff hand over themselves as delivered, or clear the mark. Chardb item and character prizes deliver themselves. */
   setHalloweenPrizeDelivered: HalloweenWin;
@@ -3453,6 +3462,7 @@ export type Query = {
   globalPendingImageCount: Scalars['Int']['output'];
   /** A Halloween candy board, by the id in its link. Null if there is no such board in this community's Discord server, or the community has none linked. An error if the community does not exist or has the Halloween event turned off. */
   halloweenCandyBoard: Maybe<HalloweenCandyBoard>;
+  halloweenCandySwapLimits: HalloweenCandySwapLimits;
   /** A random handful of other players' open candy offers that you have a spare candy of the wanted kind for. At most 50; 12 unless given. */
   halloweenCandySwapOffers: Array<HalloweenCandyOffer>;
   /** Every kind of Halloween candy, by slug: its image is /halloween/candy/<slug>.png on the frontend */
@@ -3512,8 +3522,8 @@ export type Query = {
   myGalleries: GalleryConnection;
   /** Your Halloween candies here that are not held in an offer, oldest first */
   myHalloweenCandies: Array<HalloweenCandy>;
-  /** Your Halloween candy boards here, the last changed first. Null without Discord linked, since candies come from knocking on Discord. */
-  myHalloweenCandyBoards: Maybe<Array<HalloweenCandyBoard>>;
+  /** Your Halloween candy boards here, the last changed first. */
+  myHalloweenCandyBoards: Array<HalloweenCandyBoard>;
   /** Your open candy offers here, newest first */
   myHalloweenCandyOffers: Array<HalloweenCandyOffer>;
   /** The candy swaps you took part in here, newest first */
@@ -5478,7 +5488,7 @@ export type CandySwapQueryVariables = Exact<{
 }>;
 
 
-export type CandySwapQuery = { __typename?: 'Query', halloweenCandyTypes: Array<string>, myHalloweenCandies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }>, myHalloweenCandyOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }>, myHalloweenCandyTrades: Array<{ __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
+export type CandySwapQuery = { __typename?: 'Query', halloweenCandyTypes: Array<string>, halloweenCandySwapLimits: { __typename?: 'HalloweenCandySwapLimits', maxOpenOffers: number, maxOfferedCandies: number }, myHalloweenCandies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }>, myHalloweenCandyOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }>, myHalloweenCandyTrades: Array<{ __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
 
 export type CandySwapOffersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -6295,7 +6305,7 @@ export type MyHalloweenCandyBoardsQueryVariables = Exact<{
 }>;
 
 
-export type MyHalloweenCandyBoardsQuery = { __typename?: 'Query', myHalloweenCandyBoards: Array<{ __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> }> | null };
+export type MyHalloweenCandyBoardsQuery = { __typename?: 'Query', myHalloweenCandyBoards: Array<{ __typename?: 'HalloweenCandyBoard', id: string, viewerIsOwner: boolean, background: string | null, backgroundEffects: { __typename?: 'HalloweenCandyBackgroundEffects', dim: number, tint: string | null, tintStrength: number, saturation: number } | null, lighting: { __typename?: 'HalloweenCandyLighting', x: number, y: number, height: number, intensity: number, colour: string | null, colourStrength: number, spotlight: number, cone: number } | null, name: { __typename?: 'HalloweenCandyBoardName', first: string, joiner: string | null, last: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string, receivedAt: string }>, placements: Array<{ __typename?: 'HalloweenCandyPlacement', x: number, y: number, rotation: number, scale: number, sticker: { __typename?: 'HalloweenSticker', candy: number | null, nameplate: boolean | null } }> }> };
 
 export type CreateHalloweenCandyBoardMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -8615,6 +8625,10 @@ export type MeQueryResult = Apollo.QueryResult<MeQuery, MeQueryVariables>;
 export const CandySwapDocument = gql`
     query CandySwap($communityId: ID!) {
   halloweenCandyTypes
+  halloweenCandySwapLimits {
+    maxOpenOffers
+    maxOfferedCandies
+  }
   myHalloweenCandies(communityId: $communityId) {
     id
     slug

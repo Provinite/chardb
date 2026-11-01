@@ -45,6 +45,7 @@ const renderView = (props: Partial<CandySwapViewProps> = {}) => {
       myOffers={[]}
       trades={[]}
       maxOpenOffers={10}
+      maxOffered={3}
       placing={false}
       acceptingId={null}
       cancellingId={null}
@@ -139,6 +140,17 @@ describe("CandySwapView", () => {
       }
       expect(
         within(form).getByRole("button", { name: "Add candy corn (1 left)" }),
+      ).toBeDisabled();
+    });
+
+    it("gives as many candies as the swap allows", async () => {
+      renderView({ maxOffered: 1 });
+      const form = section("Make an offer");
+      await userEvent.click(
+        within(form).getByRole("button", { name: "Add banana (1 left)" }),
+      );
+      expect(
+        within(form).getByRole("button", { name: "Add candy corn (2 left)" }),
       ).toBeDisabled();
     });
 

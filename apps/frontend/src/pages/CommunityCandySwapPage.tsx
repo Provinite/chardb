@@ -13,15 +13,13 @@ import {
 import { candyName } from "../components/halloween/candyBoard";
 import {
   CandySwapDocument,
+  CandySwapOffersDocument,
   useAcceptHalloweenCandyOfferMutation,
   useCancelHalloweenCandyOfferMutation,
   useCandySwapOffersQuery,
   useCandySwapQuery,
   usePlaceHalloweenCandyOfferMutation,
 } from "../generated/graphql";
-
-/** The most open offers a player may have. Mirrors the backend's limit. */
-const MAX_OPEN_OFFERS = 10;
 
 const errorMessage = (e: unknown, fallback: string) =>
   e instanceof Error ? e.message : fallback;
@@ -61,7 +59,12 @@ export const CommunityCandySwapPage: React.FC = () => {
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const refetchSwap = [{ query: CandySwapDocument, variables }];
+  // Every change can change which candies are spare, and so which offers
+  // can be taken; both lists are fetched again after any of them.
+  const refetchSwap = [
+    { query: CandySwapDocument, variables },
+    { query: CandySwapOffersDocument, variables },
+  ];
   const [place, { loading: placing }] = usePlaceHalloweenCandyOfferMutation({
     refetchQueries: refetchSwap,
     awaitRefetchQueries: true,
@@ -101,7 +104,6 @@ export const CommunityCandySwapPage: React.FC = () => {
       const trade = result.data?.placeHalloweenCandyOffer.trade;
       if (trade) {
         tradedToast(trade);
-        void offers.refetch();
       } else {
         toast.success("Offer placed");
       }
@@ -119,9 +121,10 @@ export const CommunityCandySwapPage: React.FC = () => {
       if (result.data) tradedToast(result.data.acceptHalloweenCandyOffer);
     } catch (e) {
       toast.error(errorMessage(e, "Could not take the offer"));
+      // Taken or withdrawn by someone else first: show what is left.
+      void offers.refetch();
     } finally {
       setAcceptingId(null);
-      void offers.refetch();
     }
   };
 
@@ -143,7 +146,8 @@ export const CommunityCandySwapPage: React.FC = () => {
       offers={offers.data?.halloweenCandySwapOffers ?? null}
       myOffers={data.myHalloweenCandyOffers}
       trades={data.myHalloweenCandyTrades}
-      maxOpenOffers={MAX_OPEN_OFFERS}
+      maxOpenOffers={data.halloweenCandySwapLimits.maxOpenOffers}
+      maxOffered={data.halloweenCandySwapLimits.maxOfferedCandies}
       onPlace={onPlace}
       onAccept={onAccept}
       onCancel={onCancel}

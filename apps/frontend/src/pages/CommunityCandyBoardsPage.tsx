@@ -226,17 +226,7 @@ export const CommunityCandyBoardsPage: React.FC = () => {
       </Container>
     );
   }
-  const boards = data?.myHalloweenCandyBoards;
-  if (!boards) {
-    return (
-      <Container>
-        <Message>
-          Link your Discord account to collect candies here.{" "}
-          <Link to="/profile/edit">Link Discord</Link>
-        </Message>
-      </Container>
-    );
-  }
+  const boards = data?.myHalloweenCandyBoards ?? [];
 
   const makeBoard = async () => {
     if (!communityId) return;

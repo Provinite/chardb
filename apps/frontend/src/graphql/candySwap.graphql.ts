@@ -30,6 +30,10 @@ export const HALLOWEEN_CANDY_TRADE_FRAGMENT = gql`
 export const CANDY_SWAP_QUERY = gql`
   query CandySwap($communityId: ID!) {
     halloweenCandyTypes
+    halloweenCandySwapLimits {
+      maxOpenOffers
+      maxOfferedCandies
+    }
     myHalloweenCandies(communityId: $communityId) {
       id
       slug
