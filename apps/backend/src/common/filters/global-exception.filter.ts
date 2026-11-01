@@ -9,6 +9,29 @@ import {
 import { GqlContextType } from "@nestjs/graphql";
 import { Request, Response } from "express";
 
+/**
+ * The http-errors shape body-parser and raw-body throw for a body the client
+ * got wrong: aborted mid-upload, too large, malformed JSON. Each carries a
+ * 4xx status and a `type` such as "request.aborted".
+ */
+interface BodyParserClientError extends Error {
+  status: number;
+  type: string;
+}
+
+const isBodyParserClientError = (
+  exception: unknown,
+): exception is BodyParserClientError => {
+  if (!(exception instanceof Error)) return false;
+  const { status, type } = exception as Partial<BodyParserClientError>;
+  return (
+    typeof type === "string" &&
+    typeof status === "number" &&
+    status >= 400 &&
+    status < 500
+  );
+};
+
 @Catch()
 export class GlobalExceptionFilter implements ExceptionFilter {
   private readonly logger = new Logger("GlobalException");
@@ -24,6 +47,22 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     const ctx = host.switchToHttp();
     const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
+
+    // body-parser rejects a bad request body before any route runs, so its
+    // errors reach here as plain Errors rather than HttpExceptions.
+    if (isBodyParserClientError(exception)) {
+      this.logger.warn({
+        message: "Request body rejected",
+        method: request.method,
+        url: request.originalUrl,
+        statusCode: exception.status,
+        type: exception.type,
+      });
+      response
+        .status(exception.status)
+        .json({ message: exception.message, statusCode: exception.status });
+      return;
+    }
 
     const status =
       exception instanceof HttpException
@@ -65,7 +104,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     };
 
     // Add file upload info if it's a multipart request
-    if (request?.is?.("multipart/form-data") && (request as any)?.file) {
+    if (request?.is?.("multipart/form-data")) {
       const file = request.file;
       if (file) {
         errorInfo["fileInfo"] = {

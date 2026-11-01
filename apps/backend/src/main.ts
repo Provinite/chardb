@@ -15,9 +15,9 @@ import { loggerConfig } from "./logger.config";
 // `cookie_parser_1.default`, which is undefined at runtime for a CommonJS
 // module whose export is the function itself.
 import * as cookieParser from "cookie-parser";
-import type { Request, Response, NextFunction } from "express";
 import { isOriginAllowed } from "./auth/allowed-origins";
 import { cloudfrontOriginGuard } from "./middleware/cloudfront-origin.middleware";
+import { requestLogger } from "./middleware/request-logger.middleware";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
@@ -43,22 +43,7 @@ async function bootstrap() {
   // and cloudfrontOriginGuard above rejects any other distribution.
   app.set("trust proxy", 1);
 
-  // Enable request logging middleware
-  app.use((req: Request, res: Response, next: NextFunction) => {
-    const logger = new Logger("HTTP");
-    const start = Date.now();
-
-    logger.log(`${req.method} ${req.url} - ${req.ip}`);
-
-    res.on("finish", () => {
-      const duration = Date.now() - start;
-      logger.log(
-        `${req.method} ${req.url} - ${res.statusCode} - ${duration}ms`,
-      );
-    });
-
-    next();
-  });
+  app.use(requestLogger(new Logger("HTTP")));
 
   // Tracing is handled by OpenTelemetry auto-instrumentation
 
