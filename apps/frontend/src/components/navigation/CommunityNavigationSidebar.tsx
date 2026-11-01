@@ -5,6 +5,7 @@ import {
   ArrowLeftRight,
   BarChart3,
   Candy,
+  Ghost,
   Repeat,
   Users,
   User,
@@ -31,6 +32,7 @@ import {
 import { useSpotlight } from "../spotlight/SpotlightContext";
 import { CommunityNavigationItem } from "./CommunityNavigationItem";
 import { CommunityNavigationGroup } from "./CommunityNavigationGroup";
+import { HalloweenNavigationSection } from "./HalloweenNavigationSection";
 import { CommunitySwitcher } from "./CommunitySwitcher";
 import { GlobalNavigationSidebar } from "./GlobalNavigationSidebar";
 import { useUserCommunityRole } from "../../hooks/useUserCommunityRole";
@@ -461,24 +463,6 @@ export const CommunityNavigationSidebar: React.FC<
               isNested
             />
 
-            {/* Candy Boards - every member's, while Halloween is on here */}
-            {community?.halloweenEnabled && (
-              <CommunityNavigationItem
-                to={`${communityBasePath}/halloween/board`}
-                icon={Candy}
-                label="Candy Boards"
-                isNested
-              />
-            )}
-            {community?.halloweenEnabled && (
-              <CommunityNavigationItem
-                to={`${communityBasePath}/halloween/swap`}
-                icon={Repeat}
-                label="Candy Swap"
-                isNested
-              />
-            )}
-
             {/* Invite Codes - requires invite permissions */}
             {hasInvitePermissions && (
               <CommunityNavigationItem
@@ -499,6 +483,24 @@ export const CommunityNavigationSidebar: React.FC<
               />
             )}
           </CommunityNavigationGroup>
+
+          {/* Halloween - every member's, while the event is on here */}
+          {community?.halloweenEnabled && (
+            <HalloweenNavigationSection>
+              <CommunityNavigationItem
+                to={`${communityBasePath}/halloween/board`}
+                icon={Candy}
+                label="Candy Boards"
+                isNested
+              />
+              <CommunityNavigationItem
+                to={`${communityBasePath}/halloween/swap`}
+                icon={Repeat}
+                label="Candy Swap"
+                isNested
+              />
+            </HalloweenNavigationSection>
+          )}
 
           {/* Species & Characters Section - requires species permissions */}
           {hasSpeciesPermissions && (
@@ -591,6 +593,18 @@ export const CommunityNavigationSidebar: React.FC<
                   isNested
                 />
               )}
+
+              {/* Halloween Event - running the event takes either item
+                  permission, as its page does. */}
+              {community?.halloweenEnabled &&
+                (permissions.canManageItems || permissions.canGrantItems) && (
+                  <CommunityNavigationItem
+                    to={`${communityBasePath}/admin/halloween`}
+                    icon={Ghost}
+                    label="Halloween Event"
+                    isNested
+                  />
+                )}
 
               {/* External Members - people something waits on here without
                   an account. Seeing who they are is what this permission

@@ -60,6 +60,32 @@ export class HalloweenEventSettings {
   winChannel: string | null;
 }
 
+@ObjectType({ description: "What happened between two moments" })
+export class HalloweenPeriodStats {
+  @Field()
+  from: Date;
+
+  @Field()
+  to: Date;
+
+  @Field(() => Int, { description: "Distinct Discord users who knocked" })
+  players: number;
+
+  @Field(() => Int)
+  knocks: number;
+
+  @Field(() => Int)
+  wins: number;
+
+  @Field(() => Int)
+  giftiesSent: number;
+
+  @Field(() => Int, {
+    description: "Players, of those who knocked, who also sent a gifty",
+  })
+  giftySenders: number;
+}
+
 @ObjectType({ description: "Running totals for the event" })
 export class HalloweenEventSummary {
   @Field(() => Int)
@@ -78,6 +104,24 @@ export class HalloweenEventSummary {
     description: "Wins of STAFF prizes not yet marked delivered",
   })
   toDeliver: number;
+
+  @Field(() => Int, { description: "Gifties no knock has spent yet" })
+  unspentGifties: number;
+
+  @Field(() => HalloweenPeriodStats)
+  last24Hours: HalloweenPeriodStats;
+
+  @Field(() => HalloweenPeriodStats, {
+    nullable: true,
+    description: "Since the last daily reset; null without settings",
+  })
+  today: HalloweenPeriodStats | null;
+
+  @Field(() => HalloweenPeriodStats, {
+    nullable: true,
+    description: "The reset day before today's; null without settings",
+  })
+  yesterday: HalloweenPeriodStats | null;
 }
 
 @ObjectType({ description: "A prize in the guild's pool" })

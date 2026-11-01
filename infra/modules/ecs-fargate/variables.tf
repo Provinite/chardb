@@ -60,7 +60,19 @@ variable "task_memory" {
 }
 
 variable "desired_count" {
-  description = "Desired number of tasks"
+  description = "Tasks the service starts with; auto-scaling owns the count after that"
+  type        = number
+  default     = 1
+}
+
+variable "min_capacity" {
+  description = "Fewest tasks auto-scaling keeps running"
+  type        = number
+  default     = 1
+}
+
+variable "max_capacity" {
+  description = "Most tasks auto-scaling may run"
   type        = number
   default     = 1
 }

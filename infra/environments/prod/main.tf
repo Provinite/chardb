@@ -564,6 +564,8 @@ module "ecs" {
 
   # Service Configuration
   desired_count    = var.ecs_desired_count
+  min_capacity     = var.ecs_min_capacity
+  max_capacity     = var.ecs_max_capacity
   assign_public_ip = true
 
   # Environment Variables (non-sensitive)

@@ -142,19 +142,31 @@ variable "rds_deletion_protection" {
 variable "ecs_task_cpu" {
   description = "CPU units for ECS task (256 = 0.25 vCPU)"
   type        = number
-  default     = 256
-}
-
-variable "ecs_task_memory" {
-  description = "Memory for ECS task in MB"
-  type        = number
   default     = 512
 }
 
-variable "ecs_desired_count" {
-  description = "Desired number of ECS tasks"
+variable "ecs_task_memory" {
+  description = "Memory for ECS task in MB (0.5 vCPU needs at least 1024)"
   type        = number
-  default     = 1
+  default     = 1024
+}
+
+variable "ecs_desired_count" {
+  description = "ECS tasks the service starts with; auto-scaling owns the count after that"
+  type        = number
+  default     = 2
+}
+
+variable "ecs_min_capacity" {
+  description = "Fewest ECS tasks auto-scaling keeps running"
+  type        = number
+  default     = 2
+}
+
+variable "ecs_max_capacity" {
+  description = "Most ECS tasks auto-scaling may run"
+  type        = number
+  default     = 2
 }
 
 variable "ecs_log_retention_days" {

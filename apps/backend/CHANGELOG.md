@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Halloween dashboard reports the last 24 hours and each reset day**: players, knocks, wins, gifties and gifty senders, plus unspent gifties.
+
+### Changed
+
+- **Halloween gifties are indexed by knock event**, which every knock's allowance count looks up.
+
 ## [v15.1.0] - 2026-11-01
 
 ### Added

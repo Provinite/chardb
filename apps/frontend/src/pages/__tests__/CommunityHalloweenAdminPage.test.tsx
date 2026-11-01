@@ -157,8 +157,23 @@ const dashboard = (toDeliver = 1) => ({
     giftiesSent: 1,
     players: 5,
     toDeliver,
+    unspentGifties: 2,
+    last24Hours: period("2025-10-14T17:00:00.000Z", "2025-10-15T17:00:00.000Z"),
+    today: period("2025-10-15T11:00:00.000Z", "2025-10-15T17:00:00.000Z"),
+    yesterday: period("2025-10-14T11:00:00.000Z", "2025-10-15T11:00:00.000Z"),
   },
   prizes: [adopt, candy],
+});
+
+const period = (from: string, to: string) => ({
+  __typename: "HalloweenPeriodStats" as const,
+  from,
+  to,
+  players: 4,
+  knocks: 10,
+  wins: 1,
+  giftiesSent: 2,
+  giftySenders: 1,
 });
 
 const dashboardMock = (
@@ -170,7 +185,10 @@ const dashboardMock = (
     variables: { communityId: COMMUNITY_ID },
   },
   result: {
-    data: { halloweenDashboard: { ...dashboard(toDeliver), ...overrides } },
+    data: {
+      halloweenDashboard: { ...dashboard(toDeliver), ...overrides },
+      halloweenCandyTypes: ["candy-corn", "caramel-apple"],
+    },
   },
 });
 
