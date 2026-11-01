@@ -95,6 +95,31 @@ describe("ThemedToaster", () => {
     expect(document.activeElement).toBe(dismiss);
   });
 
+  it("hands focus back to where it came from when a focused toast goes", async () => {
+    render(
+      <>
+        <ThemedToaster />
+        <Dialog.Root open onClose={() => {}} aria-label="Rename">
+          <input aria-label="Name" />
+        </Dialog.Root>
+      </>,
+    );
+    const field = screen.getByRole("textbox", { name: "Name" });
+    act(() => field.focus());
+    let id = "";
+    act(() => {
+      id = toast("Saved");
+    });
+    const dismiss = await screen.findByRole("button", {
+      name: "Dismiss notification",
+    });
+    act(() => dismiss.focus());
+
+    act(() => toast.remove(id));
+
+    expect(document.activeElement).toBe(field);
+  });
+
   it("styles toasts from the stylesheet, with nothing inline", async () => {
     render(<ThemedToaster />);
     act(() => {

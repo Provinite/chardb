@@ -1,4 +1,4 @@
-import React, { useLayoutEffect, useState } from "react";
+import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Toaster, toast, type Toast } from "react-hot-toast";
 import { X } from "lucide-react";
@@ -7,6 +7,33 @@ import * as styles from "./ThemedToaster.css";
 
 const toneOf = (t: Toast) =>
   t.type === "success" ? "success" : t.type === "error" ? "error" : "neutral";
+
+/**
+ * One toast. Leaving with focus inside it (dismissed, or timed out), it hands
+ * focus to `returnTo` first: otherwise focus would drop to `<body>`, outside
+ * any dialog the toast was shown over.
+ */
+const ToastItem: React.FC<{
+  returnTo: React.MutableRefObject<HTMLElement | null>;
+  children: React.ReactNode;
+}> = ({ returnTo, children }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = ref.current;
+    return () => {
+      // Still in the page here: React removes it after this runs.
+      const back = returnTo.current;
+      if (
+        el?.contains(document.activeElement) &&
+        back?.isConnected &&
+        !back.closest("[inert]")
+      ) {
+        back.focus();
+      }
+    };
+  }, [returnTo]);
+  return <div ref={ref}>{children}</div>;
+};
 
 /**
  * The toasts, in their own child of `<body>` that an open dialog leaves out
@@ -22,6 +49,19 @@ export const ThemedToaster: React.FC = () => {
   useLayoutEffect(() => {
     document.body.append(host);
     return () => host.remove();
+  }, [host]);
+
+  // The last thing focused outside the toasts: where focus goes back to
+  // when the toast holding it leaves.
+  const returnTo = useRef<HTMLElement | null>(null);
+  useEffect(() => {
+    const onFocusIn = (e: FocusEvent) => {
+      if (e.target instanceof HTMLElement && !host.contains(e.target)) {
+        returnTo.current = e.target;
+      }
+    };
+    document.addEventListener("focusin", onFocusIn);
+    return () => document.removeEventListener("focusin", onFocusIn);
   }, [host]);
 
   return createPortal(
@@ -42,21 +82,23 @@ export const ThemedToaster: React.FC = () => {
       }}
     >
       {(t) => (
-        <div className={styles.slide} data-visible={t.visible}>
-          <div className={styles.toast({ tone: toneOf(t) })}>
-            <div className={styles.message}>
-              {typeof t.message === "function" ? t.message(t) : t.message}
+        <ToastItem returnTo={returnTo}>
+          <div className={styles.slide} data-visible={t.visible}>
+            <div className={styles.toast({ tone: toneOf(t) })}>
+              <div className={styles.message}>
+                {typeof t.message === "function" ? t.message(t) : t.message}
+              </div>
+              <button
+                type="button"
+                className={styles.dismiss}
+                onClick={() => toast.dismiss(t.id)}
+                aria-label="Dismiss notification"
+              >
+                <X size={18} aria-hidden />
+              </button>
             </div>
-            <button
-              type="button"
-              className={styles.dismiss}
-              onClick={() => toast.dismiss(t.id)}
-              aria-label="Dismiss notification"
-            >
-              <X size={18} aria-hidden />
-            </button>
           </div>
-        </div>
+        </ToastItem>
       )}
     </Toaster>,
     host,
