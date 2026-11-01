@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { HalloweenGuildSettings, Prisma } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import {
   MissingGuildSettingsError,
   type ValidationFieldError,
@@ -66,7 +66,7 @@ export class GuildSettingsService {
 
   constructor(
     private readonly db: DatabaseService,
-    private readonly clock: HalloweenClock,
+    private readonly clock: Clock,
   ) {}
 
   /**

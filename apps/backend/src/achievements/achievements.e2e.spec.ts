@@ -7,7 +7,7 @@ import { AuthModule } from "../auth/auth.module";
 import { UsersModule } from "../users/users.module";
 import { DatabaseService } from "../database/database.service";
 import { refreshCookieName } from "../auth/refresh-cookie";
-import { HalloweenClock } from "../halloween/clock";
+import { Clock } from "../clock/clock";
 import { AchievementsModule } from "./achievements.module";
 import { AchievementsService } from "./achievements.service";
 
@@ -55,8 +55,7 @@ describe("Achievements (e2e)", () => {
       {
         imports: [DatabaseModule, AuthModule, UsersModule, AchievementsModule],
       },
-      (builder) =>
-        builder.overrideProvider(HalloweenClock).useValue({ now: () => now }),
+      (builder) => builder.overrideProvider(Clock).useValue({ now: () => now }),
     );
     db = testApp.getDb();
   });

@@ -6,7 +6,7 @@ import {
   InteractionType,
 } from "@discordjs/core";
 import { generateKeyPairSync } from "crypto";
-import type { HalloweenClock } from "../clock";
+import type { Clock } from "../../clock/clock";
 import type { HalloweenConfig } from "../halloween.config";
 
 export const GUILD_ID = "100000000000000001";
@@ -29,7 +29,7 @@ export function testConfig(): Pick<
   };
 }
 
-export function fixedClock(iso: string): Pick<HalloweenClock, "now"> {
+export function fixedClock(iso: string): Pick<Clock, "now"> {
   return { now: () => new Date(iso) };
 }
 

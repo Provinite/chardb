@@ -6,7 +6,7 @@ import type {
 } from "@discordjs/core";
 import { HalloweenConfig } from "../halloween.config";
 import { HalloweenRandom } from "../random";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 // Listed from apps/frontend/public/halloween by scripts/halloween-images.mjs.
 import { AUTHOR_ICON_COUNT, CANDY_SLUGS } from "./images.generated";
 
@@ -28,7 +28,7 @@ export class HalloweenUi {
   constructor(
     private readonly config: HalloweenConfig,
     private readonly random: HalloweenRandom,
-    private readonly clock: HalloweenClock,
+    private readonly clock: Clock,
   ) {}
 
   /** One of the two hosts, with a random portrait: 0-5 Daphne, 6-10 Luther. */

@@ -30,7 +30,7 @@ import {
   verifyDiscordSignature,
   type SignatureCheck,
 } from "./verify-signature";
-import { HalloweenClock } from "../clock";
+import { Clock } from "../../clock/clock";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 
 /**
@@ -54,7 +54,7 @@ export class HalloweenInteractionsController {
 
   constructor(
     private readonly config: HalloweenConfig,
-    private readonly clock: HalloweenClock,
+    private readonly clock: Clock,
     private readonly dispatcher: HalloweenCommandDispatcher,
   ) {}
 

@@ -1,7 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import type { Community } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
-import { HalloweenClock } from "../halloween/clock";
+import { Clock } from "../clock/clock";
 import {
   findAchievement,
   type AchievementDefinition,
@@ -18,7 +18,7 @@ export interface EarnedAchievementView extends AchievementDefinition {
 export class AchievementsService {
   constructor(
     private readonly db: DatabaseService,
-    private readonly clock: HalloweenClock,
+    private readonly clock: Clock,
   ) {}
 
   /**
