@@ -1,11 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  hover,
-  hoverQuery,
-  mq,
-  reducedMotionQuery,
-  touchQuery,
-} from "./media";
+import { hover, hoverQuery, mq, reducedMotionQuery, touchQuery } from "./media";
 
 describe("mq", () => {
   it.each([
