@@ -792,6 +792,16 @@ describe("/adminknock", () => {
     [
       { type: ApplicationCommandOptionType.User, name: "user", value: userId },
     ] as APIApplicationCommandInteractionDataOption[];
+  /** The target as Discord resolves them beside the option. */
+  const resolved = (userId: string) => ({
+    [userId]: {
+      id: userId,
+      username: "target",
+      discriminator: "0",
+      global_name: null,
+      avatar: null,
+    },
+  });
 
   beforeEach(() => knock.knock.mockClear());
 
@@ -856,6 +866,7 @@ describe("/adminknock", () => {
         name: "adminknock",
         permissions: ADMINISTRATOR,
         options: target(OTHER_USER_ID),
+        resolvedUsers: resolved(OTHER_USER_ID),
       }),
     );
     expect(log).toHaveBeenCalledWith(
@@ -870,16 +881,41 @@ describe("/adminknock", () => {
     log.mockRestore();
   });
 
-  it("knocks as the target, with their allowance and prizes", async () => {
+  // The whole user, as Discord resolved them: a prize records the winner's
+  // names, which must be the player's and not the admin's.
+  it("knocks as the target, with their allowance, prizes and names", async () => {
+    const player = {
+      id: OTHER_USER_ID,
+      username: "alice.knocks",
+      discriminator: "0",
+      global_name: "Alice",
+      avatar: null,
+    };
     const interaction = buildInteraction({
       name: "adminknock",
       permissions: ADMINISTRATOR,
       options: target(OTHER_USER_ID),
+      resolvedUsers: { [OTHER_USER_ID]: player },
     });
     await expect(command.handle(interaction)).resolves.toBe(knocked);
     const [asTarget] = knock.knock.mock.calls[0];
-    expect(asTarget.member.user.id).toBe(OTHER_USER_ID);
+    expect(asTarget.member.user).toEqual(player);
     expect(asTarget.data.name).toBe("knock");
     expect(asTarget.token).toBe(interaction.token);
+  });
+
+  it("refuses a target Discord did not resolve, rather than guess their names", async () => {
+    await expect(
+      command.handle(
+        buildInteraction({
+          name: "adminknock",
+          permissions: ADMINISTRATOR,
+          options: target(OTHER_USER_ID),
+        }),
+      ),
+    ).rejects.toThrow(
+      "You must provide a target user for the adminknock command",
+    );
+    expect(knock.knock).not.toHaveBeenCalled();
   });
 });

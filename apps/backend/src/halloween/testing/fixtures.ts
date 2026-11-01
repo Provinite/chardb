@@ -2,6 +2,7 @@ import {
   APIApplicationCommandInteractionDataOption,
   APIChatInputApplicationCommandGuildInteraction,
   APIUserApplicationCommandGuildInteraction,
+  type APIUser,
   ApplicationCommandType,
   InteractionType,
 } from "@discordjs/core";
@@ -40,6 +41,8 @@ interface InteractionOverrides {
   userId?: string;
   guildId?: string;
   permissions?: string;
+  /** Users the options name, as Discord resolves them alongside. */
+  resolvedUsers?: Record<string, APIUser>;
 }
 
 /**
@@ -83,6 +86,9 @@ export function buildInteraction(
       name: overrides.name ?? "knock",
       type: ApplicationCommandType.ChatInput,
       ...(overrides.options ? { options: overrides.options } : {}),
+      ...(overrides.resolvedUsers
+        ? { resolved: { users: overrides.resolvedUsers } }
+        : {}),
     },
   };
   return interaction as unknown as APIChatInputApplicationCommandGuildInteraction;
