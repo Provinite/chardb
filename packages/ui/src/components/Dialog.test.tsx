@@ -93,6 +93,12 @@ describe("Dialog", () => {
     expect(title.textContent).toBe("Name your board");
   });
 
+  it("puts a test id on the dialog element", () => {
+    render(<Dialog.Root open onClose={() => {}} data-testid="board-dialog" />);
+
+    expect(dialogs()[0].dataset.testid).toBe("board-dialog");
+  });
+
   it("makes the rest of the page inert while open, and only that", () => {
     const already = document.createElement("div");
     already.setAttribute("inert", "");

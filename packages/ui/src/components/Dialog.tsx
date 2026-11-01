@@ -78,6 +78,8 @@ export interface DialogRootProps {
    */
   width?: keyof typeof styles.width;
   className?: string;
+  /** On the `<dialog>`, for tests to find it by. */
+  "data-testid"?: string;
 }
 
 /**
@@ -100,6 +102,7 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
       "aria-label": ariaLabel,
       width = "default",
       className,
+      "data-testid": testId,
     },
     ref,
   ) {
@@ -193,6 +196,7 @@ export const DialogRoot = forwardRef<HTMLDialogElement, DialogRootProps>(
           aria-modal="true"
           aria-label={ariaLabel}
           aria-labelledby={hasTitle ? titleId : undefined}
+          data-testid={testId}
           tabIndex={-1}
           className={[styles.dialog, styles.width[width], className]
             .filter(Boolean)
