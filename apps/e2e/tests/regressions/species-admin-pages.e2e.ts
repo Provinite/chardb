@@ -30,9 +30,9 @@ test.describe("a plain member", () => {
     ).toBeVisible();
     await expect(page.getByText(TRAITS_CARD)).toHaveCount(0);
     await expect(page.getByText(VARIANTS_CARD)).toHaveCount(0);
-    await expect(page.getByRole("link", { name: "Manage Species" })).toHaveCount(
-      0,
-    );
+    await expect(
+      page.getByRole("link", { name: "Manage Species" }),
+    ).toHaveCount(0);
   });
 
   for (const path of [
