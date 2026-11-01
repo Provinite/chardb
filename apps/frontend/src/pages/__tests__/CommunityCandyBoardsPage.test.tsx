@@ -92,9 +92,7 @@ const board = (
   })),
 });
 
-const boardsQuery = (
-  boards: ReturnType<typeof board>[],
-): MockedResponse => ({
+const boardsQuery = (boards: ReturnType<typeof board>[]): MockedResponse => ({
   request: {
     query: MyHalloweenCandyBoardsDocument,
     variables: { communityId: COMMUNITY_ID },
