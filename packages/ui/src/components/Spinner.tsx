@@ -1,3 +1,4 @@
+import { cx } from "../layout/element";
 import * as styles from "./Spinner.css";
 
 export interface SpinnerProps {
@@ -10,10 +11,5 @@ export interface SpinnerProps {
  * screen readers; the control says it is busy with `aria-busy`.
  */
 export function Spinner({ className }: SpinnerProps) {
-  return (
-    <span
-      aria-hidden="true"
-      className={className ? `${styles.spinner} ${className}` : styles.spinner}
-    />
-  );
+  return <span aria-hidden="true" className={cx(styles.spinner, className)} />;
 }

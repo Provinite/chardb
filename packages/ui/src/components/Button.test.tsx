@@ -70,6 +70,22 @@ describe("Button", () => {
     );
   });
 
+  it("keeps the caller's own aria-disabled and aria-busy while not busy", () => {
+    const onClick = vi.fn();
+    const button = buttonIn(
+      render(
+        <Button aria-disabled aria-busy onClick={onClick}>
+          Save
+        </Button>,
+      ),
+    );
+    expect(button.getAttribute("aria-disabled")).toBe("true");
+    expect(button.getAttribute("aria-busy")).toBe("true");
+    // A caller's aria-disabled is its own: it may still explain on click.
+    button.click();
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   it("is natively disabled when disabled", () => {
     const button = buttonIn(render(<Button disabled>Save</Button>));
     expect(button.disabled).toBe(true);

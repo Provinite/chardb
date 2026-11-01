@@ -1,4 +1,5 @@
 import React, { forwardRef } from "react";
+import { cx } from "../layout/element";
 import type { ButtonSize, ButtonTone } from "./Button";
 import * as buttonStyles from "./Button.css";
 import { useBusyPress } from "./busyPress";
@@ -38,12 +39,19 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
       type = "button",
       className,
       onClick,
+      "aria-disabled": ariaDisabled,
+      "aria-busy": ariaBusy,
       ...rest
     },
     ref,
   ) {
-    const press = useBusyPress({ busy, disabled, onClick });
-    const classes = styles.iconButton({ tone, size });
+    const press = useBusyPress({
+      busy,
+      disabled,
+      onClick,
+      "aria-disabled": ariaDisabled,
+      "aria-busy": ariaBusy,
+    });
 
     return (
       <button
@@ -52,7 +60,7 @@ export const IconButton = forwardRef<HTMLButtonElement, IconButtonProps>(
         ref={ref}
         type={type}
         aria-label={label}
-        className={className ? `${classes} ${className}` : classes}
+        className={cx(styles.iconButton({ tone, size }), className)}
       >
         <span className={buttonStyles.label}>{icon}</span>
         {press.spinnerShown && (

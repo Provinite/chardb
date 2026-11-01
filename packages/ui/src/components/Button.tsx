@@ -1,4 +1,5 @@
 import React, { Children, cloneElement, forwardRef } from "react";
+import { cx } from "../layout/element";
 import * as styles from "./Button.css";
 import { useBusyPress } from "./busyPress";
 import { Spinner } from "./Spinner";
@@ -32,9 +33,6 @@ export interface ButtonProps
   children: React.ReactNode;
 }
 
-const join = (...classes: (string | undefined)[]) =>
-  classes.filter(Boolean).join(" ");
-
 /**
  * A button: something that does something. For a control that goes to a
  * page, use `ButtonLink` around the app's own link. Busy, it stays focusable;
@@ -55,11 +53,19 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       className,
       onClick,
       children,
+      "aria-disabled": ariaDisabled,
+      "aria-busy": ariaBusy,
       ...rest
     },
     ref,
   ) {
-    const press = useBusyPress({ busy, disabled, onClick });
+    const press = useBusyPress({
+      busy,
+      disabled,
+      onClick,
+      "aria-disabled": ariaDisabled,
+      "aria-busy": ariaBusy,
+    });
 
     return (
       <button
@@ -67,7 +73,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         {...press.props}
         ref={ref}
         type={type}
-        className={join(styles.button({ tone, size }), className)}
+        className={cx(styles.button({ tone, size }), className)}
       >
         <span className={styles.label}>
           {icon}
@@ -109,7 +115,7 @@ export interface ButtonLinkProps {
 export function ButtonLink({ tone, size, icon, children }: ButtonLinkProps) {
   const link = Children.only(children);
   return cloneElement(link, {
-    className: join(styles.button({ tone, size }), link.props.className),
+    className: cx(styles.button({ tone, size }), link.props.className),
     children: (
       <span className={styles.label}>
         {icon}
