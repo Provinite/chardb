@@ -50,6 +50,14 @@ const press = (key: string) =>
 const wisp: SearchSelectOption = { id: "ch-1", name: "Pumpkin Wisp" };
 const ghost = { id: "u-1", username: "ghost" };
 
+/** The user typeahead's result for `ghost`, and so its list's only option. */
+const ghostOption = () =>
+  [...document.querySelectorAll("button")].find(
+    // After the avatar's initial.
+    (b) => b.textContent?.endsWith("ghost"),
+  ) ?? null;
+const userList = () => ghostOption()?.parentElement ?? null;
+
 /** Each overlay, with how to open it and how to find what it opened. */
 const overlays: {
   name: string;
@@ -138,7 +146,7 @@ const overlays: {
       focus(input);
       type(input, "gh");
     },
-    find: () => document.querySelector<HTMLElement>("[data-typeahead-list]"),
+    find: userList,
   },
 ];
 
@@ -215,7 +223,7 @@ describe("Portal container", () => {
     )!;
     focus(input);
     type(input, "gh");
-    const option = document.querySelector("[data-typeahead-list] button")!;
+    const option = ghostOption()!;
 
     // As a browser does: the press, then the click.
     mousedown(option);
@@ -262,7 +270,88 @@ describe("Portal container", () => {
     focus(input);
     type(input, "gh");
     press("Escape");
-    expect(document.querySelector("[data-typeahead-list]")).toBeNull();
+    expect(userList()).toBeNull();
     expect(document.querySelector("dialog")).not.toBeNull();
+  });
+
+  it("keeps a popover open for a pick from a typeahead inside it", () => {
+    const onChange = vi.fn();
+    render(
+      themed(
+        <Popover.Root>
+          <Popover.Trigger>
+            <button type="button">Recipient</button>
+          </Popover.Trigger>
+          <Popover.Panel aria-label="Recipient">
+            <UserTypeahead
+              value={null}
+              users={[ghost]}
+              onChange={onChange}
+              onSearch={() => {}}
+            />
+          </Popover.Panel>
+        </Popover.Root>,
+      ),
+    );
+    click(document.querySelector("button[aria-haspopup]")!);
+    const input = document.querySelector<HTMLInputElement>(
+      '[aria-label="Search for user"]',
+    )!;
+    type(input, "gh");
+    const option = ghostOption()!;
+    // Portalled out of the panel, but inside it in the component tree.
+    expect(document.querySelector('[role="dialog"]')!.contains(option)).toBe(
+      false,
+    );
+
+    mousedown(option);
+    click(option);
+
+    expect(onChange).toHaveBeenCalledWith("u-1", ghost);
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  });
+
+  it("keeps a popover open for a press in a menu inside it", () => {
+    render(
+      themed(
+        <Popover.Root>
+          <Popover.Trigger>
+            <button type="button">Options</button>
+          </Popover.Trigger>
+          <Popover.Panel aria-label="Options">
+            <Menu label="More actions">
+              <MenuItem onSelect={() => {}}>Rename</MenuItem>
+            </Menu>
+          </Popover.Panel>
+        </Popover.Root>,
+      ),
+    );
+    click(document.querySelector("button[aria-haspopup]")!);
+    click(document.querySelector('[aria-label="More actions"]')!);
+
+    mousedown(document.querySelector('[role="menuitem"]')!);
+
+    expect(document.querySelector('[role="dialog"]')).not.toBeNull();
+  });
+
+  it("still closes a popover on a press outside it", () => {
+    render(
+      <>
+        <p>Outside</p>
+        <Popover.Root>
+          <Popover.Trigger>
+            <button type="button">Options</button>
+          </Popover.Trigger>
+          <Popover.Panel aria-label="Options">
+            <input aria-label="Field" />
+          </Popover.Panel>
+        </Popover.Root>
+      </>,
+    );
+    click(document.querySelector("button[aria-haspopup]")!);
+
+    mousedown(document.querySelector("p")!);
+
+    expect(document.querySelector('[role="dialog"]')).toBeNull();
   });
 });

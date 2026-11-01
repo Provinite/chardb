@@ -13,7 +13,13 @@ import React, {
 import { createPortal } from "react-dom";
 import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
 import type { Align, FallbackStrategy, Side } from "../hooks/placeFloating";
-import { applyPlacement, refOf, setRefs, tabbables } from "./floating";
+import {
+  applyPlacement,
+  refOf,
+  setRefs,
+  tabbables,
+  usePressOutside,
+} from "./floating";
 import * as floatingStyles from "./floating.css";
 import * as styles from "./Popover.css";
 import { usePortalContainer } from "./portal";
@@ -53,6 +59,8 @@ interface PopoverContextValue {
   triggerRef: React.MutableRefObject<HTMLElement | null>;
   panelRef: React.MutableRefObject<HTMLDivElement | null>;
   bodyRef: React.MutableRefObject<HTMLDivElement | null>;
+  /** On the panel: marks presses inside it, nested portals included. */
+  pressInside: { onMouseDownCapture: (e: React.MouseEvent) => void };
 }
 
 /**
@@ -138,26 +146,22 @@ export function PopoverRoot({
   }, []);
   const toggle = useCallback(() => setOpen((was) => !was), []);
 
-  useEffect(() => {
-    if (!open) return;
-    const onMouseDown = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        !panelRef.current?.contains(target) &&
-        !triggerRef.current?.contains(target)
-      ) {
-        close(false);
-      }
-    };
-    document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
-  }, [open, close]);
+  const pressInside = usePressOutside(open, () => close(false), [triggerRef]);
 
   // Changes only on open and close: where the panel sits is never in here, so
   // following a scroll re-renders neither the trigger nor the panel.
   const ctx = useMemo(
-    () => ({ open, toggle, close, panelId, triggerRef, panelRef, bodyRef }),
-    [open, toggle, close, panelId],
+    () => ({
+      open,
+      toggle,
+      close,
+      panelId,
+      triggerRef,
+      panelRef,
+      bodyRef,
+      pressInside,
+    }),
+    [open, toggle, close, panelId, pressInside],
   );
 
   return (
@@ -205,8 +209,11 @@ export interface PopoverPanelProps
 
 /** The panel, with an arrow pointing at the trigger. Only there while open. */
 export const PopoverPanel = forwardRef<HTMLDivElement, PopoverPanelProps>(
-  function PopoverPanel({ className, children, onKeyDown, ...rest }, ref) {
-    const { open, close, panelId, triggerRef, panelRef, bodyRef } =
+  function PopoverPanel(
+    { className, children, onKeyDown, onMouseDownCapture, ...rest },
+    ref,
+  ) {
+    const { open, close, panelId, triggerRef, panelRef, bodyRef, pressInside } =
       usePopover();
     const container = usePortalContainer();
     const setPanel = useCallback(
@@ -263,6 +270,10 @@ export const PopoverPanel = forwardRef<HTMLDivElement, PopoverPanelProps>(
         tabIndex={-1}
         // Placed by `applyPlacement`, before paint.
         className={className ? `${styles.panel} ${className}` : styles.panel}
+        onMouseDownCapture={(e) => {
+          onMouseDownCapture?.(e);
+          pressInside.onMouseDownCapture(e);
+        }}
         onKeyDown={(e) => {
           onKeyDown?.(e);
           escapeCloses(e, close);

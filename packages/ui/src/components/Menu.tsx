@@ -14,6 +14,7 @@ import { createPortal } from "react-dom";
 import styled, { css } from "styled-components";
 import { vars } from "../theme/contract.css";
 import { useAnchoredPosition } from "../hooks/useAnchoredPosition";
+import { usePressOutside } from "./floating";
 import { usePortalContainer } from "./portal";
 
 /**
@@ -265,22 +266,7 @@ export const Menu: React.FC<MenuProps> = ({
     if (open) items()[0]?.focus({ preventScroll: true });
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (e: MouseEvent) => {
-      const target = e.target as Node;
-      if (
-        !listRef.current?.contains(target) &&
-        !triggerRef.current?.contains(target)
-      ) {
-        close(false);
-      }
-    };
-    document.addEventListener("mousedown", onPointerDown);
-    return () => {
-      document.removeEventListener("mousedown", onPointerDown);
-    };
-  }, [open, close]);
+  const pressInside = usePressOutside(open, () => close(false), [triggerRef]);
 
   const context = useMemo(
     () => ({ close: () => close(true), dismiss: () => close(false) }),
@@ -354,6 +340,7 @@ export const Menu: React.FC<MenuProps> = ({
               role="menu"
               aria-label={label}
               onKeyDown={onListKeyDown}
+              onMouseDownCapture={pressInside.onMouseDownCapture}
             >
               {children}
             </List>
