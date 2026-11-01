@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **`/adminknock` records the player's own Discord names on what they win**, not the admin's.
+- **Each task exports its own metric series** (`service.instance.id`); two tasks sharing one series inflated every rate about twelvefold.
+- **`/health` is no longer traced or request-logged** and returns only `status` and `version`; the request log shows `/graphql` instead of `/` for GraphQL responses and logs aborted requests.
+- **Client errors (4xx) log as warnings, not errors**, and a request body the client aborts or oversizes answers with body-parser's 4xx instead of a 500.
 
 ## [v15.2.0] - 2026-11-01
 

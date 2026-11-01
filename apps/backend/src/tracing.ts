@@ -3,14 +3,15 @@ import { getNodeAutoInstrumentations } from "@opentelemetry/auto-instrumentation
 import { resourceFromAttributes } from "@opentelemetry/resources";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { createDenyListAttributesProcessor } from "@opentelemetry/sdk-metrics";
-import {
-  ATTR_SERVICE_NAME,
-  ATTR_SERVICE_VERSION,
-} from "@opentelemetry/semantic-conventions";
+import { randomUUID } from "crypto";
 import { WinstonInstrumentation } from "@opentelemetry/instrumentation-winston";
 import { PrismaInstrumentation } from "@prisma/instrumentation";
 import { SeverityNumber } from "@opentelemetry/api-logs";
 import { traceDetailOptions } from "./tracing-detail";
+import {
+  isUntracedRequest,
+  tracingResourceAttributes,
+} from "./tracing-requests";
 
 // Honour the standard OTEL_SDK_DISABLED switch before constructing anything.
 //
@@ -40,10 +41,9 @@ if (tracingDisabled) {
 
   // Initialize OpenTelemetry SDK with simplified configuration
   sdk = new NodeSDK({
-    resource: resourceFromAttributes({
-      [ATTR_SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || "chardb-backend",
-      [ATTR_SERVICE_VERSION]: process.env.OTEL_SERVICE_VERSION || "1.0.0",
-    }),
+    resource: resourceFromAttributes(
+      tracingResourceAttributes(process.env, randomUUID()),
+    ),
 
     // Trace exporter
     traceExporter: new OTLPTraceExporter({}),
@@ -79,10 +79,7 @@ if (tracingDisabled) {
         // Enable core instrumentations
         "@opentelemetry/instrumentation-http": {
           enabled: true,
-          ignoreIncomingRequestHook: () => {
-            // Never ignore OPTIONS requests - we want to trace them!
-            return false;
-          },
+          ignoreIncomingRequestHook: isUntracedRequest,
           requestHook: (span, request) => {
             // Type guard to check if this is an IncomingMessage (server request)
             if ("headers" in request && request.method === "OPTIONS") {
