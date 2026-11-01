@@ -1,8 +1,7 @@
 import React, { useCallback, useState } from "react";
 import styled from "styled-components";
-import { Modal } from "@mantine/core";
 import { Blend, Droplets, Moon, Palette } from "lucide-react";
-import { Tooltip } from "@chardb/ui";
+import { Dialog, Tooltip } from "@chardb/ui";
 import {
   BOARD_BACKGROUNDS,
   SURFACE_COLOUR,
@@ -133,16 +132,13 @@ export const BackgroundDialog: React.FC<BackgroundDialogProps> = ({
   open,
   ...body
 }) => (
-  <Modal
-    opened={open}
-    onClose={body.onClose}
-    title="Background"
-    size="lg"
-    centered
-  >
-    {/* Mounted afresh each opening, so it starts from what the board has. */}
-    <DialogBody {...body} />
-  </Modal>
+  <Dialog.Root open={open} onClose={body.onClose} width="wide">
+    <Dialog.Title>Background</Dialog.Title>
+    <Dialog.Body>
+      {/* Mounted afresh each opening, so it starts from what the board has. */}
+      <DialogBody {...body} />
+    </Dialog.Body>
+  </Dialog.Root>
 );
 
 // The icons naming each row, the same every render.
@@ -168,7 +164,7 @@ const STRENGTH_ICON = (
 );
 
 /**
- * The dialog's contents. Its state lives here, under the Modal, and the
+ * The dialog's contents. Its state lives here, under the Dialog, and the
  * swatches are memoised, so dragging a slider re-renders only the preview
  * and the slider: an input event can come several times a frame.
  */

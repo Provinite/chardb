@@ -11,7 +11,6 @@ import { MockedProvider } from "@apollo/client/testing";
 import { ApolloLink, Observable } from "@apollo/client";
 import { ThemeProvider } from "styled-components";
 import { lightTheme } from "@chardb/ui";
-import { MantineProvider } from "@mantine/core";
 import {
   ExternalAccountProvider,
   ItemTransactionKind,
@@ -158,11 +157,9 @@ const renderLedger = (sent: Filters[], options?: LedgerOptions) =>
   render(
     <MockedProvider link={recordingLink(sent, options)}>
       <ThemeProvider theme={lightTheme}>
-        <MantineProvider>
-          <MemoryRouter>
-            <CommunityItemLedgerPage />
-          </MemoryRouter>
-        </MantineProvider>
+        <MemoryRouter>
+          <CommunityItemLedgerPage />
+        </MemoryRouter>
       </ThemeProvider>
     </MockedProvider>,
   );
