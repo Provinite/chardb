@@ -36,13 +36,6 @@ describe("HalloweenRandom", () => {
     });
   });
 
-  describe("element", () => {
-    it("picks by position", () => {
-      expect(scripted([0]).element(["a", "b", "c"])).toBe("a");
-      expect(scripted([0.99]).element(["a", "b", "c"])).toBe("c");
-    });
-  });
-
   describe("weighted", () => {
     it("selects in proportion to weight", () => {
       // total weight 6: [0,1) -> a, [1,3) -> b, [3,6) -> c
@@ -62,13 +55,6 @@ describe("HalloweenRandom", () => {
       expect(() => new HalloweenRandom().weighted(["a"], [1, 2])).toThrow(
         "elements and weights must be the same length",
       );
-    });
-  });
-
-  describe("shuffle", () => {
-    it("returns every element", () => {
-      const out = new HalloweenRandom().shuffle([1, 2, 3, 4, 5]);
-      expect([...out].sort()).toEqual([1, 2, 3, 4, 5]);
     });
   });
 });

@@ -14,9 +14,10 @@ const prizePath = ({ itemTypeId, characterId }: ChardbPrize): string | null =>
       : null;
 
 /**
- * Links from Discord back to chardb. Built the way the frontend's
- * `communityUrl` builds them: the community's slug under ROOT_DOMAIN, with
- * the scheme and port FRONTEND_URL is served on.
+ * Links back to chardb, for Discord and for the API. Built the way the
+ * frontend's `communityUrl` and `apexUrl` build them: the community's slug
+ * under ROOT_DOMAIN, or ROOT_DOMAIN itself, with the scheme and port
+ * FRONTEND_URL is served on.
  */
 @Injectable()
 export class HalloweenLinks {
@@ -30,12 +31,12 @@ export class HalloweenLinks {
    * there is none to link to.
    */
   async halloweenPage(guildId: string): Promise<string | null> {
-    return this.communityUrl(guildId, "/admin/halloween");
+    return this.guildUrl(guildId, "/admin/halloween");
   }
 
   /** The community's public prize list, or null with nowhere to link to. */
   async prizeListPage(guildId: string): Promise<string | null> {
-    return this.communityUrl(guildId, "/halloween/prizes");
+    return this.guildUrl(guildId, "/halloween/prizes");
   }
 
   /**
@@ -46,40 +47,48 @@ export class HalloweenLinks {
     guildId: string,
     prize: ChardbPrize,
   ): Promise<string | undefined> {
-    if (!prizePath(prize)) {
+    const path = prizePath(prize);
+    if (!path) {
       return undefined;
     }
-    return (await this.chardbLinks(guildId))(prize);
+    const url = await this.guildUrl(guildId, path);
+    return url ? `[View on CharDB](${url})` : undefined;
   }
 
-  /** `chardbLink` for a list of prizes, finding the community once. */
-  async chardbLinks(
-    guildId: string,
-  ): Promise<(prize: ChardbPrize) => string | undefined> {
-    const base = await this.communityUrl(guildId, "");
-    return (prize) => {
-      const path = prizePath(prize);
-      return base && path ? `[View on CharDB](${base}${path})` : undefined;
-    };
+  /**
+   * What the prize hands over, on the community's host, or null for a prize
+   * staff hand over themselves, or without the site's address configured.
+   */
+  prizeUrl(communitySlug: string, prize: ChardbPrize): string | null {
+    const path = prizePath(prize);
+    return path ? this.siteUrl(communitySlug, path) : null;
   }
 
-  private async communityUrl(
+  /** A user's profile, on the apex, or null without the site's address. */
+  profileUrl(username: string): string | null {
+    return this.siteUrl(null, `/user/${encodeURIComponent(username)}`);
+  }
+
+  private async guildUrl(
     guildId: string,
     path: string,
   ): Promise<string | null> {
+    const community = await this.db.community.findFirst({
+      where: { discordGuildId: guildId },
+      select: { slug: true },
+    });
+    return community ? this.siteUrl(community.slug, path) : null;
+  }
+
+  /** The path on a community's host, or on the apex for no community. */
+  private siteUrl(communitySlug: string | null, path: string): string | null {
     const frontendUrl = this.config.get<string>("FRONTEND_URL");
     const rootDomain = this.config.get<string>("ROOT_DOMAIN");
     if (!frontendUrl || !rootDomain) {
       return null;
     }
-    const community = await this.db.community.findFirst({
-      where: { discordGuildId: guildId },
-      select: { slug: true },
-    });
-    if (!community) {
-      return null;
-    }
     const { protocol, port } = new URL(frontendUrl);
-    return `${protocol}//${community.slug}.${rootDomain}${port ? `:${port}` : ""}${path}`;
+    const host = communitySlug ? `${communitySlug}.${rootDomain}` : rootDomain;
+    return `${protocol}//${host}${port ? `:${port}` : ""}${path}`;
   }
 }

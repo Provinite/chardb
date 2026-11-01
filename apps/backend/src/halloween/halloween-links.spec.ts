@@ -94,6 +94,58 @@ describe("HalloweenLinks", () => {
     });
   });
 
+  // The same rule as chardbLink, for pages that already know the community.
+  describe("prizeUrl", () => {
+    const chardb = links({
+      FRONTEND_URL: "https://chardb.cc",
+      ROOT_DOMAIN: "chardb.cc",
+    });
+    const none = { itemTypeId: null, characterId: null };
+
+    it("is the item type or character on the community's host", () => {
+      expect(chardb.prizeUrl("cloverse", { ...none, itemTypeId: "it-1" })).toBe(
+        "https://cloverse.chardb.cc/item-types/it-1",
+      );
+      expect(
+        chardb.prizeUrl("cloverse", { ...none, characterId: "ch-1" }),
+      ).toBe("https://cloverse.chardb.cc/character/ch-1");
+    });
+
+    it("is null for a prize staff hand over", () => {
+      expect(chardb.prizeUrl("cloverse", none)).toBeNull();
+    });
+  });
+
+  // Profiles live on the apex, not under a community.
+  describe("profileUrl", () => {
+    it("is the user's page on the apex", () => {
+      expect(
+        links({
+          FRONTEND_URL: "https://chardb.cc",
+          ROOT_DOMAIN: "chardb.cc",
+        }).profileUrl("pumpkin"),
+      ).toBe("https://chardb.cc/user/pumpkin");
+    });
+
+    it("keeps the scheme and port of a local frontend", () => {
+      expect(
+        links({
+          FRONTEND_URL: "http://dev.localhost:3000",
+          ROOT_DOMAIN: "dev.localhost",
+        }).profileUrl("pumpkin"),
+      ).toBe("http://dev.localhost:3000/user/pumpkin");
+    });
+
+    it("escapes the username", () => {
+      expect(
+        links({
+          FRONTEND_URL: "https://chardb.cc",
+          ROOT_DOMAIN: "chardb.cc",
+        }).profileUrl("a b"),
+      ).toBe("https://chardb.cc/user/a%20b");
+    });
+  });
+
   it("has no link without the site's address configured", async () => {
     expect(
       await links({ ROOT_DOMAIN: "chardb.cc" }).halloweenPage(GUILD_ID),

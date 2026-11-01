@@ -24,10 +24,6 @@ export class HalloweenRandom {
     return randomInt(max);
   }
 
-  element<T>(items: readonly T[]): T {
-    return items[Math.floor(this.unit() * items.length)];
-  }
-
   /**
    * An element chosen with probability proportional to its weight: weight 2
    * is twice as likely as weight 1.
@@ -35,9 +31,5 @@ export class HalloweenRandom {
   weighted<T>(items: readonly T[], weights: readonly number[]): T {
     const total = weights.reduce((acc, w) => acc + w, 0);
     return pickWeighted(items, weights, this.int(total));
-  }
-
-  shuffle<T>(items: readonly T[]): T[] {
-    return [...items].sort(() => this.unit() - 0.5);
   }
 }
