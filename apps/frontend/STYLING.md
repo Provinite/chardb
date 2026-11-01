@@ -148,7 +148,7 @@ Durations and easings are tokens, for transitions and animations only. A literal
   A decorative loop takes `duration` (a motion token, default `motion.duration.essential`); both take `easing` (default `motion.easing.linear`).
 
   `infinite` outside `loop()` is a lint error (`loop-via-helper`).
-- **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token. `vars.timing.*` is for CSS such as `animation-delay`; JavaScript timers read the same values in milliseconds from `timingMs`.
+- **Timers** (toast lifetime, tooltip delay, debounce) have their own `timing.*` tokens, which reduced motion leaves alone. Never time something with a duration token. `vars.timing.*` is for CSS such as `animation-delay`; JavaScript timers read the same values in milliseconds from `timingMs`. Debounced input waits `timing.debounce.typeahead` (200ms) for a list of picks updating as you type, and `timing.debounce.search` (300ms) for a search box over a page of results.
 - **Smooth scrolling.** The theme sets `scroll-behavior: auto` under reduced motion. In code, scroll with `scrollToElement(el, options)` and `scrollToPosition(position, el?)` from `@chardb/ui` instead of `scrollIntoView` and `scrollTo`, which are lint errors (`no-restricted-properties`); they scroll smoothly, or jump when the user prefers reduced motion. A scroll that resets rather than moves, such as a new page starting at the top, passes `jump: true` to `scrollToPosition` and jumps for everyone.
 
 ## Breakpoints
