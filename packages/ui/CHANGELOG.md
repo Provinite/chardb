@@ -9,6 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`IconButton`**, named by a required `label`, plus **`ButtonLink`**, **`Spinner`**, `useLoaderVisible`, `touchQuery` and the `size.spinner` and `action.primary.fgOutline` tokens (#503).
+
 - **`useDebouncedValue`**, **`Dialog.Body`**, and a `wide` `Dialog` with the `size.dialogWide` token, for what Mantine supplied (#466).
 
 - **`Tooltip`**, a name shown on hover, keyboard focus and long press, and **`Toggletip`**, a note behind an info button that screen readers hear as it opens; plus the `timing.tooltip` tokens and the `illustration.lamp` colours (#466).
@@ -18,6 +20,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Breaking: `Button` is on vanilla-extract**: `variant` is `tone`, `loading` is `busy` (spinner after the loader delay, label kept), `lg`, `as`, `to` and `href` are gone, and every size is a 44px target on touch; `Dialog` takes `data-testid` (#503).
 - **The focus ring is a listed pair on every status tint** (`status.*.bgSubtle`), so the contrast test covers controls inside tinted toasts and alerts (#484).
 - **`scrollToPosition()` takes `jump: true`** to skip the animation for everyone, for scrolls that reset rather than move (#484).
 - **`loop()` returns a style rule instead of a class**, so the vanilla-extract runtime no longer ships in every bundle that imports `@chardb/ui`; `style([loop(...), {...}])` works unchanged (#465).

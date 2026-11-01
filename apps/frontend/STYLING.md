@@ -340,7 +340,7 @@ Pick the indicator by what is loading. Each follows the [no pop-in](#no-pop-in) 
 
 - **Skeletons** take the footprint of the content they stand in for, so the swap moves nothing. They appear at once, with no delay. Their shimmer is a decorative loop and stops under reduced motion.
 - **Never replace content already on screen with a skeleton.** A refetch keeps the old data until the new data arrives. "Load more" shows busy state on its own button, and new rows appear below.
-- **Buttons keep their size while busy.** The label stays in place but invisible, the spinner sits over it, and the button is disabled with `aria-busy`. Do not swap the label for "Saving…". Report the outcome with a toast or inline status.
+- **Buttons keep their size while busy.** The label stays in place but invisible, the spinner sits over it, and the button is disabled with `aria-busy`. Do not swap the label for "Saving…". Report the outcome with a toast or inline status. `Button` and `IconButton` do all of this with `busy`: presses are blocked at once through `aria-disabled`, which keeps keyboard focus on the button, and the spinner and `aria-busy` follow the [timing](#timing). The label is hidden with `opacity`, so it stays the button's accessible name.
 - **Spinners** appear only inside controls: buttons and input end slots. A spinner centred in an empty section is not an option; that is what skeletons are for. `Spinner` from `@chardb/ui` is `size.spinner` square, as tall as the control's text, and drawn in `currentColor`.
 - **Known progress is shown as progress.** A task that can report how far along it is uses a determinate bar, never a spinner.
 - **Route changes** keep the current page on screen until the next page's code and data are ready, with the top progress bar showing in the meantime. The bar is `TopProgressBar` from `@chardb/ui`, in `action.primary.bg`; the shell shows it while a navigation waits on the next page's code.
@@ -377,7 +377,8 @@ The `AppLoader` animation is the startup screen, and it lives in `index.html`, n
   - A `title` attribute is neither: touch screens never show it.
 - **Focus** uses the shared focus ring (`focusRing`) on `:focus-visible`. Never remove an outline without replacing it.
 - **Links go somewhere; buttons do something.** Anything that takes people to a page is a real `<a href>`: a router `Link`, or `HostAwareLink` when the destination may be on another host. That keeps everything browsers do with links: Ctrl-click, Cmd-click, middle-click and Shift-click, "Open in new tab", "Copy link address", and the address shown on hover. Never send someone to a page from a button's `onClick` or with `navigate()` in a handler. Buttons are for actions: save, log out, switch theme.
-  - This holds inside menus, cards and lists too. A menu item that navigates is a `MenuLinkItem` around the link.
+  - This holds inside menus, cards and lists too. A menu item that navigates is a `MenuLinkItem` around the link, and a link that looks like a button is a `ButtonLink` around it.
+  - `IconButton` takes a required `label`, its accessible name. Wrap it in `Tooltip` to show the name on hover too.
   - A handler on a link, or on something around it, that does extra work on a click (closing a drawer, closing a menu) leaves modified and middle clicks alone, and never calls `preventDefault` on them.
 
 ## Accessibility

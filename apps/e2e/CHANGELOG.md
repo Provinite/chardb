@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Button specs**: Ctrl-click on a link button, 44px touch targets on a phone, and Enter not resubmitting while a submit button is busy (#503).
 - **Give-to-community specs**; the character page's `character-staff-menu` test id is now `character-actions-menu`, since owners use it too (#521).
 - **Trait review deep-link specs**: badge to narrowed queue, the empty state after approving, and no link for members (#526).
 
