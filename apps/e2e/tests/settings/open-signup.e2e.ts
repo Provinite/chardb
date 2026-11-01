@@ -33,7 +33,10 @@ test.describe("a visitor", () => {
     await page.goto(world.open.url);
     await page.getByRole("link", { name: "Sign Up to Join" }).click();
 
-    await expect(page.getByText("You'll be joining Open Glade")).toBeVisible();
+    await expect(page).toHaveURL(`${world.open.url}/signup`);
+    await expect(
+      page.getByRole("heading", { name: "Join Open Glade" }),
+    ).toBeVisible();
     await expect(page.locator("#inviteCode")).toHaveCount(0);
 
     await page.fill("#username", "glader");
@@ -50,6 +53,34 @@ test.describe("a visitor", () => {
     ]);
   });
 
+  test("signs up from the header menu without an invite code", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(world.open.url);
+    await page.getByRole("button", { name: "Log in or sign up" }).click();
+    await page.getByRole("menuitem", { name: "Sign up" }).click();
+
+    await expect(page).toHaveURL(`${world.open.url}/signup`);
+    await expect(
+      page.getByRole("heading", { name: "Join Open Glade" }),
+    ).toBeVisible();
+    await expect(page.locator("#inviteCode")).toHaveCount(0);
+
+    await page.fill("#username", "menuglader");
+    await page.fill("#email", "menuglader@e2e.local");
+    await page.fill("#password", "password123");
+    await page.fill("#confirmPassword", "password123");
+    await page.getByRole("button", { name: "Create Account" }).click();
+
+    await expect(
+      page.getByRole("heading", { name: "Check your email" }),
+    ).toBeVisible();
+    expect(await membershipsOf("menuglader@e2e.local")).toEqual([
+      world.open.memberRoleId,
+    ]);
+  });
+
   test("still needs a code for a community that takes invites", async ({
     page,
     world,
@@ -61,6 +92,13 @@ test.describe("a visitor", () => {
     await expect(
       page.getByRole("link", { name: "Sign Up to Join" }),
     ).toHaveCount(0);
+
+    await page.goto(`${world.closed.url}/signup`);
+    await expect(
+      page.getByRole("heading", { name: "Join Closed Hollow" }),
+    ).toBeVisible();
+    await expect(page.getByText("Closed Hollow is invite-only")).toBeVisible();
+    await expect(page.getByLabel("Invite code")).toBeVisible();
   });
 });
 

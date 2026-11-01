@@ -282,11 +282,9 @@ test.describe("one session across hosts", () => {
     page,
     world,
   }) => {
-    // Signing in has to happen at the apex -- that is where the cookie for the
-    // whole parent domain is set -- but leaving a community should not be a
-    // one-way trip. Router state cannot carry the way back, because the trip
-    // crosses an ORIGIN and `location.state` does not survive that; the return
-    // address has to be in the URL.
+    // The sign-in form is served on the community host itself. The API sets
+    // the session cookie for the whole parent domain whichever host the form
+    // is on, so nothing about signing in needs the apex.
     //
     // A PUBLIC community page, because this is the journey that starts by
     // clicking Login rather than by being bounced there: somewhere a signed-out
@@ -296,18 +294,24 @@ test.describe("one session across hosts", () => {
     await page.getByRole("button", { name: "Log in or sign up" }).click();
     await page.getByRole("menuitem", { name: "Log in" }).click();
 
-    // Anchored on the APEX login page, not any `/login`. The community host has
-    // one too -- it is the hop that sends you here -- and filling the form on
-    // that one races the redirect and loses what was typed.
-    await expect(page).toHaveURL(urlStartingWith(apexUrl("/login")));
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/login`),
+    );
+    await expect(
+      page.getByRole("heading", { name: `Sign in to ${world.community.name}` }),
+    ).toBeVisible();
 
     await page.getByLabel("Email").fill(world.users.member.email);
     await page.getByLabel("Password").fill(world.users.member.password);
     await page.getByRole("button", { name: "Sign In" }).click();
 
-    // Back where they started, not stranded on the apex dashboard.
+    // Back where they started.
     await expect(page).toHaveURL(`${world.community.url}/characters`);
     await expect(communityNav(page)).toBeVisible();
+    await expect(signedInMenu(page)).toBeVisible();
+
+    // One sign-in still covers every host.
+    await page.goto(apexUrl("/"));
     await expect(signedInMenu(page)).toBeVisible();
   });
 
@@ -316,11 +320,13 @@ test.describe("one session across hosts", () => {
     world,
   }) => {
     // The same journey, entered by URL rather than by clicking: ProtectedRoute
-    // bounces to /login, which on a community host is itself a hop to the
-    // apex. Two redirects, and the destination has to survive both.
+    // bounces to the community host's own /login, and the destination has to
+    // survive the trip.
     await page.goto(`${world.community.url}/settings`);
 
-    await expect(page).toHaveURL(urlStartingWith(apexUrl("/login")));
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/login`),
+    );
     await page.getByLabel("Email").fill(world.users.commadmin.email);
     await page.getByLabel("Password").fill(world.users.commadmin.password);
     await page.getByRole("button", { name: "Sign In" }).click();

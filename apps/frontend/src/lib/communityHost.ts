@@ -120,10 +120,10 @@ export const communityUrl = (slug: string, path = "/"): string =>
  * Where to come back to after signing in, as two parameters rather than one
  * URL: which community, and which path within it.
  *
- * Signing in always happens at the apex, because that is where the cookie for
- * the whole parent domain is set -- so leaving a community host is
- * unavoidable. Coming back is not, and the way back has to travel in the URL,
- * because `location.state` does not survive a navigation across origins.
+ * Every host serves its own sign-in form, but a link can still send someone
+ * to another host's (the API's auth failure redirect goes to the apex). The
+ * way back travels in the URL, because `location.state` does not survive a
+ * navigation across origins.
  *
  * Split rather than absolute so that a foreign origin cannot be *expressed*.
  * An absolute URL in a query parameter is an open redirect that has to be
@@ -156,8 +156,7 @@ const NOT_A_RETURN_DESTINATION = new Set([
  * A `/login` link that remembers where it was clicked from.
  *
  * Relative, because the router resolves it against whichever host it was
- * clicked on -- and on a community host that `/login` route is the hop to the
- * apex, which carries these parameters along with the rest of the query.
+ * clicked on, and every host serves its own sign-in form.
  */
 export const loginUrlReturningHere = (): string => {
   if (NOT_A_RETURN_DESTINATION.has(window.location.pathname)) return "/login";
@@ -177,9 +176,9 @@ export const loginUrlReturningHere = (): string => {
  * Where to go once signed in, built from the two parameters, or `null` if they
  * do not name anywhere.
  *
- * Returns a path when the destination is the apex -- the login page is always
- * there, so the router can handle it -- and an absolute URL when it is a
- * community, which is a different origin and needs a whole-page navigation.
+ * Returns a path when the destination is the apex and an absolute URL when it
+ * is a community. The sign-in page decides which of those it can reach with
+ * the router: a path is only local when the form is on the apex too.
  */
 export const returnDestination = (params: URLSearchParams): string | null => {
   const path = params.get(RETURN_PATH_PARAM);
