@@ -92,11 +92,11 @@ export const HalloweenEventStats: React.FC<HalloweenEventStatsProps> = ({
       <Stat value={summary.unspentGifties} label="Gifties unspent" />
       <Stat
         value={sendToday === null ? "–" : percent(sendToday)}
-        label="Players sending gifties today"
+        label="Sent a gifty today"
       />
       <Stat
         value={sendYesterday === null ? "–" : percent(sendYesterday)}
-        label="Players sending gifties yesterday"
+        label="Sent a gifty yesterday"
       />
       <Stat value={summary.toDeliver} label="To deliver" />
     </Grid>
@@ -119,7 +119,10 @@ const PrizeResult: React.FC<{ prize: SimulatedPrize }> = ({ prize }) => (
         width={64}
         height={64}
       />
-    ) : null}
+    ) : (
+      // Holds the picture's place, so every prize lays out alike.
+      <div className={styles.resultImage} />
+    )}
     <Stack gap="xs">
       <p className={styles.resultTitle}>{prize.name}</p>
       <p className={styles.muted}>
@@ -195,7 +198,9 @@ export const HalloweenSimulators: React.FC<HalloweenSimulatorsProps> = ({
         <h3 className={styles.sectionTitle}>Prize draw</h3>
         <p className={styles.muted}>A prize a win could take right now.</p>
         <div className={styles.result} aria-live="polite">
-          {drawn === undefined ? null : drawn === null ? (
+          {drawn === undefined ? (
+            <p className={styles.muted}>Nothing drawn yet</p>
+          ) : drawn === null ? (
             <p className={styles.resultTitle}>No prizes left</p>
           ) : (
             <PrizeResult prize={drawn} />
@@ -217,7 +222,11 @@ export const HalloweenSimulators: React.FC<HalloweenSimulatorsProps> = ({
           A knock at today&apos;s win rate: a prize or a candy.
         </p>
         <div className={styles.result} aria-live="polite">
-          {knock ? <KnockResult knock={knock} winRate={winRate} /> : null}
+          {knock ? (
+            <KnockResult knock={knock} winRate={winRate} />
+          ) : (
+            <p className={styles.muted}>No knock yet</p>
+          )}
         </div>
         <Cluster>
           <Button
@@ -278,8 +287,7 @@ export const HalloweenRunOutForecast: React.FC<
     players: String(measured ? last24Hours.players : DEFAULT_PLAYERS_PER_DAY),
     knocksPerPlayer: (measured
       ? last24Hours.knocks / last24Hours.players
-      : knocksPerDay +
-        (giftiesPerPlayer(yesterday) ?? DEFAULT_GIFTY_SEND_RATE)
+      : knocksPerDay + (giftiesPerPlayer(yesterday) ?? DEFAULT_GIFTY_SEND_RATE)
     ).toFixed(2),
   };
   const [winRatePct, setWinRatePct] = useState(defaults.winRatePct);

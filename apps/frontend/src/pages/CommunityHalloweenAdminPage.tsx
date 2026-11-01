@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Ghost, Check, Undo2, Pencil, Plus, Trash2 } from "lucide-react";
-import { Button, Modal } from "@chardb/ui";
+import { Button, Modal, Stack } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -414,23 +414,25 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
         <>
           <HalloweenEventStats summary={summary} prizes={dashboard.prizes} />
           <SectionTitle>Simulators</SectionTitle>
-          <HalloweenSimulators
-            prizes={dashboard.prizes}
-            winRate={settings.winRate}
-            candySlugs={data?.halloweenCandyTypes ?? []}
-          />
-          <HalloweenRunOutForecast
-            // New settings start the what-ifs over from them.
-            key={`${settings.winRate}:${settings.knocksPerDay}:${settings.startDate}:${settings.endDate}`}
-            prizes={dashboard.prizes}
-            winRate={settings.winRate}
-            knocksPerDay={settings.knocksPerDay}
-            last24Hours={summary.last24Hours}
-            yesterday={summary.yesterday ?? null}
-            startDate={settings.startDate ?? null}
-            endDate={settings.endDate ?? null}
-            now={new Date()}
-          />
+          <Stack gap="md">
+            <HalloweenSimulators
+              prizes={dashboard.prizes}
+              winRate={settings.winRate}
+              candySlugs={data?.halloweenCandyTypes ?? []}
+            />
+            <HalloweenRunOutForecast
+              // New settings start the what-ifs over from them.
+              key={`${settings.winRate}:${settings.knocksPerDay}:${settings.startDate}:${settings.endDate}`}
+              prizes={dashboard.prizes}
+              winRate={settings.winRate}
+              knocksPerDay={settings.knocksPerDay}
+              last24Hours={summary.last24Hours}
+              yesterday={summary.yesterday ?? null}
+              startDate={settings.startDate ?? null}
+              endDate={settings.endDate ?? null}
+              now={new Date()}
+            />
+          </Stack>
           <SectionHeader>
             <SectionTitle>Settings</SectionTitle>
             {canManage && !editingSettings && (

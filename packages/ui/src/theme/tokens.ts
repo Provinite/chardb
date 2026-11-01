@@ -46,8 +46,25 @@ const illustration = {
   },
 };
 
+/**
+ * Colours of a seasonal event's own corner of the interface, such as the
+ * Halloween links in the sidebar: the same in both themes, because the
+ * event looks like itself by day and by night.
+ */
+const event = {
+  halloween: {
+    /** Night sky, behind the event's heading. */
+    bg: p.violet950,
+    /** Pumpkin: the heading's text. */
+    fg: p.orange400,
+    /** Candlelight: the heading's icon and the rule under it. */
+    accent: p.orange300,
+  },
+};
+
 export const lightColors = {
   illustration,
+  event,
   surface: {
     page: p.white,
     raised: p.slate50,
@@ -103,6 +120,7 @@ export type ColorTokens = typeof lightColors;
 
 export const darkColors: ColorTokens = {
   illustration,
+  event,
   surface: {
     page: p.slate900,
     raised: p.slate800,

@@ -63,8 +63,8 @@ describe("HalloweenEventStats", () => {
     expect(statValue("Players, last 24h")).toBe("8");
     expect(statValue("Players, all time")).toBe("12");
     expect(statValue("Gifties unspent")).toBe("4");
-    expect(statValue("Players sending gifties today")).toBe("25%");
-    expect(statValue("Players sending gifties yesterday")).toBe("–");
+    expect(statValue("Sent a gifty today")).toBe("25%");
+    expect(statValue("Sent a gifty yesterday")).toBe("–");
   });
 });
 

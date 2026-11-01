@@ -107,6 +107,9 @@ export const pairs: Pair[] = [
     ["surface.page", "surface.raised", "surface.sunken"],
     "body",
   ),
+  // A seasonal event's heading, on its own background.
+  ...on("event.halloween.fg", ["event.halloween.bg"], "body"),
+  ...on("event.halloween.accent", ["event.halloween.bg"], "nonText"),
   // The route progress bar, over the page or the header.
   ...on("action.primary.bg", ["surface.page"], "nonText"),
   {
