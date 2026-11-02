@@ -2,7 +2,7 @@
 
 This page covers what CharDB stores about you, why, and who else can see it. Last updated: 2026-11-01. We will try to keep this up-to-date, but please reach out on GitHub if you have any questions.
 
-CharDB's source code is public at https://github.com/provinite/chardb, so you can check what this page says against what the site does.
+CharDB's source code and deployment history are available at https://github.com/provinite/chardb. You can compare what this document says against what the site does at any time.
 
 ## Your account
 
