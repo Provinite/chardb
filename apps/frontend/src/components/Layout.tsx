@@ -1,5 +1,5 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { TopProgressBar, useBreakpoint } from "@chardb/ui";
 import { Header } from "./Header";
 import { Footer } from "./Footer";
@@ -108,7 +108,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
           {children}
         </main>
       </div>
-      <Footer ref={footerRef} />
+      <Footer ref={footerRef}>
+        <Link to="/privacy">Your data</Link>
+      </Footer>
     </div>
   );
 };

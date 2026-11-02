@@ -26,6 +26,12 @@ export const CommunityUnreachable = lazyPage(
   "CommunityUnreachable",
 );
 
+// --- site information
+export const PrivacyPage = lazyPage(
+  () => import("../pages/PrivacyPage"),
+  "PrivacyPage",
+);
+
 // --- signing in
 export const LoginPage = lazyPage(
   () => import("../pages/LoginPage"),
