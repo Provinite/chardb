@@ -2,6 +2,8 @@
 
 This page covers what CharDB stores about you, why, and who else can see it. Last updated: 2026-11-01. We will try to keep this up-to-date, but please reach out on GitHub if you have any questions.
 
+CharDB's source code is public at https://github.com/provinite/chardb, so you can check what this page says against what the site does.
+
 ## Your account
 
 When you sign up we store your username, email address and password. Your password is hashed before it is saved, so we never see or store it in readable form.
