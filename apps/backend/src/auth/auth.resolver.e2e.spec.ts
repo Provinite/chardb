@@ -56,7 +56,7 @@ describe("AuthResolver (e2e)", () => {
         inviteCode,
       };
 
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input,
       });
 
@@ -90,7 +90,7 @@ describe("AuthResolver (e2e)", () => {
         inviteCode,
       };
 
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input,
       });
       expect(response.body.errors).toBeUndefined();
@@ -117,7 +117,7 @@ describe("AuthResolver (e2e)", () => {
       };
 
       // Create first user
-      await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, { input });
+      await testApp.signupRequest({ input });
 
       // Try to create second user with same email (invite code still has claims remaining)
       const duplicateInput = {
@@ -126,7 +126,7 @@ describe("AuthResolver (e2e)", () => {
         displayName: "User 2",
       };
 
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input: duplicateInput,
       });
 
@@ -146,7 +146,7 @@ describe("AuthResolver (e2e)", () => {
       };
 
       // Create first user
-      await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, { input });
+      await testApp.signupRequest({ input });
 
       // Try to create second user with same username
       const duplicateInput = {
@@ -155,7 +155,7 @@ describe("AuthResolver (e2e)", () => {
         displayName: "User 2",
       };
 
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input: duplicateInput,
       });
 
@@ -175,7 +175,7 @@ describe("AuthResolver (e2e)", () => {
         inviteCode: "dummy-code",
       };
 
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input,
       });
 
@@ -192,7 +192,7 @@ describe("AuthResolver (e2e)", () => {
         inviteCode: "dummy-code",
       };
 
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input,
       });
 
@@ -321,7 +321,7 @@ describe("AuthResolver (e2e)", () => {
 
     const signupWith = async (email: string): Promise<void> => {
       const inviteCode = await testApp.createTestInviteCode();
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input: {
           username: `user_${Date.now()}`,
           email,

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Sign-up requires a proof-of-work challenge** (ALTCHA): `signupChallenge` hands one out, and `signup` refuses an `altchaPayload` that is missing, expired, forged, unsolved or already spent, or a filled `honeypot`. Needs `ALTCHA_HMAC_SECRET` in production.
+
 ## [v15.3.0] - 2026-11-01
 
 ### Added

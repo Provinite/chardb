@@ -203,6 +203,25 @@ module "app_secrets" {
   tags = local.common_tags
 }
 
+# Signs the sign-up proof-of-work challenges (ALTCHA). The backend refuses to
+# start in production mode without it. deploy.sh loads every parameter under
+# the app-secrets path into the host's .env, naming it from the last segment,
+# so this arrives as ALTCHA_HMAC_SECRET with no other change. Letters and
+# digits only, so it needs no escaping in the env file.
+resource "random_password" "altcha_hmac_secret" {
+  length  = 64
+  special = false
+}
+
+resource "aws_ssm_parameter" "altcha_hmac_secret" {
+  name        = "${module.app_secrets.path_prefix}/altcha-hmac-secret"
+  description = "ALTCHA sign-up challenge HMAC secret"
+  type        = "SecureString"
+  value       = random_password.altcha_hmac_secret.result
+
+  tags = merge(local.common_tags, { ValueManagedBy = "terraform" })
+}
+
 data "aws_kms_key" "ssm" {
   key_id = "alias/aws/ssm"
 }

@@ -4287,6 +4287,11 @@ type Query {
   """What a community sells, priced, with what the viewer can afford."""
   shopItems(communityId: ID!, includeInactive: Boolean! = false): [ShopItem!]!
 
+  """
+  A signed proof-of-work challenge for the sign-up form, as ALTCHA widget JSON
+  """
+  signupChallenge: String!
+
   """Get all species with pagination"""
   species(
     """Cursor for pagination"""
@@ -4839,9 +4844,16 @@ enum ShopPurchaseLineStatus {
 }
 
 input SignupInput {
+  """
+  The solved signupChallenge, as the ALTCHA widget encodes it: base64 of { challenge, solution }
+  """
+  altchaPayload: String!
   communityId: ID
   displayName: String
   email: String!
+
+  """A field hidden from people. Anything in it refuses the sign-up."""
+  honeypot: String
   inviteCode: String
   password: String!
   username: String!

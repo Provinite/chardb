@@ -16,6 +16,7 @@ import {
   useRefreshTokenMutation,
   useLogoutMutation,
   type MeQuery,
+  type SignupInput,
 } from "../generated/graphql";
 import { setAccessToken } from "../lib/accessToken";
 import { isRateLimited } from "../lib/rateLimit";
@@ -52,15 +53,8 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<LoginOutcome>;
-  signup: (
-    username: string,
-    email: string,
-    password: string,
-    displayName?: string,
-    inviteCode?: string,
-    /** Joins this community without a code, if its sign-up is open. */
-    communityId?: string,
-  ) => Promise<boolean>;
+  /** Creates the account. `communityId` joins without a code when open. */
+  signup: (input: SignupInput) => Promise<boolean>;
   logout: () => void;
   refreshAccessToken: () => Promise<boolean>;
 }
@@ -194,25 +188,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   );
 
   const signup = useCallback(
-    async (
-      username: string,
-      email: string,
-      password: string,
-      displayName?: string,
-      inviteCode?: string,
-      communityId?: string,
-    ): Promise<boolean> => {
+    async (input: SignupInput): Promise<boolean> => {
       try {
         const { data } = await signupMutation({
           variables: {
-            input: {
-              username,
-              email,
-              password,
-              displayName,
-              inviteCode: inviteCode || undefined,
-              communityId,
-            },
+            input: { ...input, inviteCode: input.inviteCode || undefined },
           },
         });
 

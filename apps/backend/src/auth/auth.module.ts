@@ -42,6 +42,7 @@ import { OrGuard } from "./guards/OrGuard";
 import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
 import { CommunityMembershipModule } from "../community-membership/community-membership.module";
 import { AchievementsModule } from "../achievements/achievements.module";
+import { SignupChallengeService } from "./services/signup-challenge.service";
 
 @Module({
   imports: [
@@ -72,6 +73,7 @@ import { AchievementsModule } from "../achievements/achievements.module";
   providers: [
     AuthService,
     AuthResolver,
+    SignupChallengeService,
     JwtStrategy,
     LocalStrategy,
     DeviantArtStrategy,

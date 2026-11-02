@@ -3639,6 +3639,8 @@ export type Query = {
   searchTags: Array<Tag>;
   /** What a community sells, priced, with what the viewer can afford. */
   shopItems: Array<ShopItem>;
+  /** A signed proof-of-work challenge for the sign-up form, as ALTCHA widget JSON */
+  signupChallenge: Scalars['String']['output'];
   /** Get all species with pagination */
   species: SpeciesConnection;
   /** Get species by community ID with pagination */
@@ -4696,9 +4698,13 @@ export enum ShopPurchaseLineStatus {
 }
 
 export type SignupInput = {
+  /** The solved signupChallenge, as the ALTCHA widget encodes it: base64 of { challenge, solution } */
+  altchaPayload: Scalars['String']['input'];
   communityId?: InputMaybe<Scalars['ID']['input']>;
   displayName?: InputMaybe<Scalars['String']['input']>;
   email: Scalars['String']['input'];
+  /** A field hidden from people. Anything in it refuses the sign-up. */
+  honeypot?: InputMaybe<Scalars['String']['input']>;
   inviteCode?: InputMaybe<Scalars['String']['input']>;
   password: Scalars['String']['input'];
   username: Scalars['String']['input'];
@@ -5575,6 +5581,11 @@ export type SignupMutationVariables = Exact<{
 
 
 export type SignupMutation = { __typename?: 'Mutation', signup: boolean };
+
+export type SignupChallengeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type SignupChallengeQuery = { __typename?: 'Query', signupChallenge: string };
 
 export type RefreshTokenMutationVariables = Exact<{ [key: string]: never; }>;
 
@@ -8641,6 +8652,43 @@ export function useSignupMutation(baseOptions?: Apollo.MutationHookOptions<Signu
 export type SignupMutationHookResult = ReturnType<typeof useSignupMutation>;
 export type SignupMutationResult = Apollo.MutationResult<SignupMutation>;
 export type SignupMutationOptions = Apollo.BaseMutationOptions<SignupMutation, SignupMutationVariables>;
+export const SignupChallengeDocument = gql`
+    query SignupChallenge {
+  signupChallenge
+}
+    `;
+
+/**
+ * __useSignupChallengeQuery__
+ *
+ * To run a query within a React component, call `useSignupChallengeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useSignupChallengeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useSignupChallengeQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useSignupChallengeQuery(baseOptions?: Apollo.QueryHookOptions<SignupChallengeQuery, SignupChallengeQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<SignupChallengeQuery, SignupChallengeQueryVariables>(SignupChallengeDocument, options);
+      }
+export function useSignupChallengeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<SignupChallengeQuery, SignupChallengeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<SignupChallengeQuery, SignupChallengeQueryVariables>(SignupChallengeDocument, options);
+        }
+export function useSignupChallengeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<SignupChallengeQuery, SignupChallengeQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<SignupChallengeQuery, SignupChallengeQueryVariables>(SignupChallengeDocument, options);
+        }
+export type SignupChallengeQueryHookResult = ReturnType<typeof useSignupChallengeQuery>;
+export type SignupChallengeLazyQueryHookResult = ReturnType<typeof useSignupChallengeLazyQuery>;
+export type SignupChallengeSuspenseQueryHookResult = ReturnType<typeof useSignupChallengeSuspenseQuery>;
+export type SignupChallengeQueryResult = Apollo.QueryResult<SignupChallengeQuery, SignupChallengeQueryVariables>;
 export const RefreshTokenDocument = gql`
     mutation RefreshToken {
   refreshToken
