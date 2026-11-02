@@ -19,6 +19,14 @@ export const SIGNUP_MUTATION = gql`
   }
 `;
 
+// The proof-of-work challenge the sign-up form solves, as JSON for the ALTCHA
+// widget. One per sign-up: a solved challenge creates one account.
+export const SIGNUP_CHALLENGE_QUERY = gql`
+  query SignupChallenge {
+    signupChallenge
+  }
+`;
+
 /** Takes no argument: the server reads the refresh cookie off the request. */
 export const REFRESH_TOKEN_MUTATION = gql`
   mutation RefreshToken {

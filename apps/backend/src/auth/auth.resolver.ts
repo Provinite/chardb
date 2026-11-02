@@ -39,7 +39,10 @@ export class AuthResolver {
    */
   @AllowUnauthenticated()
   @CredentialThrottle()
-  @Query(() => String)
+  @Query(() => String, {
+    description:
+      "A signed proof-of-work challenge for the sign-up form, as ALTCHA widget JSON",
+  })
   async signupChallenge(): Promise<string> {
     return this.signupChallengeService.create();
   }

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Bot protection on sign-up**: the form solves an invisible proof-of-work challenge while you fill it in, and carries a honeypot field password managers leave alone.
+
 ## [v15.3.0] - 2026-11-01
 
 ### Added

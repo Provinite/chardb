@@ -200,7 +200,10 @@ describe("Sign-up challenge (e2e)", () => {
     // person fixes the field and submits the same solved payload.
     const payload = await testApp.solvedSignupChallenge();
     await testApp.signupRequest({
-      input: await signupInput({ inviteCode: "no-such-code", altchaPayload: payload }),
+      input: await signupInput({
+        inviteCode: "no-such-code",
+        altchaPayload: payload,
+      }),
     });
 
     const response = await testApp.signupRequest({

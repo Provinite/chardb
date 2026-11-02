@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
+import { toast } from "react-hot-toast";
 import { usePageMeta } from "../lib/pageMeta";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -8,7 +9,14 @@ import { Button, Cluster, Stack } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { useInviteCodeByIdQuery } from "../graphql/inviteCodes.graphql";
-import { useCommunityBySlugQuery } from "../generated/graphql";
+import {
+  useCommunityBySlugQuery,
+  useSignupChallengeQuery,
+} from "../generated/graphql";
+import {
+  SignupChallengeWidget,
+  type SignupChallengeWidgetHandle,
+} from "../components/auth/SignupChallengeWidget";
 import { returnQuery } from "../lib/communityHost";
 import { ResendVerification } from "../components/auth/ResendVerification";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
@@ -56,6 +64,15 @@ type SignupForm = z.infer<ReturnType<typeof makeSignupSchema>>;
 
 export const SignupPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
+  const challengeWidget = useRef<SignupChallengeWidgetHandle>(null);
+  /** Read on submit, not registered: its name has to stay `website`. */
+  const honeypot = useRef<HTMLInputElement>(null);
+  const { data: challengeData, refetch: refetchChallenge } =
+    useSignupChallengeQuery({
+      fetchPolicy: "network-only",
+      notifyOnNetworkStatusChange: false,
+    });
+  const challenge = challengeData?.signupChallenge ?? null;
   /** Set once the account exists. Swaps the form for the "check your email" card. */
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
@@ -140,19 +157,31 @@ export const SignupPage: React.FC = () => {
   const onSubmit = async (data: SignupForm) => {
     setIsLoading(true);
     try {
-      const success = await signup(
-        data.username,
-        data.email,
-        data.password,
-        data.displayName,
-        askForCode ? data.inviteCode : undefined,
-        askForCode ? undefined : openCommunity?.id,
-      );
+      const altchaPayload = await challengeWidget.current?.solve();
+      if (!altchaPayload) {
+        toast.error("Verification failed. Please try again.");
+        void refetchChallenge();
+        return;
+      }
+      const success = await signup({
+        username: data.username,
+        email: data.email,
+        password: data.password,
+        displayName: data.displayName,
+        inviteCode: askForCode ? data.inviteCode : undefined,
+        communityId: askForCode ? undefined : openCommunity?.id,
+        altchaPayload,
+        honeypot: honeypot.current?.value || undefined,
+      });
       if (success) {
         // Not the dashboard: signup no longer produces a session. The account
         // exists, and stays unusable until somebody follows the link now
         // sitting in that inbox.
         setRegisteredEmail(data.email);
+      } else {
+        // A fresh challenge for the next try. The refused one may still be
+        // good, but a new one is cheap and never already spent.
+        void refetchChallenge();
       }
     } finally {
       setIsLoading(false);
@@ -407,7 +436,40 @@ export const SignupPage: React.FC = () => {
               </span>
             </Stack>
 
-            <Button type="submit" busy={isLoading} disabled={isLoading}>
+            {/* Out of the layout, so neither adds a gap to the form. */}
+            <div className={styles.hiddenFields}>
+              {/* A field for scripts that fill in every input. Hidden from
+                  people, screen readers and the keyboard, and marked for each
+                  password manager to leave alone. */}
+              <div aria-hidden="true">
+                <label htmlFor="signup-website">Leave this field empty</label>
+                <input
+                  ref={honeypot}
+                  type="text"
+                  id="signup-website"
+                  name="website"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  data-1p-ignore=""
+                  data-lpignore="true"
+                  data-bwignore="true"
+                  data-form-type="other"
+                />
+              </div>
+              {challenge && (
+                <SignupChallengeWidget
+                  key={challenge}
+                  ref={challengeWidget}
+                  challenge={challenge}
+                />
+              )}
+            </div>
+
+            <Button
+              type="submit"
+              busy={isLoading}
+              disabled={isLoading || !challenge}
+            >
               Create Account
             </Button>
           </Stack>

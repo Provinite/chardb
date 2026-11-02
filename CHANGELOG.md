@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`ALTCHA_HMAC_SECRET`** in Terraform for prod (ECS secret) and dev (Parameter Store, loaded by `deploy.sh`), generated per environment. Apply both before deploying the sign-up challenge.
+
 ## [v15.3.0] - 2026-11-01
 
 ### Changed

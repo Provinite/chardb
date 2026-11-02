@@ -78,6 +78,23 @@ test.describe("a visitor", () => {
       "off",
     );
 
+    // The honeypot and the proof-of-work widget are on the form but take no
+    // room: the button sits one form gap below the last field's message line.
+    await expect(page.locator("altcha-widget")).toHaveCount(1);
+    await expect(page.locator("#signup-website")).not.toBeInViewport();
+    const lastLine = await page
+      .locator("#confirmPassword ~ span")
+      .boundingBox();
+    const button = await page
+      .getByRole("button", { name: "Create Account" })
+      .boundingBox();
+    const formGap = 16;
+    expect(
+      Math.round(
+        (button?.y ?? 0) - ((lastLine?.y ?? 0) + (lastLine?.height ?? 0)),
+      ),
+    ).toBe(formGap);
+
     await page.fill("#username", "menuglader");
     await page.fill("#email", "menuglader@e2e.local");
     await page.fill("#password", "password123");

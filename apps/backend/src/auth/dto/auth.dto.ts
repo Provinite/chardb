@@ -67,13 +67,20 @@ export class SignupInput {
    * The solved sign-up challenge from `signupChallenge`, as the widget
    * encodes it: base64 of `{ challenge, solution }`.
    */
-  @Field()
+  @Field({
+    description:
+      "The solved signupChallenge, as the ALTCHA widget encodes it: base64 of { challenge, solution }",
+  })
   @IsString()
   @MaxLength(4096)
   altchaPayload: string;
 
   /** A field people never see. Anything in it refuses the sign-up. */
-  @Field({ nullable: true })
+  @Field({
+    nullable: true,
+    description:
+      "A field hidden from people. Anything in it refuses the sign-up.",
+  })
   @IsOptional()
   @IsString()
   @MaxLength(500)

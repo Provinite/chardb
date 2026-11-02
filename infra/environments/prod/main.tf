@@ -92,6 +92,23 @@ resource "aws_ssm_parameter" "jwt_secret" {
   tags = merge(local.common_tags, { ValueManagedBy = "terraform" })
 }
 
+# Signs the sign-up proof-of-work challenges (ALTCHA). The backend refuses to
+# start in production without it. Letters and digits only, so it needs no
+# escaping in any env file.
+resource "random_password" "altcha_hmac_secret" {
+  length  = 64
+  special = false
+}
+
+resource "aws_ssm_parameter" "altcha_hmac_secret" {
+  name        = "/${var.project_name}/${var.environment}/altcha-hmac-secret"
+  description = "ALTCHA sign-up challenge HMAC secret"
+  type        = "SecureString"
+  value       = random_password.altcha_hmac_secret.result
+
+  tags = merge(local.common_tags, { ValueManagedBy = "terraform" })
+}
+
 resource "aws_ssm_parameter" "cloudfront_secret" {
   name        = "/${var.project_name}/${var.environment}/cloudfront-secret"
   description = "Shared secret the API CloudFront distribution sends as X-CloudFront-Secret"
@@ -709,6 +726,10 @@ module "ecs" {
       valueFrom = aws_ssm_parameter.jwt_secret.arn
     },
     {
+      name      = "ALTCHA_HMAC_SECRET"
+      valueFrom = aws_ssm_parameter.altcha_hmac_secret.arn
+    },
+    {
       name      = "DEVIANTART_CLIENT_SECRET"
       valueFrom = module.app_secrets.arns["deviantart-client-secret"]
     },
@@ -754,6 +775,7 @@ module "ecs" {
     [
       aws_ssm_parameter.database_url.arn,
       aws_ssm_parameter.jwt_secret.arn,
+      aws_ssm_parameter.altcha_hmac_secret.arn,
       aws_ssm_parameter.cloudfront_secret.arn,
     ],
     module.app_secrets.arn_list,

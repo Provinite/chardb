@@ -1,5 +1,12 @@
 import { style, styleVariants } from "@vanilla-extract/css";
-import { focusRing, hover, mq, vars } from "@chardb/ui/theme";
+import { focusRing, hover, mq, vars, visuallyHidden } from "@chardb/ui/theme";
+
+/**
+ * The sign-up form's unseen parts, the honeypot field and the proof-of-work
+ * widget: out of view and out of the layout. The markup hides the honeypot
+ * from screen readers (`aria-hidden`) and the keyboard (`tabIndex`).
+ */
+export const hiddenFields = style([visuallyHidden]);
 
 /**
  * Shared by the sign-in and sign-up pages: one form standing alone on a page,
