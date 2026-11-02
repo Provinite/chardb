@@ -10,6 +10,7 @@ import {
 } from "../lib/siteAdminAccess";
 import {
   NotFoundPage,
+  PrivacyPage,
   HomePage,
   LoginPage,
   SignupPage,
@@ -83,6 +84,7 @@ export const apexRoutes = (
   <>
     {/* --- public */}
     <Route path="/" element={<HomePage />} />
+    <Route path="/privacy" element={<PrivacyPage />} />
     <Route path="/login" element={<LoginPage />} />
     <Route path="/signup" element={<SignupPage />} />
     <Route path="/forgot-password" element={<ForgotPasswordPage />} />

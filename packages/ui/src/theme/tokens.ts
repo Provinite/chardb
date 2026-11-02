@@ -238,6 +238,8 @@ export const sharedTokens = {
     spinner: "1em",
     /** The navigation sidebar's width, beside the page and as a drawer. */
     sidebar: "17.5rem",
+    /** The widest a column of running text gets, so lines stay readable. */
+    prose: "45rem",
     target: {
       /** The 24px floor no control goes under. */
       min: "1.5rem",

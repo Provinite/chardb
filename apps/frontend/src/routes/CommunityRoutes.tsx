@@ -6,6 +6,7 @@ import { SpeciesScopeRoute } from "../components/SpeciesScopeRoute";
 import { ApexRedirect } from "./ApexRedirect";
 import {
   NotFoundPage,
+  PrivacyPage,
   LoginPage,
   SignupPage,
   CommunityPage,
@@ -541,6 +542,9 @@ export const communityRoutes = (
         on, and signing up here joins this community. */}
     <Route path="/login" element={<LoginPage />} />
     <Route path="/signup" element={<SignupPage />} />
+
+    {/* The footer links here on every host. */}
+    <Route path="/privacy" element={<PrivacyPage />} />
 
     {/* --- paths that only exist at the apex.
         Someone who edits the URL, or follows a stale link, lands on the right

@@ -244,6 +244,8 @@ Layout primitives in `@chardb/ui` own the flex and grid patterns the app repeats
 - `Grid` clamps its minimum to the grid's width, so one column never overflows a grid narrower than `min`. `fill` keeps empty columns, so a short last row stays at one item width.
 - `Sidebar` is a layout inside a page. The app's navigation sidebar is a separate component.
 
+A page that is mostly running text, such as the privacy page, is no wider than `size.prose`, so lines stay short enough to read.
+
 Reach for a primitive before writing `display: flex`. A one-off flex rule in a component is fine when no primitive fits; three of the same one-off is a missing primitive.
 
 ### Proportional grids
