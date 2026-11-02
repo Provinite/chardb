@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.3.0] - 2026-11-01
+
 ### Added
 
 - **Open sign-up**: Communities can let anyone join as a chosen role without an invite code, set from the Invite Codes page.
