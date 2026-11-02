@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Domain event bus**: in-process, fire-and-forget `DomainEvents` with typed `@OnDomainEvent` listeners; sign-in achievements now listen for `user.signed_in`.
 - **Halloween play achievements**: trade tiers at 5/15/30 swaps, 3-for-1 offers made and taken, gifting yourself, knocking every day, and knocking with none left; earned as you play and caught up on sign-in.
+- **Infectious Enthusiasm 2026**: passes to whoever swaps candy with someone who has it; seeded to staff and site admins, with the event's swaps so far replayed in order.
 
 ## [v15.3.0] - 2026-11-01
 

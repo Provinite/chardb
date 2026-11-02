@@ -28,6 +28,7 @@ export function halloweenPlaySlug(year: number) {
     treatYourself: `treat-yourself-${year}`,
     everyNight: `every-night-${year}`,
     nobodyHome: `nobody-home-${year}`,
+    infectiousEnthusiasm: `infectious-enthusiasm-${year}`,
   };
 }
 
@@ -87,6 +88,13 @@ export const ACHIEVEMENTS: readonly AchievementDefinition[] = [
     name: "Nobody Home 2026",
     description: "Knocked with no knocks left during Trick-or-Treat 2026.",
     imagePath: "/halloween/candy/toilet-paper.png",
+  },
+  {
+    slug: play2026.infectiousEnthusiasm,
+    name: "Infectious Enthusiasm 2026",
+    description:
+      "Caught it by swapping candy with someone who had it during Trick-or-Treat 2026.",
+    imagePath: "/halloween/candy/firecrackers.png",
   },
 ];
 
