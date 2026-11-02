@@ -7,8 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [v15.3.0] - 2026-11-01
-
 ### Changed
 
 - **Sign-in walkthroughs follow the community host**: Community Subdomains, Open Sign-up and Email Verification describe signing in and up on a community's own address, with fresh screenshots.
