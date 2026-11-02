@@ -70,7 +70,9 @@ You can delete your own images, galleries and comments at any time. Deleting a c
 
 CharDB has no AI features. Nothing that you submit is ever automatically sent to an AI service.
 
-When improving the site and investigating issues, AI tools are used in interactive sessions by the developer to investigate application logs and data that is directly relevant to the issue. This data may include application database records.
+When improving the site and investigating issues, I use AI tools to save time and enable timely support as a solo developer. These tools are used in interactive (not automated) sessions to investigate application logs and data that is directly relevant to the issue. This data may include application database records.
+
+I only look up the records involved in the issue I'm fixing. These tools are never fed bulk exports or collections of people's uploads.
 
 The data is not used to train AI models, and is deleted after 30 days.
 
