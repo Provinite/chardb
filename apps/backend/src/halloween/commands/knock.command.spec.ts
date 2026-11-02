@@ -23,6 +23,7 @@ import { PrizeAwardService } from "../services/prize-award.service";
 import { PlayerLock } from "../services/player-lock";
 import { PrizeImageService } from "../services/prize-image.service";
 import { DatabaseService } from "../../database/database.service";
+import type { DomainEvents } from "../../events/domain-events";
 import { Prisma } from "@chardb/database";
 import {
   BusyError,
@@ -136,7 +137,11 @@ describe("/knock", () => {
   let images: { imageFor: jest.Mock };
   let lock: { acquire: jest.Mock };
   let random: HalloweenRandom;
-  let db: { $transaction: jest.Mock };
+  let db: {
+    $transaction: jest.Mock;
+    halloweenOutOfKnocksAttempt: { create: jest.Mock };
+  };
+  let events: { publish: jest.Mock };
   let command: KnockCommand;
 
   beforeEach(() => {
@@ -186,7 +191,9 @@ describe("/knock", () => {
     jest.spyOn(random, "int").mockReturnValue(0);
     db = {
       $transaction: jest.fn((fn: (t: unknown) => Promise<unknown>) => fn(tx)),
+      halloweenOutOfKnocksAttempt: { create: jest.fn().mockResolvedValue({}) },
     };
+    events = { publish: jest.fn().mockResolvedValue(undefined) };
     command = new KnockCommand(
       discord,
       stubUi(),
@@ -201,6 +208,7 @@ describe("/knock", () => {
       lock as unknown as PlayerLock,
       random,
       db as unknown as DatabaseService,
+      events as unknown as DomainEvents,
     );
   });
 
@@ -316,6 +324,34 @@ describe("/knock", () => {
         { name: "Last Reset Time", value: "2025-10-17 6:00:00 AM" },
       ]);
       expect(knocks.save).not.toHaveBeenCalled();
+    });
+
+    it("records and announces a knock refused for want of knocks", async () => {
+      knocks.countSinceLastReset.mockResolvedValue(3);
+      await expect(knock()).rejects.toBeInstanceOf(TooManyKnocksError);
+      expect(db.halloweenOutOfKnocksAttempt.create).toHaveBeenCalledWith({
+        data: { guildId: GUILD_ID, discordUserId: USER_ID },
+      });
+      expect(events.publish).toHaveBeenCalledWith(
+        "halloween.knock.out_of_knocks",
+        { guildId: GUILD_ID, discordUserId: USER_ID },
+      );
+    });
+
+    it("still refuses when the refusal cannot be recorded", async () => {
+      jest.spyOn(Logger.prototype, "warn").mockImplementation();
+      knocks.countSinceLastReset.mockResolvedValue(3);
+      db.halloweenOutOfKnocksAttempt.create.mockRejectedValue(
+        new Error("database down"),
+      );
+      await expect(knock()).rejects.toBeInstanceOf(TooManyKnocksError);
+      expect(events.publish).not.toHaveBeenCalled();
+    });
+
+    it("records nothing for any other refusal", async () => {
+      guildSettings.eventStatus.mockReturnValue(EventStatus.Ended);
+      await expect(knock()).rejects.toBeInstanceOf(EventEndedError);
+      expect(db.halloweenOutOfKnocksAttempt.create).not.toHaveBeenCalled();
     });
   });
 
@@ -762,12 +798,18 @@ describe("/knock", () => {
       await knock();
     });
 
-    it("leaves nothing for after the reply without a win channel", async () => {
+    it("only announces the knock after the reply without a win channel", async () => {
       prizes.lockInStock.mockResolvedValue([
         prize("myo", { itemTypeId: "it-1" }),
       ]);
       const { afterReply } = await knockOnly();
-      expect(afterReply).toBeUndefined();
+      expect(events.publish).not.toHaveBeenCalled();
+      await afterReply?.();
+      expect(discord.createChannelMessage).not.toHaveBeenCalled();
+      expect(events.publish).toHaveBeenCalledWith("halloween.knock.completed", {
+        guildId: GUILD_ID,
+        discordUserId: USER_ID,
+      });
     });
 
     // The whole knock rolls back, so the player keeps it.

@@ -4,6 +4,7 @@ import type { DatabaseService } from "../../database/database.service";
 import type { NotificationsService } from "../../notifications/notifications.service";
 import type { HalloweenDashboardService } from "../dashboard/halloween-dashboard.service";
 import type { PlayerLock } from "../services/player-lock";
+import type { DomainEvents } from "../../events/domain-events";
 import { CandySwapService } from "./candy-swap.service";
 
 const OFFER_ID = "00000000-0000-4000-8000-000000000001";
@@ -19,6 +20,7 @@ const serviceFailingWith = (failure: Error) =>
     } as unknown as HalloweenDashboardService,
     {} as PlayerLock,
     {} as NotificationsService,
+    { publish: jest.fn() } as unknown as DomainEvents,
   );
 
 describe("CandySwapService under contention", () => {

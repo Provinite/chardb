@@ -13,6 +13,7 @@ import { GuildSettingsService } from "../services/guild-settings.service";
 import { GiftyService } from "../services/gifty.service";
 import { PlayerLock } from "../services/player-lock";
 import { DatabaseService } from "../../database/database.service";
+import type { DomainEvents } from "../../events/domain-events";
 import { Prisma } from "@chardb/database";
 import { BusyError, HalloweenDiscordError, ValidationError } from "../errors";
 import { LOCKED_TRANSACTION_OPTIONS } from "../services/locked-transaction";
@@ -262,6 +263,7 @@ describe("/gifty", () => {
       {
         getCached: jest.fn().mockResolvedValue({}),
       } as unknown as GuildSettingsService,
+      { publish: jest.fn() } as unknown as DomainEvents,
     );
   });
 

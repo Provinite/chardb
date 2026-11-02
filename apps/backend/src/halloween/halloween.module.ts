@@ -36,6 +36,7 @@ import { HalloweenStaffAccess } from "./dashboard/halloween-staff-access";
 import { HalloweenPrizeListService } from "./prizes/halloween-prize-list.service";
 import { HalloweenPrizeListResolver } from "./prizes/halloween-prize-list.resolver";
 import { NotificationsModule } from "../notifications/notifications.module";
+import { EventsModule } from "../events/events.module";
 import { KnockCommand } from "./commands/knock.command";
 import { AdminKnockCommand } from "./commands/adminknock.command";
 import { GiftyCommand } from "./commands/gifty.command";
@@ -74,6 +75,7 @@ const COMMANDS = [
     ItemsModule,
     PendingOwnershipModule,
     NotificationsModule,
+    EventsModule,
   ],
   controllers: [HalloweenInteractionsController],
   providers: [

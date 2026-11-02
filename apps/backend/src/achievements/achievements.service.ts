@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Clock } from "../clock/clock";
 import { OnDomainEvent } from "../events/domain-events";
@@ -7,10 +7,9 @@ import {
   findAchievement,
   type AchievementDefinition,
 } from "./achievement-catalog";
-import {
-  signInAchievements,
-  type CommunityHalloweenEvent,
-} from "./sign-in-achievements";
+import { AchievementGrants } from "./achievement-grants";
+import { HalloweenPlayAchievements } from "./halloween-play-achievements.service";
+import { signInAchievements } from "./sign-in-achievements";
 
 export interface EarnedAchievementView extends AchievementDefinition {
   id: string;
@@ -30,16 +29,8 @@ export const SIGN_IN_CHECK_TTL_MS = 60 * 60 * 1000;
  */
 const SIGN_IN_CHECK_CACHE_USERS = 1_000;
 
-/** The `event` field of achievement log lines, for searching. */
-export const AchievementLogEvent = {
-  /** A user earned an achievement; `reason` says how. */
-  Granted: "achievements.granted",
-} as const;
-
 @Injectable()
 export class AchievementsService {
-  private readonly logger = new Logger(AchievementsService.name);
-
   /**
    * When each user was last checked, least recent first: a Map keeps
    * insertion order. Per instance, so another instance may check a user
@@ -50,6 +41,8 @@ export class AchievementsService {
   constructor(
     private readonly db: DatabaseService,
     private readonly clock: Clock,
+    private readonly grants: AchievementGrants,
+    private readonly halloweenPlay: HalloweenPlayAchievements,
   ) {}
 
   @OnDomainEvent("user.signed_in")
@@ -59,9 +52,9 @@ export class AchievementsService {
 
   /**
    * Grants what signing in now earns: trick-or-treater for each community
-   * the user belongs to whose Halloween event is on. One already earned is
-   * left as it was. A user whose check found something to award is not
-   * checked again for an hour.
+   * the user belongs to whose Halloween event is on, and whatever their play
+   * in each event that has started has earned and not yet been granted. A
+   * user with an event started is not checked again for an hour.
    */
   async recordSignIn(userId: string): Promise<void> {
     const now = this.clock.now();
@@ -70,42 +63,19 @@ export class AchievementsService {
       return;
     }
 
-    const events = await this.db.$queryRaw<CommunityHalloweenEvent[]>`
-      SELECT c.id AS "communityId",
-             s.start_date AS "startDate",
-             s.end_date AS "endDate"
-      FROM "communities" c
-      JOIN "halloween_guild_settings" s ON s.guild_id = c.discord_guild_id
-      WHERE c.halloween_enabled
-        AND EXISTS (
-          SELECT 1
-          FROM "community_members" m
-          JOIN "roles" r ON r.id = m.role_id
-          WHERE r.community_id = c.id AND m.user_id = ${userId}
-        )
-    `;
-    const earned = signInAchievements(events, now);
-    // Nothing to award is not remembered: the event may start, or the user
+    const players = await this.halloweenPlay.playerIn(userId);
+    await this.grants.grant(
+      signInAchievements(players, now).map((e) => ({ ...e, userId })),
+      "sign-in",
+    );
+    const started = players.filter((p) => p.startDate <= now);
+    for (const player of started) {
+      await this.halloweenPlay.grantFor(player, "sign-in");
+    }
+    // Nothing started is not remembered: the event may start, or the user
     // join a community, before an hour is up, and the next page load should
     // catch it.
-    if (!earned.length) return;
-
-    // Returns only the rows it inserted, so one already earned is not logged
-    // as granted again.
-    const granted = await this.db.userAchievement.createManyAndReturn({
-      data: earned.map((e) => ({ ...e, userId, earnedAt: now })),
-      skipDuplicates: true,
-      select: { userId: true, communityId: true, slug: true },
-    });
-    for (const row of granted) {
-      this.logger.log({
-        event: AchievementLogEvent.Granted,
-        message: "Achievement granted",
-        ...row,
-        reason: "sign-in",
-      });
-    }
-    this.remember(userId, now.getTime());
+    if (started.length) this.remember(userId, now.getTime());
   }
 
   private remember(userId: string, at: number): void {
