@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Your data page links to the source code**, so readers can check its claims against the code.
+
 ### Added
 
 - **Your data page**: a page explaining what CharDB stores and who sees it, linked from the footer on every host.
