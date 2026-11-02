@@ -62,6 +62,22 @@ export class SignupInput {
   @IsOptional()
   @IsString()
   communityId?: string;
+
+  /**
+   * The solved sign-up challenge from `signupChallenge`, as the widget
+   * encodes it: base64 of `{ challenge, solution }`.
+   */
+  @Field()
+  @IsString()
+  @MaxLength(4096)
+  altchaPayload: string;
+
+  /** A field people never see. Anything in it refuses the sign-up. */
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  honeypot?: string;
 }
 
 @ObjectType()

@@ -1,4 +1,4 @@
-import { Resolver, Mutation, Args, Context } from "@nestjs/graphql";
+import { Resolver, Mutation, Query, Args, Context } from "@nestjs/graphql";
 import { UnauthorizedException } from "@nestjs/common";
 import type { Request, Response } from "express";
 import { AuthService } from "./auth.service";
@@ -15,6 +15,7 @@ import {
   mapAuthResponseToGraphQL,
 } from "./utils/auth-resolver-mappers";
 import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
+import { SignupChallengeService } from "./services/signup-challenge.service";
 import { CredentialThrottle } from "../middleware/credential-throttle.decorator";
 import {
   clearRefreshCookie,
@@ -27,7 +28,21 @@ type GqlContext = { req: Request; res: Response };
 
 @Resolver()
 export class AuthResolver {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private signupChallengeService: SignupChallengeService,
+  ) {}
+
+  /**
+   * A signed proof-of-work challenge for the sign-up form, as JSON the ALTCHA
+   * widget accepts. The solved challenge goes back as `altchaPayload`.
+   */
+  @AllowUnauthenticated()
+  @CredentialThrottle()
+  @Query(() => String)
+  async signupChallenge(): Promise<string> {
+    return this.signupChallengeService.create();
+  }
 
   @AllowUnauthenticated()
   @CredentialThrottle()

@@ -32,6 +32,7 @@
     "@vanilla-extract/dynamic": "^2.1.5",
     "@vanilla-extract/recipes": "^0.5.7",
     "@vanilla-extract/sprinkles": "^1.7.1",
+    "altcha": "3.5.0",
     "framer-motion": "^10.16.0",
     "graphql": "^16.8.0",
     "graphql-ws": "^6.0.7",

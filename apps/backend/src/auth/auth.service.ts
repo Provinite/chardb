@@ -20,6 +20,7 @@ import { DatabaseService } from "../database/database.service";
 import { EmailService } from "../email/email.service";
 import { EmailVerificationService } from "../email-verification/email-verification.service";
 import { EmailNotVerifiedError } from "./errors/email-not-verified.error";
+import { SignupChallengeService } from "./services/signup-challenge.service";
 import { Prisma, User } from "@chardb/database";
 
 /**
@@ -54,6 +55,10 @@ export interface SignupServiceInput {
   inviteCode?: string;
   /** Community to join without a code; ignored when `inviteCode` is given */
   communityId?: string;
+  /** The solved sign-up challenge, as the widget encodes it */
+  altchaPayload: string;
+  /** The hidden honeypot field; anything in it refuses the sign-up */
+  honeypot?: string;
 }
 
 /**
@@ -90,6 +95,7 @@ export class AuthService {
     @Inject(forwardRef(() => CommunityMembershipService))
     private membership: CommunityMembershipService,
     private achievements: AchievementsService,
+    private signupChallenge: SignupChallengeService,
   ) {}
 
   private readonly logger = new Logger(AuthService.name);
@@ -165,7 +171,17 @@ export class AuthService {
    */
   async signup(input: SignupServiceInput): Promise<void> {
     const normalizedEmail = input.email.toLowerCase();
+    // Checked before anything else, and before the transaction opens: a
+    // refused challenge costs no database work.
+    const challenge = await this.signupChallenge.verify(
+      input.altchaPayload,
+      input.honeypot,
+    );
     const userId = await this.prisma.$transaction(async (tx) => {
+      // 0. Spend the challenge. In the transaction, so a sign-up that fails
+      // below leaves it unspent and the person can fix the form and resubmit.
+      await this.signupChallenge.spend(tx, challenge);
+
       // 1. Find what lets this person in: an invite code, or a community that
       // takes anyone. A code wins when both are given, since following an
       // invite link is the more deliberate act.

@@ -32,6 +32,8 @@ export function mapSignupInputToService(
     displayName: input.displayName,
     inviteCode: input.inviteCode,
     communityId: input.communityId,
+    altchaPayload: input.altchaPayload,
+    honeypot: input.honeypot,
   };
 }
 

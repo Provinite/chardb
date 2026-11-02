@@ -1028,6 +1028,20 @@ model InviteCode {
   @@map("invite_codes")
 }
 
+/// A sign-up challenge (ALTCHA proof of work) already spent on an account.
+/// Written in the sign-up transaction, so a solved challenge creates one
+/// account and a failed sign-up leaves it unspent. Rows are useless once
+/// `expiresAt` passes, since the challenge is refused as expired by then, and
+/// are deleted as new ones arrive.
+model UsedSignupChallenge {
+  /// The challenge's nonce, covered by its signature.
+  nonce     String   @id
+  expiresAt DateTime @map("expires_at")
+
+  @@index([expiresAt])
+  @@map("used_signup_challenges")
+}
+
 /// One change of a character's variant, and what it did to its traits.
 ///
 /// Rarity is economically load-bearing -- it is the thing upgrade tickets sell

@@ -1,4 +1,4 @@
-import { TestApp, AUTH_QUERIES } from "../../test/setup-e2e";
+import { TestApp } from "../../test/setup-e2e";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
 import { UsersModule } from "../users/users.module";
@@ -110,7 +110,7 @@ describe("Community open sign-up (e2e)", () => {
     it("joins an open community without an invite code", async () => {
       await openSignup(memberRoleId);
 
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input: signupInput({ communityId }),
       });
 
@@ -125,7 +125,7 @@ describe("Community open sign-up (e2e)", () => {
     });
 
     it("refuses a community that requires an invite", async () => {
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input: signupInput({ communityId }),
       });
 
@@ -139,7 +139,7 @@ describe("Community open sign-up (e2e)", () => {
     });
 
     it("refuses a signup with neither a code nor a community", async () => {
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input: signupInput({}),
       });
 
@@ -149,7 +149,7 @@ describe("Community open sign-up (e2e)", () => {
     });
 
     it("refuses a community that does not exist", async () => {
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input: signupInput({
           communityId: "00000000-0000-0000-0000-000000000000",
         }),
@@ -168,7 +168,7 @@ describe("Community open sign-up (e2e)", () => {
         data: { roleId: otherRoleId },
       });
 
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input: signupInput({ communityId, inviteCode: code }),
       });
 
@@ -459,7 +459,7 @@ describe("Community open sign-up (e2e)", () => {
     it("refuses signup once the chosen role gains one", async () => {
       await openSignup(moderatorRoleId);
 
-      const response = await testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      const response = await testApp.signupRequest({
         input: signupInput({ communityId }),
       });
 

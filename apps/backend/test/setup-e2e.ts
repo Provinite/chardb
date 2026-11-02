@@ -14,6 +14,8 @@ import * as jwt from "jsonwebtoken";
 import * as cookieParser from "cookie-parser";
 import type { Request, Response } from "express";
 import { readFileSync } from "fs";
+import { solveChallenge, type Challenge } from "altcha-lib";
+import { deriveKey } from "altcha-lib/algorithms/pbkdf2";
 import * as path from "path";
 import { parseEnv } from "util";
 import { DatabaseService } from "../src/database/database.service";
@@ -182,6 +184,39 @@ export class TestApp {
         query,
         variables,
       });
+  }
+
+  /**
+   * A sign-up challenge from the API, solved, in the encoding the widget
+   * submits: base64 of `{ challenge: { parameters, signature }, solution }`.
+   */
+  async solvedSignupChallenge(): Promise<string> {
+    const response = await this.graphqlRequest(AUTH_QUERIES.SIGNUP_CHALLENGE);
+    const challenge: Challenge = JSON.parse(response.body.data.signupChallenge);
+    const solution = await solveChallenge({ challenge, deriveKey });
+    if (!solution) throw new Error("Could not solve the sign-up challenge");
+    return Buffer.from(
+      JSON.stringify({
+        challenge: {
+          parameters: challenge.parameters,
+          signature: challenge.signature,
+        },
+        solution,
+      }),
+    ).toString("base64");
+  }
+
+  /**
+   * Sends `signup` the way the form does, with a freshly solved challenge.
+   * An `altchaPayload` in `input` wins, for specs about the challenge itself.
+   */
+  async signupRequest(variables: { input: Record<string, unknown> }) {
+    return this.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+      input: {
+        altchaPayload: await this.solvedSignupChallenge(),
+        ...variables.input,
+      },
+    });
   }
 
   async authenticatedGraphqlRequest(
@@ -356,6 +391,12 @@ export const AUTH_QUERIES = {
   SIGNUP: `
     mutation signup($input: SignupInput!) {
       signup(input: $input)
+    }
+  `,
+
+  SIGNUP_CHALLENGE: `
+    query signupChallenge {
+      signupChallenge
     }
   `,
 
