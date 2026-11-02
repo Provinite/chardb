@@ -23,7 +23,7 @@ import {
   useCommunityId,
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
-import { apexUrl } from "../lib/communityHost";
+import { apexUrl, loginUrlReturningHere } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
 
 /**
@@ -331,8 +331,8 @@ export const CommunityPage: React.FC = () => {
                           );
                           return;
                         }
-                        // Claiming an invite code, like signing in, happens at
-                        // the apex: the router cannot cross a host.
+                        // Claiming an invite code happens at the apex: the
+                        // router cannot cross a host.
                         window.location.assign(apexUrl("/join-community"));
                       }}
                     >
@@ -346,25 +346,17 @@ export const CommunityPage: React.FC = () => {
                   )}
                 </>
               ) : (
-                // The session cookie is set on the parent domain, so signing
-                // in and up have to happen at the apex.
                 // Sign Up comes last and Sign In never changes: the page can
                 // first render from a remembered copy of the community, and
                 // when the fresh one opens sign-up, nothing already on screen
                 // moves or restyles.
                 <>
                   <ButtonLink tone="primary">
-                    <a href={apexUrl("/login")}>Sign In to Join</a>
+                    <Link to={loginUrlReturningHere()}>Sign In to Join</Link>
                   </ButtonLink>
                   {community.openSignupRoleId && (
                     <ButtonLink tone="outline">
-                      <a
-                        href={apexUrl(
-                          `/signup?community=${encodeURIComponent(community.slug)}`,
-                        )}
-                      >
-                        Sign Up to Join
-                      </a>
+                      <Link to="/signup">Sign Up to Join</Link>
                     </ButtonLink>
                   )}
                 </>

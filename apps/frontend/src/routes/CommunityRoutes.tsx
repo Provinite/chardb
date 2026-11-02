@@ -6,6 +6,8 @@ import { SpeciesScopeRoute } from "../components/SpeciesScopeRoute";
 import { ApexRedirect } from "./ApexRedirect";
 import {
   NotFoundPage,
+  LoginPage,
+  SignupPage,
   CommunityPage,
   CommunityCharactersPage,
   CommunityMyCharactersPage,
@@ -534,13 +536,15 @@ export const communityRoutes = (
       }
     />
 
+    {/* Signing in and up happen on the community host itself. The API sets the
+        session cookie for the whole parent domain whichever host the form is
+        on, and signing up here joins this community. */}
+    <Route path="/login" element={<LoginPage />} />
+    <Route path="/signup" element={<SignupPage />} />
+
     {/* --- paths that only exist at the apex.
         Someone who edits the URL, or follows a stale link, lands on the right
-        page rather than a 404 on the wrong host. Signing in is the important
-        one: the session cookie is set for the whole parent domain, so it has
-        to be established there. */}
-    <Route path="/login" element={<ApexRedirect />} />
-    <Route path="/signup" element={<ApexRedirect />} />
+        page rather than a 404 on the wrong host. */}
     <Route path="/forgot-password" element={<ApexRedirect />} />
     <Route path="/reset-password/*" element={<ApexRedirect />} />
     <Route path="/verify-email/*" element={<ApexRedirect />} />

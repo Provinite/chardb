@@ -120,10 +120,9 @@ export const communityUrl = (slug: string, path = "/"): string =>
  * Where to come back to after signing in, as two parameters rather than one
  * URL: which community, and which path within it.
  *
- * Signing in always happens at the apex, because that is where the cookie for
- * the whole parent domain is set -- so leaving a community host is
- * unavoidable. Coming back is not, and the way back has to travel in the URL,
- * because `location.state` does not survive a navigation across origins.
+ * Every host serves its own sign-in form, but a link can still send someone
+ * to another host's. The way back travels in the URL, because
+ * `location.state` does not survive a navigation across origins.
  *
  * Split rather than absolute so that a foreign origin cannot be *expressed*.
  * An absolute URL in a query parameter is an open redirect that has to be
@@ -152,12 +151,31 @@ const NOT_A_RETURN_DESTINATION = new Set([
   "/forgot-password",
 ]);
 
+/** True on the sign-in, sign-up and forgotten-password forms. */
+export const isAuthPage = (pathname: string): boolean =>
+  NOT_A_RETURN_DESTINATION.has(pathname);
+
+/**
+ * The return address in `search`, as a query string to put on another of the
+ * auth pages' links, or "" when there is none. Moving between sign-in and
+ * sign-up keeps the way back this way.
+ */
+export const returnQuery = (search: string): string => {
+  const from = new URLSearchParams(search);
+  const kept = new URLSearchParams();
+  for (const key of [RETURN_SLUG_PARAM, RETURN_PATH_PARAM]) {
+    const value = from.get(key);
+    if (value !== null) kept.set(key, value);
+  }
+  const query = kept.toString();
+  return query ? `?${query}` : "";
+};
+
 /**
  * A `/login` link that remembers where it was clicked from.
  *
  * Relative, because the router resolves it against whichever host it was
- * clicked on -- and on a community host that `/login` route is the hop to the
- * apex, which carries these parameters along with the rest of the query.
+ * clicked on, and every host serves its own sign-in form.
  */
 export const loginUrlReturningHere = (): string => {
   if (NOT_A_RETURN_DESTINATION.has(window.location.pathname)) return "/login";
@@ -177,9 +195,9 @@ export const loginUrlReturningHere = (): string => {
  * Where to go once signed in, built from the two parameters, or `null` if they
  * do not name anywhere.
  *
- * Returns a path when the destination is the apex -- the login page is always
- * there, so the router can handle it -- and an absolute URL when it is a
- * community, which is a different origin and needs a whole-page navigation.
+ * Always an absolute URL, on the apex when no community is named. The sign-in
+ * form is on every host, so a bare path would mean a different place depending
+ * on where it was read; `localPath` then says whether the router can reach it.
  */
 export const returnDestination = (params: URLSearchParams): string | null => {
   const path = params.get(RETURN_PATH_PARAM);
@@ -187,20 +205,11 @@ export const returnDestination = (params: URLSearchParams): string | null => {
   if (!path || !path.startsWith("/") || path.startsWith("//")) return null;
 
   const slug = params.get(RETURN_SLUG_PARAM);
-  if (!slug) return path;
+  if (!slug) return apexUrl(path);
 
   // The same rule that decides what a community may be called. A slug that
   // could not name one cannot name a destination either.
   return isValidCommunitySlug(slug) ? communityUrl(slug, path) : null;
-};
-
-/**
- * The `?community=` slug, if it could name a community. It becomes a
- * hostname, so anything else is dropped rather than navigated to.
- */
-export const communitySlugParam = (params: URLSearchParams): string | null => {
-  const slug = params.get("community");
-  return slug && isValidCommunitySlug(slug) ? slug : null;
 };
 
 /**

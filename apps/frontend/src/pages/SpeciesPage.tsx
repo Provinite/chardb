@@ -30,6 +30,7 @@ import {
 import { Link } from "react-router-dom";
 import { useCanManageSpecies } from "../hooks/useCanManageSpecies";
 import { useCommunityId } from "../contexts/CommunityHostContext";
+import { loginUrlReturningHere } from "../lib/communityHost";
 
 /**
  * Species Landing Page
@@ -461,7 +462,7 @@ export const SpeciesPage: React.FC = () => {
           </HelpText>
           <div style={{ marginTop: "1rem" }}>
             <ButtonLink tone="primary">
-              <Link to="/login">Sign In</Link>
+              <Link to={loginUrlReturningHere()}>Sign In</Link>
             </ButtonLink>
           </div>
         </div>

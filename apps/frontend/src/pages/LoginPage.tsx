@@ -4,11 +4,16 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import { Button, Stack } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
-import { returnDestination } from "../lib/communityHost";
+import { useHostCommunity } from "../contexts/CommunityHostContext";
+import {
+  localPath,
+  returnDestination,
+  returnQuery,
+} from "../lib/communityHost";
 import { ResendVerification } from "../components/auth/ResendVerification";
+import * as styles from "./AuthPage.css";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email"),
@@ -17,88 +22,11 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>;
 
-const Container = styled.div`
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 0 ${({ theme }) => theme.spacing.md};
-`;
-
-const Card = styled.div`
-  background: ${({ theme }) => theme.colors.background};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  padding: ${({ theme }) => theme.spacing.xl};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
-`;
-
-const Title = styled.h1`
-  font-size: ${({ theme }) => theme.typography.fontSize.xxl};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
-const Label = styled.label`
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Input = styled.input`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.primary};
-  transition: all 0.2s ease;
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.text.muted};
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}20;
-    background: ${({ theme }) => theme.colors.background};
-  }
-`;
-
-const ErrorMessage = styled.span`
-  color: ${({ theme }) => theme.colors.error};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-`;
-
-const Footer = styled.div`
-  text-align: center;
-  margin-top: ${({ theme }) => theme.spacing.lg};
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
-const SignupLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primary};
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
 export const LoginPage: React.FC = () => {
-  usePageMeta({ title: "Sign In" });
+  const hostCommunity = useHostCommunity();
+  usePageMeta({
+    title: hostCommunity ? `Sign in to ${hostCommunity.name}` : "Sign In",
+  });
 
   const [isLoading, setIsLoading] = useState(false);
   /**
@@ -113,17 +41,13 @@ export const LoginPage: React.FC = () => {
   const location = useLocation();
 
   /**
-   * Where to go once signed in.
-   *
-   * The query parameters come first, because they are the only channel that
-   * survives the trip from a community host -- signing in happens at the apex,
-   * and router state does not cross an origin. `location.state` still covers
-   * the apex-only journeys that never leave, and the dashboard is the fallback.
+   * Where to go once signed in: the return address in the URL, or this host's
+   * home page. The address names a host as well as a path, so a link from one
+   * host to another's sign-in form still comes back.
    */
   const returnTo =
     returnDestination(new URLSearchParams(location.search)) ??
-    location.state?.from?.pathname ??
-    "/dashboard";
+    (hostCommunity ? "/" : "/dashboard");
 
   const {
     register,
@@ -141,11 +65,12 @@ export const LoginPage: React.FC = () => {
       if (outcome === "unverified") {
         setUnverifiedEmail(data.email);
       } else if (outcome === "success") {
-        // A community host is a different origin, which the router cannot
-        // reach -- that one needs a whole-page navigation. A path stays in the
-        // router so the apex case keeps its client-side transition.
-        if (returnTo.startsWith("/")) {
-          navigate(returnTo, { replace: true });
+        // Another host is a different origin, which the router cannot reach --
+        // that one needs a whole-page navigation. Anywhere on this host stays
+        // in the router.
+        const path = localPath(returnTo);
+        if (path !== null) {
+          navigate(path, { replace: true });
         } else {
           window.location.replace(returnTo);
         }
@@ -156,9 +81,20 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <Container>
-      <Card>
-        <Title>Welcome Back</Title>
+    <div className={styles.page}>
+      <Stack gap="lg" className={styles.panel}>
+        <Stack as="header" gap="xs" className={styles.header}>
+          <h1 className={styles.title}>
+            {hostCommunity
+              ? `Sign in to ${hostCommunity.name}`
+              : "Welcome Back"}
+          </h1>
+          {hostCommunity && (
+            <p className={styles.subtitle}>
+              Your CharDB account works in every community.
+            </p>
+          )}
+        </Stack>
 
         {unverifiedEmail && (
           <ResendVerification
@@ -170,47 +106,58 @@ export const LoginPage: React.FC = () => {
           </ResendVerification>
         )}
 
-        <Form onSubmit={handleSubmit(onSubmit)}>
-          <FormGroup>
-            <Label htmlFor="email">Email</Label>
-            <Input
+        <Stack as="form" gap="md" noValidate onSubmit={handleSubmit(onSubmit)}>
+          <Stack gap="xs">
+            <label htmlFor="email" className={styles.label}>
+              Email
+            </label>
+            <input
               {...register("email")}
               type="email"
               id="email"
+              autoComplete="username"
+              className={styles.input}
               placeholder="Enter your email"
             />
-            {errors.email && (
-              <ErrorMessage>{errors.email.message}</ErrorMessage>
-            )}
-          </FormGroup>
+            <span className={styles.error}>{errors.email?.message}</span>
+          </Stack>
 
-          <FormGroup>
-            <Label htmlFor="password">Password</Label>
-            <Input
+          <Stack gap="xs">
+            <label htmlFor="password" className={styles.label}>
+              Password
+            </label>
+            <input
               {...register("password")}
               type="password"
               id="password"
+              autoComplete="current-password"
+              className={styles.input}
               placeholder="Enter your password"
             />
-            {errors.password && (
-              <ErrorMessage>{errors.password.message}</ErrorMessage>
-            )}
-          </FormGroup>
+            <span className={styles.error}>{errors.password?.message}</span>
+          </Stack>
 
           <Button type="submit" busy={isLoading} disabled={isLoading}>
-            {isLoading ? "Signing In..." : "Sign In"}
+            Sign In
           </Button>
-        </Form>
+        </Stack>
 
-        <Footer>
-          <SignupLink to="/forgot-password">Forgot password?</SignupLink>
-        </Footer>
+        <p className={styles.footer}>
+          <Link to="/forgot-password" className={styles.link}>
+            Forgot password?
+          </Link>
+        </p>
 
-        <Footer>
+        <p className={styles.footer}>
           Don't have an account?{" "}
-          <SignupLink to="/signup">Sign up here</SignupLink>
-        </Footer>
-      </Card>
-    </Container>
+          <Link
+            to={`/signup${returnQuery(location.search)}`}
+            className={styles.link}
+          >
+            Sign up here
+          </Link>
+        </p>
+      </Stack>
+    </div>
   );
 };

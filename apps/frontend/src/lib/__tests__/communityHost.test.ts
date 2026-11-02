@@ -5,10 +5,12 @@ import {
   isValidCommunitySlug,
 } from "@chardb/shared";
 import {
+  apexUrl,
   communityUrl,
-  communitySlugParam,
+  isAuthPage,
   parseCommunitySlug,
   returnDestination,
+  returnQuery,
   ROOT_DOMAIN,
 } from "../communityHost";
 
@@ -66,11 +68,11 @@ describe("parseCommunitySlug", () => {
 describe("returnDestination", () => {
   const params = (init: Record<string, string>) => new URLSearchParams(init);
 
-  it("returns a path when no community is named", () => {
-    // The login page is always on the apex, so a bare path is same-origin and
-    // the router can take it.
+  it("builds an apex URL when no community is named", () => {
+    // Absolute either way: the sign-in form is on every host, so a bare path
+    // would mean a different place depending on where it was read.
     expect(returnDestination(params({ nextPath: "/dashboard" }))).toBe(
-      "/dashboard",
+      apexUrl("/dashboard"),
     );
   });
 
@@ -131,27 +133,28 @@ describe("returnDestination", () => {
   });
 });
 
-describe("communitySlugParam", () => {
-  const read = (query: string) =>
-    communitySlugParam(new URLSearchParams(query));
-
-  it("reads a valid slug", () => {
-    expect(read("community=willowmere")).toBe("willowmere");
+describe("returnQuery", () => {
+  it("keeps only the return address", () => {
+    expect(
+      returnQuery(
+        "?nextCommunitySlug=willowmere&nextPath=%2Fsettings&invite=abc",
+      ),
+    ).toBe("?nextCommunitySlug=willowmere&nextPath=%2Fsettings");
   });
 
-  it("is null without one", () => {
-    expect(read("")).toBeNull();
+  it("is empty without one", () => {
+    expect(returnQuery("?invite=abc")).toBe("");
+    expect(returnQuery("")).toBe("");
+  });
+});
+
+describe("isAuthPage", () => {
+  it.each(["/login", "/signup", "/forgot-password"])("is true for %s", (p) => {
+    expect(isAuthPage(p)).toBe(true);
   });
 
-  // The slug becomes a hostname. Anything that could not be a community's
-  // name could name somebody else's site.
-  it.each([
-    ["evil.com/?", "a path"],
-    ["evil.com#", "a fragment"],
-    ["evil.com", "a dot"],
-    ["Willowmere", "uppercase"],
-  ])("refuses %s (%s)", (slug) => {
-    expect(read(`community=${encodeURIComponent(slug)}`)).toBeNull();
+  it("is false elsewhere", () => {
+    expect(isAuthPage("/characters")).toBe(false);
   });
 });
 

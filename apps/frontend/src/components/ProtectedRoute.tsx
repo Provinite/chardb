@@ -17,10 +17,9 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
   }
 
   if (!user) {
-    // The return address goes in the URL, not in router state. On a community
-    // host `/login` is itself a hop to the apex, and `location.state` does not
-    // survive a navigation across origins -- carrying it that way stranded
-    // people on the apex dashboard instead of the page they asked for.
+    // The return address goes in the URL, not in router state: it names the
+    // host as well as the path, so it still works when the sign-in form is
+    // reached from another host.
     return <Navigate to={loginUrlReturningHere()} replace />;
   }
 

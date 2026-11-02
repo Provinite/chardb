@@ -12,7 +12,11 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import { Kind, OperationTypeNode } from "graphql";
 import { createClient } from "graphql-ws";
 import { getAccessToken, setAccessToken } from "./accessToken";
-import { apexUrl, API_BASE_URL } from "./communityHost";
+import {
+  API_BASE_URL,
+  isAuthPage,
+  loginUrlReturningHere,
+} from "./communityHost";
 import { hasRateLimitError, notifyRateLimited } from "./rateLimit";
 import { rateLimitBackoff } from "./rateLimitBackoff";
 
@@ -69,12 +73,15 @@ const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
   if (networkError) {
     console.log(`[Network error]: ${networkError}`);
 
-    // Handle 401 errors by clearing the token and redirecting to login.
-    // Login lives at the apex, so from a community host this leaves the
-    // subdomain -- the session it establishes covers both.
+    // Handle 401 errors by clearing the token and sending the visitor to this
+    // host's sign-in, which brings them back to where they were. Not from the
+    // auth forms: from sign-in it would reload in a loop, and from the others
+    // it would throw away what was typed.
     if (networkError.message.includes("401")) {
       setAccessToken(null);
-      window.location.href = apexUrl("/login");
+      if (!isAuthPage(window.location.pathname)) {
+        window.location.href = loginUrlReturningHere();
+      }
     }
   }
 });

@@ -4,14 +4,15 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import styled from "styled-components";
-import { Button } from "@chardb/ui";
+import { Button, Cluster, Stack } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
+import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { useInviteCodeByIdQuery } from "../graphql/inviteCodes.graphql";
 import { useCommunityBySlugQuery } from "../generated/graphql";
-import { communitySlugParam, communityUrl } from "../lib/communityHost";
+import { returnQuery } from "../lib/communityHost";
 import { ResendVerification } from "../components/auth/ResendVerification";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import * as styles from "./AuthPage.css";
 
 const inviteCodeField = z
   .string()
@@ -53,167 +54,44 @@ const makeSignupSchema = (codeRequired: boolean) =>
 
 type SignupForm = z.infer<ReturnType<typeof makeSignupSchema>>;
 
-const Container = styled.div`
-  max-width: 400px;
-  margin: 2rem auto;
-  padding: 0 ${({ theme }) => theme.spacing.md};
-`;
-
-const Card = styled.div`
-  background: ${({ theme }) => theme.colors.background};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  padding: ${({ theme }) => theme.spacing.xl};
-  border-radius: ${({ theme }) => theme.borderRadius.lg};
-  box-shadow: ${({ theme }) => theme.shadows.lg};
-`;
-
-const Title = styled.h1`
-  font-size: ${({ theme }) => theme.typography.fontSize.xxl};
-  font-weight: ${({ theme }) => theme.typography.fontWeight.bold};
-  text-align: center;
-  margin-bottom: ${({ theme }) => theme.spacing.xl};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Form = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.lg};
-`;
-
-const FormGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.spacing.xs};
-`;
-
-const Label = styled.label`
-  font-weight: ${({ theme }) => theme.typography.fontWeight.medium};
-  color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const Input = styled.input`
-  padding: ${({ theme }) => theme.spacing.sm} ${({ theme }) => theme.spacing.md};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  font-size: ${({ theme }) => theme.typography.fontSize.md};
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.primary};
-  transition: all 0.2s ease;
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.text.muted};
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.colors.primary}20;
-    background: ${({ theme }) => theme.colors.background};
-  }
-`;
-
-const ErrorMessage = styled.span`
-  color: ${({ theme }) => theme.colors.error};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-`;
-
-const HelpText = styled.span`
-  color: ${({ theme }) => theme.colors.text.muted};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-`;
-
-const ValidationMessage = styled.div<{
-  $status: "valid" | "invalid" | "loading";
-}>`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.xs};
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ $status, theme }) => {
-    switch ($status) {
-      case "valid":
-        return theme.colors.success;
-      case "invalid":
-        return theme.colors.error;
-      case "loading":
-        return theme.colors.text.secondary;
-    }
-  }};
-`;
-
-const CommunityPreview = styled.div`
-  background: ${({ theme }) => theme.colors.primary + "10"};
-  border: 1px solid ${({ theme }) => theme.colors.primary + "30"};
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  padding: ${({ theme }) => theme.spacing.md};
-  margin-top: ${({ theme }) => theme.spacing.sm};
-`;
-
-const CommunityInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: ${({ theme }) => theme.spacing.sm};
-  margin-bottom: ${({ theme }) => theme.spacing.xs};
-`;
-
-const CommunityName = styled.span`
-  font-weight: ${({ theme }) => theme.typography.fontWeight.semibold};
-  color: ${({ theme }) => theme.colors.primary};
-`;
-
-const RoleInfo = styled.span`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
-const PreviewText = styled.p`
-  font-size: ${({ theme }) => theme.typography.fontSize.sm};
-  color: ${({ theme }) => theme.colors.text.primary};
-  margin: 0;
-`;
-
-const Footer = styled.div`
-  text-align: center;
-  margin-top: ${({ theme }) => theme.spacing.lg};
-  color: ${({ theme }) => theme.colors.text.secondary};
-`;
-
-const LoginLink = styled(Link)`
-  color: ${({ theme }) => theme.colors.primary};
-  text-decoration: none;
-
-  &:hover {
-    text-decoration: underline;
-  }
-`;
-
 export const SignupPage: React.FC = () => {
-  usePageMeta({ title: "Sign Up" });
-
   const [isLoading, setIsLoading] = useState(false);
   /** Set once the account exists. Swaps the form for the "check your email" card. */
   const [registeredEmail, setRegisteredEmail] = useState<string | null>(null);
   const [searchParams] = useSearchParams();
   const { signup, user } = useAuth();
   const navigate = useNavigate();
+  const { community: hostCommunity, slug: hostSlug } = useCommunityHost();
 
-  // `?community=<slug>`: sent here from a community's page. An invite link
-  // wins over it, so the code it carries is still asked for and used.
+  // The community being joined is the host's own. An invite link wins over
+  // it, so the code it carries is still asked for and used.
   const inviteParam = searchParams.get("invite");
-  const communitySlug = inviteParam ? null : communitySlugParam(searchParams);
-  const { data: communityData, loading: communityLoading } =
-    useCommunityBySlugQuery({
-      variables: { slug: communitySlug ?? "" },
-      skip: !communitySlug,
-    });
-  const openCommunity = communityData?.communityBySlug?.openSignupRoleId
-    ? communityData.communityBySlug
+  const community = inviteParam ? null : hostCommunity;
+
+  // Whether sign-up is open comes from a fresh read, not the host's record:
+  // that can be the copy remembered from an earlier visit, from before staff
+  // opened or closed sign-up.
+  const {
+    data: freshData,
+    loading: freshLoading,
+    error: freshError,
+  } = useCommunityBySlugQuery({
+    variables: { slug: hostSlug ?? "" },
+    skip: !community || !hostSlug,
+    fetchPolicy: "network-only",
+  });
+  // A failed read means "unknown", not "invite-only": fall back to the host's
+  // own record rather than demand a code an open community does not need.
+  const fresh = community
+    ? (freshData?.communityBySlug ?? (freshError ? community : null))
     : null;
-  // Until the community has loaded, its preview holds the code field's place,
-  // so a community that turns out to be open never shows the field at all.
-  const awaitingCommunity = Boolean(communitySlug) && communityLoading;
+  const openCommunity = fresh?.openSignupRoleId ? fresh : null;
+  // Until the fresh read lands, the form is a placeholder: no field can
+  // appear above the others once it does.
+  const awaitingCommunity = Boolean(community) && freshLoading;
   const askForCode = !openCommunity && !awaitingCommunity;
+
+  usePageMeta({ title: community ? `Join ${community.name}` : "Sign Up" });
 
   const schema = useMemo(() => makeSignupSchema(askForCode), [askForCode]);
   const {
@@ -244,10 +122,10 @@ export const SignupPage: React.FC = () => {
 
   // Signed in already: the community's own page has the Join button.
   useEffect(() => {
-    if (user && communitySlug) {
-      window.location.assign(communityUrl(communitySlug));
+    if (user && community) {
+      navigate("/", { replace: true });
     }
-  }, [user, communitySlug]);
+  }, [user, community, navigate]);
 
   // Query to validate invite code
   const {
@@ -286,45 +164,47 @@ export const SignupPage: React.FC = () => {
 
     if (inviteCodeLoading) {
       return (
-        <ValidationMessage $status="loading">
-          <AlertTriangle size={16} />
+        <Cluster gap="xs" className={styles.validation.loading}>
+          <AlertTriangle size={16} aria-hidden />
           Checking invite code...
-        </ValidationMessage>
+        </Cluster>
       );
     }
 
     if (inviteCodeError || !inviteCodeData?.inviteCodeById) {
       return (
-        <ValidationMessage $status="invalid">
-          <XCircle size={16} />
+        <Cluster gap="xs" className={styles.validation.invalid}>
+          <XCircle size={16} aria-hidden />
           Invalid invite code
-        </ValidationMessage>
+        </Cluster>
       );
     }
 
     const code = inviteCodeData.inviteCodeById;
     if (!code.isAvailable) {
       return (
-        <ValidationMessage $status="invalid">
-          <XCircle size={16} />
+        <Cluster gap="xs" className={styles.validation.invalid}>
+          <XCircle size={16} aria-hidden />
           This invite code has been exhausted
-        </ValidationMessage>
+        </Cluster>
       );
     }
 
     return (
-      <ValidationMessage $status="valid">
-        <CheckCircle size={16} />
+      <Cluster gap="xs" className={styles.validation.valid}>
+        <CheckCircle size={16} aria-hidden />
         Valid invite code ({code.remainingClaims} uses remaining)
-      </ValidationMessage>
+      </Cluster>
     );
   };
 
   if (registeredEmail) {
     return (
-      <Container>
-        <Card>
-          <Title>Check your email</Title>
+      <div className={styles.page}>
+        <Stack gap="lg" className={styles.panel}>
+          <h1 className={`${styles.header} ${styles.title}`}>
+            Check your email
+          </h1>
 
           <ResendVerification
             email={registeredEmail}
@@ -334,155 +214,215 @@ export const SignupPage: React.FC = () => {
             sign in — until then the account cannot be used.
           </ResendVerification>
 
-          <Footer>
-            Already confirmed? <LoginLink to="/login">Sign in here</LoginLink>
-          </Footer>
-        </Card>
-      </Container>
+          <p className={styles.footer}>
+            Already confirmed?{" "}
+            <Link
+              to={`/login${returnQuery(searchParams.toString())}`}
+              className={styles.link}
+            >
+              Sign in here
+            </Link>
+          </p>
+        </Stack>
+      </div>
     );
   }
 
+  const subtitle = (() => {
+    if (awaitingCommunity) return " ";
+    if (openCommunity) {
+      return (
+        <>
+          Create a CharDB account to join{" "}
+          <span className={styles.communityName}>{openCommunity.name}</span>.
+        </>
+      );
+    }
+    if (community) {
+      return `${community.name} is invite-only. Enter the invite code you were given.`;
+    }
+    return "Enter the invite code you were given.";
+  })();
+
+  const invitedRole = inviteCodeData?.inviteCodeById?.role;
+
   return (
-    <Container>
-      <Card>
-        <Title>Join CharDB</Title>
+    <div className={styles.page}>
+      <Stack gap="lg" className={styles.panel}>
+        <Stack as="header" gap="xs" className={styles.header}>
+          <h1 className={styles.title}>
+            {community ? `Join ${community.name}` : "Join CharDB"}
+          </h1>
+          <p className={styles.subtitle} aria-busy={awaitingCommunity}>
+            {subtitle}
+          </p>
+        </Stack>
 
-        <Form onSubmit={handleSubmit(onSubmit)}>
-          {askForCode ? (
-            <FormGroup>
-              <Label htmlFor="inviteCode">Invite Code *</Label>
-              <Input
-                {...register("inviteCode")}
-                type="text"
-                id="inviteCode"
-                placeholder="Enter your invite code"
-              />
-              {errors.inviteCode && (
-                <ErrorMessage>{errors.inviteCode.message}</ErrorMessage>
-              )}
-              {getInviteCodeValidation()}
-              {inviteCodeData?.inviteCodeById?.role && (
-                <CommunityPreview>
-                  <CommunityInfo>
-                    <CommunityName>
-                      {inviteCodeData.inviteCodeById.role.community.name}
-                    </CommunityName>
-                    <RoleInfo>
-                      as {inviteCodeData.inviteCodeById.role.name}
-                    </RoleInfo>
-                  </CommunityInfo>
-                  <PreviewText>
-                    You'll be joining this community and assigned the{" "}
-                    {inviteCodeData.inviteCodeById.role.name} role.
-                  </PreviewText>
-                </CommunityPreview>
-              )}
-              {inviteCodeData?.inviteCodeById &&
-                !inviteCodeData.inviteCodeById.role && (
-                  <CommunityPreview>
-                    <PreviewText>
-                      <strong>Site Registration:</strong> This code will give
-                      you access to the platform.
-                    </PreviewText>
-                  </CommunityPreview>
-                )}
-            </FormGroup>
-          ) : (
-            // While the community loads, the box holds a line's height and
-            // says nothing: a fast answer never flashes a loading message,
-            // and the name lands without moving the form.
-            <CommunityPreview aria-busy={awaitingCommunity}>
-              <PreviewText>
-                {openCommunity
-                  ? `You'll be joining ${openCommunity.name}.`
-                  : " "}
-              </PreviewText>
-            </CommunityPreview>
-          )}
-
-          <FormGroup>
-            <Label htmlFor="username">Username</Label>
-            <Input
-              {...register("username")}
-              type="text"
-              id="username"
-              placeholder="Choose a username"
-            />
-            {errors.username && (
-              <ErrorMessage>{errors.username.message}</ErrorMessage>
-            )}
-            <HelpText>
-              This will be your unique identifier on the platform
-            </HelpText>
-          </FormGroup>
-
-          <FormGroup>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              {...register("email")}
-              type="email"
-              id="email"
-              placeholder="Enter your email"
-            />
-            {errors.email && (
-              <ErrorMessage>{errors.email.message}</ErrorMessage>
-            )}
-          </FormGroup>
-
-          <FormGroup>
-            <Label htmlFor="displayName">Display Name (Optional)</Label>
-            <Input
-              {...register("displayName")}
-              type="text"
-              id="displayName"
-              placeholder="How others will see your name"
-            />
-            {errors.displayName && (
-              <ErrorMessage>{errors.displayName.message}</ErrorMessage>
-            )}
-            <HelpText>This can be different from your username</HelpText>
-          </FormGroup>
-
-          <FormGroup>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              {...register("password")}
-              type="password"
-              id="password"
-              placeholder="Create a password"
-            />
-            {errors.password && (
-              <ErrorMessage>{errors.password.message}</ErrorMessage>
-            )}
-          </FormGroup>
-
-          <FormGroup>
-            <Label htmlFor="confirmPassword">Confirm Password</Label>
-            <Input
-              {...register("confirmPassword")}
-              type="password"
-              id="confirmPassword"
-              placeholder="Confirm your password"
-            />
-            {errors.confirmPassword && (
-              <ErrorMessage>{errors.confirmPassword.message}</ErrorMessage>
-            )}
-          </FormGroup>
-
-          <Button
-            type="submit"
-            busy={isLoading}
-            disabled={isLoading || awaitingCommunity}
+        {awaitingCommunity ? (
+          // First load: shaped like the fields, standing in until the
+          // community says whether there is a code field to show.
+          <Stack gap="md" aria-hidden>
+            {[0, 1, 2, 3, 4].map((field) => (
+              <Stack key={field} gap="xs">
+                <span className={styles.placeholderLabel} />
+                <span className={styles.placeholderInput} />
+                <span className={styles.help} />
+              </Stack>
+            ))}
+            <span className={styles.placeholderInput} />
+          </Stack>
+        ) : (
+          <Stack
+            as="form"
+            gap="md"
+            noValidate
+            onSubmit={handleSubmit(onSubmit)}
           >
-            {isLoading ? "Creating Account..." : "Create Account"}
-          </Button>
-        </Form>
+            {askForCode && (
+              <Stack gap="xs">
+                <label htmlFor="inviteCode" className={styles.label}>
+                  Invite code
+                </label>
+                <input
+                  {...register("inviteCode")}
+                  type="text"
+                  id="inviteCode"
+                  className={styles.input}
+                  placeholder="Enter your invite code"
+                />
+                {getInviteCodeValidation()}
+                {invitedRole && (
+                  <p className={styles.communityBanner}>
+                    You'll join{" "}
+                    <span className={styles.communityName}>
+                      {invitedRole.community.name}
+                    </span>{" "}
+                    as {invitedRole.name}.
+                  </p>
+                )}
+                {inviteCodeData?.inviteCodeById && !invitedRole && (
+                  <p className={styles.communityBanner}>
+                    <span className={styles.communityName}>
+                      Site registration:
+                    </span>{" "}
+                    this code gives you access to CharDB.
+                  </p>
+                )}
+                <span className={styles.error}>
+                  {errors.inviteCode?.message}
+                </span>
+              </Stack>
+            )}
 
-        <Footer>
+            <Stack gap="xs">
+              <label htmlFor="username" className={styles.label}>
+                Username
+              </label>
+              <input
+                {...register("username")}
+                type="text"
+                id="username"
+                // Not "username": sign-in asks for the email, so that is the
+                // identifier a password manager should save with the password.
+                autoComplete="off"
+                className={styles.input}
+                placeholder="Choose a username"
+              />
+              {errors.username ? (
+                <span className={styles.error}>{errors.username.message}</span>
+              ) : (
+                <span className={styles.help}>
+                  This will be your unique identifier on the platform
+                </span>
+              )}
+            </Stack>
+
+            <Stack gap="xs">
+              <label htmlFor="email" className={styles.label}>
+                Email
+              </label>
+              <input
+                {...register("email")}
+                type="email"
+                id="email"
+                autoComplete="username"
+                className={styles.input}
+                placeholder="Enter your email"
+              />
+              <span className={styles.error}>{errors.email?.message}</span>
+            </Stack>
+
+            <Stack gap="xs">
+              <label htmlFor="displayName" className={styles.label}>
+                Display name (optional)
+              </label>
+              <input
+                {...register("displayName")}
+                type="text"
+                id="displayName"
+                autoComplete="nickname"
+                className={styles.input}
+                placeholder="How others will see your name"
+              />
+              {errors.displayName ? (
+                <span className={styles.error}>
+                  {errors.displayName.message}
+                </span>
+              ) : (
+                <span className={styles.help}>
+                  This can be different from your username
+                </span>
+              )}
+            </Stack>
+
+            <Stack gap="xs">
+              <label htmlFor="password" className={styles.label}>
+                Password
+              </label>
+              <input
+                {...register("password")}
+                type="password"
+                id="password"
+                autoComplete="new-password"
+                className={styles.input}
+                placeholder="Create a password"
+              />
+              <span className={styles.error}>{errors.password?.message}</span>
+            </Stack>
+
+            <Stack gap="xs">
+              <label htmlFor="confirmPassword" className={styles.label}>
+                Confirm password
+              </label>
+              <input
+                {...register("confirmPassword")}
+                type="password"
+                id="confirmPassword"
+                autoComplete="new-password"
+                className={styles.input}
+                placeholder="Confirm your password"
+              />
+              <span className={styles.error}>
+                {errors.confirmPassword?.message}
+              </span>
+            </Stack>
+
+            <Button type="submit" busy={isLoading} disabled={isLoading}>
+              Create Account
+            </Button>
+          </Stack>
+        )}
+
+        <p className={styles.footer}>
           Already have an account?{" "}
-          <LoginLink to="/login">Sign in here</LoginLink>
-        </Footer>
-      </Card>
-    </Container>
+          <Link
+            to={`/login${returnQuery(searchParams.toString())}`}
+            className={styles.link}
+          >
+            Sign in here
+          </Link>
+        </p>
+      </Stack>
+    </div>
   );
 };

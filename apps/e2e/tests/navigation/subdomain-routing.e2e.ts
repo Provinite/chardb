@@ -37,6 +37,15 @@ const globalNav = (page: import("@playwright/test").Page) =>
 /** The header's account menu, which is named for whoever is signed in. */
 const signedInMenu = (page: import("@playwright/test").Page) =>
   page.getByRole("button", { name: /, account menu$/ });
+/** Tags the running page. A full page load clears the tag. */
+const markPage = (page: import("@playwright/test").Page) =>
+  page.evaluate(() => {
+    (window as unknown as { __stillHere?: true }).__stillHere = true;
+  });
+const pageIsMarked = (page: import("@playwright/test").Page) =>
+  page.evaluate(
+    () => (window as unknown as { __stillHere?: true }).__stillHere === true,
+  );
 
 test.describe("community hosts", () => {
   test.use({ persona: "member" });
@@ -250,8 +259,83 @@ test.describe("community hosts", () => {
   });
 });
 
+test.describe("a session the API refuses", () => {
+  test.use({ persona: "member" });
+
+  test("goes to this community's sign-in and back", async ({ page, world }) => {
+    // The page's first API call answers 401, as an expired session would.
+    // Armed before the page exists, so no background request from an
+    // earlier load can take the one refusal.
+    await page.route(
+      "**/graphql",
+      (route) => route.fulfill({ status: 401, body: "Unauthorized" }),
+      { times: 1 },
+    );
+    await page.goto(`${world.community.url}/characters`);
+
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/login`),
+    );
+    expect(new URL(page.url()).searchParams.get("nextPath")).toBe(
+      "/characters",
+    );
+
+    await page.getByLabel("Email").fill(world.users.member.email);
+    await page.getByLabel("Password").fill(world.users.member.password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    await expect(page).toHaveURL(`${world.community.url}/characters`);
+  });
+});
+
 test.describe("one session across hosts", () => {
   test.use({ persona: "anon" });
+
+  test("a refused API call leaves a sign-up form alone", async ({
+    page,
+    world,
+  }) => {
+    // Sending someone to sign in from the sign-up form would throw away what
+    // they had typed.
+    await page.route(
+      "**/graphql",
+      (route) => route.fulfill({ status: 401, body: "Unauthorized" }),
+      { times: 1 },
+    );
+    const refused = page.waitForResponse(
+      (r) => r.url().includes("/graphql") && r.status() === 401,
+    );
+    await page.goto(`${world.community.url}/signup`);
+    await refused;
+    await page.waitForLoadState("networkidle");
+
+    await expect(page).toHaveURL(`${world.community.url}/signup`);
+  });
+
+  test("moving between sign-in and sign-up keeps the way back", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(`${world.community.url}/settings`);
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/login`),
+    );
+
+    await page.getByRole("link", { name: "Sign up here" }).click();
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/signup`),
+    );
+    await page.getByRole("link", { name: "Sign in here" }).click();
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/login`),
+    );
+    expect(new URL(page.url()).searchParams.get("nextPath")).toBe("/settings");
+
+    await page.getByLabel("Email").fill(world.users.commadmin.email);
+    await page.getByLabel("Password").fill(world.users.commadmin.password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await expect(page).toHaveURL(`${world.community.url}/settings`);
+  });
 
   test("signing in at the apex signs you in on a community host", async ({
     page,
@@ -282,11 +366,9 @@ test.describe("one session across hosts", () => {
     page,
     world,
   }) => {
-    // Signing in has to happen at the apex -- that is where the cookie for the
-    // whole parent domain is set -- but leaving a community should not be a
-    // one-way trip. Router state cannot carry the way back, because the trip
-    // crosses an ORIGIN and `location.state` does not survive that; the return
-    // address has to be in the URL.
+    // The sign-in form is served on the community host itself. The API sets
+    // the session cookie for the whole parent domain whichever host the form
+    // is on, so nothing about signing in needs the apex.
     //
     // A PUBLIC community page, because this is the journey that starts by
     // clicking Login rather than by being bounced there: somewhere a signed-out
@@ -296,18 +378,31 @@ test.describe("one session across hosts", () => {
     await page.getByRole("button", { name: "Log in or sign up" }).click();
     await page.getByRole("menuitem", { name: "Log in" }).click();
 
-    // Anchored on the APEX login page, not any `/login`. The community host has
-    // one too -- it is the hop that sends you here -- and filling the form on
-    // that one races the redirect and loses what was typed.
-    await expect(page).toHaveURL(urlStartingWith(apexUrl("/login")));
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/login`),
+    );
+    await expect(
+      page.getByRole("heading", { name: `Sign in to ${world.community.name}` }),
+    ).toBeVisible();
+    await expect(page.getByLabel("Email")).toHaveAttribute(
+      "autocomplete",
+      "username",
+    );
 
+    // Survives only if the way back stays in the app: a page load wipes it.
+    await markPage(page);
     await page.getByLabel("Email").fill(world.users.member.email);
     await page.getByLabel("Password").fill(world.users.member.password);
     await page.getByRole("button", { name: "Sign In" }).click();
 
-    // Back where they started, not stranded on the apex dashboard.
+    // Back where they started, without reloading the app.
     await expect(page).toHaveURL(`${world.community.url}/characters`);
     await expect(communityNav(page)).toBeVisible();
+    await expect(signedInMenu(page)).toBeVisible();
+    expect(await pageIsMarked(page)).toBe(true);
+
+    // One sign-in still covers every host.
+    await page.goto(apexUrl("/"));
     await expect(signedInMenu(page)).toBeVisible();
   });
 
@@ -316,16 +411,20 @@ test.describe("one session across hosts", () => {
     world,
   }) => {
     // The same journey, entered by URL rather than by clicking: ProtectedRoute
-    // bounces to /login, which on a community host is itself a hop to the
-    // apex. Two redirects, and the destination has to survive both.
+    // bounces to the community host's own /login, and the destination has to
+    // survive the trip.
     await page.goto(`${world.community.url}/settings`);
 
-    await expect(page).toHaveURL(urlStartingWith(apexUrl("/login")));
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/login`),
+    );
+    await markPage(page);
     await page.getByLabel("Email").fill(world.users.commadmin.email);
     await page.getByLabel("Password").fill(world.users.commadmin.password);
     await page.getByRole("button", { name: "Sign In" }).click();
 
     await expect(page).toHaveURL(`${world.community.url}/settings`);
+    expect(await pageIsMarked(page)).toBe(true);
   });
 
   test("a forged return address is ignored", async ({ page, world }) => {

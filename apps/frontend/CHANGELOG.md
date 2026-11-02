@@ -21,6 +21,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Signing in and up happen on the community's own host**, so every Sign up link there joins that community, without an invite code when it has open sign-up. Both pages name the community.
+- **An expired session goes to that host's sign-in** and back to the page it was on, instead of the apex sign-in and the dashboard.
 - **Species admin pages** (traits, variants, species editing) are hidden from members without species permissions, and their URLs show Access Denied. A species from another community is not found, and roles without species editing see these pages without their edit controls.
 
 ## [v15.2.0] - 2026-11-01

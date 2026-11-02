@@ -41,3 +41,15 @@ test("rejects a bad password", async ({ page, world }) => {
 
   await expect(page).toHaveURL(/\/login/);
 });
+
+test("field errors appear without moving the form", async ({ page }) => {
+  await page.goto("/login");
+  const signIn = page.getByRole("button", { name: "Sign In" });
+  const before = await signIn.boundingBox();
+
+  await signIn.click();
+
+  await expect(page.getByText("Please enter a valid email")).toBeVisible();
+  await expect(page.getByText("Password is required")).toBeVisible();
+  expect((await signIn.boundingBox())?.y).toBe(before?.y);
+});
