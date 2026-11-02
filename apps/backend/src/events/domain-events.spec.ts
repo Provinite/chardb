@@ -1,6 +1,10 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { Test, type TestingModule } from "@nestjs/testing";
-import { DomainEventLogEvent, DomainEvents, OnDomainEvent } from "./domain-events";
+import {
+  DomainEventLogEvent,
+  DomainEvents,
+  OnDomainEvent,
+} from "./domain-events";
 import { EventsModule } from "./events.module";
 import type { UserSignedIn } from "./domain-event-map";
 
