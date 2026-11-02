@@ -73,20 +73,22 @@ export const input = style([
   },
 ]);
 
-export const help = style({
-  color: vars.text.muted,
+/**
+ * The line under every field: its error, else its hint, else empty. A line
+ * tall either way, so a message arriving moves nothing below it.
+ */
+const message = style({
+  minBlockSize: `calc(${vars.font.size.sm} * ${vars.font.lineHeight.normal})`,
   fontSize: vars.font.size.sm,
+  lineHeight: vars.font.lineHeight.normal,
 });
 
-export const error = style({
-  color: vars.status.danger.fg,
-  fontSize: vars.font.size.sm,
-});
+export const help = style([message, { color: vars.text.muted }]);
 
+export const error = style([message, { color: vars.status.danger.fg }]);
+
+/** Colour and size only: the row itself is a `Cluster`. */
 const validationBase = style({
-  display: "flex",
-  alignItems: "center",
-  gap: vars.space.xs,
   fontSize: vars.font.size.sm,
 });
 

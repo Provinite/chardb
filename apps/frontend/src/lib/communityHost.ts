@@ -176,9 +176,9 @@ export const loginUrlReturningHere = (): string => {
  * Where to go once signed in, built from the two parameters, or `null` if they
  * do not name anywhere.
  *
- * Returns a path when the destination is the apex and an absolute URL when it
- * is a community. The sign-in page decides which of those it can reach with
- * the router: a path is only local when the form is on the apex too.
+ * Always an absolute URL, on the apex when no community is named. The sign-in
+ * form is on every host, so a bare path would mean a different place depending
+ * on where it was read; `localPath` then says whether the router can reach it.
  */
 export const returnDestination = (params: URLSearchParams): string | null => {
   const path = params.get(RETURN_PATH_PARAM);
@@ -186,20 +186,11 @@ export const returnDestination = (params: URLSearchParams): string | null => {
   if (!path || !path.startsWith("/") || path.startsWith("//")) return null;
 
   const slug = params.get(RETURN_SLUG_PARAM);
-  if (!slug) return path;
+  if (!slug) return apexUrl(path);
 
   // The same rule that decides what a community may be called. A slug that
   // could not name one cannot name a destination either.
   return isValidCommunitySlug(slug) ? communityUrl(slug, path) : null;
-};
-
-/**
- * The `?community=` slug, if it could name a community. It becomes a
- * hostname, so anything else is dropped rather than navigated to.
- */
-export const communitySlugParam = (params: URLSearchParams): string | null => {
-  const slug = params.get("community");
-  return slug && isValidCommunitySlug(slug) ? slug : null;
 };
 
 /**

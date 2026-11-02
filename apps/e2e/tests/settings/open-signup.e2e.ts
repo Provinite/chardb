@@ -67,6 +67,17 @@ test.describe("a visitor", () => {
     ).toBeVisible();
     await expect(page.locator("#inviteCode")).toHaveCount(0);
 
+    // Sign-in asks for the email, so that is the identifier a password
+    // manager should save with the new password, not the handle.
+    await expect(page.locator("#email")).toHaveAttribute(
+      "autocomplete",
+      "username",
+    );
+    await expect(page.locator("#username")).toHaveAttribute(
+      "autocomplete",
+      "off",
+    );
+
     await page.fill("#username", "menuglader");
     await page.fill("#email", "menuglader@e2e.local");
     await page.fill("#password", "password123");
@@ -99,6 +110,52 @@ test.describe("a visitor", () => {
     ).toBeVisible();
     await expect(page.getByText("Closed Hollow is invite-only")).toBeVisible();
     await expect(page.getByLabel("Invite code")).toBeVisible();
+  });
+
+  test("waits for the community's current setting, not a remembered one", async ({
+    page,
+    world,
+  }) => {
+    // The host remembers its community between visits. A copy from when
+    // Closed Hollow was open must not decide the form: until the fresh record
+    // lands, nothing can be submitted, and then the code field is there.
+    await page.addInitScript(
+      ({ key, value }) => window.localStorage.setItem(key, value),
+      {
+        key: `chardb.community.${world.closed.slug}`,
+        value: JSON.stringify({
+          id: world.closed.id,
+          name: world.closed.name,
+          slug: world.closed.slug,
+          openSignupRoleId: world.closed.memberRoleId,
+        }),
+      },
+    );
+    let release: () => void = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    await page.route("**/graphql", async (route) => {
+      if (route.request().postData()?.includes("CommunityBySlug")) {
+        await held;
+      }
+      await route.continue();
+    });
+
+    await page.goto(`${world.closed.url}/signup`);
+    await expect(
+      page.getByRole("heading", { name: "Join Closed Hollow" }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Create Account" }),
+    ).toBeDisabled();
+    await expect(page.locator("#inviteCode")).toHaveCount(0);
+
+    release();
+    await expect(page.getByLabel("Invite code")).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Create Account" }),
+    ).toBeEnabled();
   });
 });
 

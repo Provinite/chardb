@@ -37,6 +37,15 @@ const globalNav = (page: import("@playwright/test").Page) =>
 /** The header's account menu, which is named for whoever is signed in. */
 const signedInMenu = (page: import("@playwright/test").Page) =>
   page.getByRole("button", { name: /, account menu$/ });
+/** Tags the running page. A full page load clears the tag. */
+const markPage = (page: import("@playwright/test").Page) =>
+  page.evaluate(() => {
+    (window as unknown as { __stillHere?: true }).__stillHere = true;
+  });
+const pageIsMarked = (page: import("@playwright/test").Page) =>
+  page.evaluate(
+    () => (window as unknown as { __stillHere?: true }).__stillHere === true,
+  );
 
 test.describe("community hosts", () => {
   test.use({ persona: "member" });
@@ -300,15 +309,22 @@ test.describe("one session across hosts", () => {
     await expect(
       page.getByRole("heading", { name: `Sign in to ${world.community.name}` }),
     ).toBeVisible();
+    await expect(page.getByLabel("Email")).toHaveAttribute(
+      "autocomplete",
+      "username",
+    );
 
+    // Survives only if the way back stays in the app: a page load wipes it.
+    await markPage(page);
     await page.getByLabel("Email").fill(world.users.member.email);
     await page.getByLabel("Password").fill(world.users.member.password);
     await page.getByRole("button", { name: "Sign In" }).click();
 
-    // Back where they started.
+    // Back where they started, without reloading the app.
     await expect(page).toHaveURL(`${world.community.url}/characters`);
     await expect(communityNav(page)).toBeVisible();
     await expect(signedInMenu(page)).toBeVisible();
+    expect(await pageIsMarked(page)).toBe(true);
 
     // One sign-in still covers every host.
     await page.goto(apexUrl("/"));
@@ -327,11 +343,13 @@ test.describe("one session across hosts", () => {
     await expect(page).toHaveURL(
       urlStartingWith(`${world.community.url}/login`),
     );
+    await markPage(page);
     await page.getByLabel("Email").fill(world.users.commadmin.email);
     await page.getByLabel("Password").fill(world.users.commadmin.password);
     await page.getByRole("button", { name: "Sign In" }).click();
 
     await expect(page).toHaveURL(`${world.community.url}/settings`);
+    expect(await pageIsMarked(page)).toBe(true);
   });
 
   test("a forged return address is ignored", async ({ page, world }) => {

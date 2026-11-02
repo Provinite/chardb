@@ -7,7 +7,7 @@ import { z } from "zod";
 import { Button, Stack } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useHostCommunity } from "../contexts/CommunityHostContext";
-import { apexUrl, localPath, returnDestination } from "../lib/communityHost";
+import { localPath, returnDestination } from "../lib/communityHost";
 import { ResendVerification } from "../components/auth/ResendVerification";
 import * as styles from "./AuthPage.css";
 
@@ -37,22 +37,13 @@ export const LoginPage: React.FC = () => {
   const location = useLocation();
 
   /**
-   * Where to go once signed in.
-   *
-   * The query parameters come first: they name a host as well as a path, so
-   * a link from one host to another's sign-in form still comes back. A return
-   * path with no community names the apex, which on a community host is
-   * another origin. `location.state` covers the journeys that never leave this
-   * host, and the host's own home page is the fallback.
+   * Where to go once signed in: the return address in the URL, or this host's
+   * home page. The address names a host as well as a path, so a link from one
+   * host to another's sign-in form still comes back.
    */
-  const fromParams = returnDestination(new URLSearchParams(location.search));
   const returnTo =
-    fromParams !== null
-      ? fromParams.startsWith("/") && hostCommunity
-        ? apexUrl(fromParams)
-        : fromParams
-      : (location.state?.from?.pathname ??
-        (hostCommunity ? "/" : "/dashboard"));
+    returnDestination(new URLSearchParams(location.search)) ??
+    (hostCommunity ? "/" : "/dashboard");
 
   const {
     register,
@@ -73,7 +64,7 @@ export const LoginPage: React.FC = () => {
         // Another host is a different origin, which the router cannot reach --
         // that one needs a whole-page navigation. Anywhere on this host stays
         // in the router.
-        const path = returnTo.startsWith("/") ? returnTo : localPath(returnTo);
+        const path = localPath(returnTo);
         if (path !== null) {
           navigate(path, { replace: true });
         } else {
@@ -111,7 +102,7 @@ export const LoginPage: React.FC = () => {
           </ResendVerification>
         )}
 
-        <Stack as="form" gap="lg" noValidate onSubmit={handleSubmit(onSubmit)}>
+        <Stack as="form" gap="md" noValidate onSubmit={handleSubmit(onSubmit)}>
           <Stack gap="xs">
             <label htmlFor="email" className={styles.label}>
               Email
@@ -120,13 +111,11 @@ export const LoginPage: React.FC = () => {
               {...register("email")}
               type="email"
               id="email"
-              autoComplete="email"
+              autoComplete="username"
               className={styles.input}
               placeholder="Enter your email"
             />
-            {errors.email && (
-              <span className={styles.error}>{errors.email.message}</span>
-            )}
+            <span className={styles.error}>{errors.email?.message}</span>
           </Stack>
 
           <Stack gap="xs">
@@ -141,9 +130,7 @@ export const LoginPage: React.FC = () => {
               className={styles.input}
               placeholder="Enter your password"
             />
-            {errors.password && (
-              <span className={styles.error}>{errors.password.message}</span>
-            )}
+            <span className={styles.error}>{errors.password?.message}</span>
           </Stack>
 
           <Button type="submit" busy={isLoading} disabled={isLoading}>

@@ -4,12 +4,11 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Button, Stack } from "@chardb/ui";
+import { Button, Cluster, Stack } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
-import { useHostCommunity } from "../contexts/CommunityHostContext";
+import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { useInviteCodeByIdQuery } from "../graphql/inviteCodes.graphql";
 import { useCommunityBySlugQuery } from "../generated/graphql";
-import { communitySlugParam, communityUrl } from "../lib/communityHost";
 import { ResendVerification } from "../components/auth/ResendVerification";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import * as styles from "./AuthPage.css";
@@ -61,26 +60,26 @@ export const SignupPage: React.FC = () => {
   const [searchParams] = useSearchParams();
   const { signup, user } = useAuth();
   const navigate = useNavigate();
-  const hostCommunity = useHostCommunity();
+  const { community: hostCommunity, slug: hostSlug } = useCommunityHost();
 
-  // The community being joined: the host's own on a community host, or
-  // `?community=<slug>` at the apex. An invite link wins over both, so the
-  // code it carries is still asked for and used.
+  // The community being joined is the host's own. An invite link wins over
+  // it, so the code it carries is still asked for and used.
   const inviteParam = searchParams.get("invite");
-  const paramSlug =
-    inviteParam || hostCommunity ? null : communitySlugParam(searchParams);
-  const { data: communityData, loading: communityLoading } =
-    useCommunityBySlugQuery({
-      variables: { slug: paramSlug ?? "" },
-      skip: !paramSlug,
-    });
-  const community = inviteParam
-    ? null
-    : (hostCommunity ?? communityData?.communityBySlug ?? null);
-  const openCommunity = community?.openSignupRoleId ? community : null;
-  // Until the community has loaded, the heading's second line holds its place,
-  // so a community that turns out to be open never shows the code field.
-  const awaitingCommunity = Boolean(paramSlug) && communityLoading;
+  const community = inviteParam ? null : hostCommunity;
+
+  // Whether sign-up is open comes from a fresh read, not the host's record:
+  // that can be the copy remembered from an earlier visit, from before staff
+  // opened or closed sign-up.
+  const { data: freshData, loading: freshLoading } = useCommunityBySlugQuery({
+    variables: { slug: hostSlug ?? "" },
+    skip: !community || !hostSlug,
+    fetchPolicy: "network-only",
+  });
+  const fresh = community ? (freshData?.communityBySlug ?? null) : null;
+  const openCommunity = fresh?.openSignupRoleId ? fresh : null;
+  // Until the fresh read lands, the heading's second line holds its place and
+  // nothing can be submitted.
+  const awaitingCommunity = Boolean(community) && freshLoading;
   const askForCode = !openCommunity && !awaitingCommunity;
 
   usePageMeta({ title: community ? `Join ${community.name}` : "Sign Up" });
@@ -114,13 +113,10 @@ export const SignupPage: React.FC = () => {
 
   // Signed in already: the community's own page has the Join button.
   useEffect(() => {
-    if (!user || inviteParam) return;
-    if (hostCommunity) {
+    if (user && community) {
       navigate("/", { replace: true });
-    } else if (paramSlug) {
-      window.location.assign(communityUrl(paramSlug));
     }
-  }, [user, inviteParam, hostCommunity, paramSlug, navigate]);
+  }, [user, community, navigate]);
 
   // Query to validate invite code
   const {
@@ -159,37 +155,37 @@ export const SignupPage: React.FC = () => {
 
     if (inviteCodeLoading) {
       return (
-        <div className={styles.validation.loading}>
+        <Cluster gap="xs" className={styles.validation.loading}>
           <AlertTriangle size={16} aria-hidden />
           Checking invite code...
-        </div>
+        </Cluster>
       );
     }
 
     if (inviteCodeError || !inviteCodeData?.inviteCodeById) {
       return (
-        <div className={styles.validation.invalid}>
+        <Cluster gap="xs" className={styles.validation.invalid}>
           <XCircle size={16} aria-hidden />
           Invalid invite code
-        </div>
+        </Cluster>
       );
     }
 
     const code = inviteCodeData.inviteCodeById;
     if (!code.isAvailable) {
       return (
-        <div className={styles.validation.invalid}>
+        <Cluster gap="xs" className={styles.validation.invalid}>
           <XCircle size={16} aria-hidden />
           This invite code has been exhausted
-        </div>
+        </Cluster>
       );
     }
 
     return (
-      <div className={styles.validation.valid}>
+      <Cluster gap="xs" className={styles.validation.valid}>
         <CheckCircle size={16} aria-hidden />
         Valid invite code ({code.remainingClaims} uses remaining)
-      </div>
+      </Cluster>
     );
   };
 
@@ -250,7 +246,7 @@ export const SignupPage: React.FC = () => {
           </p>
         </Stack>
 
-        <Stack as="form" gap="lg" noValidate onSubmit={handleSubmit(onSubmit)}>
+        <Stack as="form" gap="md" noValidate onSubmit={handleSubmit(onSubmit)}>
           {askForCode && (
             <Stack gap="xs">
               <label htmlFor="inviteCode" className={styles.label}>
@@ -263,11 +259,6 @@ export const SignupPage: React.FC = () => {
                 className={styles.input}
                 placeholder="Enter your invite code"
               />
-              {errors.inviteCode && (
-                <span className={styles.error}>
-                  {errors.inviteCode.message}
-                </span>
-              )}
               {getInviteCodeValidation()}
               {invitedRole && (
                 <p className={styles.communityBanner}>
@@ -286,6 +277,7 @@ export const SignupPage: React.FC = () => {
                   this code gives you access to CharDB.
                 </p>
               )}
+              <span className={styles.error}>{errors.inviteCode?.message}</span>
             </Stack>
           )}
 
@@ -297,16 +289,19 @@ export const SignupPage: React.FC = () => {
               {...register("username")}
               type="text"
               id="username"
-              autoComplete="username"
+              // Not "username": sign-in asks for the email, so that is the
+              // identifier a password manager should save with the password.
+              autoComplete="off"
               className={styles.input}
               placeholder="Choose a username"
             />
-            {errors.username && (
+            {errors.username ? (
               <span className={styles.error}>{errors.username.message}</span>
+            ) : (
+              <span className={styles.help}>
+                This will be your unique identifier on the platform
+              </span>
             )}
-            <span className={styles.help}>
-              This will be your unique identifier on the platform
-            </span>
           </Stack>
 
           <Stack gap="xs">
@@ -317,13 +312,11 @@ export const SignupPage: React.FC = () => {
               {...register("email")}
               type="email"
               id="email"
-              autoComplete="email"
+              autoComplete="username"
               className={styles.input}
               placeholder="Enter your email"
             />
-            {errors.email && (
-              <span className={styles.error}>{errors.email.message}</span>
-            )}
+            <span className={styles.error}>{errors.email?.message}</span>
           </Stack>
 
           <Stack gap="xs">
@@ -338,12 +331,13 @@ export const SignupPage: React.FC = () => {
               className={styles.input}
               placeholder="How others will see your name"
             />
-            {errors.displayName && (
+            {errors.displayName ? (
               <span className={styles.error}>{errors.displayName.message}</span>
+            ) : (
+              <span className={styles.help}>
+                This can be different from your username
+              </span>
             )}
-            <span className={styles.help}>
-              This can be different from your username
-            </span>
           </Stack>
 
           <Stack gap="xs">
@@ -358,9 +352,7 @@ export const SignupPage: React.FC = () => {
               className={styles.input}
               placeholder="Create a password"
             />
-            {errors.password && (
-              <span className={styles.error}>{errors.password.message}</span>
-            )}
+            <span className={styles.error}>{errors.password?.message}</span>
           </Stack>
 
           <Stack gap="xs">
@@ -375,11 +367,9 @@ export const SignupPage: React.FC = () => {
               className={styles.input}
               placeholder="Confirm your password"
             />
-            {errors.confirmPassword && (
-              <span className={styles.error}>
-                {errors.confirmPassword.message}
-              </span>
-            )}
+            <span className={styles.error}>
+              {errors.confirmPassword?.message}
+            </span>
           </Stack>
 
           <Button
