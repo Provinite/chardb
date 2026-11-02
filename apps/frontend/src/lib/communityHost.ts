@@ -121,9 +121,8 @@ export const communityUrl = (slug: string, path = "/"): string =>
  * URL: which community, and which path within it.
  *
  * Every host serves its own sign-in form, but a link can still send someone
- * to another host's (the API's auth failure redirect goes to the apex). The
- * way back travels in the URL, because `location.state` does not survive a
- * navigation across origins.
+ * to another host's. The way back travels in the URL, because
+ * `location.state` does not survive a navigation across origins.
  *
  * Split rather than absolute so that a foreign origin cannot be *expressed*.
  * An absolute URL in a query parameter is an open redirect that has to be

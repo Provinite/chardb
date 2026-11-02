@@ -259,6 +259,38 @@ test.describe("community hosts", () => {
   });
 });
 
+test.describe("a session the API refuses", () => {
+  test.use({ persona: "member" });
+
+  test("goes to this community's sign-in and back", async ({ page, world }) => {
+    await page.goto(`${world.community.url}/characters`);
+    await expect(signedInMenu(page)).toBeVisible();
+
+    // The next API call answers 401, as an expired session would. A reload
+    // makes "next" deterministic: background polling would otherwise race a
+    // click for the one refusal.
+    await page.route(
+      "**/graphql",
+      (route) => route.fulfill({ status: 401, body: "Unauthorized" }),
+      { times: 1 },
+    );
+    await page.reload();
+
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/login`),
+    );
+    expect(new URL(page.url()).searchParams.get("nextPath")).toBe(
+      "/characters",
+    );
+
+    await page.getByLabel("Email").fill(world.users.member.email);
+    await page.getByLabel("Password").fill(world.users.member.password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+
+    await expect(page).toHaveURL(`${world.community.url}/characters`);
+  });
+});
+
 test.describe("one session across hosts", () => {
   test.use({ persona: "anon" });
 
