@@ -2,9 +2,6 @@ import { style } from "@vanilla-extract/css";
 import { vars } from "@chardb/ui/theme";
 
 export const panel = style({
-  display: "flex",
-  flexDirection: "column",
-  gap: vars.space.sm,
   padding: vars.space.md,
   background: vars.surface.raised,
   border: `${vars.borderWidth.hairline} solid ${vars.border.default}`,

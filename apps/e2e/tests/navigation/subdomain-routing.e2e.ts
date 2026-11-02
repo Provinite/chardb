@@ -263,18 +263,15 @@ test.describe("a session the API refuses", () => {
   test.use({ persona: "member" });
 
   test("goes to this community's sign-in and back", async ({ page, world }) => {
-    await page.goto(`${world.community.url}/characters`);
-    await expect(signedInMenu(page)).toBeVisible();
-
-    // The next API call answers 401, as an expired session would. A reload
-    // makes "next" deterministic: background polling would otherwise race a
-    // click for the one refusal.
+    // The page's first API call answers 401, as an expired session would.
+    // Armed before the page exists, so no background request from an
+    // earlier load can take the one refusal.
     await page.route(
       "**/graphql",
       (route) => route.fulfill({ status: 401, body: "Unauthorized" }),
       { times: 1 },
     );
-    await page.reload();
+    await page.goto(`${world.community.url}/characters`);
 
     await expect(page).toHaveURL(
       urlStartingWith(`${world.community.url}/login`),
@@ -293,6 +290,52 @@ test.describe("a session the API refuses", () => {
 
 test.describe("one session across hosts", () => {
   test.use({ persona: "anon" });
+
+  test("a refused API call leaves a sign-up form alone", async ({
+    page,
+    world,
+  }) => {
+    // Sending someone to sign in from the sign-up form would throw away what
+    // they had typed.
+    await page.route(
+      "**/graphql",
+      (route) => route.fulfill({ status: 401, body: "Unauthorized" }),
+      { times: 1 },
+    );
+    const refused = page.waitForResponse(
+      (r) => r.url().includes("/graphql") && r.status() === 401,
+    );
+    await page.goto(`${world.community.url}/signup`);
+    await refused;
+    await page.waitForLoadState("networkidle");
+
+    await expect(page).toHaveURL(`${world.community.url}/signup`);
+  });
+
+  test("moving between sign-in and sign-up keeps the way back", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(`${world.community.url}/settings`);
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/login`),
+    );
+
+    await page.getByRole("link", { name: "Sign up here" }).click();
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/signup`),
+    );
+    await page.getByRole("link", { name: "Sign in here" }).click();
+    await expect(page).toHaveURL(
+      urlStartingWith(`${world.community.url}/login`),
+    );
+    expect(new URL(page.url()).searchParams.get("nextPath")).toBe("/settings");
+
+    await page.getByLabel("Email").fill(world.users.commadmin.email);
+    await page.getByLabel("Password").fill(world.users.commadmin.password);
+    await page.getByRole("button", { name: "Sign In" }).click();
+    await expect(page).toHaveURL(`${world.community.url}/settings`);
+  });
 
   test("signing in at the apex signs you in on a community host", async ({
     page,

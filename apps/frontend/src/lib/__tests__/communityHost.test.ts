@@ -7,8 +7,10 @@ import {
 import {
   apexUrl,
   communityUrl,
+  isAuthPage,
   parseCommunitySlug,
   returnDestination,
+  returnQuery,
   ROOT_DOMAIN,
 } from "../communityHost";
 
@@ -128,6 +130,31 @@ describe("returnDestination", () => {
   it("refuses a path that is not one", () => {
     expect(returnDestination(params({ nextPath: "dashboard" }))).toBeNull();
     expect(returnDestination(params({}))).toBeNull();
+  });
+});
+
+describe("returnQuery", () => {
+  it("keeps only the return address", () => {
+    expect(
+      returnQuery(
+        "?nextCommunitySlug=willowmere&nextPath=%2Fsettings&invite=abc",
+      ),
+    ).toBe("?nextCommunitySlug=willowmere&nextPath=%2Fsettings");
+  });
+
+  it("is empty without one", () => {
+    expect(returnQuery("?invite=abc")).toBe("");
+    expect(returnQuery("")).toBe("");
+  });
+});
+
+describe("isAuthPage", () => {
+  it.each(["/login", "/signup", "/forgot-password"])("is true for %s", (p) => {
+    expect(isAuthPage(p)).toBe(true);
+  });
+
+  it("is false elsewhere", () => {
+    expect(isAuthPage("/characters")).toBe(false);
   });
 });
 

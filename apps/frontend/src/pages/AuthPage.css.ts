@@ -45,6 +45,8 @@ export const title = style({
 
 export const subtitle = style({
   margin: 0,
+  // A line tall while empty, so its text lands without moving the form.
+  minBlockSize: `calc(${vars.font.size.md} * ${vars.font.lineHeight.normal})`,
   color: vars.text.muted,
   fontSize: vars.font.size.md,
   lineHeight: vars.font.lineHeight.normal,
@@ -96,6 +98,23 @@ export const validation = styleVariants({
   valid: [validationBase, { color: vars.status.success.fg }],
   invalid: [validationBase, { color: vars.status.danger.fg }],
   loading: [validationBase, { color: vars.text.muted }],
+});
+
+/** A field's label, standing in while the form is not ready to show. */
+export const placeholderLabel = style({
+  display: "block",
+  inlineSize: "40%",
+  minBlockSize: `calc(${vars.font.size.md} * ${vars.font.lineHeight.normal})`,
+  borderRadius: vars.radius.sm,
+  background: vars.surface.sunken,
+});
+
+/** A field's input, or the submit button, standing in the same way. */
+export const placeholderInput = style({
+  display: "block",
+  minBlockSize: vars.size.target.comfortable,
+  borderRadius: vars.radius.md,
+  background: vars.surface.sunken,
 });
 
 /** Which community the new account joins, and as what. */

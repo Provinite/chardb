@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { toast } from "react-hot-toast";
-import { Button } from "@chardb/ui";
+import { Button, Stack } from "@chardb/ui";
 
 import { useResendVerificationEmailMutation } from "../../graphql/email-verification.graphql";
 import { isRateLimited } from "../../lib/rateLimit";
@@ -49,7 +49,7 @@ export const ResendVerification: React.FC<ResendVerificationProps> = ({
   };
 
   return (
-    <div className={styles.panel}>
+    <Stack gap="sm" className={styles.panel}>
       <strong className={styles.heading}>{heading}</strong>
       <p className={styles.body}>{children}</p>
       <p className={styles.body}>
@@ -66,6 +66,6 @@ export const ResendVerification: React.FC<ResendVerificationProps> = ({
       >
         {sentOnce ? "Send it again" : "Resend the link"}
       </Button>
-    </div>
+    </Stack>
   );
 };

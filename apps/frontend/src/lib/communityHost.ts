@@ -151,6 +151,26 @@ const NOT_A_RETURN_DESTINATION = new Set([
   "/forgot-password",
 ]);
 
+/** True on the sign-in, sign-up and forgotten-password forms. */
+export const isAuthPage = (pathname: string): boolean =>
+  NOT_A_RETURN_DESTINATION.has(pathname);
+
+/**
+ * The return address in `search`, as a query string to put on another of the
+ * auth pages' links, or "" when there is none. Moving between sign-in and
+ * sign-up keeps the way back this way.
+ */
+export const returnQuery = (search: string): string => {
+  const from = new URLSearchParams(search);
+  const kept = new URLSearchParams();
+  for (const key of [RETURN_SLUG_PARAM, RETURN_PATH_PARAM]) {
+    const value = from.get(key);
+    if (value !== null) kept.set(key, value);
+  }
+  const query = kept.toString();
+  return query ? `?${query}` : "";
+};
+
 /**
  * A `/login` link that remembers where it was clicked from.
  *

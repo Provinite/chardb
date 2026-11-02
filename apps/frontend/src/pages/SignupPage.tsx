@@ -9,6 +9,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useCommunityHost } from "../contexts/CommunityHostContext";
 import { useInviteCodeByIdQuery } from "../graphql/inviteCodes.graphql";
 import { useCommunityBySlugQuery } from "../generated/graphql";
+import { returnQuery } from "../lib/communityHost";
 import { ResendVerification } from "../components/auth/ResendVerification";
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import * as styles from "./AuthPage.css";
@@ -70,15 +71,23 @@ export const SignupPage: React.FC = () => {
   // Whether sign-up is open comes from a fresh read, not the host's record:
   // that can be the copy remembered from an earlier visit, from before staff
   // opened or closed sign-up.
-  const { data: freshData, loading: freshLoading } = useCommunityBySlugQuery({
+  const {
+    data: freshData,
+    loading: freshLoading,
+    error: freshError,
+  } = useCommunityBySlugQuery({
     variables: { slug: hostSlug ?? "" },
     skip: !community || !hostSlug,
     fetchPolicy: "network-only",
   });
-  const fresh = community ? (freshData?.communityBySlug ?? null) : null;
+  // A failed read means "unknown", not "invite-only": fall back to the host's
+  // own record rather than demand a code an open community does not need.
+  const fresh = community
+    ? (freshData?.communityBySlug ?? (freshError ? community : null))
+    : null;
   const openCommunity = fresh?.openSignupRoleId ? fresh : null;
-  // Until the fresh read lands, the heading's second line holds its place and
-  // nothing can be submitted.
+  // Until the fresh read lands, the form is a placeholder: no field can
+  // appear above the others once it does.
   const awaitingCommunity = Boolean(community) && freshLoading;
   const askForCode = !openCommunity && !awaitingCommunity;
 
@@ -207,7 +216,10 @@ export const SignupPage: React.FC = () => {
 
           <p className={styles.footer}>
             Already confirmed?{" "}
-            <Link to="/login" className={styles.link}>
+            <Link
+              to={`/login${returnQuery(searchParams.toString())}`}
+              className={styles.link}
+            >
               Sign in here
             </Link>
           </p>
@@ -246,144 +258,167 @@ export const SignupPage: React.FC = () => {
           </p>
         </Stack>
 
-        <Stack as="form" gap="md" noValidate onSubmit={handleSubmit(onSubmit)}>
-          {askForCode && (
+        {awaitingCommunity ? (
+          // First load: shaped like the fields, standing in until the
+          // community says whether there is a code field to show.
+          <Stack gap="md" aria-hidden>
+            {[0, 1, 2, 3, 4].map((field) => (
+              <Stack key={field} gap="xs">
+                <span className={styles.placeholderLabel} />
+                <span className={styles.placeholderInput} />
+                <span className={styles.help} />
+              </Stack>
+            ))}
+            <span className={styles.placeholderInput} />
+          </Stack>
+        ) : (
+          <Stack
+            as="form"
+            gap="md"
+            noValidate
+            onSubmit={handleSubmit(onSubmit)}
+          >
+            {askForCode && (
+              <Stack gap="xs">
+                <label htmlFor="inviteCode" className={styles.label}>
+                  Invite code
+                </label>
+                <input
+                  {...register("inviteCode")}
+                  type="text"
+                  id="inviteCode"
+                  className={styles.input}
+                  placeholder="Enter your invite code"
+                />
+                {getInviteCodeValidation()}
+                {invitedRole && (
+                  <p className={styles.communityBanner}>
+                    You'll join{" "}
+                    <span className={styles.communityName}>
+                      {invitedRole.community.name}
+                    </span>{" "}
+                    as {invitedRole.name}.
+                  </p>
+                )}
+                {inviteCodeData?.inviteCodeById && !invitedRole && (
+                  <p className={styles.communityBanner}>
+                    <span className={styles.communityName}>
+                      Site registration:
+                    </span>{" "}
+                    this code gives you access to CharDB.
+                  </p>
+                )}
+                <span className={styles.error}>
+                  {errors.inviteCode?.message}
+                </span>
+              </Stack>
+            )}
+
             <Stack gap="xs">
-              <label htmlFor="inviteCode" className={styles.label}>
-                Invite code
+              <label htmlFor="username" className={styles.label}>
+                Username
               </label>
               <input
-                {...register("inviteCode")}
+                {...register("username")}
                 type="text"
-                id="inviteCode"
+                id="username"
+                // Not "username": sign-in asks for the email, so that is the
+                // identifier a password manager should save with the password.
+                autoComplete="off"
                 className={styles.input}
-                placeholder="Enter your invite code"
+                placeholder="Choose a username"
               />
-              {getInviteCodeValidation()}
-              {invitedRole && (
-                <p className={styles.communityBanner}>
-                  You'll join{" "}
-                  <span className={styles.communityName}>
-                    {invitedRole.community.name}
-                  </span>{" "}
-                  as {invitedRole.name}.
-                </p>
+              {errors.username ? (
+                <span className={styles.error}>{errors.username.message}</span>
+              ) : (
+                <span className={styles.help}>
+                  This will be your unique identifier on the platform
+                </span>
               )}
-              {inviteCodeData?.inviteCodeById && !invitedRole && (
-                <p className={styles.communityBanner}>
-                  <span className={styles.communityName}>
-                    Site registration:
-                  </span>{" "}
-                  this code gives you access to CharDB.
-                </p>
-              )}
-              <span className={styles.error}>{errors.inviteCode?.message}</span>
             </Stack>
-          )}
 
-          <Stack gap="xs">
-            <label htmlFor="username" className={styles.label}>
-              Username
-            </label>
-            <input
-              {...register("username")}
-              type="text"
-              id="username"
-              // Not "username": sign-in asks for the email, so that is the
-              // identifier a password manager should save with the password.
-              autoComplete="off"
-              className={styles.input}
-              placeholder="Choose a username"
-            />
-            {errors.username ? (
-              <span className={styles.error}>{errors.username.message}</span>
-            ) : (
-              <span className={styles.help}>
-                This will be your unique identifier on the platform
+            <Stack gap="xs">
+              <label htmlFor="email" className={styles.label}>
+                Email
+              </label>
+              <input
+                {...register("email")}
+                type="email"
+                id="email"
+                autoComplete="username"
+                className={styles.input}
+                placeholder="Enter your email"
+              />
+              <span className={styles.error}>{errors.email?.message}</span>
+            </Stack>
+
+            <Stack gap="xs">
+              <label htmlFor="displayName" className={styles.label}>
+                Display name (optional)
+              </label>
+              <input
+                {...register("displayName")}
+                type="text"
+                id="displayName"
+                autoComplete="nickname"
+                className={styles.input}
+                placeholder="How others will see your name"
+              />
+              {errors.displayName ? (
+                <span className={styles.error}>
+                  {errors.displayName.message}
+                </span>
+              ) : (
+                <span className={styles.help}>
+                  This can be different from your username
+                </span>
+              )}
+            </Stack>
+
+            <Stack gap="xs">
+              <label htmlFor="password" className={styles.label}>
+                Password
+              </label>
+              <input
+                {...register("password")}
+                type="password"
+                id="password"
+                autoComplete="new-password"
+                className={styles.input}
+                placeholder="Create a password"
+              />
+              <span className={styles.error}>{errors.password?.message}</span>
+            </Stack>
+
+            <Stack gap="xs">
+              <label htmlFor="confirmPassword" className={styles.label}>
+                Confirm password
+              </label>
+              <input
+                {...register("confirmPassword")}
+                type="password"
+                id="confirmPassword"
+                autoComplete="new-password"
+                className={styles.input}
+                placeholder="Confirm your password"
+              />
+              <span className={styles.error}>
+                {errors.confirmPassword?.message}
               </span>
-            )}
-          </Stack>
+            </Stack>
 
-          <Stack gap="xs">
-            <label htmlFor="email" className={styles.label}>
-              Email
-            </label>
-            <input
-              {...register("email")}
-              type="email"
-              id="email"
-              autoComplete="username"
-              className={styles.input}
-              placeholder="Enter your email"
-            />
-            <span className={styles.error}>{errors.email?.message}</span>
+            <Button type="submit" busy={isLoading} disabled={isLoading}>
+              Create Account
+            </Button>
           </Stack>
-
-          <Stack gap="xs">
-            <label htmlFor="displayName" className={styles.label}>
-              Display name (optional)
-            </label>
-            <input
-              {...register("displayName")}
-              type="text"
-              id="displayName"
-              autoComplete="nickname"
-              className={styles.input}
-              placeholder="How others will see your name"
-            />
-            {errors.displayName ? (
-              <span className={styles.error}>{errors.displayName.message}</span>
-            ) : (
-              <span className={styles.help}>
-                This can be different from your username
-              </span>
-            )}
-          </Stack>
-
-          <Stack gap="xs">
-            <label htmlFor="password" className={styles.label}>
-              Password
-            </label>
-            <input
-              {...register("password")}
-              type="password"
-              id="password"
-              autoComplete="new-password"
-              className={styles.input}
-              placeholder="Create a password"
-            />
-            <span className={styles.error}>{errors.password?.message}</span>
-          </Stack>
-
-          <Stack gap="xs">
-            <label htmlFor="confirmPassword" className={styles.label}>
-              Confirm password
-            </label>
-            <input
-              {...register("confirmPassword")}
-              type="password"
-              id="confirmPassword"
-              autoComplete="new-password"
-              className={styles.input}
-              placeholder="Confirm your password"
-            />
-            <span className={styles.error}>
-              {errors.confirmPassword?.message}
-            </span>
-          </Stack>
-
-          <Button
-            type="submit"
-            busy={isLoading}
-            disabled={isLoading || awaitingCommunity}
-          >
-            Create Account
-          </Button>
-        </Stack>
+        )}
 
         <p className={styles.footer}>
           Already have an account?{" "}
-          <Link to="/login" className={styles.link}>
+          <Link
+            to={`/login${returnQuery(searchParams.toString())}`}
+            className={styles.link}
+          >
             Sign in here
           </Link>
         </p>

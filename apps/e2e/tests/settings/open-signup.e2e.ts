@@ -118,7 +118,8 @@ test.describe("a visitor", () => {
   }) => {
     // The host remembers its community between visits. A copy from when
     // Closed Hollow was open must not decide the form: until the fresh record
-    // lands, nothing can be submitted, and then the code field is there.
+    // lands the form is a placeholder, so no field appears above the others
+    // once it does.
     await page.addInitScript(
       ({ key, value }) => window.localStorage.setItem(key, value),
       {
@@ -143,19 +144,57 @@ test.describe("a visitor", () => {
     });
 
     await page.goto(`${world.closed.url}/signup`);
-    await expect(
-      page.getByRole("heading", { name: "Join Closed Hollow" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: "Create Account" }),
-    ).toBeDisabled();
+    const heading = page.getByRole("heading", { name: "Join Closed Hollow" });
+    await expect(heading).toBeVisible();
+    await expect(page.locator("#username")).toHaveCount(0);
     await expect(page.locator("#inviteCode")).toHaveCount(0);
+    // The line under the heading is held open, so its text lands in place.
+    const subtitle = page.locator("main header p");
+    expect((await subtitle.boundingBox())?.height ?? 0).toBeGreaterThan(0);
+    const before = await subtitle.boundingBox();
 
     release();
     await expect(page.getByLabel("Invite code")).toBeVisible();
+    await expect(page.getByText("Closed Hollow is invite-only")).toBeVisible();
+    expect((await subtitle.boundingBox())?.height).toBe(before?.height);
     await expect(
       page.getByRole("button", { name: "Create Account" }),
     ).toBeEnabled();
+  });
+
+  test("falls back to the remembered setting when the fresh read fails", async ({
+    page,
+    world,
+  }) => {
+    // A failed read is "unknown", not "invite-only": the host's own record
+    // still says Open Glade is open, so the form should too.
+    await page.addInitScript(
+      ({ key, value }) => window.localStorage.setItem(key, value),
+      {
+        key: `chardb.community.${world.open.slug}`,
+        value: JSON.stringify({
+          id: world.open.id,
+          name: world.open.name,
+          slug: world.open.slug,
+          openSignupRoleId: world.open.memberRoleId,
+        }),
+      },
+    );
+    await page.route("**/graphql", async (route) => {
+      if (route.request().postData()?.includes("CommunityBySlug")) {
+        await route.abort();
+        return;
+      }
+      await route.continue();
+    });
+
+    await page.goto(`${world.open.url}/signup`);
+    await expect(
+      page.getByRole("heading", { name: "Join Open Glade" }),
+    ).toBeVisible();
+    await expect(page.locator("#username")).toBeVisible();
+    await expect(page.locator("#inviteCode")).toHaveCount(0);
+    await expect(page.getByText("is invite-only")).toHaveCount(0);
   });
 });
 

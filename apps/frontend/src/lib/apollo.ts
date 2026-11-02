@@ -12,7 +12,11 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import { Kind, OperationTypeNode } from "graphql";
 import { createClient } from "graphql-ws";
 import { getAccessToken, setAccessToken } from "./accessToken";
-import { API_BASE_URL, loginUrlReturningHere } from "./communityHost";
+import {
+  API_BASE_URL,
+  isAuthPage,
+  loginUrlReturningHere,
+} from "./communityHost";
 import { hasRateLimitError, notifyRateLimited } from "./rateLimit";
 import { rateLimitBackoff } from "./rateLimitBackoff";
 
@@ -71,10 +75,11 @@ const errorLink = onError(({ graphQLErrors, networkError, operation }) => {
 
     // Handle 401 errors by clearing the token and sending the visitor to this
     // host's sign-in, which brings them back to where they were. Not from the
-    // sign-in page itself: that would reload it in a loop.
+    // auth forms: from sign-in it would reload in a loop, and from the others
+    // it would throw away what was typed.
     if (networkError.message.includes("401")) {
       setAccessToken(null);
-      if (window.location.pathname !== "/login") {
+      if (!isAuthPage(window.location.pathname)) {
         window.location.href = loginUrlReturningHere();
       }
     }

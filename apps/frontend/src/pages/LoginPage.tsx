@@ -7,7 +7,11 @@ import { z } from "zod";
 import { Button, Stack } from "@chardb/ui";
 import { useAuth } from "../contexts/AuthContext";
 import { useHostCommunity } from "../contexts/CommunityHostContext";
-import { localPath, returnDestination } from "../lib/communityHost";
+import {
+  localPath,
+  returnDestination,
+  returnQuery,
+} from "../lib/communityHost";
 import { ResendVerification } from "../components/auth/ResendVerification";
 import * as styles from "./AuthPage.css";
 
@@ -146,7 +150,10 @@ export const LoginPage: React.FC = () => {
 
         <p className={styles.footer}>
           Don't have an account?{" "}
-          <Link to="/signup" className={styles.link}>
+          <Link
+            to={`/signup${returnQuery(location.search)}`}
+            className={styles.link}
+          >
             Sign up here
           </Link>
         </p>
