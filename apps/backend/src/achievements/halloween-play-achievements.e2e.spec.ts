@@ -147,14 +147,17 @@ describe("Halloween play achievements (e2e)", () => {
     return user;
   };
 
-  const earned = async (userId: string) =>
-    (
+  /** What the user has earned once every listener has finished. */
+  const earned = async (userId: string) => {
+    await events.idle();
+    return (
       await db.userAchievement.findMany({
         where: { userId, communityId },
         select: { slug: true },
         orderBy: { slug: "asc" },
       })
     ).map((a) => a.slug);
+  };
 
   const candy = async (ownerId: string, slug: string) => {
     const knock = await db.halloweenKnockEvent.create({
@@ -311,6 +314,7 @@ describe("Halloween play achievements (e2e)", () => {
       jest.spyOn(random, "unit").mockReturnValue(0.999);
       await run("knock");
       await run("knock");
+      await events.idle();
       expect(await db.userAchievement.count()).toBe(0);
 
       const alice = await member("alice", USER_ID);

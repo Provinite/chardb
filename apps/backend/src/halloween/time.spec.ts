@@ -7,7 +7,18 @@ import {
   getEventStatus,
   getLastReset,
   EventStatus,
+  eventYear,
 } from "./time";
+
+describe("eventYear", () => {
+  it("is the US Central year the event starts in", () => {
+    expect(eventYear(new Date("2026-10-01T11:00:00Z"))).toBe(2026);
+  });
+
+  it("is still the old year late on New Year's Eve in Chicago", () => {
+    expect(eventYear(new Date("2027-01-01T03:00:00Z"))).toBe(2026);
+  });
+});
 
 // October 2025 is CDT (UTC-5): midnight in Chicago is 05:00Z.
 const chicago = (iso: string) => new Date(iso);

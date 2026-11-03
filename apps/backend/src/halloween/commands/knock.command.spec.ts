@@ -193,7 +193,7 @@ describe("/knock", () => {
       $transaction: jest.fn((fn: (t: unknown) => Promise<unknown>) => fn(tx)),
       halloweenOutOfKnocksAttempt: { create: jest.fn().mockResolvedValue({}) },
     };
-    events = { publish: jest.fn().mockResolvedValue(undefined) };
+    events = { publish: jest.fn() };
     command = new KnockCommand(
       discord,
       stubUi(),
@@ -798,14 +798,19 @@ describe("/knock", () => {
       await knock();
     });
 
-    it("only announces the knock after the reply without a win channel", async () => {
+    it("leaves nothing for after the reply without a win channel", async () => {
       prizes.lockInStock.mockResolvedValue([
         prize("myo", { itemTypeId: "it-1" }),
       ]);
       const { afterReply } = await knockOnly();
-      expect(events.publish).not.toHaveBeenCalled();
-      await afterReply?.();
-      expect(discord.createChannelMessage).not.toHaveBeenCalled();
+      expect(afterReply).toBeUndefined();
+    });
+
+    it("announces the knock once committed", async () => {
+      prizes.lockInStock.mockResolvedValue([
+        prize("myo", { itemTypeId: "it-1" }),
+      ]);
+      await knockOnly();
       expect(events.publish).toHaveBeenCalledWith("halloween.knock.completed", {
         guildId: GUILD_ID,
         discordUserId: USER_ID,

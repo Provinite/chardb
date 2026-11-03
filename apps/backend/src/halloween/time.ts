@@ -29,6 +29,11 @@ export function getLastReset(resetTime: number, now: Date): Date {
   ).toJSDate();
 }
 
+/** The year an event belongs to: the US Central year it starts in. */
+export function eventYear(startDate: Date): number {
+  return inChicago(startDate).year;
+}
+
 export function getEventStatus(
   { startDate, endDate }: { startDate: Date | null; endDate: Date | null },
   now: Date,

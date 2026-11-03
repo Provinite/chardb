@@ -315,7 +315,7 @@ export class CandySwapService {
       matched: tradeId !== null,
     } satisfies HalloweenLogLine);
 
-    await this.events.publish("halloween.candy_offer.placed", {
+    this.events.publish("halloween.candy_offer.placed", {
       guildId,
       userId,
       offerId,
@@ -327,7 +327,7 @@ export class CandySwapService {
       }),
       tradeId ? this.loadTrade(tradeId) : null,
     ]);
-    if (trade) await this.publishTraded(trade);
+    if (trade) this.publishTraded(trade);
     return {
       offer: toOffer(offer),
       trade: trade ? toTradeRecord(trade, userId) : null,
@@ -398,12 +398,12 @@ export class CandySwapService {
     });
 
     const trade = await this.loadTrade(tradeId);
-    await this.publishTraded(trade);
+    this.publishTraded(trade);
     return toTradeRecord(trade, userId);
   }
 
-  private publishTraded(trade: TradeRow): Promise<void> {
-    return this.events.publish("halloween.candy.traded", {
+  private publishTraded(trade: TradeRow): void {
+    this.events.publish("halloween.candy.traded", {
       guildId: trade.guildId,
       tradeId: trade.id,
       initiatorId: trade.initiatorId,

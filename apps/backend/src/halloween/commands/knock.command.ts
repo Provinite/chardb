@@ -202,19 +202,18 @@ export class KnockCommand implements HalloweenCommandHandler {
     // Logged only once committed, so the log never shows a win that was
     // rolled back.
     this.logger.log({ ...result.log, ...timings });
+    this.events.publish("halloween.knock.completed", {
+      guildId,
+      discordUserId: userId,
+    });
 
     const { announcement, prize } = result;
+    if (!announcement) {
+      return { reply: result.reply };
+    }
     return {
       reply: result.reply,
-      afterReply: async () => {
-        if (announcement) {
-          await this.announce(announcement, interaction, prize);
-        }
-        await this.events.publish("halloween.knock.completed", {
-          guildId,
-          discordUserId: userId,
-        });
-      },
+      afterReply: () => this.announce(announcement, interaction, prize),
     };
   }
 
@@ -239,7 +238,7 @@ export class KnockCommand implements HalloweenCommandHandler {
       });
       return;
     }
-    await this.events.publish("halloween.knock.out_of_knocks", {
+    this.events.publish("halloween.knock.out_of_knocks", {
       guildId,
       discordUserId,
     });

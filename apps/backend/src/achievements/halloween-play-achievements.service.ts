@@ -1,6 +1,5 @@
 import { Injectable } from "@nestjs/common";
 import { ExternalAccountProvider, Prisma } from "@chardb/database";
-import { DateTime } from "luxon";
 import { DatabaseService } from "../database/database.service";
 import { OnDomainEvent } from "../events/domain-events";
 import type {
@@ -9,7 +8,7 @@ import type {
   HalloweenGiftySent,
   HalloweenKnockByDiscordUser,
 } from "../events/domain-event-map";
-import { EVENT_TIMEZONE } from "../halloween/time";
+import { eventYear } from "../halloween/time";
 import { AchievementGrants } from "./achievement-grants";
 import {
   halloweenPlaySlugs,
@@ -127,10 +126,10 @@ export class HalloweenPlayAchievements {
 
   /** Grants what this player has earned in their event so far. */
   async grantFor(player: HalloweenPlayer, reason: string): Promise<void> {
-    const year = DateTime.fromJSDate(player.startDate, {
-      zone: EVENT_TIMEZONE,
-    }).year;
-    const slugs = halloweenPlaySlugs(await this.play(player), year);
+    const slugs = halloweenPlaySlugs(
+      await this.play(player),
+      eventYear(player.startDate),
+    );
     await this.grants.grant(
       slugs.map((slug) => ({
         userId: player.userId,

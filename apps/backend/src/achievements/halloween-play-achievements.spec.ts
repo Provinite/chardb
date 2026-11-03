@@ -99,6 +99,25 @@ describe("knockedEveryDay", () => {
     ).toBe(true);
   });
 
+  it("counts a day whose reset falls in the hour repeated when daylight saving ends", () => {
+    // Resets at 1 AM: Nov 1 has two, 06:00Z (CDT) and 07:00Z (CST).
+    const event = {
+      startDate: new Date("2026-10-31T06:00:00Z"),
+      endDate: new Date("2026-11-03T07:00:00Z"),
+      resetTime: 1,
+    };
+    expect(
+      knockedEveryDay(
+        [
+          new Date("2026-10-31T12:00:00Z"),
+          new Date("2026-11-01T08:00:00Z"),
+          new Date("2026-11-02T12:00:00Z"),
+        ],
+        event,
+      ),
+    ).toBe(true);
+  });
+
   it("keeps reset days at 6 AM local across the end of daylight saving", () => {
     // DST ends 2026-11-01 at 2 AM; 6 AM is 11:00Z before and 12:00Z after.
     const overDst = {

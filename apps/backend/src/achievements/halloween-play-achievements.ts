@@ -60,19 +60,28 @@ export function knockedEveryDay(
   { startDate, endDate, resetTime }: HalloweenEventDays,
 ): boolean {
   if (!endDate) return false;
-  const knocked = new Set(
-    knocks.map((k) => getLastReset(resetTime, k).getTime()),
-  );
+  const knocked = new Set(knocks.map((k) => resetDay(resetTime, k)));
   // An event ending exactly at a reset has no time in the day that starts.
-  const last = getLastReset(resetTime, new Date(endDate.getTime() - 1));
+  const last = resetDay(resetTime, new Date(endDate.getTime() - 1));
   for (
-    let day = DateTime.fromJSDate(getLastReset(resetTime, startDate), {
+    let day = DateTime.fromISO(resetDay(resetTime, startDate), {
       zone: EVENT_TIMEZONE,
     });
-    day.toJSDate() <= last;
+    day.toISODate()! <= last;
     day = day.plus({ days: 1 })
   ) {
-    if (!knocked.has(day.toJSDate().getTime())) return false;
+    if (!knocked.has(day.toISODate()!)) return false;
   }
   return true;
+}
+
+/**
+ * The US Central date of the reset a moment falls after, e.g. `2026-11-01`.
+ * A date rather than an instant: when daylight saving ends, an early reset
+ * hour happens twice, and both are the same day.
+ */
+function resetDay(resetTime: number, at: Date): string {
+  return DateTime.fromJSDate(getLastReset(resetTime, at), {
+    zone: EVENT_TIMEZONE,
+  }).toISODate()!;
 }

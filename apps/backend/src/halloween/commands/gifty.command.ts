@@ -113,6 +113,11 @@ export class GiftyCommand implements HalloweenCommandHandler {
       giftyId: sent.id,
       rateLimitSkipped,
     } satisfies HalloweenLogLine);
+    this.events.publish("halloween.gifty.sent", {
+      guildId,
+      fromDiscordUserId: fromUserId,
+      toDiscordUserId: toUserId,
+    });
     return {
       reply: {
         allowed_mentions: {
@@ -130,12 +135,6 @@ export class GiftyCommand implements HalloweenCommandHandler {
           },
         ],
       },
-      afterReply: () =>
-        this.events.publish("halloween.gifty.sent", {
-          guildId,
-          fromDiscordUserId: fromUserId,
-          toDiscordUserId: toUserId,
-        }),
     };
   }
 
