@@ -734,8 +734,8 @@ export const UPDATE_CHARACTER_REGISTRY = gql`
 `;
 
 export const GET_LIKED_CHARACTERS = gql`
-  query GetLikedCharacters {
-    likedCharacters {
+  query GetLikedCharacters($communityId: ID) {
+    likedCharacters(communityId: $communityId) {
       id
       name
       species {

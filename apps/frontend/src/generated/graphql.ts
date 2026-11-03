@@ -29,6 +29,8 @@ export type ActivityContent = {
 };
 
 export type ActivityFeedInput = {
+  /** Only activity on this community's characters, galleries and media */
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   limit?: InputMaybe<Scalars['Int']['input']>;
   offset?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -4106,6 +4108,16 @@ export type QueryLikeStatusArgs = {
 };
 
 
+export type QueryLikedCharactersArgs = {
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type QueryLikedGalleriesArgs = {
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
 export type QueryLikedMediaArgs = {
   filters?: InputMaybe<MediaFiltersInput>;
 };
@@ -5865,7 +5877,9 @@ export type UpdateCharacterRegistryMutationVariables = Exact<{
 
 export type UpdateCharacterRegistryMutation = { __typename?: 'Mutation', updateCharacterRegistry: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, maxForms: number } | null, forms: Array<{ __typename?: 'CharacterForm', id: string, name: string, sortOrder: number, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> }> } };
 
-export type GetLikedCharactersQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetLikedCharactersQueryVariables = Exact<{
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+}>;
 
 
 export type GetLikedCharactersQuery = { __typename?: 'Query', likedCharacters: Array<{ __typename?: 'Character', id: string, name: string, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> };
@@ -6357,7 +6371,9 @@ export type ReorderGalleriesMutationVariables = Exact<{
 
 export type ReorderGalleriesMutation = { __typename?: 'Mutation', reorderGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, sortOrder: number, likesCount: number, userHasLiked: boolean, _count: { __typename?: 'GalleryCount', media: number } }> };
 
-export type GetLikedGalleriesQueryVariables = Exact<{ [key: string]: never; }>;
+export type GetLikedGalleriesQueryVariables = Exact<{
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+}>;
 
 
 export type GetLikedGalleriesQuery = { __typename?: 'Query', likedGalleries: Array<{ __typename?: 'Gallery', id: string, name: string, description: string | null, visibility: Visibility, createdAt: string, updatedAt: string, likesCount: number, userHasLiked: boolean, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, character: { __typename?: 'Character', id: string, name: string, species: { __typename?: 'Species', id: string, community: { __typename?: 'Community', id: string, slug: string } } | null } | null, _count: { __typename?: 'GalleryCount', media: number } }> };
@@ -10517,8 +10533,8 @@ export type UpdateCharacterRegistryMutationHookResult = ReturnType<typeof useUpd
 export type UpdateCharacterRegistryMutationResult = Apollo.MutationResult<UpdateCharacterRegistryMutation>;
 export type UpdateCharacterRegistryMutationOptions = Apollo.BaseMutationOptions<UpdateCharacterRegistryMutation, UpdateCharacterRegistryMutationVariables>;
 export const GetLikedCharactersDocument = gql`
-    query GetLikedCharacters {
-  likedCharacters {
+    query GetLikedCharacters($communityId: ID) {
+  likedCharacters(communityId: $communityId) {
     id
     name
     species {
@@ -10556,6 +10572,7 @@ export const GetLikedCharactersDocument = gql`
  * @example
  * const { data, loading, error } = useGetLikedCharactersQuery({
  *   variables: {
+ *      communityId: // value for 'communityId'
  *   },
  * });
  */
@@ -13384,8 +13401,8 @@ export type ReorderGalleriesMutationHookResult = ReturnType<typeof useReorderGal
 export type ReorderGalleriesMutationResult = Apollo.MutationResult<ReorderGalleriesMutation>;
 export type ReorderGalleriesMutationOptions = Apollo.BaseMutationOptions<ReorderGalleriesMutation, ReorderGalleriesMutationVariables>;
 export const GetLikedGalleriesDocument = gql`
-    query GetLikedGalleries {
-  likedGalleries {
+    query GetLikedGalleries($communityId: ID) {
+  likedGalleries(communityId: $communityId) {
     id
     name
     description
@@ -13427,6 +13444,7 @@ export const GetLikedGalleriesDocument = gql`
  * @example
  * const { data, loading, error } = useGetLikedGalleriesQuery({
  *   variables: {
+ *      communityId: // value for 'communityId'
  *   },
  * });
  */

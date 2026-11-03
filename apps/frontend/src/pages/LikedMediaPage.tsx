@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import { Link } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -226,7 +227,9 @@ export const LikedMediaPage: React.FC = () => {
   const { user } = useAuth();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
+  const scope = useHostCommunityScope();
   const { data, loading, error } = useGetLikedMediaQuery({
+    variables: { filters: scope },
     skip: !user,
   });
 

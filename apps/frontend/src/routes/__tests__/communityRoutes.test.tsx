@@ -1,6 +1,10 @@
 import { isValidElement, type ReactNode } from "react";
 import { describe, expect, it } from "vitest";
-import { createRoutesFromChildren, matchRoutes } from "react-router-dom";
+import {
+  Navigate,
+  createRoutesFromChildren,
+  matchRoutes,
+} from "react-router-dom";
 import { communityRoutes } from "../CommunityRoutes";
 import { ApexRedirect } from "../ApexRedirect";
 import { ProtectedRoute } from "../../components/ProtectedRoute";
@@ -23,6 +27,11 @@ import {
   UserMediaPage,
   FollowersPage,
   FollowingPage,
+  LikedCharactersPage,
+  LikedGalleriesPage,
+  LikedMediaPage,
+  FeedPage,
+  MyCommunitiesPage,
 } from "../pages";
 import { UserToMemberProfile } from "../CommunityRoutes";
 
@@ -70,6 +79,11 @@ describe("community host routes", () => {
     ["/user/bob/media", UserMediaPage],
     ["/user/bob/followers", FollowersPage],
     ["/user/bob/following", FollowingPage],
+    ["/liked/characters", LikedCharactersPage],
+    ["/liked/galleries", LikedGalleriesPage],
+    ["/liked/media", LikedMediaPage],
+    ["/feed", FeedPage],
+    ["/my/communities", MyCommunitiesPage],
   ])("serves %s locally", (path, page) => {
     expect(pageAt(path)).toBe(page);
   });
@@ -78,6 +92,19 @@ describe("community host routes", () => {
   // have in this community.
   it("forwards /user/:username to the member profile", () => {
     expect(pageAt("/user/bob")).toBe(UserToMemberProfile);
+  });
+
+  // Both have a community equivalent at another path.
+  it.each([
+    ["/my/characters", "/my-characters"],
+    ["/dashboard", "/"],
+  ])("forwards %s to %s", (path, to) => {
+    const element = elementAt(path);
+
+    expect(isValidElement(element) && element.type).toBe(Navigate);
+    expect(isValidElement<{ to: string }>(element) && element.props.to).toBe(
+      to,
+    );
   });
 
   it("still sends other /auth paths to the apex", () => {

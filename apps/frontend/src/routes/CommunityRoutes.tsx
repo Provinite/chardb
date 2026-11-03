@@ -74,6 +74,11 @@ import {
   UserMediaPage,
   FollowersPage,
   FollowingPage,
+  LikedCharactersPage,
+  LikedGalleriesPage,
+  LikedMediaPage,
+  FeedPage,
+  MyCommunitiesPage,
   CreateMediaPage,
   UploadImagePage,
   CreateTextPage,
@@ -586,6 +591,55 @@ export const communityRoutes = (
     <Route path="/user/:username/followers" element={<FollowersPage />} />
     <Route path="/user/:username/following" element={<FollowingPage />} />
 
+    {/* --- the viewer's own lists, narrowed to this community. The list of
+        communities you belong to is the same everywhere. */}
+    <Route
+      path="/liked/characters"
+      element={
+        <ProtectedRoute>
+          <LikedCharactersPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/liked/galleries"
+      element={
+        <ProtectedRoute>
+          <LikedGalleriesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/liked/media"
+      element={
+        <ProtectedRoute>
+          <LikedMediaPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/feed"
+      element={
+        <ProtectedRoute>
+          <FeedPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/my/communities"
+      element={
+        <ProtectedRoute>
+          <MyCommunitiesPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/my/characters"
+      element={<Navigate to="/my-characters" replace />}
+    />
+    {/* The community's overview is its dashboard. */}
+    <Route path="/dashboard" element={<Navigate to="/" replace />} />
+
     {/* Narrowed to this community, which the bell's "See all" links to. */}
     <Route
       path="/notifications"
@@ -647,10 +701,6 @@ export const communityRoutes = (
     <Route path="/reset-password/*" element={<ApexRedirect />} />
     <Route path="/verify-email/*" element={<ApexRedirect />} />
     <Route path="/auth/*" element={<ApexRedirect />} />
-    <Route path="/dashboard" element={<ApexRedirect />} />
-    <Route path="/feed" element={<ApexRedirect />} />
-    <Route path="/my/*" element={<ApexRedirect />} />
-    <Route path="/liked/*" element={<ApexRedirect />} />
     <Route path="/join-community" element={<ApexRedirect />} />
 
     <Route path="*" element={<NotFoundPage />} />

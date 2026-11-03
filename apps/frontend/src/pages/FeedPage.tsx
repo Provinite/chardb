@@ -1,5 +1,6 @@
 import React from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
@@ -195,11 +196,13 @@ export const FeedPage: React.FC = () => {
 
   const { user } = useAuth();
 
+  const scope = useHostCommunityScope();
   const { data, loading, error } = useGetActivityFeedQuery({
     variables: {
       input: {
         limit: 20,
         offset: 0,
+        ...scope,
       },
     },
     skip: !user,

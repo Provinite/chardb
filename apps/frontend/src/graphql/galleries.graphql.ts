@@ -327,8 +327,8 @@ export const REORDER_GALLERIES = gql`
 `;
 
 export const GET_LIKED_GALLERIES = gql`
-  query GetLikedGalleries {
-    likedGalleries {
+  query GetLikedGalleries($communityId: ID) {
+    likedGalleries(communityId: $communityId) {
       id
       name
       description
