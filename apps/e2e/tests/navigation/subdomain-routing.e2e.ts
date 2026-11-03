@@ -192,10 +192,7 @@ test.describe("community hosts", () => {
   });
 
   /** A profile on a community host is the member profile there. */
-  test("reading a profile stays on the community", async ({
-    page,
-    world,
-  }) => {
+  test("reading a profile stays on the community", async ({ page, world }) => {
     await page.goto(`${world.community.url}/user/member`);
 
     await expect(page).toHaveURL(`${world.community.url}/members/member`);
