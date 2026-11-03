@@ -4,7 +4,6 @@ import {
   type NotificationFieldsFragment,
 } from "../../graphql/notifications.graphql";
 import { apexUrl, communityUrl } from "../../lib/communityHost";
-import { candyList } from "../halloween/candyBoard";
 
 /**
  * Where clicking a notification goes, or null when it goes nowhere.
@@ -138,10 +137,13 @@ export function notificationSentence(
       return count
         ? `traded you ${count} candies`
         : "took your candy swap offer";
-    case NotificationKind.HalloweenDoorKnocked:
-      return `knocked on your door and left you ${candyList(
-        notification.candySlugs ?? [],
-      )}`;
+    case NotificationKind.HalloweenDoorKnocked: {
+      // The row shows the candies themselves beneath this.
+      const n = notification.candySlugs?.length ?? 0;
+      return n > 1
+        ? `knocked on your door and left you ${n} candies`
+        : "knocked on your door and left you a candy";
+    }
   }
 }
 

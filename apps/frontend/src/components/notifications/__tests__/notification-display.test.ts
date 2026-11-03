@@ -55,20 +55,18 @@ const doorKnock = (
   }) as NotificationFieldsFragment;
 
 describe("a door knock notification", () => {
-  it("names the one candy left", () => {
+  it("says one candy was left", () => {
     expect(notificationSentence(doorKnock())).toBe(
-      "knocked on your door and left you candy corn",
+      "knocked on your door and left you a candy",
     );
   });
 
-  it("lists several candies", () => {
+  it("counts several candies; the row shows which", () => {
     expect(
       notificationSentence(
         doorKnock({ candySlugs: ["candy-corn", "banana", "berry-tart"] }),
       ),
-    ).toBe(
-      "knocked on your door and left you candy corn, banana and berry tart",
-    );
+    ).toBe("knocked on your door and left you 3 candies");
   });
 
   it("goes to the community's candy board", () => {
