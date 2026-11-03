@@ -12,4 +12,4 @@ CREATE TABLE "halloween_out_of_knocks_attempts" (
     CONSTRAINT "halloween_out_of_knocks_attempts_pkey" PRIMARY KEY ("id")
 );
 
-CREATE INDEX "halloween_out_of_knocks_attempts_guild_id_discord_user_id_time_idx" ON "halloween_out_of_knocks_attempts"("guild_id", "discord_user_id", "time");
+CREATE INDEX "halloween_out_of_knocks_attempts_guild_id_discord_user_id_t_idx" ON "halloween_out_of_knocks_attempts"("guild_id", "discord_user_id", "time");
