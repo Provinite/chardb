@@ -52,11 +52,12 @@ For tasks that are expected to be worked with a relatively high level of autonom
       - New tests
       - Local browser/API testing
   - Discard all invalid findings.
+  - Label each valid finding's severity: CRITICAL (security hole, data loss or exposure), HIGH (broken flow for normal users), MEDIUM (edge-case bug, confusing UX), LOW (cleanup, micro-optimization).
   - Rank by real user impact. Recommend don't-fix or a follow-up issue for scenarios no normal user hits, and for micro-optimizations.
   - For any findings with a very clear obvious no-risk solution that requires no product judgement, go ahead and implement it.
   - Report in one list, numbered 1-n in order:
-    - Fixed findings: a single bullet with a sentence indicating the finding and what was done to fix it.
-    - All other findings: present them to the user with your recommendation (fix, don't-fix, file follow-up issue) and any necessary questions.
+    - Fixed findings: a single bullet with its severity and a sentence indicating the finding and what was done to fix it.
+    - All other findings: present them with their severity to the user with your recommendation (fix, don't-fix, file follow-up issue) and any necessary questions.
     - Discarded invalid findings are not presented.
 - Re-review by risk level, after the fixes land:
   - Green: no re-review.
@@ -77,9 +78,19 @@ For tasks that are expected to be worked with a relatively high level of autonom
 
 Pick one from what the PR touches. The highest match wins.
 
-- Red: auth, sessions, sign-up, permissions and roles, cross-community data scoping or visibility, migrations or backfills that rewrite existing rows, anything touching production data.
-- Yellow: backend business logic, schema additions, GraphQL API changes, shared components or routing.
-- Green: copy, styling, isolated UI on one page, docs.
+- Red: changes who can see or do what, or can't be undone.
+  - Auth and permissioning, always: sessions, sign-up, roles, permission checks.
+  - Visibility and scoping: private content, cross-community data boundaries.
+  - Destructive migrations: dropping or rewriting existing data, including backfills that overwrite rows.
+  - Anything writing to production data.
+- Yellow: adds a contract other code depends on, or handles sensitive data.
+  - New API surfaces: GraphQL queries, mutations or fields, REST endpoints, webhooks, bot commands.
+  - Code handling sensitive non-auth data, such as emails.
+  - Additive schema changes, backend business logic, shared components, routing.
+- Green: local and reversible.
+  - Copy, styling, isolated UI on one page, docs.
+
+When unsure between two levels, pick the higher.
 
 # Helpful Tools
 
