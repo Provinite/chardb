@@ -240,7 +240,21 @@ describe("Halloween house offers (e2e)", () => {
     });
 
     it("asks for every held kind once before asking for any twice", async () => {
-      await candy(alice, "skull-candy");
+      const held = ["banana", "jelly-beans", "skull-candy", "bone-candy"];
+      for (const slug of held) await candy(alice, slug);
+
+      for (let i = 0; i < 2 * held.length; i++) {
+        await browse(alice);
+        advance(INTERVAL);
+      }
+
+      const wants = (await houseOffers()).map((o) => o.wantSlug);
+      expect(wants.slice(0, held.length).sort()).toEqual([...held].sort());
+      expect(wants.slice(held.length).sort()).toEqual([...held].sort());
+    });
+
+    it("keeps the hosts' open offers even", async () => {
+      // Nobody holds a Luther candy, so Luther asks for any of his kinds.
       await candy(alice, "banana");
       await candy(alice, "jelly-beans");
 
@@ -249,13 +263,9 @@ describe("Halloween house offers (e2e)", () => {
         advance(INTERVAL);
       }
 
-      const wants = (await houseOffers()).map((o) => o.wantSlug);
-      expect(wants.slice(0, 3).sort()).toEqual(
-        ["banana", "jelly-beans", "skull-candy"].sort(),
-      );
-      expect(wants.slice(3).sort()).toEqual(
-        ["banana", "jelly-beans", "skull-candy"].sort(),
-      );
+      const hosts = (await openHouseOffers()).map((o) => o.host);
+      expect(hosts.filter((h) => h === "Daphne")).toHaveLength(3);
+      expect(hosts.filter((h) => h === "Luther")).toHaveLength(3);
     });
 
     it("adds one offer per interval, catching up on a quiet stretch", async () => {
@@ -299,6 +309,25 @@ describe("Halloween house offers (e2e)", () => {
       advance(INTERVAL);
       await browse(alice);
       expect(await openHouseOffers()).toHaveLength(MAX_OPEN_HOUSE_OFFERS);
+    });
+
+    it("rolls a full pool over, the oldest expiring as the newest arrives", async () => {
+      await browse(alice);
+      for (let i = 1; i < MAX_OPEN_HOUSE_OFFERS; i++) {
+        advance(INTERVAL);
+        await browse(alice);
+      }
+      const full = await openHouseOffers();
+      expect(full).toHaveLength(MAX_OPEN_HOUSE_OFFERS);
+      const [oldest] = full;
+
+      advance(INTERVAL);
+      await browse(alice);
+
+      const open = await openHouseOffers();
+      expect(open).toHaveLength(MAX_OPEN_HOUSE_OFFERS);
+      expect(open.map((o) => o.id)).not.toContain(oldest.id);
+      expect(open[open.length - 1].createdAt).toEqual(now);
     });
 
     it("expires an offer once its lifetime is up", async () => {

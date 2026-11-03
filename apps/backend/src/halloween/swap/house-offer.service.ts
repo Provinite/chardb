@@ -13,18 +13,22 @@ import {
   HOUSE_OFFER_CANDIES,
   HOUSE_OFFER_LIFETIME_MS,
   MAX_HOUSE_DROP,
+  balancedHosts,
   dueHouseSpawns,
+  isHalloweenHost,
   leastAskedWants,
   otherHost,
   type HalloweenHost,
 } from "./house-offers";
 
 /**
- * What the house may ask for, and how many open house offers already ask for
- * each kind. Spawning counts its own asks in, so a batch spreads too.
+ * What the house may ask for, how many open house offers each host has, and
+ * how many ask for each kind. Spawning counts its own offers in, so a batch
+ * balances and spreads too.
  */
 interface HouseAsks {
   pools: Record<HalloweenHost, readonly string[]>;
+  open: Record<HalloweenHost, number>;
   asked: Map<string, number>;
 }
 
@@ -193,9 +197,9 @@ export class HouseOfferService {
   }
 
   /**
-   * One house offer, dated `at`: a host asks for one of their own kinds, one
-   * the open offers ask for least, and gives three random candies of the
-   * other host's.
+   * One house offer, dated `at`: the host with fewer open offers asks for
+   * one of their own kinds, one the open offers ask for least, and gives
+   * three random candies of the other host's.
    */
   private async spawn(
     tx: Prisma.TransactionClient,
@@ -203,8 +207,11 @@ export class HouseOfferService {
     at: Date,
     asks: HouseAsks,
   ): Promise<void> {
-    const wants = leastAskedWants(asks.pools, asks.asked);
-    const { host, slug: wantSlug } = wants[this.random.int(wants.length)];
+    const hosts = balancedHosts(asks.open);
+    const host = hosts[this.random.int(hosts.length)];
+    const wants = leastAskedWants(asks.pools[host], asks.asked);
+    const wantSlug = wants[this.random.int(wants.length)];
+    asks.open[host] += 1;
     asks.asked.set(wantSlug, (asks.asked.get(wantSlug) ?? 0) + 1);
     const gives = HOST_CANDIES[otherHost(host)];
     const offer = await tx.halloweenCandyOffer.create({
@@ -233,7 +240,8 @@ export class HouseOfferService {
   /**
    * What each host may ask for: their kinds that some player here has a
    * spare of, so somebody can take the offer, or all their kinds when nobody
-   * has one. With how often the open house offers ask for each kind.
+   * has one. With each host's open offers, and how often they ask for each
+   * kind.
    */
   private async asks(
     tx: Prisma.TransactionClient,
@@ -247,7 +255,7 @@ export class HouseOfferService {
           AND "offer_id" IS NULL
       `,
       tx.halloweenCandyOffer.groupBy({
-        by: ["wantSlug"],
+        by: ["host", "wantSlug"],
         where: {
           guildId,
           host: { not: null },
@@ -262,11 +270,17 @@ export class HouseOfferService {
       return kinds.length ? kinds : HOST_CANDIES[host];
     };
     const asked = new Map<string, number>();
+    const openByHost: Record<HalloweenHost, number> = { Daphne: 0, Luther: 0 };
     for (const row of open) {
-      if (row.wantSlug) asked.set(row.wantSlug, row._count._all);
+      const count = row._count._all;
+      if (isHalloweenHost(row.host)) openByHost[row.host] += count;
+      if (row.wantSlug) {
+        asked.set(row.wantSlug, (asked.get(row.wantSlug) ?? 0) + count);
+      }
     }
     return {
       pools: { Daphne: poolFor("Daphne"), Luther: poolFor("Luther") },
+      open: openByHost,
       asked,
     };
   }

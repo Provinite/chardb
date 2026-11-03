@@ -6,6 +6,7 @@ import {
   HOUSE_SPAWN_INTERVAL_MS,
   MAX_HOUSE_CATCH_UP,
   MAX_OPEN_HOUSE_OFFERS,
+  balancedHosts,
   dueHouseSpawns,
   isHalloweenHost,
   leastAskedWants,
@@ -43,10 +44,6 @@ describe("house offers", () => {
   describe("the schedule", () => {
     it("offers every five minutes", () => {
       expect(HOUSE_SPAWN_INTERVAL_MS).toBe(5 * MINUTE);
-    });
-
-    it("keeps up to one open offer per candy kind", () => {
-      expect(MAX_OPEN_HOUSE_OFFERS).toBe(CANDY_SLUGS.length);
     });
 
     it("keeps an offer open until the full pool would roll over", () => {
@@ -123,32 +120,44 @@ describe("house offers", () => {
     } as const;
 
     it("offers every possible want while none is asked for", () => {
-      expect(leastAskedWants(pools, new Map())).toEqual([
-        { host: "Daphne", slug: "banana" },
-        { host: "Daphne", slug: "jelly-beans" },
-        { host: "Luther", slug: "skull-candy" },
+      expect(leastAskedWants(pools.Daphne, new Map())).toEqual([
+        "banana",
+        "jelly-beans",
       ]);
     });
 
     it("leaves out wants already asked for until every one is", () => {
-      const asked = new Map([
-        ["banana", 1],
-        ["skull-candy", 1],
-      ]);
-      expect(leastAskedWants(pools, asked)).toEqual([
-        { host: "Daphne", slug: "jelly-beans" },
-      ]);
+      const asked = new Map([["banana", 1]]);
+      expect(leastAskedWants(pools.Daphne, asked)).toEqual(["jelly-beans"]);
     });
 
     it("repeats the least-asked wants once every want is asked for", () => {
       const asked = new Map([
         ["banana", 2],
         ["jelly-beans", 1],
-        ["skull-candy", 1],
       ]);
-      expect(leastAskedWants(pools, asked)).toEqual([
-        { host: "Daphne", slug: "jelly-beans" },
-        { host: "Luther", slug: "skull-candy" },
+      expect(leastAskedWants(pools.Daphne, asked)).toEqual(["jelly-beans"]);
+    });
+
+    it("counts only the asks for kinds in the pool", () => {
+      const asked = new Map([["skull-candy", 5]]);
+      expect(leastAskedWants(pools.Daphne, asked)).toEqual([
+        "banana",
+        "jelly-beans",
+      ]);
+    });
+  });
+
+  describe("balancedHosts", () => {
+    it("picks the host with fewer open offers", () => {
+      expect(balancedHosts({ Daphne: 3, Luther: 1 })).toEqual(["Luther"]);
+      expect(balancedHosts({ Daphne: 0, Luther: 2 })).toEqual(["Daphne"]);
+    });
+
+    it("leaves either host when they are even", () => {
+      expect(balancedHosts({ Daphne: 2, Luther: 2 })).toEqual([
+        "Daphne",
+        "Luther",
       ]);
     });
   });

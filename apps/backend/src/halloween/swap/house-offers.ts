@@ -7,6 +7,8 @@
  * takes a dark or tricksy candy and gives three of Daphne's, and the reverse.
  */
 
+import { CANDY_SLUGS } from "../discord/images.generated";
+
 export const HALLOWEEN_HOSTS = ["Daphne", "Luther"] as const;
 export type HalloweenHost = (typeof HALLOWEEN_HOSTS)[number];
 
@@ -172,13 +174,11 @@ export const HOUSE_SPAWN_INTERVAL_MS = 5 * 60_000;
  * The most house offers open before the house stops adding them itself: one
  * per candy kind.
  */
-export const MAX_OPEN_HOUSE_OFFERS = HALLOWEEN_HOSTS.reduce(
-  (total, host) => total + HOST_CANDIES[host].length,
-  0,
-);
+export const MAX_OPEN_HOUSE_OFFERS = CANDY_SLUGS.length;
 /**
- * How long a house offer stays open. One interval per open offer, so an
- * untouched full pool rolls over: the oldest expires as the newest arrives.
+ * How long a house offer stays open. One interval per open offer, so a full
+ * pool topped up every interval rolls over: the oldest expires as the newest
+ * arrives.
  */
 export const HOUSE_OFFER_LIFETIME_MS =
   MAX_OPEN_HOUSE_OFFERS * HOUSE_SPAWN_INTERVAL_MS;
@@ -216,27 +216,29 @@ export function dueHouseSpawns(
   return due;
 }
 
-/** A candy a host may ask for. */
-export interface HouseWant {
-  host: HalloweenHost;
-  slug: string;
+/**
+ * The hosts who may put up the next offer: whoever has fewer open, so the
+ * pool stays close to half each. Both when they are even.
+ */
+export function balancedHosts(
+  open: Record<HalloweenHost, number>,
+): HalloweenHost[] {
+  const fewest = Math.min(...HALLOWEEN_HOSTS.map((host) => open[host]));
+  return HALLOWEEN_HOSTS.filter((host) => open[host] === fewest);
 }
 
 /**
- * The wants the house picks its next ask from: of every kind each host may
- * ask for, those the open offers ask for least. Every possible want is asked
- * for once before any is asked for twice.
+ * The kinds of a host's pool their next offer may ask for: those the open
+ * offers ask for least. Every kind in the pool is asked for once before any
+ * is asked for twice.
  *
  * @param asked How many open house offers ask for each kind.
  */
 export function leastAskedWants(
-  pools: Record<HalloweenHost, readonly string[]>,
+  pool: readonly string[],
   asked: ReadonlyMap<string, number>,
-): HouseWant[] {
-  const wants = HALLOWEEN_HOSTS.flatMap((host) =>
-    pools[host].map((slug) => ({ host, slug })),
-  );
-  const count = (want: HouseWant) => asked.get(want.slug) ?? 0;
-  const least = Math.min(...wants.map(count));
-  return wants.filter((want) => count(want) === least);
+): string[] {
+  const count = (slug: string) => asked.get(slug) ?? 0;
+  const least = Math.min(...pool.map(count));
+  return pool.filter((slug) => count(slug) === least);
 }
