@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Candy swap market**: `halloweenCandySwapMarket` lists every open offer with whether you can take it, plus open-offer and 24-hour trade counts; `halloweenCandySwapRecentTrades` is the community's trade feed.
+- **Halloween door knocks**: `knockOnHalloweenDoor` gives the knocker and the member knocked on 1-3 candies each and notifies the latter, once per door a day, within `knocksPerDay` door knocks (twice that for Halloween staff).
 - **House candy offers**: Daphne and Luther put up 3-for-1 candy swap offers every 5 minutes during the event (up to one per candy kind, asking for each kind once before repeating), and staff can drop more with `dropHalloweenHouseOffers`.
 - **Member search**: `communityMembersByCommunity` takes `search`, matching username, display name or role name, with exact name matches first.
 

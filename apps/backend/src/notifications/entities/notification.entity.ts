@@ -128,6 +128,14 @@ export class Notification {
     description: "Enough of a comment to recognise it in a dropdown row.",
   })
   excerpt?: string | null;
+
+  @Field(() => [String], {
+    nullable: true,
+    description:
+      "The Halloween candies received, by slug: each one's image is " +
+      "/halloween/candy/<slug>.png on the frontend.",
+  })
+  candySlugs?: string[] | null;
 }
 
 @ObjectType({ description: "A page of notifications, newest first." })

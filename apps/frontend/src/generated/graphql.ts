@@ -1521,6 +1521,34 @@ export type HalloweenDashboard = {
   summary: HalloweenEventSummary;
 };
 
+/** A member's door, as the viewer finds it: whether they can knock, and how many door knocks they have left today. */
+export type HalloweenDoor = {
+  __typename?: 'HalloweenDoor';
+  canKnock: Scalars['Boolean']['output'];
+  closedReason: Maybe<HalloweenDoorClosedReason>;
+  /** The viewer's door knocks a day: as many as /knock gives, twice that for Halloween staff */
+  knocksPerDay: Scalars['Int']['output'];
+  /** The viewer's door knocks left until the daily reset */
+  remainingKnocks: Scalars['Int']['output'];
+};
+
+export enum HalloweenDoorClosedReason {
+  AlreadyKnocked = 'ALREADY_KNOCKED',
+  NotAMember = 'NOT_A_MEMBER',
+  NoKnocksLeft = 'NO_KNOCKS_LEFT',
+  OwnDoor = 'OWN_DOOR'
+}
+
+export type HalloweenDoorKnockResult = {
+  __typename?: 'HalloweenDoorKnockResult';
+  /** The candies the player knocked on got, by slug */
+  knockeeCandies: Array<Scalars['String']['output']>;
+  /** The candies the knocker got, by slug */
+  knockerCandies: Array<Scalars['String']['output']>;
+  /** The knocker's door knocks left until the daily reset */
+  remainingKnocks: Scalars['Int']['output'];
+};
+
 /** The event's settings in a guild, as /settings sets them */
 export type HalloweenEventSettings = {
   __typename?: 'HalloweenEventSettings';
@@ -2410,6 +2438,8 @@ export type Mutation = {
   joinCommunity: CommunityMember;
   /** Remove a character from its species, flattening its trait values into custom fields. Requires CanEditCharacterRegistry permission. */
   kickCharacterFromSpecies: Scalars['Boolean']['output'];
+  /** Knock on a member's door: you and they each get 1-3 candies, and they are told what they got. Once per door a day, within your daily door knocks. */
+  knockOnHalloweenDoor: HalloweenDoorKnockResult;
   /** Link a Discord guild to a community */
   linkDiscordGuild: Community;
   login: AuthPayload;
@@ -2870,6 +2900,12 @@ export type MutationJoinCommunityArgs = {
 
 export type MutationKickCharacterFromSpeciesArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationKnockOnHalloweenDoorArgs = {
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -3353,6 +3389,8 @@ export type Notification = {
   amount: Maybe<Scalars['Int']['output']>;
   /** Free text, for the kinds that carry it. */
   body: Maybe<Scalars['String']['output']>;
+  /** The Halloween candies received, by slug: each one's image is /halloween/candy/<slug>.png on the frontend. */
+  candySlugs: Maybe<Array<Scalars['String']['output']>>;
   /** The community this belongs to, for kinds that are scoped to one. */
   community: Maybe<Community>;
   /** How many, for the kinds that move a quantity of something. */
@@ -3398,6 +3436,7 @@ export enum NotificationKind {
   CurrencyReceived = 'CURRENCY_RECEIVED',
   FollowReceived = 'FOLLOW_RECEIVED',
   HalloweenCandyTraded = 'HALLOWEEN_CANDY_TRADED',
+  HalloweenDoorKnocked = 'HALLOWEEN_DOOR_KNOCKED',
   ImageApproved = 'IMAGE_APPROVED',
   ImageRejected = 'IMAGE_REJECTED',
   ItemGranted = 'ITEM_GRANTED',
@@ -3426,6 +3465,7 @@ export enum NotificationSubjectType {
   Currency = 'CURRENCY',
   Gallery = 'GALLERY',
   HalloweenCandyTrade = 'HALLOWEEN_CANDY_TRADE',
+  HalloweenDoorKnock = 'HALLOWEEN_DOOR_KNOCK',
   Image = 'IMAGE',
   Item = 'ITEM',
   Media = 'MEDIA',
@@ -3607,6 +3647,8 @@ export type Query = {
   halloweenCandyTypes: Array<Scalars['String']['output']>;
   /** The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems. */
   halloweenDashboard: HalloweenDashboard;
+  /** A member's door as you find it. Null while the community has no Halloween event running. */
+  halloweenDoor: Maybe<HalloweenDoor>;
   /** Characters of the community a new Halloween prize could hand over, by name: no owner, no pending owner, and not a prize already (25 per search) */
   halloweenPrizeCharacters: Array<Character>;
   /** Item types of the community a new Halloween prize could hand over, by name (25 per search) */
@@ -4064,6 +4106,12 @@ export type QueryHalloweenCandySwapRecentTradesArgs = {
 
 export type QueryHalloweenDashboardArgs = {
   communityId: Scalars['ID']['input'];
+};
+
+
+export type QueryHalloweenDoorArgs = {
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
 };
 
 
@@ -6218,6 +6266,24 @@ export type RunDiscordNameBackfillMutationVariables = Exact<{ [key: string]: nev
 
 export type RunDiscordNameBackfillMutation = { __typename?: 'Mutation', runDiscordNameBackfill: { __typename?: 'DiscordNameBackfillStatus', running: boolean, total: number, processed: number, updated: number, notFound: number, failed: number, startedAt: string | null, finishedAt: string | null } };
 
+export type HalloweenDoorFieldsFragment = { __typename?: 'HalloweenDoor', canKnock: boolean, closedReason: HalloweenDoorClosedReason | null, remainingKnocks: number, knocksPerDay: number };
+
+export type HalloweenDoorQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type HalloweenDoorQuery = { __typename?: 'Query', halloweenDoor: { __typename?: 'HalloweenDoor', canKnock: boolean, closedReason: HalloweenDoorClosedReason | null, remainingKnocks: number, knocksPerDay: number } | null };
+
+export type KnockOnHalloweenDoorMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  userId: Scalars['ID']['input'];
+}>;
+
+
+export type KnockOnHalloweenDoorMutation = { __typename?: 'Mutation', knockOnHalloweenDoor: { __typename?: 'HalloweenDoorKnockResult', knockerCandies: Array<string>, knockeeCandies: Array<string>, remainingKnocks: number } };
+
 export type VerifyEmailMutationVariables = Exact<{
   input: VerifyEmailInput;
 }>;
@@ -7088,7 +7154,7 @@ export type UpdateNotificationPreferenceMutationVariables = Exact<{
 
 export type UpdateNotificationPreferenceMutation = { __typename?: 'Mutation', updateNotificationPreference: Array<{ __typename?: 'NotificationPreference', kind: NotificationKind, inApp: boolean, email: boolean, emailSupported: boolean }> };
 
-export type NotificationFieldsFragment = { __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null };
+export type NotificationFieldsFragment = { __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, candySlugs: Array<string> | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null };
 
 export type NotificationsQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -7097,7 +7163,7 @@ export type NotificationsQueryVariables = Exact<{
 }>;
 
 
-export type NotificationsQuery = { __typename?: 'Query', notifications: { __typename?: 'NotificationConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null }> } };
+export type NotificationsQuery = { __typename?: 'Query', notifications: { __typename?: 'NotificationConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, candySlugs: Array<string> | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null }> } };
 
 export type UnseenNotificationCountQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -7911,6 +7977,14 @@ export const DiscordNameBackfillStatusFieldsFragmentDoc = gql`
   finishedAt
 }
     `;
+export const HalloweenDoorFieldsFragmentDoc = gql`
+    fragment HalloweenDoorFields on HalloweenDoor {
+  canKnock
+  closedReason
+  remainingKnocks
+  knocksPerDay
+}
+    `;
 export const EnumValueSettingDetailsFragmentDoc = gql`
     fragment EnumValueSettingDetails on EnumValueSetting {
   id
@@ -8326,6 +8400,7 @@ export const NotificationFieldsFragmentDoc = gql`
   reason
   reasonText
   excerpt
+  candySlugs
   actor {
     id
     username
@@ -12194,6 +12269,83 @@ export function useRunDiscordNameBackfillMutation(baseOptions?: Apollo.MutationH
 export type RunDiscordNameBackfillMutationHookResult = ReturnType<typeof useRunDiscordNameBackfillMutation>;
 export type RunDiscordNameBackfillMutationResult = Apollo.MutationResult<RunDiscordNameBackfillMutation>;
 export type RunDiscordNameBackfillMutationOptions = Apollo.BaseMutationOptions<RunDiscordNameBackfillMutation, RunDiscordNameBackfillMutationVariables>;
+export const HalloweenDoorDocument = gql`
+    query HalloweenDoor($communityId: ID!, $userId: ID!) {
+  halloweenDoor(communityId: $communityId, userId: $userId) {
+    ...HalloweenDoorFields
+  }
+}
+    ${HalloweenDoorFieldsFragmentDoc}`;
+
+/**
+ * __useHalloweenDoorQuery__
+ *
+ * To run a query within a React component, call `useHalloweenDoorQuery` and pass it any options that fit your needs.
+ * When your component renders, `useHalloweenDoorQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useHalloweenDoorQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useHalloweenDoorQuery(baseOptions: Apollo.QueryHookOptions<HalloweenDoorQuery, HalloweenDoorQueryVariables> & ({ variables: HalloweenDoorQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<HalloweenDoorQuery, HalloweenDoorQueryVariables>(HalloweenDoorDocument, options);
+      }
+export function useHalloweenDoorLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<HalloweenDoorQuery, HalloweenDoorQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<HalloweenDoorQuery, HalloweenDoorQueryVariables>(HalloweenDoorDocument, options);
+        }
+export function useHalloweenDoorSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<HalloweenDoorQuery, HalloweenDoorQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<HalloweenDoorQuery, HalloweenDoorQueryVariables>(HalloweenDoorDocument, options);
+        }
+export type HalloweenDoorQueryHookResult = ReturnType<typeof useHalloweenDoorQuery>;
+export type HalloweenDoorLazyQueryHookResult = ReturnType<typeof useHalloweenDoorLazyQuery>;
+export type HalloweenDoorSuspenseQueryHookResult = ReturnType<typeof useHalloweenDoorSuspenseQuery>;
+export type HalloweenDoorQueryResult = Apollo.QueryResult<HalloweenDoorQuery, HalloweenDoorQueryVariables>;
+export const KnockOnHalloweenDoorDocument = gql`
+    mutation KnockOnHalloweenDoor($communityId: ID!, $userId: ID!) {
+  knockOnHalloweenDoor(communityId: $communityId, userId: $userId) {
+    knockerCandies
+    knockeeCandies
+    remainingKnocks
+  }
+}
+    `;
+export type KnockOnHalloweenDoorMutationFn = Apollo.MutationFunction<KnockOnHalloweenDoorMutation, KnockOnHalloweenDoorMutationVariables>;
+
+/**
+ * __useKnockOnHalloweenDoorMutation__
+ *
+ * To run a mutation, you first call `useKnockOnHalloweenDoorMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useKnockOnHalloweenDoorMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [knockOnHalloweenDoorMutation, { data, loading, error }] = useKnockOnHalloweenDoorMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      userId: // value for 'userId'
+ *   },
+ * });
+ */
+export function useKnockOnHalloweenDoorMutation(baseOptions?: Apollo.MutationHookOptions<KnockOnHalloweenDoorMutation, KnockOnHalloweenDoorMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<KnockOnHalloweenDoorMutation, KnockOnHalloweenDoorMutationVariables>(KnockOnHalloweenDoorDocument, options);
+      }
+export type KnockOnHalloweenDoorMutationHookResult = ReturnType<typeof useKnockOnHalloweenDoorMutation>;
+export type KnockOnHalloweenDoorMutationResult = Apollo.MutationResult<KnockOnHalloweenDoorMutation>;
+export type KnockOnHalloweenDoorMutationOptions = Apollo.BaseMutationOptions<KnockOnHalloweenDoorMutation, KnockOnHalloweenDoorMutationVariables>;
 export const VerifyEmailDocument = gql`
     mutation VerifyEmail($input: VerifyEmailInput!) {
   verifyEmail(input: $input)
