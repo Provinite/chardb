@@ -65,11 +65,19 @@ export class NotificationsResolver {
     after?: string,
     @Args("unreadOnly", { type: () => Boolean, nullable: true })
     unreadOnly?: boolean,
+    @Args("communityId", {
+      type: () => ID,
+      nullable: true,
+      description:
+        "Only this community's notifications, plus those that belong to no community.",
+    })
+    communityId?: string,
   ): Promise<NotificationConnection> {
     const page = await this.notifications.findForRecipient(user.id, {
       first,
       after,
       unreadOnly,
+      communityId,
     });
     return { ...page, nodes: page.nodes.map(mapNotification) };
   }

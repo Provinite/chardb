@@ -5,6 +5,7 @@ import { Bell } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { NotificationRow } from "../components/notifications/NotificationRow";
+import { useHostCommunity } from "../contexts/CommunityHostContext";
 import {
   useNotificationsQuery,
   useMarkAllNotificationsReadMutation,
@@ -84,15 +85,27 @@ const LoadingContainer = styled.div`
  *
  * Rows are the same component the dropdown uses, so the two cannot describe the
  * same event differently.
+ *
+ * On a community host it starts narrowed to that community plus the
+ * notifications that belong to no community, and can widen to everywhere.
  */
 export const NotificationsPage: React.FC = () => {
   usePageMeta({ title: "Notifications" });
 
+  const hostCommunity = useHostCommunity();
+  const [everywhere, setEverywhere] = useState(false);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [limit, setLimit] = useState(PAGE_SIZE);
 
+  const communityId =
+    hostCommunity && !everywhere ? hostCommunity.id : undefined;
+
   const { data, loading, error, refetch } = useNotificationsQuery({
-    variables: { first: limit, unreadOnly },
+    variables: {
+      first: limit,
+      unreadOnly,
+      ...(communityId ? { communityId } : {}),
+    },
     fetchPolicy: "cache-and-network",
   });
 
@@ -131,6 +144,26 @@ export const NotificationsPage: React.FC = () => {
     <Container>
       <Header>
         <Title>Notifications</Title>
+        {hostCommunity && (
+          <Filters>
+            <FilterTab
+              type="button"
+              aria-pressed={!everywhere}
+              $active={!everywhere}
+              onClick={() => setEverywhere(false)}
+            >
+              {hostCommunity.name}
+            </FilterTab>
+            <FilterTab
+              type="button"
+              aria-pressed={everywhere}
+              $active={everywhere}
+              onClick={() => setEverywhere(true)}
+            >
+              Everywhere
+            </FilterTab>
+          </Filters>
+        )}
         <Filters>
           <FilterTab
             type="button"

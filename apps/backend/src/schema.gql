@@ -4224,7 +4224,16 @@ type Query {
   notificationPreferences: [NotificationPreference!]!
 
   """Your notifications, newest first."""
-  notifications(after: String, first: Int = 20, unreadOnly: Boolean): NotificationConnection!
+  notifications(
+    after: String
+
+    """
+    Only this community's notifications, plus those that belong to no community.
+    """
+    communityId: ID
+    first: Int = 20
+    unreadOnly: Boolean
+  ): NotificationConnection!
 
   """
   An external member's pending inventory: the live, unclaimed items and characters held for one external account in one community. For staff who may see pending owners.

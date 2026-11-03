@@ -160,12 +160,24 @@ export class NotificationsService {
   /** One page of a recipient's notifications, newest first. */
   async findForRecipient(
     recipientId: string,
-    filters: { first?: number; after?: string; unreadOnly?: boolean },
+    filters: {
+      first?: number;
+      after?: string;
+      unreadOnly?: boolean;
+      /**
+       * Narrows to one community plus the notifications that belong to no
+       * community (a new follower), which is what a community host shows.
+       */
+      communityId?: string;
+    },
   ) {
     const take = Math.min(filters.first ?? 20, 100);
     const where: Prisma.NotificationWhereInput = {
       recipientId,
       ...(filters.unreadOnly ? { readAt: null } : {}),
+      ...(filters.communityId
+        ? { OR: [{ communityId: filters.communityId }, { communityId: null }] }
+        : {}),
     };
 
     const [rows, totalCount] = await Promise.all([

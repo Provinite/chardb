@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 import { createRoutesFromChildren, matchRoutes } from "react-router-dom";
 import { communityRoutes } from "../CommunityRoutes";
 import { ApexRedirect } from "../ApexRedirect";
+import { ProtectedRoute } from "../../components/ProtectedRoute";
 import {
   DeviantArtCallbackPage,
   DiscordCallbackPage,
+  NotificationsPage,
   PatreonCallbackPage,
   ToyhouseCallbackPage,
 } from "../pages";
@@ -28,6 +30,16 @@ describe("community host routes", () => {
     const element = elementAt(`${path}?success=true`);
 
     expect(isValidElement(element) && element.type).toBe(page);
+  });
+
+  it("serves /notifications locally", () => {
+    const element = elementAt("/notifications");
+
+    expect(isValidElement(element) && element.type).toBe(ProtectedRoute);
+    const child = isValidElement<{ children: ReactNode }>(element)
+      ? element.props.children
+      : null;
+    expect(isValidElement(child) && child.type).toBe(NotificationsPage);
   });
 
   it("still sends other /auth paths to the apex", () => {

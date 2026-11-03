@@ -60,6 +60,7 @@ import {
   TradeComposerPage,
   TradeOfferPage,
   EditProfilePage,
+  NotificationsPage,
   CreateMediaPage,
   UploadImagePage,
   CreateTextPage,
@@ -516,6 +517,15 @@ export const communityRoutes = (
         </ProtectedRoute>
       }
     />
+    {/* Narrowed to this community, which the bell's "See all" links to. */}
+    <Route
+      path="/notifications"
+      element={
+        <ProtectedRoute>
+          <NotificationsPage />
+        </ProtectedRoute>
+      }
+    />
     <Route
       path="/upload"
       element={
@@ -570,7 +580,6 @@ export const communityRoutes = (
     <Route path="/auth/*" element={<ApexRedirect />} />
     <Route path="/dashboard" element={<ApexRedirect />} />
     <Route path="/feed" element={<ApexRedirect />} />
-    <Route path="/notifications" element={<ApexRedirect />} />
     <Route path="/user/*" element={<ApexRedirect />} />
     <Route path="/my/*" element={<ApexRedirect />} />
     <Route path="/liked/*" element={<ApexRedirect />} />

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Community notifications page**: "See all notifications" on a community opens that community's notifications, with a switch to see everything.
+
 ### Fixed
 
 - **Linking an account or editing your profile from a community** keeps you on that community instead of sending you to the main site.

@@ -305,4 +305,35 @@ describe("NotificationsService", () => {
       ).not.toHaveBeenCalled();
     });
   });
+
+  describe("findForRecipient", () => {
+    const lastWhere = () =>
+      (
+        mockDatabaseService.notification.findMany.mock.calls.at(-1)?.[0] as {
+          where: Record<string, unknown>;
+        }
+      ).where;
+
+    beforeEach(() => {
+      mockDatabaseService.notification.findMany.mockResolvedValue([]);
+      mockDatabaseService.notification.count.mockResolvedValue(0);
+    });
+
+    it("lists everything when no community is given", async () => {
+      await service.findForRecipient("u1", {});
+
+      expect(lastWhere()).toEqual({ recipientId: "u1" });
+    });
+
+    // A community host shows that community's notifications plus the ones
+    // that belong to no community, like a new follower.
+    it("keeps one community's notifications and the global ones", async () => {
+      await service.findForRecipient("u1", { communityId: "c1" });
+
+      expect(lastWhere()).toEqual({
+        recipientId: "u1",
+        OR: [{ communityId: "c1" }, { communityId: null }],
+      });
+    });
+  });
 });

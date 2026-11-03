@@ -4192,6 +4192,7 @@ export type QueryMyShopPurchasesArgs = {
 
 export type QueryNotificationsArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   unreadOnly?: InputMaybe<Scalars['Boolean']['input']>;
 };
@@ -6997,6 +6998,7 @@ export type NotificationsQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
   after?: InputMaybe<Scalars['String']['input']>;
   unreadOnly?: InputMaybe<Scalars['Boolean']['input']>;
+  communityId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
@@ -17456,8 +17458,13 @@ export type UpdateNotificationPreferenceMutationHookResult = ReturnType<typeof u
 export type UpdateNotificationPreferenceMutationResult = Apollo.MutationResult<UpdateNotificationPreferenceMutation>;
 export type UpdateNotificationPreferenceMutationOptions = Apollo.BaseMutationOptions<UpdateNotificationPreferenceMutation, UpdateNotificationPreferenceMutationVariables>;
 export const NotificationsDocument = gql`
-    query Notifications($first: Int, $after: String, $unreadOnly: Boolean) {
-  notifications(first: $first, after: $after, unreadOnly: $unreadOnly) {
+    query Notifications($first: Int, $after: String, $unreadOnly: Boolean, $communityId: ID) {
+  notifications(
+    first: $first
+    after: $after
+    unreadOnly: $unreadOnly
+    communityId: $communityId
+  ) {
     nodes {
       ...NotificationFields
     }
@@ -17483,6 +17490,7 @@ export const NotificationsDocument = gql`
  *      first: // value for 'first'
  *      after: // value for 'after'
  *      unreadOnly: // value for 'unreadOnly'
+ *      communityId: // value for 'communityId'
  *   },
  * });
  */

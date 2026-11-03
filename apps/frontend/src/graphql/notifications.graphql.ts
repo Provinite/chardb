@@ -49,8 +49,18 @@ export const NOTIFICATION_FRAGMENT = gql`
 // ==================== Queries ====================
 
 export const NOTIFICATIONS_QUERY = gql`
-  query Notifications($first: Int, $after: String, $unreadOnly: Boolean) {
-    notifications(first: $first, after: $after, unreadOnly: $unreadOnly) {
+  query Notifications(
+    $first: Int
+    $after: String
+    $unreadOnly: Boolean
+    $communityId: ID
+  ) {
+    notifications(
+      first: $first
+      after: $after
+      unreadOnly: $unreadOnly
+      communityId: $communityId
+    ) {
       nodes {
         ...NotificationFields
       }
