@@ -85,7 +85,10 @@ const read = (
   variables: CommunityMembersWithRolesQueryVariables,
 ) =>
   c
-    .readQuery({ query: CommunityMembersWithRolesDocument, variables })
+    .readQuery<
+      CommunityMembersWithRolesQuery,
+      CommunityMembersWithRolesQueryVariables
+    >({ query: CommunityMembersWithRolesDocument, variables })
     ?.communityMembersByCommunity.nodes.map((n) => n.id);
 
 describe("communityMembersByCommunity in the cache", () => {
