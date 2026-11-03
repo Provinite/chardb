@@ -12,19 +12,10 @@ export const page = style({
   paddingInline: vars.space.md,
 });
 
-/**
- * The page's heading, in the event's night-sky colours like the sidebar's
- * Halloween heading, with how busy the swap is beside it.
- */
+/** The page's heading, with how busy the swap is beside it. */
 export const hero = style({
-  paddingBlock: vars.space.lg,
-  paddingInline: vars.space.lg,
-  background: vars.event.halloween.bg,
-  color: vars.event.halloween.fg,
-  // Forced colours drop the background: the border keeps the box.
-  border: `${vars.borderWidth.hairline} solid transparent`,
-  borderBlockEnd: `${vars.borderWidth.thick} solid ${vars.event.halloween.accent}`,
-  borderRadius: vars.radius.lg,
+  paddingBlockEnd: vars.space.lg,
+  borderBlockEnd: `${vars.borderWidth.hairline} solid ${vars.border.default}`,
 });
 
 /** Takes the row; under a column's width the counts wrap below it. */
@@ -41,19 +32,19 @@ export const title = style({
   fontSize: vars.font.size.xxl,
   fontWeight: vars.font.weight.bold,
   lineHeight: vars.font.lineHeight.tight,
-  color: vars.event.halloween.fg,
+  color: vars.text.default,
 });
 
 export const titleIcon = style({
   flexShrink: 0,
   width: vars.font.size.xxl,
   height: vars.font.size.xxl,
-  color: vars.event.halloween.accent,
+  color: vars.text.default,
 });
 
 export const heroLead = style({
   margin: 0,
-  color: vars.event.halloween.fg,
+  color: vars.text.muted,
 });
 
 export const stats = style({
@@ -62,12 +53,13 @@ export const stats = style({
 
 export const stat = style({
   margin: 0,
-  color: vars.event.halloween.fg,
+  color: vars.text.muted,
   fontSize: vars.font.size.sm,
 });
 
 export const statValue = style({
-  fontSize: vars.font.size.xxl,
+  color: vars.text.default,
+  fontSize: vars.font.size.xl,
   fontWeight: vars.font.weight.bold,
   fontVariantNumeric: "tabular-nums",
 });

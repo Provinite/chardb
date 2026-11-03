@@ -354,8 +354,8 @@ export const CandySwapView = ({
             Candy swap
           </h1>
           <p className={styles.heroLead}>
-            Offer up to {maxOffered} candies for one you want. Who you traded
-            with shows once a trade goes through.
+            Offer your spare candy for something specific, or browse offers
+            from the community!
           </p>
         </Stack>
         <Cluster gap="lg" className={styles.stats} aria-busy={!activity}>
