@@ -9,15 +9,28 @@ import { HalloweenRandom } from "../random";
 import { EventStatus } from "../time";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import {
-  HALLOWEEN_HOSTS,
   HOST_CANDIES,
   HOUSE_OFFER_CANDIES,
   HOUSE_OFFER_LIFETIME_MS,
   MAX_HOUSE_DROP,
+  balancedHosts,
   dueHouseSpawns,
+  isHalloweenHost,
+  leastAskedWants,
   otherHost,
   type HalloweenHost,
 } from "./house-offers";
+
+/**
+ * What the house may ask for, how many open house offers each host has, and
+ * how many ask for each kind. Spawning counts its own offers in, so a batch
+ * balances and spreads too.
+ */
+interface HouseAsks {
+  pools: Record<HalloweenHost, readonly string[]>;
+  open: Record<HalloweenHost, number>;
+  asked: Map<string, number>;
+}
 
 /**
  * Puts the house's offers up and takes them down. Browsing the swap tops the
@@ -68,8 +81,8 @@ export class HouseOfferService {
         const { open, lastAt } = await this.pool(tx, guildId, now);
         const due = dueHouseSpawns(lastAt, now, open);
         if (!due.length) return;
-        const wants = await this.wantPools(tx, guildId);
-        for (const at of due) await this.spawn(tx, guildId, at, wants);
+        const asks = await this.asks(tx, guildId);
+        for (const at of due) await this.spawn(tx, guildId, at, asks);
         this.logSpawned(guildId, due.length, null);
       });
     } catch (err) {
@@ -137,9 +150,9 @@ export class HouseOfferService {
       async (tx) => {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey(guildId)}, 0))`;
         await this.expire(tx, guildId, now);
-        const wants = await this.wantPools(tx, guildId);
+        const asks = await this.asks(tx, guildId);
         for (let i = 0; i < count; i++) {
-          await this.spawn(tx, guildId, now, wants);
+          await this.spawn(tx, guildId, now, asks);
         }
       },
       { timeout: 15_000 },
@@ -184,18 +197,22 @@ export class HouseOfferService {
   }
 
   /**
-   * One house offer, dated `at`: a random host asks for one of their own
-   * kinds and gives three random candies of the other host's.
+   * One house offer, dated `at`: the host with fewer open offers asks for
+   * one of their own kinds, one the open offers ask for least, and gives
+   * three random candies of the other host's.
    */
   private async spawn(
     tx: Prisma.TransactionClient,
     guildId: string,
     at: Date,
-    wants: Record<HalloweenHost, readonly string[]>,
+    asks: HouseAsks,
   ): Promise<void> {
-    const host = HALLOWEEN_HOSTS[this.random.int(HALLOWEEN_HOSTS.length)];
-    const pool = wants[host];
-    const wantSlug = pool[this.random.int(pool.length)];
+    const hosts = balancedHosts(asks.open);
+    const host = hosts[this.random.int(hosts.length)];
+    const wants = leastAskedWants(asks.pools[host], asks.asked);
+    const wantSlug = wants[this.random.int(wants.length)];
+    asks.open[host] += 1;
+    asks.asked.set(wantSlug, (asks.asked.get(wantSlug) ?? 0) + 1);
     const gives = HOST_CANDIES[otherHost(host)];
     const offer = await tx.halloweenCandyOffer.create({
       data: {
@@ -223,24 +240,49 @@ export class HouseOfferService {
   /**
    * What each host may ask for: their kinds that some player here has a
    * spare of, so somebody can take the offer, or all their kinds when nobody
-   * has one.
+   * has one. With each host's open offers, and how often they ask for each
+   * kind.
    */
-  private async wantPools(
+  private async asks(
     tx: Prisma.TransactionClient,
     guildId: string,
-  ): Promise<Record<HalloweenHost, readonly string[]>> {
-    const held = await tx.$queryRaw<{ slug: string }[]>`
-      SELECT DISTINCT "slug" FROM "halloween_candies"
-      WHERE "guild_id" = ${guildId}
-        AND "owner_id" IS NOT NULL
-        AND "offer_id" IS NULL
-    `;
+  ): Promise<HouseAsks> {
+    const [held, open] = await Promise.all([
+      tx.$queryRaw<{ slug: string }[]>`
+        SELECT DISTINCT "slug" FROM "halloween_candies"
+        WHERE "guild_id" = ${guildId}
+          AND "owner_id" IS NOT NULL
+          AND "offer_id" IS NULL
+      `,
+      tx.halloweenCandyOffer.groupBy({
+        by: ["host", "wantSlug"],
+        where: {
+          guildId,
+          host: { not: null },
+          status: HalloweenCandyOfferStatus.OPEN,
+        },
+        _count: { _all: true },
+      }),
+    ]);
     const slugs = new Set(held.map((c) => c.slug));
     const poolFor = (host: HalloweenHost) => {
       const kinds = HOST_CANDIES[host].filter((slug) => slugs.has(slug));
       return kinds.length ? kinds : HOST_CANDIES[host];
     };
-    return { Daphne: poolFor("Daphne"), Luther: poolFor("Luther") };
+    const asked = new Map<string, number>();
+    const openByHost: Record<HalloweenHost, number> = { Daphne: 0, Luther: 0 };
+    for (const row of open) {
+      const count = row._count._all;
+      if (isHalloweenHost(row.host)) openByHost[row.host] += count;
+      if (row.wantSlug) {
+        asked.set(row.wantSlug, (asked.get(row.wantSlug) ?? 0) + count);
+      }
+    }
+    return {
+      pools: { Daphne: poolFor("Daphne"), Luther: poolFor("Luther") },
+      open: openByHost,
+      asked,
+    };
   }
 
   /** `userId` is the staff member who dropped them; null for the top-up. */
