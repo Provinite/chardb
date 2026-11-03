@@ -66,7 +66,9 @@ describe("a door knock notification", () => {
       notificationSentence(
         doorKnock({ candySlugs: ["candy-corn", "banana", "berry-tart"] }),
       ),
-    ).toBe("knocked on your door and left you candy corn, banana and berry tart");
+    ).toBe(
+      "knocked on your door and left you candy corn, banana and berry tart",
+    );
   });
 
   it("goes to the community's candy board", () => {
