@@ -32,6 +32,7 @@ import { CandyBoardService } from "./board/candy-board.service";
 import { CandyBoardResolver } from "./board/candy-board.resolver";
 import { CandySwapService } from "./swap/candy-swap.service";
 import { CandySwapResolver } from "./swap/candy-swap.resolver";
+import { HouseOfferService } from "./swap/house-offer.service";
 import { HalloweenStaffAccess } from "./dashboard/halloween-staff-access";
 import { HalloweenPrizeListService } from "./prizes/halloween-prize-list.service";
 import { HalloweenPrizeListResolver } from "./prizes/halloween-prize-list.resolver";
@@ -101,6 +102,7 @@ const COMMANDS = [
     CandyBoardResolver,
     CandySwapService,
     CandySwapResolver,
+    HouseOfferService,
     HalloweenStaffAccess,
     HalloweenPrizeListService,
     HalloweenPrizeListResolver,

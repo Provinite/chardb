@@ -30,6 +30,9 @@ import {
   removeCandiesFromBoards,
 } from "../board/candy-board.service";
 import type { HalloweenCandy } from "../board/candy-board.types";
+import { Clock } from "../../clock/clock";
+import { HouseOfferService } from "./house-offer.service";
+import { isHalloweenHost, type HalloweenHost } from "./house-offers";
 import type {
   HalloweenCandyOffer,
   HalloweenCandyOfferPlaced,
@@ -60,6 +63,7 @@ const tradeInclude = {
   initiator: { select: userMapperSelect },
   offerer: { select: userMapperSelect },
   lines: { select: { slug: true, toInitiator: true }, orderBy: { id: "asc" } },
+  offers: { select: { host: true } },
 } as const satisfies Prisma.HalloweenCandyTradeInclude;
 
 type TradeRow = Prisma.HalloweenCandyTradeGetPayload<{
@@ -69,6 +73,12 @@ type TradeRow = Prisma.HalloweenCandyTradeGetPayload<{
 /** One side's half of a swap: who, and the candies they hand over. */
 interface Side {
   userId: string;
+  candies: { id: number; slug: string }[];
+}
+
+/** The offer's side, which is nobody's on a house offer. */
+interface OffererSide {
+  userId: string | null;
   candies: { id: number; slug: string }[];
 }
 
@@ -94,6 +104,8 @@ export class CandySwapService {
     private readonly lock: PlayerLock,
     private readonly notifications: NotificationsService,
     private readonly events: DomainEvents,
+    private readonly house: HouseOfferService,
+    private readonly clock: Clock,
   ) {}
 
   /** Every kind of candy there is, by slug. */
@@ -141,8 +153,9 @@ export class CandySwapService {
   }
 
   /**
-   * A random handful of other players' open offers that the player holds a
-   * spare candy of the wanted kind for.
+   * A random handful of open offers, other players' and the house's, that
+   * the player holds a spare candy of the wanted kind for. Tops the house's
+   * offers up first.
    */
   async browse(
     communityId: string,
@@ -151,12 +164,15 @@ export class CandySwapService {
   ): Promise<HalloweenCandyOffer[]> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
     const take = Math.max(1, Math.min(limit, MAX_BROWSE_LIMIT));
+    await this.house.topUp(guildId);
+    const now = this.clock.now();
     const picked = await this.db.$queryRaw<{ id: string }[]>`
       SELECT o."id"
       FROM "halloween_candy_offers" o
       WHERE o."guild_id" = ${guildId}
         AND o."status" = 'OPEN'
-        AND o."owner_id" <> ${userId}
+        AND (o."expires_at" IS NULL OR o."expires_at" > ${now})
+        AND o."owner_id" IS DISTINCT FROM ${userId}
         AND (
           o."want_slug" IN (
             SELECT c."slug" FROM "halloween_candies" c
@@ -300,6 +316,7 @@ export class CandySwapService {
         initiatorOfferId: offer.id,
         offerer: { userId: mirror.ownerId, candies: [mirror.candy] },
         offererOfferId: mirror.offerId,
+        host: null,
       });
       return { offerId: offer.id, tradeId };
     });
@@ -361,7 +378,7 @@ export class CandySwapService {
         where: { id: offerId, guildId, status: HalloweenCandyOfferStatus.OPEN },
         include: { candies: { select: { id: true, slug: true } } },
       });
-      if (!offer) {
+      if (!offer || (offer.expiresAt && offer.expiresAt <= this.clock.now())) {
         throw new ConflictException("That offer is no longer open");
       }
       if (offer.ownerId === userId) {
@@ -394,6 +411,7 @@ export class CandySwapService {
         initiatorOfferId: null,
         offerer: { userId: offer.ownerId, candies: offer.candies },
         offererOfferId: offer.id,
+        host: isHalloweenHost(offer.host) ? offer.host : null,
       });
     });
 
@@ -490,8 +508,9 @@ export class CandySwapService {
       JOIN "halloween_candies" c ON c."offer_id" = o."id"
       WHERE o."guild_id" = ${guildId}
         AND o."status" = 'OPEN'
+        AND (o."expires_at" IS NULL OR o."expires_at" > ${this.clock.now()})
         AND ${asks}
-        AND o."owner_id" <> ${userId}
+        AND o."owner_id" IS DISTINCT FROM ${userId}
       GROUP BY o."id", o."owner_id"
       HAVING COUNT(*) = 1 ${gives}
       ORDER BY random()
@@ -518,6 +537,9 @@ export class CandySwapService {
   /**
    * Moves each side's candies to the other, closes the offers the trade
    * fills, records it, and tells the offerer. Returns the trade's id.
+   *
+   * On a house offer the candy paid goes to nobody, and it is the taker who
+   * is told, by the offer's host.
    */
   private async swap(
     tx: Prisma.TransactionClient,
@@ -528,11 +550,13 @@ export class CandySwapService {
       initiatorOfferId,
       offerer,
       offererOfferId,
+      host,
     }: {
       initiator: Side;
       initiatorOfferId: string | null;
-      offerer: Side;
+      offerer: OffererSide;
       offererOfferId: string;
+      host: HalloweenHost | null;
     },
   ): Promise<string> {
     const now = new Date();
@@ -572,7 +596,9 @@ export class CandySwapService {
       tx,
       guildId,
       new Map([
-        [offerer.userId, offerer.candies.map((c) => c.id)],
+        ...(offerer.userId
+          ? ([[offerer.userId, offerer.candies.map((c) => c.id)]] as const)
+          : []),
         [initiator.userId, initiator.candies.map((c) => c.id)],
       ]),
     );
@@ -588,18 +614,33 @@ export class CandySwapService {
         tradeId: trade.id,
       },
     });
-    await this.notifications.create(
-      {
-        recipientId: offerer.userId,
-        kind: NotificationKind.HALLOWEEN_CANDY_TRADED,
-        actorUserId: initiator.userId,
-        communityId,
-        subjectType: NotificationSubjectType.HALLOWEEN_CANDY_TRADE,
-        subjectId: trade.id,
-        data: {},
-      },
-      tx,
-    );
+    const subject = {
+      kind: NotificationKind.HALLOWEEN_CANDY_TRADED,
+      communityId,
+      subjectType: NotificationSubjectType.HALLOWEEN_CANDY_TRADE,
+      subjectId: trade.id,
+    } as const;
+    if (offerer.userId) {
+      await this.notifications.create(
+        {
+          ...subject,
+          recipientId: offerer.userId,
+          actorUserId: initiator.userId,
+          data: {},
+        },
+        tx,
+      );
+    } else if (host) {
+      await this.notifications.create(
+        {
+          ...subject,
+          recipientId: initiator.userId,
+          actorLabel: host,
+          data: { count: offerer.candies.length },
+        },
+        tx,
+      );
+    }
 
     this.logger.log({
       event: HalloweenLogEvent.CandyTraded,
@@ -678,6 +719,8 @@ function toOffer(offer: OfferRow): HalloweenCandyOffer {
     wantSlug: offer.wantSlug,
     status: offer.status,
     candies: offer.candies,
+    host: isHalloweenHost(offer.host) ? offer.host : null,
+    expiresAt: offer.expiresAt,
     createdAt: offer.createdAt,
   };
 }
@@ -693,9 +736,11 @@ function toTradeRecord(
     trade.lines
       .filter((l) => l.toInitiator === (viewerInitiated === toViewer))
       .map((l) => l.slug);
+  const host = trade.offers.find((o) => isHalloweenHost(o.host))?.host;
   return {
     id: trade.id,
     with: other ? mapPrismaUserToGraphQL(other) : null,
+    host: isHalloweenHost(host) ? host : null,
     gave: slugs(false),
     received: slugs(true),
     createdAt: trade.createdAt,

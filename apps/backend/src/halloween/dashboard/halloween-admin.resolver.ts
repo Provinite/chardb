@@ -1,4 +1,5 @@
-import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql";
+import { Args, ID, Int, Mutation, Query, Resolver } from "@nestjs/graphql";
+import { HouseOfferService } from "../swap/house-offer.service";
 import { AllowCommunityPermission } from "../../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../../auth/decorators/ResolveCommunityFrom";
 import { CurrentUser } from "../../auth/decorators/CurrentUser";
@@ -25,7 +26,10 @@ import { mapPrismaCharacterToGraphQL } from "../../characters/utils/character-re
  */
 @Resolver()
 export class HalloweenAdminResolver {
-  constructor(private readonly admin: HalloweenAdminService) {}
+  constructor(
+    private readonly admin: HalloweenAdminService,
+    private readonly house: HouseOfferService,
+  ) {}
 
   @AllowCommunityPermission(CommunityPermission.CanManageItems)
   @ResolveCommunityFrom({ communityId: "communityId" })
@@ -113,5 +117,19 @@ export class HalloweenAdminResolver {
   ): Promise<Character[]> {
     const characters = await this.admin.prizeCharacters(communityId, search);
     return characters.map(mapPrismaCharacterToGraphQL);
+  }
+
+  @AllowCommunityPermission(CommunityPermission.CanManageItems)
+  @ResolveCommunityFrom({ communityId: "communityId" })
+  @Mutation(() => Int, {
+    description:
+      "Have Daphne and Luther put up `count` house offers in the candy swap " +
+      "now (1-50), past the cap the swap keeps to on its own. Returns how many.",
+  })
+  async dropHalloweenHouseOffers(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("count", { type: () => Int }) count: number,
+  ): Promise<number> {
+    return this.house.drop(communityId, count);
   }
 }

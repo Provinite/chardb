@@ -2531,14 +2531,20 @@ model HalloweenDeviantArtUser {
 /// community -- at the knock if both are already true, otherwise when the
 /// second happens. Until then `ownerId` is null and it waits on
 /// `discordUserId`. Trading moves it to another user.
+///
+/// A candy the house made for one of its offers has no knock and no Discord
+/// player: it is born claimed and ownerless, held in the offer. A candy paid
+/// to the house goes back to ownerless and stays that way.
 model HalloweenCandy {
   id            Int      @id @default(autoincrement())
   guildId       String   @map("guild_id") @db.VarChar(30)
   /// Which candy it is, by its image's slug (`candy/<slug>.png`).
   slug          String   @db.VarChar(40)
-  knockEventId  Int      @unique @map("knock_event_id")
-  /// The Discord player whose knock gave it, who claims it on linking.
-  discordUserId String   @map("discord_user_id") @db.VarChar(30)
+  /// Null on a candy the house made.
+  knockEventId  Int?     @unique @map("knock_event_id")
+  /// The Discord player whose knock gave it, who claims it on linking. Null
+  /// on a candy the house made.
+  discordUserId String?  @map("discord_user_id") @db.VarChar(30)
   ownerId       String?  @map("owner_id")
   /// When it first got an owner, at the knock or when claimed. A candy is
   /// claimed once: one with this set and no owner stays ownerless.
@@ -2549,7 +2555,7 @@ model HalloweenCandy {
   /// When its current owner got it: the knock, or the trade.
   receivedAt    DateTime @default(now()) @map("received_at") @db.Timestamptz
 
-  knockEvent HalloweenKnockEvent  @relation(fields: [knockEventId], references: [id], onDelete: Cascade)
+  knockEvent HalloweenKnockEvent? @relation(fields: [knockEventId], references: [id], onDelete: Cascade)
   owner      User?                @relation(fields: [ownerId], references: [id], onDelete: SetNull)
   offer      HalloweenCandyOffer? @relation(fields: [offerId], references: [id], onDelete: SetNull)
   tradeLines HalloweenCandyTradeLine[]
@@ -2564,6 +2570,8 @@ enum HalloweenCandyOfferStatus {
   OPEN
   FILLED
   CANCELLED
+  /// A house offer nobody took in time.
+  EXPIRED
 
   @@map("halloween_candy_offer_status")
 }
@@ -2572,10 +2580,19 @@ enum HalloweenCandyOfferStatus {
 /// kind when it is null. The
 /// offered candies are the ones whose `offerId` is this offer's while it is
 /// open; a filled or cancelled offer holds none.
+///
+/// A house offer has no owner: one of the event's hosts, `host`, puts it up,
+/// and it gives candies the house made for it.
 model HalloweenCandyOffer {
   id         String                    @id @default(uuid()) @db.Uuid
   guildId    String                    @map("guild_id") @db.VarChar(30)
-  ownerId    String                    @map("owner_id")
+  /// Null on a house offer.
+  ownerId    String?                   @map("owner_id")
+  /// The host who put up a house offer: one of `HALLOWEEN_HOSTS` in the
+  /// backend. Null on a player's offer.
+  host       String?                   @db.VarChar(20)
+  /// When a house offer stops being open. Null on a player's offer.
+  expiresAt  DateTime?                 @map("expires_at") @db.Timestamptz
   /// Null for an offer that takes any kind of candy.
   wantSlug   String?                   @map("want_slug") @db.VarChar(40)
   status     HalloweenCandyOfferStatus @default(OPEN)
@@ -2587,12 +2604,13 @@ model HalloweenCandyOffer {
   /// The trade that filled it.
   tradeId    String?                   @map("trade_id") @db.Uuid
 
-  owner   User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  owner   User?                @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   candies HalloweenCandy[]
   trade   HalloweenCandyTrade? @relation(fields: [tradeId], references: [id], onDelete: SetNull)
 
   @@index([guildId, status, wantSlug])
   @@index([ownerId, status])
+  @@index([guildId, host, createdAt])
   @@map("halloween_candy_offers")
 }
 

@@ -32,6 +32,20 @@ export class HalloweenCandyOffer {
   })
   candies: HalloweenCandy[];
 
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "The event host, Daphne or Luther, who put up a house offer. Null on " +
+      "a player's offer.",
+  })
+  host: string | null;
+
+  @Field(() => Date, {
+    nullable: true,
+    description: "When a house offer closes. Null on a player's offer.",
+  })
+  expiresAt: Date | null;
+
   @Field()
   createdAt: Date;
 }
@@ -54,9 +68,17 @@ export class HalloweenCandyTradeRecord {
 
   @Field(() => User, {
     nullable: true,
-    description: "Whom you traded with. Null if their account is gone.",
+    description:
+      "Whom you traded with. Null for a house offer, or if their account " +
+      "is gone.",
   })
   with: User | null;
+
+  @Field(() => String, {
+    nullable: true,
+    description: "The host, Daphne or Luther, when the trade took a house offer",
+  })
+  host: string | null;
 
   @Field(() => [String], { description: "The slugs of the candies you gave" })
   gave: string[];

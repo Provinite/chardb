@@ -5,7 +5,9 @@ import type { NotificationsService } from "../../notifications/notifications.ser
 import type { HalloweenDashboardService } from "../dashboard/halloween-dashboard.service";
 import type { PlayerLock } from "../services/player-lock";
 import type { DomainEvents } from "../../events/domain-events";
+import { Clock } from "../../clock/clock";
 import { CandySwapService } from "./candy-swap.service";
+import type { HouseOfferService } from "./house-offer.service";
 
 const OFFER_ID = "00000000-0000-4000-8000-000000000001";
 
@@ -21,6 +23,8 @@ const serviceFailingWith = (failure: Error) =>
     {} as PlayerLock,
     {} as NotificationsService,
     { publish: jest.fn() } as unknown as DomainEvents,
+    {} as HouseOfferService,
+    new Clock(),
   );
 
 describe("CandySwapService under contention", () => {
