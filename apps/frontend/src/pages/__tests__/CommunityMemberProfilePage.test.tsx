@@ -164,7 +164,9 @@ describe("CommunityMemberProfilePage", () => {
     mocks.followersCount = 1;
     renderProfile();
 
-    expect(screen.getByRole("link", { name: "1 follower" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "1 follower" }),
+    ).toBeInTheDocument();
   });
 
   it("links their galleries and media here", () => {
