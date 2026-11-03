@@ -14,6 +14,7 @@ import { CommentList } from "../components/CommentList";
 import { MediaCard } from "../components/MediaCard";
 import { characterUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -315,8 +316,10 @@ export const GalleryPage: React.FC = () => {
   const navigate = useNavigate();
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
+  // On a community host, a gallery from another community is not found.
+  const scope = useHostCommunityScope();
   const { data, loading, error } = useGetGalleryQuery({
-    variables: { id: id! },
+    variables: { id: id!, ...scope },
     skip: !id,
   });
 

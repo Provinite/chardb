@@ -1244,6 +1244,8 @@ export type GalleryCount = {
 
 export type GalleryFiltersInput = {
   characterId?: InputMaybe<Scalars['ID']['input']>;
+  /** Only galleries whose character is in one of this community's species */
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   limit?: Scalars['Int']['input'];
   offset?: Scalars['Int']['input'];
   ownerId?: InputMaybe<Scalars['ID']['input']>;
@@ -2146,6 +2148,8 @@ export type MediaConnection = {
 export type MediaFiltersInput = {
   /** Filter by associated character ID */
   characterId?: InputMaybe<Scalars['ID']['input']>;
+  /** Only media belonging to this community, through its character or where it was uploaded */
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   /** Filter by gallery ID */
   galleryId?: InputMaybe<Scalars['ID']['input']>;
   /** Maximum number of results to return */
@@ -3950,6 +3954,7 @@ export type QueryGalleriesArgs = {
 
 
 export type QueryGalleryArgs = {
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   id: Scalars['ID']['input'];
 };
 
@@ -4112,6 +4117,7 @@ export type QueryMediaArgs = {
 
 
 export type QueryMediaItemArgs = {
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   id: Scalars['ID']['input'];
 };
 
@@ -6293,6 +6299,7 @@ export type GetGalleriesQuery = { __typename?: 'Query', galleries: { __typename?
 
 export type GetGalleryQueryVariables = Exact<{
   id: Scalars['ID']['input'];
+  communityId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
@@ -6894,6 +6901,7 @@ export type GetMediaQuery = { __typename?: 'Query', media: { __typename?: 'Media
 
 export type GetMediaItemQueryVariables = Exact<{
   id: Scalars['ID']['input'];
+  communityId?: InputMaybe<Scalars['ID']['input']>;
 }>;
 
 
@@ -12898,8 +12906,8 @@ export type GetGalleriesLazyQueryHookResult = ReturnType<typeof useGetGalleriesL
 export type GetGalleriesSuspenseQueryHookResult = ReturnType<typeof useGetGalleriesSuspenseQuery>;
 export type GetGalleriesQueryResult = Apollo.QueryResult<GetGalleriesQuery, GetGalleriesQueryVariables>;
 export const GetGalleryDocument = gql`
-    query GetGallery($id: ID!) {
-  gallery(id: $id) {
+    query GetGallery($id: ID!, $communityId: ID) {
+  gallery(id: $id, communityId: $communityId) {
     id
     name
     description
@@ -12946,6 +12954,7 @@ export const GetGalleryDocument = gql`
  * const { data, loading, error } = useGetGalleryQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      communityId: // value for 'communityId'
  *   },
  * });
  */
@@ -16596,8 +16605,8 @@ export type GetMediaLazyQueryHookResult = ReturnType<typeof useGetMediaLazyQuery
 export type GetMediaSuspenseQueryHookResult = ReturnType<typeof useGetMediaSuspenseQuery>;
 export type GetMediaQueryResult = Apollo.QueryResult<GetMediaQuery, GetMediaQueryVariables>;
 export const GetMediaItemDocument = gql`
-    query GetMediaItem($id: ID!) {
-  mediaItem(id: $id) {
+    query GetMediaItem($id: ID!, $communityId: ID) {
+  mediaItem(id: $id, communityId: $communityId) {
     id
     title
     description
@@ -16682,6 +16691,7 @@ export const GetMediaItemDocument = gql`
  * const { data, loading, error } = useGetMediaItemQuery({
  *   variables: {
  *      id: // value for 'id'
+ *      communityId: // value for 'communityId'
  *   },
  * });
  */

@@ -1,5 +1,6 @@
 import React from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -264,7 +265,9 @@ export const MyGalleriesPage: React.FC = () => {
 
   const { user } = useAuth();
 
+  const scope = useHostCommunityScope();
   const { data, loading, error } = useGetMyGalleriesQuery({
+    variables: { filters: scope },
     skip: !user,
   });
 

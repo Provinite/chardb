@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useForm, Controller } from "react-hook-form";
@@ -305,8 +306,13 @@ export const EditMediaPage: React.FC = () => {
   const { user } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // On a community host, media from another community is not found, and only
+  // that community's galleries are offered.
+  const scope = useHostCommunityScope();
+  const itemVariables = { id: id!, ...scope };
+
   const { data, loading, error } = useGetMediaItemQuery({
-    variables: { id: id! },
+    variables: itemVariables,
     skip: !id,
   });
 
@@ -316,6 +322,7 @@ export const EditMediaPage: React.FC = () => {
       filters: {
         limit: 100,
         offset: 0,
+        ...scope,
       },
     },
     skip: !user,
@@ -353,15 +360,15 @@ export const EditMediaPage: React.FC = () => {
   });
 
   const [updateMedia] = useMutation(UPDATE_MEDIA, {
-    refetchQueries: [{ query: GET_MEDIA_ITEM, variables: { id } }],
+    refetchQueries: [{ query: GET_MEDIA_ITEM, variables: itemVariables }],
   });
 
   const [updateTextContent] = useMutation(UPDATE_TEXT_CONTENT, {
-    refetchQueries: [{ query: GET_MEDIA_ITEM, variables: { id } }],
+    refetchQueries: [{ query: GET_MEDIA_ITEM, variables: itemVariables }],
   });
 
   const [updateImage] = useMutation(UPDATE_IMAGE, {
-    refetchQueries: [{ query: GET_MEDIA_ITEM, variables: { id } }],
+    refetchQueries: [{ query: GET_MEDIA_ITEM, variables: itemVariables }],
   });
 
   // Reset form when media data loads

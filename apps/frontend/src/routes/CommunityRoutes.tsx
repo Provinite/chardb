@@ -61,6 +61,14 @@ import {
   TradeOfferPage,
   EditProfilePage,
   NotificationsPage,
+  MediaLibraryPage,
+  MediaPage,
+  EditMediaPage,
+  MyMediaPage,
+  GalleriesPage,
+  GalleryPage,
+  CreateGalleryPage,
+  MyGalleriesPage,
   CreateMediaPage,
   UploadImagePage,
   CreateTextPage,
@@ -86,12 +94,10 @@ const RedirectToItemType: React.FC = () => {
  * so none of them carry a community segment and no page needs a `:communityId`
  * param: `useCommunityId()` reads it off the hostname instead.
  *
- * What is deliberately NOT here is anything that reads or lists a person's own
- * things -- their profile as others see it, their galleries, their media
- * library, the feed, liked lists -- and anything belonging to the site. Those
- * stay at the apex; see `ApexRoutes`. `/my-characters` is the one apparent
- * exception and is not really one: it is this community's characters narrowed
- * to the viewer's, not a person's page served from a community host.
+ * A community host is the whole site prefiltered to its community, so pages
+ * served on both hosts, such as media and galleries, live here too and narrow
+ * their queries with `useHostCommunityScope`. Paths not served here yet are
+ * sent to the apex at the bottom of this table.
  *
  * The upload pages and the profile editor are here despite belonging to a
  * person, because they WRITE. Which host you were on when you uploaded is the
@@ -517,6 +523,46 @@ export const communityRoutes = (
         </ProtectedRoute>
       }
     />
+    {/* --- media and galleries, narrowed to this community. One from
+        another community is not found here (`useHostCommunityScope`). A
+        gallery belongs here through its character. */}
+    <Route path="/media" element={<MediaLibraryPage />} />
+    <Route path="/media/:id" element={<MediaPage />} />
+    <Route
+      path="/media/:id/edit"
+      element={
+        <ProtectedRoute>
+          <EditMediaPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/my/media"
+      element={
+        <ProtectedRoute>
+          <MyMediaPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route path="/galleries" element={<GalleriesPage />} />
+    <Route path="/gallery/:id" element={<GalleryPage />} />
+    <Route
+      path="/gallery/create"
+      element={
+        <ProtectedRoute>
+          <CreateGalleryPage />
+        </ProtectedRoute>
+      }
+    />
+    <Route
+      path="/my/galleries"
+      element={
+        <ProtectedRoute>
+          <MyGalleriesPage />
+        </ProtectedRoute>
+      }
+    />
+
     {/* Narrowed to this community, which the bell's "See all" links to. */}
     <Route
       path="/notifications"
@@ -583,9 +629,6 @@ export const communityRoutes = (
     <Route path="/user/*" element={<ApexRedirect />} />
     <Route path="/my/*" element={<ApexRedirect />} />
     <Route path="/liked/*" element={<ApexRedirect />} />
-    <Route path="/galleries" element={<ApexRedirect />} />
-    <Route path="/gallery/*" element={<ApexRedirect />} />
-    <Route path="/media/*" element={<ApexRedirect />} />
     <Route path="/join-community" element={<ApexRedirect />} />
 
     <Route path="*" element={<NotFoundPage />} />

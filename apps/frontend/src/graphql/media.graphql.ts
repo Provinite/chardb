@@ -59,8 +59,8 @@ export const GET_MEDIA = gql`
 `;
 
 export const GET_MEDIA_ITEM = gql`
-  query GetMediaItem($id: ID!) {
-    mediaItem(id: $id) {
+  query GetMediaItem($id: ID!, $communityId: ID) {
+    mediaItem(id: $id, communityId: $communityId) {
       id
       title
       description

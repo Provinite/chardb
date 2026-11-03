@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
@@ -441,9 +442,11 @@ export const UploadImagePage: React.FC = () => {
     }
   }, [searchParams]);
 
+  // On a community host, only that community's galleries are offered.
+  const scope = useHostCommunityScope();
   const { data: galleriesData, loading: galleriesLoading } =
     useGetMyGalleriesQuery({
-      variables: { filters: { limit: 100 } },
+      variables: { filters: { limit: 100, ...scope } },
       skip: !user,
     });
 

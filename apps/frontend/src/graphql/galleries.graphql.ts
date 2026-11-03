@@ -73,8 +73,8 @@ export const GET_GALLERIES = gql`
 `;
 
 export const GET_GALLERY = gql`
-  query GetGallery($id: ID!) {
-    gallery(id: $id) {
+  query GetGallery($id: ID!, $communityId: ID) {
+    gallery(id: $id, communityId: $communityId) {
       id
       name
       description

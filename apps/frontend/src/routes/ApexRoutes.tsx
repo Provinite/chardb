@@ -242,10 +242,8 @@ export const apexRoutes = (
       }
     />
 
-    {/* --- galleries and media, which belong to a person rather than a
-        community. `Image` has no path to a community at all, and `Gallery` and
-        `Media` reach one only through a nullable `characterId`, so there is no
-        community host that could serve them. */}
+    {/* --- creating and editing galleries and media. Community hosts serve
+        these too, narrowed to the community. */}
     <Route
       path="/gallery/create"
       element={

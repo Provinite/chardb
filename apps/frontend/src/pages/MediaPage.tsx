@@ -23,6 +23,7 @@ import { TextViewer } from "../components/TextViewer";
 import { Markdown } from "../components/Markdown";
 import { characterUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 // import { LikeableType, CommentableType } from '../generated/graphql';
 
 const Container = styled.div`
@@ -351,15 +352,19 @@ export const MediaPage: React.FC = () => {
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [showCropper, setShowCropper] = useState(false);
 
+  // On a community host, media from another community is not found.
+  const scope = useHostCommunityScope();
+  const itemVariables = { id: id!, ...scope };
+
   const { data, loading, error } = useGetMediaItemQuery({
-    variables: { id: id! },
+    variables: itemVariables,
     skip: !id,
   });
 
   const [updateImage, { loading: cropSaving }] = useUpdateImageMutation({
     // The regenerated thumbnail lands on a new key, so every list that already
     // rendered this image is holding a URL that no longer exists.
-    refetchQueries: [{ query: GetMediaItemDocument, variables: { id: id! } }],
+    refetchQueries: [{ query: GetMediaItemDocument, variables: itemVariables }],
     onCompleted: () => {
       setShowCropper(false);
       toast.success("Thumbnail updated");

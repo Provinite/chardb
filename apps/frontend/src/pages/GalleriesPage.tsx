@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import { useNavigate, Link } from "react-router-dom";
 import styled from "styled-components";
 import {
@@ -330,8 +331,9 @@ export const GalleriesPage: React.FC = () => {
     "ALL" | "PUBLIC" | "UNLISTED" | "PRIVATE"
   >("ALL");
 
+  const scope = useHostCommunityScope();
   const { data, loading, error, fetchMore } = useGetGalleriesQuery({
-    variables: { filters },
+    variables: { filters: { ...filters, ...scope } },
     notifyOnNetworkStatusChange: true,
   });
 
@@ -358,6 +360,7 @@ export const GalleriesPage: React.FC = () => {
         variables: {
           filters: {
             ...filters,
+            ...scope,
             offset: data.galleries.galleries.length,
           },
         },
@@ -375,7 +378,7 @@ export const GalleriesPage: React.FC = () => {
         },
       });
     }
-  }, [data, filters, fetchMore]);
+  }, [data, filters, scope, fetchMore]);
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString("en-US", {

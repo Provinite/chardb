@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -10,8 +11,6 @@ import { Button } from "@chardb/ui";
 import {
   useCreateGalleryMutation,
   useGetMyCharactersQuery,
-  GetGalleriesDocument,
-  GetMyGalleriesDocument,
   Visibility,
 } from "../generated/graphql";
 
@@ -40,6 +39,15 @@ const gallerySchema = z.object({
       return !isNaN(num) && num >= 0;
     }, "Sort order must be a valid positive number"),
 });
+
+/**
+ * A gallery belongs to a community through its character, so on a community
+ * host one made without a character would not appear there.
+ */
+const communityGallerySchema = gallerySchema.refine(
+  (data) => Boolean(data.characterId),
+  { message: "Choose a character", path: ["characterId"] },
+);
 
 type GalleryForm = z.infer<typeof gallerySchema>;
 
@@ -271,28 +279,31 @@ export const CreateGalleryPage: React.FC = () => {
 
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const scope = useHostCommunityScope();
+  const requireCharacter = Boolean(scope.communityId);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<GalleryForm>({
-    resolver: zodResolver(gallerySchema),
+    resolver: zodResolver(
+      requireCharacter ? communityGallerySchema : gallerySchema,
+    ),
     defaultValues: {
       visibility: Visibility.Public,
     },
   });
 
+  // By name, so the scoped lists on a community host refetch too.
   const [createGallery] = useCreateGalleryMutation({
-    refetchQueries: [
-      { query: GetGalleriesDocument },
-      { query: GetMyGalleriesDocument },
-    ],
+    refetchQueries: ["GetGalleries", "GetMyGalleries"],
   });
 
-  // Fetch user's characters for the character association dropdown
+  // Fetch user's characters for the character association dropdown. On a
+  // community host, only the ones that would put the gallery there.
   const { data: charactersData } = useGetMyCharactersQuery({
-    variables: { filters: { limit: 100 } },
+    variables: { filters: { limit: 100, ...scope } },
   });
 
   const handleBackClick = () => {
@@ -434,14 +445,18 @@ export const CreateGalleryPage: React.FC = () => {
 
             <FormGroup>
               <Label htmlFor="characterId">
-                Associate with Character (Optional)
+                {requireCharacter
+                  ? "Character *"
+                  : "Associate with Character (Optional)"}
               </Label>
               <Select
                 id="characterId"
                 {...register("characterId")}
                 aria-invalid={!!errors.characterId}
               >
-                <option value="">No character association</option>
+                <option value="">
+                  {requireCharacter ? "Select…" : "No character association"}
+                </option>
                 {charactersData?.myCharacters.characters.map((character) => (
                   <option key={character.id} value={character.id}>
                     {character.name}{" "}

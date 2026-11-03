@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { Button } from "@chardb/ui";
@@ -109,9 +110,11 @@ export const MediaLibraryPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [mediaFilter, setMediaFilter] = useState<MediaFilter>("all");
 
+  const scope = useHostCommunityScope();
   const { data, loading, error } = useGetMediaQuery({
     variables: {
       filters: {
+        ...scope,
         limit: 50,
         offset: 0,
         search: searchTerm || undefined,

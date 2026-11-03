@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -321,12 +322,15 @@ export const CreateTextPage: React.FC = () => {
     skip: !characterId,
   });
 
-  // Get user's galleries for selection
+  // Get user's galleries for selection. On a community host, only that
+  // community's.
+  const scope = useHostCommunityScope();
   const { data: galleriesData } = useGetMyGalleriesQuery({
     variables: {
       filters: {
         limit: 100, // Get all user galleries for selection
         offset: 0,
+        ...scope,
       },
     },
     skip: !user,
@@ -336,7 +340,8 @@ export const CreateTextPage: React.FC = () => {
 
   const [createTextMedia] = useMutation(CREATE_TEXT_MEDIA, {
     refetchQueries: [
-      { query: GET_MY_MEDIA },
+      // The variables `MyMediaPage` asks with on this host.
+      { query: GET_MY_MEDIA, variables: { filters: scope } },
       { query: GET_MEDIA },
       ...(characterId
         ? [

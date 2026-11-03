@@ -5,8 +5,16 @@ import { communityRoutes } from "../CommunityRoutes";
 import { ApexRedirect } from "../ApexRedirect";
 import { ProtectedRoute } from "../../components/ProtectedRoute";
 import {
+  CreateGalleryPage,
   DeviantArtCallbackPage,
   DiscordCallbackPage,
+  EditMediaPage,
+  GalleriesPage,
+  GalleryPage,
+  MediaLibraryPage,
+  MediaPage,
+  MyGalleriesPage,
+  MyMediaPage,
   NotificationsPage,
   PatreonCallbackPage,
   ToyhouseCallbackPage,
@@ -18,6 +26,15 @@ const elementAt = (path: string): ReactNode => {
   return matches?.[matches.length - 1]?.route.element;
 };
 
+/** The page `path` renders, looking through a `ProtectedRoute` wrapper. */
+const pageAt = (path: string): unknown => {
+  const element = elementAt(path);
+  if (!isValidElement<{ children?: ReactNode }>(element)) return null;
+  if (element.type !== ProtectedRoute) return element.type;
+  const child = element.props.children;
+  return isValidElement(child) ? child.type : null;
+};
+
 describe("community host routes", () => {
   // The API sends a linking flow back to the host that started it. Bouncing
   // that callback to the apex strands the viewer outside their community.
@@ -27,24 +44,26 @@ describe("community host routes", () => {
     ["/auth/toyhouse/callback", ToyhouseCallbackPage],
     ["/auth/patreon/callback", PatreonCallbackPage],
   ])("serves %s locally", (path, page) => {
-    const element = elementAt(`${path}?success=true`);
-
-    expect(isValidElement(element) && element.type).toBe(page);
+    expect(pageAt(`${path}?success=true`)).toBe(page);
   });
 
-  it("serves /notifications locally", () => {
-    const element = elementAt("/notifications");
-
-    expect(isValidElement(element) && element.type).toBe(ProtectedRoute);
-    const child = isValidElement<{ children: ReactNode }>(element)
-      ? element.props.children
-      : null;
-    expect(isValidElement(child) && child.type).toBe(NotificationsPage);
+  // A community host is the site prefiltered to the community, so these are
+  // served here rather than sent to the apex.
+  it.each([
+    ["/notifications", NotificationsPage],
+    ["/media", MediaLibraryPage],
+    ["/media/m1", MediaPage],
+    ["/media/m1/edit", EditMediaPage],
+    ["/galleries", GalleriesPage],
+    ["/gallery/g1", GalleryPage],
+    ["/gallery/create", CreateGalleryPage],
+    ["/my/media", MyMediaPage],
+    ["/my/galleries", MyGalleriesPage],
+  ])("serves %s locally", (path, page) => {
+    expect(pageAt(path)).toBe(page);
   });
 
   it("still sends other /auth paths to the apex", () => {
-    const element = elementAt("/auth/something-else");
-
-    expect(isValidElement(element) && element.type).toBe(ApexRedirect);
+    expect(pageAt("/auth/something-else")).toBe(ApexRedirect);
   });
 });

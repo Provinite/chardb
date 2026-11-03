@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Community notifications page**: "See all notifications" on a community opens that community's notifications, with a switch to see everything.
+- **Media and galleries on community sites**: browsing, viewing and managing them stays on the community and shows only that community's.
 
 ### Fixed
 
