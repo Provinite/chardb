@@ -91,13 +91,8 @@ export class AuthService {
     private events: DomainEvents,
   ) {}
 
-  /**
-   * Announces the sign-in without waiting on its listeners: every page load
-   * renews the session, and none of them should wait on what signing in sets
-   * off. `publish` never rejects.
-   */
   private recordSignIn(userId: string): void {
-    void this.events.publish("user.signed_in", { userId });
+    this.events.publish("user.signed_in", { userId });
   }
 
   async validateUser(

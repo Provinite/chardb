@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, type OnModuleDestroy } from "@nestjs/common";
 import { EventEmitter2, OnEvent } from "@nestjs/event-emitter";
 import type { DomainEventMap, DomainEventName } from "./domain-event-map";
 
@@ -17,29 +17,49 @@ const logger = new Logger("DomainEvents");
  * inside a transaction: a rollback would leave listeners acting on something
  * that did not happen.
  *
- * `publish` resolves once every listener has finished and never rejects. Await
- * it to keep listeners inside the request (tests and traces see their work);
- * leave it un-awaited where the caller must not wait on them.
+ * `publish` returns at once; listeners finish on their own time and the
+ * publisher never waits on them. See ARCHITECTURE.md before changing that.
  */
 @Injectable()
-export class DomainEvents {
+export class DomainEvents implements OnModuleDestroy {
+  /** Listener runs not yet finished. */
+  private readonly pending = new Set<Promise<void>>();
+
   constructor(private readonly emitter: EventEmitter2) {}
 
-  async publish<K extends DomainEventName>(
+  publish<K extends DomainEventName>(
     name: K,
     payload: DomainEventMap[K],
-  ): Promise<void> {
-    try {
-      await this.emitter.emitAsync(name, payload);
-    } catch (err) {
-      // Listeners log their own failures; this catches the emitter's.
-      logger.error({
-        event: DomainEventLogEvent.ListenerFailed,
-        message: "Domain event listener failed",
-        domainEvent: name,
-        err,
-      });
+  ): void {
+    const run = this.emitter.emitAsync(name, payload).then(
+      () => undefined,
+      (err: unknown) => {
+        // Listeners log their own failures; this catches the emitter's.
+        logger.error({
+          event: DomainEventLogEvent.ListenerFailed,
+          message: "Domain event listener failed",
+          domainEvent: name,
+          err,
+        });
+      },
+    );
+    this.pending.add(run);
+    void run.finally(() => this.pending.delete(run));
+  }
+
+  /**
+   * Resolves once every listener run started so far, and any they start in
+   * turn, has finished. For tests and shutdown; never for a publisher.
+   */
+  async idle(): Promise<void> {
+    while (this.pending.size) {
+      await Promise.all(this.pending);
     }
+  }
+
+  /** Lets listeners already running finish before the app closes. */
+  async onModuleDestroy(): Promise<void> {
+    await this.idle();
   }
 }
 
