@@ -76,7 +76,8 @@ export class HalloweenCandyTradeRecord {
 
   @Field(() => String, {
     nullable: true,
-    description: "The host, Daphne or Luther, when the trade took a house offer",
+    description:
+      "The host, Daphne or Luther, when the trade took a house offer",
   })
   host: string | null;
 

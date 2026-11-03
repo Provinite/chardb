@@ -289,7 +289,9 @@ export const CandySwapView = ({
             {offers.map((offer) => (
               <Stack as="li" key={offer.id} gap="md" className={styles.card}>
                 {offer.host && (
-                  <span className={styles.tradeWith}>{offer.host}&apos;s offer</span>
+                  <span className={styles.tradeWith}>
+                    {offer.host}&apos;s offer
+                  </span>
                 )}
                 <OfferTerms offer={offer} />
                 <Button

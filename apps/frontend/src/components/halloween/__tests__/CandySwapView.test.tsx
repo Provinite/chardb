@@ -466,7 +466,12 @@ describe("CandySwapView", () => {
   it("names the host on a house offer", () => {
     renderView({
       offers: [
-        offer("h1", "skull-candy", ["banana", "berry-tart", "candy-corn"], "Daphne"),
+        offer(
+          "h1",
+          "skull-candy",
+          ["banana", "berry-tart", "candy-corn"],
+          "Daphne",
+        ),
         offer("p1", "banana", ["luther-head"]),
       ],
     });

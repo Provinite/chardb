@@ -370,7 +370,11 @@ describe("Halloween house offers (e2e)", () => {
 
   describe("dropping offers by hand", () => {
     const drop = (who: Player, count: number) =>
-      testApp.authenticatedGraphqlRequest(DROP, { communityId, count }, who.token);
+      testApp.authenticatedGraphqlRequest(
+        DROP,
+        { communityId, count },
+        who.token,
+      );
 
     it("puts up as many as asked, past the cap", async () => {
       await browse(alice);
