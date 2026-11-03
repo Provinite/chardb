@@ -3,6 +3,7 @@ import {
   ArrowLeftRight,
   ArrowRight,
   Asterisk,
+  CircleAlert,
   Plus,
   Shuffle,
 } from "lucide-react";
@@ -17,6 +18,8 @@ import {
 } from "@chardb/ui";
 import type {
   CandySwapActivityFieldsFragment as SwapActivity,
+  CandySwapCandyFieldsFragment as SwapCandy,
+  CandySwapPlayerFieldsFragment as SwapPlayer,
   HalloweenCandyOfferFieldsFragment as SwapOffer,
   HalloweenCandySwapListingFieldsFragment as SwapListing,
   HalloweenCandySwapTradeFieldsFragment as PublicTrade,
@@ -25,11 +28,6 @@ import type {
 import { candyImageUrl, candyName } from "./candyBoard";
 import { timeAgo } from "./timeAgo";
 import * as styles from "./CandySwapView.css";
-
-export interface SwapCandy {
-  id: number;
-  slug: string;
-}
 
 export interface CandySwapViewProps {
   candyTypes: readonly string[];
@@ -41,6 +39,10 @@ export interface CandySwapViewProps {
   activity: SwapActivity | null;
   /** The community's latest trades; null while they first load. */
   recentTrades: PublicTrade[] | null;
+  /** The offers and counts could not be loaded, and none are on hand. */
+  marketFailed: boolean;
+  /** The recent swaps could not be loaded, and none are on hand. */
+  recentFailed: boolean;
   /** What the trades' times are counted back from. */
   now: Date;
   myOffers: SwapOffer[];
@@ -56,7 +58,9 @@ export interface CandySwapViewProps {
   /** `giveSlug` is the kind picked to fill an offer for any kind. */
   onAccept: (offerId: string, giveSlug?: string) => void;
   onCancel: (offerId: string) => void;
+  /** Draws a new sample of offers; also tries again after a failed load. */
   onReroll: () => void;
+  onRetryRecent: () => void;
   placing: boolean;
   acceptingId: string | null;
   cancellingId: string | null;
@@ -211,6 +215,27 @@ const Empty = ({
   </Stack>
 );
 
+/** In place of a list that failed to load, with a way to try again. */
+const LoadError = ({
+  busy,
+  onRetry,
+  children,
+}: {
+  busy?: boolean;
+  onRetry: () => void;
+  children: React.ReactNode;
+}) => (
+  <Cluster gap="sm" justify="space-between" className={styles.loadError}>
+    <p className={styles.loadErrorText}>
+      <CircleAlert className={styles.loadErrorIcon} aria-hidden />
+      {children}
+    </p>
+    <Button tone="outline" size="sm" busy={busy} onClick={onRetry}>
+      Try again
+    </Button>
+  </Cluster>
+);
+
 const countBySlug = (candies: SwapCandy[]) => {
   const counts = new Map<string, number>();
   for (const c of candies) counts.set(c.slug, (counts.get(c.slug) ?? 0) + 1);
@@ -220,9 +245,8 @@ const countBySlug = (candies: SwapCandy[]) => {
 const plural = (n: number, one: string, many: string) =>
   `${n} ${n === 1 ? one : many}`;
 
-type Person = { username: string; displayName?: string | null } | null;
-
-const nameOf = (person: Person, host?: string | null) =>
+/** A player's name; a house offer's host, or a gone account, without one. */
+const nameOf = (person: SwapPlayer | null, host?: string | null) =>
   person
     ? person.displayName || person.username
     : (host ?? "A deleted account");
@@ -242,6 +266,9 @@ export const CandySwapView = ({
   onAccept,
   onCancel,
   onReroll,
+  onRetryRecent,
+  marketFailed,
+  recentFailed,
   placing,
   acceptingId,
   cancellingId,
@@ -294,8 +321,10 @@ export const CandySwapView = ({
   }, [candyTypes, myCandies]);
 
   const takeable = listings?.filter((l) => l.canTake) ?? [];
+  // With nothing left to take, the list falls back to all, even when the
+  // offers you could take were picked by hand.
   const filter: Filter =
-    chosenFilter ?? (takeable.length > 0 ? "takeable" : "all");
+    takeable.length === 0 ? "all" : (chosenFilter ?? "takeable");
   const shown = filter === "takeable" ? takeable : (listings ?? []);
   // The listings are a sample; this is how many there are to sample from.
   const outOf =
@@ -400,8 +429,14 @@ export const CandySwapView = ({
                 </div>
               }
             >
-              {listings !== null && listings.length > 0 && (
-                <Cluster gap="sm">
+              {/* Held in place, unseen, while the offers load. */}
+              {((listings === null && !marketFailed) ||
+                (listings !== null && listings.length > 0)) && (
+                <Cluster
+                  gap="sm"
+                  className={listings === null ? styles.reserved : undefined}
+                  aria-hidden={listings === null || undefined}
+                >
                   <p className={styles.showing}>
                     Showing {shown.length} of {outOf}
                   </p>
@@ -409,7 +444,7 @@ export const CandySwapView = ({
                     tone="ghost"
                     size="sm"
                     busy={rerolling}
-                    disabled={shown.length >= outOf}
+                    disabled={listings === null || shown.length >= outOf}
                     onClick={onReroll}
                   >
                     <Shuffle className={styles.buttonIcon} aria-hidden />
@@ -417,15 +452,19 @@ export const CandySwapView = ({
                   </Button>
                 </Cluster>
               )}
-              {listings === null ? (
+              {marketFailed ? (
+                <LoadError busy={rerolling} onRetry={onReroll}>
+                  Couldn&apos;t load the open offers.
+                </LoadError>
+              ) : listings === null ? (
                 <Grid min="lg" gap="md" aria-busy>
                   {Array.from({ length: LISTING_PLACEHOLDERS }, (_, i) => (
                     <div key={i} className={styles.placeholder} />
                   ))}
                 </Grid>
               ) : listings.length === 0 ? (
-                <Empty title="No open offers yet">
-                  Put one up below and it shows here for everyone.
+                <Empty title="No one else has an open offer right now">
+                  Yours are under Your open offers.
                 </Empty>
               ) : (
                 <Grid as="ul" min="lg" gap="md" className={styles.list}>
@@ -698,7 +737,11 @@ export const CandySwapView = ({
             </Section>
 
             <Section title="Recent swaps">
-              {recentTrades === null ? (
+              {recentFailed ? (
+                <LoadError onRetry={onRetryRecent}>
+                  Couldn&apos;t load the recent swaps.
+                </LoadError>
+              ) : recentTrades === null ? (
                 <Stack gap="sm" aria-busy>
                   {Array.from({ length: FEED_PLACEHOLDERS }, (_, i) => (
                     <div key={i} className={styles.rowPlaceholder} />

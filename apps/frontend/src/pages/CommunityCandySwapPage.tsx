@@ -98,8 +98,18 @@ export const CommunityCandySwapPage: React.FC = () => {
     setRerolling(true);
     try {
       await market.refetch();
+    } catch {
+      // The query's error shows on the page; keep what was on screen.
     } finally {
       setRerolling(false);
+    }
+  };
+
+  const retryRecent = async () => {
+    try {
+      await recent.refetch();
+    } catch {
+      // The query's error shows on the page.
     }
   };
 
@@ -155,6 +165,9 @@ export const CommunityCandySwapPage: React.FC = () => {
       listings={market.data?.halloweenCandySwapMarket.listings ?? null}
       activity={market.data?.halloweenCandySwapMarket ?? null}
       recentTrades={recent.data?.halloweenCandySwapRecentTrades ?? null}
+      marketFailed={!market.data && Boolean(market.error)}
+      recentFailed={!recent.data && Boolean(recent.error)}
+      onRetryRecent={() => void retryRecent()}
       now={new Date()}
       myOffers={data.myHalloweenCandyOffers}
       trades={data.myHalloweenCandyTrades}

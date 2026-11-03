@@ -31,6 +31,7 @@ import {
 } from "../board/candy-board.service";
 import type { HalloweenCandy } from "../board/candy-board.types";
 import { Clock } from "../../clock/clock";
+import { DAY_MS } from "../time";
 import { HouseOfferService } from "./house-offer.service";
 import { isHalloweenHost, type HalloweenHost } from "./house-offers";
 import type {
@@ -54,7 +55,6 @@ export const DEFAULT_MARKET_LIMIT = 24;
 const HISTORY_LIMIT = 50;
 /** How many of the community's trades the recent feed shows when not told. */
 const DEFAULT_RECENT_TRADES_LIMIT = 10;
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const candySelect = { id: true, slug: true, receivedAt: true } as const;
 
@@ -229,27 +229,23 @@ export class CandySwapService {
     const take = Math.max(1, Math.min(limit, MAX_BROWSE_LIMIT));
     await this.house.topUp(guildId);
     const now = this.clock.now();
-    const open = {
-      guildId,
-      status: HalloweenCandyOfferStatus.OPEN,
-      OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
-    } satisfies Prisma.HalloweenCandyOfferWhereInput;
 
-    // Every row carries the totals, counted over all of them before LIMIT.
-    const [picked, openOffers, tradesLastDay] = await Promise.all([
+    // One pass over the open offers: the counts come back on every row, and
+    // on a single row with no offer when there is nothing to show.
+    const [rows, tradesLastDay] = await Promise.all([
       this.db.$queryRaw<
         {
-          id: string;
-          can_take: boolean;
+          id: string | null;
+          can_take: boolean | null;
+          open_offers: bigint;
           available: bigint;
           ready_to_trade: bigint;
         }[]
       >`
-        SELECT m.*,
-          count(*) OVER () AS "available",
-          count(*) FILTER (WHERE m."can_take") OVER () AS "ready_to_trade"
-        FROM (
-        SELECT o."id", (
+        WITH open AS (
+        SELECT o."id",
+          o."owner_id" IS NOT DISTINCT FROM ${userId} AS "mine",
+        (
           o."want_slug" IN (
             SELECT c."slug" FROM "halloween_candies" c
             WHERE c."guild_id" = ${guildId}
@@ -275,12 +271,22 @@ export class CandySwapService {
         WHERE o."guild_id" = ${guildId}
           AND o."status" = 'OPEN'
           AND (o."expires_at" IS NULL OR o."expires_at" > ${now})
-          AND o."owner_id" IS DISTINCT FROM ${userId}
-        ) m
-        ORDER BY m."can_take" DESC, random()
-        LIMIT ${take}
+        ),
+        counts AS (
+          SELECT
+            count(*) AS "open_offers",
+            count(*) FILTER (WHERE NOT "mine") AS "available",
+            count(*) FILTER (WHERE NOT "mine" AND "can_take") AS "ready_to_trade"
+          FROM open
+        ),
+        picked AS (
+          SELECT "id", "can_take" FROM open
+          WHERE NOT "mine"
+          ORDER BY "can_take" DESC, random()
+          LIMIT ${take}
+        )
+        SELECT counts.*, picked.* FROM counts LEFT JOIN picked ON true
       `,
-      this.db.halloweenCandyOffer.count({ where: open }),
       this.db.halloweenCandyTrade.count({
         where: {
           guildId,
@@ -289,6 +295,9 @@ export class CandySwapService {
       }),
     ]);
 
+    const picked = rows.flatMap((r) =>
+      r.id === null ? [] : [{ id: r.id, can_take: r.can_take === true }],
+    );
     const offers = picked.length
       ? await this.db.halloweenCandyOffer.findMany({
           where: { id: { in: picked.map((p) => p.id) } },
@@ -300,11 +309,12 @@ export class CandySwapService {
       const offer = byId.get(p.id);
       return offer ? [{ offer: toOffer(offer), canTake: p.can_take }] : [];
     });
+    const [counts] = rows;
     return {
       listings,
-      available: Number(picked[0]?.available ?? 0),
-      readyToTrade: Number(picked[0]?.ready_to_trade ?? 0),
-      openOffers,
+      openOffers: Number(counts.open_offers),
+      available: Number(counts.available),
+      readyToTrade: Number(counts.ready_to_trade),
       tradesLastDay,
     };
   }

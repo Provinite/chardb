@@ -82,6 +82,33 @@ export const list = style({
   listStyle: "none",
 });
 
+/** Keeps its space while what fills it loads, without being seen. */
+export const reserved = style({
+  visibility: "hidden",
+});
+
+/** A list that failed to load: an icon and words, so not colour alone. */
+export const loadError = style({
+  padding: vars.space.md,
+  border: `${vars.borderWidth.hairline} solid ${vars.status.danger.border}`,
+  borderRadius: vars.radius.lg,
+});
+
+export const loadErrorText = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space.sm,
+  margin: 0,
+  color: vars.text.default,
+});
+
+export const loadErrorIcon = style({
+  flexShrink: 0,
+  width: vars.font.size.lg,
+  height: vars.font.size.lg,
+  color: vars.status.danger.fg,
+});
+
 /** How many of the offers there are the sample shows. */
 export const showing = style({
   margin: 0,

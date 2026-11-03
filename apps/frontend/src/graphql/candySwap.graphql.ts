@@ -1,5 +1,12 @@
 import { gql } from "@apollo/client";
 
+export const CANDY_SWAP_CANDY_FRAGMENT = gql`
+  fragment CandySwapCandyFields on HalloweenCandy {
+    id
+    slug
+  }
+`;
+
 export const HALLOWEEN_CANDY_OFFER_FRAGMENT = gql`
   fragment HalloweenCandyOfferFields on HalloweenCandyOffer {
     id
@@ -8,9 +15,18 @@ export const HALLOWEEN_CANDY_OFFER_FRAGMENT = gql`
     host
     createdAt
     candies {
-      id
-      slug
+      ...CandySwapCandyFields
     }
+  }
+  ${CANDY_SWAP_CANDY_FRAGMENT}
+`;
+
+/** A player as the swap names them: by display name, else username. */
+export const CANDY_SWAP_PLAYER_FRAGMENT = gql`
+  fragment CandySwapPlayerFields on User {
+    id
+    username
+    displayName
   }
 `;
 
@@ -22,11 +38,10 @@ export const HALLOWEEN_CANDY_TRADE_FRAGMENT = gql`
     createdAt
     host
     with {
-      id
-      username
-      displayName
+      ...CandySwapPlayerFields
     }
   }
+  ${CANDY_SWAP_PLAYER_FRAGMENT}
 `;
 
 export const CANDY_SWAP_QUERY = gql`
@@ -37,8 +52,7 @@ export const CANDY_SWAP_QUERY = gql`
       maxOfferedCandies
     }
     myHalloweenCandies(communityId: $communityId) {
-      id
-      slug
+      ...CandySwapCandyFields
     }
     myHalloweenCandyOffers(communityId: $communityId) {
       ...HalloweenCandyOfferFields
@@ -69,16 +83,13 @@ export const HALLOWEEN_CANDY_SWAP_TRADE_FRAGMENT = gql`
     paid
     createdAt
     offerer {
-      id
-      username
-      displayName
+      ...CandySwapPlayerFields
     }
     taker {
-      id
-      username
-      displayName
+      ...CandySwapPlayerFields
     }
   }
+  ${CANDY_SWAP_PLAYER_FRAGMENT}
 `;
 
 export const CANDY_SWAP_ACTIVITY_FRAGMENT = gql`

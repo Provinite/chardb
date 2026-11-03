@@ -7,6 +7,9 @@ import { DateTime } from "luxon";
  */
 export const EVENT_TIMEZONE = "America/Chicago";
 
+/** A day in milliseconds, for "the last 24 hours" rather than a calendar day. */
+export const DAY_MS = 24 * 60 * 60 * 1000;
+
 export enum EventStatus {
   NotStartedYet,
   Ongoing,

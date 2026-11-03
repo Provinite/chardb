@@ -5677,7 +5677,11 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null, communityMemberships: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canEditSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string, halloweenEnabled: boolean } } }> } } };
 
+export type CandySwapCandyFieldsFragment = { __typename?: 'HalloweenCandy', id: number, slug: string };
+
 export type HalloweenCandyOfferFieldsFragment = { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> };
+
+export type CandySwapPlayerFieldsFragment = { __typename?: 'User', id: string, username: string, displayName: string | null };
 
 export type HalloweenCandyTradeFieldsFragment = { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, host: string | null, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null };
 
@@ -7653,6 +7657,13 @@ export type RateLimitBackoffSpecQueryVariables = Exact<{ [key: string]: never; }
 
 export type RateLimitBackoffSpecQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string } };
 
+export const CandySwapPlayerFieldsFragmentDoc = gql`
+    fragment CandySwapPlayerFields on User {
+  id
+  username
+  displayName
+}
+    `;
 export const HalloweenCandyTradeFieldsFragmentDoc = gql`
     fragment HalloweenCandyTradeFields on HalloweenCandyTradeRecord {
   id
@@ -7661,10 +7672,14 @@ export const HalloweenCandyTradeFieldsFragmentDoc = gql`
   createdAt
   host
   with {
-    id
-    username
-    displayName
+    ...CandySwapPlayerFields
   }
+}
+    ${CandySwapPlayerFieldsFragmentDoc}`;
+export const CandySwapCandyFieldsFragmentDoc = gql`
+    fragment CandySwapCandyFields on HalloweenCandy {
+  id
+  slug
 }
     `;
 export const HalloweenCandyOfferFieldsFragmentDoc = gql`
@@ -7675,11 +7690,10 @@ export const HalloweenCandyOfferFieldsFragmentDoc = gql`
   host
   createdAt
   candies {
-    id
-    slug
+    ...CandySwapCandyFields
   }
 }
-    `;
+    ${CandySwapCandyFieldsFragmentDoc}`;
 export const HalloweenCandySwapListingFieldsFragmentDoc = gql`
     fragment HalloweenCandySwapListingFields on HalloweenCandySwapListing {
   canTake
@@ -7696,17 +7710,13 @@ export const HalloweenCandySwapTradeFieldsFragmentDoc = gql`
   paid
   createdAt
   offerer {
-    id
-    username
-    displayName
+    ...CandySwapPlayerFields
   }
   taker {
-    id
-    username
-    displayName
+    ...CandySwapPlayerFields
   }
 }
-    `;
+    ${CandySwapPlayerFieldsFragmentDoc}`;
 export const CandySwapActivityFieldsFragmentDoc = gql`
     fragment CandySwapActivityFields on HalloweenCandySwapMarket {
   openOffers
@@ -9009,8 +9019,7 @@ export const CandySwapDocument = gql`
     maxOfferedCandies
   }
   myHalloweenCandies(communityId: $communityId) {
-    id
-    slug
+    ...CandySwapCandyFields
   }
   myHalloweenCandyOffers(communityId: $communityId) {
     ...HalloweenCandyOfferFields
@@ -9019,7 +9028,8 @@ export const CandySwapDocument = gql`
     ...HalloweenCandyTradeFields
   }
 }
-    ${HalloweenCandyOfferFieldsFragmentDoc}
+    ${CandySwapCandyFieldsFragmentDoc}
+${HalloweenCandyOfferFieldsFragmentDoc}
 ${HalloweenCandyTradeFieldsFragmentDoc}`;
 
 /**

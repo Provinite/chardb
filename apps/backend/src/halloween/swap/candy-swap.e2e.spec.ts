@@ -955,6 +955,17 @@ describe("Halloween candy swap (e2e)", () => {
       expect(shown.readyToTrade).toBe(5);
     });
 
+    it("counts your own open offers when no one else has any", async () => {
+      await placed(carol, [(await candy(carol, "candy-corn")).id], "banana");
+
+      expect(await market(carol)).toMatchObject({
+        listings: [],
+        openOffers: 1,
+        available: 0,
+        readyToTrade: 0,
+      });
+    });
+
     it("counts nothing when there is nothing to show", async () => {
       const empty = await market(carol);
       expect(empty).toMatchObject({

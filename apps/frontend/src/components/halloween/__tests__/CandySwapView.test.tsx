@@ -76,8 +76,9 @@ const renderView = (props: Partial<CandySwapViewProps> = {}) => {
     onAccept: vi.fn(),
     onCancel: vi.fn(),
     onReroll: vi.fn(),
+    onRetryRecent: vi.fn(),
   };
-  render(
+  const view = (over: Partial<CandySwapViewProps>) => (
     <CandySwapView
       candyTypes={["banana", "berry-tart", "candy-corn", "luther-head"]}
       myCandies={[
@@ -88,6 +89,8 @@ const renderView = (props: Partial<CandySwapViewProps> = {}) => {
       listings={[]}
       activity={activity()}
       recentTrades={[]}
+      marketFailed={false}
+      recentFailed={false}
       now={NOW}
       myOffers={[]}
       trades={[]}
@@ -98,10 +101,15 @@ const renderView = (props: Partial<CandySwapViewProps> = {}) => {
       cancellingId={null}
       rerolling={false}
       {...handlers}
-      {...props}
-    />,
+      {...over}
+    />
   );
-  return handlers;
+  const { rerender } = render(view(props));
+  return {
+    ...handlers,
+    /** Renders again with these props in place of the first ones. */
+    update: (next: Partial<CandySwapViewProps>) => rerender(view(next)),
+  };
 };
 
 const section = (name: string) => screen.getByRole("region", { name });
@@ -218,11 +226,72 @@ describe("CandySwapView", () => {
       ).toEqual(["candy corn (you have 2)", "banana (you have 1)"]);
     });
 
-    it("says when there are none at all", () => {
+    it("says when no one else has an offer open", () => {
       renderView({ listings: [] });
       expect(
-        within(section("Open offers")).getByText("No open offers yet"),
+        within(section("Open offers")).getByText(
+          "No one else has an open offer right now",
+        ),
       ).toBeInTheDocument();
+    });
+
+    it("keeps the place of the count and shuffle while the offers load", () => {
+      renderView({ listings: null, activity: null });
+      // There, but hidden from screen readers until there is something to say.
+      const row = within(section("Open offers"))
+        .getByText("Shuffle")
+        .closest("[aria-hidden]");
+      expect(row).toHaveAttribute("aria-hidden", "true");
+      expect(
+        within(row as HTMLElement)
+          .getByText("Shuffle")
+          .closest("button"),
+      ).toBeDisabled();
+    });
+
+    it("says when the offers could not be loaded, and tries again", async () => {
+      const { onReroll } = renderView({
+        listings: null,
+        activity: null,
+        marketFailed: true,
+      });
+      const offers = section("Open offers");
+      expect(
+        within(offers).getByText("Couldn't load the open offers."),
+      ).toBeInTheDocument();
+      await userEvent.click(
+        within(offers).getByRole("button", { name: "Try again" }),
+      );
+      expect(onReroll).toHaveBeenCalled();
+    });
+
+    it("goes back to all the offers once none are left to take", async () => {
+      const listings = [
+        take(offer("yes", "banana", ["luther-head"])),
+        take(offer("no", "skull-candy", ["candy-corn"]), false),
+      ];
+      const { update } = renderView({
+        listings,
+        activity: activity({ available: 2, readyToTrade: 1 }),
+      });
+      const offers = section("Open offers");
+      await userEvent.click(
+        within(offers).getByRole("button", { name: "All (2)" }),
+      );
+      await userEvent.click(
+        within(offers).getByRole("button", { name: "Ready to trade (1)" }),
+      );
+
+      // The one you could take has gone.
+      update({
+        listings: [listings[1]],
+        activity: activity({ available: 1, readyToTrade: 0 }),
+      });
+
+      expect(
+        within(offers).getByRole("button", { name: "All (1)" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(within(offers).getAllByRole("listitem")).toHaveLength(1);
     });
 
     it("says how many of all the offers it shows, and shuffles in others", async () => {
@@ -359,6 +428,21 @@ describe("CandySwapView", () => {
       expect(
         within(section("Recent swaps")).getByText("No swaps yet."),
       ).toBeInTheDocument();
+    });
+
+    it("says when they could not be loaded, and tries again", async () => {
+      const { onRetryRecent } = renderView({
+        recentTrades: null,
+        recentFailed: true,
+      });
+      const feed = section("Recent swaps");
+      expect(
+        within(feed).getByText("Couldn't load the recent swaps."),
+      ).toBeInTheDocument();
+      await userEvent.click(
+        within(feed).getByRole("button", { name: "Try again" }),
+      );
+      expect(onRetryRecent).toHaveBeenCalled();
     });
   });
 
