@@ -64,7 +64,8 @@ export class ActivityFeedInput {
 
   @Field(() => ID, {
     nullable: true,
-    description: "Only activity on this community's characters, galleries and media",
+    description:
+      "Only activity on this community's characters, galleries and media",
   })
   @IsOptional()
   @IsUUID()
