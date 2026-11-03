@@ -137,7 +137,10 @@ describe("community moderation queue, characterless uploads (e2e)", () => {
     });
 
     it("names the community on an approval", async () => {
-      await imageModerationService.approveImage(await pendingImageIn(), adminId);
+      await imageModerationService.approveImage(
+        await pendingImageIn(),
+        adminId,
+      );
 
       expect(await notificationCommunity()).toBe(communityId);
     });
