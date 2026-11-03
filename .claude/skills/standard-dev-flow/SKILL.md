@@ -12,7 +12,7 @@ For tasks that are expected to be worked with a relatively high level of autonom
 # Workflow
 
 - Prepare the dev environment **(background)**
-  - Switch into a worktree (see the worktree skill), branched from `main`
+  - Switch into a worktree (see the worktree skill), branched from the tip of `main`. For an issue, include `gh-<number>` in the branch name (e.g. `fix/gh-123-short-slug`).
   - Install deps, `yarn instance:init`, build packages, `yarn instance:up`, migrate. Kick these off, then present the plan while they run.
 - Present the plan
   - Skip this step for well-defined, tightly-scoped fixes with no judgement calls.
@@ -72,7 +72,7 @@ For tasks that are expected to be worked with a relatively high level of autonom
   - Migrations, backfills, or post-deploy steps in the PR, or that there are none
   - Follow-up issues filed
   - Whether it is ready to merge
-- After merge: remove the worktree and release its slot.
+- After merge: `yarn instance:down`, `yarn instance:release`, then `ExitWorktree` with `remove`.
 
 # Risk levels
 
