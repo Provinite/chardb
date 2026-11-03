@@ -1,7 +1,12 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MockedProvider, type MockedResponse } from "@apollo/client/testing";
-import { GetFollowStatusDocument } from "../../generated/graphql";
+import { InMemoryCache, gql } from "@apollo/client";
+import userEvent from "@testing-library/user-event";
+import {
+  GetFollowStatusDocument,
+  ToggleFollowDocument,
+} from "../../generated/graphql";
 
 vi.mock("../../contexts/AuthContext", () => ({
   useAuth: () => ({ user: { id: "viewer" } }),
@@ -47,5 +52,56 @@ describe("FollowButton", () => {
     expect(
       await screen.findByRole("button", { name: "Following" }),
     ).toBeInTheDocument();
+  });
+
+  // Any page showing this person's follower count reads it off the cached
+  // User, so the follow updates it there before the server answers.
+  it("updates the person's follower count everywhere it is cached", async () => {
+    const cache = new InMemoryCache();
+    cache.writeFragment({
+      id: "User:them",
+      fragment: gql`
+        fragment Counted on User {
+          id
+          followersCount
+        }
+      `,
+      data: { __typename: "User", id: "them", followersCount: 1 },
+    });
+    const unfollow: MockedResponse = {
+      request: {
+        query: ToggleFollowDocument,
+        variables: { input: { targetUserId: "them" } },
+      },
+      // Never answers: only the optimistic write can have changed the count.
+      delay: Infinity,
+      result: { data: null },
+    };
+
+    render(
+      <MockedProvider mocks={[followed, unfollow]} cache={cache}>
+        <FollowButton userId="them" showCount={false} />
+      </MockedProvider>,
+    );
+    await userEvent.click(
+      await screen.findByRole("button", { name: "Following" }),
+    );
+
+    await vi.waitFor(() =>
+      expect(
+        cache.readFragment<{ followersCount: number }>(
+          {
+            id: "User:them",
+            fragment: gql`
+              fragment Counted on User {
+                followersCount
+              }
+            `,
+          },
+          // What watching queries see while the mutation is in flight.
+          true,
+        )?.followersCount,
+      ).toBe(0),
+    );
   });
 });

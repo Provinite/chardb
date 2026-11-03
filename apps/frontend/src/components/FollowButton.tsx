@@ -44,6 +44,13 @@ export const FollowButton: React.FC<FollowButtonProps> = ({
     },
     update: (cache, { data }) => {
       if (data?.toggleFollow) {
+        // Runs for the optimistic response too, so every page reading this
+        // person's count off the cached User moves with the button.
+        const { followersCount } = data.toggleFollow;
+        cache.modify({
+          id: cache.identify({ __typename: "User", id: userId }),
+          fields: { followersCount: () => followersCount },
+        });
         cache.writeQuery({
           query: GetFollowStatusDocument,
           variables: { userId },
