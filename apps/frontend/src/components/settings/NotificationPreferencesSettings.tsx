@@ -62,8 +62,9 @@ const KIND_COPY: Partial<
     description: "A trade you proposed was turned down.",
   },
   [NotificationKind.HalloweenCandyTraded]: {
-    label: "Candy swaps",
-    description: "Somebody took one of your candy swap offers.",
+    label: "Halloween candy",
+    description:
+      "Somebody took one of your candy swap offers or knocked on your door.",
   },
 };
 

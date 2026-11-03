@@ -1847,6 +1847,40 @@ type HalloweenDashboard {
   summary: HalloweenEventSummary!
 }
 
+"""
+A member's door, as the viewer finds it: whether they can knock, and how many door knocks they have left today.
+"""
+type HalloweenDoor {
+  canKnock: Boolean!
+  closedReason: HalloweenDoorClosedReason
+
+  """
+  The viewer's door knocks a day: as many as /knock gives, twice that for Halloween staff
+  """
+  knocksPerDay: Int!
+
+  """The viewer's door knocks left until the daily reset"""
+  remainingKnocks: Int!
+}
+
+enum HalloweenDoorClosedReason {
+  ALREADY_KNOCKED
+  NOT_A_MEMBER
+  NO_KNOCKS_LEFT
+  OWN_DOOR
+}
+
+type HalloweenDoorKnockResult {
+  """The candies the player knocked on got, by slug"""
+  knockeeCandies: [String!]!
+
+  """The candies the knocker got, by slug"""
+  knockerCandies: [String!]!
+
+  """The knocker's door knocks left until the daily reset"""
+  remainingKnocks: Int!
+}
+
 """The event's settings in a guild, as /settings sets them"""
 type HalloweenEventSettings {
   endDate: DateTime
@@ -3067,6 +3101,11 @@ type Mutation {
   """
   kickCharacterFromSpecies(id: ID!): Boolean!
 
+  """
+  Knock on a member's door: you and they each get 1-3 candies, and they are told what they got. Once per door a day, within your daily door knocks.
+  """
+  knockOnHalloweenDoor(communityId: ID!, userId: ID!): HalloweenDoorKnockResult!
+
   """Link a Discord guild to a community"""
   linkDiscordGuild(
     """Community ID"""
@@ -3547,6 +3586,11 @@ type Notification {
   """Free text, for the kinds that carry it."""
   body: String
 
+  """
+  The Halloween candies received, by slug: each one's image is /halloween/candy/<slug>.png on the frontend.
+  """
+  candySlugs: [String!]
+
   """The community this belongs to, for kinds that are scoped to one."""
   community: Community
 
@@ -3609,6 +3653,7 @@ enum NotificationKind {
   CURRENCY_RECEIVED
   FOLLOW_RECEIVED
   HALLOWEEN_CANDY_TRADED
+  HALLOWEEN_DOOR_KNOCKED
   IMAGE_APPROVED
   IMAGE_REJECTED
   ITEM_GRANTED
@@ -3644,6 +3689,7 @@ enum NotificationSubjectType {
   CURRENCY
   GALLERY
   HALLOWEEN_CANDY_TRADE
+  HALLOWEEN_DOOR_KNOCK
   IMAGE
   ITEM
   MEDIA
@@ -4071,6 +4117,11 @@ type Query {
   The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems.
   """
   halloweenDashboard(communityId: ID!): HalloweenDashboard!
+
+  """
+  A member's door as you find it. Null while the community has no Halloween event running.
+  """
+  halloweenDoor(communityId: ID!, userId: ID!): HalloweenDoor
 
   """
   Characters of the community a new Halloween prize could hand over, by name: no owner, no pending owner, and not a prize already (25 per search)

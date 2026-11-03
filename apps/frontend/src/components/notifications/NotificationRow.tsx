@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
 import { HostAwareLink } from "../HostAwareLink";
+import { CandyStrip } from "../halloween/CandyStrip";
 import type { NotificationFieldsFragment } from "../../graphql/notifications.graphql";
 import {
   notificationActorName,
@@ -127,6 +128,9 @@ export const NotificationRow: React.FC<NotificationRowProps> = ({
         <Sentence>
           <strong>{actorName}</strong> {notificationSentence(notification)}
         </Sentence>
+        {notification.candySlugs && notification.candySlugs.length > 0 && (
+          <CandyStrip slugs={notification.candySlugs} />
+        )}
         {notification.excerpt && <Excerpt>{notification.excerpt}</Excerpt>}
         {notification.body && <Excerpt>{notification.body}</Excerpt>}
         <Meta>

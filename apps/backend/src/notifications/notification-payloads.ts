@@ -92,6 +92,11 @@ const payloadSchemas = {
   [NotificationKind.HALLOWEEN_CANDY_TRADED]: z.object({
     count: z.number().int().positive().optional(),
   }),
+
+  /** The actor knocked on the recipient's door and left them these candies. */
+  [NotificationKind.HALLOWEEN_DOOR_KNOCKED]: z.object({
+    candySlugs: z.array(z.string().max(40)).min(1).max(10),
+  }),
 } as const satisfies Record<NotificationKind, z.ZodObject<z.ZodRawShape>>;
 
 /** The payload shape for each kind, keyed by kind. */

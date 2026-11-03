@@ -36,6 +36,8 @@ import { HouseOfferService } from "./swap/house-offer.service";
 import { HalloweenStaffAccess } from "./dashboard/halloween-staff-access";
 import { HalloweenPrizeListService } from "./prizes/halloween-prize-list.service";
 import { HalloweenPrizeListResolver } from "./prizes/halloween-prize-list.resolver";
+import { DoorKnockService } from "./door-knock/door-knock.service";
+import { DoorKnockResolver } from "./door-knock/door-knock.resolver";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { EventsModule } from "../events/events.module";
 import { KnockCommand } from "./commands/knock.command";
@@ -106,6 +108,8 @@ const COMMANDS = [
     HalloweenStaffAccess,
     HalloweenPrizeListService,
     HalloweenPrizeListResolver,
+    DoorKnockService,
+    DoorKnockResolver,
     ...COMMANDS,
     {
       provide: HALLOWEEN_COMMANDS,

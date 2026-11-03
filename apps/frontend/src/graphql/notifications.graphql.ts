@@ -25,6 +25,7 @@ export const NOTIFICATION_FRAGMENT = gql`
     reason
     reasonText
     excerpt
+    candySlugs
     actor {
       id
       username

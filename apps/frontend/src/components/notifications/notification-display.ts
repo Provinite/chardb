@@ -64,6 +64,11 @@ export function notificationHref(
     case NotificationSubjectType.HalloweenCandyTrade:
       // The trade shows in the swap page's history; it has no page of its own.
       return community ? communityUrl(community.slug, "/halloween/swap") : null;
+    case NotificationSubjectType.HalloweenDoorKnock:
+      // The candies land in the tray beside the candy board.
+      return community
+        ? communityUrl(community.slug, "/halloween/board")
+        : null;
     case NotificationSubjectType.Comment:
     case NotificationSubjectType.Image:
       // Neither has a page of its own: a comment is rendered inside whatever it
@@ -132,6 +137,13 @@ export function notificationSentence(
       return count
         ? `traded you ${count} candies`
         : "took your candy swap offer";
+    case NotificationKind.HalloweenDoorKnocked: {
+      // The row shows the candies themselves beneath this.
+      const n = notification.candySlugs?.length ?? 0;
+      return n > 1
+        ? `knocked on your door and left you ${n} candies`
+        : "knocked on your door and left you a candy";
+    }
   }
 }
 

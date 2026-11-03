@@ -18,6 +18,7 @@ import { usePageMeta } from "../lib/pageMeta";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
 import { AchievementList } from "../components/achievements/AchievementList";
+import { DoorKnock } from "../components/halloween/DoorKnock";
 import {
   useCommunityMemberProfileQuery,
   useCommunityMemberRolesQuery,
@@ -315,6 +316,14 @@ export const CommunityMemberProfilePage: React.FC = () => {
               <ExternalLink size={15} /> Site profile
             </ActionAnchor>
           </Actions>
+
+          {user && communityId && community?.halloweenEnabled && (
+            <DoorKnock
+              communityId={communityId}
+              userId={member.id}
+              name={displayName}
+            />
+          )}
         </Identity>
       </Header>
 
