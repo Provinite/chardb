@@ -5,9 +5,8 @@ import {
   ConflictException,
   BadRequestException,
   forwardRef,
-  Logger,
 } from "@nestjs/common";
-import { AchievementsService } from "../achievements/achievements.service";
+import { DomainEvents } from "../events/domain-events";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
 import { findOpenSignupRoleId } from "../communities/open-signup";
 import { JwtService } from "@nestjs/jwt";
@@ -89,24 +88,11 @@ export class AuthService {
     private emailVerificationService: EmailVerificationService,
     @Inject(forwardRef(() => CommunityMembershipService))
     private membership: CommunityMembershipService,
-    private achievements: AchievementsService,
+    private events: DomainEvents,
   ) {}
 
-  private readonly logger = new Logger(AuthService.name);
-
-  /**
-   * Signing in can earn achievements. The award runs after the session is
-   * handed back, never ahead of it: every page load renews the session, and
-   * none of them should wait on it. A failure is logged and goes no further.
-   */
   private recordSignIn(userId: string): void {
-    this.achievements.recordSignIn(userId).catch((err: unknown) => {
-      this.logger.warn({
-        message: "Could not record sign-in achievements",
-        userId,
-        err,
-      });
-    });
+    this.events.publish("user.signed_in", { userId });
   }
 
   async validateUser(

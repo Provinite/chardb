@@ -1,6 +1,8 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Clock } from "../clock/clock";
+import { OnDomainEvent } from "../events/domain-events";
+import type { UserSignedIn } from "../events/domain-event-map";
 import {
   findAchievement,
   type AchievementDefinition,
@@ -49,6 +51,11 @@ export class AchievementsService {
     private readonly db: DatabaseService,
     private readonly clock: Clock,
   ) {}
+
+  @OnDomainEvent("user.signed_in")
+  async onSignedIn({ userId }: UserSignedIn): Promise<void> {
+    await this.recordSignIn(userId);
+  }
 
   /**
    * Grants what signing in now earns: trick-or-treater for each community

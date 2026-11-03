@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Domain event bus**: in-process, fire-and-forget `DomainEvents` with typed `@OnDomainEvent` listeners; sign-in achievements now listen for `user.signed_in`.
+
 ## [v15.3.0] - 2026-11-01
 
 ### Added

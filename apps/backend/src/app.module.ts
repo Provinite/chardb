@@ -50,6 +50,7 @@ import { PendingOwnershipModule } from "./pending-ownership/pending-ownership.mo
 import { DiscordModule } from "./discord/discord.module";
 import { DeviantArtModule } from "./deviantart/deviantart.module";
 import { HalloweenModule } from "./halloween/halloween.module";
+import { AchievementsModule } from "./achievements/achievements.module";
 import { ALL_THROTTLES } from "./middleware/throttles";
 import { ImageModerationModule } from "./image-moderation/image-moderation.module";
 import { TraitReviewModule } from "./trait-review/trait-review.module";
@@ -272,6 +273,7 @@ import { Request, Response } from "express";
     DiscordModule,
     DeviantArtModule,
     HalloweenModule,
+    AchievementsModule,
     ImageModerationModule,
     TraitReviewModule,
     MyoModule,

@@ -278,14 +278,17 @@ describe("Achievements (e2e)", () => {
 
     it("signs in without waiting for the award", async () => {
       const alice = await member("alice");
+      let finish: () => void = () => undefined;
       jest
         .spyOn(achievements, "recordSignIn")
-        .mockReturnValue(new Promise<void>(() => undefined));
+        .mockReturnValue(new Promise<void>((resolve) => (finish = resolve)));
 
       const res = await testApp.graphqlRequest(AUTH_QUERIES.LOGIN, {
         input: { email: alice.email, password: "password123" },
       });
       expect(res.body.data.login.accessToken).toEqual(expect.any(String));
+      // Shutting down waits for listeners still running.
+      finish();
     }, 5_000);
   });
 
