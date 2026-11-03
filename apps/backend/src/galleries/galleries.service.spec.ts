@@ -56,6 +56,7 @@ describe("GalleriesService", () => {
           description: "A test gallery",
           ownerId: userId,
           characterId: undefined,
+          communityId: null,
           visibility: Visibility.PUBLIC,
           sortOrder: 0,
         },

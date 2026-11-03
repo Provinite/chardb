@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`notifications` takes a `communityId`** to list one community's notifications plus those that belong to no community.
 - **Media and gallery queries take a `communityId`**: lists narrow to that community, and `mediaItem`/`gallery` return not found for anything outside it.
 - **Liked lists and the activity feed take a `communityId`** to narrow them to one community.
+- **Galleries remember the community they were made in** (`Gallery.communityId`), so a gallery with no character still belongs to one, by the same rule as media.
 
 ### Fixed
 

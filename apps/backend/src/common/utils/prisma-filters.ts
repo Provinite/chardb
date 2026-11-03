@@ -32,12 +32,13 @@ export const characterBelongingToCommunity = (
 });
 
 /**
- * Galleries a community host lists: those whose character is in one of the
- * community's species. A gallery has no community of its own, so one with no
- * character belongs to none.
+ * Galleries a community lists, by the same two routes as media: through the
+ * gallery's character, or `Gallery.communityId` for one created on the
+ * community's host without a character. Matching media's rule keeps a gallery
+ * and the media in it in the same community.
  */
 export const galleryBelongingToCommunity = (
   communityId: string,
 ): Prisma.GalleryWhereInput => ({
-  character: { species: { communityId } },
+  OR: [{ character: { species: { communityId } } }, { communityId }],
 });

@@ -9,6 +9,7 @@ import {
   galleryBelongingToCommunity,
   notDeleted,
 } from "../common/utils/prisma-filters";
+import { resolveMemberCommunity } from "../common/utils/member-community";
 
 /**
  * Service layer input types for gallery operations.
@@ -25,6 +26,11 @@ export interface CreateGalleryServiceInput {
   characterId?: string;
   visibility?: Visibility;
   sortOrder?: number;
+  /**
+   * The host's community, filed as `Gallery.communityId` when no character
+   * names one and the creator belongs to it (`resolveMemberCommunity`).
+   */
+  communityId?: string;
 }
 
 /**
@@ -62,6 +68,7 @@ export class GalleriesService {
       characterId,
       visibility = Visibility.PUBLIC,
       sortOrder = 0,
+      communityId,
     } = input;
 
     // Verify character ownership if specified
@@ -69,12 +76,19 @@ export class GalleriesService {
       await this.verifyCharacterOwnership(characterId, userId);
     }
 
+    // A character already says which community; the host only answers for
+    // galleries without one.
+    const filedUnder = characterId
+      ? null
+      : await resolveMemberCommunity(this.db, userId, communityId);
+
     return this.db.gallery.create({
       data: {
         name,
         description,
         ownerId: userId,
         characterId,
+        communityId: filedUnder,
         visibility,
         sortOrder,
       },
@@ -254,7 +268,10 @@ export class GalleriesService {
           { visibility: Visibility.UNLISTED },
           { ownerId: userId }, // User can see their own private galleries
         ],
-        ...(communityId ? galleryBelongingToCommunity(communityId) : {}),
+        // Under AND: the visibility rule above already holds the top-level OR.
+        ...(communityId
+          ? { AND: [galleryBelongingToCommunity(communityId)] }
+          : {}),
       },
       orderBy: [
         { createdAt: "desc" }, // Most recently created first

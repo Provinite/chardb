@@ -23,6 +23,7 @@ export function mapCreateGalleryInputToService(
     characterId: input.characterId,
     visibility: input.visibility,
     sortOrder: input.sortOrder,
+    communityId: input.communityId,
   };
 }
 

@@ -9,6 +9,7 @@ import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import { Visibility, ModerationStatus } from "@chardb/database";
 import { notDeleted } from "../common/utils/prisma-filters";
+import { resolveMemberCommunity } from "../common/utils/member-community";
 import * as sharp from "sharp";
 import { v4 as uuid } from "uuid";
 import { extname } from "path";
@@ -127,7 +128,7 @@ export class ImagesService {
     // would carry a second answer that nothing reads.
     const reviewingCommunityId = characterId
       ? null
-      : await this.resolveReviewingCommunity(userId, communityId);
+      : await resolveMemberCommunity(this.db, userId, communityId);
 
     // NOTE: Character/gallery associations now handled through Media system
 
@@ -743,50 +744,6 @@ export class ImagesService {
    * - Orphaned characters: requires `canUploadCharacterImages` or `canCreateOrphanedCharacter`
    * - Permissions are resolved via character→species→community
    */
-  /**
-   * Which community may review a characterless upload.
-   *
-   * Membership is required rather than merely a real id. The value arrives
-   * from the client -- the API is one host for every community, so there is no
-   * `Host` header to read it off -- and without a check anyone could file
-   * their uploads into a community they have nothing to do with, which is a
-   * way to put pictures in front of moderators who never agreed to look at
-   * them.
-   *
-   * A community that has gone missing, or one the uploader has since left, is
-   * not an error: the upload falls back to the global queue rather than
-   * failing. Refusing it would mean an upload that dies because of a
-   * membership change between opening the form and submitting it.
-   */
-  private async resolveReviewingCommunity(
-    userId: string,
-    communityId?: string,
-  ): Promise<string | null> {
-    if (!communityId) return null;
-
-    const membership = await this.db.communityMember.findFirst({
-      where: { userId, role: { communityId } },
-      select: { id: true },
-    });
-
-    if (membership) return communityId;
-
-    // Global admins are in no community and moderate everywhere, so their own
-    // uploads would otherwise never carry one.
-    const user = await this.db.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-    if (!user?.isAdmin) return null;
-
-    const community = await this.db.community.findUnique({
-      where: { id: communityId },
-      select: { id: true },
-    });
-
-    return community?.id ?? null;
-  }
-
   private async verifyCharacterEditPermission(
     userId: string,
     characterId: string,

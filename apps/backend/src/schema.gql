@@ -768,6 +768,11 @@ input CreateEnumValueSettingInput {
 
 input CreateGalleryInput {
   characterId: ID
+
+  """
+  The host's community, for a gallery with no character. Ignored when characterId is given or the creator is not a member.
+  """
+  communityId: ID
   description: String
   name: String!
   sortOrder: Int! = 0

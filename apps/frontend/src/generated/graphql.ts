@@ -650,6 +650,8 @@ export type CreateEnumValueSettingInput = {
 
 export type CreateGalleryInput = {
   characterId?: InputMaybe<Scalars['ID']['input']>;
+  /** The host's community, for a gallery with no character. Ignored when characterId is given or the creator is not a member. */
+  communityId?: InputMaybe<Scalars['ID']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
   sortOrder?: Scalars['Int']['input'];

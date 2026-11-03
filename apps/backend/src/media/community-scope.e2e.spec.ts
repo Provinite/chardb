@@ -137,15 +137,59 @@ describe("media and galleries scoped to a community (e2e)", () => {
   });
 
   describe("galleries", () => {
-    it("lists galleries whose character is in the community", async () => {
-      const here = await createGallery("Here", characterId);
+    it("lists galleries reaching the community by character or by creation", async () => {
+      const viaCharacter = await createGallery("Here", characterId);
+      const viaCreation = (
+        await testApp.getDb().gallery.create({
+          data: {
+            name: "Made here",
+            ownerId,
+            communityId,
+            visibility: Visibility.PUBLIC,
+          },
+        })
+      ).id;
       await createGallery("There", otherCharacterId);
       await createGallery("Loose");
 
       const result = await galleriesService.findAll({ communityId });
 
-      expect(result.galleries.map((g) => g.id)).toEqual([here]);
-      expect(result.total).toBe(1);
+      expect(result.galleries.map((g) => g.id).sort()).toEqual(
+        [viaCharacter, viaCreation].sort(),
+      );
+      expect(result.total).toBe(2);
+    });
+
+    // The same rule an upload follows: the host names the community when no
+    // character does, and only for someone who belongs to it.
+    describe("create", () => {
+      it("files a characterless gallery under the host's community", async () => {
+        const gallery = await galleriesService.create(ownerId, {
+          name: "Sketches",
+          communityId,
+        });
+
+        expect(gallery.communityId).toBe(communityId);
+      });
+
+      it("ignores the host's community when a character names one", async () => {
+        const gallery = await galleriesService.create(ownerId, {
+          name: "Sketches",
+          characterId,
+          communityId: otherCommunityId,
+        });
+
+        expect(gallery.communityId).toBeNull();
+      });
+
+      it("ignores a community the creator does not belong to", async () => {
+        const gallery = await galleriesService.create(ownerId, {
+          name: "Sketches",
+          communityId: otherCommunityId,
+        });
+
+        expect(gallery.communityId).toBeNull();
+      });
     });
 
     it("narrows liked galleries", async () => {

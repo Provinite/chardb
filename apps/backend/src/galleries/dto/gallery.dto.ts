@@ -40,6 +40,15 @@ export class CreateGalleryInput {
   @IsNumber()
   @Min(0)
   sortOrder?: number;
+
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "The host's community, for a gallery with no character. Ignored when characterId is given or the creator is not a member.",
+  })
+  @IsOptional()
+  @IsUUID()
+  communityId?: string;
 }
 
 @InputType()

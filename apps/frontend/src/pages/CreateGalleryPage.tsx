@@ -40,15 +40,6 @@ const gallerySchema = z.object({
     }, "Sort order must be a valid positive number"),
 });
 
-/**
- * A gallery belongs to a community through its character, so on a community
- * host one made without a character would not appear there.
- */
-const communityGallerySchema = gallerySchema.refine(
-  (data) => Boolean(data.characterId),
-  { message: "Choose a character", path: ["characterId"] },
-);
-
 type GalleryForm = z.infer<typeof gallerySchema>;
 
 const Container = styled.div`
@@ -279,17 +270,15 @@ export const CreateGalleryPage: React.FC = () => {
 
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // On a community host a gallery with no character is filed under it.
   const scope = useHostCommunityScope();
-  const requireCharacter = Boolean(scope.communityId);
 
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm<GalleryForm>({
-    resolver: zodResolver(
-      requireCharacter ? communityGallerySchema : gallerySchema,
-    ),
+    resolver: zodResolver(gallerySchema),
     defaultValues: {
       visibility: Visibility.Public,
     },
@@ -326,6 +315,7 @@ export const CreateGalleryPage: React.FC = () => {
         characterId: data.characterId || undefined,
         visibility: data.visibility,
         sortOrder,
+        ...scope,
       };
 
       const result = await createGallery({
@@ -445,18 +435,14 @@ export const CreateGalleryPage: React.FC = () => {
 
             <FormGroup>
               <Label htmlFor="characterId">
-                {requireCharacter
-                  ? "Character *"
-                  : "Associate with Character (Optional)"}
+                Associate with Character (Optional)
               </Label>
               <Select
                 id="characterId"
                 {...register("characterId")}
                 aria-invalid={!!errors.characterId}
               >
-                <option value="">
-                  {requireCharacter ? "Select…" : "No character association"}
-                </option>
+                <option value="">No character association</option>
                 {charactersData?.myCharacters.characters.map((character) => (
                   <option key={character.id} value={character.id}>
                     {character.name}{" "}

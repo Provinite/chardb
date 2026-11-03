@@ -328,7 +328,8 @@ export const GalleryPage: React.FC = () => {
     loading: mediaLoading,
     error: mediaError,
   } = useGetMediaQuery({
-    variables: { filters: { galleryId: id } },
+    // Only what this host would open: media from another community 404s.
+    variables: { filters: { galleryId: id, ...scope } },
     skip: !id,
   });
 

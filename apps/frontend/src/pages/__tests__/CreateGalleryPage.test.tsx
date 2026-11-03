@@ -52,9 +52,8 @@ describe("CreateGalleryPage", () => {
     await vi.waitFor(() => expect(mocks.createGallery).toHaveBeenCalled());
   });
 
-  // A gallery belongs to a community through its character, so one made here
-  // without a character would not appear here.
-  it("requires a character on a community host", async () => {
+  // A gallery without a character belongs to the community it was made in.
+  it("files a gallery with no character under the host's community", async () => {
     mocks.hostCommunity = {
       id: "community-1",
       name: "Willowmere",
@@ -66,7 +65,12 @@ describe("CreateGalleryPage", () => {
     await user.type(screen.getByLabelText(/Gallery Name/), "Sketches");
     await user.click(screen.getByRole("button", { name: "Create Gallery" }));
 
-    expect(await screen.findByText("Choose a character")).toBeInTheDocument();
-    expect(mocks.createGallery).not.toHaveBeenCalled();
+    await vi.waitFor(() =>
+      expect(mocks.createGallery).toHaveBeenCalledWith({
+        variables: {
+          input: expect.objectContaining({ communityId: "community-1" }),
+        },
+      }),
+    );
   });
 });
