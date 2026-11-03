@@ -147,6 +147,32 @@ describe("liked lists and feed scoped to a community (e2e)", () => {
     expect(scoped.total).toBe(1);
   });
 
+  // A feed is a listing: unlisted is reachable by link, private by its owner.
+  it("leaves private and unlisted things out of the feed", async () => {
+    await db().follow.create({
+      data: { followerId: viewerId, followingId: authorId },
+    });
+    await db().character.updateMany({
+      where: { id: thereCharacterId },
+      data: { visibility: Visibility.PRIVATE },
+    });
+    const hidden = await createGallery("Hidden gallery", hereCharacterId);
+    await db().gallery.update({
+      where: { id: hidden },
+      data: { visibility: Visibility.UNLISTED },
+    });
+    const secret = await createImageMedia("Secret art", hereCharacterId);
+    await db().media.update({
+      where: { id: secret },
+      data: { visibility: Visibility.PRIVATE },
+    });
+
+    const feed = await social.getActivityFeed(viewerId, 30, 0);
+
+    const names = feed.map((item) => item.content.name);
+    expect(names).toEqual(["Here"]);
+  });
+
   it("narrows the activity feed", async () => {
     await db().follow.create({
       data: { followerId: viewerId, followingId: authorId },

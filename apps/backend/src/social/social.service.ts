@@ -1,5 +1,9 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
-import { NotificationKind, NotificationSubjectType } from "@chardb/database";
+import {
+  NotificationKind,
+  NotificationSubjectType,
+  Visibility,
+} from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import { NotificationsService } from "../notifications/notifications.service";
 import { MediaFiltersInput } from "../media/dto/media.dto";
@@ -705,6 +709,8 @@ export class SocialService {
       this.databaseService.character.findMany({
         where: {
           ownerId: { in: followingUserIds },
+          // A feed is a listing: unlisted is reachable by link only.
+          visibility: Visibility.PUBLIC,
           ...notDeleted,
           ...(communityId ? characterBelongingToCommunity(communityId) : {}),
         },
@@ -722,6 +728,7 @@ export class SocialService {
       this.databaseService.gallery.findMany({
         where: {
           ownerId: { in: followingUserIds },
+          visibility: Visibility.PUBLIC,
           ...(communityId ? galleryBelongingToCommunity(communityId) : {}),
         },
         include: {
@@ -739,6 +746,7 @@ export class SocialService {
         where: {
           imageId: { not: null },
           ownerId: { in: followingUserIds },
+          visibility: Visibility.PUBLIC,
           ...(communityId ? mediaBelongingToCommunity(communityId) : {}),
         },
         include: {
