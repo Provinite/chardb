@@ -460,7 +460,6 @@ export class SocialService {
     });
   }
 
-
   async getUserLikedImages(userId: string) {
     const likes = await this.databaseService.like.findMany({
       where: {
