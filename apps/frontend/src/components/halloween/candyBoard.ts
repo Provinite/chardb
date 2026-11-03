@@ -306,3 +306,11 @@ export const candyImageUrl = (slug: string) => `/halloween/candy/${slug}.png`;
 
 /** "luther-head" -> "luther head": what a candy is called on the page. */
 export const candyName = (slug: string) => slug.replace(/-/g, " ");
+
+/** "candy corn", "candy corn and banana", "candy corn, banana and berry tart". */
+export function candyList(slugs: readonly string[]): string {
+  const names = slugs.map(candyName);
+  if (names.length === 0) return "candy";
+  if (names.length === 1) return names[0];
+  return `${names.slice(0, -1).join(", ")} and ${names[names.length - 1]}`;
+}

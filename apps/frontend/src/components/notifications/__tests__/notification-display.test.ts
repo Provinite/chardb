@@ -41,3 +41,38 @@ describe("a candy trade notification", () => {
     expect(notificationHref(candyTrade({ community: null }))).toBeNull();
   });
 });
+
+const doorKnock = (
+  changes: Partial<NotificationFieldsFragment> = {},
+): NotificationFieldsFragment =>
+  ({
+    kind: NotificationKind.HalloweenDoorKnocked,
+    subjectType: NotificationSubjectType.HalloweenDoorKnock,
+    subjectId: "7",
+    community: { id: "c1", slug: "willowmere" },
+    candySlugs: ["candy-corn"],
+    ...changes,
+  }) as NotificationFieldsFragment;
+
+describe("a door knock notification", () => {
+  it("names the one candy left", () => {
+    expect(notificationSentence(doorKnock())).toBe(
+      "knocked on your door and left you candy corn",
+    );
+  });
+
+  it("lists several candies", () => {
+    expect(
+      notificationSentence(
+        doorKnock({ candySlugs: ["candy-corn", "banana", "berry-tart"] }),
+      ),
+    ).toBe("knocked on your door and left you candy corn, banana and berry tart");
+  });
+
+  it("goes to the community's candy board", () => {
+    expect(notificationHref(doorKnock())).toBe(
+      communityUrl("willowmere", "/halloween/board"),
+    );
+    expect(notificationHref(doorKnock({ community: null }))).toBeNull();
+  });
+});
