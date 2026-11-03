@@ -3852,6 +3852,7 @@ export type QueryCommunityMembersByCommunityArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   communityId: Scalars['ID']['input'];
   first?: InputMaybe<Scalars['Int']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -7075,6 +7076,7 @@ export type CommunityMembersWithRolesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
   first: Scalars['Int']['input'];
   after?: InputMaybe<Scalars['String']['input']>;
+  search?: InputMaybe<Scalars['String']['input']>;
 }>;
 
 
@@ -17882,11 +17884,12 @@ export type UpdateRoleMutationHookResult = ReturnType<typeof useUpdateRoleMutati
 export type UpdateRoleMutationResult = Apollo.MutationResult<UpdateRoleMutation>;
 export type UpdateRoleMutationOptions = Apollo.BaseMutationOptions<UpdateRoleMutation, UpdateRoleMutationVariables>;
 export const CommunityMembersWithRolesDocument = gql`
-    query CommunityMembersWithRoles($communityId: ID!, $first: Int!, $after: String) {
+    query CommunityMembersWithRoles($communityId: ID!, $first: Int!, $after: String, $search: String) {
   communityMembersByCommunity(
     communityId: $communityId
     first: $first
     after: $after
+    search: $search
   ) {
     nodes {
       id
@@ -17953,6 +17956,7 @@ export const CommunityMembersWithRolesDocument = gql`
  *      communityId: // value for 'communityId'
  *      first: // value for 'first'
  *      after: // value for 'after'
+ *      search: // value for 'search'
  *   },
  * });
  */

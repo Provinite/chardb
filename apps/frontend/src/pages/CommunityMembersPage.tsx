@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import styled from "styled-components";
-import { Avatar } from "@chardb/ui";
+import { Avatar, timingMs, useDebouncedValue } from "@chardb/ui";
 import { Users, Search, Package, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -214,42 +214,40 @@ export const CommunityMembersPage: React.FC = () => {
   const communityId = useCommunityId();
   const { user } = useAuth();
   const [search, setSearch] = useState("");
-  const [limit, setLimit] = useState(PAGE_SIZE);
+  const debouncedSearch = useDebouncedValue(
+    search.trim(),
+    timingMs.debounce.search,
+  );
+  // "Load more" grows the page for one search; a new search starts over.
+  const [pages, setPages] = useState({
+    key: debouncedSearch,
+    limit: PAGE_SIZE,
+  });
+  const limit = pages.key === debouncedSearch ? pages.limit : PAGE_SIZE;
 
   const community = useHostCommunity();
 
-  const { data, loading, error } = useCommunityMembersWithRolesQuery({
-    variables: { communityId: communityId!, first: limit },
-    skip: !communityId,
-    // Membership changes elsewhere by definition -- people join, and staff
-    // change roles from the permissions page. A cached list would keep
-    // showing who was here when this tab opened.
-    fetchPolicy: "cache-and-network",
-  });
+  const { data, previousData, loading, error } =
+    useCommunityMembersWithRolesQuery({
+      variables: {
+        communityId: communityId!,
+        first: limit,
+        search: debouncedSearch || undefined,
+      },
+      skip: !communityId,
+      // Membership changes elsewhere by definition -- people join, and staff
+      // change roles from the permissions page. A cached list would keep
+      // showing who was here when this tab opened.
+      fetchPolicy: "cache-and-network",
+    });
 
-  const members = useMemo(
-    () => data?.communityMembersByCommunity?.nodes ?? [],
-    [data],
-  );
+  // The last results stay up while the next search loads.
+  const connection = (data ?? previousData)?.communityMembersByCommunity;
+  const members = useMemo(() => connection?.nodes ?? [], [connection]);
+  const total = connection?.totalCount ?? 0;
+  const hasMore = connection?.hasNextPage ?? false;
 
-  // Filtered here rather than server-side: the query takes no search argument,
-  // and a community's membership is small enough that fetching a page and
-  // narrowing it beats adding an API surface for it.
-  const shown = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return members;
-    return members.filter(
-      (m) =>
-        m.user.username.toLowerCase().includes(q) ||
-        (m.user.displayName ?? "").toLowerCase().includes(q) ||
-        m.role.name.toLowerCase().includes(q),
-    );
-  }, [members, search]);
-
-  const total = data?.communityMembersByCommunity?.totalCount ?? 0;
-  const hasMore = data?.communityMembersByCommunity?.hasNextPage ?? false;
-
-  if (loading && !data) {
+  if (loading && !connection) {
     return (
       <LoadingContainer>
         <LoadingSpinner />
@@ -288,18 +286,18 @@ export const CommunityMembersPage: React.FC = () => {
         />
       </SearchWrap>
 
-      {shown.length === 0 ? (
+      {members.length === 0 ? (
         <Empty>
           <Users size={36} style={{ opacity: 0.5, marginBottom: "0.75rem" }} />
           <p>
-            {search
+            {debouncedSearch
               ? "No members match that search."
               : "This community has no members yet."}
           </p>
         </Empty>
       ) : (
         <List data-testid="member-list">
-          {shown.map((m) => {
+          {members.map((m) => {
             const name = m.user.displayName || m.user.username;
             return (
               <MemberRow
@@ -338,15 +336,16 @@ export const CommunityMembersPage: React.FC = () => {
 
       <Footer>
         <span>
-          Showing {shown.length}
-          {search ? ` of ${members.length} loaded` : ""} of {total} member
+          Showing {members.length} of {total} member
           {total === 1 ? "" : "s"}
         </span>
-        {hasMore && !search && (
+        {hasMore && (
           <MoreButton
             type="button"
             disabled={loading}
-            onClick={() => setLimit((n) => n + PAGE_SIZE)}
+            onClick={() =>
+              setPages({ key: debouncedSearch, limit: limit + PAGE_SIZE })
+            }
           >
             {loading ? "Loading…" : "Load more"}
           </MoreButton>

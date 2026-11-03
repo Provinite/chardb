@@ -195,6 +195,37 @@ test.describe("finding a member from the search box", () => {
   });
 });
 
+test.describe("searching the members list", () => {
+  test.use({ persona: "member" });
+
+  test("asks the server, so members past the first page are found", async ({
+    page,
+    world,
+  }) => {
+    await page.goto(`${world.community.url}/members`);
+    await expect(page.getByTestId("member-row").first()).toBeVisible();
+
+    const { username } = world.users.othermember;
+    // Filtering only the loaded page is what hid a new member until "Load
+    // more" was clicked (#566); the search has to reach the query.
+    const searched = page.waitForRequest(
+      (req) =>
+        req.url().includes("/graphql") &&
+        req.postDataJSON()?.operationName === "CommunityMembersWithRoles" &&
+        req.postDataJSON()?.variables?.search === username,
+    );
+    await page
+      .getByRole("searchbox", { name: "Search members" })
+      .fill(username);
+    await searched;
+
+    await expect(page.getByTestId("member-row")).toHaveCount(1);
+    await expect(
+      page.locator(`[data-testid="member-row"][data-username="${username}"]`),
+    ).toBeVisible();
+  });
+});
+
 test.describe("the trade composer", () => {
   test.use({ persona: "member" });
 
