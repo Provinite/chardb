@@ -27,7 +27,9 @@ test.describe("the candy swap", () => {
     const trades = page.getByRole("region", { name: "Your trades" });
     await expect(trades.getByText("alice")).toBeVisible();
     await expect(trades.getByRole("img", { name: "berry tart" })).toBeVisible();
-    await expect(offers.getByText("No open offers yet")).toBeVisible();
+    await expect(
+      offers.getByText("No one else has an open offer right now"),
+    ).toBeVisible();
 
     // Everyone sees the swap, and who made it.
     const feed = page.getByRole("region", { name: "Recent swaps" });
