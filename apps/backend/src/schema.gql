@@ -9,6 +9,8 @@ type ActivityContent {
 }
 
 input ActivityFeedInput {
+  """Only activity on this community's characters, galleries and media"""
+  communityId: ID
   limit: Int = 20
   offset: Int = 0
 }
@@ -4155,7 +4157,10 @@ type Query {
   itemType(id: ID!): ItemType!
   itemTypes(filters: ItemTypeFiltersInput): ItemTypeConnection!
   likeStatus(entityId: ID!, entityType: LikeableType!): LikeStatus!
-  likedCharacters: [Character!]!
+  likedCharacters(
+    """Only characters in this community"""
+    communityId: ID
+  ): [Character!]!
   likedGalleries: [Gallery!]!
   likedImages: [Image!]!
   likedMedia(filters: MediaFiltersInput): MediaConnection!

@@ -7,7 +7,12 @@ import {
   userMapperSelect,
   type PublicUser,
 } from "../users/utils/user-resolver-mappers";
-import { notDeleted } from "../common/utils/prisma-filters";
+import {
+  characterBelongingToCommunity,
+  galleryBelongingToCommunity,
+  mediaBelongingToCommunity,
+  notDeleted,
+} from "../common/utils/prisma-filters";
 import {
   LikeableType,
   ToggleLikeInput,
@@ -411,7 +416,8 @@ export class SocialService {
   // resolver maps them to GraphQL entities -- the same split every other module
   // uses, and the reason these signatures no longer need to lie.
 
-  async getUserLikedCharacters(userId: string) {
+  /** With a community, only characters in it. */
+  async getUserLikedCharacters(userId: string, communityId?: string) {
     const likes = await this.databaseService.like.findMany({
       where: {
         userId,
@@ -433,6 +439,7 @@ export class SocialService {
         id: { in: characterIds.filter((id): id is string => id !== null) },
         visibility: "PUBLIC", // Only return public characters
         ...notDeleted,
+        ...(communityId ? characterBelongingToCommunity(communityId) : {}),
       },
       include: {
         owner: true,
@@ -453,7 +460,8 @@ export class SocialService {
     });
   }
 
-  async getUserLikedGalleries(userId: string) {
+  /** With a community, only galleries in it. */
+  async getUserLikedGalleries(userId: string, communityId?: string) {
     const likes = await this.databaseService.like.findMany({
       where: {
         userId,
@@ -474,13 +482,11 @@ export class SocialService {
       where: {
         id: { in: galleryIds.filter((id): id is string => id !== null) },
         visibility: "PUBLIC", // Only return public galleries
+        ...(communityId ? galleryBelongingToCommunity(communityId) : {}),
       },
       include: {
         owner: true,
         character: true,
-        _count: {
-          select: {},
-        },
       },
       orderBy: {
         updatedAt: "desc",
@@ -558,6 +564,10 @@ export class SocialService {
       ...(filters?.characterId ? { characterId: filters.characterId } : {}),
       ...(filters?.galleryId ? { galleryId: filters.galleryId } : {}),
       ...(filters?.visibility ? { visibility: filters.visibility } : {}),
+      // Under AND: the search above already holds the top-level OR.
+      ...(filters?.communityId
+        ? { AND: [mediaBelongingToCommunity(filters.communityId)] }
+        : {}),
     };
 
     const [media, total, imageCount, textCount] = await Promise.all([
@@ -697,7 +707,13 @@ export class SocialService {
     });
   }
 
-  async getActivityFeed(userId: string, limit = 20, offset = 0) {
+  /** With a community, only activity on that community's things. */
+  async getActivityFeed(
+    userId: string,
+    limit = 20,
+    offset = 0,
+    communityId?: string,
+  ) {
     // Get list of users that the current user follows
     const following = await this.databaseService.follow.findMany({
       where: {
@@ -724,6 +740,7 @@ export class SocialService {
         where: {
           ownerId: { in: followingUserIds },
           ...notDeleted,
+          ...(communityId ? characterBelongingToCommunity(communityId) : {}),
         },
         include: {
           owner: { select: userMapperSelect },
@@ -739,6 +756,7 @@ export class SocialService {
       this.databaseService.gallery.findMany({
         where: {
           ownerId: { in: followingUserIds },
+          ...(communityId ? galleryBelongingToCommunity(communityId) : {}),
         },
         include: {
           owner: { select: userMapperSelect },
@@ -755,6 +773,7 @@ export class SocialService {
         where: {
           imageId: { not: null },
           ownerId: { in: followingUserIds },
+          ...(communityId ? mediaBelongingToCommunity(communityId) : {}),
         },
         include: {
           owner: { select: userMapperSelect },

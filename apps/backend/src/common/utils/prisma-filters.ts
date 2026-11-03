@@ -24,6 +24,13 @@ export const mediaBelongingToCommunity = (
   OR: [{ character: { species: { communityId } } }, { communityId }],
 });
 
+/** Characters in one of a community's species. */
+export const characterBelongingToCommunity = (
+  communityId: string,
+): Prisma.CharacterWhereInput => ({
+  species: { communityId },
+});
+
 /**
  * Galleries a community host lists: those whose character is in one of the
  * community's species. A gallery has no community of its own, so one with no

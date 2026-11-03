@@ -1,5 +1,5 @@
-import { ObjectType, Field, InputType, Int } from "@nestjs/graphql";
-import { IsOptional, IsNumber, Min, Max } from "class-validator";
+import { ObjectType, Field, InputType, Int, ID } from "@nestjs/graphql";
+import { IsOptional, IsNumber, IsUUID, Min, Max } from "class-validator";
 import { User } from "../../users/entities/user.entity";
 
 @ObjectType()
@@ -61,4 +61,12 @@ export class ActivityFeedInput {
   @IsNumber()
   @Min(0)
   offset?: number;
+
+  @Field(() => ID, {
+    nullable: true,
+    description: "Only activity on this community's characters, galleries and media",
+  })
+  @IsOptional()
+  @IsUUID()
+  communityId?: string;
 }

@@ -100,8 +100,17 @@ export class SocialResolver {
   @Query(() => [Character])
   async likedCharacters(
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @Args("communityId", {
+      type: () => ID,
+      nullable: true,
+      description: "Only characters in this community",
+    })
+    communityId?: string,
   ): Promise<Character[]> {
-    const characters = await this.socialService.getUserLikedCharacters(user.id);
+    const characters = await this.socialService.getUserLikedCharacters(
+      user.id,
+      communityId,
+    );
     return characters.map(mapPrismaCharacterToGraphQL);
   }
 
@@ -109,8 +118,17 @@ export class SocialResolver {
   @Query(() => [Gallery])
   async likedGalleries(
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @Args("communityId", {
+      type: () => ID,
+      nullable: true,
+      description: "Only galleries whose character is in this community",
+    })
+    communityId?: string,
   ): Promise<Gallery[]> {
-    const galleries = await this.socialService.getUserLikedGalleries(user.id);
+    const galleries = await this.socialService.getUserLikedGalleries(
+      user.id,
+      communityId,
+    );
     return galleries.map(mapPrismaGalleryToGraphQL);
   }
 
@@ -168,11 +186,12 @@ export class SocialResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
     @Args("input", { nullable: true }) input?: ActivityFeedInput,
   ): Promise<ActivityItem[]> {
-    const { limit = 20, offset = 0 } = input || {};
+    const { limit = 20, offset = 0, communityId } = input || {};
     const activities = await this.socialService.getActivityFeed(
       user.id,
       limit,
       offset,
+      communityId,
     );
     return activities.map((activity) => ({
       ...activity,
