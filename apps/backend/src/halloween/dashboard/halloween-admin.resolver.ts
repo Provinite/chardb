@@ -129,7 +129,8 @@ export class HalloweenAdminResolver {
   async dropHalloweenHouseOffers(
     @Args("communityId", { type: () => ID }) communityId: string,
     @Args("count", { type: () => Int }) count: number,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<number> {
-    return this.house.drop(communityId, count);
+    return this.house.drop(communityId, count, user.id);
   }
 }

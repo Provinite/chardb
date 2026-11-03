@@ -54,6 +54,10 @@ export class HouseOfferService {
         settings !== null &&
         this.settings.eventStatus(settings) === EventStatus.Ongoing;
       const now = this.clock.now();
+      // Most browses find nothing to do: check that without a transaction.
+      const before = await this.pool(this.db, guildId, now);
+      const dueBefore = dueHouseSpawns(before.lastAt, now, before.open);
+      if (!before.lapsed && (!ongoing || !dueBefore.length)) return;
       await this.db.$transaction(async (tx) => {
         const [{ locked }] = await tx.$queryRaw<{ locked: boolean }[]>`
           SELECT pg_try_advisory_xact_lock(hashtextextended(${lockKey(guildId)}, 0)) AS "locked"
@@ -61,23 +65,12 @@ export class HouseOfferService {
         if (!locked) return;
         await this.expire(tx, guildId, now);
         if (!ongoing) return;
-        const [open, last] = await Promise.all([
-          tx.halloweenCandyOffer.count({
-            where: {
-              guildId,
-              host: { not: null },
-              status: HalloweenCandyOfferStatus.OPEN,
-            },
-          }),
-          tx.halloweenCandyOffer.findFirst({
-            where: { guildId, host: { not: null } },
-            orderBy: { createdAt: "desc" },
-            select: { createdAt: true },
-          }),
-        ]);
-        const due = dueHouseSpawns(last?.createdAt ?? null, now, open);
-        for (const at of due) await this.spawn(tx, guildId, at);
-        if (due.length) this.logSpawned(guildId, due.length, false);
+        const { open, lastAt } = await this.pool(tx, guildId, now);
+        const due = dueHouseSpawns(lastAt, now, open);
+        if (!due.length) return;
+        const wants = await this.wantPools(tx, guildId);
+        for (const at of due) await this.spawn(tx, guildId, at, wants);
+        this.logSpawned(guildId, due.length, null);
       });
     } catch (err) {
       this.logger.warn({
@@ -90,10 +83,49 @@ export class HouseOfferService {
   }
 
   /**
+   * The guild's open house offers, when the house last offered, and whether
+   * any open offer's time is up.
+   */
+  private async pool(
+    db: Prisma.TransactionClient,
+    guildId: string,
+    now: Date,
+  ): Promise<{ open: number; lastAt: Date | null; lapsed: boolean }> {
+    const [open, last, lapsed] = await Promise.all([
+      db.halloweenCandyOffer.count({
+        where: {
+          guildId,
+          host: { not: null },
+          status: HalloweenCandyOfferStatus.OPEN,
+        },
+      }),
+      db.halloweenCandyOffer.findFirst({
+        where: { guildId, host: { not: null } },
+        orderBy: { createdAt: "desc" },
+        select: { createdAt: true },
+      }),
+      db.halloweenCandyOffer.findFirst({
+        where: {
+          guildId,
+          host: { not: null },
+          status: HalloweenCandyOfferStatus.OPEN,
+          expiresAt: { lte: now },
+        },
+        select: { id: true },
+      }),
+    ]);
+    return { open, lastAt: last?.createdAt ?? null, lapsed: lapsed !== null };
+  }
+
+  /**
    * Puts up `count` house offers now, whatever the pool holds and whether or
    * not the event runs. Returns how many.
    */
-  async drop(communityId: string, count: number): Promise<number> {
+  async drop(
+    communityId: string,
+    count: number,
+    userId: string,
+  ): Promise<number> {
     const guildId = await this.dashboard.linkedGuildFor(communityId);
     if (!Number.isInteger(count) || count < 1 || count > MAX_HOUSE_DROP) {
       throw new BadRequestException(
@@ -105,11 +137,14 @@ export class HouseOfferService {
       async (tx) => {
         await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtextextended(${lockKey(guildId)}, 0))`;
         await this.expire(tx, guildId, now);
-        for (let i = 0; i < count; i++) await this.spawn(tx, guildId, now);
+        const wants = await this.wantPools(tx, guildId);
+        for (let i = 0; i < count; i++) {
+          await this.spawn(tx, guildId, now, wants);
+        }
       },
       { timeout: 15_000 },
     );
-    this.logSpawned(guildId, count, true);
+    this.logSpawned(guildId, count, userId);
     return count;
   }
 
@@ -130,20 +165,21 @@ export class HouseOfferService {
     });
     if (!lapsed.length) return;
     const ids = lapsed.map((o) => o.id);
-    await tx.halloweenCandyOffer.updateMany({
-      where: { id: { in: ids } },
+    // Still open: one taken since it was read above keeps its FILLED.
+    const { count } = await tx.halloweenCandyOffer.updateMany({
+      where: { id: { in: ids }, status: HalloweenCandyOfferStatus.OPEN },
       data: { status: HalloweenCandyOfferStatus.EXPIRED, closedAt: now },
     });
-    // The house's candies were never anyone's, and stay that way.
-    await tx.halloweenCandy.updateMany({
-      where: { offerId: { in: ids } },
-      data: { offerId: null },
+    // The house made these for the offer and nobody ever had them. A taken
+    // offer's candies left it, so only an expired one's are still here.
+    await tx.halloweenCandy.deleteMany({
+      where: { offerId: { in: ids }, ownerId: null },
     });
     this.logger.log({
       event: HalloweenLogEvent.HouseOffersExpired,
       message: "House offers expired",
       guildId,
-      count: ids.length,
+      count,
     } satisfies HalloweenLogLine);
   }
 
@@ -155,9 +191,11 @@ export class HouseOfferService {
     tx: Prisma.TransactionClient,
     guildId: string,
     at: Date,
+    wants: Record<HalloweenHost, readonly string[]>,
   ): Promise<void> {
     const host = HALLOWEEN_HOSTS[this.random.int(HALLOWEEN_HOSTS.length)];
-    const wantSlug = await this.pickWant(tx, guildId, host);
+    const pool = wants[host];
+    const wantSlug = pool[this.random.int(pool.length)];
     const gives = HOST_CANDIES[otherHost(host)];
     const offer = await tx.halloweenCandyOffer.create({
       data: {
@@ -183,36 +221,41 @@ export class HouseOfferService {
   }
 
   /**
-   * A kind of the host's that some player here has a spare of, so somebody
-   * can take the offer. Any of the host's kinds when nobody has one.
+   * What each host may ask for: their kinds that some player here has a
+   * spare of, so somebody can take the offer, or all their kinds when nobody
+   * has one.
    */
-  private async pickWant(
+  private async wantPools(
     tx: Prisma.TransactionClient,
     guildId: string,
-    host: HalloweenHost,
-  ): Promise<string> {
-    const kinds = HOST_CANDIES[host];
-    const held = await tx.halloweenCandy.findMany({
-      where: {
-        guildId,
-        ownerId: { not: null },
-        offerId: null,
-        slug: { in: [...kinds] },
-      },
-      distinct: ["slug"],
-      select: { slug: true },
-    });
-    const pool = held.length ? held.map((c) => c.slug) : kinds;
-    return pool[this.random.int(pool.length)];
+  ): Promise<Record<HalloweenHost, readonly string[]>> {
+    const held = await tx.$queryRaw<{ slug: string }[]>`
+      SELECT DISTINCT "slug" FROM "halloween_candies"
+      WHERE "guild_id" = ${guildId}
+        AND "owner_id" IS NOT NULL
+        AND "offer_id" IS NULL
+    `;
+    const slugs = new Set(held.map((c) => c.slug));
+    const poolFor = (host: HalloweenHost) => {
+      const kinds = HOST_CANDIES[host].filter((slug) => slugs.has(slug));
+      return kinds.length ? kinds : HOST_CANDIES[host];
+    };
+    return { Daphne: poolFor("Daphne"), Luther: poolFor("Luther") };
   }
 
-  private logSpawned(guildId: string, count: number, manual: boolean): void {
+  /** `userId` is the staff member who dropped them; null for the top-up. */
+  private logSpawned(
+    guildId: string,
+    count: number,
+    userId: string | null,
+  ): void {
     this.logger.log({
       event: HalloweenLogEvent.HouseOffersSpawned,
       message: "House offers spawned",
       guildId,
       count,
-      manual,
+      manual: userId !== null,
+      userId,
     } satisfies HalloweenLogLine);
   }
 }

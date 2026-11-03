@@ -77,10 +77,9 @@ interface Side {
 }
 
 /** The offer's side, which is nobody's on a house offer. */
-interface OffererSide {
-  userId: string | null;
-  candies: { id: number; slug: string }[];
-}
+type OffererSide =
+  | Side
+  | { userId: null; host: HalloweenHost; candies: Side["candies"] };
 
 /**
  * The candy swap. A player offers 1-3 of their candies for one candy of a
@@ -316,7 +315,6 @@ export class CandySwapService {
         initiatorOfferId: offer.id,
         offerer: { userId: mirror.ownerId, candies: [mirror.candy] },
         offererOfferId: mirror.offerId,
-        host: null,
       });
       return { offerId: offer.id, tradeId };
     });
@@ -409,9 +407,8 @@ export class CandySwapService {
       return this.swap(tx, communityId, guildId, {
         initiator: { userId, candies: [payment] },
         initiatorOfferId: null,
-        offerer: { userId: offer.ownerId, candies: offer.candies },
+        offerer: offererOf(offer),
         offererOfferId: offer.id,
-        host: isHalloweenHost(offer.host) ? offer.host : null,
       });
     });
 
@@ -510,7 +507,9 @@ export class CandySwapService {
         AND o."status" = 'OPEN'
         AND (o."expires_at" IS NULL OR o."expires_at" > ${this.clock.now()})
         AND ${asks}
-        AND o."owner_id" IS DISTINCT FROM ${userId}
+        -- A player's offer: the house's are taken, never matched.
+        AND o."owner_id" IS NOT NULL
+        AND o."owner_id" <> ${userId}
       GROUP BY o."id", o."owner_id"
       HAVING COUNT(*) = 1 ${gives}
       ORDER BY random()
@@ -550,16 +549,14 @@ export class CandySwapService {
       initiatorOfferId,
       offerer,
       offererOfferId,
-      host,
     }: {
       initiator: Side;
       initiatorOfferId: string | null;
       offerer: OffererSide;
       offererOfferId: string;
-      host: HalloweenHost | null;
     },
   ): Promise<string> {
-    const now = new Date();
+    const now = this.clock.now();
     const trade = await tx.halloweenCandyTrade.create({
       data: {
         guildId,
@@ -620,27 +617,22 @@ export class CandySwapService {
       subjectType: NotificationSubjectType.HALLOWEEN_CANDY_TRADE,
       subjectId: trade.id,
     } as const;
-    if (offerer.userId) {
-      await this.notifications.create(
-        {
-          ...subject,
-          recipientId: offerer.userId,
-          actorUserId: initiator.userId,
-          data: {},
-        },
-        tx,
-      );
-    } else if (host) {
-      await this.notifications.create(
-        {
-          ...subject,
-          recipientId: initiator.userId,
-          actorLabel: host,
-          data: { count: offerer.candies.length },
-        },
-        tx,
-      );
-    }
+    await this.notifications.create(
+      offerer.userId === null
+        ? {
+            ...subject,
+            recipientId: initiator.userId,
+            actorLabel: offerer.host,
+            data: { count: offerer.candies.length },
+          }
+        : {
+            ...subject,
+            recipientId: offerer.userId,
+            actorUserId: initiator.userId,
+            data: {},
+          },
+      tx,
+    );
 
     this.logger.log({
       event: HalloweenLogEvent.CandyTraded,
@@ -713,6 +705,21 @@ function paymentKind(
   return giveSlug;
 }
 
+/** The side of a trade an open offer is: its owner, or its host's. */
+function offererOf(offer: {
+  ownerId: string | null;
+  host: string | null;
+  candies: Side["candies"];
+}): OffererSide {
+  if (offer.ownerId !== null) {
+    return { userId: offer.ownerId, candies: offer.candies };
+  }
+  if (!isHalloweenHost(offer.host)) {
+    throw new Error("A house offer has no host");
+  }
+  return { userId: null, host: offer.host, candies: offer.candies };
+}
+
 function toOffer(offer: OfferRow): HalloweenCandyOffer {
   return {
     id: offer.id,
@@ -736,11 +743,10 @@ function toTradeRecord(
     trade.lines
       .filter((l) => l.toInitiator === (viewerInitiated === toViewer))
       .map((l) => l.slug);
-  const host = trade.offers.find((o) => isHalloweenHost(o.host))?.host;
   return {
     id: trade.id,
     with: other ? mapPrismaUserToGraphQL(other) : null,
-    host: isHalloweenHost(host) ? host : null,
+    host: trade.offers.map((o) => o.host).find(isHalloweenHost) ?? null,
     gave: slugs(false),
     received: slugs(true),
     createdAt: trade.createdAt,

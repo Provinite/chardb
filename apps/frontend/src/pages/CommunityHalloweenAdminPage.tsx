@@ -291,9 +291,8 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
       const { data: dropped } = await dropHouseOffers({
         variables: { communityId, count },
       });
-      toast.success(
-        `Dropped ${dropped?.dropHalloweenHouseOffers ?? count} house offers`,
-      );
+      const n = dropped?.dropHalloweenHouseOffers ?? count;
+      toast.success(`Dropped ${n} house ${n === 1 ? "offer" : "offers"}`);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Could not drop house offers",

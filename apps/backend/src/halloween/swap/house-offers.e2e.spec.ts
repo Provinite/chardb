@@ -170,6 +170,9 @@ describe("Halloween house offers (e2e)", () => {
       orderBy: { createdAt: "asc" },
     });
 
+  const ownerOfCandy = async (id: number) =>
+    (await db.halloweenCandy.findUniqueOrThrow({ where: { id } })).ownerId;
+
   const openHouseOffers = async () =>
     (await houseOffers()).filter(
       (o) => o.status === HalloweenCandyOfferStatus.OPEN,
@@ -259,6 +262,7 @@ describe("Halloween house offers (e2e)", () => {
       await holdEverything();
       await browse(alice);
       const [first] = await openHouseOffers();
+      const minted = first.candies.map((c) => c.id);
       advance(90);
       await browse(alice);
       expect(await openHouseOffers()).toHaveLength(MAX_OPEN_HOUSE_OFFERS);
@@ -274,6 +278,10 @@ describe("Halloween house offers (e2e)", () => {
       });
       expect(expired.status).toBe(HalloweenCandyOfferStatus.EXPIRED);
       expect(expired.candies).toEqual([]);
+      // Never anyone's, so nothing is left of them.
+      expect(
+        await db.halloweenCandy.count({ where: { id: { in: minted } } }),
+      ).toBe(0);
     });
 
     it("still expires the last offers once the event is over", async () => {
@@ -337,6 +345,40 @@ describe("Halloween house offers (e2e)", () => {
       expect(history.body.data.myHalloweenCandyTrades).toEqual([
         expect.objectContaining({ with: null, host: offer.host }),
       ]);
+    });
+
+    it("dates the trade by the same clock as the offer", async () => {
+      const offer = await putUp();
+      advance(5);
+
+      await gql(ACCEPT, { offerId: offer.id }, alice);
+
+      const trade = await db.halloweenCandyTrade.findFirstOrThrow();
+      expect(trade.createdAt).toEqual(now);
+    });
+
+    it("is never a player's mirror, even holding a single candy", async () => {
+      const offer = await putUp();
+      const [kept, ...rest] = offer.candies;
+      await db.halloweenCandy.deleteMany({
+        where: { id: { in: rest.map((c) => c.id) } },
+      });
+      const bob = await player("bob");
+      const want = await candy(bob, offer.wantSlug ?? "");
+
+      const res = await testApp.authenticatedGraphqlRequest(
+        `mutation Place($communityId: ID!, $candyIds: [Int!]!, $wantSlug: String) {
+          placeHalloweenCandyOffer(communityId: $communityId, candyIds: $candyIds, wantSlug: $wantSlug) {
+            trade { id }
+          }
+        }`,
+        { communityId, candyIds: [want.id], wantSlug: kept.slug },
+        bob.token,
+      );
+
+      expect(res.body.errors).toBeUndefined();
+      expect(res.body.data.placeHalloweenCandyOffer.trade).toBeNull();
+      expect(await ownerOfCandy(want.id)).toBe(bob.id);
     });
 
     it("tells the taker the host traded with them", async () => {
