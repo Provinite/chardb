@@ -494,9 +494,18 @@ export const CandySwapView = ({
                                 : onAccept(offer.id)
                             }
                           >
-                            {offer.wantSlug === null
-                              ? "Pick a candy to trade"
-                              : `Trade your ${candyName(offer.wantSlug)}`}
+                            {offer.wantSlug === null ? (
+                              "Pick a candy to trade"
+                            ) : (
+                              <>
+                                Give{" "}
+                                <img
+                                  className={styles.inlineCandy}
+                                  src={candyImageUrl(offer.wantSlug)}
+                                  alt={candyName(offer.wantSlug)}
+                                />
+                              </>
+                            )}
                           </Button>
                         ) : (
                           <p className={styles.cannotTake}>

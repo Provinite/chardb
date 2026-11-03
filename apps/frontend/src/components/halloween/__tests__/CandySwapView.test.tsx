@@ -145,15 +145,19 @@ describe("CandySwapView", () => {
       expect(
         within(card).getByRole("img", { name: "berry tart" }),
       ).toBeInTheDocument();
-      expect(
-        within(card).getByRole("img", { name: "banana" }),
-      ).toBeInTheDocument();
+      // In the terms, and again on the button.
+      expect(within(card).getAllByRole("img", { name: "banana" })).toHaveLength(
+        2,
+      );
       // Pictures only: the names are for screen readers.
       expect(within(card).queryByText("luther head")).toBeNull();
 
-      await userEvent.click(
-        within(card).getByRole("button", { name: "Trade your banana" }),
-      );
+      // The candy it costs shows as its picture, like everywhere else.
+      const give = within(card).getByRole("button", { name: "Give banana" });
+      expect(
+        within(give).getByRole("img", { name: "banana" }),
+      ).toBeInTheDocument();
+      await userEvent.click(give);
       expect(onAccept).toHaveBeenCalledWith("o1");
     });
 
