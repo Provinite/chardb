@@ -580,10 +580,7 @@ export const communityRoutes = (
     {/* --- people. Their characters, galleries and media narrowed to this
         community; who they follow is the same everywhere. */}
     <Route path="/user/:username" element={<UserToMemberProfile />} />
-    <Route
-      path="/user/:username/characters"
-      element={<UserCharactersPage />}
-    />
+    <Route path="/user/:username/characters" element={<UserCharactersPage />} />
     <Route path="/user/:username/galleries" element={<UserGalleriesPage />} />
     <Route path="/user/:username/media" element={<UserMediaPage />} />
     <Route path="/user/:username/followers" element={<FollowersPage />} />
