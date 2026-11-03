@@ -5572,7 +5572,7 @@ export type CommunityMemberProfileQueryVariables = Exact<{
 }>;
 
 
-export type CommunityMemberProfileQuery = { __typename?: 'Query', user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, achievements: Array<{ __typename?: 'UserAchievement', id: string, name: string, description: string, imagePath: string, earnedAt: string }> } | null };
+export type CommunityMemberProfileQuery = { __typename?: 'Query', user: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, followersCount: number, followingCount: number, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null, achievements: Array<{ __typename?: 'UserAchievement', id: string, name: string, description: string, imagePath: string, earnedAt: string }> } | null };
 
 export type LoginMutationVariables = Exact<{
   input: LoginInput;
@@ -8544,6 +8544,8 @@ export const CommunityMemberProfileDocument = gql`
     username
     displayName
     bio
+    followersCount
+    followingCount
     avatarImage {
       id
       originalUrl

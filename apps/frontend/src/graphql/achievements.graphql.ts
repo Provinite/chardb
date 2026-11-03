@@ -12,6 +12,8 @@ export const COMMUNITY_MEMBER_PROFILE = gql`
       username
       displayName
       bio
+      followersCount
+      followingCount
       avatarImage {
         id
         originalUrl

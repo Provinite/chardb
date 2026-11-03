@@ -1,5 +1,6 @@
 import React from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -69,6 +70,7 @@ const ErrorContainer = styled.div`
 export const UserCharactersPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   const { user: viewer } = useAuth();
+  const scope = useHostCommunityScope();
 
   usePageMeta({ title: `@${username}'s Characters` });
 
@@ -117,6 +119,7 @@ export const UserCharactersPage: React.FC = () => {
       <CharacterFolderBrowser
         ownerId={user.id}
         editable={viewer?.id === user.id}
+        communityId={scope.communityId}
       />
     </Container>
   );

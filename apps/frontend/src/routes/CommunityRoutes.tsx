@@ -69,6 +69,11 @@ import {
   GalleryPage,
   CreateGalleryPage,
   MyGalleriesPage,
+  UserCharactersPage,
+  UserGalleriesPage,
+  UserMediaPage,
+  FollowersPage,
+  FollowingPage,
   CreateMediaPage,
   UploadImagePage,
   CreateTextPage,
@@ -77,6 +82,15 @@ import {
   ToyhouseCallbackPage,
   PatreonCallbackPage,
 } from "./pages";
+
+/**
+ * The member profile is a person's profile on a community host: who they are
+ * everywhere, plus what they have here.
+ */
+export const UserToMemberProfile: React.FC = () => {
+  const { username } = useParams<{ username: string }>();
+  return <Navigate to={`/members/${username}`} replace />;
+};
 
 /** Forwards the legacy singular /item/:id to the canonical item type page. */
 const RedirectToItemType: React.FC = () => {
@@ -563,6 +577,18 @@ export const communityRoutes = (
       }
     />
 
+    {/* --- people. Their characters, galleries and media narrowed to this
+        community; who they follow is the same everywhere. */}
+    <Route path="/user/:username" element={<UserToMemberProfile />} />
+    <Route
+      path="/user/:username/characters"
+      element={<UserCharactersPage />}
+    />
+    <Route path="/user/:username/galleries" element={<UserGalleriesPage />} />
+    <Route path="/user/:username/media" element={<UserMediaPage />} />
+    <Route path="/user/:username/followers" element={<FollowersPage />} />
+    <Route path="/user/:username/following" element={<FollowingPage />} />
+
     {/* Narrowed to this community, which the bell's "See all" links to. */}
     <Route
       path="/notifications"
@@ -626,7 +652,6 @@ export const communityRoutes = (
     <Route path="/auth/*" element={<ApexRedirect />} />
     <Route path="/dashboard" element={<ApexRedirect />} />
     <Route path="/feed" element={<ApexRedirect />} />
-    <Route path="/user/*" element={<ApexRedirect />} />
     <Route path="/my/*" element={<ApexRedirect />} />
     <Route path="/liked/*" element={<ApexRedirect />} />
     <Route path="/join-community" element={<ApexRedirect />} />

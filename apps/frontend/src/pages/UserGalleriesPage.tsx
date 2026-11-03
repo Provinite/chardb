@@ -1,5 +1,6 @@
 import React from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -111,6 +112,7 @@ const PAGE_SIZE = 24;
  */
 export const UserGalleriesPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+  const scope = useHostCommunityScope();
 
   usePageMeta({ title: `@${username}'s Galleries` });
 
@@ -124,7 +126,7 @@ export const UserGalleriesPage: React.FC = () => {
   const { data, loading, error, fetchMore } = useUserGalleriesQuery({
     variables: {
       userId: user?.id ?? "",
-      filters: { limit: PAGE_SIZE, offset: 0 },
+      filters: { limit: PAGE_SIZE, offset: 0, ...scope },
     },
     skip: !user?.id,
   });
@@ -138,7 +140,7 @@ export const UserGalleriesPage: React.FC = () => {
     hasMore: data?.userGalleries?.hasMore ?? false,
     load: ({ limit, offset }) =>
       fetchMore({
-        variables: { filters: { limit, offset } },
+        variables: { filters: { limit, offset, ...scope } },
         updateQuery: (previous, { fetchMoreResult }) =>
           fetchMoreResult
             ? {

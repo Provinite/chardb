@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Community notifications page**: "See all notifications" on a community opens that community's notifications, with a switch to see everything.
 - **Media and galleries on community sites**: browsing, viewing and managing them stays on the community and shows only that community's.
+- **Profiles on community sites**: a person's profile, followers and their characters, galleries and media open on the community, with follow and edit-profile buttons.
 
 ### Fixed
 

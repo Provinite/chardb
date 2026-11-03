@@ -1,20 +1,15 @@
 import React from "react";
 import { useParams, Link } from "react-router-dom";
 import styled, { css } from "styled-components";
-import { Avatar } from "@chardb/ui";
-import {
-  Package,
-  ArrowLeftRight,
-  ExternalLink,
-  ChevronLeft,
-} from "lucide-react";
+import { Avatar, Cluster } from "@chardb/ui";
+import { Package, ArrowLeftRight, ChevronLeft, Pencil } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import {
   useCommunityId,
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
-import { apexUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
+import { FollowButton } from "../components/FollowButton";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
 import { AchievementList } from "../components/achievements/AchievementList";
@@ -27,15 +22,11 @@ import {
 /**
  * One person, seen from inside one community.
  *
- * The site already has `/user/:username`, and it is deliberately global: it
- * knows nothing about communities and cannot, because it does not know which
- * one you came from. So everything a community actually wants to say about a
- * member -- what their role here is called, what they hold here, what they own
- * here, whether you can trade with them -- had nowhere to live, and the pages
- * that did hold it were reachable only by already being on a list (#349).
- *
- * This is that page. It owns no data of its own: it is a junction, and its job
- * is to be the thing you land on when you click a person's name.
+ * A person's profile on a community host: `/user/:username` forwards here.
+ * Who they are and who follows them is the same everywhere; their role, their
+ * holdings, their characters, galleries and media are this community's. It
+ * owns no data of its own: it is a junction, and its job is to be the thing
+ * you land on when you click a person's name (#349).
  */
 
 const CHARACTER_PREVIEW_LIMIT = 8;
@@ -151,14 +142,6 @@ const actionStyles = css<{ $primary?: boolean }>`
 `;
 
 const Action = styled(Link)<{ $primary?: boolean }>`
-  ${actionStyles}
-`;
-
-/**
- * The same button, for a destination on another host. The router cannot cross
- * an origin, so anything leaving this one is a plain anchor.
- */
-const ActionAnchor = styled.a<{ $primary?: boolean }>`
   ${actionStyles}
 `;
 
@@ -309,12 +292,25 @@ export const CommunityMemberProfilePage: React.FC = () => {
                 <ArrowLeftRight size={15} /> Propose trade
               </Action>
             )}
-            {/* The apex profile: a person belongs to no community, so this
-                one leaves the host entirely rather than routing. */}
-            <ActionAnchor href={apexUrl(`/user/${member.username}`)}>
-              <ExternalLink size={15} /> Site profile
-            </ActionAnchor>
+            {/* The profile editor is served here too, and edits the one
+                profile you have everywhere. */}
+            {isSelf ? (
+              <Action to="/profile/edit">
+                <Pencil size={15} /> Edit profile
+              </Action>
+            ) : (
+              <FollowButton userId={member.id} showCount={false} size="sm" />
+            )}
           </Actions>
+
+          <Cluster gap="md">
+            <SectionLink to={`/user/${member.username}/followers`}>
+              {member.followersCount} followers
+            </SectionLink>
+            <SectionLink to={`/user/${member.username}/following`}>
+              {member.followingCount} following
+            </SectionLink>
+          </Cluster>
         </Identity>
       </Header>
 
@@ -324,11 +320,20 @@ export const CommunityMemberProfilePage: React.FC = () => {
             Characters in {communityName}
             {characterTotal > 0 && ` (${characterTotal})`}
           </SectionTitle>
-          {characterTotal > characters.length && (
-            <SectionLink to={`/user/${member.username}/characters`}>
-              All of their characters
+          <Cluster gap="md">
+            {characterTotal > characters.length && (
+              <SectionLink to={`/user/${member.username}/characters`}>
+                All of their characters
+              </SectionLink>
+            )}
+            {/* Both narrowed to this community, like the characters above. */}
+            <SectionLink to={`/user/${member.username}/galleries`}>
+              Galleries
             </SectionLink>
-          )}
+            <SectionLink to={`/user/${member.username}/media`}>
+              Media
+            </SectionLink>
+          </Cluster>
         </SectionHead>
 
         {charactersLoading ? (

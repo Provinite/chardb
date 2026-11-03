@@ -1,5 +1,6 @@
 import React from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -72,6 +73,7 @@ const PAGE_SIZE = 24;
  */
 export const UserMediaPage: React.FC = () => {
   const { username } = useParams<{ username: string }>();
+  const scope = useHostCommunityScope();
 
   usePageMeta({ title: `@${username}'s Media` });
 
@@ -85,7 +87,7 @@ export const UserMediaPage: React.FC = () => {
   const { data, loading, error, fetchMore } = useGetUserMediaQuery({
     variables: {
       userId: user?.id ?? "",
-      filters: { limit: PAGE_SIZE, offset: 0 },
+      filters: { limit: PAGE_SIZE, offset: 0, ...scope },
     },
     skip: !user?.id,
   });
@@ -99,7 +101,7 @@ export const UserMediaPage: React.FC = () => {
     hasMore: data?.userMedia?.hasMore ?? false,
     load: ({ limit, offset }) =>
       fetchMore({
-        variables: { filters: { limit, offset } },
+        variables: { filters: { limit, offset, ...scope } },
         updateQuery: (previous, { fetchMoreResult }) =>
           fetchMoreResult
             ? {
