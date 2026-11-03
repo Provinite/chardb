@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.6.0] - 2026-11-03
+
 ### Added
 
 - **Candy swap market**: `halloweenCandySwapMarket` lists every open offer with whether you can take it, plus open-offer and 24-hour trade counts; `halloweenCandySwapRecentTrades` is the community's trade feed.

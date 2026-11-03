@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.6.0] - 2026-11-03
+
 ### Added
 
 - **Candy swap redesign**: every open offer is listed with the ones you can take first, beside swap activity counts and a feed of recent swaps naming both sides.
