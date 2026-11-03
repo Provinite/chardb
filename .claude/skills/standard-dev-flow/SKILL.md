@@ -15,7 +15,9 @@ For tasks that are expected to be worked with a relatively high level of autonom
   - Switch into a worktree (see the worktree skill), branched from `main`
   - Install deps, `yarn instance:init`, build packages, `yarn instance:up`, migrate. Kick these off, then present the plan while they run.
 - Present the plan
+  - Skip this step for well-defined, tightly-scoped fixes with no judgement calls.
   - Present the user with the outline of how things will be implemented.
+  - State the PR's risk level (see Risk levels).
   - Ask any clarifying questions you have.
   - Verify any potentially-risky or hard-to-unwind judgement calls you made or decisions the ticket calls for.
   - Iterate on this step until the user approves
@@ -56,6 +58,10 @@ For tasks that are expected to be worked with a relatively high level of autonom
     - Fixed findings: a single bullet with a sentence indicating the finding and what was done to fix it.
     - All other findings: present them to the user with your recommendation (fix, don't-fix, file follow-up issue) and any necessary questions.
     - Discarded invalid findings are not presented.
+- Re-review by risk level, after the fixes land:
+  - Green: no re-review.
+  - Yellow: re-review at least once.
+  - Red: re-review until a pass returns no HIGH or CRITICAL findings.
 - Once all review findings are resolved, re-walk in the browser anything whose UI the fixes changed, then tear down the servers (`yarn instance:down`). Delete any scratch pages or files made only for screenshots.
 - Review your own message. If anything you mentioned is some form of "Caveat: I did not do [x] thing that should obviously be in this PR", raise that with the user before continuing.
 - Commit and push everything to the PR.
@@ -66,6 +72,14 @@ For tasks that are expected to be worked with a relatively high level of autonom
   - Follow-up issues filed
   - Whether it is ready to merge
 - After merge: remove the worktree and release its slot.
+
+# Risk levels
+
+Pick one from what the PR touches. The highest match wins.
+
+- Red: auth, sessions, sign-up, permissions and roles, cross-community data scoping or visibility, migrations or backfills that rewrite existing rows, anything touching production data.
+- Yellow: backend business logic, schema additions, GraphQL API changes, shared components or routing.
+- Green: copy, styling, isolated UI on one page, docs.
 
 # Helpful Tools
 
