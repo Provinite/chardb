@@ -6,7 +6,7 @@ import {
   UpdateTextContentInput,
   MediaType,
 } from "../dto/media.dto";
-import { Media, MediaConnection } from "../entities/media.entity";
+import { MediaConnection } from "../entities/media.entity";
 import {
   MediaFiltersServiceInput,
   CreateTextMediaServiceInput,
@@ -106,7 +106,7 @@ export function mapUpdateTextContentInputToService(
   return result;
 }
 
-type PrismaMedia = Prisma.MediaGetPayload<{}>;
+type PrismaMedia = Prisma.MediaGetPayload<Prisma.MediaDefaultArgs>;
 
 /**
  * Maps Prisma Media result to GraphQL Media entity
