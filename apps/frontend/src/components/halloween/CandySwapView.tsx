@@ -354,8 +354,8 @@ export const CandySwapView = ({
             Candy swap
           </h1>
           <p className={styles.heroLead}>
-            Offer your spare candy for something specific, or browse offers
-            from the community!
+            Offer your spare candy for something specific, or browse offers from
+            the community!
           </p>
         </Stack>
         <Cluster gap="lg" className={styles.stats} aria-busy={!activity}>
