@@ -12,7 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Candy swap redesign**: every open offer is listed with the ones you can take first, beside swap activity counts and a feed of recent swaps naming both sides.
-- **Halloween door knocks**: a member's community profile has a Knock on door button during the event, and the member knocked on gets a notification naming their candies.
+- **Halloween door knocks**: a member's community profile has a Knock on door button during the event, and the member knocked on gets a notification picturing their candies.
 - **House candy offers**: the candy swap names Daphne or Luther on their 3-for-1 offers and trades, and the Halloween admin page can drop more.
 
 ### Fixed
