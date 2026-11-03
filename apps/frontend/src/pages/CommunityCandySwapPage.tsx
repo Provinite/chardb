@@ -12,11 +12,13 @@ import { candyName } from "../components/halloween/candyBoard";
 import {
   type HalloweenCandyTradeFieldsFragment,
   CandySwapDocument,
-  CandySwapOffersDocument,
+  CandySwapMarketDocument,
+  CandySwapRecentTradesDocument,
   useAcceptHalloweenCandyOfferMutation,
   useCancelHalloweenCandyOfferMutation,
-  useCandySwapOffersQuery,
+  useCandySwapMarketQuery,
   useCandySwapQuery,
+  useCandySwapRecentTradesQuery,
   usePlaceHalloweenCandyOfferMutation,
 } from "../generated/graphql";
 
@@ -48,21 +50,27 @@ export const CommunityCandySwapPage: React.FC = () => {
     skip,
     fetchPolicy: "cache-and-network",
   });
-  const offers = useCandySwapOffersQuery({
+  const market = useCandySwapMarketQuery({
     variables,
     skip,
     fetchPolicy: "network-only",
     notifyOnNetworkStatusChange: true,
+  });
+  const recent = useCandySwapRecentTradesQuery({
+    variables,
+    skip,
+    fetchPolicy: "cache-and-network",
   });
   const [rerolling, setRerolling] = useState(false);
   const [acceptingId, setAcceptingId] = useState<string | null>(null);
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
   // Every change can change which candies are spare, and so which offers
-  // can be taken; both lists are fetched again after any of them.
+  // can be taken; everything is fetched again after any of them.
   const refetchSwap = [
     { query: CandySwapDocument, variables },
-    { query: CandySwapOffersDocument, variables },
+    { query: CandySwapMarketDocument, variables },
+    { query: CandySwapRecentTradesDocument, variables },
   ];
   const [place, { loading: placing }] = usePlaceHalloweenCandyOfferMutation({
     refetchQueries: refetchSwap,
@@ -89,7 +97,7 @@ export const CommunityCandySwapPage: React.FC = () => {
   const reroll = async () => {
     setRerolling(true);
     try {
-      await offers.refetch();
+      await market.refetch();
     } finally {
       setRerolling(false);
     }
@@ -123,7 +131,7 @@ export const CommunityCandySwapPage: React.FC = () => {
     } catch (e) {
       toast.error(errorMessage(e, "Could not take the offer"));
       // Taken or withdrawn by someone else first: show what is left.
-      void offers.refetch();
+      void market.refetch();
     } finally {
       setAcceptingId(null);
     }
@@ -144,7 +152,10 @@ export const CommunityCandySwapPage: React.FC = () => {
     <CandySwapView
       candyTypes={data.halloweenCandyTypes}
       myCandies={data.myHalloweenCandies}
-      offers={offers.data?.halloweenCandySwapOffers ?? null}
+      listings={market.data?.halloweenCandySwapMarket.listings ?? null}
+      activity={market.data?.halloweenCandySwapMarket ?? null}
+      recentTrades={recent.data?.halloweenCandySwapRecentTrades ?? null}
+      now={new Date()}
       myOffers={data.myHalloweenCandyOffers}
       trades={data.myHalloweenCandyTrades}
       maxOpenOffers={data.halloweenCandySwapLimits.maxOpenOffers}

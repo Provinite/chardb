@@ -9,6 +9,8 @@ import { CandySwapView, type CandySwapViewProps } from "../CandySwapView";
 import {
   HalloweenCandyOfferStatus,
   type HalloweenCandyOfferFieldsFragment,
+  type HalloweenCandySwapListingFieldsFragment,
+  type HalloweenCandySwapTradeFieldsFragment,
   type HalloweenCandyTradeFieldsFragment,
 } from "../../../generated/graphql";
 
@@ -24,6 +26,27 @@ const offer = (
   host,
   createdAt: "2026-10-31T12:00:00.000Z",
   candies: slugs.map((slug, i) => ({ id: i + 100, slug })),
+});
+
+/** An offer in the market, takeable unless said otherwise. */
+const take = (
+  o: HalloweenCandyOfferFieldsFragment,
+  canTake = true,
+): HalloweenCandySwapListingFieldsFragment => ({ canTake, offer: o });
+
+const NOW = new Date("2026-10-31T12:30:00.000Z");
+
+const swap = (
+  over: Partial<HalloweenCandySwapTradeFieldsFragment> = {},
+): HalloweenCandySwapTradeFieldsFragment => ({
+  id: "s1",
+  host: null,
+  offered: ["candy-corn", "berry-tart"],
+  paid: ["banana"],
+  createdAt: "2026-10-31T12:25:00.000Z",
+  offerer: { id: "u-alice", username: "alice", displayName: "Alice" },
+  taker: { id: "u-bob", username: "bob", displayName: null },
+  ...over,
 });
 
 const trade: HalloweenCandyTradeFieldsFragment = {
@@ -50,7 +73,10 @@ const renderView = (props: Partial<CandySwapViewProps> = {}) => {
         { id: 2, slug: "candy-corn" },
         { id: 3, slug: "banana" },
       ]}
-      offers={[]}
+      listings={[]}
+      activity={{ openOffers: 0, tradesLastDay: 0 }}
+      recentTrades={[]}
+      now={NOW}
       myOffers={[]}
       trades={[]}
       maxOpenOffers={10}
@@ -88,10 +114,10 @@ describe("CandySwapView", () => {
   describe("offers to take", () => {
     it("shows what each offer gives and wants, and takes it", async () => {
       const { onAccept } = renderView({
-        offers: [offer("o1", "banana", ["luther-head", "berry-tart"])],
+        listings: [take(offer("o1", "banana", ["luther-head", "berry-tart"]))],
       });
 
-      const offers = section("Offers you can take");
+      const offers = section("Open offers");
       const card = within(offers).getByRole("listitem");
       expect(
         within(card).getByRole("img", { name: "luther head" }),
@@ -113,9 +139,9 @@ describe("CandySwapView", () => {
 
     it("takes an offer for anything with the candy you pick", async () => {
       const { onAccept } = renderView({
-        offers: [offer("o1", null, ["luther-head"])],
+        listings: [take(offer("o1", null, ["luther-head"]))],
       });
-      const card = within(section("Offers you can take")).getByRole("listitem");
+      const card = within(section("Open offers")).getByRole("listitem");
       expect(
         within(card).getByRole("img", { name: "anything" }),
       ).toBeInTheDocument();
@@ -138,8 +164,8 @@ describe("CandySwapView", () => {
     });
 
     it("will not trade a kind an offer for anything gives", async () => {
-      renderView({ offers: [offer("o1", null, ["banana"])] });
-      const card = within(section("Offers you can take")).getByRole("listitem");
+      renderView({ listings: [take(offer("o1", null, ["banana"]))] });
+      const card = within(section("Open offers")).getByRole("listitem");
       await userEvent.click(
         within(card).getByRole("button", { name: "Pick a candy to trade" }),
       );
@@ -150,8 +176,8 @@ describe("CandySwapView", () => {
     });
 
     it("trades at once from the candy picked, rather than toggling it", async () => {
-      renderView({ offers: [offer("o1", null, ["luther-head"])] });
-      const card = within(section("Offers you can take")).getByRole("listitem");
+      renderView({ listings: [take(offer("o1", null, ["luther-head"]))] });
+      const card = within(section("Open offers")).getByRole("listitem");
       await userEvent.click(
         within(card).getByRole("button", { name: "Pick a candy to trade" }),
       );
@@ -166,9 +192,9 @@ describe("CandySwapView", () => {
     it("lists your candies in the same order as the candy types", async () => {
       renderView({
         candyTypes: ["candy-corn", "banana", "berry-tart", "luther-head"],
-        offers: [offer("o1", null, ["luther-head"])],
+        listings: [take(offer("o1", null, ["luther-head"]))],
       });
-      const card = within(section("Offers you can take")).getByRole("listitem");
+      const card = within(section("Open offers")).getByRole("listitem");
       await userEvent.click(
         within(card).getByRole("button", { name: "Pick a candy to trade" }),
       );
@@ -180,16 +206,118 @@ describe("CandySwapView", () => {
       ).toEqual(["candy corn (you have 2)", "banana (you have 1)"]);
     });
 
-    it("says when there are none, and asks for more", async () => {
-      const { onReroll } = renderView({ offers: [] });
-      const offers = section("Offers you can take");
+    it("says when there are none at all", () => {
+      renderView({ listings: [] });
       expect(
-        within(offers).getByText("No offers you can take right now."),
+        within(section("Open offers")).getByText("No open offers yet"),
       ).toBeInTheDocument();
+    });
+
+    it("shuffles in other offers", async () => {
+      const { onReroll } = renderView({
+        listings: [take(offer("o1", "banana", ["luther-head"]))],
+      });
       await userEvent.click(
-        within(offers).getByRole("button", { name: "Show others" }),
+        within(section("Open offers")).getByRole("button", {
+          name: "Show other offers",
+        }),
       );
       expect(onReroll).toHaveBeenCalled();
+    });
+
+    it("shows only the offers you can take, until asked for all", async () => {
+      renderView({
+        listings: [
+          take(offer("yes", "banana", ["luther-head"])),
+          take(offer("no", "skull-candy", ["candy-corn"]), false),
+        ],
+      });
+      const offers = section("Open offers");
+      expect(within(offers).getAllByRole("listitem")).toHaveLength(1);
+      expect(
+        within(offers).getByRole("button", { name: "You can take (1)" }),
+      ).toHaveAttribute("aria-pressed", "true");
+
+      await userEvent.click(
+        within(offers).getByRole("button", { name: "All (2)" }),
+      );
+      expect(within(offers).getAllByRole("listitem")).toHaveLength(2);
+    });
+
+    it("shows them all when you can take none", () => {
+      renderView({
+        listings: [take(offer("no", "skull-candy", ["candy-corn"]), false)],
+      });
+      const offers = section("Open offers");
+      expect(
+        within(offers).getByRole("button", { name: "You can take (0)" }),
+      ).toBeDisabled();
+      expect(
+        within(offers).getByRole("button", { name: "All (1)" }),
+      ).toHaveAttribute("aria-pressed", "true");
+      expect(within(offers).getAllByRole("listitem")).toHaveLength(1);
+    });
+
+    it("says what an offer you cannot take wants", () => {
+      renderView({
+        listings: [
+          take(offer("no", "skull-candy", ["candy-corn"]), false),
+          take(offer("any", null, ["candy-corn"]), false),
+        ],
+      });
+      const [named, anything] = within(section("Open offers")).getAllByRole(
+        "listitem",
+      );
+      expect(
+        within(named).getByRole("button", { name: "You need a skull candy" }),
+      ).toBeDisabled();
+      expect(
+        within(anything).getByRole("button", {
+          name: "You need a candy it does not give",
+        }),
+      ).toBeDisabled();
+    });
+  });
+
+  it("says how busy the swap is", () => {
+    renderView({ activity: { openOffers: 42, tradesLastDay: 1 } });
+    const stat = (text: string) =>
+      screen.getByText(
+        (_, el) => el?.tagName === "P" && el.textContent === text,
+      );
+    expect(stat("42 open offers")).toBeInTheDocument();
+    expect(stat("1 trade in the last day")).toBeInTheDocument();
+  });
+
+  describe("recent swaps", () => {
+    it("names both sides, and shows what changed hands and when", () => {
+      renderView({ recentTrades: [swap()] });
+      const row = within(section("Recent swaps")).getByRole("listitem");
+      expect(within(row).getByText("Alice")).toBeInTheDocument();
+      expect(within(row).getByText("bob")).toBeInTheDocument();
+      expect(
+        within(row).getByRole("img", { name: "berry tart" }),
+      ).toBeInTheDocument();
+      expect(
+        within(row).getByRole("img", { name: "banana" }),
+      ).toBeInTheDocument();
+      expect(within(row).getByText("5 minutes ago")).toBeInTheDocument();
+    });
+
+    it("names the host of a house offer, and a deleted account", () => {
+      renderView({
+        recentTrades: [swap({ offerer: null, host: "Daphne", taker: null })],
+      });
+      const row = within(section("Recent swaps")).getByRole("listitem");
+      expect(within(row).getByText("Daphne")).toBeInTheDocument();
+      expect(within(row).getByText("A deleted account")).toBeInTheDocument();
+    });
+
+    it("says when there are none", () => {
+      renderView({ recentTrades: [] });
+      expect(
+        within(section("Recent swaps")).getByText("No swaps yet."),
+      ).toBeInTheDocument();
     });
   });
 
@@ -428,6 +556,13 @@ describe("CandySwapView", () => {
     ).toBeInTheDocument();
   });
 
+  it("counts your open offers against the most you can have", () => {
+    renderView({ myOffers: [offer("mine", "banana", ["candy-corn"])] });
+    expect(
+      within(section("Your open offers")).getByText("1 of 10"),
+    ).toBeInTheDocument();
+  });
+
   it("lists your open offers, each cancellable", async () => {
     const { onCancel } = renderView({
       myOffers: [offer("mine", "banana", ["candy-corn"])],
@@ -465,17 +600,19 @@ describe("CandySwapView", () => {
 
   it("names the host on a house offer", () => {
     renderView({
-      offers: [
-        offer(
-          "h1",
-          "skull-candy",
-          ["banana", "berry-tart", "candy-corn"],
-          "Daphne",
+      listings: [
+        take(
+          offer(
+            "h1",
+            "skull-candy",
+            ["banana", "berry-tart", "candy-corn"],
+            "Daphne",
+          ),
         ),
-        offer("p1", "banana", ["luther-head"]),
+        take(offer("p1", "banana", ["luther-head"])),
       ],
     });
-    const [house, player] = within(section("Offers you can take")).getAllByRole(
+    const [house, player] = within(section("Open offers")).getAllByRole(
       "listitem",
     );
     expect(within(house).getByText("Daphne's offer")).toBeInTheDocument();

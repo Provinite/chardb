@@ -51,13 +51,56 @@ export const CANDY_SWAP_QUERY = gql`
   ${HALLOWEEN_CANDY_TRADE_FRAGMENT}
 `;
 
-export const CANDY_SWAP_OFFERS_QUERY = gql`
-  query CandySwapOffers($communityId: ID!) {
-    halloweenCandySwapOffers(communityId: $communityId) {
+export const HALLOWEEN_CANDY_SWAP_LISTING_FRAGMENT = gql`
+  fragment HalloweenCandySwapListingFields on HalloweenCandySwapListing {
+    canTake
+    offer {
       ...HalloweenCandyOfferFields
     }
   }
   ${HALLOWEEN_CANDY_OFFER_FRAGMENT}
+`;
+
+export const HALLOWEEN_CANDY_SWAP_TRADE_FRAGMENT = gql`
+  fragment HalloweenCandySwapTradeFields on HalloweenCandySwapTrade {
+    id
+    host
+    offered
+    paid
+    createdAt
+    offerer {
+      id
+      username
+      displayName
+    }
+    taker {
+      id
+      username
+      displayName
+    }
+  }
+`;
+
+export const CANDY_SWAP_MARKET_QUERY = gql`
+  query CandySwapMarket($communityId: ID!) {
+    halloweenCandySwapMarket(communityId: $communityId) {
+      openOffers
+      tradesLastDay
+      listings {
+        ...HalloweenCandySwapListingFields
+      }
+    }
+  }
+  ${HALLOWEEN_CANDY_SWAP_LISTING_FRAGMENT}
+`;
+
+export const CANDY_SWAP_RECENT_TRADES_QUERY = gql`
+  query CandySwapRecentTrades($communityId: ID!) {
+    halloweenCandySwapRecentTrades(communityId: $communityId) {
+      ...HalloweenCandySwapTradeFields
+    }
+  }
+  ${HALLOWEEN_CANDY_SWAP_TRADE_FRAGMENT}
 `;
 
 export const PLACE_CANDY_OFFER = gql`

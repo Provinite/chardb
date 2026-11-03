@@ -1,11 +1,30 @@
 import React, { useId, useMemo, useState } from "react";
-import { ArrowRight, Asterisk, Plus } from "lucide-react";
-import { Button, Cluster, Dialog, Grid, Stack } from "@chardb/ui";
+import {
+  ArrowLeftRight,
+  ArrowRight,
+  Asterisk,
+  Plus,
+  Shuffle,
+} from "lucide-react";
+import {
+  Button,
+  ButtonLink,
+  Cluster,
+  Dialog,
+  Grid,
+  IconButton,
+  Sidebar,
+  Stack,
+  Tooltip,
+} from "@chardb/ui";
 import type {
   HalloweenCandyOfferFieldsFragment as SwapOffer,
+  HalloweenCandySwapListingFieldsFragment as SwapListing,
+  HalloweenCandySwapTradeFieldsFragment as PublicTrade,
   HalloweenCandyTradeFieldsFragment as SwapTrade,
 } from "../../generated/graphql";
 import { candyImageUrl, candyName } from "./candyBoard";
+import { timeAgo } from "./timeAgo";
 import * as styles from "./CandySwapView.css";
 
 export interface SwapCandy {
@@ -17,8 +36,14 @@ export interface CandySwapViewProps {
   candyTypes: readonly string[];
   /** Your candies that are not in an offer. */
   myCandies: SwapCandy[];
-  /** Offers you can take; null while they first load. */
-  offers: SwapOffer[] | null;
+  /** Other players' open offers, the ones you can take first; null while they first load. */
+  listings: SwapListing[] | null;
+  /** How busy the swap is; null while it first loads. */
+  activity: { openOffers: number; tradesLastDay: number } | null;
+  /** The community's latest trades; null while they first load. */
+  recentTrades: PublicTrade[] | null;
+  /** What the recent trades' times are counted back from. */
+  now: Date;
   myOffers: SwapOffer[];
   trades: SwapTrade[];
   maxOpenOffers: number;
@@ -37,14 +62,25 @@ export interface CandySwapViewProps {
   acceptingId: string | null;
   cancellingId: string | null;
   rerolling: boolean;
-  /** Shown after the empty tray's note: where to link Discord. */
-  noCandies?: React.ReactNode;
+  /**
+   * A link to where Discord is linked, shown when you have no candies. One
+   * link element, such as a router `Link`, which is given a button's look.
+   */
+  noCandies?: React.ReactElement<{ className?: string }>;
 }
 
 /** Asking for any kind of candy. */
 const ANYTHING = Symbol("anything");
 /** What the offer being made asks for; null before anything is chosen. */
 type Ask = string | typeof ANYTHING | null;
+
+/** Which open offers are listed. */
+type Filter = "takeable" | "all";
+
+const LISTING_PLACEHOLDERS = 4;
+const FEED_PLACEHOLDERS = 4;
+/** How many of your own trades show before "Show all". */
+const TRADES_SHOWN = 5;
 
 const Candy = ({
   slug,
@@ -85,7 +121,7 @@ const OfferTerms = ({ offer }: { offer: SwapOffer }) => (
     {offer.candies.map((c) => (
       <Candy key={c.id} slug={c.slug} />
     ))}
-    <ArrowRight aria-label="for" />
+    <ArrowRight className={styles.arrow} aria-label="for" />
     {offer.wantSlug === null ? (
       <AnythingMark label="anything" />
     ) : (
@@ -138,26 +174,43 @@ const Choice = ({
 /** A section named by its heading, so it is a landmark people can jump to. */
 const Section = ({
   title,
-  action,
+  aside,
+  className,
   children,
 }: {
   title: string;
-  action?: React.ReactNode;
+  /** Beside the heading: a count or controls. */
+  aside?: React.ReactNode;
+  className?: string;
   children: React.ReactNode;
 }) => {
   const id = useId();
   return (
-    <Stack as="section" gap="md" aria-labelledby={id}>
-      <Cluster justify="space-between">
+    <Stack as="section" gap="md" aria-labelledby={id} className={className}>
+      <Cluster justify="space-between" gap="sm">
         <h2 id={id} className={styles.sectionTitle}>
           {title}
         </h2>
-        {action}
+        {aside}
       </Cluster>
       {children}
     </Stack>
   );
 };
+
+/** A sentence in place of a list with nothing in it. */
+const Empty = ({
+  title,
+  children,
+}: {
+  title?: string;
+  children?: React.ReactNode;
+}) => (
+  <Stack gap="xs" className={styles.empty}>
+    {title && <p className={styles.emptyTitle}>{title}</p>}
+    {children && <p className={styles.muted}>{children}</p>}
+  </Stack>
+);
 
 const dateFormat = new Intl.DateTimeFormat(undefined, {
   dateStyle: "medium",
@@ -170,10 +223,29 @@ const countBySlug = (candies: SwapCandy[]) => {
   return counts;
 };
 
+const plural = (n: number, one: string, many: string) =>
+  `${n} ${n === 1 ? one : many}`;
+
+type Person = { username: string; displayName?: string | null } | null;
+
+const nameOf = (person: Person, host?: string | null) =>
+  person
+    ? person.displayName || person.username
+    : (host ?? "A deleted account");
+
+/** What an offer you cannot take wants, on its disabled button. */
+const needs = (offer: SwapOffer) =>
+  offer.wantSlug === null
+    ? "You need a candy it does not give"
+    : `You need a ${candyName(offer.wantSlug)}`;
+
 export const CandySwapView = ({
   candyTypes,
   myCandies,
-  offers,
+  listings,
+  activity,
+  recentTrades,
+  now,
   myOffers,
   trades,
   maxOpenOffers,
@@ -193,6 +265,9 @@ export const CandySwapView = ({
   const [picking, setPicking] = useState(false);
   /** The offer for any kind whose payment is being picked. */
   const [paying, setPaying] = useState<SwapOffer | null>(null);
+  /** The list picked by hand; until then, the offers you can take if any. */
+  const [chosenFilter, setFilter] = useState<Filter | null>(null);
+  const [allTrades, setAllTrades] = useState(false);
 
   // Picked candies leave the tray; candies traded away since are dropped.
   const available = useMemo(
@@ -230,6 +305,11 @@ export const CandySwapView = ({
     });
   }, [candyTypes, myCandies]);
 
+  const takeable = listings?.filter((l) => l.canTake) ?? [];
+  const filter: Filter =
+    chosenFilter ?? (takeable.length > 0 ? "takeable" : "all");
+  const shown = filter === "takeable" ? takeable : (listings ?? []);
+
   const atLimit = myOffers.length >= maxOpenOffers;
   const full = offering.length >= maxOffered;
   const canPlace =
@@ -237,6 +317,7 @@ export const CandySwapView = ({
     offering.length > 0 &&
     want !== null &&
     (want === ANYTHING || !giving.has(want));
+  const noneToOffer = myCandies.length === 0 && myOffers.length === 0;
 
   const ask = (choice: Exclude<Ask, null>) => {
     // Picking the one asked for again stops asking.
@@ -258,277 +339,443 @@ export const CandySwapView = ({
     }
   };
 
+  const filterButton = (value: Filter, label: string, count: number) => (
+    <button
+      type="button"
+      className={styles.filterOption}
+      aria-pressed={filter === value}
+      disabled={count === 0}
+      onClick={() => setFilter(value)}
+    >
+      {label} ({count})
+    </button>
+  );
+
   return (
-    <Stack gap="xl" className={styles.page}>
-      <Stack gap="xs">
-        <h1 className={styles.title}>Candy swap</h1>
-        <p className={styles.muted}>
-          Offer up to {maxOffered} candies for one you want. Who you traded with
-          shows once a trade goes through.
-        </p>
-      </Stack>
-
-      <Section
-        title="Offers you can take"
-        action={
-          <Button tone="ghost" size="sm" busy={rerolling} onClick={onReroll}>
-            Show others
-          </Button>
-        }
+    <Stack gap="lg" className={styles.page}>
+      <Cluster
+        as="header"
+        gap="lg"
+        justify="space-between"
+        className={styles.hero}
       >
-        {offers === null ? (
-          <Grid min="lg" gap="md">
-            {[0, 1, 2].map((i) => (
-              <div key={i} className={styles.placeholder} />
-            ))}
-          </Grid>
-        ) : offers.length === 0 ? (
-          <p className={styles.muted}>No offers you can take right now.</p>
-        ) : (
-          <Grid as="ul" min="lg" gap="md" className={styles.list}>
-            {offers.map((offer) => (
-              <Stack as="li" key={offer.id} gap="md" className={styles.card}>
-                {offer.host && (
-                  <span className={styles.tradeWith}>
-                    {offer.host}&apos;s offer
-                  </span>
-                )}
-                <OfferTerms offer={offer} />
-                <Button
-                  busy={acceptingId === offer.id}
-                  disabled={acceptingId !== null && acceptingId !== offer.id}
-                  onClick={() =>
-                    offer.wantSlug === null
-                      ? setPaying(offer)
-                      : onAccept(offer.id)
-                  }
-                >
-                  {offer.wantSlug === null
-                    ? "Pick a candy to trade"
-                    : `Trade your ${candyName(offer.wantSlug)}`}
-                </Button>
-              </Stack>
-            ))}
-          </Grid>
-        )}
-      </Section>
+        <Stack gap="xs" className={styles.heroText}>
+          <h1 className={styles.title}>
+            <ArrowLeftRight className={styles.titleIcon} aria-hidden />
+            Candy swap
+          </h1>
+          <p className={styles.heroLead}>
+            Offer up to {maxOffered} candies for one you want. Who you traded
+            with shows once a trade goes through.
+          </p>
+        </Stack>
+        <Cluster gap="lg" className={styles.stats} aria-busy={!activity}>
+          <p className={styles.stat}>
+            <span className={styles.statValue}>
+              {activity ? activity.openOffers : "–"}
+            </span>{" "}
+            {activity?.openOffers === 1 ? "open offer" : "open offers"}
+          </p>
+          <p className={styles.stat}>
+            <span className={styles.statValue}>
+              {activity ? activity.tradesLastDay : "–"}
+            </span>{" "}
+            {activity?.tradesLastDay === 1
+              ? "trade in the last day"
+              : "trades in the last day"}
+          </p>
+        </Cluster>
+      </Cluster>
 
-      <Dialog.Root
-        open={paying !== null}
-        onClose={() => setPaying(null)}
-        closeOnScrimClick
-        width="wide"
-      >
-        <Dialog.Title>Trade a candy</Dialog.Title>
-        <Dialog.Body>
-          <Cluster as="ul" gap="sm" className={styles.list}>
-            {spares.map(([slug, have]) => (
-              <Choice
-                key={slug}
-                label={candyName(slug)}
-                have={have}
-                disabled={paying?.candies.some((c) => c.slug === slug)}
-                onPick={() => {
-                  if (paying) onAccept(paying.id, slug);
-                  setPaying(null);
-                }}
-              >
-                <Candy slug={slug} decorative lazy />
-              </Choice>
-            ))}
-          </Cluster>
-        </Dialog.Body>
-      </Dialog.Root>
-
-      <Section title="Make an offer">
-        <Stack as="form" gap="md" noValidate onSubmit={place}>
-          <Stack gap="xs">
-            <p className={styles.label}>Giving</p>
-            <Cluster gap="sm">
-              {Array.from({ length: maxOffered }, (_, i) => {
-                const c = offering[i];
-                return c ? (
-                  <button
-                    key={c.id}
-                    type="button"
-                    className={styles.filledSlot}
-                    aria-label={`Remove ${candyName(c.slug)}`}
-                    onClick={() =>
-                      setPicked((p) => p.filter((x) => x.id !== c.id))
-                    }
+      <Sidebar.Root stackBelow="lg">
+        <Sidebar.Main>
+          <Stack gap="xl">
+            <Section
+              title="Open offers"
+              aside={
+                <Cluster gap="sm">
+                  <div
+                    className={styles.filter}
+                    role="group"
+                    aria-label="Which offers"
                   >
-                    <Candy slug={c.slug} decorative />
-                  </button>
-                ) : (
-                  <span key={`empty-${i}`} className={styles.slot}>
-                    <span className={styles.candy} />
-                  </span>
-                );
-              })}
-            </Cluster>
-          </Stack>
+                    {filterButton("takeable", "You can take", takeable.length)}
+                    {filterButton("all", "All", listings?.length ?? 0)}
+                  </div>
+                  <Tooltip label="Show other offers">
+                    <IconButton
+                      label="Show other offers"
+                      tone="ghost"
+                      size="sm"
+                      icon={<Shuffle aria-hidden />}
+                      busy={rerolling}
+                      onClick={onReroll}
+                    />
+                  </Tooltip>
+                </Cluster>
+              }
+            >
+              {listings === null ? (
+                <Grid min="md" gap="md" aria-busy>
+                  {Array.from({ length: LISTING_PLACEHOLDERS }, (_, i) => (
+                    <div key={i} className={styles.placeholder} />
+                  ))}
+                </Grid>
+              ) : listings.length === 0 ? (
+                <Empty title="No open offers yet">
+                  Put one up below and it shows here for everyone.
+                </Empty>
+              ) : (
+                <Grid as="ul" min="md" gap="md" className={styles.list}>
+                  {shown.map(({ offer, canTake }) => (
+                    <Stack
+                      as="li"
+                      key={offer.id}
+                      gap="md"
+                      className={canTake ? styles.card : styles.cardOut}
+                    >
+                      <span className={styles.offerFrom}>
+                        {offer.host ? `${offer.host}'s offer` : " "}
+                      </span>
+                      <OfferTerms offer={offer} />
+                      {canTake ? (
+                        <Button
+                          busy={acceptingId === offer.id}
+                          disabled={
+                            acceptingId !== null && acceptingId !== offer.id
+                          }
+                          onClick={() =>
+                            offer.wantSlug === null
+                              ? setPaying(offer)
+                              : onAccept(offer.id)
+                          }
+                        >
+                          {offer.wantSlug === null
+                            ? "Pick a candy to trade"
+                            : `Trade your ${candyName(offer.wantSlug)}`}
+                        </Button>
+                      ) : (
+                        <Button tone="outline" disabled>
+                          {needs(offer)}
+                        </Button>
+                      )}
+                    </Stack>
+                  ))}
+                </Grid>
+              )}
+            </Section>
 
-          <Stack gap="xs">
-            <p className={styles.label}>Your candies</p>
-            {tray.length === 0 ? (
-              <p className={styles.muted}>
-                You have no candies to offer. Knock on Discord to collect some.{" "}
-                {noCandies}
-              </p>
-            ) : (
-              <Cluster as="ul" gap="sm" className={styles.list}>
-                {tray.map(([slug, left]) => (
-                  <li key={slug}>
+            <Dialog.Root
+              open={paying !== null}
+              onClose={() => setPaying(null)}
+              closeOnScrimClick
+              width="wide"
+            >
+              <Dialog.Title>Trade a candy</Dialog.Title>
+              <Dialog.Body>
+                <Cluster as="ul" gap="sm" className={styles.list}>
+                  {spares.map(([slug, have]) => (
+                    <Choice
+                      key={slug}
+                      label={candyName(slug)}
+                      have={have}
+                      disabled={paying?.candies.some((c) => c.slug === slug)}
+                      onPick={() => {
+                        if (paying) onAccept(paying.id, slug);
+                        setPaying(null);
+                      }}
+                    >
+                      <Candy slug={slug} decorative lazy />
+                    </Choice>
+                  ))}
+                </Cluster>
+              </Dialog.Body>
+            </Dialog.Root>
+
+            <Section title="Make an offer" className={styles.panel}>
+              <Stack as="form" gap="lg" noValidate onSubmit={place}>
+                <Cluster gap="md" align="flex-end">
+                  <Stack gap="xs">
+                    <p className={styles.label}>Giving</p>
+                    <Cluster gap="sm">
+                      {Array.from({ length: maxOffered }, (_, i) => {
+                        const c = offering[i];
+                        return c ? (
+                          <button
+                            key={c.id}
+                            type="button"
+                            className={styles.filledSlot}
+                            aria-label={`Remove ${candyName(c.slug)}`}
+                            onClick={() =>
+                              setPicked((p) => p.filter((x) => x.id !== c.id))
+                            }
+                          >
+                            <Candy slug={c.slug} decorative />
+                          </button>
+                        ) : (
+                          <span key={`empty-${i}`} className={styles.slot}>
+                            <span className={styles.candy} />
+                          </span>
+                        );
+                      })}
+                    </Cluster>
+                  </Stack>
+                  <ArrowRight className={styles.composeArrow} aria-hidden />
+                  <Stack gap="xs">
+                    <p className={styles.label}>Asking for</p>
                     <button
                       type="button"
-                      className={styles.trayCandy}
-                      aria-label={`Add ${candyName(slug)} (${left.length} left)`}
-                      disabled={left.length === 0 || full || slug === want}
-                      onClick={() => setPicked((p) => [...p, left[0]])}
+                      className={want ? styles.filledSlot : styles.slotButton}
+                      aria-label={
+                        want === null
+                          ? "Choose a candy to ask for"
+                          : `Asking for ${want === ANYTHING ? "anything" : candyName(want)}`
+                      }
+                      onClick={() => setPicking(true)}
                     >
-                      <Candy slug={slug} decorative />
-                      <span className={styles.count} aria-hidden>
-                        {left.length}
-                      </span>
+                      {want === null ? (
+                        <span className={styles.glyph}>
+                          <Plus className={styles.glyphIcon} aria-hidden />
+                        </span>
+                      ) : want === ANYTHING ? (
+                        <AnythingMark />
+                      ) : (
+                        <Candy slug={want} decorative />
+                      )}
                     </button>
-                  </li>
-                ))}
-              </Cluster>
-            )}
-          </Stack>
-
-          <Stack gap="xs">
-            <p className={styles.label}>Asking for</p>
-            <Cluster gap="sm">
-              <button
-                type="button"
-                className={want ? styles.filledSlot : styles.slotButton}
-                aria-label={
-                  want === null
-                    ? "Choose a candy to ask for"
-                    : `Asking for ${want === ANYTHING ? "anything" : candyName(want)}`
-                }
-                onClick={() => setPicking(true)}
-              >
-                {want === null ? (
-                  <span className={styles.glyph}>
-                    <Plus className={styles.glyphIcon} aria-hidden />
-                  </span>
-                ) : want === ANYTHING ? (
-                  <AnythingMark />
-                ) : (
-                  <Candy slug={want} decorative />
-                )}
-              </button>
-            </Cluster>
-          </Stack>
-
-          <Dialog.Root
-            open={picking}
-            onClose={() => setPicking(false)}
-            closeOnScrimClick
-            width="wide"
-          >
-            <Dialog.Title>Ask for a candy</Dialog.Title>
-            <Dialog.Body>
-              <Cluster as="ul" gap="sm" className={styles.list}>
-                <Choice
-                  label="Anything"
-                  chosen={want === ANYTHING}
-                  onPick={() => ask(ANYTHING)}
-                >
-                  <AnythingMark />
-                </Choice>
-                {candyTypes.map((slug) => (
-                  <Choice
-                    key={slug}
-                    label={candyName(slug)}
-                    have={owned.get(slug)}
-                    chosen={slug === want}
-                    disabled={giving.has(slug)}
-                    onPick={() => ask(slug)}
-                  >
-                    <Candy slug={slug} decorative lazy />
-                  </Choice>
-                ))}
-              </Cluster>
-            </Dialog.Body>
-          </Dialog.Root>
-
-          <Cluster gap="md">
-            <Button type="submit" busy={placing} disabled={!canPlace}>
-              Place offer
-            </Button>
-            <p className={styles.muted}>
-              {atLimit
-                ? `${maxOpenOffers} open ${maxOpenOffers === 1 ? "offer is" : "offers is"} the most you can have. Cancel one to make another.`
-                : `${myOffers.length} of ${maxOpenOffers} open offers`}
-            </p>
-          </Cluster>
-        </Stack>
-      </Section>
-
-      <Section title="Your open offers">
-        {myOffers.length === 0 ? (
-          <p className={styles.muted}>You have no open offers.</p>
-        ) : (
-          <Stack as="ul" gap="sm" className={styles.list}>
-            {myOffers.map((offer) => (
-              <Cluster
-                as="li"
-                key={offer.id}
-                gap="md"
-                justify="space-between"
-                className={styles.card}
-              >
-                <OfferTerms offer={offer} />
-                <Button
-                  tone="outline"
-                  size="sm"
-                  busy={cancellingId === offer.id}
-                  aria-label={`Cancel offer for ${offer.wantSlug === null ? "anything" : candyName(offer.wantSlug)}`}
-                  onClick={() => onCancel(offer.id)}
-                >
-                  Cancel
-                </Button>
-              </Cluster>
-            ))}
-          </Stack>
-        )}
-      </Section>
-
-      <Section title="Your trades">
-        {trades.length === 0 ? (
-          <p className={styles.muted}>You haven't traded any candies yet.</p>
-        ) : (
-          <Stack as="ul" gap="sm" className={styles.list}>
-            {trades.map((t) => (
-              <Stack as="li" key={t.id} gap="xs" className={styles.card}>
-                <Cluster gap="xs">
-                  <span className={styles.tradeWith}>
-                    {t.with
-                      ? t.with.displayName || t.with.username
-                      : (t.host ?? "A deleted account")}
-                  </span>
-                  <span className={styles.muted}>
-                    {dateFormat.format(new Date(t.createdAt))}
-                  </span>
+                  </Stack>
                 </Cluster>
-                <Cluster gap="sm">
-                  <span className={styles.label}>You gave</span>
-                  {t.gave.map((slug, i) => (
-                    <Candy key={`${slug}-${i}`} slug={slug} small />
-                  ))}
-                  <span className={styles.label}>You got</span>
-                  {t.received.map((slug, i) => (
-                    <Candy key={`${slug}-${i}`} slug={slug} small />
-                  ))}
+
+                <Stack gap="xs">
+                  <p className={styles.label}>Your candies</p>
+                  {tray.length === 0 ? (
+                    <Stack gap="sm" className={styles.empty}>
+                      <p className={styles.emptyTitle}>
+                        {noneToOffer
+                          ? "You have no candies yet"
+                          : "Every candy of yours is in an offer"}
+                      </p>
+                      <p className={styles.muted}>
+                        {noneToOffer
+                          ? "Knock on Discord to collect some, then trade them here."
+                          : "Cancel an offer to use its candies in another."}
+                      </p>
+                      {noneToOffer && noCandies && (
+                        <Cluster>
+                          <ButtonLink tone="outline" size="sm">
+                            {noCandies}
+                          </ButtonLink>
+                        </Cluster>
+                      )}
+                    </Stack>
+                  ) : (
+                    <Cluster as="ul" gap="sm" className={styles.list}>
+                      {tray.map(([slug, left]) => (
+                        <li key={slug}>
+                          <button
+                            type="button"
+                            className={styles.trayCandy}
+                            aria-label={`Add ${candyName(slug)} (${left.length} left)`}
+                            disabled={
+                              left.length === 0 || full || slug === want
+                            }
+                            onClick={() => setPicked((p) => [...p, left[0]])}
+                          >
+                            <Candy slug={slug} decorative />
+                            <span className={styles.count} aria-hidden>
+                              {left.length}
+                            </span>
+                          </button>
+                        </li>
+                      ))}
+                    </Cluster>
+                  )}
+                </Stack>
+
+                <Dialog.Root
+                  open={picking}
+                  onClose={() => setPicking(false)}
+                  closeOnScrimClick
+                  width="wide"
+                >
+                  <Dialog.Title>Ask for a candy</Dialog.Title>
+                  <Dialog.Body>
+                    <Cluster as="ul" gap="sm" className={styles.list}>
+                      <Choice
+                        label="Anything"
+                        chosen={want === ANYTHING}
+                        onPick={() => ask(ANYTHING)}
+                      >
+                        <AnythingMark />
+                      </Choice>
+                      {candyTypes.map((slug) => (
+                        <Choice
+                          key={slug}
+                          label={candyName(slug)}
+                          have={owned.get(slug)}
+                          chosen={slug === want}
+                          disabled={giving.has(slug)}
+                          onPick={() => ask(slug)}
+                        >
+                          <Candy slug={slug} decorative lazy />
+                        </Choice>
+                      ))}
+                    </Cluster>
+                  </Dialog.Body>
+                </Dialog.Root>
+
+                <Cluster gap="md" className={styles.panelFooter}>
+                  <Button type="submit" busy={placing} disabled={!canPlace}>
+                    Place offer
+                  </Button>
+                  <p className={styles.muted}>
+                    {atLimit
+                      ? `${maxOpenOffers} open ${maxOpenOffers === 1 ? "offer is" : "offers is"} the most you can have. Cancel one to make another.`
+                      : "Your candies are held until someone takes the offer or you cancel it."}
+                  </p>
                 </Cluster>
               </Stack>
-            ))}
+            </Section>
           </Stack>
-        )}
-      </Section>
+        </Sidebar.Main>
+
+        <Sidebar.Side width="xl">
+          <Stack gap="xl">
+            <Section
+              title="Your open offers"
+              aside={
+                <span className={styles.tally}>
+                  {myOffers.length} of {maxOpenOffers}
+                </span>
+              }
+            >
+              {myOffers.length === 0 ? (
+                <Empty>
+                  Offers you put up wait here until someone takes them.
+                </Empty>
+              ) : (
+                <Stack as="ul" gap="sm" className={styles.list}>
+                  {myOffers.map((offer) => (
+                    <Cluster
+                      as="li"
+                      key={offer.id}
+                      gap="sm"
+                      justify="space-between"
+                      className={styles.row}
+                    >
+                      <OfferTerms offer={offer} />
+                      <Button
+                        tone="outline"
+                        size="sm"
+                        busy={cancellingId === offer.id}
+                        aria-label={`Cancel offer for ${offer.wantSlug === null ? "anything" : candyName(offer.wantSlug)}`}
+                        onClick={() => onCancel(offer.id)}
+                      >
+                        Cancel
+                      </Button>
+                    </Cluster>
+                  ))}
+                </Stack>
+              )}
+            </Section>
+
+            <Section title="Recent swaps">
+              {recentTrades === null ? (
+                <Stack gap="sm" aria-busy>
+                  {Array.from({ length: FEED_PLACEHOLDERS }, (_, i) => (
+                    <div key={i} className={styles.rowPlaceholder} />
+                  ))}
+                </Stack>
+              ) : recentTrades.length === 0 ? (
+                <Empty>No swaps yet.</Empty>
+              ) : (
+                <Stack as="ul" gap="sm" className={styles.list}>
+                  {recentTrades.map((t) => (
+                    <Stack as="li" key={t.id} gap="xs" className={styles.row}>
+                      <p className={styles.feedNames}>
+                        <span className={styles.name}>
+                          {nameOf(t.offerer, t.host)}
+                        </span>
+                        <ArrowLeftRight
+                          className={styles.feedIcon}
+                          aria-label="swapped with"
+                        />
+                        <span className={styles.name}>{nameOf(t.taker)}</span>
+                      </p>
+                      <Cluster gap="xs">
+                        {t.offered.map((slug, i) => (
+                          <Candy key={`o-${slug}-${i}`} slug={slug} small />
+                        ))}
+                        <ArrowRight className={styles.arrow} aria-label="for" />
+                        {t.paid.map((slug, i) => (
+                          <Candy key={`p-${slug}-${i}`} slug={slug} small />
+                        ))}
+                        <span className={styles.time}>
+                          {timeAgo(t.createdAt, now)}
+                        </span>
+                      </Cluster>
+                    </Stack>
+                  ))}
+                </Stack>
+              )}
+            </Section>
+
+            <Section title="Your trades">
+              {trades.length === 0 ? (
+                <Empty>Your swaps, and whom they were with, show here.</Empty>
+              ) : (
+                <Stack gap="sm">
+                  <Stack as="ul" gap="sm" className={styles.list}>
+                    {(allTrades ? trades : trades.slice(0, TRADES_SHOWN)).map(
+                      (t) => (
+                        <Stack
+                          as="li"
+                          key={t.id}
+                          gap="xs"
+                          className={styles.row}
+                        >
+                          <Cluster gap="xs" justify="space-between">
+                            <span className={styles.name}>
+                              {nameOf(t.with, t.host)}
+                            </span>
+                            <span className={styles.time}>
+                              {dateFormat.format(new Date(t.createdAt))}
+                            </span>
+                          </Cluster>
+                          <Cluster gap="xs">
+                            <span className={styles.label}>You gave</span>
+                            {t.gave.map((slug, i) => (
+                              <Candy key={`${slug}-${i}`} slug={slug} small />
+                            ))}
+                            <span className={styles.label}>You got</span>
+                            {t.received.map((slug, i) => (
+                              <Candy key={`${slug}-${i}`} slug={slug} small />
+                            ))}
+                          </Cluster>
+                        </Stack>
+                      ),
+                    )}
+                  </Stack>
+                  {trades.length > TRADES_SHOWN && (
+                    <Cluster>
+                      <Button
+                        tone="ghost"
+                        size="sm"
+                        aria-expanded={allTrades}
+                        onClick={() => setAllTrades((v) => !v)}
+                      >
+                        {allTrades
+                          ? "Show fewer"
+                          : `Show all ${plural(trades.length, "trade", "trades")}`}
+                      </Button>
+                    </Cluster>
+                  )}
+                </Stack>
+              )}
+            </Section>
+          </Stack>
+        </Sidebar.Side>
+      </Sidebar.Root>
     </Stack>
   );
 };

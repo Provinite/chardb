@@ -2,6 +2,7 @@ import { style } from "@vanilla-extract/css";
 import {
   cardSurface,
   focusRing,
+  hover,
   interactiveSurface,
   vars,
 } from "@chardb/ui/theme";
@@ -11,11 +12,63 @@ export const page = style({
   paddingInline: vars.space.md,
 });
 
+/**
+ * The page's heading, in the event's night-sky colours like the sidebar's
+ * Halloween heading, with how busy the swap is beside it.
+ */
+export const hero = style({
+  paddingBlock: vars.space.lg,
+  paddingInline: vars.space.lg,
+  background: vars.event.halloween.bg,
+  color: vars.event.halloween.fg,
+  // Forced colours drop the background: the border keeps the box.
+  border: `${vars.borderWidth.hairline} solid transparent`,
+  borderBlockEnd: `${vars.borderWidth.thick} solid ${vars.event.halloween.accent}`,
+  borderRadius: vars.radius.lg,
+});
+
+export const heroText = style({
+  flex: 1,
+  minWidth: 0,
+});
+
 export const title = style({
+  display: "flex",
+  alignItems: "center",
+  gap: vars.space.sm,
   margin: 0,
   fontSize: vars.font.size.xxl,
   fontWeight: vars.font.weight.bold,
-  color: vars.text.default,
+  lineHeight: vars.font.lineHeight.tight,
+  color: vars.event.halloween.fg,
+});
+
+export const titleIcon = style({
+  flexShrink: 0,
+  width: vars.font.size.xxl,
+  height: vars.font.size.xxl,
+  color: vars.event.halloween.accent,
+});
+
+export const heroLead = style({
+  margin: 0,
+  color: vars.event.halloween.fg,
+});
+
+export const stats = style({
+  flexShrink: 0,
+});
+
+export const stat = style({
+  margin: 0,
+  color: vars.event.halloween.fg,
+  fontSize: vars.font.size.sm,
+});
+
+export const statValue = style({
+  fontSize: vars.font.size.xxl,
+  fontWeight: vars.font.weight.bold,
+  fontVariantNumeric: "tabular-nums",
 });
 
 export const sectionTitle = style({
@@ -36,6 +89,49 @@ export const list = style({
   listStyle: "none",
 });
 
+/** "You can take" and "All", one pressed at a time. */
+export const filter = style({
+  display: "inline-flex",
+  padding: vars.space.xs,
+  gap: vars.space.xs,
+  border: `${vars.borderWidth.hairline} solid ${vars.border.input}`,
+  borderRadius: vars.radius.md,
+});
+
+export const filterOption = style([
+  focusRing,
+  {
+    minHeight: vars.size.target.min,
+    paddingInline: vars.space.sm,
+    border: `${vars.borderWidth.hairline} solid transparent`,
+    borderRadius: vars.radius.sm,
+    background: "none",
+    color: vars.text.muted,
+    fontSize: vars.font.size.sm,
+    fontWeight: vars.font.weight.semibold,
+    fontVariantNumeric: "tabular-nums",
+    cursor: "pointer",
+    selectors: {
+      '&[aria-pressed="true"]': {
+        background: vars.action.primary.bgSubtle,
+        borderColor: vars.action.primary.border,
+        color: vars.text.default,
+      },
+      "&:disabled": {
+        cursor: "not-allowed",
+      },
+    },
+    "@media": {
+      ...hover({
+        '&:hover:not(:disabled):not([aria-pressed="true"])': {
+          background: vars.surface.raisedHover,
+          color: vars.text.default,
+        },
+      }),
+    },
+  },
+]);
+
 export const card = style([
   cardSurface,
   {
@@ -44,14 +140,108 @@ export const card = style([
   },
 ]);
 
+/** An offer you cannot take: set back into the page rather than raised. */
+export const cardOut = style({
+  padding: vars.space.md,
+  border: `${vars.borderWidth.hairline} solid ${vars.border.default}`,
+  borderRadius: vars.radius.lg,
+  background: vars.surface.page,
+});
+
 /** Stands in for a card while the offers load, at a card's footprint. */
 export const placeholder = style([
   card,
   {
     background: vars.surface.sunken,
+    minHeight: vars.size.column.md,
+  },
+]);
+
+/** The host of a house offer; holds its line on every card, so they align. */
+export const offerFrom = style({
+  fontSize: vars.font.size.sm,
+  fontWeight: vars.font.weight.semibold,
+  color: vars.text.default,
+});
+
+/** A section on its own surface: the offer being made. */
+export const panel = style([
+  cardSurface,
+  {
+    padding: vars.space.lg,
+    borderRadius: vars.radius.lg,
+  },
+]);
+
+export const panelFooter = style({
+  paddingBlockStart: vars.space.md,
+  borderBlockStart: `${vars.borderWidth.hairline} solid ${vars.border.default}`,
+});
+
+/** Where a list would be, with nothing in it yet. */
+export const empty = style({
+  padding: vars.space.md,
+  border: `${vars.borderWidth.thick} dashed ${vars.border.default}`,
+  borderRadius: vars.radius.lg,
+});
+
+export const emptyTitle = style({
+  margin: 0,
+  fontWeight: vars.font.weight.semibold,
+  color: vars.text.default,
+});
+
+/** How many offers you have open, of the most you may. */
+export const tally = style({
+  fontSize: vars.font.size.sm,
+  color: vars.text.muted,
+  fontVariantNumeric: "tabular-nums",
+});
+
+/** One entry in a side list: an open offer or a trade. */
+export const row = style([
+  cardSurface,
+  {
+    padding: vars.space.sm,
+    borderRadius: vars.radius.md,
+    minWidth: 0,
+  },
+]);
+
+/** Stands in for a recent swap while the feed loads, at a row's footprint. */
+export const rowPlaceholder = style([
+  row,
+  {
+    background: vars.surface.sunken,
     minHeight: vars.size.column.xs,
   },
 ]);
+
+export const feedNames = style({
+  display: "flex",
+  flexWrap: "wrap",
+  alignItems: "center",
+  gap: vars.space.xs,
+  margin: 0,
+});
+
+export const feedIcon = style({
+  flexShrink: 0,
+  width: vars.font.size.md,
+  height: vars.font.size.md,
+  color: vars.text.muted,
+});
+
+export const name = style({
+  fontWeight: vars.font.weight.semibold,
+  color: vars.text.default,
+  overflowWrap: "anywhere",
+});
+
+export const time = style({
+  fontSize: vars.font.size.sm,
+  color: vars.text.muted,
+});
 
 export const candy = style({
   display: "block",
@@ -59,6 +249,26 @@ export const candy = style({
   height: vars.size.target.comfortable,
   objectFit: "contain",
 });
+
+export const smallCandy = style({
+  display: "block",
+  width: vars.size.target.min,
+  height: vars.size.target.min,
+  objectFit: "contain",
+});
+
+export const arrow = style({
+  flexShrink: 0,
+  color: vars.text.muted,
+});
+
+/** Between what the offer gives and what it asks, level with the slots. */
+export const composeArrow = style([
+  arrow,
+  {
+    marginBlockEnd: vars.space.md,
+  },
+]);
 
 export const label = style({
   margin: 0,
@@ -105,7 +315,7 @@ export const slot = style({
   alignItems: "center",
   justifyContent: "center",
   padding: vars.space.xs,
-  border: `${vars.borderWidth.thick} dashed ${vars.border.default}`,
+  border: `${vars.borderWidth.thick} dashed ${vars.border.input}`,
   borderRadius: vars.radius.md,
 });
 
@@ -160,15 +370,3 @@ export const pickCandy = style([
     },
   },
 ]);
-
-export const tradeWith = style({
-  fontWeight: vars.font.weight.semibold,
-  color: vars.text.default,
-});
-
-export const smallCandy = style({
-  display: "block",
-  width: vars.size.target.min,
-  height: vars.size.target.min,
-  objectFit: "contain",
-});

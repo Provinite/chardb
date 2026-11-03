@@ -1454,6 +1454,42 @@ export type HalloweenCandySwapLimits = {
   maxOpenOffers: Scalars['Int']['output'];
 };
 
+/** Another player's open offer, and whether you could take it */
+export type HalloweenCandySwapListing = {
+  __typename?: 'HalloweenCandySwapListing';
+  /** Whether you hold a spare candy that fills it: one of the kind asked for, or for an offer for any kind, one of a kind it does not give */
+  canTake: Scalars['Boolean']['output'];
+  offer: HalloweenCandyOffer;
+};
+
+/** What is on offer in a community's candy swap */
+export type HalloweenCandySwapMarket = {
+  __typename?: 'HalloweenCandySwapMarket';
+  /** A random handful of other players' and the house's open offers, the ones you can take first */
+  listings: Array<HalloweenCandySwapListing>;
+  /** How many offers are open here, yours included */
+  openOffers: Scalars['Int']['output'];
+  /** How many trades went through here in the last 24 hours */
+  tradesLastDay: Scalars['Int']['output'];
+};
+
+/** A candy swap that went through, as anyone in the community sees it */
+export type HalloweenCandySwapTrade = {
+  __typename?: 'HalloweenCandySwapTrade';
+  createdAt: Scalars['DateTime']['output'];
+  /** The host, Daphne or Luther, when it was a house offer */
+  host: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  /** The slugs of the candies the offer gave */
+  offered: Array<Scalars['String']['output']>;
+  /** Whose offer was taken. Null for a house offer, or if their account is gone. */
+  offerer: Maybe<User>;
+  /** The slugs of the candies the taker gave for them */
+  paid: Array<Scalars['String']['output']>;
+  /** Who took the offer. Null if their account is gone. */
+  taker: Maybe<User>;
+};
+
 /** A candy swap you took part in, as you saw it */
 export type HalloweenCandyTradeRecord = {
   __typename?: 'HalloweenCandyTradeRecord';
@@ -3557,8 +3593,12 @@ export type Query = {
   /** A Halloween candy board, by the id in its link. Null if there is no such board in this community's Discord server, or the community has none linked. An error if the community does not exist or has the Halloween event turned off. */
   halloweenCandyBoard: Maybe<HalloweenCandyBoard>;
   halloweenCandySwapLimits: HalloweenCandySwapLimits;
+  /** A random handful of other players' open candy offers, the ones you can take first, and how busy the swap is. At most 50; 24 unless given. */
+  halloweenCandySwapMarket: HalloweenCandySwapMarket;
   /** A random handful of other players' open candy offers that you have a spare candy of the wanted kind for. At most 50; 12 unless given. */
   halloweenCandySwapOffers: Array<HalloweenCandyOffer>;
+  /** The latest candy swaps here, newest first, and who made them. At most 50; 10 unless given. */
+  halloweenCandySwapRecentTrades: Array<HalloweenCandySwapTrade>;
   /** Every kind of Halloween candy, by slug: its image is /halloween/candy/<slug>.png on the frontend */
   halloweenCandyTypes: Array<Scalars['String']['output']>;
   /** The Halloween event in this community's Discord server: settings, totals and prize pool. Requires the event to be enabled, and canGrantItems or canManageItems. */
@@ -4000,7 +4040,19 @@ export type QueryHalloweenCandyBoardArgs = {
 };
 
 
+export type QueryHalloweenCandySwapMarketArgs = {
+  communityId: Scalars['ID']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
 export type QueryHalloweenCandySwapOffersArgs = {
+  communityId: Scalars['ID']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+};
+
+
+export type QueryHalloweenCandySwapRecentTradesArgs = {
   communityId: Scalars['ID']['input'];
   limit?: InputMaybe<Scalars['Int']['input']>;
 };
@@ -5632,12 +5684,23 @@ export type CandySwapQueryVariables = Exact<{
 
 export type CandySwapQuery = { __typename?: 'Query', halloweenCandyTypes: Array<string>, halloweenCandySwapLimits: { __typename?: 'HalloweenCandySwapLimits', maxOpenOffers: number, maxOfferedCandies: number }, myHalloweenCandies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }>, myHalloweenCandyOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }>, myHalloweenCandyTrades: Array<{ __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, host: string | null, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
 
-export type CandySwapOffersQueryVariables = Exact<{
+export type HalloweenCandySwapListingFieldsFragment = { __typename?: 'HalloweenCandySwapListing', canTake: boolean, offer: { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> } };
+
+export type HalloweenCandySwapTradeFieldsFragment = { __typename?: 'HalloweenCandySwapTrade', id: string, host: string | null, offered: Array<string>, paid: Array<string>, createdAt: string, offerer: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, taker: { __typename?: 'User', id: string, username: string, displayName: string | null } | null };
+
+export type CandySwapMarketQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
 
 
-export type CandySwapOffersQuery = { __typename?: 'Query', halloweenCandySwapOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }> };
+export type CandySwapMarketQuery = { __typename?: 'Query', halloweenCandySwapMarket: { __typename?: 'HalloweenCandySwapMarket', openOffers: number, tradesLastDay: number, listings: Array<{ __typename?: 'HalloweenCandySwapListing', canTake: boolean, offer: { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> } }> } };
+
+export type CandySwapRecentTradesQueryVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type CandySwapRecentTradesQuery = { __typename?: 'Query', halloweenCandySwapRecentTrades: Array<{ __typename?: 'HalloweenCandySwapTrade', id: string, host: string | null, offered: Array<string>, paid: Array<string>, createdAt: string, offerer: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, taker: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
 
 export type PlaceHalloweenCandyOfferMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -7584,6 +7647,20 @@ export type RateLimitBackoffSpecQueryVariables = Exact<{ [key: string]: never; }
 
 export type RateLimitBackoffSpecQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string } };
 
+export const HalloweenCandyTradeFieldsFragmentDoc = gql`
+    fragment HalloweenCandyTradeFields on HalloweenCandyTradeRecord {
+  id
+  gave
+  received
+  createdAt
+  host
+  with {
+    id
+    username
+    displayName
+  }
+}
+    `;
 export const HalloweenCandyOfferFieldsFragmentDoc = gql`
     fragment HalloweenCandyOfferFields on HalloweenCandyOffer {
   id
@@ -7597,14 +7674,27 @@ export const HalloweenCandyOfferFieldsFragmentDoc = gql`
   }
 }
     `;
-export const HalloweenCandyTradeFieldsFragmentDoc = gql`
-    fragment HalloweenCandyTradeFields on HalloweenCandyTradeRecord {
+export const HalloweenCandySwapListingFieldsFragmentDoc = gql`
+    fragment HalloweenCandySwapListingFields on HalloweenCandySwapListing {
+  canTake
+  offer {
+    ...HalloweenCandyOfferFields
+  }
+}
+    ${HalloweenCandyOfferFieldsFragmentDoc}`;
+export const HalloweenCandySwapTradeFieldsFragmentDoc = gql`
+    fragment HalloweenCandySwapTradeFields on HalloweenCandySwapTrade {
   id
-  gave
-  received
-  createdAt
   host
-  with {
+  offered
+  paid
+  createdAt
+  offerer {
+    id
+    username
+    displayName
+  }
+  taker {
     id
     username
     displayName
@@ -8950,46 +9040,90 @@ export type CandySwapQueryHookResult = ReturnType<typeof useCandySwapQuery>;
 export type CandySwapLazyQueryHookResult = ReturnType<typeof useCandySwapLazyQuery>;
 export type CandySwapSuspenseQueryHookResult = ReturnType<typeof useCandySwapSuspenseQuery>;
 export type CandySwapQueryResult = Apollo.QueryResult<CandySwapQuery, CandySwapQueryVariables>;
-export const CandySwapOffersDocument = gql`
-    query CandySwapOffers($communityId: ID!) {
-  halloweenCandySwapOffers(communityId: $communityId) {
-    ...HalloweenCandyOfferFields
+export const CandySwapMarketDocument = gql`
+    query CandySwapMarket($communityId: ID!) {
+  halloweenCandySwapMarket(communityId: $communityId) {
+    openOffers
+    tradesLastDay
+    listings {
+      ...HalloweenCandySwapListingFields
+    }
   }
 }
-    ${HalloweenCandyOfferFieldsFragmentDoc}`;
+    ${HalloweenCandySwapListingFieldsFragmentDoc}`;
 
 /**
- * __useCandySwapOffersQuery__
+ * __useCandySwapMarketQuery__
  *
- * To run a query within a React component, call `useCandySwapOffersQuery` and pass it any options that fit your needs.
- * When your component renders, `useCandySwapOffersQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * To run a query within a React component, call `useCandySwapMarketQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCandySwapMarketQuery` returns an object from Apollo Client that contains loading, error, and data properties
  * you can use to render your UI.
  *
  * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
  *
  * @example
- * const { data, loading, error } = useCandySwapOffersQuery({
+ * const { data, loading, error } = useCandySwapMarketQuery({
  *   variables: {
  *      communityId: // value for 'communityId'
  *   },
  * });
  */
-export function useCandySwapOffersQuery(baseOptions: Apollo.QueryHookOptions<CandySwapOffersQuery, CandySwapOffersQueryVariables> & ({ variables: CandySwapOffersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+export function useCandySwapMarketQuery(baseOptions: Apollo.QueryHookOptions<CandySwapMarketQuery, CandySwapMarketQueryVariables> & ({ variables: CandySwapMarketQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
         const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<CandySwapOffersQuery, CandySwapOffersQueryVariables>(CandySwapOffersDocument, options);
+        return Apollo.useQuery<CandySwapMarketQuery, CandySwapMarketQueryVariables>(CandySwapMarketDocument, options);
       }
-export function useCandySwapOffersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CandySwapOffersQuery, CandySwapOffersQueryVariables>) {
+export function useCandySwapMarketLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CandySwapMarketQuery, CandySwapMarketQueryVariables>) {
           const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<CandySwapOffersQuery, CandySwapOffersQueryVariables>(CandySwapOffersDocument, options);
+          return Apollo.useLazyQuery<CandySwapMarketQuery, CandySwapMarketQueryVariables>(CandySwapMarketDocument, options);
         }
-export function useCandySwapOffersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CandySwapOffersQuery, CandySwapOffersQueryVariables>) {
+export function useCandySwapMarketSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CandySwapMarketQuery, CandySwapMarketQueryVariables>) {
           const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<CandySwapOffersQuery, CandySwapOffersQueryVariables>(CandySwapOffersDocument, options);
+          return Apollo.useSuspenseQuery<CandySwapMarketQuery, CandySwapMarketQueryVariables>(CandySwapMarketDocument, options);
         }
-export type CandySwapOffersQueryHookResult = ReturnType<typeof useCandySwapOffersQuery>;
-export type CandySwapOffersLazyQueryHookResult = ReturnType<typeof useCandySwapOffersLazyQuery>;
-export type CandySwapOffersSuspenseQueryHookResult = ReturnType<typeof useCandySwapOffersSuspenseQuery>;
-export type CandySwapOffersQueryResult = Apollo.QueryResult<CandySwapOffersQuery, CandySwapOffersQueryVariables>;
+export type CandySwapMarketQueryHookResult = ReturnType<typeof useCandySwapMarketQuery>;
+export type CandySwapMarketLazyQueryHookResult = ReturnType<typeof useCandySwapMarketLazyQuery>;
+export type CandySwapMarketSuspenseQueryHookResult = ReturnType<typeof useCandySwapMarketSuspenseQuery>;
+export type CandySwapMarketQueryResult = Apollo.QueryResult<CandySwapMarketQuery, CandySwapMarketQueryVariables>;
+export const CandySwapRecentTradesDocument = gql`
+    query CandySwapRecentTrades($communityId: ID!) {
+  halloweenCandySwapRecentTrades(communityId: $communityId) {
+    ...HalloweenCandySwapTradeFields
+  }
+}
+    ${HalloweenCandySwapTradeFieldsFragmentDoc}`;
+
+/**
+ * __useCandySwapRecentTradesQuery__
+ *
+ * To run a query within a React component, call `useCandySwapRecentTradesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCandySwapRecentTradesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCandySwapRecentTradesQuery({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useCandySwapRecentTradesQuery(baseOptions: Apollo.QueryHookOptions<CandySwapRecentTradesQuery, CandySwapRecentTradesQueryVariables> & ({ variables: CandySwapRecentTradesQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CandySwapRecentTradesQuery, CandySwapRecentTradesQueryVariables>(CandySwapRecentTradesDocument, options);
+      }
+export function useCandySwapRecentTradesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CandySwapRecentTradesQuery, CandySwapRecentTradesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CandySwapRecentTradesQuery, CandySwapRecentTradesQueryVariables>(CandySwapRecentTradesDocument, options);
+        }
+export function useCandySwapRecentTradesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CandySwapRecentTradesQuery, CandySwapRecentTradesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CandySwapRecentTradesQuery, CandySwapRecentTradesQueryVariables>(CandySwapRecentTradesDocument, options);
+        }
+export type CandySwapRecentTradesQueryHookResult = ReturnType<typeof useCandySwapRecentTradesQuery>;
+export type CandySwapRecentTradesLazyQueryHookResult = ReturnType<typeof useCandySwapRecentTradesLazyQuery>;
+export type CandySwapRecentTradesSuspenseQueryHookResult = ReturnType<typeof useCandySwapRecentTradesSuspenseQuery>;
+export type CandySwapRecentTradesQueryResult = Apollo.QueryResult<CandySwapRecentTradesQuery, CandySwapRecentTradesQueryVariables>;
 export const PlaceHalloweenCandyOfferDocument = gql`
     mutation PlaceHalloweenCandyOffer($communityId: ID!, $candyIds: [Int!]!, $wantSlug: String) {
   placeHalloweenCandyOffer(
