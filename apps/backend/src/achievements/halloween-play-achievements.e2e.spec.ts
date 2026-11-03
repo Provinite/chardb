@@ -15,6 +15,7 @@ import { HalloweenModule } from "../halloween/halloween.module";
 import { HalloweenCommandDispatcher } from "../halloween/discord/halloween-command.dispatcher";
 import { HalloweenDiscordClient } from "../halloween/discord/halloween-discord.client";
 import { HalloweenRandom } from "../halloween/random";
+import { HalloweenConfig } from "../halloween/halloween.config";
 import { GuildSettingsService } from "../halloween/services/guild-settings.service";
 import { CandySwapService } from "../halloween/swap/candy-swap.service";
 import { mockDiscord } from "../halloween/testing/command-harness";
@@ -48,6 +49,7 @@ describe("Halloween play achievements (e2e)", () => {
   let events: DomainEvents;
   let achievements: AchievementsService;
   let random: HalloweenRandom;
+  let botUserId: string;
   let communityId: string;
   let roleId: string;
   let interactionId = 0;
@@ -78,6 +80,7 @@ describe("Halloween play achievements (e2e)", () => {
     events = refs.get(DomainEvents);
     achievements = refs.get(AchievementsService);
     random = refs.get(HalloweenRandom);
+    botUserId = refs.get(HalloweenConfig).applicationId;
   });
 
   afterAll(async () => {
@@ -290,6 +293,17 @@ describe("Halloween play achievements (e2e)", () => {
       await db.halloweenGifty.deleteMany();
       await giftyTo(USER_ID);
       expect(await earned(alice.id)).toEqual(["treat-yourself-2026"]);
+    });
+
+    it("earns faustian bargain for a gifty to the bot", async () => {
+      await setUpEvent();
+      const alice = await member("alice", USER_ID);
+      await giftyTo(OTHER_USER_ID);
+      expect(await earned(alice.id)).toEqual([]);
+
+      await db.halloweenGifty.deleteMany();
+      await giftyTo(botUserId);
+      expect(await earned(alice.id)).toEqual(["faustian-bargain-2026"]);
     });
 
     it("earns nobody home for knocking with no knocks left, and records the attempt", async () => {

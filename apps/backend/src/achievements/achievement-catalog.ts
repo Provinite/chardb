@@ -26,6 +26,7 @@ export function halloweenPlaySlug(year: number) {
     generousOffer: `generous-offer-${year}`,
     bargainHunter: `bargain-hunter-${year}`,
     treatYourself: `treat-yourself-${year}`,
+    faustianBargain: `faustian-bargain-${year}`,
     everyNight: `every-night-${year}`,
     nobodyHome: `nobody-home-${year}`,
     infectiousEnthusiasm: `infectious-enthusiasm-${year}`,
@@ -76,6 +77,12 @@ export const ACHIEVEMENTS: readonly AchievementDefinition[] = [
     name: "Treat Yourself 2026",
     description: "Sent yourself a gifty during Trick-or-Treat 2026.",
     imagePath: "/halloween/candy/boo-treat-bag.png",
+  },
+  {
+    slug: play2026.faustianBargain,
+    name: "Faustian Bargain 2026",
+    description: "Sent Luther a gifty for luck during Trick-or-Treat 2026.",
+    imagePath: "/halloween/candy/luther-hehe.png",
   },
   {
     slug: play2026.everyNight,

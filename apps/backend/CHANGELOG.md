@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Faustian Bargain achievement**: earned by sending the Trick-or-Treat bot a gifty during the event.
+
 ## [v15.6.0] - 2026-11-03
 
 ### Added

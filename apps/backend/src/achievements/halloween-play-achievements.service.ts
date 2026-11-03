@@ -8,6 +8,7 @@ import type {
   HalloweenGiftySent,
   HalloweenKnockByDiscordUser,
 } from "../events/domain-event-map";
+import { HalloweenConfig } from "../halloween/halloween.config";
 import { eventYear } from "../halloween/time";
 import { AchievementGrants } from "./achievement-grants";
 import {
@@ -43,6 +44,7 @@ export class HalloweenPlayAchievements {
   constructor(
     private readonly db: DatabaseService,
     private readonly grants: AchievementGrants,
+    private readonly halloweenConfig: HalloweenConfig,
   ) {}
 
   @OnDomainEvent("halloween.candy.traded")
@@ -194,6 +196,7 @@ export class HalloweenPlayAchievements {
       ? await this.discordPlay({ ...player, discordUserId }, during)
       : {
           giftedSelf: false,
+          giftedBot: false,
           knockedEveryDay: false,
           knockedWithNoneLeft: false,
         };
@@ -236,16 +239,27 @@ export class HalloweenPlayAchievements {
   ): Promise<
     Pick<
       HalloweenPlay,
-      "giftedSelf" | "knockedEveryDay" | "knockedWithNoneLeft"
+      "giftedSelf" | "giftedBot" | "knockedEveryDay" | "knockedWithNoneLeft"
     >
   > {
     const { guildId, discordUserId } = player;
-    const [selfGifty, attempt, knocks] = await Promise.all([
+    // A bot's user id is its application's id.
+    const botUserId = this.halloweenConfig.applicationId;
+    const [selfGifty, botGifty, attempt, knocks] = await Promise.all([
       this.db.halloweenGifty.findFirst({
         where: {
           guildId,
           fromUserId: discordUserId,
           toUserId: discordUserId,
+          time: during,
+        },
+        select: { id: true },
+      }),
+      this.db.halloweenGifty.findFirst({
+        where: {
+          guildId,
+          fromUserId: discordUserId,
+          toUserId: botUserId,
           time: during,
         },
         select: { id: true },
@@ -264,6 +278,7 @@ export class HalloweenPlayAchievements {
     ]);
     return {
       giftedSelf: selfGifty !== null,
+      giftedBot: botGifty !== null,
       knockedWithNoneLeft: attempt !== null,
       knockedEveryDay: knockedEveryDay(
         knocks.map((k) => k.time),
