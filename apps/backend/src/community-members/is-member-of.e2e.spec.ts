@@ -25,7 +25,12 @@ describe("User.isMemberOf (e2e)", () => {
   beforeAll(async () => {
     testApp = new TestApp();
     await testApp.setup({
-      imports: [DatabaseModule, AuthModule, UsersModule, CommunityMembersModule],
+      imports: [
+        DatabaseModule,
+        AuthModule,
+        UsersModule,
+        CommunityMembersModule,
+      ],
     });
   });
 
