@@ -191,20 +191,14 @@ test.describe("community hosts", () => {
     ).toBeVisible();
   });
 
-  /**
-   * The control for the case above: a specific set of pages moved, not the
-   * apex boundary generally. Reading a profile is still the apex's, and it is
-   * the neighbour of `/profile/edit` in the route table -- so if a change ever
-   * widens `/profile/*` by accident, this is what catches it.
-   */
-  test("reading a profile still belongs to the apex", async ({
+  /** A profile on a community host is the member profile there. */
+  test("reading a profile stays on the community", async ({
     page,
     world,
   }) => {
     await page.goto(`${world.community.url}/user/member`);
 
-    await expect(page).toHaveURL(apexUrl("/user/member"));
-    await expect(globalNav(page)).toBeVisible();
+    await expect(page).toHaveURL(`${world.community.url}/members/member`);
   });
 
   test("remembers which community the host is, between page loads", async ({

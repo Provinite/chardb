@@ -110,10 +110,19 @@ test.describe("page search", () => {
 
   test("a result on another host loads that host", async ({ page }) => {
     const s = spotlight(page);
+    await s.search("join community");
+    await s.result(/^Join Community/).click();
+
+    await expect(page).toHaveURL(apexUrl("/join-community"));
+  });
+
+  // A community host serves the viewer's own lists, narrowed to it.
+  test("a personal page stays on the community", async ({ page, world }) => {
+    const s = spotlight(page);
     await s.search("liked characters");
     await s.result(/^Liked Characters/).click();
 
-    await expect(page).toHaveURL(apexUrl("/liked/characters"));
+    await expect(page).toHaveURL(`${world.community.url}/liked/characters`);
   });
 
   test("offers no Halloween pages while the event is off", async ({ page }) => {

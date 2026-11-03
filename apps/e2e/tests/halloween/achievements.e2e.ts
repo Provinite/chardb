@@ -1,4 +1,5 @@
 import { presetTest, expect } from "../../src/fixtures.js";
+import { apexUrl } from "../../src/config.js";
 
 const test = presetTest("achievements");
 
@@ -43,7 +44,7 @@ test.describe("achievements on a member profile", () => {
     );
     await expect(page.getByTestId("member-achievements")).toBeVisible();
 
-    await page.getByRole("link", { name: "Site profile" }).click();
+    await page.goto(apexUrl(`/user/${world.users.alice.username}`));
     await expect(
       page.getByRole("heading", { name: `@${world.users.alice.username}` }),
     ).toBeVisible();
