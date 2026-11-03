@@ -402,9 +402,8 @@ describe("EditProfilePage", () => {
         expect(mocks.navigate).toHaveBeenCalledWith("/user/johndoe");
       });
     });
-    // `/user/*` is apex-only, so on a community host it would bounce the
-    // viewer off the community they were editing from.
-    it("returns to the member profile on a community host", async () => {
+    // The community host's route table forwards `/user/:username` itself.
+    it("returns to the same profile path on a community host", async () => {
       mocks.hostCommunity = {
         id: "community-1",
         name: "Willowmere",
@@ -426,7 +425,7 @@ describe("EditProfilePage", () => {
       await user.click(screen.getByRole("button", { name: "Cancel" }));
 
       await waitFor(() => {
-        expect(mocks.navigate).toHaveBeenCalledWith("/members/johndoe");
+        expect(mocks.navigate).toHaveBeenCalledWith("/user/johndoe");
       });
     });
   });

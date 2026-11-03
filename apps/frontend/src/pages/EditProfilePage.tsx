@@ -327,14 +327,9 @@ export const EditProfilePage: React.FC = () => {
   const navigate = useNavigate();
   const { data: meData, loading: meLoading } = useMeQuery();
   const [updateProfile, { loading: updating }] = useUpdateProfileMutation();
-  // Null at the apex. Says out loud that this page is not scoped to the
-  // community whose host it is served from, and picks where to go when done.
+  // Null at the apex. Only used to say out loud that this page is not scoped
+  // to the community whose host it is being served from.
   const hostCommunity = useHostCommunity();
-
-  // `/user/*` only exists at the apex, so a community host returns to the
-  // member profile instead of leaving the community.
-  const profilePath = (username: string | undefined): string =>
-    hostCommunity ? `/members/${username}` : `/user/${username}`;
 
   // External accounts
   const {
@@ -389,7 +384,7 @@ export const EditProfilePage: React.FC = () => {
       });
 
       toast.success("Profile updated successfully!");
-      navigate(profilePath(meData?.me?.username));
+      navigate(`/user/${meData?.me?.username}`);
     } catch (error) {
       console.error("Error updating profile:", error);
       toast.error("Failed to update profile. Please try again.");
@@ -397,7 +392,7 @@ export const EditProfilePage: React.FC = () => {
   };
 
   const handleCancel = () => {
-    navigate(profilePath(meData?.me?.username));
+    navigate(`/user/${meData?.me?.username}`);
   };
 
   const handleLink = async ({ segment, label }: LinkableProvider) => {
