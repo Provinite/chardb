@@ -69,6 +69,8 @@ describe("GlobalNavigationSidebar", () => {
     mocks.slug = "willowmere";
     render(<GlobalNavigationSidebar />);
 
-    expect(hrefOf("Join Community")).toMatch(/^https?:\/\/[^/]+\/join-community$/);
+    expect(hrefOf("Join Community")).toMatch(
+      /^https?:\/\/[^/]+\/join-community$/,
+    );
   });
 });
