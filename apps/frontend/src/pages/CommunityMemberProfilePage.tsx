@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { Avatar, Cluster } from "@chardb/ui";
@@ -9,6 +9,8 @@ import {
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
 import { usePageMeta } from "../lib/pageMeta";
+import { apexUrl } from "../lib/communityHost";
+import { replaceLocation } from "../lib/replaceLocation";
 import { FollowButton } from "../components/FollowButton";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
@@ -16,6 +18,7 @@ import { AchievementList } from "../components/achievements/AchievementList";
 import {
   useCommunityMemberProfileQuery,
   useCommunityMemberRolesQuery,
+  useIsMemberOfQuery,
   useUserCharactersQuery,
 } from "../generated/graphql";
 
@@ -205,6 +208,19 @@ export const CommunityMemberProfilePage: React.FC = () => {
       skip: !username || !communityId,
     });
 
+  // A member page for someone who is not a member implies they belong here,
+  // so a stranger's profile is the main site's. Only signed-in viewers can
+  // be told who belongs; a signed-out visitor sees this page as it is.
+  const { data: membershipData, loading: membershipLoading } =
+    useIsMemberOfQuery({
+      variables: { username: username ?? "", communityId: communityId! },
+      skip: !user || !username || !communityId,
+    });
+  const notAMember = membershipData?.user?.isMemberOf === false;
+  useEffect(() => {
+    if (notAMember && username) replaceLocation(apexUrl(`/user/${username}`));
+  }, [notAMember, username]);
+
   const member = profileData?.user;
   const memberId = member?.id;
   const isSelf = memberId === user?.id;
@@ -226,7 +242,7 @@ export const CommunityMemberProfilePage: React.FC = () => {
       skip: !memberId || !communityId,
     });
 
-  if (profileLoading) {
+  if (profileLoading || membershipLoading || notAMember) {
     return (
       <LoadingContainer>
         <LoadingSpinner />

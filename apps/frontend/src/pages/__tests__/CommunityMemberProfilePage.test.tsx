@@ -4,7 +4,14 @@ import { Route, Routes } from "react-router-dom";
 import { render, createMockUser } from "../../__tests__/test-utils";
 
 const mocks = vi.hoisted(() => ({
-  viewerId: "viewer-1",
+  viewerId: "viewer-1" as string | null,
+  isMemberOf: true,
+  isMemberOfSkipped: vi.fn(),
+  replaceLocation: vi.fn(),
+}));
+
+vi.mock("../../lib/replaceLocation", () => ({
+  replaceLocation: mocks.replaceLocation,
 }));
 
 vi.mock("../../contexts/CommunityHostContext", async () => {
@@ -28,7 +35,9 @@ vi.mock("../../contexts/AuthContext", async () => {
   >("../../contexts/AuthContext");
   return {
     ...actual,
-    useAuth: () => ({ user: createMockUser({ id: mocks.viewerId }) }),
+    useAuth: () => ({
+      user: mocks.viewerId ? createMockUser({ id: mocks.viewerId }) : null,
+    }),
   };
 });
 
@@ -57,6 +66,15 @@ vi.mock("../../generated/graphql", async () => {
         },
       },
     }),
+    useIsMemberOfQuery: (options: { skip?: boolean }) => {
+      mocks.isMemberOfSkipped(Boolean(options.skip));
+      return options.skip
+        ? { loading: false, data: undefined }
+        : {
+            loading: false,
+            data: { user: { id: "member-1", isMemberOf: mocks.isMemberOf } },
+          };
+    },
     useCommunityMemberRolesQuery: () => ({
       data: { communityMemberRoles: [] },
     }),
@@ -87,6 +105,37 @@ const renderProfile = () => {
 describe("CommunityMemberProfilePage", () => {
   beforeEach(() => {
     mocks.viewerId = "viewer-1";
+    mocks.isMemberOf = true;
+    mocks.isMemberOfSkipped.mockClear();
+    mocks.replaceLocation.mockClear();
+  });
+
+  // A member page for a stranger implies they belong here.
+  it("sends a non-member to their main-site profile", () => {
+    mocks.isMemberOf = false;
+    window.history.pushState({}, "", "/members/bob");
+    render(
+      <Routes>
+        <Route
+          path="/members/:username"
+          element={<CommunityMemberProfilePage />}
+        />
+      </Routes>,
+    );
+
+    expect(mocks.replaceLocation).toHaveBeenCalledWith(
+      expect.stringMatching(/^https?:\/\/[^/]+\/user\/bob$/),
+    );
+    expect(screen.queryByRole("heading", { name: "Bob" })).toBeNull();
+  });
+
+  // Membership is only answered to signed-in viewers.
+  it("shows the member page to a signed-out visitor without asking", () => {
+    mocks.viewerId = null;
+    renderProfile();
+
+    expect(mocks.isMemberOfSkipped).toHaveBeenLastCalledWith(true);
+    expect(mocks.replaceLocation).not.toHaveBeenCalled();
   });
 
   // The profile is served on every host now, so nothing here leaves it.
