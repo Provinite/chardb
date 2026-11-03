@@ -228,4 +228,51 @@ describe("communityMembersByCommunity search (e2e)", () => {
     expect(usernames(page)).toEqual(["second", "first", "viewer"]);
     expect(page.totalCount).toBe(3);
   });
+
+  it("treats _ and % in a search as literal characters", async () => {
+    await join([
+      { username: "rowan_ii", role: "Member" },
+      { username: "rowanberry", role: "Member" },
+      { username: "rowanx", role: "Member" },
+    ]);
+
+    expect(usernames(await fetchMembers({ search: "rowan_" }))).toEqual([
+      "rowan_ii",
+    ]);
+    expect(usernames(await fetchMembers({ search: "%" }))).toEqual([]);
+  });
+
+  it("pages members who joined at the same moment without repeats", async () => {
+    const db = testApp.getDb();
+    const sameMoment = new Date("2026-02-01T00:00:00Z");
+    for (let i = 0; i < 6; i++) {
+      const user = await testApp.createTestUser({
+        username: `batch${i}`,
+        email: `batch${i}@example.com`,
+      });
+      await db.communityMember.create({
+        data: { userId: user.id, roleId: roles.Member, createdAt: sameMoment },
+      });
+    }
+
+    const seen: string[] = [];
+    let after: string | undefined;
+    let hasNextPage = true;
+    while (hasNextPage) {
+      const page = await fetchMembers({ first: 2, after });
+      seen.push(...usernames(page));
+      hasNextPage = page.hasNextPage;
+      after = page.nodes.at(-1)?.id;
+    }
+
+    expect([...seen].sort()).toEqual([
+      "batch0",
+      "batch1",
+      "batch2",
+      "batch3",
+      "batch4",
+      "batch5",
+      "viewer",
+    ]);
+  });
 });

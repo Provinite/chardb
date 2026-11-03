@@ -224,6 +224,29 @@ test.describe("searching the members list", () => {
       page.locator(`[data-testid="member-row"][data-username="${username}"]`),
     ).toBeVisible();
   });
+
+  test("a failed search leaves the search box to try again", async ({
+    page,
+    world,
+  }) => {
+    await page.route("**/graphql", (route) =>
+      route.request().postDataJSON()?.variables?.search === "unlucky"
+        ? route.abort()
+        : route.fallback(),
+    );
+    await page.goto(`${world.community.url}/members`);
+    const box = page.getByRole("searchbox", { name: "Search members" });
+
+    await box.fill("unlucky");
+    await expect(page.getByText("could not be loaded")).toBeVisible();
+
+    const { username } = world.users.othermember;
+    await box.fill(username);
+    await expect(
+      page.locator(`[data-testid="member-row"][data-username="${username}"]`),
+    ).toBeVisible();
+    await expect(page.getByText("could not be loaded")).toHaveCount(0);
+  });
 });
 
 test.describe("the trade composer", () => {

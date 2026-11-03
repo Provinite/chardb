@@ -27,6 +27,12 @@ export interface UpdateCommunityMemberServiceInput {
   roleId?: string;
 }
 
+/** The id breaks ties between members who joined at the same moment. */
+const NEWEST_FIRST: Prisma.CommunityMemberOrderByWithRelationInput[] = [
+  { createdAt: "desc" },
+  { id: "desc" },
+];
+
 @Injectable()
 export class CommunityMembersService {
   constructor(
@@ -94,7 +100,7 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: "desc" },
+        orderBy: NEWEST_FIRST,
       }),
       this.prisma.communityMember.count({
         where: { role: { communityId } },
@@ -127,12 +133,11 @@ export class CommunityMembersService {
     first: number,
     after?: string,
   ) {
-    const orderBy: Prisma.CommunityMemberOrderByWithRelationInput[] = [
-      { createdAt: "desc" },
-      { id: "desc" },
-    ];
-    const equals = { equals: term, mode: "insensitive" } as const;
-    const contains = { contains: term, mode: "insensitive" } as const;
+    const orderBy = NEWEST_FIRST;
+    // Insensitive matching is ILIKE, where these are wildcards.
+    const literal = term.replace(/[\\%_]/g, "\\$&");
+    const equals = { equals: literal, mode: "insensitive" } as const;
+    const contains = { contains: literal, mode: "insensitive" } as const;
 
     const exact = await this.prisma.communityMember.findMany({
       where: {

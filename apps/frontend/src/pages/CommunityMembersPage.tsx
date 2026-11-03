@@ -223,6 +223,9 @@ export const CommunityMembersPage: React.FC = () => {
     key: debouncedSearch,
     limit: PAGE_SIZE,
   });
+  if (pages.key !== debouncedSearch) {
+    setPages({ key: debouncedSearch, limit: PAGE_SIZE });
+  }
   const limit = pages.key === debouncedSearch ? pages.limit : PAGE_SIZE;
 
   const community = useHostCommunity();
@@ -255,19 +258,6 @@ export const CommunityMembersPage: React.FC = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Container>
-        <Empty>
-          <p>
-            That member list could not be loaded. It may belong to a community
-            you are not a member of. {error.message}
-          </p>
-        </Empty>
-      </Container>
-    );
-  }
-
   return (
     <Container>
       <Header>
@@ -286,7 +276,16 @@ export const CommunityMembersPage: React.FC = () => {
         />
       </SearchWrap>
 
-      {members.length === 0 ? (
+      {/* In place of the list rather than the page, so a search that fails
+          leaves the box to try another. */}
+      {error ? (
+        <Empty>
+          <p>
+            That member list could not be loaded. It may belong to a community
+            you are not a member of. {error.message}
+          </p>
+        </Empty>
+      ) : members.length === 0 ? (
         <Empty>
           <Users size={36} style={{ opacity: 0.5, marginBottom: "0.75rem" }} />
           <p>
