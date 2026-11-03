@@ -3,7 +3,8 @@ import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
 import { NetworkStatus } from "@apollo/client";
 import styled from "styled-components";
-import { Avatar, timingMs, useDebouncedValue } from "@chardb/ui";
+import { toast } from "react-hot-toast";
+import { Avatar, Button, timingMs, useDebouncedValue } from "@chardb/ui";
 import { Users, Search, Package, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -174,28 +175,6 @@ const Footer = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-const MoreButton = styled.button`
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  padding: 0.45rem 0.9rem;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.surface};
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
 const Empty = styled.div`
   padding: 3rem 1rem;
   text-align: center;
@@ -283,10 +262,7 @@ export const CommunityMembersPage: React.FC = () => {
           leaves the box to try another. */}
       {error ? (
         <Empty>
-          <p>
-            That member list could not be loaded. It may belong to a community
-            you are not a member of. {error.message}
-          </p>
+          <p>That member list could not be loaded. {error.message}</p>
         </Empty>
       ) : members.length === 0 ? (
         <Empty>
@@ -336,23 +312,32 @@ export const CommunityMembersPage: React.FC = () => {
         </List>
       )}
 
-      <Footer>
-        <span>
-          Showing {members.length} of {total} member
-          {total === 1 ? "" : "s"}
-        </span>
-        {hasMore && (
-          <MoreButton
-            type="button"
-            disabled={loading}
-            onClick={() =>
-              fetchMore({ variables: { after: members.at(-1)?.id } })
-            }
-          >
-            {loadingMore ? "Loading…" : "Load more"}
-          </MoreButton>
-        )}
-      </Footer>
+      {/* The count and Load more describe the list, so they go with it when
+          it is replaced by an error: paging on from the last search's rows
+          would send that search's cursor with this one. */}
+      {!error && (
+        <Footer>
+          <span>
+            Showing {members.length} of {total} member
+            {total === 1 ? "" : "s"}
+          </span>
+          {hasMore && (
+            <Button
+              tone="outline"
+              size="sm"
+              busy={loadingMore}
+              disabled={loading && !loadingMore}
+              onClick={() =>
+                fetchMore({ variables: { after: members.at(-1)?.id } }).catch(
+                  () => toast.error("More members could not be loaded."),
+                )
+              }
+            >
+              Load more
+            </Button>
+          )}
+        </Footer>
+      )}
     </Container>
   );
 };

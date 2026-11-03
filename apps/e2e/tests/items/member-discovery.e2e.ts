@@ -1,3 +1,4 @@
+import type { Page, Route } from "@playwright/test";
 import { presetTest, expect } from "../../src/fixtures.js";
 import { SeedCommunityMemberRolesDocument } from "../../src/generated/graphql.js";
 import { spotlight } from "../../src/spotlight.js";
@@ -225,21 +226,21 @@ test.describe("searching the members list", () => {
     ).toBeVisible();
   });
 
-  test("Load more fetches the next page after the last row", async ({
-    page,
-    world,
-  }) => {
-    // The seeded community fits on one page, so the first page is made to
-    // claim there is more.
-    let lastId: string | undefined;
+  /**
+   * The seeded community fits on one page, so its first page is made to
+   * claim there is more. `next` handles the "Load more" request.
+   */
+  const claimMorePages = async (
+    page: Page,
+    next: (route: Route) => Promise<void> = (route) => route.fallback(),
+  ) => {
+    const first = { lastId: undefined as string | undefined };
     await page.route("**/graphql", async (route) => {
       const body = route.request().postDataJSON();
-      if (
-        body?.operationName !== "CommunityMembersWithRoles" ||
-        body.variables?.after
-      ) {
+      if (body?.operationName !== "CommunityMembersWithRoles") {
         return route.fallback();
       }
+      if (body.variables?.after) return next(route);
       // Node, unlike the browser, cannot resolve *.localhost.
       const url = new URL(route.request().url());
       const host = url.host;
@@ -251,9 +252,17 @@ test.describe("searching the members list", () => {
       const json = await response.json();
       const connection = json.data.communityMembersByCommunity;
       connection.hasNextPage = true;
-      lastId = connection.nodes.at(-1).id;
+      first.lastId = connection.nodes.at(-1).id;
       await route.fulfill({ response, json });
     });
+    return first;
+  };
+
+  test("Load more fetches the next page after the last row", async ({
+    page,
+    world,
+  }) => {
+    const first = await claimMorePages(page);
     await page.goto(`${world.community.url}/members`);
     const rows = page.getByTestId("member-row");
     await expect(rows.first()).toBeVisible();
@@ -267,13 +276,43 @@ test.describe("searching the members list", () => {
     await page.getByRole("button", { name: "Load more" }).click();
     const { variables } = (await next).postDataJSON();
 
-    expect(variables.after).toBe(lastId);
+    expect(variables.after).toBe(first.lastId);
     expect(variables.first).toBe(50);
     // Nothing follows the last row, so the list keeps what it had.
     await expect(page.getByRole("button", { name: "Load more" })).toHaveCount(
       0,
     );
     await expect(rows).toHaveCount(before);
+  });
+
+  test("Load more keeps its label while it works", async ({ page, world }) => {
+    let release = () => {};
+    await claimMorePages(
+      page,
+      (route) =>
+        new Promise<void>((resolve) => {
+          release = () => resolve(route.fallback());
+        }),
+    );
+    await page.goto(`${world.community.url}/members`);
+
+    const button = page.getByRole("button", { name: "Load more" });
+    await button.click();
+
+    await expect(button).toHaveAttribute("aria-busy", "true");
+    await expect(button).toHaveText("Load more");
+    release();
+  });
+
+  test("says so when Load more fails", async ({ page, world }) => {
+    await claimMorePages(page, (route) => route.abort());
+    await page.goto(`${world.community.url}/members`);
+
+    await page.getByRole("button", { name: "Load more" }).click();
+
+    await expect(
+      page.getByText("More members could not be loaded."),
+    ).toBeVisible();
   });
 
   test("a failed search leaves the search box to try again", async ({
@@ -289,7 +328,12 @@ test.describe("searching the members list", () => {
     const box = page.getByRole("searchbox", { name: "Search members" });
 
     await box.fill("unlucky");
-    await expect(page.getByText("could not be loaded")).toBeVisible();
+    const failure = page.getByText("could not be loaded");
+    await expect(failure).toBeVisible();
+    // Not about membership: this member is one, and only the search failed.
+    await expect(failure).not.toContainText("not a member");
+    // The count and Load more belonged to the last search, not this one.
+    await expect(page.getByText(/^Showing \d+ of/)).toHaveCount(0);
 
     const { username } = world.users.othermember;
     await box.fill(username);
