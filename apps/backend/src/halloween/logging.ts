@@ -56,6 +56,11 @@ export const HalloweenLogEvent = {
   CandyOfferCancelled: "halloween.candy_swap.offer_cancelled",
   /** Candies changed hands; `matched` when an offer met its mirror. */
   CandyTraded: "halloween.candy_swap.traded",
+  /** The house put up offers of its own, by itself or by staff's hand. */
+  HouseOffersSpawned: "halloween.candy_swap.house_offers_spawned",
+  HouseOffersExpired: "halloween.candy_swap.house_offers_expired",
+  /** The lazy top-up failed; browsing carries on without it. */
+  HouseTopUpFailed: "halloween.candy_swap.house_top_up_failed",
   WinChannelTested: "halloween.win_channel.tested",
   /** A win that stands, but never reached the win channel. */
   WinChannelPostFailed: "halloween.win_channel.post_failed",

@@ -7,12 +7,10 @@ import {
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
 import { LoadingSpinner } from "../components/LoadingSpinner";
-import {
-  CandySwapView,
-  type SwapTrade,
-} from "../components/halloween/CandySwapView";
+import { CandySwapView } from "../components/halloween/CandySwapView";
 import { candyName } from "../components/halloween/candyBoard";
 import {
+  type HalloweenCandyTradeFieldsFragment,
   CandySwapDocument,
   CandySwapOffersDocument,
   useAcceptHalloweenCandyOfferMutation,
@@ -25,10 +23,10 @@ import {
 const errorMessage = (e: unknown, fallback: string) =>
   e instanceof Error ? e.message : fallback;
 
-const tradedToast = (trade: SwapTrade) => {
+const tradedToast = (trade: HalloweenCandyTradeFieldsFragment) => {
   const who = trade.with
     ? trade.with.displayName || trade.with.username
-    : "someone";
+    : (trade.host ?? "someone");
   toast.success(
     `Traded with ${who}: you got ${trade.received.map(candyName).join(", ")}`,
   );

@@ -1407,6 +1407,10 @@ export type HalloweenCandyOffer = {
   /** What is offered. Empty once the offer is no longer open. */
   candies: Array<HalloweenCandy>;
   createdAt: Scalars['DateTime']['output'];
+  /** When a house offer closes. Null on a player's offer. */
+  expiresAt: Maybe<Scalars['DateTime']['output']>;
+  /** The event host, Daphne or Luther, who put up a house offer. Null on a player's offer. */
+  host: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   status: HalloweenCandyOfferStatus;
   /** The kind of candy asked for, by its slug. Null when any kind will do. */
@@ -1422,6 +1426,7 @@ export type HalloweenCandyOfferPlaced = {
 
 export enum HalloweenCandyOfferStatus {
   Cancelled = 'CANCELLED',
+  Expired = 'EXPIRED',
   Filled = 'FILLED',
   Open = 'OPEN'
 }
@@ -1455,10 +1460,12 @@ export type HalloweenCandyTradeRecord = {
   createdAt: Scalars['DateTime']['output'];
   /** The slugs of the candies you gave */
   gave: Array<Scalars['String']['output']>;
+  /** The host, Daphne or Luther, when the trade took a house offer */
+  host: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   /** The slugs of the candies you got */
   received: Array<Scalars['String']['output']>;
-  /** Whom you traded with. Null if their account is gone. */
+  /** Whom you traded with. Null for a house offer, or if their account is gone. */
   with: Maybe<User>;
 };
 
@@ -2348,6 +2355,8 @@ export type Mutation = {
   deleteItemType: Scalars['Boolean']['output'];
   /** Deletes a media item and its associated content */
   deleteMedia: Scalars['Boolean']['output'];
+  /** Have Daphne and Luther put up `count` house offers in the candy swap now (1-50), past the cap the swap keeps to on its own. Returns how many. */
+  dropHalloweenHouseOffers: Scalars['Int']['output'];
   /** Edit and approve a trait review (moderator action) */
   editAndApproveTraitReview: TraitReview;
   /** Spend an edit kit to propose a change to one of your characters' traits. Destroys the kit and creates a pending USER_EDIT review; the character is unchanged until staff approve it. Authorized by holding the kit, not by canEditOwnCharacterRegistry. */
@@ -2780,6 +2789,12 @@ export type MutationDeleteItemTypeArgs = {
 
 export type MutationDeleteMediaArgs = {
   id: Scalars['ID']['input'];
+};
+
+
+export type MutationDropHalloweenHouseOffersArgs = {
+  communityId: Scalars['ID']['input'];
+  count: Scalars['Int']['input'];
 };
 
 
@@ -5605,23 +5620,23 @@ export type MeQueryVariables = Exact<{ [key: string]: never; }>;
 
 export type MeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string, username: string, email: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, isAdmin: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateCommunity: boolean, canGrantGlobalPermissions: boolean, canListUsers: boolean, privacySettings: any, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null, communityMemberships: { __typename?: 'CommunityMemberConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'CommunityMember', id: string, roleId: string, userId: string, role: { __typename?: 'Role', id: string, name: string, communityId: string, canCreateSpecies: boolean, canEditSpecies: boolean, canCreateCharacter: boolean, canEditCharacter: boolean, canEditOwnCharacter: boolean, canEditOwnCharacterRegistry: boolean, canEditCharacterRegistry: boolean, canCreateOrphanedCharacter: boolean, canUploadOwnCharacterImages: boolean, canUploadCharacterImages: boolean, canCreateInviteCode: boolean, canListInviteCodes: boolean, canCreateRole: boolean, canEditRole: boolean, canRemoveCommunityMember: boolean, canManageMemberRoles: boolean, canManageItems: boolean, canGrantItems: boolean, canModerateImages: boolean, canDeleteCharacter: boolean, community: { __typename?: 'Community', id: string, name: string, slug: string, halloweenEnabled: boolean } } }> } } };
 
-export type HalloweenCandyOfferFieldsFragment = { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> };
+export type HalloweenCandyOfferFieldsFragment = { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> };
 
-export type HalloweenCandyTradeFieldsFragment = { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null };
+export type HalloweenCandyTradeFieldsFragment = { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, host: string | null, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null };
 
 export type CandySwapQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
 
 
-export type CandySwapQuery = { __typename?: 'Query', halloweenCandyTypes: Array<string>, halloweenCandySwapLimits: { __typename?: 'HalloweenCandySwapLimits', maxOpenOffers: number, maxOfferedCandies: number }, myHalloweenCandies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }>, myHalloweenCandyOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }>, myHalloweenCandyTrades: Array<{ __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
+export type CandySwapQuery = { __typename?: 'Query', halloweenCandyTypes: Array<string>, halloweenCandySwapLimits: { __typename?: 'HalloweenCandySwapLimits', maxOpenOffers: number, maxOfferedCandies: number }, myHalloweenCandies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }>, myHalloweenCandyOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }>, myHalloweenCandyTrades: Array<{ __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, host: string | null, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
 
 export type CandySwapOffersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
 
 
-export type CandySwapOffersQuery = { __typename?: 'Query', halloweenCandySwapOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }> };
+export type CandySwapOffersQuery = { __typename?: 'Query', halloweenCandySwapOffers: Array<{ __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }> };
 
 export type PlaceHalloweenCandyOfferMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5630,7 +5645,7 @@ export type PlaceHalloweenCandyOfferMutationVariables = Exact<{
 }>;
 
 
-export type PlaceHalloweenCandyOfferMutation = { __typename?: 'Mutation', placeHalloweenCandyOffer: { __typename?: 'HalloweenCandyOfferPlaced', offer: { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }, trade: { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } | null } };
+export type PlaceHalloweenCandyOfferMutation = { __typename?: 'Mutation', placeHalloweenCandyOffer: { __typename?: 'HalloweenCandyOfferPlaced', offer: { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> }, trade: { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, host: string | null, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } | null } };
 
 export type AcceptHalloweenCandyOfferMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -5639,7 +5654,7 @@ export type AcceptHalloweenCandyOfferMutationVariables = Exact<{
 }>;
 
 
-export type AcceptHalloweenCandyOfferMutation = { __typename?: 'Mutation', acceptHalloweenCandyOffer: { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } };
+export type AcceptHalloweenCandyOfferMutation = { __typename?: 'Mutation', acceptHalloweenCandyOffer: { __typename?: 'HalloweenCandyTradeRecord', id: string, gave: Array<string>, received: Array<string>, createdAt: string, host: string | null, with: { __typename?: 'User', id: string, username: string, displayName: string | null } | null } };
 
 export type CancelHalloweenCandyOfferMutationVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -6415,6 +6430,14 @@ export type RemoveHalloweenPrizeMutationVariables = Exact<{
 
 
 export type RemoveHalloweenPrizeMutation = { __typename?: 'Mutation', removeHalloweenPrize: boolean };
+
+export type DropHalloweenHouseOffersMutationVariables = Exact<{
+  communityId: Scalars['ID']['input'];
+  count: Scalars['Int']['input'];
+}>;
+
+
+export type DropHalloweenHouseOffersMutation = { __typename?: 'Mutation', dropHalloweenHouseOffers: number };
 
 export type HalloweenPickerImageFragment = { __typename?: 'Image', id: string, thumbnailUrl: string | null, mediumUrl: string | null, originalUrl: string, moderationStatus: ModerationStatus };
 
@@ -7564,6 +7587,7 @@ export const HalloweenCandyOfferFieldsFragmentDoc = gql`
   id
   wantSlug
   status
+  host
   createdAt
   candies {
     id
@@ -7577,6 +7601,7 @@ export const HalloweenCandyTradeFieldsFragmentDoc = gql`
   gave
   received
   createdAt
+  host
   with {
     id
     username
@@ -13727,6 +13752,38 @@ export function useRemoveHalloweenPrizeMutation(baseOptions?: Apollo.MutationHoo
 export type RemoveHalloweenPrizeMutationHookResult = ReturnType<typeof useRemoveHalloweenPrizeMutation>;
 export type RemoveHalloweenPrizeMutationResult = Apollo.MutationResult<RemoveHalloweenPrizeMutation>;
 export type RemoveHalloweenPrizeMutationOptions = Apollo.BaseMutationOptions<RemoveHalloweenPrizeMutation, RemoveHalloweenPrizeMutationVariables>;
+export const DropHalloweenHouseOffersDocument = gql`
+    mutation DropHalloweenHouseOffers($communityId: ID!, $count: Int!) {
+  dropHalloweenHouseOffers(communityId: $communityId, count: $count)
+}
+    `;
+export type DropHalloweenHouseOffersMutationFn = Apollo.MutationFunction<DropHalloweenHouseOffersMutation, DropHalloweenHouseOffersMutationVariables>;
+
+/**
+ * __useDropHalloweenHouseOffersMutation__
+ *
+ * To run a mutation, you first call `useDropHalloweenHouseOffersMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useDropHalloweenHouseOffersMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [dropHalloweenHouseOffersMutation, { data, loading, error }] = useDropHalloweenHouseOffersMutation({
+ *   variables: {
+ *      communityId: // value for 'communityId'
+ *      count: // value for 'count'
+ *   },
+ * });
+ */
+export function useDropHalloweenHouseOffersMutation(baseOptions?: Apollo.MutationHookOptions<DropHalloweenHouseOffersMutation, DropHalloweenHouseOffersMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<DropHalloweenHouseOffersMutation, DropHalloweenHouseOffersMutationVariables>(DropHalloweenHouseOffersDocument, options);
+      }
+export type DropHalloweenHouseOffersMutationHookResult = ReturnType<typeof useDropHalloweenHouseOffersMutation>;
+export type DropHalloweenHouseOffersMutationResult = Apollo.MutationResult<DropHalloweenHouseOffersMutation>;
+export type DropHalloweenHouseOffersMutationOptions = Apollo.BaseMutationOptions<DropHalloweenHouseOffersMutation, DropHalloweenHouseOffersMutationVariables>;
 export const HalloweenPrizeItemTypesDocument = gql`
     query HalloweenPrizeItemTypes($communityId: ID!, $search: String!) {
   halloweenPrizeItemTypes(communityId: $communityId, search: $search) {
