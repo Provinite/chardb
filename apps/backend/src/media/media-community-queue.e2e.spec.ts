@@ -6,7 +6,11 @@ import { AuthModule } from "../auth/auth.module";
 import { CommunityResolverService } from "../auth/services/community-resolver.service";
 import { ImageModerationModule } from "../image-moderation/image-moderation.module";
 import { ImageModerationService } from "../image-moderation/image-moderation.service";
-import { ModerationStatus, Visibility } from "@chardb/database";
+import {
+  ModerationRejectionReason,
+  ModerationStatus,
+  Visibility,
+} from "@chardb/database";
 
 /**
  * A community's moderation queue, for uploads that have no character.
@@ -102,6 +106,52 @@ describe("community moderation queue, characterless uploads (e2e)", () => {
 
   afterAll(async () => {
     await testApp.teardown();
+  });
+
+  // So a community host's notifications list them there and nowhere else.
+  describe("moderation notifications", () => {
+    const notificationCommunity = async () =>
+      (
+        await testApp.getDb().notification.findFirstOrThrow({
+          where: { recipientId: uploaderId },
+        })
+      ).communityId;
+
+    const pendingImageIn = async () => {
+      const mediaId = await createMedia({ title: "Upload", communityId });
+      const media = await testApp
+        .getDb()
+        .media.findUniqueOrThrow({ where: { id: mediaId } });
+      return media.imageId as string;
+    };
+
+    let adminId: string;
+    beforeEach(async () => {
+      adminId = (
+        await testApp.createTestUser({
+          email: "admin@test.dev",
+          username: "admin",
+          isAdmin: true,
+        })
+      ).id;
+    });
+
+    it("names the community on an approval", async () => {
+      await imageModerationService.approveImage(await pendingImageIn(), adminId);
+
+      expect(await notificationCommunity()).toBe(communityId);
+    });
+
+    it("names the community on a rejection", async () => {
+      await imageModerationService.rejectImage(
+        await pendingImageIn(),
+        adminId,
+        ModerationRejectionReason.OTHER,
+        "Blurry",
+      );
+
+      expect(await notificationCommunity()).toBe(communityId);
+    });
   });
 
   describe("findPendingForModeration", () => {

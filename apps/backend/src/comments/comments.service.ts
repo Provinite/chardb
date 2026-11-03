@@ -134,6 +134,7 @@ export class CommentsService {
         actorUserId: authorId,
         subjectType: target.subjectType,
         subjectId: input.entityId,
+        communityId: target.communityId,
         data: {
           subjectName: target.name.slice(0, 200),
           excerpt: input.content.slice(0, 280),
@@ -148,7 +149,12 @@ export class CommentsService {
     }
   }
 
-  /** Who to tell about a comment, and what to call the thing commented on. */
+  /**
+   * Who to tell about a comment, what to call the thing commented on, and
+   * which community it belongs to, so a community host's notifications list
+   * it there only. The community follows the same rules as listings: a
+   * character's species, else the community the thing was made in.
+   */
   private async resolveCommentTarget(
     entityType: CommentableTypeFilter,
     entityId: string,
@@ -156,12 +162,21 @@ export class CommentsService {
     ownerId: string;
     name: string;
     subjectType: NotificationSubjectType;
+    communityId: string | null;
   } | null> {
+    const speciesCommunity = {
+      select: { species: { select: { communityId: true } } },
+    } as const;
+
     switch (entityType) {
       case CommentableTypeFilter.CHARACTER: {
         const character = await this.databaseService.character.findFirst({
           where: { id: entityId, ...notDeleted },
-          select: { ownerId: true, name: true },
+          select: {
+            ownerId: true,
+            name: true,
+            species: { select: { communityId: true } },
+          },
         });
         // An orphaned character has no owner to tell.
         return character?.ownerId
@@ -169,32 +184,55 @@ export class CommentsService {
               ownerId: character.ownerId,
               name: character.name,
               subjectType: NotificationSubjectType.CHARACTER,
+              communityId: character.species?.communityId ?? null,
             }
           : null;
       }
       case CommentableTypeFilter.IMAGE: {
         const image = await this.databaseService.image.findUnique({
           where: { id: entityId },
-          select: { uploaderId: true, altText: true, originalFilename: true },
+          select: {
+            uploaderId: true,
+            altText: true,
+            originalFilename: true,
+            media: {
+              select: { communityId: true, character: speciesCommunity },
+              take: 1,
+            },
+          },
         });
+        const media = image?.media[0];
         return image
           ? {
               ownerId: image.uploaderId,
               name: image.altText || image.originalFilename,
               subjectType: NotificationSubjectType.IMAGE,
+              communityId:
+                media?.character?.species?.communityId ??
+                media?.communityId ??
+                null,
             }
           : null;
       }
       case CommentableTypeFilter.GALLERY: {
         const gallery = await this.databaseService.gallery.findUnique({
           where: { id: entityId },
-          select: { ownerId: true, name: true },
+          select: {
+            ownerId: true,
+            name: true,
+            communityId: true,
+            character: speciesCommunity,
+          },
         });
         return gallery
           ? {
               ownerId: gallery.ownerId,
               name: gallery.name,
               subjectType: NotificationSubjectType.GALLERY,
+              communityId:
+                gallery.character?.species?.communityId ??
+                gallery.communityId ??
+                null,
             }
           : null;
       }
@@ -208,6 +246,7 @@ export class CommentsService {
               ownerId: user.id,
               name: user.displayName || user.username,
               subjectType: NotificationSubjectType.USER,
+              communityId: null,
             }
           : null;
       }

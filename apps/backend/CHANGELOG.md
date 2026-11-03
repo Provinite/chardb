@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **The activity feed no longer lists private or unlisted** characters, galleries and media of people you follow.
+- **Comment and image moderation notifications name their community**, so they show only in that community's notifications.
 
 ## [v15.5.0] - 2026-11-02
 

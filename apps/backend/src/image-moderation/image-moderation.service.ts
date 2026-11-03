@@ -46,6 +46,22 @@ export class ImageModerationService {
   ) {}
 
   /**
+   * The community an image's notifications belong to, through the media that
+   * shows it: that media's character first, then where it was uploaded --
+   * the same order `CommunityResolverService.getMediaCommunity` uses.
+   */
+  private async imageCommunityId(imageId: string): Promise<string | null> {
+    const media = await this.db.media.findFirst({
+      where: { imageId },
+      select: {
+        communityId: true,
+        character: { select: { species: { select: { communityId: true } } } },
+      },
+    });
+    return media?.character?.species?.communityId ?? media?.communityId ?? null;
+  }
+
+  /**
    * Validate an award before any of it is applied.
    *
    * Three separate things have to hold, and checking only the first is a
@@ -426,6 +442,7 @@ export class ImageModerationService {
       actorUserId: moderatorId,
       subjectType: NotificationSubjectType.IMAGE,
       subjectId: image.id,
+      communityId: await this.imageCommunityId(image.id),
       data: { subjectName: image.originalFilename },
     });
 
@@ -505,6 +522,7 @@ export class ImageModerationService {
       actorUserId: moderatorId,
       subjectType: NotificationSubjectType.IMAGE,
       subjectId: image.id,
+      communityId: await this.imageCommunityId(image.id),
       data: {
         subjectName: image.originalFilename,
         reason,
