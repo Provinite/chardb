@@ -7,7 +7,8 @@ import { Visibility } from "@chardb/database";
 
 /**
  * Liked lists and the activity feed on a community host show only that
- * community's characters, galleries and media.
+ * community's characters, galleries and media. Liked galleries are served by
+ * `GalleriesService`; see the media and galleries scope spec.
  */
 describe("liked lists and feed scoped to a community (e2e)", () => {
   let testApp: TestApp;
@@ -124,21 +125,6 @@ describe("liked lists and feed scoped to a community (e2e)", () => {
 
     expect(scoped.map((c) => c.id)).toEqual([hereCharacterId]);
     expect(all).toHaveLength(2);
-  });
-
-  it("narrows liked galleries", async () => {
-    const here = await createGallery("Here", hereCharacterId);
-    const there = await createGallery("There", thereCharacterId);
-    await db().like.createMany({
-      data: [
-        { userId: viewerId, galleryId: here },
-        { userId: viewerId, galleryId: there },
-      ],
-    });
-
-    const scoped = await social.getUserLikedGalleries(viewerId, communityId);
-
-    expect(scoped.map((g) => g.id)).toEqual([here]);
   });
 
   it("narrows liked media and keeps the search", async () => {

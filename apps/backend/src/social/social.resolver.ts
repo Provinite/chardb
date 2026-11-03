@@ -36,7 +36,6 @@ import type {
   CurrentUserType,
 } from "../auth/types/current-user.type";
 import { mapPrismaCharacterToGraphQL } from "../characters/utils/character-resolver-mappers";
-import { mapPrismaGalleryToGraphQL } from "../galleries/utils/gallery-resolver-mappers";
 import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
 import { mapPrismaMediaConnectionToGraphQL } from "../media/utils/media-resolver-mappers";
 import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
@@ -112,24 +111,6 @@ export class SocialResolver {
       communityId,
     );
     return characters.map(mapPrismaCharacterToGraphQL);
-  }
-
-  @AllowAnyAuthenticated()
-  @Query(() => [Gallery])
-  async likedGalleries(
-    @CurrentUser() user: AuthenticatedCurrentUserType,
-    @Args("communityId", {
-      type: () => ID,
-      nullable: true,
-      description: "Only galleries whose character is in this community",
-    })
-    communityId?: string,
-  ): Promise<Gallery[]> {
-    const galleries = await this.socialService.getUserLikedGalleries(
-      user.id,
-      communityId,
-    );
-    return galleries.map(mapPrismaGalleryToGraphQL);
   }
 
   @AllowAnyAuthenticated()

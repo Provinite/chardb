@@ -4161,7 +4161,10 @@ type Query {
     """Only characters in this community"""
     communityId: ID
   ): [Character!]!
-  likedGalleries: [Gallery!]!
+  likedGalleries(
+    """Only galleries whose character is in this community"""
+    communityId: ID
+  ): [Gallery!]!
   likedImages: [Image!]!
   likedMedia(filters: MediaFiltersInput): MediaConnection!
   me: User!

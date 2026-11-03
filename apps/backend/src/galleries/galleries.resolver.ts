@@ -198,12 +198,19 @@ export class GalleriesResolver {
   @Query(() => [Gallery])
   async likedGalleries(
     @CurrentUser() user: CurrentUserType,
+    @Args("communityId", {
+      type: () => ID,
+      nullable: true,
+      description: "Only galleries whose character is in this community",
+    })
+    communityId?: string,
   ): Promise<Gallery[]> {
     if (!user) {
       throw new NotFoundException("User not found");
     }
     const prismaResults = await this.galleriesService.findLikedGalleries(
       user.id,
+      communityId,
     );
     return prismaResults.map(mapPrismaGalleryToGraphQL);
   }

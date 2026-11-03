@@ -460,39 +460,6 @@ export class SocialService {
     });
   }
 
-  /** With a community, only galleries in it. */
-  async getUserLikedGalleries(userId: string, communityId?: string) {
-    const likes = await this.databaseService.like.findMany({
-      where: {
-        userId,
-        galleryId: { not: null },
-      },
-      select: {
-        galleryId: true,
-      },
-    });
-
-    const galleryIds = likes.map((like) => like.galleryId).filter(Boolean);
-
-    if (galleryIds.length === 0) {
-      return [];
-    }
-
-    return this.databaseService.gallery.findMany({
-      where: {
-        id: { in: galleryIds.filter((id): id is string => id !== null) },
-        visibility: "PUBLIC", // Only return public galleries
-        ...(communityId ? galleryBelongingToCommunity(communityId) : {}),
-      },
-      include: {
-        owner: true,
-        character: true,
-      },
-      orderBy: {
-        updatedAt: "desc",
-      },
-    });
-  }
 
   async getUserLikedImages(userId: string) {
     const likes = await this.databaseService.like.findMany({

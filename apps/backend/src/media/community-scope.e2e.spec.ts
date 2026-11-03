@@ -148,6 +148,26 @@ describe("media and galleries scoped to a community (e2e)", () => {
       expect(result.total).toBe(1);
     });
 
+    it("narrows liked galleries", async () => {
+      const here = await createGallery("Here", characterId);
+      const there = await createGallery("There", otherCharacterId);
+      await testApp.getDb().like.createMany({
+        data: [
+          { userId: ownerId, galleryId: here },
+          { userId: ownerId, galleryId: there },
+        ],
+      });
+
+      const scoped = await galleriesService.findLikedGalleries(
+        ownerId,
+        communityId,
+      );
+      const all = await galleriesService.findLikedGalleries(ownerId);
+
+      expect(scoped.map((g) => g.id)).toEqual([here]);
+      expect(all).toHaveLength(2);
+    });
+
     it("finds one gallery in its own community", async () => {
       const id = await createGallery("Here", characterId);
 

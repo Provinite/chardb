@@ -241,8 +241,8 @@ export class GalleriesService {
     });
   }
 
-  async findLikedGalleries(userId: string) {
-    // Get galleries liked by the user
+  /** Galleries the user liked; with a community, only that community's. */
+  async findLikedGalleries(userId: string, communityId?: string) {
     return this.db.gallery.findMany({
       where: {
         likes: {
@@ -254,6 +254,7 @@ export class GalleriesService {
           { visibility: Visibility.UNLISTED },
           { ownerId: userId }, // User can see their own private galleries
         ],
+        ...(communityId ? galleryBelongingToCommunity(communityId) : {}),
       },
       orderBy: [
         { createdAt: "desc" }, // Most recently created first

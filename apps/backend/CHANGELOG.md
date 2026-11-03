@@ -13,10 +13,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Media and gallery queries take a `communityId`**: lists narrow to that community, and `mediaItem`/`gallery` return not found for anything outside it.
 - **Liked lists and the activity feed take a `communityId`** to narrow them to one community.
 
-### Fixed
-
-- **`likedGalleries` no longer errors** for anyone who has liked a gallery.
-
 ## [v15.5.0] - 2026-11-02
 
 ### Added
