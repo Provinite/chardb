@@ -18,7 +18,7 @@ import {
 } from "../../users/utils/user-resolver-mappers";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
 import { Clock } from "../../clock/clock";
-import { getLastReset } from "../time";
+import { DAY_MS, getLastReset } from "../time";
 import {
   HalloweenDashboard,
   HalloweenPeriodStats,
@@ -41,8 +41,6 @@ type WinRow = Prisma.HalloweenKnockEventGetPayload<{
 
 /** The most wins one page of the feed returns, whatever the caller asks. */
 const MAX_WINS_PAGE = 100;
-
-const DAY_MS = 24 * 60 * 60 * 1000;
 
 const emptyPeriod = (from: Date, to: Date): HalloweenPeriodStats => ({
   from,

@@ -17,7 +17,7 @@ test.describe("the candy swap", () => {
   test("takes an offer, and names whom it was with afterwards", async ({
     page,
   }) => {
-    const offers = page.getByRole("region", { name: "Offers you can take" });
+    const offers = page.getByRole("region", { name: "Open offers" });
     await expect(offers.getByRole("img", { name: "berry tart" })).toBeVisible();
     // Whose it is shows only once it is traded.
     await expect(offers.getByText("alice")).toHaveCount(0);
@@ -28,8 +28,13 @@ test.describe("the candy swap", () => {
     await expect(trades.getByText("alice")).toBeVisible();
     await expect(trades.getByRole("img", { name: "berry tart" })).toBeVisible();
     await expect(
-      offers.getByText("No offers you can take right now."),
+      offers.getByText("No one else has an open offer right now"),
     ).toBeVisible();
+
+    // Everyone sees the swap, and who made it.
+    const feed = page.getByRole("region", { name: "Recent swaps" });
+    await expect(feed.getByText("alice")).toBeVisible();
+    await expect(feed.getByText("bob")).toBeVisible();
   });
 
   test("places an offer, holds the candy, and cancels it", async ({ page }) => {
@@ -55,7 +60,7 @@ test.describe("the candy swap", () => {
 
     await cancel.click();
 
-    await expect(mine.getByText("You have no open offers.")).toBeVisible();
+    await expect(mine.getByText("0 of 10")).toBeVisible();
     await expect(
       form.getByRole("button", { name: "Add banana (2 left)" }),
     ).toBeVisible();

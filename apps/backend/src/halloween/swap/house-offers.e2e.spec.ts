@@ -418,6 +418,32 @@ describe("Halloween house offers (e2e)", () => {
       ]);
     });
 
+    it("shows in the recent trades under its host", async () => {
+      const offer = await putUp();
+      await gql(ACCEPT, { offerId: offer.id }, alice);
+
+      const res = await gql(
+        `query Recent($communityId: ID!) {
+          halloweenCandySwapRecentTrades(communityId: $communityId) {
+            offerer { username } taker { username } host offered paid
+          }
+        }`,
+        {},
+        alice,
+      );
+
+      expect(res.body.errors).toBeUndefined();
+      expect(res.body.data.halloweenCandySwapRecentTrades).toEqual([
+        {
+          offerer: null,
+          taker: { username: alice.username },
+          host: offer.host,
+          offered: offer.candies.map((c) => c.slug),
+          paid: [offer.wantSlug],
+        },
+      ]);
+    });
+
     it("dates the trade by the same clock as the offer", async () => {
       const offer = await putUp();
       advance(5);

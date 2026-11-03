@@ -50,6 +50,9 @@ if (process.env.E2E_LOCALSTACK_PORT) {
 // NestJS app startup + DB operations can take well over 5s
 jest.setTimeout(60000);
 
+/** Roles made so far in this process, to keep their names apart. */
+let roleCount = 0;
+
 // Test utilities for E2E tests
 export class TestApp {
   private app: INestApplication;
@@ -271,10 +274,12 @@ export class TestApp {
     communityId: string,
     permissions: Record<string, boolean> = {},
   ): Promise<{ id: string; communityId: string }> {
+    // A timestamp alone repeats when two roles are made in one millisecond,
+    // and a community's role names are unique.
     const timestamp = Date.now();
     return this.db.role.create({
       data: {
-        name: `Test Role ${timestamp}`,
+        name: `Test Role ${timestamp}-${++roleCount}`,
         communityId,
         ...permissions,
       },

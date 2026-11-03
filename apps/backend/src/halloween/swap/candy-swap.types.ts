@@ -92,6 +92,95 @@ export class HalloweenCandyTradeRecord {
 }
 
 @ObjectType({
+  description: "Another player's open offer, and whether you could take it",
+})
+export class HalloweenCandySwapListing {
+  @Field(() => HalloweenCandyOffer)
+  offer: HalloweenCandyOffer;
+
+  @Field({
+    description:
+      "Whether you hold a spare candy that fills it: one of the kind asked " +
+      "for, or for an offer for any kind, one of a kind it does not give",
+  })
+  canTake: boolean;
+}
+
+@ObjectType({ description: "What is on offer in a community's candy swap" })
+export class HalloweenCandySwapMarket {
+  @Field(() => [HalloweenCandySwapListing], {
+    description:
+      "A random handful of other players' and the house's open offers, the " +
+      "ones you can take first",
+  })
+  listings: HalloweenCandySwapListing[];
+
+  @Field(() => Int, {
+    description:
+      "How many open offers the listings are drawn from: everyone's here " +
+      "but yours",
+  })
+  available: number;
+
+  @Field(() => Int, {
+    description: "How many of the available offers you can take",
+  })
+  readyToTrade: number;
+
+  @Field(() => Int, {
+    description: "How many offers are open here, yours included",
+  })
+  openOffers: number;
+
+  @Field(() => Int, {
+    description: "How many trades went through here in the last 24 hours",
+  })
+  tradesLastDay: number;
+}
+
+@ObjectType({
+  description:
+    "A candy swap that went through, as anyone in the community sees it",
+})
+export class HalloweenCandySwapTrade {
+  @Field(() => ID)
+  id: string;
+
+  @Field(() => User, {
+    nullable: true,
+    description:
+      "Whose offer was taken. Null for a house offer, or if their account " +
+      "is gone.",
+  })
+  offerer: User | null;
+
+  @Field(() => User, {
+    nullable: true,
+    description: "Who took the offer. Null if their account is gone.",
+  })
+  taker: User | null;
+
+  @Field(() => String, {
+    nullable: true,
+    description: "The host, Daphne or Luther, when it was a house offer",
+  })
+  host: string | null;
+
+  @Field(() => [String], {
+    description: "The slugs of the candies the offer gave",
+  })
+  offered: string[];
+
+  @Field(() => [String], {
+    description: "The slugs of the candies the taker gave for them",
+  })
+  paid: string[];
+
+  @Field()
+  createdAt: Date;
+}
+
+@ObjectType({
   description:
     "An offer just placed, and the trade it made straight away if it met " +
     "its mirror: a one-for-one offer asking for what this one gives.",

@@ -31,11 +31,14 @@ import {
 } from "../board/candy-board.service";
 import type { HalloweenCandy } from "../board/candy-board.types";
 import { Clock } from "../../clock/clock";
+import { DAY_MS } from "../time";
 import { HouseOfferService } from "./house-offer.service";
 import { isHalloweenHost, type HalloweenHost } from "./house-offers";
 import type {
   HalloweenCandyOffer,
   HalloweenCandyOfferPlaced,
+  HalloweenCandySwapMarket,
+  HalloweenCandySwapTrade,
   HalloweenCandyTradeRecord,
 } from "./candy-swap.types";
 
@@ -46,8 +49,12 @@ export const MAX_OFFERED_CANDIES = 3;
 /** How many offers browsing shows when not told. */
 export const DEFAULT_BROWSE_LIMIT = 12;
 const MAX_BROWSE_LIMIT = 50;
+/** How many offers the market shows when not told. */
+export const DEFAULT_MARKET_LIMIT = 24;
 /** How many past trades the history shows. */
 const HISTORY_LIMIT = 50;
+/** How many of the community's trades the recent feed shows when not told. */
+const DEFAULT_RECENT_TRADES_LIMIT = 10;
 
 const candySelect = { id: true, slug: true, receivedAt: true } as const;
 
@@ -206,6 +213,125 @@ export class CandySwapService {
     return offers
       .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
       .map(toOffer);
+  }
+
+  /**
+   * A random handful of other players' and the house's open offers, the
+   * ones the player can take first, and how busy the swap is. Tops the
+   * house's offers up first.
+   */
+  async market(
+    communityId: string,
+    userId: string,
+    limit = DEFAULT_MARKET_LIMIT,
+  ): Promise<HalloweenCandySwapMarket> {
+    const guildId = await this.dashboard.linkedGuildFor(communityId);
+    const take = Math.max(1, Math.min(limit, MAX_BROWSE_LIMIT));
+    await this.house.topUp(guildId);
+    const now = this.clock.now();
+
+    // One pass over the open offers: the counts come back on every row, and
+    // on a single row with no offer when there is nothing to show.
+    const [rows, tradesLastDay] = await Promise.all([
+      this.db.$queryRaw<
+        {
+          id: string | null;
+          can_take: boolean | null;
+          open_offers: bigint;
+          available: bigint;
+          ready_to_trade: bigint;
+        }[]
+      >`
+        WITH open AS (
+        SELECT o."id",
+          o."owner_id" IS NOT DISTINCT FROM ${userId} AS "mine",
+        (
+          o."want_slug" IN (
+            SELECT c."slug" FROM "halloween_candies" c
+            WHERE c."guild_id" = ${guildId}
+              AND c."owner_id" = ${userId}
+              AND c."offer_id" IS NULL
+          )
+          -- One for any kind, given a spare of a kind it does not give.
+          OR (
+            o."want_slug" IS NULL
+            AND EXISTS (
+              SELECT 1 FROM "halloween_candies" c
+              WHERE c."guild_id" = ${guildId}
+                AND c."owner_id" = ${userId}
+                AND c."offer_id" IS NULL
+                AND c."slug" NOT IN (
+                  SELECT oc."slug" FROM "halloween_candies" oc
+                  WHERE oc."offer_id" = o."id"
+                )
+            )
+          )
+        ) IS TRUE AS "can_take"
+        FROM "halloween_candy_offers" o
+        WHERE o."guild_id" = ${guildId}
+          AND o."status" = 'OPEN'
+          AND (o."expires_at" IS NULL OR o."expires_at" > ${now})
+        ),
+        counts AS (
+          SELECT
+            count(*) AS "open_offers",
+            count(*) FILTER (WHERE NOT "mine") AS "available",
+            count(*) FILTER (WHERE NOT "mine" AND "can_take") AS "ready_to_trade"
+          FROM open
+        ),
+        picked AS (
+          SELECT "id", "can_take" FROM open
+          WHERE NOT "mine"
+          ORDER BY "can_take" DESC, random()
+          LIMIT ${take}
+        )
+        SELECT counts.*, picked.* FROM counts LEFT JOIN picked ON true
+      `,
+      this.db.halloweenCandyTrade.count({
+        where: {
+          guildId,
+          createdAt: { gt: new Date(now.getTime() - DAY_MS) },
+        },
+      }),
+    ]);
+
+    const picked = rows.flatMap((r) =>
+      r.id === null ? [] : [{ id: r.id, can_take: r.can_take === true }],
+    );
+    const offers = picked.length
+      ? await this.db.halloweenCandyOffer.findMany({
+          where: { id: { in: picked.map((p) => p.id) } },
+          include: offerInclude,
+        })
+      : [];
+    const byId = new Map(offers.map((o) => [o.id, o]));
+    const listings = picked.flatMap((p) => {
+      const offer = byId.get(p.id);
+      return offer ? [{ offer: toOffer(offer), canTake: p.can_take }] : [];
+    });
+    const [counts] = rows;
+    return {
+      listings,
+      openOffers: Number(counts.open_offers),
+      available: Number(counts.available),
+      readyToTrade: Number(counts.ready_to_trade),
+      tradesLastDay,
+    };
+  }
+
+  /** The latest trades here, newest first, naming both sides. */
+  async recentTrades(
+    communityId: string,
+    limit = DEFAULT_RECENT_TRADES_LIMIT,
+  ): Promise<HalloweenCandySwapTrade[]> {
+    const guildId = await this.dashboard.linkedGuildFor(communityId);
+    const trades = await this.db.halloweenCandyTrade.findMany({
+      where: { guildId },
+      orderBy: [{ createdAt: "desc" }, { id: "asc" }],
+      take: Math.max(1, Math.min(limit, HISTORY_LIMIT)),
+      include: tradeInclude,
+    });
+    return trades.map(toPublicTrade);
   }
 
   /** The trades the player took part in here, newest first. */
@@ -729,6 +855,21 @@ function toOffer(offer: OfferRow): HalloweenCandyOffer {
     host: isHalloweenHost(offer.host) ? offer.host : null,
     expiresAt: offer.expiresAt,
     createdAt: offer.createdAt,
+  };
+}
+
+/** A trade as anyone sees it: the offer's side, and its taker's. */
+function toPublicTrade(trade: TradeRow): HalloweenCandySwapTrade {
+  const slugs = (toInitiator: boolean) =>
+    trade.lines.filter((l) => l.toInitiator === toInitiator).map((l) => l.slug);
+  return {
+    id: trade.id,
+    offerer: trade.offerer ? mapPrismaUserToGraphQL(trade.offerer) : null,
+    taker: trade.initiator ? mapPrismaUserToGraphQL(trade.initiator) : null,
+    host: trade.offers.map((o) => o.host).find(isHalloweenHost) ?? null,
+    offered: slugs(true),
+    paid: slugs(false),
+    createdAt: trade.createdAt,
   };
 }
 
