@@ -49,6 +49,30 @@ const BROWSE = `
   }
 `;
 
+const MARKET = `
+  query Market($communityId: ID!, $limit: Int) {
+    halloweenCandySwapMarket(communityId: $communityId, limit: $limit) {
+      openOffers
+      tradesLastDay
+      listings { canTake offer { ${OFFER_FIELDS} } }
+    }
+  }
+`;
+
+const RECENT_TRADES = `
+  query Recent($communityId: ID!, $limit: Int) {
+    halloweenCandySwapRecentTrades(communityId: $communityId, limit: $limit) {
+      id
+      offerer { username }
+      taker { username }
+      host
+      offered
+      paid
+      createdAt
+    }
+  }
+`;
+
 const MY_OFFERS = `
   query MyOffers($communityId: ID!) {
     myHalloweenCandyOffers(communityId: $communityId) { ${OFFER_FIELDS} }
@@ -815,6 +839,202 @@ describe("Halloween candy swap (e2e)", () => {
         "berry-tart",
       );
       expect(trade).toBeNull();
+    });
+  });
+
+  describe("the market", () => {
+    type Listing = {
+      canTake: boolean;
+      offer: { id: string; wantSlug: string | null };
+    };
+    const market = async (who: Player, limit?: number) => {
+      const res = await gql(MARKET, { limit }, who);
+      expect(res.body.errors).toBeUndefined();
+      return res.body.data.halloweenCandySwapMarket as {
+        listings: Listing[];
+        openOffers: number;
+        tradesLastDay: number;
+      };
+    };
+
+    it("shows every other player's open offer, the ones you can take first", async () => {
+      await candy(carol, "banana");
+      // Carol has no luther-head, so cannot fill this one.
+      const wantsLuther = await placed(
+        alice,
+        [(await candy(alice, "berry-tart")).id],
+        "luther-head",
+      );
+      const wantsBanana = await placed(
+        alice,
+        [(await candy(alice, "candy-corn")).id],
+        "banana",
+      );
+      // Carol's own offer is not shown to her.
+      await placed(
+        carol,
+        [(await candy(carol, "bitten-pumpkin")).id],
+        "skull-candy",
+      );
+      // Nor is one that has been cancelled.
+      const cancelled = await placed(
+        bob,
+        [(await candy(bob, "candy-corn")).id],
+        "banana",
+      );
+      await gql(CANCEL, { offerId: cancelled.offer.id }, bob);
+
+      const { listings } = await market(carol);
+
+      expect(listings).toEqual([
+        {
+          canTake: true,
+          offer: expect.objectContaining({
+            id: wantsBanana.offer.id,
+            wantSlug: "banana",
+          }),
+        },
+        {
+          canTake: false,
+          offer: expect.objectContaining({
+            id: wantsLuther.offer.id,
+            wantSlug: "luther-head",
+          }),
+        },
+      ]);
+    });
+
+    it("can take an offer for anything only with a spare of a kind it does not give", async () => {
+      await candy(carol, "candy-corn");
+      await placed(alice, [(await candy(alice, "candy-corn")).id], null);
+
+      expect((await market(carol)).listings).toEqual([
+        expect.objectContaining({ canTake: false }),
+      ]);
+
+      await candy(carol, "banana");
+      expect((await market(carol)).listings).toEqual([
+        expect.objectContaining({ canTake: true }),
+      ]);
+    });
+
+    it("does not count a candy you have in an offer as one you hold", async () => {
+      const banana = await candy(carol, "banana");
+      await placed(carol, [banana.id], "berry-tart");
+      await placed(alice, [(await candy(alice, "candy-corn")).id], "banana");
+
+      expect((await market(carol)).listings).toEqual([
+        expect.objectContaining({ canTake: false }),
+      ]);
+    });
+
+    it("shows at most `limit` offers", async () => {
+      for (let i = 0; i < 5; i++) {
+        await placed(alice, [(await candy(alice, "candy-corn")).id], "banana");
+      }
+      expect((await market(carol, 3)).listings).toHaveLength(3);
+    });
+
+    it("counts every open offer here, and the trades of the last day", async () => {
+      await placed(carol, [(await candy(carol, "candy-corn")).id], "banana");
+      await placed(alice, [(await candy(alice, "candy-corn")).id], "banana");
+      const taken = await placed(
+        alice,
+        [(await candy(alice, "berry-tart")).id],
+        "banana",
+      );
+      const old = await placed(
+        alice,
+        [(await candy(alice, "skull-candy")).id],
+        "banana",
+      );
+      await candy(bob, "banana");
+      await candy(bob, "banana");
+      await gql(ACCEPT, { offerId: taken.offer.id }, bob);
+      const res = await gql(ACCEPT, { offerId: old.offer.id }, bob);
+      await db.halloweenCandyTrade.update({
+        where: { id: res.body.data.acceptHalloweenCandyOffer.id },
+        data: { createdAt: new Date(Date.now() - 25 * 60 * 60 * 1000) },
+      });
+      // Another community's offers and trades are not counted.
+      const elsewhere = await candy(alice, "candy-corn", {
+        guildId: OTHER_GUILD,
+      });
+      await db.halloweenCandyOffer.create({
+        data: {
+          guildId: OTHER_GUILD,
+          ownerId: alice.id,
+          wantSlug: "banana",
+          candies: { connect: { id: elsewhere.id } },
+        },
+      });
+
+      const { openOffers, tradesLastDay } = await market(carol);
+
+      expect(openOffers).toBe(2);
+      expect(tradesLastDay).toBe(1);
+    });
+
+    it("needs a signed-in player", async () => {
+      const res = await testApp.graphqlRequest(MARKET, { communityId });
+      expect(error(res)).toBeDefined();
+    });
+  });
+
+  describe("recent trades", () => {
+    const recent = async (who: Player, limit?: number) => {
+      const res = await gql(RECENT_TRADES, { limit }, who);
+      expect(res.body.errors).toBeUndefined();
+      return res.body.data.halloweenCandySwapRecentTrades as unknown[];
+    };
+
+    it("shows everyone the trades here, newest first, and who made them", async () => {
+      const first = await placed(
+        alice,
+        [
+          (await candy(alice, "candy-corn")).id,
+          (await candy(alice, "berry-tart")).id,
+        ],
+        "banana",
+      );
+      await candy(bob, "banana");
+      await gql(ACCEPT, { offerId: first.offer.id }, bob);
+      const second = await placed(
+        bob,
+        [(await candy(bob, "skull-candy")).id],
+        "luther-head",
+      );
+      await candy(alice, "luther-head");
+      await gql(ACCEPT, { offerId: second.offer.id }, alice);
+      // Open offers are not trades.
+      await placed(alice, [(await candy(alice, "candy-corn")).id], "banana");
+
+      expect(await recent(carol)).toEqual([
+        {
+          id: expect.any(String),
+          offerer: { username: bob.username },
+          taker: { username: alice.username },
+          host: null,
+          offered: ["skull-candy"],
+          paid: ["luther-head"],
+          createdAt: expect.any(String),
+        },
+        {
+          id: expect.any(String),
+          offerer: { username: alice.username },
+          taker: { username: bob.username },
+          host: null,
+          offered: ["candy-corn", "berry-tart"],
+          paid: ["banana"],
+          createdAt: expect.any(String),
+        },
+      ]);
+      expect(await recent(carol, 1)).toHaveLength(1);
+    });
+
+    it("needs a signed-in player", async () => {
+      const res = await testApp.graphqlRequest(RECENT_TRADES, { communityId });
+      expect(error(res)).toBeDefined();
     });
   });
 

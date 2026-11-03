@@ -2631,6 +2631,7 @@ model HalloweenCandyTrade {
 
   @@index([guildId, initiatorId, createdAt])
   @@index([guildId, offererId, createdAt])
+  @@index([guildId, createdAt])
   @@map("halloween_candy_trades")
 }
 

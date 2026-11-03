@@ -1812,6 +1812,52 @@ type HalloweenCandySwapLimits {
   maxOpenOffers: Int!
 }
 
+"""Another player's open offer, and whether you could take it"""
+type HalloweenCandySwapListing {
+  """
+  Whether you hold a spare candy that fills it: one of the kind asked for, or for an offer for any kind, one of a kind it does not give
+  """
+  canTake: Boolean!
+  offer: HalloweenCandyOffer!
+}
+
+"""What is on offer in a community's candy swap"""
+type HalloweenCandySwapMarket {
+  """
+  A random handful of other players' and the house's open offers, the ones you can take first
+  """
+  listings: [HalloweenCandySwapListing!]!
+
+  """How many offers are open here, yours included"""
+  openOffers: Int!
+
+  """How many trades went through here in the last 24 hours"""
+  tradesLastDay: Int!
+}
+
+"""A candy swap that went through, as anyone in the community sees it"""
+type HalloweenCandySwapTrade {
+  createdAt: DateTime!
+
+  """The host, Daphne or Luther, when it was a house offer"""
+  host: String
+  id: ID!
+
+  """The slugs of the candies the offer gave"""
+  offered: [String!]!
+
+  """
+  Whose offer was taken. Null for a house offer, or if their account is gone.
+  """
+  offerer: User
+
+  """The slugs of the candies the taker gave for them"""
+  paid: [String!]!
+
+  """Who took the offer. Null if their account is gone."""
+  taker: User
+}
+
 """A candy swap you took part in, as you saw it"""
 type HalloweenCandyTradeRecord {
   createdAt: DateTime!
@@ -4058,9 +4104,19 @@ type Query {
   halloweenCandySwapLimits: HalloweenCandySwapLimits!
 
   """
+  A random handful of other players' open candy offers, the ones you can take first, and how busy the swap is. At most 50; 24 unless given.
+  """
+  halloweenCandySwapMarket(communityId: ID!, limit: Int): HalloweenCandySwapMarket!
+
+  """
   A random handful of other players' open candy offers that you have a spare candy of the wanted kind for. At most 50; 12 unless given.
   """
   halloweenCandySwapOffers(communityId: ID!, limit: Int): [HalloweenCandyOffer!]!
+
+  """
+  The latest candy swaps here, newest first, and who made them. At most 50; 10 unless given.
+  """
+  halloweenCandySwapRecentTrades(communityId: ID!, limit: Int): [HalloweenCandySwapTrade!]!
 
   """
   Every kind of Halloween candy, by slug: its image is /halloween/candy/<slug>.png on the frontend

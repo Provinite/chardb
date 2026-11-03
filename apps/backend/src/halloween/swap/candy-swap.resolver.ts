@@ -9,6 +9,8 @@ import {
   HalloweenCandyOffer,
   HalloweenCandyOfferPlaced,
   HalloweenCandySwapLimits,
+  HalloweenCandySwapMarket,
+  HalloweenCandySwapTrade,
   HalloweenCandyTradeRecord,
 } from "./candy-swap.types";
 
@@ -57,6 +59,33 @@ export class CandySwapResolver {
     @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<HalloweenCandyOffer[]> {
     return this.swap.browse(communityId, user.id, limit ?? undefined);
+  }
+
+  @AllowAnyAuthenticated()
+  @Query(() => HalloweenCandySwapMarket, {
+    description:
+      "A random handful of other players' open candy offers, the ones you " +
+      "can take first, and how busy the swap is. At most 50; 24 unless given.",
+  })
+  halloweenCandySwapMarket(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("limit", { type: () => Int, nullable: true }) limit: number | null,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
+  ): Promise<HalloweenCandySwapMarket> {
+    return this.swap.market(communityId, user.id, limit ?? undefined);
+  }
+
+  @AllowAnyAuthenticated()
+  @Query(() => [HalloweenCandySwapTrade], {
+    description:
+      "The latest candy swaps here, newest first, and who made them. At " +
+      "most 50; 10 unless given.",
+  })
+  halloweenCandySwapRecentTrades(
+    @Args("communityId", { type: () => ID }) communityId: string,
+    @Args("limit", { type: () => Int, nullable: true }) limit: number | null,
+  ): Promise<HalloweenCandySwapTrade[]> {
+    return this.swap.recentTrades(communityId, limit ?? undefined);
   }
 
   @AllowAnyAuthenticated()
