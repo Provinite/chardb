@@ -28,6 +28,12 @@ describe("a candy trade notification", () => {
     );
   });
 
+  it("says how many candies a host traded the recipient", () => {
+    expect(
+      notificationSentence(candyTrade({ actorLabel: "Luther", count: 3 })),
+    ).toBe("traded you 3 candies");
+  });
+
   it("goes to the community's candy swap", () => {
     expect(notificationHref(candyTrade())).toBe(
       communityUrl("willowmere", "/halloween/swap"),

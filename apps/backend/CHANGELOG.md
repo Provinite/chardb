@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **House candy offers**: Daphne and Luther put up 3-for-1 candy swap offers every 10 minutes during the event (up to 10, each open 100 minutes), and staff can drop more with `dropHalloweenHouseOffers`.
+
 ## [v15.5.0] - 2026-11-02
 
 ### Added

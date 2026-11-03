@@ -128,7 +128,10 @@ export function notificationSentence(
         : `could not approve ${name}`;
     }
     case NotificationKind.HalloweenCandyTraded:
-      return "took your candy swap offer";
+      // A count is a host's house offer, which the recipient took.
+      return count
+        ? `traded you ${count} candies`
+        : "took your candy swap offer";
   }
 }
 

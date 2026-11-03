@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { Ghost, Check, Undo2, Pencil, Plus, Trash2 } from "lucide-react";
-import { Button, Modal, Stack } from "@chardb/ui";
+import { Button, Cluster, Modal, Stack } from "@chardb/ui";
 import { toast } from "react-hot-toast";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -27,11 +27,15 @@ import {
   HalloweenWinFilter,
   useHalloweenDashboardQuery,
   useHalloweenWinsQuery,
+  useDropHalloweenHouseOffersMutation,
   useRemoveHalloweenPrizeMutation,
   useSetHalloweenPrizeDeliveredMutation,
   type HalloweenPrizeFieldsFragment,
   type HalloweenWinFieldsFragment,
 } from "../generated/graphql";
+
+/** The sizes of house-offer drop staff can make in one click. */
+const HOUSE_DROP_SIZES = [1, 5, 10, 25] as const;
 
 /**
  * The Halloween trick-or-treat event, for staff.
@@ -275,6 +279,29 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
     useRemoveHalloweenPrizeMutation({
       refetchQueries: [HalloweenDashboardDocument],
     });
+
+  const [dropHouseOffers] = useDropHalloweenHouseOffersMutation();
+  /** How many house offers the drop in flight asks for. */
+  const [dropping, setDropping] = useState<number | null>(null);
+
+  const handleDrop = async (count: number) => {
+    if (!communityId) return;
+    setDropping(count);
+    try {
+      const { data: dropped } = await dropHouseOffers({
+        variables: { communityId, count },
+      });
+      toast.success(
+        `Dropped ${dropped?.dropHalloweenHouseOffers ?? count} house offers`,
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not drop house offers",
+      );
+    } finally {
+      setDropping(null);
+    }
+  };
 
   const handleRemove = async (prize: HalloweenPrizeFieldsFragment) => {
     if (!communityId) return;
@@ -547,6 +574,31 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
                 </tbody>
               </Table>
             </TableWrap>
+          )}
+
+          {canManage && (
+            <>
+              <SectionTitle>House offers</SectionTitle>
+              <Subtitle>
+                While the event runs, Daphne and Luther put up a 3-for-1 offer
+                in the candy swap every 10 minutes, up to 10 at a time. Each
+                lasts 100 minutes. Drops add more now, past that limit.
+              </Subtitle>
+              <Cluster gap="sm">
+                {HOUSE_DROP_SIZES.map((count) => (
+                  <Button
+                    key={count}
+                    tone="secondary"
+                    size="sm"
+                    busy={dropping === count}
+                    disabled={dropping !== null && dropping !== count}
+                    onClick={() => void handleDrop(count)}
+                  >
+                    Drop {count}
+                  </Button>
+                ))}
+              </Cluster>
+            </>
           )}
 
           <SectionTitle>Wins</SectionTitle>

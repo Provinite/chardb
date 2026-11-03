@@ -5,26 +5,31 @@
 import { describe, it, expect, vi } from "vitest";
 import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { CandySwapView, type CandySwapViewProps } from "../CandySwapView";
 import {
-  CandySwapView,
-  type CandySwapViewProps,
-  type SwapOffer,
-  type SwapTrade,
-} from "../CandySwapView";
+  HalloweenCandyOfferStatus,
+  type HalloweenCandyOfferFieldsFragment,
+  type HalloweenCandyTradeFieldsFragment,
+} from "../../../generated/graphql";
 
 const offer = (
   id: string,
   wantSlug: string | null,
   slugs: string[],
-): SwapOffer => ({
+  host: string | null = null,
+): HalloweenCandyOfferFieldsFragment => ({
   id,
   wantSlug,
+  status: HalloweenCandyOfferStatus.Open,
+  host,
+  createdAt: "2026-10-31T12:00:00.000Z",
   candies: slugs.map((slug, i) => ({ id: i + 100, slug })),
 });
 
-const trade: SwapTrade = {
+const trade: HalloweenCandyTradeFieldsFragment = {
   id: "t1",
-  with: { username: "bob", displayName: "Bob" },
+  with: { id: "u-bob", username: "bob", displayName: "Bob" },
+  host: null,
   gave: ["candy-corn"],
   received: ["banana", "berry-tart"],
   createdAt: "2026-10-31T12:00:00.000Z",
@@ -447,5 +452,28 @@ describe("CandySwapView", () => {
     expect(
       within(row).getByRole("img", { name: "banana" }),
     ).toBeInTheDocument();
+  });
+
+  it("names the host a house trade was with", () => {
+    renderView({
+      trades: [{ ...trade, with: null, host: "Luther" }],
+    });
+    const row = within(section("Your trades")).getByRole("listitem");
+    expect(within(row).getByText("Luther")).toBeInTheDocument();
+    expect(within(row).queryByText("A deleted account")).toBeNull();
+  });
+
+  it("names the host on a house offer", () => {
+    renderView({
+      offers: [
+        offer("h1", "skull-candy", ["banana", "berry-tart", "candy-corn"], "Daphne"),
+        offer("p1", "banana", ["luther-head"]),
+      ],
+    });
+    const [house, player] = within(section("Offers you can take")).getAllByRole(
+      "listitem",
+    );
+    expect(within(house).getByText("Daphne's offer")).toBeInTheDocument();
+    expect(within(player).queryByText(/'s offer$/)).toBeNull();
   });
 });

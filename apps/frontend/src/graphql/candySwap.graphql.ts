@@ -5,6 +5,7 @@ export const HALLOWEEN_CANDY_OFFER_FRAGMENT = gql`
     id
     wantSlug
     status
+    host
     createdAt
     candies {
       id
@@ -19,6 +20,7 @@ export const HALLOWEEN_CANDY_TRADE_FRAGMENT = gql`
     gave
     received
     createdAt
+    host
     with {
       id
       username

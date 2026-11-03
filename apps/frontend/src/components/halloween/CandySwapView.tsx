@@ -1,27 +1,16 @@
 import React, { useId, useMemo, useState } from "react";
 import { ArrowRight, Asterisk, Plus } from "lucide-react";
 import { Button, Cluster, Dialog, Grid, Stack } from "@chardb/ui";
+import type {
+  HalloweenCandyOfferFieldsFragment as SwapOffer,
+  HalloweenCandyTradeFieldsFragment as SwapTrade,
+} from "../../generated/graphql";
 import { candyImageUrl, candyName } from "./candyBoard";
 import * as styles from "./CandySwapView.css";
 
 export interface SwapCandy {
   id: number;
   slug: string;
-}
-
-export interface SwapOffer {
-  id: string;
-  /** Null when any kind of candy will do. */
-  wantSlug: string | null;
-  candies: SwapCandy[];
-}
-
-export interface SwapTrade {
-  id: string;
-  with: { username: string; displayName?: string | null } | null;
-  gave: string[];
-  received: string[];
-  createdAt: string;
 }
 
 export interface CandySwapViewProps {
@@ -299,6 +288,9 @@ export const CandySwapView = ({
           <Grid as="ul" min="lg" gap="md" className={styles.list}>
             {offers.map((offer) => (
               <Stack as="li" key={offer.id} gap="md" className={styles.card}>
+                {offer.host && (
+                  <span className={styles.tradeWith}>{offer.host}&apos;s offer</span>
+                )}
                 <OfferTerms offer={offer} />
                 <Button
                   busy={acceptingId === offer.id}
@@ -514,7 +506,7 @@ export const CandySwapView = ({
                   <span className={styles.tradeWith}>
                     {t.with
                       ? t.with.displayName || t.with.username
-                      : "A deleted account"}
+                      : (t.host ?? "A deleted account")}
                   </span>
                   <span className={styles.muted}>
                     {dateFormat.format(new Date(t.createdAt))}

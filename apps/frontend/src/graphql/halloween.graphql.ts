@@ -185,6 +185,12 @@ export const REMOVE_HALLOWEEN_PRIZE_MUTATION = gql`
   }
 `;
 
+export const DROP_HALLOWEEN_HOUSE_OFFERS_MUTATION = gql`
+  mutation DropHalloweenHouseOffers($communityId: ID!, $count: Int!) {
+    dropHalloweenHouseOffers(communityId: $communityId, count: $count)
+  }
+`;
+
 // What the prize picker needs of an image: a small URL, and whether a
 // moderator has approved it -- a prize only ever shows an approved image.
 export const HALLOWEEN_PICKER_IMAGE_FRAGMENT = gql`
