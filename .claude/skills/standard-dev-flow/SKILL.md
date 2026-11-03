@@ -13,6 +13,7 @@ For tasks that are expected to be worked with a relatively high level of autonom
 
 - Prepare the dev environment **(background)**
   - Switch into a worktree (see the worktree skill), branched from the tip of `main`. For an issue, include `gh-<number>` in the branch name (e.g. `fix/gh-123-short-slug`).
+  - When told to use the main checkout, branch in place instead and skip the worktree and slot steps. Slot 0's servers may be the user's own; ask before starting or stopping them.
   - Install deps, `yarn instance:init`, build packages, `yarn instance:up`, migrate. Kick these off, then present the plan while they run.
 - Present the plan
   - Skip this step for well-defined, tightly-scoped fixes with no judgement calls.

@@ -1,71 +1,30 @@
 ---
 name: issue
-description: Work on a GitHub issue in the current checkout. Takes the issue number as its argument.
-argument-hint: <issue-number>
+description: Work on a GitHub issue following standard-dev-flow, in its own worktree by default. Takes the issue number, plus optional `main-checkout` to work in the current checkout instead.
+argument-hint: <issue-number> [main-checkout]
 disable-model-invocation: true
 ---
 
 # Work on GitHub Issue
 
-Time to get to work on GitHub issue #$ARGUMENTS!
+Arguments: `$ARGUMENTS`. The first is the issue number. If `main-checkout` is among them, work in the current checkout instead of a worktree.
 
-## Workflow
+Invoke the `standard-dev-flow` skill and follow it. It owns the setup, plan, build, review and cleanup. This skill adds only what is specific to an issue.
 
-### Step 1: Read the Issue
+## Before the plan
 
-- Use `gh issue view $ARGUMENTS --comments` to read the issue title, body, and all comments
-- Understand the full context of what's needed
-- Identify any acceptance criteria, implementation notes, or special requirements
+While the environment setup runs in the background:
 
-### Step 2: Use Sequential Thinking (#ultrathink)
+- Worktree (default): name it after the issue with `EnterWorktree` (e.g. `gh-<n>-short-slug`). It names the branch after the worktree; rename the branch to include `gh-<n>` (e.g. `fix/gh-<n>-short-slug`).
+- `main-checkout`: create the branch in place from the tip of `main`, with the same naming.
+- Read the issue with `gh issue view <n> --comments`: title, body, every comment, acceptance criteria, implementation notes.
+- Use the sequential thinking tool (mcp**sequential-thinking**sequentialthinking) to break the problem down and find edge cases.
+- Examine the codebase: related features, existing patterns to follow, every file that will change. Use the Explore agent for broad sweeps.
 
-- Use the sequential thinking tool (mcp**sequential-thinking**sequentialthinking) to analyze the requirements
-- Break down the problem systematically
-- Identify key components that will need to be modified or created
-- Consider edge cases and potential challenges
+## In the plan
 
-### Step 3: Examine the Codebase
+Cover the issue's acceptance criteria point by point, plus schema changes, API changes, frontend changes, tests and migration steps. Ask about anything the issue leaves ambiguous with AskUserQuestion.
 
-- Search for relevant existing code that this feature relates to (similar features, related modules, etc.)
-- Understand the current architecture and patterns used
-- Identify all files that will need to be modified or created
-- Look at similar implementations for consistency
-- Be thorough - examine as much of the codebase as necessary to develop a complete understanding
+## In the PR
 
-### Step 4: Develop Implementation Plan
-
-- Create a detailed, unambiguous implementation plan using the TodoWrite tool
-- The plan should include:
-  - Specific files to create or modify
-  - Database schema changes (if needed)
-  - API endpoints to add or modify (if applicable)
-  - Frontend components to create or update (if applicable)
-  - Testing considerations
-  - Any migration steps required
-- Break down complex tasks into concrete, actionable steps
-- Ensure the plan is essentially free from ambiguity
-
-### Step 5: Clarify Ambiguities
-
-- If there are any questions, unclear requirements, or multiple valid approaches, use the AskUserQuestion tool
-- Ask about:
-  - Architectural decisions where multiple approaches are valid
-  - Specific implementation details not covered in the issue
-  - User preferences for UX/UI decisions
-  - Any assumptions that need validation
-
-### Step 6: Present the Plan
-
-- Present your complete implementation plan to the user
-- Highlight any key architectural decisions
-- Note any potential risks or challenges
-- Wait for user approval before proceeding with implementation
-
-## Important Notes
-
-- Be thorough in your codebase examination - don't rush this step
-- Use the Explore agent (Task tool with subagent_type=Explore) for broad codebase exploration
-- Look for existing patterns and follow them for consistency
-- The plan should be detailed enough that implementation can proceed without ambiguity
-- Always use the sequential thinking tool to ensure thorough analysis
-- Work should be done on a new branch from the tip of main, including `gh-XX` in the branch name.
+Link the issue in the PR body (`Closes #<n>`).
