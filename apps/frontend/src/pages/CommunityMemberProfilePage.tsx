@@ -278,6 +278,23 @@ export const CommunityMemberProfilePage: React.FC = () => {
         <Identity>
           <Name>{displayName}</Name>
           <Handle>@{member.username}</Handle>
+          {/* Followers are the same everywhere; galleries and media are
+              narrowed to this community, like the characters below. */}
+          <Cluster gap="sm">
+            <SectionLink to={`/user/${member.username}/followers`}>
+              {member.followersCount}{" "}
+              {member.followersCount === 1 ? "follower" : "followers"}
+            </SectionLink>
+            <SectionLink to={`/user/${member.username}/following`}>
+              {member.followingCount} following
+            </SectionLink>
+            <SectionLink to={`/user/${member.username}/galleries`}>
+              Galleries
+            </SectionLink>
+            <SectionLink to={`/user/${member.username}/media`}>
+              Media
+            </SectionLink>
+          </Cluster>
 
           {roles.length > 0 && (
             <RoleTags data-testid="member-role-tags">
@@ -318,15 +335,6 @@ export const CommunityMemberProfilePage: React.FC = () => {
               <FollowButton userId={member.id} showCount={false} size="sm" />
             )}
           </Actions>
-
-          <Cluster gap="md">
-            <SectionLink to={`/user/${member.username}/followers`}>
-              {member.followersCount} followers
-            </SectionLink>
-            <SectionLink to={`/user/${member.username}/following`}>
-              {member.followingCount} following
-            </SectionLink>
-          </Cluster>
         </Identity>
       </Header>
 
@@ -336,20 +344,11 @@ export const CommunityMemberProfilePage: React.FC = () => {
             Characters in {communityName}
             {characterTotal > 0 && ` (${characterTotal})`}
           </SectionTitle>
-          <Cluster gap="md">
-            {characterTotal > characters.length && (
-              <SectionLink to={`/user/${member.username}/characters`}>
-                All of their characters
-              </SectionLink>
-            )}
-            {/* Both narrowed to this community, like the characters above. */}
-            <SectionLink to={`/user/${member.username}/galleries`}>
-              Galleries
+          {characterTotal > characters.length && (
+            <SectionLink to={`/user/${member.username}/characters`}>
+              All of their characters
             </SectionLink>
-            <SectionLink to={`/user/${member.username}/media`}>
-              Media
-            </SectionLink>
-          </Cluster>
+          )}
         </SectionHead>
 
         {charactersLoading ? (

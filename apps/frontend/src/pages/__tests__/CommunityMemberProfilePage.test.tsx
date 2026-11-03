@@ -5,6 +5,7 @@ import { render, createMockUser } from "../../__tests__/test-utils";
 
 const mocks = vi.hoisted(() => ({
   viewerId: "viewer-1" as string | null,
+  followersCount: 3,
   isMemberOf: true,
   isMemberOfSkipped: vi.fn(),
   replaceLocation: vi.fn(),
@@ -60,7 +61,7 @@ vi.mock("../../generated/graphql", async () => {
           displayName: "Bob",
           bio: null,
           avatarImage: null,
-          followersCount: 3,
+          followersCount: mocks.followersCount,
           followingCount: 5,
           achievements: [],
         },
@@ -106,6 +107,7 @@ describe("CommunityMemberProfilePage", () => {
   beforeEach(() => {
     mocks.viewerId = "viewer-1";
     mocks.isMemberOf = true;
+    mocks.followersCount = 3;
     mocks.isMemberOfSkipped.mockClear();
     mocks.replaceLocation.mockClear();
   });
@@ -156,6 +158,13 @@ describe("CommunityMemberProfilePage", () => {
       "href",
       "/user/bob/following",
     );
+  });
+
+  it("says follower, not followers, for one", () => {
+    mocks.followersCount = 1;
+    renderProfile();
+
+    expect(screen.getByRole("link", { name: "1 follower" })).toBeInTheDocument();
   });
 
   it("links their galleries and media here", () => {
