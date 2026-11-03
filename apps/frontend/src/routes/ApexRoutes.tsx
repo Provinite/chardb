@@ -125,9 +125,9 @@ export const apexRoutes = (
       element={<CommunityHostRedirect />}
     />
 
-    {/* --- OAuth callbacks. Single-valued provider-side, so they stay here
-        whichever host the flow started from; the origin to return to rides in
-        the signed `state` instead. */}
+    {/* --- OAuth callbacks for flows started here. The API returns each flow
+        to the host that started it (the origin rides in the signed `state`),
+        so community hosts serve these too. */}
     <Route
       path="/auth/deviantart/callback"
       element={<DeviantArtCallbackPage />}

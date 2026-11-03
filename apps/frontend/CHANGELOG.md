@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **Linking an account or editing your profile from a community** keeps you on that community instead of sending you to the main site.
+
 ## [v15.4.0] - 2026-11-01
 
 ### Added

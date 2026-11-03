@@ -6,6 +6,7 @@ import { MockedResponse } from "@apollo/client/testing";
 const mocks = vi.hoisted(() => {
   return {
     navigate: vi.fn(),
+    hostCommunity: null as { id: string; name: string; slug: string } | null,
     toast: {
       success: vi.fn(),
       error: vi.fn(),
@@ -20,6 +21,16 @@ vi.mock("react-router-dom", async () => {
   return {
     ...actual,
     useNavigate: () => mocks.navigate,
+  };
+});
+
+vi.mock("../../contexts/CommunityHostContext", async () => {
+  const actual = await vi.importActual<
+    typeof import("../../contexts/CommunityHostContext")
+  >("../../contexts/CommunityHostContext");
+  return {
+    ...actual,
+    useHostCommunity: () => mocks.hostCommunity,
   };
 });
 
@@ -143,6 +154,7 @@ const mockUpdateProfileMutation: MockedResponse = {
 describe("EditProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mocks.hostCommunity = null;
   });
 
   describe("Authentication states", () => {
@@ -388,6 +400,33 @@ describe("EditProfilePage", () => {
       // Should navigate to user profile
       await waitFor(() => {
         expect(mocks.navigate).toHaveBeenCalledWith("/user/johndoe");
+      });
+    });
+    // `/user/*` is apex-only, so on a community host it would bounce the
+    // viewer off the community they were editing from.
+    it("returns to the member profile on a community host", async () => {
+      mocks.hostCommunity = {
+        id: "community-1",
+        name: "Willowmere",
+        slug: "willowmere",
+      };
+      const user = userEvent.setup();
+      render(<EditProfilePage />, {
+        mocks: [mockMeQuery],
+      });
+
+      await waitFor(() => {
+        const displayNameInput = screen.getByLabelText(
+          "Display Name",
+        ) as HTMLInputElement;
+        expect(displayNameInput.value).toBe("John Doe");
+      });
+
+      mocks.navigate.mockClear();
+      await user.click(screen.getByRole("button", { name: "Cancel" }));
+
+      await waitFor(() => {
+        expect(mocks.navigate).toHaveBeenCalledWith("/members/johndoe");
       });
     });
   });

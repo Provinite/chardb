@@ -63,6 +63,10 @@ import {
   CreateMediaPage,
   UploadImagePage,
   CreateTextPage,
+  DeviantArtCallbackPage,
+  DiscordCallbackPage,
+  ToyhouseCallbackPage,
+  PatreonCallbackPage,
 } from "./pages";
 
 /** Forwards the legacy singular /item/:id to the canonical item type page. */
@@ -542,6 +546,17 @@ export const communityRoutes = (
         on, and signing up here joins this community. */}
     <Route path="/login" element={<LoginPage />} />
     <Route path="/signup" element={<SignupPage />} />
+
+    {/* OAuth linking returns to the host it was started from (the origin
+        rides in the signed `state`), so linking from Edit Profile here lands
+        back here. */}
+    <Route
+      path="/auth/deviantart/callback"
+      element={<DeviantArtCallbackPage />}
+    />
+    <Route path="/auth/discord/callback" element={<DiscordCallbackPage />} />
+    <Route path="/auth/toyhouse/callback" element={<ToyhouseCallbackPage />} />
+    <Route path="/auth/patreon/callback" element={<PatreonCallbackPage />} />
 
     {/* The footer links here on every host. */}
     <Route path="/privacy" element={<PrivacyPage />} />
