@@ -6,6 +6,7 @@ import { AchievementsService } from "./achievements.service";
 import { AchievementsResolver } from "./achievements.resolver";
 import { AchievementGrants } from "./achievement-grants";
 import { HalloweenPlayAchievements } from "./halloween-play-achievements.service";
+import { InfectiousEnthusiasm } from "./infectious-enthusiasm.service";
 
 @Module({
   imports: [DatabaseModule, ClockModule, EventsModule],
@@ -14,6 +15,7 @@ import { HalloweenPlayAchievements } from "./halloween-play-achievements.service
     AchievementsResolver,
     AchievementGrants,
     HalloweenPlayAchievements,
+    InfectiousEnthusiasm,
   ],
   exports: [AchievementsService],
 })
