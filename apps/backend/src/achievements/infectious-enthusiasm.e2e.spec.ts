@@ -9,6 +9,7 @@ import { HalloweenDiscordClient } from "../halloween/discord/halloween-discord.c
 import { CandySwapService } from "../halloween/swap/candy-swap.service";
 import { mockDiscord } from "../halloween/testing/command-harness";
 import { GUILD_ID } from "../halloween/testing/fixtures";
+import { DomainEvents } from "../events/domain-events";
 import { AchievementsModule } from "./achievements.module";
 
 const SLUG = "infectious-enthusiasm-2026";
@@ -30,6 +31,7 @@ describe("Infectious Enthusiasm (e2e)", () => {
   let testApp: TestApp;
   let db: DatabaseService;
   let swap: CandySwapService;
+  let events: DomainEvents;
   let communityId: string;
   let memberRole: string;
   let knockSeq = 0;
@@ -52,6 +54,7 @@ describe("Infectious Enthusiasm (e2e)", () => {
     );
     db = testApp.getDb();
     swap = testApp.getModuleRef().get(CandySwapService);
+    events = testApp.getModuleRef().get(DomainEvents);
   });
 
   afterAll(async () => {
@@ -96,8 +99,10 @@ describe("Infectious Enthusiasm (e2e)", () => {
     return u;
   };
 
-  const infected = async () =>
-    (
+  /** Who has it and since when, once every listener has finished. */
+  const infected = async () => {
+    await events.idle();
+    return (
       await db.userAchievement.findMany({
         where: { communityId, slug: SLUG },
         select: { userId: true, earnedAt: true },
@@ -106,6 +111,7 @@ describe("Infectious Enthusiasm (e2e)", () => {
       (all, a) => all.set(a.userId, a.earnedAt),
       new Map<string, Date>(),
     );
+  };
 
   const carrier = (userId: string, earnedAt = START) =>
     db.userAchievement.create({
@@ -156,6 +162,15 @@ describe("Infectious Enthusiasm (e2e)", () => {
       await carrier(mod.id);
       await swapCandy(mod.id, alice.id);
       expect((await infected()).has(alice.id)).toBe(true);
+    });
+
+    it("is dated at the swap that passed it on", async () => {
+      const mod = await member("mod");
+      const alice = await member("alice");
+      await carrier(mod.id);
+      await swapCandy(alice.id, mod.id);
+      const trade = await db.halloweenCandyTrade.findFirstOrThrow();
+      expect((await infected()).get(alice.id)).toEqual(trade.createdAt);
     });
 
     it("keeps when the carrier caught it first", async () => {

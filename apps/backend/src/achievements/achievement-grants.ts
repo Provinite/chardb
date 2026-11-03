@@ -12,9 +12,11 @@ export interface AchievementGrant {
   userId: string;
   communityId: string;
   slug: string;
+  /** When it was earned, if not now. */
+  earnedAt?: Date;
 }
 
-/** Records achievements as earned now. */
+/** Records achievements as earned. */
 @Injectable()
 export class AchievementGrants {
   private readonly logger = new Logger(AchievementGrants.name);
@@ -36,7 +38,10 @@ export class AchievementGrants {
     // Returns only the rows it inserted, so one already earned is not logged
     // as granted again.
     const granted = await this.db.userAchievement.createManyAndReturn({
-      data: grants.map((g) => ({ ...g, earnedAt: this.clock.now() })),
+      data: grants.map((g) => ({
+        ...g,
+        earnedAt: g.earnedAt ?? this.clock.now(),
+      })),
       skipDuplicates: true,
       select: { userId: true, communityId: true, slug: true },
     });

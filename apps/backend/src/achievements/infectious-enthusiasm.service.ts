@@ -1,9 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { DateTime } from "luxon";
 import { DatabaseService } from "../database/database.service";
 import { OnDomainEvent } from "../events/domain-events";
 import type { HalloweenCandyTraded } from "../events/domain-event-map";
-import { EVENT_TIMEZONE } from "../halloween/time";
+import { eventYear } from "../halloween/time";
 import { AchievementGrants } from "./achievement-grants";
 import { findAchievement, halloweenPlaySlug } from "./achievement-catalog";
 import {
@@ -59,6 +58,8 @@ export class InfectiousEnthusiasm {
         userId: player.userId,
         communityId: player.communityId,
         slug,
+        // Dated at the swap, as the seed migration's replay dates it.
+        earnedAt: trade.createdAt,
       })),
       "infected",
     );
@@ -85,10 +86,9 @@ export class InfectiousEnthusiasm {
     ) {
       return null;
     }
-    const year = DateTime.fromJSDate(player.startDate, {
-      zone: EVENT_TIMEZONE,
-    }).year;
-    const slug = halloweenPlaySlug(year).infectiousEnthusiasm;
+    const slug = halloweenPlaySlug(
+      eventYear(player.startDate),
+    ).infectiousEnthusiasm;
     if (!findAchievement(slug)) return null;
     const had = await this.db.userAchievement.findFirst({
       where: {
