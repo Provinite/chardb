@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Domain event bus**: in-process, fire-and-forget `DomainEvents` with typed `@OnDomainEvent` listeners; sign-in achievements now listen for `user.signed_in`.
+- **Halloween play achievements**: trade tiers at 5/15/30 swaps, 3-for-1 offers made and taken, gifting yourself, knocking every day, and knocking with none left; earned as you play and caught up on sign-in.
 
 ## [v15.3.0] - 2026-11-01
 

@@ -2482,6 +2482,17 @@ model HalloweenStaffAward {
   @@map("halloween_staff_awards")
 }
 
+/// A `/knock` refused because the player had no knocks or gifties left.
+model HalloweenOutOfKnocksAttempt {
+  id            Int      @id @default(autoincrement())
+  guildId       String   @map("guild_id") @db.VarChar(30)
+  discordUserId String   @map("discord_user_id") @db.VarChar(30)
+  time          DateTime @default(now()) @db.Timestamptz
+
+  @@index([guildId, discordUserId, time])
+  @@map("halloween_out_of_knocks_attempts")
+}
+
 /// An extra knock one player gives another. Pending until spent on a knock.
 model HalloweenGifty {
   id           Int      @id @default(autoincrement())
@@ -2562,16 +2573,19 @@ enum HalloweenCandyOfferStatus {
 /// offered candies are the ones whose `offerId` is this offer's while it is
 /// open; a filled or cancelled offer holds none.
 model HalloweenCandyOffer {
-  id        String                    @id @default(uuid()) @db.Uuid
-  guildId   String                    @map("guild_id") @db.VarChar(30)
-  ownerId   String                    @map("owner_id")
+  id         String                    @id @default(uuid()) @db.Uuid
+  guildId    String                    @map("guild_id") @db.VarChar(30)
+  ownerId    String                    @map("owner_id")
   /// Null for an offer that takes any kind of candy.
-  wantSlug  String?                   @map("want_slug") @db.VarChar(40)
-  status    HalloweenCandyOfferStatus @default(OPEN)
-  createdAt DateTime                  @default(now()) @map("created_at") @db.Timestamptz
-  closedAt  DateTime?                 @map("closed_at") @db.Timestamptz
+  wantSlug   String?                   @map("want_slug") @db.VarChar(40)
+  status     HalloweenCandyOfferStatus @default(OPEN)
+  /// How many candies it offered. Null on an offer cancelled before this
+  /// was recorded, whose candies had already gone back.
+  candyCount Int?                      @map("candy_count")
+  createdAt  DateTime                  @default(now()) @map("created_at") @db.Timestamptz
+  closedAt   DateTime?                 @map("closed_at") @db.Timestamptz
   /// The trade that filled it.
-  tradeId   String?                   @map("trade_id") @db.Uuid
+  tradeId    String?                   @map("trade_id") @db.Uuid
 
   owner   User                 @relation(fields: [ownerId], references: [id], onDelete: Cascade)
   candies HalloweenCandy[]

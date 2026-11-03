@@ -15,6 +15,7 @@ import { PlayerLock } from "../services/player-lock";
 import { lockedTransaction } from "../services/locked-transaction";
 import { DatabaseService } from "../../database/database.service";
 import { GuildSettingsService } from "../services/guild-settings.service";
+import { DomainEvents } from "../../events/domain-events";
 import {
   HalloweenDiscordError,
   ValidationError,
@@ -37,6 +38,7 @@ export class GiftyCommand implements HalloweenCommandHandler {
     private readonly lock: PlayerLock,
     private readonly db: DatabaseService,
     private readonly guildSettings: GuildSettingsService,
+    private readonly events: DomainEvents,
   ) {}
 
   async handle(
@@ -111,6 +113,11 @@ export class GiftyCommand implements HalloweenCommandHandler {
       giftyId: sent.id,
       rateLimitSkipped,
     } satisfies HalloweenLogLine);
+    this.events.publish("halloween.gifty.sent", {
+      guildId,
+      fromDiscordUserId: fromUserId,
+      toDiscordUserId: toUserId,
+    });
     return {
       reply: {
         allowed_mentions: {

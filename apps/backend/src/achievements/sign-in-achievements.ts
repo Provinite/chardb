@@ -1,5 +1,4 @@
-import { DateTime } from "luxon";
-import { EVENT_TIMEZONE, EventStatus, getEventStatus } from "../halloween/time";
+import { EventStatus, eventYear, getEventStatus } from "../halloween/time";
 import { findAchievement, trickOrTreaterSlug } from "./achievement-catalog";
 
 /** A community's Halloween event, as its guild's settings set it. */
@@ -31,10 +30,7 @@ export function signInAchievements(
     ) {
       return [];
     }
-    const year = DateTime.fromJSDate(event.startDate, {
-      zone: EVENT_TIMEZONE,
-    }).year;
-    const slug = trickOrTreaterSlug(year);
+    const slug = trickOrTreaterSlug(eventYear(event.startDate));
     return findAchievement(slug)
       ? [{ communityId: event.communityId, slug }]
       : [];

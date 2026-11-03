@@ -128,6 +128,7 @@ export class TestApp {
     await this.db.halloweenCandy.deleteMany({});
     await this.db.halloweenCandyOffer.deleteMany({});
     await this.db.halloweenGifty.deleteMany({});
+    await this.db.halloweenOutOfKnocksAttempt.deleteMany({});
     await this.db.halloweenKnockEvent.deleteMany({});
     await this.db.halloweenPrize.deleteMany({});
     await this.db.halloweenDeviantArtUser.deleteMany({});

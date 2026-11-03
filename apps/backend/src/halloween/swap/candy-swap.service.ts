@@ -13,6 +13,7 @@ import {
 } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
 import { NotificationsService } from "../../notifications/notifications.service";
+import { DomainEvents } from "../../events/domain-events";
 import {
   mapPrismaUserToGraphQL,
   userMapperSelect,
@@ -92,6 +93,7 @@ export class CandySwapService {
     private readonly dashboard: HalloweenDashboardService,
     private readonly lock: PlayerLock,
     private readonly notifications: NotificationsService,
+    private readonly events: DomainEvents,
   ) {}
 
   /** Every kind of candy there is, by slug. */
@@ -268,7 +270,12 @@ export class CandySwapService {
       }
 
       const offer = await tx.halloweenCandyOffer.create({
-        data: { guildId, ownerId: userId, wantSlug },
+        data: {
+          guildId,
+          ownerId: userId,
+          wantSlug,
+          candyCount: candies.length,
+        },
       });
       await tx.halloweenCandy.updateMany({
         where: { id: { in: candyIds } },
@@ -308,6 +315,11 @@ export class CandySwapService {
       matched: tradeId !== null,
     } satisfies HalloweenLogLine);
 
+    this.events.publish("halloween.candy_offer.placed", {
+      guildId,
+      userId,
+      offerId,
+    });
     const [offer, trade] = await Promise.all([
       this.db.halloweenCandyOffer.findUniqueOrThrow({
         where: { id: offerId },
@@ -315,6 +327,7 @@ export class CandySwapService {
       }),
       tradeId ? this.loadTrade(tradeId) : null,
     ]);
+    if (trade) this.publishTraded(trade);
     return {
       offer: toOffer(offer),
       trade: trade ? toTradeRecord(trade, userId) : null,
@@ -384,7 +397,18 @@ export class CandySwapService {
       });
     });
 
-    return toTradeRecord(await this.loadTrade(tradeId), userId);
+    const trade = await this.loadTrade(tradeId);
+    this.publishTraded(trade);
+    return toTradeRecord(trade, userId);
+  }
+
+  private publishTraded(trade: TradeRow): void {
+    this.events.publish("halloween.candy.traded", {
+      guildId: trade.guildId,
+      tradeId: trade.id,
+      initiatorId: trade.initiatorId,
+      offererId: trade.offererId,
+    });
   }
 
   /** Withdraws one of the player's open offers, giving its candies back. */

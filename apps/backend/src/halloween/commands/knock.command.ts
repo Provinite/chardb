@@ -33,6 +33,7 @@ import { PrizeImageService } from "../services/prize-image.service";
 import { PlayerLock } from "../services/player-lock";
 import { lockedTransaction } from "../services/locked-transaction";
 import { DatabaseService } from "../../database/database.service";
+import { DomainEvents } from "../../events/domain-events";
 import {
   EventEndedError,
   EventNotStartedError,
@@ -116,6 +117,7 @@ export class KnockCommand implements HalloweenCommandHandler {
     private readonly lock: PlayerLock,
     private readonly random: HalloweenRandom,
     private readonly db: DatabaseService,
+    private readonly events: DomainEvents,
   ) {}
 
   async handle(
@@ -176,7 +178,12 @@ export class KnockCommand implements HalloweenCommandHandler {
               ),
             };
       },
-    );
+    ).catch(async (error: unknown) => {
+      if (error instanceof TooManyKnocksError) {
+        await this.recordOutOfKnocks(guildId, userId);
+      }
+      throw error;
+    });
     const committedAt = Date.now();
     const transactionMs = committedAt - started;
 
@@ -195,6 +202,10 @@ export class KnockCommand implements HalloweenCommandHandler {
     // Logged only once committed, so the log never shows a win that was
     // rolled back.
     this.logger.log({ ...result.log, ...timings });
+    this.events.publish("halloween.knock.completed", {
+      guildId,
+      discordUserId: userId,
+    });
 
     const { announcement, prize } = result;
     if (!announcement) {
@@ -204,6 +215,33 @@ export class KnockCommand implements HalloweenCommandHandler {
       reply: result.reply,
       afterReply: () => this.announce(announcement, interaction, prize),
     };
+  }
+
+  /**
+   * Keeps a knock refused for want of knocks, and announces it. The refusal
+   * still goes back to the player if this fails.
+   */
+  private async recordOutOfKnocks(
+    guildId: string,
+    discordUserId: string,
+  ): Promise<void> {
+    try {
+      await this.db.halloweenOutOfKnocksAttempt.create({
+        data: { guildId, discordUserId },
+      });
+    } catch (err) {
+      this.logger.warn({
+        message: "Could not record a knock refused for want of knocks",
+        guildId,
+        userId: discordUserId,
+        err,
+      });
+      return;
+    }
+    this.events.publish("halloween.knock.out_of_knocks", {
+      guildId,
+      discordUserId,
+    });
   }
 
   /** Posts the win to the guild's win channel. A failure leaves the win. */
