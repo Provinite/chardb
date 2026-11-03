@@ -4,9 +4,11 @@ import {
   HOST_CANDIES,
   HOUSE_OFFER_LIFETIME_MS,
   HOUSE_SPAWN_INTERVAL_MS,
+  MAX_HOUSE_CATCH_UP,
   MAX_OPEN_HOUSE_OFFERS,
   dueHouseSpawns,
   isHalloweenHost,
+  leastAskedWants,
 } from "./house-offers";
 
 const MINUTE = 60_000;
@@ -38,50 +40,116 @@ describe("house offers", () => {
     });
   });
 
+  describe("the schedule", () => {
+    it("offers every five minutes", () => {
+      expect(HOUSE_SPAWN_INTERVAL_MS).toBe(5 * MINUTE);
+    });
+
+    it("keeps up to one open offer per candy kind", () => {
+      expect(MAX_OPEN_HOUSE_OFFERS).toBe(CANDY_SLUGS.length);
+    });
+
+    it("keeps an offer open until the full pool would roll over", () => {
+      expect(HOUSE_OFFER_LIFETIME_MS).toBe(
+        MAX_OPEN_HOUSE_OFFERS * HOUSE_SPAWN_INTERVAL_MS,
+      );
+    });
+  });
+
   describe("dueHouseSpawns", () => {
+    const interval = HOUSE_SPAWN_INTERVAL_MS / MINUTE;
+
     it("spawns one now when the house has never offered", () => {
       expect(dueHouseSpawns(null, NOW, 0)).toEqual([NOW]);
     });
 
     it("spawns nothing before an interval has passed", () => {
-      expect(dueHouseSpawns(ago(9), NOW, 0)).toEqual([]);
+      expect(dueHouseSpawns(ago(interval - 1), NOW, 0)).toEqual([]);
     });
 
     it("spawns on the tick an interval after the last", () => {
-      expect(dueHouseSpawns(ago(10), NOW, 0)).toEqual([NOW]);
-      expect(dueHouseSpawns(ago(15), NOW, 0)).toEqual([ago(5)]);
+      expect(dueHouseSpawns(ago(interval), NOW, 0)).toEqual([NOW]);
+      expect(dueHouseSpawns(ago(interval + 2), NOW, 0)).toEqual([ago(2)]);
     });
 
     it("catches up one per interval missed", () => {
-      expect(dueHouseSpawns(ago(35), NOW, 0)).toEqual([
-        ago(25),
-        ago(15),
-        ago(5),
+      expect(dueHouseSpawns(ago(3 * interval + 2), NOW, 0)).toEqual([
+        ago(2 * interval + 2),
+        ago(interval + 2),
+        ago(2),
       ]);
     });
 
+    it("catches up at most a batch at a time, keeping the latest ticks", () => {
+      const due = dueHouseSpawns(ago(100 * interval), NOW, 0);
+      expect(due).toHaveLength(MAX_HOUSE_CATCH_UP);
+      expect(due[due.length - 1]).toEqual(NOW);
+      expect(due[0]).toEqual(ago((MAX_HOUSE_CATCH_UP - 1) * interval));
+    });
+
     it("tops up only to the cap, keeping the latest ticks", () => {
-      const due = dueHouseSpawns(ago(60), NOW, MAX_OPEN_HOUSE_OFFERS - 2);
-      expect(due).toEqual([ago(10), ago(0)]);
+      const due = dueHouseSpawns(
+        ago(6 * interval),
+        NOW,
+        MAX_OPEN_HOUSE_OFFERS - 2,
+      );
+      expect(due).toEqual([ago(interval), ago(0)]);
     });
 
     it("spawns nothing at or over the cap", () => {
-      expect(dueHouseSpawns(ago(60), NOW, MAX_OPEN_HOUSE_OFFERS)).toEqual([]);
-      expect(dueHouseSpawns(ago(60), NOW, MAX_OPEN_HOUSE_OFFERS + 5)).toEqual(
-        [],
-      );
+      expect(
+        dueHouseSpawns(ago(6 * interval), NOW, MAX_OPEN_HOUSE_OFFERS),
+      ).toEqual([]);
+      expect(
+        dueHouseSpawns(ago(6 * interval), NOW, MAX_OPEN_HOUSE_OFFERS + 5),
+      ).toEqual([]);
     });
 
     it("skips ticks whose offers would already have expired", () => {
       const lifetime = HOUSE_OFFER_LIFETIME_MS / MINUTE;
-      const interval = HOUSE_SPAWN_INTERVAL_MS / MINUTE;
       const due = dueHouseSpawns(ago(lifetime * 3), NOW, 0);
-      expect(due.length).toBeLessThanOrEqual(lifetime / interval);
       for (const at of due) {
         expect(at.getTime() + HOUSE_OFFER_LIFETIME_MS).toBeGreaterThan(
           NOW.getTime(),
         );
       }
+    });
+  });
+
+  describe("leastAskedWants", () => {
+    const pools = {
+      Daphne: ["banana", "jelly-beans"],
+      Luther: ["skull-candy"],
+    } as const;
+
+    it("offers every possible want while none is asked for", () => {
+      expect(leastAskedWants(pools, new Map())).toEqual([
+        { host: "Daphne", slug: "banana" },
+        { host: "Daphne", slug: "jelly-beans" },
+        { host: "Luther", slug: "skull-candy" },
+      ]);
+    });
+
+    it("leaves out wants already asked for until every one is", () => {
+      const asked = new Map([
+        ["banana", 1],
+        ["skull-candy", 1],
+      ]);
+      expect(leastAskedWants(pools, asked)).toEqual([
+        { host: "Daphne", slug: "jelly-beans" },
+      ]);
+    });
+
+    it("repeats the least-asked wants once every want is asked for", () => {
+      const asked = new Map([
+        ["banana", 2],
+        ["jelly-beans", 1],
+        ["skull-candy", 1],
+      ]);
+      expect(leastAskedWants(pools, asked)).toEqual([
+        { host: "Daphne", slug: "jelly-beans" },
+        { host: "Luther", slug: "skull-candy" },
+      ]);
     });
   });
 });

@@ -10,11 +10,16 @@ import { mockDiscord } from "../testing/command-harness";
 import {
   HOST_CANDIES,
   HOUSE_OFFER_CANDIES,
+  HOUSE_OFFER_LIFETIME_MS,
+  HOUSE_SPAWN_INTERVAL_MS,
+  MAX_HOUSE_CATCH_UP,
   MAX_OPEN_HOUSE_OFFERS,
 } from "./house-offers";
 
 const GUILD = "100000000000000001";
 const MINUTE = 60_000;
+const INTERVAL = HOUSE_SPAWN_INTERVAL_MS / MINUTE;
+const LIFETIME = HOUSE_OFFER_LIFETIME_MS / MINUTE;
 const EVENT_START = new Date("2026-10-01T05:00:00Z");
 const EVENT_END = new Date("2026-11-01T05:00:00Z");
 
@@ -203,7 +208,7 @@ describe("Halloween house offers (e2e)", () => {
         expect(HOST_CANDIES[other]).toContain(c.slug);
       }
       expect(new Date(offer.expiresAt ?? 0).getTime()).toBe(
-        now.getTime() + 100 * MINUTE,
+        now.getTime() + HOUSE_OFFER_LIFETIME_MS,
       );
 
       const minted = await db.halloweenCandy.findMany({
@@ -234,44 +239,81 @@ describe("Halloween house offers (e2e)", () => {
       }
     });
 
-    it("adds one offer per ten minutes, catching up on a quiet stretch", async () => {
+    it("asks for every held kind once before asking for any twice", async () => {
+      await candy(alice, "skull-candy");
+      await candy(alice, "banana");
+      await candy(alice, "jelly-beans");
+
+      for (let i = 0; i < 6; i++) {
+        await browse(alice);
+        advance(INTERVAL);
+      }
+
+      const wants = (await houseOffers()).map((o) => o.wantSlug);
+      expect(wants.slice(0, 3).sort()).toEqual(
+        ["banana", "jelly-beans", "skull-candy"].sort(),
+      );
+      expect(wants.slice(3).sort()).toEqual(
+        ["banana", "jelly-beans", "skull-candy"].sort(),
+      );
+    });
+
+    it("adds one offer per interval, catching up on a quiet stretch", async () => {
       await browse(alice);
       expect(await openHouseOffers()).toHaveLength(1);
 
-      advance(9);
+      advance(INTERVAL - 1);
       await browse(alice);
       expect(await openHouseOffers()).toHaveLength(1);
 
-      advance(26);
+      advance(2 * INTERVAL + 2);
       await browse(alice);
       expect(await openHouseOffers()).toHaveLength(4);
     });
 
-    it("stops at ten open offers", async () => {
+    it("catches up a limited batch at a time", async () => {
       await browse(alice);
-      advance(90);
+      advance(50 * INTERVAL);
+
+      await browse(alice);
+
+      expect(await openHouseOffers()).toHaveLength(1 + MAX_HOUSE_CATCH_UP);
+    });
+
+    it("stops at one open offer per candy kind", async () => {
+      await browse(alice);
+      let open = 1;
+      while (open < MAX_OPEN_HOUSE_OFFERS - 1) {
+        const count = Math.min(50, MAX_OPEN_HOUSE_OFFERS - 1 - open);
+        await testApp.authenticatedGraphqlRequest(
+          DROP,
+          { communityId, count },
+          manager.token,
+        );
+        open += count;
+      }
+      advance(3 * INTERVAL);
       await browse(alice);
       expect(await openHouseOffers()).toHaveLength(MAX_OPEN_HOUSE_OFFERS);
 
-      advance(5);
+      advance(INTERVAL);
       await browse(alice);
       expect(await openHouseOffers()).toHaveLength(MAX_OPEN_HOUSE_OFFERS);
     });
 
-    it("expires an offer after 100 minutes, and the pool rolls over", async () => {
+    it("expires an offer once its lifetime is up", async () => {
       await holdEverything();
       await browse(alice);
       const [first] = await openHouseOffers();
       const minted = first.candies.map((c) => c.id);
-      advance(90);
+      advance(LIFETIME - INTERVAL);
       await browse(alice);
-      expect(await openHouseOffers()).toHaveLength(MAX_OPEN_HOUSE_OFFERS);
+      expect((await openHouseOffers()).map((o) => o.id)).toContain(first.id);
 
-      advance(10);
+      advance(INTERVAL);
       const offers = await browse(alice);
 
       expect(offers.map((o) => o.id)).not.toContain(first.id);
-      expect(await openHouseOffers()).toHaveLength(MAX_OPEN_HOUSE_OFFERS);
       const expired = await db.halloweenCandyOffer.findUniqueOrThrow({
         where: { id: first.id },
         include: { candies: true },
@@ -291,7 +333,7 @@ describe("Halloween house offers (e2e)", () => {
         where: { guildId: GUILD },
         data: { endDate: new Date(now.getTime() + MINUTE) },
       });
-      advance(101);
+      advance(LIFETIME + 1);
 
       expect(await browse(alice)).toEqual([]);
       const [offer] = await houseOffers();
@@ -400,7 +442,7 @@ describe("Halloween house offers (e2e)", () => {
 
     it("refuses an expired offer", async () => {
       const offer = await putUp();
-      advance(101);
+      advance(LIFETIME + 1);
 
       const res = await gql(ACCEPT, { offerId: offer.id }, alice);
 

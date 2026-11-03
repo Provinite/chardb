@@ -580,8 +580,9 @@ export const CommunityHalloweenAdminPage: React.FC = () => {
               <SectionTitle>House offers</SectionTitle>
               <Subtitle>
                 While the event runs, Daphne and Luther put up a 3-for-1 offer
-                in the candy swap every 10 minutes, up to 10 at a time. Each
-                lasts 100 minutes. Drops add more now, past that limit.
+                in the candy swap every 5 minutes, up to one per candy kind.
+                Each lasts 11 hours 25 minutes. Drops add more now, past that
+                limit.
               </Subtitle>
               <Cluster gap="sm">
                 {HOUSE_DROP_SIZES.map((count) => (

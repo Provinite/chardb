@@ -167,29 +167,40 @@ export const HOST_CANDIES: Record<HalloweenHost, readonly string[]> = {
 /** How many candies a house offer gives. */
 export const HOUSE_OFFER_CANDIES = 3;
 /** How often the house puts up an offer on its own. */
-export const HOUSE_SPAWN_INTERVAL_MS = 10 * 60_000;
-/** The most house offers open before the house stops adding them itself. */
-export const MAX_OPEN_HOUSE_OFFERS = 10;
+export const HOUSE_SPAWN_INTERVAL_MS = 5 * 60_000;
 /**
- * How long a house offer stays open. Ten intervals, so an untouched pool
- * rolls over: the oldest expires as the newest arrives.
+ * The most house offers open before the house stops adding them itself: one
+ * per candy kind.
+ */
+export const MAX_OPEN_HOUSE_OFFERS = HALLOWEEN_HOSTS.reduce(
+  (total, host) => total + HOST_CANDIES[host].length,
+  0,
+);
+/**
+ * How long a house offer stays open. One interval per open offer, so an
+ * untouched full pool rolls over: the oldest expires as the newest arrives.
  */
 export const HOUSE_OFFER_LIFETIME_MS =
   MAX_OPEN_HOUSE_OFFERS * HOUSE_SPAWN_INTERVAL_MS;
+/**
+ * The most offers one top-up puts up. The top-up runs inside a browse, so a
+ * long quiet stretch catches up on its latest ticks only.
+ */
+export const MAX_HOUSE_CATCH_UP = 20;
 /** The most offers one manual drop puts up. */
 export const MAX_HOUSE_DROP = 50;
 
 /**
  * When the house's due offers are dated: one per interval since its last
  * offer, the latest first kept, skipping any already expired and stopping at
- * the cap. One at `now` if it has never offered.
+ * the cap or the catch-up batch. One at `now` if it has never offered.
  */
 export function dueHouseSpawns(
   lastSpawnAt: Date | null,
   now: Date,
   open: number,
 ): Date[] {
-  const room = MAX_OPEN_HOUSE_OFFERS - open;
+  const room = Math.min(MAX_OPEN_HOUSE_OFFERS - open, MAX_HOUSE_CATCH_UP);
   if (room <= 0) return [];
   if (!lastSpawnAt) return [now];
   const due: Date[] = [];
@@ -203,4 +214,29 @@ export function dueHouseSpawns(
     due.unshift(new Date(at));
   }
   return due;
+}
+
+/** A candy a host may ask for. */
+export interface HouseWant {
+  host: HalloweenHost;
+  slug: string;
+}
+
+/**
+ * The wants the house picks its next ask from: of every kind each host may
+ * ask for, those the open offers ask for least. Every possible want is asked
+ * for once before any is asked for twice.
+ *
+ * @param asked How many open house offers ask for each kind.
+ */
+export function leastAskedWants(
+  pools: Record<HalloweenHost, readonly string[]>,
+  asked: ReadonlyMap<string, number>,
+): HouseWant[] {
+  const wants = HALLOWEEN_HOSTS.flatMap((host) =>
+    pools[host].map((slug) => ({ host, slug })),
+  );
+  const count = (want: HouseWant) => asked.get(want.slug) ?? 0;
+  const least = Math.min(...wants.map(count));
+  return wants.filter((want) => count(want) === least);
 }
