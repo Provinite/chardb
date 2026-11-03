@@ -61,7 +61,7 @@ describe("FollowButton", () => {
     cache.writeFragment({
       id: "User:them",
       fragment: gql`
-        fragment Counted on User {
+        fragment FollowButtonTestSeed on User {
           id
           followersCount
         }
@@ -93,7 +93,7 @@ describe("FollowButton", () => {
           {
             id: "User:them",
             fragment: gql`
-              fragment Counted on User {
+              fragment FollowButtonTestRead on User {
                 followersCount
               }
             `,

@@ -3,7 +3,7 @@ import { InMemoryCache, gql } from "@apollo/client";
 import { invalidateLists } from "../invalidateLists";
 
 const MY_GALLERIES = gql`
-  query MyGalleries($filters: GalleryFiltersInput) {
+  query InvalidateListsTestGalleries($filters: GalleryFiltersInput) {
     myGalleries(filters: $filters) {
       total
     }
@@ -11,7 +11,7 @@ const MY_GALLERIES = gql`
 `;
 
 const ME = gql`
-  query Me {
+  query InvalidateListsTestMe {
     me {
       id
     }

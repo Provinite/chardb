@@ -5487,6 +5487,8 @@ export type User = {
   /** User's inventories across different communities */
   inventories: Array<Inventory>;
   isAdmin: Scalars['Boolean']['output'];
+  /** Whether this person belongs to the community */
+  isMemberOf: Scalars['Boolean']['output'];
   isVerified: Scalars['Boolean']['output'];
   privacySettings: Scalars['JSON']['output'];
   updatedAt: Scalars['DateTime']['output'];
@@ -5509,6 +5511,11 @@ export type UserCommunityMembershipsArgs = {
 
 export type UserInventoriesArgs = {
   communityId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
+export type UserIsMemberOfArgs = {
+  communityId: Scalars['ID']['input'];
 };
 
 /** An achievement a user earned in a community. */
@@ -5579,6 +5586,18 @@ export enum Visibility {
   Public = 'PUBLIC',
   Unlisted = 'UNLISTED'
 }
+
+export type FollowButtonTestSeedFragment = { __typename?: 'User', id: string, followersCount: number };
+
+export type FollowButtonTestReadFragment = { __typename?: 'User', followersCount: number };
+
+export type IsMemberOfQueryVariables = Exact<{
+  username: Scalars['String']['input'];
+  communityId: Scalars['ID']['input'];
+}>;
+
+
+export type IsMemberOfQuery = { __typename?: 'Query', user: { __typename?: 'User', id: string, isMemberOf: boolean } | null };
 
 export type CommunityMemberProfileQueryVariables = Exact<{
   username: Scalars['String']['input'];
@@ -7589,11 +7608,34 @@ export type UpdateProfileMutationVariables = Exact<{
 
 export type UpdateProfileMutation = { __typename?: 'Mutation', updateProfile: { __typename?: 'User', id: string, username: string, displayName: string | null, bio: string | null, website: string | null, dateOfBirth: string | null, isVerified: boolean, createdAt: string, updatedAt: string, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, thumbnailCrop: { __typename?: 'ImageCrop', x: number, y: number, width: number, height: number } | null } | null } };
 
+export type InvalidateListsTestGalleriesQueryVariables = Exact<{
+  filters?: InputMaybe<GalleryFiltersInput>;
+}>;
+
+
+export type InvalidateListsTestGalleriesQuery = { __typename?: 'Query', myGalleries: { __typename?: 'GalleryConnection', total: number } };
+
+export type InvalidateListsTestMeQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type InvalidateListsTestMeQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string } };
+
 export type RateLimitBackoffSpecQueryVariables = Exact<{ [key: string]: never; }>;
 
 
 export type RateLimitBackoffSpecQuery = { __typename?: 'Query', me: { __typename?: 'User', id: string } };
 
+export const FollowButtonTestSeedFragmentDoc = gql`
+    fragment FollowButtonTestSeed on User {
+  id
+  followersCount
+}
+    `;
+export const FollowButtonTestReadFragmentDoc = gql`
+    fragment FollowButtonTestRead on User {
+  followersCount
+}
+    `;
 export const HalloweenCandyOfferFieldsFragmentDoc = gql`
     fragment HalloweenCandyOfferFields on HalloweenCandyOffer {
   id
@@ -8555,6 +8597,48 @@ export const FormSnapshotFieldsFragmentDoc = gql`
   }
 }
     ${TraitValueFieldsFragmentDoc}`;
+export const IsMemberOfDocument = gql`
+    query IsMemberOf($username: String!, $communityId: ID!) {
+  user(username: $username) {
+    id
+    isMemberOf(communityId: $communityId)
+  }
+}
+    `;
+
+/**
+ * __useIsMemberOfQuery__
+ *
+ * To run a query within a React component, call `useIsMemberOfQuery` and pass it any options that fit your needs.
+ * When your component renders, `useIsMemberOfQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useIsMemberOfQuery({
+ *   variables: {
+ *      username: // value for 'username'
+ *      communityId: // value for 'communityId'
+ *   },
+ * });
+ */
+export function useIsMemberOfQuery(baseOptions: Apollo.QueryHookOptions<IsMemberOfQuery, IsMemberOfQueryVariables> & ({ variables: IsMemberOfQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<IsMemberOfQuery, IsMemberOfQueryVariables>(IsMemberOfDocument, options);
+      }
+export function useIsMemberOfLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<IsMemberOfQuery, IsMemberOfQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<IsMemberOfQuery, IsMemberOfQueryVariables>(IsMemberOfDocument, options);
+        }
+export function useIsMemberOfSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<IsMemberOfQuery, IsMemberOfQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<IsMemberOfQuery, IsMemberOfQueryVariables>(IsMemberOfDocument, options);
+        }
+export type IsMemberOfQueryHookResult = ReturnType<typeof useIsMemberOfQuery>;
+export type IsMemberOfLazyQueryHookResult = ReturnType<typeof useIsMemberOfLazyQuery>;
+export type IsMemberOfSuspenseQueryHookResult = ReturnType<typeof useIsMemberOfSuspenseQuery>;
+export type IsMemberOfQueryResult = Apollo.QueryResult<IsMemberOfQuery, IsMemberOfQueryVariables>;
 export const CommunityMemberProfileDocument = gql`
     query CommunityMemberProfile($username: String!, $communityId: ID!) {
   user(username: $username) {
@@ -20763,6 +20847,85 @@ export function useUpdateProfileMutation(baseOptions?: Apollo.MutationHookOption
 export type UpdateProfileMutationHookResult = ReturnType<typeof useUpdateProfileMutation>;
 export type UpdateProfileMutationResult = Apollo.MutationResult<UpdateProfileMutation>;
 export type UpdateProfileMutationOptions = Apollo.BaseMutationOptions<UpdateProfileMutation, UpdateProfileMutationVariables>;
+export const InvalidateListsTestGalleriesDocument = gql`
+    query InvalidateListsTestGalleries($filters: GalleryFiltersInput) {
+  myGalleries(filters: $filters) {
+    total
+  }
+}
+    `;
+
+/**
+ * __useInvalidateListsTestGalleriesQuery__
+ *
+ * To run a query within a React component, call `useInvalidateListsTestGalleriesQuery` and pass it any options that fit your needs.
+ * When your component renders, `useInvalidateListsTestGalleriesQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useInvalidateListsTestGalleriesQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useInvalidateListsTestGalleriesQuery(baseOptions?: Apollo.QueryHookOptions<InvalidateListsTestGalleriesQuery, InvalidateListsTestGalleriesQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<InvalidateListsTestGalleriesQuery, InvalidateListsTestGalleriesQueryVariables>(InvalidateListsTestGalleriesDocument, options);
+      }
+export function useInvalidateListsTestGalleriesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InvalidateListsTestGalleriesQuery, InvalidateListsTestGalleriesQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<InvalidateListsTestGalleriesQuery, InvalidateListsTestGalleriesQueryVariables>(InvalidateListsTestGalleriesDocument, options);
+        }
+export function useInvalidateListsTestGalleriesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<InvalidateListsTestGalleriesQuery, InvalidateListsTestGalleriesQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<InvalidateListsTestGalleriesQuery, InvalidateListsTestGalleriesQueryVariables>(InvalidateListsTestGalleriesDocument, options);
+        }
+export type InvalidateListsTestGalleriesQueryHookResult = ReturnType<typeof useInvalidateListsTestGalleriesQuery>;
+export type InvalidateListsTestGalleriesLazyQueryHookResult = ReturnType<typeof useInvalidateListsTestGalleriesLazyQuery>;
+export type InvalidateListsTestGalleriesSuspenseQueryHookResult = ReturnType<typeof useInvalidateListsTestGalleriesSuspenseQuery>;
+export type InvalidateListsTestGalleriesQueryResult = Apollo.QueryResult<InvalidateListsTestGalleriesQuery, InvalidateListsTestGalleriesQueryVariables>;
+export const InvalidateListsTestMeDocument = gql`
+    query InvalidateListsTestMe {
+  me {
+    id
+  }
+}
+    `;
+
+/**
+ * __useInvalidateListsTestMeQuery__
+ *
+ * To run a query within a React component, call `useInvalidateListsTestMeQuery` and pass it any options that fit your needs.
+ * When your component renders, `useInvalidateListsTestMeQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useInvalidateListsTestMeQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useInvalidateListsTestMeQuery(baseOptions?: Apollo.QueryHookOptions<InvalidateListsTestMeQuery, InvalidateListsTestMeQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<InvalidateListsTestMeQuery, InvalidateListsTestMeQueryVariables>(InvalidateListsTestMeDocument, options);
+      }
+export function useInvalidateListsTestMeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<InvalidateListsTestMeQuery, InvalidateListsTestMeQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<InvalidateListsTestMeQuery, InvalidateListsTestMeQueryVariables>(InvalidateListsTestMeDocument, options);
+        }
+export function useInvalidateListsTestMeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<InvalidateListsTestMeQuery, InvalidateListsTestMeQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<InvalidateListsTestMeQuery, InvalidateListsTestMeQueryVariables>(InvalidateListsTestMeDocument, options);
+        }
+export type InvalidateListsTestMeQueryHookResult = ReturnType<typeof useInvalidateListsTestMeQuery>;
+export type InvalidateListsTestMeLazyQueryHookResult = ReturnType<typeof useInvalidateListsTestMeLazyQuery>;
+export type InvalidateListsTestMeSuspenseQueryHookResult = ReturnType<typeof useInvalidateListsTestMeSuspenseQuery>;
+export type InvalidateListsTestMeQueryResult = Apollo.QueryResult<InvalidateListsTestMeQuery, InvalidateListsTestMeQueryVariables>;
 export const RateLimitBackoffSpecDocument = gql`
     query RateLimitBackoffSpec {
   me {
