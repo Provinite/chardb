@@ -31,6 +31,8 @@ export const NOTIFICATION_PREFERENCE_DEFAULTS = {
   [NotificationKind.IMAGE_REJECTED]: { inApp: true, email: true },
 
   [NotificationKind.HALLOWEEN_CANDY_TRADED]: { inApp: true, email: false },
+  // Unused: shares HALLOWEEN_CANDY_TRADED's switch (`SHARED_SWITCHES`).
+  [NotificationKind.HALLOWEEN_DOOR_KNOCKED]: { inApp: true, email: false },
 } as const satisfies Record<
   NotificationKind,
   { inApp: boolean; email: boolean }
@@ -50,10 +52,24 @@ export const EMAIL_IMPLEMENTED_KINDS: ReadonlySet<NotificationKind> = new Set([
   NotificationKind.IMAGE_REJECTED,
 ]);
 
-/** Every kind, in the order the settings page lists them. */
-export const NOTIFICATION_KINDS = Object.keys(
-  NOTIFICATION_PREFERENCE_DEFAULTS,
-) as NotificationKind[];
+/**
+ * Kinds that have no switch of their own and follow another kind's. Turning
+ * off the Halloween candy switch silences door knocks too.
+ */
+const SHARED_SWITCHES: Partial<Record<NotificationKind, NotificationKind>> = {
+  [NotificationKind.HALLOWEEN_DOOR_KNOCKED]:
+    NotificationKind.HALLOWEEN_CANDY_TRADED,
+};
+
+/** The kind whose stored answer decides `kind`. */
+export function switchKindFor(kind: NotificationKind): NotificationKind {
+  return SHARED_SWITCHES[kind] ?? kind;
+}
+
+/** Every kind with a switch, in the order the settings page lists them. */
+export const NOTIFICATION_KINDS = (
+  Object.keys(NOTIFICATION_PREFERENCE_DEFAULTS) as NotificationKind[]
+).filter((kind) => !SHARED_SWITCHES[kind]);
 
 /** Whether `kind` has an email template behind it. */
 export function supportsEmail(kind: NotificationKind): boolean {
@@ -65,7 +81,7 @@ export function defaultFor(
   kind: NotificationKind,
   channel: NotificationChannel,
 ): boolean {
-  const defaults = NOTIFICATION_PREFERENCE_DEFAULTS[kind];
+  const defaults = NOTIFICATION_PREFERENCE_DEFAULTS[switchKindFor(kind)];
   return channel === NotificationChannel.EMAIL
     ? defaults.email
     : defaults.inApp;

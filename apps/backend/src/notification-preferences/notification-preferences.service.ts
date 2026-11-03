@@ -9,6 +9,7 @@ import {
   defaultFor,
   NOTIFICATION_KINDS,
   supportsEmail,
+  switchKindFor,
 } from "./notification-preference-defaults";
 
 /** One kind's answer for both channels, defaults already merged in. */
@@ -48,7 +49,9 @@ export class NotificationPreferencesService {
   ): Promise<boolean> {
     const client = tx ?? this.prisma;
     const row = await client.notificationPreference.findUnique({
-      where: { userId_kind_channel: { userId, kind, channel } },
+      where: {
+        userId_kind_channel: { userId, kind: switchKindFor(kind), channel },
+      },
       select: { enabled: true },
     });
     return row?.enabled ?? defaultFor(kind, channel);
@@ -69,7 +72,7 @@ export class NotificationPreferencesService {
     if (userIds.length === 0) return [];
     const client = tx ?? this.prisma;
     const rows = await client.notificationPreference.findMany({
-      where: { userId: { in: userIds }, kind, channel },
+      where: { userId: { in: userIds }, kind: switchKindFor(kind), channel },
       select: { userId: true, enabled: true },
     });
 
@@ -114,6 +117,7 @@ export class NotificationPreferencesService {
     channel: NotificationChannel,
     enabled: boolean,
   ): Promise<ResolvedNotificationPreference[]> {
+    kind = switchKindFor(kind);
     await this.prisma.notificationPreference.upsert({
       where: { userId_kind_channel: { userId, kind, channel } },
       create: { userId, kind, channel, enabled },

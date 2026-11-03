@@ -4,6 +4,7 @@ import { NotificationPreferencesService } from "./notification-preferences.servi
 import { DatabaseService } from "../database/database.service";
 import { mockDatabaseService } from "../../test/setup";
 import {
+  NOTIFICATION_KINDS,
   NOTIFICATION_PREFERENCE_DEFAULTS,
   supportsEmail,
 } from "./notification-preference-defaults";
@@ -125,9 +126,7 @@ describe("NotificationPreferencesService", () => {
     it("answers for every kind, even with no rows at all", async () => {
       const resolved = await service.resolveForUser("u1");
 
-      expect(resolved).toHaveLength(
-        Object.keys(NOTIFICATION_PREFERENCE_DEFAULTS).length,
-      );
+      expect(resolved).toHaveLength(NOTIFICATION_KINDS.length);
       for (const row of resolved) {
         expect(row.inApp).toBe(
           NOTIFICATION_PREFERENCE_DEFAULTS[row.kind].inApp,
@@ -164,6 +163,84 @@ describe("NotificationPreferencesService", () => {
       );
 
       expect(follow?.emailSupported).toBe(false);
+    });
+
+    it("lists a kind that shares another's switch only under that one", async () => {
+      const kinds = (await service.resolveForUser("u1")).map((row) => row.kind);
+
+      expect(kinds).toContain(NotificationKind.HALLOWEEN_CANDY_TRADED);
+      expect(kinds).not.toContain(NotificationKind.HALLOWEEN_DOOR_KNOCKED);
+    });
+  });
+
+  describe("a kind that shares another's switch", () => {
+    it("reads the shared kind's answer", async () => {
+      mockDatabaseService.notificationPreference.findUnique.mockResolvedValue({
+        enabled: false,
+      });
+
+      await expect(
+        service.isEnabled(
+          "u1",
+          NotificationKind.HALLOWEEN_DOOR_KNOCKED,
+          NotificationChannel.IN_APP,
+        ),
+      ).resolves.toBe(false);
+      expect(
+        mockDatabaseService.notificationPreference.findUnique,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            userId_kind_channel: {
+              userId: "u1",
+              kind: NotificationKind.HALLOWEEN_CANDY_TRADED,
+              channel: NotificationChannel.IN_APP,
+            },
+          },
+        }),
+      );
+    });
+
+    it("filters fan-out by the shared kind's answers", async () => {
+      mockDatabaseService.notificationPreference.findMany.mockResolvedValue([
+        { userId: "u2", enabled: false },
+      ]);
+
+      await expect(
+        service.filterEnabled(
+          ["u1", "u2"],
+          NotificationKind.HALLOWEEN_DOOR_KNOCKED,
+          NotificationChannel.IN_APP,
+        ),
+      ).resolves.toEqual(["u1"]);
+      expect(
+        mockDatabaseService.notificationPreference.findMany,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            kind: NotificationKind.HALLOWEEN_CANDY_TRADED,
+          }),
+        }),
+      );
+    });
+
+    it("stores an answer under the shared kind", async () => {
+      await service.setPreference(
+        "u1",
+        NotificationKind.HALLOWEEN_DOOR_KNOCKED,
+        NotificationChannel.IN_APP,
+        false,
+      );
+
+      expect(
+        mockDatabaseService.notificationPreference.upsert,
+      ).toHaveBeenCalledWith(
+        expect.objectContaining({
+          create: expect.objectContaining({
+            kind: NotificationKind.HALLOWEEN_CANDY_TRADED,
+          }),
+        }),
+      );
     });
   });
 

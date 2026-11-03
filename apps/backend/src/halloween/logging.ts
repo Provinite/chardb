@@ -61,6 +61,8 @@ export const HalloweenLogEvent = {
   HouseOffersExpired: "halloween.candy_swap.house_offers_expired",
   /** The lazy top-up failed; browsing carries on without it. */
   HouseTopUpFailed: "halloween.candy_swap.house_top_up_failed",
+  /** A member knocked on another's door, and both got candies. */
+  DoorKnocked: "halloween.door_knock.knocked",
   WinChannelTested: "halloween.win_channel.tested",
   /** A win that stands, but never reached the win channel. */
   WinChannelPostFailed: "halloween.win_channel.post_failed",

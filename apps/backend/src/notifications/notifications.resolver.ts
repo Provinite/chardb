@@ -40,6 +40,7 @@ function mapNotification(row: LoadedNotification): Notification {
     reason: data && "reason" in data ? data.reason : null,
     reasonText: data && "reasonText" in data ? data.reasonText : null,
     excerpt: data && "excerpt" in data ? data.excerpt : null,
+    candySlugs: data && "candySlugs" in data ? data.candySlugs : null,
   };
 }
 
