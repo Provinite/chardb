@@ -112,11 +112,19 @@ export class CommunityMembersResolver {
       description: "Cursor for pagination",
     })
     after?: string,
+    @Args("search", {
+      type: () => String,
+      nullable: true,
+      description:
+        "Matches username, display name or role name, ignoring case. Exact username and display name matches come first.",
+    })
+    search?: string,
   ): Promise<CommunityMemberConnection> {
     const result = await this.communityMembersService.findByCommunity(
       communityId,
       first,
       after,
+      search,
     );
     return mapPrismaCommunityMemberConnectionToGraphQL(result);
   }

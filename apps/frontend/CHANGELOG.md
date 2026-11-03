@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **House candy offers**: the candy swap names Daphne or Luther on their 3-for-1 offers and trades, and the Halloween admin page can drop more.
 
+### Fixed
+
+- **Members search**: searches the whole community rather than only the members already loaded, and "Load more" works on search results.
+
 ## [v15.4.0] - 2026-11-01
 
 ### Added

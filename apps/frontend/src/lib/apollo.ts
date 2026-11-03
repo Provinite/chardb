@@ -1,10 +1,4 @@
-import {
-  ApolloClient,
-  InMemoryCache,
-  createHttpLink,
-  from,
-  split,
-} from "@apollo/client";
+import { ApolloClient, createHttpLink, from, split } from "@apollo/client";
 import { setContext } from "@apollo/client/link/context";
 import { onError } from "@apollo/client/link/error";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
@@ -12,6 +6,7 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import { Kind, OperationTypeNode } from "graphql";
 import { createClient } from "graphql-ws";
 import { getAccessToken, setAccessToken } from "./accessToken";
+import { createCache } from "./apolloCache";
 import {
   API_BASE_URL,
   isAuthPage,
@@ -102,55 +97,5 @@ const splitLink = split(
 
 export const client = new ApolloClient({
   link: splitLink,
-  cache: new InMemoryCache({
-    typePolicies: {
-      // Keyed by kind rather than by an id, because it has none: a preference
-      // row is always the viewer's own, so the kind alone identifies it. Without
-      // this the type is unnormalisable, the mutation's reply cannot be merged
-      // into the query that rendered the switches, and a toggle visibly snaps
-      // back until the next refetch.
-      NotificationPreference: {
-        keyFields: ["kind"],
-      },
-      Query: {
-        fields: {
-          users: {
-            keyArgs: [],
-            merge(existing = { nodes: [], totalCount: 0 }, incoming) {
-              return {
-                ...incoming,
-                nodes: [...existing.nodes, ...incoming.nodes],
-              };
-            },
-          },
-          characters: {
-            keyArgs: ["filters"],
-            merge(
-              existing = { characters: [], total: 0 },
-              incoming,
-              { variables },
-            ) {
-              // If this is a fresh query (offset 0) or different filters, replace existing data
-              const isLoadMore =
-                variables?.filters?.offset && variables.filters.offset > 0;
-
-              if (!isLoadMore) {
-                // Fresh search - replace existing data
-                return incoming;
-              }
-
-              // Load more - append to existing data
-              return {
-                ...incoming,
-                characters: [
-                  ...(existing.characters || []),
-                  ...(incoming.characters || []),
-                ],
-              };
-            },
-          },
-        },
-      },
-    },
-  }),
+  cache: createCache(),
 });

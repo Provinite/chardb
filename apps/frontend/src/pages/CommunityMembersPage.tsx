@@ -1,8 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
+import { NetworkStatus } from "@apollo/client";
 import styled from "styled-components";
-import { Avatar } from "@chardb/ui";
+import { toast } from "react-hot-toast";
+import { Avatar, Button, timingMs, useDebouncedValue } from "@chardb/ui";
 import { Users, Search, Package, ArrowLeftRight } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -173,28 +175,6 @@ const Footer = styled.div`
   color: ${({ theme }) => theme.colors.text.muted};
 `;
 
-const MoreButton = styled.button`
-  font: inherit;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  padding: 0.45rem 0.9rem;
-  border-radius: ${({ theme }) => theme.borderRadius.md};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  background: ${({ theme }) => theme.colors.background};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.surface};
-    color: ${({ theme }) => theme.colors.text.primary};
-  }
-
-  &:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
-`;
-
 const Empty = styled.div`
   padding: 3rem 1rem;
   text-align: center;
@@ -214,59 +194,49 @@ export const CommunityMembersPage: React.FC = () => {
   const communityId = useCommunityId();
   const { user } = useAuth();
   const [search, setSearch] = useState("");
-  const [limit, setLimit] = useState(PAGE_SIZE);
-
+  const debouncedSearch = useDebouncedValue(
+    search.trim(),
+    timingMs.debounce.search,
+  );
   const community = useHostCommunity();
 
-  const { data, loading, error } = useCommunityMembersWithRolesQuery({
-    variables: { communityId: communityId!, first: limit },
-    skip: !communityId,
-    // Membership changes elsewhere by definition -- people join, and staff
-    // change roles from the permissions page. A cached list would keep
-    // showing who was here when this tab opened.
-    fetchPolicy: "cache-and-network",
-  });
+  const { data, previousData, loading, error, networkStatus, fetchMore } =
+    useCommunityMembersWithRolesQuery({
+      variables: {
+        communityId: communityId!,
+        first: PAGE_SIZE,
+        search: debouncedSearch || undefined,
+      },
+      skip: !communityId,
+      // Membership changes elsewhere by definition -- people join, and staff
+      // change roles from the permissions page. A cached list would keep
+      // showing who was here when this tab opened.
+      fetchPolicy: "cache-and-network",
+      // Without this, the cache write from "Load more" would trigger a fresh
+      // first page that replaces what was just appended.
+      nextFetchPolicy: "cache-first",
+      notifyOnNetworkStatusChange: true,
+    });
+  const loadingMore = networkStatus === NetworkStatus.fetchMore;
 
-  const members = useMemo(
-    () => data?.communityMembersByCommunity?.nodes ?? [],
-    [data],
-  );
+  // The last results stay up while the next search loads.
+  const connection = (data ?? previousData)?.communityMembersByCommunity;
+  const members = useMemo(() => connection?.nodes ?? [], [connection]);
+  const total = connection?.totalCount ?? 0;
+  const hasMore = connection?.hasNextPage ?? false;
 
-  // Filtered here rather than server-side: the query takes no search argument,
-  // and a community's membership is small enough that fetching a page and
-  // narrowing it beats adding an API surface for it.
-  const shown = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return members;
-    return members.filter(
-      (m) =>
-        m.user.username.toLowerCase().includes(q) ||
-        (m.user.displayName ?? "").toLowerCase().includes(q) ||
-        m.role.name.toLowerCase().includes(q),
-    );
-  }, [members, search]);
+  // Which search the list on screen answers. While the next search loads it
+  // is still the last one, and the empty state has to describe that.
+  const [shownFor, setShownFor] = useState(debouncedSearch);
+  if (data && shownFor !== debouncedSearch) {
+    setShownFor(debouncedSearch);
+  }
 
-  const total = data?.communityMembersByCommunity?.totalCount ?? 0;
-  const hasMore = data?.communityMembersByCommunity?.hasNextPage ?? false;
-
-  if (loading && !data) {
+  if (loading && !connection) {
     return (
       <LoadingContainer>
         <LoadingSpinner />
       </LoadingContainer>
-    );
-  }
-
-  if (error) {
-    return (
-      <Container>
-        <Empty>
-          <p>
-            That member list could not be loaded. It may belong to a community
-            you are not a member of. {error.message}
-          </p>
-        </Empty>
-      </Container>
     );
   }
 
@@ -288,18 +258,24 @@ export const CommunityMembersPage: React.FC = () => {
         />
       </SearchWrap>
 
-      {shown.length === 0 ? (
+      {/* In place of the list rather than the page, so a search that fails
+          leaves the box to try another. */}
+      {error ? (
+        <Empty>
+          <p>That member list could not be loaded. {error.message}</p>
+        </Empty>
+      ) : members.length === 0 ? (
         <Empty>
           <Users size={36} style={{ opacity: 0.5, marginBottom: "0.75rem" }} />
           <p>
-            {search
+            {shownFor
               ? "No members match that search."
               : "This community has no members yet."}
           </p>
         </Empty>
       ) : (
         <List data-testid="member-list">
-          {shown.map((m) => {
+          {members.map((m) => {
             const name = m.user.displayName || m.user.username;
             return (
               <MemberRow
@@ -336,22 +312,32 @@ export const CommunityMembersPage: React.FC = () => {
         </List>
       )}
 
-      <Footer>
-        <span>
-          Showing {shown.length}
-          {search ? ` of ${members.length} loaded` : ""} of {total} member
-          {total === 1 ? "" : "s"}
-        </span>
-        {hasMore && !search && (
-          <MoreButton
-            type="button"
-            disabled={loading}
-            onClick={() => setLimit((n) => n + PAGE_SIZE)}
-          >
-            {loading ? "Loading…" : "Load more"}
-          </MoreButton>
-        )}
-      </Footer>
+      {/* The count and Load more describe the list, so they go with it when
+          it is replaced by an error: paging on from the last search's rows
+          would send that search's cursor with this one. */}
+      {!error && (
+        <Footer>
+          <span>
+            Showing {members.length} of {total} member
+            {total === 1 ? "" : "s"}
+          </span>
+          {hasMore && (
+            <Button
+              tone="outline"
+              size="sm"
+              busy={loadingMore}
+              disabled={loading && !loadingMore}
+              onClick={() =>
+                fetchMore({ variables: { after: members.at(-1)?.id } }).catch(
+                  () => toast.error("More members could not be loaded."),
+                )
+              }
+            >
+              Load more
+            </Button>
+          )}
+        </Footer>
+      )}
     </Container>
   );
 };

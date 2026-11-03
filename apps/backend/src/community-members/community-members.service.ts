@@ -27,6 +27,12 @@ export interface UpdateCommunityMemberServiceInput {
   roleId?: string;
 }
 
+/** The id breaks ties between members who joined at the same moment. */
+const NEWEST_FIRST: Prisma.CommunityMemberOrderByWithRelationInput[] = [
+  { createdAt: "desc" },
+  { id: "desc" },
+];
+
 @Injectable()
 export class CommunityMembersService {
   constructor(
@@ -67,12 +73,24 @@ export class CommunityMembersService {
     };
   }
 
-  /** Find community members by community ID with pagination */
+  /**
+   * Find community members by community ID with pagination.
+   *
+   * With a search, matches username, display name and role name ignoring
+   * case. Exact username or display name matches come first, then the rest,
+   * each newest first.
+   */
   async findByCommunity(
     communityId: string,
     first: number = 20,
     after?: string,
+    search?: string,
   ) {
+    const term = search?.trim();
+    if (term) {
+      return this.searchByCommunity(communityId, term, first, after);
+    }
+
     const skip = after ? 1 : 0;
     const cursor = after ? { id: after } : undefined;
 
@@ -82,7 +100,7 @@ export class CommunityMembersService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: "desc" },
+        orderBy: NEWEST_FIRST,
       }),
       this.prisma.communityMember.count({
         where: { role: { communityId } },
@@ -98,6 +116,76 @@ export class CommunityMembersService {
       nodes,
       totalCount,
       hasNextPage,
+      hasPreviousPage: !!after,
+    };
+  }
+
+  /**
+   * Search results are two lists joined end to end: exact matches, then
+   * partial ones. Exact matches are few (usernames are unique), so they are
+   * loaded whole, and the cursor says which list to resume in: an exact
+   * match's id resumes after it, anything else is a cursor into the partial
+   * list.
+   */
+  private async searchByCommunity(
+    communityId: string,
+    term: string,
+    first: number,
+    after?: string,
+  ) {
+    const orderBy = NEWEST_FIRST;
+    // Insensitive matching is ILIKE, where these are wildcards.
+    const literal = term.replace(/[\\%_]/g, "\\$&");
+    const equals = { equals: literal, mode: "insensitive" } as const;
+    const contains = { contains: literal, mode: "insensitive" } as const;
+
+    const exact = await this.prisma.communityMember.findMany({
+      where: {
+        role: { communityId },
+        user: { OR: [{ username: equals }, { displayName: equals }] },
+      },
+      orderBy,
+    });
+    const exactIds = exact.map((m) => m.id);
+
+    const partialWhere: Prisma.CommunityMemberWhereInput = {
+      role: { communityId },
+      id: { notIn: exactIds },
+      OR: [
+        { user: { username: contains } },
+        { user: { displayName: contains } },
+        { role: { name: contains } },
+      ],
+    };
+
+    const afterExact = after ? exactIds.indexOf(after) : -1;
+    const remainingExact = !after
+      ? exact
+      : afterExact >= 0
+        ? exact.slice(afterExact + 1)
+        : [];
+    const fromExact = remainingExact.slice(0, first + 1);
+    const partialTake = first + 1 - fromExact.length;
+    const partialCursor = after && afterExact < 0 ? after : undefined;
+
+    const [partial, partialCount] = await Promise.all([
+      partialTake > 0
+        ? this.prisma.communityMember.findMany({
+            where: partialWhere,
+            take: partialTake,
+            skip: partialCursor ? 1 : 0,
+            cursor: partialCursor ? { id: partialCursor } : undefined,
+            orderBy,
+          })
+        : Promise.resolve([]),
+      this.prisma.communityMember.count({ where: partialWhere }),
+    ]);
+
+    const combined = [...fromExact, ...partial];
+    return {
+      nodes: combined.slice(0, first),
+      totalCount: exact.length + partialCount,
+      hasNextPage: combined.length > first,
       hasPreviousPage: !!after,
     };
   }

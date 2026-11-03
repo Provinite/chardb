@@ -3902,6 +3902,11 @@ type Query {
 
     """Number of community members to return"""
     first: Int = 20
+
+    """
+    Matches username, display name or role name, ignoring case. Exact username and display name matches come first.
+    """
+    search: String
   ): CommunityMemberConnection!
 
   """Get community members by user ID with pagination"""

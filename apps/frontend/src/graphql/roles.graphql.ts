@@ -118,11 +118,13 @@ export const COMMUNITY_MEMBERS_WITH_ROLES = gql`
     $communityId: ID!
     $first: Int!
     $after: String
+    $search: String
   ) {
     communityMembersByCommunity(
       communityId: $communityId
       first: $first
       after: $after
+      search: $search
     ) {
       nodes {
         id
