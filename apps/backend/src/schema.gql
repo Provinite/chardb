@@ -1824,12 +1824,20 @@ type HalloweenCandySwapListing {
 """What is on offer in a community's candy swap"""
 type HalloweenCandySwapMarket {
   """
+  How many open offers the listings are drawn from: everyone's here but yours
+  """
+  available: Int!
+
+  """
   A random handful of other players' and the house's open offers, the ones you can take first
   """
   listings: [HalloweenCandySwapListing!]!
 
   """How many offers are open here, yours included"""
   openOffers: Int!
+
+  """How many of the available offers you can take"""
+  readyToTrade: Int!
 
   """How many trades went through here in the last 24 hours"""
   tradesLastDay: Int!

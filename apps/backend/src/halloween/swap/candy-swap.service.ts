@@ -235,8 +235,20 @@ export class CandySwapService {
       OR: [{ expiresAt: null }, { expiresAt: { gt: now } }],
     } satisfies Prisma.HalloweenCandyOfferWhereInput;
 
+    // Every row carries the totals, counted over all of them before LIMIT.
     const [picked, openOffers, tradesLastDay] = await Promise.all([
-      this.db.$queryRaw<{ id: string; can_take: boolean }[]>`
+      this.db.$queryRaw<
+        {
+          id: string;
+          can_take: boolean;
+          available: bigint;
+          ready_to_trade: bigint;
+        }[]
+      >`
+        SELECT m.*,
+          count(*) OVER () AS "available",
+          count(*) FILTER (WHERE m."can_take") OVER () AS "ready_to_trade"
+        FROM (
         SELECT o."id", (
           o."want_slug" IN (
             SELECT c."slug" FROM "halloween_candies" c
@@ -264,7 +276,8 @@ export class CandySwapService {
           AND o."status" = 'OPEN'
           AND (o."expires_at" IS NULL OR o."expires_at" > ${now})
           AND o."owner_id" IS DISTINCT FROM ${userId}
-        ORDER BY "can_take" DESC, random()
+        ) m
+        ORDER BY m."can_take" DESC, random()
         LIMIT ${take}
       `,
       this.db.halloweenCandyOffer.count({ where: open }),
@@ -287,7 +300,13 @@ export class CandySwapService {
       const offer = byId.get(p.id);
       return offer ? [{ offer: toOffer(offer), canTake: p.can_take }] : [];
     });
-    return { listings, openOffers, tradesLastDay };
+    return {
+      listings,
+      available: Number(picked[0]?.available ?? 0),
+      readyToTrade: Number(picked[0]?.ready_to_trade ?? 0),
+      openOffers,
+      tradesLastDay,
+    };
   }
 
   /** The latest trades here, newest first, naming both sides. */

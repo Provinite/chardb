@@ -54,6 +54,8 @@ const MARKET = `
     halloweenCandySwapMarket(communityId: $communityId, limit: $limit) {
       openOffers
       tradesLastDay
+      available
+      readyToTrade
       listings { canTake offer { ${OFFER_FIELDS} } }
     }
   }
@@ -854,6 +856,8 @@ describe("Halloween candy swap (e2e)", () => {
         listings: Listing[];
         openOffers: number;
         tradesLastDay: number;
+        available: number;
+        readyToTrade: number;
       };
     };
 
@@ -928,11 +932,36 @@ describe("Halloween candy swap (e2e)", () => {
       ]);
     });
 
-    it("shows at most `limit` offers", async () => {
+    it("shows at most `limit` offers, and counts all of them", async () => {
+      await candy(carol, "banana");
       for (let i = 0; i < 5; i++) {
         await placed(alice, [(await candy(alice, "candy-corn")).id], "banana");
       }
-      expect((await market(carol, 3)).listings).toHaveLength(3);
+      for (let i = 0; i < 2; i++) {
+        await placed(
+          alice,
+          [(await candy(alice, "candy-corn")).id],
+          "luther-head",
+        );
+      }
+      // Carol's own offer is not one she could be shown.
+      await placed(carol, [(await candy(carol, "berry-tart")).id], "banana");
+
+      const shown = await market(carol, 3);
+
+      expect(shown.listings).toHaveLength(3);
+      expect(shown.listings.every((l) => l.canTake)).toBe(true);
+      expect(shown.available).toBe(7);
+      expect(shown.readyToTrade).toBe(5);
+    });
+
+    it("counts nothing when there is nothing to show", async () => {
+      const empty = await market(carol);
+      expect(empty).toMatchObject({
+        listings: [],
+        available: 0,
+        readyToTrade: 0,
+      });
     });
 
     it("counts every open offer here, and the trades of the last day", async () => {

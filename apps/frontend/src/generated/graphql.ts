@@ -1465,10 +1465,14 @@ export type HalloweenCandySwapListing = {
 /** What is on offer in a community's candy swap */
 export type HalloweenCandySwapMarket = {
   __typename?: 'HalloweenCandySwapMarket';
+  /** How many open offers the listings are drawn from: everyone's here but yours */
+  available: Scalars['Int']['output'];
   /** A random handful of other players' and the house's open offers, the ones you can take first */
   listings: Array<HalloweenCandySwapListing>;
   /** How many offers are open here, yours included */
   openOffers: Scalars['Int']['output'];
+  /** How many of the available offers you can take */
+  readyToTrade: Scalars['Int']['output'];
   /** How many trades went through here in the last 24 hours */
   tradesLastDay: Scalars['Int']['output'];
 };
@@ -5688,12 +5692,14 @@ export type HalloweenCandySwapListingFieldsFragment = { __typename?: 'HalloweenC
 
 export type HalloweenCandySwapTradeFieldsFragment = { __typename?: 'HalloweenCandySwapTrade', id: string, host: string | null, offered: Array<string>, paid: Array<string>, createdAt: string, offerer: { __typename?: 'User', id: string, username: string, displayName: string | null } | null, taker: { __typename?: 'User', id: string, username: string, displayName: string | null } | null };
 
+export type CandySwapActivityFieldsFragment = { __typename?: 'HalloweenCandySwapMarket', openOffers: number, tradesLastDay: number, available: number, readyToTrade: number };
+
 export type CandySwapMarketQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
 }>;
 
 
-export type CandySwapMarketQuery = { __typename?: 'Query', halloweenCandySwapMarket: { __typename?: 'HalloweenCandySwapMarket', openOffers: number, tradesLastDay: number, listings: Array<{ __typename?: 'HalloweenCandySwapListing', canTake: boolean, offer: { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> } }> } };
+export type CandySwapMarketQuery = { __typename?: 'Query', halloweenCandySwapMarket: { __typename?: 'HalloweenCandySwapMarket', openOffers: number, tradesLastDay: number, available: number, readyToTrade: number, listings: Array<{ __typename?: 'HalloweenCandySwapListing', canTake: boolean, offer: { __typename?: 'HalloweenCandyOffer', id: string, wantSlug: string | null, status: HalloweenCandyOfferStatus, host: string | null, createdAt: string, candies: Array<{ __typename?: 'HalloweenCandy', id: number, slug: string }> } }> } };
 
 export type CandySwapRecentTradesQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -7701,6 +7707,14 @@ export const HalloweenCandySwapTradeFieldsFragmentDoc = gql`
   }
 }
     `;
+export const CandySwapActivityFieldsFragmentDoc = gql`
+    fragment CandySwapActivityFields on HalloweenCandySwapMarket {
+  openOffers
+  tradesLastDay
+  available
+  readyToTrade
+}
+    `;
 export const CharacterFolderFieldsFragmentDoc = gql`
     fragment CharacterFolderFields on CharacterFolder {
   id
@@ -9043,14 +9057,14 @@ export type CandySwapQueryResult = Apollo.QueryResult<CandySwapQuery, CandySwapQ
 export const CandySwapMarketDocument = gql`
     query CandySwapMarket($communityId: ID!) {
   halloweenCandySwapMarket(communityId: $communityId) {
-    openOffers
-    tradesLastDay
+    ...CandySwapActivityFields
     listings {
       ...HalloweenCandySwapListingFields
     }
   }
 }
-    ${HalloweenCandySwapListingFieldsFragmentDoc}`;
+    ${CandySwapActivityFieldsFragmentDoc}
+${HalloweenCandySwapListingFieldsFragmentDoc}`;
 
 /**
  * __useCandySwapMarketQuery__

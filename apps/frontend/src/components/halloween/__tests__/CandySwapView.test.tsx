@@ -8,6 +8,7 @@ import userEvent from "@testing-library/user-event";
 import { CandySwapView, type CandySwapViewProps } from "../CandySwapView";
 import {
   HalloweenCandyOfferStatus,
+  type CandySwapActivityFieldsFragment,
   type HalloweenCandyOfferFieldsFragment,
   type HalloweenCandySwapListingFieldsFragment,
   type HalloweenCandySwapTradeFieldsFragment,
@@ -35,6 +36,17 @@ const take = (
 ): HalloweenCandySwapListingFieldsFragment => ({ canTake, offer: o });
 
 const NOW = new Date("2026-10-31T12:30:00.000Z");
+
+/** How busy the swap is; nothing open unless said otherwise. */
+const activity = (
+  over: Partial<CandySwapActivityFieldsFragment> = {},
+): CandySwapActivityFieldsFragment => ({
+  openOffers: 0,
+  tradesLastDay: 0,
+  available: 0,
+  readyToTrade: 0,
+  ...over,
+});
 
 const swap = (
   over: Partial<HalloweenCandySwapTradeFieldsFragment> = {},
@@ -74,7 +86,7 @@ const renderView = (props: Partial<CandySwapViewProps> = {}) => {
         { id: 3, slug: "banana" },
       ]}
       listings={[]}
-      activity={{ openOffers: 0, tradesLastDay: 0 }}
+      activity={activity()}
       recentTrades={[]}
       now={NOW}
       myOffers={[]}
@@ -213,16 +225,36 @@ describe("CandySwapView", () => {
       ).toBeInTheDocument();
     });
 
-    it("shuffles in other offers", async () => {
+    it("says how many of all the offers it shows, and shuffles in others", async () => {
       const { onReroll } = renderView({
-        listings: [take(offer("o1", "banana", ["luther-head"]))],
+        listings: [
+          take(offer("o1", "banana", ["luther-head"])),
+          take(offer("o2", "skull-candy", ["candy-corn"]), false),
+        ],
+        activity: activity({ available: 312, readyToTrade: 1 }),
       });
+      const offers = section("Open offers");
       await userEvent.click(
-        within(section("Open offers")).getByRole("button", {
-          name: "Show other offers",
-        }),
+        within(offers).getByRole("button", { name: /^All/ }),
+      );
+      expect(within(offers).getByText("Showing 2 of 312")).toBeInTheDocument();
+
+      await userEvent.click(
+        within(offers).getByRole("button", { name: "Shuffle" }),
       );
       expect(onReroll).toHaveBeenCalled();
+    });
+
+    it("cannot shuffle when every offer is showing", () => {
+      renderView({
+        listings: [take(offer("o1", "banana", ["luther-head"]))],
+        activity: activity({ available: 1, readyToTrade: 1 }),
+      });
+      const offers = section("Open offers");
+      expect(within(offers).getByText("Showing 1 of 1")).toBeInTheDocument();
+      expect(
+        within(offers).getByRole("button", { name: "Shuffle" }),
+      ).toBeDisabled();
     });
 
     it("shows only the offers you can take, until asked for all", async () => {
@@ -231,15 +263,18 @@ describe("CandySwapView", () => {
           take(offer("yes", "banana", ["luther-head"])),
           take(offer("no", "skull-candy", ["candy-corn"]), false),
         ],
+        activity: activity({ available: 312, readyToTrade: 40 }),
       });
       const offers = section("Open offers");
       expect(within(offers).getAllByRole("listitem")).toHaveLength(1);
+      // Counts every offer there is, not only those on screen.
       expect(
-        within(offers).getByRole("button", { name: "Ready to trade (1)" }),
+        within(offers).getByRole("button", { name: "Ready to trade (40)" }),
       ).toHaveAttribute("aria-pressed", "true");
+      expect(within(offers).getByText("Showing 1 of 40")).toBeInTheDocument();
 
       await userEvent.click(
-        within(offers).getByRole("button", { name: "All (2)" }),
+        within(offers).getByRole("button", { name: "All (312)" }),
       );
       expect(within(offers).getAllByRole("listitem")).toHaveLength(2);
     });
@@ -247,6 +282,7 @@ describe("CandySwapView", () => {
     it("shows them all when you can take none", () => {
       renderView({
         listings: [take(offer("no", "skull-candy", ["candy-corn"]), false)],
+        activity: activity({ available: 1, readyToTrade: 0 }),
       });
       const offers = section("Open offers");
       expect(
@@ -285,7 +321,7 @@ describe("CandySwapView", () => {
   });
 
   it("says how busy the swap is", () => {
-    renderView({ activity: { openOffers: 42, tradesLastDay: 1 } });
+    renderView({ activity: activity({ openOffers: 42, tradesLastDay: 1 }) });
     const stat = (text: string) =>
       screen.getByText(
         (_, el) => el?.tagName === "P" && el.textContent === text,

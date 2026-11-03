@@ -116,6 +116,18 @@ export class HalloweenCandySwapMarket {
   listings: HalloweenCandySwapListing[];
 
   @Field(() => Int, {
+    description:
+      "How many open offers the listings are drawn from: everyone's here " +
+      "but yours",
+  })
+  available: number;
+
+  @Field(() => Int, {
+    description: "How many of the available offers you can take",
+  })
+  readyToTrade: number;
+
+  @Field(() => Int, {
     description: "How many offers are open here, yours included",
   })
   openOffers: number;

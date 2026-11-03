@@ -12,12 +12,11 @@ import {
   Cluster,
   Dialog,
   Grid,
-  IconButton,
   Sidebar,
   Stack,
-  Tooltip,
 } from "@chardb/ui";
 import type {
+  CandySwapActivityFieldsFragment as SwapActivity,
   HalloweenCandyOfferFieldsFragment as SwapOffer,
   HalloweenCandySwapListingFieldsFragment as SwapListing,
   HalloweenCandySwapTradeFieldsFragment as PublicTrade,
@@ -39,7 +38,7 @@ export interface CandySwapViewProps {
   /** Other players' open offers, the ones you can take first; null while they first load. */
   listings: SwapListing[] | null;
   /** How busy the swap is; null while it first loads. */
-  activity: { openOffers: number; tradesLastDay: number } | null;
+  activity: SwapActivity | null;
   /** The community's latest trades; null while they first load. */
   recentTrades: PublicTrade[] | null;
   /** What the trades' times are counted back from. */
@@ -298,6 +297,11 @@ export const CandySwapView = ({
   const filter: Filter =
     chosenFilter ?? (takeable.length > 0 ? "takeable" : "all");
   const shown = filter === "takeable" ? takeable : (listings ?? []);
+  // The listings are a sample; this is how many there are to sample from.
+  const outOf =
+    filter === "takeable"
+      ? (activity?.readyToTrade ?? 0)
+      : (activity?.available ?? 0);
 
   const atLimit = myOffers.length >= maxOpenOffers;
   const full = offering.length >= maxOffered;
@@ -382,32 +386,37 @@ export const CandySwapView = ({
             <Section
               title="Open offers"
               aside={
-                <Cluster gap="sm">
-                  <div
-                    className={styles.filter}
-                    role="group"
-                    aria-label="Which offers"
-                  >
-                    {filterButton(
-                      "takeable",
-                      "Ready to trade",
-                      takeable.length,
-                    )}
-                    {filterButton("all", "All", listings?.length ?? 0)}
-                  </div>
-                  <Tooltip label="Show other offers">
-                    <IconButton
-                      label="Show other offers"
-                      tone="ghost"
-                      size="sm"
-                      icon={<Shuffle aria-hidden />}
-                      busy={rerolling}
-                      onClick={onReroll}
-                    />
-                  </Tooltip>
-                </Cluster>
+                <div
+                  className={styles.filter}
+                  role="group"
+                  aria-label="Which offers"
+                >
+                  {filterButton(
+                    "takeable",
+                    "Ready to trade",
+                    activity?.readyToTrade ?? 0,
+                  )}
+                  {filterButton("all", "All", activity?.available ?? 0)}
+                </div>
               }
             >
+              {listings !== null && listings.length > 0 && (
+                <Cluster gap="sm">
+                  <p className={styles.showing}>
+                    Showing {shown.length} of {outOf}
+                  </p>
+                  <Button
+                    tone="ghost"
+                    size="sm"
+                    busy={rerolling}
+                    disabled={shown.length >= outOf}
+                    onClick={onReroll}
+                  >
+                    <Shuffle className={styles.buttonIcon} aria-hidden />
+                    Shuffle
+                  </Button>
+                </Cluster>
+              )}
               {listings === null ? (
                 <Grid min="lg" gap="md" aria-busy>
                   {Array.from({ length: LISTING_PLACEHOLDERS }, (_, i) => (

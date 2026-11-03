@@ -82,7 +82,22 @@ export const list = style({
   listStyle: "none",
 });
 
-/** "You can take" and "All", one pressed at a time. */
+/** How many of the offers there are the sample shows. */
+export const showing = style({
+  margin: 0,
+  fontSize: vars.font.size.sm,
+  color: vars.text.muted,
+  fontVariantNumeric: "tabular-nums",
+});
+
+/** An icon before a button's label, the label's height. */
+export const buttonIcon = style({
+  flexShrink: 0,
+  width: vars.font.size.md,
+  height: vars.font.size.md,
+});
+
+/** "Ready to trade" and "All", one pressed at a time. */
 export const filter = style({
   display: "inline-flex",
   padding: vars.space.xs,

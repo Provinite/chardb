@@ -81,16 +81,25 @@ export const HALLOWEEN_CANDY_SWAP_TRADE_FRAGMENT = gql`
   }
 `;
 
+export const CANDY_SWAP_ACTIVITY_FRAGMENT = gql`
+  fragment CandySwapActivityFields on HalloweenCandySwapMarket {
+    openOffers
+    tradesLastDay
+    available
+    readyToTrade
+  }
+`;
+
 export const CANDY_SWAP_MARKET_QUERY = gql`
   query CandySwapMarket($communityId: ID!) {
     halloweenCandySwapMarket(communityId: $communityId) {
-      openOffers
-      tradesLastDay
+      ...CandySwapActivityFields
       listings {
         ...HalloweenCandySwapListingFields
       }
     }
   }
+  ${CANDY_SWAP_ACTIVITY_FRAGMENT}
   ${HALLOWEEN_CANDY_SWAP_LISTING_FRAGMENT}
 `;
 
