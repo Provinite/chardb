@@ -106,8 +106,14 @@ export class MediaResolver {
     @Args("id", { type: () => ID, description: "Media ID to retrieve" })
     id: string,
     @CurrentUser() user?: CurrentUserType,
+    @Args("communityId", {
+      type: () => ID,
+      nullable: true,
+      description: "Not found unless the media belongs to this community",
+    })
+    communityId?: string,
   ): Promise<MediaEntity> {
-    const media = await this.mediaService.findOne(id, user?.id);
+    const media = await this.mediaService.findOne(id, user?.id, communityId);
     return mapPrismaMediaToGraphQL(media);
   }
 

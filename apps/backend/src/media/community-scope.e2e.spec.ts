@@ -1,0 +1,167 @@
+import { TestApp } from "../../test/setup-e2e";
+import { MediaService } from "./media.service";
+import { MediaModule } from "./media.module";
+import { GalleriesService } from "../galleries/galleries.service";
+import { GalleriesModule } from "../galleries/galleries.module";
+import { DatabaseModule } from "../database/database.module";
+import { AuthModule } from "../auth/auth.module";
+import { NotFoundException } from "@nestjs/common";
+import { Visibility } from "@chardb/database";
+
+/**
+ * A community host shows the site prefiltered to that community: its media
+ * and galleries in listings, and a 404 for one from somewhere else.
+ */
+describe("media and galleries scoped to a community (e2e)", () => {
+  let testApp: TestApp;
+  let mediaService: MediaService;
+  let galleriesService: GalleriesService;
+
+  let ownerId: string;
+  let communityId: string;
+  let otherCommunityId: string;
+  let characterId: string;
+  let otherCharacterId: string;
+
+  const createMedia = async (data: {
+    title: string;
+    characterId?: string;
+    communityId?: string;
+  }) => {
+    const media = await testApp.getDb().media.create({
+      data: {
+        title: data.title,
+        ownerId,
+        characterId: data.characterId ?? null,
+        communityId: data.communityId ?? null,
+        visibility: Visibility.PUBLIC,
+      },
+    });
+    return media.id;
+  };
+
+  const createGallery = async (name: string, characterId?: string) => {
+    const gallery = await testApp.getDb().gallery.create({
+      data: {
+        name,
+        ownerId,
+        characterId: characterId ?? null,
+        visibility: Visibility.PUBLIC,
+      },
+    });
+    return gallery.id;
+  };
+
+  beforeAll(async () => {
+    testApp = new TestApp();
+    await testApp.setup({
+      imports: [DatabaseModule, AuthModule, MediaModule, GalleriesModule],
+    });
+    mediaService = testApp.getModuleRef().get(MediaService);
+    galleriesService = testApp.getModuleRef().get(GalleriesService);
+  });
+
+  beforeEach(async () => {
+    await testApp.clearDatabase();
+
+    const owner = await testApp.createTestUser();
+    ownerId = owner.id;
+
+    const setup = await testApp.createTestCommunitySetup(ownerId);
+    communityId = setup.communityId;
+
+    const other = await testApp.createTestCommunity("Somewhere Else");
+    otherCommunityId = other.id;
+    const otherSpecies = await testApp.getDb().species.create({
+      data: { name: "Other Species", communityId: otherCommunityId },
+    });
+
+    characterId = (
+      await testApp.getDb().character.create({
+        data: { name: "Here", ownerId, speciesId: setup.speciesId },
+      })
+    ).id;
+    otherCharacterId = (
+      await testApp.getDb().character.create({
+        data: { name: "There", ownerId, speciesId: otherSpecies.id },
+      })
+    ).id;
+  });
+
+  afterAll(async () => {
+    await testApp.teardown();
+  });
+
+  describe("media", () => {
+    it("lists media reaching the community by character or by upload", async () => {
+      const viaCharacter = await createMedia({ title: "Art", characterId });
+      const viaUpload = await createMedia({ title: "Upload", communityId });
+      await createMedia({ title: "Elsewhere", characterId: otherCharacterId });
+      await createMedia({ title: "Apex" });
+
+      const result = await mediaService.findAll({ communityId });
+
+      expect(result.media.map((m) => m.id).sort()).toEqual(
+        [viaCharacter, viaUpload].sort(),
+      );
+      expect(result.total).toBe(2);
+    });
+
+    it("lists everything without a community", async () => {
+      await createMedia({ title: "Art", characterId });
+      await createMedia({ title: "Elsewhere", characterId: otherCharacterId });
+
+      const result = await mediaService.findAll({});
+
+      expect(result.total).toBe(2);
+    });
+
+    it("finds one item in its own community", async () => {
+      const id = await createMedia({ title: "Art", characterId });
+
+      await expect(
+        mediaService.findOne(id, undefined, communityId),
+      ).resolves.toMatchObject({ id });
+    });
+
+    it("does not find another community's item", async () => {
+      const id = await createMedia({
+        title: "Elsewhere",
+        characterId: otherCharacterId,
+      });
+
+      await expect(
+        mediaService.findOne(id, undefined, communityId),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+
+  describe("galleries", () => {
+    it("lists galleries whose character is in the community", async () => {
+      const here = await createGallery("Here", characterId);
+      await createGallery("There", otherCharacterId);
+      await createGallery("Loose");
+
+      const result = await galleriesService.findAll({ communityId });
+
+      expect(result.galleries.map((g) => g.id)).toEqual([here]);
+      expect(result.total).toBe(1);
+    });
+
+    it("finds one gallery in its own community", async () => {
+      const id = await createGallery("Here", characterId);
+
+      await expect(
+        galleriesService.findOne(id, undefined, communityId),
+      ).resolves.toMatchObject({ id });
+    });
+
+    it("does not find another community's gallery", async () => {
+      const id = await createGallery("There", otherCharacterId);
+
+      await expect(
+        galleriesService.findOne(id, undefined, communityId),
+      ).rejects.toBeInstanceOf(NotFoundException);
+    });
+  });
+});

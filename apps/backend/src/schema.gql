@@ -1533,6 +1533,9 @@ type GalleryCount {
 
 input GalleryFiltersInput {
   characterId: ID
+
+  """Only galleries whose character is in one of this community's species"""
+  communityId: ID
   limit: Int! = 20
   offset: Int! = 0
   ownerId: ID
@@ -2661,6 +2664,11 @@ type MediaConnection {
 input MediaFiltersInput {
   """Filter by associated character ID"""
   characterId: ID
+
+  """
+  Only media belonging to this community, through its character or where it was uploaded
+  """
+  communityId: ID
 
   """Filter by gallery ID"""
   galleryId: ID
@@ -4008,7 +4016,11 @@ type Query {
   ): ExternalMembersPage!
   followStatus(userId: ID!): FollowStatus!
   galleries(filters: GalleryFiltersInput): GalleryConnection!
-  gallery(id: ID!): Gallery!
+  gallery(
+    """Not found unless the gallery's character is in this community"""
+    communityId: ID
+    id: ID!
+  ): Gallery!
 
   """Retrieves media from a specific gallery"""
   galleryMedia(
@@ -4157,6 +4169,9 @@ type Query {
 
   """Retrieves a single media item by ID"""
   mediaItem(
+    """Not found unless the media belongs to this community"""
+    communityId: ID
+
     """Media ID to retrieve"""
     id: ID!
   ): Media!

@@ -88,8 +88,19 @@ export class GalleriesResolver {
   async gallery(
     @Args("id", { type: () => ID }) id: string,
     @CurrentUser() user?: CurrentUserType,
+    @Args("communityId", {
+      type: () => ID,
+      nullable: true,
+      description:
+        "Not found unless the gallery's character is in this community",
+    })
+    communityId?: string,
   ): Promise<Gallery> {
-    const prismaResult = await this.galleriesService.findOne(id, user?.id);
+    const prismaResult = await this.galleriesService.findOne(
+      id,
+      user?.id,
+      communityId,
+    );
     return mapPrismaGalleryToGraphQL(prismaResult);
   }
 

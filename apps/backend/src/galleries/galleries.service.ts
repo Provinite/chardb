@@ -5,7 +5,10 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Prisma, Visibility } from "@chardb/database";
-import { notDeleted } from "../common/utils/prisma-filters";
+import {
+  galleryBelongingToCommunity,
+  notDeleted,
+} from "../common/utils/prisma-filters";
 
 /**
  * Service layer input types for gallery operations.
@@ -44,6 +47,8 @@ export interface GalleryFiltersServiceInput {
   ownerId?: string;
   characterId?: string;
   visibility?: Visibility;
+  /** Only galleries belonging to this community (`galleryBelongingToCommunity`) */
+  communityId?: string;
 }
 
 @Injectable()
@@ -83,6 +88,7 @@ export class GalleriesService {
       ownerId,
       characterId,
       visibility,
+      communityId,
     } = filters;
 
     const where: Prisma.GalleryWhereInput = {
@@ -102,6 +108,7 @@ export class GalleriesService {
         ownerId ? { ownerId } : {},
         characterId ? { characterId } : {},
         visibility !== undefined ? { visibility } : {},
+        communityId ? galleryBelongingToCommunity(communityId) : {},
       ],
     };
 
@@ -141,9 +148,14 @@ export class GalleriesService {
     return !!like;
   }
 
-  async findOne(id: string, userId?: string) {
-    const gallery = await this.db.gallery.findUnique({
-      where: { id },
+  async findOne(id: string, userId?: string, communityId?: string) {
+    // With a community, a gallery from anywhere else does not exist: a
+    // community host shows only its own.
+    const gallery = await this.db.gallery.findFirst({
+      where: {
+        id,
+        ...(communityId ? galleryBelongingToCommunity(communityId) : {}),
+      },
     });
 
     if (!gallery) {

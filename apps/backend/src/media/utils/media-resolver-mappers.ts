@@ -36,6 +36,7 @@ export function mapMediaFiltersInputToService(
     ownerId: input.ownerId,
     characterId: input.characterId,
     galleryId: input.galleryId,
+    communityId: input.communityId,
     limit: input.limit,
     offset: input.offset,
   };

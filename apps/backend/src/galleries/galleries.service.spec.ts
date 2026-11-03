@@ -96,11 +96,11 @@ describe("GalleriesService", () => {
         ownerId: "user1",
       };
 
-      db.gallery.findUnique.mockResolvedValue(mockGallery);
+      db.gallery.findFirst.mockResolvedValue(mockGallery);
 
       const result = await service.findOne(galleryId);
 
-      expect(db.gallery.findUnique).toHaveBeenCalledWith({
+      expect(db.gallery.findFirst).toHaveBeenCalledWith({
         where: { id: galleryId },
       });
       expect(result).toEqual(mockGallery);
@@ -108,7 +108,7 @@ describe("GalleriesService", () => {
 
     it("should throw NotFoundException for non-existent gallery", async () => {
       const galleryId = "nonexistent";
-      db.gallery.findUnique.mockResolvedValue(null);
+      db.gallery.findFirst.mockResolvedValue(null);
 
       await expect(service.findOne(galleryId)).rejects.toThrow(
         NotFoundException,
@@ -124,7 +124,7 @@ describe("GalleriesService", () => {
         ownerId: "user1",
       };
 
-      db.gallery.findUnique.mockResolvedValue(mockGallery);
+      db.gallery.findFirst.mockResolvedValue(mockGallery);
 
       await expect(service.findOne(galleryId, "user2")).rejects.toThrow(
         ForbiddenException,
@@ -140,7 +140,7 @@ describe("GalleriesService", () => {
         ownerId: "user1",
       };
 
-      db.gallery.findUnique.mockResolvedValue(mockGallery);
+      db.gallery.findFirst.mockResolvedValue(mockGallery);
 
       const result = await service.findOne(galleryId, "user1");
       expect(result).toEqual(mockGallery);
@@ -164,7 +164,7 @@ describe("GalleriesService", () => {
         ...input,
       };
 
-      db.gallery.findUnique.mockResolvedValue(mockExistingGallery);
+      db.gallery.findFirst.mockResolvedValue(mockExistingGallery);
       db.gallery.update.mockResolvedValue(mockUpdatedGallery);
 
       const result = await service.update(galleryId, userId, input);
@@ -184,7 +184,7 @@ describe("GalleriesService", () => {
         visibility: Visibility.PUBLIC,
       };
 
-      db.gallery.findUnique.mockResolvedValue(mockGallery);
+      db.gallery.findFirst.mockResolvedValue(mockGallery);
 
       await expect(
         service.update(galleryId, "user2", { name: "Hacked" }),
@@ -202,7 +202,7 @@ describe("GalleriesService", () => {
         characterId: "char1",
       };
 
-      db.gallery.findUnique.mockResolvedValue(mockExistingGallery);
+      db.gallery.findFirst.mockResolvedValue(mockExistingGallery);
       db.character.findFirst.mockResolvedValue({
         id: "char2",
         ownerId: "user2", // Different user
@@ -225,7 +225,7 @@ describe("GalleriesService", () => {
         visibility: Visibility.PUBLIC,
       };
 
-      db.gallery.findUnique.mockResolvedValue(mockGallery);
+      db.gallery.findFirst.mockResolvedValue(mockGallery);
       db.gallery.delete.mockResolvedValue(mockGallery);
 
       const result = await service.remove(galleryId, userId);
@@ -244,7 +244,7 @@ describe("GalleriesService", () => {
         visibility: Visibility.PUBLIC,
       };
 
-      db.gallery.findUnique.mockResolvedValue(mockGallery);
+      db.gallery.findFirst.mockResolvedValue(mockGallery);
 
       await expect(service.remove(galleryId, "user2")).rejects.toThrow(
         ForbiddenException,

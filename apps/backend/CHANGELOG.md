@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`notifications` takes a `communityId`** to list one community's notifications plus those that belong to no community.
+- **Media and gallery queries take a `communityId`**: lists narrow to that community, and `mediaItem`/`gallery` return not found for anything outside it.
 
 ## [v15.5.0] - 2026-11-02
 

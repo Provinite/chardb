@@ -79,6 +79,16 @@ export class MediaFiltersInput {
   @IsUUID()
   galleryId?: string;
 
+  /** Only media belonging to this community */
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "Only media belonging to this community, through its character or where it was uploaded",
+  })
+  @IsOptional()
+  @IsUUID()
+  communityId?: string;
+
   /** Maximum number of results to return */
   @Field({ nullable: true, description: "Maximum number of results to return" })
   @IsOptional()

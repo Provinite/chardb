@@ -49,6 +49,8 @@ export interface MediaFiltersServiceInput {
   limit?: number;
   /** Number of items to skip */
   offset?: number;
+  /** Only media belonging to this community (`mediaBelongingToCommunity`) */
+  communityId?: string;
 }
 
 /**
@@ -185,6 +187,9 @@ export class MediaService {
         filters?.characterId ? { characterId: filters.characterId } : {},
         filters?.galleryId ? { galleryId: filters.galleryId } : {},
         filters?.visibility ? { visibility: filters.visibility } : {},
+        filters?.communityId
+          ? mediaBelongingToCommunity(filters.communityId)
+          : {},
       ],
     };
 
@@ -221,13 +226,18 @@ export class MediaService {
    * @throws NotFoundException if media doesn't exist
    * @throws ForbiddenException if user lacks access to private media
    */
-  async findOne(id: string, userId?: string) {
+  async findOne(id: string, userId?: string, communityId?: string) {
     this.logger.debug(
       `Finding media with id: ${id}, userId: ${userId || "anonymous"}`,
     );
 
-    const media = await this.db.media.findUnique({
-      where: { id },
+    // With a community, media from anywhere else does not exist: a community
+    // host shows only its own.
+    const media = await this.db.media.findFirst({
+      where: {
+        id,
+        ...(communityId ? mediaBelongingToCommunity(communityId) : {}),
+      },
     });
 
     if (!media) {

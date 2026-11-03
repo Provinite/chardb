@@ -102,6 +102,15 @@ export class GalleryFiltersInput {
   @IsOptional()
   @IsEnum(Visibility)
   visibility?: Visibility;
+
+  @Field(() => ID, {
+    nullable: true,
+    description:
+      "Only galleries whose character is in one of this community's species",
+  })
+  @IsOptional()
+  @IsUUID()
+  communityId?: string;
 }
 
 @InputType()
