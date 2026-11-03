@@ -3,7 +3,6 @@ import { Gallery, GalleryConnection } from "../entities/gallery.entity";
 import {
   CreateGalleryServiceInput,
   UpdateGalleryServiceInput,
-  GalleryFiltersServiceInput,
 } from "../galleries.service";
 import { Prisma } from "@chardb/database";
 
@@ -44,7 +43,7 @@ export function mapUpdateGalleryInputToService(
   return result;
 }
 
-type PrismaGallery = Prisma.GalleryGetPayload<{}>;
+type PrismaGallery = Prisma.GalleryGetPayload<Prisma.GalleryDefaultArgs>;
 
 /**
  * Maps Prisma Gallery result to GraphQL Gallery entity
