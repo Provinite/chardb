@@ -15,6 +15,8 @@ export interface HalloweenPlay {
   /** Accepted someone else's offer of 3 candies for 1. */
   tookThreeForOne: boolean;
   giftedSelf: boolean;
+  /** Sent a gifty to the Trick-or-Treat bot itself. */
+  giftedBot: boolean;
   knockedEveryDay: boolean;
   /** Tried to knock with no knocks or gifties left. */
   knockedWithNoneLeft: boolean;
@@ -37,6 +39,7 @@ export function halloweenPlaySlugs(
     ...(play.offeredThreeForOne ? [slug.generousOffer] : []),
     ...(play.tookThreeForOne ? [slug.bargainHunter] : []),
     ...(play.giftedSelf ? [slug.treatYourself] : []),
+    ...(play.giftedBot ? [slug.faustianBargain] : []),
     ...(play.knockedEveryDay ? [slug.everyNight] : []),
     ...(play.knockedWithNoneLeft ? [slug.nobodyHome] : []),
   ];

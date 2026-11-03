@@ -4,7 +4,7 @@ import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
 import { ItemsModule } from "../items/items.module";
 import { PendingOwnershipModule } from "../pending-ownership/pending-ownership.module";
-import { HalloweenConfig } from "./halloween.config";
+import { HalloweenConfigModule } from "./halloween-config.module";
 import { ClockModule } from "../clock/clock.module";
 import { HalloweenRandom } from "./random";
 import { HalloweenUi } from "./discord/ui";
@@ -72,6 +72,7 @@ const COMMANDS = [
 @Module({
   imports: [
     ConfigModule,
+    HalloweenConfigModule,
     ClockModule,
     DatabaseModule,
     AuthModule,
@@ -82,7 +83,6 @@ const COMMANDS = [
   ],
   controllers: [HalloweenInteractionsController],
   providers: [
-    HalloweenConfig,
     HalloweenRandom,
     HalloweenUi,
     HalloweenDiscordClient,
