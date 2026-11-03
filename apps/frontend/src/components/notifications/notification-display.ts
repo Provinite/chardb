@@ -13,15 +13,11 @@ import { apexUrl, communityUrl } from "../../lib/communityHost";
  * is a normal outcome, not an error: an IMAGE subject has no page of its own,
  * and a community-scoped subject whose community is gone cannot be addressed.
  *
- * Every answer is an absolute URL, and `NotificationRow` renders it as an `<a>`
- * rather than a `<Link>`. Notifications are read at the apex -- the
- * `/notifications` page, and the bell, which sits in the header on every host
- * -- while most of what they point at is served from a community host. The
- * router cannot make that jump: it is a different origin.
- *
- * The community-owned ones name that community's host directly. The
- * notification fragment selects the slug, so there is no reason to go through
- * the apex's `/communities/:id` forwarder and pay the extra hops it costs.
+ * Notifications are read on every host, so anything that belongs to a
+ * community names that community's host directly, from the slug the fragment
+ * selects. A profile is served on every host, so it is a bare path.
+ * `NotificationRow` renders through `HostAwareLink`, which keeps same-origin
+ * answers client-side.
  */
 export function notificationHref(
   notification: NotificationFieldsFragment,
@@ -36,30 +32,34 @@ export function notificationHref(
       // and the permanent home of a species-less character, so this one URL is
       // right either way; `CharacterHostGuard` decides which.
       return apexUrl(`/character/${subjectId}`);
+    // A gallery or media that belongs to no community lives only at the apex;
+    // a community host would not find it.
     case NotificationSubjectType.Gallery:
-      return apexUrl(`/gallery/${subjectId}`);
+      return community
+        ? communityUrl(community.slug, `/gallery/${subjectId}`)
+        : apexUrl(`/gallery/${subjectId}`);
     case NotificationSubjectType.Media:
-      return apexUrl(`/media/${subjectId}`);
+      return community
+        ? communityUrl(community.slug, `/media/${subjectId}`)
+        : apexUrl(`/media/${subjectId}`);
     case NotificationSubjectType.User:
       // Profiles are addressed by username, and subjectId is an id. The actor
       // is the same person on every kind that sets a USER subject, so their
-      // username is already here.
-      return actor ? apexUrl(`/user/${actor.username}`) : null;
+      // username is already here. Relative: every host serves a profile.
+      return actor ? `/user/${actor.username}` : null;
     case NotificationSubjectType.Item:
       return community
-        ? apexUrl(`/communities/${community.id}/items/${subjectId}`)
+        ? communityUrl(community.slug, `/items/${subjectId}`)
         : null;
     case NotificationSubjectType.Currency:
-      return community
-        ? apexUrl(`/communities/${community.id}/currencies`)
-        : null;
+      return community ? communityUrl(community.slug, "/currencies") : null;
     case NotificationSubjectType.Trade:
       // Like Item below it, and for the same reason: the page lives under the
       // community, so without one there is nowhere to send them. Every trade
       // notification sets it, so the null branch is defensive rather than a
       // case anyone should hit.
       return community
-        ? apexUrl(`/communities/${community.id}/trades/${subjectId}`)
+        ? communityUrl(community.slug, `/trades/${subjectId}`)
         : null;
     case NotificationSubjectType.HalloweenCandyTrade:
       // The trade shows in the swap page's history; it has no page of its own.

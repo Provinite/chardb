@@ -1,4 +1,10 @@
-import { Routes, Route, Navigate, useParams } from "react-router-dom";
+import {
+  Routes,
+  Route,
+  Navigate,
+  useLocation,
+  useParams,
+} from "react-router-dom";
 import { ProtectedRoute } from "../components/ProtectedRoute";
 import { SpeciesAdminRoute } from "../components/SpeciesAdminRoute";
 import { SpeciesScopeRoute } from "../components/SpeciesScopeRoute";
@@ -95,6 +101,15 @@ import {
 export const UserToMemberProfile: React.FC = () => {
   const { username } = useParams<{ username: string }>();
   return <Navigate to={`/members/${username}`} replace />;
+};
+
+/**
+ * Forwards to the community's equivalent of an apex path, keeping the query
+ * and hash: folder links carry `?folder=`.
+ */
+export const ForwardKeepingQuery: React.FC<{ to: string }> = ({ to }) => {
+  const { search, hash } = useLocation();
+  return <Navigate to={`${to}${search}${hash}`} replace />;
 };
 
 /** Forwards the legacy singular /item/:id to the canonical item type page. */
@@ -635,10 +650,10 @@ export const communityRoutes = (
     />
     <Route
       path="/my/characters"
-      element={<Navigate to="/my-characters" replace />}
+      element={<ForwardKeepingQuery to="/my-characters" />}
     />
     {/* The community's overview is its dashboard. */}
-    <Route path="/dashboard" element={<Navigate to="/" replace />} />
+    <Route path="/dashboard" element={<ForwardKeepingQuery to="/" />} />
 
     {/* Narrowed to this community, which the bell's "See all" links to. */}
     <Route

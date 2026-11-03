@@ -20,7 +20,6 @@ import {
   useCommunityId,
   useHostCommunity,
 } from "../contexts/CommunityHostContext";
-import { apexUrl } from "../lib/communityHost";
 
 /**
  * Community Administration Interface
@@ -214,9 +213,7 @@ export const CommunityAdminPage: React.FC = () => {
   return (
     <Container>
       <Breadcrumb>
-        {/* The list of communities is the site's, not this one's, so it lives
-            at the apex and the router cannot reach it. */}
-        <a href={apexUrl("/my/communities")}>My Communities</a>
+        <Link to="/my/communities">My Communities</Link>
         <span>/</span>
         <Link to="/">{community.name}</Link>
         <span>/</span>

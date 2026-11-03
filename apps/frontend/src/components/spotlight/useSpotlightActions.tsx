@@ -200,11 +200,9 @@ export function useSpotlightActions(
             id: `member-page-characters-${member.id}`,
             icon: FolderOpen,
             label: "Characters",
-            // Says "every" because it is the whole site rather than here --
-            // the ones belonging to this community are on the profile above,
-            // and the site-wide list lives at the apex.
-            description: `Every character ${who} owns`,
-            to: apex(`/user/${member.username}/characters`),
+            // Narrowed to this community, like everything on its host.
+            description: `Every character ${who} owns here`,
+            to: `/user/${member.username}/characters`,
           },
         ];
 
@@ -244,14 +242,14 @@ export function useSpotlightActions(
                 icon: LayoutGrid,
                 label: "Dashboard",
                 description: "Your personal dashboard",
-                to: apex("/dashboard"),
+                to: "/dashboard",
               },
               {
                 id: "feed",
                 icon: Activity,
                 label: "Feed",
                 description: "Activity feed",
-                to: apex("/feed"),
+                to: "/feed",
               },
             ]
           : []),
@@ -267,23 +265,22 @@ export function useSpotlightActions(
           icon: User,
           label: "Browse Characters",
           description: "View all characters",
-          // Every character on the site, so the apex's `/characters`; the same
-          // path on a community host is that community's roster.
-          to: apex("/characters"),
+          // The whole site at the apex, the community's roster on its host.
+          to: "/characters",
         },
         {
           id: "browse-galleries",
           icon: LayoutGrid,
           label: "Browse Galleries",
           description: "View all galleries",
-          to: apex("/galleries"),
+          to: "/galleries",
         },
         {
           id: "browse-media",
           icon: Image,
           label: "Browse Media",
           description: "View all media",
-          to: apex("/media"),
+          to: "/media",
         },
       ],
     });
@@ -320,21 +317,21 @@ export function useSpotlightActions(
           icon: User,
           label: "My Characters",
           description: "Your characters",
-          to: apex("/my/characters"),
+          to: "/my/characters",
         },
         {
           id: "my-galleries",
           icon: LayoutGrid,
           label: "My Galleries",
           description: "Your galleries",
-          to: apex("/my/galleries"),
+          to: "/my/galleries",
         },
         {
           id: "my-media",
           icon: Image,
           label: "My Media",
           description: "Your media",
-          to: apex("/my/media"),
+          to: "/my/media",
         },
       ],
     });
@@ -348,21 +345,21 @@ export function useSpotlightActions(
           icon: User,
           label: "Liked Characters",
           description: "Characters you liked",
-          to: apex("/liked/characters"),
+          to: "/liked/characters",
         },
         {
           id: "liked-galleries",
           icon: LayoutGrid,
           label: "Liked Galleries",
           description: "Galleries you liked",
-          to: apex("/liked/galleries"),
+          to: "/liked/galleries",
         },
         {
           id: "liked-media",
           icon: Image,
           label: "Liked Media",
           description: "Media you liked",
-          to: apex("/liked/media"),
+          to: "/liked/media",
         },
       ],
     });
@@ -402,7 +399,7 @@ export function useSpotlightActions(
           icon: FolderPlus,
           label: "Create Gallery",
           description: "Create a new gallery",
-          to: apex("/gallery/create"),
+          to: "/gallery/create",
         },
         {
           id: "create-text",
@@ -424,14 +421,14 @@ export function useSpotlightActions(
           icon: User,
           label: "Edit Profile",
           description: "View and edit your profile",
-          to: apex(`/user/${user.username}`),
+          to: `/user/${user.username}`,
         },
         {
           id: "my-communities",
           icon: Users,
           label: "My Communities",
           description: "View your communities",
-          to: apex("/my/communities"),
+          to: "/my/communities",
         },
         {
           id: "join-community",

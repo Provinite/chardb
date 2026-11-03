@@ -8,7 +8,6 @@ import {
   useSetCharacterFoldersMutation,
 } from "../../generated/graphql";
 import { HostAwareLink } from "../HostAwareLink";
-import { apexUrl } from "../../lib/communityHost";
 import { flattenTree, Folder } from "./folderTree";
 import { FolderGlyph, FolderIcon, PrivateTag } from "./FolderTile";
 
@@ -193,18 +192,16 @@ export const CharacterFoldersSection: React.FC<
       ) : (
         <Chips>
           {filed.map((folder) => (
-            // Absolute, via `apexUrl`. A character page is served from its
-            // community's host and a member's characters live at the apex, so
-            // a relative href here would look for `/user/...` on the community
-            // and find nothing.
+            // Relative: both hosts serve these, a community host narrowed to
+            // the community.
             <Chip
               key={folder.id}
               $private={folder.isPrivate}
-              to={apexUrl(
+              to={
                 ownerUsername
                   ? `/user/${ownerUsername}/characters?folder=${folder.id}`
-                  : `/my/characters?folder=${folder.id}`,
-              )}
+                  : `/my/characters?folder=${folder.id}`
+              }
             >
               <FolderGlyph $private={folder.isPrivate}>
                 <FolderIcon isPrivate={folder.isPrivate} />

@@ -2,7 +2,8 @@ import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
 import { ChevronDown, Check, Search } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
-import { apexUrl, communityUrl } from "../../lib/communityHost";
+import { useNavigate } from "react-router-dom";
+import { communityUrl } from "../../lib/communityHost";
 
 interface CommunitySwitcherProps {
   className?: string;
@@ -217,6 +218,7 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
   communityId,
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
@@ -273,9 +275,9 @@ export const CommunitySwitcher: React.FC<CommunitySwitcherProps> = ({
     setSearchQuery("");
   };
 
-  /** Also a different host: this switcher only renders on a community one. */
+  /** Served on this host too. */
   const handleBrowseAll = () => {
-    window.location.assign(apexUrl("/my/communities"));
+    navigate("/my/communities");
     setIsOpen(false);
     setSearchQuery("");
   };

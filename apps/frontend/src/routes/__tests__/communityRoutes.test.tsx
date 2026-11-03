@@ -1,10 +1,14 @@
 import { isValidElement, type ReactNode } from "react";
 import { describe, expect, it } from "vitest";
 import {
-  Navigate,
+  MemoryRouter,
+  Route,
+  Routes,
   createRoutesFromChildren,
   matchRoutes,
+  useLocation,
 } from "react-router-dom";
+import { render, screen } from "@testing-library/react";
 import { communityRoutes } from "../CommunityRoutes";
 import { ApexRedirect } from "../ApexRedirect";
 import { ProtectedRoute } from "../../components/ProtectedRoute";
@@ -33,7 +37,9 @@ import {
   FeedPage,
   MyCommunitiesPage,
 } from "../pages";
-import { UserToMemberProfile } from "../CommunityRoutes";
+import { ForwardKeepingQuery, UserToMemberProfile } from "../CommunityRoutes";
+
+const SearchEcho = () => <>{useLocation().search}</>;
 
 /** The innermost element a community host renders for `path`. */
 const elementAt = (path: string): ReactNode => {
@@ -94,17 +100,34 @@ describe("community host routes", () => {
     expect(pageAt("/user/bob")).toBe(UserToMemberProfile);
   });
 
-  // Both have a community equivalent at another path.
+  // Both have a community equivalent at another path. The query survives:
+  // folder links carry `?folder=`.
   it.each([
     ["/my/characters", "/my-characters"],
     ["/dashboard", "/"],
   ])("forwards %s to %s", (path, to) => {
     const element = elementAt(path);
 
-    expect(isValidElement(element) && element.type).toBe(Navigate);
+    expect(isValidElement(element) && element.type).toBe(ForwardKeepingQuery);
     expect(isValidElement<{ to: string }>(element) && element.props.to).toBe(
       to,
     );
+  });
+
+  it("keeps the query when forwarding", async () => {
+    render(
+      <MemoryRouter initialEntries={["/my/characters?folder=f1"]}>
+        <Routes>
+          <Route
+            path="/my/characters"
+            element={<ForwardKeepingQuery to="/my-characters" />}
+          />
+          <Route path="/my-characters" element={<SearchEcho />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(await screen.findByText("?folder=f1")).toBeInTheDocument();
   });
 
   it("still sends other /auth paths to the apex", () => {

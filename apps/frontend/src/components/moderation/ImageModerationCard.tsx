@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import styled from "styled-components";
-import { apexUrl } from "../../lib/communityHost";
 import { HostAwareLink } from "../HostAwareLink";
 import {
   Check,
@@ -315,7 +314,7 @@ export const ImageModerationCard: React.FC<ImageModerationCardProps> = ({
               <User size={14} />
             </MetaIcon>
             {image.uploader ? (
-              <MetaLink to={apexUrl(`/user/${image.uploader.username}`)}>
+              <MetaLink to={`/user/${image.uploader.username}`}>
                 {image.uploader.displayName || image.uploader.username}
               </MetaLink>
             ) : (

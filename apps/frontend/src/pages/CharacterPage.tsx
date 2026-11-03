@@ -18,7 +18,6 @@ import {
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useAuth } from "../contexts/AuthContext";
 import { useUserCommunityRole } from "../hooks/useUserCommunityRole";
-import { apexUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
 import { canUserEditCharacter } from "../lib/characterPermissions";
 import { setKinds } from "../lib/characterAvailability";
@@ -906,7 +905,7 @@ export const CharacterPage: React.FC = () => {
 
         {character.owner ? (
           <OwnerInfo>
-            <OwnerLink href={apexUrl(`/user/${character.owner.username}`)}>
+            <OwnerLink href={`/user/${character.owner.username}`}>
               <OwnerAvatar
                 image={character.owner.avatarImage}
                 name={character.owner.displayName || character.owner.username}

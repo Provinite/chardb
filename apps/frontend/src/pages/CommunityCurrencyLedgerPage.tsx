@@ -6,7 +6,6 @@ import { Coins, Search } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { useCommunityId } from "../contexts/CommunityHostContext";
-import { apexUrl } from "../lib/communityHost";
 import {
   useGetCurrencyTransactionsQuery,
   useGetCurrenciesQuery,
@@ -540,9 +539,9 @@ export const CommunityCurrencyLedgerPage: React.FC = () => {
                         for -- an image is an implementation detail of one. */}
                     {row.source === CurrencyTransactionSource.MediaApproval &&
                       row.sourceId && (
-                        // Media lives at the apex, not on this community's
-                        // host, so the router cannot take us there.
-                        <SourceAnchor href={apexUrl(`/media/${row.sourceId}`)}>
+                        // An approved upload is this community's media, served
+                        // on this host.
+                        <SourceAnchor href={`/media/${row.sourceId}`}>
                           from an approved upload →
                         </SourceAnchor>
                       )}

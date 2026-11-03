@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Profiles on community sites**: a person's profile, followers and their characters, galleries and media open on the community, with follow and edit-profile buttons.
 - **Liked lists, the activity feed and My Communities on community sites**, the first two showing only that community's.
 
+### Changed
+
+- **Links on a community site stay on it**: navigation, search, notifications and profile links no longer send you to the main site.
+
 ### Fixed
 
 - **Linking an account or editing your profile from a community** keeps you on that community instead of sending you to the main site.
