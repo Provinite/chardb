@@ -116,6 +116,14 @@ test.describe("page search", () => {
     await expect(page).toHaveURL(apexUrl("/join-community"));
   });
 
+  test("Home is the community's home", async ({ page, world }) => {
+    const s = spotlight(page);
+    await s.search("home");
+    await s.result(/^Home/).click();
+
+    await expect(page).toHaveURL(`${world.community.url}/`);
+  });
+
   // A community host serves the viewer's own lists, narrowed to it.
   test("a personal page stays on the community", async ({ page, world }) => {
     const s = spotlight(page);

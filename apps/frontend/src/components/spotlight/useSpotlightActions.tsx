@@ -231,9 +231,8 @@ export function useSpotlightActions(
           icon: House,
           label: "Home",
           description: "Go to the home page",
-          // The site's home, not the community's -- `/` on a community host is
-          // that community.
-          to: apex("/"),
+          // The community's home on its host, the site's at the apex.
+          to: "/",
         },
         ...(user
           ? [
