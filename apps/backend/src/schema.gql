@@ -5840,6 +5840,9 @@ type User {
   """User's inventories across different communities"""
   inventories(communityId: ID): [Inventory!]!
   isAdmin: Boolean!
+
+  """Whether this person belongs to the community"""
+  isMemberOf(communityId: ID!): Boolean!
   isVerified: Boolean!
   privacySettings: JSON!
   updatedAt: DateTime!

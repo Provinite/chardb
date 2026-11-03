@@ -81,6 +81,9 @@ export class TestApp {
           sortSchema: true,
           playground: false,
           introspection: false,
+          // As in `AppModule`: without it, an access decorator on a field
+          // resolver is never checked here and passes for anyone.
+          fieldResolverEnhancers: ["guards", "interceptors", "filters"],
           // Mirrors the real app's context factory. The auth resolver reaches
           // for `ctx.res` to set the refresh cookie and `ctx.req` to read it
           // back, so leaving this to the driver's default would make every

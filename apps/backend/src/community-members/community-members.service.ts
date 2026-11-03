@@ -218,4 +218,12 @@ export class CommunityMembersService {
 
     return communityMembers.map((member) => member.role);
   }
+
+  /** Whether a user holds any role in the community. */
+  async isMember(userId: string, communityId: string): Promise<boolean> {
+    const count = await this.prisma.communityMember.count({
+      where: { userId, role: { communityId } },
+    });
+    return count > 0;
+  }
 }
