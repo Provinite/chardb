@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { usePageMeta } from "../lib/pageMeta";
 import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
+import { invalidateLists } from "../lib/invalidateLists";
 import React, { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
@@ -13,8 +14,6 @@ import { Button } from "@chardb/ui";
 import {
   CREATE_TEXT_MEDIA,
   GET_CHARACTER_MEDIA,
-  GET_MY_MEDIA,
-  GET_MEDIA,
 } from "../graphql/media.graphql";
 import { useGetCharacterQuery } from "../graphql/characters.graphql";
 import { useGetMyGalleriesQuery } from "../graphql/galleries.graphql";
@@ -339,10 +338,8 @@ export const CreateTextPage: React.FC = () => {
   const galleries = galleriesData?.myGalleries?.galleries || [];
 
   const [createTextMedia] = useMutation(CREATE_TEXT_MEDIA, {
+    update: invalidateLists("media", "myMedia", "userMedia"),
     refetchQueries: [
-      // The variables `MyMediaPage` asks with on this host.
-      { query: GET_MY_MEDIA, variables: { filters: scope } },
-      { query: GET_MEDIA },
       ...(characterId
         ? [
             {

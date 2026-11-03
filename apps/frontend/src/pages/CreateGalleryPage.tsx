@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import { useHostCommunityScope } from "../hooks/useHostCommunityScope";
+import { invalidateLists } from "../lib/invalidateLists";
 import { useNavigate } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -284,9 +285,8 @@ export const CreateGalleryPage: React.FC = () => {
     },
   });
 
-  // By name, so the scoped lists on a community host refetch too.
   const [createGallery] = useCreateGalleryMutation({
-    refetchQueries: ["GetGalleries", "GetMyGalleries"],
+    update: invalidateLists("galleries", "myGalleries", "userGalleries"),
   });
 
   // Fetch user's characters for the character association dropdown. On a
