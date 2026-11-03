@@ -4,7 +4,7 @@ import {
   useHalloweenDoorQuery,
   useKnockOnHalloweenDoorMutation,
 } from "../../generated/graphql";
-import { candyList } from "./candyBoard";
+import { DoorKnockToast } from "./DoorKnockToast";
 import { DoorKnockView } from "./DoorKnockView";
 
 export interface DoorKnockProps {
@@ -42,9 +42,11 @@ export function DoorKnock({ communityId, userId, name }: DoorKnockProps) {
       const knocked = result?.knockOnHalloweenDoor;
       if (knocked) {
         toast.success(
-          `You got ${candyList(knocked.knockerCandies)}. ${name} got ${candyList(
-            knocked.knockeeCandies,
-          )}.`,
+          <DoorKnockToast
+            name={name}
+            knockerCandies={knocked.knockerCandies}
+            knockeeCandies={knocked.knockeeCandies}
+          />,
         );
       }
     } catch (e) {
