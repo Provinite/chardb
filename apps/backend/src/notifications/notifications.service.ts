@@ -43,6 +43,15 @@ export type LoadedNotification = Omit<
   data: NotificationPayloads[NotificationKind] | null;
 };
 
+/**
+ * One community's notifications plus those that belong to no community (a new
+ * follower), which is what a community host shows. No filter without an id.
+ */
+const communityScope = (
+  communityId: string | undefined,
+): Prisma.NotificationWhereInput =>
+  communityId ? { OR: [{ communityId }, { communityId: null }] } : {};
+
 @Injectable()
 export class NotificationsService {
   private readonly logger = new Logger(NotificationsService.name);
@@ -164,10 +173,7 @@ export class NotificationsService {
       first?: number;
       after?: string;
       unreadOnly?: boolean;
-      /**
-       * Narrows to one community plus the notifications that belong to no
-       * community (a new follower), which is what a community host shows.
-       */
+      /** See `communityScope`. */
       communityId?: string;
     },
   ) {
@@ -175,9 +181,7 @@ export class NotificationsService {
     const where: Prisma.NotificationWhereInput = {
       recipientId,
       ...(filters.unreadOnly ? { readAt: null } : {}),
-      ...(filters.communityId
-        ? { OR: [{ communityId: filters.communityId }, { communityId: null }] }
-        : {}),
+      ...communityScope(filters.communityId),
     };
 
     const [rows, totalCount] = await Promise.all([
@@ -240,10 +244,11 @@ export class NotificationsService {
     return count;
   }
 
-  async markAllRead(recipientId: string) {
+  /** Marks read everything the matching `findForRecipient` list would show. */
+  async markAllRead(recipientId: string, communityId?: string) {
     const now = new Date();
     const { count } = await this.prisma.notification.updateMany({
-      where: { recipientId, readAt: null },
+      where: { recipientId, readAt: null, ...communityScope(communityId) },
       data: { readAt: now, seenAt: now },
     });
     return count;

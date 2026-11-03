@@ -3060,7 +3060,12 @@ type Mutation {
   logout: Boolean!
 
   """Marks all of your notifications read."""
-  markAllNotificationsRead: Int!
+  markAllNotificationsRead(
+    """
+    Only this community's notifications, plus those that belong to no community.
+    """
+    communityId: ID
+  ): Int!
 
   """
   Marks specific notifications read. Ids that are not yours match nothing. Returns how many were affected.

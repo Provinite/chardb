@@ -3,7 +3,10 @@ import { screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MockedResponse } from "@apollo/client/testing";
 import { render } from "../../__tests__/test-utils";
-import { NOTIFICATIONS_QUERY } from "../../graphql/notifications.graphql";
+import {
+  MARK_ALL_NOTIFICATIONS_READ,
+  NOTIFICATIONS_QUERY,
+} from "../../graphql/notifications.graphql";
 
 const mocks = vi.hoisted(() => ({
   hostCommunity: null as { id: string; name: string; slug: string } | null,
@@ -89,6 +92,44 @@ describe("NotificationsPage", () => {
 
     await screen.findByText(/Nothing yet/);
     expect(document.body.dataset.answered).toBe("community");
+  });
+
+  it("marks read only what the narrowed list shows", async () => {
+    mocks.hostCommunity = {
+      id: "community-1",
+      name: "Willowmere",
+      slug: "willowmere",
+    };
+    const markedFor = vi.fn();
+    const user = userEvent.setup();
+    const listVariables = {
+      first: 25,
+      unreadOnly: false,
+      communityId: "community-1",
+    };
+    render(<NotificationsPage />, {
+      mocks: [
+        emptyPage(listVariables, "community"),
+        {
+          request: {
+            query: MARK_ALL_NOTIFICATIONS_READ,
+            variables: { communityId: "community-1" },
+          },
+          result: () => {
+            markedFor("community-1");
+            return { data: { markAllNotificationsRead: 0 } };
+          },
+        },
+        emptyPage(listVariables, "community"),
+      ],
+    });
+
+    await screen.findByText(/Nothing yet/);
+    await user.click(screen.getByRole("button", { name: "Mark all read" }));
+
+    await vi.waitFor(() =>
+      expect(markedFor).toHaveBeenCalledWith("community-1"),
+    );
   });
 
   it("can widen to every community from a community host", async () => {

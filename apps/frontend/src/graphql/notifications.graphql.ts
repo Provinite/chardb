@@ -97,8 +97,8 @@ export const MARK_NOTIFICATIONS_READ = gql`
 `;
 
 export const MARK_ALL_NOTIFICATIONS_READ = gql`
-  mutation MarkAllNotificationsRead {
-    markAllNotificationsRead
+  mutation MarkAllNotificationsRead($communityId: ID) {
+    markAllNotificationsRead(communityId: $communityId)
   }
 `;
 

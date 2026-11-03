@@ -126,7 +126,14 @@ export class NotificationsResolver {
   })
   async markAllNotificationsRead(
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @Args("communityId", {
+      type: () => ID,
+      nullable: true,
+      description:
+        "Only this community's notifications, plus those that belong to no community.",
+    })
+    communityId?: string,
   ): Promise<number> {
-    return this.notifications.markAllRead(user.id);
+    return this.notifications.markAllRead(user.id, communityId);
   }
 }

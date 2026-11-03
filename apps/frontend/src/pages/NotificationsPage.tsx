@@ -127,10 +127,12 @@ export const NotificationsPage: React.FC = () => {
   );
 
   const onMarkAll = useCallback(() => {
-    void markAllRead().then(() => {
+    void markAllRead({
+      variables: communityId ? { communityId } : {},
+    }).then(() => {
       void refetch();
     });
-  }, [markAllRead, refetch]);
+  }, [markAllRead, refetch, communityId]);
 
   if (loading && !data) {
     return (

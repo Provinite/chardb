@@ -2829,6 +2829,11 @@ export type MutationLoginArgs = {
 };
 
 
+export type MutationMarkAllNotificationsReadArgs = {
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+};
+
+
 export type MutationMarkNotificationsReadArgs = {
   ids: Array<Scalars['ID']['input']>;
 };
@@ -7021,7 +7026,9 @@ export type MarkNotificationsReadMutationVariables = Exact<{
 
 export type MarkNotificationsReadMutation = { __typename?: 'Mutation', markNotificationsRead: number };
 
-export type MarkAllNotificationsReadMutationVariables = Exact<{ [key: string]: never; }>;
+export type MarkAllNotificationsReadMutationVariables = Exact<{
+  communityId?: InputMaybe<Scalars['ID']['input']>;
+}>;
 
 
 export type MarkAllNotificationsReadMutation = { __typename?: 'Mutation', markAllNotificationsRead: number };
@@ -17609,8 +17616,8 @@ export type MarkNotificationsReadMutationHookResult = ReturnType<typeof useMarkN
 export type MarkNotificationsReadMutationResult = Apollo.MutationResult<MarkNotificationsReadMutation>;
 export type MarkNotificationsReadMutationOptions = Apollo.BaseMutationOptions<MarkNotificationsReadMutation, MarkNotificationsReadMutationVariables>;
 export const MarkAllNotificationsReadDocument = gql`
-    mutation MarkAllNotificationsRead {
-  markAllNotificationsRead
+    mutation MarkAllNotificationsRead($communityId: ID) {
+  markAllNotificationsRead(communityId: $communityId)
 }
     `;
 export type MarkAllNotificationsReadMutationFn = Apollo.MutationFunction<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>;
@@ -17628,6 +17635,7 @@ export type MarkAllNotificationsReadMutationFn = Apollo.MutationFunction<MarkAll
  * @example
  * const [markAllNotificationsReadMutation, { data, loading, error }] = useMarkAllNotificationsReadMutation({
  *   variables: {
+ *      communityId: // value for 'communityId'
  *   },
  * });
  */

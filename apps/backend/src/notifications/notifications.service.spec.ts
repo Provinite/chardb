@@ -306,6 +306,39 @@ describe("NotificationsService", () => {
     });
   });
 
+  describe("markAllRead", () => {
+    const lastWhere = () =>
+      (
+        mockDatabaseService.notification.updateMany.mock.calls.at(-1)?.[0] as {
+          where: Record<string, unknown>;
+        }
+      ).where;
+
+    beforeEach(() => {
+      mockDatabaseService.notification.updateMany.mockResolvedValue({
+        count: 0,
+      });
+    });
+
+    it("marks everything when no community is given", async () => {
+      await service.markAllRead("u1");
+
+      expect(lastWhere()).toEqual({ recipientId: "u1", readAt: null });
+    });
+
+    // Matches what the narrowed list shows, so other communities' unread
+    // notifications stay unread.
+    it("marks only what a community's list shows", async () => {
+      await service.markAllRead("u1", "c1");
+
+      expect(lastWhere()).toEqual({
+        recipientId: "u1",
+        readAt: null,
+        OR: [{ communityId: "c1" }, { communityId: null }],
+      });
+    });
+  });
+
   describe("findForRecipient", () => {
     const lastWhere = () =>
       (
