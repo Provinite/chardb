@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import { Link } from "react-router-dom";
+import { NetworkStatus } from "@apollo/client";
 import styled from "styled-components";
 import { Avatar, timingMs, useDebouncedValue } from "@chardb/ui";
 import { Users, Search, Package, ArrowLeftRight } from "lucide-react";
@@ -218,23 +219,13 @@ export const CommunityMembersPage: React.FC = () => {
     search.trim(),
     timingMs.debounce.search,
   );
-  // "Load more" grows the page for one search; a new search starts over.
-  const [pages, setPages] = useState({
-    key: debouncedSearch,
-    limit: PAGE_SIZE,
-  });
-  if (pages.key !== debouncedSearch) {
-    setPages({ key: debouncedSearch, limit: PAGE_SIZE });
-  }
-  const limit = pages.key === debouncedSearch ? pages.limit : PAGE_SIZE;
-
   const community = useHostCommunity();
 
-  const { data, previousData, loading, error } =
+  const { data, previousData, loading, error, networkStatus, fetchMore } =
     useCommunityMembersWithRolesQuery({
       variables: {
         communityId: communityId!,
-        first: limit,
+        first: PAGE_SIZE,
         search: debouncedSearch || undefined,
       },
       skip: !communityId,
@@ -242,13 +233,25 @@ export const CommunityMembersPage: React.FC = () => {
       // change roles from the permissions page. A cached list would keep
       // showing who was here when this tab opened.
       fetchPolicy: "cache-and-network",
+      // Without this, the cache write from "Load more" would trigger a fresh
+      // first page that replaces what was just appended.
+      nextFetchPolicy: "cache-first",
+      notifyOnNetworkStatusChange: true,
     });
+  const loadingMore = networkStatus === NetworkStatus.fetchMore;
 
   // The last results stay up while the next search loads.
   const connection = (data ?? previousData)?.communityMembersByCommunity;
   const members = useMemo(() => connection?.nodes ?? [], [connection]);
   const total = connection?.totalCount ?? 0;
   const hasMore = connection?.hasNextPage ?? false;
+
+  // Which search the list on screen answers. While the next search loads it
+  // is still the last one, and the empty state has to describe that.
+  const [shownFor, setShownFor] = useState(debouncedSearch);
+  if (data && shownFor !== debouncedSearch) {
+    setShownFor(debouncedSearch);
+  }
 
   if (loading && !connection) {
     return (
@@ -289,7 +292,7 @@ export const CommunityMembersPage: React.FC = () => {
         <Empty>
           <Users size={36} style={{ opacity: 0.5, marginBottom: "0.75rem" }} />
           <p>
-            {debouncedSearch
+            {shownFor
               ? "No members match that search."
               : "This community has no members yet."}
           </p>
@@ -343,10 +346,10 @@ export const CommunityMembersPage: React.FC = () => {
             type="button"
             disabled={loading}
             onClick={() =>
-              setPages({ key: debouncedSearch, limit: limit + PAGE_SIZE })
+              fetchMore({ variables: { after: members.at(-1)?.id } })
             }
           >
-            {loading ? "Loading…" : "Load more"}
+            {loadingMore ? "Loading…" : "Load more"}
           </MoreButton>
         )}
       </Footer>

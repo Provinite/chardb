@@ -225,6 +225,57 @@ test.describe("searching the members list", () => {
     ).toBeVisible();
   });
 
+  test("Load more fetches the next page after the last row", async ({
+    page,
+    world,
+  }) => {
+    // The seeded community fits on one page, so the first page is made to
+    // claim there is more.
+    let lastId: string | undefined;
+    await page.route("**/graphql", async (route) => {
+      const body = route.request().postDataJSON();
+      if (
+        body?.operationName !== "CommunityMembersWithRoles" ||
+        body.variables?.after
+      ) {
+        return route.fallback();
+      }
+      // Node, unlike the browser, cannot resolve *.localhost.
+      const url = new URL(route.request().url());
+      const host = url.host;
+      url.hostname = "127.0.0.1";
+      const response = await route.fetch({
+        url: url.toString(),
+        headers: { ...route.request().headers(), host },
+      });
+      const json = await response.json();
+      const connection = json.data.communityMembersByCommunity;
+      connection.hasNextPage = true;
+      lastId = connection.nodes.at(-1).id;
+      await route.fulfill({ response, json });
+    });
+    await page.goto(`${world.community.url}/members`);
+    const rows = page.getByTestId("member-row");
+    await expect(rows.first()).toBeVisible();
+    const before = await rows.count();
+
+    const next = page.waitForRequest(
+      (req) =>
+        req.postDataJSON()?.operationName === "CommunityMembersWithRoles" &&
+        Boolean(req.postDataJSON()?.variables?.after),
+    );
+    await page.getByRole("button", { name: "Load more" }).click();
+    const { variables } = (await next).postDataJSON();
+
+    expect(variables.after).toBe(lastId);
+    expect(variables.first).toBe(50);
+    // Nothing follows the last row, so the list keeps what it had.
+    await expect(page.getByRole("button", { name: "Load more" })).toHaveCount(
+      0,
+    );
+    await expect(rows).toHaveCount(before);
+  });
+
   test("a failed search leaves the search box to try again", async ({
     page,
     world,

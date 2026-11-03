@@ -12,6 +12,7 @@ import { getMainDefinition } from "@apollo/client/utilities";
 import { Kind, OperationTypeNode } from "graphql";
 import { createClient } from "graphql-ws";
 import { getAccessToken, setAccessToken } from "./accessToken";
+import { cursorConnection } from "./cursorConnection";
 import {
   API_BASE_URL,
   isAuthPage,
@@ -123,6 +124,13 @@ export const client = new ApolloClient({
               };
             },
           },
+          // `first` keeps the permission matrix's 100 apart from the members
+          // page's 50; "Load more" pages with the same `first`.
+          communityMembersByCommunity: cursorConnection([
+            "communityId",
+            "search",
+            "first",
+          ]),
           characters: {
             keyArgs: ["filters"],
             merge(
