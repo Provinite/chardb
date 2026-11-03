@@ -42,7 +42,7 @@ export interface CandySwapViewProps {
   activity: { openOffers: number; tradesLastDay: number } | null;
   /** The community's latest trades; null while they first load. */
   recentTrades: PublicTrade[] | null;
-  /** What the recent trades' times are counted back from. */
+  /** What the trades' times are counted back from. */
   now: Date;
   myOffers: SwapOffer[];
   trades: SwapTrade[];
@@ -211,11 +211,6 @@ const Empty = ({
     {children && <p className={styles.muted}>{children}</p>}
   </Stack>
 );
-
-const dateFormat = new Intl.DateTimeFormat(undefined, {
-  dateStyle: "medium",
-  timeStyle: "short",
-});
 
 const countBySlug = (candies: SwapCandy[]) => {
   const counts = new Map<string, number>();
@@ -416,7 +411,7 @@ export const CandySwapView = ({
               }
             >
               {listings === null ? (
-                <Grid min="md" gap="md" aria-busy>
+                <Grid min="lg" gap="md" aria-busy>
                   {Array.from({ length: LISTING_PLACEHOLDERS }, (_, i) => (
                     <div key={i} className={styles.placeholder} />
                   ))}
@@ -426,7 +421,7 @@ export const CandySwapView = ({
                   Put one up below and it shows here for everyone.
                 </Empty>
               ) : (
-                <Grid as="ul" min="md" gap="md" className={styles.list}>
+                <Grid as="ul" min="lg" gap="md" className={styles.list}>
                   {shown.map(({ offer, canTake }) => (
                     <Stack
                       as="li"
@@ -434,31 +429,35 @@ export const CandySwapView = ({
                       gap="md"
                       className={canTake ? styles.card : styles.cardOut}
                     >
-                      <span className={styles.offerFrom}>
-                        {offer.host ? `${offer.host}'s offer` : " "}
-                      </span>
-                      <OfferTerms offer={offer} />
-                      {canTake ? (
-                        <Button
-                          busy={acceptingId === offer.id}
-                          disabled={
-                            acceptingId !== null && acceptingId !== offer.id
-                          }
-                          onClick={() =>
-                            offer.wantSlug === null
-                              ? setPaying(offer)
-                              : onAccept(offer.id)
-                          }
-                        >
-                          {offer.wantSlug === null
-                            ? "Pick a candy to trade"
-                            : `Trade your ${candyName(offer.wantSlug)}`}
-                        </Button>
-                      ) : (
-                        <Button tone="outline" disabled>
-                          {needs(offer)}
-                        </Button>
+                      {offer.host && (
+                        <span className={styles.offerFrom}>
+                          {offer.host}&apos;s offer
+                        </span>
                       )}
+                      <OfferTerms offer={offer} />
+                      <div className={styles.cardAction}>
+                        {canTake ? (
+                          <Button
+                            busy={acceptingId === offer.id}
+                            disabled={
+                              acceptingId !== null && acceptingId !== offer.id
+                            }
+                            onClick={() =>
+                              offer.wantSlug === null
+                                ? setPaying(offer)
+                                : onAccept(offer.id)
+                            }
+                          >
+                            {offer.wantSlug === null
+                              ? "Pick a candy to trade"
+                              : `Trade your ${candyName(offer.wantSlug)}`}
+                          </Button>
+                        ) : (
+                          <Button tone="outline" disabled>
+                            {needs(offer)}
+                          </Button>
+                        )}
+                      </div>
                     </Stack>
                   ))}
                 </Grid>
@@ -739,7 +738,7 @@ export const CandySwapView = ({
                               {nameOf(t.with, t.host)}
                             </span>
                             <span className={styles.time}>
-                              {dateFormat.format(new Date(t.createdAt))}
+                              {timeAgo(t.createdAt, now)}
                             </span>
                           </Cluster>
                           <Cluster gap="xs">

@@ -27,8 +27,9 @@ export const hero = style({
   borderRadius: vars.radius.lg,
 });
 
+/** Takes the row; under a column's width the counts wrap below it. */
 export const heroText = style({
-  flex: 1,
+  flex: `1 1 ${vars.size.column.xl}`,
   minWidth: 0,
 });
 
@@ -157,7 +158,16 @@ export const placeholder = style([
   },
 ]);
 
-/** The host of a house offer; holds its line on every card, so they align. */
+/**
+ * Holds an offer card's button at the card's foot whatever the row's
+ * height. A wrapper, because `Button` sets its own margin.
+ */
+export const cardAction = style({
+  display: "grid",
+  marginBlockStart: "auto",
+});
+
+/** The host of a house offer. */
 export const offerFrom = style({
   fontSize: vars.font.size.sm,
   fontWeight: vars.font.weight.semibold,
