@@ -167,6 +167,26 @@ export const cardAction = style({
   marginBlockStart: "auto",
 });
 
+/**
+ * In place of the button on an offer you cannot take: what it wants, as a
+ * picture in the sentence. As tall as the button, so cards line up.
+ */
+export const cannotTake = style({
+  margin: 0,
+  minHeight: vars.size.target.comfortable,
+  color: vars.text.muted,
+  textAlign: "center",
+});
+
+/** A candy inside a sentence, sitting on the line with the words. */
+export const inlineCandy = style({
+  display: "inline-block",
+  verticalAlign: "middle",
+  width: vars.size.target.min,
+  height: vars.size.target.min,
+  objectFit: "contain",
+});
+
 /** The host of a house offer. */
 export const offerFrom = style({
   fontSize: vars.font.size.sm,

@@ -235,7 +235,7 @@ describe("CandySwapView", () => {
       const offers = section("Open offers");
       expect(within(offers).getAllByRole("listitem")).toHaveLength(1);
       expect(
-        within(offers).getByRole("button", { name: "You can take (1)" }),
+        within(offers).getByRole("button", { name: "Ready to trade (1)" }),
       ).toHaveAttribute("aria-pressed", "true");
 
       await userEvent.click(
@@ -250,7 +250,7 @@ describe("CandySwapView", () => {
       });
       const offers = section("Open offers");
       expect(
-        within(offers).getByRole("button", { name: "You can take (0)" }),
+        within(offers).getByRole("button", { name: "Ready to trade (0)" }),
       ).toBeDisabled();
       expect(
         within(offers).getByRole("button", { name: "All (1)" }),
@@ -268,14 +268,19 @@ describe("CandySwapView", () => {
       const [named, anything] = within(section("Open offers")).getAllByRole(
         "listitem",
       );
+      // A picture of the candy in the sentence, not its name.
+      expect(within(named).queryByRole("button")).toBeNull();
+      expect(within(named).getByText(/You don't have any/)).toHaveTextContent(
+        "You don't have any to trade",
+      );
       expect(
-        within(named).getByRole("button", { name: "You need a skull candy" }),
-      ).toBeDisabled();
+        within(named).getAllByRole("img", { name: "skull candy" }),
+      ).toHaveLength(2);
+      expect(within(named).queryByText(/skull candy/)).toBeNull();
+      expect(within(anything).queryByRole("button")).toBeNull();
       expect(
-        within(anything).getByRole("button", {
-          name: "You need a candy it does not give",
-        }),
-      ).toBeDisabled();
+        within(anything).getByText("You have no candy it doesn't already give"),
+      ).toBeInTheDocument();
     });
   });
 

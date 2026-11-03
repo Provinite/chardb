@@ -228,12 +228,6 @@ const nameOf = (person: Person, host?: string | null) =>
     ? person.displayName || person.username
     : (host ?? "A deleted account");
 
-/** What an offer you cannot take wants, on its disabled button. */
-const needs = (offer: SwapOffer) =>
-  offer.wantSlug === null
-    ? "You need a candy it does not give"
-    : `You need a ${candyName(offer.wantSlug)}`;
-
 export const CandySwapView = ({
   candyTypes,
   myCandies,
@@ -394,7 +388,11 @@ export const CandySwapView = ({
                     role="group"
                     aria-label="Which offers"
                   >
-                    {filterButton("takeable", "You can take", takeable.length)}
+                    {filterButton(
+                      "takeable",
+                      "Ready to trade",
+                      takeable.length,
+                    )}
                     {filterButton("all", "All", listings?.length ?? 0)}
                   </div>
                   <Tooltip label="Show other offers">
@@ -453,9 +451,21 @@ export const CandySwapView = ({
                               : `Trade your ${candyName(offer.wantSlug)}`}
                           </Button>
                         ) : (
-                          <Button tone="outline" disabled>
-                            {needs(offer)}
-                          </Button>
+                          <p className={styles.cannotTake}>
+                            {offer.wantSlug === null ? (
+                              "You have no candy it doesn't already give"
+                            ) : (
+                              <>
+                                You don&apos;t have any{" "}
+                                <img
+                                  className={styles.inlineCandy}
+                                  src={candyImageUrl(offer.wantSlug)}
+                                  alt={candyName(offer.wantSlug)}
+                                />{" "}
+                                to trade
+                              </>
+                            )}
+                          </p>
                         )}
                       </div>
                     </Stack>
