@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityColorsService } from "../community-colors/community-colors.service";
+import { assertCompleteReorder } from "../shared/utils/reorder";
 
 /**
  * Service layer input types for enum values operations.
@@ -68,7 +69,7 @@ export class EnumValuesService {
     return this.prisma.enumValue.create({
       data: {
         name: input.name,
-        order: input.order ?? 0,
+        order: input.order ?? (await this.nextOrder(input.traitId)),
         trait: {
           connect: { id: input.traitId },
         },
@@ -147,6 +148,50 @@ export class EnumValuesService {
     }
 
     return enumValue;
+  }
+
+  /**
+   * Arranges a trait's values in the order given. The list must name each of
+   * the trait's values exactly once.
+   */
+  async reorder(traitId: string, enumValueIds: string[]) {
+    const existing = await this.prisma.enumValue.findMany({
+      where: { traitId },
+      select: { id: true },
+    });
+    assertCompleteReorder(
+      enumValueIds,
+      existing.map((row) => row.id),
+    );
+
+    // `(traitId, order)` is unique and Postgres checks it row by row, so
+    // writing the final positions directly would collide mid-swap. Every row
+    // first moves to a negative position no final one can share.
+    await this.prisma.$transaction([
+      ...enumValueIds.map((id, index) =>
+        this.prisma.enumValue.update({
+          where: { id },
+          data: { order: -(index + 1) },
+        }),
+      ),
+      ...enumValueIds.map((id, order) =>
+        this.prisma.enumValue.update({ where: { id }, data: { order } }),
+      ),
+    ]);
+
+    return this.prisma.enumValue.findMany({
+      where: { traitId },
+      orderBy: { order: "asc" },
+    });
+  }
+
+  /** The position after a trait's last value. */
+  private async nextOrder(traitId: string): Promise<number> {
+    const { _max } = await this.prisma.enumValue.aggregate({
+      where: { traitId },
+      _max: { order: true },
+    });
+    return _max.order === null ? 0 : _max.order + 1;
   }
 
   /** Update an enum value */

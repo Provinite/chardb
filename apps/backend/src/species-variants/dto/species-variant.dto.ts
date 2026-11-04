@@ -8,6 +8,7 @@ import {
   IsInt,
   Min,
   Max,
+  IsArray,
 } from "class-validator";
 
 /**
@@ -94,4 +95,22 @@ export class UpdateSpeciesVariantInput {
   @Min(1)
   @Max(MAX_FORMS_CEILING)
   maxForms?: number;
+}
+
+@InputType()
+export class ReorderSpeciesVariantsInput {
+  /** The species whose variants are being arranged */
+  @Field(() => ID, {
+    description: "The species whose variants are being arranged",
+  })
+  @IsUUID()
+  speciesId: string;
+
+  /** Every one of the species' variants, in their new order */
+  @Field(() => [ID], {
+    description: "Every one of the species' variants, in their new order",
+  })
+  @IsArray()
+  @IsUUID("all", { each: true })
+  variantIds: string[];
 }

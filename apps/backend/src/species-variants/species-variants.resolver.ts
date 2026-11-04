@@ -22,6 +22,7 @@ import {
 } from "./entities/species-variant.entity";
 import {
   CreateSpeciesVariantInput,
+  ReorderSpeciesVariantsInput,
   UpdateSpeciesVariantInput,
 } from "./dto/species-variant.dto";
 import {
@@ -67,6 +68,24 @@ export class SpeciesVariantsResolver {
     );
     const prismaResult = await this.speciesVariantsService.create(serviceInput);
     return mapPrismaSpeciesVariantToGraphQL(prismaResult);
+  }
+
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ speciesId: "input.speciesId" })
+  @Mutation(() => [SpeciesVariant], {
+    description:
+      "Arrange a species' variants. Lists every variant of the species, in its new order.",
+  })
+  async reorderSpeciesVariants(
+    @Args("input", { description: "The species and its variants, in order" })
+    input: ReorderSpeciesVariantsInput,
+  ): Promise<SpeciesVariant[]> {
+    const rows = await this.speciesVariantsService.reorder(
+      input.speciesId,
+      input.variantIds,
+    );
+    return rows.map(mapPrismaSpeciesVariantToGraphQL);
   }
 
   /** Get all species variants with pagination */

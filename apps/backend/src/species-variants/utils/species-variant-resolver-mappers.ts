@@ -63,6 +63,7 @@ export function mapPrismaSpeciesVariantToGraphQL(
     speciesId: prismaSpeciesVariant.speciesId,
     colorId: prismaSpeciesVariant.colorId ?? undefined,
     maxForms: prismaSpeciesVariant.maxForms,
+    sortOrder: prismaSpeciesVariant.sortOrder,
     createdAt: prismaSpeciesVariant.createdAt,
     updatedAt: prismaSpeciesVariant.updatedAt,
   };

@@ -18,6 +18,7 @@ import { CommunityPermission } from "../auth/CommunityPermission";
 import { EnumValue, EnumValueConnection } from "./entities/enum-value.entity";
 import {
   CreateEnumValueInput,
+  ReorderEnumValuesInput,
   UpdateEnumValueInput,
 } from "./dto/enum-value.dto";
 import {
@@ -140,6 +141,24 @@ export class EnumValuesResolver {
     const serviceInput = mapUpdateEnumValueInputToService(updateEnumValueInput);
     const prismaResult = await this.enumValuesService.update(id, serviceInput);
     return mapPrismaEnumValueToGraphQL(prismaResult);
+  }
+
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ traitId: "input.traitId" })
+  @Mutation(() => [EnumValue], {
+    description:
+      "Arrange a trait's values. Lists every value of the trait, in its new order.",
+  })
+  async reorderEnumValues(
+    @Args("input", { description: "The trait and its values, in order" })
+    input: ReorderEnumValuesInput,
+  ): Promise<EnumValue[]> {
+    const rows = await this.enumValuesService.reorder(
+      input.traitId,
+      input.enumValueIds,
+    );
+    return rows.map(mapPrismaEnumValueToGraphQL);
   }
 
   @AllowGlobalAdmin()

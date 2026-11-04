@@ -29,6 +29,13 @@ export class SpeciesVariant {
   })
   maxForms: number;
 
+  /** Position among its species' variants, from 0 */
+  @Field(() => Int, {
+    description:
+      "Position among its species' variants, from 0. Lists of variants read in this order.",
+  })
+  sortOrder: number;
+
   /** When the species variant was created */
   @Field({ description: "When the species variant was created" })
   createdAt: Date;
