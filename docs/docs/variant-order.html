@@ -1,0 +1,316 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Variant and Option Order - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Arrange a species' variants and a trait's options in CharDB, so Common comes before Uncommon wherever members pick one, each in its colour."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/variant-order.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Variant and Option Order" />
+    <meta
+      property="og:description"
+      content="Arrange a species' variants and a trait's options in CharDB, so Common comes before Uncommon wherever members pick one, each in its colour."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/variant-order.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/variant-order-variants.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="A species' variants listed in order, each with its colour, a drag handle and up and down buttons."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .feature-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1.5rem 0;
+      }
+
+      .feature-item {
+        background: #f8f9fa;
+        padding: 1rem;
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .feature-item .icon {
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .feature-item h4 {
+        color: #333;
+        margin-bottom: 0.25rem;
+      }
+
+      .feature-item p {
+        font-size: 0.875rem;
+        color: #666;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+      }
+
+      .example .clar {
+        color: #a8b4ff;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Variant and Option Order</h1>
+        <p>Putting variants and trait options in the order members expect</p>
+      </header>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Arrange a species' variants</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Open the species and choose <strong>Variants</strong>. The list is
+            the order members see on the create page, in the variant picker on a
+            character's edit page, and in item editors.
+          </p>
+          <ul>
+            <li>
+              Drag a variant by the handle on its left, or focus the handle and
+              use Space, the arrow keys and Space again.
+            </li>
+            <li>Or tap its up and down arrows. Each move saves at once.</li>
+          </ul>
+          <p>
+            A new variant goes to the end of the list. Variants that existed
+            before ordering start newest first, the order they always showed in.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-order-variants.png"
+            alt="The Variants page listing Common, Uncommon and Rare in order, each with its colour, a drag handle, Manage and Delete buttons, and up and down arrows"
+          />
+          <div class="screenshot-caption">
+            Common, Uncommon, Rare: each variant's colour sits beside its name
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Arrange a trait's options</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            From the <strong>Trait Builder</strong>, open a selection trait's
+            options. They move the same way, and the order is the one every
+            dropdown for that trait follows. New options go to the end.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-order-options-dark.png"
+            alt="The Manage Options page in dark mode, listing Common Eyes, Uncommon Eyes and Plain Eyes with their colours and move controls"
+          />
+          <div class="screenshot-caption">
+            A trait's options, with a tooltip on the up arrow
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">What members see</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            On the create page, variant cards follow the species' order and show
+            each variant's colour. Trait dropdowns list options in their order,
+            with a colour beside each one that has a colour, and the chosen
+            option keeps its colour once picked.
+          </p>
+          <p>
+            The same coloured dropdowns appear when staff change a character's
+            variant and when a member redeems a variant change item.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-order-create-variants.png"
+            alt="The create page on a phone, with variant cards for Common, Uncommon and Rare, each showing a coloured dot"
+          />
+          <div class="screenshot-caption">Variant cards on a phone</div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="variant-order-create-trait.png"
+            alt="An open Eye Color dropdown on a phone listing Uncommon Eyes and Common Eyes with coloured dots, and Plain Eyes without one"
+          />
+          <div class="screenshot-caption">
+            A trait dropdown: options without a colour show none
+          </div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Variant and Option Order &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>
