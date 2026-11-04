@@ -22,7 +22,7 @@ test.describe("the candy swap", () => {
     // Whose it is shows only once it is traded.
     await expect(offers.getByText("alice")).toHaveCount(0);
 
-    await offers.getByRole("button", { name: "Trade your banana" }).click();
+    await offers.getByRole("button", { name: "Give banana" }).click();
 
     const trades = page.getByRole("region", { name: "Your trades" });
     await expect(trades.getByText("alice")).toBeVisible();

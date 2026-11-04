@@ -19,6 +19,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Trait option up/down buttons**: they sent a fractional position the server refused, so options could not be reordered.
 
+- **Candy swap offer button**: taking an offer reads "Give" with the candy's picture instead of "Trade your" and its name.
+
 ### Changed
 
 - **Username links ignore case**: `/user/FOO` and `/members/FOO` open foo's page and correct the URL to the stored casing.
