@@ -1,5 +1,5 @@
 import { registerEnumType } from "@nestjs/graphql";
-import type { Prisma } from "@chardb/database";
+import type { Character, Prisma } from "@chardb/database";
 
 /**
  * The ways an owner can say they are open to being asked about a character.
@@ -78,4 +78,42 @@ export function availabilityWhere(
       [AVAILABILITY_COLUMN[kind]]: true,
     })),
   };
+}
+
+/** The columns a character's trade advertisement is made of. */
+export type CharacterAdvertisement = Pick<
+  Character,
+  (typeof AVAILABILITY_COLUMN)[CharacterAvailability] | "price"
+>;
+
+/** What moved between two versions of a character's advertisement. */
+export interface AvailabilityChange {
+  /** Kinds the owner newly said they are open to. */
+  added: CharacterAvailability[];
+  /** Kinds the owner stopped being open to. */
+  removed: CharacterAvailability[];
+  priceChanged: boolean;
+  /** The asking price afterwards, to two places. Null when there is none. */
+  price: string | null;
+}
+
+/**
+ * Compares a character's advertisement before and after an edit. Null when
+ * nothing a watcher cares about moved, which is most edits: renames, details,
+ * images.
+ */
+export function availabilityChange(
+  before: CharacterAdvertisement,
+  after: CharacterAdvertisement,
+): AvailabilityChange | null {
+  const kinds = Object.values(CharacterAvailability);
+  const isOn = (row: CharacterAdvertisement, kind: CharacterAvailability) =>
+    row[AVAILABILITY_COLUMN[kind]];
+  const added = kinds.filter((k) => isOn(after, k) && !isOn(before, k));
+  const removed = kinds.filter((k) => isOn(before, k) && !isOn(after, k));
+  const price = after.price?.toFixed(2) ?? null;
+  const priceChanged = (before.price?.toFixed(2) ?? null) !== price;
+
+  if (!added.length && !removed.length && !priceChanged) return null;
+  return { added, removed, priceChanged, price };
 }

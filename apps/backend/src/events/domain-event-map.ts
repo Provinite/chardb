@@ -1,3 +1,5 @@
+import type { AvailabilityChange } from "../characters/character-availability";
+
 /**
  * Every domain event, by name, with what it carries. A publisher announces
  * something that has already happened and committed; listeners react to it.
@@ -17,9 +19,21 @@ export interface DomainEventMap {
   "halloween.gifty.sent": HalloweenGiftySent;
   "halloween.candy_offer.placed": HalloweenCandyOfferPlaced;
   "halloween.candy.traded": HalloweenCandyTraded;
+  /** An edit changed a character's availability flags or price. */
+  "character.availability_changed": CharacterAvailabilityChanged;
 }
 
 export type DomainEventName = keyof DomainEventMap;
+
+/**
+ * Carries the change itself, not just the character, because the before
+ * state cannot be read back from the database afterwards.
+ */
+export interface CharacterAvailabilityChanged extends AvailabilityChange {
+  characterId: string;
+  /** Who made the edit: the owner, or staff. */
+  actorUserId: string;
+}
 
 export interface UserSignedIn {
   userId: string;

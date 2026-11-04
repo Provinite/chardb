@@ -15,6 +15,7 @@ import { DeviantArtModule } from "../deviantart/deviantart.module";
 import { AuthModule } from "../auth/auth.module";
 import { TraitReviewModule } from "../trait-review/trait-review.module";
 import { CharacterFormsModule } from "../character-forms/character-forms.module";
+import { EventsModule } from "../events/events.module";
 import { CharactersService } from "./characters.service";
 import { CharactersResolver } from "./characters.resolver";
 import { CharacterTraitValueResolver } from "./character-trait-value.resolver";
@@ -37,6 +38,7 @@ import { CharacterTraitValueResolver } from "./character-trait-value.resolver";
     AuthModule,
     TraitReviewModule,
     CharacterFormsModule,
+    EventsModule,
   ],
   providers: [
     CharactersService,

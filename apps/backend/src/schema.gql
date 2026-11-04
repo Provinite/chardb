@@ -161,6 +161,11 @@ type Character {
   traitReviewStatus: ModerationStatus
   updatedAt: DateTime!
   userHasLiked: Boolean!
+
+  """
+  Whether the signed-in member is watching this character. False when signed out.
+  """
+  viewerIsWatching: Boolean!
   visibility: Visibility!
 }
 
@@ -3462,6 +3467,9 @@ type Mutation {
   """Unlink an external account from the current user"""
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
 
+  """Stop being notified about this character."""
+  unwatchCharacter(characterId: ID!): Character!
+
   """Rename a folder, or change whether it is private."""
   updateCharacterFolder(input: UpdateCharacterFolderInput!): CharacterFolder!
 
@@ -3626,6 +3634,9 @@ type Mutation {
   Confirms an address from the link in a verification email. Following an already-redeemed link for an account that is confirmed succeeds.
   """
   verifyEmail(input: VerifyEmailInput!): Boolean!
+
+  """Be notified when this character's availability flags or price change."""
+  watchCharacter(characterId: ID!): Character!
 }
 
 """A form to add to a character"""
@@ -3655,6 +3666,12 @@ type Notification {
   """How much currency arrived."""
   amount: Int
 
+  """What a watched character's owner newly advertised it for."""
+  availabilityAdded: [CharacterAvailability!]
+
+  """What a watched character stopped being advertised for."""
+  availabilityRemoved: [CharacterAvailability!]
+
   """Free text, for the kinds that carry it."""
   body: String
 
@@ -3674,6 +3691,14 @@ type Notification {
   excerpt: String
   id: ID!
   kind: NotificationKind!
+
+  """
+  A watched character's asking price after the change, to two places. Null when it has none.
+  """
+  price: String
+
+  """Whether a watched character's asking price changed."""
+  priceChanged: Boolean
 
   """When the recipient opened this particular notification."""
   readAt: DateTime
@@ -3721,6 +3746,7 @@ type NotificationConnection {
 
 """What happened. Determines which of the snapshot fields below are set."""
 enum NotificationKind {
+  CHARACTER_AVAILABILITY_CHANGED
   COMMENT_RECEIVED
   CURRENCY_RECEIVED
   FOLLOW_RECEIVED

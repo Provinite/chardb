@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { ModerationRejectionReason, NotificationKind } from "@chardb/database";
+import { CharacterAvailability } from "../characters/character-availability";
 
 /**
  * The snapshot each kind of notification stores in `Notification.data`.
@@ -96,6 +97,16 @@ const payloadSchemas = {
   /** The actor knocked on the recipient's door and left them these candies. */
   [NotificationKind.HALLOWEEN_DOOR_KNOCKED]: z.object({
     candySlugs: z.array(z.string().max(40)).min(1).max(10),
+  }),
+
+  /** A watched character's advertisement moved. See `availabilityChange`. */
+  [NotificationKind.CHARACTER_AVAILABILITY_CHANGED]: z.object({
+    subjectName: z.string().max(200),
+    availabilityAdded: z.array(z.nativeEnum(CharacterAvailability)).max(6),
+    availabilityRemoved: z.array(z.nativeEnum(CharacterAvailability)).max(6),
+    priceChanged: z.boolean(),
+    /** The asking price afterwards, to two places; null when there is none. */
+    price: z.string().max(20).nullable(),
   }),
 } as const satisfies Record<NotificationKind, z.ZodObject<z.ZodRawShape>>;
 

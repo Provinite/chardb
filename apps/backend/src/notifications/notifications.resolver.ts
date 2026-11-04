@@ -41,6 +41,12 @@ function mapNotification(row: LoadedNotification): Notification {
     reasonText: data && "reasonText" in data ? data.reasonText : null,
     excerpt: data && "excerpt" in data ? data.excerpt : null,
     candySlugs: data && "candySlugs" in data ? data.candySlugs : null,
+    availabilityAdded:
+      data && "availabilityAdded" in data ? data.availabilityAdded : null,
+    availabilityRemoved:
+      data && "availabilityRemoved" in data ? data.availabilityRemoved : null,
+    priceChanged: data && "priceChanged" in data ? data.priceChanged : null,
+    price: data && "price" in data ? data.price : null,
   };
 }
 

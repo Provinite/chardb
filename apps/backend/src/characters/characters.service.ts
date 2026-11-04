@@ -36,9 +36,11 @@ import {
   CharacterRedemptionPendingError,
 } from "./characters.errors";
 import {
+  availabilityChange,
   availabilityWhere,
   CharacterAvailability,
 } from "./character-availability";
+import { DomainEvents } from "../events/domain-events";
 
 /**
  * Field classification for permission checks.
@@ -110,6 +112,7 @@ export class CharactersService {
     private readonly permissionService: PermissionService,
     private readonly traitReviewService: TraitReviewService,
     private readonly forms: CharacterFormsService,
+    private readonly events: DomainEvents,
   ) {}
 
   async create(
@@ -1089,6 +1092,18 @@ export class CharactersService {
       where: { id },
       data: characterData,
     });
+
+    // Announced here rather than at the end: nothing below is in a
+    // transaction with this write, so it has committed even if a later step
+    // throws.
+    const change = availabilityChange(character, updatedCharacter);
+    if (change) {
+      this.events.publish("character.availability_changed", {
+        characterId: id,
+        actorUserId: userId,
+        ...change,
+      });
+    }
 
     // Handle tags if provided
     if (tags !== undefined) {

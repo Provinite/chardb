@@ -33,6 +33,13 @@ export const NOTIFICATION_PREFERENCE_DEFAULTS = {
   [NotificationKind.HALLOWEEN_CANDY_TRADED]: { inApp: true, email: false },
   // Unused: shares HALLOWEEN_CANDY_TRADED's switch (`SHARED_SWITCHES`).
   [NotificationKind.HALLOWEEN_DOOR_KNOCKED]: { inApp: true, email: false },
+
+  // Only ever reaches someone who pressed Watch, so it is asked for by
+  // definition.
+  [NotificationKind.CHARACTER_AVAILABILITY_CHANGED]: {
+    inApp: true,
+    email: false,
+  },
 } as const satisfies Record<
   NotificationKind,
   { inApp: boolean; email: boolean }
