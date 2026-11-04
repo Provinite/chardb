@@ -66,7 +66,9 @@ describe("NotificationRow", () => {
 
     expect(
       screen
-        .getByRole("link", { name: /knocked on your door/ })
+        .getByRole("link", {
+          name: "Luther knocked on your door and left you a candy",
+        })
         .getAttribute("href"),
     ).toBe(communityUrl("willowmere", "/halloween/board"));
   });

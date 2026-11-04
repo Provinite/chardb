@@ -94,7 +94,13 @@ export const NotificationRow: React.FC<NotificationRowProps> = ({
             <strong className={styles.actorName}>{actorName}</strong>
           )}{" "}
           {href ? (
-            <HostAwareLink to={href} className={styles.subjectLink}>
+            <HostAwareLink
+              to={href}
+              className={styles.subjectLink}
+              // Read in a list of links, the sentence alone would not say whose
+              // knock or comment each one is.
+              aria-label={`${actorName} ${sentence}`}
+            >
               {sentence}
             </HostAwareLink>
           ) : (
