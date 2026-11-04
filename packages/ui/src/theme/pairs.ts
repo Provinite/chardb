@@ -88,6 +88,10 @@ export const pairs: Pair[] = [
     ),
     ...on("text.default", [`action.${a}.bgSubtle`], "body"),
   ]),
+  // An unread notification is tinted with the primary subtle shade; its
+  // timestamp and its focus ring sit on the tint.
+  ...on("text.muted", ["action.primary.bgSubtle"], "body"),
+  ...on("border.focus", ["action.primary.bgSubtle"], "nonText"),
 
   ...statuses.flatMap((s) => [
     ...on(`status.${s}.fg`, ["surface.page", `status.${s}.bgSubtle`], "body"),

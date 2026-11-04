@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Colour pairs**: `text.muted` and `border.focus` on `action.primary.bgSubtle`.
 - **`Select`**: a select-only combobox whose options can show more than text, such as a colour swatch.
 
 ## [v15.4.0] - 2026-11-01

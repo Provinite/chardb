@@ -4,8 +4,9 @@ import {
   NotificationSubjectType,
   type NotificationFieldsFragment,
 } from "../../../graphql/notifications.graphql";
-import { communityUrl } from "../../../lib/communityHost";
+import { apexUrl, communityUrl } from "../../../lib/communityHost";
 import {
+  notificationActorHref,
   notificationHref,
   notificationSentence,
 } from "../notification-display";
@@ -74,5 +75,49 @@ describe("a door knock notification", () => {
       communityUrl("willowmere", "/halloween/board"),
     );
     expect(notificationHref(doorKnock({ community: null }))).toBeNull();
+  });
+});
+
+const knocker: NotificationFieldsFragment["actor"] = {
+  id: "u2",
+  username: "luther",
+  displayName: "Luther",
+  avatarImage: null,
+};
+
+describe("the actor link", () => {
+  it("goes to a knocker's door, on their member page in the community", () => {
+    expect(notificationActorHref(doorKnock({ actor: knocker }))).toBe(
+      communityUrl("willowmere", "/members/luther"),
+    );
+  });
+
+  it("goes to a trader's member page in the community", () => {
+    expect(notificationActorHref(candyTrade({ actor: knocker }))).toBe(
+      communityUrl("willowmere", "/members/luther"),
+    );
+  });
+
+  it("goes to the actor's profile everywhere else", () => {
+    const follow = {
+      kind: NotificationKind.FollowReceived,
+      subjectType: NotificationSubjectType.User,
+      subjectId: "u2",
+      community: null,
+      actor: knocker,
+    } as NotificationFieldsFragment;
+    expect(notificationActorHref(follow)).toBe(apexUrl("/user/luther"));
+  });
+
+  it("goes to the profile when a Halloween notification's community is gone", () => {
+    expect(
+      notificationActorHref(doorKnock({ actor: knocker, community: null })),
+    ).toBe(apexUrl("/user/luther"));
+  });
+
+  it("is absent when no user caused it", () => {
+    expect(
+      notificationActorHref(candyTrade({ actor: null, actorLabel: "Host" })),
+    ).toBeNull();
   });
 });
