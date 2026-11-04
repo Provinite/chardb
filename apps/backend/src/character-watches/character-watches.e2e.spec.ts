@@ -12,12 +12,12 @@ import { CharacterWatchesModule } from "./character-watches.module";
 
 const WATCH = `
   mutation Watch($characterId: ID!) {
-    watchCharacter(characterId: $characterId) { id viewerIsWatching }
+    watchCharacter(characterId: $characterId)
   }
 `;
 const UNWATCH = `
   mutation Unwatch($characterId: ID!) {
-    unwatchCharacter(characterId: $characterId) { id viewerIsWatching }
+    unwatchCharacter(characterId: $characterId)
   }
 `;
 const IS_WATCHING = `
@@ -105,7 +105,7 @@ describe("Character watches (e2e)", () => {
   it("watches and unwatches, and says which it is", async () => {
     const watched = await watch(watcherToken);
     expect(watched.body.errors).toBeUndefined();
-    expect(watched.body.data.watchCharacter.viewerIsWatching).toBe(true);
+    expect(watched.body.data.watchCharacter).toBe(true);
 
     // Watching twice is not an error.
     const again = await watch(watcherToken);
@@ -120,7 +120,7 @@ describe("Character watches (e2e)", () => {
 
     const unwatched = await watch(watcherToken, UNWATCH);
     expect(unwatched.body.errors).toBeUndefined();
-    expect(unwatched.body.data.unwatchCharacter.viewerIsWatching).toBe(false);
+    expect(unwatched.body.data.unwatchCharacter).toBe(false);
   });
 
   it("answers false, not an error, for someone signed out", async () => {
@@ -139,6 +139,19 @@ describe("Character watches (e2e)", () => {
 
     const response = await watch(watcherToken);
     expect(response.body.errors).toBeDefined();
+    expect(await testApp.getDb().characterWatch.count()).toBe(0);
+  });
+
+  it("lets go of a character that has since gone private", async () => {
+    await watch(watcherToken);
+    await testApp.getDb().character.update({
+      where: { id: characterId },
+      data: { visibility: Visibility.PRIVATE },
+    });
+
+    const response = await watch(watcherToken, UNWATCH);
+    expect(response.body.errors).toBeUndefined();
+    expect(response.body.data.unwatchCharacter).toBe(false);
     expect(await testApp.getDb().characterWatch.count()).toBe(0);
   });
 

@@ -215,6 +215,17 @@ describe("a watched character's availability notification", () => {
     ).toBe("removed Moonbeam's price");
   });
 
+  it("does not invent a price change for a kind this build has not heard of", () => {
+    expect(
+      notificationSentence(
+        availability({
+          availabilityAdded: ["SOMETHING_NEW" as CharacterAvailability],
+          price: "25.00",
+        }),
+      ),
+    ).toBe("changed what Moonbeam is open to");
+  });
+
   it("goes to the character", () => {
     expect(notificationHref(availability())).toBe(apexUrl("/character/char-1"));
   });

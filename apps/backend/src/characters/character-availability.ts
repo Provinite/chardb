@@ -92,6 +92,7 @@ export interface AvailabilityChange {
   added: CharacterAvailability[];
   /** Kinds the owner stopped being open to. */
   removed: CharacterAvailability[];
+  /** Only while the character is for sale afterwards. */
   priceChanged: boolean;
   /** The asking price afterwards, to two places. Null when there is none. */
   price: string | null;
@@ -112,7 +113,10 @@ export function availabilityChange(
   const added = kinds.filter((k) => isOn(after, k) && !isOn(before, k));
   const removed = kinds.filter((k) => isOn(before, k) && !isOn(after, k));
   const price = after.price?.toFixed(2) ?? null;
-  const priceChanged = (before.price?.toFixed(2) ?? null) !== price;
+  // The price is only shown on a character for sale, so a change to it while
+  // the character is not for sale tells a watcher nothing.
+  const priceChanged =
+    after.isSellable && (before.price?.toFixed(2) ?? null) !== price;
 
   if (!added.length && !removed.length && !priceChanged) return null;
   return { added, removed, priceChanged, price };

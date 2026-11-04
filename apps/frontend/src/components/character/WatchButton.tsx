@@ -1,3 +1,4 @@
+import type { ApolloCache } from "@apollo/client";
 import toast from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import {
@@ -22,15 +23,20 @@ export function WatchButton({ characterId, ownerId }: WatchButtonProps) {
     skip: hidden,
   });
   const watching = data?.character?.viewerIsWatching ?? false;
-  const optimistic = (next: boolean) => ({
-    __typename: "Character" as const,
-    id: characterId,
-    viewerIsWatching: next,
-  });
+
+  /** The mutations answer with a bare boolean; this puts it on the character. */
+  const store = (cache: ApolloCache<unknown>, next: boolean | undefined) => {
+    if (next === undefined) return;
+    cache.modify({
+      id: cache.identify({ __typename: "Character", id: characterId }),
+      fields: { viewerIsWatching: () => next },
+    });
+  };
 
   const [watch, { loading: watchBusy }] = useWatchCharacterMutation({
     variables: { characterId },
-    optimisticResponse: { watchCharacter: optimistic(true) },
+    optimisticResponse: { watchCharacter: true },
+    update: (cache, { data }) => store(cache, data?.watchCharacter),
     onCompleted: () =>
       toast.success(
         "Watching. You'll be notified when its availability changes.",
@@ -39,7 +45,8 @@ export function WatchButton({ characterId, ownerId }: WatchButtonProps) {
   });
   const [unwatch, { loading: unwatchBusy }] = useUnwatchCharacterMutation({
     variables: { characterId },
-    optimisticResponse: { unwatchCharacter: optimistic(false) },
+    optimisticResponse: { unwatchCharacter: false },
+    update: (cache, { data }) => store(cache, data?.unwatchCharacter),
     onError: () => toast.error("Couldn't stop watching this character."),
   });
 

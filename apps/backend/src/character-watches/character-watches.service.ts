@@ -26,23 +26,22 @@ export class CharacterWatchesService {
    * Starts watching. Idempotent. Refuses a character the member cannot see,
    * through the same check the character page uses.
    */
-  async watch(userId: string, characterId: string) {
-    const character = await this.characters.findOne(characterId, userId);
+  async watch(userId: string, characterId: string): Promise<void> {
+    await this.characters.findOne(characterId, userId);
     await this.db.characterWatch.upsert({
       where: { userId_characterId: { userId, characterId } },
       create: { userId, characterId },
       update: {},
     });
-    return character;
   }
 
   /**
-   * Stops watching. Idempotent. The watch is removed before the visibility
-   * check, so a character that has since gone private can still be let go of.
+   * Stops watching. Idempotent. No visibility check, so a character that has
+   * since gone private or been deleted can still be let go of; it touches
+   * only the caller's own row and says nothing about the character.
    */
-  async unwatch(userId: string, characterId: string) {
+  async unwatch(userId: string, characterId: string): Promise<void> {
     await this.db.characterWatch.deleteMany({ where: { userId, characterId } });
-    return this.characters.findOne(characterId, userId);
   }
 
   async isWatching(userId: string, characterId: string): Promise<boolean> {

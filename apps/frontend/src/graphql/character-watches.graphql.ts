@@ -1,9 +1,5 @@
 import { gql } from "@apollo/client";
 
-/**
- * Both mutations answer with the character, so Apollo updates
- * `viewerIsWatching` in the cache without a refetch.
- */
 export const CHARACTER_WATCH_STATUS = gql`
   query CharacterWatchStatus($id: ID!) {
     character(id: $id) {
@@ -13,21 +9,20 @@ export const CHARACTER_WATCH_STATUS = gql`
   }
 `;
 
+/**
+ * Both answer with the new `viewerIsWatching` rather than the character, so
+ * unwatching works on a character the caller can no longer see. The caller
+ * writes the answer into the cache.
+ */
 export const WATCH_CHARACTER = gql`
   mutation WatchCharacter($characterId: ID!) {
-    watchCharacter(characterId: $characterId) {
-      id
-      viewerIsWatching
-    }
+    watchCharacter(characterId: $characterId)
   }
 `;
 
 export const UNWATCH_CHARACTER = gql`
   mutation UnwatchCharacter($characterId: ID!) {
-    unwatchCharacter(characterId: $characterId) {
-      id
-      viewerIsWatching
-    }
+    unwatchCharacter(characterId: $characterId)
   }
 `;
 

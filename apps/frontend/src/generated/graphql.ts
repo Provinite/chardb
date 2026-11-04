@@ -2550,8 +2550,8 @@ export type Mutation = {
   unlinkDiscordGuild: Community;
   /** Unlink an external account from the current user */
   unlinkExternalAccount: Scalars['Boolean']['output'];
-  /** Stop being notified about this character. */
-  unwatchCharacter: Character;
+  /** Stop being notified about this character, even one you can no longer see. Answers false, the new value of viewerIsWatching. */
+  unwatchCharacter: Scalars['Boolean']['output'];
   /** Rename a folder, or change whether it is private. */
   updateCharacterFolder: CharacterFolder;
   /** Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission. */
@@ -2604,8 +2604,8 @@ export type Mutation = {
   useItem: UseItemResult;
   /** Confirms an address from the link in a verification email. Following an already-redeemed link for an account that is confirmed succeeds. */
   verifyEmail: Scalars['Boolean']['output'];
-  /** Be notified when this character's availability flags or price change. */
-  watchCharacter: Character;
+  /** Be notified when this character's availability flags or price change. Answers true, the new value of viewerIsWatching. */
+  watchCharacter: Scalars['Boolean']['output'];
 };
 
 
@@ -5919,14 +5919,14 @@ export type WatchCharacterMutationVariables = Exact<{
 }>;
 
 
-export type WatchCharacterMutation = { __typename?: 'Mutation', watchCharacter: { __typename?: 'Character', id: string, viewerIsWatching: boolean } };
+export type WatchCharacterMutation = { __typename?: 'Mutation', watchCharacter: boolean };
 
 export type UnwatchCharacterMutationVariables = Exact<{
   characterId: Scalars['ID']['input'];
 }>;
 
 
-export type UnwatchCharacterMutation = { __typename?: 'Mutation', unwatchCharacter: { __typename?: 'Character', id: string, viewerIsWatching: boolean } };
+export type UnwatchCharacterMutation = { __typename?: 'Mutation', unwatchCharacter: boolean };
 
 export type CharacterCardFieldsFragment = { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } };
 
@@ -9799,10 +9799,7 @@ export type CharacterWatchStatusSuspenseQueryHookResult = ReturnType<typeof useC
 export type CharacterWatchStatusQueryResult = Apollo.QueryResult<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>;
 export const WatchCharacterDocument = gql`
     mutation WatchCharacter($characterId: ID!) {
-  watchCharacter(characterId: $characterId) {
-    id
-    viewerIsWatching
-  }
+  watchCharacter(characterId: $characterId)
 }
     `;
 export type WatchCharacterMutationFn = Apollo.MutationFunction<WatchCharacterMutation, WatchCharacterMutationVariables>;
@@ -9833,10 +9830,7 @@ export type WatchCharacterMutationResult = Apollo.MutationResult<WatchCharacterM
 export type WatchCharacterMutationOptions = Apollo.BaseMutationOptions<WatchCharacterMutation, WatchCharacterMutationVariables>;
 export const UnwatchCharacterDocument = gql`
     mutation UnwatchCharacter($characterId: ID!) {
-  unwatchCharacter(characterId: $characterId) {
-    id
-    viewerIsWatching
-  }
+  unwatchCharacter(characterId: $characterId)
 }
     `;
 export type UnwatchCharacterMutationFn = Apollo.MutationFunction<UnwatchCharacterMutation, UnwatchCharacterMutationVariables>;

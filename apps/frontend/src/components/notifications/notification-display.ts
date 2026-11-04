@@ -200,6 +200,7 @@ function availabilitySentence(
   const now = phrases(added, true);
   const noLonger = phrases(removed, false);
   if (!now.length && !noLonger.length) {
+    if (!priceChanged) return `changed what ${name} is open to`;
     return priceText
       ? `changed ${name}'s price to ${priceText}`
       : `removed ${name}'s price`;

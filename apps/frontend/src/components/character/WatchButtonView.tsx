@@ -23,7 +23,7 @@ export function WatchButtonView({
 
   return (
     <Button
-      size="sm"
+      size="md"
       tone={watching ? "secondary" : "outline"}
       icon={<Eye aria-hidden />}
       onClick={onToggle}

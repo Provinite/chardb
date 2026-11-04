@@ -7,7 +7,6 @@ import {
   Resolver,
 } from "@nestjs/graphql";
 import { Character } from "../characters/entities/character.entity";
-import { mapPrismaCharacterToGraphQL } from "../characters/utils/character-resolver-mappers";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
@@ -22,28 +21,31 @@ export class CharacterWatchesResolver {
   constructor(private readonly watches: CharacterWatchesService) {}
 
   @AllowAnyAuthenticated()
-  @Mutation(() => Character, {
+  @Mutation(() => Boolean, {
     description:
-      "Be notified when this character's availability flags or price change.",
+      "Be notified when this character's availability flags or price change. " +
+      "Answers true, the new value of viewerIsWatching.",
   })
   async watchCharacter(
     @Args("characterId", { type: () => ID }) characterId: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<Character> {
-    const character = await this.watches.watch(user.id, characterId);
-    return mapPrismaCharacterToGraphQL(character);
+  ): Promise<boolean> {
+    await this.watches.watch(user.id, characterId);
+    return true;
   }
 
   @AllowAnyAuthenticated()
-  @Mutation(() => Character, {
-    description: "Stop being notified about this character.",
+  @Mutation(() => Boolean, {
+    description:
+      "Stop being notified about this character, even one you can no " +
+      "longer see. Answers false, the new value of viewerIsWatching.",
   })
   async unwatchCharacter(
     @Args("characterId", { type: () => ID }) characterId: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
-  ): Promise<Character> {
-    const character = await this.watches.unwatch(user.id, characterId);
-    return mapPrismaCharacterToGraphQL(character);
+  ): Promise<boolean> {
+    await this.watches.unwatch(user.id, characterId);
+    return false;
   }
 
   @AllowUnauthenticated()

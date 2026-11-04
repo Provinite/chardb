@@ -3467,8 +3467,10 @@ type Mutation {
   """Unlink an external account from the current user"""
   unlinkExternalAccount(input: UnlinkExternalAccountInput!): Boolean!
 
-  """Stop being notified about this character."""
-  unwatchCharacter(characterId: ID!): Character!
+  """
+  Stop being notified about this character, even one you can no longer see. Answers false, the new value of viewerIsWatching.
+  """
+  unwatchCharacter(characterId: ID!): Boolean!
 
   """Rename a folder, or change whether it is private."""
   updateCharacterFolder(input: UpdateCharacterFolderInput!): CharacterFolder!
@@ -3635,8 +3637,10 @@ type Mutation {
   """
   verifyEmail(input: VerifyEmailInput!): Boolean!
 
-  """Be notified when this character's availability flags or price change."""
-  watchCharacter(characterId: ID!): Character!
+  """
+  Be notified when this character's availability flags or price change. Answers true, the new value of viewerIsWatching.
+  """
+  watchCharacter(characterId: ID!): Boolean!
 }
 
 """A form to add to a character"""

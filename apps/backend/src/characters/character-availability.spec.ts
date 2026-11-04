@@ -55,10 +55,38 @@ describe("availabilityChange", () => {
     expect(availabilityChange(before, after)).toBeNull();
   });
 
-  it("reports a cleared price as null", () => {
-    const before = { ...closed, price: new Prisma.Decimal("5") };
+  it("ignores a price on a character not for sale, where it is not shown", () => {
+    const before = { ...closed, price: new Prisma.Decimal("10") };
+    const after = { ...closed, price: new Prisma.Decimal("40") };
 
-    expect(availabilityChange(before, closed)).toEqual({
+    expect(availabilityChange(before, after)).toBeNull();
+  });
+
+  it("does not call a price new when the sale itself ended", () => {
+    const before = {
+      ...closed,
+      isSellable: true,
+      price: new Prisma.Decimal("20"),
+    };
+    const after = { ...closed, price: new Prisma.Decimal("30") };
+
+    expect(availabilityChange(before, after)).toEqual({
+      added: [],
+      removed: [CharacterAvailability.FOR_SALE],
+      priceChanged: false,
+      price: "30.00",
+    });
+  });
+
+  it("reports a cleared price as null", () => {
+    const before = {
+      ...closed,
+      isSellable: true,
+      price: new Prisma.Decimal("5"),
+    };
+    const after = { ...closed, isSellable: true };
+
+    expect(availabilityChange(before, after)).toEqual({
       added: [],
       removed: [],
       priceChanged: true,
