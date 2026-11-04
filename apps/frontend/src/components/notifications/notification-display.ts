@@ -88,11 +88,13 @@ export function notificationHref(
 export function notificationActorHref(
   notification: NotificationFieldsFragment,
 ): string | null {
-  const { kind, actor, community } = notification;
+  const { subjectType, actor, community } = notification;
   if (!actor) return null;
+  // By subject, as `notificationHref` routes them, so the two links agree on
+  // which notifications belong to the event.
   const halloween =
-    kind === NotificationKind.HalloweenDoorKnocked ||
-    kind === NotificationKind.HalloweenCandyTraded;
+    subjectType === NotificationSubjectType.HalloweenDoorKnock ||
+    subjectType === NotificationSubjectType.HalloweenCandyTrade;
   return halloween && community
     ? communityUrl(community.slug, `/members/${actor.username}`)
     : apexUrl(`/user/${actor.username}`);

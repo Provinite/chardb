@@ -5,6 +5,9 @@ import { focusRing, hover, vars } from "@chardb/ui/theme";
 export const row = recipe({
   base: {
     position: "relative",
+    // Keeps the actor links' z-index step inside the row, so they cannot rise
+    // above the bell's panel when it opens over the notifications page.
+    isolation: "isolate",
     display: "flex",
     alignItems: "flex-start",
     gap: vars.space.md,
@@ -76,22 +79,23 @@ export const avatarLink = style([
   },
 ]);
 
+/** The actor's name, linked or not. */
+export const actorName = style({
+  fontWeight: vars.font.weight.semibold,
+});
+
 export const actorLink = style([
+  actorName,
   aboveSubjectLink,
   focusRing,
   {
     color: "inherit",
-    fontWeight: vars.font.weight.semibold,
     textDecoration: "none",
     "@media": hover({
       "&:hover": { textDecoration: "underline" },
     }),
   },
 ]);
-
-export const actorName = style({
-  fontWeight: vars.font.weight.semibold,
-});
 
 export const body = style({
   minWidth: 0,
