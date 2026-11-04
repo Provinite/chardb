@@ -5,13 +5,11 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { Plus, Trash2, Palette, Database, Settings } from "lucide-react";
 import {
   Button,
+  ButtonLink,
+  Cluster,
   Modal,
   Input,
   ErrorMessage,
-  Card,
-  CardHeader,
-  CardMeta,
-  CardActions,
   Title,
   Subtitle,
 } from "@chardb/ui";
@@ -20,9 +18,11 @@ import {
   useSpeciesVariantsBySpeciesQuery,
   useCreateSpeciesVariantMutation,
   useDeleteSpeciesVariantMutation,
+  useReorderSpeciesVariantsMutation,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
 import { ColorPip } from "../components/colors";
+import { SortableList } from "../components/reorder/SortableList";
 import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
 
 /**
@@ -78,24 +78,20 @@ const HeaderRight = styled.div`
   gap: 1rem;
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 1.5rem;
+const ListSection = styled.section`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
   margin-top: 2rem;
 `;
 
 const VariantName = styled.h3`
-  font-size: 1.25rem;
+  font-size: 1.125rem;
   font-weight: 600;
   color: ${({ theme }) => theme.colors.text.primary};
   margin: 0;
   line-height: 1.2;
-`;
-
-const ActionButton = styled(Button)`
-  flex: 1;
-  min-width: auto;
+  overflow-wrap: anywhere;
 `;
 
 const EmptyState = styled.div`
@@ -224,7 +220,18 @@ export const SpeciesVariantManagementPage: React.FC = () => {
     skip: !speciesId,
   });
 
-  const variants = variantsData?.speciesVariantsBySpecies?.nodes || [];
+  // Sorted here as well as on the server, so a reorder shows the moment the
+  // cache takes the new positions, before any refetch.
+  const variants = [...(variantsData?.speciesVariantsBySpecies?.nodes ?? [])].sort(
+    (a, b) => a.sortOrder - b.sortOrder,
+  );
+
+  const [reorderVariantsMutation] = useReorderSpeciesVariantsMutation({
+    onError: (error) => {
+      toast.error(`Failed to reorder variants: ${error.message}`);
+      void refetch();
+    },
+  });
 
   const [createVariantMutation] = useCreateSpeciesVariantMutation({
     onCompleted: (data) => {
@@ -282,8 +289,17 @@ export const SpeciesVariantManagementPage: React.FC = () => {
     });
   };
 
-  const handleManageVariant = (variant: (typeof variants)[0]) => {
-    navigate(`/variants/${variant.id}/manage`);
+  const handleReorder = (variantIds: string[]) => {
+    void reorderVariantsMutation({
+      variables: { input: { speciesId, variantIds } },
+      optimisticResponse: {
+        reorderSpeciesVariants: variantIds.map((id, sortOrder) => ({
+          __typename: "SpeciesVariant" as const,
+          id,
+          sortOrder,
+        })),
+      },
+    });
   };
 
   // Loading states
@@ -373,57 +389,52 @@ export const SpeciesVariantManagementPage: React.FC = () => {
           )}
         </EmptyState>
       ) : (
-        <Grid>
-          {variants.map((variant) => (
-            <Card key={variant.id}>
-              <CardHeader>
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.5rem",
-                  }}
-                >
-                  <VariantName>{variant.name}</VariantName>
+        <ListSection>
+          {canEdit && (
+            <Subtitle>
+              Variants appear in this order everywhere, including character
+              creation.
+            </Subtitle>
+          )}
+          <SortableList
+            aria-label={`${species.name} variants`}
+            items={variants}
+            getId={(variant) => variant.id}
+            getName={(variant) => variant.name}
+            onReorder={handleReorder}
+            editable={canEdit}
+          >
+            {(variant) => (
+              <Cluster justify="space-between" gap="sm">
+                <Cluster gap="sm">
                   {variant.color && (
-                    <ColorPip color={variant.color.hexCode} size="sm" />
+                    <ColorPip color={variant.color.hexCode} size="md" />
                   )}
-                </div>
-              </CardHeader>
-
-              <CardMeta>
-                <p>
-                  Created: {new Date(variant.createdAt).toLocaleDateString()}
-                </p>
-                <p>
-                  Last updated:{" "}
-                  {new Date(variant.updatedAt).toLocaleDateString()}
-                </p>
-              </CardMeta>
-
-              <CardActions>
-                <ActionButton
-                  tone="primary"
-                  size="sm"
-                  onClick={() => handleManageVariant(variant)}
-                  icon={<Settings size={14} />}
-                >
-                  Manage
-                </ActionButton>
-                {canEdit && (
-                  <ActionButton
-                    tone="danger"
+                  <VariantName>{variant.name}</VariantName>
+                </Cluster>
+                <Cluster gap="sm">
+                  <ButtonLink
+                    tone="primary"
                     size="sm"
-                    onClick={() => handleDeleteVariant(variant)}
-                    icon={<Trash2 size={14} />}
+                    icon={<Settings size={14} aria-hidden />}
                   >
-                    Delete
-                  </ActionButton>
-                )}
-              </CardActions>
-            </Card>
-          ))}
-        </Grid>
+                    <Link to={`/variants/${variant.id}/manage`}>Manage</Link>
+                  </ButtonLink>
+                  {canEdit && (
+                    <Button
+                      tone="danger"
+                      size="sm"
+                      onClick={() => handleDeleteVariant(variant)}
+                      icon={<Trash2 size={14} aria-hidden />}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Cluster>
+              </Cluster>
+            )}
+          </SortableList>
+        </ListSection>
       )}
 
       {/* Create Variant Modal */}

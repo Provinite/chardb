@@ -215,6 +215,7 @@ export const GET_CHARACTER = gql`
         speciesId
         colorId
         maxForms
+        sortOrder
         createdAt
         updatedAt
         color {

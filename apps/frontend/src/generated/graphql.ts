@@ -633,7 +633,7 @@ export type CreateEnumValueInput = {
   colorId?: InputMaybe<Scalars['ID']['input']>;
   /** Name/display text of this enum value */
   name: Scalars['String']['input'];
-  /** Display order within the trait's enum values */
+  /** Display order within the trait's enum values. Left out, the value goes after the trait's existing ones. */
   order?: InputMaybe<Scalars['Int']['input']>;
   /** ID of the trait this enum value belongs to */
   traitId: Scalars['ID']['input'];
@@ -2496,7 +2496,11 @@ export type Mutation = {
   removeTrait: RemovalResponse;
   /** Remove a trait list entry */
   removeTraitListEntry: RemovalResponse;
+  /** Arrange a trait's values. Lists every value of the trait, in its new order. */
+  reorderEnumValues: Array<EnumValue>;
   reorderGalleries: Array<Gallery>;
+  /** Arrange a species' variants. Lists every variant of the species, in its new order. */
+  reorderSpeciesVariants: Array<SpeciesVariant>;
   /** Sends another verification email. Always returns true, whatever the address is or is not, so this cannot be used to discover who has an account. Subject to a per-address lifetime cap. */
   resendVerificationEmail: Scalars['Boolean']['output'];
   resetPassword: Scalars['Boolean']['output'];
@@ -3045,8 +3049,18 @@ export type MutationRemoveTraitListEntryArgs = {
 };
 
 
+export type MutationReorderEnumValuesArgs = {
+  input: ReorderEnumValuesInput;
+};
+
+
 export type MutationReorderGalleriesArgs = {
   input: ReorderGalleriesInput;
+};
+
+
+export type MutationReorderSpeciesVariantsArgs = {
+  input: ReorderSpeciesVariantsInput;
 };
 
 
@@ -4555,8 +4569,22 @@ export type RemovalResponse = {
   removed: Scalars['Boolean']['output'];
 };
 
+export type ReorderEnumValuesInput = {
+  /** Every one of the trait's values, in their new order */
+  enumValueIds: Array<Scalars['ID']['input']>;
+  /** The trait whose values are being arranged */
+  traitId: Scalars['ID']['input'];
+};
+
 export type ReorderGalleriesInput = {
   galleryIds: Array<Scalars['ID']['input']>;
+};
+
+export type ReorderSpeciesVariantsInput = {
+  /** The species whose variants are being arranged */
+  speciesId: Scalars['ID']['input'];
+  /** Every one of the species' variants, in their new order */
+  variantIds: Array<Scalars['ID']['input']>;
 };
 
 /** Something the proposer asks for. Give itemTypeId and quantity for the usual case -- any rows of that type will do, and the recipient chooses which when they accept. Give itemId only when one particular item's history is the point. */
@@ -4872,6 +4900,8 @@ export type SpeciesVariant = {
   maxForms: Scalars['Int']['output'];
   /** Name of the species variant */
   name: Scalars['String']['output'];
+  /** Position among its species' variants, from 0. Lists of variants read in this order. */
+  sortOrder: Scalars['Int']['output'];
   /** The species this variant belongs to */
   species: Species;
   /** ID of the species this variant belongs to */
@@ -5876,7 +5906,7 @@ export type GetCharacterQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, pendingTraitReviewSource: TraitReviewSource | null, traitReviewStatus: ModerationStatus | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, forms: Array<{ __typename?: 'CharacterForm', id: string, name: string, sortOrder: number, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, mediumUrl: string | null, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, pendingTraitReviewSource: TraitReviewSource | null, traitReviewStatus: ModerationStatus | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, forms: Array<{ __typename?: 'CharacterForm', id: string, name: string, sortOrder: number, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, mediumUrl: string | null, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -6405,6 +6435,13 @@ export type UpdateEnumValueMutationVariables = Exact<{
 
 
 export type UpdateEnumValueMutation = { __typename?: 'Mutation', updateEnumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, colorId: string | null, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+
+export type ReorderEnumValuesMutationVariables = Exact<{
+  input: ReorderEnumValuesInput;
+}>;
+
+
+export type ReorderEnumValuesMutation = { __typename?: 'Mutation', reorderEnumValues: Array<{ __typename?: 'EnumValue', id: string, order: number }> };
 
 export type DeleteEnumValueMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -6961,7 +6998,7 @@ export type GetMyoTicketQueryVariables = Exact<{
 }>;
 
 
-export type GetMyoTicketQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, acquiredAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } | null } } };
+export type GetMyoTicketQuery = { __typename?: 'Query', item: { __typename?: 'Item', id: string, ownerId: string | null, destroyedAt: string | null, acquiredAt: string | null, itemType: { __typename?: 'ItemType', id: string, name: string, communityId: string, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } | null } } };
 
 export type CreateCharacterFromMyoTicketMutationVariables = Exact<{
   input: RedeemMyoTicketInput;
@@ -7427,9 +7464,9 @@ export type DeleteSpeciesMutationVariables = Exact<{
 
 export type DeleteSpeciesMutation = { __typename?: 'Mutation', removeSpecies: { __typename?: 'RemovalResponse', removed: boolean, message: string | null } };
 
-export type SpeciesVariantDetailsFragment = { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
+export type SpeciesVariantDetailsFragment = { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null };
 
-export type SpeciesVariantConnectionDetailsFragment = { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> };
+export type SpeciesVariantConnectionDetailsFragment = { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> };
 
 export type SpeciesVariantsQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -7437,7 +7474,7 @@ export type SpeciesVariantsQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesVariantsQuery = { __typename?: 'Query', speciesVariants: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
+export type SpeciesVariantsQuery = { __typename?: 'Query', speciesVariants: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type SpeciesVariantsBySpeciesQueryVariables = Exact<{
   speciesId: Scalars['ID']['input'];
@@ -7446,21 +7483,21 @@ export type SpeciesVariantsBySpeciesQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesVariantsBySpeciesQuery = { __typename?: 'Query', speciesVariantsBySpecies: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
+export type SpeciesVariantsBySpeciesQuery = { __typename?: 'Query', speciesVariantsBySpecies: { __typename?: 'SpeciesVariantConnection', hasNextPage: boolean, hasPreviousPage: boolean, totalCount: number, nodes: Array<{ __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null }> } };
 
 export type SpeciesVariantByIdQueryVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type SpeciesVariantByIdQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } }, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type CreateSpeciesVariantMutationVariables = Exact<{
   createSpeciesVariantInput: CreateSpeciesVariantInput;
 }>;
 
 
-export type CreateSpeciesVariantMutation = { __typename?: 'Mutation', createSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type CreateSpeciesVariantMutation = { __typename?: 'Mutation', createSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
 
 export type UpdateSpeciesVariantMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -7468,7 +7505,14 @@ export type UpdateSpeciesVariantMutationVariables = Exact<{
 }>;
 
 
-export type UpdateSpeciesVariantMutation = { __typename?: 'Mutation', updateSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+export type UpdateSpeciesVariantMutation = { __typename?: 'Mutation', updateSpeciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } };
+
+export type ReorderSpeciesVariantsMutationVariables = Exact<{
+  input: ReorderSpeciesVariantsInput;
+}>;
+
+
+export type ReorderSpeciesVariantsMutation = { __typename?: 'Mutation', reorderSpeciesVariants: Array<{ __typename?: 'SpeciesVariant', id: string, sortOrder: number }> };
 
 export type DeleteSpeciesVariantMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -8533,6 +8577,7 @@ export const SpeciesVariantDetailsFragmentDoc = gql`
   speciesId
   colorId
   maxForms
+  sortOrder
   color {
     id
     name
@@ -9827,6 +9872,7 @@ export const GetCharacterDocument = gql`
       speciesId
       colorId
       maxForms
+      sortOrder
       createdAt
       updatedAt
       color {
@@ -12983,6 +13029,40 @@ export function useUpdateEnumValueMutation(baseOptions?: Apollo.MutationHookOpti
 export type UpdateEnumValueMutationHookResult = ReturnType<typeof useUpdateEnumValueMutation>;
 export type UpdateEnumValueMutationResult = Apollo.MutationResult<UpdateEnumValueMutation>;
 export type UpdateEnumValueMutationOptions = Apollo.BaseMutationOptions<UpdateEnumValueMutation, UpdateEnumValueMutationVariables>;
+export const ReorderEnumValuesDocument = gql`
+    mutation ReorderEnumValues($input: ReorderEnumValuesInput!) {
+  reorderEnumValues(input: $input) {
+    id
+    order
+  }
+}
+    `;
+export type ReorderEnumValuesMutationFn = Apollo.MutationFunction<ReorderEnumValuesMutation, ReorderEnumValuesMutationVariables>;
+
+/**
+ * __useReorderEnumValuesMutation__
+ *
+ * To run a mutation, you first call `useReorderEnumValuesMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReorderEnumValuesMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [reorderEnumValuesMutation, { data, loading, error }] = useReorderEnumValuesMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useReorderEnumValuesMutation(baseOptions?: Apollo.MutationHookOptions<ReorderEnumValuesMutation, ReorderEnumValuesMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ReorderEnumValuesMutation, ReorderEnumValuesMutationVariables>(ReorderEnumValuesDocument, options);
+      }
+export type ReorderEnumValuesMutationHookResult = ReturnType<typeof useReorderEnumValuesMutation>;
+export type ReorderEnumValuesMutationResult = Apollo.MutationResult<ReorderEnumValuesMutation>;
+export type ReorderEnumValuesMutationOptions = Apollo.BaseMutationOptions<ReorderEnumValuesMutation, ReorderEnumValuesMutationVariables>;
 export const DeleteEnumValueDocument = gql`
     mutation DeleteEnumValue($id: ID!) {
   removeEnumValue(id: $id) {
@@ -19644,6 +19724,40 @@ export function useUpdateSpeciesVariantMutation(baseOptions?: Apollo.MutationHoo
 export type UpdateSpeciesVariantMutationHookResult = ReturnType<typeof useUpdateSpeciesVariantMutation>;
 export type UpdateSpeciesVariantMutationResult = Apollo.MutationResult<UpdateSpeciesVariantMutation>;
 export type UpdateSpeciesVariantMutationOptions = Apollo.BaseMutationOptions<UpdateSpeciesVariantMutation, UpdateSpeciesVariantMutationVariables>;
+export const ReorderSpeciesVariantsDocument = gql`
+    mutation ReorderSpeciesVariants($input: ReorderSpeciesVariantsInput!) {
+  reorderSpeciesVariants(input: $input) {
+    id
+    sortOrder
+  }
+}
+    `;
+export type ReorderSpeciesVariantsMutationFn = Apollo.MutationFunction<ReorderSpeciesVariantsMutation, ReorderSpeciesVariantsMutationVariables>;
+
+/**
+ * __useReorderSpeciesVariantsMutation__
+ *
+ * To run a mutation, you first call `useReorderSpeciesVariantsMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useReorderSpeciesVariantsMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [reorderSpeciesVariantsMutation, { data, loading, error }] = useReorderSpeciesVariantsMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useReorderSpeciesVariantsMutation(baseOptions?: Apollo.MutationHookOptions<ReorderSpeciesVariantsMutation, ReorderSpeciesVariantsMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<ReorderSpeciesVariantsMutation, ReorderSpeciesVariantsMutationVariables>(ReorderSpeciesVariantsDocument, options);
+      }
+export type ReorderSpeciesVariantsMutationHookResult = ReturnType<typeof useReorderSpeciesVariantsMutation>;
+export type ReorderSpeciesVariantsMutationResult = Apollo.MutationResult<ReorderSpeciesVariantsMutation>;
+export type ReorderSpeciesVariantsMutationOptions = Apollo.BaseMutationOptions<ReorderSpeciesVariantsMutation, ReorderSpeciesVariantsMutationVariables>;
 export const DeleteSpeciesVariantDocument = gql`
     mutation DeleteSpeciesVariant($id: ID!) {
   removeSpeciesVariant(id: $id) {

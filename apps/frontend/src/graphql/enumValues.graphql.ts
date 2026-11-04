@@ -143,6 +143,19 @@ export const UPDATE_ENUM_VALUE_MUTATION = gql`
 `;
 
 /**
+ * Arranges a trait's values. `enumValueIds` lists every value of the trait,
+ * in its new order; the response is the whole list, renumbered.
+ */
+export const REORDER_ENUM_VALUES_MUTATION = gql`
+  mutation ReorderEnumValues($input: ReorderEnumValuesInput!) {
+    reorderEnumValues(input: $input) {
+      id
+      order
+    }
+  }
+`;
+
+/**
  * Mutation to delete an enum value.
  * WARNING: This will also delete associated enum value settings and character trait data.
  * Should include confirmation dialogs in UI implementations.
