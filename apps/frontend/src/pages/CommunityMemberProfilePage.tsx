@@ -15,6 +15,7 @@ import {
 } from "../contexts/CommunityHostContext";
 import { apexUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
+import { useCanonicalUsername } from "../hooks/useCanonicalUsername";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { CharacterGrid } from "../components/CharacterGrid";
 import { AchievementList } from "../components/achievements/AchievementList";
@@ -224,6 +225,7 @@ export const CommunityMemberProfilePage: React.FC = () => {
     });
 
   const member = profileData?.user;
+  useCanonicalUsername(username, member?.username);
   const memberId = member?.id;
   const isSelf = memberId === user?.id;
 

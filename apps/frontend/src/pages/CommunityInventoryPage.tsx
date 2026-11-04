@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useCanonicalUsername } from "../hooks/useCanonicalUsername";
 import styled, { css } from "styled-components";
 import { useParams, Link } from "react-router-dom";
 import { Package, ChevronDown } from "lucide-react";
@@ -273,8 +274,10 @@ export const CommunityInventoryPage: React.FC = () => {
   const community = useHostCommunity();
 
   // No username in the route means "my own", which is the common case and
-  // keeps /inventory working as it always has.
-  const viewingSelf = !username || username === user?.username;
+  // keeps /inventory working as it always has. Usernames ignore case, so
+  // `/members/YOU/inventory` is still yours.
+  const viewingSelf =
+    !username || username.toLowerCase() === user?.username.toLowerCase();
 
   // The route names a person, not an id, because that is what a shareable URL
   // should say. One lookup turns it into the id the holdings query needs.
@@ -302,6 +305,7 @@ export const CommunityInventoryPage: React.FC = () => {
   const loading = profileLoading || holdingsLoading;
 
   const report = data?.memberHoldings;
+  useCanonicalUsername(username, report?.member.username);
   const holdings = report?.holdings ?? [];
 
   // Staff take items back from here (#169): the same permission revoking

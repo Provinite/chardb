@@ -339,7 +339,8 @@ export class CommunitiesService {
       where: {
         ...member,
         OR: [
-          { username: { equals: search, mode: "insensitive" } },
+          // citext: `=` ignores case and uses the unique index.
+          { username: search },
           { displayName: { equals: search, mode: "insensitive" } },
         ],
       },

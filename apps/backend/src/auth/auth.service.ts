@@ -22,6 +22,24 @@ import { EmailNotVerifiedError } from "./errors/email-not-verified.error";
 import { Prisma, User } from "@chardb/database";
 
 /**
+ * The same conflict the up-front checks in `signup` raise, for a unique
+ * violation on creating the user. Anything else is returned untouched.
+ */
+function signupConflict(error: unknown): unknown {
+  if (
+    !(error instanceof Prisma.PrismaClientKnownRequestError) ||
+    error.code !== "P2002"
+  ) {
+    return error;
+  }
+  // Field names (`["email"]`) or the index name (`users_email_key`), depending
+  // on how Prisma reached the database.
+  return String(error.meta?.target).includes("email")
+    ? new ConflictException("User with this email already exists")
+    : new ConflictException("User with this username already exists");
+}
+
+/**
  * Service layer input types for auth operations.
  * These interfaces provide clean, simple inputs for the service layer,
  * avoiding the complexity of GraphQL relation objects.
@@ -193,16 +211,22 @@ export class AuthService {
         throw new ConflictException("User with this username already exists");
       }
 
-      // 4. Create user (within transaction)
+      // 4. Create user (within transaction). The checks above cannot see a
+      // signup that has not committed yet, so two at once for the same name or
+      // address both pass them; the unique index stops the second here.
       const hashedPassword = await bcrypt.hash(input.password, 10);
-      const user = await tx.user.create({
-        data: {
-          username: input.username,
-          email: normalizedEmail,
-          passwordHash: hashedPassword,
-          displayName: input.displayName,
-        },
-      });
+      const user = await tx.user
+        .create({
+          data: {
+            username: input.username,
+            email: normalizedEmail,
+            passwordHash: hashedPassword,
+            displayName: input.displayName,
+          },
+        })
+        .catch((error: unknown) => {
+          throw signupConflict(error);
+        });
 
       // 5. Claim invite code and increment usage (within transaction)
       let roleId = openSignupRoleId;

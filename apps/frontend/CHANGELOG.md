@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Username links ignore case**: `/user/FOO` and `/members/FOO` open foo's page and correct the URL to the stored casing.
+
 ## [v15.6.0] - 2026-11-03
 
 ### Added

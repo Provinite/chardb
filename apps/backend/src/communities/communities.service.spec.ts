@@ -56,7 +56,7 @@ describe("CommunitiesService.getMembers", () => {
 
     const [exactCall, partialCall] = findMany.mock.calls;
     expect(exactCall[0].where.OR).toEqual([
-      { username: { equals: "member", mode: "insensitive" } },
+      { username: "member" },
       { displayName: { equals: "member", mode: "insensitive" } },
     ]);
     expect(partialCall[0].where.OR).toEqual([

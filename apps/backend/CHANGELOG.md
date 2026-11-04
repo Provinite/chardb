@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Case-insensitive usernames**: `foo` and `Foo` are one username, so lookups match either casing and sign-up refuses the second (migration converts `users.username` to `citext`). Sign-up also limits usernames to ASCII letters, digits, `_` and `-`.
+
 ### Added
 
 - **Faustian Bargain achievement**: earned by sending the Trick-or-Treat bot a gifty during the event.

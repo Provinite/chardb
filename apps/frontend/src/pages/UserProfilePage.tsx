@@ -13,6 +13,7 @@ import { ProviderIcon } from "../components/ProviderIcon";
 import { MediaGrid } from "../components/MediaGrid";
 import { characterUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
+import { useCanonicalUsername } from "../hooks/useCanonicalUsername";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -306,6 +307,7 @@ export const UserProfilePage: React.FC = () => {
   });
 
   const profileUser = data?.userProfile?.user;
+  useCanonicalUsername(username, profileUser?.username);
   usePageMeta({
     // Both names: the display name is what people recognise, the username is
     // what the URL says. The username is in the URL, so it titles the page

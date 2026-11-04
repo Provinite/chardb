@@ -1,5 +1,6 @@
 import React from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useCanonicalUsername } from "../hooks/useCanonicalUsername";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
@@ -166,6 +167,7 @@ export const FollowingPage: React.FC = () => {
 
   const following = data?.getFollowing?.following || [];
   const user = data?.getFollowing?.user;
+  useCanonicalUsername(username, user?.username);
 
   if (loading) {
     return (

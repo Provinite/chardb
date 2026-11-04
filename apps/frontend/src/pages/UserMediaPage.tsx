@@ -1,5 +1,6 @@
 import React from "react";
 import { usePageMeta } from "../lib/pageMeta";
+import { useCanonicalUsername } from "../hooks/useCanonicalUsername";
 import { useParams, Link } from "react-router-dom";
 import styled from "styled-components";
 import { LoadingSpinner } from "../components/LoadingSpinner";
@@ -81,6 +82,7 @@ export const UserMediaPage: React.FC = () => {
   });
 
   const user = identity?.user;
+  useCanonicalUsername(username, user?.username);
 
   const { data, loading, error, fetchMore } = useGetUserMediaQuery({
     variables: {
