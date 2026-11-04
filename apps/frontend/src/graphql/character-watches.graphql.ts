@@ -1,18 +1,9 @@
 import { gql } from "@apollo/client";
 
-export const CHARACTER_WATCH_STATUS = gql`
-  query CharacterWatchStatus($id: ID!) {
-    character(id: $id) {
-      id
-      viewerIsWatching
-    }
-  }
-`;
-
 /**
  * Both answer with the new `viewerIsWatching` rather than the character, so
  * unwatching works on a character the caller can no longer see. The caller
- * writes the answer into the cache.
+ * writes the answer into the cache, where `GetCharacter` reads it.
  */
 export const WATCH_CHARACTER = gql`
   mutation WatchCharacter($characterId: ID!) {
@@ -27,8 +18,6 @@ export const UNWATCH_CHARACTER = gql`
 `;
 
 export {
-  useCharacterWatchStatusQuery,
   useWatchCharacterMutation,
   useUnwatchCharacterMutation,
-  CharacterWatchStatusDocument,
 } from "../generated/graphql";

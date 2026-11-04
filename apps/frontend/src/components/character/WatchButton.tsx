@@ -2,7 +2,6 @@ import type { ApolloCache } from "@apollo/client";
 import toast from "react-hot-toast";
 import { useAuth } from "../../contexts/AuthContext";
 import {
-  useCharacterWatchStatusQuery,
   useUnwatchCharacterMutation,
   useWatchCharacterMutation,
 } from "../../graphql/character-watches.graphql";
@@ -12,17 +11,17 @@ interface WatchButtonProps {
   characterId: string;
   /** Owners are not offered a watch on their own character. */
   ownerId?: string | null;
+  /** `viewerIsWatching` from the page's own character query. */
+  watching: boolean;
 }
 
-export function WatchButton({ characterId, ownerId }: WatchButtonProps) {
+export function WatchButton({
+  characterId,
+  ownerId,
+  watching,
+}: WatchButtonProps) {
   const { user } = useAuth();
   const hidden = !user || user.id === ownerId;
-
-  const { data, loading } = useCharacterWatchStatusQuery({
-    variables: { id: characterId },
-    skip: hidden,
-  });
-  const watching = data?.character?.viewerIsWatching ?? false;
 
   /** The mutations answer with a bare boolean; this puts it on the character. */
   const store = (cache: ApolloCache<unknown>, next: boolean | undefined) => {
@@ -55,7 +54,6 @@ export function WatchButton({ characterId, ownerId }: WatchButtonProps) {
   return (
     <WatchButtonView
       watching={watching}
-      pending={loading && !data}
       busy={watchBusy || unwatchBusy}
       onToggle={() => void (watching ? unwatch() : watch())}
     />

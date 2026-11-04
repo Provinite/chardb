@@ -811,6 +811,7 @@ export const CharacterPage: React.FC = () => {
             <WatchButton
               characterId={character.id}
               ownerId={character.owner?.id}
+              watching={character.viewerIsWatching}
             />
           </CharacterMeta>
 

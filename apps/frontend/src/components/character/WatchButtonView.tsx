@@ -4,8 +4,6 @@ import * as styles from "./WatchButtonView.css";
 
 export interface WatchButtonViewProps {
   watching: boolean;
-  /** The status has not arrived yet, so the button claims neither state. */
-  pending: boolean;
   /** A watch or unwatch is in flight. */
   busy?: boolean;
   onToggle: () => void;
@@ -14,12 +12,11 @@ export interface WatchButtonViewProps {
 /** Watch or unwatch a character, to hear when its availability changes. */
 export function WatchButtonView({
   watching,
-  pending,
   busy = false,
   onToggle,
 }: WatchButtonViewProps) {
   const labelClass = (shown: boolean) =>
-    shown && !pending ? styles.label : styles.inactiveLabel;
+    shown ? styles.label : styles.inactiveLabel;
 
   return (
     <Button
@@ -28,8 +25,7 @@ export function WatchButtonView({
       className={watching ? styles.watching : undefined}
       icon={<Eye aria-hidden />}
       onClick={onToggle}
-      busy={pending || busy}
-      aria-label={pending ? "Loading watch status" : undefined}
+      busy={busy}
     >
       <span className={styles.labels}>
         <span className={labelClass(!watching)}>Watch</span>

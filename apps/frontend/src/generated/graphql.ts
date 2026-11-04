@@ -5907,13 +5907,6 @@ export type SetCharacterFoldersMutationVariables = Exact<{
 
 export type SetCharacterFoldersMutation = { __typename?: 'Mutation', setCharacterFolders: Array<{ __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number }> };
 
-export type CharacterWatchStatusQueryVariables = Exact<{
-  id: Scalars['ID']['input'];
-}>;
-
-
-export type CharacterWatchStatusQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, viewerIsWatching: boolean } };
-
 export type WatchCharacterMutationVariables = Exact<{
   characterId: Scalars['ID']['input'];
 }>;
@@ -5952,7 +5945,7 @@ export type GetCharacterQueryVariables = Exact<{
 }>;
 
 
-export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, pendingTraitReviewSource: TraitReviewSource | null, traitReviewStatus: ModerationStatus | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, forms: Array<{ __typename?: 'CharacterForm', id: string, name: string, sortOrder: number, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, mediumUrl: string | null, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
+export type GetCharacterQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, name: string, registryId: string | null, speciesId: string | null, speciesVariantId: string | null, pendingTraitReviewSource: TraitReviewSource | null, traitReviewStatus: ModerationStatus | null, details: string | null, ownerId: string | null, creatorId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, viewerIsWatching: boolean, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, mainMediaId: string | null, species: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string, discordGuildId: string | null, discordGuildName: string | null } } | null, speciesVariant: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, colorId: string | null, maxForms: number, sortOrder: number, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, name: string, hexCode: string } | null } | null, forms: Array<{ __typename?: 'CharacterForm', id: string, name: string, sortOrder: number, traitValues: Array<{ __typename?: 'CharacterTraitValue', traitId: string, value: string | null, clarifier: string | null, trait: { __typename?: 'Trait', name: string, valueType: TraitValueType, allowsMultipleValues: boolean, allowsClarifier: boolean } | null, enumValue: { __typename?: 'EnumValue', name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null }> }>, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, _count: { __typename?: 'CharacterCount', media: number }, tags_rel: Array<{ __typename?: 'CharacterTag', tag: { __typename?: 'Tag', id: string, name: string, category: string | null, color: string | null } }>, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, mediumUrl: string | null, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null } };
 
 export type GetMyCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
@@ -9756,47 +9749,6 @@ export function useSetCharacterFoldersMutation(baseOptions?: Apollo.MutationHook
 export type SetCharacterFoldersMutationHookResult = ReturnType<typeof useSetCharacterFoldersMutation>;
 export type SetCharacterFoldersMutationResult = Apollo.MutationResult<SetCharacterFoldersMutation>;
 export type SetCharacterFoldersMutationOptions = Apollo.BaseMutationOptions<SetCharacterFoldersMutation, SetCharacterFoldersMutationVariables>;
-export const CharacterWatchStatusDocument = gql`
-    query CharacterWatchStatus($id: ID!) {
-  character(id: $id) {
-    id
-    viewerIsWatching
-  }
-}
-    `;
-
-/**
- * __useCharacterWatchStatusQuery__
- *
- * To run a query within a React component, call `useCharacterWatchStatusQuery` and pass it any options that fit your needs.
- * When your component renders, `useCharacterWatchStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useCharacterWatchStatusQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useCharacterWatchStatusQuery(baseOptions: Apollo.QueryHookOptions<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables> & ({ variables: CharacterWatchStatusQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>(CharacterWatchStatusDocument, options);
-      }
-export function useCharacterWatchStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>(CharacterWatchStatusDocument, options);
-        }
-export function useCharacterWatchStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>(CharacterWatchStatusDocument, options);
-        }
-export type CharacterWatchStatusQueryHookResult = ReturnType<typeof useCharacterWatchStatusQuery>;
-export type CharacterWatchStatusLazyQueryHookResult = ReturnType<typeof useCharacterWatchStatusLazyQuery>;
-export type CharacterWatchStatusSuspenseQueryHookResult = ReturnType<typeof useCharacterWatchStatusSuspenseQuery>;
-export type CharacterWatchStatusQueryResult = Apollo.QueryResult<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>;
 export const WatchCharacterDocument = gql`
     mutation WatchCharacter($characterId: ID!) {
   watchCharacter(characterId: $characterId)
@@ -10053,6 +10005,7 @@ export const GetCharacterDocument = gql`
     isOpenToOffers
     isFreebie
     price
+    viewerIsWatching
     tags
     customFields
     createdAt
