@@ -23,9 +23,7 @@ describe("WatchButtonView", () => {
   });
 
   it("claims neither until the status arrives", () => {
-    render(
-      <WatchButtonView watching={false} pending onToggle={vi.fn()} />,
-    );
+    render(<WatchButtonView watching={false} pending onToggle={vi.fn()} />);
 
     expect(screen.queryByRole("button", { name: "Watch" })).toBeNull();
     expect(

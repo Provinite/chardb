@@ -1,4 +1,11 @@
-import { Args, ID, Mutation, Parent, ResolveField, Resolver } from "@nestjs/graphql";
+import {
+  Args,
+  ID,
+  Mutation,
+  Parent,
+  ResolveField,
+  Resolver,
+} from "@nestjs/graphql";
 import { Character } from "../characters/entities/character.entity";
 import { mapPrismaCharacterToGraphQL } from "../characters/utils/character-resolver-mappers";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";

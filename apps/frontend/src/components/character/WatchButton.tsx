@@ -32,7 +32,9 @@ export function WatchButton({ characterId, ownerId }: WatchButtonProps) {
     variables: { characterId },
     optimisticResponse: { watchCharacter: optimistic(true) },
     onCompleted: () =>
-      toast.success("Watching. You'll be notified when its availability changes."),
+      toast.success(
+        "Watching. You'll be notified when its availability changes.",
+      ),
     onError: () => toast.error("Couldn't watch this character."),
   });
   const [unwatch, { loading: unwatchBusy }] = useUnwatchCharacterMutation({

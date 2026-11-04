@@ -206,7 +206,9 @@ describe("a watched character's availability notification", () => {
 
   it("reports a price change on its own", () => {
     expect(
-      notificationSentence(availability({ priceChanged: true, price: "30.00" })),
+      notificationSentence(
+        availability({ priceChanged: true, price: "30.00" }),
+      ),
     ).toBe("changed Moonbeam's price to $30.00");
     expect(
       notificationSentence(availability({ priceChanged: true, price: null })),
@@ -214,8 +216,6 @@ describe("a watched character's availability notification", () => {
   });
 
   it("goes to the character", () => {
-    expect(notificationHref(availability())).toBe(
-      apexUrl("/character/char-1"),
-    );
+    expect(notificationHref(availability())).toBe(apexUrl("/character/char-1"));
   });
 });
