@@ -121,13 +121,13 @@ export class ImagesService {
     // Validate file
     this.validateFile(file);
 
-    // Which community reviews this, when no character says. A character
-    // resolves its own community and outranks anything the client sent, so
-    // the column is only written for media that has none -- otherwise the row
-    // would carry a second answer that nothing reads.
-    const reviewingCommunityId = characterId
-      ? null
-      : await this.resolveReviewingCommunity(userId, communityId);
+    // An item type picture is approved on upload, so it may not also be a
+    // character's or a gallery's post, which moderation would then skip.
+    if (itemTypeId && (characterId || galleryId)) {
+      throw new BadRequestException(
+        "An item type image cannot also belong to a character or gallery",
+      );
+    }
 
     // NOTE: Character/gallery associations now handled through Media system
 
@@ -137,9 +137,19 @@ export class ImagesService {
     }
 
     // Verify item type edit permission if itemTypeId is provided
-    if (itemTypeId) {
-      await this.verifyItemTypeEditPermission(userId, itemTypeId);
-    }
+    const itemTypeCommunityId = itemTypeId
+      ? await this.verifyItemTypeEditPermission(userId, itemTypeId)
+      : null;
+
+    // Which community this belongs to, when no character says. A character
+    // resolves its own community and outranks anything the client sent, so
+    // the column is only written for media that has none -- otherwise the row
+    // would carry a second answer that nothing reads. An item type's picture
+    // belongs to the item type's community.
+    const reviewingCommunityId = characterId
+      ? null
+      : (itemTypeCommunityId ??
+        (await this.resolveReviewingCommunity(userId, communityId)));
 
     // Verify artist exists if artistId is provided
     if (artistId) {
@@ -182,6 +192,12 @@ export class ImagesService {
           mimeType: file.mimetype,
           isNsfw,
           sensitiveContentDescription,
+          // An item type's picture is set by staff holding CanManageItems,
+          // and item type pages serve it whatever its status, so it skips
+          // moderation like an avatar does.
+          ...(itemTypeId
+            ? { moderationStatus: ModerationStatus.APPROVED }
+            : {}),
           ...cropToColumns(thumbnailCrop ?? null),
         },
         include: {
@@ -913,11 +929,12 @@ export class ImagesService {
   /**
    * Verify user has permission to edit an item type (upload images).
    * Item types belong to a community and require permission to edit.
+   * Returns that community.
    */
   private async verifyItemTypeEditPermission(
     userId: string,
     itemTypeId: string,
-  ): Promise<void> {
+  ): Promise<string> {
     // Fetch item type with community info
     const itemType = await this.db.itemType.findUnique({
       where: { id: itemTypeId },
@@ -942,6 +959,8 @@ export class ImagesService {
         "You do not have permission to upload images to this item type",
       );
     }
+
+    return itemType.communityId;
   }
 
   private async verifyGalleryOwnership(
