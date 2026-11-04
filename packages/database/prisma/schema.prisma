@@ -220,6 +220,8 @@ model User {
   causedNotifications     Notification[]           @relation("NotificationActor")
   /// Only the answers that differ from the default; see NotificationPreference.
   notificationPreferences NotificationPreference[]
+  /// Characters this user is notified about. See CharacterWatch.
+  characterWatches        CharacterWatch[]
 
   // Trading. Two relations for the offers themselves, and six more because
   // every line on the table names both ends of its own movement.
@@ -368,6 +370,9 @@ model Character {
   comments  Comment[]
   likes     Like[]
   tags_rel  CharacterTag[]
+
+  /// Who is notified when this character's trade advertisement changes.
+  watches CharacterWatch[]
 
   /// Where this character's owner filed it. Rows here survive a trade rather
   /// than being deleted with it -- see CharacterFolderEntry.
@@ -697,6 +702,27 @@ model Follow {
 
   @@unique([followerId, followingId])
   @@map("follows")
+}
+
+/// A member asking to hear when a character's trade advertisement changes:
+/// its six availability flags or its price.
+///
+/// A row is not proof the watcher may still see the character. The owner can
+/// make it private afterwards, so whoever sends to watchers checks visibility
+/// as of the change, not as of the watch.
+model CharacterWatch {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  characterId String   @map("character_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  character Character @relation(fields: [characterId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, characterId])
+  /// The fan-out lookup: everyone watching one character.
+  @@index([characterId])
+  @@map("character_watches")
 }
 
 model Like {
@@ -2095,6 +2121,8 @@ enum NotificationKind {
   HALLOWEEN_CANDY_TRADED
   /// Someone knocked on your door and left you Halloween candy.
   HALLOWEEN_DOOR_KNOCKED
+  /// A character you watch changed what its owner is open to, or its price.
+  CHARACTER_AVAILABILITY_CHANGED
 }
 
 /// How a notification reaches someone.

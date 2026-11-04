@@ -24,6 +24,8 @@ export interface AvailabilityKind {
   label: string;
   /** On the character page, where it is a badge and space is short. */
   badge: string;
+  /** Mid-sentence, after "is now" or "is no longer", in a notification. */
+  phrase: string;
 }
 
 export const AVAILABILITY_KINDS: readonly AvailabilityKind[] = [
@@ -32,36 +34,42 @@ export const AVAILABILITY_KINDS: readonly AvailabilityKind[] = [
     field: "isSellable",
     label: "For sale (money)",
     badge: "For Sale",
+    phrase: "for sale",
   },
   {
     value: CharacterAvailability.ForSaleCoin,
     field: "isSellableForCoin",
     label: "For sale (community currency)",
     badge: "For Sale (coin)",
+    phrase: "for sale for community currency",
   },
   {
     value: CharacterAvailability.TradeCharacters,
     field: "isTradeable",
     label: "Open to trades for other characters",
     badge: "Open to Trades",
+    phrase: "open to trades for other characters",
   },
   {
     value: CharacterAvailability.TradeArt,
     field: "isTradeableForArt",
     label: "Open to trades for art",
     badge: "Trades for Art",
+    phrase: "open to trades for art",
   },
   {
     value: CharacterAvailability.Offers,
     field: "isOpenToOffers",
     label: "Open to offers",
     badge: "Open to Offers",
+    phrase: "open to offers",
   },
   {
     value: CharacterAvailability.Freebie,
     field: "isFreebie",
     label: "Free to a good home",
     badge: "Freebie",
+    phrase: "free to a good home",
   },
 ] as const;
 

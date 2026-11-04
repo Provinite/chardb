@@ -22,6 +22,7 @@ import { MediaModule } from "./media/media.module";
 import { GalleriesModule } from "./galleries/galleries.module";
 import { CommentsModule } from "./comments/comments.module";
 import { SocialModule } from "./social/social.module";
+import { CharacterWatchesModule } from "./character-watches/character-watches.module";
 import { HealthModule } from "./health/health.module";
 import { TagsModule } from "./tags/tags.module";
 import { CommunitiesModule } from "./communities/communities.module";
@@ -239,6 +240,7 @@ import { Request, Response } from "express";
     AuthModule,
     UsersModule,
     CharactersModule,
+    CharacterWatchesModule,
     CharacterFoldersModule,
     ImagesModule,
     MediaModule,

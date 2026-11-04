@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Character watches**: `CharacterWatch` (migration), `watchCharacter`/`unwatchCharacter`, `Character.viewerIsWatching`, and a `CHARACTER_AVAILABILITY_CHANGED` notification sent to watchers when an edit changes availability flags or price.
 - **Variant and enum value order**: `SpeciesVariant.sortOrder` (migration, existing variants keep their newest-first order), plus `reorderSpeciesVariants` and `reorderEnumValues`; new variants and enum values go last.
 
 ### Changed

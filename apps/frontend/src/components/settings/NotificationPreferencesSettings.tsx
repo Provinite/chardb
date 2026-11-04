@@ -61,6 +61,11 @@ const KIND_COPY: Partial<
     label: "Trades declined",
     description: "A trade you proposed was turned down.",
   },
+  [NotificationKind.CharacterAvailabilityChanged]: {
+    label: "Watched characters",
+    description:
+      "A character you watch changed what its owner is open to, or its price.",
+  },
   [NotificationKind.HalloweenCandyTraded]: {
     label: "Halloween candy",
     description:

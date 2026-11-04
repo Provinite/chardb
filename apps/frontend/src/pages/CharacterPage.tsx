@@ -25,6 +25,7 @@ import { setKinds } from "../lib/characterAvailability";
 import { isRedemptionReview } from "../lib/traitReviews";
 import { CharacterAvailability } from "../generated/graphql";
 import { LikeButton } from "../components/LikeButton";
+import { WatchButton } from "../components/character/WatchButton";
 import {
   DeleteCharacterDialog,
   GiveToCommunityDialog,
@@ -806,6 +807,11 @@ export const CharacterPage: React.FC = () => {
               entityType={LikeableType.Character}
               entityId={character.id}
               size="medium"
+            />
+            <WatchButton
+              characterId={character.id}
+              ownerId={character.owner?.id}
+              watching={character.viewerIsWatching}
             />
           </CharacterMeta>
 

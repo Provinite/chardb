@@ -9,6 +9,7 @@ import { DeviantArtService } from "../deviantart/deviantart.service";
 import { PermissionService } from "../auth/PermissionService";
 import { TraitReviewService } from "../trait-review/trait-review.service";
 import { CharacterFormsService } from "../character-forms/character-forms.service";
+import { DomainEvents } from "../events/domain-events";
 import { ModerationStatus, TraitValueType, Visibility } from "@chardb/database";
 import { mockDatabaseService } from "../../test/setup";
 import { CharacterAvailability } from "./character-availability";
@@ -115,6 +116,7 @@ describe("CharactersService", () => {
           provide: CharacterFormsService,
           useValue: mockCharacterFormsService,
         },
+        { provide: DomainEvents, useValue: { publish: jest.fn() } },
       ],
     }).compile();
 

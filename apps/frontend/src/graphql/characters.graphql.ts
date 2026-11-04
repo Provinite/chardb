@@ -239,6 +239,9 @@ export const GET_CHARACTER = gql`
       isOpenToOffers
       isFreebie
       price
+      # The Watch button's state, here so it arrives with the page rather than
+      # in a request of its own. False when signed out.
+      viewerIsWatching
       tags
       customFields
       createdAt

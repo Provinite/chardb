@@ -26,6 +26,10 @@ export const NOTIFICATION_FRAGMENT = gql`
     reasonText
     excerpt
     candySlugs
+    availabilityAdded
+    availabilityRemoved
+    priceChanged
+    price
     actor {
       id
       username

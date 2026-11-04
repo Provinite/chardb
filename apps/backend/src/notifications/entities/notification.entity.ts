@@ -2,6 +2,7 @@ import { ObjectType, Field, ID, Int, registerEnumType } from "@nestjs/graphql";
 import { NotificationKind, NotificationSubjectType } from "@chardb/database";
 import { User } from "../../users/entities/user.entity";
 import { Community } from "../../communities/entities/community.entity";
+import { CharacterAvailability } from "../../characters/character-availability";
 
 registerEnumType(NotificationKind, {
   name: "NotificationKind",
@@ -136,6 +137,32 @@ export class Notification {
       "/halloween/candy/<slug>.png on the frontend.",
   })
   candySlugs?: string[] | null;
+
+  @Field(() => [CharacterAvailability], {
+    nullable: true,
+    description: "What a watched character's owner newly advertised it for.",
+  })
+  availabilityAdded?: CharacterAvailability[] | null;
+
+  @Field(() => [CharacterAvailability], {
+    nullable: true,
+    description: "What a watched character stopped being advertised for.",
+  })
+  availabilityRemoved?: CharacterAvailability[] | null;
+
+  @Field(() => Boolean, {
+    nullable: true,
+    description: "Whether a watched character's asking price changed.",
+  })
+  priceChanged?: boolean | null;
+
+  @Field(() => String, {
+    nullable: true,
+    description:
+      "A watched character's asking price after the change, to two places. " +
+      "Null when it has none.",
+  })
+  price?: string | null;
 }
 
 @ObjectType({ description: "A page of notifications, newest first." })

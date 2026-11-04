@@ -3,7 +3,9 @@ import {
   NotificationSubjectType,
   type NotificationFieldsFragment,
 } from "../../graphql/notifications.graphql";
+import { CharacterAvailability } from "../../generated/graphql";
 import { apexUrl, communityUrl } from "../../lib/communityHost";
+import { AVAILABILITY_KINDS } from "../../lib/characterAvailability";
 
 /**
  * Where clicking a notification goes, or null when it goes nowhere.
@@ -161,7 +163,62 @@ export function notificationSentence(
         ? `knocked on your door and left you ${n} candies`
         : "knocked on your door and left you a candy";
     }
+    case NotificationKind.CharacterAvailabilityChanged:
+      return availabilitySentence(notification, name);
   }
+}
+
+/** "a", "a and b", "a, b and c". */
+function listOf(items: string[], conjunction: "and" | "or"): string {
+  if (items.length <= 1) return items.join("");
+  return `${items.slice(0, -1).join(", ")} ${conjunction} ${items.at(-1)}`;
+}
+
+/**
+ * What a watched character's owner changed. Kinds this build does not know
+ * are left out, so a newer server's kind reads as no change to it.
+ */
+function availabilitySentence(
+  notification: NotificationFieldsFragment,
+  name: string,
+): string {
+  const { priceChanged, price } = notification;
+  const added = notification.availabilityAdded ?? [];
+  const removed = notification.availabilityRemoved ?? [];
+  const priceText = price ? `$${price}` : null;
+
+  const phrase = (value: CharacterAvailability, withPrice: boolean) => {
+    const kind = AVAILABILITY_KINDS.find((k) => k.value === value);
+    if (!kind) return null;
+    return withPrice && value === CharacterAvailability.ForSale && priceText
+      ? `${kind.phrase} for ${priceText}`
+      : kind.phrase;
+  };
+  const phrases = (values: CharacterAvailability[], withPrice: boolean) =>
+    values.flatMap((v) => phrase(v, withPrice) ?? []);
+
+  const now = phrases(added, true);
+  const noLonger = phrases(removed, false);
+  if (!now.length && !noLonger.length) {
+    if (!priceChanged) return `changed what ${name} is open to`;
+    return priceText
+      ? `changed ${name}'s price to ${priceText}`
+      : `removed ${name}'s price`;
+  }
+
+  const parts = [
+    now.length ? `now ${listOf(now, "and")}` : null,
+    noLonger.length ? `no longer ${listOf(noLonger, "or")}` : null,
+  ].filter(Boolean);
+  // A new price on a sale that was already advertised has no phrase above to
+  // ride along with.
+  const pricedInline =
+    priceText && added.includes(CharacterAvailability.ForSale);
+  let priceNote = "";
+  if (priceChanged && !pricedInline) {
+    priceNote = priceText ? `, priced at ${priceText}` : ", and has no price";
+  }
+  return `says ${name} is ${parts.join(", and ")}${priceNote}`;
 }
 
 /**
