@@ -227,8 +227,9 @@ export class HalloweenPlayAchievements {
   }
 
   /**
-   * Which of the names in `NAMED_DOORS` they knocked on the door of, by
-   * display name, ignoring case and surrounding spaces.
+   * Which of the names in `NAMED_DOORS` they knocked on the door of, by the
+   * name the site shows (the display name, else the username), ignoring
+   * case and surrounding spaces.
    */
   private async namedDoorsKnocked({
     userId,
@@ -237,14 +238,17 @@ export class HalloweenPlayAchievements {
     endDate,
   }: HalloweenPlayer): Promise<Set<string>> {
     const rows = await this.db.$queryRaw<{ name: string }[]>`
-      SELECT DISTINCT lower(btrim(u.display_name)) AS name
+      SELECT DISTINCT n.name
       FROM "halloween_door_knocks" k
       JOIN "users" u ON u.id = k.knockee_id
+      CROSS JOIN LATERAL (
+        SELECT lower(btrim(coalesce(u.display_name, u.username::text))) AS name
+      ) n
       WHERE k.guild_id = ${guildId}
         AND k.knocker_id = ${userId}
         AND k.time >= ${startDate}
         AND (${endDate}::timestamptz IS NULL OR k.time <= ${endDate})
-        AND lower(btrim(u.display_name)) = ANY(${[...NAMED_DOORS]})
+        AND n.name = ANY(${[...NAMED_DOORS]})
     `;
     return new Set(rows.map((r) => r.name));
   }
