@@ -94,6 +94,40 @@ describe("Username case (e2e)", () => {
     });
   });
 
+  describe("characters", () => {
+    const signup = async (username: string) => {
+      const inviteCode = await testApp.createTestInviteCode();
+      return testApp.graphqlRequest(AUTH_QUERIES.SIGNUP, {
+        input: {
+          username,
+          email: "chars@example.com",
+          password: "password123",
+          inviteCode,
+        },
+      });
+    };
+
+    it.each(["Ärger", "a b", "a/b", "a.b", "naïve", "a%20"])(
+      "refuses %p",
+      async (username) => {
+        const response = await signup(username);
+
+        expect(response.body.errors).toBeDefined();
+        expect(
+          await testApp.getDb().user.count({
+            where: { email: "chars@example.com" },
+          }),
+        ).toBe(0);
+      },
+    );
+
+    it("accepts letters, digits, underscores and hyphens", async () => {
+      const response = await signup("Az09_-x");
+
+      expect(response.body.errors).toBeUndefined();
+    });
+  });
+
   describe("uniqueness", () => {
     it("refuses a signup whose username differs only in case", async () => {
       await testApp.createTestUser({ username: "taken" });

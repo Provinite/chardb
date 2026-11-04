@@ -142,7 +142,9 @@ export class CommunityMembersService {
     const exact = await this.prisma.communityMember.findMany({
       where: {
         role: { communityId },
-        user: { OR: [{ username: equals }, { displayName: equals }] },
+        // `username` is citext, so a plain `=` already ignores case and can
+        // use the unique index. It takes the term as written, not escaped.
+        user: { OR: [{ username: term }, { displayName: equals }] },
       },
       orderBy,
     });

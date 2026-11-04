@@ -5,6 +5,7 @@ import {
   IsOptional,
   MinLength,
   MaxLength,
+  Matches,
 } from "class-validator";
 
 @InputType()
@@ -24,6 +25,12 @@ export class SignupInput {
   @IsString()
   @MinLength(2)
   @MaxLength(30)
+  // ASCII only, and nothing a URL path segment would need escaped: the name
+  // is the `/user/:username` link, and the column compares it without case.
+  @Matches(/^[A-Za-z0-9_-]+$/, {
+    message:
+      "Username can only contain letters, numbers, underscores, and hyphens",
+  })
   username: string;
 
   @Field()

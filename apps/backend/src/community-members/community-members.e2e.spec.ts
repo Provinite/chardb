@@ -195,6 +195,23 @@ describe("communityMembersByCommunity search (e2e)", () => {
     expect(page.totalCount).toBe(4);
   });
 
+  it("ranks an exact username match first under any casing", async () => {
+    await join([
+      { username: "rowan_ii", role: "Member" },
+      { username: "rowan_iii", role: "Member" },
+    ]);
+
+    // `_` matches only itself, in the exact match and the partial one.
+    expect(usernames(await fetchMembers({ search: "ROWAN_II" }))).toEqual([
+      "rowan_ii",
+      "rowan_iii",
+    ]);
+    expect(usernames(await fetchMembers({ search: "Rowan_I" }))).toEqual([
+      "rowan_iii",
+      "rowan_ii",
+    ]);
+  });
+
   it("pages through exact and partial matches with a cursor", async () => {
     await join([
       { username: "rowan", role: "Member" },

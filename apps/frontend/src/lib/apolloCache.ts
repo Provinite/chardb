@@ -12,7 +12,7 @@ const byUsername = (
   args: Record<string, unknown> | null,
 ): string | undefined => {
   if (typeof args?.username === "string") {
-    return `{"username":${JSON.stringify(args.username.toLowerCase())}}`;
+    return JSON.stringify({ ...args, username: args.username.toLowerCase() });
   }
   return args ? JSON.stringify(args) : undefined;
 };
