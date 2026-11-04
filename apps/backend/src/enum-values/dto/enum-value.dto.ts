@@ -7,6 +7,7 @@ import {
   IsUUID,
   IsInt,
   Min,
+  IsArray,
 } from "class-validator";
 
 @InputType()
@@ -21,8 +22,8 @@ export class CreateEnumValueInput {
   /** Display order within the trait's enum values */
   @Field(() => Int, {
     nullable: true,
-    description: "Display order within the trait's enum values",
-    defaultValue: 0,
+    description:
+      "Display order within the trait's enum values. Left out, the value goes after the trait's existing ones.",
   })
   @IsOptional()
   @IsInt()
@@ -45,6 +46,22 @@ export class CreateEnumValueInput {
   @IsOptional()
   @IsUUID()
   colorId?: string;
+}
+
+@InputType()
+export class ReorderEnumValuesInput {
+  /** The trait whose values are being arranged */
+  @Field(() => ID, { description: "The trait whose values are being arranged" })
+  @IsUUID()
+  traitId: string;
+
+  /** Every one of the trait's values, in their new order */
+  @Field(() => [ID], {
+    description: "Every one of the trait's values, in their new order",
+  })
+  @IsArray()
+  @IsUUID("all", { each: true })
+  enumValueIds: string[];
 }
 
 @InputType()

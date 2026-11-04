@@ -1,4 +1,9 @@
-import { presetTest, expect, openMenuItem } from "../../src/fixtures.js";
+import {
+  presetTest,
+  expect,
+  openMenuItem,
+  chooseOption,
+} from "../../src/fixtures.js";
 import type { CommunityItemsWorld } from "../../src/world/presets/community-items.js";
 import type { World } from "../../src/world/types.js";
 import type { Browser, Page } from "@playwright/test";
@@ -130,11 +135,10 @@ test.describe("staff editing a character's forms", () => {
 
     await page.getByTestId("add-form").click();
     await page.getByTestId("form-name-1").fill("Awakened");
-    await page
-      .getByTestId("form-editor-1")
-      .getByRole("combobox")
-      .first()
-      .selectOption(world.traits.eyeColor.values.green);
+    await chooseOption(
+      page.getByTestId("form-editor-1").getByRole("combobox").first(),
+      world.traits.eyeColor.values.green,
+    );
     await page.getByTestId("save-species-details").click();
 
     await page.goto(world.characters.pinefall.url);
@@ -273,9 +277,10 @@ test.describe("staff editing a character's forms", () => {
     await allowForms(world, world.variants.legendary.id, 2);
 
     await page.goto(editPage(world));
-    await page
-      .getByTestId("variant-select")
-      .selectOption(world.variants.legendary.id);
+    await chooseOption(
+      page.getByTestId("variant-select"),
+      world.variants.legendary.id,
+    );
 
     const reroute = page.getByTestId("variant-reroute");
     await expect(reroute).toContainText("2 trait values do not exist");
@@ -290,11 +295,11 @@ test.describe("staff editing a character's forms", () => {
     const pickers = reroute.getByRole("combobox");
     await expect(pickers).toHaveCount(2);
     // A resolved row disappears, so the outstanding one is whatever is left.
-    await pickers.first().selectOption(world.traits.eyeColor.values.amber);
+    await chooseOption(pickers.first(), world.traits.eyeColor.values.amber);
     await expect(pickers).toHaveCount(1);
     await expect(save).toBeDisabled();
 
-    await pickers.first().selectOption(world.traits.eyeColor.values.amber);
+    await chooseOption(pickers.first(), world.traits.eyeColor.values.amber);
     await expect(reroute).toHaveCount(0);
     await expect(save).toBeEnabled();
   });
@@ -519,11 +524,11 @@ test.describe("a member's routes to a second form", () => {
 
     // Re-picking one leaves the other outstanding: a resolved row disappears,
     // so the remaining one is whatever is left at index 0.
-    await pickers.first().selectOption(world.traits.eyeColor.values.amber);
+    await chooseOption(pickers.first(), world.traits.eyeColor.values.amber);
     await expect(pickers).toHaveCount(1);
     await expect(submit).toBeDisabled();
 
-    await pickers.first().selectOption(world.traits.eyeColor.values.amber);
+    await chooseOption(pickers.first(), world.traits.eyeColor.values.amber);
     await expect(reroute).toHaveCount(0);
     await expect(submit).toBeEnabled();
 

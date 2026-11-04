@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { AlertTriangle } from "lucide-react";
+import { Select } from "@chardb/ui";
 import { strandedValues } from "../../lib/variantChangeItems";
+import { ColoredName } from "../colors";
+import { RerouteSelect } from "./RerouteSelect";
 import {
   useSpeciesVariantsBySpeciesQuery,
   useSpeciesWithTraitsAndEnumValuesQuery,
@@ -20,16 +23,6 @@ const Label = styled.label`
   font-size: 0.875rem;
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: 0.35rem;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 6px;
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: 0.875rem;
 `;
 
 const Help = styled.p`
@@ -240,23 +233,26 @@ export const VariantChangePanel: React.FC<Props> = ({
 
   return (
     <Wrap>
-      <Label htmlFor="variant">Variant</Label>
-      <Select
+      <Label id="variant-label" htmlFor="variant">
+        Variant
+      </Label>
+      <Select.Root
         id="variant"
+        aria-labelledby="variant-label"
         data-testid="variant-select"
         value={selectedVariantId ?? ""}
         disabled={disabled}
-        onChange={(e) =>
-          onVariantChange(variants.find((v) => v.id === e.target.value) ?? null)
+        onChange={(id) =>
+          onVariantChange(variants.find((v) => v.id === id) ?? null)
         }
       >
-        <option value="">No variant</option>
+        <Select.Option value="">No variant</Select.Option>
         {variants.map((v) => (
-          <option key={v.id} value={v.id}>
-            {v.name}
-          </option>
+          <Select.Option key={v.id} value={v.id} textValue={v.name}>
+            <ColoredName name={v.name} color={v.color?.hexCode} />
+          </Select.Option>
         ))}
-      </Select>
+      </Select.Root>
       <Help>
         Rarity. Changing it is a staff action and is recorded against this
         character.
@@ -307,24 +303,14 @@ export const VariantChangePanel: React.FC<Props> = ({
                     {forms.length > 1 ? ` · ${row.formName}` : ""}
                   </span>
                 </Was>
-                <Select
+                <RerouteSelect
                   data-testid={`reroute-${row.traitId}`}
-                  defaultValue=""
+                  choices={choices}
+                  traitName={row.traitName}
+                  optionName={row.optionName}
                   disabled={disabled}
-                  onChange={(e) =>
-                    reroute(row.formIndex, row.index, e.target.value)
-                  }
-                >
-                  <option value="" disabled>
-                    Choose a replacement…
-                  </option>
-                  {choices.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                  <option value="">Remove this value</option>
-                </Select>
+                  onPick={(to) => reroute(row.formIndex, row.index, to)}
+                />
               </Row>
             );
           })}

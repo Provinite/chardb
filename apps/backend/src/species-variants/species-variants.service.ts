@@ -2,6 +2,22 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityColorsService } from "../community-colors/community-colors.service";
+import {
+  assertCompleteReorder,
+  positionsInLockOrder,
+} from "../shared/utils/reorder";
+
+/**
+ * The order a species' variants read in: as staff arranged them. The
+ * tiebreaks only matter for variants that share a position (two created at
+ * once), where the older goes first as new ones go last, and keep cursor
+ * pagination stable.
+ */
+export const VARIANT_ORDER: Prisma.SpeciesVariantOrderByWithRelationInput[] = [
+  { sortOrder: "asc" },
+  { createdAt: "asc" },
+  { id: "asc" },
+];
 
 /**
  * Service layer input types for species variants operations.
@@ -70,6 +86,7 @@ export class SpeciesVariantsService {
     return this.prisma.speciesVariant.create({
       data: {
         name: input.name,
+        sortOrder: await this.nextSortOrder(input.speciesId),
         species: {
           connect: { id: input.speciesId },
         },
@@ -93,6 +110,7 @@ export class SpeciesVariantsService {
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
+        // Across species, so there is no staff order to follow.
         orderBy: { createdAt: "desc" },
       }),
       this.prisma.speciesVariant.count(),
@@ -120,7 +138,7 @@ export class SpeciesVariantsService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { createdAt: "desc" },
+        orderBy: VARIANT_ORDER,
       }),
       this.prisma.speciesVariant.count({
         where: { speciesId },
@@ -158,8 +176,12 @@ export class SpeciesVariantsService {
     const updateData: Prisma.SpeciesVariantUpdateInput = {};
 
     if (input.name !== undefined) updateData.name = input.name;
-    if (input.speciesId !== undefined) {
+    if (
+      input.speciesId !== undefined &&
+      input.speciesId !== speciesVariant.speciesId
+    ) {
       updateData.species = { connect: { id: input.speciesId } };
+      updateData.sortOrder = await this.nextSortOrder(input.speciesId);
     }
     // Lowering the limit deliberately does not touch characters that already
     // have more forms than it. Deleting somebody's second form because staff
@@ -197,6 +219,44 @@ export class SpeciesVariantsService {
       where: { id },
       data: updateData,
     });
+  }
+
+  /**
+   * Arranges a species' variants in the order given. The list must name each
+   * of the species' variants exactly once.
+   */
+  async reorder(speciesId: string, variantIds: string[]) {
+    const existing = await this.prisma.speciesVariant.findMany({
+      where: { speciesId },
+      select: { id: true },
+    });
+    assertCompleteReorder(
+      variantIds,
+      existing.map((row) => row.id),
+    );
+
+    await this.prisma.$transaction(
+      positionsInLockOrder(variantIds).map(({ id, position }) =>
+        this.prisma.speciesVariant.update({
+          where: { id },
+          data: { sortOrder: position },
+        }),
+      ),
+    );
+
+    return this.prisma.speciesVariant.findMany({
+      where: { speciesId },
+      orderBy: VARIANT_ORDER,
+    });
+  }
+
+  /** The position after a species' last variant. */
+  private async nextSortOrder(speciesId: string): Promise<number> {
+    const { _max } = await this.prisma.speciesVariant.aggregate({
+      where: { speciesId },
+      _max: { sortOrder: true },
+    });
+    return _max.sortOrder === null ? 0 : _max.sortOrder + 1;
   }
 
   /** Remove a species variant */

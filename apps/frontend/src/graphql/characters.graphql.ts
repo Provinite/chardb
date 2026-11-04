@@ -215,6 +215,7 @@ export const GET_CHARACTER = gql`
         speciesId
         colorId
         maxForms
+        sortOrder
         createdAt
         updatedAt
         color {
@@ -837,10 +838,18 @@ export const CHARACTER_VARIANT_CHANGES = gql`
       fromVariant {
         id
         name
+        color {
+          id
+          hexCode
+        }
       }
       toVariant {
         id
         name
+        color {
+          id
+          hexCode
+        }
       }
       changedBy {
         id

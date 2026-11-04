@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Variant and trait option order**: staff arrange a species' variants and a trait's options by drag or up/down buttons, and every picker follows that order.
+- **Colours in pickers**: variant and trait value pickers, the variant cards on the create page and rarity history show each one's colour.
+
+### Fixed
+
+- **Trait option up/down buttons**: they sent a fractional position the server refused, so options could not be reordered.
+
 ### Changed
 
 - **Username links ignore case**: `/user/FOO` and `/members/FOO` open foo's page and correct the URL to the stored casing.

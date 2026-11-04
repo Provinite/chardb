@@ -51,6 +51,9 @@ const mockPrismaService = {
     delete: jest.fn(),
     count: jest.fn(),
   },
+  communityColor: {
+    findMany: jest.fn(),
+  },
   enumValue: {
     create: jest.fn(),
     findUnique: jest.fn(),

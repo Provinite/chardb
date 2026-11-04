@@ -60,7 +60,7 @@ export const ColorPip: React.FC<ColorPipProps> = ({
 }) => {
   return (
     <Container $hasLabel={!!label} className={className}>
-      <Pip $color={color} $size={size} />
+      <Pip $color={color} $size={size} data-color={color} />
       {label && <Label>{label}</Label>}
     </Container>
   );

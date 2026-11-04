@@ -749,8 +749,10 @@ input CreateEnumValueInput {
   """Name/display text of this enum value"""
   name: String!
 
-  """Display order within the trait's enum values"""
-  order: Int = 0
+  """
+  Display order within the trait's enum values. Left out, the value goes after the trait's existing ones.
+  """
+  order: Int
 
   """ID of the trait this enum value belongs to"""
   traitId: ID!
@@ -3309,7 +3311,23 @@ type Mutation {
     """Trait list entry ID"""
     id: ID!
   ): RemovalResponse!
+
+  """
+  Arrange a trait's values. Lists every value of the trait, in its new order.
+  """
+  reorderEnumValues(
+    """The trait and its values, in order"""
+    input: ReorderEnumValuesInput!
+  ): [EnumValue!]!
   reorderGalleries(input: ReorderGalleriesInput!): [Gallery!]!
+
+  """
+  Arrange a species' variants. Lists every variant of the species, in its new order.
+  """
+  reorderSpeciesVariants(
+    """The species and its variants, in order"""
+    input: ReorderSpeciesVariantsInput!
+  ): [SpeciesVariant!]!
 
   """
   Sends another verification email. Always returns true, whatever the address is or is not, so this cannot be used to discover who has an account. Subject to a per-address lifetime cap.
@@ -4639,8 +4657,24 @@ type RemovalResponse {
   removed: Boolean!
 }
 
+input ReorderEnumValuesInput {
+  """Every one of the trait's values, in their new order"""
+  enumValueIds: [ID!]!
+
+  """The trait whose values are being arranged"""
+  traitId: ID!
+}
+
 input ReorderGalleriesInput {
   galleryIds: [ID!]!
+}
+
+input ReorderSpeciesVariantsInput {
+  """The species whose variants are being arranged"""
+  speciesId: ID!
+
+  """Every one of the species' variants, in their new order"""
+  variantIds: [ID!]!
 }
 
 """
@@ -5049,6 +5083,11 @@ type SpeciesVariant {
 
   """Name of the species variant"""
   name: String!
+
+  """
+  Position among its species' variants, from 0. Lists of variants read in this order.
+  """
+  sortOrder: Int!
 
   """The species this variant belongs to"""
   species: Species!

@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from "react";
+import React, { useId, useMemo, useState } from "react";
 import styled from "styled-components";
 import { toast } from "react-hot-toast";
-import { Button } from "@chardb/ui";
+import { Button, Select as ColorSelect } from "@chardb/ui";
+import { ColorPip, ColoredName } from "../colors";
 import {
   useSpeciesQuery,
   useSpeciesVariantsBySpeciesQuery,
@@ -120,6 +121,7 @@ export const ItemUseVariantChangeGrantEditor: React.FC<Props> = ({
     skip: !speciesId,
   });
   const variants = variantsData?.speciesVariantsBySpecies?.nodes ?? [];
+  const becomesLabelId = useId();
 
   if (!itemType.isConsumable) {
     return (
@@ -195,24 +197,31 @@ export const ItemUseVariantChangeGrantEditor: React.FC<Props> = ({
               <Hint>That species has no variants to offer.</Hint>
             ) : (
               <>
-                <Label>Becomes</Label>
-                <Select
+                <Label id={becomesLabelId}>Becomes</Label>
+                <ColorSelect.Root
+                  aria-labelledby={becomesLabelId}
                   value={toVariantId}
                   data-testid="variant-change-grant-to"
-                  onChange={(e) => {
-                    setToVariantId(e.target.value);
+                  onChange={(id) => {
+                    setToVariantId(id);
                     setFromVariantIds((prev) =>
-                      prev.filter((id) => id !== e.target.value),
+                      prev.filter((from) => from !== id),
                     );
                   }}
                 >
-                  <option value="">Nothing — clears this</option>
+                  <ColorSelect.Option value="">
+                    Nothing — clears this
+                  </ColorSelect.Option>
                   {variants.map((v) => (
-                    <option key={v.id} value={v.id}>
-                      {v.name}
-                    </option>
+                    <ColorSelect.Option
+                      key={v.id}
+                      value={v.id}
+                      textValue={v.name}
+                    >
+                      <ColoredName name={v.name} color={v.color?.hexCode} />
+                    </ColorSelect.Option>
                   ))}
-                </Select>
+                </ColorSelect.Root>
 
                 {toVariantId && (
                   <>
@@ -239,6 +248,9 @@ export const ItemUseVariantChangeGrantEditor: React.FC<Props> = ({
                               )
                             }
                           />
+                          {variant.color && (
+                            <ColorPip color={variant.color.hexCode} />
+                          )}
                           <span>
                             {variant.name}
                             {isDestination ? " — this is the destination" : ""}

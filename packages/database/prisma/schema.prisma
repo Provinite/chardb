@@ -1930,6 +1930,11 @@ model SpeciesVariant {
   /// entry is worth, staff should have to opt into a number for.
   maxForms Int @default(1) @map("max_forms")
 
+  /// Position among its species' variants, from 0, as staff arranged them.
+  /// Every list of variants reads in this order. No unique constraint: a
+  /// reorder rewrites every row at once (see CharacterForm.sortOrder).
+  sortOrder Int @default(0) @map("sort_order")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -1956,6 +1961,7 @@ model SpeciesVariant {
   variantChangesTo   CharacterVariantChange[] @relation("CharacterVariantChangeTo")
 
   @@unique([speciesId, name])
+  @@index([speciesId, sortOrder])
   @@map("species_variants")
 }
 

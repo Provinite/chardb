@@ -7,6 +7,7 @@ import {
   Int,
   ResolveField,
   Parent,
+  Context,
 } from "@nestjs/graphql";
 import { EnumValuesService } from "./enum-values.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
@@ -18,6 +19,7 @@ import { CommunityPermission } from "../auth/CommunityPermission";
 import { EnumValue, EnumValueConnection } from "./entities/enum-value.entity";
 import {
   CreateEnumValueInput,
+  ReorderEnumValuesInput,
   UpdateEnumValueInput,
 } from "./dto/enum-value.dto";
 import {
@@ -31,15 +33,15 @@ import { Trait } from "../traits/entities/trait.entity";
 import { TraitsService } from "../traits/traits.service";
 import { mapPrismaTraitToGraphQL } from "../traits/utils/trait-resolver-mappers";
 import { CommunityColor } from "../community-colors/entities/community-color.entity";
-import { CommunityColorsService } from "../community-colors/community-colors.service";
-import { NotFoundException } from "@nestjs/common";
+import { LoadersService } from "../dataloaders/loaders.service";
+import type { Request } from "express";
 
 @Resolver(() => EnumValue)
 export class EnumValuesResolver {
   constructor(
     private readonly enumValuesService: EnumValuesService,
     private readonly traitsService: TraitsService,
-    private readonly communityColorsService: CommunityColorsService,
+    private readonly loaders: LoadersService,
   ) {}
 
   @AllowGlobalAdmin()
@@ -144,6 +146,24 @@ export class EnumValuesResolver {
 
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
+  @ResolveCommunityFrom({ traitId: "input.traitId" })
+  @Mutation(() => [EnumValue], {
+    description:
+      "Arrange a trait's values. Lists every value of the trait, in its new order.",
+  })
+  async reorderEnumValues(
+    @Args("input", { description: "The trait and its values, in order" })
+    input: ReorderEnumValuesInput,
+  ): Promise<EnumValue[]> {
+    const rows = await this.enumValuesService.reorder(
+      input.traitId,
+      input.enumValueIds,
+    );
+    return rows.map(mapPrismaEnumValueToGraphQL);
+  }
+
+  @AllowGlobalAdmin()
+  @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
   @ResolveCommunityFrom({ enumValueId: "id" })
   @Mutation(() => RemovalResponse, { description: "Remove an enum value" })
   async removeEnumValue(
@@ -171,20 +191,11 @@ export class EnumValuesResolver {
   })
   async resolveColor(
     @Parent() enumValue: EnumValue,
+    @Context("req") req?: Request,
   ): Promise<CommunityColor | null> {
-    if (!enumValue.colorId) {
-      return null;
-    }
-
-    try {
-      return (await this.communityColorsService.findCommunityColorById(
-        enumValue.colorId,
-      )) as CommunityColor;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return null;
-      }
-      throw error;
-    }
+    if (!enumValue.colorId) return null;
+    return (await this.loaders
+      .forRequest(req)
+      .communityColorById.load(enumValue.colorId)) as CommunityColor | null;
   }
 }

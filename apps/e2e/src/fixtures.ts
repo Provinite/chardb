@@ -139,6 +139,20 @@ export async function openMenuItem(
 }
 
 /**
+ * Picks an option of a `Select` from `@chardb/ui` by value, the way
+ * `selectOption` does on a native `<select>`. The list is portalled to the end
+ * of the body, so the option is looked up page-wide; one list is open at a
+ * time.
+ */
+export async function chooseOption(
+  select: Locator,
+  value: string,
+): Promise<void> {
+  await select.click();
+  await select.page().locator(`[role="option"][data-value="${value}"]`).click();
+}
+
+/**
  * Accepts the next window.confirm.
  *
  * MUST be registered before the click that triggers it: Playwright

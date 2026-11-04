@@ -528,7 +528,10 @@ export class ItemsService {
       where: { itemTypeId },
       include: {
         species: true,
-        variants: { include: { speciesVariant: true } },
+        variants: {
+          include: { speciesVariant: true },
+          orderBy: { speciesVariant: { sortOrder: "asc" } },
+        },
       },
     });
   }
@@ -806,7 +809,10 @@ export class ItemsService {
       include: {
         species: true,
         toVariant: true,
-        fromVariants: { include: { speciesVariant: true } },
+        fromVariants: {
+          include: { speciesVariant: true },
+          orderBy: { speciesVariant: { sortOrder: "asc" } },
+        },
       },
     });
   }
@@ -819,7 +825,10 @@ export class ItemsService {
         species: {
           include: {
             species: true,
-            variants: { include: { speciesVariant: true } },
+            variants: {
+              include: { speciesVariant: true },
+              orderBy: { speciesVariant: { sortOrder: "asc" } },
+            },
           },
         },
       },
@@ -1343,7 +1352,10 @@ export class ItemsService {
             useMyoGrant: {
               include: {
                 species: true,
-                variants: { include: { speciesVariant: true } },
+                variants: {
+                  include: { speciesVariant: true },
+                  orderBy: { speciesVariant: { sortOrder: "asc" } },
+                },
               },
             },
             useTraitEditGrant: {
@@ -1351,7 +1363,10 @@ export class ItemsService {
                 species: {
                   include: {
                     species: true,
-                    variants: { include: { speciesVariant: true } },
+                    variants: {
+                      include: { speciesVariant: true },
+                      orderBy: { speciesVariant: { sortOrder: "asc" } },
+                    },
                   },
                 },
               },
@@ -1360,7 +1375,10 @@ export class ItemsService {
               include: {
                 species: true,
                 toVariant: true,
-                fromVariants: { include: { speciesVariant: true } },
+                fromVariants: {
+                  include: { speciesVariant: true },
+                  orderBy: { speciesVariant: { sortOrder: "asc" } },
+                },
               },
             },
           },

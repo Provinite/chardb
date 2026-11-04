@@ -75,6 +75,24 @@ mutation SeedCreateSpeciesVariant(
   }
 }
 
+# An enum value's name, colour or position.
+mutation SeedUpdateEnumValue(
+  $id: ID!
+  $updateEnumValueInput: UpdateEnumValueInput!
+) {
+  updateEnumValue(id: $id, updateEnumValueInput: $updateEnumValueInput) {
+    id
+  }
+}
+
+# A community colour, for tagging variants and trait values.
+mutation SeedCreateCommunityColor($input: CreateCommunityColorInput!) {
+  createCommunityColor(input: $input) {
+    id
+    hexCode
+  }
+}
+
 # How many forms a variant allows. Raising it is what turns character forms on
 # for a rarity; every variant starts at one.
 mutation SeedUpdateSpeciesVariant(

@@ -57,6 +57,7 @@ export class EnumValueSettingsService {
         skip,
         cursor,
         orderBy: [
+          { speciesVariant: { sortOrder: "asc" } },
           { speciesVariant: { name: "asc" } },
           { enumValue: { order: "asc" } },
         ],
@@ -127,7 +128,10 @@ export class EnumValueSettingsService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: { speciesVariant: { name: "asc" } },
+        orderBy: [
+          { speciesVariant: { sortOrder: "asc" } },
+          { speciesVariant: { name: "asc" } },
+        ],
       }),
       this.prisma.enumValueSetting.count({
         where: { enumValueId },

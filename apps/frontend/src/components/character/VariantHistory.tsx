@@ -2,6 +2,7 @@ import React from "react";
 import styled from "styled-components";
 import { ArrowRight, History } from "lucide-react";
 import { useCharacterVariantChangesQuery } from "../../generated/graphql";
+import { ColoredName } from "../colors";
 
 const Wrap = styled.section`
   margin-top: 2rem;
@@ -88,9 +89,15 @@ export const VariantHistory: React.FC<{ characterId: string }> = ({
       {changes.map((change) => (
         <Row key={change.id}>
           <Move>
-            {change.fromVariant?.name ?? "No variant"}
-            <ArrowRight size={14} />
-            {change.toVariant?.name ?? "No variant"}
+            <ColoredName
+              name={change.fromVariant?.name ?? "No variant"}
+              color={change.fromVariant?.color?.hexCode}
+            />
+            <ArrowRight size={14} aria-label="to" />
+            <ColoredName
+              name={change.toVariant?.name ?? "No variant"}
+              color={change.toVariant?.color?.hexCode}
+            />
           </Move>
           <Meta>
             {formatDate(change.createdAt)}

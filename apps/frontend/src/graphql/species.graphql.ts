@@ -196,6 +196,7 @@ export const SPECIES_VARIANT_FRAGMENT = gql`
     speciesId
     colorId
     maxForms
+    sortOrder
     color {
       id
       name
@@ -329,6 +330,19 @@ export const UPDATE_SPECIES_VARIANT_MUTATION = gql`
     }
   }
   ${SPECIES_VARIANT_FRAGMENT}
+`;
+
+/**
+ * Arranges a species' variants. `variantIds` lists every variant of the
+ * species, in its new order; the response is the whole list, renumbered.
+ */
+export const REORDER_SPECIES_VARIANTS_MUTATION = gql`
+  mutation ReorderSpeciesVariants($input: ReorderSpeciesVariantsInput!) {
+    reorderSpeciesVariants(input: $input) {
+      id
+      sortOrder
+    }
+  }
 `;
 
 /**

@@ -2,25 +2,21 @@ import React, { useState } from "react";
 import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import {
-  Plus,
-  Edit,
-  Trash2,
-  ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
-} from "lucide-react";
-import { Button, Modal, Input, ErrorMessage } from "@chardb/ui";
+import { Plus, Edit, Trash2, ArrowUpDown } from "lucide-react";
+import { Button, Cluster, Modal, Input, ErrorMessage } from "@chardb/ui";
 import {
   useEnumValuesByTraitQuery,
   useTraitByIdQuery,
   useCreateEnumValueMutation,
   useUpdateEnumValueMutation,
   useDeleteEnumValueMutation,
+  useReorderEnumValuesMutation,
   EnumValuesByTraitQuery,
 } from "../generated/graphql";
 import { toast } from "react-hot-toast";
 import { ColorSelector, ColorPip } from "../components/colors";
+import { SortableList } from "../components/reorder/SortableList";
+import { sortCachedConnection, sortCachedListField } from "../lib/reorderCache";
 import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
 
 /**
@@ -31,9 +27,8 @@ import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
  * real-time validation for enum values.
  *
  * Features:
- * - Visual enum value listing with drag-and-drop ordering (future)
+ * - Enum value listing, ordered by drag-and-drop or up/down buttons
  * - Real-time enum value CRUD operations
- * - Order management with up/down arrows
  * - Comprehensive error handling and loading states
  * - Breadcrumb navigation with trait and species context
  * - Responsive design optimized for enum value workflows
@@ -106,62 +101,11 @@ const HeaderRight = styled.div`
   gap: 1rem;
 `;
 
-const EnumValueList = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  margin-bottom: 2rem;
-`;
-
-const EnumValueCard = styled.div`
-  background: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 8px;
-  padding: 1.5rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: all 0.2s ease;
-
-  &:hover {
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-`;
-
-const EnumValueInfo = styled.div`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-`;
-
-const OrderBadge = styled.div`
-  background: ${({ theme }) => theme.colors.primary}20;
-  color: ${({ theme }) => theme.colors.primary};
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  min-width: 40px;
-  text-align: center;
-`;
-
 const EnumValueName = styled.div`
   font-size: 1.125rem;
   font-weight: 500;
   color: ${({ theme }) => theme.colors.text.primary};
-`;
-
-const EnumValueMeta = styled.div`
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.muted};
-`;
-
-const EnumValueActions = styled.div`
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
+  overflow-wrap: anywhere;
 `;
 
 const EmptyState = styled.div`
@@ -182,7 +126,6 @@ const EmptyState = styled.div`
 // Create/Edit Enum Value Modal Form
 interface EnumValueFormData {
   name: string;
-  order: number;
   colorId?: string | null;
 }
 
@@ -192,7 +135,6 @@ interface EnumValueModalProps {
   onSubmit: (data: EnumValueFormData) => void;
   enumValue?: EnumValuesByTraitQuery["enumValuesByTrait"]["nodes"][0];
   title: string;
-  maxOrder: number;
   communityId: string;
 }
 
@@ -202,12 +144,10 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
   onSubmit,
   enumValue,
   title,
-  maxOrder,
   communityId,
 }) => {
   const [formData, setFormData] = useState<EnumValueFormData>({
     name: enumValue?.name || "",
-    order: enumValue?.order || maxOrder + 1,
     colorId: enumValue?.colorId || null,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -216,16 +156,13 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
   React.useEffect(() => {
     setFormData({
       name: enumValue?.name || "",
-      order: enumValue?.order || maxOrder + 1,
       colorId: enumValue?.colorId || null,
     });
-  }, [enumValue, maxOrder]);
+  }, [enumValue]);
 
   // Check if form has changes (for edit mode)
   const hasChanges = enumValue
-    ? formData.name !== enumValue.name ||
-      formData.order !== enumValue.order ||
-      formData.colorId !== enumValue.colorId
+    ? formData.name !== enumValue.name || formData.colorId !== enumValue.colorId
     : true; // For create mode, always allow submission if name is filled
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -236,7 +173,7 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
     try {
       await onSubmit(formData);
       if (!enumValue) {
-        setFormData({ name: "", order: maxOrder + 1, colorId: null });
+        setFormData({ name: "", colorId: null });
       }
       onClose();
     } catch (error) {
@@ -262,33 +199,6 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
             required
             disabled={isSubmitting}
           />
-        </div>
-
-        <div style={{ marginBottom: "1.5rem" }}>
-          <label htmlFor="enum-value-order">Display Order</label>
-          <Input
-            id="enum-value-order"
-            type="number"
-            min="1"
-            value={formData.order}
-            onChange={(e) =>
-              setFormData((prev) => ({
-                ...prev,
-                order: parseInt(e.target.value) || 1,
-              }))
-            }
-            required
-            disabled={isSubmitting}
-          />
-          <p
-            style={{
-              fontSize: "0.875rem",
-              color: "#666",
-              margin: "0.25rem 0 0 0",
-            }}
-          >
-            Lower numbers appear first in selection lists
-          </p>
         </div>
 
         <div style={{ marginBottom: "1.5rem" }}>
@@ -358,7 +268,8 @@ export const EnumValueManagementPage: React.FC = () => {
     error: enumValuesError,
     refetch,
   } = useEnumValuesByTraitQuery({
-    variables: { traitId: traitId ?? "", first: 100 },
+    // A reorder names every option, so the page must hold them all.
+    variables: { traitId: traitId ?? "", first: 500 },
     skip: !traitId,
   });
 
@@ -405,9 +316,15 @@ export const EnumValueManagementPage: React.FC = () => {
     },
   });
 
+  const [reorderEnumValuesMutation] = useReorderEnumValuesMutation({
+    onError: (error) => {
+      toast.error(`Failed to reorder options: ${error.message}`);
+      void refetch();
+    },
+  });
+
   const enumValues = enumValuesData?.enumValuesByTrait?.nodes || [];
   const sortedEnumValues = [...enumValues].sort((a, b) => a.order - b.order);
-  const maxOrder = enumValues.reduce((max, ev) => Math.max(max, ev.order), 0);
 
   if (!traitId) {
     return (
@@ -423,7 +340,6 @@ export const EnumValueManagementPage: React.FC = () => {
       variables: {
         createEnumValueInput: {
           name: formData.name,
-          order: formData.order,
           traitId,
           colorId: formData.colorId,
         },
@@ -439,7 +355,6 @@ export const EnumValueManagementPage: React.FC = () => {
         id: editingEnumValue.id,
         updateEnumValueInput: {
           name: formData.name,
-          order: formData.order,
           colorId: formData.colorId,
         },
       },
@@ -466,32 +381,24 @@ export const EnumValueManagementPage: React.FC = () => {
     setEditingEnumValue(enumValue);
   };
 
-  const handleMoveUp = async (enumValue: (typeof sortedEnumValues)[0]) => {
-    const currentIndex = sortedEnumValues.findIndex(
-      (ev) => ev.id === enumValue.id,
-    );
-    if (currentIndex <= 0) return;
-
-    const newOrder = sortedEnumValues[currentIndex - 1].order;
-    await updateEnumValueMutation({
-      variables: {
-        id: enumValue.id,
-        updateEnumValueInput: { order: newOrder - 0.5 },
+  const handleReorder = (enumValueIds: string[]) => {
+    void reorderEnumValuesMutation({
+      variables: { input: { traitId, enumValueIds } },
+      optimisticResponse: {
+        reorderEnumValues: enumValueIds.map((id, order) => ({
+          __typename: "EnumValue" as const,
+          id,
+          order,
+        })),
       },
-    });
-  };
-
-  const handleMoveDown = async (enumValue: (typeof sortedEnumValues)[0]) => {
-    const currentIndex = sortedEnumValues.findIndex(
-      (ev) => ev.id === enumValue.id,
-    );
-    if (currentIndex >= sortedEnumValues.length - 1) return;
-
-    const newOrder = sortedEnumValues[currentIndex + 1].order;
-    await updateEnumValueMutation({
-      variables: {
-        id: enumValue.id,
-        updateEnumValueInput: { order: newOrder + 0.5 },
+      update: (cache) => {
+        sortCachedConnection(cache, "enumValuesByTrait", "order");
+        sortCachedListField(
+          cache,
+          cache.identify({ __typename: "Trait", id: traitId }),
+          "enumValues",
+          "order",
+        );
       },
     });
   };
@@ -585,56 +492,29 @@ export const EnumValueManagementPage: React.FC = () => {
           )}
         </EmptyState>
       ) : (
-        <EnumValueList>
-          {sortedEnumValues.map((enumValue, index) => (
-            <EnumValueCard key={enumValue.id}>
-              <EnumValueInfo>
-                <OrderBadge>#{enumValue.order}</OrderBadge>
-                <div>
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "0.5rem",
-                    }}
-                  >
-                    <EnumValueName>{enumValue.name}</EnumValueName>
-                    {enumValue.color && (
-                      <ColorPip color={enumValue.color.hexCode} size="sm" />
-                    )}
-                  </div>
-                  <EnumValueMeta>
-                    Created:{" "}
-                    {new Date(enumValue.createdAt).toLocaleDateString()}
-                  </EnumValueMeta>
-                </div>
-              </EnumValueInfo>
-
+        <SortableList
+          aria-label={`${trait.name} options`}
+          items={sortedEnumValues}
+          getId={(enumValue) => enumValue.id}
+          getName={(enumValue) => enumValue.name}
+          onReorder={handleReorder}
+          editable={canEdit}
+        >
+          {(enumValue) => (
+            <Cluster justify="space-between" gap="sm">
+              <Cluster gap="sm">
+                {enumValue.color && (
+                  <ColorPip color={enumValue.color.hexCode} size="md" />
+                )}
+                <EnumValueName>{enumValue.name}</EnumValueName>
+              </Cluster>
               {canEdit && (
-                <EnumValueActions>
-                  <Button
-                    tone="secondary"
-                    size="sm"
-                    onClick={() => handleMoveUp(enumValue)}
-                    disabled={index === 0}
-                    icon={<ArrowUp size={14} />}
-                  >
-                    Up
-                  </Button>
-                  <Button
-                    tone="secondary"
-                    size="sm"
-                    onClick={() => handleMoveDown(enumValue)}
-                    disabled={index === sortedEnumValues.length - 1}
-                    icon={<ArrowDown size={14} />}
-                  >
-                    Down
-                  </Button>
+                <Cluster gap="sm">
                   <Button
                     tone="secondary"
                     size="sm"
                     onClick={() => handleEditEnumValue(enumValue)}
-                    icon={<Edit size={14} />}
+                    icon={<Edit size={14} aria-hidden />}
                   >
                     Edit
                   </Button>
@@ -642,15 +522,15 @@ export const EnumValueManagementPage: React.FC = () => {
                     tone="danger"
                     size="sm"
                     onClick={() => handleDeleteEnumValue(enumValue)}
-                    icon={<Trash2 size={14} />}
+                    icon={<Trash2 size={14} aria-hidden />}
                   >
                     Delete
                   </Button>
-                </EnumValueActions>
+                </Cluster>
               )}
-            </EnumValueCard>
-          ))}
-        </EnumValueList>
+            </Cluster>
+          )}
+        </SortableList>
       )}
 
       {/* Create Enum Value Modal */}
@@ -659,7 +539,6 @@ export const EnumValueManagementPage: React.FC = () => {
         onClose={() => setIsCreateModalOpen(false)}
         onSubmit={handleCreateEnumValue}
         title="Create New Option"
-        maxOrder={maxOrder}
         communityId={trait.species?.communityId || ""}
       />
 
@@ -670,7 +549,6 @@ export const EnumValueManagementPage: React.FC = () => {
         onSubmit={handleUpdateEnumValue}
         enumValue={editingEnumValue || undefined}
         title="Edit Option"
-        maxOrder={maxOrder}
         communityId={trait.species?.communityId || ""}
       />
     </Container>

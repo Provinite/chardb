@@ -1,4 +1,4 @@
-import { presetTest, expect } from "../../src/fixtures.js";
+import { presetTest, expect, chooseOption } from "../../src/fixtures.js";
 import type { CommunityItemsWorld } from "../../src/world/presets/community-items.js";
 import type { World } from "../../src/world/types.js";
 import {
@@ -419,17 +419,19 @@ test.describe("changing rarity, through the page", () => {
     const id = await blueEyed(world, "Stranded");
     await page.goto(`${world.community.url}/character/${id}/edit`);
 
-    await page
-      .getByTestId("variant-select")
-      .selectOption(world.variants.legendary.id);
+    await chooseOption(
+      page.getByTestId("variant-select"),
+      world.variants.legendary.id,
+    );
 
     // Legendary permits Amber only, and this character has Blue eyes.
     await expect(page.getByTestId("variant-reroute")).toBeVisible();
     await expect(page.getByTestId("save-species-details")).toBeDisabled();
 
-    await page
-      .getByTestId(`reroute-${world.traits.eyeColor.id}`)
-      .selectOption(world.traits.eyeColor.values.amber);
+    await chooseOption(
+      page.getByTestId(`reroute-${world.traits.eyeColor.id}`),
+      world.traits.eyeColor.values.amber,
+    );
 
     await expect(page.getByTestId("save-species-details")).toBeEnabled();
   });
@@ -441,12 +443,14 @@ test.describe("changing rarity, through the page", () => {
     const id = await blueEyed(world, "Saved");
     await page.goto(`${world.community.url}/character/${id}/edit`);
 
-    await page
-      .getByTestId("variant-select")
-      .selectOption(world.variants.legendary.id);
-    await page
-      .getByTestId(`reroute-${world.traits.eyeColor.id}`)
-      .selectOption(world.traits.eyeColor.values.amber);
+    await chooseOption(
+      page.getByTestId("variant-select"),
+      world.variants.legendary.id,
+    );
+    await chooseOption(
+      page.getByTestId(`reroute-${world.traits.eyeColor.id}`),
+      world.traits.eyeColor.values.amber,
+    );
     await page.getByTestId("variant-change-reason").fill("upgrade ticket #204");
     await page.getByTestId("save-species-details").click();
 

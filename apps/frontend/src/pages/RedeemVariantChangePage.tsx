@@ -5,6 +5,7 @@ import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { AlertTriangle, ArrowLeft, ArrowUpRight } from "lucide-react";
 import { Button } from "@chardb/ui";
+import { RerouteSelect } from "../components/character/RerouteSelect";
 import {
   useGetCharacterQuery,
   useGetMyVariantChangeItemsQuery,
@@ -551,23 +552,13 @@ export const RedeemVariantChangePage: React.FC = () => {
                     {forms.length > 1 ? ` · ${row.formName}` : ""}
                   </span>
                 </Was>
-                <Select
+                <RerouteSelect
                   data-testid={`variant-change-reroute-${row.traitId}`}
-                  defaultValue=""
-                  onChange={(e) =>
-                    reroute(row.formIndex, row.index, e.target.value)
-                  }
-                >
-                  <option value="" disabled>
-                    Choose a replacement…
-                  </option>
-                  {choices.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
-                  ))}
-                  <option value="">Remove this value</option>
-                </Select>
+                  choices={choices}
+                  traitName={row.traitName}
+                  optionName={row.optionName}
+                  onPick={(to) => reroute(row.formIndex, row.index, to)}
+                />
               </Row>
             );
           })}
