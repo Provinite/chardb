@@ -1,5 +1,7 @@
 import * as DataLoader from "dataloader";
 import type {
+  Community,
+  CommunityColor,
   EnumValue,
   MediaTag,
   PendingOwnership,
@@ -139,6 +141,24 @@ export class Loaders {
       );
     },
   );
+
+  /**
+   * A community colour by id, or null once it is gone. Every coloured
+   * variant, trait and trait value in a list asks for its colour, so a
+   * species' options would otherwise cost a query each. With its community,
+   * as `CommunityColor.community` has always been read from the row.
+   */
+  readonly communityColorById = new DataLoader<
+    string,
+    (CommunityColor & { community: Community }) | null
+  >(async (ids) => {
+    const rows = await this.db.communityColor.findMany({
+      where: { id: { in: [...ids] } },
+      include: { community: true },
+    });
+    const byId = new Map(rows.map((row) => [row.id, row]));
+    return ids.map((id) => byId.get(id) ?? null);
+  });
 
   /** The account an item waits on, or null. One per item: item_id is unique. */
   readonly pendingOwnershipByItem = new DataLoader<

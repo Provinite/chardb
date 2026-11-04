@@ -7,6 +7,7 @@ import {
   Int,
   ResolveField,
   Parent,
+  Context,
 } from "@nestjs/graphql";
 import { NotFoundException } from "@nestjs/common";
 import { SpeciesVariantsService } from "./species-variants.service";
@@ -39,7 +40,8 @@ import { EnumValueSetting } from "../enum-value-settings/entities/enum-value-set
 import { EnumValueSettingsService } from "../enum-value-settings/enum-value-settings.service";
 import { mapPrismaEnumValueSettingToGraphQL } from "../enum-value-settings/utils/enum-value-setting-resolver-mappers";
 import { CommunityColor } from "../community-colors/entities/community-color.entity";
-import { CommunityColorsService } from "../community-colors/community-colors.service";
+import { LoadersService } from "../dataloaders/loaders.service";
+import type { Request } from "express";
 
 @Resolver(() => SpeciesVariant)
 export class SpeciesVariantsResolver {
@@ -47,7 +49,7 @@ export class SpeciesVariantsResolver {
     private readonly speciesVariantsService: SpeciesVariantsService,
     private readonly speciesService: SpeciesService,
     private readonly enumValueSettingsService: EnumValueSettingsService,
-    private readonly communityColorsService: CommunityColorsService,
+    private readonly loaders: LoadersService,
   ) {}
 
   /** Create a new species variant */
@@ -243,20 +245,13 @@ export class SpeciesVariantsResolver {
   })
   async resolveColor(
     @Parent() speciesVariant: SpeciesVariant,
+    @Context("req") req?: Request,
   ): Promise<CommunityColor | null> {
-    if (!speciesVariant.colorId) {
-      return null;
-    }
-
-    try {
-      return (await this.communityColorsService.findCommunityColorById(
+    if (!speciesVariant.colorId) return null;
+    return (await this.loaders
+      .forRequest(req)
+      .communityColorById.load(
         speciesVariant.colorId,
-      )) as CommunityColor;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return null;
-      }
-      throw error;
-    }
+      )) as CommunityColor | null;
   }
 }

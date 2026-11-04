@@ -35,14 +35,12 @@ import { EnumValue } from "../enum-values/entities/enum-value.entity";
 import { mapPrismaEnumValueToGraphQL } from "../enum-values/utils/enum-value-resolver-mappers";
 import { TraitValueType } from "../shared/enums/trait-value-type.enum";
 import { CommunityColor } from "../community-colors/entities/community-color.entity";
-import { CommunityColorsService } from "../community-colors/community-colors.service";
 
 @Resolver(() => Trait)
 export class TraitsResolver {
   constructor(
     private readonly traitsService: TraitsService,
     private readonly speciesService: SpeciesService,
-    private readonly communityColorsService: CommunityColorsService,
     private readonly loaders: LoadersService,
   ) {}
 
@@ -205,20 +203,13 @@ export class TraitsResolver {
     nullable: true,
     description: "The color associated with this trait",
   })
-  async resolveColor(@Parent() trait: Trait): Promise<CommunityColor | null> {
-    if (!trait.colorId) {
-      return null;
-    }
-
-    try {
-      return (await this.communityColorsService.findCommunityColorById(
-        trait.colorId,
-      )) as CommunityColor;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return null;
-      }
-      throw error;
-    }
+  async resolveColor(
+    @Parent() trait: Trait,
+    @Context("req") req?: Request,
+  ): Promise<CommunityColor | null> {
+    if (!trait.colorId) return null;
+    return (await this.loaders
+      .forRequest(req)
+      .communityColorById.load(trait.colorId)) as CommunityColor | null;
   }
 }

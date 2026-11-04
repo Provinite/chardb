@@ -11,6 +11,29 @@ describe("Loaders", () => {
     loaders = new Loaders(mockDatabaseService as unknown as DatabaseService);
   });
 
+  it("looks colours up in one query, with null for one that is gone", async () => {
+    mockDatabaseService.communityColor.findMany.mockResolvedValue([
+      { id: "violet", hexCode: "#8b5cf6" },
+      { id: "green", hexCode: "#22c55e" },
+    ]);
+
+    const colours = await Promise.all(
+      ["green", "deleted", "violet", "green"].map((id) =>
+        loaders.communityColorById.load(id),
+      ),
+    );
+
+    expect(colours.map((c) => c?.hexCode ?? null)).toEqual([
+      "#22c55e",
+      null,
+      "#8b5cf6",
+      "#22c55e",
+    ]);
+    expect(mockDatabaseService.communityColor.findMany).toHaveBeenCalledTimes(
+      1,
+    );
+  });
+
   it("answers every key in the order asked, with 0 for a key nothing matched", async () => {
     mockDatabaseService.like.groupBy.mockResolvedValue([
       { galleryId: "b", _count: { _all: 2 } },

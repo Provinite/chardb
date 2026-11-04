@@ -7,6 +7,7 @@ import {
   Int,
   ResolveField,
   Parent,
+  Context,
 } from "@nestjs/graphql";
 import { EnumValuesService } from "./enum-values.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
@@ -32,15 +33,15 @@ import { Trait } from "../traits/entities/trait.entity";
 import { TraitsService } from "../traits/traits.service";
 import { mapPrismaTraitToGraphQL } from "../traits/utils/trait-resolver-mappers";
 import { CommunityColor } from "../community-colors/entities/community-color.entity";
-import { CommunityColorsService } from "../community-colors/community-colors.service";
-import { NotFoundException } from "@nestjs/common";
+import { LoadersService } from "../dataloaders/loaders.service";
+import type { Request } from "express";
 
 @Resolver(() => EnumValue)
 export class EnumValuesResolver {
   constructor(
     private readonly enumValuesService: EnumValuesService,
     private readonly traitsService: TraitsService,
-    private readonly communityColorsService: CommunityColorsService,
+    private readonly loaders: LoadersService,
   ) {}
 
   @AllowGlobalAdmin()
@@ -190,20 +191,11 @@ export class EnumValuesResolver {
   })
   async resolveColor(
     @Parent() enumValue: EnumValue,
+    @Context("req") req?: Request,
   ): Promise<CommunityColor | null> {
-    if (!enumValue.colorId) {
-      return null;
-    }
-
-    try {
-      return (await this.communityColorsService.findCommunityColorById(
-        enumValue.colorId,
-      )) as CommunityColor;
-    } catch (error) {
-      if (error instanceof NotFoundException) {
-        return null;
-      }
-      throw error;
-    }
+    if (!enumValue.colorId) return null;
+    return (await this.loaders
+      .forRequest(req)
+      .communityColorById.load(enumValue.colorId)) as CommunityColor | null;
   }
 }

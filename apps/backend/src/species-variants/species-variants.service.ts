@@ -8,13 +8,14 @@ import {
 } from "../shared/utils/reorder";
 
 /**
- * The order every list of variants reads in: as staff arranged them. The
- * tiebreaks only matter for variants that share a position, which a reorder
- * never leaves behind, and keep cursor pagination stable.
+ * The order a species' variants read in: as staff arranged them. The
+ * tiebreaks only matter for variants that share a position (two created at
+ * once), where the older goes first as new ones go last, and keep cursor
+ * pagination stable.
  */
 export const VARIANT_ORDER: Prisma.SpeciesVariantOrderByWithRelationInput[] = [
   { sortOrder: "asc" },
-  { createdAt: "desc" },
+  { createdAt: "asc" },
   { id: "asc" },
 ];
 
@@ -109,7 +110,8 @@ export class SpeciesVariantsService {
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
-        orderBy: [{ speciesId: "asc" }, ...VARIANT_ORDER],
+        // Across species, so there is no staff order to follow.
+        orderBy: { createdAt: "desc" },
       }),
       this.prisma.speciesVariant.count(),
     ]);
