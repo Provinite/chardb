@@ -22,7 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Item type images skip moderation**: uploaded APPROVED (migration approves pending ones), so Trick-or-Treat win posts show them.
+- **Item type images skip moderation**: uploaded APPROVED and filed under the item type's community (migration backfills both), so Trick-or-Treat win posts show them.
 
 ## [v15.6.0] - 2026-11-03
 

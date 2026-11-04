@@ -166,8 +166,7 @@ describe("ImagesService", () => {
       });
 
       // Only staff with CanManageItems can set one, and every page showing
-      // an item type already serves its image whatever its status; nothing
-      // would ever review it.
+      // an item type already serves its image whatever its status.
       it("approves an item type's image on upload", async () => {
         db.itemType.findUnique.mockResolvedValue({ communityId: "c1" });
         mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
@@ -180,6 +179,36 @@ describe("ImagesService", () => {
           }),
         );
       });
+
+      it("files an item type's image under the item type's community", async () => {
+        db.itemType.findUnique.mockResolvedValue({ communityId: "c1" });
+        mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
+        mockCommunityResolverService.resolve.mockResolvedValue(null);
+
+        await service.upload("user1", { file: mockFile, itemTypeId: "it1" });
+
+        expect(db.media.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({ communityId: "c1" }),
+          }),
+        );
+      });
+
+      // An approved item type picture must not double as an unmoderated post
+      // on a character or in a gallery.
+      it.each([["characterId"], ["galleryId"]])(
+        "refuses an item type image that also names a %s",
+        async (field) => {
+          await expect(
+            service.upload("user1", {
+              file: mockFile,
+              itemTypeId: "it1",
+              [field]: "x1",
+            }),
+          ).rejects.toThrow(BadRequestException);
+          expect(db.image.create).not.toHaveBeenCalled();
+        },
+      );
 
       it("leaves any other upload to moderation", async () => {
         await service.upload("user1", { file: mockFile });
