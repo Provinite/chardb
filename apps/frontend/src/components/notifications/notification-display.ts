@@ -214,10 +214,10 @@ function availabilitySentence(
   // ride along with.
   const pricedInline =
     priceText && added.includes(CharacterAvailability.ForSale);
-  const priceNote =
-    priceChanged && priceText && !pricedInline
-      ? `, priced at ${priceText}`
-      : "";
+  let priceNote = "";
+  if (priceChanged && !pricedInline) {
+    priceNote = priceText ? `, priced at ${priceText}` : ", and has no price";
+  }
   return `says ${name} is ${parts.join(", and ")}${priceNote}`;
 }
 

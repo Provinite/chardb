@@ -23,6 +23,13 @@ export const NOTIFICATION_PREFERENCE_DEFAULTS = {
   [NotificationKind.TRADE_OFFERED]: { inApp: true, email: false },
   [NotificationKind.TRADE_ACCEPTED]: { inApp: true, email: false },
   [NotificationKind.TRADE_DECLINED]: { inApp: true, email: false },
+  // Only ever reaches someone who pressed Watch, so it is asked for by
+  // definition. Listed beside the trade kinds, which is where the settings
+  // page shows it.
+  [NotificationKind.CHARACTER_AVAILABILITY_CHANGED]: {
+    inApp: true,
+    email: false,
+  },
 
   // The two the issue is actually about. An approval is the expected outcome
   // and tells the uploader nothing they need, so it does not earn a mail. A
@@ -33,13 +40,6 @@ export const NOTIFICATION_PREFERENCE_DEFAULTS = {
   [NotificationKind.HALLOWEEN_CANDY_TRADED]: { inApp: true, email: false },
   // Unused: shares HALLOWEEN_CANDY_TRADED's switch (`SHARED_SWITCHES`).
   [NotificationKind.HALLOWEEN_DOOR_KNOCKED]: { inApp: true, email: false },
-
-  // Only ever reaches someone who pressed Watch, so it is asked for by
-  // definition.
-  [NotificationKind.CHARACTER_AVAILABILITY_CHANGED]: {
-    inApp: true,
-    email: false,
-  },
 } as const satisfies Record<
   NotificationKind,
   { inApp: boolean; email: boolean }

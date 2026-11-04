@@ -215,6 +215,18 @@ describe("a watched character's availability notification", () => {
     ).toBe("removed Moonbeam's price");
   });
 
+  it("mentions a price cleared in the same save as another change", () => {
+    expect(
+      notificationSentence(
+        availability({
+          availabilityAdded: [CharacterAvailability.Offers],
+          priceChanged: true,
+          price: null,
+        }),
+      ),
+    ).toBe("says Moonbeam is now open to offers, and has no price");
+  });
+
   it("does not invent a price change for a kind this build has not heard of", () => {
     expect(
       notificationSentence(

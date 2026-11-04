@@ -202,6 +202,34 @@ describe("Character watches (e2e)", () => {
     ).toBe(0);
   });
 
+  it("does not tell a watcher who has since become the owner", async () => {
+    await watch(watcherToken);
+    await testApp.getDb().character.update({
+      where: { id: characterId },
+      data: { ownerId: watcherId },
+    });
+    // Staff, not the new owner, makes the edit, so the actor rule alone
+    // would not leave the owner out.
+    const staff = await testApp.createTestUser();
+    const membership = await testApp
+      .getDb()
+      .communityMember.findFirstOrThrow({ where: { userId: ownerId } });
+    await testApp.createTestCommunityMember(staff.id, membership.roleId);
+    const staffToken = await testApp.generateTestToken(
+      staff.id,
+      staff.username,
+    );
+
+    const response = await testApp.authenticatedGraphqlRequest(
+      UPDATE_PROFILE,
+      { id: characterId, input: { isFreebie: true } },
+      staffToken,
+    );
+    expect(response.body.errors).toBeUndefined();
+
+    expect(await watcherNotifications()).toHaveLength(0);
+  });
+
   it("tells nobody when the same edit makes the character private", async () => {
     await watch(watcherToken);
 

@@ -63,6 +63,7 @@ export class CharacterWatchesService {
       where: { id: event.characterId },
       select: {
         name: true,
+        ownerId: true,
         visibility: true,
         deletedAt: true,
         species: { select: { communityId: true } },
@@ -76,8 +77,13 @@ export class CharacterWatchesService {
       return;
     }
 
+    // A watch survives the watcher coming to own the character, and owners
+    // are not shown the button to undo it, so the owner is left out here.
     const watches = await this.db.characterWatch.findMany({
-      where: { characterId: event.characterId },
+      where: {
+        characterId: event.characterId,
+        ...(character.ownerId ? { userId: { not: character.ownerId } } : {}),
+      },
       select: { userId: true },
     });
 
