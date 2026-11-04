@@ -81,21 +81,15 @@ export function notificationHref(
  * Where the person who caused a notification links to, or null when no user
  * did (a host's house offer, the system).
  *
- * Halloween notifications go to the actor's member page in that community,
- * which is where their door is: knocking back is the usual reason to follow
- * the link. Everything else goes to their profile.
+ * A notification from a community goes to the actor's member page there, and
+ * anything else to their profile.
  */
 export function notificationActorHref(
   notification: NotificationFieldsFragment,
 ): string | null {
-  const { subjectType, actor, community } = notification;
+  const { actor, community } = notification;
   if (!actor) return null;
-  // By subject, as `notificationHref` routes them, so the two links agree on
-  // which notifications belong to the event.
-  const halloween =
-    subjectType === NotificationSubjectType.HalloweenDoorKnock ||
-    subjectType === NotificationSubjectType.HalloweenCandyTrade;
-  return halloween && community
+  return community
     ? communityUrl(community.slug, `/members/${actor.username}`)
     : apexUrl(`/user/${actor.username}`);
 }

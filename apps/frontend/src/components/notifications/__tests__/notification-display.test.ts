@@ -98,7 +98,20 @@ describe("the actor link", () => {
     );
   });
 
-  it("goes to the actor's profile everywhere else", () => {
+  it("goes to the actor's member page on anything in a community", () => {
+    const grant = {
+      kind: NotificationKind.ItemGranted,
+      subjectType: NotificationSubjectType.Item,
+      subjectId: "i1",
+      community: { id: "c1", name: "Willowmere", slug: "willowmere" },
+      actor: knocker,
+    } as NotificationFieldsFragment;
+    expect(notificationActorHref(grant)).toBe(
+      communityUrl("willowmere", "/members/luther"),
+    );
+  });
+
+  it("goes to the actor's profile on anything outside a community", () => {
     const follow = {
       kind: NotificationKind.FollowReceived,
       subjectType: NotificationSubjectType.User,
@@ -109,7 +122,7 @@ describe("the actor link", () => {
     expect(notificationActorHref(follow)).toBe(apexUrl("/user/luther"));
   });
 
-  it("goes to the profile when a Halloween notification's community is gone", () => {
+  it("goes to the profile when the community is gone", () => {
     expect(
       notificationActorHref(doorKnock({ actor: knocker, community: null })),
     ).toBe(apexUrl("/user/luther"));
