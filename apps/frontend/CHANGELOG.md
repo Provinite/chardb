@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.7.0] - 2026-11-04
+
 ### Added
 
 - **Watch a character**: a Watch button on other members' characters notifies you when the owner changes what it's open to or its price.

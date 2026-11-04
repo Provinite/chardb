@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.7.0] - 2026-11-04
+
 ### Added
 
 - **`standard-dev-flow` agent skill**: the SOP for autonomous work, from worktree setup through PR, risk-scaled code review, browser walk and cleanup.

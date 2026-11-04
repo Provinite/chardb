@@ -7,18 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v15.7.0] - 2026-11-04
+
 ### Added
 
 - **Character watches**: `CharacterWatch` (migration), `watchCharacter`/`unwatchCharacter`, `Character.viewerIsWatching`, and a `CHARACTER_AVAILABILITY_CHANGED` notification sent to watchers when an edit changes availability flags or price.
 - **Variant and enum value order**: `SpeciesVariant.sortOrder` (migration, existing variants keep their newest-first order), plus `reorderSpeciesVariants` and `reorderEnumValues`; new variants and enum values go last.
+- **Faustian Bargain achievement**: earned by sending the Trick-or-Treat bot a gifty during the event.
 
 ### Changed
 
 - **Case-insensitive usernames**: `foo` and `Foo` are one username, so lookups match either casing and sign-up refuses the second (migration converts `users.username` to `citext`). Sign-up also limits usernames to ASCII letters, digits, `_` and `-`.
-
-### Added
-
-- **Faustian Bargain achievement**: earned by sending the Trick-or-Treat bot a gifty during the event.
 
 ### Fixed
 
