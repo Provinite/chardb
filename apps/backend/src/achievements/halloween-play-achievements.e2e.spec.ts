@@ -339,18 +339,21 @@ describe("Halloween play achievements (e2e)", () => {
         expect(await earned(alice.id)).toEqual(["also-no-relation-2026"]);
       });
 
-      it("goes by the username when there is no display name", async () => {
-        await setUpEvent();
-        const alice = await member("alice");
-        const luther = await named("lu", null);
-        await db.user.update({
-          where: { id: luther.id },
-          data: { username: "Luther" },
-        });
+      it.each([null, "", "   "])(
+        "goes by the username when the display name is %j",
+        async (displayName) => {
+          await setUpEvent();
+          const alice = await member("alice");
+          const luther = await named("lu", displayName);
+          await db.user.update({
+            where: { id: luther.id },
+            data: { username: "Luther" },
+          });
 
-        await doorKnocks.knock(communityId, alice.id, luther.id);
-        expect(await earned(alice.id)).toEqual(["no-relation-2026"]);
-      });
+          await doorKnocks.knock(communityId, alice.id, luther.id);
+          expect(await earned(alice.id)).toEqual(["no-relation-2026"]);
+        },
+      );
 
       it("publishes a door knock", async () => {
         await setUpEvent();

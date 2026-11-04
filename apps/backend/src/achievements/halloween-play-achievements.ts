@@ -20,9 +20,9 @@ export interface HalloweenPlay {
   knockedEveryDay: boolean;
   /** Tried to knock with no knocks or gifties left. */
   knockedWithNoneLeft: boolean;
-  /** Knocked on the door of a member whose display name is Luther. */
+  /** Knocked on the door of a member the site shows as Luther. */
   knockedOnLuther: boolean;
-  /** Knocked on the door of a member whose display name is Daphne. */
+  /** Knocked on the door of a member the site shows as Daphne. */
   knockedOnDaphne: boolean;
 }
 
