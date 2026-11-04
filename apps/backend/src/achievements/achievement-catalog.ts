@@ -101,13 +101,13 @@ export const ACHIEVEMENTS: readonly AchievementDefinition[] = [
   {
     slug: play2026.noRelation,
     name: "No Relation 2026",
-    description: "Knocked on Luther's door during Trick-or-Treat 2026.",
+    description: 'Knocked on "Luther\'s" door during Trick-or-Treat 2026.',
     imagePath: "/halloween/candy/luther-head.png",
   },
   {
     slug: play2026.alsoNoRelation,
     name: "Also No Relation 2026",
-    description: "Knocked on Daphne's door during Trick-or-Treat 2026.",
+    description: 'Knocked on "Daphne\'s" door during Trick-or-Treat 2026.',
     imagePath: "/halloween/candy/daphne-head.png",
   },
   {
