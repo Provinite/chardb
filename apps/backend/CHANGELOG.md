@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Variant and enum value order**: `SpeciesVariant.sortOrder` (migration, existing variants keep their newest-first order), plus `reorderSpeciesVariants` and `reorderEnumValues`; new variants and enum values go last.
+
 ### Changed
 
 - **Case-insensitive usernames**: `foo` and `Foo` are one username, so lookups match either casing and sign-up refuses the second (migration converts `users.username` to `citext`). Sign-up also limits usernames to ASCII letters, digits, `_` and `-`.

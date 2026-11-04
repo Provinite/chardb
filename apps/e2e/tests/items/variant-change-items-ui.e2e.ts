@@ -1,4 +1,4 @@
-import { presetTest, expect } from "../../src/fixtures.js";
+import { presetTest, expect, chooseOption } from "../../src/fixtures.js";
 import type { Page } from "@playwright/test";
 import {
   SeedCharacterDocument,
@@ -177,9 +177,10 @@ test.describe("redeeming a variant change item, through the pages", () => {
     await expect(reroute).toContainText("Blue");
     await expect(page.getByTestId("submit-variant-change")).toBeDisabled();
 
-    await page
-      .getByTestId(`variant-change-reroute-${world.traits.eyeColor.id}`)
-      .selectOption(world.traits.eyeColor.values.amber);
+    await chooseOption(
+      page.getByTestId(`variant-change-reroute-${world.traits.eyeColor.id}`),
+      world.traits.eyeColor.values.amber,
+    );
 
     await expect(page.getByTestId("variant-change-reroute")).toHaveCount(0);
     await page.getByTestId("submit-variant-change").click();
@@ -334,9 +335,10 @@ test.describe("configuring a variant change, through the admin page", () => {
     await editor
       .getByTestId("variant-change-grant-species")
       .selectOption(world.species.id);
-    await editor
-      .getByTestId("variant-change-grant-to")
-      .selectOption(world.variants.rare.id);
+    await chooseOption(
+      editor.getByTestId("variant-change-grant-to"),
+      world.variants.rare.id,
+    );
     await editor
       .getByTestId(`variant-change-grant-from-${world.variants.common.id}`)
       .check();
@@ -366,9 +368,10 @@ test.describe("configuring a variant change, through the admin page", () => {
     await editor
       .getByTestId("variant-change-grant-species")
       .selectOption(world.species.id);
-    await editor
-      .getByTestId("variant-change-grant-to")
-      .selectOption(world.variants.rare.id);
+    await chooseOption(
+      editor.getByTestId("variant-change-grant-to"),
+      world.variants.rare.id,
+    );
 
     // Disabled rather than hidden, so "a Rare cannot become a Rare" is
     // visible instead of discovered after saving.
@@ -385,7 +388,7 @@ test.describe("configuring a variant change, through the admin page", () => {
       .click();
 
     const editor = page.getByTestId("variant-change-grant-editor");
-    await editor.getByTestId("variant-change-grant-to").selectOption("");
+    await chooseOption(editor.getByTestId("variant-change-grant-to"), "");
     await editor.getByTestId("save-variant-change-grant").click();
 
     await expect(page.getByText("Variant change cleared")).toBeVisible();
@@ -413,9 +416,10 @@ test.describe("configuring a variant change, through the admin page", () => {
     await editor
       .getByTestId("variant-change-grant-species")
       .selectOption(world.species.id);
-    await editor
-      .getByTestId("variant-change-grant-to")
-      .selectOption(world.variants.rare.id);
+    await chooseOption(
+      editor.getByTestId("variant-change-grant-to"),
+      world.variants.rare.id,
+    );
     await editor.getByTestId("save-variant-change-grant").click();
 
     await expect(page.getByText(/already has a payout/i)).toBeVisible();
