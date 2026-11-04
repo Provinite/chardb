@@ -183,9 +183,14 @@ describe("ImagesService", () => {
       it("files an item type's image under the item type's community", async () => {
         db.itemType.findUnique.mockResolvedValue({ communityId: "c1" });
         mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
-        mockCommunityResolverService.resolve.mockResolvedValue(null);
+        db.communityMember.findFirst.mockResolvedValue({ id: "m1" });
 
-        await service.upload("user1", { file: mockFile, itemTypeId: "it1" });
+        // The client's community loses to the item type's.
+        await service.upload("user1", {
+          file: mockFile,
+          itemTypeId: "it1",
+          communityId: "c2",
+        });
 
         expect(db.media.create).toHaveBeenCalledWith(
           expect.objectContaining({
