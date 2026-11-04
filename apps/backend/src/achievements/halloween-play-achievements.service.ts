@@ -5,6 +5,7 @@ import { OnDomainEvent } from "../events/domain-events";
 import type {
   HalloweenCandyOfferPlaced,
   HalloweenCandyTraded,
+  HalloweenDoorKnocked,
   HalloweenGiftySent,
   HalloweenKnockByDiscordUser,
 } from "../events/domain-event-map";
@@ -16,6 +17,14 @@ import {
   knockedEveryDay,
   type HalloweenPlay,
 } from "./halloween-play-achievements";
+
+/**
+ * Shown names (display name, else username), lowercased, whose doors earn
+ * an achievement.
+ */
+const LUTHER = "luther";
+const DAPHNE = "daphne";
+const NAMED_DOORS = [LUTHER, DAPHNE] as const;
 
 /**
  * A member's part in one community's Halloween event: who they are on
@@ -64,6 +73,14 @@ export class HalloweenPlayAchievements {
     userId,
   }: HalloweenCandyOfferPlaced): Promise<void> {
     await this.forUser(userId, guildId, "candy-offer-placed");
+  }
+
+  @OnDomainEvent("halloween.door.knocked")
+  async onDoorKnocked({
+    guildId,
+    knockerId,
+  }: HalloweenDoorKnocked): Promise<void> {
+    await this.forUser(knockerId, guildId, "door-knocked");
   }
 
   @OnDomainEvent("halloween.gifty.sent")
@@ -173,25 +190,27 @@ export class HalloweenPlayAchievements {
   private async play(player: HalloweenPlayer): Promise<HalloweenPlay> {
     const { userId, guildId, discordUserId, startDate, endDate } = player;
     const during = { gte: startDate, ...(endDate ? { lte: endDate } : {}) };
-    const [trades, offeredThreeForOne, tookThreeForOne] = await Promise.all([
-      this.db.halloweenCandyTrade.count({
-        where: {
-          guildId,
-          createdAt: during,
-          OR: [{ initiatorId: userId }, { offererId: userId }],
-        },
-      }),
-      this.db.halloweenCandyOffer.findFirst({
-        where: {
-          guildId,
-          ownerId: userId,
-          candyCount: { gte: 3 },
-          createdAt: during,
-        },
-        select: { id: true },
-      }),
-      this.tookThreeForOne(player),
-    ]);
+    const [trades, offeredThreeForOne, tookThreeForOne, namedDoors] =
+      await Promise.all([
+        this.db.halloweenCandyTrade.count({
+          where: {
+            guildId,
+            createdAt: during,
+            OR: [{ initiatorId: userId }, { offererId: userId }],
+          },
+        }),
+        this.db.halloweenCandyOffer.findFirst({
+          where: {
+            guildId,
+            ownerId: userId,
+            candyCount: { gte: 3 },
+            createdAt: during,
+          },
+          select: { id: true },
+        }),
+        this.tookThreeForOne(player),
+        this.namedDoorsKnocked(player),
+      ]);
     const discordPlay = discordUserId
       ? await this.discordPlay({ ...player, discordUserId }, during)
       : {
@@ -204,8 +223,37 @@ export class HalloweenPlayAchievements {
       trades,
       offeredThreeForOne: offeredThreeForOne !== null,
       tookThreeForOne,
+      knockedOnLuther: namedDoors.has(LUTHER),
+      knockedOnDaphne: namedDoors.has(DAPHNE),
       ...discordPlay,
     };
+  }
+
+  /**
+   * Which of the names in `NAMED_DOORS` they knocked on the door of, by the
+   * name the site shows (the display name, else the username, as when the
+   * display name is blank), ignoring case and surrounding spaces.
+   */
+  private async namedDoorsKnocked({
+    userId,
+    guildId,
+    startDate,
+    endDate,
+  }: HalloweenPlayer): Promise<Set<string>> {
+    const rows = await this.db.$queryRaw<{ name: string }[]>`
+      SELECT DISTINCT n.name
+      FROM "halloween_door_knocks" k
+      JOIN "users" u ON u.id = k.knockee_id
+      CROSS JOIN LATERAL (
+        SELECT lower(coalesce(nullif(btrim(u.display_name), ''), u.username::text)) AS name
+      ) n
+      WHERE k.guild_id = ${guildId}
+        AND k.knocker_id = ${userId}
+        AND k.time >= ${startDate}
+        AND (${endDate}::timestamptz IS NULL OR k.time <= ${endDate})
+        AND n.name = ANY(${[...NAMED_DOORS]})
+    `;
+    return new Set(rows.map((r) => r.name));
   }
 
   /** Whether they accepted an offer that gave them three candies. */

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **No Relation and Also No Relation achievements**: earned by knocking on the door of anyone the site shows as Luther or Daphne during Trick-or-Treat.
+
 ## [v15.7.0] - 2026-11-04
 
 ### Added

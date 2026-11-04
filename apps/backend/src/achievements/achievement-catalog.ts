@@ -29,6 +29,8 @@ export function halloweenPlaySlug(year: number) {
     faustianBargain: `faustian-bargain-${year}`,
     everyNight: `every-night-${year}`,
     nobodyHome: `nobody-home-${year}`,
+    noRelation: `no-relation-${year}`,
+    alsoNoRelation: `also-no-relation-${year}`,
     infectiousEnthusiasm: `infectious-enthusiasm-${year}`,
   };
 }
@@ -95,6 +97,18 @@ export const ACHIEVEMENTS: readonly AchievementDefinition[] = [
     name: "Nobody Home 2026",
     description: "Knocked with no knocks left during Trick-or-Treat 2026.",
     imagePath: "/halloween/candy/toilet-paper.png",
+  },
+  {
+    slug: play2026.noRelation,
+    name: "No Relation 2026",
+    description: 'Knocked on "Luther\'s" door during Trick-or-Treat 2026.',
+    imagePath: "/halloween/candy/luther-head.png",
+  },
+  {
+    slug: play2026.alsoNoRelation,
+    name: "Also No Relation 2026",
+    description: 'Knocked on "Daphne\'s" door during Trick-or-Treat 2026.',
+    imagePath: "/halloween/candy/daphne-head.png",
   },
   {
     slug: play2026.infectiousEnthusiasm,
