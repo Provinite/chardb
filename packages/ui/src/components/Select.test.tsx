@@ -122,9 +122,12 @@ describe("Select", () => {
 
     key("ArrowDown", {}, combobox());
 
-    expect(
-      options().map((o) => o.getAttribute("aria-selected")),
-    ).toEqual(["false", "false", "true", "false"]);
+    expect(options().map((o) => o.getAttribute("aria-selected"))).toEqual([
+      "false",
+      "false",
+      "true",
+      "false",
+    ]);
     expect(active()?.textContent).toBe("Uncommon");
   });
 

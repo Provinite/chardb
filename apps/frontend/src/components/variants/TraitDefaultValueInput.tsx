@@ -12,7 +12,9 @@ interface TraitDefaultValueInputProps {
   defaultValueString?: string | null;
   defaultValueInt?: number | null;
   defaultValueTimestamp?: string | null;
-  enumValues?: NonNullable<TraitListEntryDetailsFragment["trait"]["enumValues"]>;
+  enumValues?: NonNullable<
+    TraitListEntryDetailsFragment["trait"]["enumValues"]
+  >;
   onChange: (value: DefaultValueState) => void;
   disabled?: boolean;
 }

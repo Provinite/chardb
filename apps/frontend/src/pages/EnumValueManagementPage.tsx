@@ -161,8 +161,7 @@ const EnumValueModal: React.FC<EnumValueModalProps> = ({
 
   // Check if form has changes (for edit mode)
   const hasChanges = enumValue
-    ? formData.name !== enumValue.name ||
-      formData.colorId !== enumValue.colorId
+    ? formData.name !== enumValue.name || formData.colorId !== enumValue.colorId
     : true; // For create mode, always allow submission if name is filled
 
   const handleSubmit = async (e: React.FormEvent) => {

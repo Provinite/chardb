@@ -222,9 +222,9 @@ export const SpeciesVariantManagementPage: React.FC = () => {
 
   // Sorted here as well as on the server, so a reorder shows the moment the
   // cache takes the new positions, before any refetch.
-  const variants = [...(variantsData?.speciesVariantsBySpecies?.nodes ?? [])].sort(
-    (a, b) => a.sortOrder - b.sortOrder,
-  );
+  const variants = [
+    ...(variantsData?.speciesVariantsBySpecies?.nodes ?? []),
+  ].sort((a, b) => a.sortOrder - b.sortOrder);
 
   const [reorderVariantsMutation] = useReorderSpeciesVariantsMutation({
     onError: (error) => {

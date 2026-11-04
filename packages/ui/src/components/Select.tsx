@@ -87,7 +87,16 @@ const textOf = (node: React.ReactNode): string => {
 const optionId = (baseId: string, index: number) => `${baseId}-option-${index}`;
 
 const Root = forwardRef<HTMLButtonElement, SelectRootProps>(function Root(
-  { value, onChange, children, disabled, className, onKeyDown, onClick, ...rest },
+  {
+    value,
+    onChange,
+    children,
+    disabled,
+    className,
+    onKeyDown,
+    onClick,
+    ...rest
+  },
   ref,
 ) {
   const baseId = useId();
