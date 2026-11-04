@@ -7,6 +7,7 @@ import {
 } from "@chardb/database";
 import { Clock } from "../../clock/clock";
 import { DatabaseService } from "../../database/database.service";
+import { DomainEvents } from "../../events/domain-events";
 import { NotificationsService } from "../../notifications/notifications.service";
 import { HalloweenDashboardService } from "../dashboard/halloween-dashboard.service";
 import { HalloweenStaffAccess } from "../dashboard/halloween-staff-access";
@@ -73,6 +74,7 @@ export class DoorKnockService {
     private readonly ui: HalloweenUi,
     private readonly notifications: NotificationsService,
     private readonly clock: Clock,
+    private readonly events: DomainEvents,
   ) {}
 
   /** The door as `viewerId` finds it, or null while no event is running. */
@@ -171,6 +173,11 @@ export class DoorKnockService {
       knockerCandyCount: result.knockerCandies.length,
       knockeeCandyCount: result.knockeeCandies.length,
     } satisfies HalloweenLogLine);
+    this.events.publish("halloween.door.knocked", {
+      guildId,
+      knockerId,
+      knockeeId,
+    });
     return {
       knockerCandies: result.knockerCandies,
       knockeeCandies: result.knockeeCandies,

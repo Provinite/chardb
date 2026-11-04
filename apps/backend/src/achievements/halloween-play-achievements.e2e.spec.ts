@@ -16,6 +16,7 @@ import { HalloweenCommandDispatcher } from "../halloween/discord/halloween-comma
 import { HalloweenDiscordClient } from "../halloween/discord/halloween-discord.client";
 import { HalloweenRandom } from "../halloween/random";
 import { HalloweenConfig } from "../halloween/halloween.config";
+import { DoorKnockService } from "../halloween/door-knock/door-knock.service";
 import { GuildSettingsService } from "../halloween/services/guild-settings.service";
 import { CandySwapService } from "../halloween/swap/candy-swap.service";
 import { mockDiscord } from "../halloween/testing/command-harness";
@@ -49,6 +50,7 @@ describe("Halloween play achievements (e2e)", () => {
   let events: DomainEvents;
   let achievements: AchievementsService;
   let random: HalloweenRandom;
+  let doorKnocks: DoorKnockService;
   let botUserId: string;
   let communityId: string;
   let roleId: string;
@@ -80,6 +82,7 @@ describe("Halloween play achievements (e2e)", () => {
     events = refs.get(DomainEvents);
     achievements = refs.get(AchievementsService);
     random = refs.get(HalloweenRandom);
+    doorKnocks = refs.get(DoorKnockService);
     botUserId = refs.get(HalloweenConfig).applicationId;
   });
 
@@ -304,6 +307,50 @@ describe("Halloween play achievements (e2e)", () => {
       await db.halloweenGifty.deleteMany();
       await giftyTo(botUserId);
       expect(await earned(alice.id)).toEqual(["faustian-bargain-2026"]);
+    });
+
+    describe("no relation", () => {
+      const named = async (name: string, displayName: string | null) => {
+        const user = await member(name);
+        await db.user.update({ where: { id: user.id }, data: { displayName } });
+        return user;
+      };
+
+      it("is earned by knocking on the door of anyone named Luther", async () => {
+        await setUpEvent();
+        const alice = await member("alice");
+        const bob = await named("bob", "Luther the Great");
+        const luther = await named("lu", " lUTHER ");
+
+        await doorKnocks.knock(communityId, alice.id, bob.id);
+        expect(await earned(alice.id)).toEqual([]);
+
+        await doorKnocks.knock(communityId, alice.id, luther.id);
+        expect(await earned(alice.id)).toEqual(["no-relation-2026"]);
+        expect(await earned(luther.id)).toEqual([]);
+      });
+
+      it("earns also no relation for knocking on the door of anyone named Daphne", async () => {
+        await setUpEvent();
+        const alice = await member("alice");
+        const daphne = await named("daph", "Daphne");
+
+        await doorKnocks.knock(communityId, alice.id, daphne.id);
+        expect(await earned(alice.id)).toEqual(["also-no-relation-2026"]);
+      });
+
+      it("publishes a door knock", async () => {
+        await setUpEvent();
+        const alice = await member("alice");
+        const bob = await named("bob", null);
+        const publish = jest.spyOn(events, "publish");
+        await doorKnocks.knock(communityId, alice.id, bob.id);
+        expect(publish).toHaveBeenCalledWith("halloween.door.knocked", {
+          guildId: GUILD_ID,
+          knockerId: alice.id,
+          knockeeId: bob.id,
+        });
+      });
     });
 
     it("earns nobody home for knocking with no knocks left, and records the attempt", async () => {

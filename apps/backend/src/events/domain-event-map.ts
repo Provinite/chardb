@@ -19,6 +19,8 @@ export interface DomainEventMap {
   "halloween.gifty.sent": HalloweenGiftySent;
   "halloween.candy_offer.placed": HalloweenCandyOfferPlaced;
   "halloween.candy.traded": HalloweenCandyTraded;
+  /** A member knocked on another member's door on the site. */
+  "halloween.door.knocked": HalloweenDoorKnocked;
   /** An edit changed a character's availability flags or price. */
   "character.availability_changed": CharacterAvailabilityChanged;
 }
@@ -55,6 +57,12 @@ export interface HalloweenCandyOfferPlaced {
   guildId: string;
   userId: string;
   offerId: string;
+}
+
+export interface HalloweenDoorKnocked {
+  guildId: string;
+  knockerId: string;
+  knockeeId: string;
 }
 
 export interface HalloweenCandyTraded {

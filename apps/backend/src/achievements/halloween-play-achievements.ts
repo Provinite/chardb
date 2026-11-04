@@ -20,6 +20,10 @@ export interface HalloweenPlay {
   knockedEveryDay: boolean;
   /** Tried to knock with no knocks or gifties left. */
   knockedWithNoneLeft: boolean;
+  /** Knocked on the door of a member whose display name is Luther. */
+  knockedOnLuther: boolean;
+  /** Knocked on the door of a member whose display name is Daphne. */
+  knockedOnDaphne: boolean;
 }
 
 /**
@@ -42,6 +46,8 @@ export function halloweenPlaySlugs(
     ...(play.giftedBot ? [slug.faustianBargain] : []),
     ...(play.knockedEveryDay ? [slug.everyNight] : []),
     ...(play.knockedWithNoneLeft ? [slug.nobodyHome] : []),
+    ...(play.knockedOnLuther ? [slug.noRelation] : []),
+    ...(play.knockedOnDaphne ? [slug.alsoNoRelation] : []),
   ];
   return earned.filter((s) => findAchievement(s));
 }

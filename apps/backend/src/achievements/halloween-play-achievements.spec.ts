@@ -12,6 +12,8 @@ const nothing: HalloweenPlay = {
   giftedBot: false,
   knockedEveryDay: false,
   knockedWithNoneLeft: false,
+  knockedOnLuther: false,
+  knockedOnDaphne: false,
 };
 
 describe("halloweenPlaySlugs", () => {
@@ -43,6 +45,8 @@ describe("halloweenPlaySlugs", () => {
           giftedBot: true,
           knockedEveryDay: true,
           knockedWithNoneLeft: true,
+          knockedOnLuther: true,
+          knockedOnDaphne: true,
         },
         2026,
       ),
@@ -53,6 +57,8 @@ describe("halloweenPlaySlugs", () => {
       "faustian-bargain-2026",
       "every-night-2026",
       "nobody-home-2026",
+      "no-relation-2026",
+      "also-no-relation-2026",
     ]);
   });
 
