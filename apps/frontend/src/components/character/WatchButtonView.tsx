@@ -24,7 +24,8 @@ export function WatchButtonView({
   return (
     <Button
       size="md"
-      tone={watching ? "secondary" : "outline"}
+      tone={watching ? "ghost" : "outline"}
+      className={watching ? styles.watching : undefined}
       icon={<Eye aria-hidden />}
       onClick={onToggle}
       busy={pending || busy}
