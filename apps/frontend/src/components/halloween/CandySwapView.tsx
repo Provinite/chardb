@@ -88,18 +88,23 @@ const TRADES_SHOWN = 5;
 const Candy = ({
   slug,
   small,
+  inline,
   decorative,
   lazy,
 }: {
   slug: string;
   small?: boolean;
+  /** Sized to sit in a line of text. */
+  inline?: boolean;
   /** Inside a control that names it, so it goes unannounced. */
   decorative?: boolean;
   /** For long lists, such as the pickers, that load as they scroll. */
   lazy?: boolean;
 }) => (
   <img
-    className={small ? styles.smallCandy : styles.candy}
+    className={
+      inline ? styles.inlineCandy : small ? styles.smallCandy : styles.candy
+    }
     src={candyImageUrl(slug)}
     alt={decorative ? "" : candyName(slug)}
     loading={lazy ? "lazy" : undefined}
@@ -494,9 +499,13 @@ export const CandySwapView = ({
                                 : onAccept(offer.id)
                             }
                           >
-                            {offer.wantSlug === null
-                              ? "Pick a candy to trade"
-                              : `Trade your ${candyName(offer.wantSlug)}`}
+                            {offer.wantSlug === null ? (
+                              "Pick a candy to trade"
+                            ) : (
+                              <>
+                                Give <Candy slug={offer.wantSlug} inline />
+                              </>
+                            )}
                           </Button>
                         ) : (
                           <p className={styles.cannotTake}>
@@ -505,12 +514,7 @@ export const CandySwapView = ({
                             ) : (
                               <>
                                 You don&apos;t have any{" "}
-                                <img
-                                  className={styles.inlineCandy}
-                                  src={candyImageUrl(offer.wantSlug)}
-                                  alt={candyName(offer.wantSlug)}
-                                />{" "}
-                                to trade
+                                <Candy slug={offer.wantSlug} inline /> to trade
                               </>
                             )}
                           </p>
