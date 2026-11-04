@@ -149,10 +149,7 @@ export async function chooseOption(
   value: string,
 ): Promise<void> {
   await select.click();
-  await select
-    .page()
-    .locator(`[role="option"][data-value="${value}"]`)
-    .click();
+  await select.page().locator(`[role="option"][data-value="${value}"]`).click();
 }
 
 /**
