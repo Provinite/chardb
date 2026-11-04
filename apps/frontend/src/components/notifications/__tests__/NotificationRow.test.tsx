@@ -32,6 +32,10 @@ const doorKnock = (
   reasonText: null,
   excerpt: null,
   candySlugs: ["candy-corn"],
+  availabilityAdded: null,
+  availabilityRemoved: null,
+  priceChanged: null,
+  price: null,
   actor: {
     id: "u2",
     username: "luther",

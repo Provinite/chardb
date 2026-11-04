@@ -149,6 +149,8 @@ export type Character = {
   traitReviewStatus: Maybe<ModerationStatus>;
   updatedAt: Scalars['DateTime']['output'];
   userHasLiked: Scalars['Boolean']['output'];
+  /** Whether the signed-in member is watching this character. False when signed out. */
+  viewerIsWatching: Scalars['Boolean']['output'];
   visibility: Visibility;
 };
 
@@ -2548,6 +2550,8 @@ export type Mutation = {
   unlinkDiscordGuild: Community;
   /** Unlink an external account from the current user */
   unlinkExternalAccount: Scalars['Boolean']['output'];
+  /** Stop being notified about this character. */
+  unwatchCharacter: Character;
   /** Rename a folder, or change whether it is private. */
   updateCharacterFolder: CharacterFolder;
   /** Update character profile fields (name, details, visibility, trade settings, etc.). Requires canEditOwnCharacter (for owned) or canEditCharacter (for any) permission. */
@@ -2600,6 +2604,8 @@ export type Mutation = {
   useItem: UseItemResult;
   /** Confirms an address from the link in a verification email. Following an already-redeemed link for an account that is confirmed succeeds. */
   verifyEmail: Scalars['Boolean']['output'];
+  /** Be notified when this character's availability flags or price change. */
+  watchCharacter: Character;
 };
 
 
@@ -3208,6 +3214,11 @@ export type MutationUnlinkExternalAccountArgs = {
 };
 
 
+export type MutationUnwatchCharacterArgs = {
+  characterId: Scalars['ID']['input'];
+};
+
+
 export type MutationUpdateCharacterFolderArgs = {
   input: UpdateCharacterFolderInput;
 };
@@ -3382,6 +3393,11 @@ export type MutationVerifyEmailArgs = {
   input: VerifyEmailInput;
 };
 
+
+export type MutationWatchCharacterArgs = {
+  characterId: Scalars['ID']['input'];
+};
+
 /** A form to add to a character */
 export type NewCharacterFormInput = {
   /** What the owner calls this form */
@@ -3401,6 +3417,10 @@ export type Notification = {
   actorLabel: Maybe<Scalars['String']['output']>;
   /** How much currency arrived. */
   amount: Maybe<Scalars['Int']['output']>;
+  /** What a watched character's owner newly advertised it for. */
+  availabilityAdded: Maybe<Array<CharacterAvailability>>;
+  /** What a watched character stopped being advertised for. */
+  availabilityRemoved: Maybe<Array<CharacterAvailability>>;
   /** Free text, for the kinds that carry it. */
   body: Maybe<Scalars['String']['output']>;
   /** The Halloween candies received, by slug: each one's image is /halloween/candy/<slug>.png on the frontend. */
@@ -3414,6 +3434,10 @@ export type Notification = {
   excerpt: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   kind: NotificationKind;
+  /** A watched character's asking price after the change, to two places. Null when it has none. */
+  price: Maybe<Scalars['String']['output']>;
+  /** Whether a watched character's asking price changed. */
+  priceChanged: Maybe<Scalars['Boolean']['output']>;
   /** When the recipient opened this particular notification. */
   readAt: Maybe<Scalars['DateTime']['output']>;
   /** Why, when staff gave a reason. For a rejected image this is the ModerationRejectionReason name rather than its label, so that rewording a label does not rewrite what old rows say. */
@@ -3446,6 +3470,7 @@ export type NotificationConnection = {
 
 /** What happened. Determines which of the snapshot fields below are set. */
 export enum NotificationKind {
+  CharacterAvailabilityChanged = 'CHARACTER_AVAILABILITY_CHANGED',
   CommentReceived = 'COMMENT_RECEIVED',
   CurrencyReceived = 'CURRENCY_RECEIVED',
   FollowReceived = 'FOLLOW_RECEIVED',
@@ -5882,6 +5907,27 @@ export type SetCharacterFoldersMutationVariables = Exact<{
 
 export type SetCharacterFoldersMutation = { __typename?: 'Mutation', setCharacterFolders: Array<{ __typename?: 'CharacterFolder', id: string, parentId: string | null, name: string, isPrivate: boolean, sortOrder: number, characterCount: number }> };
 
+export type CharacterWatchStatusQueryVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type CharacterWatchStatusQuery = { __typename?: 'Query', character: { __typename?: 'Character', id: string, viewerIsWatching: boolean } };
+
+export type WatchCharacterMutationVariables = Exact<{
+  characterId: Scalars['ID']['input'];
+}>;
+
+
+export type WatchCharacterMutation = { __typename?: 'Mutation', watchCharacter: { __typename?: 'Character', id: string, viewerIsWatching: boolean } };
+
+export type UnwatchCharacterMutationVariables = Exact<{
+  characterId: Scalars['ID']['input'];
+}>;
+
+
+export type UnwatchCharacterMutation = { __typename?: 'Mutation', unwatchCharacter: { __typename?: 'Character', id: string, viewerIsWatching: boolean } };
+
 export type CharacterCardFieldsFragment = { __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } };
 
 export type UserCharactersQueryVariables = Exact<{
@@ -7191,7 +7237,7 @@ export type UpdateNotificationPreferenceMutationVariables = Exact<{
 
 export type UpdateNotificationPreferenceMutation = { __typename?: 'Mutation', updateNotificationPreference: Array<{ __typename?: 'NotificationPreference', kind: NotificationKind, inApp: boolean, email: boolean, emailSupported: boolean }> };
 
-export type NotificationFieldsFragment = { __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, candySlugs: Array<string> | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null };
+export type NotificationFieldsFragment = { __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, candySlugs: Array<string> | null, availabilityAdded: Array<CharacterAvailability> | null, availabilityRemoved: Array<CharacterAvailability> | null, priceChanged: boolean | null, price: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null };
 
 export type NotificationsQueryVariables = Exact<{
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -7200,7 +7246,7 @@ export type NotificationsQueryVariables = Exact<{
 }>;
 
 
-export type NotificationsQuery = { __typename?: 'Query', notifications: { __typename?: 'NotificationConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, candySlugs: Array<string> | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null }> } };
+export type NotificationsQuery = { __typename?: 'Query', notifications: { __typename?: 'NotificationConnection', totalCount: number, hasNextPage: boolean, hasPreviousPage: boolean, nodes: Array<{ __typename?: 'Notification', id: string, kind: NotificationKind, createdAt: string, seenAt: string | null, readAt: string | null, actorLabel: string | null, subjectType: NotificationSubjectType | null, subjectId: string | null, body: string | null, subjectName: string | null, count: number | null, amount: number | null, reason: string | null, reasonText: string | null, excerpt: string | null, candySlugs: Array<string> | null, availabilityAdded: Array<CharacterAvailability> | null, availabilityRemoved: Array<CharacterAvailability> | null, priceChanged: boolean | null, price: string | null, actor: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null } | null, community: { __typename?: 'Community', id: string, name: string, slug: string } | null }> } };
 
 export type UnseenNotificationCountQueryVariables = Exact<{ [key: string]: never; }>;
 
@@ -8445,6 +8491,10 @@ export const NotificationFieldsFragmentDoc = gql`
   reasonText
   excerpt
   candySlugs
+  availabilityAdded
+  availabilityRemoved
+  priceChanged
+  price
   actor {
     id
     username
@@ -9706,6 +9756,115 @@ export function useSetCharacterFoldersMutation(baseOptions?: Apollo.MutationHook
 export type SetCharacterFoldersMutationHookResult = ReturnType<typeof useSetCharacterFoldersMutation>;
 export type SetCharacterFoldersMutationResult = Apollo.MutationResult<SetCharacterFoldersMutation>;
 export type SetCharacterFoldersMutationOptions = Apollo.BaseMutationOptions<SetCharacterFoldersMutation, SetCharacterFoldersMutationVariables>;
+export const CharacterWatchStatusDocument = gql`
+    query CharacterWatchStatus($id: ID!) {
+  character(id: $id) {
+    id
+    viewerIsWatching
+  }
+}
+    `;
+
+/**
+ * __useCharacterWatchStatusQuery__
+ *
+ * To run a query within a React component, call `useCharacterWatchStatusQuery` and pass it any options that fit your needs.
+ * When your component renders, `useCharacterWatchStatusQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useCharacterWatchStatusQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useCharacterWatchStatusQuery(baseOptions: Apollo.QueryHookOptions<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables> & ({ variables: CharacterWatchStatusQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>(CharacterWatchStatusDocument, options);
+      }
+export function useCharacterWatchStatusLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>(CharacterWatchStatusDocument, options);
+        }
+export function useCharacterWatchStatusSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>(CharacterWatchStatusDocument, options);
+        }
+export type CharacterWatchStatusQueryHookResult = ReturnType<typeof useCharacterWatchStatusQuery>;
+export type CharacterWatchStatusLazyQueryHookResult = ReturnType<typeof useCharacterWatchStatusLazyQuery>;
+export type CharacterWatchStatusSuspenseQueryHookResult = ReturnType<typeof useCharacterWatchStatusSuspenseQuery>;
+export type CharacterWatchStatusQueryResult = Apollo.QueryResult<CharacterWatchStatusQuery, CharacterWatchStatusQueryVariables>;
+export const WatchCharacterDocument = gql`
+    mutation WatchCharacter($characterId: ID!) {
+  watchCharacter(characterId: $characterId) {
+    id
+    viewerIsWatching
+  }
+}
+    `;
+export type WatchCharacterMutationFn = Apollo.MutationFunction<WatchCharacterMutation, WatchCharacterMutationVariables>;
+
+/**
+ * __useWatchCharacterMutation__
+ *
+ * To run a mutation, you first call `useWatchCharacterMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useWatchCharacterMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [watchCharacterMutation, { data, loading, error }] = useWatchCharacterMutation({
+ *   variables: {
+ *      characterId: // value for 'characterId'
+ *   },
+ * });
+ */
+export function useWatchCharacterMutation(baseOptions?: Apollo.MutationHookOptions<WatchCharacterMutation, WatchCharacterMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<WatchCharacterMutation, WatchCharacterMutationVariables>(WatchCharacterDocument, options);
+      }
+export type WatchCharacterMutationHookResult = ReturnType<typeof useWatchCharacterMutation>;
+export type WatchCharacterMutationResult = Apollo.MutationResult<WatchCharacterMutation>;
+export type WatchCharacterMutationOptions = Apollo.BaseMutationOptions<WatchCharacterMutation, WatchCharacterMutationVariables>;
+export const UnwatchCharacterDocument = gql`
+    mutation UnwatchCharacter($characterId: ID!) {
+  unwatchCharacter(characterId: $characterId) {
+    id
+    viewerIsWatching
+  }
+}
+    `;
+export type UnwatchCharacterMutationFn = Apollo.MutationFunction<UnwatchCharacterMutation, UnwatchCharacterMutationVariables>;
+
+/**
+ * __useUnwatchCharacterMutation__
+ *
+ * To run a mutation, you first call `useUnwatchCharacterMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useUnwatchCharacterMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [unwatchCharacterMutation, { data, loading, error }] = useUnwatchCharacterMutation({
+ *   variables: {
+ *      characterId: // value for 'characterId'
+ *   },
+ * });
+ */
+export function useUnwatchCharacterMutation(baseOptions?: Apollo.MutationHookOptions<UnwatchCharacterMutation, UnwatchCharacterMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<UnwatchCharacterMutation, UnwatchCharacterMutationVariables>(UnwatchCharacterDocument, options);
+      }
+export type UnwatchCharacterMutationHookResult = ReturnType<typeof useUnwatchCharacterMutation>;
+export type UnwatchCharacterMutationResult = Apollo.MutationResult<UnwatchCharacterMutation>;
+export type UnwatchCharacterMutationOptions = Apollo.BaseMutationOptions<UnwatchCharacterMutation, UnwatchCharacterMutationVariables>;
 export const UserCharactersDocument = gql`
     query UserCharacters($userId: ID!, $filters: CharacterFiltersInput) {
   userCharacters(userId: $userId, filters: $filters) {

@@ -4,6 +4,7 @@ import {
   NotificationSubjectType,
   type NotificationFieldsFragment,
 } from "../../../graphql/notifications.graphql";
+import { CharacterAvailability } from "../../../generated/graphql";
 import { apexUrl, communityUrl } from "../../../lib/communityHost";
 import {
   notificationActorHref,
@@ -132,5 +133,89 @@ describe("the actor link", () => {
     expect(
       notificationActorHref(candyTrade({ actor: null, actorLabel: "Host" })),
     ).toBeNull();
+  });
+});
+
+const availability = (
+  changes: Partial<NotificationFieldsFragment> = {},
+): NotificationFieldsFragment =>
+  ({
+    kind: NotificationKind.CharacterAvailabilityChanged,
+    subjectType: NotificationSubjectType.Character,
+    subjectId: "char-1",
+    subjectName: "Moonbeam",
+    availabilityAdded: [],
+    availabilityRemoved: [],
+    priceChanged: false,
+    price: null,
+    ...changes,
+  }) as NotificationFieldsFragment;
+
+describe("a watched character's availability notification", () => {
+  it("says what the character is newly open to", () => {
+    expect(
+      notificationSentence(
+        availability({
+          availabilityAdded: [
+            CharacterAvailability.TradeCharacters,
+            CharacterAvailability.Offers,
+          ],
+        }),
+      ),
+    ).toBe(
+      "says Moonbeam is now open to trades for other characters and open to offers",
+    );
+  });
+
+  it("puts the asking price on a new sale", () => {
+    expect(
+      notificationSentence(
+        availability({
+          availabilityAdded: [CharacterAvailability.ForSale],
+          priceChanged: true,
+          price: "25.00",
+        }),
+      ),
+    ).toBe("says Moonbeam is now for sale for $25.00");
+  });
+
+  it("says what the character is no longer open to", () => {
+    expect(
+      notificationSentence(
+        availability({ availabilityRemoved: [CharacterAvailability.Freebie] }),
+      ),
+    ).toBe("says Moonbeam is no longer free to a good home");
+  });
+
+  it("says both when one edit adds and removes", () => {
+    expect(
+      notificationSentence(
+        availability({
+          availabilityAdded: [CharacterAvailability.TradeArt],
+          availabilityRemoved: [
+            CharacterAvailability.ForSale,
+            CharacterAvailability.ForSaleCoin,
+            CharacterAvailability.Offers,
+          ],
+        }),
+      ),
+    ).toBe(
+      "says Moonbeam is now open to trades for art, and no longer for sale, for sale for community currency or open to offers",
+    );
+  });
+
+  it("reports a price change on its own", () => {
+    expect(
+      notificationSentence(availability({ priceChanged: true, price: "30.00" })),
+    ).toBe("changed Moonbeam's price to $30.00");
+    expect(
+      notificationSentence(availability({ priceChanged: true, price: null })),
+    ).toBe("removed Moonbeam's price");
+  });
+
+  it("goes to the character", () => {
+    expect(notificationHref(availability())).toBe(
+      apexUrl("/character/char-1"),
+    );
   });
 });
