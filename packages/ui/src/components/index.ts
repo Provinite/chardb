@@ -58,6 +58,15 @@ export const Popover = {
   Panel: PopoverPanel,
 };
 
+import { SelectOption, SelectRoot } from "./Select";
+export type { SelectOptionProps, SelectRootProps } from "./Select";
+
+/** Picks one option from a short list, swatches and all; see `SelectRoot`. */
+export const Select = {
+  Root: SelectRoot,
+  Option: SelectOption,
+};
+
 /** A modal dialog on the modal layer; see `DialogRoot`. */
 export const Dialog = {
   Root: DialogRoot,
