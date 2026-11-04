@@ -77,6 +77,23 @@ export function notificationHref(
   }
 }
 
+/**
+ * Where the person who caused a notification links to, or null when no user
+ * did (a host's house offer, the system).
+ *
+ * A notification from a community goes to the actor's member page there, and
+ * anything else to their profile.
+ */
+export function notificationActorHref(
+  notification: NotificationFieldsFragment,
+): string | null {
+  const { actor, community } = notification;
+  if (!actor) return null;
+  return community
+    ? communityUrl(community.slug, `/members/${actor.username}`)
+    : apexUrl(`/user/${actor.username}`);
+}
+
 /** What to call the person or thing that caused a notification. */
 export function notificationActorName(
   notification: NotificationFieldsFragment,

@@ -96,7 +96,6 @@
   "apps/frontend/src/components/navigation/CommunitySwitcher.tsx",
   "apps/frontend/src/components/navigation/GlobalNavigationSidebar.tsx",
   "apps/frontend/src/components/notifications/NotificationBell.tsx",
-  "apps/frontend/src/components/notifications/NotificationRow.tsx",
   "apps/frontend/src/components/pagination/Pager.tsx",
   "apps/frontend/src/components/settings/AvatarSettings.tsx",
   "apps/frontend/src/components/settings/NotificationPreferencesSettings.tsx",

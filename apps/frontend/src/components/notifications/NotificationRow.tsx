@@ -1,83 +1,15 @@
 import React from "react";
-import styled from "styled-components";
 import { Avatar } from "@chardb/ui";
 import { HostAwareLink } from "../HostAwareLink";
 import { CandyStrip } from "../halloween/CandyStrip";
 import type { NotificationFieldsFragment } from "../../graphql/notifications.graphql";
 import {
+  notificationActorHref,
   notificationActorName,
   notificationHref,
   notificationSentence,
 } from "./notification-display";
-
-const Row = styled.div<{ $unread: boolean; $clickable: boolean }>`
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border};
-  cursor: ${({ $clickable }) => ($clickable ? "pointer" : "default")};
-  /* Unread is a tint rather than a dot, so a run of them reads as a block. */
-  background: ${({ theme, $unread }) =>
-    $unread ? `${theme.colors.primary}0d` : "transparent"};
-
-  &:last-child {
-    border-bottom: none;
-  }
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.surface};
-  }
-`;
-
-const Body = styled.div`
-  min-width: 0;
-  flex: 1;
-`;
-
-const Sentence = styled.div`
-  font-size: 0.875rem;
-  color: ${({ theme }) => theme.colors.text.primary};
-  line-height: 1.4;
-
-  strong {
-    font-weight: 600;
-  }
-`;
-
-const Excerpt = styled.div`
-  margin-top: 0.25rem;
-  font-size: 0.8125rem;
-  color: ${({ theme }) => theme.colors.text.secondary};
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-`;
-
-const Meta = styled.div`
-  margin-top: 0.25rem;
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.colors.text.muted};
-`;
-
-const Bare = styled.div`
-  text-decoration: none;
-  color: inherit;
-`;
-
-/**
- * `notificationHref` answers with an absolute URL, and MOST of them are on a
- * community host the router cannot reach -- but not all. The bell renders in
- * the header on every host, so a notification about the community you are
- * already looking at points at this origin, and reloading the app to follow it
- * would be waste. `HostAwareLink` tells the two apart.
- */
-const RowLink = styled(HostAwareLink)`
-  text-decoration: none;
-  color: inherit;
-  display: block;
-`;
+import * as styles from "./NotificationRow.css";
 
 /** "3 minutes ago", down to a date once it stops being useful as an interval. */
 function relativeTime(iso: string): string {
@@ -102,46 +34,93 @@ export interface NotificationRowProps {
 /**
  * One notification, shared by the dropdown and the feed page so the two cannot
  * describe the same event differently.
+ *
+ * Two links: the actor's avatar and name go to them, and the rest of the row
+ * goes to what the notification is about. Both are `HostAwareLink`s, because
+ * `notificationHref` answers with an absolute URL that is MOSTLY on a community
+ * host the router cannot reach -- but not always: the bell renders on every
+ * host, so a notification about the community you are on points at this
+ * origin, and reloading the app to follow it would be waste.
  */
 export const NotificationRow: React.FC<NotificationRowProps> = ({
   notification,
   onOpen,
 }) => {
   const href = notificationHref(notification);
+  const actorHref = notificationActorHref(notification);
   const actorName = notificationActorName(notification);
+  const sentence = notificationSentence(notification);
 
-  const inner = (
-    <Row
-      $unread={!notification.readAt}
-      $clickable={Boolean(href)}
+  const avatar = (
+    <Avatar
+      image={notification.actor?.avatarImage}
+      name={actorName}
+      size={36}
+    />
+  );
+
+  return (
+    <div
+      className={styles.row({
+        unread: !notification.readAt,
+        clickable: Boolean(href),
+      })}
       data-testid="notification-row"
       data-kind={notification.kind}
       data-unread={notification.readAt ? "false" : "true"}
       onClick={() => onOpen?.(notification)}
     >
-      <Avatar
-        image={notification.actor?.avatarImage}
-        name={actorName}
-        size={36}
-      />
-      <Body>
-        <Sentence>
-          <strong>{actorName}</strong> {notificationSentence(notification)}
-        </Sentence>
+      {actorHref ? (
+        // The name beside it is the same link, for keyboards and screen
+        // readers; this one is for tapping the face.
+        <HostAwareLink
+          to={actorHref}
+          className={styles.avatarLink}
+          aria-hidden
+          tabIndex={-1}
+        >
+          {avatar}
+        </HostAwareLink>
+      ) : (
+        avatar
+      )}
+      <div className={styles.body}>
+        <div className={styles.sentence}>
+          {actorHref ? (
+            <HostAwareLink to={actorHref} className={styles.actorLink}>
+              {actorName}
+            </HostAwareLink>
+          ) : (
+            <strong className={styles.actorName}>{actorName}</strong>
+          )}{" "}
+          {href ? (
+            <HostAwareLink
+              to={href}
+              className={styles.subjectLink}
+              // Read in a list of links, the sentence alone would not say whose
+              // knock or comment each one is.
+              aria-label={`${actorName} ${sentence}`}
+            >
+              {sentence}
+            </HostAwareLink>
+          ) : (
+            sentence
+          )}
+        </div>
         {notification.candySlugs && notification.candySlugs.length > 0 && (
           <CandyStrip slugs={notification.candySlugs} />
         )}
-        {notification.excerpt && <Excerpt>{notification.excerpt}</Excerpt>}
-        {notification.body && <Excerpt>{notification.body}</Excerpt>}
-        <Meta>
+        {notification.excerpt && (
+          <div className={styles.excerpt}>{notification.excerpt}</div>
+        )}
+        {notification.body && (
+          <div className={styles.excerpt}>{notification.body}</div>
+        )}
+        <div className={styles.meta}>
           {notification.community ? `${notification.community.name} · ` : ""}
           {relativeTime(notification.createdAt)}
-        </Meta>
-      </Body>
-    </Row>
+        </div>
+      </div>
+    </div>
   );
-
-  // A notification whose subject has no page, or whose subject is gone, is
-  // still worth showing -- it just stops being a link.
-  return href ? <RowLink to={href}>{inner}</RowLink> : <Bare>{inner}</Bare>;
 };

@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Notification names link to the person**: a notification's avatar and name go to whoever caused it: their member page when the notification is from a community, so you can knock back.
+
 - **Trait option up/down buttons**: they sent a fractional position the server refused, so options could not be reordered.
 
 ### Changed
