@@ -201,6 +201,46 @@ describe("Select", () => {
     expect(listbox()).toBeNull();
   });
 
+  it("closes its list when it turns disabled while open", () => {
+    const onChange = vi.fn();
+    const box = (disabled: boolean) => (
+      <Select.Root
+        aria-label="Rarity"
+        value=""
+        onChange={onChange}
+        disabled={disabled}
+      >
+        <Select.Option value="">None</Select.Option>
+        <Select.Option value="rare">Rare</Select.Option>
+      </Select.Root>
+    );
+    const { rerender } = mount(box(false));
+
+    click(combobox());
+    expect(listbox()).not.toBeNull();
+    rerender(box(true));
+
+    expect(listbox()).toBeNull();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it("still calls an option's own click handler", () => {
+    const onClick = vi.fn();
+    mount(
+      <Select.Root aria-label="Rarity" value="" onChange={() => {}}>
+        <Select.Option value="">None</Select.Option>
+        <Select.Option value="rare" onClick={onClick}>
+          Rare
+        </Select.Option>
+      </Select.Root>,
+    );
+
+    click(combobox());
+    click(options()[1]);
+
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   it("does nothing while disabled", () => {
     mount(
       <Select.Root aria-label="Rarity" value="" onChange={() => {}} disabled>

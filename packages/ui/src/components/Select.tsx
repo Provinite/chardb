@@ -118,6 +118,15 @@ const Root = forwardRef<HTMLButtonElement, SelectRootProps>(function Root(
   };
   const pressInside = usePressOutside(open, close);
 
+  // A box disabled while its list is open (its form started saving) closes
+  // the list, as a native select does, so nothing can still be picked.
+  useEffect(() => {
+    if (disabled) {
+      setOpen(false);
+      setActiveIndex(-1);
+    }
+  }, [disabled]);
+
   const openAt = (index: number) => {
     setOpen(true);
     setActiveIndex(Math.max(0, Math.min(index, options.length - 1)));
@@ -261,7 +270,16 @@ const Root = forwardRef<HTMLButtonElement, SelectRootProps>(function Root(
 });
 
 const Option = forwardRef<HTMLDivElement, SelectOptionProps>(function Option(
-  { value, textValue: _textValue, children, className, ...rest },
+  {
+    value,
+    textValue: _textValue,
+    children,
+    className,
+    onMouseDown,
+    onMouseMove,
+    onClick,
+    ...rest
+  },
   ref,
 ) {
   const context = useContext(SelectContext);
@@ -283,11 +301,18 @@ const Option = forwardRef<HTMLDivElement, SelectOptionProps>(function Option(
       className={cx(styles.option, className)}
       // On mousedown so the box keeps focus; picked on click, so a press can
       // still be abandoned by moving off before letting go.
-      onMouseDown={(event) => event.preventDefault()}
-      onMouseMove={() => {
+      onMouseDown={(event) => {
+        onMouseDown?.(event);
+        event.preventDefault();
+      }}
+      onMouseMove={(event) => {
+        onMouseMove?.(event);
         if (index !== activeIndex) setActive(index);
       }}
-      onClick={() => choose(value)}
+      onClick={(event) => {
+        onClick?.(event);
+        if (!event.defaultPrevented) choose(value);
+      }}
     >
       <Check size={16} aria-hidden className={styles.check} />
       {children}

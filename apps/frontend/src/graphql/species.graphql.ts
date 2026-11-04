@@ -333,13 +333,6 @@ export const UPDATE_SPECIES_VARIANT_MUTATION = gql`
 `;
 
 /**
- * Mutation to delete a species variant.
- * WARNING: This will also delete associated trait configurations and character data.
- *
- * @param id - ID of the species variant to delete
- * @returns RemovalResponse with success confirmation
- */
-/**
  * Arranges a species' variants. `variantIds` lists every variant of the
  * species, in its new order; the response is the whole list, renumbered.
  */
@@ -352,6 +345,13 @@ export const REORDER_SPECIES_VARIANTS_MUTATION = gql`
   }
 `;
 
+/**
+ * Mutation to delete a species variant.
+ * WARNING: This will also delete associated trait configurations and character data.
+ *
+ * @param id - ID of the species variant to delete
+ * @returns RemovalResponse with success confirmation
+ */
 export const DELETE_SPECIES_VARIANT_MUTATION = gql`
   mutation DeleteSpeciesVariant($id: ID!) {
     removeSpeciesVariant(id: $id) {

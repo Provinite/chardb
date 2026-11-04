@@ -15,6 +15,23 @@ export class ReorderMismatchError extends BadRequestException {
   }
 }
 
+/**
+ * Each id with its new position, sorted by id rather than by position.
+ *
+ * Two reorders of one list can run at once (two quick taps on a move button).
+ * Each locks every row it updates, and if they update in list order, two
+ * different orders take the same locks in different sequences and deadlock.
+ * Updating in id order makes every reorder take them in the same sequence, so
+ * the second simply waits for the first.
+ */
+export function positionsInLockOrder(
+  orderedIds: readonly string[],
+): { id: string; position: number }[] {
+  return orderedIds
+    .map((id, position) => ({ id, position }))
+    .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+}
+
 /** Throws unless `orderedIds` is a permutation of `existingIds`. */
 export function assertCompleteReorder(
   orderedIds: readonly string[],

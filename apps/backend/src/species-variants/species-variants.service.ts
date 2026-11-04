@@ -2,7 +2,10 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityColorsService } from "../community-colors/community-colors.service";
-import { assertCompleteReorder } from "../shared/utils/reorder";
+import {
+  assertCompleteReorder,
+  positionsInLockOrder,
+} from "../shared/utils/reorder";
 
 /**
  * The order every list of variants reads in: as staff arranged them. The
@@ -231,10 +234,10 @@ export class SpeciesVariantsService {
     );
 
     await this.prisma.$transaction(
-      variantIds.map((id, sortOrder) =>
+      positionsInLockOrder(variantIds).map(({ id, position }) =>
         this.prisma.speciesVariant.update({
           where: { id },
-          data: { sortOrder },
+          data: { sortOrder: position },
         }),
       ),
     );

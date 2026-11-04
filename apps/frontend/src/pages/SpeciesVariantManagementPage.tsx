@@ -23,6 +23,7 @@ import {
 import { toast } from "react-hot-toast";
 import { ColorPip } from "../components/colors";
 import { SortableList } from "../components/reorder/SortableList";
+import { sortCachedConnection } from "../lib/reorderCache";
 import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
 
 /**
@@ -216,7 +217,8 @@ export const SpeciesVariantManagementPage: React.FC = () => {
     error: variantsError,
     refetch,
   } = useSpeciesVariantsBySpeciesQuery({
-    variables: { speciesId: speciesId ?? "", first: 100 },
+    // A reorder names every variant, so the page must hold them all.
+    variables: { speciesId: speciesId ?? "", first: 500 },
     skip: !speciesId,
   });
 
@@ -299,6 +301,8 @@ export const SpeciesVariantManagementPage: React.FC = () => {
           sortOrder,
         })),
       },
+      update: (cache) =>
+        sortCachedConnection(cache, "speciesVariantsBySpecies", "sortOrder"),
     });
   };
 

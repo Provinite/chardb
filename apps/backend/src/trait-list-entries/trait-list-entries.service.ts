@@ -86,7 +86,11 @@ export class TraitListEntriesService {
         take: first + 1, // Take one extra to check if there's a next page
         skip,
         cursor,
-        orderBy: [{ speciesVariant: { name: "asc" } }, { order: "asc" }],
+        orderBy: [
+          { speciesVariant: { sortOrder: "asc" } },
+          { speciesVariant: { name: "asc" } },
+          { order: "asc" },
+        ],
       }),
       this.prisma.traitListEntry.count(),
     ]);
@@ -150,7 +154,11 @@ export class TraitListEntriesService {
         take: first + 1,
         skip,
         cursor,
-        orderBy: [{ speciesVariant: { name: "asc" } }, { order: "asc" }],
+        orderBy: [
+          { speciesVariant: { sortOrder: "asc" } },
+          { speciesVariant: { name: "asc" } },
+          { order: "asc" },
+        ],
       }),
       this.prisma.traitListEntry.count({
         where: { traitId },

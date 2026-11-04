@@ -16,6 +16,7 @@ import {
 import { toast } from "react-hot-toast";
 import { ColorSelector, ColorPip } from "../components/colors";
 import { SortableList } from "../components/reorder/SortableList";
+import { sortCachedConnection, sortCachedListField } from "../lib/reorderCache";
 import { useCanEditSpecies } from "../hooks/useCanManageSpecies";
 
 /**
@@ -267,7 +268,8 @@ export const EnumValueManagementPage: React.FC = () => {
     error: enumValuesError,
     refetch,
   } = useEnumValuesByTraitQuery({
-    variables: { traitId: traitId ?? "", first: 100 },
+    // A reorder names every option, so the page must hold them all.
+    variables: { traitId: traitId ?? "", first: 500 },
     skip: !traitId,
   });
 
@@ -388,6 +390,15 @@ export const EnumValueManagementPage: React.FC = () => {
           id,
           order,
         })),
+      },
+      update: (cache) => {
+        sortCachedConnection(cache, "enumValuesByTrait", "order");
+        sortCachedListField(
+          cache,
+          cache.identify({ __typename: "Trait", id: traitId }),
+          "enumValues",
+          "order",
+        );
       },
     });
   };

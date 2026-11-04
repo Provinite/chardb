@@ -160,10 +160,19 @@ test.describe("a role that can create species but not edit them", () => {
       `${world.community.url}/species/${world.species.id}/variants`,
     );
 
-    await expect(button(page, "Manage")).toBeVisible();
+    // A link: it goes to the variant's own page.
+    await expect(
+      page.getByRole("link", { name: "Manage", exact: true }).first(),
+    ).toBeVisible();
     for (const name of ["Add Variant", "Delete"]) {
       await expect(button(page, name)).toHaveCount(0);
     }
+    await expect(
+      page.getByRole("button", { name: /^Move .* (up|down)$/ }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: /^Drag to reorder/ }),
+    ).toHaveCount(0);
   });
 
   test("sees a trait's options without their write controls", async ({
@@ -175,9 +184,15 @@ test.describe("a role that can create species but not edit them", () => {
     );
 
     await expect(page.getByText("Blue").first()).toBeVisible();
-    for (const name of ["Add Option", "Up", "Down", "Edit", "Delete"]) {
+    for (const name of ["Add Option", "Edit", "Delete"]) {
       await expect(button(page, name)).toHaveCount(0);
     }
+    await expect(
+      page.getByRole("button", { name: /^Move .* (up|down)$/ }),
+    ).toHaveCount(0);
+    await expect(
+      page.getByRole("button", { name: /^Drag to reorder/ }),
+    ).toHaveCount(0);
   });
 
   test("sees a variant without its write controls", async ({ page, world }) => {

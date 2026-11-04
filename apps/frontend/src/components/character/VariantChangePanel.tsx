@@ -4,6 +4,7 @@ import { AlertTriangle } from "lucide-react";
 import { Select } from "@chardb/ui";
 import { strandedValues } from "../../lib/variantChangeItems";
 import { ColoredName } from "../colors";
+import { RerouteSelect } from "./RerouteSelect";
 import {
   useSpeciesVariantsBySpeciesQuery,
   useSpeciesWithTraitsAndEnumValuesQuery,
@@ -23,9 +24,6 @@ const Label = styled.label`
   color: ${({ theme }) => theme.colors.text.primary};
   margin-bottom: 0.35rem;
 `;
-
-/** The re-route choice that drops the value instead of replacing it. */
-const REMOVE_VALUE = "remove";
 
 const Help = styled.p`
   margin: 0.35rem 0 0;
@@ -305,31 +303,14 @@ export const VariantChangePanel: React.FC<Props> = ({
                     {forms.length > 1 ? ` · ${row.formName}` : ""}
                   </span>
                 </Was>
-                <Select.Root
+                <RerouteSelect
                   data-testid={`reroute-${row.traitId}`}
-                  aria-label={`Replacement for ${row.traitName} ${row.optionName}`}
-                  // Never anything but the prompt: a pick resolves the row,
-                  // which takes the box away with it.
-                  value=""
+                  choices={choices}
+                  traitName={row.traitName}
+                  optionName={row.optionName}
                   disabled={disabled}
-                  onChange={(to) =>
-                    reroute(
-                      row.formIndex,
-                      row.index,
-                      to === REMOVE_VALUE ? "" : to,
-                    )
-                  }
-                >
-                  <Select.Option value="">Choose a replacement…</Select.Option>
-                  {choices.map((c) => (
-                    <Select.Option key={c.id} value={c.id} textValue={c.name}>
-                      <ColoredName name={c.name} color={c.color?.hexCode} />
-                    </Select.Option>
-                  ))}
-                  <Select.Option value={REMOVE_VALUE}>
-                    Remove this value
-                  </Select.Option>
-                </Select.Root>
+                  onPick={(to) => reroute(row.formIndex, row.index, to)}
+                />
               </Row>
             );
           })}

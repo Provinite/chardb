@@ -2,7 +2,10 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityColorsService } from "../community-colors/community-colors.service";
-import { assertCompleteReorder } from "../shared/utils/reorder";
+import {
+  assertCompleteReorder,
+  positionsInLockOrder,
+} from "../shared/utils/reorder";
 
 /**
  * Service layer input types for enum values operations.
@@ -167,15 +170,19 @@ export class EnumValuesService {
     // `(traitId, order)` is unique and Postgres checks it row by row, so
     // writing the final positions directly would collide mid-swap. Every row
     // first moves to a negative position no final one can share.
+    const rows = positionsInLockOrder(enumValueIds);
     await this.prisma.$transaction([
-      ...enumValueIds.map((id, index) =>
+      ...rows.map(({ id, position }) =>
         this.prisma.enumValue.update({
           where: { id },
-          data: { order: -(index + 1) },
+          data: { order: -(position + 1) },
         }),
       ),
-      ...enumValueIds.map((id, order) =>
-        this.prisma.enumValue.update({ where: { id }, data: { order } }),
+      ...rows.map(({ id, position }) =>
+        this.prisma.enumValue.update({
+          where: { id },
+          data: { order: position },
+        }),
       ),
     ]);
 
