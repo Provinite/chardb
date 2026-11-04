@@ -271,11 +271,21 @@ test.describe("a session the API refuses", () => {
       (route) => route.fulfill({ status: 401, body: "Unauthorized" }),
       { times: 1 },
     );
-    await page.goto(`${world.community.url}/characters`);
-
-    await expect(page).toHaveURL(
-      urlStartingWith(`${world.community.url}/login`),
+    // The refusal sends the page to sign-in with a whole-page load. The page
+    // it leaves can reach /login in its own router first, so the URL alone
+    // says nothing about which document is on screen, and a form filled in
+    // the old one is gone when the new one arrives. Wait for the new one.
+    const signInPage = page.waitForResponse(
+      (response) =>
+        response.request().isNavigationRequest() &&
+        new URL(response.url()).pathname === "/login",
     );
+    await page.goto(`${world.community.url}/characters`);
+    await signInPage;
+
+    await page.waitForURL(urlStartingWith(`${world.community.url}/login`), {
+      waitUntil: "load",
+    });
     expect(new URL(page.url()).searchParams.get("nextPath")).toBe(
       "/characters",
     );
@@ -330,6 +340,12 @@ test.describe("one session across hosts", () => {
       urlStartingWith(`${world.community.url}/login`),
     );
     expect(new URL(page.url()).searchParams.get("nextPath")).toBe("/settings");
+    // The URL changes before the new page renders, and the sign-up form still
+    // on screen has an Email field too. Filling it before the sign-in form
+    // replaces it leaves the sign-in form empty.
+    await expect(
+      page.getByRole("heading", { name: `Sign in to ${world.community.name}` }),
+    ).toBeVisible();
 
     await page.getByLabel("Email").fill(world.users.commadmin.email);
     await page.getByLabel("Password").fill(world.users.commadmin.password);

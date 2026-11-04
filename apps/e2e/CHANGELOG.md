@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Variant order and colour specs**, plus `chooseOption` for picking from a `@chardb/ui` `Select`.
 
+### Fixed
+
+- **Flaky sign-in specs in `subdomain-routing`**: they filled the page being left, whose URL had already changed; they now wait for the sign-in form itself.
+
 ## [v15.3.0] - 2026-11-01
 
 ### Added
