@@ -193,7 +193,7 @@ export class TraitListEntriesService {
 
   /** Update a trait list entry */
   async update(id: string, input: UpdateTraitListEntryServiceInput) {
-    const traitListEntry = await this.findOne(id); // This will throw if not found
+    await this.findOne(id); // This will throw if not found
 
     const updateData: Prisma.TraitListEntryUpdateInput = {};
 
