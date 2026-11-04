@@ -51,6 +51,16 @@ describe("useCanonicalUsername", () => {
     expect(where()).toBe("/user/MixedCase/followers?page=2#top");
   });
 
+  it("rewrites the username, not a route word spelled the same", () => {
+    visit("/user/user/followers", "User");
+    expect(where()).toBe("/user/User/followers");
+  });
+
+  it("rewrites the username when a later segment is spelled the same", () => {
+    visit("/user/followers/followers", "Followers");
+    expect(where()).toBe("/user/Followers/followers");
+  });
+
   it("leaves a URL that already matches alone", () => {
     visit("/user/MixedCase", "MixedCase");
     expect(where()).toBe("/user/MixedCase");

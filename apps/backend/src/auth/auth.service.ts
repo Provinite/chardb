@@ -32,9 +32,9 @@ function signupConflict(error: unknown): unknown {
   ) {
     return error;
   }
-  const target = error.meta?.target;
-  const fields = Array.isArray(target) ? target : [target];
-  return fields.includes("email")
+  // Field names (`["email"]`) or the index name (`users_email_key`), depending
+  // on how Prisma reached the database.
+  return String(error.meta?.target).includes("email")
     ? new ConflictException("User with this email already exists")
     : new ConflictException("User with this username already exists");
 }

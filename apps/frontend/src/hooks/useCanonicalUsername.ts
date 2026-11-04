@@ -1,6 +1,9 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
+/** `["", "user", ":username", ...]` once the path is split on `/`. */
+const USERNAME_SEGMENT = 2;
+
 /**
  * Puts the username in the URL back into the casing it was signed up with.
  *
@@ -20,17 +23,19 @@ export function useCanonicalUsername(
     if (!fromUrl || !stored || fromUrl === stored) return;
     if (fromUrl.toLowerCase() !== stored.toLowerCase()) return;
 
+    // Every username route is `/<section>/:username/...` (`/user/...` on the
+    // apex, `/members/...` in a community), so the name is always the second
+    // segment. Searching by value instead would hit `/user/user` at the route
+    // word.
     const segments = location.pathname.split("/");
-    const index = segments.findIndex((segment) => {
-      try {
-        return decodeURIComponent(segment) === fromUrl;
-      } catch {
-        // A stray `%` elsewhere in the path is not the username.
-        return false;
-      }
-    });
-    if (index === -1) return;
-    segments[index] = encodeURIComponent(stored);
+    let segment: string;
+    try {
+      segment = decodeURIComponent(segments[USERNAME_SEGMENT] ?? "");
+    } catch {
+      return;
+    }
+    if (segment !== fromUrl) return;
+    segments[USERNAME_SEGMENT] = encodeURIComponent(stored);
 
     navigate(
       {

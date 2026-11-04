@@ -275,7 +275,7 @@ export const CommunityInventoryPage: React.FC = () => {
 
   // No username in the route means "my own", which is the common case and
   // keeps /inventory working as it always has. Usernames ignore case, so
-  // `/members/YOU/items` is still yours.
+  // `/members/YOU/inventory` is still yours.
   const viewingSelf =
     !username || username.toLowerCase() === user?.username.toLowerCase();
 

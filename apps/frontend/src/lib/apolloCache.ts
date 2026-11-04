@@ -2,6 +2,22 @@ import { InMemoryCache } from "@apollo/client";
 import { cursorConnection } from "./cursorConnection";
 
 /**
+ * Stores a field looked up by username under the lowercased name.
+ *
+ * Usernames ignore case, so `FOO` and `foo` are one person. Profile pages
+ * correct a miscased URL once the user loads, and the corrected URL asks
+ * again; keyed this way, the second ask is answered from the first.
+ */
+const byUsername = (
+  args: Record<string, unknown> | null,
+): string | undefined => {
+  if (typeof args?.username === "string") {
+    return `{"username":${JSON.stringify(args.username.toLowerCase())}}`;
+  }
+  return args ? JSON.stringify(args) : undefined;
+};
+
+/**
  * The app's Apollo cache. Apart from the client so the type policies can be
  * tested without building the links.
  */
@@ -18,6 +34,10 @@ export function createCache(): InMemoryCache {
       },
       Query: {
         fields: {
+          user: { keyArgs: byUsername },
+          userProfile: { keyArgs: byUsername },
+          getFollowers: { keyArgs: byUsername },
+          getFollowing: { keyArgs: byUsername },
           users: {
             keyArgs: [],
             merge(existing = { nodes: [], totalCount: 0 }, incoming) {
