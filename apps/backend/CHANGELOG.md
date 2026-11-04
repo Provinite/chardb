@@ -20,6 +20,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Faustian Bargain achievement**: earned by sending the Trick-or-Treat bot a gifty during the event.
 
+### Fixed
+
+- **Item type images skip moderation**: uploaded APPROVED (migration approves pending ones), so Trick-or-Treat win posts show them.
+
 ## [v15.6.0] - 2026-11-03
 
 ### Added

@@ -156,6 +156,44 @@ describe("ImagesService", () => {
       ).rejects.toThrow(BadRequestException);
     });
 
+    describe("moderation status", () => {
+      const mockImage = { id: "img1", uploader: { id: "user1" }, tags_rel: [] };
+
+      beforeEach(() => {
+        mockS3Service.uploadImage.mockResolvedValue(mockS3Result);
+        db.image.create.mockResolvedValue(mockImage);
+        db.media.create.mockResolvedValue({ id: "media1", image: mockImage });
+      });
+
+      // Only staff with CanManageItems can set one, and every page showing
+      // an item type already serves its image whatever its status; nothing
+      // would ever review it.
+      it("approves an item type's image on upload", async () => {
+        db.itemType.findUnique.mockResolvedValue({ communityId: "c1" });
+        mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
+
+        await service.upload("user1", { file: mockFile, itemTypeId: "it1" });
+
+        expect(db.image.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.objectContaining({ moderationStatus: "APPROVED" }),
+          }),
+        );
+      });
+
+      it("leaves any other upload to moderation", async () => {
+        await service.upload("user1", { file: mockFile });
+
+        expect(db.image.create).toHaveBeenCalledWith(
+          expect.objectContaining({
+            data: expect.not.objectContaining({
+              moderationStatus: expect.anything(),
+            }),
+          }),
+        );
+      });
+    });
+
     it("should verify character ownership when specified", async () => {
       db.character.findFirst.mockResolvedValue({
         id: "char1",

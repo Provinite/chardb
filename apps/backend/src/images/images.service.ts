@@ -182,6 +182,12 @@ export class ImagesService {
           mimeType: file.mimetype,
           isNsfw,
           sensitiveContentDescription,
+          // An item type's picture is set by staff holding CanManageItems,
+          // and item type pages serve it whatever its status, so it skips
+          // moderation like an avatar does.
+          ...(itemTypeId
+            ? { moderationStatus: ModerationStatus.APPROVED }
+            : {}),
           ...cropToColumns(thumbnailCrop ?? null),
         },
         include: {
