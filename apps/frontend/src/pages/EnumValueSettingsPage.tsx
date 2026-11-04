@@ -3,7 +3,8 @@ import { usePageMeta } from "../lib/pageMeta";
 import styled from "styled-components";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Check, X, Settings, ArrowLeft, Database, Palette } from "lucide-react";
-import { Button, ErrorMessage } from "@chardb/ui";
+import { Button, Cluster, ErrorMessage } from "@chardb/ui";
+import { ColoredName } from "../components/colors";
 import {
   useSpeciesVariantWithEnumValueSettingsQuery,
   useCreateEnumValueSettingMutation,
@@ -164,15 +165,9 @@ const EnumValueInfo = styled.div`
   flex: 1;
 `;
 
-const EnumValueName = styled.div`
+const EnumValueName = styled(Cluster)`
   font-weight: 500;
   color: ${({ theme }) => theme.colors.text.primary};
-  margin-bottom: 0.25rem;
-`;
-
-const EnumValueMeta = styled.div`
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.colors.text.muted};
 `;
 
 const ToggleButton = styled(Button)<{ isEnabled: boolean }>`
@@ -422,8 +417,12 @@ export const EnumValueSettingsPage: React.FC = () => {
                   return (
                     <EnumValueCard key={enumValue.id} isEnabled={isEnabled}>
                       <EnumValueInfo>
-                        <EnumValueName>{enumValue.name}</EnumValueName>
-                        <EnumValueMeta>Order: {enumValue.order}</EnumValueMeta>
+                        <EnumValueName gap="sm">
+                          <ColoredName
+                            name={enumValue.name}
+                            color={enumValue.color?.hexCode}
+                          />
+                        </EnumValueName>
                       </EnumValueInfo>
 
                       <ToggleButton

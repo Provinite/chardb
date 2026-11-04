@@ -266,6 +266,9 @@ const Option = forwardRef<HTMLDivElement, SelectOptionProps>(function Option(
       ref={ref}
       id={optionId(baseId, index)}
       role="option"
+      // What it picks, for tests and tools that choose by value, as they
+      // would on a native <option>.
+      data-value={value}
       aria-selected={value === selectedValue}
       data-active={index === activeIndex ? "" : undefined}
       className={cx(styles.option, className)}

@@ -25,6 +25,10 @@ export const SPECIES_WITH_TRAITS_AND_ENUM_VALUES = gql`
           name
           order
           traitId
+          color {
+            id
+            hexCode
+          }
           createdAt
           updatedAt
         }
@@ -53,6 +57,10 @@ export const SPECIES_VARIANT_WITH_ENUM_VALUE_SETTINGS = gql`
             id
             name
             order
+            color {
+              id
+              hexCode
+            }
           }
         }
       }

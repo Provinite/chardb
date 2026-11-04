@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from "react";
 import styled from "styled-components";
 import { Search, Database, Palette } from "lucide-react";
-import { Input, ErrorMessage, Toggletip } from "@chardb/ui";
+import { Cluster, Input, ErrorMessage, Toggletip } from "@chardb/ui";
+import { ColorPip } from "../colors";
 import {
   useSpeciesQuery,
   useSpeciesVariantsBySpeciesQuery,
@@ -431,9 +432,13 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
                   onClick={() => !disabled && handleVariantSelect(variant)}
                 >
                   <CardHeader>
-                    <CardIcon variant="variant">
-                      <Palette size={16} />
-                    </CardIcon>
+                    {variant.color ? (
+                      <ColorPip color={variant.color.hexCode} size="lg" />
+                    ) : (
+                      <CardIcon variant="variant">
+                        <Palette size={16} />
+                      </CardIcon>
+                    )}
                     <CardTitle>{variant.name}</CardTitle>
                   </CardHeader>
                   <CardMeta>
@@ -447,7 +452,12 @@ export const SpeciesSelector: React.FC<SpeciesSelectorProps> = ({
           {selectedVariant && (
             <SelectedInfo>
               <h4>Selected Variant</h4>
-              <p>{selectedVariant.name}</p>
+              <Cluster gap="sm">
+                {selectedVariant.color && (
+                  <ColorPip color={selectedVariant.color.hexCode} />
+                )}
+                <p>{selectedVariant.name}</p>
+              </Cluster>
             </SelectedInfo>
           )}
         </div>

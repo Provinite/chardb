@@ -1,14 +1,18 @@
 import React from "react";
 import styled from "styled-components";
-import { Input } from "@chardb/ui";
-import { TraitValueType } from "../../generated/graphql";
+import { Input, Select } from "@chardb/ui";
+import {
+  TraitValueType,
+  type TraitListEntryDetailsFragment,
+} from "../../generated/graphql";
+import { ColoredName } from "../colors";
 
 interface TraitDefaultValueInputProps {
   valueType: TraitValueType;
   defaultValueString?: string | null;
   defaultValueInt?: number | null;
   defaultValueTimestamp?: string | null;
-  enumValues?: Array<{ id: string; name: string }>;
+  enumValues?: NonNullable<TraitListEntryDetailsFragment["trait"]["enumValues"]>;
   onChange: (value: DefaultValueState) => void;
   disabled?: boolean;
 }
@@ -31,26 +35,6 @@ const Label = styled.label`
   color: ${({ theme }) => theme.colors.text.primary};
 `;
 
-const Select = styled.select`
-  padding: 0.5rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 4px;
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: 0.875rem;
-  cursor: pointer;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-  }
-`;
-
 export const TraitDefaultValueInput: React.FC<TraitDefaultValueInputProps> = ({
   valueType,
   defaultValueString,
@@ -60,6 +44,7 @@ export const TraitDefaultValueInput: React.FC<TraitDefaultValueInputProps> = ({
   onChange,
   disabled = false,
 }) => {
+  const labelId = React.useId();
   const handleStringChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     onChange({
       defaultValueString: e.target.value || null,
@@ -85,8 +70,8 @@ export const TraitDefaultValueInput: React.FC<TraitDefaultValueInputProps> = ({
     });
   };
 
-  const handleEnumChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = e.target.value === "" ? null : e.target.value;
+  const handleEnumChange = (picked: string) => {
+    const value = picked === "" ? null : picked;
     onChange({
       defaultValueString: value,
       defaultValueInt: null,
@@ -145,19 +130,27 @@ export const TraitDefaultValueInput: React.FC<TraitDefaultValueInputProps> = ({
     case TraitValueType.Enum:
       return (
         <Container>
-          <Label>Default Value</Label>
-          <Select
+          <Label id={labelId}>Default Value</Label>
+          <Select.Root
+            aria-labelledby={labelId}
             value={defaultValueString || ""}
             onChange={handleEnumChange}
             disabled={disabled || enumValues.length === 0}
           >
-            <option value="">None</option>
+            <Select.Option value="">None</Select.Option>
             {enumValues.map((enumValue) => (
-              <option key={enumValue.id} value={enumValue.name}>
-                {enumValue.name}
-              </option>
+              <Select.Option
+                key={enumValue.id}
+                value={enumValue.name}
+                textValue={enumValue.name}
+              >
+                <ColoredName
+                  name={enumValue.name}
+                  color={enumValue.color?.hexCode}
+                />
+              </Select.Option>
             ))}
-          </Select>
+          </Select.Root>
         </Container>
       );
 

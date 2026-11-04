@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo } from "react";
 import styled from "styled-components";
 import { AlertTriangle } from "lucide-react";
+import { Select } from "@chardb/ui";
 import { strandedValues } from "../../lib/variantChangeItems";
+import { ColoredName } from "../colors";
 import {
   useSpeciesVariantsBySpeciesQuery,
   useSpeciesWithTraitsAndEnumValuesQuery,
@@ -22,15 +24,8 @@ const Label = styled.label`
   margin-bottom: 0.35rem;
 `;
 
-const Select = styled.select`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 6px;
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: 0.875rem;
-`;
+/** The re-route choice that drops the value instead of replacing it. */
+const REMOVE_VALUE = "remove";
 
 const Help = styled.p`
   margin: 0.35rem 0 0;
@@ -240,23 +235,26 @@ export const VariantChangePanel: React.FC<Props> = ({
 
   return (
     <Wrap>
-      <Label htmlFor="variant">Variant</Label>
-      <Select
+      <Label id="variant-label" htmlFor="variant">
+        Variant
+      </Label>
+      <Select.Root
         id="variant"
+        aria-labelledby="variant-label"
         data-testid="variant-select"
         value={selectedVariantId ?? ""}
         disabled={disabled}
-        onChange={(e) =>
-          onVariantChange(variants.find((v) => v.id === e.target.value) ?? null)
+        onChange={(id) =>
+          onVariantChange(variants.find((v) => v.id === id) ?? null)
         }
       >
-        <option value="">No variant</option>
+        <Select.Option value="">No variant</Select.Option>
         {variants.map((v) => (
-          <option key={v.id} value={v.id}>
-            {v.name}
-          </option>
+          <Select.Option key={v.id} value={v.id} textValue={v.name}>
+            <ColoredName name={v.name} color={v.color?.hexCode} />
+          </Select.Option>
         ))}
-      </Select>
+      </Select.Root>
       <Help>
         Rarity. Changing it is a staff action and is recorded against this
         character.
@@ -307,24 +305,31 @@ export const VariantChangePanel: React.FC<Props> = ({
                     {forms.length > 1 ? ` · ${row.formName}` : ""}
                   </span>
                 </Was>
-                <Select
+                <Select.Root
                   data-testid={`reroute-${row.traitId}`}
-                  defaultValue=""
+                  aria-label={`Replacement for ${row.traitName} ${row.optionName}`}
+                  // Never anything but the prompt: a pick resolves the row,
+                  // which takes the box away with it.
+                  value=""
                   disabled={disabled}
-                  onChange={(e) =>
-                    reroute(row.formIndex, row.index, e.target.value)
+                  onChange={(to) =>
+                    reroute(
+                      row.formIndex,
+                      row.index,
+                      to === REMOVE_VALUE ? "" : to,
+                    )
                   }
                 >
-                  <option value="" disabled>
-                    Choose a replacement…
-                  </option>
+                  <Select.Option value="">Choose a replacement…</Select.Option>
                   {choices.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
+                    <Select.Option key={c.id} value={c.id} textValue={c.name}>
+                      <ColoredName name={c.name} color={c.color?.hexCode} />
+                    </Select.Option>
                   ))}
-                  <option value="">Remove this value</option>
-                </Select>
+                  <Select.Option value={REMOVE_VALUE}>
+                    Remove this value
+                  </Select.Option>
+                </Select.Root>
               </Row>
             );
           })}

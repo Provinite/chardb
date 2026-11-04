@@ -4,7 +4,8 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import styled from "styled-components";
 import { AlertTriangle, ArrowLeft, ArrowUpRight } from "lucide-react";
-import { Button } from "@chardb/ui";
+import { Button, Select as ColorSelect } from "@chardb/ui";
+import { ColoredName } from "../components/colors";
 import {
   useGetCharacterQuery,
   useGetMyVariantChangeItemsQuery,
@@ -90,6 +91,9 @@ const Move = styled.p`
   font-size: 1rem;
   color: ${({ theme }) => theme.colors.text.primary};
 `;
+
+/** The re-route choice that drops the value instead of replacing it. */
+const REMOVE_VALUE = "remove";
 
 const Select = styled.select`
   width: 100%;
@@ -551,23 +555,36 @@ export const RedeemVariantChangePage: React.FC = () => {
                     {forms.length > 1 ? ` · ${row.formName}` : ""}
                   </span>
                 </Was>
-                <Select
+                <ColorSelect.Root
                   data-testid={`variant-change-reroute-${row.traitId}`}
-                  defaultValue=""
-                  onChange={(e) =>
-                    reroute(row.formIndex, row.index, e.target.value)
+                  aria-label={`Replacement for ${row.traitName} ${row.optionName}`}
+                  // Never anything but the prompt: a pick resolves the row,
+                  // which takes the box away with it.
+                  value=""
+                  onChange={(to) =>
+                    reroute(
+                      row.formIndex,
+                      row.index,
+                      to === REMOVE_VALUE ? "" : to,
+                    )
                   }
                 >
-                  <option value="" disabled>
+                  <ColorSelect.Option value="">
                     Choose a replacement…
-                  </option>
+                  </ColorSelect.Option>
                   {choices.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.name}
-                    </option>
+                    <ColorSelect.Option
+                      key={c.id}
+                      value={c.id}
+                      textValue={c.name}
+                    >
+                      <ColoredName name={c.name} color={c.color?.hexCode} />
+                    </ColorSelect.Option>
                   ))}
-                  <option value="">Remove this value</option>
-                </Select>
+                  <ColorSelect.Option value={REMOVE_VALUE}>
+                    Remove this value
+                  </ColorSelect.Option>
+                </ColorSelect.Root>
               </Row>
             );
           })}

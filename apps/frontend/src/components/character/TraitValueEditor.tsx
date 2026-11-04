@@ -1,7 +1,8 @@
 import React from "react";
 import styled from "styled-components";
 import { Type, Hash, Calendar, List, AlertCircle, Plus } from "lucide-react";
-import { Input, ErrorMessage, Button } from "@chardb/ui";
+import { Input, ErrorMessage, Button, Select } from "@chardb/ui";
+import { ColoredName } from "../colors";
 import { TraitValueType, TraitDetailsFragment } from "../../generated/graphql";
 import {
   useEnumValuesByTraitQuery,
@@ -78,39 +79,6 @@ const TraitDescription = styled.p`
   font-size: 0.75rem;
   color: ${({ theme }) => theme.colors.text.muted};
   font-style: italic;
-`;
-
-const Select = styled.select`
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: 6px;
-  background: ${({ theme }) => theme.colors.surface};
-  color: ${({ theme }) => theme.colors.text.primary};
-  font-size: 0.875rem;
-  font-family: inherit;
-  transition: all 0.2s ease;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.primary};
-    box-shadow: 0 0 0 3px ${({ theme }) => theme.colors.primary}20;
-  }
-
-  &:disabled {
-    background: ${({ theme }) => theme.colors.surface}80;
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-`;
-
-const LoadingOption = styled.option`
-  font-style: italic;
-  color: ${({ theme }) => theme.colors.text.muted};
-`;
-
-const EnumValueOption = styled.option`
-  padding: 0.5rem;
 `;
 
 const ValidationHint = styled.div`
@@ -208,6 +176,9 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
 }) => {
   // Local state for current input value (used when adding new values for multi-value traits)
   const [currentValue, setCurrentValue] = React.useState("");
+  // Per instance: the same trait can be on screen twice, once per form.
+  const fieldId = React.useId();
+  const labelId = `${fieldId}-label`;
   const [currentClarifier, setCurrentClarifier] = React.useState("");
 
   // Fetch enum values for ENUM-type traits
@@ -523,32 +494,56 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           </AddValueContainer>
         );
 
-      case TraitValueType.Enum:
+      case TraitValueType.Enum: {
+        const enumLabel = (
+          <Select.Option value="">
+            {required
+              ? `Select ${trait.name.toLowerCase()}...`
+              : `Optional - Select ${trait.name.toLowerCase()}...`}
+          </Select.Option>
+        );
+        const enumOptions = (shown: typeof availableEnumValues) =>
+          [...shown]
+            .sort((a, b) => a.order - b.order)
+            .map((enumValue) => (
+              <Select.Option
+                key={enumValue.id}
+                value={enumValue.id}
+                textValue={enumValue.name}
+              >
+                <ColoredName
+                  name={enumValue.name}
+                  color={enumValue.color?.hexCode}
+                />
+              </Select.Option>
+            ));
+        // Loading, failed and empty are the same box, disabled, so the field
+        // keeps its place and size as the options arrive.
+        const unavailable = (text: string) => (
+          <Select.Root
+            id={fieldId}
+            aria-labelledby={labelId}
+            value=""
+            onChange={() => {}}
+            disabled
+          >
+            <Select.Option value="">{text}</Select.Option>
+          </Select.Root>
+        );
+
         if (enumValuesLoading || enumSettingsLoading) {
-          return (
-            <Select disabled>
-              <LoadingOption>Loading options...</LoadingOption>
-            </Select>
-          );
+          return unavailable("Loading options...");
         }
 
         if (enumValuesError) {
-          return (
-            <Select disabled>
-              <LoadingOption>Error loading options</LoadingOption>
-            </Select>
-          );
+          return unavailable("Error loading options");
         }
 
         if (availableEnumValues.length === 0) {
-          return (
-            <Select disabled>
-              <LoadingOption>
-                {speciesVariantId
-                  ? "No options available for this variant"
-                  : "No options configured"}
-              </LoadingOption>
-            </Select>
+          return unavailable(
+            speciesVariantId
+              ? "No options available for this variant"
+              : "No options configured",
           );
         }
 
@@ -560,29 +555,23 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
           return (
             <AddValueContainer>
               <InputWrapper>
-                <Select
+                <Select.Root
+                  id={fieldId}
+                  aria-labelledby={labelId}
+                  aria-invalid={!!error || undefined}
                   value={currentValue}
-                  onChange={(e) => setCurrentValue(e.target.value)}
+                  onChange={setCurrentValue}
                   disabled={disabled}
                 >
-                  <option value="">
-                    {required
-                      ? `Select ${trait.name.toLowerCase()}...`
-                      : `Optional - Select ${trait.name.toLowerCase()}...`}
-                  </option>
-                  {[...availableEnumValues]
-                    .sort((a, b) => a.order - b.order)
-                    .filter((enumValue) =>
+                  {enumLabel}
+                  {enumOptions(
+                    availableEnumValues.filter((enumValue) =>
                       trait.allowsClarifier
                         ? true
                         : !selectedIds.has(enumValue.id),
-                    )
-                    .map((enumValue) => (
-                      <EnumValueOption key={enumValue.id} value={enumValue.id}>
-                        {enumValue.name}
-                      </EnumValueOption>
-                    ))}
-                </Select>
+                    ),
+                  )}
+                </Select.Root>
               </InputWrapper>
               {trait.allowsClarifier && (
                 <InputWrapper>
@@ -606,24 +595,17 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
         return (
           <AddValueContainer>
             <InputWrapper>
-              <Select
+              <Select.Root
+                id={fieldId}
+                aria-labelledby={labelId}
+                aria-invalid={!!error || undefined}
                 value={singleValue}
-                onChange={(e) => handleSingleValueChange(e.target.value)}
+                onChange={handleSingleValueChange}
                 disabled={disabled}
               >
-                <option value="">
-                  {required
-                    ? `Select ${trait.name.toLowerCase()}...`
-                    : `Optional - Select ${trait.name.toLowerCase()}...`}
-                </option>
-                {[...availableEnumValues]
-                  .sort((a, b) => a.order - b.order)
-                  .map((enumValue) => (
-                    <EnumValueOption key={enumValue.id} value={enumValue.id}>
-                      {enumValue.name}
-                    </EnumValueOption>
-                  ))}
-              </Select>
+                {enumLabel}
+                {enumOptions(availableEnumValues)}
+              </Select.Root>
             </InputWrapper>
             {trait.allowsClarifier && (
               <InputWrapper>
@@ -635,6 +617,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
             )}
           </AddValueContainer>
         );
+      }
 
       default:
         return (
@@ -666,7 +649,7 @@ export const TraitValueEditor: React.FC<TraitValueEditorProps> = ({
 
   return (
     <Container>
-      <Label htmlFor={`trait-${trait.id}`}>
+      <Label id={labelId} htmlFor={fieldId}>
         <TraitIcon>{getTraitTypeIcon(trait.valueType)}</TraitIcon>
         {trait.name}
         {required && <RequiredIndicator>*</RequiredIndicator>}

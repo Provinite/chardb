@@ -12,32 +12,18 @@ import {
   Save,
 } from "lucide-react";
 import { Button, Input, Tooltip } from "@chardb/ui";
-import { TraitValueType } from "../../generated/graphql";
+import {
+  TraitValueType,
+  type TraitListEntryDetailsFragment,
+} from "../../generated/graphql";
+import { ColorPip } from "../colors";
 import {
   TraitDefaultValueInput,
   DefaultValueState,
 } from "./TraitDefaultValueInput";
 
 interface TraitListEntryRowProps {
-  entry: {
-    id: string;
-    order: number;
-    required: boolean;
-    valueType: TraitValueType;
-    defaultValueString?: string | null;
-    defaultValueInt?: number | null;
-    defaultValueTimestamp?: string | null;
-    trait: {
-      id: string;
-      name: string;
-      valueType: TraitValueType;
-      enumValues?: Array<{
-        id: string;
-        name: string;
-        order: number;
-      }>;
-    };
-  };
+  entry: TraitListEntryDetailsFragment;
   isExpanded: boolean;
   onToggleExpand: () => void;
   onRemove: () => void;
@@ -165,6 +151,7 @@ const EnumValueCard = styled.div<{ $isEnabled: boolean }>`
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   padding: 0.5rem 0.75rem;
   background: ${({ theme, $isEnabled }) =>
     $isEnabled ? `${theme.colors.success}10` : `${theme.colors.surface}`};
@@ -374,6 +361,9 @@ export const TraitListEntryRow: React.FC<TraitListEntryRowProps> = ({
                           key={enumValue.id}
                           $isEnabled={isEnabled}
                         >
+                          {enumValue.color && (
+                            <ColorPip color={enumValue.color.hexCode} />
+                          )}
                           <EnumValueName>{enumValue.name}</EnumValueName>
                           <Tooltip
                             label={`${isEnabled ? "Disable" : "Enable"} ${enumValue.name}`}

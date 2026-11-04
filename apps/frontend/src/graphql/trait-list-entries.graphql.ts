@@ -24,6 +24,10 @@ export const TRAIT_LIST_ENTRY_DETAILS = gql`
         id
         name
         order
+        color {
+          id
+          hexCode
+        }
       }
     }
   }

@@ -838,10 +838,18 @@ export const CHARACTER_VARIANT_CHANGES = gql`
       fromVariant {
         id
         name
+        color {
+          id
+          hexCode
+        }
       }
       toVariant {
         id
         name
+        color {
+          id
+          hexCode
+        }
       }
       changedBy {
         id

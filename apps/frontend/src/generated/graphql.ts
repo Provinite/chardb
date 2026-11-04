@@ -6030,7 +6030,7 @@ export type CharacterVariantChangesQueryVariables = Exact<{
 }>;
 
 
-export type CharacterVariantChangesQuery = { __typename?: 'Query', characterVariantChanges: Array<{ __typename?: 'CharacterVariantChange', id: string, reason: string | null, createdAt: string, fromVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string } | null, changedBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
+export type CharacterVariantChangesQuery = { __typename?: 'Query', characterVariantChanges: Array<{ __typename?: 'CharacterVariantChange', id: string, reason: string | null, createdAt: string, fromVariant: { __typename?: 'SpeciesVariant', id: string, name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null } | null, changedBy: { __typename?: 'User', id: string, username: string, displayName: string | null } | null }> };
 
 export type CommunityMemberUserFragment = { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null };
 
@@ -6333,14 +6333,14 @@ export type SpeciesWithTraitsAndEnumValuesQueryVariables = Exact<{
 }>;
 
 
-export type SpeciesWithTraitsAndEnumValuesQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string }, traits: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string }> }> } };
+export type SpeciesWithTraitsAndEnumValuesQuery = { __typename?: 'Query', speciesById: { __typename?: 'Species', id: string, name: string, communityId: string, hasImage: boolean, createdAt: string, updatedAt: string, community: { __typename?: 'Community', id: string, name: string }, traits: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, speciesId: string, createdAt: string, updatedAt: string, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string, createdAt: string, updatedAt: string, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null }> }> } };
 
 export type SpeciesVariantWithEnumValueSettingsQueryVariables = Exact<{
   variantId: Scalars['ID']['input'];
 }>;
 
 
-export type SpeciesVariantWithEnumValueSettingsQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, traits: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> }> }, enumValueSettings: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string, enumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string } }> } };
+export type SpeciesVariantWithEnumValueSettingsQuery = { __typename?: 'Query', speciesVariantById: { __typename?: 'SpeciesVariant', id: string, name: string, speciesId: string, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, communityId: string, traits: Array<{ __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null }> }> }, enumValueSettings: Array<{ __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string, enumValue: { __typename?: 'EnumValue', id: string, name: string, order: number, traitId: string } }> } };
 
 export type EnumValueSettingDetailsFragment = { __typename?: 'EnumValueSetting', id: string, enumValueId: string, speciesVariantId: string, createdAt: string, updatedAt: string };
 
@@ -7637,7 +7637,7 @@ export type CancelTradeMutationVariables = Exact<{
 
 export type CancelTradeMutation = { __typename?: 'Mutation', cancelTrade: { __typename?: 'Trade', id: string, status: EffectiveTradeStatus, note: string | null, expiresAt: string, respondedAt: string | null, settlementBatchId: string | null, createdAt: string, community: { __typename?: 'Community', id: string, name: string, slug: string }, proposer: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, recipient: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'TradeItem', id: string, quantity: number | null, item: { __typename?: 'Item', id: string, itemTypeId: string, itemType: { __typename?: 'ItemType', id: string, name: string } } | null, itemType: { __typename?: 'ItemType', id: string, name: string } | null, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, characterLines: Array<{ __typename?: 'TradeCharacter', id: string, character: { __typename?: 'Character', id: string, name: string }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }>, currencyLines: Array<{ __typename?: 'TradeCurrencyLine', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null }, sourceUser: { __typename?: 'User', id: string, username: string, displayName: string | null }, destinationUser: { __typename?: 'User', id: string, username: string, displayName: string | null } }> } };
 
-export type TraitListEntryDetailsFragment = { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> } };
+export type TraitListEntryDetailsFragment = { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null }> } };
 
 export type TraitListEntriesByVariantQueryVariables = Exact<{
   variantId: Scalars['ID']['input'];
@@ -7645,7 +7645,7 @@ export type TraitListEntriesByVariantQueryVariables = Exact<{
 }>;
 
 
-export type TraitListEntriesByVariantQuery = { __typename?: 'Query', traitListEntriesBySpeciesVariant: { __typename?: 'TraitListEntryConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> } }> } };
+export type TraitListEntriesByVariantQuery = { __typename?: 'Query', traitListEntriesBySpeciesVariant: { __typename?: 'TraitListEntryConnection', totalCount: number, hasNextPage: boolean, nodes: Array<{ __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null }> } }> } };
 
 export type UpdateTraitOrdersMutationVariables = Exact<{
   input: UpdateTraitOrdersInput;
@@ -7659,7 +7659,7 @@ export type CreateTraitListEntryMutationVariables = Exact<{
 }>;
 
 
-export type CreateTraitListEntryMutation = { __typename?: 'Mutation', createTraitListEntry: { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> } } };
+export type CreateTraitListEntryMutation = { __typename?: 'Mutation', createTraitListEntry: { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null }> } } };
 
 export type UpdateTraitListEntryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -7667,7 +7667,7 @@ export type UpdateTraitListEntryMutationVariables = Exact<{
 }>;
 
 
-export type UpdateTraitListEntryMutation = { __typename?: 'Mutation', updateTraitListEntry: { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number }> } } };
+export type UpdateTraitListEntryMutation = { __typename?: 'Mutation', updateTraitListEntry: { __typename?: 'TraitListEntry', id: string, order: number, required: boolean, valueType: TraitValueType, defaultValueString: string | null, defaultValueInt: number | null, defaultValueTimestamp: string | null, traitId: string, speciesVariantId: string, createdAt: string, updatedAt: string, trait: { __typename?: 'Trait', id: string, name: string, valueType: TraitValueType, enumValues: Array<{ __typename?: 'EnumValue', id: string, name: string, order: number, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null }> } } };
 
 export type RemoveTraitListEntryMutationVariables = Exact<{
   id: Scalars['ID']['input'];
@@ -8747,6 +8747,10 @@ export const TraitListEntryDetailsFragmentDoc = gql`
       id
       name
       order
+      color {
+        id
+        hexCode
+      }
     }
   }
 }
@@ -10871,10 +10875,18 @@ export const CharacterVariantChangesDocument = gql`
     fromVariant {
       id
       name
+      color {
+        id
+        hexCode
+      }
     }
     toVariant {
       id
       name
+      color {
+        id
+        hexCode
+      }
     }
     changedBy {
       id
@@ -12479,6 +12491,10 @@ export const SpeciesWithTraitsAndEnumValuesDocument = gql`
         name
         order
         traitId
+        color {
+          id
+          hexCode
+        }
         createdAt
         updatedAt
       }
@@ -12539,6 +12555,10 @@ export const SpeciesVariantWithEnumValueSettingsDocument = gql`
           id
           name
           order
+          color {
+            id
+            hexCode
+          }
         }
       }
     }
