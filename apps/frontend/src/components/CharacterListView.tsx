@@ -300,17 +300,21 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     [setSearchParams],
   );
 
-  const { data, loading, error, fetchMore } = useGetCharactersQuery({
-    variables: { filters },
-    notifyOnNetworkStatusChange: true,
-    fetchPolicy: "cache-and-network",
-    errorPolicy: "all",
-    context: {
-      filterKey: JSON.stringify(filters),
-    },
-  });
+  const { data, previousData, loading, error, fetchMore } =
+    useGetCharactersQuery({
+      variables: { filters },
+      notifyOnNetworkStatusChange: true,
+      fetchPolicy: "cache-and-network",
+      errorPolicy: "all",
+      context: {
+        filterKey: JSON.stringify(filters),
+      },
+    });
 
-  const total = data?.characters.total ?? 0;
+  // The last count stands while new filters load, with the dice busy, so the
+  // button does not flash disabled and "No characters available" in between.
+  const total = (data ?? previousData)?.characters.total ?? 0;
+  const totalLoading = loading && !data;
   const { goToRandomCharacter, picking } = useRandomFilteredCharacter(
     filters,
     total,
@@ -403,7 +407,7 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
         <RandomCharacterButton
           count={total}
           onPick={goToRandomCharacter}
-          busy={picking}
+          busy={picking || totalLoading}
         />
       </Header>
 

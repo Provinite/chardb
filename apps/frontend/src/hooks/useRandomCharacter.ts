@@ -46,6 +46,9 @@ export const useRandomCharacter = () => {
  *
  * `total` is the listing's own count; the pick asks the server for the one
  * character at a random offset under the same filters.
+ *
+ * A button that navigates, against the links-go-somewhere rule, because the
+ * destination is not known until the server has picked it.
  */
 export const useRandomFilteredCharacter = (
   filters: CharacterFiltersInput,
@@ -65,7 +68,10 @@ export const useRandomFilteredCharacter = (
         >({
           query: GetRandomCharacterPickDocument,
           variables: { filters: { ...filters, limit: 1, offset } },
-          fetchPolicy: "network-only",
+          // Not "network-only": the `characters` cache policy appends any page
+          // past offset 0 to what is cached at the same filters, so a second
+          // pick at the same offset would read back the first pick's id.
+          fetchPolicy: "no-cache",
         });
         return {
           id: data.characters.characters[0]?.id ?? null,
@@ -78,7 +84,8 @@ export const useRandomFilteredCharacter = (
       } else {
         toast.error("No characters match these filters any more.");
       }
-    } catch {
+    } catch (err) {
+      console.error("Random character pick failed", err);
       toast.error("Couldn't pick a random character. Try again.");
     } finally {
       setPicking(false);
