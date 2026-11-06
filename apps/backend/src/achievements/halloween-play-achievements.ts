@@ -4,6 +4,7 @@ import {
   CANDY_TRADE_TIERS,
   findAchievement,
   halloweenPlaySlug,
+  KNOCK_KNOCK_KNOCKS,
 } from "./achievement-catalog";
 
 /** What a player did during one year's Trick-or-Treat, in one guild. */
@@ -24,6 +25,8 @@ export interface HalloweenPlay {
   knockedOnLuther: boolean;
   /** Knocked on the door of a member the site shows as Daphne. */
   knockedOnDaphne: boolean;
+  /** Knocks with `/knock` that went through, won or lost. */
+  knocks: number;
 }
 
 /**
@@ -48,6 +51,7 @@ export function halloweenPlaySlugs(
     ...(play.knockedWithNoneLeft ? [slug.nobodyHome] : []),
     ...(play.knockedOnLuther ? [slug.noRelation] : []),
     ...(play.knockedOnDaphne ? [slug.alsoNoRelation] : []),
+    ...(play.knocks >= KNOCK_KNOCK_KNOCKS ? [slug.knockKnock] : []),
   ];
   return earned.filter((s) => findAchievement(s));
 }

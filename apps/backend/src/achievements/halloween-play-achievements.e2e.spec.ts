@@ -446,6 +446,66 @@ describe("Halloween play achievements (e2e)", () => {
         expect(await earned(alice.id)).toEqual([]);
       });
     });
+
+    describe("knock knock", () => {
+      const startDate = new Date("2026-10-01T11:00:00Z");
+      const endDate = new Date("2026-11-01T11:00:00Z");
+      const during = new Date("2026-10-02T15:00:00Z");
+      const knocks = (
+        count: number,
+        { time = during, userId = USER_ID, guildId = GUILD_ID } = {},
+      ) =>
+        db.halloweenKnockEvent.createMany({
+          data: Array.from({ length: count }, () => ({
+            guildId,
+            userId,
+            time,
+          })),
+        });
+      const knocked = () =>
+        events.publish("halloween.knock.completed", {
+          guildId: GUILD_ID,
+          discordUserId: USER_ID,
+        });
+
+      beforeEach(() => setUpEvent({ startDate, endDate }));
+
+      it("is earned on the 100th knock", async () => {
+        const alice = await member("alice", USER_ID);
+        await knocks(99);
+        await knocked();
+        expect(await earned(alice.id)).toEqual([]);
+
+        await knocks(1);
+        await knocked();
+        expect(await earned(alice.id)).toEqual(["knock-knock-2026"]);
+      });
+
+      it("is earned in an event with no end", async () => {
+        await db.halloweenGuildSettings.update({
+          where: { guildId: GUILD_ID },
+          data: { endDate: null },
+        });
+        testApp.getModuleRef().get(GuildSettingsService).invalidate(GUILD_ID);
+        const alice = await member("alice", USER_ID);
+        await knocks(100);
+        await knocked();
+        expect(await earned(alice.id)).toEqual(["knock-knock-2026"]);
+      });
+
+      it.each([
+        ["before the event", { time: new Date("2026-09-30T15:00:00Z") }],
+        ["after the event", { time: new Date("2026-11-02T15:00:00Z") }],
+        ["by someone else", { userId: OTHER_USER_ID }],
+        ["in another guild", { guildId: "999999999999999999" }],
+      ])("does not count a knock %s", async (_, knock) => {
+        const alice = await member("alice", USER_ID);
+        await knocks(99);
+        await knocks(1, knock);
+        await knocked();
+        expect(await earned(alice.id)).toEqual([]);
+      });
+    });
   });
 
   describe("candy count backfill migration", () => {
