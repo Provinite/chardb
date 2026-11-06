@@ -481,6 +481,18 @@ describe("Halloween play achievements (e2e)", () => {
         expect(await earned(alice.id)).toEqual(["knock-knock-2026"]);
       });
 
+      it("is earned in an event with no end", async () => {
+        await db.halloweenGuildSettings.update({
+          where: { guildId: GUILD_ID },
+          data: { endDate: null },
+        });
+        testApp.getModuleRef().get(GuildSettingsService).invalidate(GUILD_ID);
+        const alice = await member("alice", USER_ID);
+        await knocks(100);
+        await knocked();
+        expect(await earned(alice.id)).toEqual(["knock-knock-2026"]);
+      });
+
       it.each([
         ["before the event", { time: new Date("2026-09-30T15:00:00Z") }],
         ["after the event", { time: new Date("2026-11-02T15:00:00Z") }],
