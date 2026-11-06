@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useApolloClient } from "@apollo/client";
 import toast from "react-hot-toast";
@@ -17,8 +17,8 @@ interface Character {
 // Stays a router navigation, and stays relative, because `/character/:id` is
 // a route on both hosts: on a community host it is that community's
 // character, and at the apex it is `CharacterHostGuard`, which forwards to
-// whichever host owns it. Naming the host outright would need the species'
-// community slug, which none of the list queries feeding this select.
+// whichever host owns it. Naming the host outright would make it a
+// cross-origin URL, which the router cannot navigate to.
 const characterPath = (id: string) => `/character/${id}`;
 
 /** A random pick from a list already in hand, such as a profile's strip. */
@@ -58,7 +58,20 @@ export const useRandomFilteredCharacter = (
   const client = useApolloClient();
   const [picking, setPicking] = useState(false);
 
+  // Bumped when the filters change or the listing goes away, so a pick that
+  // lands afterwards does not pull someone off what they moved on to.
+  const generation = useRef(0);
+  useEffect(() => {
+    const current = generation;
+    current.current += 1;
+    return () => {
+      current.current += 1;
+    };
+  }, [filters]);
+
   const goToRandomCharacter = useCallback(async () => {
+    const started = generation.current;
+    const stale = () => generation.current !== started;
     setPicking(true);
     try {
       const id = await pickRandomCharacterId(async (offset) => {
@@ -79,6 +92,7 @@ export const useRandomFilteredCharacter = (
         };
       }, total);
 
+      if (stale()) return;
       if (id) {
         navigate(characterPath(id));
       } else {
@@ -86,6 +100,7 @@ export const useRandomFilteredCharacter = (
       }
     } catch (err) {
       console.error("Random character pick failed", err);
+      if (stale()) return;
       toast.error("Couldn't pick a random character. Try again.");
     } finally {
       setPicking(false);

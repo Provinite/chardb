@@ -18,10 +18,14 @@ export const RandomCharacterButton: React.FC<RandomCharacterButtonProps> = ({
   busy = false,
   size = "md",
 }) => {
+  // While busy with no count yet (a first load), it is neither empty nor
+  // countable, so it says only what it does.
   const label =
-    count === 0
-      ? "No characters available"
-      : `Random character (${count.toLocaleString()} available)`;
+    count > 0
+      ? `Random character (${count.toLocaleString()} available)`
+      : busy
+        ? "Random character"
+        : "No characters available";
 
   return (
     <div className={styles.root}>
@@ -30,7 +34,7 @@ export const RandomCharacterButton: React.FC<RandomCharacterButtonProps> = ({
           label={label}
           size={size}
           busy={busy}
-          disabled={count === 0}
+          disabled={count === 0 && !busy}
           onClick={onPick}
           icon={
             <span
