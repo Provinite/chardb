@@ -24,7 +24,12 @@ export interface HalloweenPlay {
   knockedOnLuther: boolean;
   /** Knocked on the door of a member the site shows as Daphne. */
   knockedOnDaphne: boolean;
+  /** Knocks with `/knock` that went through, won or lost. */
+  knocks: number;
 }
+
+/** Knocks with `/knock` that earn knock knock. */
+export const KNOCK_KNOCK_KNOCKS = 100;
 
 /**
  * What this play earns, for the event of `year`. Every trade tier reached is
@@ -48,6 +53,7 @@ export function halloweenPlaySlugs(
     ...(play.knockedWithNoneLeft ? [slug.nobodyHome] : []),
     ...(play.knockedOnLuther ? [slug.noRelation] : []),
     ...(play.knockedOnDaphne ? [slug.alsoNoRelation] : []),
+    ...(play.knocks >= KNOCK_KNOCK_KNOCKS ? [slug.knockKnock] : []),
   ];
   return earned.filter((s) => findAchievement(s));
 }

@@ -446,6 +446,45 @@ describe("Halloween play achievements (e2e)", () => {
         expect(await earned(alice.id)).toEqual([]);
       });
     });
+
+    describe("knock knock", () => {
+      const startDate = new Date("2026-10-01T11:00:00Z");
+      const knocks = (count: number, time: Date, userId = USER_ID) =>
+        db.halloweenKnockEvent.createMany({
+          data: Array.from({ length: count }, () => ({
+            guildId: GUILD_ID,
+            userId,
+            time,
+          })),
+        });
+      const knocked = () =>
+        events.publish("halloween.knock.completed", {
+          guildId: GUILD_ID,
+          discordUserId: USER_ID,
+        });
+
+      beforeEach(() => setUpEvent({ startDate }));
+
+      it("is earned on the 100th knock", async () => {
+        const alice = await member("alice", USER_ID);
+        await knocks(99, new Date("2026-10-02T15:00:00Z"));
+        await knocked();
+        expect(await earned(alice.id)).toEqual([]);
+
+        await knocks(1, new Date("2026-10-03T15:00:00Z"));
+        await knocked();
+        expect(await earned(alice.id)).toEqual(["knocks-100-2026"]);
+      });
+
+      it("counts only their own knocks from during the event", async () => {
+        const alice = await member("alice", USER_ID);
+        await knocks(98, new Date("2026-10-02T15:00:00Z"));
+        await knocks(1, new Date("2026-09-30T15:00:00Z"));
+        await knocks(1, new Date("2026-10-02T15:00:00Z"), OTHER_USER_ID);
+        await knocked();
+        expect(await earned(alice.id)).toEqual([]);
+      });
+    });
   });
 
   describe("candy count backfill migration", () => {

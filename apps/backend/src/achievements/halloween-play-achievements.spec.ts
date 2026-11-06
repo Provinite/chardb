@@ -14,6 +14,7 @@ const nothing: HalloweenPlay = {
   knockedWithNoneLeft: false,
   knockedOnLuther: false,
   knockedOnDaphne: false,
+  knocks: 0,
 };
 
 describe("halloweenPlaySlugs", () => {
@@ -47,6 +48,7 @@ describe("halloweenPlaySlugs", () => {
           knockedWithNoneLeft: true,
           knockedOnLuther: true,
           knockedOnDaphne: true,
+          knocks: 100,
         },
         2026,
       ),
@@ -59,7 +61,16 @@ describe("halloweenPlaySlugs", () => {
       "nobody-home-2026",
       "no-relation-2026",
       "also-no-relation-2026",
+      "knocks-100-2026",
     ]);
+  });
+
+  it.each([
+    [99, []],
+    [100, ["knocks-100-2026"]],
+    [250, ["knocks-100-2026"]],
+  ])("earns knock knock at 100 knocks, given %i", (knocks, slugs) => {
+    expect(halloweenPlaySlugs({ ...nothing, knocks }, 2026)).toEqual(slugs);
   });
 
   it("earns nothing in a year with no achievements in the catalog", () => {

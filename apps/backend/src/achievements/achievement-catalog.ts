@@ -31,6 +31,7 @@ export function halloweenPlaySlug(year: number) {
     nobodyHome: `nobody-home-${year}`,
     noRelation: `no-relation-${year}`,
     alsoNoRelation: `also-no-relation-${year}`,
+    knockKnock: `knocks-100-${year}`,
     infectiousEnthusiasm: `infectious-enthusiasm-${year}`,
   };
 }
@@ -109,6 +110,12 @@ export const ACHIEVEMENTS: readonly AchievementDefinition[] = [
     name: "Also No Relation 2026",
     description: 'Knocked on "Daphne\'s" door during Trick-or-Treat 2026.',
     imagePath: "/halloween/candy/daphne-head.png",
+  },
+  {
+    slug: play2026.knockKnock,
+    name: "Knock Knock 2026",
+    description: "Knocked 100 times during Trick-or-Treat 2026.",
+    imagePath: "/halloween/candy/cloverse-tcg-pack.png",
   },
   {
     slug: play2026.infectiousEnthusiasm,
