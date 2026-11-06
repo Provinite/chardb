@@ -449,10 +449,15 @@ describe("Halloween play achievements (e2e)", () => {
 
     describe("knock knock", () => {
       const startDate = new Date("2026-10-01T11:00:00Z");
-      const knocks = (count: number, time: Date, userId = USER_ID) =>
+      const endDate = new Date("2026-11-01T11:00:00Z");
+      const during = new Date("2026-10-02T15:00:00Z");
+      const knocks = (
+        count: number,
+        { time = during, userId = USER_ID, guildId = GUILD_ID } = {},
+      ) =>
         db.halloweenKnockEvent.createMany({
           data: Array.from({ length: count }, () => ({
-            guildId: GUILD_ID,
+            guildId,
             userId,
             time,
           })),
@@ -463,24 +468,28 @@ describe("Halloween play achievements (e2e)", () => {
           discordUserId: USER_ID,
         });
 
-      beforeEach(() => setUpEvent({ startDate }));
+      beforeEach(() => setUpEvent({ startDate, endDate }));
 
       it("is earned on the 100th knock", async () => {
         const alice = await member("alice", USER_ID);
-        await knocks(99, new Date("2026-10-02T15:00:00Z"));
+        await knocks(99);
         await knocked();
         expect(await earned(alice.id)).toEqual([]);
 
-        await knocks(1, new Date("2026-10-03T15:00:00Z"));
+        await knocks(1);
         await knocked();
-        expect(await earned(alice.id)).toEqual(["knocks-100-2026"]);
+        expect(await earned(alice.id)).toEqual(["knock-knock-2026"]);
       });
 
-      it("counts only their own knocks from during the event", async () => {
+      it.each([
+        ["before the event", { time: new Date("2026-09-30T15:00:00Z") }],
+        ["after the event", { time: new Date("2026-11-02T15:00:00Z") }],
+        ["by someone else", { userId: OTHER_USER_ID }],
+        ["in another guild", { guildId: "999999999999999999" }],
+      ])("does not count a knock %s", async (_, knock) => {
         const alice = await member("alice", USER_ID);
-        await knocks(98, new Date("2026-10-02T15:00:00Z"));
-        await knocks(1, new Date("2026-09-30T15:00:00Z"));
-        await knocks(1, new Date("2026-10-02T15:00:00Z"), OTHER_USER_ID);
+        await knocks(99);
+        await knocks(1, knock);
         await knocked();
         expect(await earned(alice.id)).toEqual([]);
       });

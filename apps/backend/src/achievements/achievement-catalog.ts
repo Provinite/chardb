@@ -19,6 +19,9 @@ export function trickOrTreaterSlug(year: number): string {
 export const CANDY_TRADE_TIERS = [5, 15, 30] as const;
 export type CandyTradeTier = (typeof CANDY_TRADE_TIERS)[number];
 
+/** Knocks with `/knock` that earn knock knock. */
+export const KNOCK_KNOCK_KNOCKS = 100;
+
 /** The slugs of what playing Trick-or-Treat earns, for one year's event. */
 export function halloweenPlaySlug(year: number) {
   return {
@@ -31,7 +34,7 @@ export function halloweenPlaySlug(year: number) {
     nobodyHome: `nobody-home-${year}`,
     noRelation: `no-relation-${year}`,
     alsoNoRelation: `also-no-relation-${year}`,
-    knockKnock: `knocks-100-${year}`,
+    knockKnock: `knock-knock-${year}`,
     infectiousEnthusiasm: `infectious-enthusiasm-${year}`,
   };
 }
@@ -114,7 +117,7 @@ export const ACHIEVEMENTS: readonly AchievementDefinition[] = [
   {
     slug: play2026.knockKnock,
     name: "Knock Knock 2026",
-    description: "Knocked 100 times during Trick-or-Treat 2026.",
+    description: `Knocked ${KNOCK_KNOCK_KNOCKS} times during Trick-or-Treat 2026.`,
     imagePath: "/halloween/candy/cloverse-tcg-pack.png",
   },
   {

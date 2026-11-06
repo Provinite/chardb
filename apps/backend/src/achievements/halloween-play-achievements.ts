@@ -4,6 +4,7 @@ import {
   CANDY_TRADE_TIERS,
   findAchievement,
   halloweenPlaySlug,
+  KNOCK_KNOCK_KNOCKS,
 } from "./achievement-catalog";
 
 /** What a player did during one year's Trick-or-Treat, in one guild. */
@@ -27,9 +28,6 @@ export interface HalloweenPlay {
   /** Knocks with `/knock` that went through, won or lost. */
   knocks: number;
 }
-
-/** Knocks with `/knock` that earn knock knock. */
-export const KNOCK_KNOCK_KNOCKS = 100;
 
 /**
  * What this play earns, for the event of `year`. Every trade tier reached is

@@ -61,14 +61,14 @@ describe("halloweenPlaySlugs", () => {
       "nobody-home-2026",
       "no-relation-2026",
       "also-no-relation-2026",
-      "knocks-100-2026",
+      "knock-knock-2026",
     ]);
   });
 
   it.each([
     [99, []],
-    [100, ["knocks-100-2026"]],
-    [250, ["knocks-100-2026"]],
+    [100, ["knock-knock-2026"]],
+    [250, ["knock-knock-2026"]],
   ])("earns knock knock at 100 knocks, given %i", (knocks, slugs) => {
     expect(halloweenPlaySlugs({ ...nothing, knocks }, 2026)).toEqual(slugs);
   });

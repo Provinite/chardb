@@ -298,48 +298,41 @@ export class HalloweenPlayAchievements {
     const { guildId, discordUserId } = player;
     // A bot's user id is its application's id.
     const botUserId = this.halloweenConfig.applicationId;
-    const [selfGifty, botGifty, attempt, knockCount, knocks] =
-      await Promise.all([
-        this.db.halloweenGifty.findFirst({
-          where: {
-            guildId,
-            fromUserId: discordUserId,
-            toUserId: discordUserId,
-            time: during,
-          },
-          select: { id: true },
-        }),
-        this.db.halloweenGifty.findFirst({
-          where: {
-            guildId,
-            fromUserId: discordUserId,
-            toUserId: botUserId,
-            time: during,
-          },
-          select: { id: true },
-        }),
-        this.db.halloweenOutOfKnocksAttempt.findFirst({
-          where: { guildId, discordUserId, time: during },
-          select: { id: true },
-        }),
-        this.db.halloweenKnockEvent.count({
-          where: { guildId, userId: discordUserId, time: during },
-        }),
-        // Only an event with an end has every day to knock on.
-        player.endDate
-          ? this.db.halloweenKnockEvent.findMany({
-              where: { guildId, userId: discordUserId, time: during },
-              select: { time: true },
-            })
-          : [],
-      ]);
+    const [selfGifty, botGifty, attempt, knockTimes] = await Promise.all([
+      this.db.halloweenGifty.findFirst({
+        where: {
+          guildId,
+          fromUserId: discordUserId,
+          toUserId: discordUserId,
+          time: during,
+        },
+        select: { id: true },
+      }),
+      this.db.halloweenGifty.findFirst({
+        where: {
+          guildId,
+          fromUserId: discordUserId,
+          toUserId: botUserId,
+          time: during,
+        },
+        select: { id: true },
+      }),
+      this.db.halloweenOutOfKnocksAttempt.findFirst({
+        where: { guildId, discordUserId, time: during },
+        select: { id: true },
+      }),
+      this.db.halloweenKnockEvent.findMany({
+        where: { guildId, userId: discordUserId, time: during },
+        select: { time: true },
+      }),
+    ]);
     return {
       giftedSelf: selfGifty !== null,
       giftedBot: botGifty !== null,
       knockedWithNoneLeft: attempt !== null,
-      knocks: knockCount,
+      knocks: knockTimes.length,
       knockedEveryDay: knockedEveryDay(
-        knocks.map((k) => k.time),
+        knockTimes.map((k) => k.time),
         player,
       ),
     };
