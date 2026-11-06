@@ -14,6 +14,7 @@ import { MediaGrid } from "../components/MediaGrid";
 import { characterUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
 import { useCanonicalUsername } from "../hooks/useCanonicalUsername";
+import { useRandomCharacter } from "../hooks/useRandomCharacter";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -306,6 +307,8 @@ export const UserProfilePage: React.FC = () => {
     skip: !data?.userProfile?.isOwnProfile,
   });
 
+  const { goToRandomCharacter } = useRandomCharacter();
+
   const profileUser = data?.userProfile?.user;
   useCanonicalUsername(username, profileUser?.username);
   usePageMeta({
@@ -471,7 +474,11 @@ export const UserProfilePage: React.FC = () => {
         <Section>
           <SectionHeader>
             <SectionTitle>Featured Characters</SectionTitle>
-            <RandomCharacterButton characters={featuredCharacters} size="sm" />
+            <RandomCharacterButton
+              count={featuredCharacters.length}
+              onPick={() => goToRandomCharacter(featuredCharacters)}
+              size="sm"
+            />
           </SectionHeader>
           <Grid>
             {featuredCharacters.map((character) => (
@@ -510,7 +517,11 @@ export const UserProfilePage: React.FC = () => {
               >
                 View All ({stats.charactersCount})
               </Link>
-              <RandomCharacterButton characters={recentCharacters} size="sm" />
+              <RandomCharacterButton
+                count={recentCharacters.length}
+                onPick={() => goToRandomCharacter(recentCharacters)}
+                size="sm"
+              />
             </div>
           </SectionHeader>
           <Grid>

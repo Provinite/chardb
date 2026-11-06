@@ -15,6 +15,7 @@ import {
 } from "./AdvancedSearchForm";
 import { Pager } from "./pagination/Pager";
 import { useOffsetPaging } from "../hooks/useOffsetPaging";
+import { useRandomFilteredCharacter } from "../hooks/useRandomCharacter";
 
 const AVAILABILITY_VALUES = new Set<string>(
   Object.values(CharacterAvailability),
@@ -309,6 +310,12 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     },
   });
 
+  const total = data?.characters.total ?? 0;
+  const { goToRandomCharacter, picking } = useRandomFilteredCharacter(
+    filters,
+    total,
+  );
+
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
@@ -394,7 +401,9 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
       <Header>
         <Title>{title}</Title>
         <RandomCharacterButton
-          characters={data?.characters?.characters || []}
+          count={total}
+          onPick={goToRandomCharacter}
+          busy={picking}
         />
       </Header>
 
