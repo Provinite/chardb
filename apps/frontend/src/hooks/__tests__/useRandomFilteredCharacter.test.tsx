@@ -40,7 +40,9 @@ const renderPick = (mocks: MockedResponse[], total: number) =>
     {
       wrapper: ({ children }) => (
         <MockedProvider mocks={mocks}>
-          <MemoryRouter initialEntries={["/characters"]}>{children}</MemoryRouter>
+          <MemoryRouter initialEntries={["/characters"]}>
+            {children}
+          </MemoryRouter>
         </MockedProvider>
       ),
     },
