@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Random character button**: on the character browse pages the dice picks from every character your filters match, not just the loaded page, and its tooltip no longer spans the whole row on phones.
+- **Random character button**: the dice picks from every character your filters match, or every character a profile's owner has, not just what's on screen, and its tooltip no longer spans the whole row on phones.
 
 ## [v15.7.0] - 2026-11-04
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { Avatar } from "@chardb/ui";
@@ -14,7 +14,7 @@ import { MediaGrid } from "../components/MediaGrid";
 import { characterUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
 import { useCanonicalUsername } from "../hooks/useCanonicalUsername";
-import { useRandomCharacter } from "../hooks/useRandomCharacter";
+import { useRandomFilteredCharacter } from "../hooks/useRandomCharacter";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -307,9 +307,18 @@ export const UserProfilePage: React.FC = () => {
     skip: !data?.userProfile?.isOwnProfile,
   });
 
-  const { goToRandomCharacter } = useRandomCharacter();
-
   const profileUser = data?.userProfile?.user;
+
+  // Both strips are slices of what this member owns, so the dice beside
+  // either picks from all of it, as the "View All" page would list it.
+  const ownerId = profileUser?.id;
+  const ownedFilters = useMemo(() => ({ ownerId }), [ownerId]);
+  const ownedCount = data?.userProfile?.stats.charactersCount ?? 0;
+  const { goToRandomCharacter, picking } = useRandomFilteredCharacter(
+    ownedFilters,
+    ownedCount,
+  );
+
   useCanonicalUsername(username, profileUser?.username);
   usePageMeta({
     // Both names: the display name is what people recognise, the username is
@@ -475,8 +484,9 @@ export const UserProfilePage: React.FC = () => {
           <SectionHeader>
             <SectionTitle>Featured Characters</SectionTitle>
             <RandomCharacterButton
-              count={featuredCharacters.length}
-              onPick={() => goToRandomCharacter(featuredCharacters)}
+              count={ownedCount}
+              onPick={goToRandomCharacter}
+              busy={picking}
               size="sm"
             />
           </SectionHeader>
@@ -518,8 +528,9 @@ export const UserProfilePage: React.FC = () => {
                 View All ({stats.charactersCount})
               </Link>
               <RandomCharacterButton
-                count={recentCharacters.length}
-                onPick={() => goToRandomCharacter(recentCharacters)}
+                count={ownedCount}
+                onPick={goToRandomCharacter}
+                busy={picking}
                 size="sm"
               />
             </div>

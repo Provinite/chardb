@@ -10,35 +10,12 @@ import {
 } from "../generated/graphql";
 import { pickRandomCharacterId } from "../lib/pickRandomCharacter";
 
-interface Character {
-  id: string;
-}
-
 // Stays a router navigation, and stays relative, because `/character/:id` is
 // a route on both hosts: on a community host it is that community's
 // character, and at the apex it is `CharacterHostGuard`, which forwards to
 // whichever host owns it. Naming the host outright would make it a
 // cross-origin URL, which the router cannot navigate to.
 const characterPath = (id: string) => `/character/${id}`;
-
-/** A random pick from a list already in hand, such as a profile's strip. */
-export const useRandomCharacter = () => {
-  const navigate = useNavigate();
-
-  const goToRandomCharacter = useCallback(
-    (characters: Character[]) => {
-      if (characters.length === 0) {
-        return;
-      }
-
-      const randomIndex = Math.floor(Math.random() * characters.length);
-      navigate(characterPath(characters[randomIndex].id));
-    },
-    [navigate],
-  );
-
-  return { goToRandomCharacter };
-};
 
 /**
  * A random pick from every character a filtered listing matches, of which the
