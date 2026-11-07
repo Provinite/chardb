@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useParams, Link } from "react-router-dom";
 import styled, { css } from "styled-components";
 import { Avatar } from "@chardb/ui";
@@ -14,6 +14,7 @@ import { MediaGrid } from "../components/MediaGrid";
 import { characterUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
 import { useCanonicalUsername } from "../hooks/useCanonicalUsername";
+import { useRandomFilteredCharacter } from "../hooks/useRandomFilteredCharacter";
 
 const Container = styled.div`
   max-width: 1200px;
@@ -307,6 +308,17 @@ export const UserProfilePage: React.FC = () => {
   });
 
   const profileUser = data?.userProfile?.user;
+
+  // The dice sits beside "View All" and picks from what that page lists:
+  // everything this member owns, not the few shown here.
+  const ownerId = profileUser?.id;
+  const ownedFilters = useMemo(() => ({ ownerId }), [ownerId]);
+  const ownedCount = data?.userProfile?.stats.charactersCount ?? 0;
+  const { goToRandomCharacter, picking } = useRandomFilteredCharacter(
+    ownedFilters,
+    ownedCount,
+  );
+
   useCanonicalUsername(username, profileUser?.username);
   usePageMeta({
     // Both names: the display name is what people recognise, the username is
@@ -471,7 +483,6 @@ export const UserProfilePage: React.FC = () => {
         <Section>
           <SectionHeader>
             <SectionTitle>Featured Characters</SectionTitle>
-            <RandomCharacterButton characters={featuredCharacters} size="sm" />
           </SectionHeader>
           <Grid>
             {featuredCharacters.map((character) => (
@@ -510,7 +521,12 @@ export const UserProfilePage: React.FC = () => {
               >
                 View All ({stats.charactersCount})
               </Link>
-              <RandomCharacterButton characters={recentCharacters} size="sm" />
+              <RandomCharacterButton
+                count={ownedCount}
+                onPick={goToRandomCharacter}
+                busy={picking}
+                size="sm"
+              />
             </div>
           </SectionHeader>
           <Grid>

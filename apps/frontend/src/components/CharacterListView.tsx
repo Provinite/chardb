@@ -15,6 +15,7 @@ import {
 } from "./AdvancedSearchForm";
 import { Pager } from "./pagination/Pager";
 import { useOffsetPaging } from "../hooks/useOffsetPaging";
+import { useRandomFilteredCharacter } from "../hooks/useRandomFilteredCharacter";
 
 const AVAILABILITY_VALUES = new Set<string>(
   Object.values(CharacterAvailability),
@@ -299,38 +300,58 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     [setSearchParams],
   );
 
-  const { data, loading, error, fetchMore } = useGetCharactersQuery({
-    variables: { filters },
-    notifyOnNetworkStatusChange: true,
-    fetchPolicy: "cache-and-network",
-    errorPolicy: "all",
-    context: {
-      filterKey: JSON.stringify(filters),
-    },
-  });
+  const { data, previousData, loading, error, fetchMore } =
+    useGetCharactersQuery({
+      variables: { filters },
+      notifyOnNetworkStatusChange: true,
+      fetchPolicy: "cache-and-network",
+      errorPolicy: "all",
+      context: {
+        filterKey: JSON.stringify(filters),
+      },
+    });
+
+  // The last count stands while new filters load, with the dice busy, so the
+  // button does not flash disabled and "No characters available" in between.
+  const total = (data ?? previousData)?.characters.total ?? 0;
+  const totalLoading = loading && !data;
+  const { goToRandomCharacter, picking } = useRandomFilteredCharacter(
+    filters,
+    total,
+  );
+
+  // What every new search starts from. The page's defaults are in it, not
+  // just its fixed filters: a community listing defaults to public, and a
+  // search that dropped that would start listing the viewer's own private and
+  // unlisted characters.
+  const startingFilters = useCallback(
+    (): CharacterFiltersInput => ({
+      ...baseFilters,
+      ...defaultFilters,
+      limit: 12,
+      offset: 0,
+    }),
+    [baseFilters, defaultFilters],
+  );
 
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
       const newFilters = {
-        ...baseFilters,
-        limit: 12,
-        offset: 0,
+        ...startingFilters(),
         search: searchTerm || undefined,
       };
       setFilters(newFilters);
       updateURL(newFilters);
     },
-    [searchTerm, baseFilters, updateURL],
+    [searchTerm, startingFilters, updateURL],
   );
 
   const handleAdvancedSearch = useCallback(
     (advancedFilters: AdvancedSearchFilters) => {
       setCurrentAdvancedFilters(advancedFilters);
       const newFilters: CharacterFiltersInput = {
-        ...baseFilters,
-        limit: 12,
-        offset: 0,
+        ...startingFilters(),
         // The string coercion that used to live here is gone with the two
         // dropdowns that produced it. Checkboxes give the enum directly.
         ...advancedFilters,
@@ -338,19 +359,15 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
       setFilters(newFilters);
       updateURL(newFilters);
     },
-    [baseFilters, updateURL],
+    [startingFilters, updateURL],
   );
 
   const handleClearAdvancedSearch = useCallback(() => {
     setCurrentAdvancedFilters({});
-    const newFilters = {
-      ...baseFilters,
-      limit: 12,
-      offset: 0,
-    };
+    const newFilters = startingFilters();
     setFilters(newFilters);
     updateURL(newFilters);
-  }, [baseFilters, updateURL]);
+  }, [startingFilters, updateURL]);
 
   const { loadMore, loadingMore } = useOffsetPaging({
     pageSize: filters.limit ?? 12,
@@ -394,7 +411,9 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
       <Header>
         <Title>{title}</Title>
         <RandomCharacterButton
-          characters={data?.characters?.characters || []}
+          count={total}
+          onPick={goToRandomCharacter}
+          busy={picking || totalLoading}
         />
       </Header>
 

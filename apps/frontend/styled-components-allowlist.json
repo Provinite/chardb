@@ -22,7 +22,6 @@
   "apps/frontend/src/components/MediaCard.tsx",
   "apps/frontend/src/components/MediaGrid.tsx",
   "apps/frontend/src/components/ProviderIcon.tsx",
-  "apps/frontend/src/components/RandomCharacterButton.tsx",
   "apps/frontend/src/components/Tag.tsx",
   "apps/frontend/src/components/TagsContainer.tsx",
   "apps/frontend/src/components/TextEditor.tsx",

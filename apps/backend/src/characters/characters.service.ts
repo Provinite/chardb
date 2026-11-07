@@ -541,7 +541,7 @@ export class CharactersService {
     const [characters, total] = await Promise.all([
       this.db.character.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: this.buildOrderBy("created", "desc"),
         take: limit,
         skip: offset,
       }),
@@ -624,7 +624,7 @@ export class CharactersService {
     const [characters, total] = await Promise.all([
       this.db.character.findMany({
         where,
-        orderBy: { createdAt: "desc" },
+        orderBy: this.buildOrderBy("created", "desc"),
         take: limit,
         skip: offset,
       }),
@@ -1873,21 +1873,33 @@ export class CharactersService {
     }
   }
 
+  /**
+   * The sort column, then `id`. Names, prices and timestamps tie, and Postgres
+   * orders tied rows however the plan falls out, so without the id two pages
+   * of one listing can repeat or skip a row, and the random pick (one row at
+   * a random offset) favours some characters over others.
+   */
   private buildOrderBy(
     sortBy: string,
     sortOrder: string,
-  ): Prisma.CharacterOrderByWithRelationInput {
+  ): Prisma.CharacterOrderByWithRelationInput[] {
     const order = sortOrder === "asc" ? "asc" : "desc";
+    return [this.sortColumn(sortBy, order), { id: order }];
+  }
 
+  private sortColumn(
+    sortBy: string,
+    order: Prisma.SortOrder,
+  ): Prisma.CharacterOrderByWithRelationInput {
     switch (sortBy) {
       case "name":
-        return { name: order } as const;
+        return { name: order };
       case "updated":
-        return { updatedAt: order } as const;
+        return { updatedAt: order };
       case "price":
-        return { price: order } as const;
+        return { price: order };
       default: // 'created'
-        return { createdAt: order } as const;
+        return { createdAt: order };
     }
   }
 
