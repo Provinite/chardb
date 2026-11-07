@@ -14,7 +14,7 @@ import { MediaGrid } from "../components/MediaGrid";
 import { characterUrl } from "../lib/communityHost";
 import { usePageMeta } from "../lib/pageMeta";
 import { useCanonicalUsername } from "../hooks/useCanonicalUsername";
-import { useRandomFilteredCharacter } from "../hooks/useRandomCharacter";
+import { useRandomFilteredCharacter } from "../hooks/useRandomFilteredCharacter";
 
 const Container = styled.div`
   max-width: 1200px;

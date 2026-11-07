@@ -36,15 +36,20 @@ export const useRandomFilteredCharacter = (
   const [picking, setPicking] = useState(false);
 
   // Bumped when the filters change or the listing goes away, so a pick that
-  // lands afterwards does not pull someone off what they moved on to.
+  // lands afterwards does not pull someone off what they moved on to. Keyed
+  // on the values, not the object, so a caller rebuilding equal filters each
+  // render does not make every pick stale. The pick that went stale no longer
+  // owns `picking`, so it is released here rather than when it lands.
+  const filtersKey = JSON.stringify(filters);
   const generation = useRef(0);
   useEffect(() => {
     const current = generation;
     current.current += 1;
+    setPicking(false);
     return () => {
       current.current += 1;
     };
-  }, [filters]);
+  }, [filtersKey]);
 
   const goToRandomCharacter = useCallback(async () => {
     const started = generation.current;
@@ -80,7 +85,7 @@ export const useRandomFilteredCharacter = (
       if (stale()) return;
       toast.error("Couldn't pick a random character. Try again.");
     } finally {
-      setPicking(false);
+      if (!stale()) setPicking(false);
     }
   }, [client, filters, total, navigate]);
 

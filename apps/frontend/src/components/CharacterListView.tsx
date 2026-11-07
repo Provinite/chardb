@@ -15,7 +15,7 @@ import {
 } from "./AdvancedSearchForm";
 import { Pager } from "./pagination/Pager";
 import { useOffsetPaging } from "../hooks/useOffsetPaging";
-import { useRandomFilteredCharacter } from "../hooks/useRandomCharacter";
+import { useRandomFilteredCharacter } from "../hooks/useRandomFilteredCharacter";
 
 const AVAILABILITY_VALUES = new Set<string>(
   Object.values(CharacterAvailability),
