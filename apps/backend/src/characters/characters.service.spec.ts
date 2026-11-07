@@ -285,6 +285,40 @@ describe("CharactersService", () => {
       expect(where.AND).toEqual(expect.arrayContaining([{ deletedAt: null }]));
     });
 
+    describe("order", () => {
+      beforeEach(() => {
+        db.character.findMany.mockResolvedValue([]);
+        db.character.count.mockResolvedValue(0);
+      });
+
+      // Offset paging and the random pick both need one fixed order: rows
+      // tied on the sort column would otherwise swap between pages.
+      it.each([
+        ["created", "desc", { createdAt: "desc" }],
+        ["name", "asc", { name: "asc" }],
+        ["updated", "desc", { updatedAt: "desc" }],
+        ["price", "asc", { price: "asc" }],
+      ])("breaks %s ties by id", async (sortBy, sortOrder, primary) => {
+        await service.findAll({ sortBy, sortOrder });
+
+        const [call] = db.character.findMany.mock.calls;
+        expect(call[0].orderBy).toEqual([primary, { id: sortOrder }]);
+      });
+
+      it.each([
+        ["findEditableCharacters"],
+        ["findCharactersForImageUpload"],
+      ] as const)("%s breaks created ties by id", async (method) => {
+        await service[method]("user-1", { limit: 20, offset: 20 });
+
+        const [call] = db.character.findMany.mock.calls;
+        expect(call[0].orderBy).toEqual([
+          { createdAt: "desc" },
+          { id: "desc" },
+        ]);
+      });
+    });
+
     describe("availability", () => {
       beforeEach(() => {
         db.character.findMany.mockResolvedValue([]);
