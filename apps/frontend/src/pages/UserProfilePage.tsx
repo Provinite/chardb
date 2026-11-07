@@ -309,8 +309,8 @@ export const UserProfilePage: React.FC = () => {
 
   const profileUser = data?.userProfile?.user;
 
-  // Both strips are slices of what this member owns, so the dice beside
-  // either picks from all of it, as the "View All" page would list it.
+  // The dice sits beside "View All" and picks from what that page lists:
+  // everything this member owns, not the few shown here.
   const ownerId = profileUser?.id;
   const ownedFilters = useMemo(() => ({ ownerId }), [ownerId]);
   const ownedCount = data?.userProfile?.stats.charactersCount ?? 0;
@@ -483,12 +483,6 @@ export const UserProfilePage: React.FC = () => {
         <Section>
           <SectionHeader>
             <SectionTitle>Featured Characters</SectionTitle>
-            <RandomCharacterButton
-              count={ownedCount}
-              onPick={goToRandomCharacter}
-              busy={picking}
-              size="sm"
-            />
           </SectionHeader>
           <Grid>
             {featuredCharacters.map((character) => (

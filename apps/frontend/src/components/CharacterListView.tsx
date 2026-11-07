@@ -320,28 +320,38 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
     total,
   );
 
+  // What every new search starts from. The page's defaults are in it, not
+  // just its fixed filters: a community listing defaults to public, and a
+  // search that dropped that would start listing the viewer's own private and
+  // unlisted characters.
+  const startingFilters = useCallback(
+    (): CharacterFiltersInput => ({
+      ...baseFilters,
+      ...defaultFilters,
+      limit: 12,
+      offset: 0,
+    }),
+    [baseFilters, defaultFilters],
+  );
+
   const handleSearch = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
       const newFilters = {
-        ...baseFilters,
-        limit: 12,
-        offset: 0,
+        ...startingFilters(),
         search: searchTerm || undefined,
       };
       setFilters(newFilters);
       updateURL(newFilters);
     },
-    [searchTerm, baseFilters, updateURL],
+    [searchTerm, startingFilters, updateURL],
   );
 
   const handleAdvancedSearch = useCallback(
     (advancedFilters: AdvancedSearchFilters) => {
       setCurrentAdvancedFilters(advancedFilters);
       const newFilters: CharacterFiltersInput = {
-        ...baseFilters,
-        limit: 12,
-        offset: 0,
+        ...startingFilters(),
         // The string coercion that used to live here is gone with the two
         // dropdowns that produced it. Checkboxes give the enum directly.
         ...advancedFilters,
@@ -349,19 +359,15 @@ export const CharacterListView: React.FC<CharacterListViewProps> = ({
       setFilters(newFilters);
       updateURL(newFilters);
     },
-    [baseFilters, updateURL],
+    [startingFilters, updateURL],
   );
 
   const handleClearAdvancedSearch = useCallback(() => {
     setCurrentAdvancedFilters({});
-    const newFilters = {
-      ...baseFilters,
-      limit: 12,
-      offset: 0,
-    };
+    const newFilters = startingFilters();
     setFilters(newFilters);
     updateURL(newFilters);
-  }, [baseFilters, updateURL]);
+  }, [startingFilters, updateURL]);
 
   const { loadMore, loadingMore } = useOffsetPaging({
     pageSize: filters.limit ?? 12,
