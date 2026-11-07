@@ -1,5 +1,4 @@
 import { describe, it, expect } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   ApolloClient,
@@ -7,9 +6,7 @@ import {
   ApolloProvider,
   Observable,
 } from "@apollo/client";
-import { MemoryRouter } from "react-router-dom";
-import { ThemeProvider } from "styled-components";
-import { lightTheme } from "@chardb/ui";
+import { render, screen, waitFor } from "../../__tests__/test-utils";
 import { createCache } from "../../lib/apolloCache";
 import { CharacterFiltersInput, Visibility } from "../../generated/graphql";
 import { CharacterListView } from "../CharacterListView";
@@ -41,15 +38,12 @@ describe("CharacterListView", () => {
   it("keeps the page's default filters through a search", async () => {
     const asked: CharacterFiltersInput[] = [];
     render(
+      // Inside test-utils' MockedProvider, so this client is the one used.
       <ApolloProvider client={recordingClient(asked)}>
-        <ThemeProvider theme={lightTheme}>
-          <MemoryRouter>
-            <CharacterListView
-              baseFilters={{ communityId: "co-1" }}
-              defaultFilters={{ visibility: Visibility.Public }}
-            />
-          </MemoryRouter>
-        </ThemeProvider>
+        <CharacterListView
+          baseFilters={{ communityId: "co-1" }}
+          defaultFilters={{ visibility: Visibility.Public }}
+        />
       </ApolloProvider>,
     );
 
