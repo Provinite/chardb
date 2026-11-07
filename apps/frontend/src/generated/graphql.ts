@@ -5931,6 +5931,13 @@ export type UserCharactersQueryVariables = Exact<{
 
 export type UserCharactersQuery = { __typename?: 'Query', userCharacters: { __typename?: 'CharacterConnection', total: number, hasMore: boolean, characters: Array<{ __typename?: 'Character', id: string, name: string, details: string | null, ownerId: string | null, creatorId: string | null, mainMediaId: string | null, visibility: Visibility, isSellable: boolean, isTradeable: boolean, isSellableForCoin: boolean, isTradeableForArt: boolean, isOpenToOffers: boolean, isFreebie: boolean, price: number | null, tags: Array<string>, customFields: string | null, createdAt: string, updatedAt: string, species: { __typename?: 'Species', id: string, name: string, community: { __typename?: 'Community', id: string, slug: string } } | null, pendingOwnership: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, createdAt: string } | null, owner: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, creator: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null } | null, mainMedia: { __typename?: 'Media', id: string, title: string, image: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null, isNsfw: boolean } | null } | null, _count: { __typename?: 'CharacterCount', media: number } }> } };
 
+export type GetRandomCharacterPickQueryVariables = Exact<{
+  filters?: InputMaybe<CharacterFiltersInput>;
+}>;
+
+
+export type GetRandomCharacterPickQuery = { __typename?: 'Query', characters: { __typename?: 'CharacterConnection', total: number, characters: Array<{ __typename?: 'Character', id: string }> } };
+
 export type GetCharactersQueryVariables = Exact<{
   filters?: InputMaybe<CharacterFiltersInput>;
 }>;
@@ -9856,6 +9863,49 @@ export type UserCharactersQueryHookResult = ReturnType<typeof useUserCharactersQ
 export type UserCharactersLazyQueryHookResult = ReturnType<typeof useUserCharactersLazyQuery>;
 export type UserCharactersSuspenseQueryHookResult = ReturnType<typeof useUserCharactersSuspenseQuery>;
 export type UserCharactersQueryResult = Apollo.QueryResult<UserCharactersQuery, UserCharactersQueryVariables>;
+export const GetRandomCharacterPickDocument = gql`
+    query GetRandomCharacterPick($filters: CharacterFiltersInput) {
+  characters(filters: $filters) {
+    characters {
+      id
+    }
+    total
+  }
+}
+    `;
+
+/**
+ * __useGetRandomCharacterPickQuery__
+ *
+ * To run a query within a React component, call `useGetRandomCharacterPickQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetRandomCharacterPickQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetRandomCharacterPickQuery({
+ *   variables: {
+ *      filters: // value for 'filters'
+ *   },
+ * });
+ */
+export function useGetRandomCharacterPickQuery(baseOptions?: Apollo.QueryHookOptions<GetRandomCharacterPickQuery, GetRandomCharacterPickQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetRandomCharacterPickQuery, GetRandomCharacterPickQueryVariables>(GetRandomCharacterPickDocument, options);
+      }
+export function useGetRandomCharacterPickLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetRandomCharacterPickQuery, GetRandomCharacterPickQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetRandomCharacterPickQuery, GetRandomCharacterPickQueryVariables>(GetRandomCharacterPickDocument, options);
+        }
+export function useGetRandomCharacterPickSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetRandomCharacterPickQuery, GetRandomCharacterPickQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetRandomCharacterPickQuery, GetRandomCharacterPickQueryVariables>(GetRandomCharacterPickDocument, options);
+        }
+export type GetRandomCharacterPickQueryHookResult = ReturnType<typeof useGetRandomCharacterPickQuery>;
+export type GetRandomCharacterPickLazyQueryHookResult = ReturnType<typeof useGetRandomCharacterPickLazyQuery>;
+export type GetRandomCharacterPickSuspenseQueryHookResult = ReturnType<typeof useGetRandomCharacterPickSuspenseQuery>;
+export type GetRandomCharacterPickQueryResult = Apollo.QueryResult<GetRandomCharacterPickQuery, GetRandomCharacterPickQueryVariables>;
 export const GetCharactersDocument = gql`
     query GetCharacters($filters: CharacterFiltersInput) {
   characters(filters: $filters) {

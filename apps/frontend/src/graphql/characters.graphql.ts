@@ -83,6 +83,22 @@ export const USER_CHARACTERS = gql`
   ${CHARACTER_CARD_FIELDS_FRAGMENT}
 `;
 
+/**
+ * One character at an offset into a filtered listing, for the dice button: the
+ * offset is random, so the pick covers every match rather than the page shown.
+ * The total comes back too, so a pick past a shrunken end can try again.
+ */
+export const GET_RANDOM_CHARACTER_PICK = gql`
+  query GetRandomCharacterPick($filters: CharacterFiltersInput) {
+    characters(filters: $filters) {
+      characters {
+        id
+      }
+      total
+    }
+  }
+`;
+
 export const GET_CHARACTERS = gql`
   query GetCharacters($filters: CharacterFiltersInput) {
     characters(filters: $filters) {

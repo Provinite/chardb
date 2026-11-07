@@ -1,99 +1,51 @@
 import React from "react";
-import styled from "styled-components";
-import { Tooltip } from "@chardb/ui";
-import { useRandomCharacter } from "../hooks/useRandomCharacter";
-
-interface Character {
-  id: string;
-}
+import { IconButton, Tooltip } from "@chardb/ui";
+import * as styles from "./RandomCharacterButton.css";
 
 interface RandomCharacterButtonProps {
-  characters: Character[];
-  disabled?: boolean;
-  size?: "sm" | "md" | "lg";
+  /** How many characters a pick chooses from. None disables the button. */
+  count: number;
+  onPick: () => void;
+  /** A pick is on its way. */
+  busy?: boolean;
+  size?: "sm" | "md";
 }
 
-const getSizeStyles = (size: string) => {
-  switch (size) {
-    case "sm":
-      return "1.2rem";
-    case "lg":
-      return "2rem";
-    case "md":
-    default:
-      return "1.5rem";
-  }
-};
-
-const ButtonContainer = styled.div`
-  display: inline-block;
-  padding: 2px; /* Reserve space for translateY movement */
-`;
-
-const IconButton = styled.button<{ size: string }>`
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: ${({ theme }) => theme.spacing.xs};
-  border-radius: 50%;
-  font-size: ${({ size }) => getSizeStyles(size)};
-  color: ${({ theme }) => theme.colors.text.secondary};
-  transition: all 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2em;
-  height: 2em;
-
-  &:hover:not(:disabled) {
-    color: ${({ theme }) => theme.colors.primary};
-    background: ${({ theme }) => theme.colors.surface};
-    transform: rotate(180deg) scale(1.1) translateY(-2px);
-  }
-
-  &:active:not(:disabled) {
-    transform: rotate(180deg) scale(0.95) translateY(-2px);
-  }
-
-  &:disabled {
-    opacity: 0.3;
-    cursor: not-allowed;
-  }
-
-  &:focus {
-    outline: 2px solid ${({ theme }) => theme.colors.primary};
-    outline-offset: 2px;
-  }
-`;
-
+/** The dice: goes to a character picked at random from `count`. */
 export const RandomCharacterButton: React.FC<RandomCharacterButtonProps> = ({
-  characters,
-  disabled = false,
+  count,
+  onPick,
+  busy = false,
   size = "md",
 }) => {
-  const { goToRandomCharacter } = useRandomCharacter();
-
-  const handleClick = () => {
-    goToRandomCharacter(characters);
-  };
-
-  const isDisabled = disabled || characters.length === 0;
-  const tooltipText = isDisabled
-    ? "No characters available"
-    : `Random character (${characters.length} available)`;
+  // While busy with no count yet (a first load), it is neither empty nor
+  // countable, so it says only what it does.
+  const label =
+    count > 0
+      ? `Random character (${count.toLocaleString()} available)`
+      : busy
+        ? "Random character"
+        : "No characters available";
 
   return (
-    <Tooltip label={tooltipText}>
-      <ButtonContainer>
+    <div className={styles.root}>
+      <Tooltip label={label}>
         <IconButton
+          label={label}
           size={size}
-          onClick={handleClick}
-          disabled={isDisabled}
-          aria-label={tooltipText}
-        >
-          🎲
-        </IconButton>
-      </ButtonContainer>
-    </Tooltip>
+          busy={busy}
+          disabled={count === 0 && !busy}
+          onClick={onPick}
+          icon={
+            <span
+              aria-hidden="true"
+              className={size === "sm" ? styles.iconSmall : styles.icon}
+            >
+              🎲
+            </span>
+          }
+        />
+      </Tooltip>
+    </div>
   );
 };
