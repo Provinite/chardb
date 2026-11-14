@@ -1,6 +1,10 @@
 import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { AllowAnyAuthenticated } from "../../auth/decorators/AllowAnyAuthenticated";
 import { CurrentUser } from "../../auth/decorators/CurrentUser";
+import {
+  CurrentPermissions,
+  type RequestPermissions,
+} from "../../auth/decorators/CurrentPermissions";
 import type { AuthenticatedCurrentUserType } from "../../auth/types/current-user.type";
 import { DoorKnockService } from "./door-knock.service";
 import { HalloweenDoor, HalloweenDoorKnockResult } from "./door-knock.types";
@@ -21,8 +25,9 @@ export class DoorKnockResolver {
     @Args("communityId", { type: () => ID }) communityId: string,
     @Args("userId", { type: () => ID }) userId: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<HalloweenDoor | null> {
-    return this.doorKnocks.door(communityId, user.id, userId);
+    return this.doorKnocks.door(communityId, user.id, permissions, userId);
   }
 
   @AllowAnyAuthenticated()
@@ -36,7 +41,8 @@ export class DoorKnockResolver {
     @Args("communityId", { type: () => ID }) communityId: string,
     @Args("userId", { type: () => ID }) userId: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<HalloweenDoorKnockResult> {
-    return this.doorKnocks.knock(communityId, user.id, userId);
+    return this.doorKnocks.knock(communityId, user.id, permissions, userId);
   }
 }

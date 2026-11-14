@@ -2,9 +2,9 @@ import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { GqlExecutionContext } from "@nestjs/graphql";
 import { DatabaseService } from "../../database/database.service";
-import { PermissionService } from "../PermissionService";
 import { CommunityResolverService } from "../services/community-resolver.service";
 import { getUserFromContext } from "../utils/get-user-from-context";
+import { getPermissionsFromContext } from "../utils/get-permissions-from-context";
 import { getNestedValue } from "../../common/utils/getNestedValue";
 import { AllowCharacterProfileEditor } from "../decorators/AllowCharacterProfileEditor";
 import { notDeleted } from "../../common/utils/prisma-filters";
@@ -25,7 +25,6 @@ import { notDeleted } from "../../common/utils/prisma-filters";
 export class CharacterProfileEditGuard implements CanActivate {
   constructor(
     private prisma: DatabaseService,
-    private permissionService: PermissionService,
     private communityResolverService: CommunityResolverService,
     private reflector: Reflector,
   ) {}
@@ -90,8 +89,7 @@ export class CharacterProfileEditGuard implements CanActivate {
 
       // For orphaned characters, check if user has permission to manage orphaned characters
       // OR has canEditCharacter permission (profile-level)
-      const permissions = await this.permissionService.getCommunityPermissions(
-        user.id,
+      const permissions = await getPermissionsFromContext(context).inCommunity(
         community.id,
       );
 
@@ -121,8 +119,7 @@ export class CharacterProfileEditGuard implements CanActivate {
     }
 
     // Check profile-level permissions only
-    const permissions = await this.permissionService.getCommunityPermissions(
-      user.id,
+    const permissions = await getPermissionsFromContext(context).inCommunity(
       community.id,
     );
 

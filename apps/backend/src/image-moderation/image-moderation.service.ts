@@ -6,7 +6,7 @@ import {
   Logger,
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
-import { PermissionService } from "../auth/PermissionService";
+import type { RequestPermissions } from "../auth/request-permissions";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { NotificationDispatchService } from "../notifications/notification-dispatch.service";
 import {
@@ -39,7 +39,6 @@ export class ImageModerationService {
 
   constructor(
     private readonly db: DatabaseService,
-    private readonly permissionService: PermissionService,
     private readonly notificationDispatch: NotificationDispatchService,
     private readonly currencyLedger: CurrencyLedgerService,
     private readonly mediaService: MediaService,
@@ -71,7 +70,7 @@ export class ImageModerationService {
    * @returns the community the image belongs to.
    */
   private async assertAwardIsValid(
-    userId: string,
+    permissions: RequestPermissions,
     imageId: string,
     mediaId: string,
     currencyId: string,
@@ -84,8 +83,7 @@ export class ImageModerationService {
       );
     }
 
-    const canGrant = await this.permissionService.hasCommunityPermission(
-      userId,
+    const canGrant = await permissions.hasInCommunity(
       communityId,
       CommunityPermission.CanGrantItems,
     );
@@ -123,35 +121,21 @@ export class ImageModerationService {
   /**
    * Get community IDs where the user has image moderation permission
    */
-  async getModeratorCommunityIds(userId: string): Promise<string[]> {
-    const memberships = await this.db.communityMember.findMany({
-      where: { userId },
-      include: {
-        role: {
-          select: { communityId: true, canModerateImages: true },
-        },
-      },
-    });
-
-    return memberships
-      .filter((m) => m.role.canModerateImages)
-      .map((m) => m.role.communityId);
+  async getModeratorCommunityIds(
+    permissions: RequestPermissions,
+  ): Promise<string[]> {
+    return permissions.communityIdsWith(CommunityPermission.CanModerateImages);
   }
 
   /**
    * Check if a user can moderate a specific image
    */
   async canUserModerateImage(
-    userId: string,
+    permissions: RequestPermissions,
     imageId: string,
   ): Promise<boolean> {
     // Check if user is a global admin
-    const user = await this.db.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-
-    if (user?.isAdmin) {
+    if (permissions.isAdmin) {
       return true;
     }
 
@@ -164,8 +148,7 @@ export class ImageModerationService {
     }
 
     // Check community permission
-    return this.permissionService.hasCommunityPermission(
-      userId,
+    return permissions.hasInCommunity(
       communityId,
       CommunityPermission.CanModerateImages,
     );
@@ -313,10 +296,11 @@ export class ImageModerationService {
   async approveImage(
     imageId: string,
     moderatorId: string,
+    permissions: RequestPermissions,
     award?: ApproveImageAward,
   ) {
     // Verify permission
-    const canModerate = await this.canUserModerateImage(moderatorId, imageId);
+    const canModerate = await this.canUserModerateImage(permissions, imageId);
     if (!canModerate) {
       throw new ForbiddenException(
         "You do not have permission to moderate this image",
@@ -367,7 +351,7 @@ export class ImageModerationService {
 
       // Everything the client sent is checked here, before a single row moves.
       await this.assertAwardIsValid(
-        moderatorId,
+        permissions,
         imageId,
         media.id,
         award.currencyId,
@@ -448,6 +432,7 @@ export class ImageModerationService {
   async rejectImage(
     imageId: string,
     moderatorId: string,
+    permissions: RequestPermissions,
     reason: ModerationRejectionReason,
     reasonText?: string,
   ) {
@@ -459,7 +444,7 @@ export class ImageModerationService {
     }
 
     // Verify permission
-    const canModerate = await this.canUserModerateImage(moderatorId, imageId);
+    const canModerate = await this.canUserModerateImage(permissions, imageId);
     if (!canModerate) {
       throw new ForbiddenException(
         "You do not have permission to moderate this image",
@@ -523,8 +508,13 @@ export class ImageModerationService {
    * image is still PENDING when this returns. Recording it as a moderation
    * action would put a decision in the log that nobody made.
    */
-  async deferImage(imageId: string, moderatorId: string, note?: string) {
-    const canModerate = await this.canUserModerateImage(moderatorId, imageId);
+  async deferImage(
+    imageId: string,
+    moderatorId: string,
+    permissions: RequestPermissions,
+    note?: string,
+  ) {
+    const canModerate = await this.canUserModerateImage(permissions, imageId);
     if (!canModerate) {
       throw new ForbiddenException(
         "You do not have permission to moderate this image",

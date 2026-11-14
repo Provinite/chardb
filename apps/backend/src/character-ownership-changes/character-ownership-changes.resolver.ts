@@ -13,8 +13,11 @@ import { CharacterOwnershipChangesService } from "./character-ownership-changes.
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { CurrentUser, CurrentUserType } from "../auth/decorators/CurrentUser";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { PermissionService } from "../auth/PermissionService";
-import { GlobalPermission } from "../auth/GlobalPermission";
 import {
   CharacterOwnershipChange,
   CharacterOwnershipChangeConnection,
@@ -144,6 +147,7 @@ export class CharacterOwnershipChangesResolver {
     })
     after?: string,
     @CurrentUser() currentUser?: CurrentUserType,
+    @CurrentPermissions() permissions?: RequestPermissions,
   ): Promise<CharacterOwnershipChangeConnection> {
     // Check authorization: self OR admin
     if (!currentUser) {
@@ -151,12 +155,8 @@ export class CharacterOwnershipChangesResolver {
     }
 
     const isSelf = this.permissionService.isSelf(currentUser.id, userId);
-    const isAdmin = this.permissionService.hasGlobalPermission(
-      currentUser,
-      GlobalPermission.IsAdmin,
-    );
 
-    if (!isSelf && !isAdmin) {
+    if (!isSelf && !permissions?.isAdmin) {
       throw new ForbiddenException(
         "You can only view your own ownership changes",
       );

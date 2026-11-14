@@ -11,6 +11,7 @@ import { DomainEvents } from "../../events/domain-events";
 import { NotificationsService } from "../../notifications/notifications.service";
 import { HalloweenDashboardService } from "../dashboard/halloween-dashboard.service";
 import { HalloweenStaffAccess } from "../dashboard/halloween-staff-access";
+import type { RequestPermissions } from "../../auth/request-permissions";
 import { HalloweenUi } from "../discord/ui";
 import { BusyError, MissingGuildSettingsError } from "../errors";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
@@ -81,11 +82,18 @@ export class DoorKnockService {
   async door(
     communityId: string,
     viewerId: string,
+    permissions: RequestPermissions,
     ownerId: string,
   ): Promise<HalloweenDoor | null> {
     const event = await this.runningEvent(communityId);
     if (!event) return null;
-    const visit = await this.visit(event, communityId, viewerId, ownerId);
+    const visit = await this.visit(
+      event,
+      communityId,
+      viewerId,
+      permissions,
+      ownerId,
+    );
     return {
       canKnock: visit.closedReason === null,
       closedReason: visit.closedReason,
@@ -97,6 +105,7 @@ export class DoorKnockService {
   async knock(
     communityId: string,
     knockerId: string,
+    permissions: RequestPermissions,
     knockeeId: string,
   ): Promise<HalloweenDoorKnockResult> {
     const event = await this.runningEvent(communityId);
@@ -109,6 +118,7 @@ export class DoorKnockService {
         event,
         communityId,
         knockerId,
+        permissions,
         knockeeId,
         tx,
       );
@@ -212,6 +222,7 @@ export class DoorKnockService {
     { guildId, settings }: RunningEvent,
     communityId: string,
     knockerId: string,
+    permissions: RequestPermissions,
     knockeeId: string,
     tx: Prisma.TransactionClient = this.db,
   ): Promise<Visit> {
@@ -220,7 +231,7 @@ export class DoorKnockService {
       await Promise.all([
         this.isMember(tx, communityId, knockerId),
         this.isMember(tx, communityId, knockeeId),
-        this.staff.isStaff(knockerId, communityId),
+        this.staff.isStaff(permissions, communityId),
         tx.halloweenDoorKnock.count({
           where: { guildId, knockerId, time: { gte: since } },
         }),

@@ -1,11 +1,10 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
-import { PermissionService } from "../PermissionService";
 import { CommunityResolverService } from "../services/community-resolver.service";
 import { getUserFromContext } from "../utils/get-user-from-context";
+import { getPermissionsFromContext } from "../utils/get-permissions-from-context";
 import { Reflector } from "@nestjs/core";
 import { AllowCommunityPermission } from "../decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../decorators/ResolveCommunityFrom";
-import { CommunityPermission } from "../CommunityPermission";
 import {
   CommunityResolutionConfig,
   CommunityResolutionReference,
@@ -17,7 +16,6 @@ import { getNestedValue } from "../../common/utils/getNestedValue";
 @Injectable()
 export class CommunityPermissionGuard implements CanActivate {
   constructor(
-    private permissionService: PermissionService,
     private communityResolverService: CommunityResolverService,
     private reflector: Reflector,
   ) {}
@@ -59,19 +57,10 @@ export class CommunityPermissionGuard implements CanActivate {
       return false;
     }
 
-    const permissions =
-      await this.permissionService.getCommunityPermissionsForRequest(
-        this.getRequest(context),
-        user.id,
-        community.id,
-      );
-
-    // Special case: CommunityPermission.Any means user just needs to be a member (have any role)
-    if (requiredPermissions === CommunityPermission.Any) {
-      return permissions.hasMembership;
-    }
-
-    return permissions[requiredPermissions] === true;
+    return getPermissionsFromContext(context).hasInCommunity(
+      community.id,
+      requiredPermissions,
+    );
   }
 
   private getRequest(context: ExecutionContext): Request | undefined {

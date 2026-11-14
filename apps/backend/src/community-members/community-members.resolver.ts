@@ -18,8 +18,11 @@ import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { PermissionService } from "../auth/PermissionService";
-import { GlobalPermission } from "../auth/GlobalPermission";
 import { CommunityResolverService } from "../auth/services/community-resolver.service";
 import {
   CommunityMember,
@@ -139,6 +142,7 @@ export class CommunityMembersResolver {
     @Args("userId", { type: () => ID, description: "User ID" })
     userId: string,
     @CurrentUser() currentUser: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
     @Args("first", {
       type: () => Int,
       nullable: true,
@@ -155,12 +159,8 @@ export class CommunityMembersResolver {
   ): Promise<CommunityMemberConnection> {
     // Check authorization: self OR admin
     const isSelf = this.permissionService.isSelf(currentUser.id, userId);
-    const isAdmin = this.permissionService.hasGlobalPermission(
-      currentUser,
-      GlobalPermission.IsAdmin,
-    );
 
-    if (!isSelf && !isAdmin) {
+    if (!isSelf && !permissions.isAdmin) {
       throw new ForbiddenException(
         "You can only view your own community memberships",
       );
@@ -247,6 +247,7 @@ export class CommunityMembersResolver {
     @Args("id", { type: () => ID, description: "Community member ID" })
     id: string,
     @CurrentUser() currentUser: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<CommunityMember> {
     const membership = await this.communityMembersService.findOne(id);
 
@@ -264,18 +265,13 @@ export class CommunityMembersResolver {
       currentUser.id,
       membership.userId,
     );
-    const isAdmin = this.permissionService.hasGlobalPermission(
-      currentUser,
-      GlobalPermission.IsAdmin,
-    );
-    const hasPermission = await this.permissionService.hasCommunityPermission(
-      currentUser.id,
+    const hasPermission = await permissions.hasInCommunity(
       community.id,
       CommunityPermission.CanRemoveCommunityMember,
     );
 
     // Allow if: self-removal OR admin OR has permission
-    if (!isSelf && !isAdmin && !hasPermission) {
+    if (!isSelf && !permissions.isAdmin && !hasPermission) {
       throw new ForbiddenException("Cannot remove this community member");
     }
 

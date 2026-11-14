@@ -14,7 +14,7 @@ import { v4 as uuid } from "uuid";
 import { extname } from "path";
 import type { Image, Media, User } from "@chardb/database";
 import { S3Service } from "./s3.service";
-import { PermissionService } from "../auth/PermissionService";
+import type { RequestPermissions } from "../auth/request-permissions";
 import { CommunityResolverService } from "../auth/services/community-resolver.service";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import {
@@ -91,12 +91,12 @@ export class ImagesService {
     private readonly db: DatabaseService,
     private readonly tagsService: TagsService,
     private readonly s3Service: S3Service,
-    private readonly permissionService: PermissionService,
     private readonly communityResolverService: CommunityResolverService,
   ) {}
 
   async upload(
     userId: string,
+    permissions: RequestPermissions,
     input: UploadImageInput,
   ): Promise<Media & { image: Image; owner: User }> {
     const {
@@ -133,12 +133,16 @@ export class ImagesService {
 
     // Verify character edit permission if characterId is provided
     if (characterId) {
-      await this.verifyCharacterEditPermission(userId, characterId);
+      await this.verifyCharacterEditPermission(
+        userId,
+        permissions,
+        characterId,
+      );
     }
 
     // Verify item type edit permission if itemTypeId is provided
     const itemTypeCommunityId = itemTypeId
-      ? await this.verifyItemTypeEditPermission(userId, itemTypeId)
+      ? await this.verifyItemTypeEditPermission(permissions, itemTypeId)
       : null;
 
     // Which community this belongs to, when no character says. A character
@@ -149,7 +153,7 @@ export class ImagesService {
     const reviewingCommunityId = characterId
       ? null
       : (itemTypeCommunityId ??
-        (await this.resolveReviewingCommunity(userId, communityId)));
+        (await this.resolveReviewingCommunity(permissions, communityId)));
 
     // Verify artist exists if artistId is provided
     if (artistId) {
@@ -775,25 +779,21 @@ export class ImagesService {
    * membership change between opening the form and submitting it.
    */
   private async resolveReviewingCommunity(
-    userId: string,
+    permissions: RequestPermissions,
     communityId?: string,
   ): Promise<string | null> {
     if (!communityId) return null;
 
-    const membership = await this.db.communityMember.findFirst({
-      where: { userId, role: { communityId } },
-      select: { id: true },
-    });
+    const isMember = await permissions.hasInCommunity(
+      communityId,
+      CommunityPermission.Any,
+    );
 
-    if (membership) return communityId;
+    if (isMember) return communityId;
 
     // Global admins are in no community and moderate everywhere, so their own
     // uploads would otherwise never carry one.
-    const user = await this.db.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-    if (!user?.isAdmin) return null;
+    if (!permissions.isAdmin) return null;
 
     const community = await this.db.community.findUnique({
       where: { id: communityId },
@@ -805,14 +805,11 @@ export class ImagesService {
 
   private async verifyCharacterEditPermission(
     userId: string,
+    permissions: RequestPermissions,
     characterId: string,
   ): Promise<void> {
     // Global admins bypass all permission checks
-    const user = await this.db.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-    if (user?.isAdmin) return;
+    if (permissions.isAdmin) return;
 
     // Fetch character with species info
     const character = await this.db.character.findFirst({
@@ -854,13 +851,11 @@ export class ImagesService {
 
       // For orphaned characters, check upload permission or orphaned character permission
       const [hasUploadPermission, hasOrphanedPermission] = await Promise.all([
-        this.permissionService.hasCommunityPermission(
-          userId,
+        permissions.hasInCommunity(
           community.id,
           CommunityPermission.CanUploadCharacterImages,
         ),
-        this.permissionService.hasCommunityPermission(
-          userId,
+        permissions.hasInCommunity(
           community.id,
           CommunityPermission.CanCreateOrphanedCharacter,
         ),
@@ -910,12 +905,10 @@ export class ImagesService {
       ? CommunityPermission.CanUploadOwnCharacterImages
       : CommunityPermission.CanUploadCharacterImages;
 
-    const hasUploadPermission =
-      await this.permissionService.hasCommunityPermission(
-        userId,
-        community.id,
-        uploadPermission,
-      );
+    const hasUploadPermission = await permissions.hasInCommunity(
+      community.id,
+      uploadPermission,
+    );
 
     if (!hasUploadPermission) {
       throw new ForbiddenException(
@@ -932,7 +925,7 @@ export class ImagesService {
    * Returns that community.
    */
   private async verifyItemTypeEditPermission(
-    userId: string,
+    permissions: RequestPermissions,
     itemTypeId: string,
   ): Promise<string> {
     // Fetch item type with community info
@@ -948,8 +941,7 @@ export class ImagesService {
     }
 
     // Check if user has permission to manage items in this community
-    const hasPermission = await this.permissionService.hasCommunityPermission(
-      userId,
+    const hasPermission = await permissions.hasInCommunity(
       itemType.communityId,
       CommunityPermission.CanManageItems,
     );

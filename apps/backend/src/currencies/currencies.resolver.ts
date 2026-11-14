@@ -7,17 +7,18 @@ import {
   Int,
   ResolveField,
   Parent,
-  Context,
 } from "@nestjs/graphql";
 import { NotFoundException } from "@nestjs/common";
-import type { Request } from "express";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
-import { PermissionService } from "../auth/PermissionService";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { DatabaseService } from "../database/database.service";
 import { CurrenciesService } from "./currencies.service";
 import { CurrencyLedgerService } from "./currency-ledger.service";
@@ -276,10 +277,7 @@ export class CurrencyTransactionConnectionResolver {
  */
 @Resolver(() => CurrencyTransaction)
 export class CurrencyTransactionFieldsResolver {
-  constructor(
-    private readonly permissionService: PermissionService,
-    private readonly database: DatabaseService,
-  ) {}
+  constructor(private readonly database: DatabaseService) {}
 
   /**
    * Re-read per viewer rather than carried on the mapped entity, so a caller
@@ -297,8 +295,7 @@ export class CurrencyTransactionFieldsResolver {
   })
   async resolveStaffNote(
     @Parent() transaction: CurrencyTransaction,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
-    @Context("req") req?: Request,
+    @CurrentPermissions() viewer: RequestPermissions,
   ): Promise<string | null> {
     const currency = await this.database.currency.findUnique({
       where: { id: transaction.currencyId },
@@ -306,12 +303,7 @@ export class CurrencyTransactionFieldsResolver {
     });
     if (!currency) return null;
 
-    const permissions =
-      await this.permissionService.getCommunityPermissionsForRequest(
-        req,
-        user.id,
-        currency.communityId,
-      );
+    const permissions = await viewer.inCommunity(currency.communityId);
 
     if (
       !permissions[CommunityPermission.CanManageItems] &&

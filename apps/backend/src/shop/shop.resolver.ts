@@ -4,7 +4,10 @@ import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
-import { PermissionService } from "../auth/PermissionService";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { DatabaseService } from "../database/database.service";
 import { ShopService } from "./shop.service";
 import {
@@ -34,7 +37,6 @@ import {
 export class ShopResolver {
   constructor(
     private readonly shop: ShopService,
-    private readonly permissions: PermissionService,
     private readonly db: DatabaseService,
   ) {}
 
@@ -52,11 +54,11 @@ export class ShopResolver {
     @Args("includeInactive", { type: () => Boolean, defaultValue: false })
     includeInactive: boolean,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<ShopItem[]> {
     // Only staff may see what is not for sale; asking as a member quietly
     // gets the public list rather than an error.
-    const canManage = await this.permissions.hasCommunityPermission(
-      user.id,
+    const canManage = await permissions.hasInCommunity(
       communityId,
       CommunityPermission.CanManageItems,
     );
@@ -191,14 +193,14 @@ export class ShopResolver {
   async refundShopPurchaseLine(
     @Args("lineId", { type: () => ID }) lineId: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<ShopPurchaseLine> {
     const line = await this.db.shopPurchaseLine.findUnique({
       where: { id: lineId },
       select: { purchase: { select: { communityId: true } } },
     });
     const isStaff = line
-      ? await this.permissions.hasCommunityPermission(
-          user.id,
+      ? await permissions.hasInCommunity(
           line.purchase.communityId,
           CommunityPermission.CanGrantItems,
         )

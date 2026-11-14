@@ -1,9 +1,9 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { DatabaseService } from "../../database/database.service";
-import { PermissionService } from "../PermissionService";
 import { CommunityResolverService } from "../services/community-resolver.service";
 import { getUserFromContext } from "../utils/get-user-from-context";
+import { getPermissionsFromContext } from "../utils/get-permissions-from-context";
 import { resolveGuardPath } from "../utils/resolve-guard-path";
 import { AllowCharacterRegistryEditor } from "../decorators/AllowCharacterRegistryEditor";
 import { CommunityPermission } from "../CommunityPermission";
@@ -26,7 +26,6 @@ import { notDeleted } from "../../common/utils/prisma-filters";
 export class CharacterRegistryEditGuard implements CanActivate {
   constructor(
     private prisma: DatabaseService,
-    private permissionService: PermissionService,
     private communityResolverService: CommunityResolverService,
     private reflector: Reflector,
   ) {}
@@ -92,16 +91,15 @@ export class CharacterRegistryEditGuard implements CanActivate {
       ? CommunityPermission.CanEditOwnCharacterRegistry
       : CommunityPermission.CanEditCharacterRegistry;
 
-    const hasPermission = await this.permissionService.hasCommunityPermission(
-      user.id,
+    const permissions = getPermissionsFromContext(context);
+    const hasPermission = await permissions.hasInCommunity(
       community.id,
       requiredPermission,
     );
 
     // Also allow if user has the "any character" permission
     if (!hasPermission && isOwner) {
-      return this.permissionService.hasCommunityPermission(
-        user.id,
+      return permissions.hasInCommunity(
         community.id,
         CommunityPermission.CanEditCharacterRegistry,
       );

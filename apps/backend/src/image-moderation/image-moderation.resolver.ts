@@ -30,6 +30,10 @@ import { Image } from "../images/entities/image.entity";
 import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
@@ -194,10 +198,12 @@ export class ImageModerationResolver {
   async approveImage(
     @Args("input") input: ApproveImageInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<ImageModerationAction> {
     const action = await this.imageModerationService.approveImage(
       input.imageId,
       user.id,
+      permissions,
       {
         currencyId: input.currencyId,
         awards: input.awards,
@@ -222,10 +228,12 @@ export class ImageModerationResolver {
   async deferImage(
     @Args("input") input: DeferImageInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<Image> {
     const image = await this.imageModerationService.deferImage(
       input.imageId,
       user.id,
+      permissions,
       input.note,
     );
     return mapPrismaImageToGraphQL(image);
@@ -242,10 +250,12 @@ export class ImageModerationResolver {
   async rejectImage(
     @Args("input") input: RejectImageInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<ImageModerationAction> {
     const action = await this.imageModerationService.rejectImage(
       input.imageId,
       user.id,
+      permissions,
       input.reason,
       input.reasonText,
     );

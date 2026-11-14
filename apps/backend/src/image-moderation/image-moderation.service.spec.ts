@@ -9,12 +9,12 @@ import {
 } from "@chardb/database";
 import { ImageModerationService } from "./image-moderation.service";
 import { DatabaseService } from "../database/database.service";
-import { PermissionService } from "../auth/PermissionService";
 import { NotificationDispatchService } from "../notifications/notification-dispatch.service";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { MediaService } from "../media/media.service";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { mockDatabaseService } from "../../test/setup";
+import { fakePermissions, FakePermissions } from "../../test/fake-permissions";
 
 /**
  * First tests for this service.
@@ -25,13 +25,13 @@ import { mockDatabaseService } from "../../test/setup";
  * that is the whole reason the payment is inside the transaction.
  */
 
-const mockPermissionService = { hasCommunityPermission: jest.fn() };
 const mockNotificationDispatch = { dispatch: jest.fn() };
 const mockLedger = { credit: jest.fn() };
 const mockMediaService = { findAwardRecipients: jest.fn() };
 
 describe("ImageModerationService", () => {
   let service: ImageModerationService;
+  let permissions: FakePermissions;
 
   const IMAGE_ID = "image-1";
   const MODERATOR = "mod-1";
@@ -51,7 +51,6 @@ describe("ImageModerationService", () => {
       providers: [
         ImageModerationService,
         { provide: DatabaseService, useValue: mockDatabaseService },
-        { provide: PermissionService, useValue: mockPermissionService },
         {
           provide: NotificationDispatchService,
           useValue: mockNotificationDispatch,
@@ -65,8 +64,8 @@ describe("ImageModerationService", () => {
 
     // A plain moderator: not a global admin, holds whatever permission is asked
     // for unless a test narrows it.
-    mockDatabaseService.user.findUnique.mockResolvedValue({ isAdmin: false });
-    mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
+    permissions = fakePermissions();
+    permissions.hasInCommunity.mockResolvedValue(true);
     // Serves both lookups the service makes on media: the community
     // resolution and the source id for the ledger row.
     mockDatabaseService.media.findFirst.mockResolvedValue({
@@ -103,7 +102,7 @@ describe("ImageModerationService", () => {
 
   describe("approveImage without an award", () => {
     it("approves and records the action", async () => {
-      const action = await service.approveImage(IMAGE_ID, MODERATOR);
+      const action = await service.approveImage(IMAGE_ID, MODERATOR, permissions);
 
       expect(mockDatabaseService.image.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -114,14 +113,14 @@ describe("ImageModerationService", () => {
     });
 
     it("pays nobody", async () => {
-      await service.approveImage(IMAGE_ID, MODERATOR);
+      await service.approveImage(IMAGE_ID, MODERATOR, permissions);
       expect(mockLedger.credit).not.toHaveBeenCalled();
     });
 
     it("tells the uploader, naming the moderator as the actor", async () => {
       // Dispatch decides the channels from the uploader's preferences; the
       // service's only job is to hand it the right recipient and payload.
-      await service.approveImage(IMAGE_ID, MODERATOR);
+      await service.approveImage(IMAGE_ID, MODERATOR, permissions);
 
       expect(mockNotificationDispatch.dispatch).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -136,9 +135,9 @@ describe("ImageModerationService", () => {
     });
 
     it("refuses a moderator without permission on this image", async () => {
-      mockPermissionService.hasCommunityPermission.mockResolvedValue(false);
+      permissions.hasInCommunity.mockResolvedValue(false);
 
-      await expect(service.approveImage(IMAGE_ID, MODERATOR)).rejects.toThrow(
+      await expect(service.approveImage(IMAGE_ID, MODERATOR, permissions)).rejects.toThrow(
         ForbiddenException,
       );
     });
@@ -153,7 +152,7 @@ describe("ImageModerationService", () => {
 
       // This is also what stops an image being paid for twice: a second
       // approval cannot happen, so a second award cannot either.
-      await expect(service.approveImage(IMAGE_ID, MODERATOR)).rejects.toThrow(
+      await expect(service.approveImage(IMAGE_ID, MODERATOR, permissions)).rejects.toThrow(
         BadRequestException,
       );
     });
@@ -169,7 +168,7 @@ describe("ImageModerationService", () => {
     };
 
     it("credits inside the same transaction as the approval", async () => {
-      await service.approveImage(IMAGE_ID, MODERATOR, award);
+      await service.approveImage(IMAGE_ID, MODERATOR, permissions, award);
 
       // The tx client is threaded through, so approving and paying commit
       // together. Approved-but-unpaid is a support ticket; paid-but-unapproved
@@ -180,7 +179,7 @@ describe("ImageModerationService", () => {
     });
 
     it("stamps the source so the ledger row can name the media", async () => {
-      await service.approveImage(IMAGE_ID, MODERATOR, award);
+      await service.approveImage(IMAGE_ID, MODERATOR, permissions, award);
 
       expect(creditCall()).toEqual(
         expect.objectContaining({
@@ -192,7 +191,7 @@ describe("ImageModerationService", () => {
     });
 
     it("names the moderator as the actor", async () => {
-      await service.approveImage(IMAGE_ID, MODERATOR, award);
+      await service.approveImage(IMAGE_ID, MODERATOR, permissions, award);
 
       // The permission to mint came from the community, but who did it is
       // still the moderator, and the ledger's job is to say so.
@@ -202,7 +201,7 @@ describe("ImageModerationService", () => {
     });
 
     it("skips non-members rather than failing the approval", async () => {
-      await service.approveImage(IMAGE_ID, MODERATOR, award);
+      await service.approveImage(IMAGE_ID, MODERATOR, permissions, award);
 
       // An uploader who has since left the community must not be able to
       // block moderation of their old upload.
@@ -223,7 +222,7 @@ describe("ImageModerationService", () => {
       // currency to themselves. credit() cannot catch it: there the recipient
       // is a legitimate member of the currency's own community.
       await expect(
-        service.approveImage(IMAGE_ID, MODERATOR, award),
+        service.approveImage(IMAGE_ID, MODERATOR, permissions, award),
       ).rejects.toThrow(/does not belong to this image's community/i);
       expect(mockLedger.credit).not.toHaveBeenCalled();
       expect(mockDatabaseService.image.update).not.toHaveBeenCalled();
@@ -233,7 +232,7 @@ describe("ImageModerationService", () => {
       mockDatabaseService.currency.findUnique.mockResolvedValue(null);
 
       await expect(
-        service.approveImage(IMAGE_ID, MODERATOR, award),
+        service.approveImage(IMAGE_ID, MODERATOR, permissions, award),
       ).rejects.toThrow(/does not belong to this image's community/i);
     });
 
@@ -247,33 +246,33 @@ describe("ImageModerationService", () => {
       // MEDIA_APPROVAL row naming somebody unconnected to the upload makes
       // the source attribution worthless.
       await expect(
-        service.approveImage(IMAGE_ID, MODERATOR, award),
+        service.approveImage(IMAGE_ID, MODERATOR, permissions, award),
       ).rejects.toThrow(/connected to this upload/i);
       expect(mockLedger.credit).not.toHaveBeenCalled();
     });
 
     it("refuses an award from a moderator without canGrantItems", async () => {
-      mockPermissionService.hasCommunityPermission.mockImplementation(
-        (_userId: string, _communityId: string, permission: string) =>
+      permissions.hasInCommunity.mockImplementation(
+        (_communityId: string, permission: CommunityPermission) =>
           Promise.resolve(permission !== CommunityPermission.CanGrantItems),
       );
 
       // The widget is hidden from this person, but hiding a control is not a
       // check. Without this, anyone who could moderate could mint.
       await expect(
-        service.approveImage(IMAGE_ID, MODERATOR, award),
+        service.approveImage(IMAGE_ID, MODERATOR, permissions, award),
       ).rejects.toThrow(ForbiddenException);
       expect(mockLedger.credit).not.toHaveBeenCalled();
     });
 
     it("leaves the image pending when the award is refused", async () => {
-      mockPermissionService.hasCommunityPermission.mockImplementation(
-        (_userId: string, _communityId: string, permission: string) =>
+      permissions.hasInCommunity.mockImplementation(
+        (_communityId: string, permission: CommunityPermission) =>
           Promise.resolve(permission !== CommunityPermission.CanGrantItems),
       );
 
       await service
-        .approveImage(IMAGE_ID, MODERATOR, award)
+        .approveImage(IMAGE_ID, MODERATOR, permissions, award)
         .catch(() => undefined);
 
       expect(mockDatabaseService.image.update).not.toHaveBeenCalled();
@@ -281,14 +280,14 @@ describe("ImageModerationService", () => {
 
     it("requires a currency when amounts are given", async () => {
       await expect(
-        service.approveImage(IMAGE_ID, MODERATOR, {
+        service.approveImage(IMAGE_ID, MODERATOR, permissions, {
           awards: [{ userId: "uploader-1", amount: 25 }],
         }),
       ).rejects.toThrow(/currency is required/i);
     });
 
     it("ignores an award list that is entirely zeroes", async () => {
-      await service.approveImage(IMAGE_ID, MODERATOR, {
+      await service.approveImage(IMAGE_ID, MODERATOR, permissions, {
         currencyId: "cur-1",
         awards: [{ userId: "uploader-1", amount: 0 }],
       });
@@ -303,7 +302,7 @@ describe("ImageModerationService", () => {
       mockLedger.credit.mockRejectedValue(new Error("balance exploded"));
 
       await expect(
-        service.approveImage(IMAGE_ID, MODERATOR, award),
+        service.approveImage(IMAGE_ID, MODERATOR, permissions, award),
       ).rejects.toThrow(/balance exploded/);
 
       // The mocked $transaction does not roll back, so this asserts the
@@ -315,14 +314,14 @@ describe("ImageModerationService", () => {
 
     it("refuses an award on an image attached to no media", async () => {
       mockDatabaseService.media.findFirst.mockResolvedValue(null);
-      mockDatabaseService.user.findUnique.mockResolvedValue({ isAdmin: true });
+      permissions.isAdmin = true;
 
       // A global admin can moderate a media-less image, but there is nothing
       // for the ledger row to point at and no community to find a currency
       // in. The media check runs first because it is the more specific of the
       // two -- no media implies no community, but not the reverse.
       await expect(
-        service.approveImage(IMAGE_ID, MODERATOR, award),
+        service.approveImage(IMAGE_ID, MODERATOR, permissions, award),
       ).rejects.toThrow(/not attached to any media/i);
       expect(mockDatabaseService.image.update).not.toHaveBeenCalled();
     });
@@ -340,6 +339,7 @@ describe("ImageModerationService", () => {
       await service.rejectImage(
         IMAGE_ID,
         MODERATOR,
+        permissions,
         "SPAM_LOW_QUALITY" as never,
       );
 
@@ -350,6 +350,7 @@ describe("ImageModerationService", () => {
       await service.rejectImage(
         IMAGE_ID,
         MODERATOR,
+        permissions,
         ModerationRejectionReason.NSFW_NOT_TAGGED,
         "Please tag this.",
       );
@@ -373,6 +374,7 @@ describe("ImageModerationService", () => {
       await service.rejectImage(
         IMAGE_ID,
         MODERATOR,
+        permissions,
         ModerationRejectionReason.SPAM_LOW_QUALITY,
       );
 
@@ -386,7 +388,7 @@ describe("ImageModerationService", () => {
 
   describe("deferImage", () => {
     it("stamps the sort key, the moderator and the note", async () => {
-      await service.deferImage(IMAGE_ID, MODERATOR, "  waiting on a reupload ");
+      await service.deferImage(IMAGE_ID, MODERATOR, permissions, "  waiting on a reupload ");
 
       expect(mockDatabaseService.image.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -404,7 +406,7 @@ describe("ImageModerationService", () => {
     it("clears a previous note when deferred again with none", async () => {
       // Null, not undefined: the note describes why THIS moderator passed,
       // and leaving the last person's reason attached would misattribute it.
-      await service.deferImage(IMAGE_ID, MODERATOR);
+      await service.deferImage(IMAGE_ID, MODERATOR, permissions);
 
       expect(mockDatabaseService.image.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -414,7 +416,7 @@ describe("ImageModerationService", () => {
     });
 
     it("treats a whitespace-only note as no note", async () => {
-      await service.deferImage(IMAGE_ID, MODERATOR, "   ");
+      await service.deferImage(IMAGE_ID, MODERATOR, permissions, "   ");
 
       expect(mockDatabaseService.image.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -424,7 +426,7 @@ describe("ImageModerationService", () => {
     });
 
     it("leaves the moderation status alone", async () => {
-      await service.deferImage(IMAGE_ID, MODERATOR);
+      await service.deferImage(IMAGE_ID, MODERATOR, permissions);
 
       const data = mockDatabaseService.image.update.mock.calls.at(-1)?.[0]
         .data as Record<string, unknown>;
@@ -434,7 +436,7 @@ describe("ImageModerationService", () => {
     it("writes nothing to the moderation action log", async () => {
       // Deferring is not a decision. That table's `action` column is a
       // ModerationStatus, and there is no status for "not yet".
-      await service.deferImage(IMAGE_ID, MODERATOR);
+      await service.deferImage(IMAGE_ID, MODERATOR, permissions);
 
       expect(
         mockDatabaseService.imageModerationAction.create,
@@ -442,15 +444,15 @@ describe("ImageModerationService", () => {
     });
 
     it("never pays anyone", async () => {
-      await service.deferImage(IMAGE_ID, MODERATOR);
+      await service.deferImage(IMAGE_ID, MODERATOR, permissions);
 
       expect(mockLedger.credit).not.toHaveBeenCalled();
     });
 
     it("refuses a moderator without permission on this image", async () => {
-      mockPermissionService.hasCommunityPermission.mockResolvedValue(false);
+      permissions.hasInCommunity.mockResolvedValue(false);
 
-      await expect(service.deferImage(IMAGE_ID, MODERATOR)).rejects.toThrow(
+      await expect(service.deferImage(IMAGE_ID, MODERATOR, permissions)).rejects.toThrow(
         ForbiddenException,
       );
       expect(mockDatabaseService.image.update).not.toHaveBeenCalled();
@@ -466,7 +468,7 @@ describe("ImageModerationService", () => {
         uploader: { email: "clove@example.test", username: "clove" },
       });
 
-      await expect(service.deferImage(IMAGE_ID, MODERATOR)).rejects.toThrow(
+      await expect(service.deferImage(IMAGE_ID, MODERATOR, permissions)).rejects.toThrow(
         BadRequestException,
       );
       expect(mockDatabaseService.image.update).not.toHaveBeenCalled();

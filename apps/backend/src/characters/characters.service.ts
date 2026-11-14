@@ -13,7 +13,7 @@ import {
 import { resolveDiscordOwner } from "../pending-ownership/utils/resolve-discord-owner";
 import { DiscordService } from "../discord/discord.service";
 import { DeviantArtService } from "../deviantart/deviantart.service";
-import { PermissionService } from "../auth/PermissionService";
+import type { RequestPermissions } from "../auth/request-permissions";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import {
   Prisma,
@@ -109,7 +109,6 @@ export class CharactersService {
     private readonly pendingOwnershipService: PendingOwnershipService,
     private readonly discordService: DiscordService,
     private readonly deviantArtService: DeviantArtService,
-    private readonly permissionService: PermissionService,
     private readonly traitReviewService: TraitReviewService,
     private readonly forms: CharacterFormsService,
     private readonly events: DomainEvents,
@@ -117,6 +116,7 @@ export class CharactersService {
 
   async create(
     userId: string,
+    permissions: RequestPermissions,
     input: {
       characterData: Omit<Prisma.CharacterCreateInput, "owner" | "creator">;
       /** The character's forms. Defaults to one empty form named "Base". */
@@ -146,7 +146,7 @@ export class CharactersService {
     const speciesVariantId = characterData.speciesVariant?.connect?.id;
 
     if (speciesId) {
-      await this.assertCanCreateForSpecies(userId, speciesId);
+      await this.assertCanCreateForSpecies(permissions, speciesId);
       await this.forms.validateForms(speciesId, forms, speciesVariantId);
       if (ownerId && ownerId !== userId) {
         await this.assertOwnerInSpeciesCommunity(ownerId, speciesId);
@@ -428,9 +428,25 @@ export class CharactersService {
    */
   async findEditableCharacters(
     userId: string,
+    permissions: RequestPermissions,
     filters: CharacterServiceFilters = {},
   ) {
     const { limit = 20, offset = 0, search } = filters;
+    const [ownProfile, ownRegistry, anyCharacter, orphaned] = await Promise.all(
+      [
+        permissions.communityIdsWith(CommunityPermission.CanEditOwnCharacter),
+        permissions.communityIdsWith(
+          CommunityPermission.CanEditOwnCharacterRegistry,
+        ),
+        permissions.communityIdsWith(
+          CommunityPermission.CanEditCharacter,
+          CommunityPermission.CanEditCharacterRegistry,
+        ),
+        permissions.communityIdsWith(
+          CommunityPermission.CanCreateOrphanedCharacter,
+        ),
+      ],
+    );
 
     const where: Prisma.CharacterWhereInput = {
       ...notDeleted,
@@ -448,93 +464,13 @@ export class CharactersService {
           speciesId: null,
         },
         // User owns the character AND has canEditOwnCharacter permission (profile fields)
-        {
-          ownerId: userId,
-          species: {
-            community: {
-              roles: {
-                some: {
-                  canEditOwnCharacter: true,
-                  communityMembers: {
-                    some: {
-                      userId: userId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        { ownerId: userId, species: { communityId: { in: ownProfile } } },
         // User owns the character AND has canEditOwnCharacterRegistry permission (registry fields)
-        {
-          ownerId: userId,
-          species: {
-            community: {
-              roles: {
-                some: {
-                  canEditOwnCharacterRegistry: true,
-                  communityMembers: {
-                    some: {
-                      userId: userId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        // User has canEditCharacter permission (any character profile fields)
-        {
-          species: {
-            community: {
-              roles: {
-                some: {
-                  canEditCharacter: true,
-                  communityMembers: {
-                    some: {
-                      userId: userId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
-        // User has canEditCharacterRegistry permission (any character registry fields)
-        {
-          species: {
-            community: {
-              roles: {
-                some: {
-                  canEditCharacterRegistry: true,
-                  communityMembers: {
-                    some: {
-                      userId: userId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        { ownerId: userId, species: { communityId: { in: ownRegistry } } },
+        // User has canEditCharacter or canEditCharacterRegistry permission (any character)
+        { species: { communityId: { in: anyCharacter } } },
         // Orphaned character with canCreateOrphanedCharacter permission
-        {
-          ownerId: null,
-          species: {
-            community: {
-              roles: {
-                some: {
-                  canCreateOrphanedCharacter: true,
-                  communityMembers: {
-                    some: {
-                      userId: userId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        { ownerId: null, species: { communityId: { in: orphaned } } },
       ],
     };
 
@@ -564,9 +500,18 @@ export class CharactersService {
    */
   async findCharactersForImageUpload(
     userId: string,
+    permissions: RequestPermissions,
     filters: CharacterServiceFilters = {},
   ) {
     const { limit = 20, offset = 0, search } = filters;
+    const [ownCharacters, anyCharacter] = await Promise.all([
+      permissions.communityIdsWith(
+        CommunityPermission.CanUploadOwnCharacterImages,
+      ),
+      permissions.communityIdsWith(
+        CommunityPermission.CanUploadCharacterImages,
+      ),
+    ]);
 
     const where: Prisma.CharacterWhereInput = {
       ...notDeleted,
@@ -584,40 +529,9 @@ export class CharactersService {
           speciesId: null,
         },
         // User owns the character AND has canUploadOwnCharacterImages permission in the community
-        {
-          ownerId: userId,
-          species: {
-            community: {
-              roles: {
-                some: {
-                  canUploadOwnCharacterImages: true,
-                  communityMembers: {
-                    some: {
-                      userId: userId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        { ownerId: userId, species: { communityId: { in: ownCharacters } } },
         // User has canUploadCharacterImages permission in the community (can upload to any character)
-        {
-          species: {
-            community: {
-              roles: {
-                some: {
-                  canUploadCharacterImages: true,
-                  communityMembers: {
-                    some: {
-                      userId: userId,
-                    },
-                  },
-                },
-              },
-            },
-          },
-        },
+        { species: { communityId: { in: anyCharacter } } },
       ],
     };
 
@@ -663,6 +577,7 @@ export class CharactersService {
   async update(
     id: string,
     userId: string,
+    permissions: RequestPermissions,
     input: {
       characterData: Prisma.CharacterUpdateInput;
       tags?: string[];
@@ -683,6 +598,7 @@ export class CharactersService {
       if (species) {
         await this.validateFieldPermissions(
           userId,
+          permissions,
           character,
           characterData,
           tags,
@@ -1229,6 +1145,7 @@ export class CharactersService {
   async updateRegistry(
     id: string,
     userId: string,
+    permissions: RequestPermissions,
     input: {
       characterData: Prisma.CharacterUpdateInput;
       /** What to do to the character's forms, or undefined to leave them. */
@@ -1281,7 +1198,7 @@ export class CharactersService {
       connectedVariantId !== character.speciesVariantId;
 
     if (variantIsChanging) {
-      await this.assertCanChangeVariant(userId, character.speciesId);
+      await this.assertCanChangeVariant(permissions, character.speciesId);
     }
 
     // The variant the traits are being judged against: the one it is moving
@@ -1440,12 +1357,11 @@ export class CharactersService {
    * rights passes -- which is how this has been reachable since the field was
    * added. So the check is here, on the one field it applies to.
    */
-  private async assertCanChangeVariant(userId: string, speciesId: string) {
-    const actor = await this.db.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-    if (actor?.isAdmin) return;
+  private async assertCanChangeVariant(
+    permissions: RequestPermissions,
+    speciesId: string,
+  ) {
+    if (permissions.isAdmin) return;
 
     const species = await this.db.species.findUnique({
       where: { id: speciesId },
@@ -1455,8 +1371,7 @@ export class CharactersService {
       throw new NotFoundException(`Species with ID ${speciesId} not found`);
     }
 
-    const allowed = await this.permissionService.hasCommunityPermission(
-      userId,
+    const allowed = await permissions.hasInCommunity(
       species.communityId,
       CommunityPermission.CanEditCharacterRegistry,
     );
@@ -1497,12 +1412,11 @@ export class CharactersService {
    * member of the community it imports into, and `@AllowGlobalAdmin` is how
    * every comparable mutation says the same thing.
    */
-  private async assertCanCreateForSpecies(userId: string, speciesId: string) {
-    const actor = await this.db.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    });
-    if (actor?.isAdmin) return;
+  private async assertCanCreateForSpecies(
+    permissions: RequestPermissions,
+    speciesId: string,
+  ) {
+    if (permissions.isAdmin) return;
 
     const species = await this.db.species.findUnique({
       where: { id: speciesId },
@@ -1512,8 +1426,7 @@ export class CharactersService {
       throw new NotFoundException(`Species with ID ${speciesId} not found`);
     }
 
-    const hasPermission = await this.permissionService.hasCommunityPermission(
-      userId,
+    const hasPermission = await permissions.hasInCommunity(
       species.communityId,
       CommunityPermission.CanCreateCharacter,
     );
@@ -1533,6 +1446,7 @@ export class CharactersService {
   async assignSpecies(
     id: string,
     userId: string,
+    permissions: RequestPermissions,
     input: {
       speciesId: string;
       speciesVariantId?: string;
@@ -1561,8 +1475,7 @@ export class CharactersService {
     }
 
     // Verify user has canCreateCharacter permission for the target species
-    const hasPermission = await this.permissionService.hasCommunityPermission(
-      userId,
+    const hasPermission = await permissions.hasInCommunity(
       species.communityId,
       CommunityPermission.CanCreateCharacter,
     );
@@ -1626,16 +1539,14 @@ export class CharactersService {
    */
   async validateFieldPermissions(
     userId: string,
+    actor: RequestPermissions,
     character: { ownerId: string | null; speciesId: string | null },
     characterData: Prisma.CharacterUpdateInput,
     tags: string[] | undefined,
     communityId: string,
   ): Promise<void> {
     const isOwner = character.ownerId === userId;
-    const permissions = await this.permissionService.getCommunityPermissions(
-      userId,
-      communityId,
-    );
+    const permissions = await actor.inCommunity(communityId);
 
     // Determine which facets the user can edit
     const canEditProfile = isOwner
@@ -1944,31 +1855,23 @@ export class CharactersService {
   }
 
   async userHasOrphanedCharacterPermission(
-    userId: string,
+    permissions: RequestPermissions,
     speciesId: string,
   ): Promise<boolean> {
     // Get the community for this species
     const species = await this.db.species.findUnique({
       where: { id: speciesId },
-      include: { community: true },
+      select: { communityId: true },
     });
 
     if (!species) {
       return false;
     }
 
-    // Check if user has a role with canCreateOrphanedCharacter permission
-    const membership = await this.db.communityMember.findFirst({
-      where: {
-        userId,
-        role: {
-          communityId: species.communityId,
-          canCreateOrphanedCharacter: true,
-        },
-      },
-    });
-
-    return !!membership;
+    return permissions.hasInCommunity(
+      species.communityId,
+      CommunityPermission.CanCreateOrphanedCharacter,
+    );
   }
 
   /**

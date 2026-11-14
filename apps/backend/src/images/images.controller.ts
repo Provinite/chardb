@@ -10,6 +10,10 @@ import {
 import { FileInterceptor } from "@nestjs/platform-express";
 import { ImagesService } from "./images.service";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { ThumbnailCrop } from "./thumbnail-crop";
 
 /**
@@ -106,12 +110,13 @@ export class ImagesController {
     @UploadedFile() file: Express.Multer.File,
     @Body() body: UploadImageBody,
     @Request() req: AuthenticatedRequest,
+    @CurrentPermissions() permissions: RequestPermissions,
   ) {
     if (!file) {
       throw new BadRequestException("No file provided");
     }
 
-    const uploadInput: Parameters<ImagesService["upload"]>[1] = {
+    const uploadInput: Parameters<ImagesService["upload"]>[2] = {
       file,
       title: body.title,
       characterId: body.characterId,
@@ -132,7 +137,7 @@ export class ImagesController {
       thumbnailCrop: parseThumbnailCrop(body),
     };
 
-    return this.imagesService.upload(req.user.id, uploadInput);
+    return this.imagesService.upload(req.user.id, permissions, uploadInput);
   }
 
   /**

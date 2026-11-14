@@ -2,6 +2,9 @@ import { Injectable, ExecutionContext } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
 import { GqlExecutionContext } from "@nestjs/graphql";
 import type { Request } from "express";
+import { PermissionService } from "../PermissionService";
+import { setRequestPermissions } from "../request-permissions";
+import type { CurrentUserType } from "../types/current-user.type";
 
 /**
  * Each request's authentication, started by the first field to resolve.
@@ -13,6 +16,10 @@ const authentications = new WeakMap<Request, Promise<boolean>>();
 
 @Injectable()
 export class OptionalJwtAuthGuard extends AuthGuard("jwt") {
+  constructor(private readonly permissionService: PermissionService) {
+    super();
+  }
+
   getRequest(context: ExecutionContext): Request | undefined {
     const ctx = GqlExecutionContext.create(context);
     return ctx.getContext<{ req?: Request }>().req;
@@ -26,10 +33,27 @@ export class OptionalJwtAuthGuard extends AuthGuard("jwt") {
 
     let authentication = authentications.get(req);
     if (!authentication) {
-      authentication = super.canActivate(context) as Promise<boolean>;
+      authentication = this.authenticate(context, req);
       authentications.set(req, authentication);
     }
     return authentication;
+  }
+
+  /**
+   * Sets `req.user`, then the permissions the request acts with. This is
+   * where a request's permissions are decided: every guard, resolver and
+   * service reads them back from here.
+   */
+  private async authenticate(
+    context: ExecutionContext,
+    req: Request,
+  ): Promise<boolean> {
+    const authenticated = await (super.canActivate(
+      context,
+    ) as Promise<boolean>);
+    const user = (req as Request & { user?: CurrentUserType }).user;
+    setRequestPermissions(req, this.permissionService.forUser(user));
+    return authenticated;
   }
 
   // Override handleRequest to not throw errors if no token is provided

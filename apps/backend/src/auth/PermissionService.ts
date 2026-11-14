@@ -6,102 +6,82 @@ import {
 import { User } from "@chardb/database";
 import { CommunityMembersService } from "../community-members/community-members.service";
 import { GlobalPermission } from "./GlobalPermission";
+import {
+  ANONYMOUS_PERMISSIONS,
+  CommunityPermissions,
+  RequestPermissions,
+} from "./request-permissions";
 
-/**
- * Service for checking user permissions.
- *
- * This service handles:
- * - Global permission checks
- * - Community permission checks
- * - Identity checks (self)
- */
-export type CommunityPermissions = Awaited<
-  ReturnType<PermissionService["getCommunityPermissions"]>
->;
+export type { CommunityPermissions } from "./request-permissions";
 
-@Injectable()
-export class PermissionService {
-  /** Per request: `${userId}:${communityId}` to that member's permissions. */
-  private readonly byRequest = new WeakMap<
-    object,
-    Map<string, Promise<CommunityPermissions>>
+/** The columns of an account that its permissions are read from. */
+type PermissionHolder = Pick<User, "id" | `${GlobalPermission}`>;
+
+/** Everything an account's own flags and community roles allow. */
+class AccountPermissions implements RequestPermissions {
+  private readonly communities = new Map<
+    string,
+    Promise<CommunityPermissions>
   >();
 
-  constructor(private communityMembersService: CommunityMembersService) {}
+  constructor(
+    private readonly user: PermissionHolder,
+    private readonly communityMembersService: CommunityMembersService,
+  ) {}
 
-  /**
-   * {@link getCommunityPermissions}, read once per request for each member and
-   * community. Guards and fields run once per row of a list, and the rows of
-   * one list nearly always share a community, so this turns a query per row
-   * into one. A subscription has no request and reads every time.
-   */
-  getCommunityPermissionsForRequest(
-    req: object | undefined,
-    userId: string,
-    communityId: string,
-  ): Promise<CommunityPermissions> {
-    if (!req) return this.getCommunityPermissions(userId, communityId);
+  get isAdmin(): boolean {
+    return this.hasGlobal(GlobalPermission.IsAdmin);
+  }
 
-    let cache = this.byRequest.get(req);
-    if (!cache) {
-      cache = new Map();
-      this.byRequest.set(req, cache);
-    }
-    const key = `${userId}:${communityId}`;
-    let permissions = cache.get(key);
+  hasGlobal(permission: GlobalPermission): boolean {
+    return this.user[permission] === true;
+  }
+
+  // Guards and fields run once per row of a list, and the rows of one list
+  // nearly always share a community, so this turns a query per row into one.
+  inCommunity(communityId: string): Promise<CommunityPermissions> {
+    let permissions = this.communities.get(communityId);
     if (!permissions) {
-      permissions = this.getCommunityPermissions(userId, communityId);
-      cache.set(key, permissions);
+      permissions = this.readCommunity(communityId);
+      this.communities.set(communityId, permissions);
     }
     return permissions;
   }
 
-  /**
-   * Get all community permissions for a user in a specific community.
-   *
-   * This method:
-   * 1. Retrieves all roles the user has in the community
-   * 2. Aggregates permissions across all roles using OR logic
-   * 3. Returns a map of permissions the user has
-   * 4. Includes `hasMembership` boolean indicating if user has any role
-   *
-   * @param userOrId - The user object or user ID
-   * @param communityId - The ID of the community
-   * @returns Object mapping permission names to boolean values (or undefined == false), plus hasMembership
-   *
-   * @example
-   * ```typescript
-   * const permissions = await permissionService.getCommunityPermissions(user, communityId);
-   * if (permissions.hasMembership) {
-   *   // User is a member of this community
-   * }
-   * if (permissions.canEditCharacter) {
-   *   // User can edit characters in this community
-   * }
-   * ```
-   */
-  async getCommunityPermissions(
-    userOrId: string | Pick<User, "id">,
+  async hasInCommunity(
     communityId: string,
-  ) {
-    const userId = typeof userOrId === "string" ? userOrId : userOrId.id;
+    permission: CommunityPermission,
+  ): Promise<boolean> {
+    const permissions = await this.inCommunity(communityId);
+    if (permission === CommunityPermission.Any) {
+      return permissions.hasMembership;
+    }
+    return permissions[permission] === true;
+  }
+
+  communityIdsWith(...anyOf: CommunityPermission[]): Promise<string[]> {
+    return this.communityMembersService.getCommunityIdsWithPermission(
+      this.user.id,
+      anyOf,
+    );
+  }
+
+  /** The account's roles in the community, OR'd together. */
+  private async readCommunity(
+    communityId: string,
+  ): Promise<CommunityPermissions> {
     const roles = await this.communityMembersService.getUserRolesInCommunity(
-      userId,
+      this.user.id,
       communityId,
     );
 
-    const permissions: Partial<Record<CommunityPermission, boolean>> & {
-      hasMembership: boolean;
-    } = {
+    const permissions: CommunityPermissions = {
       hasMembership: roles.length > 0,
     };
-
     for (const role of roles) {
       for (const permission of AllCommunityPermissions) {
-        // Skip the sentinel value "Any" - it's not a real permission field
-        if (permission === CommunityPermission.Any) {
-          continue;
-        }
+        // Membership, not a column on the role.
+        if (permission === CommunityPermission.Any) continue;
         if (role[permission] === true) {
           permissions[permission] = true;
         }
@@ -109,79 +89,27 @@ export class PermissionService {
     }
     return permissions;
   }
+}
 
-  /**
-   * Check if a user has a specific permission in a community.
-   *
-   * This is a convenience method that checks a single permission
-   *
-   * @param userOrId - The user object or user ID
-   * @param communityId - The ID of the community
-   * @param permission - The specific permission to check
-   * @returns True if the user has the permission, false otherwise
-   *
-   * @example
-   * ```typescript
-   * const canEdit = await permissionService.hasCommunityPermission(
-   *   user,
-   *   communityId,
-   *   CommunityPermission.CanEditCharacter
-   * );
-   * if (!canEdit) {
-   *   throw new ForbiddenException('Cannot edit characters in this community');
-   * }
-   * ```
-   */
-  async hasCommunityPermission(
-    userOrId: string | Pick<User, "id">,
-    communityId: string,
-    permission: CommunityPermission,
-  ): Promise<boolean> {
-    const res = await this.getCommunityPermissions(userOrId, communityId);
-    return res[permission] === true;
+/**
+ * Builds the {@link RequestPermissions} a caller acts with.
+ *
+ * A request's are built once, when it is authenticated, and read back with
+ * `@CurrentPermissions()` or `getPermissionsFromContext`.
+ */
+@Injectable()
+export class PermissionService {
+  constructor(
+    private readonly communityMembersService: CommunityMembersService,
+  ) {}
+
+  /** Everything this account may do. Null is a caller who is not signed in. */
+  forUser(user: PermissionHolder | null | undefined): RequestPermissions {
+    if (!user) return ANONYMOUS_PERMISSIONS;
+    return new AccountPermissions(user, this.communityMembersService);
   }
 
-  /**
-   * Check if a user has a specific global permission.
-   *
-   * Global permissions are system-wide and stored directly on the User entity.
-   * Examples include: canCreateCommunity, canListUsers, isAdmin, etc.
-   *
-   * @param user - The user object
-   * @param permission - The global permission to check
-   * @returns True if the user has the permission, false otherwise
-   *
-   * @example
-   * ```typescript
-   * const canCreateCommunity = permissionService.hasGlobalPermission(
-   *   user,
-   *   GlobalPermission.CanCreateCommunity
-   * );
-   * if (!canCreateCommunity) {
-   *   throw new ForbiddenException('Cannot create communities');
-   * }
-   * ```
-   */
-  hasGlobalPermission(user: User, permission: GlobalPermission): boolean {
-    return user[permission] === true;
-  }
-
-  // ===== IDENTITY CHECKS =====
-
-  /**
-   * Check if a user ID matches a target user ID (identity check).
-   *
-   * @param userId - The user ID to check
-   * @param targetUserId - The target user ID
-   * @returns True if the IDs match, false otherwise
-   *
-   * @example
-   * ```typescript
-   * if (permissionService.isSelf(currentUser.id, requestedUserId)) {
-   *   // User is accessing their own data
-   * }
-   * ```
-   */
+  /** Whether `userId` is the account being asked about. */
   isSelf(userId: string, targetUserId: string): boolean {
     return userId === targetUserId;
   }

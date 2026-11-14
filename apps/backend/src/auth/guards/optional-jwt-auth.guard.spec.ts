@@ -4,6 +4,12 @@ import { JwtService } from "@nestjs/jwt";
 import { JwtStrategy } from "../strategies/jwt.strategy";
 import { UsersService } from "../../users/users.service";
 import { OptionalJwtAuthGuard } from "./optional-jwt-auth.guard";
+import { PermissionService } from "../PermissionService";
+import {
+  ANONYMOUS_PERMISSIONS,
+  getRequestPermissions,
+  RequestPermissions,
+} from "../request-permissions";
 
 const SECRET = "optional-jwt-auth-guard-spec";
 
@@ -36,7 +42,9 @@ const graphqlContextFor = (req: FakeRequest | undefined): ExecutionContext => {
  */
 describe("OptionalJwtAuthGuard", () => {
   const viewer = { id: "user-1", username: "viewer" };
+  const viewerPermissions = { isAdmin: true } as RequestPermissions;
   let findById: jest.Mock;
+  let forUser: jest.Mock;
   let guard: OptionalJwtAuthGuard;
 
   const signedInRequest = (): FakeRequest => ({
@@ -51,7 +59,31 @@ describe("OptionalJwtAuthGuard", () => {
       { get: () => SECRET } as unknown as ConfigService,
       { findById } as unknown as UsersService,
     );
-    guard = new OptionalJwtAuthGuard();
+    forUser = jest.fn((user: unknown) =>
+      user ? viewerPermissions : ANONYMOUS_PERMISSIONS,
+    );
+    guard = new OptionalJwtAuthGuard({
+      forUser,
+    } as unknown as PermissionService);
+  });
+
+  it("gives the request its viewer's permissions", async () => {
+    const req = signedInRequest();
+
+    await guard.canActivate(graphqlContextFor(req));
+    await guard.canActivate(graphqlContextFor(req));
+
+    expect(forUser).toHaveBeenCalledTimes(1);
+    expect(forUser).toHaveBeenCalledWith(viewer);
+    expect(getRequestPermissions(req)).toBe(viewerPermissions);
+  });
+
+  it("gives an anonymous request no permissions", async () => {
+    const req: FakeRequest = { headers: {} };
+
+    await guard.canActivate(graphqlContextFor(req));
+
+    expect(getRequestPermissions(req)).toBe(ANONYMOUS_PERMISSIONS);
   });
 
   it("looks the viewer up once however many fields resolve", async () => {
