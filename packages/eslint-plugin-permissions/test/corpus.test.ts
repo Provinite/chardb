@@ -205,9 +205,41 @@ const FILTERS: Array<[string, string]> = [
     "an annotated ordering",
     'const order: Prisma.RoleOrderByWithRelationInput = { canEditCharacter: "asc" }; return order;',
   ],
+  [
+    "awaited callbacks' results",
+    "await db.role.findMany({ where: { OR: await Promise.all(ids.map(async (communityId) => ({ communityId, canEditCharacter: true }))) } });",
+  ],
+  [
+    "a concatenated callback's result",
+    "await db.role.findMany({ where: { OR: [{ name: id }].concat(ids.map((name) => ({ name, canEditCharacter: true }))) } });",
+  ],
+  [
+    "an assigned object",
+    "await db.role.findMany({ where: Object.assign({ communityId: id }, { canEditCharacter: true }) });",
+  ],
+  [
+    "a callback's return inside a switch",
+    'await db.role.findMany({ where: { OR: ids.map((communityId) => { switch (communityId) { case "a": return { communityId, canEditCharacter: true }; default: return { communityId }; } }) } });',
+  ],
 ];
 
 const ALLOWED: Array<[string, string]> = [
+  [
+    "a literal turned into a string in a filter",
+    "await db.role.findMany({ where: { name: JSON.stringify({ canManageItems: true }) } });",
+  ],
+  [
+    "a literal tested for membership in a filter",
+    "await db.role.findMany({ where: { id: { in: ids.filter((x) => [{ canEditCharacter: true }].length > x.length) } } });",
+  ],
+  [
+    "a literal a filter's callback loops over",
+    "await db.role.findMany({ where: { id: { in: ids.filter((x) => { for (const probe of [{ canEditCharacter: true }]) { if (probe) return true; } return Boolean(x); }) } } });",
+  ],
+  [
+    "a literal a filter's callback only tests",
+    "await db.role.findMany({ where: { id: { in: ids.filter((x) => { while (x && { canEditCharacter: true }) { return true; } return false; }) } } });",
+  ],
   ["the request's permissions", "return permissions.isAdmin;"],
   [
     "a community's permissions",

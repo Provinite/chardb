@@ -320,11 +320,14 @@ module.exports = {
     };
 
     /** @param {RuleNode} call a CallExpression */
-    const callsModel = (call) => {
-      const signature = checker.getResolvedSignature(
+    const signatureOf = (call) =>
+      checker.getResolvedSignature(
         /** @type {import("typescript").CallExpression} */ (tsNodes.get(call)),
       );
-      const declaration = signature?.getDeclaration();
+
+    /** @param {RuleNode} call a CallExpression */
+    const callsModel = (call) => {
+      const declaration = signatureOf(call)?.getDeclaration();
       return (
         declaration !== undefined &&
         declaredIn.some((part) =>
@@ -337,19 +340,73 @@ module.exports = {
     };
 
     /**
+     * A call that hands back what it was given: one of the language's own
+     * functions whose result is an object. `Promise.all`, `Object.assign`
+     * and `concat` are; `JSON.stringify` and `includes` answer with a string
+     * and a boolean, and a function of the project's own may do anything
+     * with its argument.
+     * @param {RuleNode} call a CallExpression
+     */
+    const returnsItsArguments = (call) => {
+      const signature = signatureOf(call);
+      const declaration = signature?.getDeclaration();
+      if (!signature || !declaration) return false;
+      if (
+        !services.program?.isSourceFileDefaultLibrary(
+          declaration.getSourceFile(),
+        )
+      ) {
+        return false;
+      }
+      return parts(checker.getReturnTypeOfSignature(signature)).some(
+        (part) => (part.flags & ts.TypeFlags.Object) !== 0,
+      );
+    };
+
+    /**
+     * Whether a value at `from` is what `node` evaluates to or runs, and not
+     * something `node` only tests, loops over or discards.
+     * @param {RuleNode} node
+     * @param {RuleNode | undefined} from
+     */
+    const carries = (node, from) => {
+      switch (node.type) {
+        case "IfStatement":
+        case "ConditionalExpression":
+        case "SwitchCase":
+          return from !== node.test;
+        case "SwitchStatement":
+          return from !== node.discriminant;
+        case "WhileStatement":
+        case "DoWhileStatement":
+        case "ForStatement":
+        case "ForOfStatement":
+        case "ForInStatement":
+          return from === node.body;
+        case "SequenceExpression":
+          return from === node.expressions.at(-1);
+        case "MemberExpression":
+          return from === node.object;
+        default:
+          return true;
+      }
+    };
+
+    /**
      * Whether an object literal sits under a filtering key of an argument to
      * one of the client's own functions. Those are generic over their
      * argument, so the literal is typed by inference and never as a
      * `*WhereInput`.
      *
      * The literal has to reach the call as a value. One a callback returns
-     * counts, and so does what a method then makes of the result, as in
+     * counts, and so does what a method or one of the language's own
+     * functions then makes of it, as in
      * `where: { OR: ids.map((id) => ({ ... })).filter(Boolean) }`. One that
-     * is only declared inside a callback, or handed to some other function
-     * as an argument, does not: `where: { id: idOf({ ... }) }` filters by
-     * whatever `idOf` returns. A filtering key inside a callback does not
-     * reach out of it either, so the body of `$transaction((tx) => ...)` is
-     * not an argument to `$transaction`.
+     * is only declared or tested inside a callback, or handed to some other
+     * function as an argument, does not: `where: { id: idOf({ ... }) }`
+     * filters by whatever `idOf` returns. A filtering key inside a callback
+     * does not reach out of it either, so the body of
+     * `$transaction((tx) => ...)` is not an argument to `$transaction`.
      * @param {RuleNode} literal
      */
     const isInlineModelFilter = (literal) => {
@@ -358,7 +415,7 @@ module.exports = {
       let from;
       for (
         /** @type {RuleNode | null} */ let node = literal;
-        node && CARRIES_A_VALUE.has(node.type);
+        node && CARRIES_A_VALUE.has(node.type) && carries(node, from);
         from = node, node = node.parent
       ) {
         if (node.type === "Property") {
@@ -374,7 +431,13 @@ module.exports = {
           const isCallback =
             from?.type === "ArrowFunctionExpression" ||
             from?.type === "FunctionExpression";
-          if (from !== node.callee && !isCallback) return false;
+          if (
+            from !== node.callee &&
+            !isCallback &&
+            !returnsItsArguments(node)
+          ) {
+            return false;
+          }
         }
       }
       return false;
