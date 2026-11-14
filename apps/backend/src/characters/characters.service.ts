@@ -432,21 +432,19 @@ export class CharactersService {
     filters: CharacterServiceFilters = {},
   ) {
     const { limit = 20, offset = 0, search } = filters;
-    const [ownProfile, ownRegistry, anyCharacter, orphaned] = await Promise.all(
-      [
-        permissions.communityIdsWith(CommunityPermission.CanEditOwnCharacter),
-        permissions.communityIdsWith(
-          CommunityPermission.CanEditOwnCharacterRegistry,
-        ),
-        permissions.communityIdsWith(
-          CommunityPermission.CanEditCharacter,
-          CommunityPermission.CanEditCharacterRegistry,
-        ),
-        permissions.communityIdsWith(
-          CommunityPermission.CanCreateOrphanedCharacter,
-        ),
-      ],
-    );
+    const [ownCharacters, anyCharacter, orphaned] = await Promise.all([
+      permissions.communityIdsWith(
+        CommunityPermission.CanEditOwnCharacter,
+        CommunityPermission.CanEditOwnCharacterRegistry,
+      ),
+      permissions.communityIdsWith(
+        CommunityPermission.CanEditCharacter,
+        CommunityPermission.CanEditCharacterRegistry,
+      ),
+      permissions.communityIdsWith(
+        CommunityPermission.CanCreateOrphanedCharacter,
+      ),
+    ]);
 
     const where: Prisma.CharacterWhereInput = {
       ...notDeleted,
@@ -463,10 +461,9 @@ export class CharactersService {
           ownerId: userId,
           speciesId: null,
         },
-        // User owns the character AND has canEditOwnCharacter permission (profile fields)
-        { ownerId: userId, species: { communityId: { in: ownProfile } } },
-        // User owns the character AND has canEditOwnCharacterRegistry permission (registry fields)
-        { ownerId: userId, species: { communityId: { in: ownRegistry } } },
+        // User owns the character AND has canEditOwnCharacter (profile fields)
+        // or canEditOwnCharacterRegistry (registry fields)
+        { ownerId: userId, species: { communityId: { in: ownCharacters } } },
         // User has canEditCharacter or canEditCharacterRegistry permission (any character)
         { species: { communityId: { in: anyCharacter } } },
         // Orphaned character with canCreateOrphanedCharacter permission

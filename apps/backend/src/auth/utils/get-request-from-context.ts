@@ -3,10 +3,12 @@ import { GqlContextType, GqlExecutionContext } from "@nestjs/graphql";
 import type { Request } from "express";
 
 /**
- * The HTTP request behind a GraphQL resolver or a REST controller.
+ * The request behind a GraphQL resolver or a REST controller.
  *
- * Undefined for a subscription: graphql-ws builds its context from
- * connectionParams, so there is no request to find.
+ * For a subscription this is not an HTTP request. Apollo's driver fills the
+ * context's `req` with the graphql-ws connection context, which carries
+ * `connectionParams` and lasts as long as the socket does, so whatever is
+ * kept against it is kept for the connection.
  */
 export function getRequestFromContext(
   context: ExecutionContext,

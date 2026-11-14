@@ -46,3 +46,18 @@ export declare function findMembers(args: {
 }): void;
 export declare function createRole(args: { data: RoleCreateInput }): void;
 export declare function findUser(args: { select: UserSelect }): void;
+
+// The generated client's query methods are generic over their argument, so
+// an inline argument is typed by inference and not as a `*WhereInput`; and
+// what a `select` returns is a mapped type over the selection.
+export type Selected<S> = { [K in keyof S]: boolean };
+export declare const client: {
+  role: {
+    findMany<T>(args: T): Role[];
+    count<T>(args: T): number;
+    update<T>(args: T): Role;
+  };
+  user: {
+    findUnique<T extends { select: object }>(args: T): Selected<T["select"]>;
+  };
+};

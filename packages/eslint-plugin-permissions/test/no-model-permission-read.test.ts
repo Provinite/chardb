@@ -3,6 +3,7 @@ import { filename, options, ruleTester } from "./ruleTester";
 
 const MODELS = `import type { Role, User } from "./models";`;
 const QUERIES = `import { createRole, findCharacters, findMembers, findUser } from "./models";`;
+const CLIENT = `import { client } from "./models";`;
 const PERMISSIONS = `import type { RequestPermissions, UserEntity } from "./permissions";`;
 
 const valid = (code: string) => ({ code, filename, options });
@@ -45,6 +46,18 @@ ruleTester.run("no-model-permission-read", rule, {
     // Filtering by anything else.
     valid(`${QUERIES}
       findMembers({ where: { userId: "u", role: { communityId: "c" } } });`),
+    valid(`${CLIENT}
+      client.role.findMany({ where: { communityId: "c" } });`),
+    // Writing through the client, and assigning to a model.
+    valid(`${CLIENT}
+      client.role.update({ where: { id: "r" }, data: { canEditCharacter: true } });`),
+    valid(`${MODELS}
+      declare const role: Role;
+      role.canEditCharacter = true;`),
+    // A method that happens to be named like a permission.
+    valid(`
+      declare const guard: any;
+      export const a = guard.canActivate();`),
   ],
   invalid: [
     invalid(
@@ -106,6 +119,37 @@ ruleTester.run("no-model-permission-read", rule, {
       "untyped",
       "untyped",
       "untyped",
+    ),
+    // Assigned by destructuring, not declared.
+    invalid(
+      `${MODELS}
+      declare const user: User;
+      let isAdmin: boolean;
+      ({ isAdmin } = user);
+      export { isAdmin };`,
+      "read",
+    ),
+    // Off what a query selected: a type the client computes, with no
+    // declaration of its own for the column.
+    invalid(
+      `${CLIENT}
+      const found = client.user.findUnique({ select: { isAdmin: true } });
+      export const a = found.isAdmin;
+      export const { isAdmin } = found;`,
+      "read",
+      "read",
+    ),
+    // A filter written inline in a query, which is typed by inference.
+    invalid(
+      `${CLIENT}
+      client.role.findMany({ where: { canEditCharacter: true } });
+      client.role.count({ where: { OR: [{ canEditCharacter: true }] } });
+      client.role.findMany({ where: { "canEditCharacter": true } });
+      client.role.findMany({ orderBy: { canEditCharacter: "desc" } });`,
+      "filter",
+      "filter",
+      "filter",
+      "filter",
     ),
     // Filtering rows by a role's permission.
     invalid(

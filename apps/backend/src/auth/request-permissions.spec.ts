@@ -20,7 +20,7 @@ describe("getRequestPermissions", () => {
     expect(getRequestPermissions({ user: null })).toBe(ANONYMOUS_PERMISSIONS);
   });
 
-  it("treats a subscription, which has no request, as anonymous", () => {
+  it("treats having no request as anonymous", () => {
     expect(getRequestPermissions(undefined)).toBe(ANONYMOUS_PERMISSIONS);
   });
 

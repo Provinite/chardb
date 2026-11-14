@@ -71,8 +71,8 @@ export class MissingRequestPermissionsError extends Error {
 }
 
 /**
- * The permissions `req` was authenticated with. A request with no user, and a
- * subscription, which has no request, are anonymous.
+ * The permissions `req` was authenticated with. A request with no user is
+ * anonymous, and so is having no request at all.
  *
  * @throws MissingRequestPermissionsError for a request that has a user and
  * was given no permissions. Treating it as anonymous would refuse the caller

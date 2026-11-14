@@ -80,6 +80,108 @@ describe("repository config", () => {
   );
 
   it(
+    "refuses a filter written inline in a Prisma call",
+    async () => {
+      expect(
+        await reports(`
+          import type { DatabaseService } from "../database/database.service";
+          declare const db: DatabaseService;
+          export const run = async (userId: string, communityId: string) => {
+            await db.communityMember.findFirst({
+              where: {
+                userId,
+                role: { communityId, canCreateOrphanedCharacter: true },
+              },
+            });
+            await db.character.findMany({
+              where: {
+                OR: [
+                  {
+                    ownerId: userId,
+                    species: {
+                      community: {
+                        roles: {
+                          some: {
+                            canEditOwnCharacter: true,
+                            communityMembers: { some: { userId } },
+                          },
+                        },
+                      },
+                    },
+                  },
+                ],
+              },
+            });
+            await db.role.count({ where: { canEditCharacter: true } });
+            await db.$transaction((tx) =>
+              tx.role.findMany({ where: { canModerateImages: true } }),
+            );
+          };
+        `),
+      ).toEqual(["filter", "filter", "filter", "filter"]);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "refuses a permission read off what a Prisma call selected or included",
+    async () => {
+      expect(
+        await reports(`
+          import type { DatabaseService } from "../database/database.service";
+          declare const db: DatabaseService;
+          export const run = async (id: string) => {
+            const actor = await db.user.findUnique({
+              where: { id },
+              select: { isAdmin: true },
+            });
+            const role = await db.role.findUnique({
+              where: { id },
+              select: { canEditCharacter: true },
+            });
+            const members = await db.communityMember.findMany({
+              where: { userId: id },
+              include: { role: { select: { canModerateImages: true } } },
+            });
+            const { canEditCharacter } = role ?? { canEditCharacter: false };
+            return [
+              actor?.isAdmin,
+              role?.canEditCharacter,
+              members.filter((m) => m.role.canModerateImages),
+              canEditCharacter,
+            ];
+          };
+        `),
+      ).toEqual(["read", "read", "read", "read"]);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "allows a Prisma call that writes permissions or reads other columns",
+    async () => {
+      expect(
+        await reports(`
+          import type { DatabaseService } from "../database/database.service";
+          declare const db: DatabaseService;
+          export const run = async (id: string) => {
+            await db.role.update({
+              where: { id },
+              data: { canEditCharacter: true },
+            });
+            const user = await db.user.findUnique({
+              where: { id },
+              select: { id: true, username: true },
+            });
+            return user?.username;
+          };
+        `),
+      ).toEqual([]);
+    },
+    TIMEOUT,
+  );
+
+  it(
     "allows the same names read off a request's permissions",
     async () => {
       expect(
@@ -96,11 +198,12 @@ describe("repository config", () => {
     TIMEOUT,
   );
 
-  it("is off where requests are authenticated, where roles are edited, and in specs", async () => {
+  it("is off where roles are edited, where flags are mapped for display, and in specs", async () => {
     expect(await isOn("apps/backend/src/users/users.service.ts")).toBe(true);
-    expect(await isOn("apps/backend/src/auth/PermissionService.ts")).toBe(
-      false,
-    );
+    expect(await isOn("apps/backend/src/auth/PermissionService.ts")).toBe(true);
+    expect(
+      await isOn("apps/backend/src/users/utils/user-resolver-mappers.ts"),
+    ).toBe(false);
     expect(await isOn("apps/backend/src/roles/roles.service.ts")).toBe(false);
     expect(await isOn("apps/backend/src/users/users.service.spec.ts")).toBe(
       false,

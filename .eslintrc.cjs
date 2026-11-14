@@ -164,7 +164,6 @@ module.exports = {
       files: ["apps/backend/src/**/*.ts"],
       excludedFiles: [
         "**/*.spec.ts",
-        "apps/backend/src/auth/**",
         // Where roles are edited, and where an account's and a role's flags
         // are mapped for display.
         "apps/backend/src/roles/**",
