@@ -1,9 +1,9 @@
 import { ExecutionContext } from "@nestjs/common";
-import { GqlContextType, GqlExecutionContext } from "@nestjs/graphql";
 import {
   getRequestPermissions,
   RequestPermissions,
 } from "../request-permissions";
+import { getRequestFromContext } from "./get-request-from-context";
 
 /**
  * The permissions the current request was authenticated with, for a guard or
@@ -12,10 +12,5 @@ import {
 export function getPermissionsFromContext(
   context: ExecutionContext,
 ): RequestPermissions {
-  if (context.getType<GqlContextType>() === "graphql") {
-    return getRequestPermissions(
-      GqlExecutionContext.create(context).getContext<{ req?: object }>()?.req,
-    );
-  }
-  return getRequestPermissions(context.switchToHttp().getRequest<object>());
+  return getRequestPermissions(getRequestFromContext(context));
 }

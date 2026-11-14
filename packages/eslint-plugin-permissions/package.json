@@ -1,0 +1,25 @@
+{
+  "name": "@chardb/eslint-plugin-permissions",
+  "version": "15.8.0",
+  "private": true,
+  "description": "ESLint rules that keep backend permission checks behind RequestPermissions",
+  "main": "./src/index.js",
+  "scripts": {
+    "type-check": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/type-check.tsbuildinfo",
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "@types/eslint": "^8.56.12",
+    "@types/estree": "^1.0.8",
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^5.0.5"
+  },
+  "peerDependencies": {
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+}

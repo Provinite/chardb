@@ -133,6 +133,8 @@ export class CharacterOwnershipChangesResolver {
       description: "User ID (can be from or to user)",
     })
     userId: string,
+    @CurrentUser() currentUser: CurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
     @Args("first", {
       type: () => Int,
       nullable: true,
@@ -146,8 +148,6 @@ export class CharacterOwnershipChangesResolver {
       description: "Cursor for pagination",
     })
     after?: string,
-    @CurrentUser() currentUser?: CurrentUserType,
-    @CurrentPermissions() permissions?: RequestPermissions,
   ): Promise<CharacterOwnershipChangeConnection> {
     // Check authorization: self OR admin
     if (!currentUser) {
@@ -156,7 +156,7 @@ export class CharacterOwnershipChangesResolver {
 
     const isSelf = this.permissionService.isSelf(currentUser.id, userId);
 
-    if (!isSelf && !permissions?.isAdmin) {
+    if (!isSelf && !permissions.isAdmin) {
       throw new ForbiddenException(
         "You can only view your own ownership changes",
       );

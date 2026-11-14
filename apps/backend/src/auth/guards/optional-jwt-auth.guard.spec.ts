@@ -3,7 +3,10 @@ import { ConfigService } from "@nestjs/config";
 import { JwtService } from "@nestjs/jwt";
 import { JwtStrategy } from "../strategies/jwt.strategy";
 import { UsersService } from "../../users/users.service";
-import { OptionalJwtAuthGuard } from "./optional-jwt-auth.guard";
+import {
+  MissingPermissionServiceError,
+  OptionalJwtAuthGuard,
+} from "./optional-jwt-auth.guard";
 import { PermissionService } from "../PermissionService";
 import {
   ANONYMOUS_PERMISSIONS,
@@ -65,6 +68,15 @@ describe("OptionalJwtAuthGuard", () => {
     guard = new OptionalJwtAuthGuard({
       forUser,
     } as unknown as PermissionService);
+  });
+
+  // AuthGuard marks its own first constructor argument optional, and this
+  // class inherits the mark: Nest injects undefined where it cannot find a
+  // PermissionService rather than refusing to start.
+  it("cannot be built without a PermissionService", () => {
+    expect(
+      () => new OptionalJwtAuthGuard(undefined as unknown as PermissionService),
+    ).toThrow(MissingPermissionServiceError);
   });
 
   it("gives the request its viewer's permissions", async () => {

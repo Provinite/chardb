@@ -8,7 +8,8 @@
  *
  * `plugin:@typescript-eslint/recommended` is the non-type-checked preset. The
  * type-checked presets need a `project` per workspace and a full tsc program
- * per run; `yarn type-check` already covers what they would catch.
+ * per run; `yarn type-check` already covers what they would catch. One
+ * override below does take a `project`, for apps/backend/src alone.
  */
 
 // Rules from packages/eslint-plugin-styles for the conventions in
@@ -154,46 +155,28 @@ module.exports = {
       // A permission is read from the request's RequestPermissions
       // (apps/backend/src/auth/request-permissions.ts), which is where it is
       // decided what a request may do. Reading the account's row or its roles
-      // answers for the account instead. Matched by name: `isAdmin` may be
-      // read only off something called `permissions`, and the role rules
-      // catch the usual spellings rather than every one.
+      // answers for the account instead.
+      //
+      // The one rule here that asks the type checker, which is how it tells
+      // `user.isAdmin` from `permissions.isAdmin` whatever either is called.
+      // It costs a TypeScript program for the backend on any run that lints
+      // a backend file.
       files: ["apps/backend/src/**/*.ts"],
       excludedFiles: [
         "**/*.spec.ts",
         "apps/backend/src/auth/**",
-        // Where roles are defined, and where an account's flags are mapped
-        // for display.
+        // Where roles are edited, and where an account's and a role's flags
+        // are mapped for display.
         "apps/backend/src/roles/**",
-        "apps/backend/src/communities/communities.service.ts",
         "apps/backend/src/users/utils/user-resolver-mappers.ts",
       ],
+      parserOptions: {
+        project: "./apps/backend/tsconfig.json",
+        tsconfigRootDir: __dirname,
+      },
+      plugins: ["@chardb/permissions"],
       rules: {
-        "no-restricted-syntax": [
-          "error",
-          {
-            selector:
-              "MemberExpression[property.name='isAdmin']:not([object.name=/permissions$/i])",
-            message:
-              "Read site-admin status from the request's RequestPermissions (@CurrentPermissions(), in a variable named `permissions`), not from the account.",
-          },
-          {
-            selector: "ObjectPattern > Property[key.name='isAdmin']",
-            message:
-              "Read site-admin status from the request's RequestPermissions (@CurrentPermissions()), not from the account.",
-          },
-          {
-            selector:
-              ":matches(MemberExpression[object.name=/^role$/i], MemberExpression[object.property.name='role'])[property.name=/^can[A-Z]/]",
-            message:
-              "Read community permissions from the request's RequestPermissions (@CurrentPermissions()), not from a role.",
-          },
-          {
-            selector:
-              "Property[key.name=/^roles?$/] Property[key.name=/^can[A-Z]/]",
-            message:
-              "Filter by permission with RequestPermissions.communityIdsWith(), not by a role's columns.",
-          },
-        ],
+        "@chardb/permissions/no-model-permission-read": "error",
       },
     },
     {
@@ -246,8 +229,8 @@ module.exports = {
       env: { browser: true, node: false },
     },
     {
-      // CommonJS config files, and the style plugin, which ESLint requires.
-      files: ["**/*.cjs", "packages/eslint-plugin-styles/src/**/*.js"],
+      // CommonJS config files, and the plugins, which ESLint requires.
+      files: ["**/*.cjs", "packages/eslint-plugin-*/src/**/*.js"],
       parserOptions: { sourceType: "script" },
       rules: { "@typescript-eslint/no-var-requires": "off" },
     },

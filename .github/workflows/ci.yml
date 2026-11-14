@@ -55,8 +55,21 @@ jobs:
         if: steps.node-modules-cache.outputs.cache-hit != 'true'
         run: yarn install --immutable
 
-      # No build step: the lint preset is the non-type-checked one, so it needs
-      # no declaration files from packages/*.
+      # The lint preset is the non-type-checked one, apart from the backend's
+      # permission rule, which asks the type checker whether a value is a
+      # database model. That needs the generated Prisma client and the
+      # declaration files the backend imports.
+      - name: Build workspace packages
+        env:
+          # prisma generate resolves env("DATABASE_URL") without ever
+          # connecting.
+          DATABASE_URL: postgresql://ci:ci@localhost:5432/ci
+        run: |
+          yarn workspaces foreach -A --parallel \
+            --include '@chardb/database' \
+            --include '@chardb/shared' \
+            run build
+
       - name: Resolve diff base
         id: base
         run: |
@@ -247,6 +260,8 @@ jobs:
             workspace: "@chardb/da-import"
           - name: eslint-plugin-styles
             workspace: "@chardb/eslint-plugin-styles"
+          - name: eslint-plugin-permissions
+            workspace: "@chardb/eslint-plugin-permissions"
 
     env:
       # @chardb/database's build runs prisma generate, which resolves

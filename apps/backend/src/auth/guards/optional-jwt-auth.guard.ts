@@ -1,9 +1,9 @@
 import { Injectable, ExecutionContext } from "@nestjs/common";
 import { AuthGuard } from "@nestjs/passport";
-import { GqlExecutionContext } from "@nestjs/graphql";
 import type { Request } from "express";
 import { PermissionService } from "../PermissionService";
 import { setRequestPermissions } from "../request-permissions";
+import { getRequestFromContext } from "../utils/get-request-from-context";
 import type { CurrentUserType } from "../types/current-user.type";
 
 /**
@@ -14,15 +14,26 @@ import type { CurrentUserType } from "../types/current-user.type";
  */
 const authentications = new WeakMap<Request, Promise<boolean>>();
 
+/** The guard was built somewhere that provides no PermissionService. */
+export class MissingPermissionServiceError extends Error {
+  constructor() {
+    super("OptionalJwtAuthGuard was built without a PermissionService");
+    this.name = "MissingPermissionServiceError";
+  }
+}
+
 @Injectable()
 export class OptionalJwtAuthGuard extends AuthGuard("jwt") {
   constructor(private readonly permissionService: PermissionService) {
     super();
+    // AuthGuard marks its own first constructor argument optional and this
+    // class inherits the mark, so Nest injects undefined where it finds no
+    // PermissionService. Refuse at startup, not on the first request.
+    if (!permissionService) throw new MissingPermissionServiceError();
   }
 
   getRequest(context: ExecutionContext): Request | undefined {
-    const ctx = GqlExecutionContext.create(context);
-    return ctx.getContext<{ req?: Request }>().req;
+    return getRequestFromContext(context);
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {

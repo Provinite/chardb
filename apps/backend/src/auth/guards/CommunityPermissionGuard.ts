@@ -9,8 +9,8 @@ import {
   CommunityResolutionConfig,
   CommunityResolutionReference,
 } from "../types/CommunityResolutionConfig";
-import { GqlContextType, GqlExecutionContext } from "@nestjs/graphql";
-import type { Request } from "express";
+import { GqlExecutionContext } from "@nestjs/graphql";
+import { getRequestFromContext } from "../utils/get-request-from-context";
 import { getNestedValue } from "../../common/utils/getNestedValue";
 
 @Injectable()
@@ -50,7 +50,7 @@ export class CommunityPermissionGuard implements CanActivate {
     // The request lets field resolvers on a list share their lookups.
     const community = await this.communityResolverService.resolve(
       resolvedIds,
-      this.getRequest(context),
+      getRequestFromContext(context),
     );
 
     if (!community) {
@@ -61,15 +61,6 @@ export class CommunityPermissionGuard implements CanActivate {
       community.id,
       requiredPermissions,
     );
-  }
-
-  private getRequest(context: ExecutionContext): Request | undefined {
-    if (context.getType<GqlContextType>() === "graphql") {
-      return GqlExecutionContext.create(context).getContext<{
-        req?: Request;
-      }>().req;
-    }
-    return context.switchToHttp().getRequest<Request>();
   }
 
   private resolveEntityIds(

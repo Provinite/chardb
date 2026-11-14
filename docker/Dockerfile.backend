@@ -16,6 +16,7 @@ COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/database/package.json ./packages/database/
 COPY packages/eslint-plugin-styles/package.json ./packages/eslint-plugin-styles/
+COPY packages/eslint-plugin-permissions/package.json ./packages/eslint-plugin-permissions/
 
 RUN yarn install
 
@@ -46,6 +47,7 @@ COPY apps/backend/package.json ./apps/backend/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/database/package.json ./packages/database/
 COPY packages/eslint-plugin-styles/package.json ./packages/eslint-plugin-styles/
+COPY packages/eslint-plugin-permissions/package.json ./packages/eslint-plugin-permissions/
 
 RUN yarn workspaces focus --production @chardb/backend
 
