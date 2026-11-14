@@ -326,10 +326,20 @@ describe("Halloween play achievements (e2e)", () => {
         const bob = await named("bob", "Luther the Great");
         const luther = await named("lu", " lUTHER ");
 
-        await doorKnocks.knock(communityId, alice.id, permissionsOf(alice),bob.id);
+        await doorKnocks.knock(
+          communityId,
+          alice.id,
+          permissionsOf(alice),
+          bob.id,
+        );
         expect(await earned(alice.id)).toEqual([]);
 
-        await doorKnocks.knock(communityId, alice.id, permissionsOf(alice),luther.id);
+        await doorKnocks.knock(
+          communityId,
+          alice.id,
+          permissionsOf(alice),
+          luther.id,
+        );
         expect(await earned(alice.id)).toEqual(["no-relation-2026"]);
         expect(await earned(luther.id)).toEqual([]);
       });
@@ -339,7 +349,12 @@ describe("Halloween play achievements (e2e)", () => {
         const alice = await member("alice");
         const daphne = await named("daph", "Daphne");
 
-        await doorKnocks.knock(communityId, alice.id, permissionsOf(alice),daphne.id);
+        await doorKnocks.knock(
+          communityId,
+          alice.id,
+          permissionsOf(alice),
+          daphne.id,
+        );
         expect(await earned(alice.id)).toEqual(["also-no-relation-2026"]);
       });
 
@@ -354,7 +369,12 @@ describe("Halloween play achievements (e2e)", () => {
             data: { username: "Luther" },
           });
 
-          await doorKnocks.knock(communityId, alice.id, permissionsOf(alice),luther.id);
+          await doorKnocks.knock(
+            communityId,
+            alice.id,
+            permissionsOf(alice),
+            luther.id,
+          );
           expect(await earned(alice.id)).toEqual(["no-relation-2026"]);
         },
       );
@@ -364,7 +384,12 @@ describe("Halloween play achievements (e2e)", () => {
         const alice = await member("alice");
         const bob = await named("bob", null);
         const publish = jest.spyOn(events, "publish");
-        await doorKnocks.knock(communityId, alice.id, permissionsOf(alice),bob.id);
+        await doorKnocks.knock(
+          communityId,
+          alice.id,
+          permissionsOf(alice),
+          bob.id,
+        );
         expect(publish).toHaveBeenCalledWith("halloween.door.knocked", {
           guildId: GUILD_ID,
           knockerId: alice.id,

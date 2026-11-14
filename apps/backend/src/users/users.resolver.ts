@@ -134,8 +134,7 @@ export class UsersResolver {
     return {
       user: mapPrismaUserToGraphQL(user),
       isOwnProfile: currentUser?.id === user.id,
-      canViewPrivateContent:
-        currentUser?.id === user.id || permissions.isAdmin,
+      canViewPrivateContent: currentUser?.id === user.id || permissions.isAdmin,
     };
   }
 

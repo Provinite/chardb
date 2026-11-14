@@ -148,9 +148,7 @@ describe("characters a member may edit or upload to (e2e)", () => {
     await characters("not-a-member", await community("not-a-member", null));
     await characters("no-species", null);
 
-    expect(
-      await names(MY_EDITABLE_CHARACTERS, "myEditableCharacters"),
-    ).toEqual(
+    expect(await names(MY_EDITABLE_CHARACTERS, "myEditableCharacters")).toEqual(
       [
         "edit-own-own",
         "registry-own-own",
@@ -199,9 +197,9 @@ describe("characters a member may edit or upload to (e2e)", () => {
     await characters("not-a-member", await community("not-a-member", null));
     await characters("no-species", null);
 
-    expect(
-      await names(MY_EDITABLE_CHARACTERS, "myEditableCharacters"),
-    ).toEqual(["no-species-own"]);
+    expect(await names(MY_EDITABLE_CHARACTERS, "myEditableCharacters")).toEqual(
+      ["no-species-own"],
+    );
     expect(
       await names(MY_CHARACTERS_FOR_IMAGE_UPLOAD, "myCharactersForImageUpload"),
     ).toEqual(["no-species-own"]);

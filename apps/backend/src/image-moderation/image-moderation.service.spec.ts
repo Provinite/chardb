@@ -102,7 +102,11 @@ describe("ImageModerationService", () => {
 
   describe("approveImage without an award", () => {
     it("approves and records the action", async () => {
-      const action = await service.approveImage(IMAGE_ID, MODERATOR, permissions);
+      const action = await service.approveImage(
+        IMAGE_ID,
+        MODERATOR,
+        permissions,
+      );
 
       expect(mockDatabaseService.image.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -137,9 +141,9 @@ describe("ImageModerationService", () => {
     it("refuses a moderator without permission on this image", async () => {
       permissions.hasInCommunity.mockResolvedValue(false);
 
-      await expect(service.approveImage(IMAGE_ID, MODERATOR, permissions)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.approveImage(IMAGE_ID, MODERATOR, permissions),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it("refuses an image that is not pending", async () => {
@@ -152,9 +156,9 @@ describe("ImageModerationService", () => {
 
       // This is also what stops an image being paid for twice: a second
       // approval cannot happen, so a second award cannot either.
-      await expect(service.approveImage(IMAGE_ID, MODERATOR, permissions)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.approveImage(IMAGE_ID, MODERATOR, permissions),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -388,7 +392,12 @@ describe("ImageModerationService", () => {
 
   describe("deferImage", () => {
     it("stamps the sort key, the moderator and the note", async () => {
-      await service.deferImage(IMAGE_ID, MODERATOR, permissions, "  waiting on a reupload ");
+      await service.deferImage(
+        IMAGE_ID,
+        MODERATOR,
+        permissions,
+        "  waiting on a reupload ",
+      );
 
       expect(mockDatabaseService.image.update).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -452,9 +461,9 @@ describe("ImageModerationService", () => {
     it("refuses a moderator without permission on this image", async () => {
       permissions.hasInCommunity.mockResolvedValue(false);
 
-      await expect(service.deferImage(IMAGE_ID, MODERATOR, permissions)).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(
+        service.deferImage(IMAGE_ID, MODERATOR, permissions),
+      ).rejects.toThrow(ForbiddenException);
       expect(mockDatabaseService.image.update).not.toHaveBeenCalled();
     });
 
@@ -468,9 +477,9 @@ describe("ImageModerationService", () => {
         uploader: { email: "clove@example.test", username: "clove" },
       });
 
-      await expect(service.deferImage(IMAGE_ID, MODERATOR, permissions)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(
+        service.deferImage(IMAGE_ID, MODERATOR, permissions),
+      ).rejects.toThrow(BadRequestException);
       expect(mockDatabaseService.image.update).not.toHaveBeenCalled();
     });
   });

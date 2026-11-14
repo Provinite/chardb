@@ -116,7 +116,9 @@ describe("ImagesService", () => {
       db.image.create.mockResolvedValue(mockImage);
       db.media.create.mockResolvedValue(mockMedia);
 
-      const result = await service.upload(userId, permissions, { file: mockFile });
+      const result = await service.upload(userId, permissions, {
+        file: mockFile,
+      });
 
       expect(mockS3Service.uploadImage).toHaveBeenCalledTimes(3);
       expect(db.image.create).toHaveBeenCalledWith(
@@ -171,7 +173,10 @@ describe("ImagesService", () => {
         db.itemType.findUnique.mockResolvedValue({ communityId: "c1" });
         permissions.hasInCommunity.mockResolvedValue(true);
 
-        await service.upload("user1", permissions, { file: mockFile, itemTypeId: "it1" });
+        await service.upload("user1", permissions, {
+          file: mockFile,
+          itemTypeId: "it1",
+        });
 
         expect(db.image.create).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -234,7 +239,10 @@ describe("ImagesService", () => {
       });
 
       await expect(
-        service.upload("user1", permissions, { file: mockFile, characterId: "char1" }),
+        service.upload("user1", permissions, {
+          file: mockFile,
+          characterId: "char1",
+        }),
       ).rejects.toThrow(ForbiddenException);
     });
   });
