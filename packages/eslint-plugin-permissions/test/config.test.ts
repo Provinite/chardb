@@ -198,7 +198,7 @@ describe("repository config", () => {
   );
 
   it(
-    "refuses a filter that reaches a Prisma call through a chain, or sits where no \`where\` key is written",
+    "refuses a filter that reaches a Prisma call through a chain, or sits where no where key is written",
     async () => {
       expect(
         await reports(`
