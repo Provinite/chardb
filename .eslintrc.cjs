@@ -154,8 +154,9 @@ module.exports = {
       // A permission is read from the request's RequestPermissions
       // (apps/backend/src/auth/request-permissions.ts), which is where it is
       // decided what a request may do. Reading the account's row or its roles
-      // answers for the account instead. Matched by name, so it catches the
-      // usual spellings rather than every one.
+      // answers for the account instead. Matched by name: `isAdmin` may be
+      // read only off something called `permissions`, and the role rules
+      // catch the usual spellings rather than every one.
       files: ["apps/backend/src/**/*.ts"],
       excludedFiles: [
         "**/*.spec.ts",
@@ -171,7 +172,12 @@ module.exports = {
           "error",
           {
             selector:
-              "MemberExpression[property.name='isAdmin'][object.name=/user|actor|account|viewer|member/i]",
+              "MemberExpression[property.name='isAdmin']:not([object.name=/permissions$/i])",
+            message:
+              "Read site-admin status from the request's RequestPermissions (@CurrentPermissions(), in a variable named `permissions`), not from the account.",
+          },
+          {
+            selector: "ObjectPattern > Property[key.name='isAdmin']",
             message:
               "Read site-admin status from the request's RequestPermissions (@CurrentPermissions()), not from the account.",
           },

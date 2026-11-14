@@ -119,15 +119,6 @@ export class ImageModerationService {
   }
 
   /**
-   * Get community IDs where the user has image moderation permission
-   */
-  async getModeratorCommunityIds(
-    permissions: RequestPermissions,
-  ): Promise<string[]> {
-    return permissions.communityIdsWith(CommunityPermission.CanModerateImages);
-  }
-
-  /**
    * Check if a user can moderate a specific image
    */
   async canUserModerateImage(

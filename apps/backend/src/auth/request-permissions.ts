@@ -60,11 +60,34 @@ export function setRequestPermissions(
 }
 
 /**
- * The permissions `req` was authenticated with. A request nothing
- * authenticated, and a subscription, which has no request, are anonymous.
+ * A request has a user but was never told what it may do: something set
+ * `req.user` without calling {@link setRequestPermissions}.
+ */
+export class MissingRequestPermissionsError extends Error {
+  constructor() {
+    super("Request has a user but no permissions");
+    this.name = "MissingRequestPermissionsError";
+  }
+}
+
+/**
+ * The permissions `req` was authenticated with. A request with no user, and a
+ * subscription, which has no request, are anonymous.
+ *
+ * @throws MissingRequestPermissionsError for a request that has a user and
+ * was given no permissions. Treating it as anonymous would refuse the caller
+ * everything while `@CurrentUser()` still named them.
  */
 export function getRequestPermissions(
   req: object | undefined | null,
 ): RequestPermissions {
-  return (req && byRequest.get(req)) || ANONYMOUS_PERMISSIONS;
+  if (!req) return ANONYMOUS_PERMISSIONS;
+
+  const permissions = byRequest.get(req);
+  if (permissions) return permissions;
+
+  if ((req as { user?: unknown }).user) {
+    throw new MissingRequestPermissionsError();
+  }
+  return ANONYMOUS_PERMISSIONS;
 }

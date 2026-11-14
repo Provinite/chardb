@@ -3,7 +3,7 @@ import type {
   RequestPermissions,
 } from "../src/auth/request-permissions";
 import { CommunityPermission } from "../src/auth/CommunityPermission";
-import type { GlobalPermission } from "../src/auth/GlobalPermission";
+import { GlobalPermission } from "../src/auth/GlobalPermission";
 
 /** A {@link RequestPermissions} a spec can assert against and re-script. */
 export interface FakePermissions extends RequestPermissions {
@@ -17,9 +17,9 @@ export interface FakePermissions extends RequestPermissions {
 /**
  * A caller's permissions for a unit spec.
  *
- * `inCommunity` is what the caller holds in every community asked about;
- * `hasInCommunity` and `communityIdsWith` answer from it until a spec
- * re-scripts them.
+ * `inCommunity` is what the caller holds in every community asked about, and
+ * `hasInCommunity` answers from it. `communityIdsWith` lists no communities
+ * and `hasGlobal` grants only `isAdmin`, until a spec re-scripts them.
  */
 export function fakePermissions(
   options: {
@@ -36,9 +36,11 @@ export function fakePermissions(
       ? held.hasMembership
       : held[permission] === true;
 
-  return {
+  const fake: FakePermissions = {
     isAdmin: options.isAdmin ?? false,
-    hasGlobal: jest.fn<boolean, [GlobalPermission]>(() => false),
+    hasGlobal: jest.fn<boolean, [GlobalPermission]>(
+      (permission) => permission === GlobalPermission.IsAdmin && fake.isAdmin,
+    ),
     inCommunity: jest.fn<Promise<CommunityPermissions>, [string]>(
       async () => held,
     ),
@@ -49,4 +51,5 @@ export function fakePermissions(
       async () => [],
     ),
   };
+  return fake;
 }

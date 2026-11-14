@@ -3,7 +3,7 @@ import {
   AllCommunityPermissions,
   CommunityPermission,
 } from "./CommunityPermission";
-import { User } from "@chardb/database";
+import { Role, User } from "@chardb/database";
 import { CommunityMembersService } from "../community-members/community-members.service";
 import { GlobalPermission } from "./GlobalPermission";
 import {
@@ -11,8 +11,6 @@ import {
   CommunityPermissions,
   RequestPermissions,
 } from "./request-permissions";
-
-export type { CommunityPermissions } from "./request-permissions";
 
 /** The columns of an account that its permissions are read from. */
 type PermissionHolder = Pick<User, "id" | `${GlobalPermission}`>;
@@ -23,6 +21,7 @@ class AccountPermissions implements RequestPermissions {
     string,
     Promise<CommunityPermissions>
   >();
+  private roles?: Promise<Role[]>;
 
   constructor(
     private readonly user: PermissionHolder,
@@ -44,6 +43,8 @@ class AccountPermissions implements RequestPermissions {
     if (!permissions) {
       permissions = this.readCommunity(communityId);
       this.communities.set(communityId, permissions);
+      // A read that failed is asked again, not remembered.
+      permissions.catch(() => this.communities.delete(communityId));
     }
     return permissions;
   }
@@ -59,11 +60,26 @@ class AccountPermissions implements RequestPermissions {
     return permissions[permission] === true;
   }
 
-  communityIdsWith(...anyOf: CommunityPermission[]): Promise<string[]> {
-    return this.communityMembersService.getCommunityIdsWithPermission(
-      this.user.id,
-      anyOf,
-    );
+  async communityIdsWith(...anyOf: CommunityPermission[]): Promise<string[]> {
+    // Every role the account holds anywhere, read once: a list query asks
+    // this several times over, once per permission it filters by.
+    if (!this.roles) {
+      const roles = this.communityMembersService.getUserRoles(this.user.id);
+      this.roles = roles;
+      roles.catch(() => {
+        if (this.roles === roles) this.roles = undefined;
+      });
+    }
+
+    const communityIds = new Set<string>();
+    for (const role of await this.roles) {
+      const holdsOne = anyOf.some(
+        (permission) =>
+          permission === CommunityPermission.Any || role[permission] === true,
+      );
+      if (holdsOne) communityIds.add(role.communityId);
+    }
+    return [...communityIds];
   }
 
   /** The account's roles in the community, OR'd together. */

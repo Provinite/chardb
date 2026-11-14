@@ -2,7 +2,6 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
-import { CommunityPermission } from "../auth/CommunityPermission";
 
 /**
  * Service layer input types for community member operations.
@@ -310,32 +309,10 @@ export class CommunityMembersService {
     return communityMembers.map((member) => member.role);
   }
 
-  /**
-   * The communities where a user holds a role with at least one of these
-   * permissions. `CommunityPermission.Any` matches every role.
-   */
-  async getCommunityIdsWithPermission(
-    userId: string,
-    anyOf: CommunityPermission[],
-  ): Promise<string[]> {
-    if (anyOf.length === 0) return [];
-
-    const where: Prisma.RoleWhereInput = {
-      communityMembers: { some: { userId } },
-    };
-    if (!anyOf.includes(CommunityPermission.Any)) {
-      where.OR = anyOf.map((permission) => {
-        const holdsIt: Prisma.RoleWhereInput = {};
-        if (permission !== CommunityPermission.Any) holdsIt[permission] = true;
-        return holdsIt;
-      });
-    }
-
-    const roles = await this.prisma.role.findMany({
-      where,
-      select: { communityId: true },
-      distinct: ["communityId"],
+  /** Every role a user holds, in every community. */
+  async getUserRoles(userId: string) {
+    return this.prisma.role.findMany({
+      where: { communityMembers: { some: { userId } } },
     });
-    return roles.map((role) => role.communityId);
   }
 }
