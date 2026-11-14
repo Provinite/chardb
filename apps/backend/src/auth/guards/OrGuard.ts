@@ -21,31 +21,19 @@ import { ModuleRef } from "@nestjs/core";
  * @param guards - Array of guard classes to check
  * @returns A dynamically created guard class that implements OR logic
  *
- * @example
- * ```typescript
- * // Owner OR Admin can update
- * @Mutation(() => Gallery)
- * @UseGuards(OrGuard(OwnershipGuard, GlobalAdminGuard))
- * async updateGallery(@Args('id') id: string) {
- *   // Passes if user owns gallery OR is admin
- * }
- * ```
+ * The app registers one of these globally, as `PERMISSION_OR_GUARD` in
+ * `auth.module.ts`, over every permission guard. Each of those passes only
+ * for a handler carrying its own `@Allow*` decorator, so a resolver states
+ * who may call it with decorators and needs no `@UseGuards`:
  *
  * @example
  * ```typescript
- * // Multiple permission options
- * @Mutation(() => Character)
- * @UseGuards(
- *   OrGuard(
- *     CommunityRoleGuard,  // Has community permission
- *     GlobalAdminGuard,    // OR is global admin
- *   )
- * )
+ * // The character's community lets them edit it, OR they are a site admin
+ * @AllowGlobalAdmin()
  * @AllowCommunityPermission(CommunityPermission.CanEditCharacter)
  * @ResolveCommunityFrom({ characterId: 'id' })
- * async updateCharacter(@Args('id') id: string) {
- *   // Passes if user has permission OR is admin
- * }
+ * @Mutation(() => Character)
+ * async updateCharacter(@Args('id') id: string) {}
  * ```
  */
 export function OrGuard(...guards: Type<CanActivate>[]): Type<CanActivate> {

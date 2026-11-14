@@ -7,9 +7,26 @@ const COMMUNITY_COUNT = `
   query ($communityId: ID!) { pendingImageCount(communityId: $communityId) }
 `;
 const GLOBAL_COUNT = `query { globalPendingImageCount }`;
-const REJECT = `
-  mutation ($input: RejectImageInput!) { rejectImage(input: $input) { id } }
-`;
+const DECISIONS: Array<[string, string, Record<string, unknown>]> = [
+  [
+    "approveImage",
+    `mutation ($input: ApproveImageInput!) { approveImage(input: $input) { id } }`,
+    {},
+  ],
+  [
+    "deferImage",
+    `mutation ($input: DeferImageInput!) { deferImage(input: $input) { id } }`,
+    {},
+  ],
+  [
+    "rejectImage",
+    `mutation ($input: RejectImageInput!) { rejectImage(input: $input) { id } }`,
+    { reason: "OTHER", reasonText: "x" },
+  ],
+];
+
+/** What Nest answers when a guard refuses, as opposed to the service. */
+const REFUSED_BY_GUARD = "Forbidden resource";
 
 /**
  * Who reaches the moderation queue. The permission decorators on these
@@ -108,15 +125,30 @@ describe("image moderation access (e2e)", () => {
     expect(await outcome(GLOBAL_COUNT, {}, admin)).toBe("ok");
   });
 
-  // Open to anyone signed in; the service decides, image by image.
-  it("refuses an anonymous caller a decision, and a signed-in one an image that does not exist", async () => {
+  // A decision is open to anyone signed in, and the service decides image by
+  // image. So the guard stops an anonymous caller, and a signed-in one gets
+  // as far as the service, which is who refuses them.
+  describe.each(DECISIONS)("%s", (_name, mutation, extra) => {
     const input = {
       imageId: "00000000-0000-0000-0000-000000000000",
-      reason: "OTHER",
-      reasonText: "x",
+      ...extra,
     };
 
-    expect(await outcome(REJECT, { input }, null)).toBe("FORBIDDEN");
-    expect(await outcome(REJECT, { input }, await tokenFor({}))).not.toBe("ok");
+    const refusal = async (token: string | null) => {
+      const response = token
+        ? await testApp.authenticatedGraphqlRequest(mutation, { input }, token)
+        : await testApp.graphqlRequest(mutation, { input });
+      return (response.body.errors?.[0]?.message as string | undefined) ?? "ok";
+    };
+
+    it("is refused to an anonymous caller by the guard", async () => {
+      expect(await refusal(null)).toBe(REFUSED_BY_GUARD);
+    });
+
+    it("reaches the service for a signed-in caller", async () => {
+      expect(await refusal(await tokenFor({}))).toBe(
+        "You do not have permission to moderate this image",
+      );
+    });
   });
 });

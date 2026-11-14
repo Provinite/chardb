@@ -22,6 +22,7 @@ import {
   mockNotificationsService,
 } from "../../test/setup";
 import { fakePermissions, FakePermissions } from "../../test/fake-permissions";
+import { CommunityPermission } from "../auth/CommunityPermission";
 import { NotificationsService } from "../notifications/notifications.service";
 
 const mockPendingOwnershipService = {
@@ -900,6 +901,11 @@ describe("ItemsService", () => {
         /must be a member/i,
       );
       expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();
+      // Membership of the item's own community, and of no other.
+      expect(member.hasInCommunity).toHaveBeenCalledWith(
+        "comm1",
+        CommunityPermission.Any,
+      );
     });
   });
 });

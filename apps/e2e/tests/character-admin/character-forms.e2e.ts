@@ -330,10 +330,9 @@ test.describe("character forms", () => {
   /**
    * Who may add a form.
    *
-   * Traits used to be listed in `REGISTRY_FIELDS`, which is what
-   * `validateFieldPermissions` matches a Prisma payload against. Forms are
-   * rows rather than a column, so they are not in that set and cannot be --
-   * which leaves the mutation's own guard as the only thing standing between a
+   * Forms are rows rather than a column of the character, so nothing that
+   * checks which character fields a payload touches can see them -- which
+   * leaves the mutation's own guard as the only thing standing between a
    * member and a second design. These are the tests that say so out loud.
    *
    * The refusals read "Forbidden resource" rather than anything about forms:
