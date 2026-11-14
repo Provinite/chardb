@@ -225,6 +225,105 @@ describe("repository config", () => {
   );
 
   it(
+    "refuses a permission read through a generic over a model",
+    async () => {
+      expect(
+        await reports(`
+          import type { Prisma, Role, User } from "@chardb/database";
+          export const viaPick = <T extends User>(user: Pick<T, "isAdmin">) =>
+            user.isAdmin;
+          export const viaReadonly = <T extends Role>(roles: ReadonlyArray<Readonly<T>>) =>
+            roles.filter((role) => role.canManageItems);
+          export const viaPayload = <
+            T extends Prisma.RoleGetPayload<{ select: { canGrantItems: true } }>,
+          >(
+            role: T,
+          ) => role.canGrantItems;
+        `),
+      ).toEqual(["read", "read", "read"]);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "refuses a filter a callback returns from inside a branch, and one typed as a unique or ordering input",
+    async () => {
+      expect(
+        await reports(`
+          import type { Prisma } from "@chardb/database";
+          import type { DatabaseService } from "../database/database.service";
+          declare const db: DatabaseService;
+          export const run = async (ids: string[]) => {
+            await db.role.findMany({
+              where: {
+                OR: ids.map((communityId) => {
+                  switch (communityId) {
+                    case "a":
+                      return { communityId, canEditCharacter: true };
+                    default:
+                      try {
+                        return { communityId, canGrantItems: true };
+                      } catch {
+                        return {};
+                      }
+                  }
+                }),
+              },
+            });
+          };
+          export const unique: Prisma.RoleWhereUniqueInput = {
+            id: "r",
+            canManageItems: true,
+          };
+          export const order: Prisma.RoleOrderByWithRelationInput = {
+            canModerateImages: "asc",
+          };
+        `),
+      ).toEqual(["filter", "filter", "filter", "filter"]);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "allows a literal handed to some other function inside a Prisma call",
+    async () => {
+      expect(
+        await reports(`
+          import type { DatabaseService } from "../database/database.service";
+          declare const db: DatabaseService;
+          declare function idOf(spec: object): string;
+          declare function idsOf(spec: object): Promise<string[]>;
+          declare function audit(spec: object, id: string): boolean;
+          declare function search(args: object): string[];
+          export const run = async (ids: string[]) => {
+            await db.role.findMany({
+              where: {
+                id: idOf({ canEditCharacter: true }),
+                name: JSON.stringify({ canManageItems: true }),
+                communityId: { in: await idsOf({ canGrantItems: true }) },
+              },
+              cursor: { id: idOf({ canModerateImages: true }) },
+              take: search({ where: { canEditCharacter: true } }).length,
+            });
+            await db.role.findMany({
+              where: {
+                id: { in: ids.filter((id) => audit({ canEditCharacter: true }, id)) },
+              },
+            });
+            await db.communityMember.create({
+              data: {
+                userId: ids[0],
+                roleId: idOf({ where: { canEditCharacter: true } }),
+              },
+            });
+          };
+        `),
+      ).toEqual([]);
+    },
+    TIMEOUT,
+  );
+
+  it(
     "allows a literal inside a filter's callback that the callback does not return",
     async () => {
       expect(

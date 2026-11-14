@@ -63,10 +63,25 @@ const CARRIES_A_VALUE = new Set([
   "TSNonNullExpression",
   "ArrowFunctionExpression",
   "FunctionExpression",
+  "SequenceExpression",
+  // Everything a callback's `return` can sit inside.
   "ReturnStatement",
   "BlockStatement",
   "IfStatement",
+  "SwitchStatement",
+  "SwitchCase",
+  "TryStatement",
+  "CatchClause",
+  "ForStatement",
+  "ForOfStatement",
+  "ForInStatement",
+  "WhileStatement",
+  "DoWhileStatement",
+  "LabeledStatement",
 ]);
+
+/** The generated input types that choose or order rows, by declared name. */
+const FILTER_INPUT = /(Where\w*Input|OrderBy\w*Input)$/;
 
 /**
  * Where the database's models are declared: the generated Prisma client, and
@@ -204,13 +219,22 @@ module.exports = {
       );
 
     /**
+     * What a type is known to be when it is, or is built from, a type
+     * parameter: `T extends User`, and `T["isAdmin"]` inside `Pick<T, ...>`.
+     * @param {TsType} type
+     */
+    const constrained = (type) => checker.getBaseConstraintOfType(type) ?? type;
+
+    /**
      * A permission column holds a boolean. The same name with any other
      * type is something about the column: its name as a string, a count of
      * rows, a reference to it in a query.
      * @param {TsType} type
      */
     const isFlag = (type) =>
-      parts(type).some((part) => (part.flags & ts.TypeFlags.BooleanLike) !== 0);
+      parts(constrained(type)).some(
+        (part) => (part.flags & ts.TypeFlags.BooleanLike) !== 0,
+      );
 
     /**
      * Whether `name` on a value of this type is a model's column. Either the
@@ -221,13 +245,15 @@ module.exports = {
      * @param {string} name
      */
     const readsModel = (type, name) =>
-      parts(checker.getNonNullableType(type)).some((part) => {
-        const property = part.getProperty(name);
-        if (!property || !isFlag(checker.getTypeOfSymbol(property))) {
-          return false;
-        }
-        return isRowColumn(property) || isComputedRow(part.getSymbol());
-      });
+      parts(checker.getNonNullableType(type))
+        .flatMap((part) => parts(constrained(part)))
+        .some((part) => {
+          const property = part.getProperty(name);
+          if (!property || !isFlag(checker.getTypeOfSymbol(property))) {
+            return false;
+          }
+          return isRowColumn(property) || isComputedRow(part.getSymbol());
+        });
 
     /**
      * @param {TsType} type what is being read from
@@ -237,14 +263,29 @@ module.exports = {
     const verdict = (type, name) =>
       isUntyped(type) ? "untyped" : readsModel(type, name) ? "read" : undefined;
 
-    /** @param {TsType} type */
-    const isModelFilter = (type) =>
+    /**
+     * Whether a literal expected to be this type chooses or orders rows:
+     * the type is one of the client's `*WhereInput`s, or `name` on it was
+     * declared in one of the client's filtering or ordering inputs.
+     * @param {TsType} type
+     * @param {string} name
+     */
+    const isModelFilter = (type, name) =>
       parts(checker.getNonNullableType(type)).some((part) => {
         const symbol = part.aliasSymbol ?? part.getSymbol();
-        return (
+        if (
           symbol !== undefined &&
           WHERE_INPUT.test(symbol.getName()) &&
           isModel(symbol)
+        ) {
+          return true;
+        }
+        const property = part.getProperty(name);
+        return (
+          isModel(property) &&
+          (property?.getDeclarations() ?? []).some((declaration) =>
+            FILTER_INPUT.test(containerName(declaration)),
+          )
         );
       });
 
@@ -301,20 +342,24 @@ module.exports = {
      * argument, so the literal is typed by inference and never as a
      * `*WhereInput`.
      *
-     * The literal has to reach the call as a value: returned by a callback
-     * and passed along a chain counts, as in
-     * `where: { OR: ids.map((id) => ({ ... })).filter(Boolean) }`, and one
-     * that is only declared or used inside a callback does not. A filtering
-     * key inside a callback does not reach out of it either, so the body of
-     * `$transaction((tx) => ...)` is not an argument to `$transaction`.
+     * The literal has to reach the call as a value. One a callback returns
+     * counts, and so does what a method then makes of the result, as in
+     * `where: { OR: ids.map((id) => ({ ... })).filter(Boolean) }`. One that
+     * is only declared inside a callback, or handed to some other function
+     * as an argument, does not: `where: { id: idOf({ ... }) }` filters by
+     * whatever `idOf` returns. A filtering key inside a callback does not
+     * reach out of it either, so the body of `$transaction((tx) => ...)` is
+     * not an argument to `$transaction`.
      * @param {RuleNode} literal
      */
     const isInlineModelFilter = (literal) => {
       let filtering = false;
+      /** @type {RuleNode | undefined} */
+      let from;
       for (
         /** @type {RuleNode | null} */ let node = literal;
         node && CARRIES_A_VALUE.has(node.type);
-        node = node.parent
+        from = node, node = node.parent
       ) {
         if (node.type === "Property") {
           const name = keyName(node);
@@ -324,8 +369,12 @@ module.exports = {
           node.type === "FunctionExpression"
         ) {
           filtering = false;
-        } else if (node.type === "CallExpression" && callsModel(node)) {
-          return filtering;
+        } else if (node.type === "CallExpression") {
+          if (callsModel(node)) return filtering;
+          const isCallback =
+            from?.type === "ArrowFunctionExpression" ||
+            from?.type === "FunctionExpression";
+          if (from !== node.callee && !isCallback) return false;
         }
       }
       return false;
@@ -371,23 +420,17 @@ module.exports = {
       // where: { role: { canEditCharacter: true } }
       ObjectExpression(node) {
         /** @type {boolean | undefined} */
-        let filters;
+        let inline;
         for (const property of node.properties) {
           if (property.type !== "Property") continue;
           const name = keyName(property);
           if (!name || !PERMISSION.test(name)) continue;
 
-          if (filters === undefined) {
-            const expected = checker.getContextualType(
-              /** @type {import("typescript").Expression} */ (
-                tsNodes.get(node)
-              ),
-            );
-            filters =
-              (expected !== undefined && isModelFilter(expected)) ||
-              isInlineModelFilter(node);
-          }
-          if (filters) {
+          inline ??= isInlineModelFilter(node);
+          const expected = checker.getContextualType(
+            /** @type {import("typescript").Expression} */ (tsNodes.get(node)),
+          );
+          if (inline || (expected && isModelFilter(expected, name))) {
             context.report({
               node: property.key,
               messageId: "filter",
