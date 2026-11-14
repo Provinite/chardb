@@ -151,6 +151,46 @@ module.exports = {
       },
     },
     {
+      // A permission is read from the request's RequestPermissions
+      // (apps/backend/src/auth/request-permissions.ts), which is where it is
+      // decided what a request may do. Reading the account's row or its roles
+      // answers for the account instead. Matched by name, so it catches the
+      // usual spellings rather than every one.
+      files: ["apps/backend/src/**/*.ts"],
+      excludedFiles: [
+        "**/*.spec.ts",
+        "apps/backend/src/auth/**",
+        // Where roles are defined, and where an account's flags are mapped
+        // for display.
+        "apps/backend/src/roles/**",
+        "apps/backend/src/communities/communities.service.ts",
+        "apps/backend/src/users/utils/user-resolver-mappers.ts",
+      ],
+      rules: {
+        "no-restricted-syntax": [
+          "error",
+          {
+            selector:
+              "MemberExpression[property.name='isAdmin'][object.name=/user|actor|account|viewer|member/i]",
+            message:
+              "Read site-admin status from the request's RequestPermissions (@CurrentPermissions()), not from the account.",
+          },
+          {
+            selector:
+              ":matches(MemberExpression[object.name=/^role$/i], MemberExpression[object.property.name='role'])[property.name=/^can[A-Z]/]",
+            message:
+              "Read community permissions from the request's RequestPermissions (@CurrentPermissions()), not from a role.",
+          },
+          {
+            selector:
+              "Property[key.name=/^roles?$/] Property[key.name=/^can[A-Z]/]",
+            message:
+              "Filter by permission with RequestPermissions.communityIdsWith(), not by a role's columns.",
+          },
+        ],
+      },
+    },
+    {
       // The helpers in packages/ui/src/css build style objects too, so they
       // are held to the same rules, apart from the one each exists to break.
       files: [

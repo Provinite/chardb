@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Backend permission lint**: ESLint refuses reads of `isAdmin` and of a role's `can*` columns in `apps/backend/src` outside `auth` and `roles`.
+
 ## [v15.7.0] - 2026-11-04
 
 ### Added
