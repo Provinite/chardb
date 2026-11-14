@@ -64,6 +64,16 @@ ruleTester.run("no-model-permission-read", rule, {
       client.transaction(() => {
         elsewhere({ where: { canEditCharacter: true } });
       });`),
+    // Patterns TypeScript itself rejects, as code is while it is being
+    // typed. The rule has nothing to say, and must not throw saying it.
+    valid(`${MODELS}
+      declare const users: User[];
+      declare const byName: Record<string, User>;
+      let isAdmin: boolean;
+      let first: User;
+      for ({ isAdmin } in byName) {}
+      [first, ...{ isAdmin }] = users;
+      export { isAdmin, first };`),
     // A method that happens to be named like a permission.
     valid(`
       declare const guard: any;

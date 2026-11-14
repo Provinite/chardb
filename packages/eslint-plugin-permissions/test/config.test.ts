@@ -169,6 +169,90 @@ describe("repository config", () => {
   );
 
   it(
+    "refuses a permission column read back from a grouping or an aggregate",
+    async () => {
+      expect(
+        await reports(`
+          import type { DatabaseService } from "../database/database.service";
+          declare const db: DatabaseService;
+          export const run = async (id: string) => {
+            const groups = await db.role.groupBy({
+              by: ["canEditCharacter"],
+              _count: true,
+            });
+            const extremes = await db.user.aggregate({
+              where: { id },
+              _max: { isAdmin: true },
+              _min: { canListUsers: true },
+            });
+            return [
+              groups.map((group) => group.canEditCharacter),
+              extremes._max.isAdmin,
+              extremes._min.canListUsers,
+            ];
+          };
+        `),
+      ).toEqual(["read", "read", "read"]);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "refuses a filter that reaches a Prisma call through a chain, or sits where no \`where\` key is written",
+    async () => {
+      expect(
+        await reports(`
+          import type { DatabaseService } from "../database/database.service";
+          declare const db: DatabaseService;
+          export const run = async (id: string, ids: string[]) => {
+            await db.role.findMany({
+              where: {
+                OR: ids
+                  .map((communityId) => ({ communityId, canEditCharacter: true }))
+                  .filter(Boolean),
+              },
+            });
+            await db.role.findMany({ cursor: { id, canManageItems: true } });
+            await db.community.update({
+              where: { id },
+              data: { roles: { delete: [{ id, canGrantItems: true }] } },
+            });
+          };
+        `),
+      ).toEqual(["filter", "filter", "filter"]);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "allows a literal inside a filter's callback that the callback does not return",
+    async () => {
+      expect(
+        await reports(`
+          import type { DatabaseService } from "../database/database.service";
+          declare const db: DatabaseService;
+          declare function note(make: () => object): void;
+          export const run = async (ids: string[]) => {
+            await db.role.findMany({
+              where: {
+                id: {
+                  in: ids.map((id) => {
+                    const wanted = { canEditCharacter: true };
+                    note(() => ({ canManageItems: true }));
+                    return wanted ? id : "";
+                  }),
+                },
+              },
+            });
+            return db.role.fields.canEditCharacter;
+          };
+        `),
+      ).toEqual([]);
+    },
+    TIMEOUT,
+  );
+
+  it(
     "allows a Prisma call that writes permissions or reads other columns",
     async () => {
       expect(

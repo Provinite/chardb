@@ -17,17 +17,56 @@ const PERMISSION = /^(isAdmin|can[A-Z]\w*)$/;
 const WHERE_INPUT = /Where(Unique)?Input$/;
 
 /**
- * The keys of a query's argument under which rows are chosen or ordered. A
- * nested `deleteMany` takes its filter directly, with no `where` around it.
+ * The keys of a query's argument under which rows are chosen or ordered. The
+ * ones after `having` belong to nested writes and to paging, and take their
+ * filter directly, with no `where` around it.
  */
-const FILTERING = new Set(["where", "orderBy", "having", "deleteMany"]);
+const FILTERING = new Set([
+  "where",
+  "orderBy",
+  "having",
+  "cursor",
+  "deleteMany",
+  "delete",
+  "disconnect",
+  "connect",
+  "set",
+]);
 
 /**
  * The client's generated types that carry a model's column names without
- * being a row of it: what is written, what is selected, and what is counted.
+ * carrying its values: what is written, what is selected, how many rows have
+ * a column set, and references to the column itself. A minimum, a maximum
+ * and a grouped row do carry the value, so they are not listed.
  */
 const NOT_A_ROW =
-  /(Input(Type)?|Select(Scalar)?|Include|Omit|Args|OutputType|FieldEnum|AggregateType)$/;
+  /(Input(Type)?|Select(Scalar)?|Include|Omit|Args|CountAggregateOutputType|FieldEnum|FieldRefs)$/;
+
+/**
+ * What a value passes through on its way from an object literal to the call
+ * it is an argument of. Anything else, a statement or a declaration above
+ * all, means the literal is not part of that argument.
+ */
+const CARRIES_A_VALUE = new Set([
+  "Property",
+  "ObjectExpression",
+  "ArrayExpression",
+  "SpreadElement",
+  "ConditionalExpression",
+  "LogicalExpression",
+  "AwaitExpression",
+  "ChainExpression",
+  "MemberExpression",
+  "CallExpression",
+  "TSAsExpression",
+  "TSSatisfiesExpression",
+  "TSNonNullExpression",
+  "ArrowFunctionExpression",
+  "FunctionExpression",
+  "ReturnStatement",
+  "BlockStatement",
+  "IfStatement",
+]);
 
 /**
  * Where the database's models are declared: the generated Prisma client, and
@@ -36,16 +75,18 @@ const NOT_A_ROW =
 const PRISMA_CLIENT = ["/.prisma/client/", "/@prisma/client/"];
 
 /**
- * The runtime's types that compute the rows a query returns: what `select`,
- * `include`, `omit` and `groupBy` give back. Their mapped types are the only
- * declaration a selected column has.
+ * The client's types that compute what a query returns: what `select`,
+ * `include`, `omit` and an aggregate give back. Their mapped types are the
+ * only declaration a selected column has.
  */
 const PRISMA_ROWS = [
   "GetFindResult",
   "DefaultSelection",
   "ApplyOmit",
   "UnwrapPayload",
-  "GetGroupByResult",
+  // An aggregate's `_min` and `_max`. Its `_count` comes through here too,
+  // and is told apart by being a number.
+  "GetScalarType",
 ];
 
 /** @type {import("eslint").Rule.RuleModule} */
@@ -163,6 +204,15 @@ module.exports = {
       );
 
     /**
+     * A permission column holds a boolean. The same name with any other
+     * type is something about the column: its name as a string, a count of
+     * rows, a reference to it in a query.
+     * @param {TsType} type
+     */
+    const isFlag = (type) =>
+      parts(type).some((part) => (part.flags & ts.TypeFlags.BooleanLike) !== 0);
+
+    /**
      * Whether `name` on a value of this type is a model's column. Either the
      * column itself is declared by the client, or the type that carries it
      * is one the client computed: what a `select` returns has no declaration
@@ -173,7 +223,9 @@ module.exports = {
     const readsModel = (type, name) =>
       parts(checker.getNonNullableType(type)).some((part) => {
         const property = part.getProperty(name);
-        if (!property) return false;
+        if (!property || !isFlag(checker.getTypeOfSymbol(property))) {
+          return false;
+        }
         return isRowColumn(property) || isComputedRow(part.getSymbol());
       });
 
@@ -207,6 +259,25 @@ module.exports = {
       return undefined;
     };
 
+    /**
+     * The type an object pattern takes apart. A pattern that assigns, at any
+     * depth or in a loop, is an object literal to TypeScript, and has to be
+     * asked what it is assigned from.
+     * @param {TsNode} pattern
+     */
+    const typeTakenApart = (pattern) => {
+      if (!ts.isObjectLiteralExpression(pattern)) {
+        return checker.getTypeAtLocation(pattern);
+      }
+      try {
+        return checker.getTypeOfAssignmentPattern(pattern);
+      } catch {
+        // The checker asserts on patterns in places the language does not
+        // allow one, which is where code sits while it is being typed.
+        return checker.getTypeAtLocation(pattern);
+      }
+    };
+
     /** @param {RuleNode} call a CallExpression */
     const callsModel = (call) => {
       const signature = checker.getResolvedSignature(
@@ -230,18 +301,19 @@ module.exports = {
      * argument, so the literal is typed by inference and never as a
      * `*WhereInput`.
      *
-     * A literal a callback returns counts when the callback itself is under
-     * the filtering key: `where: { OR: ids.map((id) => ({ ... })) }`. A
-     * filtering key inside a callback does not reach out of it, so the body
-     * of `$transaction((tx) => ...)` is not an argument to `$transaction`.
+     * The literal has to reach the call as a value: returned by a callback
+     * and passed along a chain counts, as in
+     * `where: { OR: ids.map((id) => ({ ... })).filter(Boolean) }`, and one
+     * that is only declared or used inside a callback does not. A filtering
+     * key inside a callback does not reach out of it either, so the body of
+     * `$transaction((tx) => ...)` is not an argument to `$transaction`.
      * @param {RuleNode} literal
      */
     const isInlineModelFilter = (literal) => {
       let filtering = false;
-      let leftCallback = false;
       for (
         /** @type {RuleNode | null} */ let node = literal;
-        node;
+        node && CARRIES_A_VALUE.has(node.type);
         node = node.parent
       ) {
         if (node.type === "Property") {
@@ -252,17 +324,8 @@ module.exports = {
           node.type === "FunctionExpression"
         ) {
           filtering = false;
-          leftCallback = true;
-        } else if (node.type === "CallExpression") {
-          if (callsModel(node)) return filtering;
-          // Past the call a callback was handed to, and no other.
-          if (!leftCallback) return false;
-          leftCallback = false;
-        } else if (
-          node.type === "FunctionDeclaration" ||
-          node.type === "Program"
-        ) {
-          return false;
+        } else if (node.type === "CallExpression" && callsModel(node)) {
+          return filtering;
         }
       }
       return false;
@@ -298,11 +361,7 @@ module.exports = {
 
           // A pattern that assigns, at any depth or in a loop, is an object
           // literal to TypeScript, and has to be asked what it takes apart.
-          const pattern = tsNodes.get(node);
-          const from = ts.isObjectLiteralExpression(pattern)
-            ? checker.getTypeOfAssignmentPattern(pattern)
-            : checker.getTypeAtLocation(pattern);
-          const messageId = verdict(from, name);
+          const messageId = verdict(typeTakenApart(tsNodes.get(node)), name);
           if (messageId) {
             context.report({ node: property.key, messageId, data: { name } });
           }
