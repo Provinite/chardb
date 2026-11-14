@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Permission checks**: guards, resolvers and services read what the caller may do from one per-request `RequestPermissions`, built when the request is authenticated. Who may do what is unchanged.
 
+### Removed
+
+- **`JwtAuthGuard`**: resolvers no longer authenticate a second time after the global guard has.
+
 ### Fixed
 
 - **Character list order**: characters with the same name, price or date keep one order across pages, so Load More no longer repeats or skips them.

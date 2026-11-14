@@ -12,6 +12,7 @@ import { NotificationsService } from "../../notifications/notifications.service"
 import { HalloweenDashboardService } from "../dashboard/halloween-dashboard.service";
 import { HalloweenStaffAccess } from "../dashboard/halloween-staff-access";
 import type { RequestPermissions } from "../../auth/request-permissions";
+import { CommunityPermission } from "../../auth/CommunityPermission";
 import { HalloweenUi } from "../discord/ui";
 import { BusyError, MissingGuildSettingsError } from "../errors";
 import { HalloweenLogEvent, type HalloweenLogLine } from "../logging";
@@ -229,7 +230,9 @@ export class DoorKnockService {
     const since = this.guildSettings.lastReset(settings);
     const [knockerMember, knockeeMember, isStaff, used, knockedHere] =
       await Promise.all([
-        this.isMember(tx, communityId, knockerId),
+        // The knocker is whoever is asking, so their membership is the
+        // request's to answer. The knockee is somebody else.
+        permissions.hasInCommunity(communityId, CommunityPermission.Any),
         this.isMember(tx, communityId, knockeeId),
         this.staff.isStaff(permissions, communityId),
         tx.halloweenDoorKnock.count({

@@ -25,7 +25,7 @@ import { ModuleRef } from "@nestjs/core";
  * ```typescript
  * // Owner OR Admin can update
  * @Mutation(() => Gallery)
- * @UseGuards(JwtAuthGuard, OrGuard(OwnershipGuard, GlobalAdminGuard))
+ * @UseGuards(OrGuard(OwnershipGuard, GlobalAdminGuard))
  * async updateGallery(@Args('id') id: string) {
  *   // Passes if user owns gallery OR is admin
  * }
@@ -36,7 +36,6 @@ import { ModuleRef } from "@nestjs/core";
  * // Multiple permission options
  * @Mutation(() => Character)
  * @UseGuards(
- *   JwtAuthGuard,
  *   OrGuard(
  *     CommunityRoleGuard,  // Has community permission
  *     GlobalAdminGuard,    // OR is global admin

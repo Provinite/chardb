@@ -7,7 +7,6 @@ import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { EmptyStringOnForbiddenFilter } from "../auth/filters/EmptyStringOnForbiddenFilter";
 import { sentinelValueMiddleware } from "../auth/middleware/sentinel-value.middleware";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CommunityPermissionGuard } from "../auth/guards/CommunityPermissionGuard";
 
 /**
@@ -29,7 +28,7 @@ export class PendingOwnershipResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
   @ResolveCommunityFrom({ pendingOwnershipId: "$root.id" })
-  @UseGuards(JwtAuthGuard, CommunityPermissionGuard)
+  @UseGuards(CommunityPermissionGuard)
   @UseFilters(EmptyStringOnForbiddenFilter)
   @ResolveField("providerAccountId", () => String, {
     middleware: [sentinelValueMiddleware],
@@ -48,7 +47,7 @@ export class PendingOwnershipResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
   @ResolveCommunityFrom({ pendingOwnershipId: "$root.id" })
-  @UseGuards(JwtAuthGuard, CommunityPermissionGuard)
+  @UseGuards(CommunityPermissionGuard)
   @UseFilters(EmptyStringOnForbiddenFilter)
   @ResolveField("displayIdentifier", () => String, {
     nullable: true,
@@ -69,7 +68,7 @@ export class PendingOwnershipResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanCreateOrphanedCharacter)
   @ResolveCommunityFrom({ pendingOwnershipId: "$root.id" })
-  @UseGuards(JwtAuthGuard, CommunityPermissionGuard)
+  @UseGuards(CommunityPermissionGuard)
   @UseFilters(EmptyStringOnForbiddenFilter)
   @ResolveField("displayName", () => String, {
     nullable: true,

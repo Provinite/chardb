@@ -1,5 +1,9 @@
 import { Resolver, Mutation, Args } from "@nestjs/graphql";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { TraitReview } from "../trait-review/entities/trait-review.entity";
@@ -40,8 +44,9 @@ export class EditKitsResolver {
   async editCharacterTraitsWithKit(
     @Args("input") input: EditCharacterTraitsWithKitInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<TraitReview> {
-    const review = await this.editKits.spendKit(user.id, input);
+    const review = await this.editKits.spendKit(user.id, permissions, input);
     return mapPrismaTraitReviewToGraphQL(review);
   }
 }

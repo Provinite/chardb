@@ -8,7 +8,6 @@ import {
   ResolveField,
   Parent,
 } from "@nestjs/graphql";
-import { UseGuards } from "@nestjs/common";
 import { ImageModerationService } from "./image-moderation.service";
 import { DatabaseService } from "../database/database.service";
 import { CurrencyTransactionSource, ModerationStatus } from "@chardb/database";
@@ -28,7 +27,6 @@ import {
 } from "./dto/image-moderation.dto";
 import { Image } from "../images/entities/image.entity";
 import { mapPrismaImageToGraphQL } from "../images/utils/image-resolver-mappers";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import {
   CurrentPermissions,
@@ -59,7 +57,6 @@ export class ImageModerationResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanModerateImages)
   @ResolveCommunityFrom({ communityId: "communityId" })
-  @UseGuards(JwtAuthGuard)
   @Query(() => ImageModerationQueueConnection, {
     description: "Get pending images for a community moderation queue",
   })
@@ -88,7 +85,6 @@ export class ImageModerationResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanModerateImages)
   @ResolveCommunityFrom({ communityId: "communityId" })
-  @UseGuards(JwtAuthGuard)
   @Query(() => MediaConnection, {
     description:
       "Get pending media for moderation queue (use pendingModerationImage field for actual image URLs)",
@@ -116,7 +112,6 @@ export class ImageModerationResolver {
    * is the only queue it reaches.
    */
   @AllowGlobalAdmin()
-  @UseGuards(JwtAuthGuard)
   @Query(() => MediaConnection, {
     description:
       "Get pending media across the whole site for moderation (site admins only; use pendingModerationImage for actual image URLs)",
@@ -138,7 +133,6 @@ export class ImageModerationResolver {
    * Get all pending images (global admin only)
    */
   @AllowGlobalAdmin()
-  @UseGuards(JwtAuthGuard)
   @Query(() => ImageModerationQueueConnection, {
     description: "Get all pending images across all communities (admin only)",
   })
@@ -164,7 +158,6 @@ export class ImageModerationResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanModerateImages)
   @ResolveCommunityFrom({ communityId: "communityId" })
-  @UseGuards(JwtAuthGuard)
   @Query(() => Int, {
     description: "Get count of pending images for a community",
   })
@@ -178,7 +171,6 @@ export class ImageModerationResolver {
    * Get global pending image count (admin only)
    */
   @AllowGlobalAdmin()
-  @UseGuards(JwtAuthGuard)
   @Query(() => Int, {
     description:
       "Get count of all pending images across all communities (admin only)",
@@ -191,7 +183,6 @@ export class ImageModerationResolver {
    * Approve an image
    */
   @AllowAnyAuthenticated()
-  @UseGuards(JwtAuthGuard)
   @Mutation(() => ImageModerationAction, {
     description: "Approve an image (moderator action)",
   })
@@ -220,7 +211,6 @@ export class ImageModerationResolver {
    * was taken -- see the service for why nothing is written to that log.
    */
   @AllowAnyAuthenticated()
-  @UseGuards(JwtAuthGuard)
   @Mutation(() => Image, {
     description:
       "Send a pending image to the back of the moderation queue. It stays pending; nothing is decided or announced.",
@@ -243,7 +233,6 @@ export class ImageModerationResolver {
    * Reject an image
    */
   @AllowAnyAuthenticated()
-  @UseGuards(JwtAuthGuard)
   @Mutation(() => ImageModerationAction, {
     description: "Reject an image (moderator action)",
   })

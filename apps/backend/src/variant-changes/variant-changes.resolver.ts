@@ -1,5 +1,9 @@
 import { Resolver, Mutation, Args } from "@nestjs/graphql";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { Character } from "../characters/entities/character.entity";
@@ -41,8 +45,13 @@ export class VariantChangesResolver {
   async changeCharacterVariantWithItem(
     @Args("input") input: ChangeCharacterVariantWithItemInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<Character> {
-    const character = await this.variantChanges.spendItem(user.id, input);
+    const character = await this.variantChanges.spendItem(
+      user.id,
+      permissions,
+      input,
+    );
     return mapPrismaCharacterToGraphQL(character);
   }
 }

@@ -12,6 +12,7 @@ import {
 } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import { ItemsService } from "../items/items.service";
+import type { RequestPermissions } from "../auth/request-permissions";
 import { CharactersService } from "../characters/characters.service";
 import { TraitReviewService } from "../trait-review/trait-review.service";
 import { mapFormsChange } from "../characters/utils/character-resolver-mappers";
@@ -72,10 +73,15 @@ export class EditKitsService {
    * `trait_reviews` enforces it, which is what actually holds when two
    * requests race. The check alone is a read before a write.
    */
-  async spendKit(userId: string, input: EditCharacterTraitsWithKitInput) {
+  async spendKit(
+    userId: string,
+    permissions: RequestPermissions,
+    input: EditCharacterTraitsWithKitInput,
+  ) {
     const { itemType, grant } = await this.items.resolveTraitEditRedemption(
       input.itemId,
       userId,
+      permissions,
     );
 
     const character = await this.db.character.findFirst({

@@ -12,7 +12,7 @@ export type { CurrentUserType } from "../types/current-user.type";
  * @example
  * ```typescript
  * @Query(() => User)
- * @UseGuards(JwtAuthGuard)
+ * @AllowAnyAuthenticated()
  * async me(@CurrentUser() user: CurrentUserType) {
  *   return user;
  * }

@@ -10,6 +10,10 @@ import {
 } from "@nestjs/graphql";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
@@ -526,8 +530,13 @@ export class ItemsResolver {
   async useItem(
     @Args("input") input: UseItemInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<UseItemResult> {
-    const result = await this.itemsService.useItem(input.itemId, user.id);
+    const result = await this.itemsService.useItem(
+      input.itemId,
+      user.id,
+      permissions,
+    );
     return {
       itemTypeName: result.itemTypeName,
       batchId: result.batchId,

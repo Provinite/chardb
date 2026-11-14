@@ -21,6 +21,7 @@ import {
   mockDatabaseService,
   mockNotificationsService,
 } from "../../test/setup";
+import { fakePermissions, FakePermissions } from "../../test/fake-permissions";
 import { NotificationsService } from "../notifications/notifications.service";
 
 const mockPendingOwnershipService = {
@@ -752,9 +753,11 @@ describe("ItemsService", () => {
       },
     });
 
+    let member: FakePermissions;
+
     beforeEach(() => {
       mockDatabaseService.item.findFirst.mockResolvedValue(ticket());
-      mockDatabaseService.communityMember.count.mockResolvedValue(1);
+      member = fakePermissions({ inCommunity: {} });
       mockDatabaseService.item.findMany.mockResolvedValue([
         {
           id: "i1",
@@ -767,7 +770,7 @@ describe("ItemsService", () => {
     });
 
     it("destroys the item and pays on one batch id", async () => {
-      const result = await service.useItem("i1", "user1");
+      const result = await service.useItem("i1", "user1", member);
 
       // Both ledgers, one event. A use whose halves carried different ids
       // could not be recognised afterwards as the coin having come from the
@@ -788,7 +791,7 @@ describe("ItemsService", () => {
     });
 
     it("records it as a USE rather than a revoke", async () => {
-      await service.useItem("i1", "user1");
+      await service.useItem("i1", "user1", member);
 
       // The ledger is what a member reads to find out what happened to an
       // item. "Staff took it back" and "you spent it" are different stories.
@@ -799,7 +802,7 @@ describe("ItemsService", () => {
     });
 
     it("destroys conditionally on the holder still holding it", async () => {
-      await service.useItem("i1", "user1");
+      await service.useItem("i1", "user1", member);
 
       // The predicate is in the UPDATE, not merely checked before it. On a
       // feature that creates currency, a check-then-write is the difference
@@ -816,7 +819,7 @@ describe("ItemsService", () => {
     it("pays nothing when the item was destroyed under it", async () => {
       mockDatabaseService.item.updateMany.mockResolvedValue({ count: 0 });
 
-      await expect(service.useItem("i1", "user1")).rejects.toThrow();
+      await expect(service.useItem("i1", "user1", member)).rejects.toThrow();
 
       // The destroy runs first precisely so this holds: nothing was consumed,
       // so nothing is paid.
@@ -828,7 +831,7 @@ describe("ItemsService", () => {
         ticket({ ownerId: "user2" }),
       );
 
-      await expect(service.useItem("i1", "user1")).rejects.toThrow(
+      await expect(service.useItem("i1", "user1", member)).rejects.toThrow(
         /not yours/i,
       );
       expect(mockCurrencyLedger.credit).not.toHaveBeenCalled();
@@ -841,7 +844,7 @@ describe("ItemsService", () => {
 
       // Using without consuming is a button that pays every time it is
       // pressed.
-      await expect(service.useItem("i1", "user1")).rejects.toThrow(
+      await expect(service.useItem("i1", "user1", member)).rejects.toThrow(
         /cannot be used/i,
       );
       expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();
@@ -871,7 +874,9 @@ describe("ItemsService", () => {
 
       // Checked again at use rather than trusted from when staff configured
       // it. Otherwise the item is destroyed for coin that cannot be created.
-      await expect(service.useItem("i1", "user1")).rejects.toThrow(/archived/i);
+      await expect(service.useItem("i1", "user1", member)).rejects.toThrow(
+        /archived/i,
+      );
       expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();
     });
 
@@ -882,16 +887,16 @@ describe("ItemsService", () => {
 
       // Destroying the item and handing back nothing is worth refusing rather
       // than doing quietly.
-      await expect(service.useItem("i1", "user1")).rejects.toThrow(
+      await expect(service.useItem("i1", "user1", member)).rejects.toThrow(
         /does nothing/i,
       );
       expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();
     });
 
     it("refuses a non-member, before destroying anything", async () => {
-      mockDatabaseService.communityMember.count.mockResolvedValue(0);
+      member = fakePermissions();
 
-      await expect(service.useItem("i1", "user1")).rejects.toThrow(
+      await expect(service.useItem("i1", "user1", member)).rejects.toThrow(
         /must be a member/i,
       );
       expect(mockDatabaseService.item.updateMany).not.toHaveBeenCalled();

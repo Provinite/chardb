@@ -1,5 +1,4 @@
 import { Resolver, Query, Mutation, Args, Int, ID } from "@nestjs/graphql";
-import { UseGuards } from "@nestjs/common";
 import { TraitReviewService } from "./trait-review.service";
 import {
   TraitReview,
@@ -12,7 +11,6 @@ import {
   EditAndApproveTraitReviewInput,
   DeferTraitReviewInput,
 } from "./dto/trait-review.dto";
-import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
@@ -32,7 +30,6 @@ export class TraitReviewResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
   @ResolveCommunityFrom({ communityId: "communityId" })
-  @UseGuards(JwtAuthGuard)
   @Query(() => TraitReviewQueueConnection, {
     description: "Get trait reviews for a community moderation queue",
   })
@@ -56,7 +53,6 @@ export class TraitReviewResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
   @ResolveCommunityFrom({ communityId: "communityId" })
-  @UseGuards(JwtAuthGuard)
   @Query(() => Int, {
     description: "Get count of pending trait reviews for a community",
   })
@@ -69,7 +65,6 @@ export class TraitReviewResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
   @ResolveCommunityFrom({ characterId: "characterId" })
-  @UseGuards(JwtAuthGuard)
   @Query(() => TraitReview, {
     nullable: true,
     description: "Get the active pending trait review for a character",
@@ -86,7 +81,6 @@ export class TraitReviewResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
   @ResolveCommunityFrom({ traitReviewId: "input.reviewId" })
-  @UseGuards(JwtAuthGuard)
   @Mutation(() => TraitReview, {
     description: "Approve a trait review (moderator action)",
   })
@@ -104,7 +98,6 @@ export class TraitReviewResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
   @ResolveCommunityFrom({ traitReviewId: "input.reviewId" })
-  @UseGuards(JwtAuthGuard)
   @Mutation(() => TraitReview, {
     description:
       "Revert a trait review, restoring previous trait values (moderator action)",
@@ -126,7 +119,6 @@ export class TraitReviewResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
   @ResolveCommunityFrom({ traitReviewId: "input.reviewId" })
-  @UseGuards(JwtAuthGuard)
   @Mutation(() => TraitReview, {
     description:
       "Send a pending trait review to the back of the queue. It stays pending; nothing is applied, refunded or announced.",
@@ -146,7 +138,6 @@ export class TraitReviewResolver {
   @AllowGlobalAdmin()
   @AllowCommunityPermission(CommunityPermission.CanEditCharacterRegistry)
   @ResolveCommunityFrom({ traitReviewId: "input.reviewId" })
-  @UseGuards(JwtAuthGuard)
   @Mutation(() => TraitReview, {
     description: "Edit and approve a trait review (moderator action)",
   })
