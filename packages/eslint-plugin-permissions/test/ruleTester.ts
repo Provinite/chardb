@@ -10,7 +10,9 @@ const fixtures = fileURLToPath(new URL("./fixtures", import.meta.url));
 export const filename = `${fixtures}/file.ts`;
 
 /** What the fixtures treat as the database's models. */
-export const options = [{ declaredIn: ["/fixtures/models"] }];
+export const options = [
+  { declaredIn: ["/fixtures/models"], computedRows: ["Selected"] },
+];
 
 /**
  * Parses cases with type information from `test/fixtures`. RuleTester

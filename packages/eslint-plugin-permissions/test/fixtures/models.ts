@@ -52,6 +52,7 @@ export declare function findUser(args: { select: UserSelect }): void;
 // what a `select` returns is a mapped type over the selection.
 export type Selected<S> = { [K in keyof S]: boolean };
 export declare const client: {
+  transaction<R>(run: () => R): R;
   role: {
     findMany<T>(args: T): Role[];
     count<T>(args: T): number;

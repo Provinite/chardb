@@ -54,6 +54,16 @@ ruleTester.run("no-model-permission-read", rule, {
     valid(`${MODELS}
       declare const role: Role;
       role.canEditCharacter = true;`),
+    // What is being written, read back off the input that carries it.
+    valid(`import type { RoleCreateInput } from "./models";
+      declare const data: RoleCreateInput;
+      export const a = data.canEditCharacter;`),
+    // A callback of the client's is not an argument to it.
+    valid(`${CLIENT}
+      declare function elsewhere(args: unknown): void;
+      client.transaction(() => {
+        elsewhere({ where: { canEditCharacter: true } });
+      });`),
     // A method that happens to be named like a permission.
     valid(`
       declare const guard: any;
@@ -128,6 +138,39 @@ ruleTester.run("no-model-permission-read", rule, {
       ({ isAdmin } = user);
       export { isAdmin };`,
       "read",
+    ),
+    // Assigned by destructuring at any depth, and in a loop.
+    invalid(
+      `${MODELS}
+      declare const member: { role: Role };
+      declare const users: User[];
+      let canEditCharacter: boolean;
+      let isAdmin: boolean;
+      let canListUsers: boolean;
+      ({ role: { canEditCharacter } } = member);
+      [{ isAdmin }] = users;
+      for ({ canListUsers } of users) {}
+      export { canEditCharacter, isAdmin, canListUsers };`,
+      "read",
+      "read",
+      "read",
+    ),
+    // A filter built by a callback inside the query's own filter, and one
+    // given to a nested delete, which takes it with no \`where\` key.
+    invalid(
+      `${CLIENT}
+      declare const ids: string[];
+      client.role.findMany({
+        where: {
+          OR: ids.map((communityId) => ({ communityId, canEditCharacter: true })),
+        },
+      });
+      client.role.update({
+        where: { id: "r" },
+        data: { children: { deleteMany: { canModerateImages: true } } },
+      });`,
+      "filter",
+      "filter",
     ),
     // Off what a query selected: a type the client computes, with no
     // declaration of its own for the column.

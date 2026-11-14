@@ -116,9 +116,20 @@ describe("repository config", () => {
             await db.$transaction((tx) =>
               tx.role.findMany({ where: { canModerateImages: true } }),
             );
+            await db.communityMember.findMany({
+              where: {
+                OR: [communityId].map((id) => ({
+                  role: { communityId: id, canManageItems: true },
+                })),
+              },
+            });
+            await db.community.update({
+              where: { id: communityId },
+              data: { roles: { deleteMany: { canGrantItems: true } } },
+            });
           };
         `),
-      ).toEqual(["filter", "filter", "filter", "filter"]);
+      ).toEqual(["filter", "filter", "filter", "filter", "filter", "filter"]);
     },
     TIMEOUT,
   );
@@ -175,6 +186,37 @@ describe("repository config", () => {
             });
             return user?.username;
           };
+        `),
+      ).toEqual([]);
+    },
+    TIMEOUT,
+  );
+
+  it(
+    "allows the same names on the client's types that are not rows",
+    async () => {
+      expect(
+        await reports(`
+          import { Prisma } from "@chardb/database";
+          import type { DatabaseService } from "../database/database.service";
+          declare const db: DatabaseService;
+          // An input on its way to being written.
+          export const grants = (data: Prisma.UserUpdateInput) =>
+            data.isAdmin !== undefined;
+          export const flag = (data: Prisma.RoleUncheckedCreateInput) =>
+            data.canEditCharacter;
+          // The column's name, and how many rows have it set.
+          export const column = Prisma.RoleScalarFieldEnum.canEditCharacter;
+          export const counts = async () => {
+            const tally = await db.role.aggregate({
+              _count: { canEditCharacter: true },
+            });
+            return tally._count.canEditCharacter;
+          };
+          // The caller's own type, passed through one of the client's helpers.
+          export const own = (
+            mine: Prisma.Exact<{ canEditCharacter: boolean }, { canEditCharacter: boolean }>,
+          ) => mine.canEditCharacter;
         `),
       ).toEqual([]);
     },

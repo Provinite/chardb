@@ -38,8 +38,8 @@ export class OptionalJwtAuthGuard extends AuthGuard("jwt") {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const req = this.getRequest(context);
-    // graphql-ws builds the context from connectionParams, so a subscription
-    // has no req; it goes on as anonymous
+    // Nothing to authenticate against; it goes on as anonymous. A
+    // subscription does not come this way: see getRequestFromContext.
     if (!req) return true;
 
     let authentication = authentications.get(req);

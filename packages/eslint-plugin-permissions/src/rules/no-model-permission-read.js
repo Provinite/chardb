@@ -16,14 +16,37 @@ const PERMISSION = /^(isAdmin|can[A-Z]\w*)$/;
 /** The generated input types that filter rows. */
 const WHERE_INPUT = /Where(Unique)?Input$/;
 
-/** The keys of a query's argument under which rows are chosen or ordered. */
-const FILTERING = new Set(["where", "orderBy", "having"]);
+/**
+ * The keys of a query's argument under which rows are chosen or ordered. A
+ * nested `deleteMany` takes its filter directly, with no `where` around it.
+ */
+const FILTERING = new Set(["where", "orderBy", "having", "deleteMany"]);
+
+/**
+ * The client's generated types that carry a model's column names without
+ * being a row of it: what is written, what is selected, and what is counted.
+ */
+const NOT_A_ROW =
+  /(Input(Type)?|Select(Scalar)?|Include|Omit|Args|OutputType|FieldEnum|AggregateType)$/;
 
 /**
  * Where the database's models are declared: the generated Prisma client, and
  * the runtime types it computes query results with.
  */
 const PRISMA_CLIENT = ["/.prisma/client/", "/@prisma/client/"];
+
+/**
+ * The runtime's types that compute the rows a query returns: what `select`,
+ * `include`, `omit` and `groupBy` give back. Their mapped types are the only
+ * declaration a selected column has.
+ */
+const PRISMA_ROWS = [
+  "GetFindResult",
+  "DefaultSelection",
+  "ApplyOmit",
+  "UnwrapPayload",
+  "GetGroupByResult",
+];
 
 /** @type {import("eslint").Rule.RuleModule} */
 module.exports = {
@@ -38,6 +61,7 @@ module.exports = {
         type: "object",
         properties: {
           declaredIn: { type: "array", items: { type: "string" } },
+          computedRows: { type: "array", items: { type: "string" } },
         },
         additionalProperties: false,
       },
@@ -68,6 +92,8 @@ module.exports = {
 
     /** @type {string[]} */
     const declaredIn = context.options[0]?.declaredIn ?? PRISMA_CLIENT;
+    /** @type {string[]} */
+    const computedRows = context.options[0]?.computedRows ?? PRISMA_ROWS;
 
     /** @param {TsSymbol | undefined} symbol */
     const isModel = (symbol) =>
@@ -94,6 +120,49 @@ module.exports = {
       type.isUnionOrIntersection() ? type.types.flatMap(parts) : [type];
 
     /**
+     * The named type, constant or class a declaration is written inside.
+     * @param {TsNode} declaration
+     */
+    const containerName = (declaration) => {
+      for (let node = declaration.parent; node; node = node.parent) {
+        if (
+          ts.isTypeAliasDeclaration(node) ||
+          ts.isInterfaceDeclaration(node) ||
+          ts.isVariableDeclaration(node) ||
+          ts.isClassDeclaration(node)
+        ) {
+          return node.name?.getText() ?? "";
+        }
+      }
+      return "";
+    };
+
+    /**
+     * A column declared by the client as part of a row, and not as part of
+     * an input, a selection or a tally, which use the same column names.
+     * @param {TsSymbol | undefined} symbol
+     */
+    const isRowColumn = (symbol) =>
+      isModel(symbol) &&
+      (symbol?.getDeclarations() ?? []).some(
+        (declaration) => !NOT_A_ROW.test(containerName(declaration)),
+      );
+
+    /**
+     * A type the client computed a row with: one of the mapped types in
+     * `computedRows`. The client has other mapped types, which count rows or
+     * pass a caller's own type through.
+     * @param {TsSymbol | undefined} symbol
+     */
+    const isComputedRow = (symbol) =>
+      isModel(symbol) &&
+      (symbol?.getDeclarations() ?? []).some(
+        (declaration) =>
+          ts.isMappedTypeNode(declaration) &&
+          computedRows.includes(containerName(declaration)),
+      );
+
+    /**
      * Whether `name` on a value of this type is a model's column. Either the
      * column itself is declared by the client, or the type that carries it
      * is one the client computed: what a `select` returns has no declaration
@@ -105,7 +174,7 @@ module.exports = {
       parts(checker.getNonNullableType(type)).some((part) => {
         const property = part.getProperty(name);
         if (!property) return false;
-        return isModel(property) || isModel(part.aliasSymbol ?? part.symbol);
+        return isRowColumn(property) || isComputedRow(part.getSymbol());
       });
 
     /**
@@ -138,37 +207,10 @@ module.exports = {
       return undefined;
     };
 
-    /**
-     * Whether an object literal sits under a filtering key of an argument to
-     * one of the client's own functions. Those are generic over their
-     * argument, so the literal is typed by inference and never as a
-     * `*WhereInput`.
-     * @param {RuleNode} literal
-     */
-    const isInlineModelFilter = (literal) => {
-      let filtering = false;
-      /** @type {RuleNode | null} */
-      let node = literal;
-      while (node && node.type !== "CallExpression") {
-        if (node.type === "Property") {
-          const name = keyName(node);
-          if (name && FILTERING.has(name)) filtering = true;
-        }
-        // A function is a new scope for arguments: `$transaction((tx) => ...)`
-        // does not make its callback's literals arguments of `$transaction`.
-        if (
-          node.type === "ArrowFunctionExpression" ||
-          node.type === "FunctionExpression" ||
-          node.type === "FunctionDeclaration"
-        ) {
-          return false;
-        }
-        node = node.parent;
-      }
-      if (!node || !filtering) return false;
-
+    /** @param {RuleNode} call a CallExpression */
+    const callsModel = (call) => {
       const signature = checker.getResolvedSignature(
-        /** @type {import("typescript").CallExpression} */ (tsNodes.get(node)),
+        /** @type {import("typescript").CallExpression} */ (tsNodes.get(call)),
       );
       const declaration = signature?.getDeclaration();
       return (
@@ -180,6 +222,50 @@ module.exports = {
             .includes(part),
         )
       );
+    };
+
+    /**
+     * Whether an object literal sits under a filtering key of an argument to
+     * one of the client's own functions. Those are generic over their
+     * argument, so the literal is typed by inference and never as a
+     * `*WhereInput`.
+     *
+     * A literal a callback returns counts when the callback itself is under
+     * the filtering key: `where: { OR: ids.map((id) => ({ ... })) }`. A
+     * filtering key inside a callback does not reach out of it, so the body
+     * of `$transaction((tx) => ...)` is not an argument to `$transaction`.
+     * @param {RuleNode} literal
+     */
+    const isInlineModelFilter = (literal) => {
+      let filtering = false;
+      let leftCallback = false;
+      for (
+        /** @type {RuleNode | null} */ let node = literal;
+        node;
+        node = node.parent
+      ) {
+        if (node.type === "Property") {
+          const name = keyName(node);
+          if (name && FILTERING.has(name)) filtering = true;
+        } else if (
+          node.type === "ArrowFunctionExpression" ||
+          node.type === "FunctionExpression"
+        ) {
+          filtering = false;
+          leftCallback = true;
+        } else if (node.type === "CallExpression") {
+          if (callsModel(node)) return filtering;
+          // Past the call a callback was handed to, and no other.
+          if (!leftCallback) return false;
+          leftCallback = false;
+        } else if (
+          node.type === "FunctionDeclaration" ||
+          node.type === "Program"
+        ) {
+          return false;
+        }
+      }
+      return false;
     };
 
     return {
@@ -205,20 +291,17 @@ module.exports = {
 
       // const { isAdmin } = user; ({ isAdmin } = user)
       ObjectPattern(node) {
-        const { parent } = node;
-        // An assignment's pattern has the type of what it assigns to, so ask
-        // about the value instead.
-        const source =
-          parent.type === "AssignmentExpression" && parent.left === node
-            ? parent.right
-            : node;
-
         for (const property of node.properties) {
           if (property.type !== "Property") continue;
           const name = keyName(property);
           if (!name || !PERMISSION.test(name)) continue;
 
-          const from = checker.getTypeAtLocation(tsNodes.get(source));
+          // A pattern that assigns, at any depth or in a loop, is an object
+          // literal to TypeScript, and has to be asked what it takes apart.
+          const pattern = tsNodes.get(node);
+          const from = ts.isObjectLiteralExpression(pattern)
+            ? checker.getTypeOfAssignmentPattern(pattern)
+            : checker.getTypeAtLocation(pattern);
           const messageId = verdict(from, name);
           if (messageId) {
             context.report({ node: property.key, messageId, data: { name } });

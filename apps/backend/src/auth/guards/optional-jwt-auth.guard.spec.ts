@@ -133,8 +133,7 @@ describe("OptionalJwtAuthGuard", () => {
     expect(req.user).toBeNull();
   });
 
-  /** graphql-ws builds the context from connectionParams, so there is no req. */
-  it("treats a subscription as anonymous", async () => {
+  it("treats a context with no request as anonymous", async () => {
     const unhandled = jest.fn();
     process.on("unhandledRejection", unhandled);
 
