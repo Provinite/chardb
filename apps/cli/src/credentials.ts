@@ -6,7 +6,7 @@ import {
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
-import { UsageError } from "./errors";
+import { CredentialsFileError, UsageError } from "./errors";
 import {
   ENVIRONMENTS,
   type Environment,
@@ -33,9 +33,15 @@ export function defaultCredentialsPath(
 export class CredentialStore {
   constructor(readonly path: string) {}
 
+  /** @throws CredentialsFileError for a file that cannot be read or parsed. */
   read(): StoredTokens {
     if (!existsSync(this.path)) return {};
-    const parsed: unknown = JSON.parse(readFileSync(this.path, "utf8"));
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(readFileSync(this.path, "utf8"));
+    } catch {
+      throw new CredentialsFileError(this.path);
+    }
     const stored: StoredTokens = {};
     if (typeof parsed !== "object" || parsed === null) return stored;
     for (const [key, value] of Object.entries(parsed)) {
@@ -56,7 +62,7 @@ export class CredentialStore {
     if (!environment) {
       throw new UsageError("That is not a CharDB access token");
     }
-    this.write({ ...this.read(), [environment]: token });
+    this.write({ ...this.readForRepair(), [environment]: token });
     return environment;
   }
 
@@ -67,6 +73,16 @@ export class CredentialStore {
     delete stored[environment];
     this.write(stored);
     return true;
+  }
+
+  /** What is stored, or nothing for a broken file, so adding can replace it. */
+  private readForRepair(): StoredTokens {
+    try {
+      return this.read();
+    } catch (err) {
+      if (err instanceof CredentialsFileError) return {};
+      throw err;
+    }
   }
 
   private write(stored: StoredTokens): void {

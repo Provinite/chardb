@@ -16,8 +16,13 @@ export const EXIT = {
 
 export type ExitCode = (typeof EXIT)[keyof typeof EXIT];
 
-/** An error the CLI reports by its message and exit code alone. */
+/**
+ * An error the CLI reports by its message and exit code. `details` are
+ * printed under the message, one per line.
+ */
 export class CliError extends Error {
+  readonly details: Record<string, string | number> = {};
+
   constructor(
     message: string,
     readonly exitCode: ExitCode,
@@ -45,13 +50,33 @@ export class DeclinedError extends CliError {
   }
 }
 
-/** The API could not be reached, or answered with something other than GraphQL. */
+/** The stored credentials file cannot be read or parsed. */
+export class CredentialsFileError extends UsageError {
+  constructor(readonly path: string) {
+    super(
+      "The credentials file cannot be read. Delete it, or pipe a token into: yarn chardb auth add",
+    );
+    this.details.file = path;
+  }
+}
+
+/** The API could not be reached at all. */
 export class ApiUnreachableError extends CliError {
+  constructor(readonly url: string) {
+    super("Could not reach the API", EXIT.failed);
+    this.details.url = url;
+  }
+}
+
+/** Something answered, but not with a GraphQL response. */
+export class NotGraphqlError extends CliError {
   constructor(
-    message: string,
     readonly url: string,
+    readonly status: number,
   ) {
-    super(message, EXIT.failed);
+    super("The API answered, but not with GraphQL", EXIT.failed);
+    this.details.url = url;
+    this.details.status = status;
   }
 }
 

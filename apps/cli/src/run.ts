@@ -65,20 +65,30 @@ const PENDING_PROVIDERS: Record<string, ExternalAccountProvider> = {
 export async function run(options: RunOptions): Promise<number> {
   const { stdout, stderr } = options;
   let exitCode: number = EXIT.ok;
+  /** Once stdin is read for input, nobody can answer a question on it. */
+  let stdinConsumed = false;
+  const readStdin = async (): Promise<string> => {
+    stdinConsumed = true;
+    return options.stdin();
+  };
 
   const session = (args: GlobalArgs): Session => {
+    const envToken = options.env.CHARDB_TOKEN;
     const picked = pickToken({
-      envToken: options.env.CHARDB_TOKEN,
+      envToken,
       envFlag: args.env,
-      stored: new CredentialStore(options.credentialsPath).read(),
+      // Not read at all with CHARDB_TOKEN, so a broken file cannot stop it.
+      stored: envToken
+        ? {}
+        : new CredentialStore(options.credentialsPath).read(),
     });
+    const url = graphqlUrl(picked.environment, options.env, args["api-url"]);
+    if (picked.environment !== "local" && !isHttps(url)) {
+      throw new UsageError("A prod or dev token is only ever sent over https");
+    }
     return {
       environment: picked.environment,
-      client: new GraphqlClient(
-        graphqlUrl(picked.environment, options.env, args["api-url"]),
-        picked.token,
-        options.fetch,
-      ),
+      client: new GraphqlClient(url, picked.token, options.fetch),
     };
   };
 
@@ -92,12 +102,12 @@ export async function run(options: RunOptions): Promise<number> {
       environment,
       mutation,
       yes: args.yes,
-      interactive: options.interactive,
+      interactive: options.interactive && !stdinConsumed,
     });
     if (gate === "proceed") return;
     if (gate === "refuse") {
       throw new UsageError(
-        "This changes production. Pass --yes to run it without a terminal",
+        "This changes production, and there is no terminal to confirm on. Pass --yes to run it",
       );
     }
     const answer = await options.ask(
@@ -378,10 +388,11 @@ export async function run(options: RunOptions): Promise<number> {
             type: "string",
             describe: "File to read; - or none reads stdin",
           })
+          // Not `array: true`, which would also swallow the document after it.
+          // Repeating the flag still collects every value.
           .option("var", {
             type: "string",
-            array: true,
-            default: [],
+            requiresArg: true,
             describe: "A string variable, as name=value. Repeatable",
           })
           .option("vars", {
@@ -393,11 +404,11 @@ export async function run(options: RunOptions): Promise<number> {
         // yargs hands a bare `-` over as an empty string.
         const query =
           !args.document || args.document === "-"
-            ? await options.stdin()
+            ? await readStdin()
             : readDocument(resolve(options.cwd, args.document));
         const variables = {
           ...parseVarsJson(args.vars),
-          ...parseVarPairs(args.var),
+          ...parseVarPairs(([] as unknown[]).concat(args.var ?? [])),
         };
         const operationName = args["operation-name"];
         const mutation = isMutation(query, operationName);
@@ -479,15 +490,28 @@ export async function run(options: RunOptions): Promise<number> {
   } catch (err) {
     if (err instanceof CliError) {
       stderr(`${err.message}\n`);
+      for (const [key, value] of Object.entries(err.details)) {
+        stderr(`  ${key}: ${value}\n`);
+      }
       return err.exitCode;
     }
     if (err instanceof Error && err.name === "YError") {
       stderr(`${err.message}\n`);
       return EXIT.usage;
     }
-    throw err;
+    stderr("Unexpected error\n");
+    stderr(`  ${err instanceof Error ? err.message : String(err)}\n`);
+    return EXIT.failed;
   }
   return exitCode;
+}
+
+function isHttps(url: string): boolean {
+  try {
+    return new URL(url).protocol === "https:";
+  } catch {
+    return false;
+  }
 }
 
 function parsePending(value: string) {
@@ -524,9 +548,10 @@ function parseVarsJson(text: string | undefined): Record<string, unknown> {
   return parsed as Record<string, unknown>;
 }
 
-function parseVarPairs(pairs: string[]): Record<string, string> {
+function parseVarPairs(pairs: unknown[]): Record<string, string> {
   const variables: Record<string, string> = {};
-  for (const pair of pairs) {
+  for (const raw of pairs) {
+    const pair = String(raw);
     const separator = pair.indexOf("=");
     if (separator <= 0) throw new UsageError("--var takes name=value");
     variables[pair.slice(0, separator)] = pair.slice(separator + 1);

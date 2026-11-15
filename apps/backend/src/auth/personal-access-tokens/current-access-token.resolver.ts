@@ -28,6 +28,7 @@ export class CurrentAccessTokenResolver {
   ): Promise<PersonalAccessToken | null> {
     const tokenId = getRequestAccessTokenId(ctx.req);
     if (!tokenId) return null;
-    return toGraphql(await this.tokens.get(tokenId));
+    const token = await this.tokens.get(tokenId);
+    return token ? toGraphql(token) : null;
   }
 }

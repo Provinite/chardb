@@ -204,9 +204,12 @@ export class PersonalAccessTokensService {
     });
   }
 
-  /** One token by id, whoever owns it. */
+  /**
+   * One token by id, whoever owns it, or null. Checks no ownership: pass only
+   * an id the caller is entitled to, such as the request's own token.
+   */
   get(tokenId: string) {
-    return this.db.personalAccessToken.findUniqueOrThrow({
+    return this.db.personalAccessToken.findUnique({
       where: { id: tokenId },
       include: withCommunities,
     });

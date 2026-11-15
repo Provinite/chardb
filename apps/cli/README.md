@@ -23,7 +23,7 @@ The token's prefix picks the API:
 | `chardb_pat_dev_…`   | `https://api.dev.chardb.cc/graphql`                         |
 | `chardb_pat_local_…` | this checkout's backend, from its instance slot (`yarn instance`) |
 
-`--api-url` or `CHARDB_API_URL` overrides it. A token sent to another environment's API is refused by the API.
+`--api-url` or `CHARDB_API_URL` overrides it. A prod or dev token is only sent to an `https` URL; a local token goes anywhere. A token sent to another environment's API is refused by the API.
 
 ## Commands
 
@@ -42,7 +42,7 @@ Every command does at most one write. Nothing retries, batches or splits a quant
 ## For scripts
 
 - `--json` prints JSON on stdout. Messages go to stderr.
-- A command that changes production asks on the terminal first. With no terminal it is refused unless `--yes` is passed. `gql` asks only for a mutation.
+- A command that changes production asks on the terminal first. With no terminal it is refused unless `--yes` is passed. `gql` asks only for a mutation, and cannot ask at all when the document came in on stdin.
 - Exit codes:
 
 | Code | Meaning |

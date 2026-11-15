@@ -37,6 +37,7 @@ Update the version field in ALL package.json files to the new version:
 - Backend: `/apps/backend/package.json`
 - Frontend: `/apps/frontend/package.json`
 - E2E: `/apps/e2e/package.json`
+- CLI: `/apps/cli/package.json`
 - Database: `/packages/database/package.json`
 - Shared: `/packages/shared/package.json`
 - UI: `/packages/ui/package.json`
@@ -44,7 +45,7 @@ Update the version field in ALL package.json files to the new version:
 - ESLint style rules: `/packages/eslint-plugin-styles/package.json`
 - ESLint permission rules: `/packages/eslint-plugin-permissions/package.json`
 
-Ten files. Confirm the list rather than trusting it — a package added since
+Eleven files. Confirm the list rather than trusting it — a package added since
 this was written would be missed:
 `grep -rn '"version"' --include=package.json . | grep -v node_modules`
 

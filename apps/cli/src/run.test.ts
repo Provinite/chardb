@@ -165,6 +165,92 @@ describe("targeting", () => {
     expect(await exec(h, ["whoami"])).toBe(2);
     expect(h.stderr.join("")).toMatch(/auth add/);
   });
+
+  it.each([
+    ["a prod", PROD],
+    ["a dev", "chardb_pat_dev_secretCCCC"],
+  ])("never sends %s token over plain http", async (_case, token) => {
+    const h = harness({ env: { CHARDB_TOKEN: token } });
+    const api = fakeApi(() => whoamiAnswer);
+
+    expect(
+      await exec(
+        h,
+        ["whoami", "--api-url", "http://localhost:4000"],
+        api.fetch,
+      ),
+    ).toBe(2);
+    expect(api.sent).toEqual([]);
+  });
+
+  it("sends a local token over plain http", async () => {
+    const h = harness();
+    const api = fakeApi(() => whoamiAnswer);
+
+    expect(
+      await exec(
+        h,
+        ["whoami", "--api-url", "http://localhost:4000"],
+        api.fetch,
+      ),
+    ).toBe(0);
+  });
+
+  it("runs on CHARDB_TOKEN with a broken credentials file", async () => {
+    const h = harness();
+    writeFileSync(h.options.credentialsPath as string, "{ not json");
+
+    expect(await exec(h, ["whoami"], fakeApi(() => whoamiAnswer).fetch)).toBe(
+      0,
+    );
+  });
+
+  it("exits 2 naming a broken credentials file when it needs it", async () => {
+    const h = harness({ env: {} });
+    writeFileSync(h.options.credentialsPath as string, "{ not json");
+
+    expect(await exec(h, ["whoami"])).toBe(2);
+    expect(h.stderr.join("")).toMatch(/credentials/);
+  });
+});
+
+describe("answers that are not GraphQL", () => {
+  it.each([
+    ["a JSON error page", 502, { message: "Bad Gateway" }],
+    ["a body too large", 413, { statusCode: 413, message: "too large" }],
+    ["an empty object", 200, {}],
+  ])("exits 1 for %s", async (_case, status, body) => {
+    const h = harness();
+    const api = fakeApi(() => ({ status, body }));
+
+    expect(await exec(h, ["whoami"], api.fetch)).toBe(1);
+    expect(h.stderr.join("")).toMatch(/not with GraphQL/);
+    expect(h.stderr.join("")).toContain(`status: ${status}`);
+  });
+
+  it("exits 1 from gql too", async () => {
+    const h = harness({ stdin: async () => "{ a }" });
+    const api = fakeApi(() => ({
+      status: 502,
+      body: { message: "Bad Gateway" },
+    }));
+
+    expect(await exec(h, ["gql"], api.fetch)).toBe(1);
+  });
+});
+
+describe("unexpected failures", () => {
+  it("exit 1 with a message rather than throwing", async () => {
+    const h = harness();
+    h.options.stdout = () => {
+      throw new Error("disk on fire");
+    };
+
+    expect(await exec(h, ["whoami"], fakeApi(() => whoamiAnswer).fetch)).toBe(
+      1,
+    );
+    expect(h.stderr.join("")).toContain("disk on fire");
+  });
 });
 
 describe("whoami", () => {
@@ -642,6 +728,16 @@ describe("gql", () => {
   });
 
   it("asks before a production mutation", async () => {
+    const h = harness({ env: { CHARDB_TOKEN: PROD }, interactive: true });
+    writeFileSync(join(h.options.cwd as string, "m.graphql"), "mutation { c }");
+    const api = fakeApi(() => ({ body: { data: { c: true } } }));
+
+    expect(await exec(h, ["gql", "m.graphql"], api.fetch)).toBe(1);
+    expect(h.questions).toHaveLength(1);
+    expect(api.sent).toEqual([]);
+  });
+
+  it("cannot ask once stdin held the document, so needs --yes", async () => {
     const h = harness({
       env: { CHARDB_TOKEN: PROD },
       interactive: true,
@@ -649,9 +745,26 @@ describe("gql", () => {
     });
     const api = fakeApi(() => ({ body: { data: { c: true } } }));
 
-    expect(await exec(h, ["gql", "-"], api.fetch)).toBe(1);
-    expect(h.questions).toHaveLength(1);
+    expect(await exec(h, ["gql"], api.fetch)).toBe(2);
+    expect(h.questions).toEqual([]);
     expect(api.sent).toEqual([]);
+
+    expect(await exec(h, ["gql", "--yes"], api.fetch)).toBe(0);
+  });
+
+  it("takes --var before the document", async () => {
+    const h = harness();
+    writeFileSync(join(h.options.cwd as string, "q.graphql"), "{ a }");
+    const api = fakeApi(() => ({ body: { data: { a: 1 } } }));
+
+    expect(
+      await exec(
+        h,
+        ["gql", "--var", "a=1", "--var", "b=2", "q.graphql"],
+        api.fetch,
+      ),
+    ).toBe(0);
+    expect(api.sent[0].variables).toEqual({ a: "1", b: "2" });
   });
 
   it("does not ask before a production query", async () => {

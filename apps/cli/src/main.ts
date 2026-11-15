@@ -3,11 +3,12 @@ import { createInterface } from "node:readline/promises";
 import { defaultCredentialsPath } from "./credentials";
 import { run } from "./run";
 
-// A reader that stops early (`| head`) closes the pipe; there is no one left
-// to tell.
+// A reader that stops early (`| head`) closes the pipe. Output after that has
+// nowhere to go, but the command still finishes and exits with its own code.
+let stdoutClosed = false;
 process.stdout.on("error", (err: NodeJS.ErrnoException) => {
-  if (err.code === "EPIPE") process.exit(process.exitCode ?? 0);
-  throw err;
+  if (err.code !== "EPIPE") throw err;
+  stdoutClosed = true;
 });
 
 async function readStdin(): Promise<string> {
@@ -33,7 +34,9 @@ const exitCode = await run({
   env: process.env,
   fetch: globalThis.fetch,
   stdin: readStdin,
-  stdout: (text) => process.stdout.write(text),
+  stdout: (text) => {
+    if (!stdoutClosed) process.stdout.write(text);
+  },
   stderr: (text) => process.stderr.write(text),
   interactive: Boolean(process.stdin.isTTY && process.stderr.isTTY),
   ask,

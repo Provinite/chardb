@@ -4,6 +4,7 @@ import {
   ApiUnreachableError,
   type GraphqlErrorEntry,
   GraphqlRequestError,
+  NotGraphqlError,
 } from "./errors";
 
 export interface GraphqlResponse {
@@ -23,27 +24,39 @@ export class GraphqlClient {
    * A typed operation's data.
    *
    * @throws GraphqlRequestError when the API answers with errors.
-   * @throws ApiUnreachableError when it cannot be reached or answers with
-   * something other than GraphQL.
+   * @throws ApiUnreachableError when it cannot be reached.
+   * @throws NotGraphqlError when the answer is not a GraphQL response.
    */
   async request<TResult, TVariables>(
     document: TypedDocumentNode<TResult, TVariables>,
     variables: TVariables,
   ): Promise<TResult> {
-    const body = await this.send(print(document), variables);
+    const { body, status } = await this.post(print(document), variables);
     if (body.errors?.length) throw new GraphqlRequestError(body.errors);
+    if (body.data == null) throw new NotGraphqlError(this.url, status);
     return body.data as TResult;
   }
 
   /**
    * The whole response to a document, errors included, for a caller that
    * prints it as it came.
+   *
+   * @throws ApiUnreachableError when the API cannot be reached.
+   * @throws NotGraphqlError when the answer is not a GraphQL response.
    */
   async send(
     query: string,
     variables: unknown,
     operationName?: string,
   ): Promise<GraphqlResponse> {
+    return (await this.post(query, variables, operationName)).body;
+  }
+
+  private async post(
+    query: string,
+    variables: unknown,
+    operationName?: string,
+  ): Promise<{ body: GraphqlResponse; status: number }> {
     let response: Response;
     try {
       response = await this.fetchImpl(this.url, {
@@ -55,24 +68,29 @@ export class GraphqlClient {
         body: JSON.stringify({ query, variables, operationName }),
       });
     } catch {
-      throw new ApiUnreachableError(`Could not reach ${this.url}`, this.url);
+      throw new ApiUnreachableError(this.url);
     }
 
     let body: unknown;
     try {
       body = await response.json();
     } catch {
-      throw new ApiUnreachableError(
-        `${this.url} answered HTTP ${response.status}, not GraphQL`,
-        this.url,
-      );
+      throw new NotGraphqlError(this.url, response.status);
     }
-    if (typeof body !== "object" || body === null) {
-      throw new ApiUnreachableError(
-        `${this.url} answered HTTP ${response.status}, not GraphQL`,
-        this.url,
-      );
+    if (!isGraphqlResponse(body)) {
+      throw new NotGraphqlError(this.url, response.status);
     }
-    return body as GraphqlResponse;
+    // A GraphQL server answers an error status only with errors to show.
+    if (!response.ok && !body.errors?.length) {
+      throw new NotGraphqlError(this.url, response.status);
+    }
+    return { body, status: response.status };
   }
+}
+
+/** Carries `data` or a list of `errors`, as every GraphQL response must. */
+function isGraphqlResponse(body: unknown): body is GraphqlResponse {
+  if (typeof body !== "object" || body === null) return false;
+  const { data, errors } = body as { data?: unknown; errors?: unknown };
+  return data !== undefined || Array.isArray(errors);
 }
