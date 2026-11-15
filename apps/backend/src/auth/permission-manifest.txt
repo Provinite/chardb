@@ -1,0 +1,461 @@
+# Who may call every GraphQL resolver method and REST route in the backend.
+#
+# Generated from the @Allow* decorators and @UseGuards on each method by
+# apps/backend/src/auth/resolver-permission-coverage.spec.ts, which fails
+# when this file and the code disagree. A change here is a change to who
+# may do what: read the diff as that.
+#
+# To update, from apps/backend:
+#   UPDATE_PERMISSION_MANIFEST=1 yarn jest src/auth/resolver-permission-coverage.spec.ts
+#
+# Alternatives are joined with 'or'; a guard after 'and' must pass as well.
+# This is the gate in front of a method. A check the method or its service
+# makes afterwards is not shown.
+AchievementsResolver.achievementsIn (ResolveField): anyone
+AuthResolver.forgotPassword (Mutation): anyone
+AuthResolver.login (Mutation): anyone
+AuthResolver.logout (Mutation): anyone
+AuthResolver.refreshToken (Mutation): anyone
+AuthResolver.resetPassword (Mutation): anyone
+AuthResolver.signup (Mutation): anyone
+CandyBoardResolver.applyHalloweenCandyBoardActions (Mutation): signed in
+CandyBoardResolver.createHalloweenCandyBoard (Mutation): signed in
+CandyBoardResolver.deleteHalloweenCandyBoard (Mutation): signed in
+CandyBoardResolver.halloweenCandyBoard (Query): anyone
+CandyBoardResolver.myHalloweenCandyBoards (Query): signed in
+CandyBoardResolver.setHalloweenCandyBoardBackground (Mutation): signed in
+CandyBoardResolver.setHalloweenCandyBoardLighting (Mutation): signed in
+CandyBoardResolver.setHalloweenCandyBoardName (Mutation): signed in
+CandySwapResolver.acceptHalloweenCandyOffer (Mutation): signed in
+CandySwapResolver.cancelHalloweenCandyOffer (Mutation): signed in
+CandySwapResolver.halloweenCandySwapLimits (Query): anyone
+CandySwapResolver.halloweenCandySwapMarket (Query): signed in
+CandySwapResolver.halloweenCandySwapOffers (Query): signed in
+CandySwapResolver.halloweenCandySwapRecentTrades (Query): signed in
+CandySwapResolver.halloweenCandyTypes (Query): anyone
+CandySwapResolver.myHalloweenCandies (Query): signed in
+CandySwapResolver.myHalloweenCandyOffers (Query): signed in
+CandySwapResolver.myHalloweenCandyTrades (Query): signed in
+CandySwapResolver.placeHalloweenCandyOffer (Mutation): signed in
+CharacterFoldersResolver.characterFolders (Query): anyone
+CharacterFoldersResolver.createCharacterFolder (Mutation): signed in
+CharacterFoldersResolver.deleteCharacterFolder (Mutation): signed in
+CharacterFoldersResolver.moveCharacterFolder (Mutation): signed in
+CharacterFoldersResolver.moveCharactersToFolder (Mutation): signed in
+CharacterFoldersResolver.myCharacterFolders (Query): signed in
+CharacterFoldersResolver.setCharacterFolders (Mutation): signed in
+CharacterFoldersResolver.updateCharacterFolder (Mutation): signed in
+CharacterFoldersResolver.userCharacterFolders (Query): anyone
+CharacterLikesResolver.userHasLiked (ResolveField): signed in
+CharacterOwnershipChangesResolver.createCharacterOwnershipChange (Mutation): global isAdmin
+CharacterOwnershipChangesResolver.findAll (Query): global isAdmin
+CharacterOwnershipChangesResolver.findByCharacter (Query): signed in
+CharacterOwnershipChangesResolver.findByUser (Query): signed in
+CharacterOwnershipChangesResolver.findOne (Query): signed in
+CharacterOwnershipChangesResolver.removeCharacterOwnershipChange (Mutation): global isAdmin
+CharacterOwnershipChangesResolver.resolveCharacter (ResolveField): signed in
+CharacterOwnershipChangesResolver.resolveFromUser (ResolveField): signed in
+CharacterOwnershipChangesResolver.resolveToUser (ResolveField): signed in
+CharacterTraitValueResolver.resolveEnumValue (ResolveField): anyone
+CharacterTraitValueResolver.resolveTrait (ResolveField): anyone
+CharacterWatchesResolver.unwatchCharacter (Mutation): signed in
+CharacterWatchesResolver.viewerIsWatching (ResolveField): anyone
+CharacterWatchesResolver.watchCharacter (Mutation): signed in
+CharactersResolver.addCharacterTags (Mutation): global isAdmin or character profile editor {"characterId":"id"}
+CharactersResolver.assignCharacterSpecies (Mutation): global isAdmin or character profile editor {"characterId":"id"}
+CharactersResolver.character (Query): anyone
+CharactersResolver.characterVariantChanges (Query): anyone
+CharactersResolver.characters (Query): anyone
+CharactersResolver.createCharacter (Mutation): signed in or community canCreateCharacter of {"speciesId":"input.speciesId"}
+CharactersResolver.deleteCharacter (Mutation): global isAdmin or community canDeleteCharacter of {"characterId":"id"}
+CharactersResolver.giveCharacterToCommunity (Mutation): owner of {"characterId":"id"}
+CharactersResolver.kickCharacterFromSpecies (Mutation): global isAdmin or community canEditCharacterRegistry of {"characterId":"id"}
+CharactersResolver.myCharacters (Query): signed in
+CharactersResolver.myCharactersForImageUpload (Query): signed in
+CharactersResolver.myEditableCharacters (Query): signed in
+CharactersResolver.purgeCharacter (Mutation): global isAdmin
+CharactersResolver.removeCharacterTags (Mutation): global isAdmin or character profile editor {"characterId":"id"}
+CharactersResolver.resolveCountField (ResolveField): anyone
+CharactersResolver.resolveCreatorField (ResolveField): anyone
+CharactersResolver.resolveFormsField (ResolveField): anyone
+CharactersResolver.resolveIsOrphanedField (ResolveField): anyone
+CharactersResolver.resolveLikesCountField (ResolveField): anyone
+CharactersResolver.resolveMainMediaField (ResolveField): anyone
+CharactersResolver.resolveOwnerField (ResolveField): anyone
+CharactersResolver.resolvePendingOwnershipField (ResolveField): anyone
+CharactersResolver.resolveSpeciesField (ResolveField): anyone
+CharactersResolver.resolveSpeciesVariantField (ResolveField): anyone
+CharactersResolver.resolveTagsField (ResolveField): anyone
+CharactersResolver.resolveTagsRelField (ResolveField): anyone
+CharactersResolver.resolveUserHasLikedField (ResolveField): anyone
+CharactersResolver.setCharacterMainMedia (Mutation): global isAdmin or character profile editor {"characterId":"id"}
+CharactersResolver.transferCharacter (Mutation): global isAdmin or owner of {"characterId":"id"}
+CharactersResolver.updateCharacterProfile (Mutation): global isAdmin or character profile editor {"characterId":"id"}
+CharactersResolver.updateCharacterRegistry (Mutation): global isAdmin or character registry editor {"characterId":"id"}
+CharactersResolver.userCharacters (Query): anyone
+CommentLikesResolver.likesCount (ResolveField): anyone
+CommentLikesResolver.userHasLiked (ResolveField): signed in
+CommentsResolver.author (ResolveField): anyone
+CommentsResolver.character (ResolveField): anyone
+CommentsResolver.comment (Query): anyone
+CommentsResolver.comments (Query): anyone
+CommentsResolver.createComment (Mutation): signed in
+CommentsResolver.deleteComment (Mutation): global isAdmin or owner of {"commentId":"id"}
+CommentsResolver.gallery (ResolveField): anyone
+CommentsResolver.image (ResolveField): anyone
+CommentsResolver.parent (ResolveField): anyone
+CommentsResolver.replies (ResolveField): anyone
+CommentsResolver.repliesCount (ResolveField): anyone
+CommentsResolver.updateComment (Mutation): global isAdmin or owner of {"commentId":"id"}
+CommentsResolver.user (ResolveField): anyone
+CommunitiesResolver.createCommunity (Mutation): global canCreateCommunity
+CommunitiesResolver.findAll (Query): signed in
+CommunitiesResolver.findBySlug (Query): anyone
+CommunitiesResolver.findOne (Query): anyone
+CommunitiesResolver.getDiscordBotInviteUrl (Query): signed in
+CommunitiesResolver.joinCommunity (Mutation): signed in
+CommunitiesResolver.linkDiscordGuild (Mutation): community canEditRole of {"communityId":"communityId"}
+CommunitiesResolver.removeCommunity (Mutation): global canCreateCommunity
+CommunitiesResolver.resolveDiscordUser (Query): community canCreateOrphanedCharacter of {"communityId":"communityId"}
+CommunitiesResolver.resolveMemberCount (ResolveField): anyone
+CommunitiesResolver.resolveMembers (ResolveField): signed in
+CommunitiesResolver.resolveOpenSignupRoleId (ResolveField): anyone
+CommunitiesResolver.setCommunityOpenSignup (Mutation): global isAdmin or community canCreateInviteCode of {"communityId":"communityId"}
+CommunitiesResolver.unlinkDiscordGuild (Mutation): community canEditRole of {"communityId":"communityId"}
+CommunitiesResolver.updateCommunity (Mutation): global canCreateCommunity
+CommunitiesResolver.validateDiscordGuild (Query): community canEditRole of {"communityId":"communityId"}
+CommunityColorsResolver.community (ResolveField): anyone
+CommunityColorsResolver.communityColor (Query): anyone
+CommunityColorsResolver.communityColors (Query): anyone
+CommunityColorsResolver.createCommunityColor (Mutation): global isAdmin or community canEditSpecies of {"communityId":"input.communityId"}
+CommunityColorsResolver.deleteCommunityColor (Mutation): global isAdmin or community canEditSpecies of {"communityColorId":"id"}
+CommunityColorsResolver.updateCommunityColor (Mutation): global isAdmin or community canEditSpecies of {"communityColorId":"id"}
+CommunityInvitationsResolver.createCommunityInvitation (Mutation): global isAdmin or community canCreateInviteCode of {"communityId":"createCommunityInvitationInput.communityId"}
+CommunityInvitationsResolver.findAll (Query): global isAdmin
+CommunityInvitationsResolver.findByCommunity (Query): global isAdmin or community canCreateInviteCode of {"communityId":"communityId"}
+CommunityInvitationsResolver.findByInvitee (Query): signed in
+CommunityInvitationsResolver.findOne (Query): global isAdmin or community canCreateInviteCode of {"communityInvitationId":"id"}
+CommunityInvitationsResolver.removeCommunityInvitation (Mutation): global isAdmin or owner of {"inviterOrInviteeOfInvitationId":"id"}
+CommunityInvitationsResolver.resolveAccepted (ResolveField): anyone
+CommunityInvitationsResolver.resolveCommunity (ResolveField): anyone
+CommunityInvitationsResolver.resolveDeclined (ResolveField): anyone
+CommunityInvitationsResolver.resolveInvitee (ResolveField): anyone
+CommunityInvitationsResolver.resolveInviter (ResolveField): anyone
+CommunityInvitationsResolver.resolvePending (ResolveField): anyone
+CommunityInvitationsResolver.resolveRole (ResolveField): anyone
+CommunityInvitationsResolver.respondToCommunityInvitation (Mutation): owner of {"inviteeOfInvitationId":"id"}
+CommunityMembersResolver.createCommunityMember (Mutation): global isAdmin
+CommunityMembersResolver.findAll (Query): global isAdmin
+CommunityMembersResolver.findByCommunity (Query): global isAdmin or community __ANY__ of {"communityId":"communityId"}
+CommunityMembersResolver.findByUser (Query): signed in
+CommunityMembersResolver.findOne (Query): global isAdmin
+CommunityMembersResolver.findRolesInCommunity (Query): global isAdmin or community __ANY__ of {"communityId":"communityId"}
+CommunityMembersResolver.getRole (ResolveField): anyone
+CommunityMembersResolver.getUser (ResolveField): anyone
+CommunityMembersResolver.removeCommunityMember (Mutation): signed in
+CommunityMembersResolver.updateCommunityMember (Mutation): global isAdmin or community canManageMemberRoles of {"communityMemberId":"id"}
+CurrenciesResolver.burnCurrency (Mutation): community canGrantItems of {"currencyId":"input.currencyId"}
+CurrenciesResolver.createCurrency (Mutation): community canManageItems of {"communityId":"input.communityId"}
+CurrenciesResolver.findAll (Query): community __ANY__ of {"communityId":"communityId"}
+CurrenciesResolver.findHolders (Query): community __ANY__ of {"currencyId":"currencyId"}
+CurrenciesResolver.findOne (Query): community __ANY__ of {"currencyId":"id"}
+CurrenciesResolver.findSupply (Query): community __ANY__ of {"communityId":"communityId"}
+CurrenciesResolver.findTransactions (Query): community __ANY__ of {"communityId":"filters.communityId"}
+CurrenciesResolver.findWallet (Query): community __ANY__ of {"communityId":"communityId"}
+CurrenciesResolver.mintCurrency (Mutation): community canGrantItems of {"currencyId":"input.currencyId"}
+CurrenciesResolver.transferCurrency (Mutation): community __ANY__ of {"currencyId":"input.currencyId"}
+CurrenciesResolver.updateCurrency (Mutation): community canManageItems of {"currencyId":"id"}
+CurrencyBalanceFieldsResolver.resolveUser (ResolveField): signed in
+CurrencyTransactionConnectionResolver.resolveTotal (ResolveField): signed in
+CurrencyTransactionFieldsResolver.resolveActorUser (ResolveField): signed in
+CurrencyTransactionFieldsResolver.resolveCounterparty (ResolveField): signed in
+CurrencyTransactionFieldsResolver.resolveCurrency (ResolveField): signed in
+CurrencyTransactionFieldsResolver.resolveStaffNote (ResolveField): signed in
+CurrencyTransactionFieldsResolver.resolveUser (ResolveField): signed in
+DeviantArtOAuthController.handleCallback (GET): anyone and OAuthLinkCallbackGuard
+DeviantArtOAuthController.initiateOAuth (GET): signed in
+DeviantartUuidBackfillResolver.cancelDeviantartUuidBackfill (Mutation): global isAdmin
+DeviantartUuidBackfillResolver.deviantartUuidBackfillProgress (Subscription): global isAdmin
+DeviantartUuidBackfillResolver.runDeviantartUuidBackfill (Mutation): global isAdmin
+DiscordNameBackfillResolver.discordNameBackfillStatus (Query): global isAdmin
+DiscordNameBackfillResolver.runDiscordNameBackfill (Mutation): global isAdmin
+DiscordOAuthController.handleCallback (GET): anyone and OAuthLinkCallbackGuard
+DiscordOAuthController.initiateOAuth (GET): signed in
+DoorKnockResolver.halloweenDoor (Query): signed in
+DoorKnockResolver.knockOnHalloweenDoor (Mutation): signed in
+EditKitsResolver.editCharacterTraitsWithKit (Mutation): signed in
+EmailVerificationResolver.resendVerificationEmail (Mutation): anyone
+EmailVerificationResolver.verifyEmail (Mutation): anyone
+EnumValueSettingsResolver.createEnumValueSetting (Mutation): global isAdmin or community canEditSpecies of {"speciesVariantId":"createEnumValueSettingInput.speciesVariantId"}
+EnumValueSettingsResolver.findAll (Query): signed in
+EnumValueSettingsResolver.findByEnumValue (Query): global isAdmin or community __ANY__ of {"enumValueId":"enumValueId"}
+EnumValueSettingsResolver.findBySpeciesVariant (Query): global isAdmin or community __ANY__ of {"speciesVariantId":"speciesVariantId"}
+EnumValueSettingsResolver.findOne (Query): global isAdmin or community __ANY__ of {"enumValueSettingId":"id"}
+EnumValueSettingsResolver.removeEnumValueSetting (Mutation): global isAdmin or community canEditSpecies of {"enumValueSettingId":"id"}
+EnumValueSettingsResolver.resolveEnumValue (ResolveField): anyone
+EnumValueSettingsResolver.resolveSpeciesVariant (ResolveField): anyone
+EnumValueSettingsResolver.updateEnumValueSetting (Mutation): global isAdmin or community canEditSpecies of {"enumValueSettingId":"id"}
+EnumValuesResolver.createEnumValue (Mutation): global isAdmin or community canEditSpecies of {"traitId":"createEnumValueInput.traitId"}
+EnumValuesResolver.findAll (Query): signed in
+EnumValuesResolver.findByTrait (Query): global isAdmin or community __ANY__ of {"traitId":"traitId"}
+EnumValuesResolver.findOne (Query): global isAdmin or community __ANY__ of {"enumValueId":"id"}
+EnumValuesResolver.removeEnumValue (Mutation): global isAdmin or community canEditSpecies of {"enumValueId":"id"}
+EnumValuesResolver.reorderEnumValues (Mutation): global isAdmin or community canEditSpecies of {"traitId":"input.traitId"}
+EnumValuesResolver.resolveColor (ResolveField): anyone
+EnumValuesResolver.resolveTrait (ResolveField): anyone
+EnumValuesResolver.updateEnumValue (Mutation): global isAdmin or community canEditSpecies of {"enumValueId":"id"}
+ExternalAccountsResolver.getMyExternalAccounts (Query): signed in
+ExternalAccountsResolver.unlinkExternalAccount (Mutation): signed in
+GalleriesResolver.characterGalleries (Query): anyone
+GalleriesResolver.createGallery (Mutation): signed in
+GalleriesResolver.deleteGallery (Mutation): global isAdmin or owner of {"galleryId":"id"}
+GalleriesResolver.galleries (Query): anyone
+GalleriesResolver.gallery (Query): anyone
+GalleriesResolver.likedGalleries (Query): signed in
+GalleriesResolver.myGalleries (Query): signed in
+GalleriesResolver.reorderGalleries (Mutation): signed in
+GalleriesResolver.resolveCharacter (ResolveField): anyone
+GalleriesResolver.resolveCountField (ResolveField): anyone
+GalleriesResolver.resolveLikesCount (ResolveField): anyone
+GalleriesResolver.resolveOwner (ResolveField): anyone
+GalleriesResolver.resolveUserHasLiked (ResolveField): anyone
+GalleriesResolver.updateGallery (Mutation): global isAdmin or owner of {"galleryId":"id"}
+GalleriesResolver.userGalleries (Query): anyone
+GalleryLikesResolver.userHasLiked (ResolveField): signed in
+HalloweenAdminResolver.createHalloweenPrize (Mutation): community canManageItems of {"communityId":"communityId"}
+HalloweenAdminResolver.dropHalloweenHouseOffers (Mutation): community canManageItems of {"communityId":"communityId"}
+HalloweenAdminResolver.halloweenPrizeCharacters (Query): community canManageItems of {"communityId":"communityId"}
+HalloweenAdminResolver.halloweenPrizeItemTypes (Query): community canManageItems of {"communityId":"communityId"}
+HalloweenAdminResolver.removeHalloweenPrize (Mutation): community canManageItems of {"communityId":"communityId"}
+HalloweenAdminResolver.updateHalloweenPrize (Mutation): community canManageItems of {"communityId":"communityId"}
+HalloweenAdminResolver.updateHalloweenSettings (Mutation): community canManageItems of {"communityId":"communityId"}
+HalloweenDashboardResolver.halloweenDashboard (Query): community __ANY__ of {"communityId":"communityId"}
+HalloweenDashboardResolver.halloweenWins (Query): community __ANY__ of {"communityId":"communityId"}
+HalloweenDashboardResolver.setCommunityHalloweenEnabled (Mutation): global isAdmin
+HalloweenDashboardResolver.setHalloweenPrizeDelivered (Mutation): community canGrantItems of {"communityId":"communityId"}
+HalloweenInteractionsController.interactions (POST): anyone
+HalloweenPrizeListResolver.halloweenPrizes (Query): anyone
+HalloweenPrizeListResolver.halloweenRecentWins (Query): anyone
+HealthController.healthCheck (GET): anyone
+ImageLikesResolver.userHasLiked (ResolveField): signed in
+ImageModerationActionFieldsResolver.resolveCurrencyAwards (ResolveField): signed in
+ImageModerationResolver.approveImage (Mutation): signed in
+ImageModerationResolver.deferImage (Mutation): signed in
+ImageModerationResolver.globalImageModerationQueue (Query): global isAdmin
+ImageModerationResolver.globalMediaModerationQueue (Query): global isAdmin
+ImageModerationResolver.globalPendingImageCount (Query): global isAdmin
+ImageModerationResolver.imageModerationQueue (Query): global isAdmin or community canModerateImages of {"communityId":"communityId"}
+ImageModerationResolver.mediaModerationQueue (Query): global isAdmin or community canModerateImages of {"communityId":"communityId"}
+ImageModerationResolver.pendingImageCount (Query): global isAdmin or community canModerateImages of {"communityId":"communityId"}
+ImageModerationResolver.rejectImage (Mutation): signed in
+ImagesController.uploadAvatar (POST): signed in
+ImagesController.uploadImage (POST): signed in
+ImagesResolver.updateImage (Mutation): global isAdmin or owner of {"imageId":"id"}
+InviteCodesResolver.claimInviteCode (Mutation): signed in
+InviteCodesResolver.createInviteCode (Mutation): global canCreateInviteCode
+InviteCodesResolver.findAll (Query): global canListInviteCodes or community canListInviteCodes of {"communityId":"communityId"}
+InviteCodesResolver.findByCreator (Query): global canListInviteCodes
+InviteCodesResolver.findByRole (Query): global canListInviteCodes
+InviteCodesResolver.findOne (Query): anyone
+InviteCodesResolver.removeInviteCode (Mutation): global canCreateInviteCode
+InviteCodesResolver.resolveCreator (ResolveField): anyone
+InviteCodesResolver.resolveIsAvailable (ResolveField): anyone
+InviteCodesResolver.resolveRemainingClaims (ResolveField): anyone
+InviteCodesResolver.resolveRole (ResolveField): anyone
+InviteCodesResolver.updateInviteCode (Mutation): global canCreateInviteCode
+ItemFieldsResolver.resolveAcquiredAt (ResolveField): anyone
+ItemFieldsResolver.resolveItemType (ResolveField): anyone
+ItemFieldsResolver.resolveOwner (ResolveField): anyone
+ItemFieldsResolver.resolvePendingOwnership (ResolveField): anyone
+ItemTransactionConnectionResolver.resolveTotal (ResolveField): signed in
+ItemTransactionsResolver.findAll (Query): community __ANY__ of {"communityId":"filters.communityId"}
+ItemTransactionsResolver.findByItem (Query): community __ANY__ of {"itemId":"itemId"}
+ItemTransactionsResolver.resolveActorUser (ResolveField): signed in
+ItemTransactionsResolver.resolveFromUser (ResolveField): signed in
+ItemTransactionsResolver.resolveItem (ResolveField): signed in
+ItemTransactionsResolver.resolveItemType (ResolveField): signed in
+ItemTransactionsResolver.resolvePendingOwner (ResolveField): signed in
+ItemTransactionsResolver.resolveStaffNote (ResolveField): signed in
+ItemTransactionsResolver.resolveToUser (ResolveField): signed in
+ItemsResolver.community (ResolveField): anyone
+ItemsResolver.createItemType (Mutation): community canManageItems of {"communityId":"input.communityId"}
+ItemsResolver.deleteItemType (Mutation): community canManageItems of {"itemTypeId":"id"}
+ItemsResolver.externalMembers (Query): global isAdmin or community canCreateOrphanedCharacter of {"communityId":"communityId"}
+ItemsResolver.grantItem (Mutation): community canGrantItems of {"itemTypeId":"input.itemTypeId"}
+ItemsResolver.item (Query): community __ANY__ of {"itemId":"id"}
+ItemsResolver.itemEconomy (Query): community canManageItems of {"communityId":"communityId"}
+ItemsResolver.itemType (Query): anyone
+ItemsResolver.itemTypes (Query): anyone
+ItemsResolver.memberHoldings (Query): community __ANY__ of {"communityId":"communityId"}
+ItemsResolver.pendingHoldings (Query): global isAdmin or community canCreateOrphanedCharacter of {"communityId":"communityId"}
+ItemsResolver.resolveColor (ResolveField): anyone
+ItemsResolver.resolveImage (ResolveField): anyone
+ItemsResolver.resolveUseMyoGrant (ResolveField): anyone
+ItemsResolver.resolveUsePayout (ResolveField): anyone
+ItemsResolver.resolveUseTraitEditGrant (ResolveField): anyone
+ItemsResolver.resolveUseVariantChangeGrant (ResolveField): anyone
+ItemsResolver.revokeItems (Mutation): community canGrantItems of {"itemId":"itemIds.0"}
+ItemsResolver.setItemTypeMyoGrant (Mutation): community canManageItems of {"itemTypeId":"input.itemTypeId"}
+ItemsResolver.setItemTypeTraitEditGrant (Mutation): community canManageItems of {"itemTypeId":"input.itemTypeId"}
+ItemsResolver.setItemTypeUsePayout (Mutation): community canManageItems of {"itemTypeId":"input.itemTypeId"}
+ItemsResolver.setItemTypeVariantChangeGrant (Mutation): community canManageItems of {"itemTypeId":"input.itemTypeId"}
+ItemsResolver.updateItem (Mutation): community canGrantItems of {"itemId":"id"}
+ItemsResolver.updateItemType (Mutation): community canManageItems of {"itemTypeId":"id"}
+ItemsResolver.useItem (Mutation): signed in
+MediaLikesResolver.userHasLiked (ResolveField): signed in
+MediaResolver.addMediaTags (Mutation): global isAdmin or owner of {"mediaId":"id"}
+MediaResolver.awardRecipients (ResolveField): community canGrantItems of {"mediaId":"$root.id"}
+MediaResolver.character (ResolveField): anyone
+MediaResolver.characterCount (ResolveField): anyone
+MediaResolver.characterMedia (Query): anyone
+MediaResolver.createTextMedia (Mutation): signed in
+MediaResolver.deleteMedia (Mutation): global isAdmin or owner of {"mediaId":"id"}
+MediaResolver.gallery (ResolveField): anyone
+MediaResolver.galleryCount (ResolveField): anyone
+MediaResolver.galleryMedia (Query): anyone
+MediaResolver.image (ResolveField): anyone
+MediaResolver.likesCount (ResolveField): anyone
+MediaResolver.media (Query): anyone
+MediaResolver.mediaItem (Query): anyone
+MediaResolver.myMedia (Query): signed in
+MediaResolver.owner (ResolveField): anyone
+MediaResolver.pendingModerationImage (ResolveField): global isAdmin or community canModerateImages of {"mediaId":"$root.id"}
+MediaResolver.removeMediaTags (Mutation): global isAdmin or owner of {"mediaId":"id"}
+MediaResolver.tags_rel (ResolveField): anyone
+MediaResolver.textContent (ResolveField): anyone
+MediaResolver.updateMedia (Mutation): global isAdmin or owner of {"mediaId":"id"}
+MediaResolver.updateTextContent (Mutation): global isAdmin or owner of {"mediaId":"mediaId"}
+MediaResolver.userHasLiked (ResolveField): signed in
+MediaResolver.userMedia (Query): anyone
+MyoResolver.createCharacterFromMyoTicket (Mutation): signed in
+NotificationPreferencesResolver.findMine (Query): signed in
+NotificationPreferencesResolver.updateNotificationPreference (Mutation): signed in
+NotificationsResolver.countUnseen (Query): signed in
+NotificationsResolver.findMine (Query): signed in
+NotificationsResolver.markAllNotificationsRead (Mutation): signed in
+NotificationsResolver.markNotificationsRead (Mutation): signed in
+NotificationsResolver.markNotificationsSeen (Mutation): signed in
+PatreonOAuthController.handleCallback (GET): anyone and OAuthLinkCallbackGuard
+PatreonOAuthController.initiateOAuth (GET): signed in
+PendingOwnershipResolver.resolveDisplayIdentifier (ResolveField): global isAdmin or community canCreateOrphanedCharacter of {"pendingOwnershipId":"$root.id"} and CommunityPermissionGuard
+PendingOwnershipResolver.resolveDisplayName (ResolveField): global isAdmin or community canCreateOrphanedCharacter of {"pendingOwnershipId":"$root.id"} and CommunityPermissionGuard
+PendingOwnershipResolver.resolveProviderAccountId (ResolveField): global isAdmin or community canCreateOrphanedCharacter of {"pendingOwnershipId":"$root.id"} and CommunityPermissionGuard
+RolesResolver.createRole (Mutation): global isAdmin or community canCreateRole of {"communityId":"createRoleInput.communityId"}
+RolesResolver.findAll (Query): global isAdmin
+RolesResolver.findByCommunity (Query): signed in
+RolesResolver.findOne (Query): signed in
+RolesResolver.removeRole (Mutation): global isAdmin or community canEditRole of {"roleId":"id"}
+RolesResolver.resolveAllowedForOpenSignup (ResolveField): anyone
+RolesResolver.resolveCommunity (ResolveField): anyone
+RolesResolver.updateRole (Mutation): global isAdmin or community canEditRole of {"roleId":"id"}
+ShopResolver.checkout (Mutation): community __ANY__ of {"communityId":"input.communityId"}
+ShopResolver.communityShopPurchases (Query): community canGrantItems of {"communityId":"communityId"}
+ShopResolver.createShopItem (Mutation): community canManageItems of {"communityId":"input.communityId"}
+ShopResolver.myShopPurchaseLines (Query): community __ANY__ of {"communityId":"filters.communityId"}
+ShopResolver.myShopPurchases (Query): community __ANY__ of {"communityId":"communityId"}
+ShopResolver.refundShopPurchaseLine (Mutation): community __ANY__ of {"shopPurchaseLineId":"lineId"}
+ShopResolver.shopItems (Query): community __ANY__ of {"communityId":"communityId"}
+ShopResolver.updateShopItem (Mutation): community canManageItems of {"shopItemId":"id"}
+SocialResolver.activityFeed (Query): signed in
+SocialResolver.followStatus (Query): signed in
+SocialResolver.getFollowers (Query): anyone
+SocialResolver.getFollowing (Query): anyone
+SocialResolver.likeStatus (Query): anyone
+SocialResolver.likedCharacters (Query): signed in
+SocialResolver.likedGalleries (Query): signed in
+SocialResolver.likedImages (Query): signed in
+SocialResolver.likedMedia (Query): signed in
+SocialResolver.toggleFollow (Mutation): signed in
+SocialResolver.toggleLike (Mutation): signed in
+SpeciesResolver.createSpecies (Mutation): community canCreateSpecies of {"communityId":"createSpeciesInput.communityId"}
+SpeciesResolver.findAll (Query): signed in
+SpeciesResolver.findByCommunity (Query): global isAdmin or community __ANY__ of {"communityId":"communityId"}
+SpeciesResolver.findOne (Query): anyone or global isAdmin or community __ANY__ of {"speciesId":"id"}
+SpeciesResolver.removeSpecies (Mutation): global isAdmin or community canEditSpecies of {"speciesId":"id"}
+SpeciesResolver.resolveCommunity (ResolveField): anyone
+SpeciesResolver.resolveTraits (ResolveField): anyone
+SpeciesResolver.updateSpecies (Mutation): global isAdmin or community canEditSpecies of {"speciesId":"id"}
+SpeciesVariantsResolver.createSpeciesVariant (Mutation): global isAdmin or community canEditSpecies of {"speciesId":"createSpeciesVariantInput.speciesId"}
+SpeciesVariantsResolver.findAll (Query): signed in
+SpeciesVariantsResolver.findBySpecies (Query): anyone or global isAdmin or community __ANY__ of {"speciesId":"speciesId"}
+SpeciesVariantsResolver.findOne (Query): global isAdmin or community __ANY__ of {"speciesVariantId":"id"}
+SpeciesVariantsResolver.removeSpeciesVariant (Mutation): global isAdmin or community canEditSpecies of {"speciesVariantId":"id"}
+SpeciesVariantsResolver.reorderSpeciesVariants (Mutation): global isAdmin or community canEditSpecies of {"speciesId":"input.speciesId"}
+SpeciesVariantsResolver.resolveColor (ResolveField): anyone
+SpeciesVariantsResolver.resolveEnumValueSettings (ResolveField): anyone
+SpeciesVariantsResolver.resolveSpecies (ResolveField): anyone
+SpeciesVariantsResolver.updateSpeciesVariant (Mutation): global isAdmin or community canEditSpecies of {"speciesVariantId":"id"}
+TagsResolver.searchTags (Query): anyone
+ToyhouseOAuthController.handleCallback (GET): anyone and OAuthLinkCallbackGuard
+ToyhouseOAuthController.initiateOAuth (GET): signed in
+TradesResolver.acceptTrade (Mutation): signed in
+TradesResolver.cancelTrade (Mutation): signed in
+TradesResolver.counterTrade (Mutation): signed in
+TradesResolver.declineTrade (Mutation): signed in
+TradesResolver.findMine (Query): signed in
+TradesResolver.findOne (Query): signed in
+TradesResolver.proposeTrade (Mutation): signed in
+TraitListEntriesResolver.createTraitListEntry (Mutation): global isAdmin or community canEditSpecies of {"speciesVariantId":"createTraitListEntryInput.speciesVariantId"}
+TraitListEntriesResolver.findAll (Query): signed in
+TraitListEntriesResolver.findBySpeciesVariant (Query): global isAdmin or community __ANY__ of {"speciesVariantId":"speciesVariantId"}
+TraitListEntriesResolver.findByTrait (Query): global isAdmin or community __ANY__ of {"traitId":"traitId"}
+TraitListEntriesResolver.findOne (Query): global isAdmin or community __ANY__ of {"traitListEntryId":"id"}
+TraitListEntriesResolver.removeTraitListEntry (Mutation): global isAdmin or community canEditSpecies of {"traitListEntryId":"id"}
+TraitListEntriesResolver.resolveDefaultDisplayValue (ResolveField): anyone
+TraitListEntriesResolver.resolveSpeciesVariant (ResolveField): anyone
+TraitListEntriesResolver.resolveTrait (ResolveField): anyone
+TraitListEntriesResolver.updateTraitListEntry (Mutation): global isAdmin or community canEditSpecies of {"traitListEntryId":"id"}
+TraitListEntriesResolver.updateTraitOrders (Mutation): global isAdmin or community canEditSpecies of {"speciesVariantId":"input.variantId"}
+TraitReviewCharacterResolver.activeTraitReview (ResolveField): owner of {"characterId":"$root.id"} or character registry editor {"characterId":"$root.id"}
+TraitReviewCharacterResolver.pendingTraitReviewSource (ResolveField): anyone
+TraitReviewResolver.approveTraitReview (Mutation): global isAdmin or community canEditCharacterRegistry of {"traitReviewId":"input.reviewId"}
+TraitReviewResolver.characterTraitReview (Query): global isAdmin or community canEditCharacterRegistry of {"characterId":"characterId"}
+TraitReviewResolver.deferTraitReview (Mutation): global isAdmin or community canEditCharacterRegistry of {"traitReviewId":"input.reviewId"}
+TraitReviewResolver.editAndApproveTraitReview (Mutation): global isAdmin or community canEditCharacterRegistry of {"traitReviewId":"input.reviewId"}
+TraitReviewResolver.pendingTraitReviewCount (Query): global isAdmin or community canEditCharacterRegistry of {"communityId":"communityId"}
+TraitReviewResolver.revertTraitReview (Mutation): global isAdmin or community canEditCharacterRegistry of {"traitReviewId":"input.reviewId"}
+TraitReviewResolver.traitReviewQueue (Query): global isAdmin or community canEditCharacterRegistry of {"communityId":"communityId"}
+TraitsResolver.createTrait (Mutation): global isAdmin or community canEditSpecies of {"speciesId":"createTraitInput.speciesId"}
+TraitsResolver.findAll (Query): signed in
+TraitsResolver.findBySpecies (Query): anyone or global isAdmin or community __ANY__ of {"speciesId":"speciesId"}
+TraitsResolver.findOne (Query): global isAdmin or community __ANY__ of {"traitId":"id"}
+TraitsResolver.removeTrait (Mutation): global isAdmin or community canEditSpecies of {"traitId":"id"}
+TraitsResolver.resolveColor (ResolveField): anyone
+TraitsResolver.resolveEnumValues (ResolveField): anyone
+TraitsResolver.resolveSpecies (ResolveField): anyone
+TraitsResolver.updateTrait (Mutation): global isAdmin or community canEditSpecies of {"traitId":"id"}
+UserFollowResolver.followersCount (ResolveField): anyone
+UserFollowResolver.followingCount (ResolveField): anyone
+UserFollowResolver.userIsFollowing (ResolveField): signed in
+UserProfileResolver.resolveFeaturedCharacters (ResolveField): anyone
+UserProfileResolver.resolveRecentCharacters (ResolveField): anyone
+UserProfileResolver.resolveRecentGalleries (ResolveField): anyone
+UserProfileResolver.resolveRecentMedia (ResolveField): anyone
+UserProfileResolver.resolveStats (ResolveField): anyone
+UserStatsResolver.resolveCharactersCount (ResolveField): anyone
+UserStatsResolver.resolveFollowersCount (ResolveField): anyone
+UserStatsResolver.resolveFollowingCount (ResolveField): anyone
+UserStatsResolver.resolveGalleriesCount (ResolveField): anyone
+UserStatsResolver.resolveImagesCount (ResolveField): anyone
+UserStatsResolver.resolveTotalLikes (ResolveField): anyone
+UserStatsResolver.resolveTotalViews (ResolveField): anyone
+UsersResolver.findAll (Query): global canListUsers
+UsersResolver.findOne (Query): anyone
+UsersResolver.getCurrentUser (Query): signed in
+UsersResolver.getUserProfile (Query): anyone
+UsersResolver.getUserStats (Query): anyone
+UsersResolver.resolveAvatarImage (ResolveField): anyone
+UsersResolver.resolveCanCreateCommunity (ResolveField): global isAdmin or self {"userId":"$root.id"}
+UsersResolver.resolveCanCreateInviteCode (ResolveField): global isAdmin or self {"userId":"$root.id"}
+UsersResolver.resolveCanGrantGlobalPermissions (ResolveField): global isAdmin or self {"userId":"$root.id"}
+UsersResolver.resolveCanListInviteCodes (ResolveField): global isAdmin or self {"userId":"$root.id"}
+UsersResolver.resolveCanListUsers (ResolveField): global isAdmin or self {"userId":"$root.id"}
+UsersResolver.resolveCommunityMemberships (ResolveField): global isAdmin or self {"userId":"$root.id"}
+UsersResolver.resolveDateOfBirth (ResolveField): global isAdmin or self {"userId":"$root.id"}
+UsersResolver.resolveEmail (ResolveField): global isAdmin or self {"userId":"$root.id"}
+UsersResolver.resolveExternalAccounts (ResolveField): global isAdmin or self {"userId":"$root.id"}
+UsersResolver.resolveInventories (ResolveField): signed in
+UsersResolver.resolvePrivacySettings (ResolveField): global isAdmin or self {"userId":"$root.id"}
+UsersResolver.resolveUserIsFollowing (ResolveField): signed in
+UsersResolver.updateProfile (Mutation): signed in
+VariantChangesResolver.changeCharacterVariantWithItem (Mutation): signed in

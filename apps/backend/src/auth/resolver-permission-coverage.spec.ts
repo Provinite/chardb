@@ -1,10 +1,13 @@
-import { readdirSync } from "node:fs";
+import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
+import { RequestMethod } from "@nestjs/common";
+import { GUARDS_METADATA, METHOD_METADATA } from "@nestjs/common/constants";
 import {
   RESOLVER_TYPE_METADATA,
   RESOLVER_PROPERTY_METADATA,
 } from "@nestjs/graphql/dist/graphql.constants";
 
+import { ResolveCommunityFrom } from "./decorators/ResolveCommunityFrom";
 import { AllowGlobalPermission } from "./decorators/AllowGlobalPermission";
 import { AllowCommunityPermission } from "./decorators/AllowCommunityPermission";
 import { AllowEntityOwner } from "./decorators/AllowEntityOwner";
@@ -63,13 +66,14 @@ const MINIMUM_EXPECTED_RESOLVERS = 300;
 
 const SRC_ROOT = join(__dirname, "..");
 
-const resolverFiles = (dir: string): string[] =>
+const sourceFiles = (dir: string, suffix: string): string[] =>
   readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
     const full = join(dir, entry.name);
-    if (entry.isDirectory()) return resolverFiles(full);
+    if (entry.isDirectory()) return sourceFiles(full, suffix);
     // Both `.spec.ts` and `.e2e.spec.ts` end in `.ts` and neither ends in
-    // `.resolver.ts`, so this excludes them without naming them.
-    return entry.name.endsWith(".resolver.ts") ? [full] : [];
+    // `.resolver.ts` or `.controller.ts`, so this excludes them without
+    // naming them.
+    return entry.name.endsWith(suffix) ? [full] : [];
   });
 
 interface ResolverMethod {
@@ -95,10 +99,19 @@ const resolverKind = (fn: object): string | null => {
     : null;
 };
 
-const collectResolverMethods = (): ResolverMethod[] => {
+/** The HTTP verb of a controller method, or null when it is not a route. */
+const routeKind = (fn: object): string | null => {
+  const verb: unknown = Reflect.getMetadata(METHOD_METADATA, fn);
+  return typeof verb === "number" ? (RequestMethod[verb] ?? null) : null;
+};
+
+const collectMethods = (
+  suffix: string,
+  kindOf: (fn: object) => string | null,
+): ResolverMethod[] => {
   const found: ResolverMethod[] = [];
 
-  for (const file of resolverFiles(SRC_ROOT)) {
+  for (const file of sourceFiles(SRC_ROOT, suffix)) {
     // Dynamic by necessity: the point of this test is to find resolver files
     // rather than be told about them, so a static import list would be the
     // very thing that goes stale.
@@ -114,7 +127,7 @@ const collectResolverMethods = (): ResolverMethod[] => {
         const descriptor = Object.getOwnPropertyDescriptor(proto, methodName);
         if (typeof descriptor?.value !== "function") continue;
 
-        const kind = resolverKind(descriptor.value as object);
+        const kind = kindOf(descriptor.value as object);
         if (!kind) continue;
 
         found.push({
@@ -143,8 +156,99 @@ const hasDecorator = (m: ResolverMethod, key: string): boolean =>
   Reflect.getMetadata(key, m.handler) !== undefined ||
   Reflect.getMetadata(key, m.target) !== undefined;
 
+/** A decorator's value as the guards read it: the method's, else its class's. */
+const decoratorValue = (m: ResolverMethod, key: string): unknown =>
+  Reflect.getMetadata(key, m.handler) ?? Reflect.getMetadata(key, m.target);
+
+/** A config object in one stable spelling. */
+const spell = (config: unknown): string =>
+  JSON.stringify(config, Object.keys(config as object).sort());
+
+/**
+ * Who may call a method, in one line.
+ *
+ * The `@Allow*` decorators are alternatives: `PERMISSION_OR_GUARD` admits the
+ * caller when any one is satisfied, so they are joined with "or". A guard
+ * named in `@UseGuards` runs after that and has to pass as well, so those are
+ * joined with "and".
+ */
+const describeAccess = (m: ResolverMethod): string => {
+  const allowed: string[] = [];
+  const value = (decorator: { KEY: string }) =>
+    decoratorValue(m, decorator.KEY);
+
+  if (value(AllowUnauthenticated) !== undefined) allowed.push("anyone");
+  if (value(AllowAnyAuthenticated) !== undefined) allowed.push("signed in");
+
+  const global = value(AllowGlobalPermission);
+  if (global !== undefined) allowed.push(`global ${String(global)}`);
+
+  const community = value(AllowCommunityPermission);
+  if (community !== undefined) {
+    const from = value(ResolveCommunityFrom);
+    allowed.push(
+      `community ${String(community)} of ${from === undefined ? "NOTHING" : spell(from)}`,
+    );
+  }
+
+  const owner = value(AllowEntityOwner);
+  if (owner !== undefined) allowed.push(`owner of ${spell(owner)}`);
+
+  const self = value(AllowSelf);
+  if (self !== undefined) allowed.push(`self ${spell(self)}`);
+
+  const profile = value(AllowCharacterProfileEditor);
+  if (profile !== undefined) {
+    allowed.push(`character profile editor ${spell(profile)}`);
+  }
+
+  const registry = value(AllowCharacterRegistryEditor);
+  if (registry !== undefined) {
+    allowed.push(`character registry editor ${spell(registry)}`);
+  }
+
+  const routeGuards = [
+    ...((Reflect.getMetadata(GUARDS_METADATA, m.target) as unknown[]) ?? []),
+    ...((Reflect.getMetadata(GUARDS_METADATA, m.handler) as unknown[]) ?? []),
+  ].map((guard) => (guard as { name?: string }).name ?? "anonymous guard");
+
+  return [
+    allowed.length > 0 ? allowed.join(" or ") : "NOBODY",
+    ...routeGuards.map((name) => `and ${name}`),
+  ].join(" ");
+};
+
+const MANIFEST_PATH = join(__dirname, "permission-manifest.txt");
+
+const MANIFEST_HEADER = [
+  "# Who may call every GraphQL resolver method and REST route in the backend.",
+  "#",
+  "# Generated from the @Allow* decorators and @UseGuards on each method by",
+  "# apps/backend/src/auth/resolver-permission-coverage.spec.ts, which fails",
+  "# when this file and the code disagree. A change here is a change to who",
+  "# may do what: read the diff as that.",
+  "#",
+  "# To update, from apps/backend:",
+  "#   UPDATE_PERMISSION_MANIFEST=1 yarn jest src/auth/resolver-permission-coverage.spec.ts",
+  "#",
+  "# Alternatives are joined with 'or'; a guard after 'and' must pass as well.",
+  "# This is the gate in front of a method. A check the method or its service",
+  "# makes afterwards is not shown.",
+  "",
+].join("\n");
+
+const buildManifest = (methods: ResolverMethod[]): string => {
+  const lines = methods
+    .map(
+      (m) => `${m.className}.${m.methodName} (${m.kind}): ${describeAccess(m)}`,
+    )
+    .sort();
+  return `${MANIFEST_HEADER}${lines.join("\n")}\n`;
+};
+
 describe("resolver permission coverage", () => {
-  const methods = collectResolverMethods();
+  const methods = collectMethods(".resolver.ts", resolverKind);
+  const routes = collectMethods(".controller.ts", routeKind);
 
   it("finds the resolver methods to check", () => {
     expect(methods.length).toBeGreaterThan(MINIMUM_EXPECTED_RESOLVERS);
@@ -158,5 +262,24 @@ describe("resolver permission coverage", () => {
     // Listed rather than counted: the point of failing is to name the method,
     // since the runtime symptom never will.
     expect(undecorated).toEqual([]);
+  });
+
+  /**
+   * Who may call what, written down.
+   *
+   * The check above says every method has a gate. This says which gate, so a
+   * decorator that is swapped, loosened or dropped shows up as a changed line
+   * in a file a reviewer reads, and not only as a behaviour somebody has to
+   * think to test. `permission-guards.e2e.spec.ts` is the other half: it
+   * shows each kind of gate admitting and refusing who it should.
+   */
+  it("matches the committed permission manifest", () => {
+    const manifest = buildManifest([...methods, ...routes]);
+
+    if (process.env.UPDATE_PERMISSION_MANIFEST) {
+      writeFileSync(MANIFEST_PATH, manifest);
+    }
+
+    expect(manifest).toEqual(readFileSync(MANIFEST_PATH, "utf8"));
   });
 });
