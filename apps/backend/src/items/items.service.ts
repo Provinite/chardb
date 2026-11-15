@@ -14,6 +14,7 @@ import {
   type PendingOwnerNames,
 } from "../pending-ownership/pending-ownership.service";
 import { resolveDiscordOwner } from "../pending-ownership/utils/resolve-discord-owner";
+import { resolveDeviantArtOwner } from "../pending-ownership/utils/resolve-deviantart-owner";
 import { DiscordService } from "../discord/discord.service";
 import { DeviantArtService } from "../deviantart/deviantart.service";
 import {
@@ -1026,13 +1027,12 @@ export class ItemsService {
           names = resolved.names;
         }
       } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
-        // Staff type a handle; linking stores DeviantArt's UUID, so the
-        // claim can only ever match on the UUID (#449).
-        const resolved = await this.deviantArtService.resolveUsername(
+        const resolved = await resolveDeviantArtOwner(
+          this.deviantArtService,
           pendingOwner.providerAccountId,
         );
-        resolvedAccountId = resolved.uuid;
-        names = { displayIdentifier: resolved.username };
+        resolvedAccountId = resolved.accountId;
+        names = resolved.names;
       } else {
         throw new BadRequestException(
           `Unsupported provider: ${pendingOwner.provider}`,

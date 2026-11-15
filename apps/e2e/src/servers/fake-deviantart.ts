@@ -5,8 +5,7 @@
  * in the suite without reaching deviantart.com with fake credentials.
  *
  * Every handle exists. Its UUID is derived from the handle, case-insensitive
- * as DeviantArt's are, so a test can link the same account by UUID with
- * `fakeDeviantArtUuid`.
+ * as DeviantArt's are, so the same handle always names the same account.
  */
 import { createHash } from "node:crypto";
 import * as http from "node:http";
@@ -15,7 +14,7 @@ import type { AddressInfo } from "node:net";
 const PROFILE_PATH = "/api/v1/oauth2/user/profile/";
 
 /** The UUID the fake hands out for a handle. */
-export function fakeDeviantArtUuid(handle: string): string {
+function fakeDeviantArtUuid(handle: string): string {
   const hex = createHash("sha1").update(handle.toLowerCase()).digest("hex");
   return [
     hex.slice(0, 8),
@@ -46,9 +45,15 @@ export async function startFakeDeviantArt(host: string): Promise<string> {
       return;
     }
     if (req.method === "GET" && url.pathname.startsWith(PROFILE_PATH)) {
-      const handle = decodeURIComponent(
-        url.pathname.slice(PROFILE_PATH.length),
-      );
+      let handle: string;
+      try {
+        handle = decodeURIComponent(url.pathname.slice(PROFILE_PATH.length));
+      } catch {
+        // A thrown listener would take down the launcher, and the backend
+        // with it.
+        send(res, 400, { error_description: "Malformed handle." });
+        return;
+      }
       send(res, 200, {
         user: { userid: fakeDeviantArtUuid(handle), username: handle },
       });

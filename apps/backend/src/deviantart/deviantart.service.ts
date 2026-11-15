@@ -43,9 +43,11 @@ export class DeviantArtService {
   private cachedToken: CachedToken | null = null;
 
   constructor(private readonly configService: ConfigService) {
-    this.apiUrl =
-      this.configService.get<string>("DEVIANTART_API_URL") ??
-      "https://www.deviantart.com";
+    // `||`: a blank DEVIANTART_API_URL= means unset, not "no origin".
+    this.apiUrl = (
+      this.configService.get<string>("DEVIANTART_API_URL") ||
+      "https://www.deviantart.com"
+    ).replace(/\/+$/, "");
     this.clientId = this.configService.get<string>("DEVIANTART_CLIENT_ID");
     this.clientSecret = this.configService.get<string>(
       "DEVIANTART_CLIENT_SECRET",

@@ -68,6 +68,25 @@ describe("DeviantArtService.resolveUsername", () => {
     ]);
   });
 
+  it.each([
+    ["blank", "", "https://www.deviantart.com"],
+    [
+      "with a trailing slash",
+      "http://127.0.0.1:9999/",
+      "http://127.0.0.1:9999",
+    ],
+  ])(
+    "reads DEVIANTART_API_URL %s as an origin",
+    async (_label, configured, origin) => {
+      await serviceWith({
+        ...CREDENTIALS,
+        DEVIANTART_API_URL: configured,
+      }).resolveUsername("some-artist");
+
+      expect(calledUrls()[0]).toBe(`${origin}/oauth2/token`);
+    },
+  );
+
   it("reports a handle DeviantArt does not know as not found", async () => {
     fetchMock.mockImplementation((input: string | URL | Request) =>
       Promise.resolve(
