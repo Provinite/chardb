@@ -3,16 +3,20 @@
   "version": "16.0.0",
   "private": true,
   "type": "module",
+  "bin": {
+    "chardb": "dist/chardb.mjs"
+  },
   "scripts": {
     "cli": "tsx src/main.ts",
-    "build": "echo '@chardb/cli: runs from source through tsx'",
+    "build": "tsx src/build.ts",
     "codegen": "graphql-codegen --config .graphqlrc.yml",
     "type-check": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/type-check.tsbuildinfo",
     "test": "vitest",
-    "clean": "rm -rf node_modules/.cache"
+    "clean": "rm -rf node_modules/.cache dist"
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
+    "esbuild": "~0.25.0",
     "graphql": "^16.8.0",
     "tsx": "^4.0.0",
     "yargs": "^17.7.0"

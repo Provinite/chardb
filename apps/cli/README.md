@@ -11,6 +11,17 @@ yarn chardb items grant --type <itemTypeId> --user pip --quantity 3 --reason "Ev
 
 Run it from the repo root, or any directory outside `apps/*` and `packages/*`: Yarn runs a root script from inside a workspace only when its name has a colon. File arguments resolve against the directory it was run from.
 
+## The bundle
+
+`yarn chardb` boots Yarn and compiles the source on every call, which costs well over a second. A script making many calls should run the bundle instead: one file with its dependencies built in, which starts in under a tenth of a second.
+
+```bash
+yarn workspace @chardb/cli build    # writes apps/cli/dist/chardb.mjs
+apps/cli/dist/chardb.mjs whoami
+```
+
+It is the package's `chardb` bin, so it can be symlinked onto `PATH`. It does not rebuild itself: build again after pulling changes to the CLI.
+
 ## Which token, which API
 
 The token comes from `CHARDB_TOKEN`, else the stored token `--env` names, else the only stored token. Stored tokens live in `$XDG_CONFIG_HOME/chardb/credentials.json` (default `~/.config`), mode 0600, one per environment.
