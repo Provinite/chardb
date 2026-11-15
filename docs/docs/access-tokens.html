@@ -1,0 +1,352 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Access Tokens - Feature Walkthrough</title>
+    <meta
+      name="description"
+      content="Site admins can give a script or an agent its own credential: a token that acts in the communities you pick, with only the permissions you check, and nothing else."
+    />
+    <link
+      rel="canonical"
+      href="https://provinite.github.io/chardb/docs/access-tokens.html"
+    />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="CharDB" />
+    <meta property="og:title" content="Access Tokens" />
+    <meta
+      property="og:description"
+      content="Site admins can give a script or an agent its own credential: a token that acts in the communities you pick, with only the permissions you check, and nothing else."
+    />
+    <meta
+      property="og:url"
+      content="https://provinite.github.io/chardb/docs/access-tokens.html"
+    />
+    <meta
+      property="og:image"
+      content="https://provinite.github.io/chardb/docs/access-tokens-create.png"
+    />
+    <meta
+      property="og:image:alt"
+      content="The create-token dialog, with one community added and Manage Items checked."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu,
+          sans-serif;
+        line-height: 1.6;
+        color: #333;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 2rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 3rem;
+        color: white;
+      }
+
+      header h1 {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      header p {
+        font-size: 1.1rem;
+        opacity: 0.9;
+      }
+
+      .step {
+        background: white;
+        border-radius: 16px;
+        padding: 2rem;
+        margin-bottom: 2rem;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+      }
+
+      .step-header {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-number {
+        width: 48px;
+        height: 48px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        font-weight: bold;
+        flex-shrink: 0;
+      }
+
+      .step-title {
+        font-size: 1.5rem;
+        color: #333;
+      }
+
+      .step-content {
+        color: #555;
+        margin-bottom: 1.5rem;
+      }
+
+      .step-content p {
+        margin-bottom: 1rem;
+      }
+
+      .step-content ul {
+        margin-left: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .step-content li {
+        margin-bottom: 0.5rem;
+      }
+
+      .screenshot {
+        border: 1px solid #e0e0e0;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+      }
+
+      .screenshot + .screenshot {
+        margin-top: 1.25rem;
+      }
+
+      .screenshot img {
+        width: 100%;
+        display: block;
+      }
+
+      .screenshot.phone {
+        max-width: 360px;
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .screenshot-caption {
+        background: #f8f9fa;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #666;
+        border-top: 1px solid #e0e0e0;
+      }
+
+      .highlight-box {
+        background: #f0f4ff;
+        border-left: 4px solid #667eea;
+        padding: 1rem 1.25rem;
+        margin: 1rem 0;
+        border-radius: 0 8px 8px 0;
+      }
+
+      .highlight-box strong {
+        color: #667eea;
+      }
+
+      .example {
+        background: #1f2235;
+        color: #e8eaf6;
+        padding: 0.9rem 1.25rem;
+        border-radius: 8px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.9rem;
+        margin: 1rem 0;
+        overflow-x: auto;
+        white-space: pre;
+      }
+
+      footer {
+        text-align: center;
+        color: white;
+        opacity: 0.8;
+        margin-top: 2rem;
+        padding: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Access Tokens</h1>
+        <p>A credential for scripts and agents, narrower than your account</p>
+      </header>
+
+      <!-- Overview -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">0</div>
+          <h2 class="step-title">Overview</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            A script that syncs item types, or an agent that tidies a
+            community's characters, needs to call the API as someone. Handing it
+            a site admin's session would let it do anything on the site. An
+            access token acts as you, but only in the communities you add to it
+            and only with the permissions you check there.
+          </p>
+          <ul>
+            <li>Only site admins can make tokens.</li>
+            <li>
+              A token holds no site-admin power, whatever its owner holds.
+            </li>
+            <li>
+              It cannot change its owner's profile or credentials, sign in or
+              out, link accounts, or make, list or revoke tokens.
+            </li>
+            <li>
+              It stops working when it expires, when it is revoked, or when its
+              owner stops being a site admin.
+            </li>
+          </ul>
+        </div>
+        <div class="screenshot">
+          <img
+            src="access-tokens-admin-card.png"
+            alt="The Site Administration page, with an Access Tokens card beside the other admin tools."
+          />
+          <div class="screenshot-caption">
+            Tokens live under Site Administration, at
+            <code>/admin/access-tokens</code>.
+          </div>
+        </div>
+      </div>
+
+      <!-- Creating -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">1</div>
+          <h2 class="step-title">Creating a token</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Name it after what will use it, pick how long it lasts (7, 30, 90 or
+            365 days), then add each community it may act in. Every community
+            added gets its own checklist. <strong>Member</strong> lets it
+            through anything open to the community's members; each permission
+            below it is the same permission a role can hold.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="access-tokens-create.png"
+            alt="The create-token dialog: a name, a 90-day expiry, Test Community added, with Member and Manage Items checked."
+          />
+          <div class="screenshot-caption">
+            A token for one community that may manage item types there and
+            nothing more.
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <div class="highlight-box">
+            <strong>What it can do is fixed when it is made.</strong> To change
+            a token's communities or permissions, revoke it and make another.
+          </div>
+        </div>
+      </div>
+
+      <!-- The secret -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">2</div>
+          <h2 class="step-title">Copying the secret</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            The token is shown once, straight after it is made. CharDB keeps
+            only a hash of it, so nobody can show it again later, admins
+            included. Lose it and the fix is a new token.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="access-tokens-secret.png"
+            alt="The copy-your-token dialog showing a chardb_pat_ token with Copy and Done buttons."
+          />
+          <div class="screenshot-caption">
+            The only view of the secret. The list shows its last four
+            characters afterwards, to tell tokens apart.
+          </div>
+        </div>
+        <div class="step-content" style="margin-top: 1.5rem">
+          <p>The script sends it the same way the site sends a session:</p>
+          <div class="example">curl https://api.chardb.cc/graphql \
+  -H "Authorization: Bearer chardb_pat_…" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ me { username } }"}'</div>
+          <p>
+            A token that has expired or been revoked gets an
+            <code>UNAUTHENTICATED</code> error on every request, rather than
+            being treated as signed out.
+          </p>
+        </div>
+      </div>
+
+      <!-- Revoking -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">3</div>
+          <h2 class="step-title">Revoking</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            Each token shows where it may act, when it was made, when it was
+            last used and when it expires. Revoke one the moment it might have
+            leaked; whatever holds it is refused on its next request.
+          </p>
+        </div>
+        <div class="screenshot">
+          <img
+            src="access-tokens-revoke.png"
+            alt="A confirmation dialog asking to revoke the Item sync script token."
+          />
+          <div class="screenshot-caption">Revoking asks first.</div>
+        </div>
+        <div class="screenshot">
+          <img
+            src="access-tokens-revoked.png"
+            alt="The token list, with the Item sync script token marked Revoked and its Revoke button disabled."
+          />
+          <div class="screenshot-caption">
+            Revoked and expired tokens stay in the list, marked as such.
+          </div>
+        </div>
+        <div class="screenshot phone">
+          <img
+            src="access-tokens-phone.png"
+            alt="The access tokens page on a phone, with one active token."
+          />
+          <div class="screenshot-caption">The same page on a phone.</div>
+        </div>
+      </div>
+
+      <footer>
+        <p>CharDB Access Tokens &bull; Feature Documentation</p>
+      </footer>
+    </div>
+    <script src="lightbox.js" defer></script>
+  </body>
+</html>
