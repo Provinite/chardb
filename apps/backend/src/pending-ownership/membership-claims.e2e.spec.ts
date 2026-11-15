@@ -4,6 +4,7 @@ import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
 import { DatabaseService } from "../database/database.service";
 import { DiscordService } from "../discord/discord.service";
+import { DeviantArtService } from "../deviantart/deviantart.service";
 import { ItemsModule } from "../items/items.module";
 import { ItemsService } from "../items/items.service";
 import { PendingOwnershipModule } from "./pending-ownership.module";
@@ -14,7 +15,9 @@ import { InviteCodesModule } from "../invite-codes/invite-codes.module";
 import { InviteCodesService } from "../invite-codes/invite-codes.service";
 
 const DISCORD_ID = "200000000000000042";
-const { DISCORD } = ExternalAccountProvider;
+const DEVIANTART_HANDLE = "some-artist";
+const DEVIANTART_UUID = "6a8a2c4e-1f3b-4d5e-9c7a-0b1d2e3f4a5b";
+const { DISCORD, DEVIANTART } = ExternalAccountProvider;
 
 /**
  * A community's items and characters belong only to its members. Something
@@ -33,6 +36,10 @@ describe("Pending ownership and community membership (e2e)", () => {
     userId: DISCORD_ID,
     username: "neo.baka",
     displayName: "Neo the Baka",
+  });
+  const resolveUsername = jest.fn().mockResolvedValue({
+    uuid: DEVIANTART_UUID,
+    username: "Some-Artist",
   });
 
   let communityId: string;
@@ -56,7 +63,11 @@ describe("Pending ownership and community membership (e2e)", () => {
         ],
       },
       (builder) =>
-        builder.overrideProvider(DiscordService).useValue({ getUserInfo }),
+        builder
+          .overrideProvider(DiscordService)
+          .useValue({ getUserInfo })
+          .overrideProvider(DeviantArtService)
+          .useValue({ resolveUsername }),
     );
     db = testApp.getDb();
     items = testApp.getModuleRef().get(ItemsService);
@@ -335,6 +346,57 @@ describe("Pending ownership and community membership (e2e)", () => {
       await grantToDiscord();
       await join();
       expect(await itemOwner()).toBeNull();
+    });
+  });
+
+  /**
+   * Staff grant to a DeviantArt handle; linking DeviantArt stores the
+   * account's UUID. The grant has to wait on the UUID, or nothing ever
+   * claims it (#449).
+   */
+  describe("granting to a DeviantArt handle", () => {
+    const grantToHandle = () =>
+      items.grantItem({
+        itemTypeId,
+        quantity: 1,
+        pendingOwner: {
+          provider: DEVIANTART,
+          providerAccountId: DEVIANTART_HANDLE,
+        },
+        actor: { actorLabel: "test" },
+      });
+    const linkDeviantArt = () =>
+      accounts.linkExternalAccount(
+        player.id,
+        DEVIANTART,
+        DEVIANTART_UUID,
+        "Some-Artist",
+      );
+
+    it("is claimed when the artist links DeviantArt and then joins", async () => {
+      await grantToHandle();
+      await linkDeviantArt();
+      await join();
+
+      expect(await itemOwner()).toBe(player.id);
+    });
+
+    it("is claimed when a member links DeviantArt", async () => {
+      await grantToHandle();
+      await join();
+      await linkDeviantArt();
+
+      expect(await itemOwner()).toBe(player.id);
+    });
+
+    it("names the account as DeviantArt spells it, for staff to find", async () => {
+      await grantToHandle();
+
+      const row = await db.pendingOwnership.findFirstOrThrow({
+        where: { provider: DEVIANTART },
+      });
+      expect(row.providerAccountId).toBe(DEVIANTART_UUID);
+      expect(row.displayIdentifier).toBe("Some-Artist");
     });
   });
 });
