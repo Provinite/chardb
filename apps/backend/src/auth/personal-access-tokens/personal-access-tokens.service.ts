@@ -204,6 +204,17 @@ export class PersonalAccessTokensService {
     });
   }
 
+  /**
+   * One token by id, whoever owns it, or null. Checks no ownership: pass only
+   * an id the caller is entitled to, such as the request's own token.
+   */
+  get(tokenId: string) {
+    return this.db.personalAccessToken.findUnique({
+      where: { id: tokenId },
+      include: withCommunities,
+    });
+  }
+
   /** Revoking a revoked token leaves its first revocation time. */
   async revoke(ownerId: string, tokenId: string) {
     const token = await this.db.personalAccessToken.findFirst({

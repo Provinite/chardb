@@ -1,0 +1,25 @@
+# yaml-language-server: disable
+# Reads the committed code-first schema from disk -- no running backend needed.
+# The output is committed so `yarn chardb` never waits on codegen.
+schema: "../backend/src/schema.gql"
+documents: "src/operations/*.graphql"
+overwrite: true
+generates:
+  src/generated/graphql.ts:
+    plugins:
+      - "typescript"
+      - "typescript-operations"
+      - "typed-document-node"
+    config:
+      onlyOperationTypes: true
+      scalars:
+        DateTime: string
+        # Deliberately unknown, not any: forces callers to narrow.
+        JSON: unknown
+      namingConvention:
+        typeNames: pascal-case#pascalCase
+      avoidOptionals:
+        field: true
+        inputValue: false
+        object: false
+        defaultValue: false

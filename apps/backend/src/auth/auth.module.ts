@@ -44,6 +44,7 @@ import { CommunityMembershipModule } from "../community-membership/community-mem
 import { EventsModule } from "../events/events.module";
 import { PersonalAccessTokensService } from "./personal-access-tokens/personal-access-tokens.service";
 import { PersonalAccessTokensResolver } from "./personal-access-tokens/personal-access-tokens.resolver";
+import { CurrentAccessTokenResolver } from "./personal-access-tokens/current-access-token.resolver";
 
 @Module({
   imports: [
@@ -95,6 +96,7 @@ import { PersonalAccessTokensResolver } from "./personal-access-tokens/personal-
     CustomThrottlerGuard,
     PersonalAccessTokensService,
     PersonalAccessTokensResolver,
+    CurrentAccessTokenResolver,
     {
       provide: "PERMISSION_OR_GUARD",
       useClass: OrGuard(

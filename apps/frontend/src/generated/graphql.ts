@@ -3700,6 +3700,8 @@ export type Query = {
   currencySupply: Array<CurrencySupply>;
   /** The currency ledger for one community, newest first. A transfer is two rows sharing a batchId. Readable by any member. */
   currencyTransactions: CurrencyTransactionConnection;
+  /** The personal access token this request was made with, and what it may do. Null for a session. */
+  currentAccessToken: Maybe<PersonalAccessToken>;
   /** Get the Discord bot invite URL */
   discordBotInviteUrl: Scalars['String']['output'];
   /** Progress of the most recent Discord name backfill. */

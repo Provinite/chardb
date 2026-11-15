@@ -1,0 +1,30 @@
+{
+  "name": "@chardb/cli",
+  "version": "16.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "cli": "tsx src/main.ts",
+    "build": "echo '@chardb/cli: runs from source through tsx'",
+    "codegen": "graphql-codegen --config .graphqlrc.yml",
+    "type-check": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/type-check.tsbuildinfo",
+    "test": "vitest",
+    "clean": "rm -rf node_modules/.cache"
+  },
+  "dependencies": {
+    "@graphql-typed-document-node/core": "^3.2.0",
+    "graphql": "^16.8.0",
+    "tsx": "^4.0.0",
+    "yargs": "^17.7.0"
+  },
+  "devDependencies": {
+    "@graphql-codegen/cli": "^5.0.7",
+    "@graphql-codegen/typed-document-node": "^5.0.0",
+    "@graphql-codegen/typescript": "^4.1.6",
+    "@graphql-codegen/typescript-operations": "^4.6.1",
+    "@types/node": "^20.0.0",
+    "@types/yargs": "^17.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^5.0.5"
+  }
+}

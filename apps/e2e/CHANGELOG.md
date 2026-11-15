@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **CLI spec**: runs `yarn chardb` with a fresh token against the e2e backend.
+
 ## [v16.0.0] - 2026-11-15
 
 ### Added

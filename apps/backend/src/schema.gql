@@ -4140,6 +4140,11 @@ type Query {
   """
   currencyTransactions(filters: CurrencyTransactionFiltersInput!): CurrencyTransactionConnection!
 
+  """
+  The personal access token this request was made with, and what it may do. Null for a session.
+  """
+  currentAccessToken: PersonalAccessToken
+
   """Get the Discord bot invite URL"""
   discordBotInviteUrl: String!
 

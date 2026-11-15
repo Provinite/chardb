@@ -1,0 +1,61 @@
+/**
+ * Every access token names the environment it was minted in:
+ * `chardb_pat_<environment>_<random>`. The backend's own copy of this rule is
+ * `apps/backend/src/auth/personal-access-tokens/access-token-secret.ts`.
+ */
+export const ENVIRONMENTS = ["prod", "dev", "local"] as const;
+
+export type Environment = (typeof ENVIRONMENTS)[number];
+
+const TOKEN_PREFIX = "chardb_pat_";
+
+export function isEnvironment(value: string): value is Environment {
+  return (ENVIRONMENTS as readonly string[]).includes(value);
+}
+
+/** The random part is base64url: anything else is a damaged copy. */
+const RANDOM_PART = /^[A-Za-z0-9_-]+$/;
+
+/**
+ * The environment a well-formed token names, or null for anything else,
+ * including a token with a stray CR, space or quote from being copied.
+ */
+export function tokenEnvironment(token: string): Environment | null {
+  if (!token.startsWith(TOKEN_PREFIX)) return null;
+  const rest = token.slice(TOKEN_PREFIX.length);
+  const separator = rest.indexOf("_");
+  if (separator <= 0) return null;
+  const environment = rest.slice(0, separator);
+  if (!RANDOM_PART.test(rest.slice(separator + 1))) return null;
+  return isEnvironment(environment) ? environment : null;
+}
+
+const DEPLOYED: Record<Exclude<Environment, "local">, string> = {
+  prod: "https://api.chardb.cc/graphql",
+  dev: "https://api.dev.chardb.cc/graphql",
+};
+
+/** The main checkout's backend. Any other needs `--api-url`. */
+const LOCAL_DEFAULT = "http://localhost:4000/graphql";
+
+/**
+ * Where a token's requests go.
+ *
+ * An explicit URL (the flag, then `CHARDB_API_URL`) wins. Otherwise prod and
+ * dev go to their deployed APIs, and local to the main checkout's backend.
+ */
+export function graphqlUrl(
+  environment: Environment,
+  env: Record<string, string | undefined>,
+  flag?: string,
+): string {
+  const explicit = flag ?? env.CHARDB_API_URL;
+  if (explicit) return withGraphqlPath(explicit);
+  if (environment === "local") return LOCAL_DEFAULT;
+  return DEPLOYED[environment];
+}
+
+function withGraphqlPath(url: string): string {
+  const trimmed = url.replace(/\/+$/, "");
+  return trimmed.endsWith("/graphql") ? trimmed : `${trimmed}/graphql`;
+}
