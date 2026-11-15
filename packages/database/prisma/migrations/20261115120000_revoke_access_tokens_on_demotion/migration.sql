@@ -5,8 +5,7 @@
 -- only the database can see it happen. Revoking rather than relying on the
 -- check at use means reinstating the account restores none of its tokens: an
 -- admin demoted because their account may be compromised gets no leaked token
--- back. The backend also revokes them when one is used by an owner who is no
--- admin, in case this is ever bypassed.
+-- back.
 CREATE FUNCTION revoke_access_tokens_on_demotion() RETURNS trigger
 LANGUAGE plpgsql AS $$
 BEGIN

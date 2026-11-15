@@ -133,12 +133,13 @@ export class PersonalAccessTokensService {
     });
 
     const now = new Date();
-    if (!token || token.revokedAt || token.expiresAt <= now) {
-      throw new InvalidAccessTokenError();
-    }
-    // The owner's own account, as a session of theirs would see it.
-    if (!this.permissionService.forUser(token.user).isAdmin) {
-      await this.revokeAllOf(token.userId, now);
+    if (
+      !token ||
+      token.revokedAt ||
+      token.expiresAt <= now ||
+      // The owner's own account, as a session of theirs would see it.
+      !this.permissionService.forUser(token.user).isAdmin
+    ) {
       throw new InvalidAccessTokenError();
     }
 
@@ -268,28 +269,6 @@ export class PersonalAccessTokensService {
           : permissions,
       };
     });
-  }
-
-  /**
-   * Revokes every live token of an owner who is no longer a site admin, so
-   * reinstating them restores none. The database does this as they are
-   * demoted (the `revoke_access_tokens_on_demotion` trigger); this catches a
-   * demotion that got past it. A failure is logged: the request is refused
-   * whatever happens here.
-   */
-  private async revokeAllOf(userId: string, now: Date): Promise<void> {
-    try {
-      await this.db.personalAccessToken.updateMany({
-        where: { userId, revokedAt: null },
-        data: { revokedAt: now },
-      });
-    } catch (err: unknown) {
-      this.logger.warn({
-        message: "Failed to revoke a demoted owner's access tokens",
-        userId,
-        err,
-      });
-    }
   }
 
   /** Not awaited: a failed write here must not fail the request it came on. */

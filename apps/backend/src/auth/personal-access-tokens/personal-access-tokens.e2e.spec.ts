@@ -2,7 +2,6 @@ import { TestApp } from "../../../test/setup-e2e";
 import { DatabaseModule } from "../../database/database.module";
 import { AuthModule } from "../auth.module";
 import { UsersModule } from "../../users/users.module";
-import { PersonalAccessTokensService } from "./personal-access-tokens.service";
 
 const CREATE = `
   mutation Create($input: CreatePersonalAccessTokenInput!) {
@@ -313,49 +312,6 @@ describe("personal access tokens (e2e)", () => {
           .getDb()
           .user.update({ where: { id: adminId }, data: { isAdmin: true } });
       }
-    });
-
-    // Demotion is permanent for tokens: an admin demoted because their
-    // account may be compromised, then reinstated, gets no leaked token back.
-    //
-    // The database revokes them as the owner is demoted, by a trigger this
-    // suite's `db push`-ed schema does not have; the browser suite's
-    // access-tokens spec covers that. This is the backstop: the first use by
-    // an owner who is no admin revokes every token of theirs.
-    it("revokes every token of a demoted owner when one is used, for good", async () => {
-      const first = await mint();
-      const second = await mint();
-      const other = await testApp.createTestUser({
-        username: "pat_bystander",
-        email: "pat_bystander@example.com",
-        isAdmin: true,
-      });
-      const bystanders = await testApp
-        .getApp()
-        .get(PersonalAccessTokensService)
-        .create(other.id, input());
-
-      await testApp
-        .getDb()
-        .user.update({ where: { id: adminId }, data: { isAdmin: false } });
-      await refused(first.secret);
-      const revoked = await testApp.getDb().personalAccessToken.findMany({
-        where: { id: { in: [first.id, second.id, bystanders.token.id] } },
-        select: { id: true, revokedAt: true },
-      });
-      await testApp
-        .getDb()
-        .user.update({ where: { id: adminId }, data: { isAdmin: true } });
-
-      expect(
-        Object.fromEntries(revoked.map((t) => [t.id, t.revokedAt !== null])),
-      ).toEqual({
-        [first.id]: true,
-        [second.id]: true,
-        [bystanders.token.id]: false,
-      });
-      // Reinstated, and still refused.
-      await refused(first.secret);
     });
   });
 
