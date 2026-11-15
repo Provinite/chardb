@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { Search } from "lucide-react";
 import { Button, timingMs, useDebouncedValue } from "@chardb/ui";
 import { usePageMeta } from "../lib/pageMeta";
+import { formatAmount } from "../lib/currencyDisplay";
 import { ProviderIcon } from "../components/ProviderIcon";
 import { useCommunityId } from "../contexts/CommunityHostContext";
 import {
@@ -18,7 +19,8 @@ import {
 
 /**
  * External members: people something waits on here without an account --
- * items or characters granted to a Discord or DeviantArt account (#445).
+ * items, characters or currency granted to a Discord or DeviantArt account
+ * (#445, #610).
  *
  * A lookup first: staff come here for one person, so nothing is listed until
  * they search. Browsing everyone is the fallback, a page at a time. Either
@@ -248,6 +250,9 @@ export const CommunityExternalMembersPage: React.FC = () => {
                       m.itemCount > 0 && plural(m.itemCount, "item"),
                       m.characterCount > 0 &&
                         plural(m.characterCount, "character"),
+                      ...m.balances.map((b) =>
+                        formatAmount(b.amount, b.currency),
+                      ),
                     ]
                       .filter(Boolean)
                       .join(" · ")}

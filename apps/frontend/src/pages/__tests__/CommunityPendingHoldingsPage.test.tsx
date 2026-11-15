@@ -28,12 +28,29 @@ vi.mock("../../hooks/useUserCommunityRole", () => ({
   useUserCommunityRole: () => ({ permissions: { canGrantItems: true } }),
 }));
 
-const report = (claimedBy: { id: string; username: string } | null) => ({
+const clover = {
+  __typename: "PendingCurrencyBalance" as const,
+  amount: 1250,
+  grantCount: 2,
+  currency: {
+    __typename: "Currency" as const,
+    id: "cur1",
+    name: "Clover",
+    code: "CLV",
+    symbol: null,
+  },
+};
+
+const report = (
+  claimedBy: { id: string; username: string } | null,
+  balances: (typeof clover)[] = [],
+) => ({
   __typename: "PendingHoldingsReport" as const,
   totalItems: 0,
   distinctTypes: 0,
   holdings: [],
   characters: [],
+  balances,
   claimedBy: claimedBy && { __typename: "User" as const, ...claimedBy },
   holder: {
     __typename: "PendingOwnership" as const,
@@ -45,7 +62,10 @@ const report = (claimedBy: { id: string; username: string } | null) => ({
   },
 });
 
-const renderAt = (claimedBy: { id: string; username: string } | null) => {
+const renderAt = (
+  claimedBy: { id: string; username: string } | null,
+  balances: (typeof clover)[] = [],
+) => {
   const mocks: MockedResponse[] = [
     {
       request: {
@@ -56,7 +76,7 @@ const renderAt = (claimedBy: { id: string; username: string } | null) => {
           providerAccountId: DISCORD_ID,
         },
       },
-      result: { data: { pendingHoldings: report(claimedBy) } },
+      result: { data: { pendingHoldings: report(claimedBy, balances) } },
     },
   ];
   render(
@@ -88,6 +108,17 @@ describe("CommunityPendingHoldingsPage", () => {
     expect(
       await screen.findByText("inventory of the claimant"),
     ).toBeInTheDocument();
+  });
+
+  it("lists the currency waiting on them", async () => {
+    renderAt(null, [clover]);
+
+    const row = await screen.findByTestId("pending-balance");
+    expect(row).toHaveTextContent("Clover");
+    expect(row).toHaveTextContent("1,250 CLV");
+    expect(
+      screen.queryByText("Nothing is left waiting for them here."),
+    ).toBeNull();
   });
 
   it("stays put while nobody has claimed it", async () => {

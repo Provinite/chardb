@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Pending currency on External Members**: the list and an account's pending holdings show currency waiting on them (#610).
+
 ## [v16.0.0] - 2026-11-15
 
 ### Added

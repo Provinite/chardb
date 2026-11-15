@@ -982,6 +982,8 @@ export enum CurrencyTransactionSource {
   ItemUse = 'ITEM_USE',
   /** Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media. */
   MediaApproval = 'MEDIA_APPROVAL',
+  /** Minted to an external account before it had a user here, and claimed when its person linked it and joined. sourceId is the pending ownership row, which keeps when it was minted. */
+  PendingGrant = 'PENDING_GRANT',
   ShopPurchase = 'SHOP_PURCHASE'
 }
 
@@ -1176,6 +1178,8 @@ export enum ExternalAccountProvider {
 /** Someone something waits on in a community without an account here. */
 export type ExternalMember = {
   __typename?: 'ExternalMember';
+  /** Currency waiting on them, by currency name. */
+  balances: Array<PendingCurrencyBalance>;
   /** Characters waiting on them. */
   characterCount: Scalars['Int']['output'];
   /** Their most recent waiting claim, carrying the names last recorded for them. Blank to viewers who may not see who holds what. */
@@ -2296,11 +2300,13 @@ export type MintCurrencyInput = {
   /** How much each named member receives. Positive. */
   amount: Scalars['Int']['input'];
   currencyId: Scalars['ID']['input'];
+  /** External accounts who receive it: a Discord id or username, or a DeviantArt handle. An account linked by a member here is paid at once; any other waits on the account until its person links it and joins. */
+  pendingOwners?: InputMaybe<Array<PendingOwnerInput>>;
   /** Member-facing. Required, because it is public. */
   reason: Scalars['String']['input'];
   staffNote?: InputMaybe<Scalars['String']['input']>;
-  /** Who receives it. At least one. */
-  userIds: Array<Scalars['ID']['input']>;
+  /** Members who receive it. With pendingOwners, at least one recipient in all. */
+  userIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 /** The reason for rejecting an image */
@@ -3544,9 +3550,20 @@ export type PendingCharacter = {
   name: Scalars['String']['output'];
 };
 
+/** Currency minted to an external account that has no user here yet, summed over every grant still waiting on it. */
+export type PendingCurrencyBalance = {
+  __typename?: 'PendingCurrencyBalance';
+  amount: Scalars['Int']['output'];
+  currency: Currency;
+  /** How many mints the amount is made of. */
+  grantCount: Scalars['Int']['output'];
+};
+
 /** Live, unclaimed items and characters held for one external account in one community. */
 export type PendingHoldingsReport = {
   __typename?: 'PendingHoldingsReport';
+  /** Currency waiting on them, by currency name. */
+  balances: Array<PendingCurrencyBalance>;
   /** By name. */
   characters: Array<PendingCharacter>;
   /** Who claimed what was held for the account, once nothing is left waiting: they linked it and joined. Null while anything still waits. */
@@ -3573,6 +3590,8 @@ export type PendingOwnerUpdate = {
 
 export type PendingOwnership = {
   __typename?: 'PendingOwnership';
+  /** How much of the currency a pending currency grant holds */
+  amount: Maybe<Scalars['Int']['output']>;
   character: Maybe<Character>;
   /** Character ID if this is a pending character ownership */
   characterId: Maybe<Scalars['ID']['output']>;
@@ -3583,6 +3602,8 @@ export type PendingOwnership = {
   claimedByUserId: Maybe<Scalars['ID']['output']>;
   /** When this pending ownership was created */
   createdAt: Scalars['DateTime']['output'];
+  /** Currency ID if this is a pending currency grant */
+  currencyId: Maybe<Scalars['ID']['output']>;
   displayIdentifier: Maybe<Scalars['String']['output']>;
   displayName: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
@@ -7070,6 +7091,8 @@ export type GetMemberHoldingsQueryVariables = Exact<{
 
 export type GetMemberHoldingsQuery = { __typename?: 'Query', memberHoldings: { __typename?: 'MemberHoldingsReport', totalItems: number, distinctTypes: number, pendingItems: number, member: { __typename?: 'User', id: string, username: string, displayName: string | null, avatarImage: { __typename?: 'Image', id: string, originalUrl: string, thumbnailUrl: string | null, altText: string | null } | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, description: string | null, category: string | null, isTradeable: boolean, isConsumable: boolean, usePayout: Array<{ __typename?: 'ItemUsePayoutComponent', id: string, amount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, useMyoGrant: { __typename?: 'ItemUseMyoGrant', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> } | null, useTraitEditGrant: { __typename?: 'ItemUseTraitEditGrant', id: string, species: Array<{ __typename?: 'ItemUseTraitEditGrantSpecies', id: string, species: { __typename?: 'Species', id: string, name: string }, variants: Array<{ __typename?: 'SpeciesVariant', id: string, name: string }> }> } | null, useVariantChangeGrant: { __typename?: 'ItemUseVariantChangeGrant', id: string, toVariant: { __typename?: 'SpeciesVariant', id: string, name: string } } | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }> } };
 
+export type PendingCurrencyBalanceFieldsFragment = { __typename?: 'PendingCurrencyBalance', amount: number, grantCount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } };
+
 export type GetPendingHoldingsQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
   provider: ExternalAccountProvider;
@@ -7077,7 +7100,7 @@ export type GetPendingHoldingsQueryVariables = Exact<{
 }>;
 
 
-export type GetPendingHoldingsQuery = { __typename?: 'Query', pendingHoldings: { __typename?: 'PendingHoldingsReport', totalItems: number, distinctTypes: number, holder: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }>, characters: Array<{ __typename?: 'PendingCharacter', id: string, name: string }>, claimedBy: { __typename?: 'User', id: string, username: string } | null } };
+export type GetPendingHoldingsQuery = { __typename?: 'Query', pendingHoldings: { __typename?: 'PendingHoldingsReport', totalItems: number, distinctTypes: number, holder: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null }, holdings: Array<{ __typename?: 'MemberHolding', count: number, itemType: { __typename?: 'ItemType', id: string, name: string, category: string | null, color: { __typename?: 'CommunityColor', id: string, hexCode: string } | null, image: { __typename?: 'Image', id: string, thumbnailUrl: string | null, originalUrl: string, altText: string | null } | null }, items: Array<{ __typename?: 'Item', id: string, createdAt: string }> }>, characters: Array<{ __typename?: 'PendingCharacter', id: string, name: string }>, balances: Array<{ __typename?: 'PendingCurrencyBalance', amount: number, grantCount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }>, claimedBy: { __typename?: 'User', id: string, username: string } | null } };
 
 export type GetExternalMembersQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -7088,7 +7111,7 @@ export type GetExternalMembersQueryVariables = Exact<{
 }>;
 
 
-export type GetExternalMembersQuery = { __typename?: 'Query', externalMembers: { __typename?: 'ExternalMembersPage', hasMore: boolean, members: Array<{ __typename?: 'ExternalMember', itemCount: number, characterCount: number, holder: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null } }> } };
+export type GetExternalMembersQuery = { __typename?: 'Query', externalMembers: { __typename?: 'ExternalMembersPage', hasMore: boolean, members: Array<{ __typename?: 'ExternalMember', itemCount: number, characterCount: number, holder: { __typename?: 'PendingOwnership', id: string, provider: ExternalAccountProvider, providerAccountId: string, displayIdentifier: string | null, displayName: string | null }, balances: Array<{ __typename?: 'PendingCurrencyBalance', amount: number, grantCount: number, currency: { __typename?: 'Currency', id: string, name: string, code: string, symbol: string | null } }> }> } };
 
 export type UseItemMutationVariables = Exact<{
   input: UseItemInput;
@@ -8556,6 +8579,18 @@ export const ItemTransactionFieldsFragmentDoc = gql`
   }
 }
     ${UserBasicFragmentDoc}`;
+export const PendingCurrencyBalanceFieldsFragmentDoc = gql`
+    fragment PendingCurrencyBalanceFields on PendingCurrencyBalance {
+  amount
+  grantCount
+  currency {
+    id
+    name
+    code
+    symbol
+  }
+}
+    `;
 export const NotificationPreferenceFieldsFragmentDoc = gql`
     fragment NotificationPreferenceFields on NotificationPreference {
   kind
@@ -16457,13 +16492,16 @@ export const GetPendingHoldingsDocument = gql`
       id
       name
     }
+    balances {
+      ...PendingCurrencyBalanceFields
+    }
     claimedBy {
       id
       username
     }
   }
 }
-    `;
+    ${PendingCurrencyBalanceFieldsFragmentDoc}`;
 
 /**
  * __useGetPendingHoldingsQuery__
@@ -16519,10 +16557,13 @@ export const GetExternalMembersDocument = gql`
         displayIdentifier
         displayName
       }
+      balances {
+        ...PendingCurrencyBalanceFields
+      }
     }
   }
 }
-    `;
+    ${PendingCurrencyBalanceFieldsFragmentDoc}`;
 
 /**
  * __useGetExternalMembersQuery__
