@@ -45,8 +45,8 @@ describe("bearerCredential", () => {
     ).toBe("chardb_pat_x");
   });
 
-  // RFC 6750: the scheme is case-insensitive. A script that writes it in
-  // lower case must still be heard as a token, not run as anonymous.
+  // RFC 9110 §11.1: the scheme is case-insensitive. A script that writes it
+  // in lower case must still be heard as a token, not run as anonymous.
   it("reads it whatever the scheme's case", () => {
     expect(
       bearerCredential({ headers: { authorization: "bearer chardb_pat_x" } }),
@@ -61,11 +61,61 @@ describe("bearerCredential", () => {
     ).toBe("chardb_pat_x");
   });
 
+  // connectionParams is whatever the client sent; nothing lowercases its
+  // keys the way Node does a header's name.
+  it("reads connection parameters whatever the key's case", () => {
+    expect(
+      bearerCredential({
+        connectionParams: { Authorization: "Bearer chardb_pat_x" },
+      }),
+    ).toBe("chardb_pat_x");
+  });
+
+  // RFC 9110 allows more than one space after the scheme, and nothing trims
+  // connectionParams. Neither may end up inside the credential.
+  it.each([
+    ["two spaces after the scheme", "Bearer  chardb_pat_x"],
+    ["a trailing space", "Bearer chardb_pat_x "],
+    ["a leading space", " Bearer chardb_pat_x"],
+  ])("reads it with %s", (_case, authorization) => {
+    expect(bearerCredential({ connectionParams: { authorization } })).toBe(
+      "chardb_pat_x",
+    );
+  });
+
+  it("reads a JWT-shaped credential whole", () => {
+    expect(
+      bearerCredential({
+        headers: { authorization: "Bearer aaa.bbb-_.c+/==" },
+      }),
+    ).toBe("aaa.bbb-_.c+/==");
+  });
+
   it.each([
     ["no request", undefined],
     ["no headers", {}],
     ["another scheme", { headers: { authorization: "Basic abc" } }],
+    ["a scheme and nothing else", { headers: { authorization: "Bearer " } }],
+    [
+      "a scheme and blanks",
+      { connectionParams: { authorization: "Bearer   " } },
+    ],
+    ["two credentials", { headers: { authorization: "Bearer abc def" } }],
+    [
+      "characters a bearer credential cannot hold",
+      { headers: { authorization: "Bearer abc\u0000" } },
+    ],
   ])("finds nothing with %s", (_case, req) => {
     expect(bearerCredential(req)).toBeNull();
+  });
+
+  // A request whose header names another scheme is answered by that header.
+  it("does not fall back to connection parameters when the header names another scheme", () => {
+    expect(
+      bearerCredential({
+        headers: { authorization: "Basic abc" },
+        connectionParams: { authorization: "Bearer chardb_pat_x" },
+      }),
+    ).toBeNull();
   });
 });

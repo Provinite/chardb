@@ -41,20 +41,42 @@ export function isAccessTokenSecret(value: string): boolean {
 }
 
 /**
+ * `Bearer <credential>`: the scheme in any case (RFC 9110 §11.1), one or more
+ * spaces, then one credential of the characters RFC 6750 allows a bearer
+ * token. Blanks around the whole are dropped first, since nothing trims a
+ * subscription's connection parameters the way Node trims a header.
+ */
+const BEARER = /^bearer +([A-Za-z0-9\-._~+/]+=*)$/i;
+
+/**
  * The bearer credential on a request, or on a subscription's connection
- * parameters. Null when there is none.
+ * parameters. Null when there is none, or it is malformed.
+ *
+ * A request with an Authorization header is answered by that header alone,
+ * whatever its scheme.
  */
 export function bearerCredential(req: unknown): string | null {
   const request = req as
     | {
+        // Node lowercases header names.
         headers?: { authorization?: unknown };
-        connectionParams?: { authorization?: unknown };
+        // The client's own object: its key may be in any case.
+        connectionParams?: Record<string, unknown>;
       }
     | undefined;
-  const header =
-    request?.headers?.authorization ?? request?.connectionParams?.authorization;
-  if (typeof header !== "string") return null;
-  // The scheme is case-insensitive (RFC 6750).
-  const match = /^bearer (.+)$/i.exec(header);
-  return match ? match[1] : null;
+  const value =
+    request?.headers?.authorization ??
+    authorizationParam(request?.connectionParams);
+  if (typeof value !== "string") return null;
+  return BEARER.exec(value.trim())?.[1] ?? null;
+}
+
+function authorizationParam(
+  params: Record<string, unknown> | undefined,
+): unknown {
+  if (!params || typeof params !== "object") return undefined;
+  const key = Object.keys(params).find(
+    (name) => name.toLowerCase() === "authorization",
+  );
+  return key === undefined ? undefined : params[key];
 }
