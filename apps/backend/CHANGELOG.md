@@ -21,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Member role changes**: `updateCommunityMember` accepts only a role from the member's own community.
 - **Character list order**: characters with the same name, price or date keep one order across pages, so Load More no longer repeats or skips them.
 
 ## [v15.8.0] - 2026-11-04

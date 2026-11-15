@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
@@ -32,6 +36,13 @@ const NEWEST_FIRST: Prisma.CommunityMemberOrderByWithRelationInput[] = [
   { createdAt: "desc" },
   { id: "desc" },
 ];
+
+/** A member's new role is from a community other than their membership's. */
+export class RoleInAnotherCommunityError extends BadRequestException {
+  constructor() {
+    super("That role belongs to another community");
+  }
+}
 
 @Injectable()
 export class CommunityMembersService {
@@ -236,13 +247,34 @@ export class CommunityMembersService {
     return communityMember;
   }
 
-  /** Update a community membership (change role) */
+  /**
+   * Update a community membership (change role).
+   *
+   * @throws RoleInAnotherCommunityError for a role from a community other
+   * than the membership's. A membership is in whichever community its role
+   * belongs to, so such a role would move the member there, past every gate
+   * on joining it.
+   */
   async update(id: string, input: UpdateCommunityMemberServiceInput) {
-    await this.findOne(id); // This will throw if not found
+    const membership = await this.prisma.communityMember.findUnique({
+      where: { id },
+      select: { role: { select: { communityId: true } } },
+    });
+    if (!membership) {
+      throw new NotFoundException(`Community member with ID ${id} not found`);
+    }
 
     const updateData: Prisma.CommunityMemberUpdateInput = {};
 
     if (input.roleId !== undefined) {
+      const role = await this.prisma.role.findUnique({
+        where: { id: input.roleId },
+        select: { communityId: true },
+      });
+      if (!role) throw new NotFoundException("Role not found");
+      if (role.communityId !== membership.role.communityId) {
+        throw new RoleInAnotherCommunityError();
+      }
       updateData.role = {
         connect: { id: input.roleId },
       };
