@@ -301,7 +301,7 @@ export class CurrencyLedgerService {
       ? await read.currency.findUniqueOrThrow({ where: { id: currencyId } })
       : await this.loadWritableCurrency(read, currencyId);
 
-    // Merge duplicate recipients rather than paying twice, and sort. Sorting
+    // Sum a recipient's awards into one row per member, and sort. Sorting
     // is the deadlock guard: two concurrent batches over overlapping
     // recipients would otherwise take the same row locks in different orders.
     const totals = new Map<string, number>();
@@ -412,11 +412,13 @@ export class CurrencyLedgerService {
       throw new BadRequestException("Too many recipients for one mint");
     }
 
-    // Every named member is paid the amount once, however often they are
-    // named -- directly, or through an account they have linked.
-    const direct = new Set(userIds);
-    const awardsFor = (ids: Set<string>) =>
-      [...ids].map((userId) => ({ userId, amount: input.amount }));
+    // Paid once per recipient named: each distinct member id, and each
+    // distinct external account. A member reached through their own id and
+    // their linked accounts earned through each, and is paid for each --
+    // credit() sums them into their one balance row.
+    const direct = [...new Set(userIds)];
+    const awardsFor = (ids: string[]) =>
+      ids.map((userId) => ({ userId, amount: input.amount }));
     const creditOptions = {
       currencyId: input.currencyId,
       reason: input.reason,
@@ -467,11 +469,11 @@ export class CurrencyLedgerService {
         const userId = linked.get(
           accountKey(account.provider, account.accountId),
         );
-        if (userId) direct.add(userId);
+        if (userId) direct.push(userId);
         else waiting.push(account);
       }
 
-      if (direct.size > 0) {
+      if (direct.length > 0) {
         await this.credit({
           ...creditOptions,
           awards: awardsFor(direct),

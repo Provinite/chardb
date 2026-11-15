@@ -304,6 +304,33 @@ describe("Pending currency grants (e2e)", () => {
     ).toBe(true);
   });
 
+  it("pays each account named, even when both are one member's", async () => {
+    await testApp.createTestCommunityMember(player.id, memberRoleId);
+    await accounts.linkExternalAccount(player.id, DISCORD, DISCORD_ID, "neo");
+    await accounts.linkExternalAccount(
+      player.id,
+      DEVIANTART,
+      DEVIANTART_UUID,
+      "Some-Artist",
+    );
+
+    await ledger.mint(
+      {
+        currencyId,
+        userIds: [player.id],
+        pendingOwners: [
+          { provider: DISCORD, providerAccountId: DISCORD_ID },
+          { provider: DEVIANTART, providerAccountId: DEVIANTART_HANDLE },
+        ],
+        amount: 10,
+        reason: "Event prize",
+      },
+      staff.id,
+    );
+
+    expect(await balance()).toBe(30);
+  });
+
   it("names the same account once when it is listed twice", async () => {
     await ledger.mint(
       {
