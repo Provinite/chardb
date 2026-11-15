@@ -1,7 +1,7 @@
 import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { CredentialStore } from "./credentials";
 import { run, type RunOptions } from "./run";
 
@@ -821,5 +821,18 @@ describe("usage", () => {
 
   it("exits 2 for a missing required option", async () => {
     expect(await exec(harness(), ["items", "types"])).toBe(2);
+  });
+
+  it("explains usage in English whatever the system locale", async () => {
+    // The bundle carries no yargs translations, so source must not use them
+    // either: the two would print different messages for the same mistake.
+    vi.stubEnv("LC_ALL", "de_DE.UTF-8");
+    try {
+      const h = harness();
+      await exec(h, ["items", "types"]);
+      expect(h.stderr.join("")).toContain("Missing required argument");
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

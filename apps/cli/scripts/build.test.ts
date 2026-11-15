@@ -1,5 +1,12 @@
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, statSync } from "node:fs";
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  statSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
@@ -36,5 +43,27 @@ describe("buildCli", () => {
 
     expect(result.stderr).toContain("No access token");
     expect(result.status).toBe(2);
+  });
+
+  it("reads file arguments from where it runs, not a parent's INIT_CWD", () => {
+    // Anything started under Yarn inherits INIT_CWD. Run directly, the
+    // bundle must ignore it.
+    const work = join(dir, "work");
+    mkdirSync(work);
+    writeFileSync(join(work, "q.graphql"), "query Q { me { id } }");
+    const { CHARDB_TOKEN: _token, ...env } = process.env;
+
+    const result = spawnSync(outfile, ["gql", "q.graphql"], {
+      cwd: work,
+      env: {
+        ...env,
+        INIT_CWD: dir,
+        XDG_CONFIG_HOME: join(dir, "config"),
+      },
+      encoding: "utf8",
+    });
+
+    expect(result.stderr).not.toContain("Could not read");
+    expect(result.stderr).toContain("No access token");
   });
 });
