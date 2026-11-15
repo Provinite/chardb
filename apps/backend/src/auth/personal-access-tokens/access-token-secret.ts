@@ -30,6 +30,8 @@ export function bearerCredential(req: unknown): string | null {
     | undefined;
   const header =
     request?.headers?.authorization ?? request?.connectionParams?.authorization;
-  if (typeof header !== "string" || !header.startsWith("Bearer ")) return null;
-  return header.slice("Bearer ".length);
+  if (typeof header !== "string") return null;
+  // The scheme is case-insensitive (RFC 6750).
+  const match = /^bearer (.+)$/i.exec(header);
+  return match ? match[1] : null;
 }

@@ -97,7 +97,10 @@ export class OptionalJwtAuthGuard extends AuthGuard("jwt") {
     const { tokenId, user, grants } =
       await this.accessTokens.authenticate(secret);
     (req as Request & { user?: CurrentUserType }).user = user;
-    setRequestPermissions(req, this.permissionService.forAccessToken(grants));
+    setRequestPermissions(
+      req,
+      this.permissionService.forAccessToken(user, grants),
+    );
     setRequestAccessToken(req, tokenId);
     trace.getActiveSpan()?.setAttribute("auth.access_token_id", tokenId);
     return true;

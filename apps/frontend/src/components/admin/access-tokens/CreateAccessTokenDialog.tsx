@@ -301,7 +301,7 @@ const GrantFieldset: React.FC<{
           </Cluster>
           <p id={memberHelpId} className={styles.help}>
             Anything open to members, including spending your currency and
-            buying from the shop as you.
+            buying from the shop as you. Works only while you are a member.
           </p>
         </Stack>
         {[...byCategory].map(([category, permissions]) => (

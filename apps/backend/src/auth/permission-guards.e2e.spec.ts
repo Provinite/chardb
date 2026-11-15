@@ -181,14 +181,15 @@ const NOT_TOKEN = EVERYONE.filter((persona) => persona !== "token");
  * - `staff` holds the edit-anyone's and manage-items permissions.
  * - `staffElsewhere` holds those in a different community.
  * - `globalFlagHolder` has `canListUsers` on their account and no role.
- * - `siteAdmin` has `isAdmin` on their account and no role, and owns a
- *   character of the species and one of none.
+ * - `siteAdmin` has `isAdmin` on their account and a role with no
+ *   permissions, and owns a character of the species and one of none.
  * - `token` is a personal access token of `siteAdmin`'s granting membership,
  *   `canManageItems` and `canEditOwnCharacter` in the first community.
  */
 describe("what each permission decorator admits (e2e)", () => {
   let testApp: TestApp;
   const tokens = {} as Record<Exclude<Persona, "anonymous">, string>;
+  let tokenWhereOwnerIsNoMember: string;
   const ids = {} as {
     community: string;
     elsewhere: string;
@@ -235,7 +236,11 @@ describe("what each permission decorator admits (e2e)", () => {
       { persona: "staff", role: [ids.community, staffRole] },
       { persona: "staffElsewhere", role: [ids.elsewhere, staffRole] },
       { persona: "globalFlagHolder", account: { canListUsers: true } },
-      { persona: "siteAdmin", account: { isAdmin: true } },
+      {
+        persona: "siteAdmin",
+        account: { isAdmin: true },
+        role: [ids.community, {}],
+      },
     ];
 
     const userIds = {} as Record<SignedIn, string>;
@@ -269,10 +274,9 @@ describe("what each permission decorator admits (e2e)", () => {
     ids.adminsCharacter = await characterOf(userIds.siteAdmin);
     ids.adminsSpecieslessCharacter = await characterOf(userIds.siteAdmin, null);
 
-    const { secret } = await testApp
-      .getApp()
-      .get(PersonalAccessTokensService)
-      .create(userIds.siteAdmin, {
+    const accessTokens = testApp.getApp().get(PersonalAccessTokensService);
+    tokens.token = (
+      await accessTokens.create(userIds.siteAdmin, {
         name: "gate probe",
         expiresInDays: 7,
         communities: [
@@ -285,8 +289,22 @@ describe("what each permission decorator admits (e2e)", () => {
             ],
           },
         ],
-      });
-    tokens.token = secret;
+      })
+    ).secret;
+    // Granted membership where its owner holds no role.
+    tokenWhereOwnerIsNoMember = (
+      await accessTokens.create(userIds.siteAdmin, {
+        name: "gate probe elsewhere",
+        expiresInDays: 7,
+        communities: [
+          {
+            communityId: ids.elsewhere,
+            member: true,
+            permissions: [CommunityPermission.CanManageItems],
+          },
+        ],
+      })
+    ).secret;
   });
 
   afterAll(async () => {
@@ -342,7 +360,7 @@ describe("what each permission decorator admits (e2e)", () => {
     [
       "@AllowCommunityPermission(Any), which is membership",
       () => `probeMember(communityId: "${ids.community}")`,
-      ["member", "ownEditor", "staff", "token"],
+      ["member", "ownEditor", "staff", "siteAdmin", "token"],
     ],
     [
       "@AllowCommunityPermission, which being a site admin does not grant",
@@ -448,5 +466,23 @@ describe("what each permission decorator admits (e2e)", () => {
 
   it.each(writes)("%s", async (_gate, field, expected) => {
     expect(await admitted(field, "mutation")).toEqual(expected);
+  });
+
+  it("a token granted membership where its owner holds no role is no member there", async () => {
+    const ask = (field: string) =>
+      testApp.authenticatedGraphqlRequest(
+        `query { ${field} }`,
+        {},
+        tokenWhereOwnerIsNoMember,
+      );
+
+    const member = await ask(`probeMember(communityId: "${ids.elsewhere}")`);
+    expect(member.body.errors?.[0]?.extensions?.code).toBe("FORBIDDEN");
+
+    // Its other grants there still stand.
+    const manager = await ask(
+      `probeCommunityPermission(communityId: "${ids.elsewhere}")`,
+    );
+    expect(manager.body.errors).toBeUndefined();
   });
 });

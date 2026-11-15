@@ -189,7 +189,7 @@ describe("OptionalJwtAuthGuard", () => {
 
       expect(authenticateAccessToken).toHaveBeenCalledWith("chardb_pat_secret");
       expect(req.user).toBe(viewer);
-      expect(forAccessToken).toHaveBeenCalledWith(grants);
+      expect(forAccessToken).toHaveBeenCalledWith(viewer, grants);
       expect(forUser).not.toHaveBeenCalled();
       expect(getRequestPermissions(req)).toBe(tokenPermissions);
       expect(getRequestAccessTokenId(req)).toBe("token-1");

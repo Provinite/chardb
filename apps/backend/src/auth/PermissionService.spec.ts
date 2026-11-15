@@ -194,8 +194,21 @@ describe("PermissionService", () => {
       },
     ];
 
+    const owner = user({ isAdmin: true, canListUsers: true });
+
+    /** The owner holds a role in each of these communities and no other. */
+    const ownerIsMemberOf = (...communityIds: string[]) => {
+      getUserRolesInCommunity.mockImplementation(
+        async (_userId: string, communityId: string) =>
+          communityIds.includes(communityId) ? [role({ communityId })] : [],
+      );
+      getUserRoles.mockResolvedValue(
+        communityIds.map((communityId) => role({ communityId })),
+      );
+    };
+
     it("holds no global permission, whatever its owner's account holds", () => {
-      const permissions = service.forAccessToken(grants);
+      const permissions = service.forAccessToken(owner, grants);
 
       expect(permissions.isAdmin).toBe(false);
       for (const permission of Object.values(GlobalPermission)) {
@@ -204,7 +217,8 @@ describe("PermissionService", () => {
     });
 
     it("grants exactly the permissions it names in a community it names", async () => {
-      const permissions = service.forAccessToken(grants);
+      ownerIsMemberOf("c-1");
+      const permissions = service.forAccessToken(owner, grants);
 
       expect(await permissions.inCommunity("c-1")).toEqual({
         hasMembership: true,
@@ -219,7 +233,8 @@ describe("PermissionService", () => {
     });
 
     it("is a member only where membership was granted", async () => {
-      const permissions = service.forAccessToken(grants);
+      ownerIsMemberOf("c-1", "c-2");
+      const permissions = service.forAccessToken(owner, grants);
 
       expect(
         await permissions.hasInCommunity("c-1", CommunityPermission.Any),
@@ -235,8 +250,27 @@ describe("PermissionService", () => {
       ).toBe(true);
     });
 
+    // A member token acts as its owner in member-only places: their wallet,
+    // their purchases. Where the owner is no member there is nothing to act as.
+    it("is no member where its owner holds no role, though granted", async () => {
+      ownerIsMemberOf();
+      const permissions = service.forAccessToken(owner, grants);
+
+      expect(await permissions.inCommunity("c-1")).toEqual({
+        hasMembership: false,
+        canManageItems: true,
+      });
+      expect(
+        await permissions.hasInCommunity("c-1", CommunityPermission.Any),
+      ).toBe(false);
+      expect(
+        await permissions.communityIdsWith(CommunityPermission.Any),
+      ).toEqual([]);
+    });
+
     it("grants nothing in a community it does not name", async () => {
-      const permissions = service.forAccessToken(grants);
+      ownerIsMemberOf("c-3");
+      const permissions = service.forAccessToken(owner, grants);
 
       expect(await permissions.inCommunity("c-3")).toEqual({
         hasMembership: false,
@@ -244,7 +278,8 @@ describe("PermissionService", () => {
     });
 
     it("lists the communities that grant any of the permissions", async () => {
-      const permissions = service.forAccessToken(grants);
+      ownerIsMemberOf("c-1", "c-2");
+      const permissions = service.forAccessToken(owner, grants);
 
       expect(
         await permissions.communityIdsWith(
@@ -262,13 +297,21 @@ describe("PermissionService", () => {
       ).toEqual([]);
     });
 
-    it("reads no roles", async () => {
-      const permissions = service.forAccessToken(grants);
-      await permissions.inCommunity("c-1");
-      await permissions.communityIdsWith(CommunityPermission.Any);
+    it("reads the owner's roles only to answer membership, once per community", async () => {
+      ownerIsMemberOf("c-1", "c-2");
+      const permissions = service.forAccessToken(owner, grants);
 
+      await permissions.inCommunity("c-2");
+      await permissions.hasInCommunity(
+        "c-1",
+        CommunityPermission.CanManageItems,
+      );
       expect(getUserRolesInCommunity).not.toHaveBeenCalled();
-      expect(getUserRoles).not.toHaveBeenCalled();
+
+      await permissions.inCommunity("c-1");
+      await permissions.hasInCommunity("c-1", CommunityPermission.Any);
+      expect(getUserRolesInCommunity).toHaveBeenCalledTimes(1);
+      expect(getUserRolesInCommunity).toHaveBeenCalledWith("user-1", "c-1");
     });
   });
 });

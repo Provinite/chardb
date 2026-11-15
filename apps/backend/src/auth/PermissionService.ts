@@ -116,30 +116,42 @@ export interface AccessTokenGrant {
 
 const knownCommunityPermissions = new Set<string>(AllCommunityPermissions);
 
+/** One community's grant, read: membership asked for, and the rest. */
+interface ReadGrant {
+  member: boolean;
+  permissions: Partial<Record<CommunityPermission, boolean>>;
+}
+
 /**
- * Exactly what a personal access token was granted. No global permission,
- * and in each community it names, the permissions it names there. Membership
- * is a grant of its own, `CommunityPermission.Any`.
+ * What a personal access token was granted. No global permission, and in each
+ * community it names, the permissions it names there.
  *
- * The owner's roles are not consulted: only a site admin may hold a token, a
- * site admin may grant any community permission, and whether the owner is
- * still a site admin is checked before this is built.
+ * Membership (`CommunityPermission.Any`) is a grant of its own, and counts
+ * only where the owner really holds a role: a member-only handler acts on the
+ * owner's own wallet and purchases there, and a non-member has none. Every
+ * other permission is the grant alone, since a site admin may grant any of
+ * them anywhere, and the owner is checked to still be a site admin before this
+ * is built.
  */
 class AccessTokenPermissions implements RequestPermissions {
-  private readonly communities = new Map<string, CommunityPermissions>();
+  private readonly grants = new Map<string, ReadGrant>();
 
-  constructor(grants: readonly AccessTokenGrant[]) {
+  constructor(
+    grants: readonly AccessTokenGrant[],
+    /** The owner's own account, asked only whether they are a member. */
+    private readonly owner: RequestPermissions,
+  ) {
     for (const grant of grants) {
-      const permissions: CommunityPermissions = { hasMembership: false };
+      const read: ReadGrant = { member: false, permissions: {} };
       for (const name of grant.permissions) {
         if (!knownCommunityPermissions.has(name)) continue;
         if (name === CommunityPermission.Any) {
-          permissions.hasMembership = true;
+          read.member = true;
         } else {
-          permissions[name as CommunityPermission] = true;
+          read.permissions[name as CommunityPermission] = true;
         }
       }
-      this.communities.set(grant.communityId, permissions);
+      this.grants.set(grant.communityId, read);
     }
   }
 
@@ -150,34 +162,46 @@ class AccessTokenPermissions implements RequestPermissions {
   }
 
   async inCommunity(communityId: string): Promise<CommunityPermissions> {
+    const grant = this.grants.get(communityId);
+    if (!grant) return { hasMembership: false };
     return {
-      ...(this.communities.get(communityId) ?? { hasMembership: false }),
+      ...grant.permissions,
+      hasMembership: await this.holds(communityId, CommunityPermission.Any),
     };
   }
 
-  async hasInCommunity(
+  hasInCommunity(
     communityId: string,
     permission: CommunityPermission,
   ): Promise<boolean> {
-    const permissions = this.communities.get(communityId);
-    if (!permissions) return false;
-    if (permission === CommunityPermission.Any) {
-      return permissions.hasMembership;
-    }
-    return permissions[permission] === true;
+    return this.holds(communityId, permission);
   }
 
   async communityIdsWith(...anyOf: CommunityPermission[]): Promise<string[]> {
     const communityIds: string[] = [];
-    for (const [communityId, permissions] of this.communities) {
-      const holdsOne = anyOf.some((permission) =>
-        permission === CommunityPermission.Any
-          ? permissions.hasMembership
-          : permissions[permission] === true,
-      );
-      if (holdsOne) communityIds.push(communityId);
+    for (const communityId of this.grants.keys()) {
+      for (const permission of anyOf) {
+        if (await this.holds(communityId, permission)) {
+          communityIds.push(communityId);
+          break;
+        }
+      }
     }
     return communityIds;
+  }
+
+  /** The one rule every question above asks. */
+  private async holds(
+    communityId: string,
+    permission: CommunityPermission,
+  ): Promise<boolean> {
+    const grant = this.grants.get(communityId);
+    if (!grant) return false;
+    if (permission !== CommunityPermission.Any) {
+      return grant.permissions[permission] === true;
+    }
+    if (!grant.member) return false;
+    return (await this.owner.inCommunity(communityId)).hasMembership;
   }
 }
 
@@ -200,11 +224,18 @@ export class PermissionService {
   }
 
   /**
-   * What a request made with a personal access token may do: its grants and
-   * nothing else. The token's owner must already have been checked.
+   * What a request made with a personal access token may do: its grants, and
+   * membership only where `owner` is a member. The owner must already have
+   * been checked to be a site admin.
    */
-  forAccessToken(grants: readonly AccessTokenGrant[]): RequestPermissions {
-    return new AccessTokenPermissions(grants);
+  forAccessToken(
+    owner: PermissionHolder,
+    grants: readonly AccessTokenGrant[],
+  ): RequestPermissions {
+    return new AccessTokenPermissions(
+      grants,
+      new AccountPermissions(owner, this.communityMembersService),
+    );
   }
 
   /** Whether `userId` is the account being asked about. */
