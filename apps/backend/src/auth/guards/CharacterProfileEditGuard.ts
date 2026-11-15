@@ -8,6 +8,7 @@ import { getPermissionsFromContext } from "../utils/get-permissions-from-context
 import { getNestedValue } from "../../common/utils/getNestedValue";
 import { AllowCharacterProfileEditor } from "../decorators/AllowCharacterProfileEditor";
 import { notDeleted } from "../../common/utils/prisma-filters";
+import { refusesAccessToken } from "../access-token-request";
 
 /**
  * Guard that checks character profile edit permissions based on ownership.
@@ -100,10 +101,14 @@ export class CharacterProfileEditGuard implements CanActivate {
 
     // Handle owned characters
     const isOwner = character.ownerId === user.id;
+    // Who the caller is, with no community permission asked: a token is
+    // turned away here, as at every gate on identity alone.
+    const isOwnerByIdentityAlone =
+      isOwner && !refusesAccessToken(this.reflector, context);
 
     // If no species, only owner can edit
     if (!character.speciesId) {
-      return isOwner;
+      return isOwnerByIdentityAlone;
     }
 
     // Resolve community from species
@@ -115,7 +120,7 @@ export class CharacterProfileEditGuard implements CanActivate {
 
     if (!community) {
       // No community means only owner can edit
-      return isOwner;
+      return isOwnerByIdentityAlone;
     }
 
     // Check profile-level permissions only

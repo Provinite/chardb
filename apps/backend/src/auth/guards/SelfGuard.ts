@@ -9,6 +9,7 @@ import {
 } from "../types/SelfResolutionConfig";
 import { getUserFromContext } from "../utils/get-user-from-context";
 import { getNestedValue } from "../../common/utils/getNestedValue";
+import { refusesAccessToken } from "../access-token-request";
 
 /**
  * Guard that verifies the current user is accessing their own data.
@@ -25,6 +26,8 @@ export class SelfGuard implements CanActivate {
     if (!user) {
       return false;
     }
+
+    if (refusesAccessToken(this.reflector, context)) return false;
 
     const config = this.reflector.getAllAndOverride(AllowSelf, [
       context.getHandler(),

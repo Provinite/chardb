@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Personal access tokens**: site admins mint `chardb_pat_<env>_` bearer tokens scoped to chosen communities and permissions. Tokens never pass site-admin, signed-in, self or owner gates unless a handler is marked `@AllowAccessToken()`.
+
 ### Changed
 
 - **Permission checks**: guards, resolvers and services read what the caller may do from one per-request `RequestPermissions`, built when the request is authenticated. Who may do what is unchanged.
@@ -17,6 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **Community roles and actors**: `updateCommunityMember` and community invitations accept only the community's own roles. Invitations, `claimInviteCode` and `createInviteCode` now always act for the caller, so `inviterId`, `creatorId` and `claimInviteCodeInput` are gone from the API.
 - **Character list order**: characters with the same name, price or date keep one order across pages, so Load More no longer repeats or skips them.
 
 ## [v15.8.0] - 2026-11-04

@@ -8,6 +8,7 @@ import {
 } from "../types/OwnershipResolutionConfig";
 import { resolveGuardPath } from "../utils/resolve-guard-path";
 import { OwnershipService } from "../OwnershipService";
+import { refusesAccessToken } from "../access-token-request";
 
 /**
  * Generic guard that checks if the current user owns an entity or has identity relationship.
@@ -35,6 +36,8 @@ export class OwnershipGuard implements CanActivate {
     if (!user) {
       return false;
     }
+
+    if (refusesAccessToken(this.reflector, context)) return false;
 
     const config = this.reflector.getAllAndOverride(AllowEntityOwner, [
       context.getHandler(),

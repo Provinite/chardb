@@ -66,6 +66,8 @@ export interface CommunityBasicWorld {
     payingmod: Persona;
     /** Credited as the artist on the pending image. */
     artist: Persona;
+    /** Holds the global canCreateInviteCode flag, and no role anywhere. */
+    inviter: Persona;
   };
   characters: {
     /** Owned by `member`; carries a trait value, so it has a PENDING review. */
@@ -108,6 +110,7 @@ export default definePreset<CommunityBasicWorld>({
     const imagemod = await ctx.user("imagemod");
     const payingmod = await ctx.user("payingmod");
     const artist = await ctx.user("artist");
+    const inviter = await ctx.user("inviter", { canCreateInviteCode: true });
 
     // --- community. Auto-creates Admin/Moderator/Member roles and binds the
     // creator (commadmin) to Admin.
@@ -370,6 +373,7 @@ export default definePreset<CommunityBasicWorld>({
         imagemod,
         payingmod,
         artist,
+        inviter,
       },
       // A character is served from its community's host, because it reaches a
       // community through its species. The apex still answers for

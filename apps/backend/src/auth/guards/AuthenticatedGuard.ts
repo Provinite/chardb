@@ -2,6 +2,7 @@ import { Injectable, CanActivate, ExecutionContext } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { getUserFromContext } from "../utils/get-user-from-context";
 import { AllowAnyAuthenticated } from "../decorators/AllowAnyAuthenticated";
+import { refusesAccessToken } from "../access-token-request";
 
 /**
  * Guard that checks if a user is authenticated.
@@ -26,6 +27,8 @@ export class AuthenticatedGuard implements CanActivate {
     if (!requiresAuth) {
       return false;
     }
+
+    if (refusesAccessToken(this.reflector, context)) return false;
 
     const user = getUserFromContext(context);
     return Boolean(user);

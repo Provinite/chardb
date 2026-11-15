@@ -32,13 +32,6 @@ export class CreateInviteCodeInput {
   @Min(1, { message: "Max claims must be at least 1" })
   maxClaims!: number;
 
-  /** The user who is creating this invite code */
-  @Field(() => ID, {
-    description: "The ID of the user who is creating this invite code",
-  })
-  @IsUUID(4, { message: "Creator ID must be a valid UUID" })
-  creatorId!: string;
-
   /** The role to grant when this invite code is used (optional) */
   @Field(() => ID, {
     description: "The ID of the role to grant when this invite code is used",
@@ -69,14 +62,4 @@ export class UpdateInviteCodeInput {
   @IsOptional()
   @IsUUID(4, { message: "Role ID must be a valid UUID" })
   roleId?: string | null;
-}
-
-@InputType({ description: "Input for claiming an invite code" })
-export class ClaimInviteCodeInput {
-  /** The user who is claiming this invite code */
-  @Field(() => ID, {
-    description: "The ID of the user who is claiming this invite code",
-  })
-  @IsUUID(4, { message: "User ID must be a valid UUID" })
-  userId!: string;
 }

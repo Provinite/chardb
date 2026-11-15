@@ -340,6 +340,10 @@ PatreonOAuthController.initiateOAuth (GET): signed in
 PendingOwnershipResolver.resolveDisplayIdentifier (ResolveField): global isAdmin or community canCreateOrphanedCharacter of {"pendingOwnershipId":"$root.id"} and CommunityPermissionGuard
 PendingOwnershipResolver.resolveDisplayName (ResolveField): global isAdmin or community canCreateOrphanedCharacter of {"pendingOwnershipId":"$root.id"} and CommunityPermissionGuard
 PendingOwnershipResolver.resolveProviderAccountId (ResolveField): global isAdmin or community canCreateOrphanedCharacter of {"pendingOwnershipId":"$root.id"} and CommunityPermissionGuard
+PersonalAccessTokensResolver.createPersonalAccessToken (Mutation): global isAdmin
+PersonalAccessTokensResolver.personalAccessTokenGrantOptions (Query): global isAdmin
+PersonalAccessTokensResolver.personalAccessTokens (Query): global isAdmin
+PersonalAccessTokensResolver.revokePersonalAccessToken (Mutation): global isAdmin
 RolesResolver.createRole (Mutation): global isAdmin or community canCreateRole of {"communityId":"createRoleInput.communityId"}
 RolesResolver.findAll (Query): global isAdmin
 RolesResolver.findByCommunity (Query): signed in
@@ -441,7 +445,7 @@ UserStatsResolver.resolveTotalLikes (ResolveField): anyone
 UserStatsResolver.resolveTotalViews (ResolveField): anyone
 UsersResolver.findAll (Query): global canListUsers
 UsersResolver.findOne (Query): anyone
-UsersResolver.getCurrentUser (Query): signed in
+UsersResolver.getCurrentUser (Query): signed in (access tokens admitted)
 UsersResolver.getUserProfile (Query): anyone
 UsersResolver.getUserStats (Query): anyone
 UsersResolver.resolveAvatarImage (ResolveField): anyone

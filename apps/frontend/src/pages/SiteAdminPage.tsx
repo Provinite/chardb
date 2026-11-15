@@ -9,6 +9,7 @@ import {
   Activity,
   RefreshCw,
   Image,
+  KeyRound,
 } from "lucide-react";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -240,6 +241,17 @@ export function SiteAdminPage() {
               <CardTitle>Audit Logs</CardTitle>
               <CardDescription>
                 Security monitoring and activity logs
+              </CardDescription>
+            </AdminCard>
+
+            <AdminCard to="/admin/access-tokens">
+              <CardIcon>
+                <KeyRound size={24} />
+              </CardIcon>
+              <CardTitle>Access Tokens</CardTitle>
+              <CardDescription>
+                Tokens that let scripts and agents use the API in the
+                communities you choose
               </CardDescription>
             </AdminCard>
 

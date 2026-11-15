@@ -483,7 +483,6 @@ export function SiteInviteCodesPage() {
 
     const input: CreateInviteCodeInput = {
       id: inviteCodeId,
-      creatorId: userData.me.id,
       maxClaims,
       // No roleId for global invite codes
     };

@@ -411,12 +411,6 @@ input CheckoutLineInputDto {
   shopPriceId: ID!
 }
 
-"""Input for claiming an invite code"""
-input ClaimInviteCodeInput {
-  """The ID of the user who is claiming this invite code"""
-  userId: ID!
-}
-
 type Comment {
   author: User!
   authorId: ID!
@@ -714,9 +708,6 @@ input CreateCommunityInvitationInput {
   """The ID of the user being invited"""
   inviteeId: ID!
 
-  """The ID of the user who is creating the invitation"""
-  inviterId: ID!
-
   """The ID of the role to grant when the invitation is accepted"""
   roleId: ID!
 }
@@ -795,9 +786,6 @@ input CreateHalloweenPrizeInput {
 
 """Input for creating a new invite code"""
 input CreateInviteCodeInput {
-  """The ID of the user who is creating this invite code"""
-  creatorId: ID!
-
   """The invite code string (alphanumeric and hyphens only)"""
   id: String!
 
@@ -819,6 +807,12 @@ input CreateItemTypeInput {
   isConsumable: Boolean! = false
   isTradeable: Boolean! = true
   metadata: String
+  name: String!
+}
+
+input CreatePersonalAccessTokenInput {
+  communities: [PersonalAccessTokenGrantInput!]!
+  expiresInDays: Int!
   name: String!
 }
 
@@ -1038,6 +1032,14 @@ input CreateTraitListEntryInput {
 
   """Type of values this trait stores"""
   valueType: TraitValueType!
+}
+
+type CreatedPersonalAccessToken {
+  """
+  The token's secret, sent as `Authorization: Bearer <secret>`. Returned once; it cannot be read again.
+  """
+  secret: String!
+  token: PersonalAccessToken!
 }
 
 """
@@ -2975,9 +2977,6 @@ type Mutation {
 
   """Claim an invite code to join a community"""
   claimInviteCode(
-    """Invite code claim data"""
-    claimInviteCodeInput: ClaimInviteCodeInput!
-
     """Invite code ID"""
     id: ID!
   ): InviteCode!
@@ -3052,6 +3051,11 @@ type Mutation {
     createInviteCodeInput: CreateInviteCodeInput!
   ): InviteCode!
   createItemType(input: CreateItemTypeInput!): ItemType!
+
+  """
+  Mints a personal access token for the caller. The secret is in this response and nowhere else.
+  """
+  createPersonalAccessToken(input: CreatePersonalAccessTokenInput!): CreatedPersonalAccessToken!
 
   """Create a new role"""
   createRole(
@@ -3376,6 +3380,7 @@ type Mutation {
     """Staff-only detail. Never shown to members."""
     staffNote: String
   ): Int!
+  revokePersonalAccessToken(id: ID!): PersonalAccessToken!
 
   """
   Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this).
@@ -3883,6 +3888,52 @@ type PendingOwnership {
   """The external account provider (Discord, DeviantArt, etc.)"""
   provider: ExternalAccountProvider!
   providerAccountId: String!
+}
+
+type PersonalAccessToken {
+  communities: [PersonalAccessTokenGrant!]!
+  createdAt: DateTime!
+
+  """The secret's last four characters."""
+  displayHint: String!
+  expiresAt: DateTime!
+  id: ID!
+  lastUsedAt: DateTime
+  name: String!
+  revokedAt: DateTime
+}
+
+type PersonalAccessTokenCommunityRef {
+  id: ID!
+  name: String!
+  slug: String!
+}
+
+"""What a token may do in one community."""
+type PersonalAccessTokenGrant {
+  community: PersonalAccessTokenCommunityRef!
+
+  """Passes gates that ask only for membership."""
+  member: Boolean!
+
+  """Community permission names, such as canManageItems."""
+  permissions: [String!]!
+}
+
+input PersonalAccessTokenGrantInput {
+  communityId: ID!
+  member: Boolean!
+  permissions: [String!]!
+}
+
+type PersonalAccessTokenGrantOptions {
+  communities: [PersonalAccessTokenCommunityRef!]!
+
+  """Lifetimes a token may have, in days."""
+  lifetimesDays: [Int!]!
+
+  """Every community permission a token may be granted."""
+  permissions: [String!]!
 }
 
 type Query {
@@ -4423,6 +4474,12 @@ type Query {
 
   """Get count of pending trait reviews for a community"""
   pendingTraitReviewCount(communityId: ID!): Int!
+
+  """What a new personal access token may be granted."""
+  personalAccessTokenGrantOptions: PersonalAccessTokenGrantOptions!
+
+  """The caller's personal access tokens, newest first."""
+  personalAccessTokens: [PersonalAccessToken!]!
 
   """
   Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters.

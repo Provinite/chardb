@@ -107,6 +107,104 @@ class AccountPermissions implements RequestPermissions {
   }
 }
 
+/** What a personal access token was granted in one community. */
+export interface AccessTokenGrant {
+  communityId: string;
+  /** `CommunityPermission` names. A name the code no longer knows grants nothing. */
+  permissions: readonly string[];
+}
+
+const knownCommunityPermissions = new Set<string>(AllCommunityPermissions);
+
+/** One community's grant, read: membership asked for, and the rest. */
+interface ReadGrant {
+  member: boolean;
+  permissions: Partial<Record<CommunityPermission, boolean>>;
+}
+
+/**
+ * What a personal access token was granted. No global permission, and in each
+ * community it names, the permissions it names there.
+ *
+ * Membership (`CommunityPermission.Any`) is a grant of its own, and counts
+ * only where the owner really holds a role: a member-only handler acts on the
+ * owner's own wallet and purchases there, and a non-member has none. Every
+ * other permission is the grant alone, since a site admin may grant any of
+ * them anywhere, and the owner is checked to still be a site admin before this
+ * is built.
+ */
+class AccessTokenPermissions implements RequestPermissions {
+  private readonly grants = new Map<string, ReadGrant>();
+
+  constructor(
+    grants: readonly AccessTokenGrant[],
+    /** The owner's own account, asked only whether they are a member. */
+    private readonly owner: RequestPermissions,
+  ) {
+    for (const grant of grants) {
+      const read: ReadGrant = { member: false, permissions: {} };
+      for (const name of grant.permissions) {
+        if (!knownCommunityPermissions.has(name)) continue;
+        if (name === CommunityPermission.Any) {
+          read.member = true;
+        } else {
+          read.permissions[name as CommunityPermission] = true;
+        }
+      }
+      this.grants.set(grant.communityId, read);
+    }
+  }
+
+  readonly isAdmin = false;
+
+  hasGlobal(): boolean {
+    return false;
+  }
+
+  async inCommunity(communityId: string): Promise<CommunityPermissions> {
+    const grant = this.grants.get(communityId);
+    if (!grant) return { hasMembership: false };
+    return {
+      ...grant.permissions,
+      hasMembership: await this.holds(communityId, CommunityPermission.Any),
+    };
+  }
+
+  hasInCommunity(
+    communityId: string,
+    permission: CommunityPermission,
+  ): Promise<boolean> {
+    return this.holds(communityId, permission);
+  }
+
+  async communityIdsWith(...anyOf: CommunityPermission[]): Promise<string[]> {
+    const communityIds: string[] = [];
+    for (const communityId of this.grants.keys()) {
+      for (const permission of anyOf) {
+        if (await this.holds(communityId, permission)) {
+          communityIds.push(communityId);
+          break;
+        }
+      }
+    }
+    return communityIds;
+  }
+
+  /** The one rule every question above asks. */
+  private async holds(
+    communityId: string,
+    permission: CommunityPermission,
+  ): Promise<boolean> {
+    const grant = this.grants.get(communityId);
+    if (!grant) return false;
+    if (permission !== CommunityPermission.Any) {
+      return grant.permissions[permission] === true;
+    }
+    if (!grant.member) return false;
+    return (await this.owner.inCommunity(communityId)).hasMembership;
+  }
+}
+
 /**
  * Builds the {@link RequestPermissions} a caller acts with.
  *
@@ -123,6 +221,21 @@ export class PermissionService {
   forUser(user: PermissionHolder | null | undefined): RequestPermissions {
     if (!user) return ANONYMOUS_PERMISSIONS;
     return new AccountPermissions(user, this.communityMembersService);
+  }
+
+  /**
+   * What a request made with a personal access token may do: its grants, and
+   * membership only where `owner` is a member. The owner must already have
+   * been checked to be a site admin.
+   */
+  forAccessToken(
+    owner: PermissionHolder,
+    grants: readonly AccessTokenGrant[],
+  ): RequestPermissions {
+    return new AccessTokenPermissions(
+      grants,
+      new AccountPermissions(owner, this.communityMembersService),
+    );
   }
 
   /** Whether `userId` is the account being asked about. */

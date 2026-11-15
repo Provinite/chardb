@@ -575,6 +575,11 @@ module "ecs" {
       value = "production"
     },
     {
+      # Named in every personal access token this server mints.
+      name  = "APP_ENVIRONMENT"
+      value = "prod"
+    },
+    {
       name  = "PORT"
       value = tostring(var.backend_container_port)
     },

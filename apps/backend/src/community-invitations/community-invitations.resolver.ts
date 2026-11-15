@@ -73,9 +73,11 @@ export class CommunityInvitationsResolver {
       description: "Community invitation creation data",
     })
     createCommunityInvitationInput: CreateCommunityInvitationInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<CommunityInvitation> {
     const serviceInput = mapCreateCommunityInvitationInputToService(
       createCommunityInvitationInput,
+      user.id,
     );
     const prismaResult =
       await this.communityInvitationsService.create(serviceInput);
