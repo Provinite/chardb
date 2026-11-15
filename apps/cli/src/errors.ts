@@ -66,7 +66,9 @@ const REFUSAL_CODES = new Set(["UNAUTHENTICATED", "FORBIDDEN"]);
 export class GraphqlRequestError extends CliError {
   constructor(readonly errors: GraphqlErrorEntry[]) {
     super(
-      errors.flatMap(errorMessages).join("; ") || "Request failed",
+      // One cause often fails every field of a request alike.
+      [...new Set(errors.flatMap(errorMessages))].join("; ") ||
+        "Request failed",
       exitCodeForErrors(errors),
     );
   }

@@ -224,6 +224,22 @@ describe("whoami", () => {
     expect(h.stderr.join("")).toMatch(/reach/);
   });
 
+  it("prints a message repeated across fields once", async () => {
+    const h = harness();
+    const refusal = {
+      message: "This access token belongs to another environment",
+      extensions: { code: "UNAUTHENTICATED" },
+    };
+    const api = fakeApi(() => ({
+      body: { data: null, errors: [refusal, refusal] },
+    }));
+
+    expect(await exec(h, ["whoami"], api.fetch)).toBe(3);
+    expect(h.stderr.join("")).toBe(
+      "This access token belongs to another environment\n",
+    );
+  });
+
   it("prints the validation messages behind a generic Bad Request", async () => {
     const h = harness();
     const api = fakeApi(() => ({

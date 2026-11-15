@@ -3,6 +3,13 @@ import { createInterface } from "node:readline/promises";
 import { defaultCredentialsPath } from "./credentials";
 import { run } from "./run";
 
+// A reader that stops early (`| head`) closes the pipe; there is no one left
+// to tell.
+process.stdout.on("error", (err: NodeJS.ErrnoException) => {
+  if (err.code === "EPIPE") process.exit(process.exitCode ?? 0);
+  throw err;
+});
+
 async function readStdin(): Promise<string> {
   const chunks: Buffer[] = [];
   for await (const chunk of process.stdin) {
