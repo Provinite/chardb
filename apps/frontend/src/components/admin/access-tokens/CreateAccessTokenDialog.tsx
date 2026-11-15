@@ -212,7 +212,7 @@ const TokenForm: React.FC<CreateAccessTokenDialogProps> = ({
             if (!community) return;
             setGrants((current) => [
               ...current,
-              { community, member: true, permissions: [] },
+              { community, member: false, permissions: [] },
             ]);
           }}
         />
@@ -223,54 +223,19 @@ const TokenForm: React.FC<CreateAccessTokenDialogProps> = ({
       </Stack>
 
       {grants.map((grant) => (
-        <fieldset key={grant.community.id} className={styles.grant}>
-          <legend className={styles.legend}>{grant.community.name}</legend>
-          <Stack gap="sm">
-            <Cluster gap="sm" justify="space-between">
-              <Checkbox
-                label="Member"
-                checked={grant.member}
-                onChange={(member) => update(grant.community.id, { member })}
-              />
-              <IconButton
-                label={`Remove ${grant.community.name}`}
-                icon={<X />}
-                onClick={() =>
-                  setGrants((current) =>
-                    current.filter(
-                      (other) => other.community.id !== grant.community.id,
-                    ),
-                  )
-                }
-              />
-            </Cluster>
-            {[...byCategory].map(([category, permissions]) => (
-              <Stack gap="xs" key={category}>
-                <p className={styles.category}>
-                  {PERMISSION_CATEGORIES[category].title}
-                </p>
-                <Grid min="lg" gap="xs">
-                  {permissions.map((permission) => (
-                    <Checkbox
-                      key={permission}
-                      label={permissionInfo[permission]?.name ?? permission}
-                      checked={grant.permissions.includes(permission)}
-                      onChange={(checked) =>
-                        update(grant.community.id, {
-                          permissions: checked
-                            ? [...grant.permissions, permission]
-                            : grant.permissions.filter(
-                                (other) => other !== permission,
-                              ),
-                        })
-                      }
-                    />
-                  ))}
-                </Grid>
-              </Stack>
-            ))}
-          </Stack>
-        </fieldset>
+        <GrantFieldset
+          key={grant.community.id}
+          grant={grant}
+          byCategory={byCategory}
+          onChange={(change) => update(grant.community.id, change)}
+          onRemove={() =>
+            setGrants((current) =>
+              current.filter(
+                (other) => other.community.id !== grant.community.id,
+              ),
+            )
+          }
+        />
       ))}
 
       <p className={styles.message} role="alert">
@@ -291,16 +256,80 @@ const TokenForm: React.FC<CreateAccessTokenDialogProps> = ({
 
 const Checkbox: React.FC<{
   label: string;
+  /** The id of the text that says what checking it allows. */
+  describedBy?: string;
   checked: boolean;
   onChange: (checked: boolean) => void;
-}> = ({ label, checked, onChange }) => (
+}> = ({ label, describedBy, checked, onChange }) => (
   <label className={styles.checkbox}>
     <input
       type="checkbox"
       className={styles.checkboxInput}
       checked={checked}
+      aria-describedby={describedBy}
       onChange={(event) => onChange(event.target.checked)}
     />
     {label}
   </label>
 );
+
+/** One community's checklist. */
+const GrantFieldset: React.FC<{
+  grant: DraftGrant;
+  byCategory: Map<PermissionCategory, string[]>;
+  onChange: (change: Partial<DraftGrant>) => void;
+  onRemove: () => void;
+}> = ({ grant, byCategory, onChange, onRemove }) => {
+  const memberHelpId = useId();
+  return (
+    <fieldset className={styles.grant}>
+      <legend className={styles.legend}>{grant.community.name}</legend>
+      <Stack gap="sm">
+        <Stack gap="none">
+          <Cluster gap="sm" justify="space-between">
+            <Checkbox
+              label="Member"
+              describedBy={memberHelpId}
+              checked={grant.member}
+              onChange={(member) => onChange({ member })}
+            />
+            <IconButton
+              label={`Remove ${grant.community.name}`}
+              icon={<X />}
+              onClick={onRemove}
+            />
+          </Cluster>
+          <p id={memberHelpId} className={styles.help}>
+            Anything open to members, including spending your currency and
+            buying from the shop as you.
+          </p>
+        </Stack>
+        {[...byCategory].map(([category, permissions]) => (
+          <Stack gap="xs" key={category}>
+            <p className={styles.category}>
+              {PERMISSION_CATEGORIES[category].title}
+            </p>
+            <Grid min="lg" gap="xs">
+              {permissions.map((permission) => (
+                <Checkbox
+                  key={permission}
+                  label={permissionInfo[permission]?.name ?? permission}
+                  checked={grant.permissions.includes(permission)}
+                  onChange={(checked) =>
+                    onChange({
+                      permissions: checked
+                        ? [...grant.permissions, permission]
+                        : grant.permissions.filter(
+                            (other) => other !== permission,
+                          ),
+                    })
+                  }
+                />
+              ))}
+            </Grid>
+          </Stack>
+        ))}
+      </Stack>
+    </fieldset>
+  );
+};

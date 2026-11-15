@@ -34,8 +34,9 @@ export const AccessTokensPage: React.FC = () => {
   });
   const [create, { loading: createBusy }] =
     useCreatePersonalAccessTokenMutation({
+      // Not awaited: the secret exists only in this response, and a failed
+      // refresh of the list must not lose it.
       refetchQueries: [{ query: PERSONAL_ACCESS_TOKENS }],
-      awaitRefetchQueries: true,
     });
   const [revoke, { loading: revokeBusy }] =
     useRevokePersonalAccessTokenMutation();

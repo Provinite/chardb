@@ -57,9 +57,7 @@ test.describe("access tokens", () => {
 
     const card = page.getByRole("listitem", { name: "e2e bot" });
     await expect(card).toContainText("Active");
-    await expect(card).toContainText(
-      `${world.community.name}: Member, Manage Items`,
-    );
+    await expect(card).toContainText(`${world.community.name}: Manage Items`);
     await expect(card).toContainText(`…${secret.slice(-4)}`);
 
     const signedIn = await whoAmI(request, secret);

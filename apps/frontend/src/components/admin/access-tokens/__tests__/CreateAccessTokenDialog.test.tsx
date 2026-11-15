@@ -45,7 +45,7 @@ const addCommunity = async (name: string) => {
 };
 
 describe("CreateAccessTokenDialog", () => {
-  it("creates nothing until it has a name and a community", async () => {
+  it("creates nothing until it has a name and a grant", async () => {
     renderDialog();
     const create = screen.getByRole("button", { name: "Create token" });
 
@@ -53,7 +53,23 @@ describe("CreateAccessTokenDialog", () => {
     await userEvent.type(screen.getByLabelText("Name"), "deploy bot");
     expect(create).toBeDisabled();
     await addCommunity("Willowmere");
+    expect(create).toBeDisabled();
+    await userEvent.click(screen.getByLabelText("Manage Items"));
     expect(create).toBeEnabled();
+  });
+
+  // Membership opens spending the owner's currency and buying from the shop
+  // as them, so it is never granted without being asked for.
+  it("grants nothing in a community until something is checked", async () => {
+    renderDialog();
+
+    await addCommunity("Willowmere");
+    const grant = screen.getByRole("group", { name: "Willowmere" });
+
+    expect(within(grant).getByLabelText("Member")).not.toBeChecked();
+    expect(within(grant).getByLabelText("Member")).toHaveAccessibleDescription(
+      /spending your currency/,
+    );
   });
 
   it("sends the name, lifetime and each community's grants", async () => {
@@ -63,7 +79,6 @@ describe("CreateAccessTokenDialog", () => {
     await userEvent.selectOptions(screen.getByLabelText("Expires after"), "30");
     await addCommunity("Willowmere");
     const grant = screen.getByRole("group", { name: "Willowmere" });
-    await userEvent.click(within(grant).getByLabelText("Member"));
     await userEvent.click(within(grant).getByLabelText("Manage Items"));
     await userEvent.click(screen.getByRole("button", { name: "Create token" }));
 
@@ -74,20 +89,6 @@ describe("CreateAccessTokenDialog", () => {
         { communityId: "c-1", member: false, permissions: ["canManageItems"] },
       ],
     });
-  });
-
-  it("will not send a community granted nothing", async () => {
-    renderDialog();
-
-    await userEvent.type(screen.getByLabelText("Name"), "deploy bot");
-    await addCommunity("Willowmere");
-    await userEvent.click(
-      within(screen.getByRole("group", { name: "Willowmere" })).getByLabelText(
-        "Member",
-      ),
-    );
-
-    expect(screen.getByRole("button", { name: "Create token" })).toBeDisabled();
   });
 
   it("shows the secret once made, and copies it", async () => {
