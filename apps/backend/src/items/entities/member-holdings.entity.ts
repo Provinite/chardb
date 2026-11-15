@@ -3,6 +3,7 @@ import { ItemType } from "./item-type.entity";
 import { Item } from "./item.entity";
 import { User } from "../../users/entities/user.entity";
 import { PendingOwnership } from "../../pending-ownership/entities/pending-ownership.entity";
+import { PendingCurrencyBalance } from "../../currencies/entities/currency-balance.entity";
 
 /**
  * What one member holds in one community.
@@ -96,6 +97,11 @@ export class PendingHoldingsReport {
   @Field(() => [PendingCharacter], { description: "By name." })
   characters: PendingCharacter[];
 
+  @Field(() => [PendingCurrencyBalance], {
+    description: "Currency waiting on them, by currency name.",
+  })
+  balances: PendingCurrencyBalance[];
+
   @Field(() => User, {
     nullable: true,
     description:
@@ -122,6 +128,11 @@ export class ExternalMember {
 
   @Field(() => Int, { description: "Characters waiting on them." })
   characterCount: number;
+
+  @Field(() => [PendingCurrencyBalance], {
+    description: "Currency waiting on them, by currency name.",
+  })
+  balances: PendingCurrencyBalance[];
 }
 
 @ObjectType()

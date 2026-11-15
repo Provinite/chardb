@@ -11,6 +11,7 @@ import type { RequestPermissions } from "../auth/request-permissions";
 import { notDeleted } from "../common/utils/prisma-filters";
 import {
   PendingOwnershipService,
+  accountKey,
   type PendingOwnerNames,
 } from "../pending-ownership/pending-ownership.service";
 import { resolveDiscordOwner } from "../pending-ownership/utils/resolve-discord-owner";
@@ -1977,8 +1978,8 @@ export class ItemsService {
 
   /**
    * An external member's pending inventory: everything that waits on one
-   * external account in one community -- items and characters -- for staff to
-   * find and clean up (#445).
+   * external account in one community -- items, characters and currency --
+   * for staff to find and clean up (#445, #610).
    *
    * @throws NotFoundException if nothing was ever held for the account here
    */
@@ -1987,19 +1988,17 @@ export class ItemsService {
     provider: ExternalAccountProvider,
     providerAccountId: string,
   ) {
-    const [holder, items, characters] = await Promise.all([
+    const inCommunity: Prisma.PendingOwnershipWhereInput[] = [
+      { item: { itemType: { communityId } } },
+      { character: { species: { communityId } } },
+      { currency: { communityId } },
+    ];
+    const [holder, items, characters, balancesByAccount] = await Promise.all([
       // Any row ever held for them here, removed or not, so a holder staff
       // have emptied out still has a page that says who they are. The newest
       // carries the names last recorded for them.
       this.db.pendingOwnership.findFirst({
-        where: {
-          provider,
-          providerAccountId,
-          OR: [
-            { item: { itemType: { communityId } } },
-            { character: { species: { communityId } } },
-          ],
-        },
+        where: { provider, providerAccountId, OR: inCommunity },
         orderBy: { createdAt: "desc" },
       }),
       this.db.item.findMany({
@@ -2021,6 +2020,9 @@ export class ItemsService {
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),
+      this.pendingOwnershipService.findPendingBalances(communityId, [
+        { provider, providerAccountId },
+      ]),
     ]);
 
     if (!holder) {
@@ -2028,21 +2030,20 @@ export class ItemsService {
         "Nothing has been held for that account in this community",
       );
     }
+    const balances =
+      balancesByAccount.get(accountKey(provider, providerAccountId)) ?? [];
 
     // Nothing left waiting because they linked and joined: who they are now,
     // so the page can send staff to them instead.
     const claimedBy =
-      items.length === 0 && characters.length === 0
+      items.length === 0 && characters.length === 0 && balances.length === 0
         ? ((
             await this.db.pendingOwnership.findFirst({
               where: {
                 provider,
                 providerAccountId,
                 claimedByUserId: { not: null },
-                OR: [
-                  { item: { itemType: { communityId } } },
-                  { character: { species: { communityId } } },
-                ],
+                OR: inCommunity,
               },
               orderBy: { claimedAt: "desc" },
               include: { claimedByUser: true },
@@ -2053,6 +2054,7 @@ export class ItemsService {
     const holdings = groupHoldings(items);
     return {
       holder,
+      balances,
       totalItems: items.length,
       distinctTypes: holdings.length,
       holdings,

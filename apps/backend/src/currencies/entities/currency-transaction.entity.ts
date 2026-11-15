@@ -17,6 +17,12 @@ registerEnumType(CurrencyTransactionSource, {
         "Awarded when uploaded media was approved in moderation. sourceId is " +
         "the media -- an image is an implementation detail of a media.",
     },
+    PENDING_GRANT: {
+      description:
+        "Minted to an external account before it had a user here, and " +
+        "claimed when its person linked it and joined. sourceId is the " +
+        "pending ownership row, which keeps when it was minted.",
+    },
   },
 });
 

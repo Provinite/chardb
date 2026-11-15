@@ -1,4 +1,4 @@
-import { ObjectType, Field, ID, registerEnumType } from "@nestjs/graphql";
+import { ObjectType, Field, ID, Int, registerEnumType } from "@nestjs/graphql";
 import { ExternalAccountProvider } from "@chardb/database";
 import { Character } from "../../characters/entities/character.entity";
 import { Item } from "../../items/entities/item.entity";
@@ -26,6 +26,18 @@ export class PendingOwnership {
     description: "Item ID if this is a pending item ownership",
   })
   itemId?: string;
+
+  @Field(() => ID, {
+    nullable: true,
+    description: "Currency ID if this is a pending currency grant",
+  })
+  currencyId?: string;
+
+  @Field(() => Int, {
+    nullable: true,
+    description: "How much of the currency a pending currency grant holds",
+  })
+  amount?: number;
 
   @Field(() => ExternalAccountProvider, {
     description: "The external account provider (Discord, DeviantArt, etc.)",

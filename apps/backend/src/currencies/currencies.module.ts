@@ -2,6 +2,8 @@ import { Module, forwardRef } from "@nestjs/common";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
 import { NotificationsModule } from "../notifications/notifications.module";
+import { DiscordModule } from "../discord/discord.module";
+import { DeviantArtModule } from "../deviantart/deviantart.module";
 import { CurrenciesService } from "./currencies.service";
 import { CurrencyLedgerService } from "./currency-ledger.service";
 import {
@@ -15,7 +17,14 @@ import {
   // forwardRef on AuthModule: it reaches UsersModule, which imports
   // ItemsModule, which now imports this one for item-use payouts. AuthModule
   // already holds UsersModule at arm's length for the same reason.
-  imports: [DatabaseModule, forwardRef(() => AuthModule), NotificationsModule],
+  imports: [
+    DatabaseModule,
+    forwardRef(() => AuthModule),
+    NotificationsModule,
+    // Resolving the external accounts a mint names (#610).
+    DiscordModule,
+    DeviantArtModule,
+  ],
   providers: [
     CurrenciesService,
     CurrencyLedgerService,

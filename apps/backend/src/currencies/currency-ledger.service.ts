@@ -9,11 +9,18 @@ import {
   Prisma,
   CurrencyTransactionKind,
   CurrencyTransactionSource,
+  ExternalAccountProvider,
   NotificationKind,
   NotificationSubjectType,
+  PendingOwnership,
 } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import { NotificationsService } from "../notifications/notifications.service";
+import { DiscordService } from "../discord/discord.service";
+import { DeviantArtService } from "../deviantart/deviantart.service";
+import { PendingOwnerInput } from "../pending-ownership/dto/pending-ownership.dto";
+import type { PendingOwnerNames } from "../pending-ownership/pending-ownership.service";
+import { resolvePendingOwner } from "../pending-ownership/utils/resolve-pending-owner";
 import {
   CurrencyTransactionFilters,
   MintCurrencyInput,
@@ -33,6 +40,16 @@ export type DbClient = DatabaseService | Prisma.TransactionClient;
 
 /** The CHECK constraint that stops a balance going negative. */
 const NON_NEGATIVE_CONSTRAINT = "currency_balances_amount_non_negative";
+
+/** Members and external accounts together, as MintCurrencyInput caps each. */
+const MAX_MINT_RECIPIENTS = 200;
+
+/** An external account a mint names, as its provider knows it. */
+interface ResolvedAccount {
+  provider: ExternalAccountProvider;
+  accountId: string;
+  names: PendingOwnerNames;
+}
 
 /** One recipient and what they are owed by a single event. */
 export interface CreditAward {
@@ -84,6 +101,12 @@ export interface CreditOptions {
    * has since left the community.
    */
   skipNonMembers?: boolean;
+  /**
+   * Pay out of an archived currency. Only for coin minted before it was
+   * archived and still waiting to be claimed: archiving keeps every balance,
+   * and that coin is a balance whose holder had not arrived yet.
+   */
+  allowArchived?: boolean;
 }
 
 /** One currency and how much of it a single event moves. */
@@ -128,6 +151,8 @@ export class CurrencyLedgerService {
   constructor(
     private readonly db: DatabaseService,
     private readonly notifications: NotificationsService,
+    private readonly discord: DiscordService,
+    private readonly deviantArt: DeviantArtService,
   ) {}
 
   // ==================== Balance mechanics ====================
@@ -260,6 +285,7 @@ export class CurrencyLedgerService {
       sourceId = null,
       tx,
       skipNonMembers = false,
+      allowArchived = false,
     } = options;
 
     // Every query below runs on one client: the caller's transaction when
@@ -269,7 +295,9 @@ export class CurrencyLedgerService {
     // connection only another waiting transaction could release.
     const read: DbClient = tx ?? this.db;
 
-    const currency = await this.loadWritableCurrency(read, currencyId);
+    const currency = allowArchived
+      ? await read.currency.findUniqueOrThrow({ where: { id: currencyId } })
+      : await this.loadWritableCurrency(read, currencyId);
 
     // Merge duplicate recipients rather than paying twice, and sort. Sorting
     // is the deadlock guard: two concurrent batches over overlapping
@@ -373,18 +401,171 @@ export class CurrencyLedgerService {
     actorUserId: string | null,
     actorLabel?: string | null,
   ): Promise<string> {
-    const { batchId } = await this.credit({
+    const userIds = input.userIds ?? [];
+    const pendingOwners = input.pendingOwners ?? [];
+    if (userIds.length + pendingOwners.length === 0) {
+      throw new BadRequestException("Name at least one recipient");
+    }
+    if (userIds.length + pendingOwners.length > MAX_MINT_RECIPIENTS) {
+      throw new BadRequestException(
+        `Cannot mint to more than ${MAX_MINT_RECIPIENTS} recipients at once`,
+      );
+    }
+
+    // Every named member is paid the amount once, however often they are
+    // named -- directly, or through an account they have linked.
+    const direct = new Set(userIds);
+    const awardsFor = (ids: Set<string>) =>
+      [...ids].map((userId) => ({ userId, amount: input.amount }));
+    const creditOptions = {
       currencyId: input.currencyId,
-      awards: input.userIds.map((userId) => ({
-        userId,
-        amount: input.amount,
-      })),
       reason: input.reason,
       staffNote: input.staffNote,
       actorUserId,
       actorLabel,
+    };
+
+    if (pendingOwners.length === 0) {
+      const { batchId } = await this.credit({
+        ...creditOptions,
+        awards: awardsFor(direct),
+      });
+      return batchId;
+    }
+
+    // Resolved before the transaction: each one may ask Discord or
+    // DeviantArt over HTTP, and that should not hold a connection open.
+    const currency = await this.loadWritableCurrency(this.db, input.currencyId);
+    const accounts = await this.resolveAccounts(
+      currency.communityId,
+      pendingOwners,
+    );
+
+    const batchId = randomUUID();
+    await this.db.$transaction(async (tx) => {
+      const waiting: ResolvedAccount[] = [];
+      for (const account of accounts) {
+        const userId = await this.linkedMember(
+          tx,
+          account,
+          currency.communityId,
+        );
+        if (userId) direct.add(userId);
+        else waiting.push(account);
+      }
+
+      if (direct.size > 0) {
+        await this.credit({
+          ...creditOptions,
+          awards: awardsFor(direct),
+          batchId,
+          tx,
+        });
+      }
+
+      // Waits on the account until its person links it and is a member.
+      // No ledger row yet: this row is the record of the mint, and the
+      // claim writes the ledger row that names who received it.
+      if (waiting.length > 0) {
+        await tx.pendingOwnership.createMany({
+          data: waiting.map((account) => ({
+            currencyId: currency.id,
+            amount: input.amount,
+            provider: account.provider,
+            providerAccountId: account.accountId,
+            displayIdentifier: account.names.displayIdentifier,
+            displayName: account.names.displayName,
+            batchId,
+            reason: input.reason,
+            staffNote: input.staffNote ?? null,
+            actorUserId: actorUserId ?? null,
+            actorLabel: actorUserId ? null : (actorLabel ?? "system"),
+          })),
+        });
+      }
     });
+
     return batchId;
+  }
+
+  /**
+   * Credit a pending currency grant to the user who has just claimed it, with
+   * the ledger row the mint did not write.
+   *
+   * The row keeps the mint's batch, reasons and actor, so it reads as the
+   * staff action it was. Run in the claim's transaction: the balance and the
+   * pending row being marked claimed commit together.
+   */
+  async claimPendingGrant(
+    tx: Prisma.TransactionClient,
+    pending: PendingOwnership,
+    userId: string,
+  ): Promise<void> {
+    if (!pending.currencyId || !pending.amount || !pending.batchId) {
+      throw new Error("Not a pending currency grant");
+    }
+    await this.credit({
+      currencyId: pending.currencyId,
+      awards: [{ userId, amount: pending.amount }],
+      reason: pending.reason ?? "",
+      staffNote: pending.staffNote,
+      actorUserId: pending.actorUserId,
+      actorLabel: pending.actorLabel,
+      source: CurrencyTransactionSource.PENDING_GRANT,
+      sourceId: pending.id,
+      batchId: pending.batchId,
+      allowArchived: true,
+      tx,
+    });
+  }
+
+  /**
+   * The accounts a mint names, resolved to the ids a linked account carries.
+   * Named twice -- by handle and by id, say -- is one account.
+   */
+  private async resolveAccounts(
+    communityId: string,
+    pendingOwners: PendingOwnerInput[],
+  ): Promise<ResolvedAccount[]> {
+    const byKey = new Map<string, ResolvedAccount>();
+    for (const owner of pendingOwners) {
+      const resolved = await resolvePendingOwner(
+        { db: this.db, discord: this.discord, deviantArt: this.deviantArt },
+        communityId,
+        owner.provider,
+        owner.providerAccountId,
+      );
+      byKey.set(`${owner.provider}:${resolved.accountId}`, {
+        provider: owner.provider,
+        ...resolved,
+      });
+    }
+    return [...byKey.values()];
+  }
+
+  /**
+   * The user who has linked this account, if they belong to the community.
+   * Coin minted to anyone else waits on the account.
+   */
+  private async linkedMember(
+    client: DbClient,
+    account: ResolvedAccount,
+    communityId: string,
+  ): Promise<string | null> {
+    const linked = await client.externalAccount.findUnique({
+      where: {
+        provider_providerAccountId: {
+          provider: account.provider,
+          providerAccountId: account.accountId,
+        },
+      },
+      select: { userId: true },
+    });
+    if (!linked) return null;
+    const members = await this.findMembers(client, communityId, [
+      linked.userId,
+    ]);
+    return members.has(linked.userId) ? linked.userId : null;
   }
 
   /**

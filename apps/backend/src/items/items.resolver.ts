@@ -27,7 +27,10 @@ import { ItemsService } from "./items.service";
 import { CommunitiesService } from "../communities/communities.service";
 import { UsersService } from "../users/users.service";
 import { CommunityColorsService } from "../community-colors/community-colors.service";
-import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
+import {
+  PendingOwnershipService,
+  type PendingBalance,
+} from "../pending-ownership/pending-ownership.service";
 import { PendingOwnership } from "../pending-ownership/entities/pending-ownership.entity";
 import { mapPrismaPendingOwnershipToGraphQL } from "../pending-ownership/utils/pending-ownership-mappers";
 import {
@@ -72,6 +75,11 @@ import { mapPrismaUserToGraphQL } from "../users/utils/user-resolver-mappers";
 import { mapPrismaItemToGraphQL } from "./utils/item-resolver-mappers";
 import { mapPrismaSpeciesToGraphQL } from "../species/utils/species-resolver-mappers";
 import { mapPrismaSpeciesVariantToGraphQL } from "../species-variants/utils/species-variant-resolver-mappers";
+
+const mapPendingBalance = (b: PendingBalance) => ({
+  ...b,
+  currency: mapPrismaCurrencyToGraphQL(b.currency),
+});
 
 @Resolver(() => ItemTypeEntity)
 export class ItemsResolver {
@@ -363,6 +371,7 @@ export class ItemsResolver {
     return {
       ...report,
       holder: mapPrismaPendingOwnershipToGraphQL(report.holder),
+      balances: report.balances.map(mapPendingBalance),
       claimedBy: report.claimedBy
         ? mapPrismaUserToGraphQL(report.claimedBy)
         : null,
@@ -400,6 +409,7 @@ export class ItemsResolver {
       members: page.members.map((m) => ({
         ...m,
         holder: mapPrismaPendingOwnershipToGraphQL(m.holder),
+        balances: m.balances.map(mapPendingBalance),
       })),
     };
   }

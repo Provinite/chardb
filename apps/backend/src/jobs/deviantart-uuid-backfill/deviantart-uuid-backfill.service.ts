@@ -151,6 +151,7 @@ export class DeviantartUuidBackfillService {
               {
                 characterId: record.characterId ?? undefined,
                 itemId: record.itemId ?? undefined,
+                currencyId: record.currencyId ?? undefined,
               },
               cached.username,
             );

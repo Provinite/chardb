@@ -1238,6 +1238,11 @@ enum CurrencyTransactionSource {
   Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media.
   """
   MEDIA_APPROVAL
+
+  """
+  Minted to an external account before it had a user here, and claimed when its person linked it and joined. sourceId is the pending ownership row, which keeps when it was minted.
+  """
+  PENDING_GRANT
   SHOP_PURCHASE
 }
 
@@ -1471,6 +1476,9 @@ enum ExternalAccountProvider {
 
 """Someone something waits on in a community without an account here."""
 type ExternalMember {
+  """Currency waiting on them, by currency name."""
+  balances: [PendingCurrencyBalance!]!
+
   """Characters waiting on them."""
   characterCount: Int!
 
@@ -2855,12 +2863,19 @@ input MintCurrencyInput {
   amount: Int!
   currencyId: ID!
 
+  """
+  External accounts who receive it: a Discord id or username, or a DeviantArt handle. An account linked by a member here is paid at once; any other waits on the account until its person links it and joins.
+  """
+  pendingOwners: [PendingOwnerInput!]
+
   """Member-facing. Required, because it is public."""
   reason: String!
   staffNote: String
 
-  """Who receives it. At least one."""
-  userIds: [ID!]!
+  """
+  Members who receive it. With pendingOwners, at least one recipient in all.
+  """
+  userIds: [ID!]
 }
 
 """The reason for rejecting an image"""
@@ -3823,9 +3838,23 @@ type PendingCharacter {
 }
 
 """
+Currency minted to an external account that has no user here yet, summed over every grant still waiting on it.
+"""
+type PendingCurrencyBalance {
+  amount: Int!
+  currency: Currency!
+
+  """How many mints the amount is made of."""
+  grantCount: Int!
+}
+
+"""
 Live, unclaimed items and characters held for one external account in one community.
 """
 type PendingHoldingsReport {
+  """Currency waiting on them, by currency name."""
+  balances: [PendingCurrencyBalance!]!
+
   """By name."""
   characters: [PendingCharacter!]!
 
@@ -3863,6 +3892,8 @@ input PendingOwnerUpdate {
 }
 
 type PendingOwnership {
+  """How much of the currency a pending currency grant holds"""
+  amount: Int
   character: Character
 
   """Character ID if this is a pending character ownership"""
@@ -3877,6 +3908,9 @@ type PendingOwnership {
 
   """When this pending ownership was created"""
   createdAt: DateTime!
+
+  """Currency ID if this is a pending currency grant"""
+  currencyId: ID
   displayIdentifier: String
   displayName: String
   id: ID!

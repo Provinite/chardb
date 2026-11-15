@@ -46,6 +46,7 @@ class RequestLookups {
           id: true,
           character: { select: { species: { select: { communityId: true } } } },
           item: { select: { itemType: { select: { communityId: true } } } },
+          currency: { select: { communityId: true } },
         },
       });
       const byId = new Map(rows.map((row) => [row.id, row]));
@@ -57,6 +58,7 @@ class RequestLookups {
         return (
           row.character?.species?.communityId ||
           row.item?.itemType?.communityId ||
+          row.currency?.communityId ||
           null
         );
       });

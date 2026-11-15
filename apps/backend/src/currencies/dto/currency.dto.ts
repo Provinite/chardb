@@ -11,10 +11,12 @@ import {
   Max,
   MaxLength,
   Matches,
-  ArrayNotEmpty,
   ArrayMaxSize,
+  ValidateNested,
 } from "class-validator";
+import { Type } from "class-transformer";
 import { CurrencyTransactionKind } from "@chardb/database";
+import { PendingOwnerInput } from "../../pending-ownership/dto/pending-ownership.dto";
 
 @InputType()
 export class CreateCurrencyInput {
@@ -137,12 +139,32 @@ export class MintCurrencyInput {
   @IsUUID()
   currencyId: string;
 
-  @Field(() => [ID], { description: "Who receives it. At least one." })
+  @Field(() => [ID], {
+    nullable: true,
+    description:
+      "Members who receive it. With pendingOwners, at least one recipient " +
+      "in all.",
+  })
+  @IsOptional()
   @IsArray()
-  @ArrayNotEmpty()
   @ArrayMaxSize(200)
   @IsUUID("4", { each: true })
-  userIds: string[];
+  userIds?: string[];
+
+  @Field(() => [PendingOwnerInput], {
+    nullable: true,
+    description:
+      "External accounts who receive it: a Discord id or username, or a " +
+      "DeviantArt handle. An account linked by a member here is paid at " +
+      "once; any other waits on the account until its person links it and " +
+      "joins.",
+  })
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(200)
+  @ValidateNested({ each: true })
+  @Type(() => PendingOwnerInput)
+  pendingOwners?: PendingOwnerInput[];
 
   @Field(() => Int, {
     description: "How much each named member receives. Positive.",

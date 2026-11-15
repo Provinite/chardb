@@ -40,6 +40,22 @@ export class MemberWallet {
   balances: CurrencyBalanceLine[];
 }
 
+@ObjectType({
+  description:
+    "Currency minted to an external account that has no user here yet, " +
+    "summed over every grant still waiting on it.",
+})
+export class PendingCurrencyBalance {
+  @Field(() => Currency)
+  currency: Currency;
+
+  @Field(() => Int)
+  amount: number;
+
+  @Field(() => Int, { description: "How many mints the amount is made of." })
+  grantCount: number;
+}
+
 @ObjectType()
 export class CurrencyBalanceLine {
   @Field(() => Currency)
