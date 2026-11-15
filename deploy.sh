@@ -128,6 +128,9 @@ DATABASE_URL="postgresql://app:$ENCODED_PASSWORD@postgres:5432/app"
 # Application settings
 JWT_SECRET="${JWT_SECRET//$/\\$}"
 NODE_ENV=production
+# Named in every personal access token this server mints. Without it a
+# production build makes and accepts none.
+APP_ENVIRONMENT=$ENVIRONMENT
 FRONTEND_URL="$FRONTEND_URL"
 # The domain communities are subdomains of. Two things depend on it and both
 # fail closed: the CORS allowlist, which without this defaults to `localhost`
