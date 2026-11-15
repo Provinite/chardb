@@ -2,7 +2,11 @@ import { print } from "graphql";
 import type { APIRequestContext } from "@playwright/test";
 import { presetTest, expect } from "../../src/fixtures.js";
 import { apexUrl, CFG } from "../../src/config.js";
-import { SeedWhoAmIDocument } from "../../src/generated/graphql.js";
+import {
+  SeedCreateAccessTokenDocument,
+  SeedWhoAmIDocument,
+} from "../../src/generated/graphql.js";
+import { withClient } from "../../src/db/sql.js";
 
 const test = presetTest("community-basic");
 
@@ -73,6 +77,59 @@ test.describe("access tokens", () => {
     await expect(card.getByRole("button", { name: "Revoke" })).toBeDisabled();
 
     const refused = await whoAmI(request, secret);
+    expect(refused.errors?.[0]?.extensions?.code).toBe("UNAUTHENTICATED");
+  });
+
+  /**
+   * Demoting a site admin revokes their tokens at once, before any is used,
+   * and reinstating them restores none.
+   *
+   * The demotion is written straight to the database on purpose: no app path
+   * sets `is_admin`, so that is how a demotion is made, and what the trigger
+   * in migration 20261115120000 has to catch.
+   */
+  test("demoting the owner revokes their tokens at once, for good", async ({
+    request,
+    world,
+  }) => {
+    const { createPersonalAccessToken: made } = await world
+      .as("siteadmin")
+      .gql(SeedCreateAccessTokenDocument, {
+        input: {
+          name: "e2e demotion",
+          expiresInDays: 7,
+          communities: [
+            {
+              communityId: world.community.id,
+              member: false,
+              permissions: ["canManageItems"],
+            },
+          ],
+        },
+      });
+
+    const revokedAt = async (): Promise<Date | null> =>
+      withClient(CFG.databaseUrl, async (client) => {
+        const { rows } = await client.query<{ revoked_at: Date | null }>(
+          `SELECT revoked_at FROM personal_access_tokens WHERE id = $1`,
+          [made.token.id],
+        );
+        return rows[0].revoked_at;
+      });
+    const setAdmin = (isAdmin: boolean) =>
+      withClient(CFG.databaseUrl, (client) =>
+        client.query(`UPDATE users SET is_admin = $1 WHERE username = $2`, [
+          isAdmin,
+          "siteadmin",
+        ]),
+      );
+
+    expect(await revokedAt()).toBeNull();
+    await setAdmin(false);
+    expect(await revokedAt()).not.toBeNull();
+
+    await setAdmin(true);
+    const refused = await whoAmI(request, made.secret);
     expect(refused.errors?.[0]?.extensions?.code).toBe("UNAUTHENTICATED");
   });
 });
