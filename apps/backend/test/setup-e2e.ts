@@ -84,6 +84,10 @@ export class TestApp {
           sortSchema: true,
           playground: false,
           introspection: false,
+          // As the real app: without it no guard runs on a field resolver,
+          // and every gate on a field (self-only fields, staff notes) passes
+          // here while production refuses it.
+          fieldResolverEnhancers: ["guards", "interceptors", "filters"],
           // Mirrors the real app's context factory. The auth resolver reaches
           // for `ctx.res` to set the refresh cookie and `ctx.req` to read it
           // back, so leaving this to the driver's default would make every
