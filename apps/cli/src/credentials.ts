@@ -1,8 +1,9 @@
 import {
-  chmodSync,
   existsSync,
   mkdirSync,
   readFileSync,
+  renameSync,
+  rmSync,
   writeFileSync,
 } from "node:fs";
 import { dirname, join } from "node:path";
@@ -85,13 +86,23 @@ export class CredentialStore {
     }
   }
 
+  /**
+   * Written whole to a new owner-only file, then renamed over the old one, so
+   * the secrets are never in a file others can read and an interrupted write
+   * never leaves half a file.
+   */
   private write(stored: StoredTokens): void {
     mkdirSync(dirname(this.path), { recursive: true, mode: 0o700 });
-    writeFileSync(this.path, `${JSON.stringify(stored, null, 2)}\n`, {
-      mode: 0o600,
-    });
-    // `mode` applies only when the file is created.
-    chmodSync(this.path, 0o600);
+    const temp = `${this.path}.${process.pid}.tmp`;
+    try {
+      writeFileSync(temp, `${JSON.stringify(stored, null, 2)}\n`, {
+        mode: 0o600,
+        flag: "wx",
+      });
+      renameSync(temp, this.path);
+    } finally {
+      rmSync(temp, { force: true });
+    }
   }
 }
 
@@ -109,7 +120,9 @@ export function pickToken(input: {
   envFlag?: Environment;
   stored: StoredTokens;
 }): PickedToken {
-  const { envToken, envFlag, stored } = input;
+  const { envFlag, stored } = input;
+  // `$(cat token.txt)` keeps a CR from a file with Windows line endings.
+  const envToken = input.envToken?.trim();
 
   if (envToken) {
     const environment = tokenEnvironment(envToken);

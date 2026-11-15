@@ -62,9 +62,13 @@ export class CredentialsFileError extends UsageError {
 
 /** The API could not be reached at all. */
 export class ApiUnreachableError extends CliError {
-  constructor(readonly url: string) {
+  constructor(
+    readonly url: string,
+    cause: string,
+  ) {
     super("Could not reach the API", EXIT.failed);
     this.details.url = url;
+    this.details.cause = cause;
   }
 }
 

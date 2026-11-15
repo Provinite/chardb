@@ -13,13 +13,20 @@ export function isEnvironment(value: string): value is Environment {
   return (ENVIRONMENTS as readonly string[]).includes(value);
 }
 
-/** The environment a token names, or null for anything that names none. */
+/** The random part is base64url: anything else is a damaged copy. */
+const RANDOM_PART = /^[A-Za-z0-9_-]+$/;
+
+/**
+ * The environment a well-formed token names, or null for anything else,
+ * including a token with a stray CR, space or quote from being copied.
+ */
 export function tokenEnvironment(token: string): Environment | null {
   if (!token.startsWith(TOKEN_PREFIX)) return null;
   const rest = token.slice(TOKEN_PREFIX.length);
   const separator = rest.indexOf("_");
-  if (separator <= 0 || separator === rest.length - 1) return null;
+  if (separator <= 0) return null;
   const environment = rest.slice(0, separator);
+  if (!RANDOM_PART.test(rest.slice(separator + 1))) return null;
   return isEnvironment(environment) ? environment : null;
 }
 

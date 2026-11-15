@@ -11,6 +11,9 @@ describe("tokenEnvironment", () => {
   });
 
   it.each([
+    "chardb_pat_prod_abc\r",
+    "chardb_pat_prod_ab c",
+    'chardb_pat_prod_abc"',
     "chardb_pat_staging_abc",
     "chardb_pat_prod_",
     "chardb_pat_",

@@ -1,6 +1,12 @@
-import { mkdtempSync, readFileSync, statSync } from "node:fs";
+import {
+  chmodSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  statSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
 import { describe, expect, it } from "vitest";
 import {
   CredentialStore,
@@ -45,6 +51,17 @@ describe("CredentialStore", () => {
     });
   });
 
+  it("never leaves tokens in a file others can read", () => {
+    const store = tempStore();
+    store.add(PROD);
+    chmodSync(store.path, 0o644);
+
+    store.add(DEV);
+
+    expect(statSync(store.path).mode & 0o777).toBe(0o600);
+    expect(readdirSync(dirname(store.path))).toEqual(["creds.json"]);
+  });
+
   it("refuses something that is not an access token", () => {
     expect(() => tempStore().add("hunter2")).toThrow(UsageError);
   });
@@ -74,6 +91,13 @@ describe("defaultCredentialsPath", () => {
 });
 
 describe("pickToken", () => {
+  it("trims CHARDB_TOKEN, as a file read by $(cat) keeps a CR", () => {
+    expect(pickToken({ envToken: `${DEV}\r`, stored: {} })).toEqual({
+      token: DEV,
+      environment: "dev",
+    });
+  });
+
   it("takes CHARDB_TOKEN over anything stored", () => {
     expect(pickToken({ envToken: DEV, stored: { prod: PROD } })).toEqual({
       token: DEV,

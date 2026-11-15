@@ -1,10 +1,9 @@
 import { execFile } from "node:child_process";
-import { mkdtempSync } from "node:fs";
-import { tmpdir } from "node:os";
+import { mkdirSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { promisify } from "node:util";
 import { presetTest, expect } from "../../src/fixtures.js";
-import { CFG, REPO_ROOT } from "../../src/config.js";
+import { CFG, E2E_ROOT, REPO_ROOT } from "../../src/config.js";
 import { SeedCreateAccessTokenDocument } from "../../src/generated/graphql.js";
 
 const run = promisify(execFile);
@@ -18,8 +17,18 @@ const test = presetTest("community-items");
  * path holds together.
  */
 test.describe("chardb CLI", () => {
+  /** XDG_CONFIG_HOME for the CLI: never the person's own stored tokens. */
+  let configHome: string;
+
   test.beforeEach(async ({ world }) => {
     await world.reset();
+    const tmp = join(E2E_ROOT, ".tmp");
+    mkdirSync(tmp, { recursive: true });
+    configHome = mkdtempSync(join(tmp, "cli-config-"));
+  });
+
+  test.afterEach(() => {
+    rmSync(configHome, { recursive: true, force: true });
   });
 
   test("a token reads itself, lists item types and grants items", async ({
@@ -50,8 +59,7 @@ test.describe("chardb CLI", () => {
           ...process.env,
           CHARDB_TOKEN: made.secret,
           CHARDB_API_URL: CFG.graphqlUrl,
-          // Never the person's own stored tokens.
-          XDG_CONFIG_HOME: mkdtempSync(join(tmpdir(), "chardb-cli-e2e-")),
+          XDG_CONFIG_HOME: configHome,
         },
       });
       return JSON.parse(stdout) as unknown;

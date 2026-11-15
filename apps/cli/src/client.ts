@@ -12,13 +12,21 @@ export interface GraphqlResponse {
   errors?: GraphqlErrorEntry[];
 }
 
+/** Long enough for a grant of 100 items, short enough that a script moves on. */
+const DEFAULT_TIMEOUT_MS = 60_000;
+
 /** One API, one token. */
 export class GraphqlClient {
+  private readonly timeoutMs: number;
+
   constructor(
     readonly url: string,
     private readonly token: string,
     private readonly fetchImpl: typeof fetch,
-  ) {}
+    options: { timeoutMs?: number } = {},
+  ) {
+    this.timeoutMs = options.timeoutMs ?? DEFAULT_TIMEOUT_MS;
+  }
 
   /**
    * A typed operation's data.
@@ -66,9 +74,10 @@ export class GraphqlClient {
           authorization: `Bearer ${this.token}`,
         },
         body: JSON.stringify({ query, variables, operationName }),
+        signal: AbortSignal.timeout(this.timeoutMs),
       });
-    } catch {
-      throw new ApiUnreachableError(this.url);
+    } catch (err) {
+      throw new ApiUnreachableError(this.url, unreachableCause(err));
     }
 
     let body: unknown;
@@ -86,6 +95,20 @@ export class GraphqlClient {
     }
     return { body, status: response.status };
   }
+}
+
+/**
+ * Why a request never got an answer: a timeout, or the system error code
+ * (ECONNREFUSED, ENOTFOUND, a certificate error) fetch keeps as its cause.
+ */
+function unreachableCause(err: unknown): string {
+  if (err instanceof Error && err.name === "TimeoutError") return "timed out";
+  const cause = err instanceof Error ? err.cause : undefined;
+  if (cause instanceof Error) {
+    const code = (cause as NodeJS.ErrnoException).code;
+    return code ?? cause.message;
+  }
+  return err instanceof Error ? err.message : String(err);
 }
 
 /** Carries `data` or a list of `errors`, as every GraphQL response must. */
