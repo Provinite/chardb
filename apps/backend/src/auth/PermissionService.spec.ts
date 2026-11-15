@@ -177,4 +177,95 @@ describe("PermissionService", () => {
       expect(getUserRoles).not.toHaveBeenCalled();
     });
   });
+
+  describe("forAccessToken", () => {
+    const grants = [
+      {
+        communityId: "c-1",
+        permissions: [
+          CommunityPermission.Any,
+          CommunityPermission.CanManageItems,
+          "canDoSomethingRemoved",
+        ],
+      },
+      { communityId: "c-2", permissions: [CommunityPermission.CanEditCharacter] },
+    ];
+
+    it("holds no global permission, whatever its owner's account holds", () => {
+      const permissions = service.forAccessToken(grants);
+
+      expect(permissions.isAdmin).toBe(false);
+      for (const permission of Object.values(GlobalPermission)) {
+        expect(permissions.hasGlobal(permission)).toBe(false);
+      }
+    });
+
+    it("grants exactly the permissions it names in a community it names", async () => {
+      const permissions = service.forAccessToken(grants);
+
+      expect(await permissions.inCommunity("c-1")).toEqual({
+        hasMembership: true,
+        canManageItems: true,
+      });
+      expect(
+        await permissions.hasInCommunity(
+          "c-1",
+          CommunityPermission.CanEditCharacter,
+        ),
+      ).toBe(false);
+    });
+
+    it("is a member only where membership was granted", async () => {
+      const permissions = service.forAccessToken(grants);
+
+      expect(
+        await permissions.hasInCommunity("c-1", CommunityPermission.Any),
+      ).toBe(true);
+      expect(
+        await permissions.hasInCommunity("c-2", CommunityPermission.Any),
+      ).toBe(false);
+      expect(
+        await permissions.hasInCommunity(
+          "c-2",
+          CommunityPermission.CanEditCharacter,
+        ),
+      ).toBe(true);
+    });
+
+    it("grants nothing in a community it does not name", async () => {
+      const permissions = service.forAccessToken(grants);
+
+      expect(await permissions.inCommunity("c-3")).toEqual({
+        hasMembership: false,
+      });
+    });
+
+    it("lists the communities that grant any of the permissions", async () => {
+      const permissions = service.forAccessToken(grants);
+
+      expect(
+        await permissions.communityIdsWith(
+          CommunityPermission.CanManageItems,
+          CommunityPermission.CanEditCharacter,
+        ),
+      ).toEqual(["c-1", "c-2"]);
+      expect(
+        await permissions.communityIdsWith(CommunityPermission.Any),
+      ).toEqual(["c-1"]);
+      expect(
+        await permissions.communityIdsWith(
+          CommunityPermission.CanDeleteCharacter,
+        ),
+      ).toEqual([]);
+    });
+
+    it("reads no roles", async () => {
+      const permissions = service.forAccessToken(grants);
+      await permissions.inCommunity("c-1");
+      await permissions.communityIdsWith(CommunityPermission.Any);
+
+      expect(getUserRolesInCommunity).not.toHaveBeenCalled();
+      expect(getUserRoles).not.toHaveBeenCalled();
+    });
+  });
 });
