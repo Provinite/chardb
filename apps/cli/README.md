@@ -17,10 +17,13 @@ Run it from the repo root, or any directory outside `apps/*` and `packages/*`: Y
 
 ```bash
 yarn workspace @chardb/cli build    # writes apps/cli/dist/chardb.mjs
-apps/cli/dist/chardb.mjs whoami
+npm i -g ./apps/cli                 # once: puts `chardb` on PATH
+chardb whoami
 ```
 
-It is the package's `chardb` bin, so it can be symlinked onto `PATH`. It does not rebuild itself: build again after pulling changes to the CLI.
+`npm i -g` links the package's `chardb` bin to this checkout's `dist/chardb.mjs`, so a rebuild updates the command. It does not rebuild itself: build again after pulling changes to the CLI.
+
+Inside `apps/cli`, `yarn chardb` runs the bundle rather than the root script, so it runs whatever was last built. Use it from the repo root.
 
 ## Which token, which API
 
