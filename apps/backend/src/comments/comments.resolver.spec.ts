@@ -12,6 +12,7 @@ import {
   mockDatabaseService,
   mockNotificationsService,
 } from "../../test/setup";
+import { fakePermissions } from "../../test/fake-permissions";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 
 /**
@@ -154,7 +155,11 @@ describe("CommentsResolver", () => {
       db.comment.findUnique.mockResolvedValue(mockDbComment);
       db.comment.delete.mockResolvedValue(mockDbComment);
 
-      const result = await resolver.deleteComment("comment-1", mockUser);
+      const result = await resolver.deleteComment(
+        "comment-1",
+        mockUser,
+        fakePermissions(),
+      );
 
       expect(result).toBe(true);
     });

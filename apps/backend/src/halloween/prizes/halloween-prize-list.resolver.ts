@@ -1,9 +1,9 @@
 import { Args, ID, Int, Query, Resolver } from "@nestjs/graphql";
 import { AllowUnauthenticated } from "../../auth/decorators/AllowUnauthenticated";
 import {
-  CurrentUser,
-  type CurrentUserType,
-} from "../../auth/decorators/CurrentUser";
+  CurrentPermissions,
+  type RequestPermissions,
+} from "../../auth/decorators/CurrentPermissions";
 import { HalloweenStaffAccess } from "../dashboard/halloween-staff-access";
 import { HalloweenPrizeListService } from "./halloween-prize-list.service";
 import {
@@ -41,12 +41,12 @@ export class HalloweenPrizeListResolver {
   async halloweenRecentWins(
     @Args("communityId", { type: () => ID }) communityId: string,
     @Args("limit", { type: () => Int, nullable: true }) limit: number | null,
-    @CurrentUser() user?: CurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<HalloweenPublicWin[]> {
     return this.prizeList.recentWins(
       communityId,
       limit ?? undefined,
-      user ? await this.staffAccess.isStaff(user.id, communityId) : false,
+      await this.staffAccess.isStaff(permissions, communityId),
     );
   }
 }

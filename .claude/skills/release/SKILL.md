@@ -42,8 +42,9 @@ Update the version field in ALL package.json files to the new version:
 - UI: `/packages/ui/package.json`
 - DA import: `/packages/da-import/package.json`
 - ESLint style rules: `/packages/eslint-plugin-styles/package.json`
+- ESLint permission rules: `/packages/eslint-plugin-permissions/package.json`
 
-Nine files. Confirm the list rather than trusting it — a package added since
+Ten files. Confirm the list rather than trusting it — a package added since
 this was written would be missed:
 `grep -rn '"version"' --include=package.json . | grep -v node_modules`
 

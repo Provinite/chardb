@@ -15,6 +15,10 @@ import { UserProfile, UserStats } from "./entities/user-profile.entity";
 import { UpdateUserInput } from "./dto/update-user.input";
 import { CurrentUser, CurrentUserType } from "../auth/decorators/CurrentUser";
 import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
+import {
   mapUpdateUserInputToService,
   mapPrismaUserToGraphQL,
   mapPrismaUserConnectionToGraphQL,
@@ -120,7 +124,8 @@ export class UsersResolver {
   @Query(() => UserProfile, { name: "userProfile", nullable: true })
   async getUserProfile(
     @Args("username") username: string,
-    @CurrentUser() currentUser?: CurrentUserType,
+    @CurrentUser() currentUser: CurrentUserType | undefined,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<UserProfile | null> {
     const user = await this.usersService.findByUsername(username);
     if (!user) return null;
@@ -129,8 +134,7 @@ export class UsersResolver {
     return {
       user: mapPrismaUserToGraphQL(user),
       isOwnProfile: currentUser?.id === user.id,
-      canViewPrivateContent:
-        currentUser?.id === user.id || !!currentUser?.isAdmin,
+      canViewPrivateContent: currentUser?.id === user.id || permissions.isAdmin,
     };
   }
 
@@ -437,11 +441,12 @@ export class UserStatsResolver {
   })
   async resolveCharactersCount(
     @Parent() stats: UserStats,
-    @CurrentUser() currentUser?: CurrentUserType,
+    @CurrentUser() currentUser: CurrentUserType | undefined,
+    @CurrentPermissions() permissions: RequestPermissions,
   ) {
     if (!stats.userId) return 0;
     const includePrivate =
-      currentUser?.id === stats.userId || !!currentUser?.isAdmin;
+      currentUser?.id === stats.userId || permissions.isAdmin;
     return this.usersService.getUserCharactersCount(
       stats.userId,
       includePrivate,
@@ -454,11 +459,12 @@ export class UserStatsResolver {
   })
   async resolveGalleriesCount(
     @Parent() stats: UserStats,
-    @CurrentUser() currentUser?: CurrentUserType,
+    @CurrentUser() currentUser: CurrentUserType | undefined,
+    @CurrentPermissions() permissions: RequestPermissions,
   ) {
     if (!stats.userId) return 0;
     const includePrivate =
-      currentUser?.id === stats.userId || !!currentUser?.isAdmin;
+      currentUser?.id === stats.userId || permissions.isAdmin;
     return this.usersService.getUserGalleriesCount(
       stats.userId,
       includePrivate,
@@ -472,11 +478,12 @@ export class UserStatsResolver {
   })
   async resolveImagesCount(
     @Parent() stats: UserStats,
-    @CurrentUser() currentUser?: CurrentUserType,
+    @CurrentUser() currentUser: CurrentUserType | undefined,
+    @CurrentPermissions() permissions: RequestPermissions,
   ) {
     if (!stats.userId) return 0;
     const includePrivate =
-      currentUser?.id === stats.userId || !!currentUser?.isAdmin;
+      currentUser?.id === stats.userId || permissions.isAdmin;
     return this.usersService.getUserImagesCount(stats.userId, includePrivate);
   }
 

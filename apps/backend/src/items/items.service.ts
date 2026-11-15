@@ -6,6 +6,8 @@ import {
 } from "@nestjs/common";
 import { randomUUID } from "crypto";
 import { DatabaseService } from "../database/database.service";
+import { CommunityPermission } from "../auth/CommunityPermission";
+import type { RequestPermissions } from "../auth/request-permissions";
 import { notDeleted } from "../common/utils/prisma-filters";
 import {
   PendingOwnershipService,
@@ -1273,11 +1275,15 @@ export class ItemsService {
    * of them stay true on their own -- staff can archive the currency, or clear
    * the payout, between the button rendering and the press landing.
    */
-  async useItem(itemId: string, userId: string) {
+  async useItem(
+    itemId: string,
+    userId: string,
+    permissions: RequestPermissions,
+  ) {
     const item = await this.loadUsableItem(itemId, userId);
 
     // What this item type actually does.
-    const effect = await this.resolveUseEffect(item.itemType, userId);
+    const effect = await this.resolveUseEffect(item.itemType, permissions);
 
     // The other three effects need input this mutation has no way to carry
     // -- which variant, what name, which traits, which character -- and
@@ -1409,9 +1415,13 @@ export class ItemsService {
    * there. Returns before anything is written -- the caller opens the
    * transaction.
    */
-  async resolveMyoRedemption(itemId: string, userId: string) {
+  async resolveMyoRedemption(
+    itemId: string,
+    userId: string,
+    permissions: RequestPermissions,
+  ) {
     const item = await this.loadUsableItem(itemId, userId);
-    const effect = await this.resolveUseEffect(item.itemType, userId);
+    const effect = await this.resolveUseEffect(item.itemType, permissions);
 
     if (effect.kind !== "MYO") {
       throw new BadRequestException(
@@ -1430,9 +1440,13 @@ export class ItemsService {
    * belong here beside the destroy that enforces them, and the character rules
    * belong in EditKitsService. Returns before anything is written.
    */
-  async resolveTraitEditRedemption(itemId: string, userId: string) {
+  async resolveTraitEditRedemption(
+    itemId: string,
+    userId: string,
+    permissions: RequestPermissions,
+  ) {
     const item = await this.loadUsableItem(itemId, userId);
-    const effect = await this.resolveUseEffect(item.itemType, userId);
+    const effect = await this.resolveUseEffect(item.itemType, permissions);
 
     if (effect.kind !== "TRAIT_EDIT") {
       throw new BadRequestException(
@@ -1451,9 +1465,13 @@ export class ItemsService {
    * belong here beside the destroy that enforces them, and the character rules
    * belong in VariantChangesService. Returns before anything is written.
    */
-  async resolveVariantChangeRedemption(itemId: string, userId: string) {
+  async resolveVariantChangeRedemption(
+    itemId: string,
+    userId: string,
+    permissions: RequestPermissions,
+  ) {
     const item = await this.loadUsableItem(itemId, userId);
-    const effect = await this.resolveUseEffect(item.itemType, userId);
+    const effect = await this.resolveUseEffect(item.itemType, permissions);
 
     if (effect.kind !== "VARIANT_CHANGE") {
       throw new BadRequestException(
@@ -1568,16 +1586,17 @@ export class ItemsService {
         };
       };
     }>,
-    userId: string,
+    permissions: RequestPermissions,
   ) {
     // Membership first, and for both effects. Coin only exists inside a
     // community for its members, and neither does a species. Checked before
     // anything is destroyed, so a non-member is refused rather than left with
     // neither the item nor what it was for.
-    const membership = await this.db.communityMember.count({
-      where: { userId, role: { communityId: itemType.communityId } },
-    });
-    if (membership === 0) {
+    const isMember = await permissions.hasInCommunity(
+      itemType.communityId,
+      CommunityPermission.Any,
+    );
+    if (!isMember) {
       throw new BadRequestException(
         "You must be a member of this community to use that",
       );

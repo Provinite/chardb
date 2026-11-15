@@ -1,5 +1,9 @@
 import { Resolver, Mutation, Args } from "@nestjs/graphql";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { Character as CharacterEntity } from "../characters/entities/character.entity";
@@ -39,8 +43,13 @@ export class MyoResolver {
   async createCharacterFromMyoTicket(
     @Args("input") input: RedeemMyoTicketInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<CharacterEntity> {
-    const character = await this.myoService.redeemTicket(user.id, input);
+    const character = await this.myoService.redeemTicket(
+      user.id,
+      permissions,
+      input,
+    );
     return mapPrismaCharacterToGraphQL(character);
   }
 }

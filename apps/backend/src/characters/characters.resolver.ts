@@ -14,6 +14,10 @@ import type { Request } from "express";
 import { TraitReviewSource } from "@chardb/database";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
 import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
+import {
   AuthenticatedCurrentUserType,
   CurrentUserType,
 } from "../auth/types/current-user.type";
@@ -96,6 +100,7 @@ export class CharactersResolver {
   async createCharacter(
     @Args("input") input: CreateCharacterInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ) {
     // Require speciesId for all character creation
     if (!input.speciesId) {
@@ -108,7 +113,7 @@ export class CharactersResolver {
     if (
       input.traitReviewSource &&
       input.traitReviewSource !== TraitReviewSource.CREATION &&
-      !user.isAdmin
+      !permissions.isAdmin
     ) {
       throw new ForbiddenException(
         "Only site admins can set a custom trait review source",
@@ -127,7 +132,7 @@ export class CharactersResolver {
     if (input.ownerId && input.ownerId !== user.id) {
       const hasPermission =
         await this.charactersService.userHasOrphanedCharacterPermission(
-          user.id,
+          permissions,
           input.speciesId,
         );
       if (!hasPermission) {
@@ -142,7 +147,7 @@ export class CharactersResolver {
       // Check permissions
       const hasPermission =
         await this.charactersService.userHasOrphanedCharacterPermission(
-          user.id,
+          permissions,
           input.speciesId,
         );
       if (!hasPermission) {
@@ -155,6 +160,7 @@ export class CharactersResolver {
     const serviceInput = mapCreateCharacterInputToService(input);
     const character = await this.charactersService.create(
       user.id, // Creator is always the current user
+      permissions,
       serviceInput, // ownerId comes from serviceInput (null for orphaned)
     );
     return mapPrismaCharacterToGraphQL(character);
@@ -190,6 +196,7 @@ export class CharactersResolver {
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateCharacterProfileInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<CharacterEntity> {
     // If updating ownership or pending ownership, require canCreateOrphanedCharacter permission
     if (
@@ -209,7 +216,7 @@ export class CharactersResolver {
       // Check permissions
       const hasPermission =
         await this.charactersService.userHasOrphanedCharacterPermission(
-          user.id,
+          permissions,
           speciesId,
         );
       if (!hasPermission) {
@@ -238,12 +245,15 @@ export class CharactersResolver {
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: UpdateCharacterRegistryInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<CharacterEntity> {
     const serviceInput = mapUpdateCharacterRegistryInputToService(input);
-    const character = await this.charactersService.updateRegistry(id, user.id, {
-      ...serviceInput,
-      variantChangeReason: input.variantChangeReason,
-    });
+    const character = await this.charactersService.updateRegistry(
+      id,
+      user.id,
+      permissions,
+      { ...serviceInput, variantChangeReason: input.variantChangeReason },
+    );
     return mapPrismaCharacterToGraphQL(character);
   }
 
@@ -294,13 +304,19 @@ export class CharactersResolver {
     @Args("id", { type: () => ID }) id: string,
     @Args("input") input: AssignCharacterSpeciesInput,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<CharacterEntity> {
-    const character = await this.charactersService.assignSpecies(id, user.id, {
-      speciesId: input.speciesId,
-      speciesVariantId: input.speciesVariantId,
-      registryId: input.registryId,
-      forms: mapNewForms(input.forms),
-    });
+    const character = await this.charactersService.assignSpecies(
+      id,
+      user.id,
+      permissions,
+      {
+        speciesId: input.speciesId,
+        speciesVariantId: input.speciesVariantId,
+        registryId: input.registryId,
+        forms: mapNewForms(input.forms),
+      },
+    );
     return mapPrismaCharacterToGraphQL(character);
   }
 
@@ -428,10 +444,12 @@ export class CharactersResolver {
   @Query(() => CharacterConnection)
   async myEditableCharacters(
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
   ): Promise<CharacterConnection> {
     const result = await this.charactersService.findEditableCharacters(
       user.id,
+      permissions,
       filters,
     );
     return mapPrismaCharacterConnectionToGraphQL(result);
@@ -443,10 +461,12 @@ export class CharactersResolver {
   })
   async myCharactersForImageUpload(
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
     @Args("filters", { nullable: true }) filters?: CharacterFiltersInput,
   ): Promise<CharacterConnection> {
     const result = await this.charactersService.findCharactersForImageUpload(
       user.id,
+      permissions,
       filters,
     );
     return mapPrismaCharacterConnectionToGraphQL(result);

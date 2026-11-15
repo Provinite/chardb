@@ -14,9 +14,10 @@ import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated"
 import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { CommunityPermission } from "../auth/CommunityPermission";
-import { CurrentUser } from "../auth/decorators/CurrentUser";
-import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
-import { PermissionService } from "../auth/PermissionService";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { DatabaseService } from "../database/database.service";
 import { ItemTransactionsService } from "./item-transactions.service";
 import {
@@ -56,7 +57,6 @@ import { mapPrismaPendingOwnershipToGraphQL } from "../pending-ownership/utils/p
 export class ItemTransactionsResolver {
   constructor(
     private readonly itemTransactionsService: ItemTransactionsService,
-    private readonly permissionService: PermissionService,
     private readonly database: DatabaseService,
     private readonly loaders: LoadersService,
   ) {}
@@ -107,15 +107,9 @@ export class ItemTransactionsResolver {
   })
   async resolveStaffNote(
     @Parent() transaction: ItemTransaction,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
-    @Context("req") req?: Request,
+    @CurrentPermissions() viewer: RequestPermissions,
   ): Promise<string | null> {
-    const permissions =
-      await this.permissionService.getCommunityPermissionsForRequest(
-        req,
-        user.id,
-        transaction.communityId,
-      );
+    const permissions = await viewer.inCommunity(transaction.communityId);
 
     if (
       !permissions[CommunityPermission.CanManageItems] &&

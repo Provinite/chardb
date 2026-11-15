@@ -5,6 +5,10 @@ import { AllowCommunityPermission } from "../../auth/decorators/AllowCommunityPe
 import { AllowGlobalAdmin } from "../../auth/decorators/AllowGlobalAdmin";
 import { ResolveCommunityFrom } from "../../auth/decorators/ResolveCommunityFrom";
 import { CurrentUser } from "../../auth/decorators/CurrentUser";
+import {
+  CurrentPermissions,
+  type RequestPermissions,
+} from "../../auth/decorators/CurrentPermissions";
 import { CommunityPermission } from "../../auth/CommunityPermission";
 import type { AuthenticatedCurrentUserType } from "../../auth/types/current-user.type";
 import { DatabaseService } from "../../database/database.service";
@@ -38,10 +42,10 @@ export class HalloweenDashboardResolver {
    * so it admits any member and this narrows it.
    */
   private async assertCanView(
-    userId: string,
+    permissions: RequestPermissions,
     communityId: string,
   ): Promise<void> {
-    if (!(await this.staffAccess.isStaff(userId, communityId))) {
+    if (!(await this.staffAccess.isStaff(permissions, communityId))) {
       throw new ForbiddenException(
         "Seeing the Halloween event needs permission to grant or manage items",
       );
@@ -58,9 +62,9 @@ export class HalloweenDashboardResolver {
   })
   async halloweenDashboard(
     @Args("communityId", { type: () => ID }) communityId: string,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<HalloweenDashboard> {
-    await this.assertCanView(user.id, communityId);
+    await this.assertCanView(permissions, communityId);
     return this.dashboard.getDashboard(communityId);
   }
 
@@ -82,9 +86,9 @@ export class HalloweenDashboardResolver {
     limit: number,
     @Args("offset", { type: () => Int, nullable: true, defaultValue: 0 })
     offset: number,
-    @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<HalloweenWinPage> {
-    await this.assertCanView(user.id, communityId);
+    await this.assertCanView(permissions, communityId);
     return this.dashboard.getWins(communityId, filter, limit, offset);
   }
 

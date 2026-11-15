@@ -1,12 +1,10 @@
 import { ExecutionContext } from "@nestjs/common";
-import { GqlExecutionContext } from "@nestjs/graphql";
 import { CurrentUserType } from "../types/current-user.type";
+import { getRequestFromContext } from "./get-request-from-context";
 
 /**
- * Extracts the current user from an ExecutionContext.
- *
- * This utility works for both GraphQL and REST contexts.
- * For GraphQL, it extracts the user from the GraphQL execution context.
+ * Extracts the current user from an ExecutionContext, for a GraphQL resolver
+ * or a REST controller.
  *
  * @param context - The NestJS ExecutionContext
  * @returns The current user or null if no user is authenticated
@@ -23,7 +21,8 @@ import { CurrentUserType } from "../types/current-user.type";
 export function getUserFromContext(
   context: ExecutionContext,
 ): CurrentUserType | null {
-  const ctx = GqlExecutionContext.create(context);
-  const user = ctx.getContext().req?.user;
-  return user ?? null;
+  const req = getRequestFromContext(context) as
+    | { user?: CurrentUserType }
+    | undefined;
+  return req?.user ?? null;
 }

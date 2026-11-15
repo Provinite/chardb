@@ -6,12 +6,12 @@ import { TagsService } from "../tags/tags.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
 import { DeviantArtService } from "../deviantart/deviantart.service";
-import { PermissionService } from "../auth/PermissionService";
 import { TraitReviewService } from "../trait-review/trait-review.service";
 import { CharacterFormsService } from "../character-forms/character-forms.service";
 import { DomainEvents } from "../events/domain-events";
 import { ModerationStatus, TraitValueType, Visibility } from "@chardb/database";
 import { mockDatabaseService } from "../../test/setup";
+import { fakePermissions } from "../../test/fake-permissions";
 import { CharacterAvailability } from "./character-availability";
 
 const mockTagsService = {
@@ -28,10 +28,6 @@ const mockDiscordService = {
   getUserInfo: jest.fn(),
 };
 const mockDeviantArtService = { resolveUsername: jest.fn() };
-const mockPermissionService = {
-  hasCommunityPermission: jest.fn(),
-  getCommunityPermissions: jest.fn(),
-};
 const mockTraitReviewService = { createReview: jest.fn() };
 
 /**
@@ -110,7 +106,6 @@ describe("CharactersService", () => {
         },
         { provide: DiscordService, useValue: mockDiscordService },
         { provide: DeviantArtService, useValue: mockDeviantArtService },
-        { provide: PermissionService, useValue: mockPermissionService },
         { provide: TraitReviewService, useValue: mockTraitReviewService },
         {
           provide: CharacterFormsService,
@@ -133,7 +128,7 @@ describe("CharactersService", () => {
   describe("Discord names on a pending character (#445)", () => {
     const DISCORD_ID = "214000000000009071";
     const createFor = (providerAccountId: string) =>
-      service.create("admin1", {
+      service.create("admin1", fakePermissions({ isAdmin: true }), {
         characterData: {
           name: "Prize",
           species: { connect: { id: "species1" } },
@@ -145,8 +140,6 @@ describe("CharactersService", () => {
 
     beforeEach(() => {
       jest.clearAllMocks();
-      // An admin skips the species permission check.
-      db.user.findUnique.mockResolvedValue({ isAdmin: true });
       db.species.findUnique.mockResolvedValue({ communityId: "comm1" });
       db.$transaction.mockImplementation(
         (fn: (tx: typeof mockDatabaseService) => Promise<unknown>) => fn(db),
@@ -309,7 +302,10 @@ describe("CharactersService", () => {
         ["findEditableCharacters"],
         ["findCharactersForImageUpload"],
       ] as const)("%s breaks created ties by id", async (method) => {
-        await service[method]("user-1", { limit: 20, offset: 20 });
+        await service[method]("user-1", fakePermissions(), {
+          limit: 20,
+          offset: 20,
+        });
 
         const [call] = db.character.findMany.mock.calls;
         expect(call[0].orderBy).toEqual([
@@ -503,6 +499,9 @@ describe("CharactersService", () => {
   });
 
   describe("assignSpecies", () => {
+    const mayCreateCharacters = () =>
+      fakePermissions({ inCommunity: { canCreateCharacter: true } });
+
     /**
      * Not an e2e test, because the mutation is not reachable end to end: the
      * only speciesless characters are ones kicked out of a species, and
@@ -517,10 +516,9 @@ describe("CharactersService", () => {
         communityId: "community1",
       });
       db.speciesVariant.findFirst.mockResolvedValue({ id: "variant1" });
-      mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
       db.character.update.mockResolvedValue(character);
 
-      await service.assignSpecies("char1", "user1", {
+      await service.assignSpecies("char1", "user1", mayCreateCharacters(), {
         speciesId: "species1",
         speciesVariantId: "variant1",
       });
@@ -541,10 +539,9 @@ describe("CharactersService", () => {
       db.speciesVariant.findFirst.mockResolvedValue({ id: "variant1" });
       db.speciesVariant.findUnique.mockResolvedValue({ maxForms: 1 });
       db.trait.findMany.mockResolvedValue([]);
-      mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
       db.character.update.mockResolvedValue(character);
 
-      await service.assignSpecies("char1", "user1", {
+      await service.assignSpecies("char1", "user1", mayCreateCharacters(), {
         speciesId: "species1",
         speciesVariantId: "variant1",
         forms: [{ name: "Base", traitValues: [] }],

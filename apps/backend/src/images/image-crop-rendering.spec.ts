@@ -5,9 +5,9 @@ import { ImagesService } from "./images.service";
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import { S3Service } from "./s3.service";
-import { PermissionService } from "../auth/PermissionService";
 import { CommunityResolverService } from "../auth/services/community-resolver.service";
 import { mockDatabaseService } from "../../test/setup";
+import { fakePermissions } from "../../test/fake-permissions";
 
 /**
  * Thumbnail rendering, with the real sharp.
@@ -111,7 +111,6 @@ const mockS3Service = {
   deleteImage: jest.fn(),
   deleteImages: jest.fn(),
 };
-const mockPermissionService = { hasCommunityPermission: jest.fn() };
 const mockCommunityResolverService = { resolve: jest.fn() };
 
 describe("thumbnail rendering (real sharp)", () => {
@@ -148,7 +147,6 @@ describe("thumbnail rendering (real sharp)", () => {
         { provide: DatabaseService, useValue: mockDatabaseService },
         { provide: TagsService, useValue: mockTagsService },
         { provide: S3Service, useValue: mockS3Service },
-        { provide: PermissionService, useValue: mockPermissionService },
         {
           provide: CommunityResolverService,
           useValue: mockCommunityResolverService,
@@ -180,7 +178,7 @@ describe("thumbnail rendering (real sharp)", () => {
     it("produces a 300x300 centre crop, exactly as before this feature", async () => {
       const buffer = await markedImage("jpeg");
 
-      await service.upload("user1", {
+      await service.upload("user1", fakePermissions(), {
         file: fileOf(buffer, "marked.jpg", "image/jpeg"),
       });
 
@@ -196,7 +194,7 @@ describe("thumbnail rendering (real sharp)", () => {
     it("stores no crop, so nothing needed backfilling", async () => {
       const buffer = await markedImage("jpeg");
 
-      await service.upload("user1", {
+      await service.upload("user1", fakePermissions(), {
         file: fileOf(buffer, "marked.jpg", "image/jpeg"),
       });
 
@@ -213,7 +211,7 @@ describe("thumbnail rendering (real sharp)", () => {
     it("frames the thumbnail on the chosen region", async () => {
       const buffer = await markedImage("jpeg");
 
-      await service.upload("user1", {
+      await service.upload("user1", fakePermissions(), {
         file: fileOf(buffer, "marked.jpg", "image/jpeg"),
         thumbnailCrop: { x: 300, y: 100, width: 100, height: 100 },
       });
@@ -229,7 +227,7 @@ describe("thumbnail rendering (real sharp)", () => {
     it("stores the rect against the original", async () => {
       const buffer = await markedImage("jpeg");
 
-      await service.upload("user1", {
+      await service.upload("user1", fakePermissions(), {
         file: fileOf(buffer, "marked.jpg", "image/jpeg"),
         thumbnailCrop: { x: 300, y: 100, width: 100, height: 100 },
       });
@@ -246,7 +244,7 @@ describe("thumbnail rendering (real sharp)", () => {
       const buffer = await markedImage("jpeg");
 
       await expect(
-        service.upload("user1", {
+        service.upload("user1", fakePermissions(), {
           file: fileOf(buffer, "marked.jpg", "image/jpeg"),
           thumbnailCrop: { x: 350, y: 100, width: 100, height: 100 },
         }),
@@ -257,7 +255,7 @@ describe("thumbnail rendering (real sharp)", () => {
       const buffer = await markedImage("jpeg");
 
       await expect(
-        service.upload("user1", {
+        service.upload("user1", fakePermissions(), {
           file: fileOf(buffer, "marked.jpg", "image/jpeg"),
           thumbnailCrop: { x: 0, y: 0, width: 4000, height: 4000 },
         }),
@@ -277,7 +275,7 @@ describe("thumbnail rendering (real sharp)", () => {
     it("records the size the browser sees, not the stored one", async () => {
       const buffer = await exifRotatedImage();
 
-      await service.upload("user1", {
+      await service.upload("user1", fakePermissions(), {
         file: fileOf(buffer, "rotated.jpg", "image/jpeg"),
       });
 
@@ -289,7 +287,7 @@ describe("thumbnail rendering (real sharp)", () => {
       const buffer = await exifRotatedImage();
 
       // Only meaningful after rotation: x runs to 50, y runs to 100.
-      await service.upload("user1", {
+      await service.upload("user1", fakePermissions(), {
         file: fileOf(buffer, "rotated.jpg", "image/jpeg"),
         thumbnailCrop: { x: 10, y: 60, width: 30, height: 30 },
       });
@@ -304,7 +302,7 @@ describe("thumbnail rendering (real sharp)", () => {
 
       // 90 wide fits the stored 100x50 but not the displayed 50x100.
       await expect(
-        service.upload("user1", {
+        service.upload("user1", fakePermissions(), {
           file: fileOf(buffer, "rotated.jpg", "image/jpeg"),
           thumbnailCrop: { x: 0, y: 0, width: 90, height: 40 },
         }),
@@ -316,7 +314,7 @@ describe("thumbnail rendering (real sharp)", () => {
     it("crops a GIF the same way as any other image", async () => {
       const buffer = await markedImage("gif");
 
-      await service.upload("user1", {
+      await service.upload("user1", fakePermissions(), {
         file: fileOf(buffer, "marked.gif", "image/gif"),
         thumbnailCrop: { x: 300, y: 100, width: 100, height: 100 },
       });
@@ -325,7 +323,7 @@ describe("thumbnail rendering (real sharp)", () => {
     });
 
     it("thumbnails an animated GIF to a still JPEG of its first frame", async () => {
-      await service.upload("user1", {
+      await service.upload("user1", fakePermissions(), {
         file: fileOf(ANIMATED_GIF, "spin.gif", "image/gif"),
         thumbnailCrop: { x: 0, y: 0, width: 4, height: 4 },
       });
@@ -348,7 +346,7 @@ describe("thumbnail rendering (real sharp)", () => {
      */
     it("measures one frame, not the frames stacked together", async () => {
       await expect(
-        service.upload("user1", {
+        service.upload("user1", fakePermissions(), {
           file: fileOf(ANIMATED_GIF, "spin.gif", "image/gif"),
           thumbnailCrop: { x: 0, y: 4, width: 4, height: 4 },
         }),
@@ -356,7 +354,7 @@ describe("thumbnail rendering (real sharp)", () => {
     });
 
     it("keeps the medium variant animated", async () => {
-      await service.upload("user1", {
+      await service.upload("user1", fakePermissions(), {
         file: fileOf(ANIMATED_GIF, "spin.gif", "image/gif"),
       });
 

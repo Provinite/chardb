@@ -17,11 +17,14 @@ import { AllowCommunityPermission } from "../auth/decorators/AllowCommunityPermi
 import { ResolveCommunityFrom } from "../auth/decorators/ResolveCommunityFrom";
 import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { CommunityPermission } from "../auth/CommunityPermission";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { PermissionService } from "../auth/PermissionService";
 import { OwnershipService } from "../auth/OwnershipService";
-import { GlobalPermission } from "../auth/GlobalPermission";
 import {
   CommunityInvitation,
   CommunityInvitationConnection,
@@ -148,6 +151,7 @@ export class CommunityInvitationsResolver {
     @Args("inviteeId", { type: () => ID, description: "Invitee ID" })
     inviteeId: string,
     @CurrentUser() currentUser: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
     @Args("first", {
       type: () => Int,
       nullable: true,
@@ -164,12 +168,8 @@ export class CommunityInvitationsResolver {
   ): Promise<CommunityInvitationConnection> {
     // Check authorization: self OR admin
     const isSelf = this.permissionService.isSelf(currentUser.id, inviteeId);
-    const isAdmin = this.permissionService.hasGlobalPermission(
-      currentUser,
-      GlobalPermission.IsAdmin,
-    );
 
-    if (!isSelf && !isAdmin) {
+    if (!isSelf && !permissions.isAdmin) {
       throw new ForbiddenException("You can only view your own invitations");
     }
 

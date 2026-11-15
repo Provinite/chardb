@@ -152,6 +152,10 @@ export class TestApp {
     await this.db.character.deleteMany({});
     await this.db.tag.deleteMany({});
     await this.db.inviteCode.deleteMany({});
+    // A purchase line restricts the deletion of the shop item it bought, so
+    // a community that has sold anything does not cascade away on its own.
+    await this.db.shopPurchaseLine.deleteMany({});
+    await this.db.shopPurchase.deleteMany({});
     await this.db.community.deleteMany({});
     // Explicit, unlike the cascading children above: this table's FK is
     // `ON DELETE SET NULL` by design, so deleting the users leaves every row

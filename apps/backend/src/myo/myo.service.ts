@@ -8,6 +8,7 @@ import {
 } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import { ItemsService } from "../items/items.service";
+import type { RequestPermissions } from "../auth/request-permissions";
 import { CharactersService } from "../characters/characters.service";
 import { TagsService } from "../tags/tags.service";
 import { TraitReviewService } from "../trait-review/trait-review.service";
@@ -63,10 +64,15 @@ export class MyoService {
    * ledger row written by the destroy can name the character it paid for
    * without a second update.
    */
-  async redeemTicket(userId: string, input: RedeemMyoTicketInput) {
+  async redeemTicket(
+    userId: string,
+    permissions: RequestPermissions,
+    input: RedeemMyoTicketInput,
+  ) {
     const { itemType, grant } = await this.items.resolveMyoRedemption(
       input.itemId,
       userId,
+      permissions,
     );
 
     // Against the grant, not against the species. A ticket for a Common is

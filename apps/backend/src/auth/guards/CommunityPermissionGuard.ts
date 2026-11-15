@@ -1,23 +1,21 @@
 import { CanActivate, ExecutionContext, Injectable } from "@nestjs/common";
-import { PermissionService } from "../PermissionService";
 import { CommunityResolverService } from "../services/community-resolver.service";
 import { getUserFromContext } from "../utils/get-user-from-context";
+import { getPermissionsFromContext } from "../utils/get-permissions-from-context";
 import { Reflector } from "@nestjs/core";
 import { AllowCommunityPermission } from "../decorators/AllowCommunityPermission";
 import { ResolveCommunityFrom } from "../decorators/ResolveCommunityFrom";
-import { CommunityPermission } from "../CommunityPermission";
 import {
   CommunityResolutionConfig,
   CommunityResolutionReference,
 } from "../types/CommunityResolutionConfig";
-import { GqlContextType, GqlExecutionContext } from "@nestjs/graphql";
-import type { Request } from "express";
+import { GqlExecutionContext } from "@nestjs/graphql";
+import { getRequestFromContext } from "../utils/get-request-from-context";
 import { getNestedValue } from "../../common/utils/getNestedValue";
 
 @Injectable()
 export class CommunityPermissionGuard implements CanActivate {
   constructor(
-    private permissionService: PermissionService,
     private communityResolverService: CommunityResolverService,
     private reflector: Reflector,
   ) {}
@@ -52,35 +50,17 @@ export class CommunityPermissionGuard implements CanActivate {
     // The request lets field resolvers on a list share their lookups.
     const community = await this.communityResolverService.resolve(
       resolvedIds,
-      this.getRequest(context),
+      getRequestFromContext(context),
     );
 
     if (!community) {
       return false;
     }
 
-    const permissions =
-      await this.permissionService.getCommunityPermissionsForRequest(
-        this.getRequest(context),
-        user.id,
-        community.id,
-      );
-
-    // Special case: CommunityPermission.Any means user just needs to be a member (have any role)
-    if (requiredPermissions === CommunityPermission.Any) {
-      return permissions.hasMembership;
-    }
-
-    return permissions[requiredPermissions] === true;
-  }
-
-  private getRequest(context: ExecutionContext): Request | undefined {
-    if (context.getType<GqlContextType>() === "graphql") {
-      return GqlExecutionContext.create(context).getContext<{
-        req?: Request;
-      }>().req;
-    }
-    return context.switchToHttp().getRequest<Request>();
+    return getPermissionsFromContext(context).hasInCommunity(
+      community.id,
+      requiredPermissions,
+    );
   }
 
   private resolveEntityIds(

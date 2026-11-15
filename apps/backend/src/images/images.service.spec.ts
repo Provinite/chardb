@@ -8,9 +8,9 @@ import { ImagesService } from "./images.service";
 import { DatabaseService } from "../database/database.service";
 import { TagsService } from "../tags/tags.service";
 import { S3Service } from "./s3.service";
-import { PermissionService } from "../auth/PermissionService";
 import { CommunityResolverService } from "../auth/services/community-resolver.service";
 import { mockDatabaseService } from "../../test/setup";
+import { fakePermissions, FakePermissions } from "../../test/fake-permissions";
 
 /**
  * sharp is stubbed here so these tests stay about orchestration -- permissions,
@@ -51,21 +51,21 @@ const mockS3Service = {
   deleteImage: jest.fn(),
   deleteImages: jest.fn(),
 };
-const mockPermissionService = { hasCommunityPermission: jest.fn() };
 const mockCommunityResolverService = { resolve: jest.fn() };
 
 describe("ImagesService", () => {
   let service: ImagesService;
   let db: typeof mockDatabaseService;
+  let permissions: FakePermissions;
 
   beforeEach(async () => {
+    permissions = fakePermissions();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ImagesService,
         { provide: DatabaseService, useValue: mockDatabaseService },
         { provide: TagsService, useValue: mockTagsService },
         { provide: S3Service, useValue: mockS3Service },
-        { provide: PermissionService, useValue: mockPermissionService },
         {
           provide: CommunityResolverService,
           useValue: mockCommunityResolverService,
@@ -116,7 +116,9 @@ describe("ImagesService", () => {
       db.image.create.mockResolvedValue(mockImage);
       db.media.create.mockResolvedValue(mockMedia);
 
-      const result = await service.upload(userId, { file: mockFile });
+      const result = await service.upload(userId, permissions, {
+        file: mockFile,
+      });
 
       expect(mockS3Service.uploadImage).toHaveBeenCalledTimes(3);
       expect(db.image.create).toHaveBeenCalledWith(
@@ -141,7 +143,7 @@ describe("ImagesService", () => {
       } as Express.Multer.File;
 
       await expect(
-        service.upload("user1", { file: invalidFile }),
+        service.upload("user1", permissions, { file: invalidFile }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -152,7 +154,7 @@ describe("ImagesService", () => {
       } as Express.Multer.File;
 
       await expect(
-        service.upload("user1", { file: largeFile }),
+        service.upload("user1", permissions, { file: largeFile }),
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -169,9 +171,12 @@ describe("ImagesService", () => {
       // an item type already serves its image whatever its status.
       it("approves an item type's image on upload", async () => {
         db.itemType.findUnique.mockResolvedValue({ communityId: "c1" });
-        mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
+        permissions.hasInCommunity.mockResolvedValue(true);
 
-        await service.upload("user1", { file: mockFile, itemTypeId: "it1" });
+        await service.upload("user1", permissions, {
+          file: mockFile,
+          itemTypeId: "it1",
+        });
 
         expect(db.image.create).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -182,11 +187,10 @@ describe("ImagesService", () => {
 
       it("files an item type's image under the item type's community", async () => {
         db.itemType.findUnique.mockResolvedValue({ communityId: "c1" });
-        mockPermissionService.hasCommunityPermission.mockResolvedValue(true);
-        db.communityMember.findFirst.mockResolvedValue({ id: "m1" });
+        permissions.hasInCommunity.mockResolvedValue(true);
 
         // The client's community loses to the item type's.
-        await service.upload("user1", {
+        await service.upload("user1", permissions, {
           file: mockFile,
           itemTypeId: "it1",
           communityId: "c2",
@@ -205,7 +209,7 @@ describe("ImagesService", () => {
         "refuses an item type image that also names a %s",
         async (field) => {
           await expect(
-            service.upload("user1", {
+            service.upload("user1", permissions, {
               file: mockFile,
               itemTypeId: "it1",
               [field]: "x1",
@@ -216,7 +220,7 @@ describe("ImagesService", () => {
       );
 
       it("leaves any other upload to moderation", async () => {
-        await service.upload("user1", { file: mockFile });
+        await service.upload("user1", permissions, { file: mockFile });
 
         expect(db.image.create).toHaveBeenCalledWith(
           expect.objectContaining({
@@ -235,7 +239,10 @@ describe("ImagesService", () => {
       });
 
       await expect(
-        service.upload("user1", { file: mockFile, characterId: "char1" }),
+        service.upload("user1", permissions, {
+          file: mockFile,
+          characterId: "char1",
+        }),
       ).rejects.toThrow(ForbiddenException);
     });
   });

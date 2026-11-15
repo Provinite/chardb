@@ -5,9 +5,9 @@ import { CommunityPermission } from "../CommunityPermission";
  * Decorator to require a specific community role permission.
  *
  * This decorator marks a resolver as requiring a specific permission within a community.
- * It must be used together with:
- * - `@UseGuards(JwtAuthGuard, CommunityRoleGuard)` - To enforce authentication and permission checks
- * - {@link ResolveCommunityFrom} - To specify how to resolve the community context from arguments
+ * It must be used together with {@link ResolveCommunityFrom}, which says how
+ * to resolve the community from the arguments. The global permission guard
+ * enforces it; a resolver needs no `@UseGuards`.
  *
  * The permission check will verify that the current user has ANY role in the resolved
  * community that grants the specified permission. If a user has multiple roles, permissions
@@ -21,7 +21,6 @@ import { CommunityPermission } from "../CommunityPermission";
  * @example
  * ```typescript
  * @Mutation(() => Species)
- * @UseGuards(JwtAuthGuard, CommunityRoleGuard)
  * @AllowCommunityPermission(CommunityPermission.CanEditSpecies)
  * @ResolveCommunityFrom({ speciesId: 'id' })
  * async updateSpecies(
@@ -35,7 +34,6 @@ import { CommunityPermission } from "../CommunityPermission";
  * @example
  * ```typescript
  * @Mutation(() => Character)
- * @UseGuards(JwtAuthGuard, CommunityRoleGuard)
  * @AllowCommunityPermission(CommunityPermission.CanCreateCharacter)
  * @ResolveCommunityFrom({ speciesId: 'input.speciesId' })
  * async createCharacter(@Args('input') input: CreateCharacterInput) {

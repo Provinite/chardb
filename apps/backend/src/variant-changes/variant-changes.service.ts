@@ -11,6 +11,7 @@ import {
 } from "@chardb/database";
 import { DatabaseService } from "../database/database.service";
 import { ItemsService } from "../items/items.service";
+import type { RequestPermissions } from "../auth/request-permissions";
 import { CharactersService } from "../characters/characters.service";
 import { mapFormsChange } from "../characters/utils/character-resolver-mappers";
 import { CharacterFormsService } from "../character-forms/character-forms.service";
@@ -58,10 +59,15 @@ export class VariantChangesService {
    * submitted tabs spend one item: the second destroys nothing, throws, and
    * moves nothing.
    */
-  async spendItem(userId: string, input: ChangeCharacterVariantWithItemInput) {
+  async spendItem(
+    userId: string,
+    permissions: RequestPermissions,
+    input: ChangeCharacterVariantWithItemInput,
+  ) {
     const { itemType, grant } = await this.items.resolveVariantChangeRedemption(
       input.itemId,
       userId,
+      permissions,
     );
 
     const character = await this.db.character.findFirst({

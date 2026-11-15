@@ -8,7 +8,8 @@
  *
  * `plugin:@typescript-eslint/recommended` is the non-type-checked preset. The
  * type-checked presets need a `project` per workspace and a full tsc program
- * per run; `yarn type-check` already covers what they would catch.
+ * per run; `yarn type-check` already covers what they would catch. One
+ * override below does take a `project`, for apps/backend/src alone.
  */
 
 // Rules from packages/eslint-plugin-styles for the conventions in
@@ -151,6 +152,33 @@ module.exports = {
       },
     },
     {
+      // A permission is read from the request's RequestPermissions
+      // (apps/backend/src/auth/request-permissions.ts), which is where it is
+      // decided what a request may do. Reading the account's row or its roles
+      // answers for the account instead.
+      //
+      // The one rule here that asks the type checker, which is how it tells
+      // `user.isAdmin` from `permissions.isAdmin` whatever either is called.
+      // It costs a TypeScript program for the backend on any run that lints
+      // a backend file.
+      files: ["apps/backend/src/**/*.ts"],
+      excludedFiles: [
+        "**/*.spec.ts",
+        // Where roles are edited, and where an account's and a role's flags
+        // are mapped for display.
+        "apps/backend/src/roles/**",
+        "apps/backend/src/users/utils/user-resolver-mappers.ts",
+      ],
+      parserOptions: {
+        project: "./apps/backend/tsconfig.json",
+        tsconfigRootDir: __dirname,
+      },
+      plugins: ["@chardb/permissions"],
+      rules: {
+        "@chardb/permissions/no-model-permission-read": "error",
+      },
+    },
+    {
       // The helpers in packages/ui/src/css build style objects too, so they
       // are held to the same rules, apart from the one each exists to break.
       files: [
@@ -200,8 +228,8 @@ module.exports = {
       env: { browser: true, node: false },
     },
     {
-      // CommonJS config files, and the style plugin, which ESLint requires.
-      files: ["**/*.cjs", "packages/eslint-plugin-styles/src/**/*.js"],
+      // CommonJS config files, and the plugins, which ESLint requires.
+      files: ["**/*.cjs", "packages/eslint-plugin-*/src/**/*.js"],
       parserOptions: { sourceType: "script" },
       rules: { "@typescript-eslint/no-var-requires": "off" },
     },

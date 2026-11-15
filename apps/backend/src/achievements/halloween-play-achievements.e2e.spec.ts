@@ -9,6 +9,7 @@ import { ExternalAccountProvider } from "@chardb/database";
 import { TestApp } from "../../test/setup-e2e";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
+import { PermissionService } from "../auth/PermissionService";
 import { DatabaseService } from "../database/database.service";
 import { DiscordService } from "../discord/discord.service";
 import { HalloweenModule } from "../halloween/halloween.module";
@@ -51,6 +52,7 @@ describe("Halloween play achievements (e2e)", () => {
   let achievements: AchievementsService;
   let random: HalloweenRandom;
   let doorKnocks: DoorKnockService;
+  let permissionsOf: PermissionService["forUser"];
   let botUserId: string;
   let communityId: string;
   let roleId: string;
@@ -83,6 +85,8 @@ describe("Halloween play achievements (e2e)", () => {
     achievements = refs.get(AchievementsService);
     random = refs.get(HalloweenRandom);
     doorKnocks = refs.get(DoorKnockService);
+    const permissionService = refs.get(PermissionService, { strict: false });
+    permissionsOf = (user) => permissionService.forUser(user);
     botUserId = refs.get(HalloweenConfig).applicationId;
   });
 
@@ -322,10 +326,20 @@ describe("Halloween play achievements (e2e)", () => {
         const bob = await named("bob", "Luther the Great");
         const luther = await named("lu", " lUTHER ");
 
-        await doorKnocks.knock(communityId, alice.id, bob.id);
+        await doorKnocks.knock(
+          communityId,
+          alice.id,
+          permissionsOf(alice),
+          bob.id,
+        );
         expect(await earned(alice.id)).toEqual([]);
 
-        await doorKnocks.knock(communityId, alice.id, luther.id);
+        await doorKnocks.knock(
+          communityId,
+          alice.id,
+          permissionsOf(alice),
+          luther.id,
+        );
         expect(await earned(alice.id)).toEqual(["no-relation-2026"]);
         expect(await earned(luther.id)).toEqual([]);
       });
@@ -335,7 +349,12 @@ describe("Halloween play achievements (e2e)", () => {
         const alice = await member("alice");
         const daphne = await named("daph", "Daphne");
 
-        await doorKnocks.knock(communityId, alice.id, daphne.id);
+        await doorKnocks.knock(
+          communityId,
+          alice.id,
+          permissionsOf(alice),
+          daphne.id,
+        );
         expect(await earned(alice.id)).toEqual(["also-no-relation-2026"]);
       });
 
@@ -350,7 +369,12 @@ describe("Halloween play achievements (e2e)", () => {
             data: { username: "Luther" },
           });
 
-          await doorKnocks.knock(communityId, alice.id, luther.id);
+          await doorKnocks.knock(
+            communityId,
+            alice.id,
+            permissionsOf(alice),
+            luther.id,
+          );
           expect(await earned(alice.id)).toEqual(["no-relation-2026"]);
         },
       );
@@ -360,7 +384,12 @@ describe("Halloween play achievements (e2e)", () => {
         const alice = await member("alice");
         const bob = await named("bob", null);
         const publish = jest.spyOn(events, "publish");
-        await doorKnocks.knock(communityId, alice.id, bob.id);
+        await doorKnocks.knock(
+          communityId,
+          alice.id,
+          permissionsOf(alice),
+          bob.id,
+        );
         expect(publish).toHaveBeenCalledWith("halloween.door.knocked", {
           guildId: GUILD_ID,
           knockerId: alice.id,

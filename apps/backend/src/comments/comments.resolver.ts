@@ -29,6 +29,10 @@ import {
 import { AllowAnyAuthenticated } from "../auth/decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { CurrentUser } from "../auth/decorators/CurrentUser";
+import {
+  CurrentPermissions,
+  RequestPermissions,
+} from "../auth/decorators/CurrentPermissions";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
 import { AllowEntityOwner } from "../auth/decorators/AllowEntityOwner";
 import { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
@@ -102,8 +106,9 @@ export class CommentsResolver {
   async deleteComment(
     @Args("id", { type: () => ID }) id: string,
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
   ) {
-    return this.commentsService.remove(id, user.id, user.isAdmin);
+    return this.commentsService.remove(id, user.id, permissions.isAdmin);
   }
 
   // Field Resolvers

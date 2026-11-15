@@ -13,6 +13,7 @@ COPY apps/frontend/package.json ./apps/frontend/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/eslint-plugin-styles/package.json ./packages/eslint-plugin-styles/
+COPY packages/eslint-plugin-permissions/package.json ./packages/eslint-plugin-permissions/
 
 # Install dependencies
 RUN yarn install

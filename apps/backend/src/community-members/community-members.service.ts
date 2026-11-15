@@ -308,4 +308,11 @@ export class CommunityMembersService {
 
     return communityMembers.map((member) => member.role);
   }
+
+  /** Every role a user holds, in every community. */
+  async getUserRoles(userId: string) {
+    return this.prisma.role.findMany({
+      where: { communityMembers: { some: { userId } } },
+    });
+  }
 }
