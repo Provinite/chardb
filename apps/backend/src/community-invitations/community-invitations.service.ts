@@ -293,6 +293,14 @@ export class CommunityInvitationsService {
         "This invitation has already been responded to",
       );
     }
+    // Checked again here as well as at creation: an invitation made before
+    // that check can still carry another community's role.
+    if (
+      respondInput.accept &&
+      invitation.role.communityId !== invitation.communityId
+    ) {
+      throw new RoleInAnotherCommunityError();
+    }
 
     const updateData = respondInput.accept
       ? { acceptedAt: new Date() }

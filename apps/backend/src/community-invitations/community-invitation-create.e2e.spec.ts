@@ -123,4 +123,44 @@ describe("creating a community invitation (e2e)", () => {
       "GRAPHQL_VALIDATION_FAILED",
     );
   });
+
+  // An invitation made before the role was checked at creation can still
+  // carry another community's role. Accepting it must not join that one.
+  it("will not accept an invitation whose role is from another community", async () => {
+    const staleInvitation = await testApp.getDb().communityInvitation.create({
+      data: {
+        roleId: roles.elsewhere,
+        communityId: here,
+        inviteeId,
+        inviterId: staffId,
+      },
+    });
+    const invitee = await testApp.getDb().user.findUniqueOrThrow({
+      where: { id: inviteeId },
+    });
+    const inviteeSession = await testApp.generateTestToken(
+      invitee.id,
+      invitee.username,
+    );
+
+    const response = await testApp.authenticatedGraphqlRequest(
+      `mutation Accept($id: ID!) {
+        respondToCommunityInvitation(
+          id: $id
+          respondToCommunityInvitationInput: { accept: true }
+        ) { id }
+      }`,
+      { id: staleInvitation.id },
+      inviteeSession,
+    );
+
+    expect(response.body.errors?.[0]?.message).toBe(
+      "That role belongs to another community",
+    );
+    expect(
+      await testApp.getDb().communityMember.count({
+        where: { userId: inviteeId, roleId: roles.elsewhere },
+      }),
+    ).toBe(0);
+  });
 });
