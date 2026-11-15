@@ -11,9 +11,9 @@ import type { RequestPermissions } from "../auth/request-permissions";
 import { notDeleted } from "../common/utils/prisma-filters";
 import {
   PendingOwnershipService,
-  accountKey,
   type PendingOwnerNames,
 } from "../pending-ownership/pending-ownership.service";
+import { accountKey } from "../pending-ownership/utils/account-key";
 import { resolveDiscordOwner } from "../pending-ownership/utils/resolve-discord-owner";
 import { resolveDeviantArtOwner } from "../pending-ownership/utils/resolve-deviantart-owner";
 import { DiscordService } from "../discord/discord.service";

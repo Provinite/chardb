@@ -20,6 +20,8 @@ import { DiscordService } from "../discord/discord.service";
 import { DeviantArtService } from "../deviantart/deviantart.service";
 import { PendingOwnerInput } from "../pending-ownership/dto/pending-ownership.dto";
 import type { PendingOwnerNames } from "../pending-ownership/pending-ownership.service";
+import { accountKey } from "../pending-ownership/utils/account-key";
+import { lockPendingAccounts } from "../pending-ownership/utils/lock-pending-accounts";
 import { resolvePendingOwner } from "../pending-ownership/utils/resolve-pending-owner";
 import {
   CurrencyTransactionFilters,
@@ -407,9 +409,7 @@ export class CurrencyLedgerService {
       throw new BadRequestException("Name at least one recipient");
     }
     if (userIds.length + pendingOwners.length > MAX_MINT_RECIPIENTS) {
-      throw new BadRequestException(
-        `Cannot mint to more than ${MAX_MINT_RECIPIENTS} recipients at once`,
-      );
+      throw new BadRequestException("Too many recipients for one mint");
     }
 
     // Every named member is paid the amount once, however often they are
@@ -443,12 +443,29 @@ export class CurrencyLedgerService {
 
     const batchId = randomUUID();
     await this.db.$transaction(async (tx) => {
+      // Before deciding who is linked: a link or join claiming these
+      // accounts waits for this mint to commit, and so sees its rows.
+      await lockPendingAccounts(
+        tx,
+        accounts.map((a) => ({
+          provider: a.provider,
+          providerAccountId: a.accountId,
+        })),
+      );
+      // Again inside the transaction: an archive that committed while the
+      // accounts were being resolved must stop a mint that pays no member
+      // directly, and so never reaches credit()'s own check.
+      await this.loadWritableCurrency(tx, currency.id);
+
+      const linked = await this.linkedMembers(
+        tx,
+        accounts,
+        currency.communityId,
+      );
       const waiting: ResolvedAccount[] = [];
       for (const account of accounts) {
-        const userId = await this.linkedMember(
-          tx,
-          account,
-          currency.communityId,
+        const userId = linked.get(
+          accountKey(account.provider, account.accountId),
         );
         if (userId) direct.add(userId);
         else waiting.push(account);
@@ -535,7 +552,7 @@ export class CurrencyLedgerService {
         owner.provider,
         owner.providerAccountId,
       );
-      byKey.set(`${owner.provider}:${resolved.accountId}`, {
+      byKey.set(accountKey(owner.provider, resolved.accountId), {
         provider: owner.provider,
         ...resolved,
       });
@@ -544,28 +561,33 @@ export class CurrencyLedgerService {
   }
 
   /**
-   * The user who has linked this account, if they belong to the community.
-   * Coin minted to anyone else waits on the account.
+   * Who has linked each of these accounts and belongs to the community, by
+   * accountKey. Coin minted to any other account waits on it.
    */
-  private async linkedMember(
+  private async linkedMembers(
     client: DbClient,
-    account: ResolvedAccount,
+    accounts: ResolvedAccount[],
     communityId: string,
-  ): Promise<string | null> {
-    const linked = await client.externalAccount.findUnique({
+  ): Promise<Map<string, string>> {
+    const linked = await client.externalAccount.findMany({
       where: {
-        provider_providerAccountId: {
-          provider: account.provider,
-          providerAccountId: account.accountId,
-        },
+        OR: accounts.map((a) => ({
+          provider: a.provider,
+          providerAccountId: a.accountId,
+        })),
       },
-      select: { userId: true },
+      select: { userId: true, provider: true, providerAccountId: true },
     });
-    if (!linked) return null;
-    const members = await this.findMembers(client, communityId, [
-      linked.userId,
-    ]);
-    return members.has(linked.userId) ? linked.userId : null;
+    const members = await this.findMembers(
+      client,
+      communityId,
+      linked.map((l) => l.userId),
+    );
+    return new Map(
+      linked
+        .filter((l) => members.has(l.userId))
+        .map((l) => [accountKey(l.provider, l.providerAccountId), l.userId]),
+    );
   }
 
   /**

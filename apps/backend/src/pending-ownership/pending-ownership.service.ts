@@ -21,6 +21,8 @@ import {
 import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
+import { lockPendingAccounts } from "./utils/lock-pending-accounts";
+import { accountKey } from "./utils/account-key";
 
 /** What a pending row waits on: exactly one of these is set. */
 interface PendingEntity {
@@ -39,10 +41,6 @@ export interface PendingOwnerNames {
   /** Discord's global_name. */
   displayName?: string;
 }
-
-/** Identifies one external account across providers. */
-export const accountKey = (provider: string, providerAccountId: string) =>
-  `${provider}:${providerAccountId}`;
 
 /** Currency of one kind waiting on one external account. */
 export interface PendingBalance {
@@ -206,13 +204,27 @@ export class PendingOwnershipService {
     return account.userId;
   }
 
-  /** Hands one waiting grant to its claimant and marks it claimed. */
+  /**
+   * Hands one waiting grant to its claimant and marks it claimed. Null when
+   * another claim got there first.
+   *
+   * Marked first, and only while unclaimed: Postgres re-checks claimedAt
+   * after taking the row's lock, so of two claims racing for one row exactly
+   * one goes on to hand it over. A currency grant paid twice is coin made
+   * from nothing.
+   */
   private async claimOne(
     tx: Prisma.TransactionClient,
     pending: PendingOwnership,
     userId: string,
     claimedAt: Date,
-  ): Promise<PendingOwnership> {
+  ): Promise<PendingOwnership | null> {
+    const marked = await tx.pendingOwnership.updateMany({
+      where: { id: pending.id, claimedAt: null },
+      data: { claimedAt, claimedByUserId: userId },
+    });
+    if (marked.count === 0) return null;
+
     if (pending.characterId) {
       await tx.character.update({
         where: { id: pending.characterId },
@@ -229,9 +241,8 @@ export class PendingOwnershipService {
     } else {
       throw new Error("Pending ownership row waits on nothing");
     }
-    return tx.pendingOwnership.update({
+    return tx.pendingOwnership.findUniqueOrThrow({
       where: { id: pending.id },
-      data: { claimedAt, claimedByUserId: userId },
       include: { character: true, item: true },
     });
   }
@@ -254,6 +265,8 @@ export class PendingOwnershipService {
     });
     if (!linked.length) return [];
 
+    // Waits out a mint to their accounts still in flight (see claimAllForAccount).
+    await lockPendingAccounts(tx, linked);
     const waiting = await tx.pendingOwnership.findMany({
       where: {
         claimedAt: null,
@@ -275,7 +288,8 @@ export class PendingOwnershipService {
     const now = new Date();
     const claimed: PendingOwnership[] = [];
     for (const pending of waiting) {
-      claimed.push(await this.claimOne(tx, pending, userId, now));
+      const row = await this.claimOne(tx, pending, userId, now);
+      if (row) claimed.push(row);
     }
     return claimed;
   }
@@ -609,7 +623,9 @@ export class PendingOwnershipService {
     // every row and pick in memory, which is the cost this avoids (#445).
     // Window counts are taken before DISTINCT ON keeps one row per account;
     // id settles a tie on time, so the name shown never wobbles.
-    const rows = await this.prisma.$queryRaw<ExternalMemberSqlRow[]>(Prisma.sql`
+    // The page's balances need only the page, so they load alongside.
+    const [rows, balances] = await Promise.all([
+      this.prisma.$queryRaw<ExternalMemberSqlRow[]>(Prisma.sql`
       SELECT DISTINCT ON (po.provider, po.provider_account_id)
         po.*,
         count(po.item_id) OVER account AS item_count,
@@ -638,12 +654,13 @@ export class PendingOwnershipService {
         )
       WINDOW account AS (PARTITION BY po.provider, po.provider_account_id)
       ORDER BY po.provider, po.provider_account_id, po.created_at DESC, po.id DESC
-    `);
+    `),
+      this.findPendingBalances(communityId, page),
+    ]);
 
     const byKey = new Map(
       rows.map((r) => [accountKey(r.provider, r.provider_account_id), r]),
     );
-    const balances = await this.findPendingBalances(communityId, page);
 
     // In the page's order. An account whose last waiting row went between
     // the two queries has no row here and drops out of this page.
@@ -773,7 +790,9 @@ export class PendingOwnershipService {
       if (provider === ExternalAccountProvider.DISCORD) {
         await claimCandiesOnLink(tx, userId, providerAccountId);
       }
-      // Query for unclaimed items INSIDE transaction to ensure consistent snapshot
+      // Waits out a mint to this account that is still in flight, so its
+      // rows are visible to the query below rather than landing after it.
+      await lockPendingAccounts(tx, [{ provider, providerAccountId }]);
       const pendingItems = await tx.pendingOwnership.findMany({
         where: { provider, providerAccountId, claimedAt: null },
       });
@@ -785,7 +804,8 @@ export class PendingOwnershipService {
         if (communityId && !(await this.isMember(tx, userId, communityId))) {
           continue;
         }
-        claimed.push(await this.claimOne(tx, pending, userId, now));
+        const row = await this.claimOne(tx, pending, userId, now);
+        if (row) claimed.push(row);
       }
       return claimed;
     });

@@ -226,6 +226,29 @@ describe("Pending currency grants (e2e)", () => {
     expect(await balance()).toBe(60);
   });
 
+  it("credits a grant once when two claims race for it", async () => {
+    await mintToDeviantArt(80);
+    await testApp.createTestCommunityMember(player.id, memberRoleId);
+    await db.externalAccount.create({
+      data: {
+        userId: player.id,
+        provider: DEVIANTART,
+        providerAccountId: DEVIANTART_UUID,
+        displayName: "Some-Artist",
+      },
+    });
+
+    await Promise.all([
+      pending.claimAllForAccount(player.id, DEVIANTART, DEVIANTART_UUID),
+      pending.claimAllForAccount(player.id, DEVIANTART, DEVIANTART_UUID),
+    ]);
+
+    expect(await balance()).toBe(80);
+    expect(
+      await db.currencyTransaction.count({ where: { userId: player.id } }),
+    ).toBe(1);
+  });
+
   it("keeps each mint its own claim and its own ledger row", async () => {
     await mintToDeviantArt(100);
     await mintToDeviantArt(25);
