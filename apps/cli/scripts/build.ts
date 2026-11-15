@@ -24,6 +24,9 @@ export async function buildCli({
     platform: "node",
     format: "esm",
     target: "node22",
+    // Also what makes the output independent of the working directory:
+    // unminified, it embeds module paths relative to it.
+    minify: true,
     banner: { js: "#!/usr/bin/env node" },
     logLevel: "warning",
   });

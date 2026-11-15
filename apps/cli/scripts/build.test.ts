@@ -10,7 +10,7 @@ import {
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
-import { buildCli } from "./build";
+import { buildCli, DEFAULT_OUTFILE } from "./build";
 
 describe("buildCli", () => {
   let dir: string;
@@ -31,6 +31,15 @@ describe("buildCli", () => {
       "#!/usr/bin/env node",
     );
     expect(statSync(outfile).mode & 0o111).not.toBe(0);
+  });
+
+  it("matches the committed bundle", () => {
+    // Every checkout runs the committed file, so it must be what the source
+    // builds to.
+    expect(
+      readFileSync(outfile, "utf8") === readFileSync(DEFAULT_OUTFILE, "utf8"),
+      "apps/cli/dist/chardb.mjs is out of date: run `yarn workspace @chardb/cli build` and commit it",
+    ).toBe(true);
   });
 
   it("runs on its own, with no node_modules beside it", () => {

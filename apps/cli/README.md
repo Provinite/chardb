@@ -13,17 +13,18 @@ Run it from the repo root, or any directory outside `apps/*` and `packages/*`: Y
 
 ## The bundle
 
-`yarn chardb` boots Yarn and compiles the source on every call, which costs well over a second. A script making many calls should run the bundle instead: one file with its dependencies built in, which starts in under a tenth of a second.
+`yarn chardb` boots Yarn and compiles the source on every call, which costs well over a second. A script making many calls should run the bundle instead: `apps/cli/dist/chardb.mjs`, one file with its dependencies built in, which starts in under a tenth of a second. It is committed, so every checkout has the bundle its own source builds to.
 
 ```bash
-yarn workspace @chardb/cli build    # writes apps/cli/dist/chardb.mjs
-npm i -g ./apps/cli                 # once: puts `chardb` on PATH
+npm i -g ./apps/cli    # once: puts `chardb` on PATH
 chardb whoami
 ```
 
-`npm i -g` links the package's `chardb` bin to this checkout's `dist/chardb.mjs`, so a rebuild updates the command. It does not rebuild itself: build again after pulling changes to the CLI.
+`npm i -g` links the package's `chardb` bin to this checkout's `dist/chardb.mjs`, so pulling updates the command.
 
-Inside `apps/cli`, `yarn chardb` runs the bundle rather than the root script, so it runs whatever was last built. Use it from the repo root.
+After changing the CLI's source or dependencies, run `yarn workspace @chardb/cli build` and commit the bundle. A test fails while the committed bundle differs from a fresh build.
+
+Inside `apps/cli`, `yarn chardb` runs the bundle rather than the root script. Use it from the repo root.
 
 ## Which token, which API
 
