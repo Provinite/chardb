@@ -206,7 +206,8 @@ describe("ItemsService", () => {
     const DA_UUID = "6a8a2c4e-1f3b-4d5e-9c7a-0b1d2e3f4a5b";
 
     beforeEach(() => {
-      mockPendingOwnershipService.checkIfAccountClaimed.mockResolvedValue(null);
+      // Nobody has linked the account yet, so the grant waits on it.
+      mockDatabaseService.externalAccount.findUnique.mockResolvedValue(null);
       mockDatabaseService.item.findMany.mockResolvedValue([{ id: "i1" }]);
     });
 
