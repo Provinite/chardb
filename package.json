@@ -14,6 +14,7 @@
     "dev:frontend": "yarn workspace @chardb/frontend dev",
     "dev:agent": "yarn dev | tee dev.log",
     "db:query": "node scripts/db-query.mjs",
+    "chardb": "CHARDB_CLI_CWD=\"$INIT_CWD\" yarn workspace @chardb/cli cli",
     "instance": "node scripts/instance.mjs",
     "instance:init": "node scripts/instance-init.mjs",
     "instance:list": "node scripts/instance.mjs --list",

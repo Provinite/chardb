@@ -59,6 +59,7 @@ module.exports = {
     // Generated: rewritten by codegen/prisma, not hand-edited.
     "apps/frontend/src/generated",
     "apps/e2e/src/generated",
+    "apps/cli/src/generated",
     "packages/database/src/generated",
     // Playwright output.
     "apps/e2e/playwright-report",

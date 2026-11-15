@@ -1,0 +1,58 @@
+query CurrentAccessToken {
+  currentAccessToken {
+    id
+    name
+    displayHint
+    expiresAt
+    communities {
+      community {
+        id
+        name
+        slug
+      }
+      member
+      permissions
+    }
+  }
+  me {
+    id
+    username
+  }
+}
+
+query CommunityBySlug($slug: String!) {
+  communityBySlug(slug: $slug) {
+    id
+    name
+    slug
+  }
+}
+
+query UserByUsername($username: String!) {
+  user(username: $username) {
+    id
+    username
+    displayName
+  }
+}
+
+query ItemTypes($filters: ItemTypeFiltersInput!) {
+  itemTypes(filters: $filters) {
+    total
+    hasMore
+    itemTypes {
+      id
+      name
+      category
+      isConsumable
+    }
+  }
+}
+
+mutation GrantItem($input: GrantItemInput!) {
+  grantItem(input: $input) {
+    id
+    itemTypeId
+    ownerId
+  }
+}

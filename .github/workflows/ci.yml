@@ -202,12 +202,17 @@ jobs:
       # checked in.
       - name: Check GraphQL codegen is up to date
         run: |
-          yarn workspace @chardb/frontend codegen
-          if ! git diff --quiet -- apps/frontend/src/generated/graphql.ts; then
-            echo "::error file=apps/frontend/src/generated/graphql.ts::Generated GraphQL types are out of date. Run 'yarn workspace @chardb/frontend codegen' and commit the result."
-            git diff -- apps/frontend/src/generated/graphql.ts
-            exit 1
-          fi
+          stale=0
+          for workspace in frontend cli; do
+            file="apps/$workspace/src/generated/graphql.ts"
+            yarn workspace "@chardb/$workspace" codegen
+            if ! git diff --quiet -- "$file"; then
+              echo "::error file=$file::Generated GraphQL types are out of date. Run 'yarn workspace @chardb/$workspace codegen' and commit the result."
+              git diff -- "$file"
+              stale=1
+            fi
+          done
+          if [ "$stale" -ne 0 ]; then exit 1; fi
           echo "Generated GraphQL types are up to date."
 
       # The Halloween bot picks a candy image by slug, and candy boards take a
@@ -258,6 +263,8 @@ jobs:
             workspace: "@chardb/ui"
           - name: da-import
             workspace: "@chardb/da-import"
+          - name: cli
+            workspace: "@chardb/cli"
           - name: eslint-plugin-styles
             workspace: "@chardb/eslint-plugin-styles"
           - name: eslint-plugin-permissions
