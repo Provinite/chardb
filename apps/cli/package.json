@@ -12,7 +12,7 @@
     "codegen": "graphql-codegen --config .graphqlrc.yml",
     "type-check": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/type-check.tsbuildinfo",
     "test": "vitest",
-    "clean": "rm -rf node_modules/.cache dist"
+    "clean": "rm -rf node_modules/.cache"
   },
   "dependencies": {
     "@graphql-typed-document-node/core": "^3.2.0",
