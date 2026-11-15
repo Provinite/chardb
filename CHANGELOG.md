@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v16.0.0] - 2026-11-15
+
 ### Added
 
 - **Backend permission lint**: `@chardb/eslint-plugin-permissions` refuses reads of `isAdmin` and `can*` off an account or role in `apps/backend/src`, using the type checker to tell a database model from a request's permissions.
