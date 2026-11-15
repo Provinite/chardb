@@ -21,9 +21,9 @@ The token's prefix picks the API:
 | -------------------- | ----------------------------------------------------------- |
 | `chardb_pat_prod_…`  | `https://api.chardb.cc/graphql`                             |
 | `chardb_pat_dev_…`   | `https://api.dev.chardb.cc/graphql`                         |
-| `chardb_pat_local_…` | this checkout's backend, from its instance slot (`yarn instance`) |
+| `chardb_pat_local_…` | `http://localhost:4000/graphql`                             |
 
-`--api-url` or `CHARDB_API_URL` overrides it. A prod or dev token is only sent to an `https` URL; a local token goes anywhere. A token sent to another environment's API is refused by the API.
+`--api-url` or `CHARDB_API_URL` overrides it: a worktree on another port passes its backend's URL from `yarn instance`. A prod or dev token is only sent to an `https` URL; a local token goes anywhere. A token sent to another environment's API is refused by the API.
 
 ## Commands
 

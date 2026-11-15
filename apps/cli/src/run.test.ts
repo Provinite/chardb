@@ -133,11 +133,11 @@ describe("targeting", () => {
     expect(api.sent[0].authorization).toBe(`Bearer ${PROD}`);
   });
 
-  it("sends a local token to this checkout's backend", async () => {
+  it("sends a local token to the endpoint CHARDB_API_URL names", async () => {
     const h = harness({
       env: {
         CHARDB_TOKEN: LOCAL,
-        GRAPHQL_ENDPOINT: "http://localhost:21001/graphql",
+        CHARDB_API_URL: "http://localhost:21001/graphql",
       },
     });
     const api = fakeApi(() => whoamiAnswer);

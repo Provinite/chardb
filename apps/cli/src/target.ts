@@ -35,25 +35,23 @@ const DEPLOYED: Record<Exclude<Environment, "local">, string> = {
   dev: "https://api.dev.chardb.cc/graphql",
 };
 
-/** Slot 0's backend, for a local token run outside any checkout. */
-const LOCAL_FALLBACK = "http://localhost:4000/graphql";
+/** The main checkout's backend. Any other needs `--api-url`. */
+const LOCAL_DEFAULT = "http://localhost:4000/graphql";
 
 /**
  * Where a token's requests go.
  *
  * An explicit URL (the flag, then `CHARDB_API_URL`) wins. Otherwise prod and
- * dev go to their deployed APIs, and local to this checkout's backend:
- * `GRAPHQL_ENDPOINT` is set by `scripts/with-instance.mjs` for the checkout's
- * slot.
+ * dev go to their deployed APIs, and local to the main checkout's backend.
  */
 export function graphqlUrl(
   environment: Environment,
-  env: { CHARDB_API_URL?: string; GRAPHQL_ENDPOINT?: string },
+  env: Record<string, string | undefined>,
   flag?: string,
 ): string {
   const explicit = flag ?? env.CHARDB_API_URL;
   if (explicit) return withGraphqlPath(explicit);
-  if (environment === "local") return env.GRAPHQL_ENDPOINT ?? LOCAL_FALLBACK;
+  if (environment === "local") return LOCAL_DEFAULT;
   return DEPLOYED[environment];
 }
 

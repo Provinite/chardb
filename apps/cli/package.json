@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "cli": "node ../../scripts/with-instance.mjs tsx src/main.ts",
+    "cli": "tsx src/main.ts",
     "build": "echo '@chardb/cli: runs from source through tsx'",
     "codegen": "graphql-codegen --config .graphqlrc.yml",
     "type-check": "tsc --noEmit --incremental --tsBuildInfoFile node_modules/.cache/type-check.tsbuildinfo",

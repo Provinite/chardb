@@ -30,16 +30,16 @@ describe("graphqlUrl", () => {
     expect(graphqlUrl("dev", {})).toBe("https://api.dev.chardb.cc/graphql");
   });
 
-  it("sends a local token to this checkout's backend", () => {
+  it("sends a local token to localhost:4000 unless told otherwise", () => {
+    expect(graphqlUrl("local", {})).toBe("http://localhost:4000/graphql");
+  });
+
+  it("knows nothing of instance slots", () => {
     expect(
       graphqlUrl("local", {
         GRAPHQL_ENDPOINT: "http://localhost:21001/graphql",
       }),
-    ).toBe("http://localhost:21001/graphql");
-  });
-
-  it("falls back to slot 0 for a local token outside a checkout", () => {
-    expect(graphqlUrl("local", {})).toBe("http://localhost:4000/graphql");
+    ).toBe("http://localhost:4000/graphql");
   });
 
   it("prefers the flag, then CHARDB_API_URL, over the default", () => {

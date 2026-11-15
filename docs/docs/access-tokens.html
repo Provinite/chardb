@@ -374,7 +374,8 @@ curl https://api.chardb.cc/graphql \
             In a checkout of the repo, <code>yarn chardb</code> makes requests
             with a token. The token's prefix picks the API: a
             <code>chardb_pat_prod_</code> token goes to the live site, a local
-            one to the checkout's own backend.
+            one to <code>localhost:4000</code>. <code>--api-url</code> points it
+            anywhere else.
           </p>
           <pre class="example">
 $ pbpaste | yarn chardb auth add
