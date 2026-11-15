@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`currentAccessToken` query**: a personal access token reads its own name, expiry and community grants; null for a session.
 
+### Fixed
+
+- **DeviantArt item grants are claimable**: granting an item to a DeviantArt handle resolves it to the account's UUID, and the DeviantArt UUID backfill now converts item pending owners too (#449).
+
 ## [v16.0.0] - 2026-11-15
 
 ### Added

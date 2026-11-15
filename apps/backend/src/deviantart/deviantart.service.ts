@@ -38,9 +38,14 @@ export class DeviantArtService {
   private readonly clientId: string | undefined;
   private readonly clientSecret: string | undefined;
   private readonly isConfigured: boolean;
+  /** DeviantArt's origin. The e2e suite points it at a local fake. */
+  private readonly apiUrl: string;
   private cachedToken: CachedToken | null = null;
 
   constructor(private readonly configService: ConfigService) {
+    this.apiUrl =
+      this.configService.get<string>("DEVIANTART_API_URL") ??
+      "https://www.deviantart.com";
     this.clientId = this.configService.get<string>("DEVIANTART_CLIENT_ID");
     this.clientSecret = this.configService.get<string>(
       "DEVIANTART_CLIENT_SECRET",
@@ -85,7 +90,7 @@ export class DeviantArtService {
 
     try {
       const response = await fetch(
-        `https://www.deviantart.com/api/v1/oauth2/user/profile/${encodeURIComponent(username)}`,
+        `${this.apiUrl}/api/v1/oauth2/user/profile/${encodeURIComponent(username)}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -204,7 +209,7 @@ export class DeviantArtService {
       client_secret: this.clientSecret!,
     });
 
-    const response = await fetch("https://www.deviantart.com/oauth2/token", {
+    const response = await fetch(`${this.apiUrl}/oauth2/token`, {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
