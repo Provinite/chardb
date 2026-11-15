@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **`currentAccessToken` query**: a personal access token reads its own name, expiry and community grants; null for a session.
 
+### Fixed
+
+- **GraphQL subscriptions work again**: the rate limiter skips subscriptions instead of crashing on them (#615).
+
 ## [v16.0.0] - 2026-11-15
 
 ### Added

@@ -22,15 +22,22 @@ export class CustomThrottlerGuard extends ThrottlerGuard {
 
     if (context.getType<GqlContextType>() === "graphql") {
       const gql = GqlExecutionContext.create(context);
+      const info = gql.getInfo<GraphQLResolveInfo>();
 
       // `fieldResolverEnhancers` runs global guards on every field resolver,
       // so without this a list of 50 characters would spend 50+ hits. Only a
       // root field -- a query or mutation entry point -- counts.
-      if (gql.getInfo<GraphQLResolveInfo>().path.prev !== undefined) {
+      if (info.path.prev !== undefined) {
         return true;
       }
 
-      // Subscriptions over graphql-ws carry no HTTP request to key on.
+      // graphql-ws hands the context the upgrade request but no response, and
+      // the throttler writes its rate-limit headers to the response.
+      if (info.operation.operation === "subscription") {
+        return true;
+      }
+
+      // Nothing to key on.
       return !gql.getContext<{ req?: Request }>().req;
     }
 
