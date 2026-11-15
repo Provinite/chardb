@@ -1,7 +1,6 @@
 import {
   CreateInviteCodeInput,
   UpdateInviteCodeInput,
-  ClaimInviteCodeInput,
 } from "../dto/invite-code.dto";
 import {
   InviteCode,
@@ -18,11 +17,13 @@ import { Prisma } from "@chardb/database";
  */
 export function mapCreateInviteCodeInputToService(
   input: CreateInviteCodeInput,
+  /** Always the caller: a code names who actually made it. */
+  creatorId: string,
 ) {
   return {
     id: input.id,
     maxClaims: input.maxClaims,
-    creatorId: input.creatorId,
+    creatorId,
     roleId: input.roleId,
   };
 }
@@ -42,15 +43,6 @@ export function mapUpdateInviteCodeInputToService(
   if (input.roleId !== undefined) result.roleId = input.roleId;
 
   return result;
-}
-
-/**
- * Maps ClaimInviteCodeInput to service input format
- */
-export function mapClaimInviteCodeInputToService(input: ClaimInviteCodeInput) {
-  return {
-    userId: input.userId,
-  };
 }
 
 type PrismaInviteCode = Prisma.InviteCodeGetPayload<{}>;

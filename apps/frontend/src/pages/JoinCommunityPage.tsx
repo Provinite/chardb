@@ -153,12 +153,7 @@ export const JoinCommunityPage: React.FC = () => {
     setIsLoading(true);
     try {
       const result = await claimInviteCode({
-        variables: {
-          id: data.inviteCode,
-          claimInviteCodeInput: {
-            userId: user.id,
-          },
-        },
+        variables: { id: data.inviteCode },
       });
 
       if (result.data?.claimInviteCode) {

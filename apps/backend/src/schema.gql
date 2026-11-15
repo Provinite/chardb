@@ -411,12 +411,6 @@ input CheckoutLineInputDto {
   shopPriceId: ID!
 }
 
-"""Input for claiming an invite code"""
-input ClaimInviteCodeInput {
-  """The ID of the user who is claiming this invite code"""
-  userId: ID!
-}
-
 type Comment {
   author: User!
   authorId: ID!
@@ -792,9 +786,6 @@ input CreateHalloweenPrizeInput {
 
 """Input for creating a new invite code"""
 input CreateInviteCodeInput {
-  """The ID of the user who is creating this invite code"""
-  creatorId: ID!
-
   """The invite code string (alphanumeric and hyphens only)"""
   id: String!
 
@@ -2986,9 +2977,6 @@ type Mutation {
 
   """Claim an invite code to join a community"""
   claimInviteCode(
-    """Invite code claim data"""
-    claimInviteCodeInput: ClaimInviteCodeInput!
-
     """Invite code ID"""
     id: ID!
   ): InviteCode!

@@ -126,11 +126,8 @@ export const REMOVE_INVITE_CODE_MUTATION = gql`
 `;
 
 export const CLAIM_INVITE_CODE_MUTATION = gql`
-  mutation ClaimInviteCode(
-    $id: ID!
-    $claimInviteCodeInput: ClaimInviteCodeInput!
-  ) {
-    claimInviteCode(id: $id, claimInviteCodeInput: $claimInviteCodeInput) {
+  mutation ClaimInviteCode($id: ID!) {
+    claimInviteCode(id: $id) {
       id
       claimCount
       maxClaims
@@ -208,5 +205,4 @@ export {
   type RoleConnection,
   type CreateInviteCodeInput,
   type UpdateInviteCodeInput,
-  type ClaimInviteCodeInput,
 } from "../generated/graphql";

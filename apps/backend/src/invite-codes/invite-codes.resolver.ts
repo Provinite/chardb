@@ -23,15 +23,15 @@ import {
 import {
   CreateInviteCodeInput,
   UpdateInviteCodeInput,
-  ClaimInviteCodeInput,
 } from "./dto/invite-code.dto";
 import {
   mapCreateInviteCodeInputToService,
   mapUpdateInviteCodeInputToService,
-  mapClaimInviteCodeInputToService,
   mapPrismaInviteCodeToGraphQL,
   mapPrismaInviteCodeConnectionToGraphQL,
 } from "./utils/invite-code-resolver-mappers";
+import { CurrentUser } from "../auth/decorators/CurrentUser";
+import type { AuthenticatedCurrentUserType } from "../auth/types/current-user.type";
 import { RemovalResponse } from "../shared/entities/removal-response.entity";
 import { User } from "../users/entities/user.entity";
 import { Role } from "../roles/entities/role.entity";
@@ -53,9 +53,11 @@ export class InviteCodesResolver {
   async createInviteCode(
     @Args("createInviteCodeInput", { description: "Invite code creation data" })
     createInviteCodeInput: CreateInviteCodeInput,
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<InviteCode> {
     const serviceInput = mapCreateInviteCodeInputToService(
       createInviteCodeInput,
+      user.id,
     );
     const prismaResult = await this.inviteCodesService.create(serviceInput);
     return mapPrismaInviteCodeToGraphQL(prismaResult);
@@ -197,11 +199,12 @@ export class InviteCodesResolver {
   async claimInviteCode(
     @Args("id", { type: () => ID, description: "Invite code ID" })
     id: string,
-    @Args("claimInviteCodeInput", { description: "Invite code claim data" })
-    claimInviteCodeInput: ClaimInviteCodeInput,
+    // Always the caller: a code joins the person using it, nobody else.
+    @CurrentUser() user: AuthenticatedCurrentUserType,
   ): Promise<InviteCode> {
-    const serviceInput = mapClaimInviteCodeInputToService(claimInviteCodeInput);
-    const prismaResult = await this.inviteCodesService.claim(id, serviceInput);
+    const prismaResult = await this.inviteCodesService.claim(id, {
+      userId: user.id,
+    });
     return mapPrismaInviteCodeToGraphQL(prismaResult);
   }
 

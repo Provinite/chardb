@@ -574,7 +574,6 @@ export function CommunityInviteCodesPage() {
 
     const input: CreateInviteCodeInput = {
       id: inviteCodeId,
-      creatorId: userData.me.id,
       maxClaims,
       roleId: roleId || undefined,
     };

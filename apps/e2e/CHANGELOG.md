@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Access tokens and invite codes**: specs for making, using, revoking and demoting away an access token, and for joining a community from the join page.
+
 ## [v15.7.0] - 2026-11-04
 
 ### Added

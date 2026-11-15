@@ -347,12 +347,6 @@ export type CheckoutLineInputDto = {
   shopPriceId: Scalars['ID']['input'];
 };
 
-/** Input for claiming an invite code */
-export type ClaimInviteCodeInput = {
-  /** The ID of the user who is claiming this invite code */
-  userId: Scalars['ID']['input'];
-};
-
 export type Comment = {
   __typename?: 'Comment';
   author: User;
@@ -668,8 +662,6 @@ export type CreateHalloweenPrizeInput = {
 
 /** Input for creating a new invite code */
 export type CreateInviteCodeInput = {
-  /** The ID of the user who is creating this invite code */
-  creatorId: Scalars['ID']['input'];
   /** The invite code string (alphanumeric and hyphens only) */
   id: Scalars['String']['input'];
   /** Maximum number of times this invite code can be claimed */
@@ -2698,7 +2690,6 @@ export type MutationCheckoutArgs = {
 
 
 export type MutationClaimInviteCodeArgs = {
-  claimInviteCodeInput: ClaimInviteCodeInput;
   id: Scalars['ID']['input'];
 };
 
@@ -6949,7 +6940,6 @@ export type RemoveInviteCodeMutation = { __typename?: 'Mutation', removeInviteCo
 
 export type ClaimInviteCodeMutationVariables = Exact<{
   id: Scalars['ID']['input'];
-  claimInviteCodeInput: ClaimInviteCodeInput;
 }>;
 
 
@@ -15679,8 +15669,8 @@ export type RemoveInviteCodeMutationHookResult = ReturnType<typeof useRemoveInvi
 export type RemoveInviteCodeMutationResult = Apollo.MutationResult<RemoveInviteCodeMutation>;
 export type RemoveInviteCodeMutationOptions = Apollo.BaseMutationOptions<RemoveInviteCodeMutation, RemoveInviteCodeMutationVariables>;
 export const ClaimInviteCodeDocument = gql`
-    mutation ClaimInviteCode($id: ID!, $claimInviteCodeInput: ClaimInviteCodeInput!) {
-  claimInviteCode(id: $id, claimInviteCodeInput: $claimInviteCodeInput) {
+    mutation ClaimInviteCode($id: ID!) {
+  claimInviteCode(id: $id) {
     id
     claimCount
     maxClaims
@@ -15719,7 +15709,6 @@ export type ClaimInviteCodeMutationFn = Apollo.MutationFunction<ClaimInviteCodeM
  * const [claimInviteCodeMutation, { data, loading, error }] = useClaimInviteCodeMutation({
  *   variables: {
  *      id: // value for 'id'
- *      claimInviteCodeInput: // value for 'claimInviteCodeInput'
  *   },
  * });
  */
