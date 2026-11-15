@@ -24,7 +24,9 @@ const options: NonNullable<CreateAccessTokenDialogProps["options"]> = {
   lifetimesDays: [7, 30, 90, 365],
 };
 
-const renderDialog = (overrides: Partial<CreateAccessTokenDialogProps> = {}) => {
+const renderDialog = (
+  overrides: Partial<CreateAccessTokenDialogProps> = {},
+) => {
   const props: CreateAccessTokenDialogProps = {
     open: true,
     options,
