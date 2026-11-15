@@ -3,7 +3,7 @@
 `yarn chardb`: the CharDB API from a shell, authenticated with a personal access token. Small, single-request commands meant to be composed by scripts. Making a token is covered in the [access tokens walkthrough](../../docs/docs/access-tokens.html).
 
 ```bash
-pbpaste | yarn chardb auth add      # store a token (read from stdin, never argv)
+yarn chardb auth add < token.txt    # store a token (read from stdin, never argv)
 yarn chardb whoami                  # what the token may do, and where
 yarn chardb items types --community cloverse
 yarn chardb items grant --type <itemTypeId> --user pip --quantity 3 --reason "Event prize"
@@ -37,26 +37,26 @@ Use `localhost`, not the `api.dev.localhost` host `yarn instance` prints: Node c
 
 | Command | Does |
 | --- | --- |
-| `whoami` | The token's name, expiry, owner and per-community grants |
+| `whoami` | The token's name, expiry, owner, and its permissions in each community (e.g. `canGrantItems`) |
 | `communities get <slug>` | A community's id from its subdomain label |
 | `users get <username>` | A user's id |
 | `items types --community <slug\|id>` | A community's item types. `--search`, `--category`, `--limit`, `--offset` |
 | `items grant --type <id> (--user <username\|id> \| --pending <provider>:<account>)` | `grantItem`. `--quantity` (at most 100 per call), `--reason` (members see it), `--staff-note` (staff only) |
-| `gql [file]` | Any GraphQL document, from a file or stdin. `--var name=value` (strings), `--vars '<json>'`, `--operation-name`. Prints the whole response |
+| `gql [file]` | Any GraphQL document, from a file or stdin. `--var name=value` (strings), `--vars '<json>'`, `--operation-name`. Prints the whole response. Introspection is off: the schema is `apps/backend/src/schema.gql` |
 | `auth add` / `auth list` / `auth remove <env>` | Stored tokens |
 
 Every command does at most one write. Nothing retries, batches or splits a quantity: that is the calling script's job.
 
 `--pending` grants to someone without a CharDB account, held until they link that account:
 
-- `discord:<user id>`, or `discord:<username>` in a community whose Discord server can look it up.
+- `discord:<user id>`, or `discord:<username>` in a community whose Discord server can look it up. Either way the API checks the account with Discord, so it needs a working Discord bot token: a local backend without one answers "Discord could not be reached".
 - `deviantart:<username>`. Caveat: an item held for a DeviantArt username is never claimed when that person links their account (issue #449, DeviantArt pending owners stored as handles can never be claimed).
 
 Toyhouse is not accepted for items.
 
 ## For scripts
 
-- `--json` prints JSON on stdout. Messages go to stderr.
+- `--json` prints JSON on stdout. Messages go to stderr. `items grant` prints `{"items":[{"id","itemTypeId","ownerId"}]}`, so `--json | jq -r '.items[].id'` gives the new item ids; the lookups print the record they found.
 - A command that changes production asks on the terminal first. With no terminal it is refused unless `--yes` is passed. `gql` asks only for a mutation, and cannot ask at all when the document came in on stdin.
 - Exit codes:
 
