@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v16.0.0] - 2026-11-15
+
 ### Added
 
 - **Personal access tokens**: site admins mint `chardb_pat_<env>_` bearer tokens scoped to chosen communities and permissions. Tokens never pass site-admin, signed-in, self or owner gates unless a handler is marked `@AllowAccessToken()`.

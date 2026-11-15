@@ -1,6 +1,6 @@
 {
   "name": "@chardb/eslint-plugin-permissions",
-  "version": "15.8.0",
+  "version": "16.0.0",
   "private": true,
   "description": "ESLint rules that keep backend permission checks behind RequestPermissions",
   "main": "./src/index.js",

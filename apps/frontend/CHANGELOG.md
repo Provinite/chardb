@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v16.0.0] - 2026-11-15
+
 ### Added
 
 - **Access tokens page**: site admins create and revoke personal access tokens at `/admin/access-tokens`.
