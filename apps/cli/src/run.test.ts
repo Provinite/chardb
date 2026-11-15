@@ -638,6 +638,8 @@ describe("items grant", () => {
     [["--user", USER_ID, "--pending", "discord:1"]],
     [[]],
     [["--pending", "patreon:1"]],
+    // grantItem refuses Toyhouse pending owners.
+    [["--pending", "toyhouse:someone"]],
     [["--pending", "deviantart"]],
   ])("exits 2 for recipient flags %j", async (flags) => {
     const h = harness();

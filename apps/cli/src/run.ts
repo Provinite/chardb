@@ -55,10 +55,10 @@ interface Session {
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
+/** The providers `grantItem` accepts a pending owner for. */
 const PENDING_PROVIDERS: Record<string, ExternalAccountProvider> = {
   deviantart: ExternalAccountProvider.Deviantart,
   discord: ExternalAccountProvider.Discord,
-  toyhouse: ExternalAccountProvider.Toyhouse,
 };
 
 /** Runs one command line. Never throws: every outcome is an exit code. */
@@ -149,7 +149,8 @@ export async function run(options: RunOptions): Promise<number> {
     })
     .option("api-url", {
       type: "string",
-      describe: "GraphQL endpoint, instead of the one the token names",
+      describe:
+        "API to use instead of the one the token names, e.g. http://localhost:21001 (/graphql is added)",
     })
     .option("json", {
       type: "boolean",
@@ -331,7 +332,7 @@ export async function run(options: RunOptions): Promise<number> {
               .option("pending", {
                 type: "string",
                 describe:
-                  "External recipient as provider:accountId (deviantart, discord, toyhouse)",
+                  "External recipient: deviantart:<username> or discord:<user id or username>",
               })
               .option("quantity", { type: "number", default: 1 })
               .option("reason", {
@@ -520,7 +521,7 @@ function parsePending(value: string) {
   const providerAccountId = value.slice(separator + 1);
   if (separator <= 0 || !provider || !providerAccountId) {
     throw new UsageError(
-      "--pending takes provider:accountId, with provider deviantart, discord or toyhouse",
+      "--pending takes deviantart:<username> or discord:<user id or username>",
     );
   }
   return { provider, providerAccountId };

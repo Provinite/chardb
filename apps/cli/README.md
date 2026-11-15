@@ -23,7 +23,15 @@ The token's prefix picks the API:
 | `chardb_pat_dev_…`   | `https://api.dev.chardb.cc/graphql`                         |
 | `chardb_pat_local_…` | `http://localhost:4000/graphql`                             |
 
-`--api-url` or `CHARDB_API_URL` overrides it: a worktree on another port passes its backend's URL from `yarn instance`. A prod or dev token is only sent to an `https` URL; a local token goes anywhere. A token sent to another environment's API is refused by the API.
+`--api-url` or `CHARDB_API_URL` overrides it; `/graphql` is added to a URL without it. A prod or dev token is only sent to an `https` URL. A token sent to another environment's API is refused by the API.
+
+In a worktree, the backend is not on port 4000. Take its port from the `backend` line of `yarn instance` and set it once:
+
+```bash
+export CHARDB_API_URL=http://localhost:21001   # the backend port, on plain localhost
+```
+
+Use `localhost`, not the `api.dev.localhost` host `yarn instance` prints: Node cannot resolve it. Without this, a local token goes to the main checkout's backend and its database.
 
 ## Commands
 
@@ -33,11 +41,18 @@ The token's prefix picks the API:
 | `communities get <slug>` | A community's id from its subdomain label |
 | `users get <username>` | A user's id |
 | `items types --community <slug\|id>` | A community's item types. `--search`, `--category`, `--limit`, `--offset` |
-| `items grant --type <id> (--user <username\|id> \| --pending <provider>:<accountId>)` | `grantItem`. `--quantity` (at most 100 per call), `--reason`, `--staff-note`. `--pending` takes `deviantart`, `discord` or `toyhouse` |
+| `items grant --type <id> (--user <username\|id> \| --pending <provider>:<account>)` | `grantItem`. `--quantity` (at most 100 per call), `--reason` (members see it), `--staff-note` (staff only) |
 | `gql [file]` | Any GraphQL document, from a file or stdin. `--var name=value` (strings), `--vars '<json>'`, `--operation-name`. Prints the whole response |
 | `auth add` / `auth list` / `auth remove <env>` | Stored tokens |
 
 Every command does at most one write. Nothing retries, batches or splits a quantity: that is the calling script's job.
+
+`--pending` grants to someone without a CharDB account, held until they link that account:
+
+- `discord:<user id>`, or `discord:<username>` in a community whose Discord server can look it up.
+- `deviantart:<username>`. Caveat: an item held for a DeviantArt username is never claimed when that person links their account (issue #449, DeviantArt pending owners stored as handles can never be claimed).
+
+Toyhouse is not accepted for items.
 
 ## For scripts
 
