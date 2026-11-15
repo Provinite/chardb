@@ -108,8 +108,8 @@ describe("AccessTokensPage", () => {
       screen.getAllByRole("button", { name: "Create token" }).at(-1)!,
     );
 
-    expect(
-      await screen.findByTestId("access-token-secret"),
-    ).toHaveTextContent("chardb_pat_made");
+    expect(await screen.findByTestId("access-token-secret")).toHaveTextContent(
+      "chardb_pat_made",
+    );
   });
 });
