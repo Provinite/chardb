@@ -284,6 +284,8 @@ export class PendingOwnershipService {
           },
         ],
       },
+      // In currency order, for the same reason as claimAllForAccount.
+      orderBy: [{ currencyId: "asc" }, { createdAt: "asc" }],
     });
     const now = new Date();
     const claimed: PendingOwnership[] = [];
@@ -506,7 +508,11 @@ export class PendingOwnershipService {
     const pending = await tx.pendingOwnership.findUniqueOrThrow({
       where: { id: pendingOwnershipId },
     });
-    await this.claimOne(tx, pending, userId, new Date());
+    // A link or join may have claimed it first; that claim is the one that
+    // counts, not this job's.
+    if (!(await this.claimOne(tx, pending, userId, new Date()))) {
+      return { claimed: false };
+    }
 
     return { claimed: true, claimedByUserId: userId };
   }
@@ -795,6 +801,10 @@ export class PendingOwnershipService {
       await lockPendingAccounts(tx, [{ provider, providerAccountId }]);
       const pendingItems = await tx.pendingOwnership.findMany({
         where: { provider, providerAccountId, claimedAt: null },
+        // Currency grants credit balances in currency order, as debit()
+        // spends them, so a claim and the member's own checkout queue on the
+        // balance rows rather than deadlock.
+        orderBy: [{ currencyId: "asc" }, { createdAt: "asc" }],
       });
 
       const claimed: PendingOwnership[] = [];
