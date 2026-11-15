@@ -41,8 +41,9 @@ const exitCode = await run({
   interactive: Boolean(process.stdin.isTTY && process.stderr.isTTY),
   ask,
   credentialsPath: defaultCredentialsPath(process.env, homedir()),
-  // Yarn runs the script from the package. INIT_CWD is where it was typed,
-  // except that `yarn workspace` resets it, so the root script passes it on.
-  cwd: process.env.CHARDB_CLI_CWD || process.env.INIT_CWD || process.cwd(),
+  // Yarn runs the script from the package, so the `cli` script passes on
+  // where it was typed as CHARDB_CLI_CWD. Run directly, the bundle uses its
+  // own cwd: an INIT_CWD it sees was inherited from some parent Yarn process.
+  cwd: process.env.CHARDB_CLI_CWD || process.cwd(),
 });
 process.exitCode = exitCode;

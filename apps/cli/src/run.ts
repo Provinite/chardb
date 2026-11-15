@@ -142,6 +142,8 @@ export async function run(options: RunOptions): Promise<number> {
 
   const parser = (yargs(options.argv) as Argv<GlobalArgs>)
     .scriptName("chardb")
+    // The bundle leaves yargs' translations behind; source matches it.
+    .locale("en")
     .usage("$0 <command> [options]")
     .option("env", {
       choices: ENVIRONMENTS,

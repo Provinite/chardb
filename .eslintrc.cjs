@@ -88,7 +88,7 @@ module.exports = {
           "**/*.config.{js,cjs,mjs,ts,mts}",
           "apps/e2e/**",
           "apps/backend/test/**",
-          "scripts/**",
+          "**/scripts/**",
         ],
       },
     ],
