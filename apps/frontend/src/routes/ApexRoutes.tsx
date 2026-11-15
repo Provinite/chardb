@@ -53,6 +53,7 @@ import {
   MyCommunitiesPage,
   DeviantArtBackfillPage,
   DiscordNameBackfillPage,
+  AccessTokensPage,
   DeviantArtCallbackPage,
   DiscordCallbackPage,
   ToyhouseCallbackPage,
@@ -328,6 +329,14 @@ export const apexRoutes = (
       element={
         <SiteAdminRoute allow={isSiteAdmin}>
           <DiscordNameBackfillPage />
+        </SiteAdminRoute>
+      }
+    />
+    <Route
+      path="/admin/access-tokens"
+      element={
+        <SiteAdminRoute allow={isSiteAdmin}>
+          <AccessTokensPage />
         </SiteAdminRoute>
       }
     />

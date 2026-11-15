@@ -694,6 +694,12 @@ export type CreateItemTypeInput = {
   name: Scalars['String']['input'];
 };
 
+export type CreatePersonalAccessTokenInput = {
+  communities: Array<PersonalAccessTokenGrantInput>;
+  expiresInDays: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+};
+
 /** Input for creating a new role */
 export type CreateRoleInput = {
   /** Whether members with this role can create new characters */
@@ -843,6 +849,13 @@ export type CreateTraitListEntryInput = {
   traitId: Scalars['ID']['input'];
   /** Type of values this trait stores */
   valueType: TraitValueType;
+};
+
+export type CreatedPersonalAccessToken = {
+  __typename?: 'CreatedPersonalAccessToken';
+  /** The token's secret, sent as `Authorization: Bearer <secret>`. Returned once; it cannot be read again. */
+  secret: Scalars['String']['output'];
+  token: PersonalAccessToken;
 };
 
 /** A community-defined unit of account. A community may define any number of them; they never convert into one another and never leave their community. */
@@ -2394,6 +2407,8 @@ export type Mutation = {
   /** Create a new invite code */
   createInviteCode: InviteCode;
   createItemType: ItemType;
+  /** Mints a personal access token for the caller. The secret is in this response and nowhere else. */
+  createPersonalAccessToken: CreatedPersonalAccessToken;
   /** Create a new role */
   createRole: Role;
   createShopItem: ShopItem;
@@ -2512,6 +2527,7 @@ export type Mutation = {
   revertTraitReview: TraitReview;
   /** Revoke items, destroying them. Soft: a destroyed item keeps its provenance readable. A public reason is required -- it is written to the ledger and shown to anyone who can read it. Returns the count. */
   revokeItems: Scalars['Int']['output'];
+  revokePersonalAccessToken: PersonalAccessToken;
   /** Start a DeviantArt UUID backfill job. Client provides the jobId (subscribe first, then call this). */
   runDeviantartUuidBackfill: Scalars['Boolean']['output'];
   /** Start looking up Discord names for unclaimed Discord pending owners. Returns at once; poll discordNameBackfillStatus for progress. */
@@ -2778,6 +2794,11 @@ export type MutationCreateInviteCodeArgs = {
 
 export type MutationCreateItemTypeArgs = {
   input: CreateItemTypeInput;
+};
+
+
+export type MutationCreatePersonalAccessTokenArgs = {
+  input: CreatePersonalAccessTokenInput;
 };
 
 
@@ -3098,6 +3119,11 @@ export type MutationRevokeItemsArgs = {
   itemIds: Array<Scalars['ID']['input']>;
   reason: Scalars['String']['input'];
   staffNote?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationRevokePersonalAccessTokenArgs = {
+  id: Scalars['ID']['input'];
 };
 
 
@@ -3579,6 +3605,51 @@ export type PendingOwnership = {
   providerAccountId: Scalars['String']['output'];
 };
 
+export type PersonalAccessToken = {
+  __typename?: 'PersonalAccessToken';
+  communities: Array<PersonalAccessTokenGrant>;
+  createdAt: Scalars['DateTime']['output'];
+  /** The secret's last four characters. */
+  displayHint: Scalars['String']['output'];
+  expiresAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  lastUsedAt: Maybe<Scalars['DateTime']['output']>;
+  name: Scalars['String']['output'];
+  revokedAt: Maybe<Scalars['DateTime']['output']>;
+};
+
+export type PersonalAccessTokenCommunityRef = {
+  __typename?: 'PersonalAccessTokenCommunityRef';
+  id: Scalars['ID']['output'];
+  name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+};
+
+/** What a token may do in one community. */
+export type PersonalAccessTokenGrant = {
+  __typename?: 'PersonalAccessTokenGrant';
+  community: PersonalAccessTokenCommunityRef;
+  /** Passes gates that ask only for membership. */
+  member: Scalars['Boolean']['output'];
+  /** Community permission names, such as canManageItems. */
+  permissions: Array<Scalars['String']['output']>;
+};
+
+export type PersonalAccessTokenGrantInput = {
+  communityId: Scalars['ID']['input'];
+  member: Scalars['Boolean']['input'];
+  permissions: Array<Scalars['String']['input']>;
+};
+
+export type PersonalAccessTokenGrantOptions = {
+  __typename?: 'PersonalAccessTokenGrantOptions';
+  communities: Array<PersonalAccessTokenCommunityRef>;
+  /** Lifetimes a token may have, in days. */
+  lifetimesDays: Array<Scalars['Int']['output']>;
+  /** Every community permission a token may be granted. */
+  permissions: Array<Scalars['String']['output']>;
+};
+
 export type Query = {
   __typename?: 'Query';
   activityFeed: Array<ActivityItem>;
@@ -3767,6 +3838,10 @@ export type Query = {
   pendingImageCount: Scalars['Int']['output'];
   /** Get count of pending trait reviews for a community */
   pendingTraitReviewCount: Scalars['Int']['output'];
+  /** What a new personal access token may be granted. */
+  personalAccessTokenGrantOptions: PersonalAccessTokenGrantOptions;
+  /** The caller's personal access tokens, newest first. */
+  personalAccessTokens: Array<PersonalAccessToken>;
   /** Resolve a Discord username or user ID to full user information. Requires permission to create orphaned characters. */
   resolveDiscordUser: DiscordUserInfo;
   /** Get a role by ID */
@@ -7270,6 +7345,32 @@ export type MarkAllNotificationsReadMutationVariables = Exact<{ [key: string]: n
 
 export type MarkAllNotificationsReadMutation = { __typename?: 'Mutation', markAllNotificationsRead: number };
 
+export type PersonalAccessTokenFieldsFragment = { __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> };
+
+export type PersonalAccessTokensQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PersonalAccessTokensQuery = { __typename?: 'Query', personalAccessTokens: Array<{ __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> }> };
+
+export type PersonalAccessTokenGrantOptionsQueryVariables = Exact<{ [key: string]: never; }>;
+
+
+export type PersonalAccessTokenGrantOptionsQuery = { __typename?: 'Query', personalAccessTokenGrantOptions: { __typename?: 'PersonalAccessTokenGrantOptions', permissions: Array<string>, lifetimesDays: Array<number>, communities: Array<{ __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string }> } };
+
+export type CreatePersonalAccessTokenMutationVariables = Exact<{
+  input: CreatePersonalAccessTokenInput;
+}>;
+
+
+export type CreatePersonalAccessTokenMutation = { __typename?: 'Mutation', createPersonalAccessToken: { __typename?: 'CreatedPersonalAccessToken', secret: string, token: { __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> } } };
+
+export type RevokePersonalAccessTokenMutationVariables = Exact<{
+  id: Scalars['ID']['input'];
+}>;
+
+
+export type RevokePersonalAccessTokenMutation = { __typename?: 'Mutation', revokePersonalAccessToken: { __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> } };
+
 export type RolesByCommunityDetailedQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
   first: Scalars['Int']['input'];
@@ -8510,6 +8611,25 @@ export const NotificationFieldsFragmentDoc = gql`
     id
     name
     slug
+  }
+}
+    `;
+export const PersonalAccessTokenFieldsFragmentDoc = gql`
+    fragment PersonalAccessTokenFields on PersonalAccessToken {
+  id
+  name
+  displayHint
+  createdAt
+  expiresAt
+  lastUsedAt
+  revokedAt
+  communities {
+    community {
+      id
+      name
+    }
+    member
+    permissions
   }
 }
     `;
@@ -18255,6 +18375,158 @@ export function useMarkAllNotificationsReadMutation(baseOptions?: Apollo.Mutatio
 export type MarkAllNotificationsReadMutationHookResult = ReturnType<typeof useMarkAllNotificationsReadMutation>;
 export type MarkAllNotificationsReadMutationResult = Apollo.MutationResult<MarkAllNotificationsReadMutation>;
 export type MarkAllNotificationsReadMutationOptions = Apollo.BaseMutationOptions<MarkAllNotificationsReadMutation, MarkAllNotificationsReadMutationVariables>;
+export const PersonalAccessTokensDocument = gql`
+    query PersonalAccessTokens {
+  personalAccessTokens {
+    ...PersonalAccessTokenFields
+  }
+}
+    ${PersonalAccessTokenFieldsFragmentDoc}`;
+
+/**
+ * __usePersonalAccessTokensQuery__
+ *
+ * To run a query within a React component, call `usePersonalAccessTokensQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePersonalAccessTokensQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePersonalAccessTokensQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function usePersonalAccessTokensQuery(baseOptions?: Apollo.QueryHookOptions<PersonalAccessTokensQuery, PersonalAccessTokensQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<PersonalAccessTokensQuery, PersonalAccessTokensQueryVariables>(PersonalAccessTokensDocument, options);
+      }
+export function usePersonalAccessTokensLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<PersonalAccessTokensQuery, PersonalAccessTokensQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<PersonalAccessTokensQuery, PersonalAccessTokensQueryVariables>(PersonalAccessTokensDocument, options);
+        }
+export function usePersonalAccessTokensSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<PersonalAccessTokensQuery, PersonalAccessTokensQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<PersonalAccessTokensQuery, PersonalAccessTokensQueryVariables>(PersonalAccessTokensDocument, options);
+        }
+export type PersonalAccessTokensQueryHookResult = ReturnType<typeof usePersonalAccessTokensQuery>;
+export type PersonalAccessTokensLazyQueryHookResult = ReturnType<typeof usePersonalAccessTokensLazyQuery>;
+export type PersonalAccessTokensSuspenseQueryHookResult = ReturnType<typeof usePersonalAccessTokensSuspenseQuery>;
+export type PersonalAccessTokensQueryResult = Apollo.QueryResult<PersonalAccessTokensQuery, PersonalAccessTokensQueryVariables>;
+export const PersonalAccessTokenGrantOptionsDocument = gql`
+    query PersonalAccessTokenGrantOptions {
+  personalAccessTokenGrantOptions {
+    communities {
+      id
+      name
+    }
+    permissions
+    lifetimesDays
+  }
+}
+    `;
+
+/**
+ * __usePersonalAccessTokenGrantOptionsQuery__
+ *
+ * To run a query within a React component, call `usePersonalAccessTokenGrantOptionsQuery` and pass it any options that fit your needs.
+ * When your component renders, `usePersonalAccessTokenGrantOptionsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = usePersonalAccessTokenGrantOptionsQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function usePersonalAccessTokenGrantOptionsQuery(baseOptions?: Apollo.QueryHookOptions<PersonalAccessTokenGrantOptionsQuery, PersonalAccessTokenGrantOptionsQueryVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<PersonalAccessTokenGrantOptionsQuery, PersonalAccessTokenGrantOptionsQueryVariables>(PersonalAccessTokenGrantOptionsDocument, options);
+      }
+export function usePersonalAccessTokenGrantOptionsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<PersonalAccessTokenGrantOptionsQuery, PersonalAccessTokenGrantOptionsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<PersonalAccessTokenGrantOptionsQuery, PersonalAccessTokenGrantOptionsQueryVariables>(PersonalAccessTokenGrantOptionsDocument, options);
+        }
+export function usePersonalAccessTokenGrantOptionsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<PersonalAccessTokenGrantOptionsQuery, PersonalAccessTokenGrantOptionsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<PersonalAccessTokenGrantOptionsQuery, PersonalAccessTokenGrantOptionsQueryVariables>(PersonalAccessTokenGrantOptionsDocument, options);
+        }
+export type PersonalAccessTokenGrantOptionsQueryHookResult = ReturnType<typeof usePersonalAccessTokenGrantOptionsQuery>;
+export type PersonalAccessTokenGrantOptionsLazyQueryHookResult = ReturnType<typeof usePersonalAccessTokenGrantOptionsLazyQuery>;
+export type PersonalAccessTokenGrantOptionsSuspenseQueryHookResult = ReturnType<typeof usePersonalAccessTokenGrantOptionsSuspenseQuery>;
+export type PersonalAccessTokenGrantOptionsQueryResult = Apollo.QueryResult<PersonalAccessTokenGrantOptionsQuery, PersonalAccessTokenGrantOptionsQueryVariables>;
+export const CreatePersonalAccessTokenDocument = gql`
+    mutation CreatePersonalAccessToken($input: CreatePersonalAccessTokenInput!) {
+  createPersonalAccessToken(input: $input) {
+    secret
+    token {
+      ...PersonalAccessTokenFields
+    }
+  }
+}
+    ${PersonalAccessTokenFieldsFragmentDoc}`;
+export type CreatePersonalAccessTokenMutationFn = Apollo.MutationFunction<CreatePersonalAccessTokenMutation, CreatePersonalAccessTokenMutationVariables>;
+
+/**
+ * __useCreatePersonalAccessTokenMutation__
+ *
+ * To run a mutation, you first call `useCreatePersonalAccessTokenMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useCreatePersonalAccessTokenMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [createPersonalAccessTokenMutation, { data, loading, error }] = useCreatePersonalAccessTokenMutation({
+ *   variables: {
+ *      input: // value for 'input'
+ *   },
+ * });
+ */
+export function useCreatePersonalAccessTokenMutation(baseOptions?: Apollo.MutationHookOptions<CreatePersonalAccessTokenMutation, CreatePersonalAccessTokenMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<CreatePersonalAccessTokenMutation, CreatePersonalAccessTokenMutationVariables>(CreatePersonalAccessTokenDocument, options);
+      }
+export type CreatePersonalAccessTokenMutationHookResult = ReturnType<typeof useCreatePersonalAccessTokenMutation>;
+export type CreatePersonalAccessTokenMutationResult = Apollo.MutationResult<CreatePersonalAccessTokenMutation>;
+export type CreatePersonalAccessTokenMutationOptions = Apollo.BaseMutationOptions<CreatePersonalAccessTokenMutation, CreatePersonalAccessTokenMutationVariables>;
+export const RevokePersonalAccessTokenDocument = gql`
+    mutation RevokePersonalAccessToken($id: ID!) {
+  revokePersonalAccessToken(id: $id) {
+    ...PersonalAccessTokenFields
+  }
+}
+    ${PersonalAccessTokenFieldsFragmentDoc}`;
+export type RevokePersonalAccessTokenMutationFn = Apollo.MutationFunction<RevokePersonalAccessTokenMutation, RevokePersonalAccessTokenMutationVariables>;
+
+/**
+ * __useRevokePersonalAccessTokenMutation__
+ *
+ * To run a mutation, you first call `useRevokePersonalAccessTokenMutation` within a React component and pass it any options that fit your needs.
+ * When your component renders, `useRevokePersonalAccessTokenMutation` returns a tuple that includes:
+ * - A mutate function that you can call at any time to execute the mutation
+ * - An object with fields that represent the current status of the mutation's execution
+ *
+ * @param baseOptions options that will be passed into the mutation, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options-2;
+ *
+ * @example
+ * const [revokePersonalAccessTokenMutation, { data, loading, error }] = useRevokePersonalAccessTokenMutation({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useRevokePersonalAccessTokenMutation(baseOptions?: Apollo.MutationHookOptions<RevokePersonalAccessTokenMutation, RevokePersonalAccessTokenMutationVariables>) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useMutation<RevokePersonalAccessTokenMutation, RevokePersonalAccessTokenMutationVariables>(RevokePersonalAccessTokenDocument, options);
+      }
+export type RevokePersonalAccessTokenMutationHookResult = ReturnType<typeof useRevokePersonalAccessTokenMutation>;
+export type RevokePersonalAccessTokenMutationResult = Apollo.MutationResult<RevokePersonalAccessTokenMutation>;
+export type RevokePersonalAccessTokenMutationOptions = Apollo.BaseMutationOptions<RevokePersonalAccessTokenMutation, RevokePersonalAccessTokenMutationVariables>;
 export const RolesByCommunityDetailedDocument = gql`
     query RolesByCommunityDetailed($communityId: ID!, $first: Int!, $after: String) {
   rolesByCommunity(communityId: $communityId, first: $first, after: $after) {

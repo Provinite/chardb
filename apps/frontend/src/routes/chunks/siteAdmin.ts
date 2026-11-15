@@ -5,3 +5,4 @@ export { SiteInviteCodesPage } from "../../pages/SiteInviteCodesPage";
 export { CommunityManagementPage } from "../../pages/CommunityManagementPage";
 export { DeviantArtBackfillPage } from "../../pages/DeviantArtBackfillPage";
 export { DiscordNameBackfillPage } from "../../pages/DiscordNameBackfillPage";
+export { AccessTokensPage } from "../../pages/AccessTokensPage";

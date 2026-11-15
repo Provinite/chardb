@@ -406,3 +406,4 @@ export const DiscordNameBackfillPage = lazyPage(
   siteAdmin,
   "DiscordNameBackfillPage",
 );
+export const AccessTokensPage = lazyPage(siteAdmin, "AccessTokensPage");
