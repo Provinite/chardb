@@ -287,16 +287,17 @@
             alt="The copy-your-token dialog showing a chardb_pat_ token with Copy and Done buttons."
           />
           <div class="screenshot-caption">
-            The only view of the secret. The list shows its last four
-            characters afterwards, to tell tokens apart.
+            The only view of the secret. The list shows its last four characters
+            afterwards, to tell tokens apart.
           </div>
         </div>
         <div class="step-content" style="margin-top: 1.5rem">
           <p>The script sends it the same way the site sends a session:</p>
-          <div class="example">curl https://api.chardb.cc/graphql \
-  -H "Authorization: Bearer chardb_pat_…" \
-  -H "Content-Type: application/json" \
-  -d '{"query":"{ me { username } }"}'</div>
+          <div class="example">
+            curl https://api.chardb.cc/graphql \ -H "Authorization: Bearer
+            chardb_pat_…" \ -H "Content-Type: application/json" \ -d
+            '{"query":"{ me { username } }"}'
+          </div>
           <p>
             A token that has expired or been revoked gets an
             <code>UNAUTHENTICATED</code> error on every request, rather than
