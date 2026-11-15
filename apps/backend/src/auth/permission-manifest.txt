@@ -172,6 +172,7 @@ CurrencyTransactionFieldsResolver.resolveCounterparty (ResolveField): signed in
 CurrencyTransactionFieldsResolver.resolveCurrency (ResolveField): signed in
 CurrencyTransactionFieldsResolver.resolveStaffNote (ResolveField): signed in
 CurrencyTransactionFieldsResolver.resolveUser (ResolveField): signed in
+CurrentAccessTokenResolver.currentAccessToken (Query): signed in (access tokens admitted)
 DeviantArtOAuthController.handleCallback (GET): anyone and OAuthLinkCallbackGuard
 DeviantArtOAuthController.initiateOAuth (GET): signed in
 DeviantartUuidBackfillResolver.cancelDeviantartUuidBackfill (Mutation): global isAdmin

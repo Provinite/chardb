@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`currentAccessToken` query**: a personal access token reads its own name, expiry and community grants; null for a session.
+
 ## [v16.0.0] - 2026-11-15
 
 ### Added

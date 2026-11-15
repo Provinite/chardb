@@ -33,6 +33,18 @@ const REVOKE = `
 
 const ME = `query { me { id username } }`;
 
+const CURRENT = `
+  query {
+    currentAccessToken {
+      id
+      name
+      displayHint
+      expiresAt
+      communities { community { id name slug } member permissions }
+    }
+  }
+`;
+
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /**
@@ -312,6 +324,53 @@ describe("personal access tokens (e2e)", () => {
           .getDb()
           .user.update({ where: { id: adminId }, data: { isAdmin: true } });
       }
+    });
+  });
+
+  describe("reading itself", () => {
+    it("shows the token it was called with, with its grants", async () => {
+      const { secret, id } = await mint();
+
+      const response = await testApp.authenticatedGraphqlRequest(
+        CURRENT,
+        {},
+        secret,
+      );
+
+      expect(response.body.errors).toBeUndefined();
+      const current = response.body.data.currentAccessToken;
+      expect(current.id).toBe(id);
+      expect(current.name).toBe("deploy bot");
+      expect(current.displayHint).toBe(secret.slice(-4));
+      expect(current.communities).toEqual([
+        {
+          community: {
+            id: communityId,
+            name: "Tokenville",
+            slug: expect.any(String),
+          },
+          member: true,
+          permissions: ["canManageItems"],
+        },
+      ]);
+    });
+
+    it("is null for a session", async () => {
+      const response = await testApp.authenticatedGraphqlRequest(
+        CURRENT,
+        {},
+        adminSession,
+      );
+
+      expect(response.body.errors).toBeUndefined();
+      expect(response.body.data.currentAccessToken).toBeNull();
+    });
+
+    it("refuses an anonymous caller", async () => {
+      const response = await testApp.graphqlRequest(CURRENT);
+
+      expect(response.body.data?.currentAccessToken ?? null).toBeNull();
+      expect(response.body.errors).toBeDefined();
     });
   });
 

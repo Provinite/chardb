@@ -20,7 +20,7 @@ type StoredToken = Awaited<
 >[number];
 
 /** A stored token as the API shows it: membership apart from permissions. */
-const toGraphql = (token: StoredToken): PersonalAccessToken => ({
+export const toGraphql = (token: StoredToken): PersonalAccessToken => ({
   id: token.id,
   name: token.name,
   displayHint: token.displayHint,
@@ -40,7 +40,8 @@ const toGraphql = (token: StoredToken): PersonalAccessToken => ({
 /**
  * Site admins' personal access tokens. Every handler here is
  * `@AllowGlobalAdmin()` and none is `@AllowAccessToken()`: a token holds no
- * global permission, so a token cannot list, mint or revoke tokens.
+ * global permission, so a token cannot list, mint or revoke tokens. A token
+ * reads itself through `CurrentAccessTokenResolver` instead.
  */
 @Resolver()
 export class PersonalAccessTokensResolver {

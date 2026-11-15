@@ -204,6 +204,14 @@ export class PersonalAccessTokensService {
     });
   }
 
+  /** One token by id, whoever owns it. */
+  get(tokenId: string) {
+    return this.db.personalAccessToken.findUniqueOrThrow({
+      where: { id: tokenId },
+      include: withCommunities,
+    });
+  }
+
   /** Revoking a revoked token leaves its first revocation time. */
   async revoke(ownerId: string, tokenId: string) {
     const token = await this.db.personalAccessToken.findFirst({
