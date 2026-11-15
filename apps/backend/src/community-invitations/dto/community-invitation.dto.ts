@@ -15,13 +15,6 @@ export class CreateCommunityInvitationInput {
   @IsUUID(4, { message: "Invitee ID must be a valid UUID" })
   inviteeId!: string;
 
-  /** The user who is creating the invitation */
-  @Field(() => ID, {
-    description: "The ID of the user who is creating the invitation",
-  })
-  @IsUUID(4, { message: "Inviter ID must be a valid UUID" })
-  inviterId!: string;
-
   /** The community the invitation is for */
   @Field(() => ID, {
     description: "The ID of the community the invitation is for",

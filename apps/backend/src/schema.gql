@@ -714,9 +714,6 @@ input CreateCommunityInvitationInput {
   """The ID of the user being invited"""
   inviteeId: ID!
 
-  """The ID of the user who is creating the invitation"""
-  inviterId: ID!
-
   """The ID of the role to grant when the invitation is accepted"""
   roleId: ID!
 }

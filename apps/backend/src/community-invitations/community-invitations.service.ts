@@ -5,6 +5,7 @@ import {
 } from "@nestjs/common";
 import { DatabaseService } from "../database/database.service";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
+import { RoleInAnotherCommunityError } from "../community-membership/role-in-another-community.error";
 
 /**
  * Service layer input types for community invitations operations.
@@ -41,8 +42,23 @@ export class CommunityInvitationsService {
     private membership: CommunityMembershipService,
   ) {}
 
-  /** Create a new community invitation */
+  /**
+   * Create a new community invitation.
+   *
+   * @throws RoleInAnotherCommunityError for a role from a community other
+   * than the invitation's. Accepting joins the role's community, so such a
+   * role would invite someone somewhere the inviter may not.
+   */
   async create(input: CreateCommunityInvitationServiceInput) {
+    const role = await this.prisma.role.findUnique({
+      where: { id: input.roleId },
+      select: { communityId: true },
+    });
+    if (!role) throw new NotFoundException("Role not found");
+    if (role.communityId !== input.communityId) {
+      throw new RoleInAnotherCommunityError();
+    }
+
     // Check if there's already a pending invitation for this role and invitee
     const existingInvitation = await this.prisma.communityInvitation.findFirst({
       where: {

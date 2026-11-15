@@ -604,8 +604,6 @@ export type CreateCommunityInvitationInput = {
   communityId: Scalars['ID']['input'];
   /** The ID of the user being invited */
   inviteeId: Scalars['ID']['input'];
-  /** The ID of the user who is creating the invitation */
-  inviterId: Scalars['ID']['input'];
   /** The ID of the role to grant when the invitation is accepted */
   roleId: Scalars['ID']['input'];
 };

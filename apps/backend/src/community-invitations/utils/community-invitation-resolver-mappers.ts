@@ -17,11 +17,13 @@ import { Prisma } from "@chardb/database";
  */
 export function mapCreateCommunityInvitationInputToService(
   input: CreateCommunityInvitationInput,
+  /** Always the caller: an invitation names who actually made it. */
+  inviterId: string,
 ) {
   return {
     roleId: input.roleId,
     inviteeId: input.inviteeId,
-    inviterId: input.inviterId,
+    inviterId,
     communityId: input.communityId,
   };
 }

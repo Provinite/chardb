@@ -1,8 +1,5 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
+import { RoleInAnotherCommunityError } from "../community-membership/role-in-another-community.error";
 import { DatabaseService } from "../database/database.service";
 import { Prisma } from "@chardb/database";
 import { CommunityMembershipService } from "../community-membership/community-membership.service";
@@ -36,13 +33,6 @@ const NEWEST_FIRST: Prisma.CommunityMemberOrderByWithRelationInput[] = [
   { createdAt: "desc" },
   { id: "desc" },
 ];
-
-/** A member's new role is from a community other than their membership's. */
-export class RoleInAnotherCommunityError extends BadRequestException {
-  constructor() {
-    super("That role belongs to another community");
-  }
-}
 
 @Injectable()
 export class CommunityMembersService {

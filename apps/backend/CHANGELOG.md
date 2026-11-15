@@ -21,7 +21,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
-- **Member role changes**: `updateCommunityMember` accepts only a role from the member's own community.
+- **Community roles**: `updateCommunityMember` and `createCommunityInvitation` accept only the community's own roles. An invitation's inviter is now always the caller; `inviterId` is gone from its input.
 - **Character list order**: characters with the same name, price or date keep one order across pages, so Load More no longer repeats or skips them.
 
 ## [v15.8.0] - 2026-11-04
