@@ -117,7 +117,8 @@ describe("personal access tokens (e2e)", () => {
 
       expect(response.body.errors).toBeUndefined();
       const { secret, token } = response.body.data.createPersonalAccessToken;
-      expect(secret).toMatch(/^chardb_pat_[A-Za-z0-9_-]{43}$/);
+      // The test server names no environment and is no production build.
+      expect(secret).toMatch(/^chardb_pat_local_[A-Za-z0-9_-]{43}$/);
       expect(token.displayHint).toBe(secret.slice(-4));
       expect(token.communities).toEqual([
         {
@@ -249,10 +250,28 @@ describe("personal access tokens (e2e)", () => {
       );
       expect(response.body.data?.me ?? null).toBeNull();
       expect(errorCode(response)).toBe("UNAUTHENTICATED");
+      return response.body.errors[0].message as string;
     };
 
     it("refuses a secret that matches no token", async () => {
-      await refused("chardb_pat_not-a-real-token");
+      expect(await refused("chardb_pat_local_not-a-real-token")).toBe(
+        "Access token is invalid, expired or revoked",
+      );
+    });
+
+    it("says so when a token is for another environment", async () => {
+      const { secret } = await mint();
+      const elsewhere = secret.replace("chardb_pat_local_", "chardb_pat_prod_");
+
+      expect(await refused(elsewhere)).toBe(
+        "This access token belongs to another environment",
+      );
+    });
+
+    it("refuses a secret that names no environment", async () => {
+      expect(await refused("chardb_pat_abc")).toBe(
+        "Access token is invalid, expired or revoked",
+      );
     });
 
     it("refuses a revoked token", async () => {

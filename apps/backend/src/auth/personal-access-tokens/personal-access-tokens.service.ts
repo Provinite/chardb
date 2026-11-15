@@ -3,8 +3,10 @@ import {
   Injectable,
   Logger,
   NotFoundException,
+  ServiceUnavailableException,
   UnauthorizedException,
 } from "@nestjs/common";
+import { ConfigService } from "@nestjs/config";
 import type { User } from "@chardb/database";
 import { DatabaseService } from "../../database/database.service";
 import {
@@ -13,9 +15,14 @@ import {
 } from "../CommunityPermission";
 import { PermissionService, type AccessTokenGrant } from "../PermissionService";
 import {
+  accessTokenSecretEnvironment,
   generateAccessTokenSecret,
   hashAccessTokenSecret,
 } from "./access-token-secret";
+import {
+  accessTokenEnvironment,
+  type AccessTokenEnvironment,
+} from "./access-token-environment";
 
 /** How long a new token may last, in days. */
 export const ACCESS_TOKEN_LIFETIMES_DAYS = [7, 30, 90, 365] as const;
@@ -36,8 +43,26 @@ const DAY_MS = 24 * 60 * 60 * 1000;
  * owner is no longer a site admin.
  */
 export class InvalidAccessTokenError extends UnauthorizedException {
+  constructor(message = "Access token is invalid, expired or revoked") {
+    super(message);
+  }
+}
+
+/**
+ * A request's token names an environment other than this server's: a dev
+ * token sent to production, say. Told apart because that is the mistake a
+ * script's author actually makes.
+ */
+export class AccessTokenWrongEnvironmentError extends InvalidAccessTokenError {
   constructor() {
-    super("Access token is invalid, expired or revoked");
+    super("This access token belongs to another environment");
+  }
+}
+
+/** This server names no environment, so it makes no token. */
+export class AccessTokensUnavailableError extends ServiceUnavailableException {
+  constructor() {
+    super("Access tokens are not set up on this server");
   }
 }
 
@@ -71,19 +96,37 @@ const withCommunities = {
 export class PersonalAccessTokensService {
   private readonly logger = new Logger(PersonalAccessTokensService.name);
 
+  /** What this server mints and accepts; none makes and accepts no token. */
+  private readonly environment: AccessTokenEnvironment | null;
+
+  /** @throws UnknownAppEnvironmentError for an `APP_ENVIRONMENT` typo. */
   constructor(
     private readonly db: DatabaseService,
     private readonly permissionService: PermissionService,
-  ) {}
+    config: ConfigService,
+  ) {
+    this.environment = accessTokenEnvironment({
+      APP_ENVIRONMENT: config.get<string>("APP_ENVIRONMENT"),
+      NODE_ENV: config.get<string>("NODE_ENV"),
+    });
+  }
 
   /**
    * The owner and grants of the token with this secret.
    *
-   * @throws InvalidAccessTokenError for a secret that matches no token, or a
-   * token that is revoked or expired, or whose owner is no longer a site
-   * admin.
+   * @throws AccessTokenWrongEnvironmentError for a secret that names another
+   * environment.
+   * @throws InvalidAccessTokenError for a secret that names no environment or
+   * matches no token, a token that is revoked or expired, or one whose owner
+   * is no longer a site admin.
    */
   async authenticate(secret: string): Promise<AuthenticatedAccessToken> {
+    const environment = accessTokenSecretEnvironment(secret);
+    if (!environment || !this.environment) throw new InvalidAccessTokenError();
+    if (environment !== this.environment) {
+      throw new AccessTokenWrongEnvironmentError();
+    }
+
     const token = await this.db.personalAccessToken.findUnique({
       where: { tokenHash: hashAccessTokenSecret(secret) },
       include: { user: true, communities: true },
@@ -114,6 +157,9 @@ export class PersonalAccessTokensService {
 
   /** The secret is returned here and nowhere else. */
   async create(ownerId: string, request: CreateAccessTokenRequest) {
+    const environment = this.environment;
+    if (!environment) throw new AccessTokensUnavailableError();
+
     const name = request.name.trim();
     if (!name) throw new BadRequestException("Name a token");
 
@@ -133,7 +179,7 @@ export class PersonalAccessTokensService {
       throw new BadRequestException("A granted community does not exist");
     }
 
-    const secret = generateAccessTokenSecret();
+    const secret = generateAccessTokenSecret(environment);
     const token = await this.db.personalAccessToken.create({
       data: {
         userId: ownerId,

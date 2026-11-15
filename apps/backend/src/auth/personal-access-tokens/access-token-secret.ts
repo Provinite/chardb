@@ -1,11 +1,34 @@
 import { createHash, randomBytes } from "node:crypto";
+import {
+  type AccessTokenEnvironment,
+  isAccessTokenEnvironment,
+} from "./access-token-environment";
 
-/** Every personal access token's secret starts with this. */
+/**
+ * Every personal access token's secret starts with this, then names its
+ * environment: `chardb_pat_prod_…`. One pattern finds every token; the
+ * environment says which matter.
+ */
 export const ACCESS_TOKEN_PREFIX = "chardb_pat_";
 
-/** A new secret: the prefix and 32 random bytes. */
-export function generateAccessTokenSecret(): string {
-  return `${ACCESS_TOKEN_PREFIX}${randomBytes(32).toString("base64url")}`;
+/** A new secret: the prefix, the environment, and 32 random bytes. */
+export function generateAccessTokenSecret(
+  environment: AccessTokenEnvironment,
+): string {
+  const random = randomBytes(32).toString("base64url");
+  return `${ACCESS_TOKEN_PREFIX}${environment}_${random}`;
+}
+
+/** The environment a secret names, or null for one that names none. */
+export function accessTokenSecretEnvironment(
+  secret: string,
+): AccessTokenEnvironment | null {
+  if (!isAccessTokenSecret(secret)) return null;
+  const rest = secret.slice(ACCESS_TOKEN_PREFIX.length);
+  const separator = rest.indexOf("_");
+  if (separator <= 0 || separator === rest.length - 1) return null;
+  const environment = rest.slice(0, separator);
+  return isAccessTokenEnvironment(environment) ? environment : null;
 }
 
 /** What is stored in place of the secret: SHA-256, hex. */

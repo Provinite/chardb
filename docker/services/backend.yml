@@ -26,6 +26,9 @@ services:
     # No container_name -- see the note in services/postgres.yml.
     environment:
       NODE_ENV: ${NODE_ENV:-development}
+      # prod, dev or local: named in every access token the server mints.
+      # Unset on a NODE_ENV=production server, access tokens are off.
+      APP_ENVIRONMENT: ${APP_ENVIRONMENT:-}
       PORT: ${BACKEND_PORT:-4000}
       DATABASE_URL: ${DATABASE_URL:-postgresql://chardb:chardb_password@postgres:5432/chardb_dev}
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-here}

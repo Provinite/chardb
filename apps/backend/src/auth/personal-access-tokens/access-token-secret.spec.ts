@@ -1,4 +1,42 @@
-import { bearerCredential } from "./access-token-secret";
+import {
+  accessTokenSecretEnvironment,
+  bearerCredential,
+  generateAccessTokenSecret,
+  isAccessTokenSecret,
+} from "./access-token-secret";
+
+describe("generateAccessTokenSecret", () => {
+  it("names the environment it was made in", () => {
+    const secret = generateAccessTokenSecret("prod");
+
+    expect(secret).toMatch(/^chardb_pat_prod_[A-Za-z0-9_-]{43}$/);
+    expect(isAccessTokenSecret(secret)).toBe(true);
+    expect(accessTokenSecretEnvironment(secret)).toBe("prod");
+  });
+
+  it("makes a different secret each time", () => {
+    expect(generateAccessTokenSecret("local")).not.toBe(
+      generateAccessTokenSecret("local"),
+    );
+  });
+});
+
+describe("accessTokenSecretEnvironment", () => {
+  it.each([
+    ["chardb_pat_dev_abc", "dev"],
+    ["chardb_pat_local_a_b_c", "local"],
+  ])("reads %s as %s", (secret, environment) => {
+    expect(accessTokenSecretEnvironment(secret)).toBe(environment);
+  });
+
+  it.each([
+    ["no environment", "chardb_pat_abc"],
+    ["an unknown environment", "chardb_pat_staging_abc"],
+    ["nothing after the environment", "chardb_pat_prod_"],
+  ])("finds none in a secret with %s", (_case, secret) => {
+    expect(accessTokenSecretEnvironment(secret)).toBeNull();
+  });
+});
 
 describe("bearerCredential", () => {
   it("reads the credential from the Authorization header", () => {
