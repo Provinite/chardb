@@ -57,7 +57,7 @@ export class ApiUnreachableError extends CliError {
 
 export interface GraphqlErrorEntry {
   message: string;
-  extensions?: { code?: unknown };
+  extensions?: { code?: unknown; originalError?: unknown };
 }
 
 const REFUSAL_CODES = new Set(["UNAUTHENTICATED", "FORBIDDEN"]);
@@ -66,10 +66,28 @@ const REFUSAL_CODES = new Set(["UNAUTHENTICATED", "FORBIDDEN"]);
 export class GraphqlRequestError extends CliError {
   constructor(readonly errors: GraphqlErrorEntry[]) {
     super(
-      errors.map((e) => e.message).join("; ") || "Request failed",
+      errors.flatMap(errorMessages).join("; ") || "Request failed",
       exitCodeForErrors(errors),
     );
   }
+}
+
+/**
+ * What went wrong, in words a person can act on. A failed input validation
+ * says only "Bad Request Exception"; NestJS puts the validator's own messages
+ * in `extensions.originalError.message`.
+ */
+function errorMessages(error: GraphqlErrorEntry): string[] {
+  const original = error.extensions?.originalError;
+  if (typeof original === "object" && original !== null) {
+    const detail = (original as { message?: unknown }).message;
+    if (Array.isArray(detail)) {
+      const strings = detail.filter((m): m is string => typeof m === "string");
+      if (strings.length) return strings;
+    }
+    if (typeof detail === "string" && detail) return [detail];
+  }
+  return [error.message];
 }
 
 /** 3 when the API turned the token away, 1 for anything else. */

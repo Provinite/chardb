@@ -223,6 +223,34 @@ describe("whoami", () => {
     ).toBe(1);
     expect(h.stderr.join("")).toMatch(/reach/);
   });
+
+  it("prints the validation messages behind a generic Bad Request", async () => {
+    const h = harness();
+    const api = fakeApi(() => ({
+      body: {
+        data: null,
+        errors: [
+          {
+            message: "Bad Request Exception",
+            extensions: {
+              code: "BAD_REQUEST",
+              originalError: {
+                message: [
+                  "quantity must not be greater than 100",
+                  "reason must be shorter than or equal to 500 characters",
+                ],
+              },
+            },
+          },
+        ],
+      },
+    }));
+
+    expect(await exec(h, ["whoami"], api.fetch)).toBe(1);
+    expect(h.stderr.join("")).toBe(
+      "quantity must not be greater than 100; reason must be shorter than or equal to 500 characters\n",
+    );
+  });
 });
 
 describe("communities get", () => {

@@ -18,7 +18,7 @@ export type StoredTokens = Partial<Record<Environment, string>>;
 
 /** `$XDG_CONFIG_HOME/chardb/credentials.json`, else under `~/.config`. */
 export function defaultCredentialsPath(
-  env: { XDG_CONFIG_HOME?: string },
+  env: Record<string, string | undefined>,
   home: string,
 ): string {
   const base = env.XDG_CONFIG_HOME || join(home, ".config");
