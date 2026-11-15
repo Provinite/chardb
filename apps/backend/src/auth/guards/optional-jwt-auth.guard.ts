@@ -5,6 +5,13 @@ import { PermissionService } from "../PermissionService";
 import { setRequestPermissions } from "../request-permissions";
 import { getRequestFromContext } from "../utils/get-request-from-context";
 import type { CurrentUserType } from "../types/current-user.type";
+import { trace } from "@opentelemetry/api";
+import { setRequestAccessToken } from "../access-token-request";
+import {
+  bearerCredential,
+  isAccessTokenSecret,
+} from "../personal-access-tokens/access-token-secret";
+import { PersonalAccessTokensService } from "../personal-access-tokens/personal-access-tokens.service";
 
 /**
  * Each request's authentication, started by the first field to resolve.
@@ -24,7 +31,10 @@ export class MissingPermissionServiceError extends Error {
 
 @Injectable()
 export class OptionalJwtAuthGuard extends AuthGuard("jwt") {
-  constructor(private readonly permissionService: PermissionService) {
+  constructor(
+    private readonly permissionService: PermissionService,
+    private readonly accessTokens: PersonalAccessTokensService,
+  ) {
     super();
     // AuthGuard marks its own first constructor argument optional and this
     // class inherits the mark, so Nest injects undefined where it finds no
@@ -59,12 +69,38 @@ export class OptionalJwtAuthGuard extends AuthGuard("jwt") {
     context: ExecutionContext,
     req: Request,
   ): Promise<boolean> {
+    const credential = bearerCredential(req);
+    if (credential && isAccessTokenSecret(credential)) {
+      return this.authenticateAccessToken(req, credential);
+    }
+
     const authenticated = await (super.canActivate(
       context,
     ) as Promise<boolean>);
     const user = (req as Request & { user?: CurrentUserType }).user;
     setRequestPermissions(req, this.permissionService.forUser(user));
     return authenticated;
+  }
+
+  /**
+   * A personal access token acts as its owner, with its own grants in place
+   * of the owner's permissions. A token that is refused fails the request,
+   * where a bad session goes on anonymous: a script holding a dead token
+   * should hear so, not be told every field is forbidden.
+   *
+   * @throws InvalidAccessTokenError
+   */
+  private async authenticateAccessToken(
+    req: Request,
+    secret: string,
+  ): Promise<boolean> {
+    const { tokenId, user, grants } =
+      await this.accessTokens.authenticate(secret);
+    (req as Request & { user?: CurrentUserType }).user = user;
+    setRequestPermissions(req, this.permissionService.forAccessToken(grants));
+    setRequestAccessToken(req, tokenId);
+    trace.getActiveSpan()?.setAttribute("auth.access_token_id", tokenId);
+    return true;
   }
 
   // Override handleRequest to not throw errors if no token is provided

@@ -150,7 +150,9 @@ class AccessTokenPermissions implements RequestPermissions {
   }
 
   async inCommunity(communityId: string): Promise<CommunityPermissions> {
-    return { ...(this.communities.get(communityId) ?? { hasMembership: false }) };
+    return {
+      ...(this.communities.get(communityId) ?? { hasMembership: false }),
+    };
   }
 
   async hasInCommunity(

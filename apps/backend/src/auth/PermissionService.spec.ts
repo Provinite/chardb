@@ -188,7 +188,10 @@ describe("PermissionService", () => {
           "canDoSomethingRemoved",
         ],
       },
-      { communityId: "c-2", permissions: [CommunityPermission.CanEditCharacter] },
+      {
+        communityId: "c-2",
+        permissions: [CommunityPermission.CanEditCharacter],
+      },
     ];
 
     it("holds no global permission, whatever its owner's account holds", () => {

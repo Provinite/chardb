@@ -1,4 +1,4 @@
-import { Args, ID, Query, Resolver } from "@nestjs/graphql";
+import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { TestApp } from "../../test/setup-e2e";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "./auth.module";
@@ -14,6 +14,8 @@ import { AllowGlobalPermission } from "./decorators/AllowGlobalPermission";
 import { AllowSelf } from "./decorators/AllowSelf";
 import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
 import { ResolveCommunityFrom } from "./decorators/ResolveCommunityFrom";
+import { AllowAccessToken } from "./decorators/AllowAccessToken";
+import { PersonalAccessTokensService } from "./personal-access-tokens/personal-access-tokens.service";
 
 /**
  * One query per kind of gate, each doing nothing but answering. Whatever
@@ -30,6 +32,26 @@ class GateProbeResolver {
   @AllowAnyAuthenticated()
   @Query(() => Boolean)
   probeSignedIn() {
+    return true;
+  }
+
+  @AllowAnyAuthenticated()
+  @AllowAccessToken()
+  @Query(() => Boolean)
+  probeSignedInOrToken() {
+    return true;
+  }
+
+  @AllowUnauthenticated()
+  @Mutation(() => Boolean)
+  probeAnyoneWrites() {
+    return true;
+  }
+
+  @AllowUnauthenticated()
+  @AllowAccessToken()
+  @Mutation(() => Boolean)
+  probeAnyoneWritesOrToken() {
     return true;
   }
 
@@ -122,7 +144,10 @@ type Persona =
   | "staff"
   | "staffElsewhere"
   | "globalFlagHolder"
-  | "siteAdmin";
+  | "siteAdmin"
+  | "token";
+
+type SignedIn = Exclude<Persona, "anonymous" | "token">;
 
 const EVERYONE: Persona[] = [
   "anonymous",
@@ -133,8 +158,13 @@ const EVERYONE: Persona[] = [
   "staffElsewhere",
   "globalFlagHolder",
   "siteAdmin",
+  "token",
 ];
-const SIGNED_IN = EVERYONE.filter((persona) => persona !== "anonymous");
+/** Signed in with a session. */
+const SIGNED_IN = EVERYONE.filter(
+  (persona) => persona !== "anonymous" && persona !== "token",
+);
+const NOT_TOKEN = EVERYONE.filter((persona) => persona !== "token");
 
 /**
  * What each `@Allow*` decorator admits and refuses, against a real database
@@ -151,7 +181,10 @@ const SIGNED_IN = EVERYONE.filter((persona) => persona !== "anonymous");
  * - `staff` holds the edit-anyone's and manage-items permissions.
  * - `staffElsewhere` holds those in a different community.
  * - `globalFlagHolder` has `canListUsers` on their account and no role.
- * - `siteAdmin` has `isAdmin` on their account and no role.
+ * - `siteAdmin` has `isAdmin` on their account and no role, and owns a
+ *   character of the species and one of none.
+ * - `token` is a personal access token of `siteAdmin`'s granting membership,
+ *   `canManageItems` and `canEditOwnCharacter` in the first community.
  */
 describe("what each permission decorator admits (e2e)", () => {
   let testApp: TestApp;
@@ -161,8 +194,11 @@ describe("what each permission decorator admits (e2e)", () => {
     elsewhere: string;
     species: string;
     ownEditor: string;
+    siteAdmin: string;
     ownEditorsCharacter: string;
     membersCharacter: string;
+    adminsCharacter: string;
+    adminsSpecieslessCharacter: string;
   };
 
   beforeAll(async () => {
@@ -183,7 +219,7 @@ describe("what each permission decorator admits (e2e)", () => {
       canEditCharacterRegistry: true,
     };
     const cast: Array<{
-      persona: Exclude<Persona, "anonymous">;
+      persona: SignedIn;
       account?: Record<string, unknown>;
       role?: [communityId: string, permissions: Record<string, boolean>];
     }> = [
@@ -202,7 +238,7 @@ describe("what each permission decorator admits (e2e)", () => {
       { persona: "siteAdmin", account: { isAdmin: true } },
     ];
 
-    const userIds = {} as Record<Exclude<Persona, "anonymous">, string>;
+    const userIds = {} as Record<SignedIn, string>;
     for (const { persona, account, role } of cast) {
       const user = await testApp.createTestUser({
         username: `gate_${persona.toLowerCase()}`,
@@ -217,35 +253,59 @@ describe("what each permission decorator admits (e2e)", () => {
       tokens[persona] = await testApp.generateTestToken(user.id, user.username);
     }
     ids.ownEditor = userIds.ownEditor;
+    ids.siteAdmin = userIds.siteAdmin;
 
-    const characterOf = async (ownerId: string) =>
+    const characterOf = async (
+      ownerId: string,
+      speciesId: string | null = ids.species,
+    ) =>
       (
         await testApp.getDb().character.create({
-          data: {
-            name: "Ridley",
-            ownerId,
-            creatorId: ownerId,
-            speciesId: ids.species,
-          },
+          data: { name: "Ridley", ownerId, creatorId: ownerId, speciesId },
         })
       ).id;
     ids.ownEditorsCharacter = await characterOf(userIds.ownEditor);
     ids.membersCharacter = await characterOf(userIds.member);
+    ids.adminsCharacter = await characterOf(userIds.siteAdmin);
+    ids.adminsSpecieslessCharacter = await characterOf(userIds.siteAdmin, null);
+
+    const { secret } = await testApp
+      .getApp()
+      .get(PersonalAccessTokensService)
+      .create(userIds.siteAdmin, {
+        name: "gate probe",
+        expiresInDays: 7,
+        communities: [
+          {
+            communityId: ids.community,
+            member: true,
+            permissions: [
+              CommunityPermission.CanManageItems,
+              CommunityPermission.CanEditOwnCharacter,
+            ],
+          },
+        ],
+      });
+    tokens.token = secret;
   });
 
   afterAll(async () => {
     await testApp.teardown();
   });
 
-  /** Which of the cast a query lets in. */
-  const admitted = async (query: string): Promise<Persona[]> => {
+  /** Which of the cast an operation lets in. */
+  const admitted = async (
+    field: string,
+    operation: "query" | "mutation" = "query",
+  ): Promise<Persona[]> => {
     const let_in: Persona[] = [];
     for (const persona of EVERYONE) {
+      const document = `${operation} { ${field} }`;
       const response =
         persona === "anonymous"
-          ? await testApp.graphqlRequest(`query { ${query} }`, {})
+          ? await testApp.graphqlRequest(document, {})
           : await testApp.authenticatedGraphqlRequest(
-              `query { ${query} }`,
+              document,
               {},
               tokens[persona],
             );
@@ -262,7 +322,16 @@ describe("what each permission decorator admits (e2e)", () => {
 
   const gates: Array<[string, () => string, Persona[]]> = [
     ["@AllowUnauthenticated", () => "probeAnyone", EVERYONE],
-    ["@AllowAnyAuthenticated", () => "probeSignedIn", SIGNED_IN],
+    [
+      "@AllowAnyAuthenticated, which a token does not satisfy",
+      () => "probeSignedIn",
+      SIGNED_IN,
+    ],
+    [
+      "@AllowAnyAuthenticated with @AllowAccessToken",
+      () => "probeSignedInOrToken",
+      [...SIGNED_IN, "token"],
+    ],
     ["no decorator at all", () => "probeNoDecorator", []],
     ["@AllowGlobalAdmin", () => "probeSiteAdmin", ["siteAdmin"]],
     [
@@ -273,12 +342,12 @@ describe("what each permission decorator admits (e2e)", () => {
     [
       "@AllowCommunityPermission(Any), which is membership",
       () => `probeMember(communityId: "${ids.community}")`,
-      ["member", "ownEditor", "staff"],
+      ["member", "ownEditor", "staff", "token"],
     ],
     [
       "@AllowCommunityPermission, which being a site admin does not grant",
       () => `probeCommunityPermission(communityId: "${ids.community}")`,
-      ["staff"],
+      ["staff", "token"],
     ],
     [
       "@AllowCommunityPermission in another community",
@@ -288,7 +357,7 @@ describe("what each permission decorator admits (e2e)", () => {
     [
       "@AllowCommunityPermission with the community found through a species",
       () => `probeCommunityPermissionBySpecies(speciesId: "${ids.species}")`,
-      ["staff"],
+      ["staff", "token"],
     ],
     [
       "@AllowCommunityPermission for a community that does not exist",
@@ -300,7 +369,7 @@ describe("what each permission decorator admits (e2e)", () => {
       "@AllowGlobalAdmin beside @AllowCommunityPermission, which is either",
       () =>
         `probeSiteAdminOrCommunityPermission(communityId: "${ids.community}")`,
-      ["staff", "siteAdmin"],
+      ["staff", "siteAdmin", "token"],
     ],
     [
       "@AllowSelf",
@@ -332,9 +401,52 @@ describe("what each permission decorator admits (e2e)", () => {
       () => `probeRegistryEditor(characterId: "${ids.membersCharacter}")`,
       ["staff"],
     ],
+    [
+      "@AllowSelf on the token's owner",
+      () => `probeSelf(userId: "${ids.siteAdmin}")`,
+      ["siteAdmin"],
+    ],
+    [
+      "@AllowEntityOwner on a character of the token's owner",
+      () => `probeOwner(characterId: "${ids.adminsCharacter}")`,
+      ["siteAdmin"],
+    ],
+    [
+      "@AllowCharacterProfileEditor on the token owner's character, which the token may edit as its own",
+      () => `probeProfileEditor(characterId: "${ids.adminsCharacter}")`,
+      ["staff", "token"],
+    ],
+    [
+      "@AllowCharacterRegistryEditor on the token owner's character, which the token was not granted",
+      () => `probeRegistryEditor(characterId: "${ids.adminsCharacter}")`,
+      ["staff"],
+    ],
+    [
+      "@AllowCharacterProfileEditor on a character of no species, which only its owner may edit",
+      () =>
+        `probeProfileEditor(characterId: "${ids.adminsSpecieslessCharacter}")`,
+      ["siteAdmin"],
+    ],
   ];
 
   it.each(gates)("%s", async (_gate, query, expected) => {
     expect(await admitted(query())).toEqual(expected);
+  });
+
+  const writes: Array<[string, string, Persona[]]> = [
+    [
+      "@AllowUnauthenticated on a mutation, which a token does not satisfy",
+      "probeAnyoneWrites",
+      NOT_TOKEN,
+    ],
+    [
+      "@AllowUnauthenticated on a mutation with @AllowAccessToken",
+      "probeAnyoneWritesOrToken",
+      EVERYONE,
+    ],
+  ];
+
+  it.each(writes)("%s", async (_gate, field, expected) => {
+    expect(await admitted(field, "mutation")).toEqual(expected);
   });
 });

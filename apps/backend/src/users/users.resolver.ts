@@ -36,6 +36,7 @@ import { GlobalPermission } from "../auth/GlobalPermission";
 import { AllowUnauthenticated } from "../auth/decorators/AllowUnauthenticated";
 import { AllowSelf } from "../auth/decorators/AllowSelf";
 import { AllowGlobalAdmin } from "../auth/decorators/AllowGlobalAdmin";
+import { AllowAccessToken } from "../auth/decorators/AllowAccessToken";
 import { GraphQLJSON } from "graphql-type-json";
 import { Inventory } from "../items/entities/inventory.entity";
 import { Item as ItemEntity } from "../items/entities/item.entity";
@@ -98,6 +99,7 @@ export class UsersResolver {
   }
 
   @AllowAnyAuthenticated()
+  @AllowAccessToken()
   @Query(() => User, { name: "me" })
   async getCurrentUser(@CurrentUser() user: CurrentUserType): Promise<User> {
     if (!user) {

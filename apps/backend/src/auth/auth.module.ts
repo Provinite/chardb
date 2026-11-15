@@ -42,6 +42,8 @@ import { OrGuard } from "./guards/OrGuard";
 import { AuthenticatedGuard } from "./guards/AuthenticatedGuard";
 import { CommunityMembershipModule } from "../community-membership/community-membership.module";
 import { EventsModule } from "../events/events.module";
+import { PersonalAccessTokensService } from "./personal-access-tokens/personal-access-tokens.service";
+import { PersonalAccessTokensResolver } from "./personal-access-tokens/personal-access-tokens.resolver";
 
 @Module({
   imports: [
@@ -91,6 +93,8 @@ import { EventsModule } from "../events/events.module";
     AuthenticatedGuard,
     OptionalJwtAuthGuard,
     CustomThrottlerGuard,
+    PersonalAccessTokensService,
+    PersonalAccessTokensResolver,
     {
       provide: "PERMISSION_OR_GUARD",
       useClass: OrGuard(
@@ -115,6 +119,7 @@ import { EventsModule } from "../events/events.module";
     GlobalPermissionGuard,
     OptionalJwtAuthGuard,
     CustomThrottlerGuard,
+    PersonalAccessTokensService,
     "PERMISSION_OR_GUARD",
   ],
 })

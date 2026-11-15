@@ -16,6 +16,7 @@ import { AllowCharacterProfileEditor } from "./decorators/AllowCharacterProfileE
 import { AllowCharacterRegistryEditor } from "./decorators/AllowCharacterRegistryEditor";
 import { AllowAnyAuthenticated } from "./decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
+import { AllowAccessToken } from "./decorators/AllowAccessToken";
 
 /**
  * Every resolver method must say who may call it.
@@ -215,8 +216,28 @@ const describeAccess = (m: ResolverMethod): string => {
   return [
     allowed.length > 0 ? allowed.join(" or ") : "NOBODY",
     ...routeGuards.map((name) => `and ${name}`),
+    ...(value(AllowAccessToken) !== undefined
+      ? ["(access tokens admitted)"]
+      : []),
   ].join(" ");
 };
+
+/**
+ * Handlers that change credentials, sessions, linked accounts or tokens.
+ * A personal access token must never reach them, so none may carry
+ * `@AllowAccessToken()`. A whole class is named by its name alone.
+ */
+const NEVER_FOR_ACCESS_TOKENS = [
+  "AuthResolver",
+  "EmailVerificationResolver",
+  "ExternalAccountsResolver",
+  "PersonalAccessTokensResolver",
+  "DeviantArtOAuthController",
+  "DiscordOAuthController",
+  "ToyhouseOAuthController",
+  "PatreonOAuthController",
+  "UsersResolver.updateProfile",
+];
 
 const MANIFEST_PATH = join(__dirname, "permission-manifest.txt");
 
@@ -262,6 +283,29 @@ describe("resolver permission coverage", () => {
     // Listed rather than counted: the point of failing is to name the method,
     // since the runtime symptom never will.
     expect(undecorated).toEqual([]);
+  });
+
+  it("opens no credential handler to personal access tokens", () => {
+    const named = new Set(NEVER_FOR_ACCESS_TOKENS);
+    const handlers = [...methods, ...routes].filter(
+      (m) =>
+        named.has(m.className) || named.has(`${m.className}.${m.methodName}`),
+    );
+
+    // Every name on the list still finds something, or the list has gone stale.
+    for (const name of NEVER_FOR_ACCESS_TOKENS) {
+      expect(
+        handlers.some(
+          (m) =>
+            m.className === name || `${m.className}.${m.methodName}` === name,
+        ),
+      ).toBe(true);
+    }
+    expect(
+      handlers
+        .filter((m) => hasDecorator(m, AllowAccessToken.KEY))
+        .map(describeMethod),
+    ).toEqual([]);
   });
 
   /**

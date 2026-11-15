@@ -13,6 +13,11 @@ import {
   getRequestPermissions,
   RequestPermissions,
 } from "../request-permissions";
+import { getRequestAccessTokenId } from "../access-token-request";
+import {
+  InvalidAccessTokenError,
+  PersonalAccessTokensService,
+} from "../personal-access-tokens/personal-access-tokens.service";
 
 const SECRET = "optional-jwt-auth-guard-spec";
 
@@ -48,7 +53,11 @@ describe("OptionalJwtAuthGuard", () => {
   const viewerPermissions = { isAdmin: true } as RequestPermissions;
   let findById: jest.Mock;
   let forUser: jest.Mock;
+  let forAccessToken: jest.Mock;
+  let authenticateAccessToken: jest.Mock;
   let guard: OptionalJwtAuthGuard;
+  const tokenPermissions = { isAdmin: false } as RequestPermissions;
+  const grants = [{ communityId: "c-1", permissions: ["canManageItems"] }];
 
   const signedInRequest = (): FakeRequest => ({
     headers: {
@@ -65,9 +74,18 @@ describe("OptionalJwtAuthGuard", () => {
     forUser = jest.fn((user: unknown) =>
       user ? viewerPermissions : ANONYMOUS_PERMISSIONS,
     );
-    guard = new OptionalJwtAuthGuard({
-      forUser,
-    } as unknown as PermissionService);
+    forAccessToken = jest.fn(() => tokenPermissions);
+    authenticateAccessToken = jest.fn().mockResolvedValue({
+      tokenId: "token-1",
+      user: viewer,
+      grants,
+    });
+    guard = new OptionalJwtAuthGuard(
+      { forUser, forAccessToken } as unknown as PermissionService,
+      {
+        authenticate: authenticateAccessToken,
+      } as unknown as PersonalAccessTokensService,
+    );
   });
 
   // AuthGuard marks its own first constructor argument optional, and this
@@ -75,7 +93,11 @@ describe("OptionalJwtAuthGuard", () => {
   // PermissionService rather than refusing to start.
   it("cannot be built without a PermissionService", () => {
     expect(
-      () => new OptionalJwtAuthGuard(undefined as unknown as PermissionService),
+      () =>
+        new OptionalJwtAuthGuard(
+          undefined as unknown as PermissionService,
+          {} as PersonalAccessTokensService,
+        ),
     ).toThrow(MissingPermissionServiceError);
   });
 
@@ -151,5 +173,64 @@ describe("OptionalJwtAuthGuard", () => {
     await guard.canActivate(graphqlContextFor(signedInRequest()));
 
     expect(findById).toHaveBeenCalledTimes(2);
+  });
+
+  describe("with a personal access token", () => {
+    const tokenRequest = (): FakeRequest => ({
+      headers: { authorization: "Bearer chardb_pat_secret" },
+    });
+
+    it("acts as the token's owner with the token's permissions", async () => {
+      const req = tokenRequest();
+
+      await expect(guard.canActivate(graphqlContextFor(req))).resolves.toBe(
+        true,
+      );
+
+      expect(authenticateAccessToken).toHaveBeenCalledWith("chardb_pat_secret");
+      expect(req.user).toBe(viewer);
+      expect(forAccessToken).toHaveBeenCalledWith(grants);
+      expect(forUser).not.toHaveBeenCalled();
+      expect(getRequestPermissions(req)).toBe(tokenPermissions);
+      expect(getRequestAccessTokenId(req)).toBe("token-1");
+    });
+
+    it("does not try the token as a session", async () => {
+      await guard.canActivate(graphqlContextFor(tokenRequest()));
+
+      expect(findById).not.toHaveBeenCalled();
+    });
+
+    it("authenticates the token once however many fields resolve", async () => {
+      const req = tokenRequest();
+
+      await Promise.all([
+        guard.canActivate(graphqlContextFor(req)),
+        guard.canActivate(graphqlContextFor(req)),
+      ]);
+
+      expect(authenticateAccessToken).toHaveBeenCalledTimes(1);
+    });
+
+    it("refuses a token the service refuses, rather than going on anonymous", async () => {
+      authenticateAccessToken.mockRejectedValue(new InvalidAccessTokenError());
+      const req = tokenRequest();
+
+      await expect(guard.canActivate(graphqlContextFor(req))).rejects.toThrow(
+        InvalidAccessTokenError,
+      );
+      expect(req.user).toBeUndefined();
+    });
+
+    it("reads a subscription's token from its connection parameters", async () => {
+      const req = {
+        connectionParams: { authorization: "Bearer chardb_pat_secret" },
+      } as unknown as FakeRequest;
+
+      await guard.canActivate(graphqlContextFor(req));
+
+      expect(authenticateAccessToken).toHaveBeenCalledWith("chardb_pat_secret");
+      expect(getRequestPermissions(req)).toBe(tokenPermissions);
+    });
   });
 });
