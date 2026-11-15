@@ -68,9 +68,10 @@ Files to update:
 - Backend: `/apps/backend/CHANGELOG.md`
 - Frontend: `/apps/frontend/CHANGELOG.md`
 - E2E: `/apps/e2e/CHANGELOG.md`
+- CLI: `/apps/cli/CHANGELOG.md`
 - UI: `/packages/ui/CHANGELOG.md`
 
-Five files. Confirm the list with `git ls-files '*CHANGELOG.md'`, and skip any
+Six files. Confirm the list with `git ls-files '*CHANGELOG.md'`, and skip any
 whose Unreleased section is empty.
 
 ### Check for duplicate headings first

@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **CLI in CI**: `@chardb/cli` joins the unit-test matrix and the codegen staleness check.
+
 ## [v16.0.0] - 2026-11-15
 
 ### Added

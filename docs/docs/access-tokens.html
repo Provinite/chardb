@@ -363,6 +363,45 @@ curl https://api.chardb.cc/graphql \
         </div>
       </div>
 
+      <!-- The CLI -->
+      <div class="step">
+        <div class="step-header">
+          <div class="step-number">4</div>
+          <h2 class="step-title">From the command line</h2>
+        </div>
+        <div class="step-content">
+          <p>
+            In a checkout of the repo, <code>yarn chardb</code> makes requests
+            with a token. The token's prefix picks the API: a
+            <code>chardb_pat_prod_</code> token goes to the live site, a local
+            one to the checkout's own backend.
+          </p>
+          <pre class="example">
+$ pbpaste | yarn chardb auth add
+Stored the prod token
+$ yarn chardb whoami
+token  Bank import (…x7Qa), expires 2026-12-15
+user   siteadmin
+api    https://api.chardb.cc/graphql (prod)
+
+cloverse  Cloverse  canGrantItems</pre
+          >
+          <p>
+            Scripts set <code>CHARDB_TOKEN</code> and pass <code>--json</code>.
+            The exit code tells failures apart: 2 for a mistake in the command,
+            3 when the token is refused, 4 when a lookup finds nothing, 1 for
+            anything else.
+          </p>
+          <p>
+            A command that changes production asks first. Without a terminal to
+            ask on, it needs <code>--yes</code>.
+            <code>yarn chardb gql</code> sends any GraphQL document, for what
+            has no command of its own. The full reference is in
+            <code>apps/cli/README.md</code>.
+          </p>
+        </div>
+      </div>
+
       <footer>
         <p>CharDB Access Tokens &bull; Feature Documentation</p>
       </footer>
