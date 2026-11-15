@@ -18,6 +18,7 @@ import * as path from "node:path";
 import { CFG, REPO_ROOT } from "../config.js";
 import { provision } from "../db/provision.js";
 import { superviseChild } from "./supervise.js";
+import { startFakeDeviantArt } from "./fake-deviantart.js";
 
 async function assertPortFree(port: number): Promise<void> {
   await new Promise<void>((resolve, reject) => {
@@ -83,6 +84,8 @@ async function main(): Promise<void> {
     });
   }
 
+  const deviantArtUrl = await startFakeDeviantArt(CFG.bindHost);
+
   const child = spawn("node", ["dist/src/main.js"], {
     // cwd is apps/backend so the code-first GraphQL schema lands back at
     // src/schema.gql, exactly as `nest start` does in development.
@@ -104,6 +107,9 @@ async function main(): Promise<void> {
       // quite possibly nothing at all.
       AWS_ENDPOINT_URL: CFG.s3Endpoint,
       S3_IMAGES_BUCKET: "chardb-images",
+      // .env.test's DeviantArt credentials are fake; deviantart.com would
+      // refuse them, so handle lookups go to a local stand-in.
+      DEVIANTART_API_URL: deviantArtUrl,
     },
   });
 

@@ -14,6 +14,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 - **GraphQL subscriptions work again**: the rate limiter skips subscriptions instead of crashing on them (#615).
+- **DeviantArt item grants are claimable**: granting an item to a DeviantArt handle resolves it to the account's UUID, and the DeviantArt UUID backfill now converts item pending owners too (#449).
 
 ## [v16.0.0] - 2026-11-15
 

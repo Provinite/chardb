@@ -11,6 +11,7 @@ import {
   type PendingOwnerNames,
 } from "../pending-ownership/pending-ownership.service";
 import { resolveDiscordOwner } from "../pending-ownership/utils/resolve-discord-owner";
+import { resolveDeviantArtOwner } from "../pending-ownership/utils/resolve-deviantart-owner";
 import { DiscordService } from "../discord/discord.service";
 import { DeviantArtService } from "../deviantart/deviantart.service";
 import type { RequestPermissions } from "../auth/request-permissions";
@@ -1633,13 +1634,7 @@ export class CharactersService {
       );
     }
     if (provider === ExternalAccountProvider.DEVIANTART) {
-      // DeviantArt uses usernames in the UI, but OAuth stores UUIDs.
-      // Resolve the username to a UUID so it matches external_accounts.
-      const resolved = await this.deviantArtService.resolveUsername(identifier);
-      return {
-        accountId: resolved.uuid,
-        names: { displayIdentifier: resolved.username },
-      };
+      return resolveDeviantArtOwner(this.deviantArtService, identifier);
     }
     return { accountId: identifier, names: {} };
   }

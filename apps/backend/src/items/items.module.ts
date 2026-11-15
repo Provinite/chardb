@@ -5,6 +5,7 @@ import { UsersModule } from "../users/users.module";
 import { CommunityColorsModule } from "../community-colors/community-colors.module";
 import { PendingOwnershipModule } from "../pending-ownership/pending-ownership.module";
 import { DiscordModule } from "../discord/discord.module";
+import { DeviantArtModule } from "../deviantart/deviantart.module";
 import { ItemTransactionsModule } from "../item-transactions/item-transactions.module";
 import { NotificationsModule } from "../notifications/notifications.module";
 import { CurrenciesModule } from "../currencies/currencies.module";
@@ -19,6 +20,7 @@ import { ItemsResolver, ItemFieldsResolver } from "./items.resolver";
     CommunityColorsModule,
     PendingOwnershipModule,
     DiscordModule,
+    DeviantArtModule,
     ItemTransactionsModule,
     NotificationsModule,
     // forwardRef: CurrenciesModule pulls in AuthModule, which reaches back

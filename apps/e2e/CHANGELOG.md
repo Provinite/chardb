@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **CLI spec**: runs `yarn chardb` with a fresh token against the e2e backend.
+- **DeviantArt fake**: the e2e backend resolves DeviantArt handles against a local stand-in (`DEVIANTART_API_URL`), so grants to a handle work in specs.
 
 ## [v16.0.0] - 2026-11-15
 

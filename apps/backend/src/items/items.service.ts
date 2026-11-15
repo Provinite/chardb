@@ -14,7 +14,9 @@ import {
   type PendingOwnerNames,
 } from "../pending-ownership/pending-ownership.service";
 import { resolveDiscordOwner } from "../pending-ownership/utils/resolve-discord-owner";
+import { resolveDeviantArtOwner } from "../pending-ownership/utils/resolve-deviantart-owner";
 import { DiscordService } from "../discord/discord.service";
+import { DeviantArtService } from "../deviantart/deviantart.service";
 import {
   Prisma,
   ExternalAccountProvider,
@@ -145,6 +147,7 @@ export class ItemsService {
     private readonly db: DatabaseService,
     private readonly pendingOwnershipService: PendingOwnershipService,
     private readonly discordService: DiscordService,
+    private readonly deviantArtService: DeviantArtService,
     private readonly itemTransactions: ItemTransactionsService,
     private readonly notifications: NotificationsService,
     private readonly currencyLedger: CurrencyLedgerService,
@@ -1024,9 +1027,12 @@ export class ItemsService {
           names = resolved.names;
         }
       } else if (pendingOwner.provider === ExternalAccountProvider.DEVIANTART) {
-        // DeviantArt uses usernames, so always store as displayIdentifier
-        names = { displayIdentifier: pendingOwner.providerAccountId };
-        resolvedAccountId = pendingOwner.providerAccountId;
+        const resolved = await resolveDeviantArtOwner(
+          this.deviantArtService,
+          pendingOwner.providerAccountId,
+        );
+        resolvedAccountId = resolved.accountId;
+        names = resolved.names;
       } else {
         throw new BadRequestException(
           `Unsupported provider: ${pendingOwner.provider}`,

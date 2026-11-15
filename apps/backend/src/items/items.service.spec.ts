@@ -10,6 +10,7 @@ import { MAX_GRANT_QUANTITY } from "./dto/item.dto";
 import { DatabaseService } from "../database/database.service";
 import { PendingOwnershipService } from "../pending-ownership/pending-ownership.service";
 import { DiscordService } from "../discord/discord.service";
+import { DeviantArtService } from "../deviantart/deviantart.service";
 import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
 import {
@@ -35,6 +36,7 @@ const mockDiscordService = {
   resolveUsernameToId: jest.fn(),
   getUserInfo: jest.fn(),
 };
+const mockDeviantArtService = { resolveUsername: jest.fn() };
 const mockItemTransactions = { recordBatch: jest.fn() };
 const mockCurrencyLedger = { credit: jest.fn() };
 
@@ -78,6 +80,7 @@ describe("ItemsService", () => {
           useValue: mockPendingOwnershipService,
         },
         { provide: DiscordService, useValue: mockDiscordService },
+        { provide: DeviantArtService, useValue: mockDeviantArtService },
         { provide: ItemTransactionsService, useValue: mockItemTransactions },
         { provide: CurrencyLedgerService, useValue: mockCurrencyLedger },
       ],
@@ -195,6 +198,54 @@ describe("ItemsService", () => {
           actor,
         }),
       ).rejects.toThrow(NotFoundException);
+      expect(mockPendingOwnershipService.createForItem).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("DeviantArt pending grant (#449)", () => {
+    const DA_UUID = "6a8a2c4e-1f3b-4d5e-9c7a-0b1d2e3f4a5b";
+
+    beforeEach(() => {
+      // Nobody has linked the account yet, so the grant waits on it.
+      mockDatabaseService.externalAccount.findUnique.mockResolvedValue(null);
+      mockDatabaseService.item.findMany.mockResolvedValue([{ id: "i1" }]);
+    });
+
+    const grantToHandle = (handle: string) =>
+      service.grantItem({
+        itemTypeId: "type1",
+        quantity: 1,
+        pendingOwner: { provider: "DEVIANTART", providerAccountId: handle },
+        actor,
+      });
+
+    it("waits on the account's UUID, which is what linking stores", async () => {
+      mockDeviantArtService.resolveUsername.mockResolvedValue({
+        uuid: DA_UUID,
+        username: "Some-Artist",
+      });
+
+      await grantToHandle("some-artist");
+
+      expect(mockDeviantArtService.resolveUsername).toHaveBeenCalledWith(
+        "some-artist",
+      );
+      const [, provider, accountId, names] =
+        mockPendingOwnershipService.createForItem.mock.calls[0];
+      expect(provider).toBe("DEVIANTART");
+      expect(accountId).toBe(DA_UUID);
+      expect(names).toEqual({ displayIdentifier: "Some-Artist" });
+    });
+
+    it("refuses a handle DeviantArt does not know", async () => {
+      mockDeviantArtService.resolveUsername.mockRejectedValue(
+        new NotFoundException("DeviantArt user not found"),
+      );
+
+      await expect(grantToHandle("nobody-here")).rejects.toThrow(
+        NotFoundException,
+      );
+      expect(mockDatabaseService.item.createMany).not.toHaveBeenCalled();
       expect(mockPendingOwnershipService.createForItem).not.toHaveBeenCalled();
     });
   });
@@ -933,6 +984,7 @@ describe("ItemsService.findItemEconomy", () => {
           useValue: mockPendingOwnershipService,
         },
         { provide: DiscordService, useValue: mockDiscordService },
+        { provide: DeviantArtService, useValue: mockDeviantArtService },
         { provide: ItemTransactionsService, useValue: mockItemTransactions },
         { provide: CurrencyLedgerService, useValue: mockCurrencyLedger },
       ],
@@ -1065,6 +1117,7 @@ describe("ItemsService.findMemberHoldings", () => {
           useValue: mockPendingOwnershipService,
         },
         { provide: DiscordService, useValue: mockDiscordService },
+        { provide: DeviantArtService, useValue: mockDeviantArtService },
         { provide: ItemTransactionsService, useValue: mockItemTransactions },
         { provide: CurrencyLedgerService, useValue: mockCurrencyLedger },
       ],
@@ -1197,6 +1250,7 @@ describe("ItemsService.findPendingHoldings", () => {
           useValue: mockPendingOwnershipService,
         },
         { provide: DiscordService, useValue: mockDiscordService },
+        { provide: DeviantArtService, useValue: mockDeviantArtService },
         { provide: ItemTransactionsService, useValue: mockItemTransactions },
         { provide: CurrencyLedgerService, useValue: mockCurrencyLedger },
       ],
