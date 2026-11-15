@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **Personal access tokens**: site admins mint `chardb_pat_` bearer tokens scoped to chosen communities and permissions. Tokens never pass site-admin, signed-in, self or owner gates unless a handler is marked `@AllowAccessToken()`.
+- **Personal access tokens**: site admins mint `chardb_pat_<env>_` bearer tokens scoped to chosen communities and permissions. Tokens never pass site-admin, signed-in, self or owner gates unless a handler is marked `@AllowAccessToken()`.
 
 ### Changed
 

@@ -286,28 +286,37 @@
             only a hash of it, so nobody can show it again later, admins
             included. Lose it and the fix is a new token.
           </p>
+          <p>
+            Every token names the environment it was made in:
+            <code>chardb_pat_prod_…</code> on the live site,
+            <code>chardb_pat_dev_…</code> on the dev stack and
+            <code>chardb_pat_local_…</code> on a laptop. A token found in a log
+            or a paste says at a glance whether it opens production.
+          </p>
         </div>
         <div class="screenshot">
           <img
             src="access-tokens-secret.png"
-            alt="The copy-your-token dialog showing a chardb_pat_ token with Copy and Done buttons."
+            alt="The copy-your-token dialog showing a chardb_pat_local_ token with Copy and Done buttons."
           />
           <div class="screenshot-caption">
-            The only view of the secret. The list shows its last four characters
-            afterwards, to tell tokens apart.
+            The only view of the secret, here from a local server. The list
+            shows its last four characters afterwards, to tell tokens apart.
           </div>
         </div>
         <div class="step-content" style="margin-top: 1.5rem">
           <p>The script sends it the same way the site sends a session:</p>
-          <div class="example">
-            curl https://api.chardb.cc/graphql \ -H "Authorization: Bearer
-            chardb_pat_…" \ -H "Content-Type: application/json" \ -d
-            '{"query":"{ me { username } }"}'
-          </div>
+          <pre class="example">
+curl https://api.chardb.cc/graphql \
+  -H "Authorization: Bearer chardb_pat_prod_…" \
+  -H "Content-Type: application/json" \
+  -d '{"query":"{ me { username } }"}'</pre
+          >
           <p>
             A token that has expired or been revoked gets an
             <code>UNAUTHENTICATED</code> error on every request, rather than
-            being treated as signed out.
+            being treated as signed out. One sent to the wrong environment is
+            told so: <em>This access token belongs to another environment</em>.
           </p>
         </div>
       </div>
