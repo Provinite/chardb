@@ -6,7 +6,7 @@ import {
   InviteCode,
   InviteCodeConnection,
 } from "../entities/invite-code.entity";
-import { Prisma } from "@chardb/database";
+import type { InviteCode as PrismaInviteCode } from "@chardb/database";
 
 /**
  * Resolver layer mapping functions to convert between GraphQL DTOs and service types
@@ -44,8 +44,6 @@ export function mapUpdateInviteCodeInputToService(
 
   return result;
 }
-
-type PrismaInviteCode = Prisma.InviteCodeGetPayload<{}>;
 
 /**
  * Maps Prisma InviteCode result to GraphQL InviteCode entity
