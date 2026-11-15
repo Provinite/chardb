@@ -1216,6 +1216,26 @@ mutation SeedSetCommunityOpenSignup($communityId: ID!, $roleId: ID) {
   }
 }
 
+# Requires the global canCreateInviteCode flag. The creator is the caller.
+mutation SeedCreateInviteCode($input: CreateInviteCodeInput!) {
+  createInviteCode(createInviteCodeInput: $input) {
+    id
+  }
+}
+
+# The caller's own memberships: which roles they hold, in which communities.
+query SeedMyMemberships {
+  me {
+    communityMemberships(first: 50) {
+      nodes {
+        role {
+          id
+        }
+      }
+    }
+  }
+}
+
 mutation SeedCreateAccessToken($input: CreatePersonalAccessTokenInput!) {
   createPersonalAccessToken(input: $input) {
     secret
