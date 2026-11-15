@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Access tokens page**: site admins create and revoke personal access tokens at `/admin/access-tokens`.
+
 ### Fixed
 
 - **Random character button**: the dice picks from every character your filters match, or every character a profile's owner has, not just what's on screen, and its tooltip no longer spans the whole row on phones.

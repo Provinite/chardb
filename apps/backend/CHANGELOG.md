@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Personal access tokens**: site admins mint `chardb_pat_` bearer tokens scoped to chosen communities and permissions. Tokens never pass site-admin, signed-in, self or owner gates unless a handler is marked `@AllowAccessToken()`.
+
 ### Changed
 
 - **Permission checks**: guards, resolvers and services read what the caller may do from one per-request `RequestPermissions`, built when the request is authenticated. Who may do what is unchanged.

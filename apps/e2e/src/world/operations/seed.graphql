@@ -1215,3 +1215,11 @@ mutation SeedSetCommunityOpenSignup($communityId: ID!, $roleId: ID) {
     openSignupRoleId
   }
 }
+
+# Who a credential acts as. The one query a personal access token may ask.
+query SeedWhoAmI {
+  me {
+    id
+    username
+  }
+}
