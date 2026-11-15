@@ -64,12 +64,11 @@ export class DeviantartUuidBackfillService {
 
   private async executeBackfill(jobId: string): Promise<void> {
     await new Promise((res) => setTimeout(res, 1500));
-    // Find all unclaimed DA pending_ownership records for characters
+    // Every unclaimed DA pending_ownership record, characters and items alike
     const candidates = await this.db.pendingOwnership.findMany({
       where: {
         provider: ExternalAccountProvider.DEVIANTART,
         claimedAt: null,
-        characterId: { not: null },
       },
     });
 
