@@ -52,9 +52,9 @@ export const AccessTokensPage: React.FC = () => {
       <Stack gap="sm">
         <h1 className={styles.title}>Access Tokens</h1>
         <p className={styles.intro}>
-          A token lets a script or an agent use the API as you, in the
-          communities you choose and with only the permissions you grant. It
-          cannot act as a site admin, change your account, or manage tokens.
+          A token lets a script or an agent use the API as you, with only the
+          site permissions and community permissions you grant. It cannot change
+          your account or manage tokens.
         </p>
       </Stack>
 

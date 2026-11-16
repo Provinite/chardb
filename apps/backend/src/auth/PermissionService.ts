@@ -123,13 +123,17 @@ interface ReadGrant {
 }
 
 /**
- * Global permissions a token may hold. Never `canGrantGlobalPermissions`: a
- * script hands out nothing site-wide.
+ * Global permissions a token may hold, in the order they are offered. Never
+ * `canGrantGlobalPermissions`: a script hands out nothing site-wide. A
+ * permission added to `GlobalPermission` is no token's until listed here.
  */
-export const GRANTABLE_GLOBAL_PERMISSIONS: readonly GlobalPermission[] =
-  Object.values(GlobalPermission).filter(
-    (permission) => permission !== GlobalPermission.CanGrantGlobalPermissions,
-  );
+export const GRANTABLE_GLOBAL_PERMISSIONS: readonly GlobalPermission[] = [
+  GlobalPermission.IsAdmin,
+  GlobalPermission.CanCreateCommunity,
+  GlobalPermission.CanListUsers,
+  GlobalPermission.CanListInviteCodes,
+  GlobalPermission.CanCreateInviteCode,
+];
 
 const grantableGlobalPermissions = new Set<string>(
   GRANTABLE_GLOBAL_PERMISSIONS,

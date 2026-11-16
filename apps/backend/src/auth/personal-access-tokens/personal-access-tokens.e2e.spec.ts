@@ -293,7 +293,7 @@ describe("personal access tokens (e2e)", () => {
 
         expect(
           response.body.data.personalAccessTokenGrantOptions.globalPermissions,
-        ).toEqual(["canListUsers", "isAdmin"]);
+        ).toEqual(["isAdmin", "canListUsers"]);
       } finally {
         await db.user.update({
           where: { id: adminId },

@@ -205,13 +205,15 @@
             A script that syncs item types, or an agent that tidies a
             community's characters, needs to call the API as someone. Handing it
             a site admin's session would let it do anything on the site. An
-            access token acts as you, but only in the communities you add to it
-            and only with the permissions you check there.
+            access token acts as you, but only with the site permissions you
+            check and in the communities you add, with the permissions you check
+            there.
           </p>
           <ul>
             <li>Only site admins can make tokens.</li>
             <li>
-              A token holds no site-admin power, whatever its owner holds.
+              A token holds a site permission only if it was granted one and its
+              owner still holds it.
             </li>
             <li>
               It cannot change its owner's profile or credentials, sign in or
@@ -244,9 +246,17 @@
         <div class="step-content">
           <p>
             Name it after what will use it, pick how long it lasts (7, 30, 90 or
-            365 days), then add each community it may act in. Every community
+            365 days), then check its site permissions and add each community it
+            may act in. A token needs at least one of either. Every community
             added gets its own checklist, all unchecked. Each permission is the
             same permission a role can hold.
+          </p>
+          <p>
+            <strong>Site permissions</strong> lists the site-wide permissions
+            you hold, all unchecked. <strong>Site Admin</strong> lets the token
+            do anything a site admin can in every community, such as reading
+            linked accounts or running a backfill. It still cannot make, list or
+            revoke tokens.
           </p>
           <p>
             <strong>Member</strong> lets it through anything open to the
@@ -259,17 +269,27 @@
         <div class="screenshot">
           <img
             src="access-tokens-create.png"
-            alt="The create-token dialog: a name, a 90-day expiry, Test Community added, with only Manage Items checked."
+            alt="The create-token dialog: a name, a 90-day expiry, no site permissions checked, and Test Community added with only Manage Items checked."
           />
           <div class="screenshot-caption">
             A token for one community that may manage item types there and
             nothing more.
           </div>
         </div>
+        <div class="screenshot">
+          <img
+            src="access-tokens-site.png"
+            alt="The create-token dialog with Site Admin checked under Site permissions and no community added."
+          />
+          <div class="screenshot-caption">
+            A token for a backfill script: Site Admin and no community.
+          </div>
+        </div>
         <div class="step-content" style="margin-top: 1.5rem">
           <div class="highlight-box">
             <strong>What it can do is fixed when it is made.</strong> To change
-            a token's communities or permissions, revoke it and make another.
+            a token's site permissions, communities or permissions, revoke it
+            and make another.
           </div>
         </div>
       </div>
@@ -335,7 +355,9 @@ curl https://api.chardb.cc/graphql \
           </p>
           <p>
             Removing someone's site admin status revokes all of their tokens at
-            once. Making them an admin again brings none back.
+            once. Making them an admin again brings none back. Removing any
+            other site permission only stops their tokens using it, until they
+            hold it again.
           </p>
         </div>
         <div class="screenshot">
@@ -357,7 +379,7 @@ curl https://api.chardb.cc/graphql \
         <div class="screenshot phone">
           <img
             src="access-tokens-phone.png"
-            alt="The access tokens page on a phone, with one active token."
+            alt="The access tokens page on a phone, with two active tokens: one holding Site Admin, one for Test Community."
           />
           <div class="screenshot-caption">The same page on a phone.</div>
         </div>
@@ -384,6 +406,7 @@ $ yarn chardb whoami
 token  Bank import (…x7Qa), expires 2026-12-15
 user   siteadmin
 api    https://api.chardb.cc/graphql (prod)
+site   isAdmin
 
 cloverse  Cloverse  canGrantItems</pre
           >
