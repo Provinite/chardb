@@ -16,6 +16,8 @@ import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
 import { ResolveCommunityFrom } from "./decorators/ResolveCommunityFrom";
 import { AllowAccessToken } from "./decorators/AllowAccessToken";
 import { PersonalAccessTokensService } from "./personal-access-tokens/personal-access-tokens.service";
+import { PermissionService } from "./PermissionService";
+import type { RequestPermissions } from "./request-permissions";
 
 /**
  * One query per kind of gate, each doing nothing but answering. Whatever
@@ -145,9 +147,11 @@ type Persona =
   | "staffElsewhere"
   | "globalFlagHolder"
   | "siteAdmin"
-  | "token";
+  | "token"
+  | "adminToken";
 
-type SignedIn = Exclude<Persona, "anonymous" | "token">;
+type TokenPersona = "token" | "adminToken";
+type SignedIn = Exclude<Persona, "anonymous" | TokenPersona>;
 
 const EVERYONE: Persona[] = [
   "anonymous",
@@ -159,12 +163,16 @@ const EVERYONE: Persona[] = [
   "globalFlagHolder",
   "siteAdmin",
   "token",
+  "adminToken",
 ];
+const isToken = (persona: Persona): persona is TokenPersona =>
+  persona === "token" || persona === "adminToken";
 /** Signed in with a session. */
 const SIGNED_IN = EVERYONE.filter(
-  (persona) => persona !== "anonymous" && persona !== "token",
+  (persona) => persona !== "anonymous" && !isToken(persona),
 );
-const NOT_TOKEN = EVERYONE.filter((persona) => persona !== "token");
+const NOT_TOKEN = EVERYONE.filter((persona) => !isToken(persona));
+const TOKENS: Persona[] = ["token", "adminToken"];
 
 /**
  * What each `@Allow*` decorator admits and refuses, against a real database
@@ -185,11 +193,14 @@ const NOT_TOKEN = EVERYONE.filter((persona) => persona !== "token");
  *   permissions, and owns a character of the species and one of none.
  * - `token` is a personal access token of `siteAdmin`'s granting membership,
  *   `canManageItems` and `canEditOwnCharacter` in the first community.
+ * - `adminToken` is a token of `siteAdmin`'s granting the global `isAdmin`
+ *   and no community.
  */
 describe("what each permission decorator admits (e2e)", () => {
   let testApp: TestApp;
   const tokens = {} as Record<Exclude<Persona, "anonymous">, string>;
   let tokenWhereOwnerIsNoMember: string;
+  let siteAdminPermissions: RequestPermissions;
   const ids = {} as {
     community: string;
     elsewhere: string;
@@ -275,8 +286,16 @@ describe("what each permission decorator admits (e2e)", () => {
     ids.adminsSpecieslessCharacter = await characterOf(userIds.siteAdmin, null);
 
     const accessTokens = testApp.getApp().get(PersonalAccessTokensService);
+    siteAdminPermissions = testApp
+      .getApp()
+      .get(PermissionService)
+      .forUser(
+        await testApp
+          .getDb()
+          .user.findUniqueOrThrow({ where: { id: userIds.siteAdmin } }),
+      );
     tokens.token = (
-      await accessTokens.create(userIds.siteAdmin, {
+      await accessTokens.create(userIds.siteAdmin, siteAdminPermissions, {
         name: "gate probe",
         expiresInDays: 7,
         communities: [
@@ -292,8 +311,16 @@ describe("what each permission decorator admits (e2e)", () => {
       })
     ).secret;
     // Granted membership where its owner holds no role.
+    tokens.adminToken = (
+      await accessTokens.create(userIds.siteAdmin, siteAdminPermissions, {
+        name: "gate probe admin",
+        expiresInDays: 7,
+        communities: [],
+        globalPermissions: [GlobalPermission.IsAdmin],
+      })
+    ).secret;
     tokenWhereOwnerIsNoMember = (
-      await accessTokens.create(userIds.siteAdmin, {
+      await accessTokens.create(userIds.siteAdmin, siteAdminPermissions, {
         name: "gate probe elsewhere",
         expiresInDays: 7,
         communities: [
@@ -348,10 +375,14 @@ describe("what each permission decorator admits (e2e)", () => {
     [
       "@AllowAnyAuthenticated with @AllowAccessToken",
       () => "probeSignedInOrToken",
-      [...SIGNED_IN, "token"],
+      [...SIGNED_IN, ...TOKENS],
     ],
     ["no decorator at all", () => "probeNoDecorator", []],
-    ["@AllowGlobalAdmin", () => "probeSiteAdmin", ["siteAdmin"]],
+    [
+      "@AllowGlobalAdmin, which a token holds only when granted",
+      () => "probeSiteAdmin",
+      ["siteAdmin", "adminToken"],
+    ],
     [
       "@AllowGlobalPermission, which being a site admin does not grant",
       () => "probeGlobalFlag",
@@ -387,7 +418,7 @@ describe("what each permission decorator admits (e2e)", () => {
       "@AllowGlobalAdmin beside @AllowCommunityPermission, which is either",
       () =>
         `probeSiteAdminOrCommunityPermission(communityId: "${ids.community}")`,
-      ["staff", "siteAdmin", "token"],
+      ["staff", "siteAdmin", "token", "adminToken"],
     ],
     [
       "@AllowSelf",
@@ -484,5 +515,51 @@ describe("what each permission decorator admits (e2e)", () => {
       `probeCommunityPermission(communityId: "${ids.elsewhere}")`,
     );
     expect(manager.body.errors).toBeUndefined();
+  });
+
+  it("a token loses a granted global permission when its owner does", async () => {
+    const db = testApp.getDb();
+    await db.user.update({
+      where: { id: ids.siteAdmin },
+      data: { canListUsers: true },
+    });
+    const owner = testApp
+      .getApp()
+      .get(PermissionService)
+      .forUser(
+        await db.user.findUniqueOrThrow({ where: { id: ids.siteAdmin } }),
+      );
+    const { secret } = await testApp
+      .getApp()
+      .get(PersonalAccessTokensService)
+      .create(ids.siteAdmin, owner, {
+        name: "gate probe flag",
+        expiresInDays: 7,
+        communities: [],
+        globalPermissions: [GlobalPermission.CanListUsers],
+      });
+    const ask = () =>
+      testApp.authenticatedGraphqlRequest(
+        `query { probeGlobalFlag }`,
+        {},
+        secret,
+      );
+
+    try {
+      expect((await ask()).body.errors).toBeUndefined();
+
+      await db.user.update({
+        where: { id: ids.siteAdmin },
+        data: { canListUsers: false },
+      });
+
+      const refused = await ask();
+      expect(refused.body.errors?.[0]?.extensions?.code).toBe("FORBIDDEN");
+    } finally {
+      await db.user.update({
+        where: { id: ids.siteAdmin },
+        data: { canListUsers: false },
+      });
+    }
   });
 });

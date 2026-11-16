@@ -13,7 +13,13 @@ import {
   AllCommunityPermissions,
   CommunityPermission,
 } from "../CommunityPermission";
-import { PermissionService, type AccessTokenGrant } from "../PermissionService";
+import type { GlobalPermission } from "../GlobalPermission";
+import {
+  GRANTABLE_GLOBAL_PERMISSIONS,
+  PermissionService,
+  type AccessTokenGrant,
+} from "../PermissionService";
+import type { RequestPermissions } from "../request-permissions";
 import {
   accessTokenSecretEnvironment,
   generateAccessTokenSecret,
@@ -31,6 +37,14 @@ export const ACCESS_TOKEN_LIFETIMES_DAYS = [7, 30, 90, 365] as const;
 export const GRANTABLE_COMMUNITY_PERMISSIONS: readonly CommunityPermission[] =
   AllCommunityPermissions.filter(
     (permission) => permission !== CommunityPermission.Any,
+  );
+
+/** The global permissions `creator` may grant a token: those they hold. */
+export const globalPermissionsGrantableBy = (
+  creator: RequestPermissions,
+): GlobalPermission[] =>
+  GRANTABLE_GLOBAL_PERMISSIONS.filter((permission) =>
+    creator.hasGlobal(permission),
   );
 
 /** `lastUsedAt` is written at most this often, so use is not a write per request. */
@@ -76,6 +90,8 @@ export interface CreateAccessTokenRequest {
   name: string;
   expiresInDays: number;
   communities: AccessTokenGrantRequest[];
+  /** `GlobalPermission` names, each one the creator holds. */
+  globalPermissions?: string[];
 }
 
 /** A request authenticated with a token: who it acts as, and with what. */
@@ -83,6 +99,7 @@ export interface AuthenticatedAccessToken {
   tokenId: string;
   user: User;
   grants: AccessTokenGrant[];
+  globalPermissions: string[];
 }
 
 const withCommunities = {
@@ -152,11 +169,21 @@ export class PersonalAccessTokensService {
         communityId: grant.communityId,
         permissions: grant.permissions,
       })),
+      globalPermissions: token.globalPermissions,
     };
   }
 
-  /** The secret is returned here and nowhere else. */
-  async create(ownerId: string, request: CreateAccessTokenRequest) {
+  /**
+   * The secret is returned here and nowhere else.
+   *
+   * @param creator The permissions of the session minting the token: a global
+   * permission is granted only if they hold it.
+   */
+  async create(
+    ownerId: string,
+    creator: RequestPermissions,
+    request: CreateAccessTokenRequest,
+  ) {
     const environment = this.environment;
     if (!environment) throw new AccessTokensUnavailableError();
 
@@ -171,6 +198,15 @@ export class PersonalAccessTokensService {
       throw new BadRequestException("Unsupported token lifetime");
     }
 
+    const globalPermissions = this.validateGlobalGrants(
+      creator,
+      request.globalPermissions ?? [],
+    );
+    if (request.communities.length === 0 && globalPermissions.length === 0) {
+      throw new BadRequestException(
+        "Grant a token at least one community or global permission",
+      );
+    }
     const grants = this.validateGrants(request.communities);
     const found = await this.db.community.count({
       where: { id: { in: grants.map((grant) => grant.communityId) } },
@@ -187,6 +223,7 @@ export class PersonalAccessTokensService {
         tokenHash: hashAccessTokenSecret(secret),
         displayHint: secret.slice(-4),
         expiresAt: new Date(Date.now() + request.expiresInDays * DAY_MS),
+        globalPermissions,
         communities: { create: grants },
       },
       include: withCommunities,
@@ -243,13 +280,25 @@ export class PersonalAccessTokensService {
     });
   }
 
+  private validateGlobalGrants(
+    creator: RequestPermissions,
+    requested: string[],
+  ): GlobalPermission[] {
+    const grantable = new Set<string>(globalPermissionsGrantableBy(creator));
+    const permissions = [...new Set(requested)];
+    for (const permission of permissions) {
+      if (!grantable.has(permission)) {
+        throw new BadRequestException(
+          "A token may be granted only global permissions you hold",
+        );
+      }
+    }
+    return permissions as GlobalPermission[];
+  }
+
   private validateGrants(
     requested: AccessTokenGrantRequest[],
   ): Array<{ communityId: string; permissions: string[] }> {
-    if (requested.length === 0) {
-      throw new BadRequestException("Grant a token at least one community");
-    }
-
     const seen = new Set<string>();
     return requested.map((grant) => {
       if (seen.has(grant.communityId)) {

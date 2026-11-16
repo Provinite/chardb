@@ -123,8 +123,22 @@ interface ReadGrant {
 }
 
 /**
- * What a personal access token was granted. No global permission, and in each
- * community it names, the permissions it names there.
+ * Global permissions a token may hold. Never `canGrantGlobalPermissions`: a
+ * script hands out nothing site-wide.
+ */
+export const GRANTABLE_GLOBAL_PERMISSIONS: readonly GlobalPermission[] =
+  Object.values(GlobalPermission).filter(
+    (permission) => permission !== GlobalPermission.CanGrantGlobalPermissions,
+  );
+
+const grantableGlobalPermissions = new Set<string>(
+  GRANTABLE_GLOBAL_PERMISSIONS,
+);
+
+/**
+ * What a personal access token was granted. Each global permission it names
+ * while its owner still holds it, and in each community it names, the
+ * permissions it names there.
  *
  * Membership (`CommunityPermission.Any`) is a grant of its own, and counts
  * only where the owner really holds a role: a member-only handler acts on the
@@ -135,12 +149,20 @@ interface ReadGrant {
  */
 class AccessTokenPermissions implements RequestPermissions {
   private readonly grants = new Map<string, ReadGrant>();
+  private readonly global = new Set<GlobalPermission>();
 
   constructor(
     grants: readonly AccessTokenGrant[],
-    /** The owner's own account, asked only whether they are a member. */
+    /** `GlobalPermission` names. A name the code no longer knows grants nothing. */
+    globalGrants: readonly string[],
+    /** The owner's own account, asked which global permissions they hold and whether they are a member. */
     private readonly owner: RequestPermissions,
   ) {
+    for (const name of globalGrants) {
+      if (grantableGlobalPermissions.has(name)) {
+        this.global.add(name as GlobalPermission);
+      }
+    }
     for (const grant of grants) {
       const read: ReadGrant = { member: false, permissions: {} };
       for (const name of grant.permissions) {
@@ -155,10 +177,13 @@ class AccessTokenPermissions implements RequestPermissions {
     }
   }
 
-  readonly isAdmin = false;
+  get isAdmin(): boolean {
+    return this.hasGlobal(GlobalPermission.IsAdmin);
+  }
 
-  hasGlobal(): boolean {
-    return false;
+  /** Granted, and still held by the owner: taking it from them takes it from the token. */
+  hasGlobal(permission: GlobalPermission): boolean {
+    return this.global.has(permission) && this.owner.hasGlobal(permission);
   }
 
   async inCommunity(communityId: string): Promise<CommunityPermissions> {
@@ -224,16 +249,19 @@ export class PermissionService {
   }
 
   /**
-   * What a request made with a personal access token may do: its grants, and
-   * membership only where `owner` is a member. The owner must already have
-   * been checked to be a site admin.
+   * What a request made with a personal access token may do: its community
+   * grants, membership only where `owner` is a member, and its global grants
+   * only while `owner` holds them. The owner must already have been checked
+   * to be a site admin.
    */
   forAccessToken(
     owner: PermissionHolder,
     grants: readonly AccessTokenGrant[],
+    globalGrants: readonly string[],
   ): RequestPermissions {
     return new AccessTokenPermissions(
       grants,
+      globalGrants,
       new AccountPermissions(owner, this.communityMembersService),
     );
   }

@@ -685,8 +685,11 @@ export type CreateItemTypeInput = {
 };
 
 export type CreatePersonalAccessTokenInput = {
+  /** May be empty when globalPermissions is not: a token needs one or the other. */
   communities: Array<PersonalAccessTokenGrantInput>;
   expiresInDays: Scalars['Int']['input'];
+  /** Global permission names, each one the caller holds. Never canGrantGlobalPermissions. */
+  globalPermissions?: InputMaybe<Array<Scalars['String']['input']>>;
   name: Scalars['String']['input'];
 };
 
@@ -3622,6 +3625,8 @@ export type PersonalAccessToken = {
   /** The secret's last four characters. */
   displayHint: Scalars['String']['output'];
   expiresAt: Scalars['DateTime']['output'];
+  /** Global permission names, such as isAdmin. Each counts only while the owner still holds it. */
+  globalPermissions: Array<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   lastUsedAt: Maybe<Scalars['DateTime']['output']>;
   name: Scalars['String']['output'];
@@ -3654,6 +3659,8 @@ export type PersonalAccessTokenGrantInput = {
 export type PersonalAccessTokenGrantOptions = {
   __typename?: 'PersonalAccessTokenGrantOptions';
   communities: Array<PersonalAccessTokenCommunityRef>;
+  /** The global permissions the caller holds and may grant. */
+  globalPermissions: Array<Scalars['String']['output']>;
   /** Lifetimes a token may have, in days. */
   lifetimesDays: Array<Scalars['Int']['output']>;
   /** Every community permission a token may be granted. */
@@ -7358,31 +7365,31 @@ export type MarkAllNotificationsReadMutationVariables = Exact<{ [key: string]: n
 
 export type MarkAllNotificationsReadMutation = { __typename?: 'Mutation', markAllNotificationsRead: number };
 
-export type PersonalAccessTokenFieldsFragment = { __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> };
+export type PersonalAccessTokenFieldsFragment = { __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, globalPermissions: Array<string>, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> };
 
 export type PersonalAccessTokensQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type PersonalAccessTokensQuery = { __typename?: 'Query', personalAccessTokens: Array<{ __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> }> };
+export type PersonalAccessTokensQuery = { __typename?: 'Query', personalAccessTokens: Array<{ __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, globalPermissions: Array<string>, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> }> };
 
 export type PersonalAccessTokenGrantOptionsQueryVariables = Exact<{ [key: string]: never; }>;
 
 
-export type PersonalAccessTokenGrantOptionsQuery = { __typename?: 'Query', personalAccessTokenGrantOptions: { __typename?: 'PersonalAccessTokenGrantOptions', permissions: Array<string>, lifetimesDays: Array<number>, communities: Array<{ __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string }> } };
+export type PersonalAccessTokenGrantOptionsQuery = { __typename?: 'Query', personalAccessTokenGrantOptions: { __typename?: 'PersonalAccessTokenGrantOptions', permissions: Array<string>, globalPermissions: Array<string>, lifetimesDays: Array<number>, communities: Array<{ __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string }> } };
 
 export type CreatePersonalAccessTokenMutationVariables = Exact<{
   input: CreatePersonalAccessTokenInput;
 }>;
 
 
-export type CreatePersonalAccessTokenMutation = { __typename?: 'Mutation', createPersonalAccessToken: { __typename?: 'CreatedPersonalAccessToken', secret: string, token: { __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> } } };
+export type CreatePersonalAccessTokenMutation = { __typename?: 'Mutation', createPersonalAccessToken: { __typename?: 'CreatedPersonalAccessToken', secret: string, token: { __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, globalPermissions: Array<string>, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> } } };
 
 export type RevokePersonalAccessTokenMutationVariables = Exact<{
   id: Scalars['ID']['input'];
 }>;
 
 
-export type RevokePersonalAccessTokenMutation = { __typename?: 'Mutation', revokePersonalAccessToken: { __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> } };
+export type RevokePersonalAccessTokenMutation = { __typename?: 'Mutation', revokePersonalAccessToken: { __typename?: 'PersonalAccessToken', id: string, name: string, displayHint: string, createdAt: string, expiresAt: string, lastUsedAt: string | null, revokedAt: string | null, globalPermissions: Array<string>, communities: Array<{ __typename?: 'PersonalAccessTokenGrant', member: boolean, permissions: Array<string>, community: { __typename?: 'PersonalAccessTokenCommunityRef', id: string, name: string } }> } };
 
 export type RolesByCommunityDetailedQueryVariables = Exact<{
   communityId: Scalars['ID']['input'];
@@ -8648,6 +8655,7 @@ export const PersonalAccessTokenFieldsFragmentDoc = gql`
   expiresAt
   lastUsedAt
   revokedAt
+  globalPermissions
   communities {
     community {
       id
@@ -18452,6 +18460,7 @@ export const PersonalAccessTokenGrantOptionsDocument = gql`
       name
     }
     permissions
+    globalPermissions
     lifetimesDays
   }
 }

@@ -1,11 +1,18 @@
+import { UseGuards } from "@nestjs/common";
 import { Args, ID, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { AllowGlobalAdmin } from "../decorators/AllowGlobalAdmin";
+import { RefuseAccessTokenGuard } from "../guards/RefuseAccessTokenGuard";
+import {
+  CurrentPermissions,
+  type RequestPermissions,
+} from "../decorators/CurrentPermissions";
 import { CurrentUser } from "../decorators/CurrentUser";
 import type { AuthenticatedCurrentUserType } from "../types/current-user.type";
 import { CommunityPermission } from "../CommunityPermission";
 import {
   ACCESS_TOKEN_LIFETIMES_DAYS,
   GRANTABLE_COMMUNITY_PERMISSIONS,
+  globalPermissionsGrantableBy,
   PersonalAccessTokensService,
 } from "./personal-access-tokens.service";
 import {
@@ -28,6 +35,7 @@ export const toGraphql = (token: StoredToken): PersonalAccessToken => ({
   expiresAt: token.expiresAt,
   lastUsedAt: token.lastUsedAt,
   revokedAt: token.revokedAt,
+  globalPermissions: token.globalPermissions,
   communities: token.communities.map((grant) => ({
     community: grant.community,
     member: grant.permissions.includes(CommunityPermission.Any),
@@ -39,11 +47,12 @@ export const toGraphql = (token: StoredToken): PersonalAccessToken => ({
 
 /**
  * Site admins' personal access tokens. Every handler here is
- * `@AllowGlobalAdmin()` and none is `@AllowAccessToken()`: a token holds no
- * global permission, so a token cannot list, mint or revoke tokens. A token
- * reads itself through `CurrentAccessTokenResolver` instead.
+ * `@AllowGlobalAdmin()`, and the class refuses every token request: a token
+ * granted `isAdmin` still cannot list, mint or revoke tokens. A token reads
+ * itself through `CurrentAccessTokenResolver` instead.
  */
 @Resolver()
+@UseGuards(RefuseAccessTokenGuard)
 export class PersonalAccessTokensResolver {
   constructor(private readonly tokens: PersonalAccessTokensService) {}
 
@@ -61,10 +70,13 @@ export class PersonalAccessTokensResolver {
   @Query(() => PersonalAccessTokenGrantOptions, {
     description: "What a new personal access token may be granted.",
   })
-  async personalAccessTokenGrantOptions(): Promise<PersonalAccessTokenGrantOptions> {
+  async personalAccessTokenGrantOptions(
+    @CurrentPermissions() permissions: RequestPermissions,
+  ): Promise<PersonalAccessTokenGrantOptions> {
     return {
       communities: await this.tokens.grantableCommunities(),
       permissions: [...GRANTABLE_COMMUNITY_PERMISSIONS],
+      globalPermissions: globalPermissionsGrantableBy(permissions),
       lifetimesDays: [...ACCESS_TOKEN_LIFETIMES_DAYS],
     };
   }
@@ -76,9 +88,14 @@ export class PersonalAccessTokensResolver {
   })
   async createPersonalAccessToken(
     @CurrentUser() user: AuthenticatedCurrentUserType,
+    @CurrentPermissions() permissions: RequestPermissions,
     @Args("input") input: CreatePersonalAccessTokenInput,
   ): Promise<CreatedPersonalAccessToken> {
-    const { token, secret } = await this.tokens.create(user.id, input);
+    const { token, secret } = await this.tokens.create(
+      user.id,
+      permissions,
+      input,
+    );
     return { token: toGraphql(token), secret };
   }
 

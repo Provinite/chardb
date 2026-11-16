@@ -207,8 +207,8 @@ describe("PermissionService", () => {
       );
     };
 
-    it("holds no global permission, whatever its owner's account holds", () => {
-      const permissions = service.forAccessToken(owner, grants);
+    it("holds no global permission it was not granted, whatever its owner's account holds", () => {
+      const permissions = service.forAccessToken(owner, grants, []);
 
       expect(permissions.isAdmin).toBe(false);
       for (const permission of Object.values(GlobalPermission)) {
@@ -216,9 +216,57 @@ describe("PermissionService", () => {
       }
     });
 
+    it("holds a granted global permission its owner holds", () => {
+      const permissions = service.forAccessToken(owner, grants, [
+        GlobalPermission.IsAdmin,
+        GlobalPermission.CanListUsers,
+      ]);
+
+      expect(permissions.isAdmin).toBe(true);
+      expect(permissions.hasGlobal(GlobalPermission.IsAdmin)).toBe(true);
+      expect(permissions.hasGlobal(GlobalPermission.CanListUsers)).toBe(true);
+      expect(permissions.hasGlobal(GlobalPermission.CanCreateCommunity)).toBe(
+        false,
+      );
+    });
+
+    it("holds no granted global permission its owner no longer holds", () => {
+      const permissions = service.forAccessToken(
+        user({ isAdmin: true, canListUsers: false }),
+        grants,
+        [GlobalPermission.CanListUsers],
+      );
+
+      expect(permissions.hasGlobal(GlobalPermission.CanListUsers)).toBe(false);
+    });
+
+    it("never holds canGrantGlobalPermissions, though granted and held", () => {
+      const permissions = service.forAccessToken(
+        user({ isAdmin: true, canGrantGlobalPermissions: true }),
+        grants,
+        [GlobalPermission.CanGrantGlobalPermissions],
+      );
+
+      expect(
+        permissions.hasGlobal(GlobalPermission.CanGrantGlobalPermissions),
+      ).toBe(false);
+    });
+
+    it("ignores a global permission name the code no longer knows", () => {
+      const permissions = service.forAccessToken(
+        user({ isAdmin: true, canDoSomethingRemoved: true } as Partial<User>),
+        grants,
+        ["canDoSomethingRemoved"],
+      );
+
+      expect(
+        permissions.hasGlobal("canDoSomethingRemoved" as GlobalPermission),
+      ).toBe(false);
+    });
+
     it("grants exactly the permissions it names in a community it names", async () => {
       ownerIsMemberOf("c-1");
-      const permissions = service.forAccessToken(owner, grants);
+      const permissions = service.forAccessToken(owner, grants, []);
 
       expect(await permissions.inCommunity("c-1")).toEqual({
         hasMembership: true,
@@ -234,7 +282,7 @@ describe("PermissionService", () => {
 
     it("is a member only where membership was granted", async () => {
       ownerIsMemberOf("c-1", "c-2");
-      const permissions = service.forAccessToken(owner, grants);
+      const permissions = service.forAccessToken(owner, grants, []);
 
       expect(
         await permissions.hasInCommunity("c-1", CommunityPermission.Any),
@@ -254,7 +302,7 @@ describe("PermissionService", () => {
     // their purchases. Where the owner is no member there is nothing to act as.
     it("is no member where its owner holds no role, though granted", async () => {
       ownerIsMemberOf();
-      const permissions = service.forAccessToken(owner, grants);
+      const permissions = service.forAccessToken(owner, grants, []);
 
       expect(await permissions.inCommunity("c-1")).toEqual({
         hasMembership: false,
@@ -270,7 +318,7 @@ describe("PermissionService", () => {
 
     it("grants nothing in a community it does not name", async () => {
       ownerIsMemberOf("c-3");
-      const permissions = service.forAccessToken(owner, grants);
+      const permissions = service.forAccessToken(owner, grants, []);
 
       expect(await permissions.inCommunity("c-3")).toEqual({
         hasMembership: false,
@@ -279,7 +327,7 @@ describe("PermissionService", () => {
 
     it("lists the communities that grant any of the permissions", async () => {
       ownerIsMemberOf("c-1", "c-2");
-      const permissions = service.forAccessToken(owner, grants);
+      const permissions = service.forAccessToken(owner, grants, []);
 
       expect(
         await permissions.communityIdsWith(
@@ -299,7 +347,7 @@ describe("PermissionService", () => {
 
     it("reads the owner's roles only to answer membership, once per community", async () => {
       ownerIsMemberOf("c-1", "c-2");
-      const permissions = service.forAccessToken(owner, grants);
+      const permissions = service.forAccessToken(owner, grants, []);
 
       await permissions.inCommunity("c-2");
       await permissions.hasInCommunity(

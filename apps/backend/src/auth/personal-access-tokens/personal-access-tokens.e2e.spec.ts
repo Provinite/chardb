@@ -13,6 +13,7 @@ const CREATE = `
         displayHint
         expiresAt
         revokedAt
+        globalPermissions
         communities { community { id name } member permissions }
       }
     }
@@ -40,6 +41,7 @@ const CURRENT = `
       name
       displayHint
       expiresAt
+      globalPermissions
       communities { community { id name slug } member permissions }
     }
   }
@@ -112,8 +114,8 @@ describe("personal access tokens (e2e)", () => {
     );
 
   /** Mints a token as the admin and returns its id and secret. */
-  const mint = async () => {
-    const response = await create(adminSession);
+  const mint = async (overrides: Record<string, unknown> = {}) => {
+    const response = await create(adminSession, overrides);
     expect(response.body.errors).toBeUndefined();
     const { secret, token } = response.body.data.createPersonalAccessToken;
     return { secret: secret as string, id: token.id as string };
@@ -139,6 +141,7 @@ describe("personal access tokens (e2e)", () => {
           permissions: ["canManageItems"],
         },
       ]);
+      expect(token.globalPermissions).toEqual([]);
       const expiresIn = new Date(token.expiresAt).getTime() - Date.now();
       expect(expiresIn).toBeGreaterThan(29 * DAY_MS);
       expect(expiresIn).toBeLessThanOrEqual(30 * DAY_MS);
@@ -152,6 +155,52 @@ describe("personal access tokens (e2e)", () => {
 
     it("refuses a caller who is not a site admin", async () => {
       expect(errorCode(await create(memberSession))).toBe("FORBIDDEN");
+    });
+
+    it("grants global permissions the creator holds", async () => {
+      const response = await create(adminSession, {
+        globalPermissions: ["isAdmin"],
+      });
+
+      expect(response.body.errors).toBeUndefined();
+      expect(
+        response.body.data.createPersonalAccessToken.token.globalPermissions,
+      ).toEqual(["isAdmin"]);
+    });
+
+    it("grants global permissions alone, with no community", async () => {
+      const response = await create(adminSession, {
+        communities: [],
+        globalPermissions: ["isAdmin"],
+      });
+
+      expect(response.body.errors).toBeUndefined();
+      const { token } = response.body.data.createPersonalAccessToken;
+      expect(token.communities).toEqual([]);
+      expect(token.globalPermissions).toEqual(["isAdmin"]);
+    });
+
+    it("refuses canGrantGlobalPermissions, even to a creator who holds it", async () => {
+      const db = testApp.getDb();
+      await db.user.update({
+        where: { id: adminId },
+        data: { canGrantGlobalPermissions: true },
+      });
+      const before = await db.personalAccessToken.count();
+
+      try {
+        const response = await create(adminSession, {
+          globalPermissions: ["canGrantGlobalPermissions"],
+        });
+
+        expect(response.body.errors).toBeDefined();
+        expect(await db.personalAccessToken.count()).toBe(before);
+      } finally {
+        await db.user.update({
+          where: { id: adminId },
+          data: { canGrantGlobalPermissions: false },
+        });
+      }
     });
 
     it.each([
@@ -196,7 +245,12 @@ describe("personal access tokens (e2e)", () => {
           ],
         },
       ],
-      ["no community", { communities: [] }],
+      ["no community and no global permission", { communities: [] }],
+      [
+        "a global permission the creator does not hold",
+        { globalPermissions: ["canListUsers"] },
+      ],
+      ["an unknown global permission", { globalPermissions: ["canFly"] }],
       ["an unsupported lifetime", { expiresInDays: 3650 }],
       ["a blank name", { name: "   " }],
     ])("refuses %s", async (_case, overrides) => {
@@ -211,7 +265,7 @@ describe("personal access tokens (e2e)", () => {
 
     it("offers every community and every community permission", async () => {
       const response = await testApp.authenticatedGraphqlRequest(
-        `query { personalAccessTokenGrantOptions { communities { id } permissions lifetimesDays } }`,
+        `query { personalAccessTokenGrantOptions { communities { id } permissions globalPermissions lifetimesDays } }`,
         {},
         adminSession,
       );
@@ -221,6 +275,31 @@ describe("personal access tokens (e2e)", () => {
       expect(options.permissions).toContain("canManageItems");
       expect(options.permissions).not.toContain("__ANY__");
       expect(options.lifetimesDays).toEqual([7, 30, 90, 365]);
+    });
+
+    it("offers only the global permissions the caller holds, never canGrantGlobalPermissions", async () => {
+      const db = testApp.getDb();
+      await db.user.update({
+        where: { id: adminId },
+        data: { canListUsers: true, canGrantGlobalPermissions: true },
+      });
+
+      try {
+        const response = await testApp.authenticatedGraphqlRequest(
+          `query { personalAccessTokenGrantOptions { globalPermissions } }`,
+          {},
+          adminSession,
+        );
+
+        expect(
+          response.body.data.personalAccessTokenGrantOptions.globalPermissions,
+        ).toEqual(["canListUsers", "isAdmin"]);
+      } finally {
+        await db.user.update({
+          where: { id: adminId },
+          data: { canListUsers: false, canGrantGlobalPermissions: false },
+        });
+      }
     });
   });
 
@@ -329,7 +408,7 @@ describe("personal access tokens (e2e)", () => {
 
   describe("reading itself", () => {
     it("shows the token it was called with, with its grants", async () => {
-      const { secret, id } = await mint();
+      const { secret, id } = await mint({ globalPermissions: ["isAdmin"] });
 
       const response = await testApp.authenticatedGraphqlRequest(
         CURRENT,
@@ -353,6 +432,7 @@ describe("personal access tokens (e2e)", () => {
           permissions: ["canManageItems"],
         },
       ]);
+      expect(current.globalPermissions).toEqual(["isAdmin"]);
     });
 
     it("is null for a session", async () => {
@@ -375,8 +455,11 @@ describe("personal access tokens (e2e)", () => {
   });
 
   describe("what a token may never do", () => {
-    it("cannot mint, list or revoke tokens", async () => {
-      const { secret, id } = await mint();
+    it.each([
+      ["a token", {}],
+      ["a token granted isAdmin", { globalPermissions: ["isAdmin"] }],
+    ])("%s cannot mint, list or revoke tokens", async (_case, overrides) => {
+      const { secret, id } = await mint(overrides);
 
       expect(
         errorCode(
@@ -393,6 +476,15 @@ describe("personal access tokens (e2e)", () => {
       expect(
         errorCode(
           await testApp.authenticatedGraphqlRequest(REVOKE, { id }, secret),
+        ),
+      ).toBe("FORBIDDEN");
+      expect(
+        errorCode(
+          await testApp.authenticatedGraphqlRequest(
+            `query { personalAccessTokenGrantOptions { lifetimesDays } }`,
+            {},
+            secret,
+          ),
         ),
       ).toBe("FORBIDDEN");
     });

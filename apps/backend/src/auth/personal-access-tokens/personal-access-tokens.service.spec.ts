@@ -1,6 +1,7 @@
 import { ConfigService } from "@nestjs/config";
 import { DatabaseService } from "../../database/database.service";
 import { PermissionService } from "../PermissionService";
+import { ANONYMOUS_PERMISSIONS } from "../request-permissions";
 import {
   AccessTokensUnavailableError,
   InvalidAccessTokenError,
@@ -32,7 +33,7 @@ describe("PersonalAccessTokensService on a server that names no environment", ()
     const { service, db } = serviceWith(unnamed);
 
     await expect(
-      service.create("user-1", {
+      service.create("user-1", ANONYMOUS_PERMISSIONS, {
         name: "bot",
         expiresInDays: 30,
         communities: [{ communityId: "c-1", member: true, permissions: [] }],
