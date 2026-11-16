@@ -4,6 +4,7 @@ import { Link, Navigate, useParams } from "react-router-dom";
 import { Package } from "lucide-react";
 import { Button } from "@chardb/ui";
 import { usePageMeta } from "../lib/pageMeta";
+import { formatAmount } from "../lib/currencyDisplay";
 import { LoadingSpinner } from "../components/LoadingSpinner";
 import { ProviderIcon } from "../components/ProviderIcon";
 import { RemoveItemsDialog } from "../components/items/RemoveItemsDialog";
@@ -20,7 +21,7 @@ import {
 } from "../lib/pendingOwner";
 
 /**
- * An external member's pending inventory: the items and characters waiting
+ * An external member's pending inventory: the currency, items and characters waiting
  * on someone with no account here -- an event winner known only by Discord,
  * say -- for staff to find and clean up (#445).
  *
@@ -202,7 +203,9 @@ export const CommunityPendingHoldingsPage: React.FC = () => {
   }
 
   const nothingLeft =
-    report.holdings.length === 0 && report.characters.length === 0;
+    report.holdings.length === 0 &&
+    report.characters.length === 0 &&
+    report.balances.length === 0;
 
   return (
     <Container>
@@ -221,6 +224,29 @@ export const CommunityPendingHoldingsPage: React.FC = () => {
           <Package size={36} style={{ opacity: 0.5 }} />
           <p>Nothing is left waiting for them here.</p>
         </Empty>
+      )}
+
+      {report.balances.length > 0 && (
+        <Section>
+          <SectionTitle>Currency</SectionTitle>
+          <Groups>
+            {report.balances.map((b) => (
+              <Group
+                key={b.currency.id}
+                data-testid="pending-balance"
+                data-currency-id={b.currency.id}
+              >
+                <Name>
+                  {b.currency.name}
+                  <small>
+                    {b.grantCount === 1 ? "1 grant" : `${b.grantCount} grants`}
+                  </small>
+                </Name>
+                <Count>{formatAmount(b.amount, b.currency)}</Count>
+              </Group>
+            ))}
+          </Groups>
+        </Section>
       )}
 
       {report.holdings.length > 0 && (

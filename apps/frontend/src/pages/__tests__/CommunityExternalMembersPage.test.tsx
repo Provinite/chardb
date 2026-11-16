@@ -33,6 +33,20 @@ const neo = {
   __typename: "ExternalMember" as const,
   itemCount: 2,
   characterCount: 1,
+  balances: [
+    {
+      __typename: "PendingCurrencyBalance" as const,
+      amount: 1250,
+      grantCount: 2,
+      currency: {
+        __typename: "Currency" as const,
+        id: "cur1",
+        name: "Clover",
+        code: "CLV",
+        symbol: null,
+      },
+    },
+  ],
   holder: {
     __typename: "PendingOwnership" as const,
     id: "po1",
@@ -105,6 +119,7 @@ describe("CommunityExternalMembersPage", () => {
     expect(row).toHaveTextContent("Neo the Baka (@neo.baka)");
     expect(row).toHaveTextContent("2 items");
     expect(row).toHaveTextContent("1 character");
+    expect(row).toHaveTextContent("1,250 CLV");
     expect(screen.getByRole("link", { name: /Neo the Baka/ })).toHaveAttribute(
       "href",
       "/external-members/discord/214000000000009071",

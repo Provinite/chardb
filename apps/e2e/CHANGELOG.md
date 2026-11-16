@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CLI spec**: runs `yarn chardb` with a fresh token against the e2e backend.
 - **DeviantArt fake**: the e2e backend resolves DeviantArt handles against a local stand-in (`DEVIANTART_API_URL`), so grants to a handle work in specs.
+- **Pending currency specs**: minting to DeviantArt handles, staff views and permissions, the External Members page, and claiming on join (#610).
+- **Readable input errors**: a refused GraphQL input names the failed validation rules instead of only "Bad Request Exception".
 
 ## [v16.0.0] - 2026-11-15
 

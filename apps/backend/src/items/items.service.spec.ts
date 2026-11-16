@@ -30,6 +30,7 @@ const mockPendingOwnershipService = {
   createForItem: jest.fn(),
   checkIfAccountClaimed: jest.fn(),
   isMember: jest.fn(),
+  findPendingBalances: jest.fn().mockResolvedValue(new Map()),
 };
 const mockDiscordService = {
   validateUserId: jest.fn(),
@@ -1316,6 +1317,7 @@ describe("ItemsService.findPendingHoldings", () => {
       OR: [
         { item: { itemType: { communityId: "comm1" } } },
         { character: { species: { communityId: "comm1" } } },
+        { currency: { communityId: "comm1" } },
       ],
     });
   });

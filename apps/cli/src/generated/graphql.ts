@@ -508,6 +508,8 @@ export enum CurrencyTransactionSource {
   ItemUse = 'ITEM_USE',
   /** Awarded when uploaded media was approved in moderation. sourceId is the media -- an image is an implementation detail of a media. */
   MediaApproval = 'MEDIA_APPROVAL',
+  /** Minted to an external account before it had a user here, and claimed when its person linked it and joined. sourceId is the pending ownership row, which keeps when it was minted. */
+  PendingGrant = 'PENDING_GRANT',
   ShopPurchase = 'SHOP_PURCHASE'
 }
 
@@ -827,11 +829,13 @@ export type MintCurrencyInput = {
   /** How much each named member receives. Positive. */
   amount: Scalars['Int']['input'];
   currencyId: Scalars['ID']['input'];
+  /** External accounts who receive it: a Discord id or username, or a DeviantArt handle. An account linked by a member here is paid at once; any other waits on the account until its person links it and joins. */
+  pendingOwners?: InputMaybe<Array<PendingOwnerInput>>;
   /** Member-facing. Required, because it is public. */
   reason: Scalars['String']['input'];
   staffNote?: InputMaybe<Scalars['String']['input']>;
-  /** Who receives it. At least one. */
-  userIds: Array<Scalars['ID']['input']>;
+  /** Members who receive it. With pendingOwners, at least one recipient in all. */
+  userIds?: InputMaybe<Array<Scalars['ID']['input']>>;
 };
 
 /** The reason for rejecting an image */

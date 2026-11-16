@@ -4,6 +4,7 @@ import { PendingOwnershipService } from "./pending-ownership.service";
 import { DatabaseService } from "../database/database.service";
 import { ExternalAccountsService } from "../external-accounts/external-accounts.service";
 import { ItemTransactionsService } from "../item-transactions/item-transactions.service";
+import { CurrencyLedgerService } from "../currencies/currency-ledger.service";
 import { mockDatabaseService } from "../../test/setup";
 
 const NEO = "214000000000009071";
@@ -42,6 +43,7 @@ describe("PendingOwnershipService.findExternalMembers", () => {
         { provide: DatabaseService, useValue: mockDatabaseService },
         { provide: ExternalAccountsService, useValue: {} },
         { provide: ItemTransactionsService, useValue: {} },
+        { provide: CurrencyLedgerService, useValue: {} },
       ],
     }).compile();
     service = module.get(PendingOwnershipService);
@@ -122,6 +124,7 @@ describe("PendingOwnershipService.findExternalMembers", () => {
                 species: { communityId: "comm1" },
               },
             },
+            { currency: { communityId: "comm1" } },
           ],
         },
       ],

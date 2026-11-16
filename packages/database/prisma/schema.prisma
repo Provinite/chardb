@@ -193,7 +193,8 @@ model User {
   shopLinesRefunded                ShopPurchaseLine[]    @relation("ShopLineRefunder")
 
   // Pending ownership claims
-  claimedPendingItems PendingOwnership[]
+  claimedPendingItems PendingOwnership[] @relation("PendingOwnershipClaimedBy")
+  pendingGrantsMade   PendingOwnership[] @relation("PendingOwnershipActor")
 
   // Password reset tokens
   passwordResetTokens PasswordResetToken[]
@@ -1188,6 +1189,22 @@ model PendingOwnership {
   // Exactly one must be set (enforced by CHECK constraint)
   characterId String? @unique @map("character_id")
   itemId      String? @unique @map("item_id")
+  /// A currency grant: `amount` of this currency, minted to an account with
+  /// no user here yet (#610). Not unique: every mint to the account is its
+  /// own row, claimed into its own ledger row.
+  currencyId  String? @map("currency_id")
+
+  /// The currency grant's amount. Set exactly when currencyId is (CHECK).
+  amount      Int?
+  /// The rest of what the claim's ledger row records. No ledger row is
+  /// written at mint, so this row carries it until then: the mint's batch id,
+  /// its reasons and who did it. Currency grants only; an item's GRANT row
+  /// already holds these.
+  batchId     String? @map("batch_id")
+  reason      String? @db.Text
+  staffNote   String? @map("staff_note") @db.Text
+  actorUserId String? @map("actor_user_id")
+  actorLabel  String? @map("actor_label") @db.VarChar(50)
 
   // External account info
   provider          ExternalAccountProvider
@@ -1205,10 +1222,13 @@ model PendingOwnership {
   // Relations
   character     Character? @relation(fields: [characterId], references: [id], onDelete: Cascade)
   item          Item?      @relation(fields: [itemId], references: [id], onDelete: Cascade)
-  claimedByUser User?      @relation(fields: [claimedByUserId], references: [id], onDelete: SetNull)
+  currency      Currency?  @relation(fields: [currencyId], references: [id], onDelete: Cascade)
+  claimedByUser User?      @relation("PendingOwnershipClaimedBy", fields: [claimedByUserId], references: [id], onDelete: SetNull)
+  actorUser     User?      @relation("PendingOwnershipActor", fields: [actorUserId], references: [id], onDelete: SetNull)
 
   // Constraints
   @@index([provider, providerAccountId])
+  @@index([currencyId])
   @@map("pending_ownership")
 }
 
@@ -1413,6 +1433,7 @@ model Currency {
   shopPriceComponents   ShopPriceComponent[]
   shopPurchaseLineCosts ShopPurchaseLineCost[]
   itemUsePayouts        ItemUsePayoutComponent[]
+  pendingGrants         PendingOwnership[]
 
   @@unique([communityId, code])
   @@unique([communityId, name])
@@ -1487,6 +1508,10 @@ enum CurrencyTransactionSource {
   /// it is what the matching USE row on the item ledger names too, so the two
   /// halves of one event point at the same object.
   ITEM_USE
+  /// Minted to an external account before it had a user here, and claimed
+  /// when its person linked it and joined (#610). Source id is the
+  /// PENDING_OWNERSHIP row, which keeps when it was minted and by whom.
+  PENDING_GRANT
 }
 
 /// One member's side of one currency movement. A transfer is two rows.

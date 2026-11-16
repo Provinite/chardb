@@ -11,6 +11,8 @@ import {
   mockNotificationsService,
 } from "../../test/setup";
 import { NotificationsService } from "../notifications/notifications.service";
+import { DiscordService } from "../discord/discord.service";
+import { DeviantArtService } from "../deviantart/deviantart.service";
 
 /** The shape the service writes into currency_transactions. */
 interface LedgerRow {
@@ -80,6 +82,8 @@ describe("CurrencyLedgerService", () => {
           provide: NotificationsService,
           useValue: mockNotificationsService,
         },
+        { provide: DiscordService, useValue: {} },
+        { provide: DeviantArtService, useValue: {} },
       ],
     }).compile();
 

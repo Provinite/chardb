@@ -437,6 +437,20 @@ export const GET_MEMBER_HOLDINGS = gql`
   ${USER_BASIC_FRAGMENT}
 `;
 
+// Currency minted to someone with no account here, summed per currency (#610).
+export const PENDING_CURRENCY_BALANCE_FIELDS = gql`
+  fragment PendingCurrencyBalanceFields on PendingCurrencyBalance {
+    amount
+    grantCount
+    currency {
+      id
+      name
+      code
+      symbol
+    }
+  }
+`;
+
 // What waits on someone with no account here, for staff to clean up (#445).
 export const GET_PENDING_HOLDINGS = gql`
   query GetPendingHoldings(
@@ -484,12 +498,16 @@ export const GET_PENDING_HOLDINGS = gql`
         id
         name
       }
+      balances {
+        ...PendingCurrencyBalanceFields
+      }
       claimedBy {
         id
         username
       }
     }
   }
+  ${PENDING_CURRENCY_BALANCE_FIELDS}
 `;
 
 // External members: who something waits on here without an account, one per
@@ -520,9 +538,13 @@ export const GET_EXTERNAL_MEMBERS = gql`
           displayIdentifier
           displayName
         }
+        balances {
+          ...PendingCurrencyBalanceFields
+        }
       }
     }
   }
+  ${PENDING_CURRENCY_BALANCE_FIELDS}
 `;
 
 export const USE_ITEM = gql`
