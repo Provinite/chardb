@@ -3,6 +3,11 @@ import type { Request } from "express";
 import { getRequestAccessTokenId } from "../access-token-request";
 import { AllowAccessToken } from "../decorators/AllowAccessToken";
 import { AllowAnyAuthenticated } from "../decorators/AllowAnyAuthenticated";
+import {
+  CurrentPermissions,
+  type RequestPermissions,
+} from "../decorators/CurrentPermissions";
+import type { GlobalPermission } from "../GlobalPermission";
 import { PersonalAccessToken } from "./personal-access-token.dto";
 import { PersonalAccessTokensService } from "./personal-access-tokens.service";
 import { toGraphql } from "./personal-access-tokens.resolver";
@@ -25,10 +30,17 @@ export class CurrentAccessTokenResolver {
   })
   async currentAccessToken(
     @Context() ctx: { req: Request },
+    @CurrentPermissions() permissions: RequestPermissions,
   ): Promise<PersonalAccessToken | null> {
     const tokenId = getRequestAccessTokenId(ctx.req);
     if (!tokenId) return null;
     const token = await this.tokens.get(tokenId);
-    return token ? toGraphql(token) : null;
+    if (!token) return null;
+    const shown = toGraphql(token);
+    // What it may do now: a grant its owner has since lost counts for nothing.
+    shown.globalPermissions = shown.globalPermissions.filter((name) =>
+      permissions.hasGlobal(name as GlobalPermission),
+    );
+    return shown;
   }
 }

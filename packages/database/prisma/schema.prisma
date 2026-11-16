@@ -286,8 +286,9 @@ model PasswordResetToken {
 }
 
 /// A credential a site admin mints for a script or an agent. It acts as its
-/// owner, but only with the community permissions it was granted, and only
-/// while the owner is still a site admin.
+/// owner, but only with the global and community permissions it was granted,
+/// and only while the owner is still a site admin. A global grant can include
+/// isAdmin; handlers a token must never reach refuse it outright.
 model PersonalAccessToken {
   id                String    @id @default(uuid())
   userId            String    @map("user_id")

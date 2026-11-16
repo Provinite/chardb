@@ -79,6 +79,7 @@ describe("OptionalJwtAuthGuard", () => {
       tokenId: "token-1",
       user: viewer,
       grants,
+      globalPermissions: ["isAdmin"],
     });
     guard = new OptionalJwtAuthGuard(
       { forUser, forAccessToken } as unknown as PermissionService,
@@ -189,7 +190,7 @@ describe("OptionalJwtAuthGuard", () => {
 
       expect(authenticateAccessToken).toHaveBeenCalledWith("chardb_pat_secret");
       expect(req.user).toBe(viewer);
-      expect(forAccessToken).toHaveBeenCalledWith(viewer, grants);
+      expect(forAccessToken).toHaveBeenCalledWith(viewer, grants, ["isAdmin"]);
       expect(forUser).not.toHaveBeenCalled();
       expect(getRequestPermissions(req)).toBe(tokenPermissions);
       expect(getRequestAccessTokenId(req)).toBe("token-1");

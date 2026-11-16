@@ -435,6 +435,40 @@ describe("personal access tokens (e2e)", () => {
       expect(current.globalPermissions).toEqual(["isAdmin"]);
     });
 
+    it("shows only the global permissions its owner still holds", async () => {
+      const db = testApp.getDb();
+      await db.user.update({
+        where: { id: adminId },
+        data: { canListUsers: true },
+      });
+
+      try {
+        const { secret } = await mint({
+          globalPermissions: ["isAdmin", "canListUsers"],
+        });
+        await db.user.update({
+          where: { id: adminId },
+          data: { canListUsers: false },
+        });
+
+        const response = await testApp.authenticatedGraphqlRequest(
+          CURRENT,
+          {},
+          secret,
+        );
+
+        expect(response.body.errors).toBeUndefined();
+        expect(response.body.data.currentAccessToken.globalPermissions).toEqual(
+          ["isAdmin"],
+        );
+      } finally {
+        await db.user.update({
+          where: { id: adminId },
+          data: { canListUsers: false },
+        });
+      }
+    });
+
     it("is null for a session", async () => {
       const response = await testApp.authenticatedGraphqlRequest(
         CURRENT,
