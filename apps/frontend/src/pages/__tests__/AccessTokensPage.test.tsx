@@ -19,6 +19,7 @@ const created: PersonalAccessTokenFieldsFragment = {
   expiresAt: "2027-02-12T00:00:00Z",
   lastUsedAt: null,
   revokedAt: null,
+  globalPermissions: [],
   communities: [
     {
       __typename: "PersonalAccessTokenGrant",
@@ -52,6 +53,7 @@ const mocks: MockedResponse[] = [
             },
           ],
           permissions: ["canManageItems"],
+          globalPermissions: ["isAdmin"],
           lifetimesDays: [7, 30, 90, 365],
         },
       },
@@ -71,6 +73,7 @@ const mocks: MockedResponse[] = [
               permissions: ["canManageItems"],
             },
           ],
+          globalPermissions: [],
         },
       },
     },

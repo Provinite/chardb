@@ -52,7 +52,7 @@ Use `localhost`, not the `api.dev.localhost` host `yarn instance` prints: Node c
 
 | Command | Does |
 | --- | --- |
-| `whoami` | The token's name, expiry, owner, and its permissions in each community (e.g. `canGrantItems`) |
+| `whoami` | The token's name, expiry, owner, the site permissions it can still use (`site` row, e.g. `isAdmin`), and its permissions in each community (e.g. `canGrantItems`) |
 | `communities get <slug>` | A community's id from its subdomain label |
 | `users get <username>` | A user's id |
 | `items types --community <slug\|id>` | A community's item types. `--search`, `--category`, `--limit`, `--offset` |

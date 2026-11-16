@@ -177,6 +177,39 @@ export const PERMISSION_LABELS: { [K in PermissionKey]: string } = Object.keys(
   {} as { [K in PermissionKey]: string },
 );
 
+export interface GlobalPermissionInfo {
+  name: string;
+  description: string;
+}
+
+/**
+ * Site-wide permissions an access token may be granted, by backend name. A
+ * name missing here shows as itself.
+ */
+export const GLOBAL_PERMISSIONS_MAP: Record<string, GlobalPermissionInfo> = {
+  isAdmin: {
+    name: "Site Admin",
+    description:
+      "Acts with your full site admin access in every community. It still cannot create, list or revoke access tokens.",
+  },
+  canCreateCommunity: {
+    name: "Manage Communities",
+    description: "Create, edit and remove communities.",
+  },
+  canListUsers: {
+    name: "List Users",
+    description: "See every account on the site.",
+  },
+  canListInviteCodes: {
+    name: "View Site Invite Codes",
+    description: "See every invite code on the site.",
+  },
+  canCreateInviteCode: {
+    name: "Manage Site Invite Codes",
+    description: "Create, edit and remove invite codes.",
+  },
+};
+
 /**
  * Category metadata for UI display
  */

@@ -17,6 +17,7 @@ import { AllowCharacterRegistryEditor } from "./decorators/AllowCharacterRegistr
 import { AllowAnyAuthenticated } from "./decorators/AllowAnyAuthenticated";
 import { AllowUnauthenticated } from "./decorators/AllowUnauthenticated";
 import { AllowAccessToken } from "./decorators/AllowAccessToken";
+import { RefuseAccessTokenGuard } from "./guards/RefuseAccessTokenGuard";
 
 /**
  * Every resolver method must say who may call it.
@@ -161,6 +162,12 @@ const hasDecorator = (m: ResolverMethod, key: string): boolean =>
 const decoratorValue = (m: ResolverMethod, key: string): unknown =>
   Reflect.getMetadata(key, m.handler) ?? Reflect.getMetadata(key, m.target);
 
+/** The guards named in `@UseGuards` on the method's class, then the method. */
+const routeGuardsOf = (m: ResolverMethod): unknown[] => [
+  ...((Reflect.getMetadata(GUARDS_METADATA, m.target) as unknown[]) ?? []),
+  ...((Reflect.getMetadata(GUARDS_METADATA, m.handler) as unknown[]) ?? []),
+];
+
 /** A config object in one stable spelling. */
 const spell = (config: unknown): string =>
   JSON.stringify(config, Object.keys(config as object).sort());
@@ -208,10 +215,9 @@ const describeAccess = (m: ResolverMethod): string => {
     allowed.push(`character registry editor ${spell(registry)}`);
   }
 
-  const routeGuards = [
-    ...((Reflect.getMetadata(GUARDS_METADATA, m.target) as unknown[]) ?? []),
-    ...((Reflect.getMetadata(GUARDS_METADATA, m.handler) as unknown[]) ?? []),
-  ].map((guard) => (guard as { name?: string }).name ?? "anonymous guard");
+  const routeGuards = routeGuardsOf(m).map(
+    (guard) => (guard as { name?: string }).name ?? "anonymous guard",
+  );
 
   return [
     allowed.length > 0 ? allowed.join(" or ") : "NOBODY",
@@ -225,7 +231,9 @@ const describeAccess = (m: ResolverMethod): string => {
 /**
  * Handlers that change credentials, sessions, linked accounts or tokens.
  * A personal access token must never reach them, so none may carry
- * `@AllowAccessToken()`. A whole class is named by its name alone.
+ * `@AllowAccessToken()`, and one gated on a global or community permission
+ * must carry `RefuseAccessTokenGuard`. A whole class is named by its name
+ * alone.
  */
 const NEVER_FOR_ACCESS_TOKENS = [
   "AuthResolver",
@@ -304,6 +312,19 @@ describe("resolver permission coverage", () => {
     expect(
       handlers
         .filter((m) => hasDecorator(m, AllowAccessToken.KEY))
+        .map(describeMethod),
+    ).toEqual([]);
+
+    // A token can be granted global and community permissions, so a gate on
+    // one admits a token with no `@AllowAccessToken()` at all.
+    expect(
+      handlers
+        .filter(
+          (m) =>
+            hasDecorator(m, AllowGlobalPermission.KEY) ||
+            hasDecorator(m, AllowCommunityPermission.KEY),
+        )
+        .filter((m) => !routeGuardsOf(m).includes(RefuseAccessTokenGuard))
         .map(describeMethod),
     ).toEqual([]);
   });

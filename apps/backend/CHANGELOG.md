@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **`currentAccessToken` query**: a personal access token reads its own name, expiry and community grants; null for a session.
+- **Global permissions on access tokens**: a site admin can grant a token the global permissions they hold, `isAdmin` included, each counting only while they still hold it; tokens still cannot manage tokens (#611).
 - **Pending currency grants**: `mintCurrency` takes `pendingOwners`, and coin minted to an unlinked Discord or DeviantArt account is credited with its ledger row when they link and join (#610).
 
 ### Fixed

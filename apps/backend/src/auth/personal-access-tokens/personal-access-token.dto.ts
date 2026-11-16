@@ -1,9 +1,9 @@
 import { Field, ID, InputType, Int, ObjectType } from "@nestjs/graphql";
 import { Type } from "class-transformer";
 import {
-  ArrayMinSize,
   IsBoolean,
   IsIn,
+  IsOptional,
   IsString,
   IsUUID,
   MaxLength,
@@ -52,6 +52,12 @@ export class PersonalAccessToken {
   @Field(() => [PersonalAccessTokenGrant])
   communities: PersonalAccessTokenGrant[];
 
+  @Field(() => [String], {
+    description:
+      "Global permission names, such as isAdmin. Each counts only while the owner still holds it.",
+  })
+  globalPermissions: string[];
+
   @Field()
   createdAt: Date;
 
@@ -87,6 +93,11 @@ export class PersonalAccessTokenGrantOptions {
   })
   permissions: string[];
 
+  @Field(() => [String], {
+    description: "The global permissions the caller holds and may grant.",
+  })
+  globalPermissions: string[];
+
   @Field(() => [Int], { description: "Lifetimes a token may have, in days." })
   lifetimesDays: number[];
 }
@@ -118,9 +129,20 @@ export class CreatePersonalAccessTokenInput {
   @IsIn([...ACCESS_TOKEN_LIFETIMES_DAYS])
   expiresInDays: number;
 
-  @Field(() => [PersonalAccessTokenGrantInput])
-  @ArrayMinSize(1)
+  @Field(() => [PersonalAccessTokenGrantInput], {
+    description:
+      "May be empty when globalPermissions is not: a token needs one or the other.",
+  })
   @ValidateNested({ each: true })
   @Type(() => PersonalAccessTokenGrantInput)
   communities: PersonalAccessTokenGrantInput[];
+
+  @Field(() => [String], {
+    nullable: true,
+    description:
+      "Global permission names, each one the caller holds. Never canGrantGlobalPermissions.",
+  })
+  @IsOptional()
+  @IsString({ each: true })
+  globalPermissions?: string[];
 }

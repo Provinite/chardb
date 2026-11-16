@@ -811,8 +811,16 @@ input CreateItemTypeInput {
 }
 
 input CreatePersonalAccessTokenInput {
+  """
+  May be empty when globalPermissions is not: a token needs one or the other.
+  """
   communities: [PersonalAccessTokenGrantInput!]!
   expiresInDays: Int!
+
+  """
+  Global permission names, each one the caller holds. Never canGrantGlobalPermissions.
+  """
+  globalPermissions: [String!]
   name: String!
 }
 
@@ -3931,6 +3939,11 @@ type PersonalAccessToken {
   """The secret's last four characters."""
   displayHint: String!
   expiresAt: DateTime!
+
+  """
+  Global permission names, such as isAdmin. Each counts only while the owner still holds it.
+  """
+  globalPermissions: [String!]!
   id: ID!
   lastUsedAt: DateTime
   name: String!
@@ -3962,6 +3975,9 @@ input PersonalAccessTokenGrantInput {
 
 type PersonalAccessTokenGrantOptions {
   communities: [PersonalAccessTokenCommunityRef!]!
+
+  """The global permissions the caller holds and may grant."""
+  globalPermissions: [String!]!
 
   """Lifetimes a token may have, in days."""
   lifetimesDays: [Int!]!

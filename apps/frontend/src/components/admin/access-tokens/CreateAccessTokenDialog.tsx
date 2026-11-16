@@ -16,6 +16,7 @@ import type {
   PersonalAccessTokenGrantOptionsQuery,
 } from "../../../generated/graphql";
 import {
+  GLOBAL_PERMISSIONS_MAP,
   PERMISSION_CATEGORIES,
   PERMISSIONS_MAP,
   type PermissionCategory,
@@ -117,6 +118,7 @@ const TokenForm: React.FC<CreateAccessTokenDialogProps> = ({
   const [name, setName] = useState("");
   const [lifetime, setLifetime] = useState(DEFAULT_LIFETIME_DAYS);
   const [grants, setGrants] = useState<DraftGrant[]>([]);
+  const [globalPermissions, setGlobalPermissions] = useState<string[]>([]);
   const [search, setSearch] = useState("");
 
   const unpicked = useMemo(() => {
@@ -147,7 +149,7 @@ const TokenForm: React.FC<CreateAccessTokenDialogProps> = ({
 
   const complete =
     name.trim().length > 0 &&
-    grants.length > 0 &&
+    (grants.length > 0 || globalPermissions.length > 0) &&
     grants.every((grant) => grant.member || grant.permissions.length > 0);
 
   const submit = (event: React.FormEvent) => {
@@ -161,6 +163,10 @@ const TokenForm: React.FC<CreateAccessTokenDialogProps> = ({
         member: grant.member,
         permissions: grant.permissions,
       })),
+      // In the order offered, not the order clicked.
+      globalPermissions: (options?.globalPermissions ?? []).filter(
+        (permission) => globalPermissions.includes(permission),
+      ),
     });
   };
 
@@ -198,6 +204,14 @@ const TokenForm: React.FC<CreateAccessTokenDialogProps> = ({
         </select>
       </Stack>
 
+      {options && options.globalPermissions.length > 0 && (
+        <SitePermissionsFieldset
+          offered={options.globalPermissions}
+          checked={globalPermissions}
+          onChange={setGlobalPermissions}
+        />
+      )}
+
       <Stack gap="sm">
         <SearchSelect
           label="Add a community"
@@ -217,8 +231,8 @@ const TokenForm: React.FC<CreateAccessTokenDialogProps> = ({
           }}
         />
         <p className={styles.help}>
-          The token can act only in the communities added here, with only the
-          permissions checked.
+          Beyond its site permissions, the token can act only in the communities
+          added here, with only the permissions checked.
         </p>
       </Stack>
 
@@ -272,6 +286,57 @@ const Checkbox: React.FC<{
     {label}
   </label>
 );
+
+/** Site-wide permissions, each one the creator holds. */
+const SitePermissionsFieldset: React.FC<{
+  offered: readonly string[];
+  checked: string[];
+  onChange: (checked: string[]) => void;
+}> = ({ offered, checked, onChange }) => (
+  <fieldset className={styles.grant}>
+    <legend className={styles.legend}>Site permissions</legend>
+    <Stack gap="sm">
+      {offered.map((permission) => (
+        <SitePermissionCheckbox
+          key={permission}
+          permission={permission}
+          checked={checked.includes(permission)}
+          onChange={(on) =>
+            onChange(
+              on
+                ? [...checked, permission]
+                : checked.filter((other) => other !== permission),
+            )
+          }
+        />
+      ))}
+    </Stack>
+  </fieldset>
+);
+
+const SitePermissionCheckbox: React.FC<{
+  permission: string;
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}> = ({ permission, checked, onChange }) => {
+  const helpId = useId();
+  const info = GLOBAL_PERMISSIONS_MAP[permission];
+  return (
+    <Stack gap="none">
+      <Checkbox
+        label={info?.name ?? permission}
+        describedBy={info ? helpId : undefined}
+        checked={checked}
+        onChange={onChange}
+      />
+      {info && (
+        <p id={helpId} className={styles.help}>
+          {info.description}
+        </p>
+      )}
+    </Stack>
+  );
+};
 
 /** One community's checklist. */
 const GrantFieldset: React.FC<{

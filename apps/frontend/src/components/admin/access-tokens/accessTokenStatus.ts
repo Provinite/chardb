@@ -1,5 +1,8 @@
 import type { PersonalAccessTokenFieldsFragment } from "../../../generated/graphql";
-import { PERMISSIONS_MAP } from "../../../lib/permissions";
+import {
+  GLOBAL_PERMISSIONS_MAP,
+  PERMISSIONS_MAP,
+} from "../../../lib/permissions";
 
 export type AccessTokenStatus = "active" | "expired" | "revoked";
 
@@ -20,6 +23,13 @@ type Grant = Pick<
 >;
 
 const labels: Record<string, { name: string }> = PERMISSIONS_MAP;
+
+/** A token's site-wide permissions, as labels. */
+export function describeGlobalGrant(
+  permissions: PersonalAccessTokenFieldsFragment["globalPermissions"],
+): string[] {
+  return permissions.map((name) => GLOBAL_PERMISSIONS_MAP[name]?.name ?? name);
+}
 
 /** What a token may do in one community, as labels. */
 export function describeGrant(grant: Grant): string[] {

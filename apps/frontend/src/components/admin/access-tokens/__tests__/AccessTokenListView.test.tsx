@@ -17,6 +17,7 @@ const token = (
   expiresAt: "2027-01-30T00:00:00Z",
   lastUsedAt: null,
   revokedAt: null,
+  globalPermissions: [],
   communities: [
     {
       __typename: "PersonalAccessTokenGrant",
@@ -43,6 +44,19 @@ describe("AccessTokenListView", () => {
     expect(within(card).getByText("Active")).toBeInTheDocument();
     expect(card).toHaveTextContent("Willowmere: Member, Manage Items");
     expect(card).toHaveTextContent("Last used Never");
+  });
+
+  it("shows a token's site permissions", () => {
+    render(
+      <AccessTokenListView
+        tokens={[token({ globalPermissions: ["isAdmin"], communities: [] })]}
+        now={now}
+        onRevoke={vi.fn()}
+      />,
+    );
+
+    const card = screen.getByRole("listitem", { name: "deploy bot" });
+    expect(card).toHaveTextContent("Site permissions: Site Admin");
   });
 
   it("revokes an active token", async () => {

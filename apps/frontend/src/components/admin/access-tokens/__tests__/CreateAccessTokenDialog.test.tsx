@@ -21,6 +21,7 @@ const options: NonNullable<CreateAccessTokenDialogProps["options"]> = {
     },
   ],
   permissions: ["canManageItems", "canEditCharacter"],
+  globalPermissions: ["isAdmin", "canListUsers"],
   lifetimesDays: [7, 30, 90, 365],
 };
 
@@ -88,6 +89,62 @@ describe("CreateAccessTokenDialog", () => {
       communities: [
         { communityId: "c-1", member: false, permissions: ["canManageItems"] },
       ],
+      globalPermissions: [],
+    });
+  });
+
+  it("offers the site permissions the creator holds", () => {
+    renderDialog();
+    const site = screen.getByRole("group", { name: "Site permissions" });
+
+    expect(within(site).getAllByRole("checkbox")).toHaveLength(2);
+    expect(within(site).getByLabelText("Site Admin")).not.toBeChecked();
+    expect(
+      within(site).getByLabelText("Site Admin"),
+    ).toHaveAccessibleDescription(
+      /cannot create, list or revoke access tokens/,
+    );
+    expect(within(site).getByLabelText("List Users")).not.toBeChecked();
+  });
+
+  it("offers no site permissions when the creator holds none", () => {
+    renderDialog({ options: { ...options, globalPermissions: [] } });
+
+    expect(
+      screen.queryByRole("group", { name: "Site permissions" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("sends site permissions in the order offered, not the order checked", async () => {
+    const { onSubmit } = renderDialog();
+
+    await userEvent.type(screen.getByLabelText("Name"), "backfill");
+    await userEvent.click(screen.getByLabelText("List Users"));
+    await userEvent.click(screen.getByLabelText("Site Admin"));
+    await userEvent.click(screen.getByRole("button", { name: "Create token" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        globalPermissions: ["isAdmin", "canListUsers"],
+      }),
+    );
+  });
+
+  it("creates a token with site permissions and no community", async () => {
+    const { onSubmit } = renderDialog();
+    const create = screen.getByRole("button", { name: "Create token" });
+
+    await userEvent.type(screen.getByLabelText("Name"), "backfill");
+    expect(create).toBeDisabled();
+    await userEvent.click(screen.getByLabelText("Site Admin"));
+    expect(create).toBeEnabled();
+    await userEvent.click(create);
+
+    expect(onSubmit).toHaveBeenCalledWith({
+      name: "backfill",
+      expiresInDays: 90,
+      communities: [],
+      globalPermissions: ["isAdmin"],
     });
   });
 

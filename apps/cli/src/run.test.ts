@@ -109,6 +109,7 @@ const whoamiAnswer = {
         name: "bank import",
         displayHint: "AAAA",
         expiresAt: "2027-01-01T00:00:00.000Z",
+        globalPermissions: ["isAdmin"],
         communities: [
           {
             community: { id: COMMUNITY_ID, name: "Cloverse", slug: "cloverse" },
@@ -266,6 +267,7 @@ describe("whoami", () => {
     expect(out).toContain("siteadmin");
     expect(out).toContain("cloverse");
     expect(out).toContain("canGrantItems");
+    expect(out).toMatch(/^site\s+isAdmin$/m);
   });
 
   it("prints JSON with --json", async () => {

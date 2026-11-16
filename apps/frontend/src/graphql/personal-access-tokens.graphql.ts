@@ -9,6 +9,7 @@ const PERSONAL_ACCESS_TOKEN_FIELDS = gql`
     expiresAt
     lastUsedAt
     revokedAt
+    globalPermissions
     communities {
       community {
         id
@@ -37,6 +38,7 @@ export const PERSONAL_ACCESS_TOKEN_GRANT_OPTIONS = gql`
         name
       }
       permissions
+      globalPermissions
       lifetimesDays
     }
   }

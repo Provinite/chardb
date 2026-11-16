@@ -10,6 +10,7 @@ import { GalleriesModule } from "../../galleries/galleries.module";
 import { CharactersModule } from "../../characters/characters.module";
 import { ImagesModule } from "../../images/images.module";
 import { CommunityPermission } from "../CommunityPermission";
+import { ANONYMOUS_PERMISSIONS } from "../request-permissions";
 import { PersonalAccessTokensService } from "./personal-access-tokens.service";
 
 type Outcome = "ok" | "forbidden";
@@ -92,24 +93,26 @@ describe("real endpoints under a personal access token (e2e)", () => {
       owner.username,
     );
     const tokens = testApp.getApp().get(PersonalAccessTokensService);
-    credentials.token = (
-      await tokens.create(owner.id, {
-        name: "endpoints",
-        expiresInDays: 7,
-        communities: [
-          {
-            communityId: ids.here,
-            member: true,
-            permissions: [
-              CommunityPermission.CanManageItems,
-              CommunityPermission.CanEditOwnCharacter,
-            ],
-          },
-        ],
-      })
-    ).secret;
+    credentials.token =
+      // Grants nothing global, so the creator's permissions are not asked.
+      (
+        await tokens.create(owner.id, ANONYMOUS_PERMISSIONS, {
+          name: "endpoints",
+          expiresInDays: 7,
+          communities: [
+            {
+              communityId: ids.here,
+              member: true,
+              permissions: [
+                CommunityPermission.CanManageItems,
+                CommunityPermission.CanEditOwnCharacter,
+              ],
+            },
+          ],
+        })
+      ).secret;
     credentials.tokenWithoutMembership = (
-      await tokens.create(owner.id, {
+      await tokens.create(owner.id, ANONYMOUS_PERMISSIONS, {
         name: "endpoints, no membership",
         expiresInDays: 7,
         communities: [
