@@ -115,6 +115,21 @@ describe("CreateAccessTokenDialog", () => {
     ).not.toBeInTheDocument();
   });
 
+  it("sends site permissions in the order offered, not the order checked", async () => {
+    const { onSubmit } = renderDialog();
+
+    await userEvent.type(screen.getByLabelText("Name"), "backfill");
+    await userEvent.click(screen.getByLabelText("List Users"));
+    await userEvent.click(screen.getByLabelText("Site Admin"));
+    await userEvent.click(screen.getByRole("button", { name: "Create token" }));
+
+    expect(onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        globalPermissions: ["isAdmin", "canListUsers"],
+      }),
+    );
+  });
+
   it("creates a token with site permissions and no community", async () => {
     const { onSubmit } = renderDialog();
     const create = screen.getByRole("button", { name: "Create token" });

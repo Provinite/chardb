@@ -310,7 +310,6 @@ describe("what each permission decorator admits (e2e)", () => {
         ],
       })
     ).secret;
-    // Granted membership where its owner holds no role.
     tokens.adminToken = (
       await accessTokens.create(userIds.siteAdmin, siteAdminPermissions, {
         name: "gate probe admin",
@@ -319,6 +318,7 @@ describe("what each permission decorator admits (e2e)", () => {
         globalPermissions: [GlobalPermission.IsAdmin],
       })
     ).secret;
+    // Granted membership where its owner holds no role.
     tokenWhereOwnerIsNoMember = (
       await accessTokens.create(userIds.siteAdmin, siteAdminPermissions, {
         name: "gate probe elsewhere",

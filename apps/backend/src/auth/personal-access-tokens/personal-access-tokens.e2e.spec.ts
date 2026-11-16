@@ -193,7 +193,9 @@ describe("personal access tokens (e2e)", () => {
           globalPermissions: ["canGrantGlobalPermissions"],
         });
 
-        expect(response.body.errors).toBeDefined();
+        expect(response.body.errors?.[0]?.message).toBe(
+          "A token may be granted only global permissions you hold",
+        );
         expect(await db.personalAccessToken.count()).toBe(before);
       } finally {
         await db.user.update({

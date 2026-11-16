@@ -163,7 +163,10 @@ const TokenForm: React.FC<CreateAccessTokenDialogProps> = ({
         member: grant.member,
         permissions: grant.permissions,
       })),
-      globalPermissions,
+      // In the order offered, not the order clicked.
+      globalPermissions: (options?.globalPermissions ?? []).filter(
+        (permission) => globalPermissions.includes(permission),
+      ),
     });
   };
 
