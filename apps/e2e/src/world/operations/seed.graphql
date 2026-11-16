@@ -637,6 +637,76 @@ mutation SeedMintCurrency($input: MintCurrencyInput!) {
   mintCurrency(input: $input)
 }
 
+# What waits on external accounts in a community (#445, #610). Staff only.
+query SeedExternalMembers(
+  $communityId: ID!
+  $search: String
+  $provider: ExternalAccountProvider
+) {
+  externalMembers(
+    communityId: $communityId
+    search: $search
+    provider: $provider
+  ) {
+    hasMore
+    members {
+      itemCount
+      characterCount
+      balances {
+        amount
+        grantCount
+        currency {
+          id
+          code
+        }
+      }
+      holder {
+        id
+        provider
+        providerAccountId
+        displayIdentifier
+        currencyId
+        amount
+      }
+    }
+  }
+}
+
+query SeedPendingHoldings(
+  $communityId: ID!
+  $provider: ExternalAccountProvider!
+  $providerAccountId: String!
+) {
+  pendingHoldings(
+    communityId: $communityId
+    provider: $provider
+    providerAccountId: $providerAccountId
+  ) {
+    totalItems
+    holder {
+      providerAccountId
+      displayIdentifier
+    }
+    balances {
+      amount
+      grantCount
+      currency {
+        id
+        code
+      }
+    }
+    claimedBy {
+      id
+    }
+  }
+}
+
+mutation SeedJoinCommunity($communityId: ID!) {
+  joinCommunity(communityId: $communityId) {
+    id
+  }
+}
+
 mutation SeedBurnCurrency($input: BurnCurrencyInput!) {
   burnCurrency(input: $input)
 }

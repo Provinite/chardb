@@ -3,15 +3,32 @@ import type { TypedDocumentNode } from "@graphql-typed-document-node/core";
 import { CFG } from "../config.js";
 import type { Actor, Persona } from "./types.js";
 
+/**
+ * One GraphQL error as the backend sends it. A rejected input arrives as a
+ * bare "Bad Request Exception"; what was wrong with it is in
+ * `extensions.originalError.message`, one string per failed rule.
+ */
+interface GraphQLErrorBody {
+  message: string;
+  extensions?: { originalError?: { message?: string | string[] } };
+}
+
+const describeError = (e: GraphQLErrorBody): string => {
+  const detail = e.extensions?.originalError?.message;
+  const details = Array.isArray(detail) ? detail : detail ? [detail] : [];
+  const extra = details.filter((d) => d !== e.message);
+  return extra.length ? `${e.message} (${extra.join(", ")})` : e.message;
+};
+
 class GraphQLRequestError extends Error {
   constructor(
     readonly actorKey: string,
     readonly operation: string,
-    readonly errors: Array<{ message: string }>,
+    readonly errors: GraphQLErrorBody[],
   ) {
     super(
       `GraphQL ${operation} failed as "${actorKey}": ` +
-        errors.map((e) => e.message).join("; "),
+        errors.map(describeError).join("; "),
     );
     this.name = "GraphQLRequestError";
   }
@@ -53,7 +70,7 @@ export function makeActor(key: string, persona: Persona | null): Actor {
     });
     const body = (await res.json()) as {
       data?: TResult;
-      errors?: Array<{ message: string }>;
+      errors?: GraphQLErrorBody[];
     };
     if (body.errors?.length) {
       throw new GraphQLRequestError(key, operationName(document), body.errors);
