@@ -2,7 +2,9 @@ import {
   CurrencyTransactionKind,
   CurrencyTransactionSource,
   ExternalAccountProvider,
+  NotificationKind,
 } from "@chardb/database";
+import { lockPendingAccounts } from "../pending-ownership/utils/lock-pending-accounts";
 import { TestApp } from "../../test/setup-e2e";
 import { DatabaseModule } from "../database/database.module";
 import { AuthModule } from "../auth/auth.module";
@@ -43,6 +45,7 @@ describe("Pending currency grants (e2e)", () => {
     username: "neo.baka",
     displayName: "Neo the Baka",
   });
+  const resolveUsernameToId = jest.fn().mockResolvedValue(DISCORD_ID);
   const resolveUsername = jest.fn().mockResolvedValue({
     uuid: DEVIANTART_UUID,
     username: "Some-Artist",
@@ -71,7 +74,7 @@ describe("Pending currency grants (e2e)", () => {
       (builder) =>
         builder
           .overrideProvider(DiscordService)
-          .useValue({ getUserInfo })
+          .useValue({ getUserInfo, resolveUsernameToId })
           .overrideProvider(DeviantArtService)
           .useValue({ resolveUsername }),
     );
@@ -346,6 +349,149 @@ describe("Pending currency grants (e2e)", () => {
     );
 
     expect(await db.pendingOwnership.count({ where: { currencyId } })).toBe(1);
+  });
+
+  it("waits on a Discord username as its id, looked up in the community's server", async () => {
+    await db.community.update({
+      where: { id: communityId },
+      data: { discordGuildId: "300000000000000001" },
+    });
+
+    await ledger.mint(
+      {
+        currencyId,
+        pendingOwners: [{ provider: DISCORD, providerAccountId: "neo.baka" }],
+        amount: 15,
+        reason: "Event prize",
+      },
+      staff.id,
+    );
+
+    expect(resolveUsernameToId).toHaveBeenCalledWith(
+      "300000000000000001",
+      "neo.baka",
+    );
+    expect(
+      await db.pendingOwnership.findFirstOrThrow({ where: { currencyId } }),
+    ).toMatchObject({
+      providerAccountId: DISCORD_ID,
+      displayIdentifier: "neo.baka",
+      displayName: "Neo the Baka",
+    });
+  });
+
+  it("tells the member when a grant is claimed, and nobody when it is minted", async () => {
+    await mintToDeviantArt(250);
+    expect(await db.notification.count()).toBe(0);
+
+    await testApp.createTestCommunityMember(player.id, memberRoleId);
+    await accounts.linkExternalAccount(
+      player.id,
+      DEVIANTART,
+      DEVIANTART_UUID,
+      "Some-Artist",
+    );
+
+    const notes = await db.notification.findMany({
+      where: { recipientId: player.id },
+    });
+    expect(notes).toHaveLength(1);
+    expect(notes[0]).toMatchObject({
+      kind: NotificationKind.CURRENCY_RECEIVED,
+      communityId,
+      subjectId: currencyId,
+      data: expect.objectContaining({ amount: 250 }),
+    });
+  });
+
+  describe("racing a mint against a claim", () => {
+    /** Resolves once an advisory lock is in the state asked for. */
+    const advisoryLock = async (granted: boolean) => {
+      for (let i = 0; i < 200; i++) {
+        const [{ n }] = await db.$queryRaw<{ n: bigint }[]>`
+          SELECT count(*) AS n FROM pg_locks
+          WHERE locktype = 'advisory' AND granted = ${granted}`;
+        if (n > 0n) return;
+        await new Promise((resolve) => setTimeout(resolve, 10));
+      }
+      throw new Error("No advisory lock reached that state");
+    };
+    const someoneWaitsOnALock = () => advisoryLock(false);
+    const someoneHoldsALock = () => advisoryLock(true);
+
+    it("a link claims coin from a mint that was still in flight when it linked", async () => {
+      await testApp.createTestCommunityMember(player.id, memberRoleId);
+      let commitMint = () => {};
+      const mintHeld = new Promise<void>((resolve) => {
+        commitMint = resolve;
+      });
+
+      // A mint that has decided the account is unlinked and written its row,
+      // but not yet committed.
+      const mint = db.$transaction(async (tx) => {
+        await lockPendingAccounts(tx, [
+          { provider: DEVIANTART, providerAccountId: DEVIANTART_UUID },
+        ]);
+        await tx.pendingOwnership.create({
+          data: {
+            currencyId,
+            amount: 90,
+            provider: DEVIANTART,
+            providerAccountId: DEVIANTART_UUID,
+            batchId: "in-flight-batch",
+            reason: "Event prize",
+            actorUserId: staff.id,
+          },
+        });
+        await mintHeld;
+      });
+
+      const link = accounts.linkExternalAccount(
+        player.id,
+        DEVIANTART,
+        DEVIANTART_UUID,
+        "Some-Artist",
+      );
+      await someoneWaitsOnALock();
+      commitMint();
+      await Promise.all([mint, link]);
+
+      expect(await balance()).toBe(90);
+    });
+
+    it("a mint pays a member directly once their join, in flight when it began, commits", async () => {
+      await accounts.linkExternalAccount(
+        player.id,
+        DEVIANTART,
+        DEVIANTART_UUID,
+        "Some-Artist",
+      );
+      let commitJoin = () => {};
+      const joinHeld = new Promise<void>((resolve) => {
+        commitJoin = resolve;
+      });
+
+      // A join that has taken the account's lock but not yet committed the
+      // membership.
+      const joining = db.$transaction(async (tx) => {
+        await tx.communityMember.create({
+          data: { userId: player.id, roleId: memberRoleId },
+        });
+        await pending.claimPendingInCommunity(tx, player.id, communityId);
+        await joinHeld;
+      });
+      await someoneHoldsALock();
+
+      const mint = mintToDeviantArt(70);
+      await someoneWaitsOnALock();
+      commitJoin();
+      await Promise.all([joining, mint]);
+
+      expect(await balance()).toBe(70);
+      expect(await db.pendingOwnership.count({ where: { currencyId } })).toBe(
+        0,
+      );
+    });
   });
 
   it("refuses a mint that names nobody", async () => {
