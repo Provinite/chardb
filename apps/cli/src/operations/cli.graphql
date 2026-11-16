@@ -4,6 +4,7 @@ query CurrentAccessToken {
     name
     displayHint
     expiresAt
+    globalPermissions
     communities {
       community {
         id

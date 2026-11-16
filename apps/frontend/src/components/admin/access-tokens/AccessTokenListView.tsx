@@ -1,7 +1,11 @@
 import React from "react";
 import { Button, Cluster, Stack } from "@chardb/ui";
 import type { PersonalAccessTokenFieldsFragment } from "../../../generated/graphql";
-import { accessTokenStatus, describeGrant } from "./accessTokenStatus";
+import {
+  accessTokenStatus,
+  describeGlobalGrant,
+  describeGrant,
+} from "./accessTokenStatus";
 import * as styles from "./AccessTokenListView.css";
 
 export interface AccessTokenListViewProps {
@@ -64,6 +68,12 @@ export const AccessTokenListView: React.FC<AccessTokenListViewProps> = ({
             </Cluster>
 
             <Stack as="ul" gap="xs" className={styles.list}>
+              {token.globalPermissions.length > 0 && (
+                <li className={styles.grant}>
+                  <span className={styles.community}>Site permissions</span>:{" "}
+                  {describeGlobalGrant(token.globalPermissions).join(", ")}
+                </li>
+              )}
               {token.communities.map((grant) => (
                 <li key={grant.community.id} className={styles.grant}>
                   <span className={styles.community}>

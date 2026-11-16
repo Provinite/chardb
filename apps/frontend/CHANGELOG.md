@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - **Pending currency on External Members**: the list and an account's pending holdings show currency waiting on them (#610).
+- **Site permissions on access tokens**: the create dialog grants a token site-wide permissions you hold, and the token list shows them (#611).
 
 ## [v16.0.0] - 2026-11-15
 

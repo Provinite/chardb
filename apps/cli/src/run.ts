@@ -194,6 +194,9 @@ export async function run(options: RunOptions): Promise<number> {
             "token",
             `${token.name} (…${token.displayHint}), expires ${token.expiresAt.slice(0, 10)}`,
           ]);
+          if (token.globalPermissions.length) {
+            rows.push(["site", token.globalPermissions.join(", ")]);
+          }
         }
         stdout(table(rows));
         if (token?.communities.length) {

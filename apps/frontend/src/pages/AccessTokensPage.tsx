@@ -29,9 +29,9 @@ export const AccessTokensPage: React.FC = () => {
   const { data, loading, error } = usePersonalAccessTokensQuery({
     fetchPolicy: "cache-and-network",
   });
-  const { data: optionsData } = usePersonalAccessTokenGrantOptionsQuery({
-    skip: !creating,
-  });
+  // Fetched with the page, not when the dialog opens: the site permissions
+  // section exists only once these arrive, and would push the form down.
+  const { data: optionsData } = usePersonalAccessTokenGrantOptionsQuery();
   const [create, { loading: createBusy }] =
     useCreatePersonalAccessTokenMutation({
       // Not awaited: the secret exists only in this response, and a failed
