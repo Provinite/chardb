@@ -11,6 +11,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **CLI in CI**: `@chardb/cli` joins the unit-test matrix and the codegen staleness check.
 
+### Changed
+
+- **Prod backend back to one 0.25 vCPU / 512 MB task** now the Halloween event is over.
+
 ## [v16.0.0] - 2026-11-15
 
 ### Added
